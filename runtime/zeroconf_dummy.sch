@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.4.x/runtime/zeroconf_dummy.sch        */
+;*    serrano/prgm/project/hop/3.0.x/runtime/zeroconf_dummy.sch        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:13:46 2011                          */
-;*    Last change :  Sun Jul  1 06:58:38 2012 (serrano)                */
-;*    Copyright   :  2011-12 Manuel Serrano                            */
+;*    Last change :  Wed Sep 23 13:37:36 2015 (serrano)                */
+;*    Copyright   :  2011-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dummy (fake) Zeroconf implementation                             */
 ;*=====================================================================*/
@@ -15,6 +15,11 @@
 (directives
 
    (export (class zeroconf-dummy::zeroconf)))
+
+;*---------------------------------------------------------------------*/
+;*    *zeroconf-backend* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *zeroconf-backend* (instantiate::zeroconf-dummy))
 
 ;*---------------------------------------------------------------------*/
 ;*    Register the dummy-backend                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Sep  3 16:33:59 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 11:21:36 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -332,7 +332,7 @@
    
    (define (response-error status-line request socket header)
       (http-response
-       (instantiate::http-response-error
+       (instantiate::http-response-string
 	  (start-line status-line)
 	  (charset (hop-locale))
 	  (header header))

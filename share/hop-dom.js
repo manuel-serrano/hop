@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Sep 15 07:54:41 2015 (serrano)                */
+/*    Last change :  Tue Sep 22 10:00:40 2015 (serrano)                */
 /*    Copyright   :  2006-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -337,13 +337,16 @@ function hop_dom_create( tag, args ) {
 	    hop_style_attribute_set( el, valstr( val ) );
 	 } else if( attr === "%location" ) {
 	    ; /* ignore */
-	 } else if( m = attr.match( "^on(.*)" ) ) {
-	    hop_add_event_listener( el, m[ 1 ], val, true );
 	 } else {
-	    el.setAttribute( attr, valstr( val) );
-	    try {
-	       el[ attr ] = valstr( val );
-	    } catch( _ ) { ; }
+	    m = attr.match( "^on(.*)" );
+	    if( m ) {
+	       hop_add_event_listener( el, m[ 1 ], val, true );
+	    } else {
+	       el.setAttribute( attr, valstr( val) );
+	       try {
+		  el[ attr ] = valstr( val );
+	       } catch( _ ) { ; }
+	    }
 	 }
       }
    }
