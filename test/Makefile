@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Sep 17 19:38:03 2015 (serrano)                */
+#*    Last change :  Tue Sep 22 09:29:01 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -60,10 +60,13 @@ POPULATION = Makefile \
   hopjs/serv/webSocketOpen.js \
   hopjs/serv/webSocket.js \
   hopjs/serv/asyncSrvRsp.js \
+  hopjs/serv/worker.js \
+  hopjs/serv/asyncSrvWS.js \
   hopjs/serv/aux/launchWorkers.js \
   hopjs/serv/aux/stdClient.js \
   hopjs/serv/aux/stressClient.js \
   hopjs/serv/aux/wsOpenClient.js \
+  hopjs/serv/aux/workerNOOP.js \
   hopjs/serv/https/cert.pem \
   hopjs/serv/https/key.pem
   

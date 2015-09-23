@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct  9 18:26:51 2014                          */
-/*    Last change :  Mon Jan  5 09:42:38 2015 (serrano)                */
+/*    Last change :  Tue Sep 22 07:58:38 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Stdio initialization                                             */
