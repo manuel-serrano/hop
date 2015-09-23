@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Aug 14 07:14:24 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 13:14:11 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -289,34 +289,34 @@
 		  (<TR> (<TH> f)))))
 	 stack))
 
-  '(let loop ((l stack)
-	      (s skip))
-    (cond
-       ((null? l)
-	"")
-       ((= s 0)
-	(<DIV> :data-hss-class "hop-exception-stack"
-	   :data-idiom ((@ hop_idiom js))
-	   :data-debug-mode (if (string=? ((@ hop_idiom js)) "scheme")
-				"hop" "all")
-	   (if (string=? ((@ hop_idiom js)) "scheme")
-	       (<BUTTON> "Show JavaScript frames"
-		  :onclick ~(let* ((p this.parentNode)
-				   (c (p.getAttribute "data-debug-mode")))
-			       (if (equal? c "all")
-				   (begin
-				      (innerHTML-set! this "Show JavaScript frames")
-				      (p.setAttribute "data-debug-mode" "hop"))
-				   (begin
-				      (innerHTML-set! this "Hide JavaScript frames")
-				      (p.setAttribute "data-debug-mode" "all")))
-			       (stop-event-propagation event))))
-	   (<TABLE> :data-hss-class "hop-exception-stack"
-	      :onclick ~(stop-event-propagation event)
-	      (<TR> (<TH> "Execution stack:"))
-	      (pp-stack l))))
-       (else
-	(loop (cdr l) (- s 1))))))
+  (let loop ((l stack)
+	     (s skip))
+     (cond
+	((null? l)
+	 "")
+	((= s 0)
+	 (<DIV> :data-hss-class "hop-exception-stack"
+	    :data-idiom ((@ hop_idiom js))
+	    :data-debug-mode (if (string=? ((@ hop_idiom js)) "scheme")
+				 "hop" "all")
+	    (if (string=? ((@ hop_idiom js)) "scheme")
+		(<BUTTON> "Show JavaScript frames"
+		   :onclick ~(let* ((p this.parentNode)
+				    (c (p.getAttribute "data-debug-mode")))
+				(if (equal? c "all")
+				    (begin
+				       (innerHTML-set! this "Show JavaScript frames")
+				       (p.setAttribute "data-debug-mode" "hop"))
+				    (begin
+				       (innerHTML-set! this "Hide JavaScript frames")
+				       (p.setAttribute "data-debug-mode" "all")))
+				(stop-event-propagation event))))
+	    (<TABLE> :data-hss-class "hop-exception-stack"
+	       :onclick ~(stop-event-propagation event)
+	       (<TR> (<TH> "Execution stack:"))
+	       (pp-stack l))))
+	(else
+	 (loop (cdr l) (- s 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <EXCEPTION> ...                                                  */
@@ -334,9 +334,11 @@
 	    (<TABLE> :data-hss-class "hop-exception-msg"
 	       (<TR> (<TH> exc.name))
 	       (<TR> (<TD> (get-exception-message exc)))
-	       (when (js-in? "scObject" exc)
-		  (<TR>
-		     (<TD> (<TT> (obj->name exc.scObject #f))))))
+	       (let ((name (if (and (js-instanceof? exc (@ Object js))
+				    (js-in? "scObject" exc))
+			       (obj->name exc.scObject #f)
+			       (typeof exc))))
+		  (<TR> (<TD> (<TT> name)))))
 	    ;; call stack
 	    (<EXCEPTION-STACK> stack 0)))))
 
@@ -430,6 +432,7 @@
 				     (substring msg j len)))))))))))
 	       
    (cond
+      ((not (isa? e (@ Object js))) e)
       ((isa? e (@ ReferenceError js)) (reference-error e.message))
       ((js-in? "message" e) (demangle-string e.message))
       ((js-in? "description" e) (demangle-string e.description))
@@ -448,16 +451,17 @@
       (set! hop-current-exception e)
       (set! hop-current-exception-stack (hop-debug-exception-stack stk)))
    ;; notify the server of the exception and re-throw it
-   (unless (and (js-in? "scClientOnly" e) e.scClientOnly)
-      (with-hop ($(service :name "public/server-debug/exception"
-		     (#!key exc proc msg obj stack))
-		   :exc e
-		   :url (if (js-in? "name" e)
-			    (string-append document.location.href ", " e.name)
-			    document.location.href)
-		   :msg (get-exception-message e)
-		   :obj (if (js-in? "scObject" e) e.scObject #unspecified)
-		   :stack hop-current-exception-stack)))
+   (when (js-instanceof? e (@ Object js))
+      (unless (and (js-in? "scClientOnly" e) e.scClientOnly)
+	 (with-hop ($(service :name "public/server-debug/exception"
+			(#!key exc proc msg obj stack))
+		      :exc e
+		      :url (if (js-in? "name" e)
+			       (string-append document.location.href ", " e.name)
+			       document.location.href)
+		      :msg (get-exception-message e)
+		      :obj (if (js-in? "scObject" e) e.scObject #unspecified)
+		      :stack hop-current-exception-stack))))
    (raise e))
 
 ;*---------------------------------------------------------------------*/

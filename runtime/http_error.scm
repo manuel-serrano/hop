@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Thu Aug  6 14:33:45 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 11:21:20 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -325,7 +325,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*    http-permission-denied ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (http-permission-denied file)
-   (instantiate::http-response-error
+   (instantiate::http-response-string
       (start-line "HTTP/1.0 403 Forbidden")
       (charset (hop-locale))
       (body (format "Permission denied: ~s" file))))
@@ -334,7 +334,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*    http-method-error ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-method-error obj)
-   (instantiate::http-response-error
+   (instantiate::http-response-string
       (start-line "HTTP/1.0 501 Not Implemented")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Method not implemented ~a</body></html>"
@@ -344,7 +344,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*    http-parse-error ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (http-parse-error obj)
-   (instantiate::http-response-error
+   (instantiate::http-response-string
       (start-line "HTTP/1.0 400 Bad Request")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Parse error in HTTP request on token <tt>~a</tt>/body></html>"
@@ -354,7 +354,7 @@ a timeout which has now expired. The service is then no longer available."))
 ;*    http-bad-request ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (http-bad-request obj)
-   (instantiate::http-response-error
+   (instantiate::http-response-string
       (start-line "HTTP/1.0 400 Bad Request")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Bad request <tt><pre>~a</pre></tt></body></html>" obj))))
@@ -443,7 +443,7 @@ Reloading the page is the only way to fix this problem."))))))
 ;*---------------------------------------------------------------------*/
 (define (http-internal-warning e)
    (let ((s (with-error-to-string (lambda () (warning-notify e)))))
-      (instantiate::http-response-error
+      (instantiate::http-response-string
 	 (start-line "HTTP/1.0 400 Bad Request")
 	 (charset (hop-locale))
 	 (body (format "<HTML><BODY><PRE> ~a </PRE></BODY></HTML>" s)))))
@@ -528,7 +528,7 @@ Reloading the page is the only way to fix this problem."))))))
 ;*    http-gateway-timeout ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (http-gateway-timeout e)
-   (instantiate::http-response-error
+   (instantiate::http-response-string
       (start-line "HTTP/1.0 502 Bad Gateway")
       (charset (hop-locale))
       (body (format "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\">\n<html><body>Gateway Timeout ~a</body></html>" e))))

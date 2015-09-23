@@ -152,6 +152,11 @@ ${ <span class="label label-info">authentication/authentication.js</span> }
 ${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 14 ) }
 ```
 
+### hop.HTTPResponseError( obj, [option] ) ###
+
+Respond an error value to the client, which either invokes the `fail`
+callback of the `post` service call, or raises an exception.
+
 ### hop.HTTPResponseAsync( sender, req ) ###
 [:@glyphicon glyphicon-tag function]
 
@@ -192,6 +197,11 @@ service foo( x ) {
    }
 }
 ```
+
+Invoking the `resolve` function actually sends the responds to the client.
+Invoking the `reject` as the same effect of responding a `HHTPResponseError`
+value.
+
 
 ### hop.HTTPResponseProxy( obj, [option] ) ###
 [:@glyphicon glyphicon-tag function]

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Aug 25 10:18:04 2015 (serrano)                */
+;*    Last change :  Tue Sep 22 11:06:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -238,8 +238,17 @@
 		(set! body (walk! body nenv fmode withs nwenv)))
 	    (with-access::J2SDeclArguments arguments (usecnt)
 	       (when (>fx usecnt 0)
-		  (with-access::J2SFun this (vararg)
-		     (set! vararg #t)))))))
+		  (with-access::J2SFun this (vararg params)
+		     (if vararg
+			 (with-access::J2SParam (car (last-pair params)) (id loc)
+			    (raise
+			       (instantiate::&io-parse-error
+				  (proc "js-symbol")
+				  (msg "\"arguments\" object may not be used in conjunction with a rest parameter")
+				  (obj id)
+				  (fname (cadr loc))
+				  (location (caddr loc)))))
+			 (set! vararg 'arguments))))))))
    this)
 
 ;; MS CARE: 25 Juil 2014, not sure it would be a good idea to traverse ~ nodes

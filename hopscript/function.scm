@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Sep 15 08:10:23 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 10:50:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -37,7 +37,7 @@
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
 	      #!key
-	      __proto__ prototype construct alloc strict arity src)))
+	      __proto__ prototype construct alloc strict arity src rest)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -187,7 +187,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3.1     */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function %this procedure length name
-	   #!key __proto__ prototype alloc construct strict arity src)
+	   #!key __proto__ prototype alloc construct strict arity src rest)
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -206,6 +206,7 @@
 		(fun (instantiate::JsFunction
 		       (procedure procedure)
 		       (arity (or arity (procedure-arity procedure)))
+		       (rest rest)
 		       (len length)
 		       (__proto__ (or __proto__ js-function-prototype))
 		       (name fname)

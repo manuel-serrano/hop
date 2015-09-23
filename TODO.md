@@ -7,16 +7,13 @@ HopScript
 ---------
 
   1. (2015-09-12) Fix .post arguments passing 
-  2. (2015-09-12) JavaScript Service class (new Service(...))
-  3. (2015-09-12) server-to-server broadcast
-  4. (2015-09-15) HTTPResponseError (connected to reject of Async promises)
+  2. (2015-09-12) server-to-server broadcast
   
 
 EcmaScript 6
 ------------
 
-  1. (2015-09-12) Rest function arguments
-  2. (2015-09-12) ES6 compliance
+  1. (2015-09-12) ES6 compliance
 
 
 Nodejs compatibility
