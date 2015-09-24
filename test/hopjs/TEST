@@ -81,11 +81,19 @@ for path in noserv/*.js; do
 done
 
 for path in serv/*.js; do
-   if [ -f $path.rc.js ]; then
-     run $path -p 0 --rc-file $path.rc.js
-   else       
-     run $path -p 0 --rc-file passwd.hop
-   fi
+    if [ -f $path.rc.js ]; then
+	if [ -f $path.args ]; then
+	    run $path -p 0 `cat $path.args` --rc-file $path.rc.js
+	else
+	    run $path -p 0 --rc-file $path.rc.js
+	fi
+    else       
+	if [ -f $path.args ]; then
+	    run $path -p 0 `cat $path.args` --rc-file passwd.hop
+	else
+	    run $path -p 0 --rc-file passwd.hop
+	fi
+    fi
        
 done
 
