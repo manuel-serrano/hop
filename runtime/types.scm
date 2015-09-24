@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Jul 29 14:43:11 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 11:23:34 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -143,8 +143,6 @@
 	      (sec read-only (default #f))
 	      (accept read-only (default #f))
 	      (onconnect read-only (default #f)))
-	   
-	   (class http-response-error::http-response-string)
 	   
 	   (class http-response-cgi::%http-response-server
 	      (cgibin::bstring read-only))

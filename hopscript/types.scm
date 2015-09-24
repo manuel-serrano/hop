@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Sep 12 07:47:39 2015 (serrano)                */
+;*    Last change :  Tue Sep 22 17:49:58 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -189,6 +189,7 @@
 	      (constrmap (default #f)) 
 	      (arity::int read-only (default -1))
 	      (len::int read-only)
+	      (rest::bool read-only (default #f))
 	      (procedure::procedure read-only)
 	      (src read-only (default #f)))
 	   

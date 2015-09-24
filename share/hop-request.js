@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Aug 14 05:49:22 2015 (serrano)                */
+/*    Last change :  Wed Sep 23 13:08:00 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -107,21 +107,30 @@ function hop_default_failure( exc, xhr ) {
       return;
    }
 
-   var nexc = new Error( "statusText" in xhr ? xhr.statusText : "server error" );
+   if( xhr ) {
+      var nexc = new Error( "statusText" in xhr ? xhr.statusText : "server error" );
 
-   if( xhr.svc ) {
-      var svc = xhr.svc;
-      var i = svc.indexOf( "?" );
-      nexc.name = i ? svc.substring( 0, i ) : svc;
+      if( xhr.svc ) {
+	 var svc = xhr.svc;
+	 var i = svc.indexOf( "?" );
+	 nexc.name = i ? svc.substring( 0, i ) : svc;
+      } else {
+	 nexc.name = "with-hop"
+      }
+      
+      nexc.scObject = "status: " + xhr.status;
+      nexc.scOffset = 3;
+      nexc.scClientOnly = true;
+
+      throw nexc;
    } else {
-      nexc.name = "with-hop"
+      if( exc instanceof Object ) {
+	 exc.scClientOnly = true;
+	 throw exc;
+      } else {
+	 throw exc;
+      }
    }
-   
-   nexc.scObject = "status: " + xhr.status;
-   nexc.scOffset = 3;
-   nexc.scClientOnly = true;
-
-   throw nexc;
 }
 
 /*---------------------------------------------------------------------*/
@@ -404,63 +413,86 @@ function hop_request_onready( xhr, svc, succ, fail ) {
       
    try {
       switch( xhr.status ) {
-        case 200: {
-	   var o;
-	   
-	   if( hop_debug() > 0 ) {
-	      succ = xhr_hop_success_callback( succ );
-	      
-	      try {
-		 o = hop_request_unserialize( xhr, svc );
-	      } catch( e ) {
-		 hop_callback_handler( e, xhr.precontext );
-	      }
-	   } else {
-	      o = hop_request_unserialize( xhr, svc );
-	   }
+         case 200: {
+	    var o;
+	    
+	    if( hop_debug() > 0 ) {
+	       succ = xhr_hop_success_callback( succ );
+	       
+	       try {
+		  o = hop_request_unserialize( xhr, svc );
+	       } catch( e ) {
+		  hop_callback_handler( e, xhr.precontext );
+	       }
+	    } else {
+	       o = hop_request_unserialize( xhr, svc );
+	    }
 
-	   return succ( o, xhr );
-	}
-	 
-        case 204:
-  	   return false;
-	 
-        case 259:
-	   hop_set_cookie( xhr );
-	   return false;
-	 
-        case 400:
-	   if( hop_debug() > 0 ) {
-	      fail = xhr_hop_failure_callback( fail );
-	   }
-	   return false;
-	 
-        case 407:
-	   if( hop_debug() > 0 ) {
-	      fail = xhr_hop_failure_callback( fail );
-	   }
-  	   fail( 407, xhr );
-	   return false;
-	 
-      default:
-	   if( (typeof xhr.status === "number") &&
-  	       (xhr.status > 200) && (xhr.status < 300) ) {
-	      if( hop_debug() > 0 ) {
-		 succ = xhr_hop_success_callback( succ );
-	      }
+	    return succ( o, xhr );
+	 }
+	    
+         case 204:
+  	    return false;
+	    
+         case 259:
+	    hop_set_cookie( xhr );
+	    return false;
+	    
+         case 400:
+	    if( hop_debug() > 0 ) {
+	       fail = xhr_hop_failure_callback( fail );
+	    }
+	    fail( 400, xhr );
+	    return false;
+	    
+         case 407:
+	    if( hop_debug() > 0 ) {
+	       fail = xhr_hop_failure_callback( fail );
+	    }
+  	    fail( 407, xhr );
+	    return false;
 
-	      if( xhr.responseType == "arraybuffer" ) {
-  		 return succ( ab2string( xhr.responseText ), xhr );
-	      } else {
-  		 return succ( xhr.responseText, xhr );
-	      }
-  	   } else {
-	      if( hop_debug() > 0 ) {
-		 fail = xhr_hop_failure_callback( fail );
-	      }
-  	      fail( xhr.status, xhr );
-  	      return false;
-  	   }
+	 case 500:
+	    if( xhr.getResponseHeader( "Hop-Error" ) ) {
+	       var o;
+
+	       if( hop_debug() > 0 ) {
+		  fail = xhr_hop_success_callback( fail );
+
+		  try {
+		     o = hop_request_unserialize( xhr, svc );
+		  } catch( e ) {
+		     hop_callback_handler( e, xhr.precontext );
+		  }
+	       } else {
+		  o = hop_request_unserialize( xhr, svc );
+	       }
+
+	       return fail( o );
+	    } else {
+	       fail( xhr.status, xhr );
+	       return false;
+	    }
+	    
+	 default:
+	    if( (typeof xhr.status === "number") &&
+  		(xhr.status > 200) && (xhr.status < 300) ) {
+	       if( hop_debug() > 0 ) {
+		  succ = xhr_hop_success_callback( succ );
+	       }
+
+	       if( xhr.responseType == "arraybuffer" ) {
+  		  return succ( ab2string( xhr.responseText ), xhr );
+	       } else {
+  		  return succ( xhr.responseText, xhr );
+	       }
+  	    } else {
+	       if( hop_debug() > 0 ) {
+		  fail = xhr_hop_failure_callback( fail );
+	       }
+  	       fail( xhr.status, xhr );
+  	       return false;
+  	    }
       }
    } finally {
       if( typeof hop_stop_anim === "function" ) { 

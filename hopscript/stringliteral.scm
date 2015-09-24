@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Sep 19 07:40:41 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 14:56:55 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -242,11 +242,9 @@
 	    (iota num))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-tonumber ::JsStringLiteral ...                                */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
+;*    js-jsstring-tonumber ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-tonumber this::JsStringLiteral %this)
+(define (js-jsstring-tonumber this %this)
    (let ((str (trim-whitespaces+ (js-jsstring->string this)
 		 :left #t :right #t :plus #t)))
       (cond
@@ -268,13 +266,20 @@
 	  (js-parseint str 10 #t %this)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-tonumber ::JsStringLiteral ...                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
+;*---------------------------------------------------------------------*/
+(define-method (js-tonumber this::JsStringLiteral %this)
+   (js-jsstring-tonumber this %this))
+
+;*---------------------------------------------------------------------*/
 ;*    js-tointeger ::JsStringLiteral ...                               */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.3          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tointeger this::JsStringLiteral %this)
-   (with-access::JsStringLiteral this (val)
-      (js-tointeger (js-jsstring->string val) %this)))
+   (js-tointeger (js-jsstring-tonumber this %this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    integers ...                                                     */

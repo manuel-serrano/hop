@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Sep 12 07:55:17 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 10:00:21 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -757,7 +757,12 @@
 	    (mode 'strict)
 	    (params params)
 	    (body (arrow-body params)))))
-	    
+
+   (define (rest-params params)
+      (when (pair? params)
+	 (with-access::J2SParam (car (last-pair params)) (usage)
+	    (when (equal? usage '(rest)) 'rest))))
+   
    (define (function declaration?)
       (let* ((token (consume-token! 'function))
 	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
@@ -776,6 +781,7 @@
 			(name (cdr id))
 			(mode mode)
 			(body body)
+			(vararg (rest-params params))
 			(decl (instantiate::J2SDecl
 				 (loc (token-loc token))
 				 (id (cdr id))
@@ -788,6 +794,7 @@
 				      (loc (token-loc token))
 				      (decl decl)
 				      (params params)
+				      (vararg (rest-params params))
 				      (name (cdr id))
 				      (mode mode)
 				      (body body)))
@@ -804,6 +811,7 @@
 	     (instantiate::J2SFun
 		(loc (token-loc token))
 		(params params)
+		(vararg (rest-params params))
 		(name '||)
 		(mode mode)
 		(body body))))))
@@ -842,6 +850,7 @@
 		(val (instantiate::J2SSvc
 			(loc (token-loc token))
 			(params params)
+			(vararg (rest-params params))
 			(name (cdr id))
 			(init init)
 			(mode 'strict)
@@ -858,6 +867,7 @@
 				      (loc (token-loc id))
 				      (decl decl)
 				      (params params)
+				      (vararg (rest-params params))
 				      (name (cdr id))
 				      (init init)
 				      (mode 'strict)
@@ -875,6 +885,7 @@
 	     (instantiate::J2SSvc
 		(loc (token-loc token))
 		(params params)
+		(vararg (rest-params params))
 		(name (gensym))
 		(init init)
 		(mode 'strict)
@@ -896,6 +907,7 @@
 			     (loc loc)
 			     (id (cdr id))))
 		    (loc loc)
+		    (vararg (rest-params inits))
 		    (params inits)
 		    (name (cdr id))
 		    (init (instantiate::J2SNop
@@ -924,41 +936,79 @@
 	    (defval expr)
 	    (loc loc)
 	    (id (token-value token)))))
+
+   (define (consume-rest-param!)
+      (let* ((token (consume-token! 'ID))
+	     (loc (token-loc token))
+	     (expr (instantiate::J2SUndefined (loc loc))))
+	 (instantiate::J2SParam
+	    (defval expr)
+	    (loc loc)
+	    (usage '(rest))
+	    (id (token-value token)))))
       
    (define (params)
       (push-open-token (consume! 'LPAREN))
-      (if (eq? (peek-token-type) 'RPAREN)
-	  (begin
-	     (consume-any!)
+      (case (peek-token-type)
+	 ((RPAREN)
+	  (consume-any!)
+	  (pop-open-token)
+	  '())
+	 ((DOTS)
+	  (consume-any!)
+	  (let ((param (consume-rest-param!)))
+	     (consume-token! 'RPAREN)
 	     (pop-open-token)
-	     '())
+	     (list param)))
+	 (else
 	  (let loop ((rev-params (list (consume-param!))))
 	     (if (eq? (peek-token-type) 'COMMA)
 		 (begin
 		    (consume-any!)
-		    (loop (cons (consume-param!) rev-params)))
+		    (if (eq? (peek-token-type) 'DOTS)
+			(begin
+			   (consume-any!)
+			   (let ((param (consume-rest-param!)))
+			      (consume! 'RPAREN)
+			      (pop-open-token)
+			      (reverse! (cons param rev-params))))
+			(loop (cons (consume-param!) rev-params))))
 		 (begin
 		    (consume! 'RPAREN)
 		    (pop-open-token)
-		    (reverse! rev-params))))))
+		    (reverse! rev-params)))))))
 
    (define (service-params)
       (push-open-token (consume! 'LPAREN))
       (case (peek-token-type)
 	 ((RPAREN)
 	  (consume-any!)
+	  (pop-open-token)
 	  '())
 	 ((LBRACE)
 	  (let ((o (object-literal)))
 	     (consume! 'RPAREN)
 	     (pop-open-token)
 	     o))
+	 ((DOTS)
+	  (consume-any!)
+	  (let ((param (consume-rest-param!)))
+	     (consume-token! 'RPAREN)
+	     (pop-open-token)
+	     (list param)))
 	 (else
 	  (let loop ((rev-params (list (consume-param!))))
 	     (if (eq? (peek-token-type) 'COMMA)
 		 (begin
 		    (consume-any!)
-		    (loop (cons (consume-param!) rev-params)))
+		    (if (eq? (peek-token-type) 'DOTS)
+			(begin
+			   (consume-any!)
+			   (let ((param (consume-rest-param!)))
+			      (consume! 'RPAREN)
+			      (pop-open-token)
+			      (reverse! (cons param rev-params))))
+			(loop (cons (consume-param!) rev-params))))
 		 (begin
 		    (consume! 'RPAREN)
 		    (pop-open-token)
@@ -1774,6 +1824,7 @@
 			(loc (token-loc tokname))
 			(params params)
 			(name (cdr id))
+			(vararg (rest-params params))
 			(body body)))
 		(oprop (find-prop (symbol->string! (cdr id)) props))
 		(prop (or oprop

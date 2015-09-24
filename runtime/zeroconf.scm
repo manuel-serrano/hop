@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Sat Sep 19 20:23:20 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 14:22:37 2015 (serrano)                */
 ;*    Copyright   :  2011-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -63,11 +63,6 @@
 	   (zeroconf-started?)
 	   (zeroconf-start)
 	   (zeroconf-publish! #!key name port type #!rest opts)))
-
-;*---------------------------------------------------------------------*/
-;*    *zeroconf-backend* ...                                           */
-;*---------------------------------------------------------------------*/
-(define *zeroconf-backend* (instantiate::zeroconf-dummy))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-register-backend! ...                                   */

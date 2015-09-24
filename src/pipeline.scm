@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu Aug 27 20:19:30 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 11:28:20 2015 (serrano)                */
 ;*    Copyright   :  2008-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -214,8 +214,7 @@
 (define (http-response-static? resp)
    (or (isa? resp http-response-file)
        (isa? resp http-response-string)
-       (isa? resp http-response-abort)
-       (isa? resp http-response-error)))
+       (isa? resp http-response-abort)))
 
 ;*---------------------------------------------------------------------*/
 ;*    stage-response ...                                               */

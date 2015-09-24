@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sun Sep 13 09:05:21 2015 (serrano)                */
+/*    Last change :  Wed Sep 23 11:56:28 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -40,6 +40,7 @@ function hop_callback( proc, ctx, id ) {
    
    var applyCallback = function() {
       var old = hop_current_stack_context;
+
       try {
 	 hop_current_stack_context = ctx;
 	 return proc.apply( this, arguments );

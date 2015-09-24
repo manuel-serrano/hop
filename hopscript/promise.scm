@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Sep  4 12:24:08 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 13:05:18 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -69,7 +69,15 @@
 		  (lambda (this resp)
 		     (k (scheme->response resp req)))
 		  1 "reply")
-	       (js-undefined)))))
+	       (js-make-function %this
+		  (lambda (this rej)
+		     (k (instantiate::http-response-hop
+			   (start-line "HTTP/1.1 500 Internal Server Error")
+			   (backend (hop-xml-backend))
+			   (content-type "application/x-javascript")
+			   (header '((Hop-Error: . "true")))
+			   (value rej))))
+		  1 "reject")))))
    
    (instantiate::http-response-async
       (async async-proc)))

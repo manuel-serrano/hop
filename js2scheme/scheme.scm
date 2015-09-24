@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Sep 20 09:05:44 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 16:43:49 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -403,7 +403,9 @@
       (with-access::J2SFun val (params mode vararg body)
 	 (let* ((scmid (j2s-name name id))
 		(fastid (j2s-fast-id id))
-		(arity (if vararg -1 (+fx 1 (length params)))))
+		(lparams (length params))
+		(arity (if vararg -1 (+fx 1 lparams)))
+		(len (if (eq? vararg 'rest) (-fx lparams 1) lparams)))
 	    (epairify-deep loc
 	       (if global 
 		   `(begin
@@ -413,8 +415,9 @@
 			  (js-bind! %this ,global ',id
 			     :configurable #f
 			     :value (js-make-function %this
-				       ,fastid ,(length params) ',id
+				       ,fastid ,len ',id
 				       :src ,(j2s-function-src loc val conf)
+				       :rest ,(eq? vararg 'rest)
 				       :arity ,arity
 				       :strict ,(eq? mode 'strict)
 				       :alloc (lambda (o)
@@ -425,8 +428,9 @@
 			  ,(jsfun->lambda val mode return conf))
 		       (define ,scmid
 			  (js-make-function %this
-			     ,fastid ,(length params) ',id
+			     ,fastid ,len ',id
 			     :src ,(j2s-function-src loc val conf)
+			     :rest ,(eq? vararg 'rest)
 			     :arity ,arity
 			     :strict ,(eq? mode 'strict)
 			     :alloc (lambda (o) (js-object-alloc o %this))
@@ -896,17 +900,22 @@
 	 (let ((args (j2s-scheme params mode return conf)))
 	    (lambda-or-labels idthis id args body))))
    
+   (define (rest-lambda fun id body)
+      (with-access::J2SFun fun (idthis params)
+	 (let ((args (j2s-scheme params mode return conf)))
+	    (lambda-or-labels idthis id args body))))
+   
    (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
       (let ((id (or id (gensym 'fun)))
-	    (rest (gensym 'rest)))
+	    (rest (gensym 'arguments)))
 	 (with-access::J2SFun fun (idthis)
 	    (lambda-or-labels idthis id rest
 	       (jsfun-normal-vararg-body fun body id rest)))))
    
    (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
-      (let ((rest (gensym 'rest)))
+      (let ((rest (gensym 'arguments)))
 	 (with-access::J2SFun fun (idthis)
 	    (lambda-or-labels idthis id rest
 	       (jsfun-strict-vararg-body fun body id rest)))))
@@ -922,6 +931,8 @@
 	     (fun (cond
 		     ((not vararg)
 		      (fixarg-lambda this id body))
+		     ((eq? vararg 'rest)
+		      (rest-lambda this id body))
 		     ((eq? mode 'normal)
 		      (normal-vararg-lambda this id body))
 		     (else
@@ -934,11 +945,14 @@
 (define (j2sfun->scheme this::J2SFun tmp mode return conf)
    (with-access::J2SFun this (loc name params mode vararg)
       (let* ((id (j2sfun-id this))
+	     (lparams (length params))
+	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
 	     (arity (if vararg -1 (+fx 1 (length params)))))
 	 (epairify-deep loc
 	    `(js-make-function %this
-		,tmp ,(length params) ',(j2s-name name id)
+		,tmp ,len ',(j2s-name name id)
 		:src ,(j2s-function-src loc this conf)
+		:rest ,(eq? vararg 'rest)
 		:arity ,arity
 		:strict ,(eq? mode 'strict)
 		:alloc (lambda (o) (js-object-alloc o %this))
@@ -1002,18 +1016,26 @@
       
       (define (service-fix-proc->scheme this)
 	 (with-access::J2SSvc this (loc vararg)
-	    (let* ((imp `(lambda ,(cons 'this args)
+	    (let ((imp `(lambda ,(cons 'this args)
 			    (js-worker-exec @worker ,(symbol->string scmid)
-			       (lambda () ,(service-body this)))))
-		   (app `(let ((fun ,imp))
-			    (js-apply% fun ,(+fx 1 (length args)) this args))))
+			       (lambda () ,(service-body this))))))
 	       (epairify-deep loc
-		  `(lambda (this . args)
-		      (map! (lambda (a) (js-obj->jsobject a %this)) args)
-		      ,(if (not vararg)
-			   app
-			   `(let ((arguments (js-strict-arguments %this args)))
-			       ,app)))))))
+		  `(lambda (this . params)
+		      (map! (lambda (a) (js-obj->jsobject a %this)) params)
+		      ,(case vararg
+			  ((arguments)
+			   `(let ((arguments (js-strict-arguments %this params))
+				  (fun ,imp))
+			       (js-apply-service% fun this params
+				  ,(length args))))
+			  ((rest)
+			   `(let ((fun ,imp))
+			       (js-apply-rest% %this fun this params
+				  ,(-fx (length args) 1) (+fx 1 (length params)))))
+			  (else
+			   `(let ((fun ,imp))
+			       (js-apply-service% fun this params
+				   ,(length args))))))))))
 
       (define (service-dsssl-proc->scheme this)
 	 (with-access::J2SSvc this (loc init)
@@ -1583,8 +1605,9 @@
       (let ((tmp (gensym)))
 	 (epairify loc
 	    (if (isa? else J2SNop)
-		`(when ,(j2s-test test mode return conf)
-		    ,(j2s-scheme then mode return conf))
+		`(if ,(j2s-test test mode return conf)
+		     ,(j2s-scheme then mode return conf)
+		     (js-undefined))
 		`(if ,(j2s-test test mode return conf)
 		     ,(j2s-scheme then mode return conf)
 		     ,(j2s-scheme else mode return conf)))))))
@@ -1971,33 +1994,65 @@
    (define (call-hop-function fun::J2SHopRef args)
       `(,(j2s-scheme fun mode return conf) ,@(j2s-scheme args mode return conf)))
 
+   (define (call-rest-function fun::J2SFun f args)
+      ;; call a function that accepts a rest argument
+      (with-access::J2SFun fun (params vararg)
+	 (let loop ((params params)
+		    (args args)
+		    (actuals '()))
+	    (cond
+	       ((null? (cdr params))
+		;; the rest argument
+		`(,f (js-undefined)
+		    ,@(reverse! actuals)
+		    (js-vector->jsarray
+		       (vector ,@(j2s-scheme args mode return conf))
+		       %this)))
+	       ((null? args)
+		(with-access::J2SParam (car params) (loc)
+		   (loop (cdr params) '()
+		      (cons '(js-undefined) actuals))))
+	       (else
+		(loop (cdr params) (cdr args)
+		   (cons (j2s-scheme (car args) mode return conf)
+		      actuals)))))))
+
+   (define (call-fix-function fun::J2SFun f args)
+      ;; call a function that accepts a fix number of arguments
+      (with-access::J2SFun fun (params vararg)
+	 (let ((lenf (length params))
+	       (lena (length args)))
+	    (cond
+	       ((=fx lenf lena)
+		;; matching arity
+		`(,f (js-undefined) ,@(j2s-scheme args mode return conf)))
+	       ((>fx lena lenf)
+		;; too many arguments ignore the extra values,
+		;; but still evaluate extra expressions
+		(let ((temps (map (lambda (i)
+				     (string->symbol
+					(string-append "%a"
+					   (integer->string i))))
+				(iota lena))))
+		   `(let* ,(map (lambda (t a)
+				   `(,t ,(j2s-scheme a mode return conf))) temps args)
+		       (,f (js-undefined) ,@(take temps lenf)))))
+	       (else
+		;; argument missing
+		`(,f
+		    (js-undefined)
+		    ,@(j2s-scheme args mode return conf)
+		    ,@(make-list (-fx lenf lena) '(js-undefined))))))))
+   
    (define (call-fun-function fun::J2SFun f args)
       (with-access::J2SFun fun (params vararg)
-	 (if vararg
-	     `(,f (js-undefined) ,@(j2s-scheme args mode return conf))
-	     (let ((lenf (length params))
-		   (lena (length args)))
-		(cond
-		   ((=fx lenf lena)
-		    ;; matching arity
-		    `(,f (js-undefined) ,@(j2s-scheme args mode return conf)))
-		   ((>fx lena lenf)
-		    ;; too many arguments ignore the extra values,
-		    ;; but still evaluate extra expressions
-		    (let ((temps (map (lambda (i)
-					 (string->symbol
-					    (string-append "%a"
-					       (integer->string i))))
-				    (iota lena))))
-		       `(let* ,(map (lambda (t a)
-				       `(,t ,(j2s-scheme a mode return conf))) temps args)
-			   (,f (js-undefined) ,@(take temps lenf)))))
-		   (else
-		    ;; argument missing
-		    `(,f
-			(js-undefined)
-			,@(j2s-scheme args mode return conf)
-			,@(make-list (-fx lenf lena) '(js-undefined)))))))))
+	 (case vararg
+	    ((arguments)
+	     `(,f (js-undefined) ,@(j2s-scheme args mode return conf)))
+	    ((rest)
+	     (call-rest-function fun f args))
+	    (else
+	     (call-fix-function fun f args)))))
 
    (define (call-with-function fun::J2SWithRef args)
       (with-access::J2SWithRef fun (id withs loc)
