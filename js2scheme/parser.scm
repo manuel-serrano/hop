@@ -758,6 +758,12 @@
 	    (params params)
 	    (body (arrow-body params)))))
 
+
+   (define (rest-params params)
+      (when (pair? params)
+	 (with-access::J2SParam (car (last-pair params)) (usage)
+	    (when (equal? usage '(rest)) 'rest))))
+   
    (define (rest-params params)
       (when (pair? params)
 	 (with-access::J2SParam (car (last-pair params)) (usage)
@@ -782,6 +788,7 @@
 			(mode mode)
 			(body body)
 			(vararg (rest-params params))
+			(vararg (rest-params params))
 			(decl (instantiate::J2SDecl
 				 (loc (token-loc token))
 				 (id (cdr id))
@@ -794,6 +801,7 @@
 				      (loc (token-loc token))
 				      (decl decl)
 				      (params params)
+				      (vararg (rest-params params))
 				      (vararg (rest-params params))
 				      (name (cdr id))
 				      (mode mode)
@@ -811,6 +819,7 @@
 	     (instantiate::J2SFun
 		(loc (token-loc token))
 		(params params)
+		(vararg (rest-params params))
 		(vararg (rest-params params))
 		(name '||)
 		(mode mode)

@@ -13,9 +13,9 @@ var runTest = require( './aux/launchWorkers.js' ).runTest;
 var clientModule = require.resolve( './aux/workerNOOP.js' );
 
 
-var NUMCLIENTS = 20; // number of concurrent clients
+var NUMCLIENTS = 10; // number of concurrent clients
 var NUMCALLS = 0; // not used
-var TIMEOUT = 1000; //global timeout (test will fail if not completed by then)
+var TIMEOUT = 2000; //global timeout (test will fail if not completed by then)
 // change TIMEOUT value to match your hardware
 
 
@@ -23,4 +23,4 @@ runTest( { clientModule: clientModule,
 	   numClients: NUMCLIENTS,
 	   numCalls: NUMCALLS,
 	   timeout: TIMEOUT,
-	   onSuccess: process.exit } );
+	 } );
