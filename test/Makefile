@@ -49,24 +49,33 @@ POPULATION = Makefile \
   hopjs/noserv/es6-promise.js \
   hopjs/noserv/es6-arrow.js \
   hopjs/noserv/es6-defval.js \
+  hopjs/serv/asyncSrvRsp.js \
+  hopjs/serv/asyncSrvWS.js \
+  hopjs/serv/authentication.js \
+  hopjs/serv/authentication.js.rc.js \
+  hopjs/serv/http.js \
+  hopjs/serv/https.js \
+  hopjs/serv/https.js.args \
+  hopjs/serv/https.js.rc.js \
+  hopjs/serv/post.js \
   hopjs/serv/serialization.js \
   hopjs/serv/service.js \
   hopjs/serv/service2.js \
-  hopjs/serv/post.js \
+  hopjs/serv/stressService.js \
   hopjs/serv/svc_args.js \
-  hopjs/serv/authentication.js \
-  hopjs/serv/authentication.js.rc.js \
+  hopjs/serv/syncSrvRsp.js \
   hopjs/serv/unregisterService.js \
-  hopjs/serv/webSocketOpen.js \
+  hopjs/serv/webService.js \
   hopjs/serv/webSocket.js \
-  hopjs/serv/asyncSrvRsp.js \
+  hopjs/serv/webSocketOpen.js \
   hopjs/serv/worker.js \
-  hopjs/serv/asyncSrvWS.js \
   hopjs/serv/aux/launchWorkers.js \
+  hopjs/serv/aux/objectEqual.js \
   hopjs/serv/aux/stdClient.js \
   hopjs/serv/aux/stressClient.js \
-  hopjs/serv/aux/wsOpenClient.js \
+  hopjs/serv/aux/webSocketClient.js \
   hopjs/serv/aux/workerNOOP.js \
+  hopjs/serv/aux/wsOpenClient.js \
   hopjs/serv/https/cert.pem \
   hopjs/serv/https/key.pem
   
