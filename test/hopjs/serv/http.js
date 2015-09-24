@@ -11,17 +11,30 @@
 
 var assert = require( 'assert' );
 var hop = require( 'hop' );
-//var spawn = require( 'childProcess' ).spawn;
+var config = require( hop.config );
 
-var payload = [ 1999, 'This is not a string', {key: {subkey: 'subkey', otherKey: 'enough'}, andALastOne: ['d', 'i', 's', 'c', 'o' ]}, [ 3.14, 1837, -765 ] ];
+var objectEqual = require( './aux/objectEqual.js' );
 
-console.log( 'testing local http ...' );
+var payload = [ 1999, 'This is not a string', {key: {subkey: 'subkey', otherKey: 'enough'}, andALastOne: ['d', 'i', 's', 'c', 'o' ]}, [ 3.14, 1837, -765 ],
+		[ { foo: 'oof', bar : 'rab' }, { gee: 'eeg' } ]];
 
+var ssl;
+var wsScheme;
+
+if (config.HTTPSPort) {
+   ssl = true;
+   wsScheme = 'wss';
+} else {
+   ssl = false;
+   wsScheme = 'ws';
+};
+
+
+service foo( arg ) {
+   return arg ;
+}
 
 function goToService() {
-   service foo( arg ) {
-      return arg ;
-   }
    
    function testService( i ) {
       if ( i == payload.length ) {
@@ -29,14 +42,13 @@ function goToService() {
 	 goToServiceNamedArgs();
       } else {
 	 foo( payload[i] ).post(function( result ) {
-	    // console.log( i, payload[ i ], result, typeof( result ) );
-	    assert.equal( typeof( result ), typeof( payload[ i ] ));
-	    assert.equal( result.toString(), payload[ i ].toString() );
+	    assert.ok( objectEqual( result, payload[i] ) );
 	    testService( i + 1 );
-	 }, function( error ) {
+	 }, { fail: function( error ) {
 	    process.exit( 1 );
-	 }
-			       );
+	 },
+	      ssl: ssl
+	    });
       }
    }
    console.log( 'Service test' );
@@ -53,13 +65,13 @@ function goToServiceNamedArgs() {
 	 goToWS();
       } else {
 	 bar( { arg: payload[i] } ).post(function( result ) {
-	    assert.equal( typeof( result ), typeof( payload[ i ] ));
-	    assert.equal( result.toString(), payload[ i ].toString() );
+	    assert.ok( result, payload[ i ] );
 	    testService( i + 1 );
-	 }, function( error ) {
+	 }, { fail: function( error ) {
 	    process.exit( 1 );
-	 }
-			       );
+	 },
+	      ssl: ssl
+	    });
       }
    }
    console.log( 'Service test (named arguments)' );
@@ -95,8 +107,7 @@ function goToWS() {
 	 WSFlag = true;
       };
    };
-   console.log( 'ws://' + hop.hostname + ':' + hop.port + '/hop/server' );
-   var ws = new WebSocket( 'ws://' + hop.hostname + ':' + hop.port + '/hop/server' );
+   var ws = new WebSocket( wsScheme + '://' + hop.hostname + ':' + hop.port + '/hop/server' );
    console.log( 'client: WS created' );
    ws.onopen = function() {
       console.log( 'client: ws url', ws.url );
@@ -106,7 +117,6 @@ function goToWS() {
    };
    ws.onmessage = function( event ) {
       console.log( 'client WS received', event.data );
-      assert.equal( typeof( event.data ), typeof( message ) );
       assert.equal( event.data, message );
       ws.close();
       console.log( 'attempting to close ws' );
@@ -128,8 +138,7 @@ function goToBroadcast(){
    console.log( 'Broadcast test' );
    var i = 0
    server.addEventListener( 'foo', function( event ) {
-      assert.equal( typeof( event.data ), typeof( payload[ i ] ));
-      assert.equal( event.data.toString(), payload[ i ].toString() );
+      assert.ok( event.data, payload[ i ] );
       i++;
       if ( i < payload.length ) {
 	 broadcast( 'foo', payload[ i ] );
@@ -142,12 +151,18 @@ function goToBroadcast(){
 
 function goToEnd() {
    setTimeout( function() {
-      console.log( 'Asynchronous test: is the ws closed server side?', WSFlag );
-      //      assert.ok( WSFlag ); commented out: the server does not
-      // get the close event within 2 seconds but we consider that the
-      // test is valid anyway.
+      assert.ok( WSFlag );
+      console.log( 'All tests passed' );
       process.exit( 0 );
-   }, 2000 );
+   }, 200 );
 }
 
+
 goToService();
+
+setTimeout( function() {
+   console.log( 'TIMEOUT while running tests. Abort' );
+   process.exit( 1 );
+}, 2000 );
+
+
