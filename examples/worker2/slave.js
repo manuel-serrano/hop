@@ -11,16 +11,15 @@
 /*    run: hop -v -g worker.js                                         */
 /*=====================================================================*/
 
-console.log( "starting worker-slave..." );
-
-onexit = function( e ) {
-   console.log( "slave sending last message before dying" );
-   postMessage( "dying master..." );
-}
+console.log( "Worker: starting" );
 
 onmessage = function( e ) {
-   console.log( "slave received '%s'", e.data );
-   postMessage( "what master?" );
-}
+   console.log( "Worker received '%s'", e.data );
+   console.log( "Worker processing ..." );
+   setTimeout( function() {
+      console.log( "Worker sending Report" );
+      postMessage( "Report" );
+   }, 1000 );
+};
 
-console.log( "worker-slave done..." );
+

@@ -11,22 +11,21 @@
 /*    run: hop -v -g worker.js                                         */
 /*=====================================================================*/
 
-console.log( "starting worker-master..." );
-
+console.log( "Master creating a Worker" );
 var w = new Worker( "./slave.js" );
 
-// wait one second and send a message
-setTimeout( function() {
-   console.log( "sending hello slave" );
-   w.postMessage( "hello slave" );
+// can post as soon as the Worker object is created.
+console.log( "Master sending a Work Order" );
+w.postMessage( "Work Order" );
 
-   // wait one other 2 seconds and kill the worker
-   setTimeout( function() {
-      console.log( "terminating slave" );
-      w.terminate();
-   }, 2000 );
-}, 1000 );
 
 w.onmessage = function ( e ) {
-   console.log( "master received '%s'", e.data );
+   console.log( "Master received '%s'", e.data );
+   console.log( "Master terminating worker" );
+   w.terminate();
 };
+
+//w.onexit is useful to track worker self termination (not the case here).
+w.onexit = function() {
+   console.log( "Worker is terminated, I knew that already" );
+}
