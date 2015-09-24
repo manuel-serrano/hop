@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Sep 23 14:45:28 2015 (serrano)                */
+;*    Last change :  Thu Sep 24 08:24:19 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -308,6 +308,7 @@
    (js-bind! %this obj 'length
       :value 0
       :enumerable #f)
+   
    ;; constructor
    (js-bind! %this obj 'constructor
       :value js-string

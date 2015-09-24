@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Fri Jul 17 17:43:13 2015 (serrano)                */
+;*    Last change :  Thu Sep 24 16:57:46 2015 (serrano)                */
 ;*    Copyright   :  2007-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
@@ -111,7 +111,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    IMG ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define-tag <IMG> ((id #f string)
+(define-tag <IMG> ((id #f)
 		   (inline #f boolean)
 		   (alt #f)
 		   (src #unspecified)
@@ -121,15 +121,18 @@
    (define (plain-img src cssrc)
       (instantiate::xml-empty-element
 	 (tag 'img)
-	 (id (xml-make-id id 'img))
-	 (attributes `(:src ,cssrc :alt ,(or alt (basename src)) ,@attributes))
+	 (id (xml-make-id (xml-primitive-value id) 'img))
+	 (attributes `(:src ,cssrc :alt ,(or alt (basename src))
+			 ,@(map xml-primitive-value attributes)))
 	 (body '())))
 
    (define (empty-img)
       (instantiate::xml-empty-element
 	 (tag 'img)
-	 (id (xml-make-id id 'img))
-	 (attributes (if alt `(:alt ,alt ,@attributes) attributes))
+	 (id (xml-make-id (xml-primitive-value id) 'img))
+	 (attributes (if alt
+			 `(:alt ,alt ,@(map xml-primitive-value attributes))
+			 (map xml-primitive-value attributes)))
 	 (body '())))
    
    (define (onerror-img attributes src)
@@ -152,13 +155,14 @@
 		   (set-car! (cdr onerror) nval)
 		   attributes)))
 	    (else
-	     `(:onerror ,(secure-javascript-attr val) ,@attributes)))))
+	     `(:onerror ,(secure-javascript-attr val)
+		 ,@(map xml-primitive-value attributes))))))
    
    (define (inline-img src cssrc isrc)
       (if isrc
 	  (instantiate::xml-empty-element
 	     (tag 'img)
-	     (id (xml-make-id id 'img))
+	     (id (xml-make-id (xml-primitive-value id) 'img))
 	     (attributes `(:src ,isrc :alt ,(or alt (basename src))
 				,@(onerror-img attributes src)))
 	     (body '()))
@@ -171,7 +175,8 @@
 	  (instantiate::xml-empty-element
 	     (tag 'img)
 	     (id id)
-	     (attributes `(:src ,src :alt ,alt ,@attributes))
+	     (attributes `(:src ,src :alt ,(xml-primitive-value alt)
+			     ,@(map xml-primitive-value attributes)))
 	     (body '())))
 	 ((string? src)
 	  (if (string-prefix? "data:" src)

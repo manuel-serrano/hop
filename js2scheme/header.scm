@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue Aug 25 08:14:04 2015 (serrano)                */
+;*    Last change :  Wed Sep 23 17:39:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -63,7 +63,7 @@
 		 (expr expr)))))
 
    (list
-      (js-def-extern 'global #t #f '%this)
+      (js-def-extern 'global #t #t '%this)
       (js-def-extern 'GLOBAL #t #f '%this)
       (js-def-extern 'module #t #t '%module)
       (js-def-extern 'exports #t #t '(js-get %module 'exports %scope))

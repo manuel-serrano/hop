@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Wed Sep 16 12:59:55 2015 (serrano)                */
+/*    Last change :  Thu Sep 24 17:55:31 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -288,6 +288,10 @@ pre code {
 
 pre.fontifier-prog {
   background-color: #fafafa;
+}
+
+pre.fontifier-prog span.ebnf-tag {
+  color: #338;
 }
 
 /*---------------------------------------------------------------------*/

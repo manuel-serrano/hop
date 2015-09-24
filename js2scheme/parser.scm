@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Sep 23 10:00:21 2015 (serrano)                */
+;*    Last change :  Thu Sep 24 17:00:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1412,6 +1412,9 @@
    (define (html-expression tag)
       (html-parser input-port (cons* :tilde-level tilde-level conf) tag))
 
+   (define (doctype-expression)
+      (html-parser input-port (cons* :tilde-level tilde-level conf)))
+
    (define (xml-expression tag)
       (if (lbrace-following? input-port)
 	  (js-xml-expression tag)
@@ -1612,6 +1615,9 @@
 			       (val (token-value tag))))))))
 	 ((OHTML)
 	  (html-expression (consume-any!)))
+	 ((DOCTYPE)
+	  (consume-any!)
+	  (doctype-expression))
 	 ((TILDE)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2STilde

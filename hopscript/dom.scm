@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Wed Sep  2 19:32:44 2015 (serrano)                */
+;*    Last change :  Thu Sep 24 17:11:43 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -242,11 +242,11 @@
 	     1 'getElementsByTagName))
 	 ((getElementsByClassName)
 	  (js-make-function %this
-	     (lambda (this tag)
+	     (lambda (this clazz)
 		(js-vector->jsarray
 		   (list->vector
 		      (dom-get-elements-by-class this
-			 (js-tostring tag %this)))
+			 (js-tostring clazz %this)))
 		   %this))
 	     1 'getElementsByClassName))
 	 ((appendChild)
@@ -316,7 +316,9 @@
       ((innerHTML)
        (with-access::xml-element o (body)
 	  (js-stringlist->jsstring
-	     (map (lambda (b) (js-tostring b %this)) body))))
+	     (map (lambda (b)
+		     (if (string? b) b (js-tostring b %this)))
+		body))))
       (else
        (call-next-method))))
    

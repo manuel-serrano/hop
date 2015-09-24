@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Sep 23 14:35:05 2015 (serrano)                */
+;*    Last change :  Thu Sep 24 11:46:35 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -375,6 +375,8 @@
        (if (eq? lang 'javascript)
 	   (token 'ERROR (the-string) (the-length))
 	   (token 'HTML (symbol-append (the-subsymbol 0 -2) '>) (the-length))))
+      ((: "<!" tagid (+ (out #\>)) ">")
+       (token 'DOCTYPE (the-string) (the-length)))
       
       ;; error
       (else

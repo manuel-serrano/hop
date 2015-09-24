@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Wed Sep 16 13:46:06 2015 (serrano)                */
+/*    Last change :  Thu Sep 24 11:07:31 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -183,6 +183,16 @@ function downloadButton( attrs ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    idx ...                                                          */
+/*---------------------------------------------------------------------*/
+function idx( attrs, entries ) {
+   return <table>
+     ${entries.map( function( e ) {
+	return <tr><td><a href=${e.url}>${e.key}</a></td></tr>; } )}
+	</table>;
+}
+
+/*---------------------------------------------------------------------*/
 /*    exports                                                          */
 /*---------------------------------------------------------------------*/
 exports.TITLE = title;
@@ -191,3 +201,4 @@ exports.NAVBAR = navbar;
 exports.FOOTER = docfooter;
 exports.DOWNLOADBUTTON = downloadButton;
 exports.copyrightYears = copyrightYears;
+exports.IDX = idx;
