@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Thu Sep 24 17:55:31 2015 (serrano)                */
+/*    Last change :  Fri Sep 25 09:22:59 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
@@ -449,10 +449,32 @@ code .h1, code .h2, code .h3, code .h4 {
 }
 
 /*---------------------------------------------------------------------*/
+/*    index                                                            */
+/*---------------------------------------------------------------------*/
+.idx-col {
+  width: 100%;
+}
+
+.idx-prefix {
+  color: #777;
+  text-align: right;
+}
+
+.idx-letter th {
+  text-align: left;
+  color: #777;
+  font-size: 220%;
+}
+
+.idx-letter > * {
+  border-bottom: 1px solid #ccc;
+}
+
+/*---------------------------------------------------------------------*/
 /*    media                                                            */
 /*---------------------------------------------------------------------*/
 @media screen and (max-width:1024px) {
-  #navbar {
+  #navbar, .idx-chapter {
      display: none;
   }
 }

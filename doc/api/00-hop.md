@@ -76,12 +76,12 @@ This class is used to deliver XML documents to client.
 
 ```hopscript
 service getXml() {
-  return hop.HTTPResponseXML( <div>a div</div> );
+  return hop.HTTPResponseXml( <div>a div</div> );
 ```
 
 ${ <span class="label label-warning">Note:</span> }
  In normal situation, it is not necessary to explicitly build the
-`HTTPResponseXML` object as the runtime system automatically constructs
+`HTTPResponseXml` object as the runtime system automatically constructs
 one when the response of a service is an XML fragment.
 [:@warning]
 
@@ -351,7 +351,7 @@ This function is a constructor to create native (Bigloo) objects.
 ### hop.signal() ###
 [:@glyphicon glyphicon-tag function]
 
-### hop.XMLCompile( node [, ofile] [, backend] ) ###
+### hop.xmlCompile( node [, ofile] [, backend] ) ###
 [:@glyphicon glyphicon-tag function]
 
 Compile a XML `node` into HTML. If no output file is specified,

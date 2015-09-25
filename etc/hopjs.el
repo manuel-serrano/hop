@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Sep 16 19:32:34 2015 (serrano)                */
+;*    Last change :  Fri Sep 25 05:28:41 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -372,6 +372,9 @@ usage: (js-return)  -- [RET]"
      ((looking-at "<[a-zA-Z_$][:.0-9a-zA-Z_$]*[ ]+\\([^>\n]\\)[^>]*$")
       ;; open tag + attribute
       (if (looking-at hopjs-re-special-tag) 'tag 'otag-attr))
+     ((looking-at "<[a-zA-Z_$][:.0-9a-zA-Z_$]*[ ]*$")
+      ;; open tag - attribute
+      (if (looking-at hopjs-re-special-tag) 'tag 'otag-sans))
      ((looking-at "\\([^<>\n=]+=[^<>\n=]+[ \t]*\\)+/>[ \t]*$")
       ;; attribute + closing
       'attr-tag)
@@ -381,7 +384,7 @@ usage: (js-return)  -- [RET]"
      ((looking-at "\\([^<>\n]+=[^<>\n]+[ \t]*\\)+$")
       ;; attribute
       'attr)
-     ((looking-at "</[^>]*>[ \t;)}]*$")
+     ((looking-at "\\(</[^>]*>\\)+[ \t;)}]*$")
       ;; closing
       'ctag)
      ((looking-at "<\\([a-zA-Z_$][:.0-9a-zA-Z_$]*\\).*</\\1>[ \t]*$")
@@ -438,7 +441,7 @@ usage: (js-return)  -- [RET]"
 	    (cond
 	     ((memq type types)
 	      (goto-char (match-beginning attr-or-tag))
-	      (if (and in-attr-tag (memq type '(otag otag-attr))) 'tag type))
+	      (if (and in-attr-tag (memq type '(otag otag-attr otag-sans))) 'tag type))
 	     ((eq type 'attr-tag)
 	      (hopjs-goto-html-line types pmin attr-or-tag t t))
 	     (t
@@ -478,7 +481,7 @@ usage: (js-return)  -- [RET]"
 (defun hopjs-html-statement-indentation-tag (ptype pmin)
   (case ptype
     ((attr-tag)
-     (hopjs-goto-html-line '(otag otag-attr entering) pmin 0 t nil)
+     (hopjs-goto-html-line '(otag otag-attr otag-sans entering) pmin 0 t nil)
      (current-column))
     ((ctag)
      (current-column))
@@ -506,7 +509,7 @@ usage: (js-return)  -- [RET]"
 	     (current-column))
 	    ((newline)
 	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr entering ctag ctag-attr tag text)
+			   '(otag otag-attr otag-sans entering ctag ctag-attr tag text)
 			   pmin 0 t nil)))
 	       (hopjs-debug "<<<.2 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
 			    ltype ptype (current-column) (point))
@@ -514,37 +517,50 @@ usage: (js-return)  -- [RET]"
 		   ;; a newline after plain text
 		   (hopjs-html-statement-indentation-text)
 		 (hopjs-html-statement-indentation-tag ptype pmin))))
-	    ((tag otag otag-attr script)
+	    ((tag otag otag-attr otag-sans script)
 	     (let ((ptype (hopjs-goto-html-line
-			   '(ctag otag otag-attr tag entering attr-tag)
+			   '(ctag otag otag-attr otag-sans tag entering attr-tag)
 			   pmin 0 t nil)))
 	       (hopjs-debug "<<<.3 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
 			    ltype ptype (current-column) (point))
 	       (hopjs-html-statement-indentation-tag ptype pmin)))
 	    ((ctag)
 	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr entering ctag ctag-attr tag)
+			   '(otag otag-attr otag-sans entering ctag ctag-attr tag)
 			   pmin 0 t nil)))
 	       (hopjs-debug "<<<.4 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
 			    ltype ptype (current-column) (point))
 	       (case ptype
 		 ((tag ctag ctag-attr tag)
 		  (- (current-column) hopjs-indent-level-html))
-		 ((otag otag-attr)
+		 ((otag otag-attr otag-sans)
 		  (current-column))
 		 (t
 		  (current-column)))))
 	    ((comment ocomment)
-	     (hopjs-debug "<<<.5 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
-			  ltype ptype (current-column) (point))
 	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr entering ctag attr-tag ctag-attr tag
+			   '(otag otag-attr otag-sans entering ctag attr-tag ctag-attr tag
 				  comment ocomment comment)
 			   pmin 0 t nil)))
+	       (hopjs-debug "<<<.5 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
+			    ltype ptype (current-column) (point))
 	       (case ptype
 		 ((comment ocomment tag)
 		  (current-column))
 		 ((otag attr-tag)
+		  (+ (current-column) hopjs-indent-level-html))
+		 (else
+		  (current-column)))))
+	    ((attr attr-tag)
+	     (let ((ptype (hopjs-goto-html-line
+			   '(otag-attr otag-sans attr-tag attr)
+			   pmin 0 t nil)))
+	       (hopjs-debug "<<<.6 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
+			    ltype ptype (current-column) (point))
+	       (case ptype
+		 ((attr attr-tag)
+		  (current-column))
+		 ((otag-attr otag-sans)
 		  (+ (current-column) hopjs-indent-level-html))
 		 (else
 		  (current-column)))))

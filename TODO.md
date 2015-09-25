@@ -14,6 +14,7 @@ EcmaScript 6
 ------------
 
   1. (2015-09-12) ES6 compliance
+    * (2015-09-15) Strings startsWidth and endsWidth
 
 
 Nodejs compatibility

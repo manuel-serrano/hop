@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Thu Sep 24 17:21:52 2015 (serrano)                */
+/*    Last change :  Fri Sep 25 09:24:53 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -204,7 +204,7 @@ function compileSection( page ) {
      </body>
    </html>;
 
-   console.log( hop.XMLCompile( document ) );
+   console.log( hop.xmlCompile( document ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -250,7 +250,7 @@ function compileChapter( json ) {
      </body>
    </html>;
 
-   console.log( hop.XMLCompile( document ) );
+   console.log( hop.xmlCompile( document ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -276,7 +276,7 @@ function compileIndex( content ) {
      </body>
    </html>;
 
-   console.log( hop.XMLCompile( document ) );
+   console.log( hop.xmlCompile( document ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -297,8 +297,10 @@ function mkIdx( base, files ) {
    for( i = 0; i < files.length; i++ ) {
       var file = files[ i ];
       var xml = require( "./" + file );
+      var chapter = path.basename( file, ".html" ).replace( /^[0-9]+-/, "" );
 
       var idx = doc.index( { XML: xml } ).map( function( e ) {
+	 e.chapter = chapter;
 	 e.url = file + "#" + e.id;
 	 return e;
       } );
@@ -339,7 +341,7 @@ function compileIdx( json ) {
      </body>
    </html>;
 
-   console.log( hop.XMLCompile( document ) );
+   console.log( hop.xmlCompile( document ) );
 }
 
 /*---------------------------------------------------------------------*/

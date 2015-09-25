@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Thu Sep 24 11:07:31 2015 (serrano)                */
+/*    Last change :  Fri Sep 25 09:24:00 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -21,23 +21,23 @@ const path = require( "path" );
 /*---------------------------------------------------------------------*/
 function title( attrs, subtitle ) {
    return <div class="jumbotron">
-   <div class="container">
-   <div class="row">
-     <div class="col-md-2">
-       <svg:img
-         src=${path.join( attrs.root, "../share/icons/hop/hop.svg" )}
-         height="20ex" width="10em"/>
-      </div>
-     <div class="col-md-10">
-       <h1>
-         Hop.js ${subtitle ? <small>/${subtitle}</small> : ""}
-       </h1>
-       <p>
-         <span class="label label-default lbl-lg">version ${hop.version}</span>
-       </p>
+     <div class="container">
+       <div class="row">
+	 <div class="col-md-2">
+	   <svg:img
+             src=${path.join( attrs.root, "../share/icons/hop/hop.svg" )}
+             height="20ex" width="10em"/>
+	 </div>
+	 <div class="col-md-10">
+	   <h1>
+              Hop.js ${subtitle ? <small>/${subtitle}</small> : ""}
+	   </h1>
+	   <p>
+             <span class="label label-default lbl-lg">version ${hop.version}</span>
+	   </p>
+	 </div>
+       </div>
      </div>
-   </div>
-   </div>
    </div>;
 }
 
@@ -183,13 +183,93 @@ function downloadButton( attrs ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    entryLetter ...                                                  */
+/*---------------------------------------------------------------------*/
+function entryLetter( en ) {
+   return en.key.charAt( 0 );
+}
+
+/*---------------------------------------------------------------------*/
+/*    idxLetters ...                                                   */
+/*---------------------------------------------------------------------*/
+function idxLetters( es ) {
+   var res = [];
+   var letter = false;
+   var mark = 0;
+
+   for( var i = 0; i < es.length; i++ ) {
+      var l = entryLetter( es[ i ] );
+      if( l != letter ) {
+	 if( i > 0 ) {
+	    res = res.concat( es.slice( mark, i ) );
+	 }
+	 res = res.concat( [ l ] );
+	 letter = l;
+	 mark = i;
+      }
+   }
+
+   if( mark < i ) {
+      res = res.concat( es.slice( mark, i ) );
+   }
+
+   return res;
+}
+
+/*---------------------------------------------------------------------*/
+/*    idxEntry ...                                                     */
+/*---------------------------------------------------------------------*/
+function idxEntry( e ) {
+   if( typeof( e ) === "string" ) {
+      return <tr class="idx-letter"><td/><th>${e}</th></tr>;
+   } else {
+      var p = e.proto.indexOf( "(" );
+      var proto = (p > 0? (e.proto.substring( 0, p ) + "()") : e.proto);
+      var i = proto.indexOf( "." );
+      var title = e.proto + "..." + e.chapter;
+
+      if( i > 0 ) {
+	 return <tr>
+	   <td class="idx-prefix">${proto.substring( 0, i )}.</td>
+	   <td class="idx-entry" title=${title}>
+	     <a href=${e.url}>${proto.substring( i+1 )}</a>
+	   </td>
+	 </tr>;
+      } else {
+	 return <tr>
+	   <td/>
+	   <td class="idx-entry" title=${title}>
+	     <a href=${e.url}>${proto}</a>
+	   </td>
+	 </tr>
+      }
+   }
+}
+
+/*---------------------------------------------------------------------*/
 /*    idx ...                                                          */
 /*---------------------------------------------------------------------*/
 function idx( attrs, entries ) {
-   return <table>
-     ${entries.map( function( e ) {
-	return <tr><td><a href=${e.url}>${e.key}</a></td></tr>; } )}
-	</table>;
+   var en = idxLetters( entries );
+   var collen = en.length / 3;
+   
+   return <div class="row">
+     <div class="col-md-4">
+       <table class="idx-col">
+         ${en.slice( 0, collen ).map( idxEntry )}
+       </table>
+     </div>
+     <div class="col-md-4">
+       <table class="idx-col">
+         ${en.slice( collen, collen * 2 ).map( idxEntry )}
+       </table>
+     </div>
+     <div class="col-md-4">
+       <table class="idx-col">
+         ${en.slice( collen * 2, en.length ).map( idxEntry )}
+       </table>
+     </div>
+   </div>;
 }
 
 /*---------------------------------------------------------------------*/
