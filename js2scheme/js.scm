@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Sep  3 15:35:26 2015 (serrano)                */
+;*    Last change :  Fri Sep 25 09:48:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -62,6 +62,30 @@
 		(if (null? (cdr nodes))
 		    (list end)
 		    (cons sep (loop (cdr nodes)))))))))
+				
+;*---------------------------------------------------------------------*/
+;*    j2s-js*/beforeeend ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-js-ellipsis this::J2SNode start end sep ellipsis nodes tildec dollarc mode evalp conf)
+   (cond
+      ((null? nodes)
+       (list this start ellipsis end))
+      ((null? (cdr nodes))
+       (cons* this start ellipsis
+	  (append (j2s-js (car nodes) tildec dollarc mode evalp conf)
+	     (list end)  )))
+      (else
+       (cons* this start
+	  (let loop ((nodes nodes))
+	     (append (j2s-js (car nodes) tildec dollarc mode evalp conf)
+		(cond
+		   ((null? (cddr nodes))
+		    (cons* sep ellipsis
+		       (append
+			  (j2s-js (cadr nodes) tildec dollarc mode evalp conf)
+			  (list end))))
+		   (else
+		    (cons sep (loop (cdr nodes)))))))))))
 				
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SNode ...                                             */
@@ -130,11 +154,22 @@
 ;*    j2s-js ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SFun tildec dollarc mode evalp conf)
-   (with-access::J2SFun this (params body)
-      (cons* this (format "function ~a" (or (j2sfun-id this) ""))
-	 (append
-	    (j2s-js* this "(" ")" "," params tildec dollarc mode evalp conf)
-	    (j2s-js body tildec dollarc mode evalp conf)))))
+   (with-access::J2SFun this (params body idthis vararg)
+      (let ((ellipsis (if (eq? vararg 'rest) "... " "")))
+	 (if (eq? idthis '%)
+	     ;; an arrow function
+	     (cons* this "("
+		(append
+		   (j2s-js-ellipsis this "(" ") => " "," ellipsis
+		      params tildec dollarc mode evalp conf)
+		   (j2s-js body tildec dollarc mode evalp conf)
+		   '(")")))
+	     ;; a regular function
+	     (cons* this (format "function ~a" (or (j2sfun-id this) ""))
+		(append
+		   (j2s-js-ellipsis this "(" ")" "," ellipsis
+		      params tildec dollarc mode evalp conf)
+		   (j2s-js body tildec dollarc mode evalp conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SObjInit ...                                          */

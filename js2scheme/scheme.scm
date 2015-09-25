@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Sep 24 17:23:45 2015 (serrano)                */
+;*    Last change :  Fri Sep 25 11:12:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -394,12 +394,12 @@
 				  (mmap-substring m
 				     (fixnum->elong start)
 				     (+elong 1 (fixnum->elong end)))))))))))))
-  
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
-   (with-access::J2SDeclFun this (loc id name val global)
+   (with-access::J2SDeclFun this (loc id name  global val)
       (with-access::J2SFun val (params mode vararg body)
 	 (let* ((scmid (j2s-name name id))
 		(fastid (j2s-fast-id id))
@@ -1970,8 +1970,10 @@
    (define (read-only-function ref::J2SRef)
       (with-access::J2SRef ref (decl)
 	 (cond
-	    ((isa? decl J2SDeclCnstFun)
-	     decl)
+	    ((isa? decl J2SDeclFun)
+	     (with-access::J2SDeclFun decl (writable)
+		(unless writable
+		   decl)))
 	    ((isa? decl J2SLetOpt)
 	     (with-access::J2SLetOpt decl (usage id)
 		(unless (memq 'assig usage) decl))))))
@@ -2070,9 +2072,9 @@
 
    (define (call-known-function fun::J2SDecl args)
       (cond
-	 ((isa? fun J2SDeclCnstFun)
-	  (with-access::J2SDeclCnstFun fun (id fun)
-	     (call-fun-function fun (j2s-fast-id id) args)))
+	 ((isa? fun J2SDeclFun)
+	  (with-access::J2SDeclFun fun (id val)
+	     (call-fun-function val (j2s-fast-id id) args)))
 	 ((isa? fun J2SLetOpt)
 	  (with-access::J2SLetOpt fun (id val)
 	     (call-fun-function val (j2s-fast-id id) args)))

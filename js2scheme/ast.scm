@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Sep 22 10:54:17 2015 (serrano)                */
+;*    Last change :  Fri Sep 25 11:00:45 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -204,10 +204,8 @@
 	   (wide-class J2SLetOpt::J2SLet
 	      (val::J2SExpr read-only))
 	   
-	   (class J2SDeclFun::J2SDeclInit)
-	   
-	   (class J2SDeclCnstFun::J2SDecl
-	      (fun::J2SFun read-only (info '("notraverse"))))
+	   (class J2SDeclFun::J2SDeclInit
+	      (expression::bool (default #f)))
 	   
 	   (class J2SDeclSvc::J2SDeclFun)
 	   
@@ -360,7 +358,9 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sfun-expression? this::J2SFun)
    (with-access::J2SFun this (decl)
-      (isa? decl J2SDeclCnstFun)))
+      (when (isa? decl J2SDeclFun)
+	 (with-access::J2SDeclFun decl (expression)
+	    expression))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *ast-decl-key* ...                                               */

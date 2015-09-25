@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Aug 22 09:03:30 2015 (serrano)                */
+;*    Last change :  Fri Sep 25 10:06:36 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -155,7 +155,7 @@
 	    (("--js-es6" (help "Enable all EcmaScript 6 support"))
 	     (j2s-compile-options-set!
 		(append '(es6-let: #t es6-const: #t es6-arrow-function: #t
-			  es6-default-value: #t)
+			  es6-default-value: #t es6-rest-argument: #t)
 		   (j2s-compile-options))))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
 	     (j2s-compile-options-set!

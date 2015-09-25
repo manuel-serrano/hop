@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Aug 28 14:48:58 2015 (serrano)                */
+;*    Last change :  Fri Sep 25 10:06:03 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -301,10 +301,11 @@
 	     (nodejs-compiler-options-add! :return-as-exit #t)) 
 	    (("--no-js-return-as-exit" (help "Do not consider toplevel returns as exits"))
 	     (nodejs-compiler-options-add! :return-as-exit #f))
-	    (("--js-es6" (help "Enable all EcmaScript 6 support"))
+	    (("--js-es6" (help "Enable all EcmaScript 6 supports"))
 	     (for-each (lambda (ext)
 			  (nodejs-compiler-options-add! ext #t))
-		'(es6-let: es6-const: es6-arrow-function: es6-default-value:)))
+		'(es6-let: es6-const: es6-arrow-function: es6-default-value:
+		  es6-rest-argument:)))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
 	     (nodejs-compiler-options-add! (string->keyword opt)
 		(cond

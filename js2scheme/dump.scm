@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Aug 22 07:08:32 2015 (serrano)                */
+;*    Last change :  Fri Sep 25 11:09:20 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -353,21 +353,22 @@
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (id val key)
-      `(,@(call-next-method) ,(j2s->list val))))
+   (with-access::J2SDeclInit this (val ronly writable)
+      `(,@(call-next-method) :ronly ,ronly :writable ,writable
+	  ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLetInit ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLetInit)
-   (with-access::J2SLetInit this (id val key)
+   (with-access::J2SLetInit this (val)
       `(,@(call-next-method) ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLetOpt ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLetOpt)
-   (with-access::J2SLetOpt this (id val key)
+   (with-access::J2SLetOpt this (val)
       `(,@(call-next-method) ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/
