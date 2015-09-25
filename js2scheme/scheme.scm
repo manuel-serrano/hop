@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Sep 23 16:43:49 2015 (serrano)                */
+;*    Last change :  Thu Sep 24 17:23:45 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1024,8 +1024,8 @@
 		      (map! (lambda (a) (js-obj->jsobject a %this)) params)
 		      ,(case vararg
 			  ((arguments)
-			   `(let ((arguments (js-strict-arguments %this params))
-				  (fun ,imp))
+			   `(let* ((arguments (js-strict-arguments %this params))
+				   (fun ,imp))
 			       (js-apply-service% fun this params
 				  ,(length args))))
 			  ((rest)

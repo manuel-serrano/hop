@@ -23,9 +23,9 @@ The arguments are as follows:
    
 When a language is specified and when this language is not `hopscript`,
 all the syntactic extensions of Hop.js are disabled (`service`, HTML syntax,
-`\${`, and `~{` mark). Requiring a module specifying the `javascript` language
-is then useful to require a module that uses the extra HopScript keywords
-as normal identifiers.
+`${<span>$</span>}{`, and `${<span>~</span>}{` mark). Requiring a module
+specifying the `javascript` language is then useful to require a module
+that uses the extra HopScript keywords as normal identifiers.
 
 Modules are loaded differently depending on their source file suffix.
 

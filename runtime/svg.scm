@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Fri Jul 31 08:32:17 2015 (serrano)                */
+;*    Last change :  Thu Sep 24 16:59:30 2015 (serrano)                */
 ;*    Copyright   :  2007-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -108,14 +108,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    Standards SVG elements                                           */
 ;*---------------------------------------------------------------------*/
-(define-tag <SVG> ((id #unspecified string)
-		   (xmlns "http://www.w3.org/2000/svg" string)
+(define-tag <SVG> ((id #unspecified)
+		   (xmlns "http://www.w3.org/2000/svg")
 		   (attributes)
 		   body)
    (instantiate::xml-element
       (tag 'svg)
-      (id (xml-make-id id 'svg))
-      (attributes `(:xmlns ,xmlns ,@attributes))
+      (id (xml-make-id (xml-primitive-value id) 'svg))
+      (attributes `(:xmlns ,(xml-primitive-value xmlns)
+		      ,@(map xml-primitive-value attributes)))
       (body body)))
 
 ;; misc

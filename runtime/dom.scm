@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Thu Aug 27 07:20:22 2015 (serrano)                */
+;*    Last change :  Thu Sep 24 17:20:48 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -620,7 +620,7 @@
 	  (append-map loop obj))
 	 ((isa? obj xml-markup)
 	  (with-access::xml-markup obj (body)
-	     (let ((c (dom-get-attribute obj "data-hss-tag")))
+	     (let ((c (xml-primitive-value (dom-get-attribute obj "data-hss-tag"))))
 		(if (and (string? c) (string=? c name))
 		    (cons obj (loop body))
 		    (loop body)))))
@@ -634,19 +634,26 @@
 
    (define (string-in? c name)
       (or (string=? c name)
-	  (and (>fx (string-length c) (string-length name))
-	       (or (and (string-prefix? name c)
-			(char=? (string-ref c (string-length name)) #\space))
-		   (and (string-contains c name)
-			(pregexp-match (string-append "\\b" name "\\b") c))))))
+	  (let ((cl (string-length c))
+		(nl  (string-length name)))
+	     (and (>fx cl nl)
+		  (or (and (string-prefix? name c)
+			   (memq (string-ref c nl)
+			      '(#\space #\newline #\tab)))
+		      (and (string-suffix? name c)
+			   (memq (string-ref c (-fx (-fx cl nl) 1))
+			      '(#\space #\newline #\tab)))
+		      (and (string-contains c name)
+			   (pregexp-match
+			      (string-append "[ \t\n]" name "[ \t\n]") c)))))))
    
    (let loop ((obj obj))
       (cond
 	 ((pair? obj)
 	  (append-map loop obj))
 	 ((isa? obj xml-markup)
-	  (with-access::xml-markup obj (body)
-	     (let ((c (dom-get-attribute obj "class")))
+	  (with-access::xml-markup obj (body tag)
+	     (let ((c (xml-primitive-value (dom-get-attribute obj "class"))))
 		(if (and (string? c) (string-in? c name))
 		    (cons obj (loop body))
 		    (loop body)))))

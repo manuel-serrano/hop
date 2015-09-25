@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Sep  9 11:15:07 2015 (serrano)                */
+#*    Last change :  Thu Sep 24 17:30:46 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -49,6 +49,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
+  xml-ignore.json
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
   hss.html config.html user.html 01-html.html markdown.html
@@ -61,7 +62,8 @@ WIDGET_TARGETS=widget.html tree.html spage.html
 DEV_TARGETS=dev.html 00-command.html 10-edit.html
 
 ALL_TARGETS=index.html download.html nodejs.html \
-  $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
+  $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
+  idx.html
 
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
@@ -79,7 +81,7 @@ VPATH=api lang dev widget \
 #*---------------------------------------------------------------------*/
 .PHONY: build clean install uninstall
 
-build: $(ALL_TARGETS)
+build: $(ALL_TARGETS) 
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -88,6 +90,7 @@ clean:
 	$(RM) $(API_TARGETS) $(LANG_TARGETS) $(WIDGET_TARGETS)
 	$(RM) license.html index.html nodejs.html download.html dev.html
 	$(RM) 00-command.html 10-edit.html
+	$(RM) idx.json idx.html
 
 devclean: clean
 
@@ -141,6 +144,22 @@ uninstall:
 index.html: _index.md doc.js xml.js
 	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js $< > $@ \
+          || ($(RM) $@; exit 1)
+
+#*---------------------------------------------------------------------*/
+#*    idx.json ...                                                     */
+#*---------------------------------------------------------------------*/
+idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
+	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+          $(BUILDDIR)/doc/doc.js mkidx . $^ > $@ \
+          || ($(RM) $@; exit 1)
+
+#*---------------------------------------------------------------------*/
+#*    apiindex.html ...                                                */
+#*---------------------------------------------------------------------*/
+idx.html: idx.json
+	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+          $(BUILDDIR)/doc/doc.js cmpidx $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/

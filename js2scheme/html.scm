@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Sat Sep 12 08:15:27 2015 (serrano)                */
+;*    Last change :  Thu Sep 24 16:37:05 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -23,19 +23,31 @@
 	   __js2scheme_dump
 	   __js2scheme_utils)
    
-   (export (html-parser ::input-port ::pair-nil ::pair)))
+   (export (html-parser ::input-port ::pair-nil #!optional tag)))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-parser ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (html-parser port conf::pair-nil tag)
-   (let ((str (symbol->string! (token-value tag))))
-      (rgc-buffer-unget-char port (char->integer #\space))
-      (rgc-buffer-insert-substring! port str 0 (string-length str)))
-   (read/rp xml-grammar port list *html-special-elements* #f
-      (lambda (x) x)
-      (hop-locale)
-      conf))
+(define (html-parser port conf::pair-nil #!optional tag)
+   (if tag
+      (let ((str (symbol->string! (token-value tag))))
+	 (rgc-buffer-unget-char port (char->integer #\space))
+	 (rgc-buffer-insert-substring! port str 0 (string-length str))
+	 (read/rp xml-grammar port list *html-special-elements* #f
+	    (lambda (x) x)
+	    (hop-locale)
+	    conf))
+      (let loop ()
+	 (let ((v (read/rp xml-grammar port list *html-special-elements* #f
+		     (lambda (x) x)
+		     (hop-locale)
+		     conf)))
+	    (cond
+	       ((isa? v J2SString)
+		(with-access::J2SString v (val)
+		   (if (string-skip val " \n\t") v (loop))))
+	       (else
+		v))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    special-tags ...                                                 */
@@ -93,46 +105,44 @@
    (let* ((sp (input-port-position iport))
 	  (g (regular-grammar ()
 		((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
-		 (let ((s (the-substring 1 (-fx (the-length) 1))))
-		    (cons (string-append "\"" (string-for-read s) "\"")
-			  (ignore))))
+		 (let ((s (instantiate::J2SString
+			     (escape '(escape))
+			     (val (the-substring 1 (-fx (the-length) 1)))
+			     (loc (the-coord (the-port) (+fx (the-length) 1))))))
+		    (cons s (ignore))))
 		((: "\'" (* (or (out #a000 #\\ #\') (: #\\ all))) "\'")
-		 (let ((s (the-substring 1 (-fx (the-length) 1))))
-		    (cons (string-append "\'" (string-for-read s) "\'")
-			  (ignore))))
+		 (let ((s (instantiate::J2SString
+			     (escape '(escape))
+			     (val (string-for-read
+				     (the-substring 1 (-fx (the-length) 1))))
+			     (loc (the-coord (the-port) (+fx (the-length) 1))))))
+		    (cons s (ignore))))
 		((: "//" (* all))
 		 (ignore))
 		((: "/*" (* (or (out #\*) (: #\* (out "/")))) "*/")
 		 (ignore))
-		((+ (out "<"))
-		 (let ((s (the-string)))
-		    (cons s (ignore))))
-		(#\<
-		 (let ((s (the-string)))
+		((or (+ (out "<")) #\<)
+		 (let ((s (instantiate::J2SString
+			     (escape '(escape))
+			     (val (the-string))
+			     (loc (the-coord (the-port) (the-length))))))
 		    (cons s (ignore))))
 		((uncase "</script>")
 		 '())  
 		(else
 		 (let ((char (the-failure)))
 		    (raise
-		     (instantiate::&io-parse-error
-			(proc "xml-parser")
-			(msg (if (eof-object? char)
-				 "Premature end of file"
-				 "Unclosed list"))
-			(obj (if (eof-object? char)
-				 char
-				 (string-append "{" (string char) "}")))
-			(fname (input-port-name iport))
-			(location (input-port-position iport)))))))))
-      (let ((exp (read/rp g iport)))
-	 (cond
-	    ((null? exp)
-	     '())
-	    ((null? (cdr exp))
-	     exp)
-	    (else
-	     (list (apply string-append exp)))))))
+		       (instantiate::&io-parse-error
+			  (proc "xml-parser")
+			  (msg (if (eof-object? char)
+				   "Premature end of file"
+				   "Unclosed list"))
+			  (obj (if (eof-object? char)
+				   char
+				   (string-append "{" (string char) "}")))
+			  (fname (input-port-name iport))
+			  (location (input-port-position iport)))))))))
+      (read/rp g iport)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-parser ...                                                   */
@@ -179,7 +189,7 @@
 	  (escape '(escape))
 	  (val (the-string))
 	  (loc (the-coord (the-port) (+fx (the-length) 1)))))
-      ((+ (or (out "<$~") (: (in "$~") (out "{"))))
+      ((+ (or (out "<$~") (: (in "$~") (out "<{"))))
        (instantiate::J2SString
 	  (escape '(escape))
 	  (val (decoder (the-string)))
@@ -205,9 +215,12 @@
 		  (* (out ">]"))
 		  (? (: "[" (* (out "]")) "]"))
 		  (* (out ">"))) ">")
-       (cons 'declaration (the-string)))
+       (tprint "ignore [" (the-string) "]")
+       (ignore))
+;*        (cons 'declaration (the-string)))                            */
       ("<![CDATA["
-       (cons 'cdata (read/rp cdata-grammar (the-port) decoder)))
+       (cons 'cdata (read/rp cdata-grammar (the-port) decoder))
+       (ignore))
       ((: "<?xml " (* (out "?>")) "?>")
        (let ((s (the-substring 6 (the-length))))
 	  (string-set! s (-fx (string-length s) 2) #\space)
@@ -220,7 +233,8 @@
 		      ((eq? obj '>)
 		       (cons 'xml-decl attr))))))))
       ((: "<?" (* (out ">")) ">")
-       (cons 'instruction (the-string)))
+       (cons 'instruction (the-string))
+       (ignore))
       ((: "<" id ">")
        (let* ((t (the-substring 1 (-fx (the-length) 1)))
 	      (ts (string->symbol t))

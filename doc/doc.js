@@ -3,13 +3,16 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Wed Sep 16 12:07:24 2015 (serrano)                */
+/*    Last change :  Fri Sep 25 09:24:53 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
 /*=====================================================================*/
 "use hopscript";
 
+/*---------------------------------------------------------------------*/
+/*    module imports                                                   */
+/*---------------------------------------------------------------------*/
 const hop = require( "hop" );
 const path = require( "path" );
 const fs = require( "fs" );
@@ -18,6 +21,9 @@ const fontifier = require( hop.fontifier );
 const doc = require( "hopdoc" );
 const docxml = require( "./xml.js" );
 
+/*---------------------------------------------------------------------*/
+/*    global parameters                                                */
+/*---------------------------------------------------------------------*/
 const ROOT = path.dirname( module.filename );
 
 const css = [ P( "hss/doc.hss" ),
@@ -198,7 +204,7 @@ function compileSection( page ) {
      </body>
    </html>;
 
-   console.log( hop.XMLCompile( document ) );
+   console.log( hop.xmlCompile( document ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -244,7 +250,7 @@ function compileChapter( json ) {
      </body>
    </html>;
 
-   console.log( hop.XMLCompile( document ) );
+   console.log( hop.xmlCompile( document ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -270,13 +276,82 @@ function compileIndex( content ) {
      </body>
    </html>;
 
-   console.log( hop.XMLCompile( document ) );
+   console.log( hop.xmlCompile( document ) );
+}
+
+/*---------------------------------------------------------------------*/
+/*    bind dummy xml construct                                         */
+/*---------------------------------------------------------------------*/
+(function( tags ) {
+   function ignore( attr, _ ) { return undefined; };
+
+   tags.forEach( function( tag ) { this[ tag ] = ignore } );
+})( require( "./xml-ignore.json" ) );
+
+/*---------------------------------------------------------------------*/
+/*    mkIdx ...                                                        */
+/*---------------------------------------------------------------------*/
+function mkIdx( base, files ) {
+   var table = [];
+
+   for( i = 0; i < files.length; i++ ) {
+      var file = files[ i ];
+      var xml = require( "./" + file );
+      var chapter = path.basename( file, ".html" ).replace( /^[0-9]+-/, "" );
+
+      var idx = doc.index( { XML: xml } ).map( function( e ) {
+	 e.chapter = chapter;
+	 e.url = file + "#" + e.id;
+	 return e;
+      } );
+
+      table = table.concat( idx );
+   }
+   
+   console.log(
+      JSON.stringify(
+	 table.sort( function( l, r ) {
+	    return l.key.localeCompare( r.key ); } ) ) );
+}
+
+/*---------------------------------------------------------------------*/
+/*    compileIdx ...                                                   */
+/*---------------------------------------------------------------------*/
+function compileIdx( json ) {
+   var idx = require( json );
+   var chapter = { title: "Index", key: "index" };
+
+   var document = <html>
+     <head css=${[ fontifier.css, markdown.css, css ]}
+	   title=${chapter.title}
+           jscript=${jscript}
+           rts=${false}/>
+
+     <body data-spy="scroll" data-target="#navbar">
+       <docxml.navbar title=${chapter.title}
+                      key=${chapter.key}>
+         ${chapters}
+       </docxml.navbar>
+       <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
+
+       <div class="container">
+	 <docxml.idx>${idx}</docxml.idx>
+	 <docxml.footer root=${ROOT}/>
+       </div>
+     </body>
+   </html>;
+
+   console.log( hop.xmlCompile( document ) );
 }
 
 /*---------------------------------------------------------------------*/
 /*    top level forms                                                  */
 /*---------------------------------------------------------------------*/
-if( process.argv[ 2 ].match( /[.]md$/ ) ) {
+if( process.argv[ 2 ] == "mkidx" ) {
+   mkIdx( process.argv[ 3 ], process.argv.slice( 4 ) );
+} else if( process.argv[ 2 ] == "cmpidx" ) {
+   compileIdx( "./" + process.argv[ 3 ] );
+} else if( process.argv[ 2 ].match( /[.]md$/ ) ) {
    if( process.argv[ 2 ] === "_index.md" ) {
       compileIndex( "./" + process.argv[ 2 ] );
    } else {
