@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sat Sep 26 08:15:06 2015 (serrano)                */
+/*    Last change :  Sat Sep 26 17:24:46 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -26,9 +26,15 @@ const docxml = require( "./xml.js" );
 /*---------------------------------------------------------------------*/
 const ROOT = path.dirname( module.filename );
 
+function P( file ) {
+   return path.normalize( "./" + file );
+}
+   
 const css = [ P( "hss/doc.hss" ),
+	      P( "hss/markdown.hss" ),
+	      P( "hss/fontifier.hss" ),
 	      P( "lib/bootstrap/css/bootstrap.min.css" ) ];
-const jscript = [ P( "lib//jquery/js/jquery.min.js" ),
+const jscript = [ P( "lib/jquery/js/jquery.min.js" ),
 		  P( "lib/bootstrap/js/bootstrap.min.js" ) ];
 
 const alias = {
@@ -40,13 +46,6 @@ const alias = {
    "spage": "widget"
 }
 
-/*---------------------------------------------------------------------*/
-/*    P ...                                                            */
-/*---------------------------------------------------------------------*/
-function P( file ) {
-   return path.normalize( "./" + file );
-}
-   
 /*---------------------------------------------------------------------*/
 /*    chapters ...                                                     */
 /*---------------------------------------------------------------------*/
@@ -62,7 +61,7 @@ const chapters = require( "./doc.json" )
 /*---------------------------------------------------------------------*/
 function chapterEntries( chapter ) {
    
-   function chapterFile( file ) {
+   function chapterFile( file, i = false, arr = false ) {
       var base = path.basename( file );
       return {
 	 path: file.replace( /[.]md$/, ".html" ),
@@ -71,7 +70,7 @@ function chapterEntries( chapter ) {
       };
    }
    
-   function chapterEntry( file ) {
+   function chapterEntry( file, i = false, arr = false ) {
       var fp = path.join( ROOT, file );
       if( fs.lstatSync( fp ).isDirectory() ) {
 	 return fs.readdirSync( fp )
@@ -163,9 +162,9 @@ function compileSection( page ) {
    } else if( key == "." ) {
       key = title;
    }
-   
+
    var document = <html>
-     <head css=${[ fontifier.css, markdown.css, css ]}
+     <head css=${css}
 	   title=${title}
            jscript=${jscript}
            rts=${false}/>
@@ -216,7 +215,7 @@ function compileChapter( json ) {
    var toc = chapterEntries( chapter );
 
    var document = <html>
-     <head css=${[ fontifier.css, markdown.css, css ]}
+     <head css=${css}
 	   title=${chapter.title}
            jscript=${jscript}
            rts=${false}/>
@@ -259,7 +258,7 @@ function compileChapter( json ) {
 /*---------------------------------------------------------------------*/
 function compileIndex( content ) {
    var document = <html>
-     <head css=${[ fontifier.css, markdown.css, css ]}
+     <head css=${css}
 	   title="Hop.js"
            jscript=${jscript}
            rts=${false}/>
@@ -323,7 +322,7 @@ function compileIdx( json ) {
    var chapter = { title: "Index", key: "index" };
 
    var document = <html>
-     <head css=${[ fontifier.css, markdown.css, css ]}
+     <head css=${css}
 	   title=${chapter.title}
            jscript=${jscript}
            rts=${false}/>

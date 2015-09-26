@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Sep 15 07:52:41 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 12:26:44 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -375,7 +375,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	      (mode #f)
 	      (rts #t)
 	      (dir #f)
-	      (path (list (pwd)))
+	      (path '())
 	      (base #f)
 	      (inl #f)
 	      (packed #t)
