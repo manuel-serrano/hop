@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Sep 25 11:00:45 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 10:35:15 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -207,6 +207,9 @@
 	   (class J2SDeclFun::J2SDeclInit
 	      (expression::bool (default #f)))
 	   
+	   (class J2SDeclFunCnst::J2SDecl
+	      (val::J2SExpr read-only (info '("notraverse"))))
+	   
 	   (class J2SDeclSvc::J2SDeclFun)
 	   
 	   (class J2SDeclTag::J2SDeclFun)
@@ -358,9 +361,10 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sfun-expression? this::J2SFun)
    (with-access::J2SFun this (decl)
-      (when (isa? decl J2SDeclFun)
-	 (with-access::J2SDeclFun decl (expression)
-	    expression))))
+      (if (isa? decl J2SDeclFun)
+	  (with-access::J2SDeclFun decl (expression)
+	     expression)
+	  (isa? decl J2SDeclFunCnst))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *ast-decl-key* ...                                               */
@@ -559,9 +563,9 @@
        ,@(map (lambda (nb) (gen-method! nb)) (iota 5))))
 
 ;*---------------------------------------------------------------------*/
-;*    gen-traverals ...                                                */
+;*    gen-traversals ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-macro (gen-traverals class)
+(define-macro (gen-traversals class)
 
    (define (gen-method nb-args)
       (let ((args (map (lambda (i)
@@ -682,6 +686,7 @@
 (gen-walks J2SAccessorPropertyInit name get set)
 (gen-walks J2SArray (exprs))
 (gen-walks J2SDeclInit val)
+(gen-walks J2SDeclFunCnst)
 (gen-walks J2SLetInit val)
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
@@ -689,7 +694,7 @@
 (gen-walks J2SDollar node)
 (gen-walks J2SComprehension (iterables) test expr)
 
-(gen-traverals J2STilde)
+(gen-traversals J2STilde)
 
 ;*---------------------------------------------------------------------*/
 ;*    walk.sch at runtime ...                                          */

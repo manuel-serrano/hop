@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Sep 25 11:12:43 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 10:33:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -396,6 +396,21 @@
 				     (+elong 1 (fixnum->elong end)))))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-minlen ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-minlen val)
+   (with-access::J2SFun val (params vararg)
+      (let ((len 0))
+	 (for-each (lambda (p)
+		      (with-access::J2SParam p (defval)
+			 (when (isa? defval J2SUndefined)
+			    (set! len (+fx len 1)))))
+	    params)
+	 (if (eq? vararg 'rest)
+	     (-fx len 1)
+	     len))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
@@ -405,6 +420,7 @@
 		(fastid (j2s-fast-id id))
 		(lparams (length params))
 		(arity (if vararg -1 (+fx 1 lparams)))
+		(minlen (if (eq? mode 'hopscript) (j2s-minlen val) -1))
 		(len (if (eq? vararg 'rest) (-fx lparams 1) lparams)))
 	    (epairify-deep loc
 	       (if global 
@@ -419,7 +435,8 @@
 				       :src ,(j2s-function-src loc val conf)
 				       :rest ,(eq? vararg 'rest)
 				       :arity ,arity
-				       :strict ,(eq? mode 'strict)
+				       :minlen ,minlen
+				       :strict ',mode
 				       :alloc (lambda (o)
 						 (js-object-alloc o %this))
 				       :construct ,fastid))))
@@ -432,7 +449,8 @@
 			     :src ,(j2s-function-src loc val conf)
 			     :rest ,(eq? vararg 'rest)
 			     :arity ,arity
-			     :strict ,(eq? mode 'strict)
+			     :minlen ,minlen
+			     :strict ',mode
 			     :alloc (lambda (o) (js-object-alloc o %this))
 			     :construct ,fastid)))))))))
 
@@ -954,7 +972,7 @@
 		:src ,(j2s-function-src loc this conf)
 		:rest ,(eq? vararg 'rest)
 		:arity ,arity
-		:strict ,(eq? mode 'strict)
+		:strict ',mode
 		:alloc (lambda (o) (js-object-alloc o %this))
 		:construct ,tmp)))))
 
@@ -1127,7 +1145,7 @@
 ;*    j2s-scheme ::J2SParam ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SParam mode return conf)
-   (with-access::J2SParam this (id name defval)
+   (with-access::J2SParam this (id name)
       (j2s-name name id)))
 
 ;*---------------------------------------------------------------------*/
@@ -1971,7 +1989,7 @@
       (with-access::J2SRef ref (decl)
 	 (cond
 	    ((isa? decl J2SDeclFun)
-	     (with-access::J2SDeclFun decl (writable)
+	     (with-access::J2SDecl decl (writable)
 		(unless writable
 		   decl)))
 	    ((isa? decl J2SLetOpt)
@@ -2045,7 +2063,26 @@
 		    (js-undefined)
 		    ,@(j2s-scheme args mode return conf)
 		    ,@(make-list (-fx lenf lena) '(js-undefined))))))))
-   
+
+   (define (check-hopscript-fun-arity decl::J2SDeclFun args)
+      (with-access::J2SDeclFun decl (val id)
+	 (with-access::J2SFun val (params vararg loc name mode)
+	    (when (eq? mode 'hopscript)
+	       (let ((lp (length params))
+		     (la (length args)))
+		  (unless (=fx lp la)
+		     (case vararg
+			((rest)
+			 (unless (>=fx la (-fx (j2s-minlen val)  1))
+			    (j2s-error id "wrong number of arguments"
+			       this name)))
+			((arguments)
+			 #t)
+			(else
+			 (unless (and (>=fx la (j2s-minlen val)) (<=fx la lp))
+			    (j2s-error id "wrong number of arguments"
+			       this name))))))))))
+	    
    (define (call-fun-function fun::J2SFun f args)
       (with-access::J2SFun fun (params vararg)
 	 (case vararg
@@ -2074,6 +2111,7 @@
       (cond
 	 ((isa? fun J2SDeclFun)
 	  (with-access::J2SDeclFun fun (id val)
+	     (check-hopscript-fun-arity fun args)
 	     (call-fun-function val (j2s-fast-id id) args)))
 	 ((isa? fun J2SLetOpt)
 	  (with-access::J2SLetOpt fun (id val)
@@ -2457,11 +2495,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-error ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-error proc msg obj)
+(define (j2s-error proc msg obj #!optional str)
    (with-access::J2SNode obj (loc)
       (match-case loc
 	 ((at ?fname ?loc)
-	  (error/location proc msg (j2s->list obj) fname loc))
+	  (error/location proc msg (or str (j2s->list obj)) fname loc))
 	 (else
 	  (error proc msg obj)))))
 

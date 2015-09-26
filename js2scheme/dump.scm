@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Sep 25 11:09:20 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 09:24:59 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -152,7 +152,7 @@
    (with-access::J2SFun this (params body decl)
       (if (isa? decl J2SDecl)
 	  (with-access::J2SDecl decl (key id)
-	     `(,@(call-next-method) :id ,id :key ,key
+	     `(,@(call-next-method) :id ,id :key ,key :decl ,(typeof decl)
 		 ,(map j2s->list params) ,(j2s->list body)))
 	  `(,@(call-next-method) ,(map j2s->list params) ,(j2s->list body)))))
 

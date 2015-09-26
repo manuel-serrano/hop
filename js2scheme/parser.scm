@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Sep 25 11:14:22 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 10:34:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -809,11 +809,10 @@
 				      (name (cdr id))
 				      (mode mode)
 				      (body body)))
-			      (decl (instantiate::J2SDeclFun
+			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
 				       (id (cdr id))
 				       (name (cdr id))
-				       (expression #t)
 				       (writable #f)
 				       (ronly #t)
 				       (global #t)
@@ -885,11 +884,10 @@
 				      (init init)
 				      (mode 'strict)
 				      (body body)))
-			      (decl (instantiate::J2SDeclFun
+			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
 				       (id (cdr id))
 				       (name (cdr id))
-				       (expression #t)
 				       (writable #f)
 				       (ronly #t)
 				       (global #t)
@@ -2157,8 +2155,9 @@
       (with-access::J2SFun val (mode)
 	 (when (eq? mode 'normal)
 	    (set! writable #f)
-	    (set! ronly #t))))
-   this)
+	    (set! ronly #t))
+	 (set! mode 'hopscript)))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-let ...                                              */
@@ -2170,7 +2169,7 @@
 ;*    disable-es6-let ::J2SFun ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-es6-let this::J2SFun)
-   (with-access::J2SFun this (mode)
+   (with-access::J2SFun this (mode name)
       (unless (memq mode '(hopscript ecmascript6))
 	 (call-default-walker))))
 
@@ -2253,11 +2252,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-es6-rest-argument this::J2SFun)
    (with-access::J2SFun this (vararg loc)
-      (when (eq? vararg 'rest)
-	 (raise
-	    (instantiate::&io-parse-error
-	       (proc "js-parser")
-	       (msg "rest arguments values disabled")
-	       (obj 'id)
-	       (fname (cadr loc))
-	       (location (caddr loc)))))))
+      (if (eq? vararg 'rest)
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "js-parser")
+		(msg "rest arguments values disabled")
+		(obj 'id)
+		(fname (cadr loc))
+		(location (caddr loc))))
+	  (call-default-walker))))

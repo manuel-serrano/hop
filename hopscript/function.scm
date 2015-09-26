@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Sep 23 10:50:16 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 06:28:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -37,7 +37,8 @@
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
 	      #!key
-	      __proto__ prototype construct alloc strict arity src rest)))
+	      __proto__ prototype construct alloc
+	      (strict 'normal) arity (minlen -1) src rest)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -187,7 +188,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3.1     */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function %this procedure length name
-	   #!key __proto__ prototype alloc construct strict arity src rest)
+	   #!key __proto__ prototype alloc construct (strict 'normal)
+	   arity (minlen -1) src rest)
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -204,19 +206,20 @@
 	 (let* ((constr (or construct list))
 		(fname (if (symbol? name) (symbol->string! name) name))
 		(fun (instantiate::JsFunction
-		       (procedure procedure)
-		       (arity (or arity (procedure-arity procedure)))
-		       (rest rest)
-		       (len length)
-		       (__proto__ (or __proto__ js-function-prototype))
-		       (name fname)
-		       (src src)
-		       (alloc (cond
-				 (alloc alloc)
-				 (construct (lambda (_) #unspecified))
-				 (else js-not-a-constructor)))
-		       (construct constr)
-		       (constrmap (when construct (instantiate::JsConstructMap))))))
+			(procedure procedure)
+			(arity (or arity (procedure-arity procedure)))
+			(minlen minlen)
+			(rest rest)
+			(len length)
+			(__proto__ (or __proto__ js-function-prototype))
+			(name fname)
+			(src src)
+			(alloc (cond
+				  (alloc alloc)
+				  (construct (lambda (_) #unspecified))
+				  (else js-not-a-constructor)))
+			(construct constr)
+			(constrmap (when construct (instantiate::JsConstructMap))))))
 	    (cond
 	       (prototype
 		(when (isa? prototype JsObject)
@@ -239,7 +242,7 @@
 	    (js-bind! %this fun 'length
 	       :value length
 	       :enumerable #f :configurable #f :writable #f)
-	    (when strict
+	    (unless (eq? strict 'normal)
 	       (js-bind! %this fun 'arguments
 		  :get thrower-get :set thrower-set
 		  :enumerable #f :configurable #f)
@@ -374,7 +377,7 @@
 		   fun
 		   (maxfx 0 (-fx len (length args)))
 		   name
-		   :strict #t
+		   :strict 'strict
 		   :alloc alloc
 		   :construct fun)))))
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Thu Sep 24 16:59:30 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 08:03:44 2015 (serrano)                */
 ;*    Copyright   :  2007-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -217,37 +217,40 @@
       (if (string? s)
 	  (string-replace! s #\' #\")
 	  s))
-
+   
    (let loop ((a attr))
       (when (pair? a)
 	 (display " ")
-	 (display (keyword->string! (car a)))
-	 (display "='")
-	 (cond
-	    ((eq? (car a) :id)
-	     (display prefix)
-	     (display (xml-attribute-encode (kwote (cadr a)))))
-	    ((and (eq? (car a) :xlink:href)
-		  (string? (cadr a))
-		  (char=? (string-ref (cadr a) 0) #\#))
-	     (display "#")
-	     (display prefix)
-	     (display
-	      (kwote (substring (cadr a) 1 (string-length (cadr a))))))
-	    ((and (eq? (car a) :style) (string? (cadr a)))
-	     (display
-	      (kwote
-	       (pregexp-replace*
-		"url[(]#" (cadr a) (string-append "url(#" prefix)))))
-	    ((and (string? (cadr a)) (substring-at? (cadr a) "url(#" 0))
-	     (display "url(#")
-	     (display prefix)
-	     (display
-	      (kwote (substring (cadr a) 5 (string-length (cadr a))))))
-	    (else
-	     (display (kwote (xml-attribute-encode (cadr a))))))
-	 (display "'")
-	 (loop (cddr a)))))
+	 (if (and (eq? (car a) :%location) (pair? (cdr a)))
+	     (loop (cddr a))
+	     (begin
+		(display (keyword->string! (car a)))
+		(display "='")
+		(cond
+		   ((eq? (car a) :id)
+		    (display prefix)
+		    (display (xml-attribute-encode (kwote (cadr a)))))
+		   ((and (eq? (car a) :xlink:href)
+			 (string? (cadr a))
+			 (char=? (string-ref (cadr a) 0) #\#))
+		    (display "#")
+		    (display prefix)
+		    (display
+		       (kwote (substring (cadr a) 1 (string-length (cadr a))))))
+		   ((and (eq? (car a) :style) (string? (cadr a)))
+		    (display
+		       (kwote
+			  (pregexp-replace*
+			     "url[(]#" (cadr a) (string-append "url(#" prefix)))))
+		   ((and (string? (cadr a)) (substring-at? (cadr a) "url(#" 0))
+		    (display "url(#")
+		    (display prefix)
+		    (display
+		       (kwote (substring (cadr a) 5 (string-length (cadr a))))))
+		   (else
+		    (display (kwote (xml-attribute-encode (cadr a))))))
+		(display "'")
+		(loop (cddr a)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    show-svg-img-markup-open ...                                     */

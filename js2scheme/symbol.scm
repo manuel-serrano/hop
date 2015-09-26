@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Sep 25 10:55:17 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 10:27:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -417,8 +417,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDollar ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (resolve! this::J2SDollar env mode withs wenv)
-   this)
+;* (define-method (resolve! this::J2SDollar env mode withs wenv)       */
+;*    this)                                                            */
 
 ;*---------------------------------------------------------------------*/
 ;*    check-strict-mode-eval ...                                       */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Sep 25 09:24:53 2015 (serrano)                */
+/*    Last change :  Sat Sep 26 08:15:06 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -116,34 +116,35 @@ function childrenSize( children ) {
 /*---------------------------------------------------------------------*/
 /*    makeToc ...                                                      */
 /*---------------------------------------------------------------------*/
-function _makeToc( els, k, proc, indent ) {
-   if( els.length == k  ) {
-      return [];
-   } else {
-      var acc = [];
-      var tag = els[ k ].tagName;
+function makeToc( els, k, proc = false ) {
+   
+   function _makeToc( els, k, proc, indent ) {
+      if( els.length == k  ) {
+	 return [];
+      } else {
+	 var acc = [];
+	 var tag = els[ k ].tagName;
 
-      for( var i = k; i < els.length; ) {
-	 if( els[ i ].tagName == tag ) {
-	    var el = els[ i++ ];
-	    var n = proc ? proc( el ) : el.childNodes;
-	    acc.push( <li>
-	      <a href=${"#" + el.id} role="presentation">
+	 for( var i = k; i < els.length; ) {
+	    if( els[ i ].tagName == tag ) {
+	       var el = els[ i++ ];
+	       var n = proc ? proc( el ) : el.childNodes;
+	       acc.push( <li>
+		 <a href=${"#" + el.id} role="presentation">
 		${n}</a></li> );
-	 } else if( els[ i ].tagName > tag ) {
-	    var children = _makeToc( els, i, proc, indent + "  " );
-	    acc.push( <ul>${children}</ul> );
-	    i += childrenSize( children );
-	 } else {
-	    return acc;
+	    } else if( els[ i ].tagName > tag ) {
+	       var children = _makeToc( els, i, proc, indent + "  " );
+	       acc.push( <ul>${children}</ul> );
+	       i += childrenSize( children );
+	    } else {
+	       return acc;
+	    }
 	 }
+
+	 return acc;
       }
-
-      return acc;
    }
-}
-
-function makeToc( els, k, proc ) {
+   
    return _makeToc( els, k, proc, "" );
 }
 
@@ -269,7 +270,7 @@ function compileIndex( content ) {
        </docxml.navbar>
        <docxml.title root=${ROOT}/>
 
-       <div class="container">
+       <div class="container home-body">
          ${doc.load( path.join( path.dirname( module.filename ), "_index.md" ) ).XML}
 	 <docxml.footer root=${ROOT}/>
        </div>
@@ -283,7 +284,7 @@ function compileIndex( content ) {
 /*    bind dummy xml construct                                         */
 /*---------------------------------------------------------------------*/
 (function( tags ) {
-   function ignore( attr, _ ) { return undefined; };
+   function ignore( attr, ... _ ) { return undefined; };
 
    tags.forEach( function( tag ) { this[ tag ] = ignore } );
 })( require( "./xml-ignore.json" ) );

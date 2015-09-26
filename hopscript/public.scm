@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Sep 23 14:57:08 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 06:53:20 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -304,11 +304,27 @@
 	  (cons (js-undefined) (loop (-fx num 1))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-raise-arity-error ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-raise-arity-error %this fun n)
+   (with-access::JsFunction fun (name minlen arity rest len)
+      ;; (tprint "name=" name " minlen=" minlen " arity=" arity " len=" len " rest=" rest " n=" n)
+      (js-raise-type-error %this
+	 (format "~a: wrong number of arguments ~a provided, ~a expected"
+	    (if (string? name) name "")
+	    n
+	    (cond
+	       ((or (<fx minlen 0) (and (=fx minlen len) (not rest))) len)
+	       (rest (format ">= ~a" minlen))
+	       (else (format "[~a..~a]" minlen len))))
+	 fun)))
+
+;*---------------------------------------------------------------------*/
 ;*    gen-calln ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-macro (gen-calln . args)
    (let ((n (+fx 1 (length args))))
-      `(with-access::JsFunction fun (arity len rest)
+      `(with-access::JsFunction fun (arity len rest minlen src name)
 	  (case arity
 	     ((-1)
 	      (if (not rest)
@@ -318,40 +334,57 @@
 		      (proc this (js-vector->jsarray (vector ,@args) %this)))
 		     ,@(map (lambda (i)
 			       `((,i)
+				 ;;(tprint "name=" name " n=" ,n " i=" ,i " minlen=" minlen)
 				 ,(if (<=fx n i)
-				      `(proc this ,@args ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
-					  (js-vector->jsarray '#() %this))
+				      `(if (and (<=fx ,n minlen) (>=fx minlen 0))
+					   (js-raise-arity-error %this fun ,(-fx n 1))
+					   (proc this ,@args ,@(make-list (-fx (+fx i 1) n) '(js-undefined))
+					      (js-vector->jsarray '#() %this)))
 				      `(proc this ,@(take args i)
 					  (js-vector->jsarray (vector ,@(drop args i)) %this)))))
 			(iota 8 1))
 		     (else
-		      (if (<=fx ,n (+fx len 1))
+		      (cond
+			 ((and (<=fx ,n minlen) (>=fx minlen 0))
+			  (js-raise-arity-error %this fun ,(-fx n 1)))
+			 ((<=fx ,(-fx n 1) len)
 			  (apply proc this ,@args
-			     (js-rest-args %this (-fx (+fx len 1) ,n)))
+			     (js-rest-args %this (-fx (+fx len 1) ,n))))
+			 (else
 			  (let ((args (list ,@args)))
 			     (apply proc this
 				(append (take args len)
 				   (list
 				      (js-vector->jsarray
-					 (apply vector (drop args len)) %this))))))))))
+					 (apply vector (drop args len)) %this)))))))))))
 	     ,@(map (lambda (i)
 		       `((,i) 
 			 ,(cond
 			     ((=fx i n)
 			      `(proc this ,@args))
 			     ((<fx i n)
-			      `(proc this ,@(take args (-fx i 1))))
+			      `(if (>=fx minlen 0)
+				   (js-raise-arity-error %this fun ,(-fx n 1))
+				   (proc this ,@(take args (-fx i 1)))))
 			     (else
-			      `(proc this ,@args
-				  ,@(make-list (-fx i n) '(js-undefined)))))))
+			      `(if (or (>fx ,n minlen) (<fx minlen 0))
+				   (proc this ,@args
+				      ,@(make-list (-fx i n) '(js-undefined)))
+				   (js-raise-arity-error %this fun ,(-fx n 1)))))))
 		(iota 8 1))
 	     (else
-	      (if (<fx arity 0)
+	      (cond
+		 ((<fx arity 0)
 		  (let ((min (-fx (negfx arity) 1)))
 		     (apply proc this ,@args
-			(make-list (-fx min ,n) (js-undefined))))
+			(make-list (-fx min ,n) (js-undefined)))))
+		 ((=fx arity ,n)
+		  (apply proc this ,@args))
+		 ((>=fx minlen 0)
+		  (js-raise-arity-error %this fun ,(-fx n 1)))
+		 (else
 		  (apply proc this ,@args
-		     (make-list (-fx arity ,n) (js-undefined)))))))))
+		     (make-list (-fx arity ,n) (js-undefined))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-calln ...                                                     */
@@ -422,29 +455,40 @@
 	  (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7))))
 
 (define (js-calln% %this fun this args)
-   (with-access::JsFunction fun (procedure arity rest len)
+   (with-access::JsFunction fun (procedure arity minlen rest len)
       (let ((n (+fx 1 (length args))))
 	 (cond
 	    ((=fx arity n)
 	     (apply procedure this args))
 	    ((>fx arity n)
-	     (apply procedure this
-		(append args
-		   (make-list (-fx arity n)
-		      (js-undefined)))))
+	     (if (>fx minlen 0)
+		 (js-raise-type-error %this
+		    "wrong number of arguments" fun)
+		 (apply procedure this
+		    (append args
+		       (make-list (-fx arity n)
+			  (js-undefined))))))
 	    ((>=fx arity 0)
-	     (apply procedure this (take args (-fx arity 1))))
+	     (if (>fx minlen 0)
+		 (js-raise-type-error %this
+		    "wrong number of arguments" fun)
+		 (apply procedure this (take args (-fx arity 1)))))
 	    ((not rest)
 	     (apply procedure this args))
 	    (else
-	     (if (<=fx n (+fx len 1))
+	     (cond
+		((and (<=fx (-fx n 1) minlen) (>fx minlen 0))
+		 (js-raise-type-error %this
+		    "wrong number of arguments" fun))
+		((<=fx (-fx n 1) len)
 		 (apply procedure this
-		    (append args (js-rest-args %this (-fx (+fx len 1) n))))
+		    (append args (js-rest-args %this (-fx (+fx len 1) n)))))
+		(else
 		 (apply procedure this
 		    (append (take args len)
 		       (list
 			  (js-vector->jsarray
-			     (apply vector (drop args len)) %this))))))))))
+			     (apply vector (drop args len)) %this)))))))))))
 
 (define (js-calln %this fun this . args)
    (if (not (isa? fun JsFunction))
@@ -455,7 +499,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call0: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure arity)
+       (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
@@ -466,7 +510,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call1: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure (fname name) arity)
+       (with-access::JsFunction fun (procedure (fname name))
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
@@ -477,7 +521,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call2: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure arity)
+       (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
@@ -488,7 +532,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call3: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure arity)
+       (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
@@ -499,7 +543,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call4: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure arity)
+       (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
@@ -510,7 +554,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call5: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure arity)
+       (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
@@ -521,7 +565,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call6: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure arity)
+       (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
@@ -532,7 +576,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call7: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure arity)
+       (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
@@ -543,7 +587,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call8: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure arity)
+       (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)
@@ -554,7 +598,7 @@
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
 	  (format "call: not a function ~~s ~a" loc) fun)
-       (with-access::JsFunction fun (procedure arity)
+       (with-access::JsFunction fun (procedure)
 	  (let ((env (current-dynamic-env))
 		(name (js-function-debug-name fun)))
 	     ($env-push-trace env name loc)

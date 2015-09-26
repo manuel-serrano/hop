@@ -29,7 +29,7 @@ The `use hopscript` mode is an even stricter mode that `use strict` mode.
 Its caracteristics are:
 
   * Function declarations are immutables.
-  * Arity checks are enforced and type errors are raised on mistmatch (not implemented yet).
+  * Arity checks are enforced and errors are raised on mistmatch.
 
 [es5]: http://www.ecma-international.org/ecma-262/5.1
 [es6]: http://www.ecma-international.org/ecma-262/6.0

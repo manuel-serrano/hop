@@ -1,5 +1,4 @@
 ${ var doc = require( "hopdoc" ) }
-${ var fontifier = require( "fontifier" ) }
 
 HopScript Modules
 =================
