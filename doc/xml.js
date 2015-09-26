@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Fri Sep 25 09:24:00 2015 (serrano)                */
+/*    Last change :  Sat Sep 26 08:09:10 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -19,7 +19,7 @@ const path = require( "path" );
 /*---------------------------------------------------------------------*/
 /*    title ...                                                        */
 /*---------------------------------------------------------------------*/
-function title( attrs, subtitle ) {
+function title( attrs, subtitle = false, ... nodes ) {
    return <div class="jumbotron">
      <div class="container">
        <div class="row">
@@ -219,7 +219,7 @@ function idxLetters( es ) {
 /*---------------------------------------------------------------------*/
 /*    idxEntry ...                                                     */
 /*---------------------------------------------------------------------*/
-function idxEntry( e ) {
+function idxEntry( e, idx = false, arr = false ) {
    if( typeof( e ) === "string" ) {
       return <tr class="idx-letter"><td/><th>${e}</th></tr>;
    } else {

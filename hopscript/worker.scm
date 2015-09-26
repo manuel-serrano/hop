@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Sep 20 07:27:01 2015 (serrano)                */
+;*    Last change :  Fri Sep 25 13:36:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -49,6 +49,7 @@
 	   (generic js-worker-alive? ::object)
 	   
 	   (generic js-worker-terminate! ::object ::obj)
+	   (generic js-worker-self-terminate! ::JsWorker ::obj)
 	   (generic js-worker-post-slave-message ::JsWorker ::obj)
 	   (generic js-worker-post-master-message ::JsWorker ::obj)
 	   (generic js-worker-add-handler! ::object ::JsFunction)
@@ -146,7 +147,7 @@
       (js-bind! %this scope 'terminate
 	 :value (js-make-function %this
 		   (lambda (this)
-		      (js-worker-terminate! worker #f))
+		      (js-worker-self-terminate! worker #f))
 		   0 'terminate)
 	 :writable #f
 	 :configurable #f
@@ -170,21 +171,22 @@
 	    :writable #t
 	    :enumerable #t)
 	 
-	 ;; onexit
-	 (js-bind! %this %this 'onexit
-	    :get (js-make-function %this
-		    (lambda (this)
-		       (with-access::WorkerHopThread thread (onexit)
-			  onexit))
-		    0 'onexit)
-	    :set (js-make-function %this
-		    (lambda (this v)
-		       (with-access::WorkerHopThread thread (onexit)
-			  (set! onexit v)))
-		    1 'onexit)
-	    :writable #t
-	    :configurable #t
-	    :enumerable #t)))
+;* 	 ;; onexit                                                     */
+;* 	 (js-bind! %this %this 'onexit                                 */
+;* 	    :get (js-make-function %this                               */
+;* 		    (lambda (this)                                     */
+;* 		       (with-access::WorkerHopThread thread (onexit)   */
+;* 			  onexit))                                     */
+;* 		    0 'onexit)                                         */
+;* 	    :set (js-make-function %this                               */
+;* 		    (lambda (this v)                                   */
+;* 		       (with-access::WorkerHopThread thread (onexit)   */
+;* 			  (set! onexit v)))                            */
+;* 		    1 'onexit)                                         */
+;* 	    :writable #t                                               */
+;* 	    :configurable #t                                           */
+;* 	    :enumerable #t)                                            */
+	 ))
    
    (lambda (_ src)
       (with-access::JsGlobalObject %this (js-worker js-worker-prototype js-object)
@@ -224,8 +226,9 @@
 		     (lambda (%this this scope mod)
 			(bind-worker-methods! %this scope worker))))
 	       
-	       ;; master onmessage
-	       (let ((onmessage (js-undefined)))
+	       ;; master onmessage and onexit
+	       (let ((onmessage (js-undefined))
+		     (onexit (js-undefined)))
 		  (js-bind! %this worker 'onmessage
 		     :get (js-make-function %this
 			     (lambda (this) onmessage)
@@ -237,6 +240,19 @@
 				   (lambda (this e)
 				      (js-call1 %this v this e))))
 			     2 'onmessage)
+		     :configurable #t
+		     :enumerable #t)
+		  (js-bind! %this worker 'onexit
+		     :get (js-make-function %this
+			     (lambda (this) onexit)
+			     0 'onexit)
+		     :set (js-make-function %this
+			     (lambda (this v)
+				(set! onexit v)
+				(add-event-listener! this "exit"
+				   (lambda (this e)
+				      (js-call1 %this v this e))))
+			     2 'onexit)
 		     :configurable #t
 		     :enumerable #t))
 	       
@@ -281,6 +297,17 @@
       :configurable #f))
 
 ;*---------------------------------------------------------------------*/
+;*    js-worker-self-terminate ::WorkerHopThread ...                   */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-self-terminate! worker::JsWorker pred)
+   (with-access::JsWorker worker (thread)
+      (with-access::WorkerHopThread thread (subworkers)
+	 (for-each (lambda (w)
+		      (js-worker-terminate! w pred))
+	    subworkers))
+      (js-worker-terminate! thread pred)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-worker-post-slave-message ::WorkerHopThread ...               */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-post-slave-message worker::JsWorker data)
@@ -311,16 +338,24 @@
 		     (js-call1 %this onmessage this e))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    add-event-listener! ::WorkerHopThread ...                        */
+;*    add-event-listener! ::JsWorker ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! obj::JsWorker evt proc . capture)
-   (if (string=? evt "message")
+   (cond
+      ((string=? evt "message")
        (with-access::JsWorker obj (thread)
 	  (with-access::WorkerHopThread thread (mutex listeners)
 	     (synchronize mutex
 		(set! listeners
-		   (cons (lambda (e) (proc obj e)) listeners)))))
-       (call-next-method)))
+		   (cons (lambda (e) (proc obj e)) listeners))))))
+      ((string=? evt "exit")
+       (with-access::JsWorker obj (thread)
+	  (with-access::WorkerHopThread thread (mutex exitlisteners)
+	     (synchronize mutex
+		(set! exitlisteners
+		   (cons (lambda (e) (proc obj e)) exitlisteners))))))
+      (else
+       (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::WorkerHopThread ...                        */

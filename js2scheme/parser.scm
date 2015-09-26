@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Sep 24 17:00:51 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 10:34:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -778,24 +778,27 @@
 	     (mode (or (javascript-mode body) 'normal)))
 	 (cond
 	    (declaration?
-	     (instantiate::J2SDeclFun
-		(loc (token-loc token))
-		(id (cdr id))
-		(val (instantiate::J2SFun
-			(loc (token-loc token))
-			(params params)
-			(name (cdr id))
-			(mode mode)
-			(body body)
-			(vararg (rest-params params))
-			(vararg (rest-params params))
-			(decl (instantiate::J2SDecl
-				 (loc (token-loc token))
-				 (id (cdr id))
-				 (name (cdr id))
-				 (writable #f)
-				 (ronly #t)
-				 (global #t)))))))
+	     (let ((val (instantiate::J2SFun
+			   (loc (token-loc token))
+			   (params params)
+			   (name (cdr id))
+			   (mode mode)
+			   (body body)
+			   (vararg (rest-params params))
+			   (vararg (rest-params params))
+			   (decl (instantiate::J2SDecl
+				    (loc (token-loc token))
+				    (id (cdr id))
+				    (name (cdr id))
+				    (writable #f)
+				    (ronly #t)
+				    (global #t))))))
+		(instantiate::J2SDeclFun
+		   (loc (token-loc token))
+		   (writable (not (eq? mode 'hopscript)))
+		   (ronly (eq? mode 'hopscript))
+		   (id (cdr id))
+		   (val val))))
 	    (id
 	     (co-instantiate ((fun (instantiate::J2SFun
 				      (loc (token-loc token))
@@ -806,14 +809,14 @@
 				      (name (cdr id))
 				      (mode mode)
 				      (body body)))
-			      (decl (instantiate::J2SDeclCnstFun
+			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
 				       (id (cdr id))
 				       (name (cdr id))
 				       (writable #f)
 				       (ronly #t)
 				       (global #t)
-				       (fun fun))))
+				       (val fun))))
 		fun))
 	    (else
 	     (instantiate::J2SFun
@@ -881,14 +884,14 @@
 				      (init init)
 				      (mode 'strict)
 				      (body body)))
-			      (decl (instantiate::J2SDeclCnstFun
+			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
 				       (id (cdr id))
 				       (name (cdr id))
 				       (writable #f)
 				       (ronly #t)
 				       (global #t)
-				       (fun fun))))
+				       (val fun))))
 		fun))
 	    (else
 	     (instantiate::J2SSvc
@@ -1944,7 +1947,7 @@
 	       (main (config-get conf :module-main #f))
 	       (name (config-get conf :module-name #f))
 	       (mode mode)
-	       (nodes (map! (lambda (n) (disable-es6 n mode conf)) nodes))))))
+	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
    
    (define (eval)
       (set! tilde-level 0)
@@ -1956,7 +1959,7 @@
 	       (path (config-get conf :filename (abspath)))
 	       (name (config-get conf :module-name #f))
 	       (mode mode)
-	       (nodes (map! (lambda (n) (disable-es6 n mode conf)) nodes))))))
+	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
 
    (define (repl)
       (let ((el (repl-element)))
@@ -1968,7 +1971,7 @@
 		   (main (config-get conf :module-main #f))
 		   (name (config-get conf :module-name #f))
 		   (path (config-get conf :filename (abspath)))
-		   (nodes (list (disable-es6 el 'normal conf)))))
+		   (nodes (list (dialect el 'normal conf)))))
 	     el)))
 
    (case (config-get conf :parser #f)
@@ -2111,17 +2114,50 @@
 	       (call-with-input-string val read))))))
 
 ;*---------------------------------------------------------------------*/
-;*    disable-es6 ...                                                  */
+;*    dialect ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    Modify the AST according to the compilation dialect (which is    */
+;*    specified by the MODE argument).                                 */
 ;*---------------------------------------------------------------------*/
-(define (disable-es6 node::J2SNode mode conf)
-   (unless (memq mode '(hopscript ecmascript6))
-      (unless (config-get conf :es6-let #f)
-	 (disable-es6-let node))
-      (unless (config-get conf :es6-default-value #f)
-	 (disable-es6-default-value node))
-      (unless (config-get conf :es6-arrow-function #f)
-	 (disable-es6-arrow node)))
-   node)
+(define (dialect node::J2SNode mode conf)
+   (case mode
+      ((hopscript)
+       (hopscript-cnst-fun! node))
+      ((ecmascript6)
+       node)
+      (else
+       (unless (memq mode '(hopscript ecmascript6))
+	  (unless (config-get conf :es6-let #f)
+	     (disable-es6-let node))
+	  (unless (config-get conf :es6-default-value #f)
+	     (disable-es6-default-value node))
+	  (unless (config-get conf :es6-arrow-function #f)
+	     (disable-es6-arrow node))
+	  (unless (config-get conf :es6-rest-argument #f)
+	     (disable-es6-rest-argument node)))
+       node)))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript-cnst-fun! ...                                          */
+;*    -------------------------------------------------------------    */
+;*    In HopScript mode, function declarations are read-only. To       */
+;*    implement this, this walker siwtches J2SDeclFun ronly attribute  */
+;*    to #t.                                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hopscript-cnst-fun! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript-cnst-fun! ::J2SDeclFun ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hopscript-cnst-fun! this::J2SDeclFun)
+   (with-access::J2SDeclFun this (val loc id ronly writable)
+      (with-access::J2SFun val (mode)
+	 (when (eq? mode 'normal)
+	    (set! writable #f)
+	    (set! ronly #t))
+	 (set! mode 'hopscript)))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-let ...                                              */
@@ -2133,7 +2169,7 @@
 ;*    disable-es6-let ::J2SFun ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-es6-let this::J2SFun)
-   (with-access::J2SFun this (mode)
+   (with-access::J2SFun this (mode name)
       (unless (memq mode '(hopscript ecmascript6))
 	 (call-default-walker))))
 
@@ -2201,7 +2237,27 @@
 	    (instantiate::&io-parse-error
 	       (proc "js-parser")
 	       (msg "default parameter values disabled")
-	       (obj 'id)
+	       (obj id)
 	       (fname (cadr loc))
-	       (location (caddr loc))))))) 
+	       (location (caddr loc)))))))
 
+;*---------------------------------------------------------------------*/
+;*    disable-es6-rest-argument ::J2SNode ...                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-rest-argument this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    disable-es6-rest-argument ::J2SFun ...                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (disable-es6-rest-argument this::J2SFun)
+   (with-access::J2SFun this (vararg loc)
+      (if (eq? vararg 'rest)
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "js-parser")
+		(msg "rest arguments values disabled")
+		(obj 'id)
+		(fname (cadr loc))
+		(location (caddr loc))))
+	  (call-default-walker))))

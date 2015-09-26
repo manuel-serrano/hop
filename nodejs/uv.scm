@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sun Sep 20 07:41:54 2015 (serrano)                */
+;*    Last change :  Fri Sep 25 13:36:28 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -458,7 +458,15 @@
 (define-method (js-worker-terminate! th::WorkerHopThread pred)
    (js-worker-push-thunk! th "stop"
       (lambda ()
-	 (with-access::WorkerHopThread th (keep-alive)
+	 (with-access::WorkerHopThread th (keep-alive parent exitlisteners)
+	    (when (pair? exitlisteners)
+	       (js-worker-push-thunk! parent "slave-terminate"
+		  (lambda ()
+		     (let ((e (instantiate::MessageEvent
+				 (name "exit")
+				 (target (js-undefined))
+				 (data (js-undefined)))))
+			(apply-listeners exitlisteners e)))))
 	    (set! keep-alive #f))
 	 (uv-stop (worker-loop th)))))
 

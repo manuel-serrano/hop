@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Sep 24 17:30:46 2015 (serrano)                */
+#*    Last change :  Sat Sep 26 17:21:51 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -63,7 +63,7 @@ DEV_TARGETS=dev.html 00-command.html 10-edit.html
 
 ALL_TARGETS=index.html download.html nodejs.html \
   $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
-  idx.html
+  idx.html hss/markdown.hss hss/fontifier.hss
 
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
@@ -91,6 +91,7 @@ clean:
 	$(RM) license.html index.html nodejs.html download.html dev.html
 	$(RM) 00-command.html 10-edit.html
 	$(RM) idx.json idx.html
+	$(RM) -f hss/markdown.hss hss/fontifier.hss
 
 devclean: clean
 
@@ -167,3 +168,10 @@ idx.html: idx.json
 #*---------------------------------------------------------------------*/
 download.html: license.md
 lang.html: _lang.md
+
+hss/markdown.hss: ../node_modules/markdown/hss/markdown.hss
+	cp $< $@
+
+hss/fontifier.hss: ../node_modules/fontifier/hss/fontifier.hss
+	cp $< $@
+

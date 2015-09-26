@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Sep 22 11:06:18 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 10:27:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -212,7 +212,6 @@
 		(decls (filter (lambda (d)
 				  ;; see ecma-262-51.html#sec-10.2
 				  (or (isa? d J2SDeclFun)
-				      (isa? d J2SDeclCnstFun)
 				      (not-in? d params)))
 			  (collect* body)))
 		(arguments (instantiate::J2SDeclArguments
@@ -418,8 +417,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDollar ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (resolve! this::J2SDollar env mode withs wenv)
-   this)
+;* (define-method (resolve! this::J2SDollar env mode withs wenv)       */
+;*    this)                                                            */
 
 ;*---------------------------------------------------------------------*/
 ;*    check-strict-mode-eval ...                                       */

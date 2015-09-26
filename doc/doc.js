@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Sep 25 09:24:53 2015 (serrano)                */
+/*    Last change :  Sat Sep 26 17:24:46 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -26,9 +26,15 @@ const docxml = require( "./xml.js" );
 /*---------------------------------------------------------------------*/
 const ROOT = path.dirname( module.filename );
 
+function P( file ) {
+   return path.normalize( "./" + file );
+}
+   
 const css = [ P( "hss/doc.hss" ),
+	      P( "hss/markdown.hss" ),
+	      P( "hss/fontifier.hss" ),
 	      P( "lib/bootstrap/css/bootstrap.min.css" ) ];
-const jscript = [ P( "lib//jquery/js/jquery.min.js" ),
+const jscript = [ P( "lib/jquery/js/jquery.min.js" ),
 		  P( "lib/bootstrap/js/bootstrap.min.js" ) ];
 
 const alias = {
@@ -40,13 +46,6 @@ const alias = {
    "spage": "widget"
 }
 
-/*---------------------------------------------------------------------*/
-/*    P ...                                                            */
-/*---------------------------------------------------------------------*/
-function P( file ) {
-   return path.normalize( "./" + file );
-}
-   
 /*---------------------------------------------------------------------*/
 /*    chapters ...                                                     */
 /*---------------------------------------------------------------------*/
@@ -62,7 +61,7 @@ const chapters = require( "./doc.json" )
 /*---------------------------------------------------------------------*/
 function chapterEntries( chapter ) {
    
-   function chapterFile( file ) {
+   function chapterFile( file, i = false, arr = false ) {
       var base = path.basename( file );
       return {
 	 path: file.replace( /[.]md$/, ".html" ),
@@ -71,7 +70,7 @@ function chapterEntries( chapter ) {
       };
    }
    
-   function chapterEntry( file ) {
+   function chapterEntry( file, i = false, arr = false ) {
       var fp = path.join( ROOT, file );
       if( fs.lstatSync( fp ).isDirectory() ) {
 	 return fs.readdirSync( fp )
@@ -116,34 +115,35 @@ function childrenSize( children ) {
 /*---------------------------------------------------------------------*/
 /*    makeToc ...                                                      */
 /*---------------------------------------------------------------------*/
-function _makeToc( els, k, proc, indent ) {
-   if( els.length == k  ) {
-      return [];
-   } else {
-      var acc = [];
-      var tag = els[ k ].tagName;
+function makeToc( els, k, proc = false ) {
+   
+   function _makeToc( els, k, proc, indent ) {
+      if( els.length == k  ) {
+	 return [];
+      } else {
+	 var acc = [];
+	 var tag = els[ k ].tagName;
 
-      for( var i = k; i < els.length; ) {
-	 if( els[ i ].tagName == tag ) {
-	    var el = els[ i++ ];
-	    var n = proc ? proc( el ) : el.childNodes;
-	    acc.push( <li>
-	      <a href=${"#" + el.id} role="presentation">
+	 for( var i = k; i < els.length; ) {
+	    if( els[ i ].tagName == tag ) {
+	       var el = els[ i++ ];
+	       var n = proc ? proc( el ) : el.childNodes;
+	       acc.push( <li>
+		 <a href=${"#" + el.id} role="presentation">
 		${n}</a></li> );
-	 } else if( els[ i ].tagName > tag ) {
-	    var children = _makeToc( els, i, proc, indent + "  " );
-	    acc.push( <ul>${children}</ul> );
-	    i += childrenSize( children );
-	 } else {
-	    return acc;
+	    } else if( els[ i ].tagName > tag ) {
+	       var children = _makeToc( els, i, proc, indent + "  " );
+	       acc.push( <ul>${children}</ul> );
+	       i += childrenSize( children );
+	    } else {
+	       return acc;
+	    }
 	 }
+
+	 return acc;
       }
-
-      return acc;
    }
-}
-
-function makeToc( els, k, proc ) {
+   
    return _makeToc( els, k, proc, "" );
 }
 
@@ -162,9 +162,9 @@ function compileSection( page ) {
    } else if( key == "." ) {
       key = title;
    }
-   
+
    var document = <html>
-     <head css=${[ fontifier.css, markdown.css, css ]}
+     <head css=${css}
 	   title=${title}
            jscript=${jscript}
            rts=${false}/>
@@ -215,7 +215,7 @@ function compileChapter( json ) {
    var toc = chapterEntries( chapter );
 
    var document = <html>
-     <head css=${[ fontifier.css, markdown.css, css ]}
+     <head css=${css}
 	   title=${chapter.title}
            jscript=${jscript}
            rts=${false}/>
@@ -258,7 +258,7 @@ function compileChapter( json ) {
 /*---------------------------------------------------------------------*/
 function compileIndex( content ) {
    var document = <html>
-     <head css=${[ fontifier.css, markdown.css, css ]}
+     <head css=${css}
 	   title="Hop.js"
            jscript=${jscript}
            rts=${false}/>
@@ -269,7 +269,7 @@ function compileIndex( content ) {
        </docxml.navbar>
        <docxml.title root=${ROOT}/>
 
-       <div class="container">
+       <div class="container home-body">
          ${doc.load( path.join( path.dirname( module.filename ), "_index.md" ) ).XML}
 	 <docxml.footer root=${ROOT}/>
        </div>
@@ -283,7 +283,7 @@ function compileIndex( content ) {
 /*    bind dummy xml construct                                         */
 /*---------------------------------------------------------------------*/
 (function( tags ) {
-   function ignore( attr, _ ) { return undefined; };
+   function ignore( attr, ... _ ) { return undefined; };
 
    tags.forEach( function( tag ) { this[ tag ] = ignore } );
 })( require( "./xml-ignore.json" ) );
@@ -322,7 +322,7 @@ function compileIdx( json ) {
    var chapter = { title: "Index", key: "index" };
 
    var document = <html>
-     <head css=${[ fontifier.css, markdown.css, css ]}
+     <head css=${css}
 	   title=${chapter.title}
            jscript=${jscript}
            rts=${false}/>
