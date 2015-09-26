@@ -61,6 +61,7 @@ POPULATION = Makefile \
   hopjs/serv/serialization.js \
   hopjs/serv/service.js \
   hopjs/serv/service2.js \
+  hopjs/serv/serviceArguments.js \
   hopjs/serv/stressService.js \
   hopjs/serv/svc_args.js \
   hopjs/serv/syncSrvRsp.js \
