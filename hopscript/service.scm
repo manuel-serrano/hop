@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Sep 23 11:06:59 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 18:15:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -457,7 +457,9 @@
    (define (dsssl-args args)
       (let ((acc '()))
 	 (js-for-in args
-	    (lambda (s) (set! acc (cons (string->symbol s) acc))) %this)
+	    (lambda (s)
+	       (set! acc (cons (string->symbol (js-tostring s %this)) acc)))
+	    %this)
 	 (cons '#!key (reverse! acc))))
    
    (define (create-fix-service proc name)
@@ -491,7 +493,7 @@
 	 svcjs))
 
    (define (dsssl-actuals defaults objs)
-      (if (and (null? (cdr objs)) (isa? (car objs) JsObject))
+      (if (and (pair? objs) (null? (cdr objs)) (isa? (car objs) JsObject))
 	  (let ((obj (car objs)))
 	     (map (lambda (arg)
 		     (let ((k (keyword->symbol (car arg))))

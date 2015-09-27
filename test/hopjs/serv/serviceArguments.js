@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/serviceArguments.js*/
+/*    .../project/hop/3.0.x/test/hopjs/serv/serviceArguments.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Tue Sep  15 12:42:26 2015 (serrano)               */
+/*    Last change :  Sat Sep 26 18:13:36 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
@@ -231,12 +231,12 @@ var testSuite = [
 	 pass();
       }, { fail: fail });
    },
-   // function() {
-   //    svcnew4().post( function( result ) {
-   // 	 assert.equal( result, 'foo' );
-   // 	 pass();
-   //    }, { fail: fail });
-   // },
+   function() {
+      svcnew4().post( function( result ) {
+    	 assert.equal( result, 'foo' );
+    	 pass();
+      }, { fail: fail });
+   },
    function() {
       svcnew4( { a : 2, b : 'bar' } ).post( function( result ) {
 	 assert.equal( result, 'bar' );
@@ -255,9 +255,9 @@ var testSuite = [
 	 pass();
       }, { fail: fail });
    },
-   // function() {
-   //    svcnew4( { c: 0 } ).post( fail, { fail: pass });
-   // },
+   function() {
+      svcnew4( { c: 0 } ).post( fail, { fail: pass });
+   },
 ];
 
 var passed = 0
