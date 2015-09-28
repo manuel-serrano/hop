@@ -107,3 +107,9 @@ arch/debian/makedeb.sh
 .hg
 .hgtags
 README.hg
+
+doc/idx.json
+
+doc/hss/fontifier.hss
+
+doc/hss/markdown.hss

@@ -134,12 +134,15 @@ Hop.js services are instances of the `Service` constructor.
  * `name`, is an optional string argument, which is the name of the
 service. 
  * `arguments`, is an optional object, which specifies the arguments
-name and default value for named argument service.
+name and default value for named argument service. At run time,
+service invocation arguments are complemented with default values and
+re-ordered according to `arguments`, then `function` is invoked with
+these sorted arguments.
 
 Example:
 
 ```hopscript
-function svcImpl( fname, lname ) { return <html>${fname},${lname}</html> };
+function svcImpl( arg1, arg2 ) { return <html>${arg1},${arg2}</html> };
 
 // create an anonymous service with fixed arguments
 var priv = new Service( svcImpl );
@@ -149,9 +152,14 @@ var pub = new Service( svcImpl, "public", { fname: "jean", lname: "dupond" } );
 
 // call the first service
 priv( "jeanne", "durand" ).post();
+// will return <html> jeanne, durand </html>
 
 // call the second service
-pub( { name: "larivierre" }).post();
+pub( { lname: "larivierre" }).post();
+// will return <html> jean, larivierre </html>
+
+pub( { lname: "martin", fname: "henri" }.post();
+//will return <html> henri, martin </html>
 ```
 
 

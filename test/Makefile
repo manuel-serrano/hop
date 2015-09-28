@@ -49,6 +49,10 @@ POPULATION = Makefile \
   hopjs/noserv/es6-promise.js \
   hopjs/noserv/es6-arrow.js \
   hopjs/noserv/es6-defval.js \
+  hopjs/noserv/worker1.js \
+  hopjs/noserv/worker2.js \
+  hopjs/noserv/aux/worker1.js \
+  hopjs/noserv/aux/worker2.js \
   hopjs/serv/asyncSrvRsp.js \
   hopjs/serv/asyncSrvWS.js \
   hopjs/serv/authentication.js \
