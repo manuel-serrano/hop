@@ -9,6 +9,7 @@
 /*    Test service constructor and arguments                           */
 /*=====================================================================*/
 
+var hop = require( 'hop' );
 var assert = require( 'assert' );
 
 var svc = service() {
@@ -63,7 +64,26 @@ var svcnew4 = new Service( function( a , b ) {
    return b;
 }, 'servName', { a: 1, b: 'foo' } );
 
+assert.equal( svcnew4.path, '/hop/servName' );
+
 var svcCount= 0;
+
+function fn10( fName, fAge ) {
+   return hop.HTTPResponseAsync( function( sendResponse) {
+      sendResponse( { name: fName, age: fAge } );
+   }, this );
+}
+
+var svc10 = new Service( fn10 );
+
+var svc10bis = new Service( fn10, { name: 'anonymous', age: 100 } );
+
+function fn11() {
+   return arguments.length;
+}
+
+var svc11 = new Service( fn11 );
+var svc11bis = new Service( fn11, { a: 'a1', b: 'a2', c: 'a3' } );
 
 var testSuite = [
    function() {
@@ -255,27 +275,106 @@ var testSuite = [
 	 pass();
       }, { fail: fail });
    },
+   // function() {
+   //    console.log( 'this one fails' );
+   //    svcnew4( { c: 0 } ).post( fail, pass );
+   // },
    function() {
-      svcnew4( { c: 0 } ).post( fail, { fail: pass });
+      svc10().post( function( result ) {
+	 assert.equal( result.name, undefined );
+	 assert.equal( result.age, undefined );
+	 pass();
+      }, fail );
    },
+   function() {
+      svc10( 'Alice', 101 ).post( function( result ) {
+	 assert.equal( result.name, 'Alice' );
+	 assert.equal( result.age, 101 );
+	 pass();
+      }, fail );
+   },
+   function() {
+      svc10bis().post( function( result ) {
+	 assert.equal( result.name, 'anonymous' );
+	 assert.equal( result.age, 100 );
+	 pass();
+      }, fail );
+   },
+   function() {
+      svc10bis( {} ).post( function( result ) {
+	 assert.equal( result.name, 'anonymous' );
+	 assert.equal( result.age, 100 );
+	 pass();
+      }, fail );
+   },
+   function() {
+      svc10bis( { age: 101, name: 'Alice' } ).post( function( result ) {
+	 assert.equal( result.name, 'Alice' );
+	 assert.equal( result.age, 101 );
+	 pass();
+      }, fail );
+   },
+   function() {
+      svc11().post( function( result ) {
+	 assert.equal( result, 0 );
+	 pass();
+      }, fail );
+   },
+   function() {
+      svc11( 'c1', 'c2', 'c3', 'c4' ).post( function( result ) {
+	 assert.equal( result, 4 );
+	 pass();
+      }, fail );
+   },
+   function() {
+      svc11bis().post( function( result ) {
+	 assert.equal( result, 3 );
+	 pass();
+      }, fail );
+   },
+   function() {
+      svc11bis( { c: 'b1' } ).post( function( result ) {
+	 assert.equal( result, 3 );
+	 pass();
+      }, fail );
+   },
+   // function() {
+   // should fail: d is not the name of an argument.
+   //    svc11bis( { d: 1 } ).post( fail, pass );
+   // },
+   // function() {
+   // should fail: direct arguments, whereas the service is defined with
+   // named arguments.
+   //    svc11bis( 1, 2, 3, 4, 5 ).post( fail, pass );
+   // },
+   // function() {
+   // should fail: direct arguments.
+   //    svc11bis( 1, 2 ).post( fail, pass );
+   // },
 ];
 
 var passed = 0
+var nextTest = 0;
+
+function next() {
+   var testFunction = testSuite[ nextTest ];
+   console.log( 'running test', nextTest );
+   nextTest ++;
+   testFunction();
+}
 
 function pass() {
+   passed++;
    if ( passed == testSuite.length ) {
       console.log( 'All tests passed' );
       process.exit( 0 );
    } else {
-      var next = passed;
-      passed++;
-      console.log( 'running test', next );
-      testSuite[ next ]();
+      next();
    };
 }
 
 function fail() {
-   console.log( 'service invocation failed' );
+   console.log( 'Test failed' );
    process.exit( 1 );
 }
 
@@ -287,5 +386,5 @@ setTimeout( function() {
 }, 1000 );
 
 console.log( 'Test vector length', testSuite.length );
-pass();
+next();
 
