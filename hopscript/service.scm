@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Sep 26 18:15:12 2015 (serrano)                */
+;*    Last change :  Mon Sep 28 18:28:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -493,20 +493,42 @@
 	 svcjs))
 
    (define (dsssl-actuals defaults objs)
-      (if (and (pair? objs) (null? (cdr objs)) (isa? (car objs) JsObject))
+      (cond
+	 ((and (pair? objs) (null? (cdr objs)) (isa? (car objs) JsObject))
 	  (let ((obj (car objs)))
+	     (js-for-in (car objs)
+		(lambda (k)
+		   (let ((s (string->keyword (js-jsstring->string k))))
+		      (unless (assq s defaults)
+			 (js-raise-type-error %this
+			    (format "~s: bad named service argument ~s"
+			       (if (eq? args (js-undefined))
+				   (js-tostring proc %this)
+				   name)
+			       s)
+			    #f))))
+		%this)
 	     (map (lambda (arg)
 		     (let ((k (keyword->symbol (car arg))))
 			(if (js-has-property obj k %this)
 			    (js-get obj k %this)
 			    (cdr arg))))
-		defaults))
+		defaults)))
+	 ((null? objs)
 	  (map (lambda (arg)
 		  (let ((c (memq (car arg) objs)))
 		     (if (pair? c)
 			 (js-obj->jsobject (cadr c) %this)
 			 (cdr arg))))
-	     defaults)))
+	     defaults))
+	 (else
+	  (js-raise-type-error %this
+	     (format "~s: bad named service argument ~a"
+		(if (eq? args (js-undefined))
+		    (js-tostring proc %this)
+		    name)
+		(if (and (pair? objs) (null? (cdr objs))) (car objs) objs))
+	     #f))))
    
    (define (create-dsssl-service proc name args)
       (letrec* ((id (if (string? name) (string->symbol name) (gensym 'svc)))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Sat Sep 26 18:13:36 2015 (serrano)                */
+/*    Last change :  Mon Sep 28 18:31:39 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
@@ -46,13 +46,11 @@ var svcN = service( { a: 1, b: 'foo' } ) {
    return b;
 };
 
-var svcNN = service svcName( {a: 1, b: 'foo' } ) {
+var svcNN = service svcName( { a: 1, b: 'foo' } ) {
    return a;
 };
 
-/* I'd expect svcNN to have this path:
 assert.equal( svcNN.path, '/hop/svcName' );
-*/
 
 var svcnew3 = new Service( function() {
    return true;
@@ -275,10 +273,10 @@ var testSuite = [
 	 pass();
       }, { fail: fail });
    },
-   // function() {
-   //    console.log( 'this one fails' );
-   //    svcnew4( { c: 0 } ).post( fail, pass );
-   // },
+   function() {
+       console.log( 'this one fails' );
+       svcnew4( { c: 0 } ).post( fail, pass );
+   },
    function() {
       svc10().post( function( result ) {
 	 assert.equal( result.name, undefined );
@@ -338,19 +336,15 @@ var testSuite = [
 	 pass();
       }, fail );
    },
-   // function() {
-   // should fail: d is not the name of an argument.
-   //    svc11bis( { d: 1 } ).post( fail, pass );
-   // },
-   // function() {
-   // should fail: direct arguments, whereas the service is defined with
-   // named arguments.
-   //    svc11bis( 1, 2, 3, 4, 5 ).post( fail, pass );
-   // },
-   // function() {
-   // should fail: direct arguments.
-   //    svc11bis( 1, 2 ).post( fail, pass );
-   // },
+   function() {
+      svc11bis( { d: 1 } ).post( fail, pass );
+   },
+   function() {
+      svc11bis( 1, 2, 3, 4, 5 ).post( fail, pass );
+   },
+   function() {
+      svc11bis( 1, 2 ).post( fail, pass );
+   },
 ];
 
 var passed = 0
