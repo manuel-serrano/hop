@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Sep 26 10:35:15 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 18:28:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -218,7 +218,7 @@
 	      (bind::bool read-only (default #f)))
 
 	   (final-class J2SParam::J2SDecl
-	      (defval::J2SExpr read-only))
+	      (defval::J2SExpr read-only (default (nodefval))))
 	   
 	   (abstract-class J2SLiteral::J2SExpr)
 	   
@@ -342,10 +342,32 @@
 	   (ast-decl-key::int)
 	   
 	   (ast->json ::obj ::output-port)
-	   (json->ast ::input-port))
+	   (json->ast ::input-port)
+
+	   (nodefval::J2SUndefined)
+	   (nodefval?::bool ::J2SExpr))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
+
+;*---------------------------------------------------------------------*/
+;*    %nodefval ...                                                    */
+;*---------------------------------------------------------------------*/
+(define %nodefval
+   (instantiate::J2SUndefined
+      (loc '("no loc"))))
+
+;*---------------------------------------------------------------------*/
+;*    nodefval ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (nodefval)
+   %nodefval)
+
+;*---------------------------------------------------------------------*/
+;*    nodefval? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (nodefval? v)
+   (eq? v %nodefval))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-id ...                                                    */

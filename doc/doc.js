@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sat Sep 26 17:24:46 2015 (serrano)                */
+/*    Last change :  Sun Sep 27 08:15:08 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -38,12 +38,12 @@ const jscript = [ P( "lib/jquery/js/jquery.min.js" ),
 		  P( "lib/bootstrap/js/bootstrap.min.js" ) ];
 
 const alias = {
-   "user": "api",
-   "config": "api",
-   "hss": "api",
-   "markdown": "api",
-   "tree": "widget",
-   "spage": "widget"
+   "user.md": "api",
+   "config.md": "api",
+   "hss.md": "api",
+   "markdown.md": "api",
+   "tree.md": "widget",
+   "spage.md": "widget"
 }
 
 /*---------------------------------------------------------------------*/
@@ -61,7 +61,7 @@ const chapters = require( "./doc.json" )
 /*---------------------------------------------------------------------*/
 function chapterEntries( chapter ) {
    
-   function chapterFile( file, i = false, arr = false ) {
+   function chapterFile( file, i = undefined, arr = undefined ) {
       var base = path.basename( file );
       return {
 	 path: file.replace( /[.]md$/, ".html" ),
@@ -156,7 +156,7 @@ function compileSection( page ) {
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
    var chapter = path.basename( path.dirname( path ) );
    var key = path.basename( path.dirname( page ) ).toLowerCase();
-   
+
    if( key == "doc" ) {
       key = alias[ path.basename( page ) ];
    } else if( key == "." ) {

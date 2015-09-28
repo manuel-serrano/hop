@@ -74,7 +74,7 @@ run() {
 
 for path in noserv/*.js; do
    if [ -f $path.rc.js ]; then
-     run $path -q --no-server --rc-file $path.rc.js
+     run $path --no-server --rc-file $path.rc.js
    else
      run $path -q --no-server
    fi

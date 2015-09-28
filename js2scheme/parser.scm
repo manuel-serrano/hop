@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Sep 26 10:34:38 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 18:23:45 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -657,7 +657,6 @@
 	       (instantiate::J2SCatch
 		  (loc loc)
 		  (param (instantiate::J2SParam
-			    (defval (instantiate::J2SUndefined (loc loc)))
 			    (loc loc)
 			    (id id)))
 		  (body body))))))
@@ -711,7 +710,6 @@
 		 ((pair? p)
 		  (let ((loc (token-loc p)))
 		     (instantiate::J2SParam
-			(defval (instantiate::J2SUndefined (loc loc)))
 			(loc loc)
 			(id (token-value p)))))
 		 ((isa? p J2SAssig)
@@ -724,7 +722,6 @@
 		 ((isa? p J2SUnresolvedRef)
 		  (with-access::J2SUnresolvedRef p (id loc)
 		     (instantiate::J2SParam
-			(defval (instantiate::J2SUndefined (loc loc)))
 			(loc loc)
 			(id id))))
 		 (else
@@ -834,7 +831,6 @@
 	     (if (isa? name J2SString)
 		 (with-access::J2SString name (val)
 		    (instantiate::J2SParam
-		       (defval (instantiate::J2SUndefined (loc loc)))
 		       (loc loc)
 		       (id (string->symbol val))))
 		 (parse-node-error "Illegal parameter declaration" init)))
@@ -943,7 +939,7 @@
 			  (consume-any!)
 			  (assig-expr #f))
 		       ;; no default value
-		       (instantiate::J2SUndefined (loc loc)))))
+		       (nodefval))))
 	 (instantiate::J2SParam
 	    (defval expr)
 	    (loc loc)
@@ -951,10 +947,8 @@
 
    (define (consume-rest-param!)
       (let* ((token (consume-token! 'ID))
-	     (loc (token-loc token))
-	     (expr (instantiate::J2SUndefined (loc loc))))
+	     (loc (token-loc token)))
 	 (instantiate::J2SParam
-	    (defval expr)
 	    (loc loc)
 	    (usage '(rest))
 	    (id (token-value token)))))
@@ -2232,7 +2226,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-es6-default-value this::J2SParam)
    (with-access::J2SParam this (defval id loc)
-      (unless (isa? defval J2SUndefined)
+      (unless (nodefval? defval)
 	 (raise
 	    (instantiate::&io-parse-error
 	       (proc "js-parser")

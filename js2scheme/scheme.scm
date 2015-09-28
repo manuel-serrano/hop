@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Sep 26 10:33:57 2015 (serrano)                */
+;*    Last change :  Sat Sep 26 18:23:59 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -403,7 +403,7 @@
       (let ((len 0))
 	 (for-each (lambda (p)
 		      (with-access::J2SParam p (defval)
-			 (when (isa? defval J2SUndefined)
+			 (when (nodefval? defval)
 			    (set! len (+fx len 1)))))
 	    params)
 	 (if (eq? vararg 'rest)

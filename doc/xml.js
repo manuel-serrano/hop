@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Sat Sep 26 08:09:10 2015 (serrano)                */
+/*    Last change :  Sat Sep 26 18:24:46 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -219,7 +219,7 @@ function idxLetters( es ) {
 /*---------------------------------------------------------------------*/
 /*    idxEntry ...                                                     */
 /*---------------------------------------------------------------------*/
-function idxEntry( e, idx = false, arr = false ) {
+function idxEntry( e, idx = undefined, arr = undefined ) {
    if( typeof( e ) === "string" ) {
       return <tr class="idx-letter"><td/><th>${e}</th></tr>;
    } else {

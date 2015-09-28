@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Aug  2 10:50:31 2015 (serrano)                */
+#*    Last change :  Sun Sep 27 08:21:01 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -331,7 +331,7 @@ hop-builtin-serializers.js: $(BUILDETCDIR)/mkserializer.hop
          export DYLD_LIBRARY_PATH; \
          PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
          export PATH; \
-	 $(call compile,$(HOP),,--no-server,$< > $@) || ($(RM) -f $@; exit 1))
+	 $(call compile,$(HOP),,-q --no-server,$< > $@) || ($(RM) -f $@; exit 1))
 
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */
