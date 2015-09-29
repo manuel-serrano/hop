@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Sep 27 08:25:22 2015 (serrano)                */
+#*    Last change :  Tue Sep 29 10:02:46 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -63,7 +63,7 @@ DEV_TARGETS=dev.html 00-command.html 10-edit.html
 
 ALL_TARGETS=index.html download.html nodejs.html \
   $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
-  idx.html hss/markdown.hss hss/fontifier.hss
+  idx.html
 
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
@@ -90,7 +90,7 @@ build:
          export PATH; \
 	 $(MAKE) builddoc)
 
-builddoc: $(ALL_TARGETS) 
+builddoc: $(ALL_TARGETS) hss/markdown.hss hss/fontifier.hss
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -115,6 +115,7 @@ install:
 	$(INSTALL) $(ALL_TARGETS) $(DESTDIR)$(HOPDOCDIR)
 	cp -r lib/bootstrap $(DESTDIR)$(HOPDOCDIR)/lib
 	cp -r lib/jquery $(DESTDIR)$(HOPDOCDIR)/lib
+	$(RM) -r -f $(DESTDIR)$(HOPDOCDIR)/hss
 	cp -r hss $(DESTDIR)$(HOPDOCDIR)/hss
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/hss

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 10:09:31 2014                          */
-/*    Last change :  Tue Jan 13 16:38:07 2015 (serrano)                */
+/*    Last change :  Tue Sep 29 07:54:15 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Server side worker thread example                                */
@@ -21,5 +21,3 @@ onmessage = function( e ) {
       postMessage( "Report" );
    }, 1000 );
 };
-
-

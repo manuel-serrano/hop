@@ -1,9 +1,22 @@
 #!/bin/bash
 
+BUILDLIBDIR=/home/serrano/prgm/project/hop/3.0.x/lib/hop/3.0.0
+BUILDBINDIR=/home/serrano/prgm/project/hop/3.0.x/bin
+
+LD_LIBRARY_PATH=$BUILDLIBDIR:$LD_LIBRARY_PATH;
+export LD_LIBRARY_PATH;
+
+DYLD_LIBRARY_PATH=$BUILDLIBDIR:$DYLD_LIBRARY_PATH;
+export DYLD_LIBRARY_PATH;
+
+PATH=$BUILDBINDIR:$BUILDLIBDIR:$PATH;
+
+export PATH;
+
 rest=
 verb=
 basedir=$pwd
-hop=../../bin/hop
+hop=hop
 
 while : ; do
 

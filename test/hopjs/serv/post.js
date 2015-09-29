@@ -141,8 +141,11 @@ function test() {
 }
 
 setTimeout( function() {
-   assert.ok( res === 3 );
-   process.exit( res === 3 ? 0 : 1 );
+   try {
+      assert.ok( res === 3 );
+   } finally {
+      process.exit( res === 3 ? 0 : 1 );
+   }
 }, 500 );
 
 test();

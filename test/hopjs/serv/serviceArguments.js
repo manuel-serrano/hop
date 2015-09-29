@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Mon Sep 28 18:31:39 2015 (serrano)                */
+/*    Last change :  Tue Sep 29 07:50:19 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
@@ -371,8 +371,6 @@ function fail() {
    console.log( 'Test failed' );
    process.exit( 1 );
 }
-
-
 
 setTimeout( function() {
    console.log( 'timeout' );

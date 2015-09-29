@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Sep 26 18:23:45 2015 (serrano)                */
+;*    Last change :  Tue Sep 29 07:43:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -863,6 +863,7 @@
 			(init init)
 			(mode 'strict)
 			(body body)
+			(path (cdr id))
 			(decl (instantiate::J2SDecl
 				 (loc (token-loc token))
 				 (id (cdr id))
@@ -879,6 +880,7 @@
 				      (name (cdr id))
 				      (init init)
 				      (mode 'strict)
+				      (path (cdr id))
 				      (body body)))
 			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
@@ -922,6 +924,7 @@
 			     (loc (token-loc token))))
 		    (register #f)
 		    (mode 'strict)
+		    (path (cdr id))
 		    (body (instantiate::J2SBlock
 			     (loc loc)
 			     (endloc loc)
