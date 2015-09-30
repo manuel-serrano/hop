@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Sat Jun 27 08:10:01 2015                          */
-/*    Last change :  Thu Aug 20 09:00:33 2015 (serrano)                */
+/*    Last change :  Tue Sep 29 07:54:37 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Server side workers and services                                 */
@@ -39,4 +39,3 @@ service worker5() {
 }
 
 console.log( "Go to \"http://%s:%d/hop/worker5\"", hop.hostname, hop.port );
-

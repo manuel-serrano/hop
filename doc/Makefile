@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Sep 26 17:21:51 2015 (serrano)                */
+#*    Last change :  Tue Sep 29 10:02:46 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -63,7 +63,7 @@ DEV_TARGETS=dev.html 00-command.html 10-edit.html
 
 ALL_TARGETS=index.html download.html nodejs.html \
   $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
-  idx.html hss/markdown.hss hss/fontifier.hss
+  idx.html
 
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
@@ -81,7 +81,16 @@ VPATH=api lang dev widget \
 #*---------------------------------------------------------------------*/
 .PHONY: build clean install uninstall
 
-build: $(ALL_TARGETS) 
+build:
+	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
+         export LD_LIBRARY_PATH; \
+         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
+         export DYLD_LIBRARY_PATH; \
+         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
+         export PATH; \
+	 $(MAKE) builddoc)
+
+builddoc: $(ALL_TARGETS) hss/markdown.hss hss/fontifier.hss
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -106,6 +115,7 @@ install:
 	$(INSTALL) $(ALL_TARGETS) $(DESTDIR)$(HOPDOCDIR)
 	cp -r lib/bootstrap $(DESTDIR)$(HOPDOCDIR)/lib
 	cp -r lib/jquery $(DESTDIR)$(HOPDOCDIR)/lib
+	$(RM) -r -f $(DESTDIR)$(HOPDOCDIR)/hss
 	cp -r hss $(DESTDIR)$(HOPDOCDIR)/hss
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/hss
@@ -127,7 +137,7 @@ uninstall:
 #*    .md -> .html                                                     */
 #*---------------------------------------------------------------------*/
 %.html: %.md doc.js xml.js
-	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
 
@@ -135,7 +145,7 @@ uninstall:
 #*    .json -> .html                                                   */
 #*---------------------------------------------------------------------*/
 %.html: %.json doc.js xml.js
-	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
 
@@ -143,7 +153,7 @@ uninstall:
 #*    index.html ...                                                   */
 #*---------------------------------------------------------------------*/
 index.html: _index.md doc.js xml.js
-	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js $< > $@ \
           || ($(RM) $@; exit 1)
 
@@ -151,7 +161,7 @@ index.html: _index.md doc.js xml.js
 #*    idx.json ...                                                     */
 #*---------------------------------------------------------------------*/
 idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
-	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js mkidx . $^ > $@ \
           || ($(RM) $@; exit 1)
 
@@ -159,7 +169,7 @@ idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
 #*    apiindex.html ...                                                */
 #*---------------------------------------------------------------------*/
 idx.html: idx.json
-	$(HOP) $(EFLAGS) --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js cmpidx $< > $@ \
           || ($(RM) $@; exit 1)
 

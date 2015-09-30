@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Sep 26 10:34:38 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 09:23:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -657,7 +657,6 @@
 	       (instantiate::J2SCatch
 		  (loc loc)
 		  (param (instantiate::J2SParam
-			    (defval (instantiate::J2SUndefined (loc loc)))
 			    (loc loc)
 			    (id id)))
 		  (body body))))))
@@ -711,7 +710,6 @@
 		 ((pair? p)
 		  (let ((loc (token-loc p)))
 		     (instantiate::J2SParam
-			(defval (instantiate::J2SUndefined (loc loc)))
 			(loc loc)
 			(id (token-value p)))))
 		 ((isa? p J2SAssig)
@@ -724,7 +722,6 @@
 		 ((isa? p J2SUnresolvedRef)
 		  (with-access::J2SUnresolvedRef p (id loc)
 		     (instantiate::J2SParam
-			(defval (instantiate::J2SUndefined (loc loc)))
 			(loc loc)
 			(id id))))
 		 (else
@@ -834,7 +831,6 @@
 	     (if (isa? name J2SString)
 		 (with-access::J2SString name (val)
 		    (instantiate::J2SParam
-		       (defval (instantiate::J2SUndefined (loc loc)))
 		       (loc loc)
 		       (id (string->symbol val))))
 		 (parse-node-error "Illegal parameter declaration" init)))
@@ -867,6 +863,7 @@
 			(init init)
 			(mode 'strict)
 			(body body)
+			(path (cdr id))
 			(decl (instantiate::J2SDecl
 				 (loc (token-loc token))
 				 (id (cdr id))
@@ -883,6 +880,7 @@
 				      (name (cdr id))
 				      (init init)
 				      (mode 'strict)
+				      (path (cdr id))
 				      (body body)))
 			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
@@ -926,6 +924,7 @@
 			     (loc (token-loc token))))
 		    (register #f)
 		    (mode 'strict)
+		    (path (cdr id))
 		    (body (instantiate::J2SBlock
 			     (loc loc)
 			     (endloc loc)
@@ -943,7 +942,7 @@
 			  (consume-any!)
 			  (assig-expr #f))
 		       ;; no default value
-		       (instantiate::J2SUndefined (loc loc)))))
+		       (nodefval))))
 	 (instantiate::J2SParam
 	    (defval expr)
 	    (loc loc)
@@ -951,10 +950,8 @@
 
    (define (consume-rest-param!)
       (let* ((token (consume-token! 'ID))
-	     (loc (token-loc token))
-	     (expr (instantiate::J2SUndefined (loc loc))))
+	     (loc (token-loc token)))
 	 (instantiate::J2SParam
-	    (defval expr)
 	    (loc loc)
 	    (usage '(rest))
 	    (id (token-value token)))))
@@ -1318,7 +1315,7 @@
 			     (field (instantiate::J2SString
 				       (loc (token-loc field))
 				       (val field-str)))))
-		    (parse-token-error "Wrong property name" field))))
+		    (parse-token-error "wrong property name" field))))
 	    ((LPAREN)
 	     (if call-allowed?
 		 (loop (instantiate::J2SCall
@@ -1822,7 +1819,7 @@
 			(instantiate::J2SString
 			   (loc (token-loc token))
 			   (val (symbol->string (token-value token)))))))
-		 (parse-token-error "Wrong property name" (peek-token))))))
+		 (parse-token-error "wrong property name" (peek-token))))))
       
       (define (find-prop name props)
 	 (find (lambda (prop)
@@ -1859,10 +1856,10 @@
 	       (if (eq? name 'get)
 		   (if (isa? get J2SUndefined)
 		       (set! get fun)
-		       (parse-token-error "Wrong property" (peek-token)))
+		       (parse-token-error "wrong property" (peek-token)))
 		   (if (isa? set J2SUndefined)
 		       (set! set fun)
-		       (parse-token-error "Wrong property" (peek-token))))
+		       (parse-token-error "wrong property" (peek-token))))
 	       ;; return a prop only if new
 	       (unless oprop prop))))
       
@@ -1887,7 +1884,7 @@
 		   (else
 		    (if (j2s-reserved-id? (peek-token-type))
 			(property-accessor tokname name props)
-			(parse-token-error "Wrong property name" (peek-token))))))
+			(parse-token-error "wrong property name" (peek-token))))))
 	       (else
 		(let* ((ignore (consume! ':))
 		       (val (assig-expr #f)))
@@ -2232,7 +2229,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-es6-default-value this::J2SParam)
    (with-access::J2SParam this (defval id loc)
-      (unless (isa? defval J2SUndefined)
+      (unless (nodefval? defval)
 	 (raise
 	    (instantiate::&io-parse-error
 	       (proc "js-parser")

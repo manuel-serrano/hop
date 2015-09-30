@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Sep 26 10:33:57 2015 (serrano)                */
+;*    Last change :  Tue Sep 29 07:49:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -403,7 +403,7 @@
       (let ((len 0))
 	 (for-each (lambda (p)
 		      (with-access::J2SParam p (defval)
-			 (when (isa? defval J2SUndefined)
+			 (when (nodefval? defval)
 			    (set! len (+fx len 1)))))
 	    params)
 	 (if (eq? vararg 'rest)
@@ -1005,7 +1005,7 @@
 	 ;; see runtime/service_expd.sch
 	 "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ) ); },
               sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
-              sc_lambda)")
+p              sc_lambda)")
 
       (define (service-call-error this::J2SSvc)
 	 (with-access::J2SSvc this (loc name)
@@ -1112,7 +1112,7 @@
 	    (list (string->symbol name) (j2s-scheme val mode return conf)))))
    
    (define (svc-proc-entry this)
-      (with-access::J2SSvc this (name params loc)
+      (with-access::J2SSvc this (name params loc path)
 	 (let ((params (j2s-scheme params mode return conf))
 	       (tmpp (gensym 'servicep))
 	       (tmps (gensym 'services)))
@@ -1123,8 +1123,8 @@
 		       (,tmps ,(j2sscheme-service this tmpp (or scmid tmpp)
 				  (epairify loc
 				     `(make-hop-url-name
-					 ,(if (symbol? id)
-					      (symbol->string id)
+					 ,(if (symbol? path)
+					      (symbol->string path)
 					      '(gen-service-url :public #t))))
 				  params -1
 				  mode return)))

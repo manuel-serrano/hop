@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Sep 26 10:35:15 2015 (serrano)                */
+;*    Last change :  Tue Sep 29 07:45:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -131,6 +131,7 @@
 	   
 	   (class J2SSvc::J2SFun
 	      (init::J2SNode read-only)
+	      (path::obj read-only (default #f))
 	      (register::bool read-only (default #t)))
 
 	   (class J2SArrow::J2SFun)
@@ -218,7 +219,7 @@
 	      (bind::bool read-only (default #f)))
 
 	   (final-class J2SParam::J2SDecl
-	      (defval::J2SExpr read-only))
+	      (defval::J2SExpr read-only (default (nodefval))))
 	   
 	   (abstract-class J2SLiteral::J2SExpr)
 	   
@@ -342,10 +343,32 @@
 	   (ast-decl-key::int)
 	   
 	   (ast->json ::obj ::output-port)
-	   (json->ast ::input-port))
+	   (json->ast ::input-port)
+
+	   (nodefval::J2SUndefined)
+	   (nodefval?::bool ::J2SExpr))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
+
+;*---------------------------------------------------------------------*/
+;*    %nodefval ...                                                    */
+;*---------------------------------------------------------------------*/
+(define %nodefval
+   (instantiate::J2SUndefined
+      (loc '("no loc"))))
+
+;*---------------------------------------------------------------------*/
+;*    nodefval ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (nodefval)
+   %nodefval)
+
+;*---------------------------------------------------------------------*/
+;*    nodefval? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (nodefval? v)
+   (eq? v %nodefval))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-id ...                                                    */

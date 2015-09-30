@@ -5,7 +5,8 @@
        { <FunctionBody> }
 
 <ServiceExpression> -->
-    service ( <FormalParameterListopt> ) 
+  | <ServiceDeclaration>
+  | service ( <FormalParameterListopt> ) 
        { <FunctionBody> }
   | service ( <ObjectLiteral> ) 
        { <FunctionBody> }

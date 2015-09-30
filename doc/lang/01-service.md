@@ -126,17 +126,17 @@ Service Constructor
 
 Hop.js services are instances of the `Service` constructor.
 
-### new Service( function, [name], [arguments] ) ###
+### new Service( function [, name ] [, args] ) ###
 [:@glyphicon glyphicon-tag function]
 
  * `function`, is the function implementing the service. When invoked,
 `this` is bound to the request object.
  * `name`, is an optional string argument, which is the name of the
 service. 
- * `arguments`, is an optional object, which specifies the arguments
+ * `args`, is an optional object, which specifies the args
 name and default value for named argument service. At run time,
 service invocation arguments are complemented with default values and
-re-ordered according to `arguments`, then `function` is invoked with
+re-ordered according to `args`, then `function` is invoked with
 these sorted arguments.
 
 Example:
