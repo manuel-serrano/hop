@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Thu Aug 13 19:59:13 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 13:26:30 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -231,7 +231,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    <FORM> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-tag <FORM> ((id #unspecified string)
+(define-tag <FORM> ((id #unspecified)
 		    (onsubmit #f)
 		    (onreset #f)
 		    (action #f)
@@ -241,28 +241,28 @@
 		    ((isa? onsubmit xml-tilde)
 		     `(:onsubmit ,(xml-tilde->return onsubmit) ,@attrs))
 		    (onsubmit
-		       `(:onsubmit ,onsubmit ,@attrs))
+		     `(:onsubmit ,onsubmit ,@attrs))
 		    (else
-		     attrs)))
+		     (map xml-primitive-value attrs))))
 	  (attrs (cond
 		    ((isa? onreset xml-tilde)
 		     `(:onreset ,(xml-tilde->return onreset) ,@attrs))
 		    (onreset
-		       `(:onreset ,onreset ,@attrs))
+		     `(:onreset ,onreset ,@attrs))
 		    (else
-		     attrs)))
+		     (map xml-primitive-value attrs))))
 	  (attrs (cond
 		    ((isa? action xml-tilde)
 		     `(:action ,(format "javascript: ~a"
 				   (xml-tilde->statement action))
-			 ,@attrs))
+			 ,@(map xml-primitive-value attrs)))
 		    (action
-		       `(:action ,action ,@attrs))
+		     `(:action ,action ,@attrs))
 		    (else
-		     attrs))))
+		     (map xml-primitive-value attrs)))))
       (instantiate::xml-element
 	 (tag 'form)
-	 (id (xml-make-id id 'FORM))
+	 (id (xml-make-id (xml-primitive-value id) 'FORM))
 	 (attributes attrs)
 	 (body body))))
 
@@ -287,7 +287,7 @@
 	     (id id)
 	     (attributes `(:type ,type
 			     :onkeydown ,(secure-javascript-attr onkeydown)
-			     ,@attributes))
+			     ,@(map xml-primitive-value attributes)))
 	     (body '())))
        (instantiate::xml-empty-element
 	  (tag 'input)
@@ -296,5 +296,5 @@
 			  ,@(if onkeydown
 				`(onkeydown: ,(secure-javascript-attr onkeydown))
 				'())
-			  ,@attributes))
+			  ,@(map xml-primitive-value attributes)))
 	  (body '()))))
