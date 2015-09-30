@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Sep 29 07:43:28 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 09:23:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1315,7 +1315,7 @@
 			     (field (instantiate::J2SString
 				       (loc (token-loc field))
 				       (val field-str)))))
-		    (parse-token-error "Wrong property name" field))))
+		    (parse-token-error "wrong property name" field))))
 	    ((LPAREN)
 	     (if call-allowed?
 		 (loop (instantiate::J2SCall
@@ -1819,7 +1819,7 @@
 			(instantiate::J2SString
 			   (loc (token-loc token))
 			   (val (symbol->string (token-value token)))))))
-		 (parse-token-error "Wrong property name" (peek-token))))))
+		 (parse-token-error "wrong property name" (peek-token))))))
       
       (define (find-prop name props)
 	 (find (lambda (prop)
@@ -1856,10 +1856,10 @@
 	       (if (eq? name 'get)
 		   (if (isa? get J2SUndefined)
 		       (set! get fun)
-		       (parse-token-error "Wrong property" (peek-token)))
+		       (parse-token-error "wrong property" (peek-token)))
 		   (if (isa? set J2SUndefined)
 		       (set! set fun)
-		       (parse-token-error "Wrong property" (peek-token))))
+		       (parse-token-error "wrong property" (peek-token))))
 	       ;; return a prop only if new
 	       (unless oprop prop))))
       
@@ -1884,7 +1884,7 @@
 		   (else
 		    (if (j2s-reserved-id? (peek-token-type))
 			(property-accessor tokname name props)
-			(parse-token-error "Wrong property name" (peek-token))))))
+			(parse-token-error "wrong property name" (peek-token))))))
 	       (else
 		(let* ((ignore (consume! ':))
 		       (val (assig-expr #f)))

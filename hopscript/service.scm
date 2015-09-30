@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Sep 28 18:28:18 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 09:58:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -393,6 +393,7 @@
 	    :user user :password password :authorization authorization
 	    :header header
 	    :ctx %this
+	    :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
 	    :args args))
 
       (define (scheme->js val)

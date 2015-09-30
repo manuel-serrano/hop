@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Sep 25 09:25:31 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 09:59:02 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -327,6 +327,8 @@
 	       :method method
 	       :timeout timeout
 	       :authorization authorization
+	       :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
+	       :ctx %this
 	       :header header)))
       
       (define (scheme->js val)
@@ -380,6 +382,7 @@
 	 :fail fail 
 	 :timeout timeout
 	 :ctx %this
+	 :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
 	 :method (string->symbol method))))
 
 ;*---------------------------------------------------------------------*/

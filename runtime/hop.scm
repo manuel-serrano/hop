@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Sep 14 16:50:48 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 09:55:53 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -50,6 +50,7 @@
 		      (connection 'keep-alive)
 		      (timeout 0)
 		      (method 'GET)
+		      (json-parser (lambda (ip ctx) (javascript->obj ip)))
 		      (ctx #f)
 		      body)
 	    (with-hop-remote path success failure
@@ -64,6 +65,7 @@
 			     (anim #f)
 			     (scheme 'http)
 			     (ctx #f)
+			     (json-parser (lambda (ip ctx) (javascript->obj ip)))
 			     args)
 	    (generic with-hop-local obj success fail authorization header)
 	    (hop-get-file::obj ::bstring ::obj)
@@ -225,7 +227,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (make-http-callback url req success fail user-or-auth ctx responsetype)
+(define (make-http-callback url req success fail user-or-auth ctx responsetype json-parser)
    (lambda (p status header clength tenc)
       (with-trace 'with-hop "make-http-callback"
 	 (trace-item "status=" status " content-length=" clength)
@@ -252,9 +254,9 @@
 				  (javascript->obj (read-chars clength p)))
 			       #f ctx))
 			   ((application/json)
-			    (javascript->obj p))
+			    (json-parser p ctx))
 			   ((application/x-javascript)
-			    (javascript->obj p))
+			    (json-parser p ctx))
 			   ((text/html application/xhtml+xml)
 			    (car (last-pair (parse-html p (elong->fixnum clength)))))
 			   (else
@@ -312,6 +314,7 @@
 		  (timeout 0)
 		  (method 'GET)
 		  (connection 'keep-alive)
+		  (json-parser (lambda (ip ctx) (javascript->obj ip)))
 		  (ctx #f)
 		  body)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
@@ -365,7 +368,7 @@
 			      (authorization authorization)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
-			(hdl (make-http-callback url r suc fail #f ctx 'plain)))
+			(hdl (make-http-callback url r suc fail #f ctx 'plain json-parser)))
 		    (trace-item "remote path=" path)
 		    (http-send-request r hdl :body body)))))))))
 
@@ -383,6 +386,7 @@
 	   (authorization #f)
 	   (anim #f)
 	   (scheme 'http)
+	   (json-parser (lambda (ip ctx) (javascript->obj ip)))
 	   (ctx #f)
 	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
@@ -419,7 +423,8 @@
 			 (path (or abspath path))))
 		 (suc (or success (lambda (x) x)))
 		 (hdl (make-http-callback path req suc fail
-			 (or user authorization) ctx 'arraybuffer)))
+			 (or user authorization) ctx 'arraybuffer
+			 json-parser)))
 	     (trace-item "remote path=" path)
 	     (http-send-request req hdl :args args))))))
 
