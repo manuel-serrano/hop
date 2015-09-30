@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Sep  3 16:24:39 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 17:03:36 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -85,6 +85,17 @@
 	       (data::obj (default #unspecified)))
 
 	    (class server-event::event)
+
+	    (class server
+	       (server-init!)
+	       (host::bstring read-only)
+	       (port::int read-only)
+	       (ssl::bool (default #f))
+	       (authorization read-only (default #f))
+	       (%websocket read-only (default #f))
+	       (%key (default #f)))
+	    
+	    (generic server-init! ::server)
 	    
 	    (generic add-event-listener! ::obj ::obj ::procedure . l)
 	    (generic remove-event-listener! ::obj ::obj ::procedure . l)
@@ -134,6 +145,40 @@
       (set! stopped #t)))
 
 ;*---------------------------------------------------------------------*/
+;*    server-init! ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-generic (server-init! srv::server)
+   (with-access::server srv (host port ssl authorization %websocket %key)
+      (with-hop (string-append (hop-service-base) "/public/server-event/info")
+	 :host host :port port
+	 :authorization authorization
+	 :ssl ssl
+	 :sync #t
+	 (lambda (v)
+	    (let* ((key (vector-ref v 2))
+		   (url (format "~a://~a:~a~a/public/server-event/websocket?key=~a"
+			   (if ssl "wss" "ws") host port (hop-service-base)
+			   key)))
+	       (set! %key key)
+	       (set! %websocket
+		  (instantiate::websocket
+		     (url url)
+		     (authorization authorization)
+		     (onmessages (list (lambda (v) (tprint "v=" v))))))
+	       (websocket-connect! %websocket))))))
+
+;*---------------------------------------------------------------------*/
+;*    add-event-listener! ::server ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (add-event-listener! obj::server event proc . capture)
+   (with-access::server obj (host port ssl authorization %websocket %key)
+      (with-hop (format "~a/public/server-event/register?event=~a&key=~a&mode=websocket"
+		   (hop-service-base) event %key)
+	 :host host :port port
+	 :authorization authorization
+	 :ssl ssl)))
+
+;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
 ;*---------------------------------------------------------------------*/
 (define *event-mutex* (make-mutex "hop-event"))
@@ -155,9 +200,7 @@
 (define *policy-file-service #f)
 (define *close-service* #f)
 (define *client-key* 0)
-(define *default-request* (instantiate::http-server-request
-			     #;(user (class-nil user))
-			     ))
+(define *default-request* (instantiate::http-server-request))
 (define *ping* (symbol->string (gensym 'ping)))
 (define *clients-number* 0)
 
@@ -453,6 +496,7 @@
 	       (#!key key)
 	       (with-trace 'event "start websocket service"
 		  (trace-item "key=" key)
+		  (tprint "SERVER-EVENT/WEBSOCKET key=" key)
 		  (let ((req (current-request)))
 		     (with-access::http-request req (header)
 			(if (websocket-proxy-request? header)
@@ -499,7 +543,6 @@
 			;; increments the number of connected clients
 			(set! *clients-number* (+fx *clients-number* 1))
 			(instantiate::http-response-event
-			   #;(request req)
 			   (name key)))))))
 	 
 	 (set! *policy-file-service
@@ -508,7 +551,6 @@
 	       :timeout 0
 	       (#!key port key)
 	       (instantiate::http-response-string
-		  #;(request (current-request))
 		  (content-type "application/xml")
 		  (body (hop-event-policy port)))))
 	 
@@ -674,8 +716,7 @@
 			       name
 			       (lambda (l) (cons req l))
 			       (list req))
-	    (instantiate::http-response-string
-	       #;(request req)))))
+	    (instantiate::http-response-string))))
 
    (define (multipart-register-event! req key name)
       (with-trace 'event "multipart-register-event!"
@@ -694,7 +735,6 @@
 		   ;; that's the way we have configured the xhr
 		   ;; on the client side but we must close the connection
 		   (instantiate::http-response-string
-		      #;(request req)
 		      (header '((Transfer-Encoding: . "chunked")))
 		      (content-length #e-2)
 		      (content-type (format "multipart/x-mixed-replace; boundary=\"~a\"" hop-multipart-key))
@@ -728,6 +768,7 @@
 	    (trace-item "key=" key)
 	    (trace-item "name=" name)
 	    (trace-item "c=" c)
+	    (tprint "lst=" *websocket-response-list*)
 	    (if (pair? c)
 		(let ((resp (cdr c)))
 		   (hashtable-update! *websocket-socket-table*
@@ -806,9 +847,9 @@
 	 (when (pair? c)
 	    (let ((resp (cdr c)))
 	       (hashtable-update! *websocket-socket-table*
-				  event
-				  (lambda (l) (delete! resp l))
-				  '())
+		  event
+		  (lambda (l) (delete! resp l))
+		  '())
 	       ;; Ping the client to check if it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
@@ -1343,7 +1384,6 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-event-policy-file req)
    (instantiate::http-response-raw
-      #;(request req)
       (connection 'close)
       (proc (lambda (p)
 	       (with-access::http-request req (port)

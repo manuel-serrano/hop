@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sun Aug  9 06:48:07 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 16:43:40 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -341,7 +341,7 @@
 		 header))
 	     ((eq? (car opts) :ssl)
 	      (loop (cddr opts)
-		 (cons* (if (cadr opts) 'https 'http) 'scheme args)
+		 (cons* `(if ,(cadr opts) 'https 'http) scheme: args)
 		 success fail
 		 host port sync
 		 auth
