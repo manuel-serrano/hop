@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Wed Sep 23 11:24:44 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 16:20:58 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -130,7 +130,8 @@
   	   (class wiki-syntax)
 
 	   (class event)
-
+	   (class server)
+	   
 	   (class zeroconf)
 	   (class zeroconf-service-event)
 
