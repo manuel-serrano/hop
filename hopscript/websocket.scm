@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sun Sep 20 06:53:05 2015 (serrano)                */
+;*    Last change :  Thu Oct  1 22:25:21 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -37,7 +37,8 @@
 	      (wss::JsWebSocketServer read-only)
 	      (socket::socket read-only)
 	      (onmessages::pair-nil (default '()))
-	      (oncloses::pair-nil (default '())))
+	      (oncloses::pair-nil (default '()))
+	      (onerrors::pair-nil (default '())))
 	   
 	   (class JsWebSocketServer::JsObject
 	      (state::symbol (default 'init))
@@ -132,7 +133,10 @@
 	  (set! onmessages (cons proc onmessages))))
       ((string=? name "close")
        (with-access::JsWebSocketClient this (oncloses)
-	  (set! oncloses (cons proc oncloses))))))
+	  (set! oncloses (cons proc oncloses))))
+      ((string=? name "error")
+       (with-access::JsWebSocketClient this (onerrors)
+	  (set! onerrors (cons proc onerrors))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-websocket! ...                                           */
@@ -198,7 +202,21 @@
 		  ;; connect the socket to the server
 		  (js-worker-push-thunk! worker "ws-listener"
 		     (lambda ()
-			(websocket-connect! ws)))
+			(with-handler
+			   (lambda (e)
+			      (with-access::&error e (msg)
+				 (with-access::websocket ws (onerrors)
+				    (let* ((msg (js-string->jsstring msg))
+					   (evt (instantiate::JsWebSocketEvent
+						   (name "error")
+						   (target ws)
+						   (data msg)
+						   (value msg))))
+				       (js-worker-push-thunk! worker
+					  "wesbsocket-client"
+					  (lambda ()
+					     (apply-listeners onerrors evt)))))))
+			   (websocket-connect! ws))))
 		  obj)))
 
 	 (define (wss-onconnect wss)
@@ -476,8 +494,6 @@
    
    (define (onmessage frame)
       (with-access::JsWebSocketClient ws (onmessages)
-;* 			      (tprint "############## read " id " " (frame++) " " frame */
-;* 				 " " onmessages)                       */
 	 (with-access::JsWebSocketServer wss (worker)
 	    (let* ((val (js-string->jsstring frame))
 		   (evt (instantiate::JsWebSocketEvent
@@ -502,6 +518,26 @@
 		  "wesbsocket-client"
 		  (lambda ()
 		     (apply-listeners oncloses evt)))))))
+
+   (define (onerror)
+      (with-access::JsWebSocketClient ws (onerrors)
+	 (with-access::JsWebSocketServer wss (worker)
+	    (let ((evt (instantiate::JsWebSocketEvent
+			  (name "error")
+			  (target ws)
+			  (data (js-undefined))
+			  (value (js-undefined)))))
+	       (js-worker-push-thunk! worker
+		  "wesbsocket-client"
+		  (lambda ()
+		     (apply-listeners onerrors evt)))))))
+
+   (define (eof-error? e)
+      (or (isa? e &io-closed-error)
+	  (and (isa? e &error)
+	       (with-access::&error e (msg)
+		  (string=? msg
+		     "Can't read on a closed input port")))))
    
    (with-access::http-request req (socket)
       (thread-start!
@@ -512,15 +548,24 @@
 		     (let ((in (socket-input socket)))
 			(input-port-timeout-set! in 0))
 		     ;; start reading the frames
-		     (let loop ()
-			(let ((frame (websocket-read socket)))
-			   (if (string? frame)
-			       (begin
+		     (with-handler
+			(lambda (e)
+			   (socket-shutdown socket)
+			   (if (eof-error? e)
+			       (onclose)
+			       (onerror)))
+			(let loop ()
+			   (let ((frame (websocket-read socket)))
+			      (cond
+				 ((string? frame)
 				  (onmessage frame)
 				  (loop))
-			       (begin
+				 ((eof-object? frame)
 				  (socket-shutdown socket)
-				  (onclose)))))))))
+				  (onclose))
+				 (else
+				  (socket-shutdown socket)
+				  (onerror))))))))))
       ws))
 
 ;*---------------------------------------------------------------------*/
