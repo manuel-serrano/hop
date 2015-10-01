@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Sep 30 09:59:02 2015 (serrano)                */
+;*    Last change :  Thu Oct  1 13:53:02 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -95,13 +95,36 @@
 	 (js-make-function %this
 	    (lambda (this url args)
 	       (js-new %this js-webservice url args))
-	    1 'JsWebservice
+	    2 'webservice
 	    :__proto__ js-function-prototype
 	    :prototype js-urlframe-prototype
 	    :construct (lambda (this url args)
 			  (js-make-urlframe %this
 			     js-urlframe-prototype
 			     url args))))
+
+      (define js-server-prototype
+	 (instantiate::JsObject
+	    (__proto__ __proto__)
+	    (extensible #t)))
+      
+      (define js-server
+	 (js-make-function %this
+	    (lambda (this host port auth)
+	       (js-new %this host port auth))
+	    3 'Server
+	    :__proto__ js-function-prototype
+	    :prototype js-server-prototype
+	    :construct (lambda (this host port auth)
+			  (instantiate::JsWrapper
+			     (__proto__ js-server-prototype)
+			     (data '())
+			     (obj (instantiate::server
+				     (host (js-tostring host %this))
+				     (port (js-tointeger port %this))
+				     (authorization (if (eq? auth (js-undefined))
+							#f
+							(js-tostring auth %this)))))))))
       
       (js-bind! %this js-urlframe-prototype 'post
 	 :value (js-make-function %this
@@ -118,7 +141,30 @@
 		   (lambda (this::JsUrlFrame)
 		      (js-string->jsstring (urlframe->string this %this)))
 		   0 'toString))
+
+      (js-bind! %this js-server-prototype 'addEventListener
+	 :value (js-make-function %this
+		   (lambda (this::JsWrapper event proc . capture)
+		      (with-access::JsWrapper this (obj data)
+			 (let ((f (lambda (evt)
+				     (js-call1 %this proc this evt))))
+			    (set! data (cons (cons proc f) data))
+			    (when (isa? obj server)
+			       (add-event-listener! obj
+				     (js-tostring event %this) f)))))
+		   3 'addEventListener))
       
+      (js-bind! %this js-server-prototype 'removeEventListener
+	 :value (js-make-function %this
+		   (lambda (this::JsWrapper event proc . capture)
+		      (with-access::JsWrapper this (obj data)
+			 (when (isa? obj server)
+			    (let ((f (assq proc data)))
+			       (when (pair? f)
+				  (remove-event-listener! server
+					(js-tostring event %this) (cdr f)))))))
+		   3 'removeEventListener))
+				  
       (with-access::JsGlobalObject %this (js-object)
 	 (js-alist->jsobject
 	    (list
@@ -176,10 +222,12 @@
 	       (define-js signal 2
 		  (lambda (this name v)
 		     (hop-event-signal! (js-tostring name %this) v)))
-	       
+
 	       (define-js broadcast 2
 		  (lambda (this name v)
 		     (hop-event-broadcast! (js-tostring name %this) v)))
+
+	       `(Server . ,js-server)
 	       
 	       ;; xml
 	       (define-js xmlCompile 3

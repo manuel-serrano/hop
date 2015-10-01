@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Sep 26 06:28:14 2015 (serrano)                */
+;*    Last change :  Thu Oct  1 13:43:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -98,6 +98,10 @@
 	      (properties::pair-nil (default '()))
 	      (cmap (default #f))
 	      (elements::vector (default '#())))
+
+	   (class JsWrapper::JsObject
+	      obj
+	      data)
 	   
 	   (class JsGlobalObject::JsObject
 	      (js-object::JsFunction (default (class-nil JsFunction)))

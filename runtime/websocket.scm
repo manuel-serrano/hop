@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Sun Sep 20 06:50:27 2015 (serrano)                */
+;*    Last change :  Thu Oct  1 22:54:22 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -577,16 +577,20 @@
 		  (socket-shutdown %socket)
 		  (set! %socket #f))))))
    
-   (define (abort)
-      (with-access::websocket ws (%mutex %socket onerrors)
+   (define (abort e)
+      (exception-notify e)
+      (with-access::websocket ws (%mutex %socket onerrors state)
 	 (synchronize %mutex
 	    (when (pair? onerrors)
 	       (let ((se (instantiate::websocket-event
 			    (name "close")
 			    (target ws)
-			    (value ws))))
-		  (apply-listeners onerrors se))))
-	 (close)))
+			    (data e)
+			    (value e))))
+		  (apply-listeners onerrors se)))
+	    (when (socket? %socket)
+	       (socket-shutdown %socket)
+	       (set! %socket #f)))))
    
    (define (message val)
       (with-access::websocket ws (onmessages %mutex)
@@ -597,22 +601,13 @@
 		      (value val))))
 	    (synchronize %mutex
 	       (apply-listeners onmessages se)))))
-   
-   (define (read-check-byte in val)
-      (unless (=fx (read-byte in) val)
-	 (abort)))
-   
-   (define (read-messages)
-      (with-access::websocket ws (%socket)
-	 (let ((in (socket-input %socket)))
-	    (input-timeout-set! in 0)
-	    (let loop ()
-	       (let ((msg (websocket-read %socket)))
-		  (if (string? msg)
-		      (begin
-			 (message msg)
-			 (loop))
-		      (abort)))))))
+
+   (define (eof-error? e)
+      (or (isa? e &io-closed-error)
+	  (and (isa? e &error)
+	       (with-access::&error e (msg)
+		  (string=? msg
+		     "Can't read on a closed input port")))))
    
    (with-access::websocket ws (%mutex %condvar %socket url authorization state onopens protocol onmessages)
       (synchronize %mutex
@@ -663,15 +658,27 @@
 				    (thread-start!
 				       (instantiate::hopthread
 					  (body (lambda ()
-						   (let loop ()
-						      (synchronize %mutex
-							 (unless (pair? onmessages)
-							    (condition-variable-wait! %condvar %mutex)))
-						      (unwind-protect
-							 (with-handler
-							    (lambda (e) #f)
-							    (read-messages))
-							 (close)))))))))))))))))))
+						   (synchronize %mutex
+						      (unless (pair? onmessages)
+							 (condition-variable-wait! %condvar %mutex)))
+						   (with-handler
+						      (lambda (e)
+							 (if (eof-error? e)
+							     (close)
+							     (abort e)))
+						      (with-access::websocket ws (%socket)
+							 (let ((in (socket-input %socket)))
+							    (input-timeout-set! in 0)
+							    (let loop ()
+							       (let ((msg (websocket-read %socket)))
+								  (cond
+								     ((string? msg)
+								      (message msg)
+								      (if %socket (loop) (close)))
+								     ((eof-object? msg)
+								      (close))
+								     (else
+								      (abort msg))))))))))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-close ...                                              */
@@ -836,9 +843,8 @@
 	     (wl (read-int16 in)))
 	 (bit-or (bit-lsh wh 16) wl)))
    
-   (define (read-check-byte in val)
-      (let ((b (read-byte in)))
-	 (and (integer? b) (=fx b val))))
+   (define (check-byte b val)
+      (and (integer? b) (=fx b val)))
    
    (define (read-playload-len l::int in::input-port)
       (cond
@@ -847,11 +853,19 @@
 	 ((=fx l 126)
 	  (read-int16 in))
 	 ((=fx l 127)
-	  (when (and (read-check-byte in 0)
-		     (read-check-byte in 0)
-		     (read-check-byte in 0)
-		     (read-check-byte in 0))
-	     (read-int32 in)))
+	  (let* ((b0 (read-byte in))
+		 (b1 (read-byte in))
+		 (b2 (read-byte in))
+		 (b3 (read-byte in)))
+	     (if (check-byte b0 0)
+		 (if (check-byte b1 0)
+		     (if (check-byte b2 0)
+			 (if (check-byte b3 0)
+			     (read-int32 in)
+			     b3)
+			 b2)
+		     b1)
+		 b0)))
 	 (else
 	  #f)))
    
@@ -874,26 +888,37 @@
    
    (let ((in (socket-input sock)))
       ;; MS: to be complete, binary, ping, etc. must be supported
-      (when (read-check-byte in #x81)
-	 (let ((s (read-byte in)))
-	    (when (integer? s)
-	       (let ((len (read-playload-len (bit-and s #x7f) in)))
-		  (cond
-		     ((not len)
-		      (error "websocket-read" "badly formed frame" s))
-		     ((=fx (bit-and s #x80) 0)
-		      ;; unmasked payload
-		      (read-chars len in))
-		     (else
-		      ;; masked payload
-		      (let* ((key0 (read-byte in))
-			     (key1 (read-byte in))
-			     (key2 (read-byte in))
-			     (key3 (read-byte in)))
-			 (when (and (integer? key0)
-				    (integer? key1)
-				    (integer? key2)
-				    (integer? key3))
-			    (let ((key (vector key0 key1 key2 key3))
-				  (payload (read-chars len in)))
-			       (unmask payload key))))))))))))
+      (let ((b (read-byte in)))
+	 (if (check-byte b #x81)
+	     (let ((s (read-byte in)))
+		(if (integer? s)
+		    (let ((len (read-playload-len (bit-and s #x7f) in)))
+		       (cond
+			  ((not len)
+			   (if (eof-object? len)
+			       len
+			       (error "websocket-read" "badly formed frame" s)))
+			  ((=fx (bit-and s #x80) 0)
+			   ;; unmasked payload
+			   (read-chars len in))
+			  (else
+			   ;; masked payload
+			   (let* ((key0 (read-byte in))
+				  (key1 (read-byte in))
+				  (key2 (read-byte in))
+				  (key3 (read-byte in)))
+			      (if (integer? key0)
+				  (if (integer? key1)
+				      (if (integer? key2)
+					  (if (integer? key3)
+					      (let ((key (vector key0 key1 key2 key3))
+						    (payload (read-chars len in)))
+						 (if (string? payload)
+						     (unmask payload key)
+						     payload))
+					      key3)
+					  key2)
+				      key1)
+				  key0)))))
+		    s))
+	     b))))
