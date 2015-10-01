@@ -61,6 +61,7 @@ POPULATION = Makefile \
   hopjs/serv/https.js \
   hopjs/serv/https.js.args \
   hopjs/serv/https.js.rc.js \
+  hopjs/serv/JsonPayload.js \
   hopjs/serv/post.js \
   hopjs/serv/serialization.js \
   hopjs/serv/service.js \
