@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/aux/launchWorkers.js*/
+/*    .../project/hop/3.0.x/test/hopjs/serv/aux/launchWorkers.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Tue Sep  15 12:42:26 2015 (serrano)               */
+/*    Last change :  Thu Oct  1 23:04:03 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    A generic launcher for stress test workers                       */
@@ -57,7 +57,7 @@ function runTest( args ){
    }
    
    function checkCompletion() {
-      console.log( 'checkCompletion', doneWithClients );
+      // console.log( 'checkCompletion', doneWithClients );
       if ( doneWithClients == numClients ) {
 	 console.log( 'All client tests passed. Checking server post flight assertions' );
 	 onSuccess();

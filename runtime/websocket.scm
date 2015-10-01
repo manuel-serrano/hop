@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Oct  1 22:15:34 2015 (serrano)                */
+;*    Last change :  Thu Oct  1 22:54:22 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -577,14 +577,16 @@
 		  (socket-shutdown %socket)
 		  (set! %socket #f))))))
    
-   (define (abort)
+   (define (abort e)
+      (exception-notify e)
       (with-access::websocket ws (%mutex %socket onerrors state)
 	 (synchronize %mutex
 	    (when (pair? onerrors)
 	       (let ((se (instantiate::websocket-event
 			    (name "close")
 			    (target ws)
-			    (value ws))))
+			    (data e)
+			    (value e))))
 		  (apply-listeners onerrors se)))
 	    (when (socket? %socket)
 	       (socket-shutdown %socket)
@@ -663,7 +665,7 @@
 						      (lambda (e)
 							 (if (eof-error? e)
 							     (close)
-							     (abort)))
+							     (abort e)))
 						      (with-access::websocket ws (%socket)
 							 (let ((in (socket-input %socket)))
 							    (input-timeout-set! in 0)
@@ -672,11 +674,11 @@
 								  (cond
 								     ((string? msg)
 								      (message msg)
-								      (loop))
+								      (if %socket (loop) (close)))
 								     ((eof-object? msg)
 								      (close))
 								     (else
-								      (abort))))))))))))))))))))))))
+								      (abort msg))))))))))))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-close ...                                              */
