@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Sep 30 17:03:36 2015 (serrano)                */
+;*    Last change :  Wed Sep 30 20:46:46 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -145,9 +145,42 @@
       (set! stopped #t)))
 
 ;*---------------------------------------------------------------------*/
+;*    envelope-re ...                                                  */
+;*---------------------------------------------------------------------*/
+(define envelope-re
+   (pregexp "^<([rsxifj]) name='([^']+)'>((?:.|[\n])*)</[rsxifj]>$" ))
+(define cdata-re
+   (pregexp "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$"))
+
+;*---------------------------------------------------------------------*/
 ;*    server-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-generic (server-init! srv::server)
+
+   (define (parse-message v)
+      (tprint "v=" v " " (typeof v))
+      (with-access::websocket-event v (data)
+	 (let ((m (pregexp-match envelope-re data)))
+	    (tprint "v=" v " m=" m)
+	    (when (pair? m)
+	       (let ((k (cadr m))
+		     (id (caddr m))
+		     (text (cadddr m)))
+		  (tprint "k=" k " " (typeof k))
+		  (case (string-ref k 0)
+		     ((#\i)
+		      (tprint "todo.i"))
+		     ((#\f)
+		      (tprint "todo.f"))
+		     ((#\x)
+		      (tprint "todo.x"))
+		     ((#\j)
+		      (let ((t (pregexp-match cdata-re text)))
+			 (tprint "t=" t)
+			 (let ((v (string->obj (url-decode (cadr t)))))
+			    (tprint "v=" v)
+			    v)))))))))
+      
    (with-access::server srv (host port ssl authorization %websocket %key)
       (with-hop (string-append (hop-service-base) "/public/server-event/info")
 	 :host host :port port
@@ -164,7 +197,7 @@
 		  (instantiate::websocket
 		     (url url)
 		     (authorization authorization)
-		     (onmessages (list (lambda (v) (tprint "v=" v))))))
+		     (onmessages (list parse-message))))
 	       (websocket-connect! %websocket))))))
 
 ;*---------------------------------------------------------------------*/

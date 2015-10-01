@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BUILDLIBDIR=/home/serrano/prgm/project/hop/3.0.x/lib/hop/3.0.0
-BUILDBINDIR=/home/serrano/prgm/project/hop/3.0.x/bin
+BUILDLIBDIR=@BUILDLIBDIR@
+BUILDBINDIR=@BUILDBINDIR@
 
 LD_LIBRARY_PATH=$BUILDLIBDIR:$LD_LIBRARY_PATH;
 export LD_LIBRARY_PATH;
@@ -72,10 +72,10 @@ run() {
     $hop -g --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1
 
     if [ $? = 0 ]; then
-      echo -e "\e[32m\e[1mok\e[0m.";
+      echo "ok.";
       success=`expr $success + 1`
     else
-      echo -e "\e[31m\e[1mfailure\e[0m."
+      echo "failure !!!"
       if [ "$verb " != " " ]; then
         cat /tmp/TEST-HOPJS.out
       fi

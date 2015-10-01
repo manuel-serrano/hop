@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Sep 22 09:29:01 2015 (serrano)                */
+#*    Last change :  Thu Oct  1 11:54:52 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -28,7 +28,7 @@ POPULATION = Makefile \
   test262/README \
   test262/TEST \
   hopjs/README \
-  hopjs/TEST \
+  hopjs/TEST.in \
   hopjs/passwd.hop \
   hopjs/noserv/array.js \
   hopjs/noserv/comprehension.js \
