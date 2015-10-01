@@ -73,6 +73,7 @@ POPULATION = Makefile \
   hopjs/serv/unregisterService.js \
   hopjs/serv/webService.js \
   hopjs/serv/webSocket.js \
+  hopjs/serv/webSocketErrors.js \
   hopjs/serv/webSocketOpen.js \
   hopjs/serv/worker.js \
   hopjs/serv/aux/launchWorkers.js \
