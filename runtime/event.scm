@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Sep 30 20:46:46 2015 (serrano)                */
+;*    Last change :  Thu Oct  1 13:55:42 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -84,7 +84,7 @@
 	    (class websocket-event::event
 	       (data::obj (default #unspecified)))
 
-	    (class server-event::event)
+	    (class server-event::websocket-event)
 
 	    (class server
 	       (server-init!)
@@ -92,6 +92,7 @@
 	       (port::int read-only)
 	       (ssl::bool (default #f))
 	       (authorization read-only (default #f))
+	       (listeners::pair-nil (default '()))
 	       (%websocket read-only (default #f))
 	       (%key (default #f)))
 	    
@@ -157,29 +158,64 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (server-init! srv::server)
 
+   (define (message->event k id text)
+      (case (string-ref k 0)
+	 ((#\i)
+	  (let ((val (string->integer text)))
+	     (instantiate::server-event
+		(target server)
+		(name id)
+		(value val)
+		(data val))))
+	 ((#\f)
+	  (let ((val (string->real text)))
+	     (instantiate::server-event
+		(target server)
+		(name id)
+		(value val)
+		(data val))))
+	 ((#\x)
+	  (let ((val (call-with-input-string text
+			(lambda (p)
+			   (car
+			      (last-pair
+				 (parse-html p (string-length text))))))))
+	     (instantiate::server-event
+		(target server)
+		(name id)
+		(value val)
+		(data val))))
+	 ((#\s)
+	  (let ((val (url-decode text)))
+	     (instantiate::server-event
+		(target server)
+		(name id)
+		(value val)
+		(data val))))
+	 ((#\j)
+	  (let ((val (string->obj
+			(url-decode (cadr (pregexp-match cdata-re text))))))
+	     (instantiate::server-event
+		(target server)
+		(name id)
+		(value val)
+		(data val))))))
+      
    (define (parse-message v)
-      (tprint "v=" v " " (typeof v))
       (with-access::websocket-event v (data)
 	 (let ((m (pregexp-match envelope-re data)))
-	    (tprint "v=" v " m=" m)
 	    (when (pair? m)
 	       (let ((k (cadr m))
 		     (id (caddr m))
 		     (text (cadddr m)))
-		  (tprint "k=" k " " (typeof k))
-		  (case (string-ref k 0)
-		     ((#\i)
-		      (tprint "todo.i"))
-		     ((#\f)
-		      (tprint "todo.f"))
-		     ((#\x)
-		      (tprint "todo.x"))
-		     ((#\j)
-		      (let ((t (pregexp-match cdata-re text)))
-			 (tprint "t=" t)
-			 (let ((v (string->obj (url-decode (cadr t)))))
-			    (tprint "v=" v)
-			    v)))))))))
+		  (with-access::server srv (listeners)
+		     (let ((ltns (filter-map (lambda (l)
+						(when (string=? (car l) id)
+						   (cdr l)))
+				    listeners)))
+			(when (pair? ltns)
+			   (let ((event (message->event k id text)))
+			      (apply-listeners ltns event))))))))))
       
    (with-access::server srv (host port ssl authorization %websocket %key)
       (with-hop (string-append (hop-service-base) "/public/server-event/info")
@@ -204,12 +240,26 @@
 ;*    add-event-listener! ::server ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! obj::server event proc . capture)
-   (with-access::server obj (host port ssl authorization %websocket %key)
+   (with-access::server obj (host port ssl authorization %websocket %key listeners)
       (with-hop (format "~a/public/server-event/register?event=~a&key=~a&mode=websocket"
 		   (hop-service-base) event %key)
 	 :host host :port port
 	 :authorization authorization
-	 :ssl ssl)))
+	 :ssl ssl
+	 (lambda (v)
+	    (synchronize *event-mutex*
+	       (set! listeners (cons (cons event proc) listeners)))))))
+
+;*---------------------------------------------------------------------*/
+;*    remove-event-listener! ::server ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (remove-event-listener! obj::server event proc . capture)
+   (with-access::server obj (listeners)
+      (synchronize *event-mutex*
+	 (set! listeners
+	    (filter (lambda (l)
+		       (not (and (eq? (cdr l) proc) (string=? (car l) event))))
+	       listeners)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
@@ -801,7 +851,6 @@
 	    (trace-item "key=" key)
 	    (trace-item "name=" name)
 	    (trace-item "c=" c)
-	    (tprint "lst=" *websocket-response-list*)
 	    (if (pair? c)
 		(let ((resp (cdr c)))
 		   (hashtable-update! *websocket-socket-table*
