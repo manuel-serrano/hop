@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/webSocketErrors.js */
+/*    .../project/hop/3.0.x/test/hopjs/serv/webSocketErrors.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Oct 02 00:43:00 2015                          */
-/*    Last change :  Fri Sep 18 16:11:43 2015 (serrano)                */
+/*    Last change :  Fri Oct  2 14:36:46 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Negative test for webSockets                                     */
@@ -13,7 +13,9 @@ var hop = require( 'hop' );
 
 var serv = new WebSocketServer( { path: "serv" } );
 
-var wrongURL = 'ws://' + hop.hostname + ':'+ hop.port + '/hop/wrongURL';
+var wrongURL = 'ws://' + hop.hostname + ':' + hop.port + '/hop/wrongURL';
+var wrongURL2 = 'ws://' + hop.hostname + ':' + (hop.port + 10) + '/hop/wrongURL';
+var wrongURL3 = 'ws://' + hop.hostname + "_doesnotexist" + ':' + hop.port + '/hop/wrongURL';
 var URL = 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv';
 
 serv.onconnection = function( event ) {
@@ -36,7 +38,8 @@ serv.onconnection = function( event ) {
 	 break;
 	 
       case 'sendClose':
-	 console.log( 'server: closing socket' );
+	    console.log( 'server: closing socket' );
+	    this.send( "foobar" );
 	 this.close();
 	 console.log( 'state( server side):', this.readyState );
 	 break;
@@ -77,11 +80,10 @@ function ignore() {
    pass();
 }
 
-var testSuite = [
-
-   function() {
-      console.log( 'TEST: tries to open a ws on a wrong URL, should raise an exception or return an error and/or close event.' );
-     // return ignore();; // IGNORE TEST
+function mkTest( wrongURL ) {
+   return function() {
+      console.log( 'TEST.0: tries to open a ws on a wrong URL, should raise an exception or return an error and/or close event.' );
+      // return ignore();; // IGNORE TEST
       var ws;
       var timer = setTimeout( function () {
 	 console.log( 'client state: %s. Timeout', ws.readyState );
@@ -107,14 +109,21 @@ var testSuite = [
 	 pass();
       };
       console.log( 'client listeners are listening ...' );
-   },
+   }
+}
+
+var testSuite = [
+   mkTest( wrongURL ),
+   mkTest( wrongURL2 ),
+   mkTest( wrongURL3 ),
    
    function() {
-      console.log( 'TEST: server initiated close, test that close event is received on the server side' );
+      console.log( 'TEST.1: server initiated close, test that close event is received on the server side' );
       var ws;
       ws = new WebSocket( URL );
+      console.error( "URL=", URL );
       console.log( 'client state:', ws.readyState );
-      ws.onopen = function() {	 
+      ws.onopen = function() {
 	 console.log( 'client state:', ws.readyState );
 	 console.log( 'client sending exitOnClose request' );
 	 ws.send( 'exitOnClose' );
@@ -123,10 +132,9 @@ var testSuite = [
       };
       console.log( 'client listeners are listening ...' );
    },
-
+   
    function() {
-      console.log( 'TEST: server initiated close, test that close event is received on the client side' );
-      return ignore();; // IGNORE TEST
+      console.log( 'TEST.2: server initiated close, test that close event is received on the client side' );
       var ws;
       ws = new WebSocket( URL );
       console.log( 'client state:', ws.readyState );
@@ -151,8 +159,7 @@ var testSuite = [
    },
 
    function() {
-      console.log( 'client initiated close, test that close event is received on the client side' );
-      return ignore();; // IGNORE TEST
+      console.log( 'TEST.3: client initiated close, test that close event is received on the client side' );
       var ws;
       ws = new WebSocket( URL );
       console.log( 'client state:', ws.readyState );
@@ -181,7 +188,7 @@ var testSuite = [
    },
 
    function() {
-      console.log( 'client initiated close, test that close event is received on the server side' );
+      console.log( 'TEST.4: client initiated close, test that close event is received on the server side' );
       var ws;
       ws = new WebSocket( URL );
       console.log( 'client state:', ws.readyState );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Oct  2 07:48:27 2015 (serrano)                */
+;*    Last change :  Fri Oct  2 14:36:13 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -482,14 +482,15 @@
 		(set! onopens (cons proc onopens))))
 	    ((string=? evt "message")
 	     (with-access::websocket ws (onmessages %condvar)
-		(unless (pair? onmessages)
-		   (condition-variable-signal! %condvar))
+		(condition-variable-signal! %condvar)
 		(set! onmessages (cons proc onmessages))))
 	    ((string=? evt "close")
-	     (with-access::websocket ws (oncloses)
+	     (with-access::websocket ws (oncloses %condvar)
+		(condition-variable-signal! %condvar)
 		(set! oncloses (cons proc oncloses))))
 	    ((string=? evt "error")
-	     (with-access::websocket ws (onerrors)
+	     (with-access::websocket ws (onerrors %condvar)
+		(condition-variable-signal! %condvar)
 		(set! onerrors (cons proc onerrors))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -601,7 +602,7 @@
 		      (value val))))
 	    (synchronize %mutex
 	       (apply-listeners onmessages se)))))
-
+   
    (define (eof-error? e)
       (cond-expand
 	 (bigloo4.2a
@@ -613,7 +614,8 @@
 	 (else
 	  (isa? e &io-closed-error))))
    
-   (with-access::websocket ws (%mutex %condvar %socket url authorization state onopens protocol onmessages)
+   (with-access::websocket ws (%mutex %condvar %socket url authorization state onopens protocol
+				 onmessages onerrors oncloses)
       (synchronize %mutex
 	 (unless (websocket-connected? ws)
 	    (multiple-value-bind (scheme userinfo host port path)
@@ -644,45 +646,49 @@
 				       '())))
 		     (multiple-value-bind (http status line)
 			(http-parse-status-line in)
-			(when (=fx status 101)
-			   (multiple-value-bind (header host port clen tenc auth pauth connection)
-			      (http-parse-header in out)
-			      (let ((accept (assq sec-websocket-accept: header)))
-				 (when (and (pair? accept)
-					    (string=?
-					       (websocket-hybi-accept sec-ws-key)
-					       (cdr accept)))
-				    (set! state 'open)
-				    (when (pair? onopens)
-				       (let ((se (instantiate::websocket-event
-						    (name "open")
-						    (target ws)
-						    (value ws))))
-					  (apply-listeners onopens se)))
-				    (thread-start!
-				       (instantiate::hopthread
-					  (body (lambda ()
-						   (synchronize %mutex
-						      (unless (pair? onmessages)
-							 (condition-variable-wait! %condvar %mutex)))
-						   (with-handler
-						      (lambda (e)
-							 (if (eof-error? e)
-							     (close)
-							     (abort e)))
-						      (with-access::websocket ws (%socket)
-							 (let ((in (socket-input %socket)))
-							    (input-timeout-set! in 0)
-							    (let loop ()
-							       (let ((msg (websocket-read %socket)))
-								  (cond
-								     ((string? msg)
-								      (message msg)
-								      (if %socket (loop) (close)))
-								     ((eof-object? msg)
-								      (close))
-								     (else
-								      (abort msg))))))))))))))))))))))))
+			(if (=fx status 101)
+			    (multiple-value-bind (header host port clen tenc auth pauth connection)
+			       (http-parse-header in out)
+			       (let ((accept (assq sec-websocket-accept: header)))
+				  (when (and (pair? accept)
+					     (string=?
+						(websocket-hybi-accept sec-ws-key)
+						(cdr accept)))
+				     (set! state 'open)
+				     (when (pair? onopens)
+					(let ((se (instantiate::websocket-event
+						     (name "open")
+						     (target ws)
+						     (value ws))))
+					   (apply-listeners onopens se)))
+				     (thread-start!
+					(instantiate::hopthread
+					   (body (lambda ()
+						    (synchronize %mutex
+						       (unless (or (pair? onmessages)
+								   (pair? onerrors)
+								   (pair? oncloses))
+							  (condition-variable-wait! %condvar %mutex)))
+						    (with-handler
+						       (lambda (e)
+							  (exception-notify e)
+							  (if (eof-error? e)
+							      (close)
+							      (abort e)))
+						       (with-access::websocket ws (%socket)
+							  (let ((in (socket-input %socket)))
+							     (input-timeout-set! in 0)
+							     (let loop ()
+								(let ((msg (websocket-read %socket)))
+								   (cond
+								      ((string? msg)
+								       (message msg)
+								       (if %socket (loop) (close)))
+								      ((eof-object? msg)
+								       (close))
+								      (else
+								       (abort msg)))))))))))))))
+			    (close))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    websocket-close ...                                              */

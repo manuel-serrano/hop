@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Oct  2 07:48:13 2015 (serrano)                */
+;*    Last change :  Fri Oct  2 14:37:15 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -34,8 +34,9 @@
 	      (ws::websocket read-only))
 	   
 	   (class JsWebSocketClient::JsObject
+	      (state::symbol (default 'connecting))
 	      (wss::JsWebSocketServer read-only)
-	      (socket::socket read-only)
+	      socket::obj 
 	      (onmessages::pair-nil (default '()))
 	      (oncloses::pair-nil (default '()))
 	      (onerrors::pair-nil (default '())))
@@ -507,30 +508,36 @@
 		     (apply-listeners onmessages evt)))))))
    
    (define (onclose)
-      (with-access::JsWebSocketClient ws (oncloses)
-	 (with-access::JsWebSocketServer wss (worker)
-	    (let ((evt (instantiate::JsWebSocketEvent
-			  (name "close")
-			  (target ws)
-			  (data (js-undefined))
-			  (value (js-undefined)))))
-	       (js-worker-push-thunk! worker
-		  "wesbsocket-client"
-		  (lambda ()
-		     (apply-listeners oncloses evt)))))))
+      (with-access::JsWebSocketClient ws (oncloses socket state)
+	 (when socket
+	    (socket-shutdown socket)
+	    (set! state 'closed)
+	    (with-access::JsWebSocketServer wss (worker)
+	       (let ((evt (instantiate::JsWebSocketEvent
+			     (name "close")
+			     (target ws)
+			     (data (js-undefined))
+			     (value (js-undefined)))))
+		  (js-worker-push-thunk! worker
+		     "wesbsocket-client"
+		     (lambda ()
+			(apply-listeners oncloses evt))))))))
 
    (define (onerror)
-      (with-access::JsWebSocketClient ws (onerrors)
-	 (with-access::JsWebSocketServer wss (worker)
-	    (let ((evt (instantiate::JsWebSocketEvent
-			  (name "error")
-			  (target ws)
-			  (data (js-undefined))
-			  (value (js-undefined)))))
-	       (js-worker-push-thunk! worker
-		  "wesbsocket-client"
-		  (lambda ()
-		     (apply-listeners onerrors evt)))))))
+      (with-access::JsWebSocketClient ws (onerrors socket state)
+	 (when socket
+	    (socket-shutdown socket)
+	    (set! state 'closed)
+	    (with-access::JsWebSocketServer wss (worker)
+	       (let ((evt (instantiate::JsWebSocketEvent
+			     (name "error")
+			     (target ws)
+			     (data (js-undefined))
+			     (value (js-undefined)))))
+		  (js-worker-push-thunk! worker
+		     "wesbsocket-client"
+		     (lambda ()
+			(apply-listeners onerrors evt))))))))
 
    (define (eof-error? e)
       (cond-expand
@@ -551,6 +558,8 @@
 		     ;; connection/read timeouts.
 		     (let ((in (socket-input socket)))
 			(input-port-timeout-set! in 0))
+		     (with-access::JsWebSocketClient ws (state)
+			(set! state 'open))
 		     ;; start reading the frames
 		     (with-handler
 			(lambda (e)
@@ -580,22 +589,18 @@
    (js-bind! %this obj 'readyState
       :get (js-make-function %this
 	      (lambda (this)
-		 (with-access::JsWebSocketClient this (socket)
-		    (cond
-		       ((not (socket? socket))
-			(js-string->jsstring "connecting"))
-		       ((socket-down? socket)
-			(js-string->jsstring "closed"))
-		       (else
-			(js-string->jsstring "open")))))
+		 (with-access::JsWebSocketClient this (socket state)
+		    (js-string->jsstring (symbol->string state))))
 	      0 'readyState))
    ;; close
    (js-bind! %this obj 'close
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsWebSocketClient this (socket oncloses wss)
+		   (with-access::JsWebSocketClient this (socket oncloses wss state)
 		      (when (socket? socket)
-			 (socket-shutdown socket))
+			 (socket-shutdown socket)
+			 (set! socket #f))
+		      (set! state 'closed)
 		      (when (pair? oncloses)
 			 ;; invoke the onclose listener
 			 (let ((evt (instantiate::server-event
