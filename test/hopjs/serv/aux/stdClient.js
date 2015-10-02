@@ -19,7 +19,7 @@ function test( id, num ) {
    if ( num == 0 ) {
       postMessage( { messageType: 'done' });
    } else {
-//      console.log( 'client #%s: call #%s', id, num );
+      console.log( 'client #%s: call #%s', id, num );
       try {
 	 toTest( id, num ).post( function( result ) {
 	    test( id, num - 1 );

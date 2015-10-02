@@ -12,5 +12,5 @@
 onmessage = function( e ) {
    console.log( 'worker processing ', e.data );
    postMessage( 'Response' );
-   terminate();
+   close();
 };

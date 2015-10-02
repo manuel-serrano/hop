@@ -13,35 +13,35 @@ var hop = require( 'hop' );
 
 var serv = new WebSocketServer( { path: "serv" } );
 
+var wrongURL = 'ws://' + hop.hostname + ':'+ hop.port + '/hop/wrongURL';
+var URL = 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv';
+
 serv.onconnection = function( event ) {
    var ws = event.value;
    console.log( 'server: new connection' );
    ws.onmessage = function( event ) {
       console.log( 'server received %s command', event.data );
       switch (event.data) {
-      case 'testClose': ws.onclose = function() {
-	 console.log( 'server: received close event' );
-	 pass();
-      };
+	 
+      case 'exitOnClose':
+	 this.onclose = function() {
+	    console.log( 'server received close event' );
+	    console.log( 'state( server side):', this.readyState );
+	    this.onclose = function() {
+	       console.log( 'WARNING: duplicate close event');
+	    };
+	    setTimeout( pass, 200 );
+	 };
+	 this.send( 'ready' );
 	 break;
+	 
       case 'sendClose':
 	 console.log( 'server: closing socket' );
-	 ws.close();
-	 break;
-      case 'receiveClose':
-	 console.log( 'server setting receiveClose commands' );
-	 ws.onclose = function() {
-	    console.log( 'server: received close event' );
-	    pass();
-	 };
-	 ws.onerror = function() {
-	    console.log( 'server: received error message' );
-	    fail();
-	 };
-	 ws.send( 'sendClose' );
+	 this.close();
+	 console.log( 'state( server side):', this.readyState );
 	 break;
       default: console.log( 'server received ping');
-	 ws.send( 'pong' );
+	 this.send( 'pong' );
       }
    };
 };
@@ -78,85 +78,125 @@ function ignore() {
 }
 
 var testSuite = [
+
    function() {
-      console.log( 'tries to open a ws on a wrong URL, should raise an exception' );
-      return ignore();; // IGNORE TEST
+      console.log( 'TEST: tries to open a ws on a wrong URL, should raise an exception or return an error and/or close event.' );
+     // return ignore();; // IGNORE TEST
       var ws;
-      try {
-	 ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/wrongURL' );
-	 console.log( 'Exception not raised' );
+      var timer = setTimeout( function () {
+	 console.log( 'client state: %s. Timeout', ws.readyState );
 	 fail();
+      }, 2000 );
+      try {
+	 ws = new WebSocket( wrongURL );
+	 console.log( 'client state:', ws.readyState );
+	 ws.onerror = function() {
+	    console.log( 'client received error' );
+	    clearTimeout( timer );
+	    pass();
+	 };
+	 ws.onclose = function() {
+	    console.log( 'client received close' );
+	    clearTimeout( timer );
+	    pass();
+	 };
       }
       catch (e) {
 	 console.log( 'Exception raised. ok' );
-	 pass()
+	 clearTimeout( timer );
+	 pass();
       };
+      console.log( 'client listeners are listening ...' );
    },
+   
    function() {
-      console.log( 'server initiated close, test that close event is received on the server side' );
+      console.log( 'TEST: server initiated close, test that close event is received on the server side' );
       var ws;
-      ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
-      console.log( 'client, ws created' );
-      ws.onopen = function() {
-	 console.log( 'client sending testClose request' );
-	 ws.send( 'testClose' );
+      ws = new WebSocket( URL );
+      console.log( 'client state:', ws.readyState );
+      ws.onopen = function() {	 
+	 console.log( 'client state:', ws.readyState );
+	 console.log( 'client sending exitOnClose request' );
+	 ws.send( 'exitOnClose' );
 	 console.log( 'client sending sendClose request' );
 	 ws.send( 'sendClose' );
       };
+      console.log( 'client listeners are listening ...' );
    },
+
    function() {
-      console.log( 'server initiated close, test that close event is received on the client side' );
+      console.log( 'TEST: server initiated close, test that close event is received on the client side' );
+      return ignore();; // IGNORE TEST
       var ws;
-      ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
-      console.log( 'client, ws created' );
+      ws = new WebSocket( URL );
+      console.log( 'client state:', ws.readyState );
       ws.onclose = function() {
+	 console.log( 'client state:', this.readyState );
 	 console.log( 'client received close' );
 	 pass();
       };
       ws.onopen = function() {
+	 console.log( 'client state:', this.readyState );
 	 console.log( 'client sending sendClose request' );
-	 ws.send( 'sendClose' );
+	 this.send( 'sendClose' );
+	 setTimeout( function() {
+	    console.log( 'client sending a ping message' );
+	    this.send( 'ping' ); //send a message to detect that the socket is down
+	 }.bind( this ), 100 );
       };
       ws.onerror = function() {
 	 console.log( 'client received error event' );
 	 fail();
       };
    },
+
    function() {
       console.log( 'client initiated close, test that close event is received on the client side' );
+      return ignore();; // IGNORE TEST
       var ws;
-      ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
-      console.log( 'client, ws created' );
+      ws = new WebSocket( URL );
+      console.log( 'client state:', ws.readyState );
       ws.onclose = function() {
+	 console.log( 'client state:', this.readyState );
 	 console.log( 'client received close, ok' );
-	 pass();
+	 this.onclose = function() {
+	    console.log( 'WARNING: client: duplicate close event' );
+	 };
+	 setTimeout( function() {
+	    pass();
+	 }, 200 );
       };
       ws.onopen = function() {
-	 console.log( 'client closing websocket' );
-	 ws.close();
+	 console.log( 'client state:', ws.readyState );
+	 setTimeout( function() {
+	    console.log( 'client closing websocket' );
+	    this.close();
+	    console.log( 'client state:', this.readyState );
+	 }.bind( this ), 500 );
       };
       ws.onerror = function() {
 	 console.log( 'client received error event' );
 	 fail();
       };
    },
+
    function() {
       console.log( 'client initiated close, test that close event is received on the server side' );
       var ws;
-      return ignore();; // IGNORE TEST
-      ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
-      console.log( 'client, ws created' );
+      ws = new WebSocket( URL );
+      console.log( 'client state:', ws.readyState );
       ws.onopen = function() {
-	 console.log( 'client sending close request' );
-	 ws.send( 'receiveClose' );
+	 console.log( 'client state:', this.readyState );
+	 console.log( 'client sending exitOnClose request' );
+	 this.send( 'exitOnClose' );
       };
       ws.onerror = function() {
 	 console.log( 'client received error event' );
 	 fail();
       };
       ws.onmessage = function() {
-	 console.log( 'client received server ack' );
-	 ws.close();
+	 console.log( 'client closing WebSocket' );
+	 this.close();
       };
    },
       
