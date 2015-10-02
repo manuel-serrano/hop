@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Sep  4 15:48:02 2015 (serrano)                */
+;*    Last change :  Thu Oct  1 23:13:04 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -66,25 +66,10 @@
 (register-class-serialization! JsSlowBuffer
    jsslowbuffer->u8vector
    js-u8vector->jsslowbuffer)
-;*    (lambda (o)                                                      */
-;*       (with-access::JsSlowBuffer o (data) data))                    */
-;*    js-string->jsslowbuffer)                                         */
-;*    (lambda (o)                                                      */
-;*       (let ((stu (make-struct '__JsCustom__ 2 o)))                  */
-;* 	 (struct-set! stu 1 js-string->jsslowbuffer)                   */
-;* 	 stu)))                                                        */
-;*                                                                     */
+
 (register-class-serialization! JsFastBuffer
    jsfastbuffer->u8vector
    js-u8vector->jsfastbuffer)
-;*    (lambda (o)                                                      */
-;*       (with-access::JsFastBuffer o (%data length byteoffset)        */
-;* 	 (make-serialization-substring %data                           */
-;* 	    (uint32->fixnum byteoffset) (uint32->fixnum length))))     */
-;*    (lambda (o)                                                      */
-;*       (let ((stu (make-struct '__JsCustom__ 2 o)))                  */
-;* 	 (struct-set! stu 1 js-string->jsfastbuffer)                   */
-;* 	 stu)))                                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-ref ::JsFastBuffer ...                             */

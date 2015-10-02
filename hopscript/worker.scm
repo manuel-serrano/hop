@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Sep 25 13:36:30 2015 (serrano)                */
+;*    Last change :  Fri Oct  2 08:20:35 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -143,12 +143,12 @@
 	 :configurable #f
 	 :enumerable #f)
       
-      ;; terminate
-      (js-bind! %this scope 'terminate
+      ;; close
+      (js-bind! %this scope 'close
 	 :value (js-make-function %this
 		   (lambda (this)
 		      (js-worker-self-terminate! worker #f))
-		   0 'terminate)
+		   0 'close)
 	 :writable #f
 	 :configurable #f
 	 :enumerable #f)

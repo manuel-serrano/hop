@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Thu Oct  1 23:01:28 2015 (serrano)                */
+;*    Last change :  Fri Oct  2 07:48:13 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -533,11 +533,15 @@
 		     (apply-listeners onerrors evt)))))))
 
    (define (eof-error? e)
-      (or (isa? e &io-closed-error)
-	  (and (isa? e &error)
-	       (with-access::&error e (msg)
-		  (string=? msg
-		     "Can't read on a closed input port")))))
+      (cond-expand
+	 (bigloo4.2a
+	  (or (isa? e &io-closed-error)
+	      (and (isa? e &error)
+		   (with-access::&error e (msg)
+		      (string=? msg
+			 "Can't read on a closed input port")))))
+	 (else
+	  (isa? e &io-closed-error))))
    
    (with-access::http-request req (socket)
       (thread-start!

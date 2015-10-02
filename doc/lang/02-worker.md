@@ -158,10 +158,10 @@ ${ doc.include( doc.ROOT + "/examples/worker/bar.js", 14 ) }
 Terminates `Worker` as soon as possible. Sub Workers are recursively
 terminated.
 
-### terminate() ###
+### close() ###
 [:@glyphicon glyphicon-tag function]
 
-Use the function `terminate` to self terminate a Worker. Sub Workers
+Use the function `close` to self terminate a Worker. Sub Workers
 are recursively terminated.
 
 ${ doc.include( doc.EXAMPLES_DIR + "/worker2/README.md" ) }
