@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Oct  1 22:54:22 2015 (serrano)                */
+;*    Last change :  Fri Oct  2 07:48:27 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -603,11 +603,15 @@
 	       (apply-listeners onmessages se)))))
 
    (define (eof-error? e)
-      (or (isa? e &io-closed-error)
-	  (and (isa? e &error)
-	       (with-access::&error e (msg)
-		  (string=? msg
-		     "Can't read on a closed input port")))))
+      (cond-expand
+	 (bigloo4.2a
+	  (or (isa? e &io-closed-error)
+	      (and (isa? e &error)
+		   (with-access::&error e (msg)
+		      (string=? msg
+			 "Can't read on a closed input port")))))
+	 (else
+	  (isa? e &io-closed-error))))
    
    (with-access::websocket ws (%mutex %condvar %socket url authorization state onopens protocol onmessages)
       (synchronize %mutex
