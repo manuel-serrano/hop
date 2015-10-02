@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug 21 17:22:16 2015 (serrano)                */
+;*    Last change :  Fri Oct  2 15:00:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -289,8 +289,17 @@
 				      (signed val
 					 (if (= f 0)
 					     "0"
-					     (string-append "0."
-						(make-string f #\0)))))
+					     (let* ((d (- x n))
+						    (m (inexact->exact (round (* d (expt 10 f)))))
+						    (s (integer->string m))
+						    (l (string-length s)))
+						(cond
+						   ((>fx l f)
+						    (string-append "0." (substring s 0 f)))
+						   ((=fx l f)
+						    (string-append "0." s))
+						   (else
+						    (string-append "0." s (make-string f #\0))))))))
 				     ((= f 0)
 				      (signed val (number->string n)))
 				     (else
