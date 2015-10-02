@@ -17,6 +17,7 @@ rest=
 verb=
 basedir=$pwd
 hop=hop
+test=
 
 while : ; do
 
@@ -49,6 +50,8 @@ while : ; do
     shift;
     hop=$1;;    
 
+  *)
+    test=$1;;
   esac
 
   shift
@@ -86,14 +89,17 @@ run() {
 }
 
 for path in noserv/*.js; do
-   if [ -f $path.rc.js ]; then
-     run $path --no-server --rc-file $path.rc.js
-   else
-     run $path -q --no-server
-   fi
+  if [ "$test " = " " -o "$test " = "$path " ]; then
+    if [ -f $path.rc.js ]; then
+      run $path --no-server --rc-file $path.rc.js
+    else
+      run $path -q --no-server
+    fi
+  fi
 done
 
 for path in serv/*.js; do
+  if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
 	if [ -f $path.args ]; then
 	    run $path -p 0 `cat $path.args` --rc-file $path.rc.js
@@ -107,7 +113,7 @@ for path in serv/*.js; do
 	    run $path -p 0 --rc-file passwd.hop
 	fi
     fi
-       
+  fi   
 done
 
 echo "`expr $success + $failure` executed"

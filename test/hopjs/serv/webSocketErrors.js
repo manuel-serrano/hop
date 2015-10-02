@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Oct 02 00:43:00 2015                          */
-/*    Last change :  Fri Oct  2 14:36:46 2015 (serrano)                */
+/*    Last change :  Fri Oct  2 15:35:42 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Negative test for webSockets                                     */
@@ -83,7 +83,6 @@ function ignore() {
 function mkTest( wrongURL ) {
    return function() {
       console.log( 'TEST.0: tries to open a ws on a wrong URL, should raise an exception or return an error and/or close event.' );
-      // return ignore();; // IGNORE TEST
       var ws;
       var timer = setTimeout( function () {
 	 console.log( 'client state: %s. Timeout', ws.readyState );

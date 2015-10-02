@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Thu Sep  17 11:43:00 2015                         */
-/*    Last change :  Thu Oct  1 22:57:13 2015 (serrano)                */
+/*    Last change :  Fri Oct  2 15:56:28 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    simple worker to open/close a WebSocket                          */
@@ -24,7 +24,7 @@ function test( id, num ) {
    
    function loop( num ) {
       if ( num == 0 ) {
-	 /// console.error( "<<<" + id + " done" );
+	 // console.error( "<<<" + id + " done" );
 	 postMessage( { messageType: 'done' } );
       } else {
 	 // console.log( 'client #%s: call #%s', id, num );
