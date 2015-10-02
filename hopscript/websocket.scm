@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Oct  2 16:28:59 2015 (serrano)                */
+;*    Last change :  Fri Oct  2 18:10:06 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -34,6 +34,7 @@
 	      (ws::websocket read-only))
 	   
 	   (class JsWebSocketClient::JsObject
+	      (%mutex::mutex read-only (default (make-mutex)))
 	      (state::symbol (default 'connecting))
 	      (wss::JsWebSocketServer read-only)
 	      socket::obj 
@@ -508,36 +509,41 @@
 		     (apply-listeners onmessages evt)))))))
    
    (define (onclose)
-      (with-access::JsWebSocketClient ws (oncloses socket state)
-	 (when socket
-	    (socket-shutdown socket)
-	    (set! state 'closed)
-	    (with-access::JsWebSocketServer wss (worker)
-	       (let ((evt (instantiate::JsWebSocketEvent
-			     (name "close")
-			     (target ws)
-			     (data (js-undefined))
-			     (value (js-undefined)))))
-		  (js-worker-push-thunk! worker
-		     "wesbsocket-client"
-		     (lambda ()
-			(apply-listeners oncloses evt))))))))
+      (with-access::JsWebSocketClient ws (oncloses socket state %mutex)
+	 (synchronize %mutex
+	    (when socket
+	       (socket-shutdown socket)
+	       (set! socket #f)
+	       (set! state 'closed)
+	       (with-access::JsWebSocketServer wss (worker)
+		  (let ((evt (instantiate::JsWebSocketEvent
+				(name "close")
+				(target ws)
+				(data (js-undefined))
+				(value (js-undefined)))))
+		     (js-worker-push-thunk! worker
+			"wesbsocket-client"
+			(lambda ()
+			   (apply-listeners oncloses evt)))))))))
 
    (define (onerror)
-      (with-access::JsWebSocketClient ws (onerrors socket state)
-	 (when socket
-	    (socket-shutdown socket)
-	    (set! state 'closed)
-	    (with-access::JsWebSocketServer wss (worker)
-	       (let ((evt (instantiate::JsWebSocketEvent
-			     (name "error")
-			     (target ws)
-			     (data (js-undefined))
-			     (value (js-undefined)))))
-		  (js-worker-push-thunk! worker
-		     "wesbsocket-client"
-		     (lambda ()
-			(apply-listeners onerrors evt))))))))
+      (with-access::JsWebSocketClient ws (onerrors socket state %mutex)
+	 (synchronize %mutex
+	    (when socket
+	       (tprint "onerror socket=" socket)
+	       (socket-shutdown socket)
+	       (set! socket #f)
+	       (set! state 'closed)
+	       (with-access::JsWebSocketServer wss (worker)
+		  (let ((evt (instantiate::JsWebSocketEvent
+				(name "error")
+				(target ws)
+				(data (js-undefined))
+				(value (js-undefined)))))
+		     (js-worker-push-thunk! worker
+			"wesbsocket-client"
+			(lambda ()
+			   (apply-listeners onerrors evt)))))))))
 
    (define (eof-error? e)
       (cond-expand
@@ -595,21 +601,22 @@
    (js-bind! %this obj 'close
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsWebSocketClient this (socket oncloses wss state)
-		      (when (socket? socket)
-			 (socket-shutdown socket)
-			 (set! socket #f))
-		      (set! state 'closed)
-		      (when (pair? oncloses)
-			 ;; invoke the onclose listener
-			 (let ((evt (instantiate::server-event
-				       (name "connection")
-				       (target this)
-				       (value this))))
+		   (with-access::JsWebSocketClient this (socket oncloses wss state %mutex)
+		      (synchronize %mutex
+			 (when (socket? socket)
+			    (socket-shutdown socket)
+			    (set! socket #f)
+			    (set! state 'closed)
 			    (with-access::JsWebSocketServer wss (worker)
 			       (js-worker-push-thunk! worker "ws-onclose"
 				  (lambda ()
-				     (apply-listeners oncloses evt))))))))
+				     (when (pair? oncloses)
+					;; invoke the onclose listener
+					(let ((evt (instantiate::server-event
+						      (name "connection")
+						      (target this)
+						      (value this))))
+					   (apply-listeners oncloses evt))))))))))
 		0 'close))
    ;; client
    (js-bind! %this obj 'socket

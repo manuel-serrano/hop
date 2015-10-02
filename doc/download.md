@@ -35,6 +35,35 @@ Compiling Hop.js requires the Bigloo compiler.
   </div>
 </div>}
 
+#### Bigloo installation ####
+
+To configure and install the Bigloo compiler that is needed to compile
+Hop, use the following:
+
+```shell
+./configure --abort-missing && make && sudo make install
+```
+
+#### Hop installation ####
+
+To configure and install Hop, execute the following:
+
+```shell
+./configure && make && sudo make install
+```
+
+Optionally, to compile and install the documentation:
+
+```shell
+make doc && sudo make install
+```
+
+To test the installation:
+
+```shell
+make test
+```
+
 ## Git ##
 
 Hop.js can be forked at

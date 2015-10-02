@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Oct 02 00:43:00 2015                          */
-/*    Last change :  Fri Oct  2 15:35:42 2015 (serrano)                */
+/*    Last change :  Fri Oct  2 18:09:35 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Negative test for webSockets                                     */
@@ -30,7 +30,7 @@ serv.onconnection = function( event ) {
 	    console.log( 'server received close event' );
 	    console.log( 'state( server side):', this.readyState );
 	    this.onclose = function() {
-	       console.log( 'WARNING: duplicate close event');
+	       console.log( 'WARNING.1: duplicate close event');
 	    };
 	    setTimeout( pass, 200 );
 	 };
@@ -38,8 +38,7 @@ serv.onconnection = function( event ) {
 	 break;
 	 
       case 'sendClose':
-	    console.log( 'server: closing socket' );
-	    this.send( "foobar" );
+         console.log( 'server: closing socket' );
 	 this.close();
 	 console.log( 'state( server side):', this.readyState );
 	 break;
@@ -166,7 +165,7 @@ var testSuite = [
 	 console.log( 'client state:', this.readyState );
 	 console.log( 'client received close, ok' );
 	 this.onclose = function() {
-	    console.log( 'WARNING: client: duplicate close event' );
+	    console.log( 'WARNING.2: client: duplicate close event' );
 	 };
 	 setTimeout( function() {
 	    pass();
@@ -205,7 +204,7 @@ var testSuite = [
 	 this.close();
       };
    },
-      
+
 ];
 
 next();
