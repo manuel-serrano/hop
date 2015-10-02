@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Oct  2 16:28:30 2015 (serrano)                */
+;*    Last change :  Fri Oct  2 17:52:04 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -579,7 +579,6 @@
 		  (set! %socket #f))))))
    
    (define (abort e)
-      (exception-notify e)
       (with-access::websocket ws (%mutex %socket onerrors state)
 	 (synchronize %mutex
 	    (when (pair? onerrors)
@@ -591,6 +590,7 @@
 		  (apply-listeners onerrors se)))
 	    (when (socket? %socket)
 	       (socket-shutdown %socket)
+	       (set! state 'closed)
 	       (set! %socket #f)))))
    
    (define (message val)
@@ -673,7 +673,6 @@
 							  (condition-variable-wait! %condvar %mutex)))
 						    (with-handler
 						       (lambda (e)
-							  (exception-notify e)
 							  (if (eof-error? e)
 							      (close)
 							      (abort e)))
