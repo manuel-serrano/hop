@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Oct  2 14:37:15 2015 (serrano)                */
+;*    Last change :  Fri Oct  2 16:28:59 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -543,12 +543,14 @@
       (cond-expand
 	 (bigloo4.2a
 	  (or (isa? e &io-closed-error)
+	      (isa? e &io-read-error)
 	      (and (isa? e &error)
 		   (with-access::&error e (msg)
 		      (string=? msg
 			 "Can't read on a closed input port")))))
 	 (else
-	  (isa? e &io-closed-error))))
+	  (or (isa? e &io-closed-error)
+	      (isa? e &io-read-error)))))
    
    (with-access::http-request req (socket)
       (thread-start!
@@ -563,7 +565,6 @@
 		     ;; start reading the frames
 		     (with-handler
 			(lambda (e)
-			   (socket-shutdown socket)
 			   (if (eof-error? e)
 			       (onclose)
 			       (onerror)))
@@ -574,10 +575,8 @@
 				  (onmessage frame)
 				  (loop))
 				 ((eof-object? frame)
-				  (socket-shutdown socket)
 				  (onclose))
 				 (else
-				  (socket-shutdown socket)
 				  (onerror))))))))))
       ws))
 
