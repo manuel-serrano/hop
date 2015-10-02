@@ -14,7 +14,7 @@ var assert = require( 'assert' );
 var runTest = require( './aux/launchWorkers.js' ).runTest;
 var clientModule = require.resolve( './aux/stdClient.js' );
 
-var NUMCLIENTS = 10; // number of concurrent clients
+var NUMCLIENTS = 1; // number of concurrent clients
 var NUMCALLS = 100; // number of service invocations per client
 var TIMEOUT = 10000; //global timeout (test will fail if not completed by then)
 // change TIMEOUT value to match your hardware
@@ -27,11 +27,11 @@ var connections = 0;
 
 var serv = new WebSocketServer( {path: 'serv'} );
 serv.onconnection = function( event ) {
-   //console.log( 'WebSocketServer accepting a new connection' );
+   console.log( 'WebSocketServer accepting a new connection' );
    connections++;
    var ws = event.value;
    ws.onmessage = function( event ) {
-   //   console.log( 'WebSocketServer processing message', event.data );
+      console.log( 'WebSocketServer processing message', event.data );
       ws.send( event.data );
    };
    ws.onclose = function() {
@@ -44,20 +44,24 @@ service toTest( clientId, num ) {
    //console.log( 'Service received request', clientId, num );
    return hop.HTTPResponseAsync( function( sendResponse ) {
       var ws = new WebSocket( 'ws://localhost:' + hop.port + '/hop/serv' );
-      // comment the line below (console.log) blocks the execution
-      //console.log( 'Service created WS', clientId, num, ws );
       ws.onopen = function() {
 	 ws.send( JSON.stringify( {clientId: clientId, num: num } ));
-	 //	 console.log( 'Service forwarding request', clientId, num );
+	 console.log( 'Service forwarding request', clientId, num );
       };
       ws.onclose = function() {
-//	 console.log( 'Service sends result', result );
+	 console.log( 'Service sends result', result );
 	 sendResponse( result );
       };
       ws.onmessage = function( event ) {
-//	 console.log( 'Service received WS message', event.data );
+	 console.log( 'Service received WS message', event.data );
 	 result = JSON.parse( event.data );
+	 console.log( 'socket State', ws.readyState );
 	 ws.close();
+	 console.log( 'socket State', ws.readyState );
+      };
+      ws.onerror = function( e ) {
+	 console.log( 'webSocket error', e );
+	 process.exit( 1 );
       };
    }, this );
 }
