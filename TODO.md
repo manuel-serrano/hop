@@ -6,8 +6,8 @@ Hop.js TODO list
 HopScript
 ---------
 
-  1. (2015-09-12) Fix .post arguments passing 
-  2. (2015-09-12) server-to-server broadcast
+  1. (2015-09-12) Fix .post arguments passing
+  2. mmap binding
   
 
 EcmaScript 6
@@ -28,3 +28,4 @@ Bigloo
 ------
 
   1. (2015-09-12) IPv6 support
+  2. (2015-10-05) Make regexp compatible with mmap

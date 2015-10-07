@@ -181,7 +181,7 @@ frame.toString();          // /hop/svc2?hop-encoding=hop&vals=c%01%02(%01%0...
 A `HopFrame` implements the methods described in the section.
 
 ### frame.post( [ success, [ fail-or-option ] ] ) ###
-[:@glyphicon glyphicon-tag function]
+[:post@glyphicon glyphicon-tag function]
 
 
 Invokes asynchronously the service. The  optional `success` argument,

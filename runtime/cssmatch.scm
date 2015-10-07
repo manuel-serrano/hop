@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 19 14:53:16 2010                          */
-;*    Last change :  Sun Aug 23 10:33:52 2015 (serrano)                */
+;*    Last change :  Wed Oct  7 15:31:21 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Parsing and dealing with CSS.                                    */
@@ -40,6 +40,45 @@
 	   (node-computed-style ::xml ::obj css)
 	   (generic css-get-computed-style css ::obj)
 	   (generic css-find-matching-rules::pair-nil css ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::css-stylesheet ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write o::css-stylesheet op backend)
+   (display "<style>\n" op)
+   (css-write o op)
+   (display "</style>\n" op))
+
+;*---------------------------------------------------------------------*/
+;*    css-write ::css-style ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (css-write o::css-style op)
+   (with-access::css-style o (before after attributes)
+      (let ((sep ""))
+	 (display "{" op)
+	 (when before
+	    (display "before: " op)
+	    (css-write before op)
+	    (display ";" op)
+	    (set! sep " "))
+	 (display sep op)
+	 (when after
+	    (display "after: " op)
+	    (css-write after op)
+	    (display ";" op)
+	    (set! sep " "))
+	 (display sep op)
+	 (let loop ((attr attributes)
+		    (sep sep))
+	    (if (null? attr)
+		(display "}" op)
+		(let ((a (car attr)))
+		   (display sep op)
+		   (display (car a) op)
+		   (display ": " op)
+		   (css-write (cdr a) op)
+		   (display ";" op)
+		   (loop (cdr attr) " ")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    css-mutex ...                                                    */

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Sep 29 10:02:46 2015 (serrano)                */
+#*    Last change :  Sun Oct  4 13:49:05 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -90,7 +90,7 @@ build:
          export PATH; \
 	 $(MAKE) builddoc)
 
-builddoc: $(ALL_TARGETS) hss/markdown.hss hss/fontifier.hss
+builddoc: $(ALL_TARGETS) hss/markdown.css hss/fontifier.css hss/doc.css
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -113,6 +113,7 @@ install:
 	$(MAKE) mkdir DIR=$(DESTDIR)$(HOPDOCDIR)
 	$(MAKE) mkdir DIR=$(DESTDIR)$(HOPDOCDIR)/lib
 	$(INSTALL) $(ALL_TARGETS) $(DESTDIR)$(HOPDOCDIR)
+	$(INSTALL) idx.json $(DESTDIR)$(HOPDOCDIR)
 	cp -r lib/bootstrap $(DESTDIR)$(HOPDOCDIR)/lib
 	cp -r lib/jquery $(DESTDIR)$(HOPDOCDIR)/lib
 	$(RM) -r -f $(DESTDIR)$(HOPDOCDIR)/hss
@@ -179,9 +180,12 @@ idx.html: idx.json
 download.html: license.md
 lang.html: _lang.md
 
-hss/markdown.hss: ../node_modules/markdown/hss/markdown.hss
+hss/markdown.css: ../node_modules/markdown/hss/markdown.hss
 	cp $< $@
 
-hss/fontifier.hss: ../node_modules/fontifier/hss/fontifier.hss
+hss/fontifier.css: ../node_modules/fontifier/hss/fontifier.hss
+	cp $< $@
+
+hss/doc.css: hss/doc.hss
 	cp $< $@
 

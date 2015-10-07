@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Sep 15 15:27:36 2015 (serrano)                */
+#*    Last change :  Sun Oct  4 13:10:19 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -30,7 +30,7 @@ POPULATION	= Makefile Makefile.weblet Makefile.library \
                   js2scheme.init.in hopscript.init.in nodejs.init.in \
                   hopdroid.init.in \
                   hop.man.in hopsh.man.in hopreplay.man.in \
-                  hopc.sh.in hopwidget.init.in hglog.scm hopjs.el \
+                  hopc.sh.in hopwidget.init.in hglog.scm hopjs.el.in \
                   node_crypto_groups.h node_crypto_groups.c \
                   mkserializer.hop
 
