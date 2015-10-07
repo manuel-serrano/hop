@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Sep 29 07:29:38 2015 (serrano)                */
+#*    Last change :  Sun Oct  4 13:44:53 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1051,6 +1051,34 @@ for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST; do
             -e "s|@HOPARCH@|$arch|" \
       >> $script
   chmod a+x $script
+done
+
+# hopjs
+for file in etc/hopjs.el; do
+  rm -f $file 2> /dev/null
+  echo ";* Automatically generated file (don't edit) */" > $file
+  cat $file.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BIGLOOVERSION@|$bglversion|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
+            -e "s|@URL@|$url|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@ETCDIR@|$etcdir|" \
+            -e "s|@WEBLETSDIR@|$webletsdir|" \
+            -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@BUILDDIR@|$PWD|" \
+            -e "s|@BUILDLIBDIR@|$buildlibdir|" \
+            -e "s|@BUILDETCDIR@|$PWD/etc|" \
+            -e "s|@BUILDBINDIR@|$PWD/bin|" \
+            -e "s|@DOCDIR@|$docdir|" \
+            -e "s|@DOCDIR@|$docdir|" \
+      >> $file
+  chmod a+x $file
 done
 
 #* # hopscript/configure.sch                                           */

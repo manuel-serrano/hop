@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Sep 30 19:52:23 2015 (serrano)                */
+;*    Last change :  Wed Oct  7 19:47:23 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2155,7 +2155,7 @@
 	     (call-method fun args))
 	    ((isa? fun J2SHopRef)
 	     (call-hop-function fun args))
-	    ((isa? fun J2SFun)
+	    ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
 	     (call-fun-function fun (jsfun->lambda fun mode return conf) args))
 	    ((isa? fun J2SUnresolvedRef)
 	     (if (is-eval? fun)

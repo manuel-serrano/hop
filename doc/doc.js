@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Tue Sep 29 07:17:34 2015 (serrano)                */
+/*    Last change :  Fri Oct  2 19:51:52 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -30,9 +30,9 @@ function P( file ) {
    return path.normalize( "./" + file );
 }
    
-const css = [ P( "hss/doc.hss" ),
-	      P( "hss/markdown.hss" ),
-	      P( "hss/fontifier.hss" ),
+const css = [ P( "hss/doc.css" ),
+	      P( "hss/markdown.css" ),
+	      P( "hss/fontifier.css" ),
 	      P( "lib/bootstrap/css/bootstrap.min.css" ) ];
 const jscript = [ P( "lib/jquery/js/jquery.min.js" ),
 		  P( "lib/bootstrap/js/bootstrap.min.js" ) ];

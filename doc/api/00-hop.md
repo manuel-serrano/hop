@@ -248,7 +248,7 @@ xml-elements. Clients register to specific broadcast events with the
 hop.broadcast( 'refreshScore', 14 );
 ```
 
-### addEventListener( eventName, handler [, options] ) ###
+### Server.addEventListener( eventName, handler [, options] ) ###
 [:@glyphicon glyphicon-tag function]
 
 Use this method on the client side to register to the `eventName`
@@ -264,7 +264,6 @@ server serving the current page, the exact syntax is
 the current server (the runtime system automatically binds the 
 `server` variable to the current server). 
 
-
 ```hopscript
 server.addEventListener( 'refreshScore', function( event ) {
   var score = event.value;
@@ -272,8 +271,27 @@ server.addEventListener( 'refreshScore', function( event ) {
   // update GUI element with new score
 ```
 
-The `addEventListener` method is not supported by client Hop processes.
+On the server side, server objects are instances of the Server class.
 
+### new Server( hostname, port [, authorization ] ) ###
+
+the arguments are as follows:
+
+  * `hostname`: a string, the name or IP number of the remote host that
+  will emit signals.
+  * `port`: the port number of the remote host.
+  * `authorization`: a string, an optional authorization for accessing
+  the remote host. This has the syntax of the
+  frame `[post](01-service.html#post) method.
+  
+```hopscript
+var srv = new Server( "localhost", 9999 );
+
+srv.addEventListener( 'refreshScore', function( event ) {
+   var score = event.value;
+   ...
+} )
+```
 
 
 WebService
