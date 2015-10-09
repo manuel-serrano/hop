@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jul  3 16:16:04 2015 (serrano)                */
+;*    Last change :  Thu Oct  8 19:12:48 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Check strict mode best practice rules                            */
@@ -60,17 +60,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (bestpractice this::J2SFun mode parent)
    (with-access::J2SFun this (body id (fmode mode))
-      (let ((mode (if (eq? mode 'strict) mode fmode)))
-	 (if (isa? body J2SBlock)
-	     (with-access::J2SBlock body (nodes)
-		(for-each (lambda (n) (bestpractice n mode this)) nodes))
-	     (bestpractice body mode this)))))
+      (if (isa? body J2SBlock)
+	  (with-access::J2SBlock body (nodes)
+	     (for-each (lambda (n) (bestpractice n fmode this)) nodes))
+	  (bestpractice body fmode this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bestpractice ::J2SDeclFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (bestpractice this::J2SDeclFun mode parent)
-   (when (and (eq? mode 'strict) parent (not (isa? parent J2SFun)))
+   (when (and (not (eq? mode 'normal)) parent (not (isa? parent J2SFun)))
       (with-access::J2SDeclFun this (id loc)
 	 (raise
 	    (instantiate::&io-parse-error

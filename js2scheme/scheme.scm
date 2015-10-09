@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Oct  7 19:47:23 2015 (serrano)                */
+;*    Last change :  Thu Oct  8 18:57:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1992,6 +1992,8 @@
 	     (with-access::J2SDecl decl (writable)
 		(unless writable
 		   decl)))
+	    ((isa? decl J2SDeclFunCnst)
+	     decl)
 	    ((isa? decl J2SLetOpt)
 	     (with-access::J2SLetOpt decl (usage id)
 		(unless (memq 'assig usage) decl))))))
@@ -2064,24 +2066,24 @@
 		    ,@(j2s-scheme args mode return conf)
 		    ,@(make-list (-fx lenf lena) '(js-undefined))))))))
 
-   (define (check-hopscript-fun-arity decl::J2SDeclFun args)
-      (with-access::J2SDeclFun decl (val id)
-	 (with-access::J2SFun val (params vararg loc name mode)
-	    (when (eq? mode 'hopscript)
-	       (let ((lp (length params))
-		     (la (length args)))
-		  (unless (=fx lp la)
-		     (case vararg
-			((rest)
-			 (unless (>=fx la (-fx (j2s-minlen val)  1))
-			    (j2s-error id "wrong number of arguments"
-			       this name)))
-			((arguments)
-			 #t)
-			(else
-			 (unless (and (>=fx la (j2s-minlen val)) (<=fx la lp))
-			    (j2s-error id "wrong number of arguments"
-			       this name))))))))))
+   (define (check-hopscript-fun-arity val::J2SFun id args)
+      (with-access::J2SFun val (params vararg loc name mode)
+	 (tprint "check call id=" id " mode=" mode)
+	 (when (eq? mode 'hopscript)
+	    (let ((lp (length params))
+		  (la (length args)))
+	       (unless (=fx lp la)
+		  (case vararg
+		     ((rest)
+		      (unless (>=fx la (-fx (j2s-minlen val)  1))
+			 (j2s-error id "wrong number of arguments"
+			    this name)))
+		     ((arguments)
+		      #t)
+		     (else
+		      (unless (and (>=fx la (j2s-minlen val)) (<=fx la lp))
+			 (j2s-error id "wrong number of arguments"
+			    this name)))))))))
 	    
    (define (call-fun-function fun::J2SFun f args)
       (with-access::J2SFun fun (params vararg)
@@ -2111,7 +2113,11 @@
       (cond
 	 ((isa? fun J2SDeclFun)
 	  (with-access::J2SDeclFun fun (id val)
-	     (check-hopscript-fun-arity fun args)
+	     (check-hopscript-fun-arity val id args)
+	     (call-fun-function val (j2s-fast-id id) args)))
+	 ((isa? fun J2SDeclFunCnst)
+	  (with-access::J2SDeclFunCnst fun (id val)
+	     (check-hopscript-fun-arity val id args)
 	     (call-fun-function val (j2s-fast-id id) args)))
 	 ((isa? fun J2SLetOpt)
 	  (with-access::J2SLetOpt fun (id val)

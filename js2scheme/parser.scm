@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Sep 30 09:23:14 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 08:34:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -849,7 +849,8 @@
 		       inits
 		       (instantiate::J2SNop
 			  (loc (token-loc token)))))
-	     (body (fun-body params)))
+	     (body (fun-body params))
+	     (mode (or (javascript-mode body) 'normal)))
 	 (cond
 	    (declaration?
 	     (instantiate::J2SDeclSvc
@@ -879,7 +880,9 @@
 				      (vararg (rest-params params))
 				      (name (cdr id))
 				      (init init)
-				      (mode 'strict)
+				      (mode (if (eq? mode 'hopscript)
+						'hopscript
+						'strict))
 				      (path (cdr id))
 				      (body body)))
 			      (decl (instantiate::J2SDeclFunCnst
@@ -2117,22 +2120,45 @@
 ;*    specified by the MODE argument).                                 */
 ;*---------------------------------------------------------------------*/
 (define (dialect node::J2SNode mode conf)
-   (case mode
-      ((hopscript)
-       (hopscript-cnst-fun! node))
-      ((ecmascript6)
-       node)
-      (else
-       (unless (memq mode '(hopscript ecmascript6))
-	  (unless (config-get conf :es6-let #f)
-	     (disable-es6-let node))
-	  (unless (config-get conf :es6-default-value #f)
-	     (disable-es6-default-value node))
-	  (unless (config-get conf :es6-arrow-function #f)
-	     (disable-es6-arrow node))
-	  (unless (config-get conf :es6-rest-argument #f)
-	     (disable-es6-rest-argument node)))
-       node)))
+   ;; propage function definition modes
+   (hopscript-mode-fun! node mode)
+   ;; make hopscript function constant
+   (hopscript-cnst-fun! node)
+   (unless (memq mode '(hopscript ecmascript6))
+      (unless (config-get conf :es6-let #f)
+	 (disable-es6-let node))
+      (unless (config-get conf :es6-default-value #f)
+	 (disable-es6-default-value node))
+      (unless (config-get conf :es6-arrow-function #f)
+	 (disable-es6-arrow node))
+      (unless (config-get conf :es6-rest-argument #f)
+	 (disable-es6-rest-argument node)))
+   node)
+
+;*---------------------------------------------------------------------*/
+;*    hopscript-mode-fun! ...                                          */
+;*    -------------------------------------------------------------    */
+;*    Propagate the JavaScript mode into the funtion definitions       */ 
+;*---------------------------------------------------------------------*/
+(define-walk-method (hopscript-mode-fun! this::J2SNode mode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript-mode-fun! ::J2SFun ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hopscript-mode-fun! this::J2SFun mode)
+   (with-access::J2SFun this ((fmode mode) body name)
+      (when (eq? fmode 'normal) (set! fmode mode))
+      (hopscript-mode-fun! body fmode)
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript-mode-fun! ::J2SDeclFunCnst ...                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hopscript-mode-fun! this::J2SDeclFunCnst mode)
+   (with-access::J2SDeclFunCnst this (val loc id)
+      (hopscript-mode-fun! val mode))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-cnst-fun! ...                                          */
@@ -2150,10 +2176,18 @@
 (define-walk-method (hopscript-cnst-fun! this::J2SDeclFun)
    (with-access::J2SDeclFun this (val loc id ronly writable)
       (with-access::J2SFun val (mode)
-	 (when (eq? mode 'normal)
+	 (when (eq? mode 'hopscript)
 	    (set! writable #f)
-	    (set! ronly #t))
-	 (set! mode 'hopscript)))
+	    (set! ronly #t))))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript-cnst-fun! ::J2SFun ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hopscript-cnst-fun! this::J2SFun)
+   (with-access::J2SFun this (decl)
+      (when (isa? decl J2SDeclFunCnst)
+	 (hopscript-cnst-fun! decl)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

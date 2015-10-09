@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sat Sep 19 07:15:02 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 07:57:21 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -463,7 +463,7 @@
 		(js-create-from-arraybuffer this
 		   (js-new %this (js-get %this 'ArrayBuffer %this))
 		   #u32:0 #u32:0))
-	       ((fixnum? (car items))
+	       ((number? (car items))
 		(cond
 		   ((< (car items) 0)
 		    (js-raise-range-error %this

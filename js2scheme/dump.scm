@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Sep 26 09:24:59 2015 (serrano)                */
+;*    Last change :  Thu Oct  8 18:55:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -149,10 +149,11 @@
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
-   (with-access::J2SFun this (params body decl)
+   (with-access::J2SFun this (params body decl mode)
       (if (isa? decl J2SDecl)
-	  (with-access::J2SDecl decl (key id)
-	     `(,@(call-next-method) :id ,id :key ,key :decl ,(typeof decl)
+	  (with-access::J2SDecl decl (key id writable)
+	     `(,@(call-next-method) :id ,id :key ,key :mode ,mode
+		 :writable ,writable :decl ,(typeof decl)
 		 ,(map j2s->list params) ,(j2s->list body)))
 	  `(,@(call-next-method) ,(map j2s->list params) ,(j2s->list body)))))
 

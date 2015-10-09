@@ -103,6 +103,8 @@ pummel/test-regress-GH-814_2.js
 pummel/test-tls-connect-memleak.js
 pummel/test-net-connect-memleak.js
 pummel/test-net-connect-econnrefused.js
+pummel/test-postmortem-findjsobjects.js
+pummel/test-next-tick-loops-quick.js 
 
 # intrinsic incompatibilities
 simple/test-abort-fatal-error.js
