@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Thu Sep 24 16:37:05 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 16:59:29 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -288,7 +288,7 @@
 ;*    make-dom-create ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (make-dom-create tag::pair attributes body conf)
-
+   
    (define (debug-init-val loc)
       (match-case loc
 	 ((at ?fname ?pos)
@@ -314,7 +314,7 @@
 	 (else
 	  (instantiate::J2SUndefined
 	     (loc loc)))))
-
+   
    (define (debug-init loc)
       (instantiate::J2SDataPropertyInit
 	 (loc loc)
@@ -322,7 +322,21 @@
 		  (val "%location")
 		  (loc loc)))
 	 (val (debug-init-val loc))))
-
+   
+   (define (nohead loc)
+      (instantiate::J2SDataPropertyInit
+	 (loc loc)
+	 (name (instantiate::J2SString
+		  (val "hopautohead")
+		  (loc loc)))
+	 (val (instantiate::J2SBool
+		 (loc loc)
+		 (val #f)))))
+   
+   (define (html? tag)
+      (when (symbol? (token-value tag))
+	 (memq (token-value tag) '(<html> <HTML>))))
+   
    (let ((attrs '())
 	 (abody '()))
       (for-each (lambda (x)
@@ -335,13 +349,20 @@
 			       (isa? x J2SDataPropertyInit))
 		       (reverse! attrs)))
 	     (dbg (> (config-get conf :debug 0) 0))
+	     (inits (if dbg
+			(cons (debug-init loc) inits)
+			inits))
 	     (a (if (and (null? attrs) (not dbg))
-		    (instantiate::J2SUndefined
-		       (loc loc))
+		    (if (html? tag)
+			(instantiate::J2SObjInit
+			   (loc loc)
+			   (inits (list (nohead loc))))
+			(instantiate::J2SUndefined
+			   (loc loc)))
 		    (instantiate::J2SObjInit
 		       (loc loc)
-		       (inits (if dbg
-				  (cons (debug-init loc) inits)
+		       (inits (if (html? tag)
+				  (cons (nohead loc) inits)
 				  inits))))))
 	 (instantiate::J2SCall
 	    (loc loc)

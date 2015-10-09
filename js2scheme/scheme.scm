@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Oct  8 18:57:26 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 11:06:36 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2068,7 +2068,6 @@
 
    (define (check-hopscript-fun-arity val::J2SFun id args)
       (with-access::J2SFun val (params vararg loc name mode)
-	 (tprint "check call id=" id " mode=" mode)
 	 (when (eq? mode 'hopscript)
 	    (let ((lp (length params))
 		  (la (length args)))

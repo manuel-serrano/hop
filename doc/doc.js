@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Oct  2 19:51:52 2015 (serrano)                */
+/*    Last change :  Fri Oct  9 11:09:22 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -285,7 +285,7 @@ function compileIndex( content ) {
 (function( tags ) {
    function ignore( attr, ... _ ) { return undefined; };
 
-   tags.forEach( function( tag ) { this[ tag ] = ignore } );
+   tags.forEach( function( tag ) { GLOBAL[ tag ] = ignore } );
 })( require( "./xml-ignore.json" ) );
 
 /*---------------------------------------------------------------------*/

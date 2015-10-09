@@ -23,6 +23,7 @@ config.status
 etc/Makefile.hopconfig
 etc/hoprc.hop
 etc/hopshrc.hop
+etc/hopjs.el
 
 share/hop-autoconf.js
 share/hop-runtime.sch
