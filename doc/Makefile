@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Oct  4 13:49:05 2015 (serrano)                */
+#*    Last change :  Sat Oct 10 16:38:44 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -120,12 +120,18 @@ install:
 	cp -r hss $(DESTDIR)$(HOPDOCDIR)/hss
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/hss
+	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/hss/*
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/jquery
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/css
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/js
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/fonts
+	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/lib/jquery/js
 	chmod $(MODFILE) $(ALL_TARGETS:%=$(DESTDIR)$(HOPDOCDIR)/%)
 	chmod $(MODFILE) $(JQUERY_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/jquery/%)
 	chmod $(MODFILE) $(BOOTSTRAP_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/%)
+	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/css/*
 
 uninstall:
 

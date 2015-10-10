@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sun Jul  5 07:21:20 2015 (serrano)                */
+/*    Last change :  Sat Oct 10 20:30:03 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 let construct                             */
@@ -100,7 +100,7 @@ function errForward2() {
 function arity() {
    var x = 0;
    
-   let f = function( x ) { return x; }
+   let f = function( x, a, b ) { return x; }
 
    f( 0, x++, x++ );
 

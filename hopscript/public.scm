@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Sep 26 06:53:20 2015 (serrano)                */
+;*    Last change :  Sat Oct 10 11:14:53 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -334,7 +334,7 @@
 		      (proc this (js-vector->jsarray (vector ,@args) %this)))
 		     ,@(map (lambda (i)
 			       `((,i)
-				 ;;(tprint "name=" name " n=" ,n " i=" ,i " minlen=" minlen)
+				 ;;(tprint "name=" name " n=" ,n " i=" ,i " minlen=" minlen " arity=" arity)
 				 ,(if (<=fx n i)
 				      `(if (and (<=fx ,n minlen) (>=fx minlen 0))
 					   (js-raise-arity-error %this fun ,(-fx n 1))

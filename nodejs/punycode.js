@@ -33,7 +33,7 @@
 	regexNonASCII = /[^ -~]/, // unprintable ASCII chars + non-ASCII chars
 	regexSeparators = /\x2E|\u3002|\uFF0E|\uFF61/g, // RFC 3490 separators
 
-	/** Error messages */
+	/** error messages */
 	errors = {
 		'overflow': 'Overflow: input needs wider integers to process',
 		'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
@@ -54,10 +54,10 @@
 	 * A generic error utility function.
 	 * @private
 	 * @param {String} type The error type.
-	 * @returns {Error} Throws a `RangeError` with the applicable error message.
+	 * @returns {error} Throws a `Rangeerror` with the applicable error message.
 	 */
 	function error(type) {
-		throw RangeError(errors[type]);
+		throw Rangeerror(errors[type]);
 	}
 
 	/**

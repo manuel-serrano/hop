@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Oct  9 11:09:22 2015 (serrano)                */
+/*    Last change :  Sat Oct 10 11:30:58 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -51,7 +51,7 @@ const alias = {
 /*---------------------------------------------------------------------*/
 const chapters = require( "./doc.json" )
       .chapters
-      .map( function( c ) {
+      .map( function( c, idx = undefined, arr = undefined ) {
 	 c.entries = chapterEntries( c );
 	 return c;
       } );
@@ -74,7 +74,7 @@ function chapterEntries( chapter ) {
       var fp = path.join( ROOT, file );
       if( fs.lstatSync( fp ).isDirectory() ) {
 	 return fs.readdirSync( fp )
-	    .filter( function( e ) {
+	    .filter( function( e, idx = undefined, arr = undefined ) {
 	       return e.match( /[.]md$/ ) && (e != "index.md");
 	    } )
 	    .sort( function( left, right ) {
@@ -236,7 +236,7 @@ function compileChapter( json ) {
 	 
          <h1 class="toc" id="toc">Table of Contents</h1>
          <ul class="toc">
-           ${toc.map( function( el ) {
+           ${toc.map( function( el, idx = undefined, arr = undefined ) {
               return <li>
 	        <a href=${el.href}>${el.title}</a>
                 <span class="toc-description">
@@ -285,7 +285,9 @@ function compileIndex( content ) {
 (function( tags ) {
    function ignore( attr, ... _ ) { return undefined; };
 
-   tags.forEach( function( tag ) { GLOBAL[ tag ] = ignore } );
+   tags.forEach( function( tag, idx = undefined, arr = undefined ) {
+      GLOBAL[ tag ] = ignore;
+   } );
 })( require( "./xml-ignore.json" ) );
 
 /*---------------------------------------------------------------------*/
@@ -299,7 +301,8 @@ function mkIdx( base, files ) {
       var xml = require( "./" + file );
       var chapter = path.basename( file, ".html" ).replace( /^[0-9]+-/, "" );
 
-      var idx = doc.index( { XML: xml } ).map( function( e ) {
+      var idx = doc.index( { XML: xml } )
+	  .map( function( e, idx = undefined, arr = undefined ) {
 	 e.chapter = chapter;
 	 e.url = file + "#" + e.id;
 	 return e;

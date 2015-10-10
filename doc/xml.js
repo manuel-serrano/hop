@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Fri Oct  9 10:25:12 2015 (serrano)                */
+/*    Last change :  Sat Oct 10 11:29:02 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -86,7 +86,7 @@ function navbar( attrs, chapters ) {
    return <nav class="navbar navbar-inverse navbar-fixed-top">
      <div class="container">
        <ul class="nav navbar-nav">
-         ${chapters.map( function( p ) {
+         ${chapters.map( function( p, idx = undefined, arr = undefined ) {
 	    if( p.entries.length == 0 ) {
                var clazz = p.name.toLowerCase()==attrs.key
 		   ? "active" : "";
@@ -108,7 +108,7 @@ function navbar( attrs, chapters ) {
                  <ul class="dropdown-menu">
                    <li><a href=${p.href}>${p.name}</a></li>
                    <li role="separator" class="divider"></li>
-	           ${p.entries.map( function( e ) {
+	           ${p.entries.map( function( e, idx = undefined, arr = undefined ) {
                         return <li><a href=${e.href}>${e.title}</a></li>
 		   } )}
                  </ul>
