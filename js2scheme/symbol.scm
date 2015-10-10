@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Sep 26 10:27:16 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 07:44:13 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -197,16 +197,13 @@
    
    (with-access::J2SFun this (body params loc (fmode mode) params decl)
       (let ((id (j2sfun-id this)))
-	 ;; propagate the compilation mode to the function
-	 (when (eq? mode 'strict)
-	    (set! fmode mode))
 	 ;; check parameter correctness
-	 (if (eq? fmode 'strict)
+	 (if (eq? fmode 'normal)
+	     (nonstrict-params! params)
 	     (begin
 		(check-strict-mode-params params loc)
 		(when (symbol? id)
-		   (check-strict-mode-eval id "Function name" loc)))
-	     (nonstrict-params! params))
+		   (check-strict-mode-eval id "Function name" loc))))
 	 ;; walk throught the function body
 	 (let* ((env0 (if (j2sfun-expression? this) (cons decl env) env))
 		(decls (filter (lambda (d)

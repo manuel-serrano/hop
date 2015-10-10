@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Sep 26 12:26:44 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 16:58:53 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -84,7 +84,9 @@
 		      ((let ((v (xml-primitive-value (car body))))
 			  (and (string? v) (not (string-skip v "\n\t "))))
 		       (loop (cdr body)))
-		      ((not (xml-markup-is? (car body) 'head))
+		      ((and (not (xml-markup-is? (car body) 'head))
+			    (let ((l (memq ':hopautohead attr)))
+			       (or (not (pair? l)) (cadr l))))
 		       (cons (<HEAD>)
 			  (append-map (lambda (n)
 					 (or (xml-unpack n) (list n)))

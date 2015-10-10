@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Sat Sep 26 18:24:46 2015 (serrano)                */
+/*    Last change :  Fri Oct  9 10:25:12 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -44,8 +44,8 @@ function title( attrs, subtitle = false, ... nodes ) {
 /*---------------------------------------------------------------------*/
 /*    xmlNodes ...                                                     */
 /*---------------------------------------------------------------------*/
-function xmlNodes( arguments ) {
-   var nodes = Array.prototype.slice.call( arguments, 1 );
+function xmlNodes( args ) {
+   var nodes = Array.prototype.slice.call( args, 1 );
    
    function pred( el ) {
       return !(typeof( el ) == "string" );

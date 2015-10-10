@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Thu Sep 24 17:11:43 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 15:58:05 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -182,6 +182,8 @@
        (dom-next-sibling o))
       ((previousSibling)
        (dom-previous-sibling o))
+      ((childNodes)
+       (js-vector->jsarray '#() %this))
       (else
        (js-undefined))))
 
@@ -259,6 +261,26 @@
 	     (lambda (this child)
 		(dom-remove-child! this child))
 	     1 'removeChild))
+	 ((previousSibling)
+	  (dom-previous-sibling o))
+	 ((childNodes)
+	  (with-access::xml-markup o (body)
+	     (js-vector->jsarray
+		(list->vector
+		   (map (lambda (o)
+			   (cond
+			      ((string? o)
+			       (instantiate::xml-verbatim
+				  (parent o)
+				  (data o)))
+			      ((isa? o JsStringLiteral)
+			       (instantiate::xml-verbatim
+				  (parent o)
+				  (data (js-jsstring->string o))))
+			      (else
+			       o)))
+		      body))
+		%this)))
 	 (else
 	  (with-access::xml-markup o (attributes)
 	     (let* ((id (if (eq? pname 'className)
@@ -291,26 +313,6 @@
        (with-access::xml-element o (parent) parent))
       ((nextSibling)
        (dom-next-sibling o))
-      ((previousSibling)
-       (dom-previous-sibling o))
-      ((childNodes)
-       (with-access::xml-element o (body)
-	  (js-vector->jsarray
-	     (list->vector
-		(map (lambda (o)
-			(cond
-			   ((string? o)
-			    (instantiate::xml-verbatim
-			       (parent o)
-			       (data o)))
-			   ((isa? o JsStringLiteral)
-			    (instantiate::xml-verbatim
-			       (parent o)
-			       (data (js-jsstring->string o))))
-			   (else
-			    o)))
-		   body))
-	     %this)))
       ((outerHTML)
        (js-string->jsstring (js-tostring o %this)))
       ((innerHTML)

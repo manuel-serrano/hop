@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Oct  7 15:27:03 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 11:26:56 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -697,20 +697,21 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs-load-index ...                                             */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-load-index (file table)
-  (let* ((i 0)
-	 (v (json-read-file file))
-	 (len (length v)))
-    (while (< i len)
-      (let* ((en (aref v i))
-	     (k (assq 'key en))
-	     (n (string-match (cdr k) "[^.]+$"))
-	     (c (aref (cdr k) (or n 0)))
-	     (m (cond
-		 ((and (>= c ?A) (<= c ?Z)) (- c ?A))
-		 ((and (>= c ?a) (<= c ?z)) (- c ?a))
-		 (else 27))))
-	(aset table m (cons en (aref table m)))
-	(setq i (+ i 1))))))
+  (when (file-exists-p file)
+    (let* ((i 0)
+	   (v (json-read-file file))
+	   (len (length v)))
+      (while (< i len)
+	(let* ((en (aref v i))
+	       (k (assq 'key en))
+	       (n (string-match (cdr k) "[^.]+$"))
+	       (c (aref (cdr k) (or n 0)))
+	       (m (cond
+		   ((and (>= c ?A) (<= c ?Z)) (- c ?A))
+		   ((and (>= c ?a) (<= c ?z)) (- c ?a))
+		   (else 27))))
+	  (aset table m (cons en (aref table m)))
+	  (setq i (+ i 1)))))))
 	
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-balloon-started-p ...                                      */

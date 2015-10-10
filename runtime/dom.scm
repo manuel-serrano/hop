@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Thu Sep 24 17:20:48 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 14:38:21 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -317,12 +317,9 @@
 		   (let loop ((body body)
 			      (prev #f))
 		      (cond
-			 ((null? body)
-			  prev)
-			 ((eq-verbatim? (car body) node)
-			  prev)
-			 (else
-			  (loop (cdr body) (car body))))))))))
+			 ((null? body) prev)
+			 ((eq-verbatim? (car body) node) prev)
+			 (else (loop (cdr body) (car body))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-next-sibling ...                                             */

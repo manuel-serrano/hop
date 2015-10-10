@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Sep 24 16:47:24 2015 (serrano)                */
+;*    Last change :  Fri Oct  9 16:58:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -432,7 +432,12 @@
 	    (define (js-html-html %this)
 	       (js-make-function %this
 		  (lambda (this attrs . nodes)
-		     (apply <HTML> nodes))
+		     (if (isa? attrs JsObject)
+			 (apply <HTML>
+			    (append
+			       (js-object->keyword-arguments attrs %this)
+			       nodes))
+			 (apply <HTML> nodes)))
 		  1 'HTML))
 	    
 	    (js-bind! %this %this 'HTML
