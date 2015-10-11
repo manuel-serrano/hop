@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Oct  9 11:06:36 2015 (serrano)                */
+;*    Last change :  Sat Oct 10 20:24:15 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -101,7 +101,7 @@
 ;*    j2s-name ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-name name id)
-   (or name (j2s-scheme-id id)))
+   (if name (j2s-scheme-id name) (j2s-scheme-id id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-new ...                                                      */
@@ -399,7 +399,7 @@
 ;*    j2s-minlen ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-minlen val)
-   (with-access::J2SFun val (params vararg)
+   (with-access::J2SFun val (params vararg name)
       (let ((len 0))
 	 (for-each (lambda (p)
 		      (with-access::J2SParam p (defval)
@@ -415,7 +415,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
    (with-access::J2SDeclFun this (loc id name  global val)
-      (with-access::J2SFun val (params mode vararg body)
+      (with-access::J2SFun val (params mode vararg body name)
 	 (let* ((scmid (j2s-name name id))
 		(fastid (j2s-fast-id id))
 		(lparams (length params))
@@ -961,11 +961,12 @@
 ;*    j2sfun->scheme ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (j2sfun->scheme this::J2SFun tmp mode return conf)
-   (with-access::J2SFun this (loc name params mode vararg)
+   (with-access::J2SFun this (loc name params mode vararg mode)
       (let* ((id (j2sfun-id this))
 	     (lparams (length params))
 	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
-	     (arity (if vararg -1 (+fx 1 (length params)))))
+	     (arity (if vararg -1 (+fx 1 (length params))))
+	     (minlen (if (eq? mode 'hopscript) (j2s-minlen this) -1)))
 	 (epairify-deep loc
 	    `(js-make-function %this
 		,tmp ,len ',(j2s-name name id)
@@ -973,6 +974,7 @@
 		:rest ,(eq? vararg 'rest)
 		:arity ,arity
 		:strict ',mode
+		:minlen ,minlen
 		:alloc (lambda (o) (js-object-alloc o %this))
 		:construct ,tmp)))))
 
@@ -1023,7 +1025,7 @@
 			     ,(format "wrong service call \"~s\"" name)))))))))
 
       (define (service-body this::J2SSvc)
-	 (with-access::J2SSvc this (loc body need-bind-exit-return name)
+	 (with-access::J2SSvc this (loc body need-bind-exit-return name mode)
 	    (if need-bind-exit-return
 		(with-access::J2SNode body (loc)
 		   (epairify loc
@@ -1112,7 +1114,7 @@
 	    (list (string->symbol name) (j2s-scheme val mode return conf)))))
    
    (define (svc-proc-entry this)
-      (with-access::J2SSvc this (name params loc path)
+      (with-access::J2SSvc this (name params loc path mode)
 	 (let ((params (j2s-scheme params mode return conf))
 	       (tmpp (gensym 'servicep))
 	       (tmps (gensym 'services)))

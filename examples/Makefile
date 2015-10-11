@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Sep  8 16:08:39 2015 (serrano)                */
+#*    Last change :  Sat Oct 10 11:19:31 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -101,6 +101,7 @@ POPULATION = Makefile \
   scheme/scheme.js \
   scheme/scheme.hop \
   md/md.js md/markdown.hss md/tex.hss md/README.md md/example.json \
+  mdtag/mdtag.js mdtag/README.md mdtag/example.json \
   examples/doc.js examples/doc.wiki examples/example.json examples/examples.hss \
   examples/examples.js examples/libs/bootstrap/css/bootstrap-theme.css \
   examples/libs/bootstrap/css/bootstrap-theme.css.map \

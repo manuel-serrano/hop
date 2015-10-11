@@ -1,0 +1,7 @@
+{
+   "tags": [ "markdown" ],
+   "description": "Markdown tag example",
+   "files": [ "mdtag.js" ],
+   "service": "mdtag",
+   "level": 3.1
+}

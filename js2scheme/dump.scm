@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Oct  8 18:55:04 2015 (serrano)                */
+;*    Last change :  Sat Oct 10 10:09:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -130,13 +130,27 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLiteral)
    (call-next-method))
- 
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteralValue ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLiteralValue)
    (with-access::J2SLiteralValue this (val)
       `(,@(call-next-method) ,val)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SString ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SString)
+   (with-access::J2SLiteralValue this (val)
+      `(,(typeof this) ,(format "~s" val))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SNativeString ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SNativeString)
+   (with-access::J2SLiteralValue this (val)
+      `(,(typeof this) ,(format "~s" val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SArray ...                                         */
@@ -366,7 +380,7 @@
       `(,@(call-next-method) ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SLetOpt ...                                       */
+;*    j2s->list ::J2SLetOpt ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLetOpt)
    (with-access::J2SLetOpt this (val)
