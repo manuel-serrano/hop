@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Sat Oct 10 10:11:30 2015 (serrano)                */
+;*    Last change :  Mon Oct 12 15:02:00 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -323,16 +323,6 @@
 		  (loc loc)))
 	 (val (debug-init-val loc))))
    
-   (define (nohead loc)
-      (instantiate::J2SDataPropertyInit
-	 (loc loc)
-	 (name (instantiate::J2SString
-		  (val "hopautohead")
-		  (loc loc)))
-	 (val (instantiate::J2SBool
-		 (loc loc)
-		 (val #f)))))
-   
    (define (html? tag)
       (when (symbol? (token-value tag))
 	 (memq (token-value tag) '(<html> <HTML>))))
@@ -353,17 +343,11 @@
 			(cons (debug-init loc) inits)
 			inits))
 	     (a (if (and (null? attrs) (not dbg))
-		    (if (html? tag)
-			(instantiate::J2SObjInit
-			   (loc loc)
-			   (inits (list (nohead loc))))
-			(instantiate::J2SUndefined
-			   (loc loc)))
+		    (instantiate::J2SUndefined
+		       (loc loc))
 		    (instantiate::J2SObjInit
 		       (loc loc)
-		       (inits (if (html? tag)
-				  (cons (nohead loc) inits)
-				  inits))))))
+		       (inits inits)))))
 	 (instantiate::J2SCall
 	    (loc loc)
 	    (fun (j2s-tag->expr tag #t))

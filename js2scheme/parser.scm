@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct  9 08:34:51 2015 (serrano)                */
+;*    Last change :  Mon Oct 12 07:53:53 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -786,7 +786,6 @@
 			   (decl (instantiate::J2SDecl
 				    (loc (token-loc token))
 				    (id (cdr id))
-				    (name (cdr id))
 				    (writable #f)
 				    (ronly #t)
 				    (global #t))))))
@@ -800,16 +799,15 @@
 	     (co-instantiate ((fun (instantiate::J2SFun
 				      (loc (token-loc token))
 				      (decl decl)
+				      (name (cdr id))
 				      (params params)
 				      (vararg (rest-params params))
 				      (vararg (rest-params params))
-				      (name (cdr id))
 				      (mode mode)
 				      (body body)))
 			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
 				       (id (cdr id))
-				       (name (cdr id))
 				       (writable #f)
 				       (ronly #t)
 				       (global #t)
@@ -868,7 +866,6 @@
 			(decl (instantiate::J2SDecl
 				 (loc (token-loc token))
 				 (id (cdr id))
-				 (name (cdr id))
 				 (writable #f)
 				 (ronly #t)
 				 (global #t)))))))
@@ -888,7 +885,6 @@
 			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
 				       (id (cdr id))
-				       (name (cdr id))
 				       (writable #f)
 				       (ronly #t)
 				       (global #t)
