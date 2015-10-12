@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Oct 12 20:12:55 2015 (serrano)                */
+;*    Last change :  Mon Oct 12 20:13:18 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -66,8 +66,8 @@
   ;; index
   (hopjs-load-index (concat hopjs-doc-dir "/idx.json") hopjs-doc-index-table)
   ;; balloons
-  (hopjs-balloon-start)
-  ;; (setq l (json-read-file "toto.json"))
+;*   (hopjs-balloon-start)                                             */
+;*   ;; (setq l (json-read-file "toto.json"))                          */
 ;*   (hopjs-add-balloon-action                                         */
 ;*    "popup"                                                          */
 ;*    '(lambda (point win)                                             */
