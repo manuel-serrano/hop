@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sat Oct 10 16:44:01 2015 (serrano)                */
+;*    Last change :  Mon Oct 12 20:12:55 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -68,18 +68,18 @@
   ;; balloons
   (hopjs-balloon-start)
   ;; (setq l (json-read-file "toto.json"))
-  (hopjs-add-balloon-action
-   "popup"
-   '(lambda (point win)
-      (save-excursion
-	(goto-char point)
-	(let* ((beg (progn (backward-word ) (point)))
-	       (end (progn (forward-word 1) (point)))
-	       (str (buffer-substring-no-properties beg end)))
-	  (message "point=%s beg=%s end=%sstr=[%s]" point beg end str)
-	  nil)))
-   '(lambda ()
-      (message "action")))
+;*   (hopjs-add-balloon-action                                         */
+;*    "popup"                                                          */
+;*    '(lambda (point win)                                             */
+;*       (save-excursion                                               */
+;* 	(goto-char point)                                              */
+;* 	(let* ((beg (progn (backward-word ) (point)))                  */
+;* 	       (end (progn (forward-word 1) (point)))                  */
+;* 	       (str (buffer-substring-no-properties beg end)))         */
+;* 	  (message "point=%s beg=%s end=%sstr=[%s]" point beg end str) */
+;* 	  nil)))                                                       */
+;*    '(lambda ()                                                      */
+;*       (message "action")))                                          */
   ;; user hooks
   (run-hooks 'hopjs-mode-hook))
 
