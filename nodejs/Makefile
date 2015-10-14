@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Sep 22 07:56:14 2015 (serrano)                */
+#*    Last change :  Tue Oct 13 14:13:59 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -71,14 +71,7 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 .PHONY: build native jvm
 
-build:
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(MAKE) $(BACKEND))
+build: $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm

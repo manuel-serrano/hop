@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sat May 24 06:48:25 2014 (serrano)                */
+#*    Last change :  Tue Oct 13 14:15:21 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -62,14 +62,7 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 .PHONY: build native jvm distrib distrib-clean
 
-build: .afile
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(MAKE) $(BACKEND))
+build: .afile $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
@@ -100,16 +93,7 @@ getsources:
 #*---------------------------------------------------------------------*/
 .PHONY: predistrib predistrib-src predistrib-clean
 
-predistrib:
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(MAKE) predistrib-src)
-
-predistrib-src: $(SOURCES:%.hop=%.scm)
+predistrib: $(SOURCES:%.hop=%.scm)
 
 predistrib-clean:
 	$(RM) -f $(patsubst %.hop,%.scm,$(filter %hop, $(SOURCES)))

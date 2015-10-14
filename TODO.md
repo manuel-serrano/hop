@@ -15,6 +15,7 @@ EcmaScript 6
 
   1. (2015-09-12) ES6 compliance
     * (2015-09-15) Strings startsWidth and endsWidth
+    * (2015-10-14) Class
 
 
 Nodejs compatibility
@@ -29,3 +30,4 @@ Bigloo
 
   1. (2015-09-12) IPv6 support
   2. (2015-10-05) Make regexp compatible with mmap
+  3. (2015-10-14) CSS2 selectors

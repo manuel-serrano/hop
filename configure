@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Oct  9 15:44:01 2015 (serrano)                */
+#*    Last change :  Tue Oct 13 14:17:16 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -907,6 +907,29 @@ if [ "$bigloobindir " != " " ]; then
   fi
 fi
 
+for p in hopc.sh hop.sh; do
+  cat etc/$p.in \
+      | sed -e "s|@RELEASE@|$version|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@DATE@|$date|" \
+            -e "s|@DEVEL@|$devel|" \
+            -e "s|@DEBUG@|$debug|" \
+            -e "s|@HOP@|$hop|" \
+            -e "s|@HOPC@|$hopc|" \
+            -e "s|@BUILDDIR@|$PWD|" \
+            -e "s|@BUILDLIBDIR@|$buildlibdir|" \
+            -e "s|@BUILDETCDIR@|$PWD/etc|" \
+            -e "s|@BUILDBINDIR@|$PWD/bin|" \
+            -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
+            -e "s|@BUILDSPECIFIC@|$buildspecific|" \
+            -e "s|@INSTALLSPECIFIC@|$installspecific|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+  > bin/$p
+  chmod a+rx bin/$p
+done
+    
 cat $mkmf.in \
     | sed -e "s|@RELEASE@|$version|" \
           -e "s|@BRANCH@|$branch|" \
@@ -915,8 +938,8 @@ cat $mkmf.in \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
           -e "s|@BIGLOOVERSION@|$bglversion|" \
-          -e "s|@HOP@|$hop|" \
-          -e "s|@HOPC@|$hopc|" \
+          -e "s|@HOP@|$hop.sh|" \
+          -e "s|@HOPC@|$hopc.sh|" \
           -e "s|@BGLCPP@|$bglcpp|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@LINK@|$link|" \

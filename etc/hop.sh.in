@@ -1,13 +1,13 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/etc/hopc.sh.in                    */
+#*    serrano/prgm/project/hop/3.0.x/etc/hop.sh.in                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 13 14:06:56 2015                          */
-#*    Last change :  Tue Oct 13 14:09:36 2015 (serrano)                */
+#*    Last change :  Tue Oct 13 14:16:15 2015 (serrano)                */
 #*    Copyright   :  2015 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
-#*    Hopc wrapper                                                     */
+#*    Hop wrapper                                                      */
 #*=====================================================================*/
 
 LD_LIBRARY_PATH=@BUILDLIBDIR@:$LD_LIBRARY_PATH
@@ -16,4 +16,4 @@ DYLD_LIBRARY_PATH=@BUILDLIBDIR@:$DYLD_LIBRARY_PATH
 export LD_LIBRARY_PATH
 export DYLD_LIBRARY_PATH
 
-exec @HOPC@ "$@"
+exec @HOP@ "$@"

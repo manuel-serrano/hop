@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Aug  3 09:07:17 2014 (serrano)                */
+#*    Last change :  Tue Oct 13 14:11:25 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -19,30 +19,30 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Target and Project                                               */
 #*---------------------------------------------------------------------*/
-EXEC		= hopc
+EXEC = hopc
 
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES		= hopc_param parseargs main driver
+MODULES = hopc_param parseargs main driver
 
-INCLUDES	= 
+INCLUDES =  
 
-CLASS_DIR	= o/class_s/bigloo/hop
+CLASS_DIR = o/class_s/bigloo/hop
 
-OBJECTS 	= $(MODULES:%=o/%.o)
-BGL_CLASSES	= $(MODULES:%=$(CLASS_DIR)/%.class)
+OBJECTS = $(MODULES:%=o/%.o)
+BGL_CLASSES = $(MODULES:%=$(CLASS_DIR)/%.class)
 
-SOURCES 	= $(MODULES:%=%.scm)
+SOURCES = $(MODULES:%=%.scm)
 
-COLOR		= 32
+COLOR = 32
 
-BHFLAGS		= -srfi hopc
+BHFLAGS = -srfi hopc
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
+POPULATION=$(INCLUDES) $(SOURCES) Makefile
 
 #*---------------------------------------------------------------------*/
 #*    The roost executable                                             */

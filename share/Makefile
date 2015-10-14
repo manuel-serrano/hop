@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Sep 27 08:21:01 2015 (serrano)                */
+#*    Last change :  Tue Oct 13 14:15:00 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -307,31 +307,13 @@ flash/%.swf: flash/%.as
 #*    JavaScript compilation                                           */
 #*---------------------------------------------------------------------*/
 hop-exception.js: hop-exception.scm ../runtime/client-exception.sch
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
+	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@))
+	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 hop-builtin-serializers.js: $(BUILDETCDIR)/mkserializer.hop
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(call compile,$(HOP),,-q --no-server,$< > $@) || ($(RM) -f $@; exit 1))
+	$(call compile,$(HOP),,-q --no-server,$< > $@) || ($(RM) -f $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */

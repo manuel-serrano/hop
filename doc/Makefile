@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Oct 10 16:38:44 2015 (serrano)                */
+#*    Last change :  Tue Oct 13 14:13:07 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -81,16 +81,7 @@ VPATH=api lang dev widget \
 #*---------------------------------------------------------------------*/
 .PHONY: build clean install uninstall
 
-build:
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(MAKE) builddoc)
-
-builddoc: $(ALL_TARGETS) hss/markdown.css hss/fontifier.css hss/doc.css
+build: $(ALL_TARGETS) hss/markdown.css hss/fontifier.css hss/doc.css
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */

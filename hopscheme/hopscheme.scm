@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Wed Feb 17 18:39:39 2010                          */
-;*    Last change :  Mon Aug 10 11:24:35 2015 (serrano)                */
+;*    Last change :  Wed Oct 14 09:25:04 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Florian Loitsch and Manuel Serrano        */
 ;*    -------------------------------------------------------------    */
 ;*    Hopscheme                                                        */
@@ -22,7 +22,7 @@
 	   __hopscheme_hop_runtime
 	   __dollar_scheme2js_module)
    
-   (export (hopscheme-compile-module clauses::pair-nil)
+   (export (hopscheme-compile-module clauses::pair-nil ::obj)
 	   (hopscheme-compile-file file::bstring ::bstring ::obj)
 	   (hopscheme-create-empty-macro-environment)
 	   (hopscheme-compile-expression e ::obj ::obj ::procedure)
@@ -49,8 +49,8 @@
 ;*    HOPSCHEME-COMPILE-EXPRESSION. Clauses should be something like   */
 ;*    '(import m1), etc.                                               */
 ;*---------------------------------------------------------------------*/
-(define (hopscheme-compile-module clauses)
-   (list (precompile-headers clauses)))
+(define (hopscheme-compile-module clauses base)
+   (list (precompile-headers clauses base)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscheme-compile-file ...                                       */

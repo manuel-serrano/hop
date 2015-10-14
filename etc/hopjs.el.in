@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Oct 12 20:13:18 2015 (serrano)                */
+;*    Last change :  Wed Oct 14 16:14:26 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -142,10 +142,10 @@
 	  "\\|" hopjs-re-code))
 
 (defconst hopjs-re-entering-html
-  "\\(?:var[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]+[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\|[^/]>\\)")
+  "\\(?:var[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\|[^/]>\\)")
 
 (defconst hopjs-re-entering-attr-html
-  "\\(?:var[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]+[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\)[ \t]+\\([^\n<]+\\)")
+  "\\(?:var[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\)[ \t]+\\([^\n<>]+\\)$")
 
 (defconst hopjs-re-special-tag
   "<\\(link\\|LINK\\)")
@@ -433,7 +433,7 @@ usage: (js-return)  -- [RET]"
      ((looking-at "\\([^<>\n=]+=[^<>\n=]+[ \t]*\\)+>[ \t]*$")
       ;; attribute + tag
       'attr-otag)
-     ((looking-at "\\([^<>\n]+=[^<>\n]+[ \t]*\\)+$")
+     ((looking-at "\\([^<> [\n]+=[^<>\n]+[ \t]*\\)+$")
       ;; attribute
       'attr)
      ((looking-at "\\(</[^>]*>\\)+[ \t;)}]*$")
@@ -478,7 +478,7 @@ usage: (js-return)  -- [RET]"
 ;*    hopjs-goto-html-line ...                                         */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-goto-html-line (types pmin attr-or-tag goto-prev in-attr-tag)
-  (hopjs-debug "### hopjs-goto-html-line point=%s pmin=%s attr-or-tag=%s types=%s"
+  (hopjs-debug "  ### hopjs-goto-html-line point=%s pmin=%s attr-or-tag=%s types=%s"
 	       (point) pmin attr-or-tag types)
   (if (> (point) pmin)
       (progn
@@ -488,40 +488,47 @@ usage: (js-return)  -- [RET]"
 	(cond
 	 ((call-sans-debug 'hopjs-html-p (point))
 	  (let ((type (hopjs-html-line-type)))
-	    (hopjs-debug "###### hopjs-goto-html-line point=%s type=%s attr-or-tag=%s"
-			 (point) type attr-or-tag)
+	    (hopjs-debug "  ###### hopjs-goto-html-line.1 type=%s point=%s attr-or-tag=%s"
+			 type (point) attr-or-tag)
 	    (cond
 	     ((memq type types)
 	      (goto-char (match-beginning attr-or-tag))
 	      (if (and in-attr-tag (memq type '(otag otag-attr otag-sans))) 'tag type))
 	     ((eq type 'attr-tag)
 	      (hopjs-goto-html-line types pmin attr-or-tag t t))
+	     ((eq type 'attr-otag)
+	      (hopjs-goto-html-line types pmin 0 t t))
 	     (t
 	      (hopjs-goto-html-line types pmin attr-or-tag t in-attr-tag)))))
 	 ((eq (hopjs-html-line-type) 'entering-attr)
-	  (hopjs-debug "###### hopjs-goto-html-line entering-attr...attr-or-tag=%s beg=%s" attr-or-tag (match-beginning attr-or-tag))
+	  (hopjs-debug "  ###### hopjs-goto-html-line.2 type=entering-attr attr-or-tag=%s beg=%s"
+		       attr-or-tag (match-beginning attr-or-tag))
 	  (if (memq 'entering-attr types)
 	      (progn
 		(goto-char (match-beginning attr-or-tag))
 		'entering-attr)
 	    (hopjs-goto-html-line types pmin attr-or-tag t nil)))
 	 ((eq (hopjs-html-line-type) 'entering)
-	  (hopjs-debug "###### hopjs-goto-html-line entering...attr-or-tag=%s beg=%s" attr-or-tag (match-beginning attr-or-tag))
+	  (hopjs-debug "  ###### hopjs-goto-html-line.3 type-entering attr-or-tag=%s beg=%s"
+		       attr-or-tag (match-beginning attr-or-tag))
 	  (if (memq 'entering types)
 	      (progn
 		(goto-char (match-beginning attr-or-tag))
 		'entering)
 	    (hopjs-goto-html-line types pmin attr-or-tag t nil)))
 	 (t
-	  (hopjs-debug "###### hopjs-goto-html-line else...")
-	  (condition-case nil
-	      (progn
-		(end-of-line)
-		(backward-sexp 1)
-		(hopjs-goto-html-line types pmin attr-or-tag nil nil))
-	    (error
-	     (hopjs-debug "!!!hopjs-goto-html-line: cannot forward sexp %s" (point))
-	     'text)))))
+	  (hopjs-debug "  ###### hopjs-goto-html-line.4 else... %s" (point))
+	  (let ((p (point)))
+	    (condition-case nil
+		(progn
+		  (end-of-line)
+		  (backward-sexp 1)
+		  (if (< (point) p)
+		      (hopjs-goto-html-line types pmin attr-or-tag nil nil)
+		    'text))
+	      (error
+	       (hopjs-debug "  !!!hopjs-goto-html-line: cannot forward sexp %s" (point))
+	       'text))))))
     'text))
 
 ;*---------------------------------------------------------------------*/
@@ -542,9 +549,10 @@ usage: (js-return)  -- [RET]"
     ((attr-tag)
      (hopjs-goto-html-line '(otag otag-attr otag-sans entering) pmin 0 t nil)
      (current-column))
-    ((ctag)
+    ((ctag tag)
      (current-column))
-    ((tag)
+    ((entering-attr)
+     (goto-char (match-beginning 1))
      (current-column))
     (t
      (+ (current-column) hopjs-indent-level-html))))
@@ -568,24 +576,37 @@ usage: (js-return)  -- [RET]"
 	     (current-column))
 	    ((newline)
 	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr otag-sans entering ctag ctag-attr tag text)
+			   '(otag otag-attr attr-otag otag-sans entering entering-attr ctag ctag-attr tag text)
 			   pmin 0 t nil)))
 	       (hopjs-debug "<<<.2 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
 			    ltype ptype (current-column) (point))
-	       (if (eq ptype 'text)
-		   ;; a newline after plain text
-		   (hopjs-html-statement-indentation-text)
-		 (hopjs-html-statement-indentation-tag ptype pmin))))
+	       (cond
+		((eq ptype 'text)
+		 ;; a newline after plain text
+		 (hopjs-html-statement-indentation-text))
+		((eq ptype 'attr-otag)
+		 (let ((ptype (hopjs-goto-html-line
+			       '(otag entering-attr)
+			       pmin 0 t nil)))
+		   (+ (current-column) hopjs-indent-level-html)))
+		(t
+		 (hopjs-html-statement-indentation-tag ptype pmin)))))
 	    ((tag otag otag-attr otag-sans script)
 	     (let ((ptype (hopjs-goto-html-line
-			   '(ctag otag otag-attr otag-sans tag entering attr-tag)
+			   '(ctag otag otag-attr otag-sans tag
+				  entering entering-attr attr-tag)
 			   pmin 0 t nil)))
 	       (hopjs-debug "<<<.3 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
 			    ltype ptype (current-column) (point))
-	       (hopjs-html-statement-indentation-tag ptype pmin)))
+	       (case ptype
+		 ((entering-attr entering)
+		  (+ (current-column) hopjs-indent-level-html))
+		 (t
+		  (hopjs-html-statement-indentation-tag ptype pmin)))))
 	    ((ctag)
 	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr otag-sans entering ctag ctag-attr tag)
+			   '(otag otag-attr otag-sans entering entering-attr
+				  ctag ctag-attr tag)
 			   pmin 0 t nil)))
 	       (hopjs-debug "<<<.4 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
 			    ltype ptype (current-column) (point))
@@ -598,7 +619,7 @@ usage: (js-return)  -- [RET]"
 		  (current-column)))))
 	    ((comment ocomment)
 	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr otag-sans entering ctag attr-tag ctag-attr tag
+			   '(otag otag-attr otag-sans entering entering-attr ctag attr-tag ctag-attr tag
 				  comment ocomment comment)
 			   pmin 0 t nil)))
 	       (hopjs-debug "<<<.5 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
@@ -619,9 +640,27 @@ usage: (js-return)  -- [RET]"
 	       (case ptype
 		 ((attr attr-tag entering-attr)
 		  (current-column))
-		 ((otag-attr otag-sans)
+		 ((otag-sans)
 		  (+ (current-column) hopjs-indent-level-html))
+		 ((otag-attr)
+		  (goto-char (match-beginning 1))
+		  (current-column))
 		 (else
+		  (current-column)))))
+	    ((attr-otag)
+	     (let ((ptype (hopjs-goto-html-line
+			   '(otag otag-attr attr-tag attr
+				  entering entering-attr)
+			   pmin 0 t nil)))
+	       (hopjs-debug "<<<.7 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
+			    ltype ptype (current-column) (point))
+	       (case ptype
+		 ((entering-attr)
+		  (goto-char (match-beginning 1))
+		  (current-column))
+		 ((entering)
+		  (+ (current-column) hopjs-indent-level-html))
+		 (t
 		  (current-column)))))
 	    (t
 	     (current-column))))))))

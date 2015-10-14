@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Mon Jul 27 11:00:00 2015 (serrano)                */
+;*    Last change :  Wed Oct 14 15:27:06 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -217,6 +217,17 @@
        (call-next-method)
        (with-access::xml-element obj (id)
 	  (fprintf op "document.getElementById( '~a' )" id))))
+
+;*---------------------------------------------------------------------*/
+;*    hop->javascript ::xml-style ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript obj::xml-style op compile isexpr)
+   (display "hop_create_encoded_element(\"" op)
+   (let ((s (url-path-encode
+	       (call-with-output-string
+		  (lambda (op) (xml-write obj op (hop-xml-backend)))))))
+      (display s op))
+   (display "\")" op))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::xml-tilde ...                                  */

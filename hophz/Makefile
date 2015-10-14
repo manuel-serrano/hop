@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Sun Aug  3 09:09:25 2014 (serrano)                */
+#*    Last change :  Tue Oct 13 14:14:28 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hophz                                   */
 #*=====================================================================*/
@@ -53,16 +53,9 @@ POPULATION 	= $(INCLUDES) $(SOURCES) Makefile
 #*---------------------------------------------------------------------*/
 .PHONY: build dobuild
 
-build: o
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(MAKE) $(BACKEND))
+build: o $(BACKEND)
 
-native: $(BUILDBINDIR)/$(EXEC)
+native: o $(BUILDBINDIR)/$(EXEC)
 jvm: $(CLASS_DIR) $(BUILDBINDIR)/$(EXEC).jar
 
 o: 
@@ -177,16 +170,7 @@ getsources:
 #*---------------------------------------------------------------------*/
 .PHONY: predistrib predistrib-src predistrib-clean
 
-predistrib:
-	(LD_LIBRARY_PATH=$(BUILDLIBDIR):$$LD_LIBRARY_PATH; \
-         export LD_LIBRARY_PATH; \
-         DYLD_LIBRARY_PATH=$(BUILDLIBDIR):$$DYLD_LIBRARY_PATH; \
-         export DYLD_LIBRARY_PATH; \
-         PATH=$(BUILDBINDIR):$(BUILDLIBDIR):$$PATH; \
-         export PATH; \
-	 $(MAKE) predistrib-src)
-
-predistrib-src: $(HOPMODULES:%=o/%.scm)
+predistrib: $(HOPMODULES:%=o/%.scm)
 
 predistrib-clean:
 	$(RM) $(HOPMODULES:%=o/%.scm)
