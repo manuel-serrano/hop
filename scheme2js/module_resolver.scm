@@ -1,6 +1,6 @@
 ;*=====================================================================*/
 ;*    Author      :  Florian Loitsch                                   */
-;*    Copyright   :  2007-14 Florian Loitsch, see LICENSE file         */
+;*    Copyright   :  2007-15 Florian Loitsch, see LICENSE file         */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -24,15 +24,15 @@
    (with-trace 'scheme2js "scheme2js-module-resolver"
       (trace-item "mod=" mod)
       (trace-item "files=" files)
-      (with-abase file
-	 (lambda ()
-	    (trace-item "abase=" (module-abase))
-	    (or ((config 'module-resolver) mod files (module-abase))
-		((bigloo-module-resolver) mod files (module-abase))
-		(let ((path (if (string? file)
-				(cons (dirname file) (config 'include-paths))
-				(config 'include-paths))))
-		   (extension-resolver mod path)))))))
+      (trace-item "file=" file)
+      (let ((abase (dirname file)))
+	 (trace-item "abase=" abase)
+	 (or ((config 'module-resolver) mod files abase)
+	     ((bigloo-module-resolver) mod files abase)
+	     (let ((path (if (string? file)
+			     (cons abase (config 'include-paths))
+			     (config 'include-paths))))
+		(extension-resolver mod path))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    config-runtime-resolver ...                                      */
@@ -66,27 +66,4 @@
       (if module-file
 	  (list module-file)
 	  '())))
-
-;*---------------------------------------------------------------------*/
-;*    with-abase ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (with-abase file proc)
-   
-   (define (set-abase! file)
-      (let loop ((dir (dirname file)))
-	 (if (file-exists? (make-file-name dir ".afile"))
-	     (module-abase-set! dir)
-	     (let ((ndir (dirname dir)))
-		(unless (string=? dir ndir)
-		   (loop ndir))))))
-   
-   (if (string? file)
-       (let ((abase (module-abase)))
-	  (set-abase! file)
-	  (let ((r (proc)))
-	     (module-abase-set! abase)
-	     r))
-       (proc)))
-
-
 

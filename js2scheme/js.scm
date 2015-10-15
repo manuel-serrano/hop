@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Sep 25 09:48:08 2015 (serrano)                */
+;*    Last change :  Mon Oct 12 07:54:11 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -345,8 +345,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SRef tildec dollarc mode evalp conf)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (id name global)
-	 (list this (or name (symbol->string id))))))
+      (with-access::J2SDecl decl (id global)
+	 (list this (symbol->string id)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SUnresolvedRef ...                                    */

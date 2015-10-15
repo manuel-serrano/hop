@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Tue Sep  1 14:12:51 2015 (serrano)                */
+;*    Last change :  Thu Oct 15 05:46:42 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -836,15 +836,11 @@
 ;*    with-loading-file ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (with-loading-file file proc)
-   (let ((old (the-loading-file))
-	 (abase (module-abase)))
+   (let ((old (the-loading-file)))
       (loading-file-set! file)
-      (module-abase-set! (dirname file))
       (unwind-protect
 	 (proc)
-	 (begin
-	    (loading-file-set! old)
-	    (module-abase-set! abase)))))
+	 (loading-file-set! old))))
       
 ;*---------------------------------------------------------------------*/
 ;*    with-input-from-loading-file ...                                 */
@@ -870,22 +866,8 @@
 ;*    access table.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-load-afile dir)
-   
-   (define (add-dir f)
-      (if (or (string=? f "") (char=? (string-ref f 0) #\/))
-	  f
-	  (make-file-name dir f)))
-
-   (when (synchronize *afile-mutex*
-	    (unless (member dir *afile-dirs*)
-	       (set! *afile-dirs* (cons dir *afile-dirs*))
-	       #t))
-      (with-trace 'read "hop-load-afile"
-	 (trace-item "dir=" dir)
-	 (let ((path (make-file-name dir ".afile")))
-	    (if (file-exists? path)
-		(module-load-access-file path)
-		(get-directory-module-access dir))))))
+   (or (module-load-access-file dir)
+       (get-directory-module-access dir)))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-directory-module-access ...                                  */
@@ -944,9 +926,7 @@
       ;; feed the cache
       (let ((dir (hz-dir fname)))
 	 ;; load the afile
-	 (let ((afile (make-file-path dir ".afile")))
-	    (when (file-exists? afile)
-	       (module-load-access-file afile)))
+	 (hop-load-afile dir)
 	 ;; load the .hop source file
 	 (let ((base (basename dir)))
 	    (let ((fname (string-append (make-file-name dir base) ".hop")))
@@ -1035,7 +1015,6 @@
 			 (let ()
 			    ($env-push-trace denv traceid #f)
 			    (when afile (hop-load-afile apath))
-			    (when abase (module-abase-set! apath))
 			    (loading-file-set! path)
 			    (when (evmodule? env) (eval-module-set! env))
 			    (case mode

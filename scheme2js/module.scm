@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/module.scm              */
+;*    serrano/prgm/project/hop/3.0.x/scheme2js/module.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Fri Aug  9 17:45:51 2013 (serrano)                */
-;*    Copyright   :  2007-13 Florian Loitsch, Manuel Serrano           */
+;*    Last change :  Thu Oct 15 05:32:54 2015 (serrano)                */
+;*    Copyright   :  2007-15 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*                                                                     */
@@ -746,15 +746,15 @@
 			      reader
 			      :stack stack
 			      :bigloo-modules? bigloo-modules?)))
-		      (if (not im)
-			  (scheme2js-error "scheme2js module"
-			     "cannot find imported module"
-			     name
-			     mod)
-			  ;; just reuse the cond-clause above.
-			  (loop (cons im (cdr imported-modules))
-			     new-macros
-			     new-imports)))))
+		   (if (not im)
+		       (scheme2js-error "scheme2js module"
+			  "cannot find imported module"
+			  mod
+			  name)
+		       ;; just reuse the cond-clause above.
+		       (loop (cons im (cdr imported-modules))
+			  new-macros
+			  new-imports)))))
 	    ((symbol? (car imported-modules))
 	     (let ((mod (car imported-modules)))
 		(cond

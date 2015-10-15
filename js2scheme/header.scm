@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Thu Oct  8 19:13:25 2015 (serrano)                */
+;*    Last change :  Mon Oct 12 07:50:41 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -54,7 +54,6 @@
       (instantiate::J2SDeclExtern
 	 (loc loc)
 	 (id js)
-	 (name (j2s-scheme-id js))
 	 (writable writable)
 	 (global '%scope)
 	 (bind bind)

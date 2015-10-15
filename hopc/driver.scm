@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sat Sep 12 08:00:29 2015 (serrano)                */
+;*    Last change :  Thu Oct 15 05:47:51 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -316,13 +316,16 @@
       (write (with-input-from-file path read))
       (newline)
       (newline))
+
+   (define abase (dirname (car (hopc-sources))))
    
    (define (include-module module)
       (match-case module
 	 (((and (? symbol?) ?sym) (and (? string?) ?path))
 	  (load-module sym path))
 	 ((? symbol?)
-	  (load-module module (car ((bigloo-module-resolver) module '() (module-abase)))))
+	  (load-module module
+	     (car ((bigloo-module-resolver) module '() abase))))
 	 (else
 	  (error "hopc" "Illegal module clause" module))))
 	     

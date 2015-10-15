@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Aug 21 17:25:00 2015 (serrano)                */
+;*    Last change :  Wed Oct 14 15:43:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -198,7 +198,7 @@
 	 :configurable #t
 	 :enumerable #f)
       
-      ;exp
+      ;; exp
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.8
       (define (js-math-exp this x)
 	 (exp x))

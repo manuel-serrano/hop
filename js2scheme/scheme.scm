@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Oct 10 20:24:15 2015 (serrano)                */
+;*    Last change :  Mon Oct 12 08:05:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -24,8 +24,7 @@
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
-	   (generic j2s-scheme ::obj ::symbol ::procedure ::obj)
-	   (j2s-scheme-id id)))
+	   (generic j2s-scheme ::obj ::symbol ::procedure ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -98,10 +97,15 @@
        id))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-name ...                                                     */
+;*    j2s-decl-scheme-id ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (j2s-name name id)
-   (if name (j2s-scheme-id name) (j2s-scheme-id id)))
+(define (j2s-decl-scheme-id decl::J2SDecl)
+   (with-access::J2SDecl decl (%scmid id)
+      (if %scmid
+	  %scmid
+	  (let ((sid (j2s-scheme-id id)))
+	     (set! %scmid sid)
+	     sid))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-new ...                                                      */
@@ -273,8 +277,8 @@
 ;*    j2s-scheme-decl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-decl this::J2SDecl value writable mode return)
-   (with-access::J2SDecl this (loc id name global)
-      (let ((ident (j2s-name name id)))
+   (with-access::J2SDecl this (loc global id)
+      (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
 	    (if global
 		(let ((fun-name (string->symbol
@@ -308,11 +312,11 @@
 ;*    j2s-scheme ::J2SLet ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLet mode return conf)
-   (with-access::J2SLet this (loc id name global)
+   (with-access::J2SLet this (loc global)
       (epairify loc
 	 (if global
-	     `(define ,(j2s-name name id) (js-make-let))
-	     `(,(j2s-name name id) (js-make-let))))))
+	     `(define ,(j2s-decl-scheme-id this) (js-make-let))
+	     `(,(j2s-decl-scheme-id this) (js-make-let))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SLetOpt ...                                       */
@@ -336,8 +340,8 @@
    
    (define (set decl)
       (if (and (isa? decl J2SLet) (not (isa? decl J2SLetOpt)))
-	  (with-access::J2SLet decl (id name global)
-	     `(js-let-set! ,(j2s-name name id) ,val))
+	  (with-access::J2SLet decl (global)
+	     `(js-let-set! ,(j2s-decl-scheme-id decl) ,val))
 	  `(set! ,(j2s-scheme lhs mode return conf) ,val)))
    
    (with-access::J2SRef lhs (decl)
@@ -368,8 +372,8 @@
 ;*    j2s-scheme ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclInit mode return conf)
-   (with-access::J2SDeclInit this (loc id name val writable)
-      (let ((ident (j2s-name name id)))
+   (with-access::J2SDeclInit this (loc val writable)
+      (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify loc
 	    (if writable
 		`(begin
@@ -414,9 +418,9 @@
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
-   (with-access::J2SDeclFun this (loc id name  global val)
+   (with-access::J2SDeclFun this (loc id global val)
       (with-access::J2SFun val (params mode vararg body name)
-	 (let* ((scmid (j2s-name name id))
+	 (let* ((scmid (j2s-decl-scheme-id this))
 		(fastid (j2s-fast-id id))
 		(lparams (length params))
 		(arity (if vararg -1 (+fx 1 lparams)))
@@ -458,8 +462,8 @@
 ;*    j2s-scheme ::J2SDeclSvc ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclSvc mode return conf)
-   (with-access::J2SDeclSvc this (loc id name val global)
-      (let ((scmid (j2s-name name id))
+   (with-access::J2SDeclSvc this (loc id val global)
+      (let ((scmid (j2s-decl-scheme-id this))
 	    (fastid (j2s-fast-id id)))
 	 (epairify-deep loc
 	    (if global
@@ -499,16 +503,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return conf)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (id name global)
+      (with-access::J2SDecl decl (global id)
 	 (cond
 	    ((isa? decl J2SLetOpt)
-	     (j2s-name name id))
+	     (j2s-decl-scheme-id decl))
 	    ((isa? decl J2SLet)
-	     `(js-let-ref ,(j2s-name name id) ',id ',loc %this))
+	     `(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this))
 	    ((and global (in-eval? return))
 	     `(js-get-global-object-name %scope ',id #f %this))
 	    (else
-	     (j2s-name name id))))))
+	     (j2s-decl-scheme-id decl))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SWithRef ...                                      */
@@ -577,10 +581,7 @@
 		     (js-new %this js-syntax-error
 			(js-string->jsstring
 			   "comprehension only supported in strict mode"))))))
-	  (let* ((names (map (lambda (decl)
-				(with-access::J2SDecl decl (id name)
-				   (j2s-name name id)))
-			   decls))
+	  (let* ((names (map j2s-decl-scheme-id decls))
 		 (iters (map (lambda (iter)
 				(j2s-scheme iter mode return conf))
 			   iterables))
@@ -800,13 +801,6 @@
    `(bind-exit (%return) ,(flatten-stmt body)))
 
 ;*---------------------------------------------------------------------*/
-;*    jsfun-param-scheme-id ...                                        */
-;*---------------------------------------------------------------------*/
-(define (jsfun-param-scheme-id param)
-   (with-access::J2SDecl param (id name)
-      (j2s-name name id)))
-
-;*---------------------------------------------------------------------*/
 ;*    jsfun-normal-vararg-body ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (jsfun-normal-vararg-body this::J2SFun body id rest)
@@ -821,7 +815,7 @@
 	     (enumerable #t))))
 
    (define (init-alias-argument argument rest indx)
-      (let ((id (jsfun-param-scheme-id argument)))
+      (let ((id (j2s-decl-scheme-id argument)))
 	 `(begin
 	     (set! ,id (car ,rest))
 	     (js-arguments-define-own-property arguments ,indx
@@ -840,9 +834,9 @@
 		   (make-vector (length ,rest) (js-absent)))))
 	  ,@(if (pair? params)
 		(map (lambda (param)
-			(with-access::J2SDecl param (id name loc)
+			(with-access::J2SDecl param (loc)
 			   (epairify loc
-			      `(define ,(j2s-name name id)
+			      `(define ,(j2s-decl-scheme-id param)
 				  (js-undefined)))))
 		   params)
 		'())
@@ -882,21 +876,21 @@
       `(let ((arguments (js-strict-arguments %this ,rest)))
 	  ,@(if (pair? params)
 		(map (lambda (param)
-			(with-access::J2SDecl param (id name loc)
+			(with-access::J2SDecl param (loc)
 			   (epairify loc
-			      `(define ,(j2s-name name id)
+			      `(define ,(j2s-decl-scheme-id param)
 				  (js-undefined)))))
 		   params)
 		'())
 	  ,(when (pair? params)
 	      `(when (pair? ,rest)
-		  (set! ,(jsfun-param-scheme-id (car params)) (car ,rest))
+		  (set! ,(j2s-decl-scheme-id (car params)) (car ,rest))
 		  ,(let loop ((params (cdr params)))
 		      (if (null? params)
 			  #unspecified
 			  `(when (pair? (cdr ,rest))
 			      (set! ,rest (cdr ,rest))
-			      (set! ,(jsfun-param-scheme-id (car params))
+			      (set! ,(j2s-decl-scheme-id (car params))
 				 (car ,rest))
 			      ,(loop (cdr params)))))))
 	  ,body)))
@@ -969,7 +963,7 @@
 	     (minlen (if (eq? mode 'hopscript) (j2s-minlen this) -1)))
 	 (epairify-deep loc
 	    `(js-make-function %this
-		,tmp ,len ',(j2s-name name id)
+		,tmp ,len ',(or name (j2s-decl-scheme-id id))
 		:src ,(j2s-function-src loc this conf)
 		:rest ,(eq? vararg 'rest)
 		:arity ,arity
@@ -1147,8 +1141,7 @@
 ;*    j2s-scheme ::J2SParam ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SParam mode return conf)
-   (with-access::J2SParam this (id name)
-      (j2s-name name id)))
+   (j2s-decl-scheme-id this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SReturn ...                                       */
@@ -1225,8 +1218,8 @@
 (define (j2s-let-decl::pair-nil d::J2SDecl mode return conf)
    (if (not (isa? d J2SLetOpt))
        (list (j2s-scheme d mode return conf))
-       (with-access::J2SLetOpt d (val usage id name)
-	  (let ((ident (j2s-name name id)))
+       (with-access::J2SLetOpt d (val usage id)
+	  (let ((ident (j2s-decl-scheme-id d)))
 	     (cond
 		((or (not (isa? val J2SFun)) (memq 'assig usage))
 		 (list `(,ident ,(j2s-scheme val mode return conf))))

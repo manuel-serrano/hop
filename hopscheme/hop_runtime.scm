@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov  5 19:11:10 2012                          */
-;*    Last change :  Sat Sep 20 06:45:18 2014 (serrano)                */
-;*    Copyright   :  2012-14 Manuel Serrano                            */
+;*    Last change :  Wed Oct 14 09:23:21 2015 (serrano)                */
+;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScheme runtime interface                                      */
 ;*=====================================================================*/
@@ -85,7 +85,7 @@
 			     f)))))
       (set! *hop-precompiled-modules*
 	 (map (lambda (m)
-		 (precompile-module m resolver))
+		 (precompile-module m resolver '*))
 	    *hop-runtime-modules*))))
 
 ;*---------------------------------------------------------------------*/

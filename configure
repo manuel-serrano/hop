@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Oct  9 15:44:01 2015 (serrano)                */
+#*    Last change :  Thu Oct 15 15:28:07 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -412,6 +412,29 @@ while : ; do
   esac
   shift
 done
+
+# patch the bigloobindir path
+if [ "$bigloobindir " = " " -a "$bigloo " != "bigloo " ]; then
+  bigloobindir=`dirname $bigloo`;
+fi  
+    
+if [ "$bigloobindir " != " " ]; then
+  if [ "$bigloo " = "bigloo " ]; then
+    bigloo=$bigloobindir/bigloo
+  fi
+  if [ "$afile " = "bglafile " ]; then
+    afile=$bigloobindir/bglafile
+  fi
+  if [ "$jfile " = "bgljfile " ]; then
+    jfile=$bigloobindir/bgljfile
+  fi
+  if [ "$btags " = "bgltags " ]; then
+    btags=$bigloobindir/bgltags
+  fi
+  if [ "$bdepend " = "bgldepend " ]; then
+    bdepend=$bigloobindir/bgldepend
+  fi
+fi
 
 #*---------------------------------------------------------------------*/
 #*    Versioning                                                       */
@@ -843,6 +866,14 @@ if [ "$felix " != " " ]; then
 fi
 
 #*---------------------------------------------------------------------*/
+#*    Create directories                                               */
+#*---------------------------------------------------------------------*/
+mkdir -p bin
+mkdir -p lib
+mkdir -p lib/hop
+mkdir -p lib/hop/$version
+
+#*---------------------------------------------------------------------*/
 #*    Makefile.hopconfig                                               */
 #*---------------------------------------------------------------------*/
 if [ "$ssl " = "yes " ]; then
@@ -884,29 +915,29 @@ if [ "$mach " = " " ]; then
   mach="`$bigloo -eval '(begin (display (os-name)) (exit 0))'`-`$bigloo -eval '(begin (display (os-arch)) (exit 0))'`"
 fi
 
-# patch the bigloobindir path
-if [ "$bigloobindir " = " " -a "$bigloo " != "bigloo " ]; then
-  bigloobindir=`dirname $bigloo`;
-fi  
+for p in hopc.sh hop.sh; do
+  cat etc/$p.in \
+      | sed -e "s|@RELEASE@|$version|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@DATE@|$date|" \
+            -e "s|@DEVEL@|$devel|" \
+            -e "s|@DEBUG@|$debug|" \
+            -e "s|@HOP@|$hop|" \
+            -e "s|@HOPC@|$hopc|" \
+            -e "s|@BUILDDIR@|$PWD|" \
+            -e "s|@BUILDLIBDIR@|$buildlibdir|" \
+            -e "s|@BUILDETCDIR@|$PWD/etc|" \
+            -e "s|@BUILDBINDIR@|$PWD/bin|" \
+            -e "s|@BUILDSHAREDIR@|$buildsharedir|" \
+            -e "s|@BUILDSPECIFIC@|$buildspecific|" \
+            -e "s|@INSTALLSPECIFIC@|$installspecific|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+  > bin/$p
+  chmod a+rx bin/$p
+done
     
-if [ "$bigloobindir " != " " ]; then
-  if [ "$bigloo " = "bigloo " ]; then
-    bigloo=$bigloobindir/bigloo
-  fi
-  if [ "$afile " = "bglafile " ]; then
-    afile=$bigloobindir/afile
-  fi
-  if [ "$jfile " = "bgljfile " ]; then
-    jfile=$bigloobindir/jfile
-  fi
-  if [ "$btags " = "bgltags " ]; then
-    btags=$bigloobindir/btags
-  fi
-  if [ "$bdepend " = "bgldepend " ]; then
-    bdepend=$bigloobindir/bdepend
-  fi
-fi
-
 cat $mkmf.in \
     | sed -e "s|@RELEASE@|$version|" \
           -e "s|@BRANCH@|$branch|" \
@@ -915,8 +946,8 @@ cat $mkmf.in \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
           -e "s|@BIGLOOVERSION@|$bglversion|" \
-          -e "s|@HOP@|$hop|" \
-          -e "s|@HOPC@|$hopc|" \
+          -e "s|@HOP@|$hop.sh|" \
+          -e "s|@HOPC@|$hopc.sh|" \
           -e "s|@BGLCPP@|$bglcpp|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@LINK@|$link|" \
@@ -1178,9 +1209,6 @@ cat etc/hopshrc.hop.in \
 
 # lib/hop.init
 init=lib/hop/$version/hop.init
-mkdir -p lib
-mkdir -p lib/hop
-mkdir -p lib/hop/$version
 
 rm -f $init 2> /dev/null
 echo ";* Automatically generated file (don't edit) */" > $init
