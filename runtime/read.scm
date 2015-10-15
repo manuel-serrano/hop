@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Wed Oct 14 11:12:35 2015 (serrano)                */
+;*    Last change :  Thu Oct 15 05:46:42 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -836,15 +836,11 @@
 ;*    with-loading-file ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (with-loading-file file proc)
-   (let ((old (the-loading-file))
-	 (abase (module-abase)))
+   (let ((old (the-loading-file)))
       (loading-file-set! file)
-      (module-abase-set! (dirname file))
       (unwind-protect
 	 (proc)
-	 (begin
-	    (loading-file-set! old)
-	    (module-abase-set! abase)))))
+	 (loading-file-set! old))))
       
 ;*---------------------------------------------------------------------*/
 ;*    with-input-from-loading-file ...                                 */
@@ -1019,7 +1015,6 @@
 			 (let ()
 			    ($env-push-trace denv traceid #f)
 			    (when afile (hop-load-afile apath))
-			    (when abase (module-abase-set! apath))
 			    (loading-file-set! path)
 			    (when (evmodule? env) (eval-module-set! env))
 			    (case mode

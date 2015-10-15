@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Oct 13 16:36:11 2015 (serrano)                */
+;*    Last change :  Thu Oct 15 08:27:47 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -190,9 +190,21 @@
       #f this)
 
    ;; require.cache
-   (with-access::WorkerHopThread worker (module-cache) 
-      (js-put! require 'cache module-cache #f this))
-	 
+   (with-access::WorkerHopThread worker (module-cache)
+      (js-bind! this require 'cache
+	 :get (js-make-function this
+		 (lambda (this) module-cache)
+		 0 'cache)
+	 :set (js-make-function this
+		 (lambda (this v)
+		    ;; when setting require.cache, erase the compilation
+		    ;; table for avoid out of sync errors
+		    (synchronize compile-mutex
+		       (set! compile-table (make-hashtable)))
+		    (set! module-cache v))
+		 1 'cache)
+	 :configurable #f))
+
    ;; module.require
    (js-bind! this %module 'require
       :value require
@@ -714,15 +726,41 @@
    (define (resolve-file x)
       (cond
 	 ((and (file-exists? x) (not (directory? x)))
-	  (file-name-canonicalize x))
+	  (if (string-suffix? ".hz" x)
+	      (resolve-hz x)
+	      (file-name-canonicalize x)))
+	 ((string-suffix? ".hz" x)
+	  (resolve-autoload-hz x))
 	 (else
-	  (let loop ((suffixes '(".js" ".hop" ".so" ".json")))
+	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hz")))
 	     (when (pair? suffixes)
 		(let* ((suffix (car suffixes))
 		       (src (string-append x suffix)))
 		   (if (and (file-exists? src) (not (directory? src)))
 		       (file-name-canonicalize src)
 		       (loop (cdr suffixes)))))))))
+
+   (define (resolve-autoload-hz hz)
+      (with-trace 'require "nodejs-resolve.resolve-autoload-hz"
+	 (trace-item "hz=" hz)
+	 (cond
+	    ((hz-local-weblet-path hz (get-autoload-directories))
+	     => resolve-directory)
+	    ((hz-cache-path hz)
+	     => resolve-directory)
+	    (else
+	     (let ((dir (hz-download-to-cache hz (hop-hz-repositories))))
+		(if (directory? dir)
+		    (resolve-directory dir)
+		    #f))))))
+   
+   (define (resolve-hz hz)
+      (with-trace 'require "nodejs-resolve.resolve-hz"
+	 (trace-item "hz=" hz)
+	 (let ((dir (hz-download-to-cache hz (hop-hz-repositories))))
+	    (if (directory? dir)
+		(resolve-directory dir)
+		#f))))
    
    (define (resolve-package pkg)
       (call-with-input-file pkg

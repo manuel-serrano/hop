@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  Thu Nov 24 07:24:24 2011                          */
-;*    Last change :  Wed Oct 14 22:05:44 2015 (serrano)                */
+;*    Last change :  Thu Oct 15 05:32:54 2015 (serrano)                */
 ;*    Copyright   :  2007-15 Florian Loitsch, Manuel Serrano           */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
@@ -746,8 +746,6 @@
 			      reader
 			      :stack stack
 			      :bigloo-modules? bigloo-modules?)))
-		   (unless im
-		      (tprint "ERROR import mod=" mod " file=" file))
 		   (if (not im)
 		       (scheme2js-error "scheme2js module"
 			  "cannot find imported module"
@@ -775,13 +773,10 @@
 				  (loop (cdr imported-modules)
 				     new-macros
 				     new-imports)
-				  (begin
-				     (tprint "ERROR.2 import mod=" mod
-					" file=" files)
-				     (scheme2js-error "scheme2js module"
-					"cannot find imported module"
-					mod
-					header))))
+				  (scheme2js-error "scheme2js module"
+				     "cannot find imported module"
+				     mod
+				     header)))
 			     ((read-imported-module-file
 				 mod
 				 (car module-files)
