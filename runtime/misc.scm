@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Fri Sep 18 17:41:29 2015 (serrano)                */
+;*    Last change :  Mon Oct 19 08:38:44 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -340,7 +340,7 @@
 			   (cond-expand
 			      (enable-ssl
 				 (make-ssl-client-socket host port
-				    :protocol 'tls
+				    :protocol (hop-https-protocol)
 				    :timeout tmt))
 			      (else
 			       (error "make-client-socket/timeout"
