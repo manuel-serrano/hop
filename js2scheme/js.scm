@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Oct 12 07:54:11 2015 (serrano)                */
+;*    Last change :  Wed Oct 21 06:48:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -636,10 +636,11 @@
 (define (j2s-js-attribute-tilde this::J2STilde tildec dollarc mode evalp conf)
    (with-access::J2STilde this (loc stmt)
       (let* ((temp (gensym))
-	     (assign (j2s-stmt-assign stmt temp)))
+	     (assign (j2s-stmt-assign stmt temp))
+	     (ndollarc (j2s-js-client-dollar dollarc)))
 	 (cons* this "function( event ) { var "
 	    (symbol->string temp) "; "
-	    (append (j2s-js assign tildec j2s-js-client-dollar mode evalp conf)
+	    (append (j2s-js assign tildec ndollarc mode evalp conf)
 	       `(,(format "\nreturn ~a}" temp)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -664,9 +665,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-client-dollar ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (j2s-js-client-dollar this::J2SDollar tildec dollarc mode evalp conf)
-   (with-access::J2SDollar this (node)
-      (j2s-js node tildec dollarc mode evalp conf)))
+(define (j2s-js-client-dollar odollarc)
+   (lambda (this::J2SDollar tildec dollarc mode evalp conf)
+      (with-access::J2SDollar this (node)
+	 (j2s-js node tildec odollarc mode evalp conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SNew ...                                              */

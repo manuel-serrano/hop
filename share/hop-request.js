@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Sep 23 13:08:00 2015 (serrano)                */
+/*    Last change :  Tue Oct 20 08:21:22 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -667,6 +667,8 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    }
 
    xhr.svc = svc;
+   xhr.onerror = function( e ) { return fail( e, xhr ) };
+   
    try {
       xhr.send( null );
 
@@ -704,7 +706,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 	 hop_stop_anim( xhr );
       }
 
-      throw e;
+      return fail( e, xhr );
    }
 
    return xhr;

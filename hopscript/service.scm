@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Sep 30 09:58:40 2015 (serrano)                */
+;*    Last change :  Tue Oct 20 07:57:15 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -324,7 +324,7 @@
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (post svc::bstring args success opt %this force-sync)
-
+   
    (let ((host "localhost")
 	 (port (hop-port))
 	 (user #f)
@@ -385,8 +385,14 @@
 				(js-alist->jsobject header %this)))))))
 	     (when (isa? r JsObject)
 		(set! header (js-jsobject->alist r %this))))))
-
-      (define (with-hop callback)
+      
+      (define (scheme->js val)
+	 ;; a string might be received on internal server error
+	 (if (string? val)
+	     (js-string->jsstring val)
+	     val))
+      
+      (define (post-request callback)
 	 (with-hop-remote svc callback fail
 	    :scheme scheme
 	    :host host :port port 
@@ -395,13 +401,7 @@
 	    :ctx %this
 	    :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
 	    :args args))
-
-      (define (scheme->js val)
-	 ;; a string might be received on internal server error
-	 (if (string? val)
-	     (js-string->jsstring val)
-	     val))
-
+      
       (if asynchronous
 	  (begin
 	     (thread-start!
@@ -414,16 +414,16 @@
 					 (lambda ()
 					    (js-call1 %this failjs %this e)))
 				      (exception-notify e)))
-			       (with-hop
-				     (if (isa? success JsFunction)
-					 (lambda (x)
-					    (js-worker-push-thunk! worker svc
-					       (lambda ()
-						  (js-call1 %this success %this
-						     (scheme->js x)))))
-					 scheme->js)))))))
+			       (post-request
+				  (if (isa? success JsFunction)
+				      (lambda (x)
+					 (js-worker-push-thunk! worker svc
+					    (lambda ()
+					       (js-call1 %this success %this
+						  (scheme->js x)))))
+				      scheme->js)))))))
 	     (js-undefined))
-	  (with-hop
+	  (post-request
 	     (if (isa? success JsFunction)
 		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
 		 scheme->js)))))

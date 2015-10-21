@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Wed Sep 30 16:43:40 2015 (serrano)                */
+;*    Last change :  Tue Oct 20 08:07:32 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -273,7 +273,13 @@
 				      (with-hop-remote svc a success fail args))))
 			   (if sync
 			       wh
-			       `(begin ,wh #unspecified)))))
+			       `(let ((fail ,fail))
+				   (with-handler
+				      (lambda (e)
+					 (if (procedure? fail)
+					     (fail e)
+					     (exception-notify e)))
+				      (begin ,wh #unspecified)))))))
 		 (e (evepairify nx x) e)))
 	     ((not (keyword? (car opts)))
 	      (cond

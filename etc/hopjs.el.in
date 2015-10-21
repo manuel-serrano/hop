@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Oct 14 16:14:26 2015 (serrano)                */
+;*    Last change :  Tue Oct 20 16:59:03 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -45,6 +45,23 @@
   :group 'js)
   
 ;*---------------------------------------------------------------------*/
+;*    Highlighting                                                     */
+;*---------------------------------------------------------------------*/
+(defface hopjs-nomatch-face
+  '((((class color)) (:background "Red"))
+    (t (:weight bold)))
+  "Face used for marking a nomatched tag."
+  :group 'hopjs)
+
+(defface hopjs-match-face
+  '((((class color)) (:background "Green"))
+    (t (:weight bold)))
+  "Face used for marking a matched tag."
+  :group 'hopjs)
+
+(defvar hopjs-tag-overlays nil)
+
+;*---------------------------------------------------------------------*/
 ;*    global state                                                     */
 ;*---------------------------------------------------------------------*/
 (defvar hopjs-doc-index-table
@@ -80,6 +97,9 @@
 ;* 	  nil)))                                                       */
 ;*    '(lambda ()                                                      */
 ;*       (message "action")))                                          */
+  ;; tag matching
+  (message "installating post-command-hook...")
+  (add-hook 'post-command-hook (function hopjs-tag-matching) t t)
   ;; user hooks
   (run-hooks 'hopjs-mode-hook))
 
@@ -128,9 +148,9 @@
 ;*    hopjs-re-open-tag ...                                            */
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-re-open-tag
-  "<[a-zA-Z_$][a-zA-Z_$0-9.]*[^<>/{]*")
+  "<[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_.:$!]*[^<>/{ \t]*\\)")
 (defconst hopjs-re-close-tag
-  "</[a-zA-Z_$][a-zA-Z_$0-9.]*[ ]*>")
+  "</[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_.:$!]*\\)[ \t]*>")
 (defconst hopjs-re-end-tag
   "/>")
 (defconst hopjs-re-code
@@ -141,6 +161,9 @@
 	  "\\|" hopjs-re-end-tag
 	  "\\|" hopjs-re-code))
 
+(defconst hopjs-re-standalone-tag
+  "<\\([^>/\n]\\|/[^>]\\)*/>")
+
 (defconst hopjs-re-entering-html
   "\\(?:var[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\|[^/]>\\)")
 
@@ -149,7 +172,10 @@
 
 (defconst hopjs-re-special-tag
   "<\\(link\\|LINK\\)")
-  
+
+(defconst hopjs-re-any-tag
+  (concat hopjs-re-open-tag "\\|" hopjs-re-close-tag))
+
 ;*---------------------------------------------------------------------*/
 ;*    debugging                                                        */
 ;*---------------------------------------------------------------------*/
@@ -339,6 +365,13 @@ usage: (js-return)  -- [RET]"
           (t 0))))
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-in-string-comment-p ...                                    */
+;*---------------------------------------------------------------------*/
+(defun hopjs-in-string-comment-p (pos)
+  (memq (get-text-property pos 'face)
+	'(font-lock-comment-face font-lock-string-face)))
+
+;*---------------------------------------------------------------------*/
 ;*    hopjs-html-p ...                                                 */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-html-p (pos)
@@ -357,12 +390,11 @@ usage: (js-return)  -- [RET]"
 	      (let ((next (match-end 0)))
 		(hopjs-debug "--- hopjs-html-p open=%d point=%s next=%d match=\"%s\""
 			     open (point) next
-			 (buffer-substring
+			 (buffer-substring-no-properties
 			  (match-beginning 0) (match-end 0)))
 		(goto-char (match-beginning 0))
 		(cond
-		 ((memq (get-text-property (point) 'face)
-			'(font-lock-comment-face font-lock-string-face))
+		 ((hopjs-in-string-comment-p (point))
 		  (hopjs-debug "     (in-comment/string)")
 		  (goto-char next))
 		 ((looking-at hopjs-re-code)
@@ -901,6 +933,173 @@ usage: (js-return)  -- [RET]"
 	  (start-process "system" nil "sh" "-c"
 			 (format "%s file://%s/%s" hopjs-navigator hopjs-doc-dir
 				 (cdr url))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-unhighlight-tags ...                                       */
+;*---------------------------------------------------------------------*/
+(defun hopjs-unhighlight-tags ()
+  (while (consp hopjs-tag-overlays)
+    (delete-overlay (car hopjs-tag-overlays))
+    (setq hopjs-tag-overlays (cdr hopjs-tag-overlays))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-highlight-tag ...                                          */
+;*---------------------------------------------------------------------*/
+(defun hopjs-highlight-tag (face beg end)
+  (let ((ov (make-overlay beg end nil t nil)))
+    (overlay-put ov 'face face)
+    (overlay-put ov 'hopjs-tag-overlay t)
+    (overlay-put ov 'evaporate t)
+    (setq hopjs-tag-overlays (cons ov hopjs-tag-overlays))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-closing-tag-p ...                                          */
+;*---------------------------------------------------------------------*/
+(defun hopjs-closing-tag-p (pos)
+  (when (and (eq (char-after pos) ?>)
+	     (> pos (+ 1 (point-min)))
+	     (not (eq (char-after (1- pos)) ?/)))
+    (save-excursion
+      (when (search-backward "<" nil t 1)
+	(and (looking-at hopjs-re-close-tag)
+	     (= (match-end 0) (1+ pos)))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-opening-tag-p ...                                          */
+;*---------------------------------------------------------------------*/
+(defun hopjs-opening-tag-p (pos)
+  (when (and (eq (char-after pos) ?<) (< pos (- (point-max) 1)))
+    (save-excursion
+      (looking-at hopjs-re-open-tag))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-find-opening-tag ...                                       */
+;*---------------------------------------------------------------------*/
+(defun hopjs-find-opening-tag (pos)
+  (save-excursion
+    (goto-char pos)
+    (let ((depth 1)
+	  (res 'loop))
+      (while (eq res 'loop)
+	(if (re-search-backward hopjs-re-any-tag nil t 1)
+	    (progn
+	      (message "hopjs-find-opering-tag depth=%s point=%s buf=%s"
+		       depth
+		       (match-beginning 0)
+		       (buffer-substring-no-properties
+			(match-beginning 0)
+			(match-end 0)))
+	      (unless (hopjs-in-string-comment-p (match-beginning 0))
+		(cond
+		 ((looking-at hopjs-re-standalone-tag)
+		  (message "standlone %s" (point))
+		  nil)
+		 ((looking-at hopjs-re-close-tag)
+		  (message "close... %s" (point))
+		  (setq depth (1+ depth)))
+		 (t
+		  (if (= depth 1)
+		      (progn
+			(looking-at hopjs-re-open-tag)
+			(setq res 
+			      (buffer-substring-no-properties
+			       (match-beginning 1) (match-end 1))))
+		    (setq depth (1- depth)))))))
+	  (setq res nil)))
+      res)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-find-closing-tag ...                                       */
+;*---------------------------------------------------------------------*/
+(defun hopjs-find-closing-tag (pos)
+  (save-excursion
+    (goto-char pos)
+    (let ((depth 1)
+	  (res 'loop))
+      (while (eq res 'loop)
+	(if (re-search-forward hopjs-re-any-tag nil t 1)
+	    (let ((beg (match-beginning 0))
+		  (end (match-end 0)))
+	      (message "hopjs-find-closing-tag depth=%s point=%s bug=%s"
+		       depth
+		       beg
+		       (buffer-substring-no-properties beg end))
+			
+	      (unless (hopjs-in-string-comment-p beg)
+		(goto-char beg)
+		(cond
+		 ((looking-at hopjs-re-standalone-tag)
+		  (message "standalone... %s" (point))
+		  nil)
+		 ((looking-at hopjs-re-open-tag)
+		  (message "open...%s" (point))
+		  (setq depth (1+ depth)))
+		 (t
+		  (message "close...%s" (point))
+		  (if (= depth 1)
+		      (progn
+			(looking-at hopjs-re-close-tag)
+			(setq res 
+			      (buffer-substring-no-properties
+			       (match-beginning 1) (match-end 1))))
+		    (setq depth (1- depth))))))
+	      (goto-char end))
+	  (setq res nil)))
+      res)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-tag-matching ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-tag-matching ()
+  (interactive)
+  (hopjs-unhighlight-tags)
+  (cond
+   ((hopjs-closing-tag-p (1- (point)))
+    (message "hopjs-tag-match...closing %s" (point))
+    (if (> (point) 3)
+	(let* ((tag (buffer-substring-no-properties
+		     (match-beginning 1) (match-end 1)))
+	       (beg (match-beginning 1))
+	       (end (match-end 1))
+	       (otag (hopjs-find-opening-tag (match-beginning 0))))
+	  (cond
+	   ((not otag)
+	    (hopjs-highlight-tag 'hopjs-nomatch-face beg end))
+	   ((string-equal tag otag)
+	    (hopjs-highlight-tag
+	     'hopjs-match-face beg end)
+	    (hopjs-highlight-tag
+	     'hopjs-match-face (match-beginning 1) (match-end 1)))
+	   (t
+	    (hopjs-highlight-tag
+	     'hopjs-nomatch-face beg end)
+	    (hopjs-highlight-tag
+	     'hopjs-nomatch-face (match-beginning 1) (match-end 1)))))
+      (hopjs-unhighlight-tags)))
+   ((hopjs-opening-tag-p (point))
+    (message "hopjs-tag-match...opening %s" (point))
+    (cond
+     ((looking-at hopjs-re-standalone-tag)
+      (hopjs-unhighlight-tags))
+     ((< (point) (- (point-max) 3))
+      (let* ((tag (buffer-substring-no-properties
+		   (match-beginning 1) (match-end 1)))
+	     (beg (match-beginning 1))
+	     (end (match-end 1))
+	     (otag (hopjs-find-closing-tag (+ 1 (match-end 0)))))
+	(cond
+	 ((not otag)
+	  (hopjs-highlight-tag 'hopjs-nomatch-face beg end))
+	 ((string-equal tag otag)
+	  (hopjs-highlight-tag
+	   'hopjs-match-face (match-beginning 1) (match-end 1)))
+	 (t
+	  (hopjs-highlight-tag
+	   'hopjs-nomatch-face (match-beginning 1) (match-end 1))))))
+     (t
+      (hopjs-unhighlight-tags))))
+   (t
+    (hopjs-unhighlight-tags))))
 
 ;*---------------------------------------------------------------------*/
 ;*    init                                                             */
