@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Sep 13 08:55:18 2015 (serrano)                */
+;*    Last change :  Mon Oct 19 08:38:32 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -63,6 +63,9 @@
 
 	    (hop-realm::bstring)
 	    (hop-realm-set! ::bstring)
+	    
+	    (hop-https-protocol::symbol)
+	    (hop-https-protocol-set! ::symbol)
 	    
 	    (hop-login-cookie-id::bstring)
 	    (hop-login-cookie-time::int)
@@ -451,6 +454,14 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-realm
    "hop")
+
+;*---------------------------------------------------------------------*/
+;*    hop-https-protocol ...                                           */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-https-protocol
+   (cond-expand
+      (bigloo4.2a 'tlsv1)
+      (else 'tlsv1_2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-proxy ...                                                    */
@@ -1438,7 +1449,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hop-user-agent ...                                               */
 ;*    -------------------------------------------------------------    */
-;*    User-Agent string when emitting https requests                   */
+;*    User-Agent string when emitting http requests                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-user-agent
    "Mozilla/5.0 (X11; Linux i686; rv:31.0) Gecko/20100101 Firefox/31.0 Iceweasel/31.5.3")

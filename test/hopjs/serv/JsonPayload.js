@@ -1,4 +1,3 @@
-var hop = require( 'hop' );
 var path = require( 'path' );
 var fs = require( 'fs' );
 var assert = require( 'assert' );

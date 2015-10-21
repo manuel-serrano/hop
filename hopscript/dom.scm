@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Oct  9 15:58:05 2015 (serrano)                */
+;*    Last change :  Fri Oct 16 10:24:54 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -283,19 +283,15 @@
 		%this)))
 	 (else
 	  (with-access::xml-markup o (attributes)
-	     (let* ((id (if (eq? pname 'className)
-			    class:
-			    (symbol->keyword pname)))
-		    (c (memq id attributes)))
-		(cond
-		   ((not (pair? c))
-		    (js-undefined))
-		   ((string? (cadr c))
-		    (js-string->jsstring (cadr c)))
-		   ((isa? (cadr c) JsStringLiteral)
-		    (cadr c))
-		   (else
-		    (cadr c)))))))))
+	     (let ((name (if (eq? pname 'className)
+			     "class"
+			     (symbol->string pname))))
+		(if (dom-has-attribute? o name)
+		    (let ((v (dom-get-attribute o name)))
+		       (if (string? v)
+			   (js-string->jsstring v)
+			   v))
+		    (js-undefined))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::xml-element ...                                         */
@@ -371,13 +367,7 @@
 	 ((className:)
 	  (loop 'class:))
 	 (else
-	  (with-access::xml-markup o (attributes)
-	     (let ((c (memq pname attributes)))
-		(cond
-		   ((not (pair? c))
-		    (set! attributes (cons* pname (->obj v) attributes)))
-		   (else
-		    (set-car! (cdr c) (->obj v))))))))))
+	  (dom-set-attribute! o (keyword->string pname) (->obj v))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-element ...                                        */

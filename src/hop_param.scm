@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Sep  2 20:30:07 2015 (serrano)                */
+;*    Last change :  Mon Oct 19 08:38:33 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -61,9 +61,6 @@
 	    
 	    (hop-enable-https::bool)
 	    (hop-enable-https-set! ::bool)
-	    
-	    (hop-https-protocol::symbol)
-	    (hop-https-protocol-set! ::symbol)
 	    
 	    (hop-https-cert::bstring)
 	    (hop-https-cert-set! ::bstring)
@@ -270,9 +267,6 @@
 	 (else
 	  (when v (warning "SSL not supporting, disabling https support."))
 	  v))))
-
-(define-parameter hop-https-protocol
-   'tlsv1)
 
 (define-parameter hop-https-pkey
    "/etc/ssl/private/hop.pem")

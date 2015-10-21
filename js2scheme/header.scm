@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Mon Oct 12 07:50:41 2015 (serrano)                */
+;*    Last change :  Mon Oct 19 07:09:39 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -79,6 +79,11 @@
 	     (loc loc))
 	  (js-def-extern 'console #t #f
 	     '(nodejs-require-core "console" %worker %this)))
+      (if (string=? path "hop")
+	  (instantiate::J2SUndefined
+	     (loc loc))
+	  (js-def-extern 'hop #t #t
+	     '(nodejs-require-core "hop" %worker %this)))
       (js-def-extern '%__INIT #f #f
 	 ;; this will not be compiled as a global (see scheme.scm)
 	 `(begin

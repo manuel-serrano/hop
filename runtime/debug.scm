@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Sun Nov 16 08:05:48 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Fri Oct 16 08:38:27 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
 ;*=====================================================================*/
@@ -97,7 +97,8 @@
       (if (and (integer? i)
 	       (substring-at? file (hop-scm-compile-suffix) (+fx i 1)))
 	  (let ((cache (clientc-cached-response (substring file 0 i))))
-	     (or (source-map-translate cache file line col) file))
+	     (or (source-map-translate cache file line col)
+		 (values file #f #f)))
 	  file)))
 
 ;*---------------------------------------------------------------------*/
@@ -126,7 +127,7 @@
 (define (source-map-translate cache file line col)
    (when (string? cache)
       (let ((smap (string-append cache ".map")))
-	 (when (file-exists? smap)
+	 (if (file-exists? smap)
 	    (with-handler
 	       (lambda (e)
 		  #f)

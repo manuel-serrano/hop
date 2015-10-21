@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Wed Oct 14 14:18:46 2015 (serrano)                */
+;*    Last change :  Fri Oct 16 10:14:23 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -18,7 +18,7 @@
 	   __hop_xml
 	   __hop_priv)
 
-   (export (dom-get-attributes::pair-nil ::obj)
+   (export (generic dom-get-attributes::pair-nil ::obj)
 	   (dom-owner-document node)
 	   (dom-child-nodes::pair-nil ::obj)
 	   (dom-first-child ::obj)
@@ -44,10 +44,10 @@
 	   (dom-get-elements-by-tag-name::pair-nil obj ::bstring)
 	   (dom-get-elements-by-hss-tag-name::pair-nil obj ::bstring)
 	   (dom-get-elements-by-class::pair-nil obj ::bstring)
-	   (dom-get-attribute node ::bstring)
-	   (dom-has-attribute?::bool node ::bstring)
-	   (dom-remove-attribute! node name)
-	   (dom-set-attribute! node name value)
+	   (generic dom-get-attribute node ::bstring)
+	   (generic dom-has-attribute?::bool node ::bstring)
+	   (generic dom-remove-attribute! node name)
+	   (generic dom-set-attribute! node name value)
 	   (dom-node-element? node)
 	   (dom-node-text? node)
 	   (dom-node-document? node)
@@ -159,7 +159,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-attributes ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (dom-get-attributes node)
+(define-generic (dom-get-attributes node)
    (if (isa? node xml-markup)
        (with-access::xml-markup node (attributes)
 	  attributes)
@@ -660,7 +660,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-get-attribute ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (dom-get-attribute node name)
+(define-generic (dom-get-attribute node name)
    (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (let ((a (plist-assq (string->keyword name) attributes)))
@@ -669,7 +669,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-has-attribute? ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (dom-has-attribute? node name)
+(define-generic (dom-has-attribute? node name)
    (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (pair? (plist-assq (string->keyword name) attributes)))))
@@ -677,7 +677,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-attribute! ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (dom-remove-attribute! node name)
+(define-generic (dom-remove-attribute! node name)
    (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (set! attributes (plist-remq! (string->keyword name) attributes))
@@ -686,7 +686,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    dom-set-attribute!...                                            */
 ;*---------------------------------------------------------------------*/
-(define (dom-set-attribute! node name value)
+(define-generic (dom-set-attribute! node name value)
    (when (isa? node xml-markup)
       (with-access::xml-markup node (attributes)
 	 (let* ((key (string->keyword name))

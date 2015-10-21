@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Sep  3 08:37:19 2015 (serrano)                */
+;*    Last change :  Wed Oct 21 11:06:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -140,9 +140,9 @@
 			   (us (js-tonumber ms %this))
 			   (ns (cond
 				  ((fixnum? us)
-				   (*llong #l1000 (fixnum->llong us)))
+				   (*llong #l1000000 (fixnum->llong us)))
 				  ((flonum? us)
-				   (*llong #l1000
+				   (*llong #l1000000
 				      (fixnum->llong (flonum->fixnum us))))
 				  (else
 				   #l0))))
@@ -221,19 +221,18 @@
 			       (js-date->jsdate 
 				  (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
 				      +nan.0
-				      (seconds->date
-					 (flonum->elong
-					    (round (/fl v 1000.))))))
+				      (nanoseconds->date
+					 (*llong
+					    #l1000000
+					    (flonum->llong (round v))))))
 			       (let ((n (cond
-					   ((fixnum? v)
-					    (fixnum->elong (/fx v 1000)))
-					   ((llong? v)
-					    (llong->elong (/llong v #l1000)))
-					   ((elong? v)
-					    (/elong v #e1000))
-					   (else
-					    v))))
-				  (js-date->jsdate (seconds->date n)))))
+					   ((fixnum? v) (fixnum->llong v))
+					   ((llong? v) v)
+					   ((elong? v) (elong->llong v))
+					   (else #l0))))
+				  (js-date->jsdate
+				     (nanoseconds->date
+					(*llong #l1000000 n))))))
 			  (else
 			   (js-date->jsdate v)))))
 		   (else
@@ -318,10 +317,6 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-date-prototype! %this js-date obj)
    
-   ;; timezone
-   (define current-timezone
-      (date-timezone (current-date)))
-      
    ;; constructor
    (js-bind! %this obj 'constructor
       :value js-date
@@ -499,11 +494,6 @@
    ;; getTime
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.9
    (define (date-prototype-gettime this::JsDate)
-      
-      (define (date->milliseconds date::date)
-	 (let ((nsec (date->nanoseconds date)))
-	    (llong->flonum (/llong nsec #l1000000))))
-      
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (date->milliseconds val)
@@ -562,7 +552,7 @@
    (define (date-prototype-getutcmonth this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date-month val)
+	     (-fx (date-month val) 1)
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getUTCMonth
@@ -604,7 +594,7 @@
    (define (date-prototype-getday this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date-wday val)
+	     (-fx (date-wday val) 1)
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getDay
@@ -618,7 +608,7 @@
    (define (date-prototype-getutcday this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date-wday val)
+	     (-fx (date-wday val) 1)
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getUTCDay
@@ -646,7 +636,9 @@
    (define (date-prototype-getutchours this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date-hour val)
+	     (let* ((tz (date-timezone val))
+		    (tzh (/fx tz 3600)))
+		(-fx (date-hour val) tzh))
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getUTCHours
@@ -730,7 +722,7 @@
    (define (date-prototype-getutcmilliseconds this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (* 1000 (date-nanosecond val))
+	     (llong->fixnum (/llong (date-nanosecond val) #l1000000))
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getUTCMilliseconds
@@ -757,8 +749,22 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.27
    (define (date-prototype-settime this::JsDate time)
       (with-access::JsDate this (val)
-	 (set! val (seconds->date time))
-	 (date->seconds val)))
+	 (let ((s (js-tonumber time %this)))
+	    (cond
+	       ((fixnum? s)
+		(set! val (seconds->date (fixnum->elong s)))
+		(date->milliseconds val))
+	       ((elong? s)
+		(set! val (seconds->date s))
+		(date->milliseconds val))
+	       ((flonum? s)
+		(if (nanfl? s)
+		    (begin
+		       (set! val s)
+		       time)
+		    (begin
+		       (set! val (seconds->date (flonum->fixnum s)))
+		       (date->milliseconds val))))))))
 
    (js-bind! %this obj 'setTime
       :value (js-make-function %this date-prototype-settime 1 'setTime)
@@ -810,7 +816,21 @@
    (define (date-prototype-setmilliseconds this::JsDate ms)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date->seconds val)
+	     (let ((ms (js-tonumber ms %this)))
+		(cond
+		   ((flonum? ms)
+		    (if (nanfl? ms)
+			(begin
+			   (set! val ms)
+			   ms)
+			(begin
+			   (set! val (date-copy val :nsec (*llong #l1000000 (flonum->llong ms))))
+			   (date->milliseconds val))))
+		   ((fixnum? ms)
+		    (set! val (date-copy val :nsec (*llong #l1000000 (fixnum->llong ms))))
+		    (date->milliseconds val))
+		   (else
+		    (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setMilliseconds
@@ -824,7 +844,21 @@
    (define (date-prototype-setutcmilliseconds this::JsDate ms)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date->seconds val)
+	     (let ((ms (js-tonumber ms %this)))
+		(cond
+		   ((flonum? ms)
+		    (if (nanfl? ms)
+			(begin
+			   (set! val ms)
+			   ms)
+			(begin
+			   (set! val (date-copy val :nsec (*llong #l1000000 (flonum->llong ms))))
+			   (date->milliseconds val))))
+		   ((fixnum? ms)
+		    (set! val (date-copy val :nsec (*llong #l1000000 (fixnum->llong ms))))
+		    (date->milliseconds val))
+		   (else
+		    (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setUTCMilliseconds
@@ -839,8 +873,13 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let ((sec (js-tonumber sec %this)))
-		(set! val (date-copy val :sec sec))
-		(date->seconds val))
+		(if (and (flonum? sec) (nanfl? sec))
+		    (begin
+		       (set! val sec)
+		       sec)
+		    (begin
+		       (set! val (date-copy val :sec sec))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setSeconds
@@ -855,8 +894,13 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let ((sec (js-tonumber sec %this)))
-		(set! val (date-copy val :sec sec))
-		(date->seconds val))
+		(if (and (flonum? sec) (nanfl? sec))
+		    (begin
+		       (set! val sec)
+		       sec)
+		    (begin
+		       (set! val (date-copy val :sec sec))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setUTCSeconds
@@ -872,8 +916,13 @@
 	 (if (date? val)
 	     (let ((min (js-tonumber min %this))
 		   (sec (unless (eq? sec (js-undefined)) (js-tonumber sec %this))))
-		(set! val (date-copy val :min min :sec sec))
-		(date->seconds val))
+		(if (and (flonum? min) (nanfl? min))
+		    (begin
+		       (set! val min)
+		       min)
+		    (begin
+		       (set! val (date-copy val :min min :sec sec))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setMinutes
@@ -889,8 +938,13 @@
 	 (if (date? val)
 	     (let ((min (js-tonumber min %this))
 		   (sec (unless (eq? sec (js-undefined)) (js-tonumber sec %this))))
-		(set! val (date-copy val :min min :sec sec))
-		(date->seconds val))
+		(if (and (flonum? min) (nanfl? min))
+		    (begin
+		       (set! val min)
+		       min)
+		    (begin
+		       (set! val (date-copy val :min min :sec sec))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setUTCMinutes
@@ -907,8 +961,13 @@
 	     (let ((hour (js-tonumber hour %this))
 		   (min (unless (eq? min (js-undefined)) (js-tonumber min %this)))
 		   (sec (unless (eq? sec (js-undefined)) (js-tonumber sec %this))))
-		(set! val (date-copy val :hour hour :min min :sec sec))
-		(date->seconds val))
+		(if (and (flonum? hour) (nanfl? hour))
+		    (begin
+		       (set! val hour)
+		       hour)
+		    (begin
+		       (set! val (date-copy val :hour hour :min min :sec sec))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setHours
@@ -922,11 +981,21 @@
    (define (date-prototype-setutchours this::JsDate hour min sec ms)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (let ((hour (js-tonumber hour %this))
-		   (min (unless (eq? min (js-undefined)) (js-tonumber min %this)))
-		   (sec (unless (eq? sec (js-undefined)) (js-tonumber sec %this))))
-		(set! val (date-copy val :hour hour :min min :sec sec))
-		(date->seconds val))
+	     (let ((hour (js-tonumber hour %this)))
+		(if (and (flonum? hour) (nanfl? hour))
+		    (begin
+		       (set! val hour)
+		       hour)
+		    (let* ((min (unless (eq? min (js-undefined)) (js-tonumber min %this)))
+			   (sec (unless (eq? sec (js-undefined)) (js-tonumber sec %this)))
+			   (dt (date-copy val :hour hour :min min :sec sec))
+			   (ns (date->nanoseconds dt)))
+		       (set! val
+			  (nanoseconds->date
+			     (+llong ns
+				(*llong #l1000000000
+				   (fixnum->llong (date-timezone dt))))))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setUTCHours
@@ -945,8 +1014,13 @@
 			    ((fixnum? date) date)
 			    ((flonum? date) (flonum->fixnum date))
 			    (else 1))))
-		(set! val (date-copy val :day day))
-		(date->seconds val))
+		(if (and (flonum? date) (nanfl? date))
+		    (begin
+		       (set! val date)
+		       date)
+		    (begin
+		       (set! val (date-copy val :day day))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setDate
@@ -961,8 +1035,13 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let ((date (js-tonumber date %this)))
-		(set! val (date-copy val :day date))
-		(date->seconds val))
+		(if (and (flonum? date) (nanfl? date))
+		    (begin
+		       (set! val date)
+		       date)
+		    (begin
+		       (set! val (date-copy val :day date))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setUTCDate
@@ -977,10 +1056,17 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let ((month (js-tonumber month %this))
-		   (date (unless (eq? date (js-undefined))
-			    (js-tonumber date %this))))
-		(set! val (date-copy val :month (+ 1 month) :day date))
-		(date->seconds val))
+		   (day (unless (eq? date (js-undefined)) (js-tonumber date %this))))
+		(if (and (flonum? month) (nanfl? month))
+		    (begin
+		       (set! val month)
+		       month)
+		    (begin
+		       (set! val
+			  (date-copy val :timezone 0
+			     :month (+ 1 month)
+			     :day day))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setMonth
@@ -995,9 +1081,14 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let ((month (js-tonumber month %this))
-		   (date (when date (js-tonumber date %this))))
-		(set! val (date-copy val :month (+ 1 month) :day date))
-		(date->seconds val))
+		   (date (unless (eq? date (js-undefined)) (js-tonumber date %this))))
+		(if (and (flonum? month) (nanfl? month))
+		    (begin
+		       (set! val month)
+		       month)
+		    (begin
+		       (set! val (date-copy val :month (+ 1 month) :day date))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setUTCMonth
@@ -1014,8 +1105,13 @@
 	     (let ((year (js-tonumber year %this))
 		   (month (unless (eq? month (js-undefined)) (js-tonumber month %this)))
 		   (date (unless (eq? date (js-undefined)) (js-tonumber date %this))))
-		(set! val (date-copy val :year year :month month :day date))
-		(date->seconds val))
+		(if (and (flonum? year) (nanfl? year))
+		    (begin
+		       (set! val year)
+		       year)
+		    (begin
+		       (set! val (date-copy val :year year :month month :day date))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setFullYear
@@ -1032,8 +1128,13 @@
 	     (let ((year (js-tonumber year %this))
 		   (month (unless (eq? month (js-undefined)) (js-tonumber month %this)))
 		   (date (unless (eq? date (js-undefined)) (js-tonumber date %this))))
-		(set! val (date-copy val :year year :month month :day date))
-		(date->seconds val))
+		(if (and (flonum? year) (nanfl? year))
+		    (begin
+		       (set! val year)
+		       year)
+		    (begin
+		       (set! val (date-copy val :year year :month month :day date))
+		       (date->milliseconds val))))
 	     val)))
 
    (js-bind! %this obj 'setUTCFullYear
@@ -1054,6 +1155,12 @@
       :enumerable #f)
    
    obj)
+
+;*---------------------------------------------------------------------*/
+;*    date->milliseconds ...                                           */
+;*---------------------------------------------------------------------*/
+(define (date->milliseconds dt::date)
+   (llong->flonum (/llong (date->nanoseconds dt) #l1000000)))
 
 ;*---------------------------------------------------------------------*/
 ;*    date->utc-date ...                                               */

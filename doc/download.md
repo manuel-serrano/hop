@@ -64,13 +64,6 @@ To test the installation:
 make test
 ```
 
-## Git ##
-
-Hop.js can be forked at
-
-    ${cfg.github}
-
-
 ## Binary distributions ##
 
 Precompiled Hop.js distributions are available.
@@ -81,3 +74,17 @@ A Debian/Raspberry repository is available. To use it, add the following
 to your `apt` path:
 
      deb ftp://ftp-sop.inria.fr/indes/fp/Hop/debian squeeze hop
+
+
+## Git ##
+
+Hop.js can be forked at
+
+${<a href=${cfg.github}>${cfg.github}</a>}
+
+
+## Older releases ##
+
+Old Hop releases can be obtain at the following address:
+
+<ftp://ftp-sop.inria.fr/indes/fp/Hop/>

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Wed Aug 19 18:38:46 2015 (serrano)                */
+/*    Last change :  Sun Oct 18 09:09:15 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Online translation example                                       */
@@ -11,12 +11,14 @@
 /*    run: hop -v -g url.js                                            */
 /*    browser: http://localhost:8080/hop/url                           */
 /*=====================================================================*/
+"use hopscript";
+
 var hop = require( "hop" );
 
 var mymemory = hop.webService( "http://mymemory.translated.net/api/get" );
 
-function translateText( text, lang ) {
-   var o = mymemory( { q: text, langpair: (lang ? lang : "en|fr") } ).postSync();
+function translateText( text, lang = "en|fr" ) {
+   var o = mymemory( { q: text, langpair: lang } ).postSync();
    
    if( o.responseStatus === 200 ) {
       var t = o.responseData.translatedText;

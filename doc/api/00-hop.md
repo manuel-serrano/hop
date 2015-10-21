@@ -4,14 +4,14 @@ Hop
 ===
 
 This module contains utilities for getting, controlling, and using the
-Hop server.
-The module defines functions to craft service responses, and a
-broadcast function that lets a server send events to registered
+Hop server.  The module defines functions to craft service responses,
+and a broadcast function that lets a server send events to registered
 remote clients.
 
 The module also defines an API to invoke third party WebServices.
 
-Use `require( 'hop' )` to use this module.
+For ease of use, `hop` is defined as a global object and can be used
+directly without require.
 
 
 Server Information

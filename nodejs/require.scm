@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 15 08:27:47 2015 (serrano)                */
+;*    Last change :  Mon Oct 19 07:07:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -662,10 +662,14 @@
       (with-access::WorkerHopThread worker (module-cache)
 	 (let* ((path (nodejs-resolve name %this %module))
 		(mod (js-get-property-value module-cache module-cache path %this)))
+	    (trace-item "path=" path)
+	    (trace-item "mode=" (typeof mod))
 	    (if (eq? mod (js-absent))
 		(let ((mod (load-module path worker %this %module)))
 		   (js-get mod 'exports %this))
-		(js-get mod 'exports %this))))))
+		(let ((exports (js-get mod 'exports %this)))
+		   (trace-item "exports=" (typeof exports))
+		   exports))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    core-module? ...                                                 */
@@ -830,12 +834,12 @@
       (let* ((mod %module)
 	     (filename (js-jsstring->string (js-get mod 'filename %this)))
 	     (dir (dirname filename)))
-	 (trace-item "name=" name
-	    " dir=" dir
-	    " path=" (let ((paths (js-get mod 'paths %this)))
-			(if (isa? paths JsArray)
-			    (jsarray->vector paths %this)
-			    paths)))
+	 (trace-item "name=" name)
+	 (trace-item "dir=" dir)
+	 (trace-item "path=" (let ((paths (js-get mod 'paths %this)))
+				(if (isa? paths JsArray)
+				    (jsarray->vector paths %this)
+				    paths)))
 	 (cond
 	    ((core-module? name)
 	     name)

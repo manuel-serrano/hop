@@ -7,8 +7,9 @@ HopScript
 ---------
 
   1. (2015-09-12) Fix .post arguments passing
-  2. mmap binding
-  
+  2. (2015-10-03) mmap binding
+  3. (2015-10-19) Server side cooking  
+
 
 EcmaScript 6
 ------------
@@ -31,3 +32,9 @@ Bigloo
   1. (2015-09-12) IPv6 support
   2. (2015-10-05) Make regexp compatible with mmap
   3. (2015-10-14) CSS2 selectors
+
+
+Env
+---
+
+  1. (2015-10-19) Emacs, tag matching
