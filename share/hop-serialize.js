@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Sep 23 11:28:45 2015 (serrano)                */
+/*    Last change :  Fri Oct 23 08:00:23 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -735,7 +735,7 @@ function hop_bytearray_to_obj( s, extension ) {
    function utf8substring( s, end ) {
       var j = 0;
       var res = "";
-      
+
       while( pointer < end ) {
 	 var code = s[ pointer++ ];
 	 if( code < 128 ) {
@@ -744,20 +744,20 @@ function hop_bytearray_to_obj( s, extension ) {
 	    var code2 = s[ pointer++ ];
 	    if( code < 224 ) {
 	       code2 = ((code - 192) << 6) + (code2 - 128);
-	       res += String.fromCharCode( code, code2 );
+	       res += String.fromCharCode( code2 );
 	    } else {
 	       var code3 = s[ pointer++ ];
 	       if( code < 240 ) {
 		  code3 = ((code - 224) << 12)
 		     + ((code2 - 128) << 6) + (code3 - 128);
-		  res += String.fromCharCode( code, code2, code3 );
+		  res += String.fromCharCode( code3 );
 	       } else {
 		  var code4 = s[ pointer++ ];
 		  code4 = ((code - 240) << 18)
 		     + ((code2 - 128) << 12)
 		     + ((code3 - 128) << 6)
 		     + (code4 - 128);
-		  res += String.fromCharCode( code, code2, code3, code4 );
+		  res += String.fromCharCode( code4 );
 	       }
 	    }
 	 }
@@ -1066,7 +1066,7 @@ function hop_bytearray_to_obj( s, extension ) {
 	 }
       }
    }
-   
+
    function read_item() {
       switch( s[ pointer++ ] ) {
 	 case 0x3d /* = */: return read_definition();

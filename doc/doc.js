@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sat Oct 10 11:30:58 2015 (serrano)                */
+/*    Last change :  Wed Oct 21 18:06:08 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -13,7 +13,6 @@
 /*---------------------------------------------------------------------*/
 /*    module imports                                                   */
 /*---------------------------------------------------------------------*/
-const hop = require( "hop" );
 const path = require( "path" );
 const fs = require( "fs" );
 const markdown = require( hop.markdown );
