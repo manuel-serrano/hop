@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Oct 20 07:57:15 2015 (serrano)                */
+;*    Last change :  Fri Oct 23 09:00:45 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -235,7 +235,14 @@
 	    (js-bind! %this %this 'Service
 	       :configurable #f :enumerable #f :value js-service)
 	    (js-bind! %this %this 'HopFrame
-	       :configurable #f :enumerable #f :value js-hopframe))
+	       :configurable #f :enumerable #f :value js-hopframe)
+	    
+	    (js-bind! %this js-service 'exists
+	       :configurable #f :enumerable #f
+	       :value (js-make-function %this
+			 (lambda (this svc)
+			    (if (service-exists? (js-tostring svc %this)) #t #f))
+			 1 'exists)))
 
 	 (js-undefined))))
 

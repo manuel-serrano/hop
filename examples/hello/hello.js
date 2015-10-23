@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/hello-ng/hello.js        */
+/*    serrano/prgm/project/hop/3.0.x/examples/hello/hello.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Jul 29 15:03:37 2015 (serrano)                */
+/*    Last change :  Fri Oct 23 11:10:05 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    basic example that shows client/server interaction               */
@@ -22,18 +22,18 @@ service hello() {
    var cdate = <TD id="cdate">-</TD>;
 
    return <HTML>
-   <BUTTON onclick=~{
+     <BUTTON onclick=~{
 	    ${helloServerDate}()
 	       .post( function( snow ) {
 		  ${sdate}.innerHTML = new Date( snow ).toString();
 		  ${cdate}.innerHTML = new Date( Date.now() ).toString();
 	       } ) }>
      Click me to update dates...
-   </BUTTON>
-   <TABLE>
-     <TR><TH>server date: ${sdate}</TH></TR>
-     <TR><TH>client date: ${cdate}</TH></TR>
-   </TABLE>
+     </BUTTON>
+     <TABLE>
+       <TR><TH>server date: ${sdate}</TH></TR>
+       <TR><TH>client date: ${cdate}</TH></TR>
+     </TABLE>
    </HTML>;
 }
    

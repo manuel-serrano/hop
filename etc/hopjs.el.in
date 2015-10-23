@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Oct 22 17:43:40 2015 (serrano)                */
+;*    Last change :  Fri Oct 23 08:41:45 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -1161,7 +1161,10 @@ usage: (js-return)  -- [RET]"
 ;* 		 ((looking-at hopjs-re-standalone-tag)                 */
 ;* 		  nil)                                                 */
 		 ((looking-at hopjs-re-open-tag)
-		  (setq depth (1+ depth)))
+		  (unless (member (buffer-substring-no-properties
+				   (match-beginning 1) (match-end 1))
+				  hopjs-special-tags)
+		    (setq depth (1+ depth))))
 		 ((looking-at hopjs-re-end-tag)
 		  (if (= depth 1)
 		      (setq res 'tag)

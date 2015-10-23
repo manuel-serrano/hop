@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Aug 23 08:07:57 2015                          */
-/*    Last change :  Sat Oct 10 11:40:31 2015 (serrano)                */
+/*    Last change :  Fri Oct 23 11:10:57 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    An example using the MARKDOWN Html tag                           */
@@ -27,3 +27,6 @@ tutu non plus.
    </md.markdown>
 </html>;
 }
+
+console.log( "Go to \"http://%s:%d/hop/mtag\"", hop.hostname, hop.port );
+
