@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Mon Oct 19 08:26:11 2015 (serrano)                */
+/*    Last change :  Sat Oct 24 05:50:36 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -59,9 +59,10 @@ exports.broadcast = hop.broadcast;
 exports.Server = hop.Server;
 
 /*---------------------------------------------------------------------*/
-/*    Xml                                                              */
+/*    XML                                                              */
 /*---------------------------------------------------------------------*/
-exports.xmlCompile = hop.xmlCompile;
+exports.compileXML = hop.compileXML;
+exports.createElement = hop.createElement;
 
 /*---------------------------------------------------------------------*/
 /*    Lib                                                              */

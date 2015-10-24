@@ -1,0 +1,7 @@
+{
+   "tags": ["html"],
+   "files": [ "custom.js", "foo-bar.js", "foo-bar.hss" ],
+   "description": "Custom client-side HTML tag",
+   "doc": "This example shows how to use client side custom HTML tags.",
+   "level": 4
+}

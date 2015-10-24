@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Oct  9 16:58:01 2015 (serrano)                */
+;*    Last change :  Sat Oct 24 06:21:27 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -121,7 +121,7 @@
 ;*    an XML constructor.                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (xml-unpack o::JsObject)
-   (js-object->keyword-arguments o (js-initial-global-object)))
+   (js-jsobject->keyword-plist o (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-to-errstring ::JsObject ...                                  */
@@ -178,10 +178,10 @@
                        (if (isa? attrs JsObject)
                            (if (null? nodes)
                                (apply ,(symbol-append '< tag '>)
-                                  (js-object->keyword-arguments attrs ,%this))
+                                  (js-jsobject->keyword-plist attrs ,%this))
                                (apply ,(symbol-append '< tag '>)
                                   (append
-                                     (js-object->keyword-arguments attrs ,%this)
+                                     (js-jsobject->keyword-plist attrs ,%this)
                                      nodes)))
                            (apply ,(symbol-append '< tag '>)
                               nodes)))
@@ -435,7 +435,7 @@
 		     (if (isa? attrs JsObject)
 			 (apply <HTML>
 			    (append
-			       (js-object->keyword-arguments attrs %this)
+			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
 			 (apply <HTML> nodes)))
 		  1 'HTML))
