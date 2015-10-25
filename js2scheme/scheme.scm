@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Oct 12 08:05:05 2015 (serrano)                */
+;*    Last change :  Sun Oct 25 05:49:30 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1052,7 +1052,7 @@
 				   ,(length args))))))))))
 
       (define (service-dsssl-proc->scheme this)
-	 (with-access::J2SSvc this (loc init)
+	 (with-access::J2SSvc this (loc init name)
 	    (with-access::J2SObjInit init (inits)
 	       (let ((imp `(lambda (this #!key ,@(map init->formal inits))
 			      (js-worker-exec @worker ,(symbol->string scmid)
