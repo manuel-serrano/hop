@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Mon Oct 12 15:02:00 2015 (serrano)                */
+;*    Last change :  Mon Oct 26 16:05:02 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -29,25 +29,28 @@
 ;*    html-parser ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (html-parser port conf::pair-nil #!optional tag)
-   (if tag
-      (let ((str (symbol->string! (token-value tag))))
-	 (rgc-buffer-unget-char port (char->integer #\space))
-	 (rgc-buffer-insert-substring! port str 0 (string-length str))
-	 (read/rp xml-grammar port list *html-special-elements* #f
-	    (lambda (x) x)
-	    (hop-locale)
-	    conf))
-      (let loop ()
-	 (let ((v (read/rp xml-grammar port list *html-special-elements* #f
-		     (lambda (x) x)
-		     (hop-locale)
-		     conf)))
-	    (cond
-	       ((isa? v J2SString)
-		(with-access::J2SString v (val)
-		   (if (string-skip val " \n\t") v (loop))))
-	       (else
-		v))))))
+   (let ((lang (config-get conf :language 'hopscript)))
+      (if tag
+	  (let ((str (symbol->string! (token-value tag))))
+	     (rgc-buffer-unget-char port (char->integer #\space))
+	     (rgc-buffer-insert-substring! port str 0 (string-length str))
+	     (read/rp xml-grammar port list *html-special-elements* #f
+		(lambda (x) x)
+		(hop-locale)
+		lang
+		conf))
+	  (let loop ()
+	     (let ((v (read/rp xml-grammar port list *html-special-elements* #f
+			 (lambda (x) x)
+			 (hop-locale)
+			 lang
+			 conf)))
+		(cond
+		   ((isa? v J2SString)
+		    (with-access::J2SString v (val)
+		       (if (string-skip val " \n\t") v (loop))))
+		   (else
+		    v)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    special-tags ...                                                 */
@@ -145,28 +148,6 @@
       (read/rp g iport)))
 
 ;*---------------------------------------------------------------------*/
-;*    xml-parser ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (xml-parser::pair-nil port::input-port
-	   #!key
-	   (procedure list)
-	   (specials '())
-	   (strict #t)
-	   (encoding 'UTF-8))
-   (let loop ((decoder (lambda (x) x)))
-      (let ((obj (read/rp xml-grammar port procedure procedure specials strict decoder encoding)))
-	 (cond
-	    ((eof-object? obj)
-	     '())
-	    ((and (pair? obj) (eq? 'xml-decl (car obj)))
-	     (let ((enc (assq 'encoding (cdr obj))))
-		(if enc
-		    (cons obj (loop (charset-converter (cdr enc) encoding)))
-		    (cons obj (loop decoder)))))
-	    (else
-	     (cons obj (loop decoder)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    special ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-struct special tag attributes body owner)
@@ -182,6 +163,7 @@
 		     strict
 		     decoder
 		     encoding
+		     lang
 		     conf)
       
       ((+ (in " \t\n\r"))
@@ -215,7 +197,6 @@
 		  (* (out ">]"))
 		  (? (: "[" (* (out "]")) "]"))
 		  (* (out ">"))) ">")
-       (tprint "ignore [" (the-string) "]")
        (ignore))
 ;*        (cons 'declaration (the-string)))                            */
       ("<![CDATA["
@@ -241,13 +222,10 @@
 	      (tag (token 'OHTML (the-symbol) (the-length)))
 	      (p (the-port)))
 	  (collect-up-to ignore tag '()
-	     p specials strict decoder encoding conf)))
+	     p specials strict decoder encoding lang conf)))
       ((: "<" id "/>")
        (let ((tag (token 'HTML (symbol-append (the-subsymbol 0 -2) '>) (the-length))))
-	  (make-dom-create tag '() '() conf)))
-;* 	  (instantiate::J2SCall                                        */
-;* 	     (loc (token-loc tag))                                     */
-;* 	     (fun (j2s-tag->expr tag #t)))))                           */
+	  (make-dom-create tag '() '() lang conf)))
       ((: "<" id (in " \n\t\r"))
        (let* ((t (the-substring 1 (-fx (the-length) 1)))
 	      (ts (string->symbol t))
@@ -259,20 +237,35 @@
 		   ((isa? obj J2SNode)
 		    (loop (cons obj attr)))
 		   ((eq? obj '>)
-		    (collect-up-to ignore tag (reverse! attr) p specials strict decoder encoding
-		       conf))
+		    (collect-up-to ignore tag (reverse! attr) p specials
+		       strict decoder encoding
+		       lang conf))
 		   ((eq? obj '/>)
-		    (make-dom-create tag attr '() conf)))))))
+		    (make-dom-create tag attr '() lang conf)))))))
       ((: "</" id ">")
        (string->symbol (the-substring 2 (-fx (the-length) 1))))
       ("~{"
        (let ((str (the-string)))
-	  (rgc-buffer-insert-substring! (the-port) str 0 2))
-       (j2s-parser (the-port) (cons* :parser 'tilde-expression conf)))
+	  (if (eq? lang 'html)
+	      (instantiate::J2SString
+		 (escape '(escape))
+		 (val str)
+		 (loc (the-coord (the-port) (+fx (the-length) 1))))
+	      (begin
+		 (rgc-buffer-insert-substring! (the-port) str 0 2)
+		 (j2s-parser (the-port)
+		    (cons* :parser 'tilde-expression conf))))))
       ("${"
        (let ((str (the-string)))
-	  (rgc-buffer-insert-substring! (the-port) str 0 2))
-       (j2s-parser (the-port) (cons* :parser 'dollar-expression conf)))
+	  (if (eq? lang 'html)
+	      (instantiate::J2SString
+		 (escape '(escape))
+		 (val str)
+		 (loc (the-coord (the-port) (+fx (the-length) 1))))
+	      (begin
+		 (rgc-buffer-insert-substring! (the-port) str 0 2)
+		 (j2s-parser (the-port)
+		    (cons* :parser 'dollar-expression conf))))))
       (else
        (let ((c (the-failure)))
 	  (cond
@@ -287,7 +280,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    make-dom-create ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (make-dom-create tag::pair attributes body conf)
+(define (make-dom-create tag::pair attributes body lang conf)
    
    (define (debug-init-val loc)
       (match-case loc
@@ -323,10 +316,20 @@
 		  (loc loc)))
 	 (val (debug-init-val loc))))
    
+   (define (hopautohead-init loc)
+      (instantiate::J2SDataPropertyInit
+	 (loc loc)
+	 (name (instantiate::J2SString
+		  (val "hopautohead")
+		  (loc loc)))
+	 (val (instantiate::J2SBool
+		 (val #f)
+		 (loc loc)))))
+   
    (define (html? tag)
       (when (symbol? (token-value tag))
 	 (memq (token-value tag) '(<html> <HTML>))))
-   
+
    (let ((attrs '())
 	 (abody '()))
       (for-each (lambda (x)
@@ -342,7 +345,10 @@
 	     (inits (if dbg
 			(cons (debug-init loc) inits)
 			inits))
-	     (a (if (and (null? attrs) (not dbg))
+	     (inits (if (or (eq? lang 'hopscript) (not (html? tag)))
+			inits
+			(cons (hopautohead-init loc) inits)))
+	     (a (if (null? inits)
 		    (instantiate::J2SUndefined
 		       (loc loc))
 		    (instantiate::J2SObjInit
@@ -356,7 +362,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-up-to ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (collect-up-to ignore tag::pair attributes port specials strict decoder encoding conf)
+(define (collect-up-to ignore tag::pair attributes port specials strict decoder encoding lang conf)
    
    (define (collect ignore tags)
       (let ((name (input-port-name port))
@@ -367,24 +373,25 @@
 	       ((symbol? item)
 		(cond
 		   ((eq? item tag)
-		    (make-dom-create tag attributes (reverse! acc) conf))
+		    (make-dom-create tag attributes (reverse! acc) lang conf))
 		   (strict
 		    (xml-parse-error "Illegal closing tag"
 				     (format "`~a' expected, `~a' provided"
 					     tag item)
 				     name po))
 		   (else
-		    (make-dom-create tag attributes (reverse! acc) conf))))
+		    (make-dom-create tag attributes (reverse! acc) lang conf))))
 	       ((special? item)
 		(let ((nitem (make-dom-create (special-tag item)
 				(special-attributes item)
 				(special-body item)
-				conf)))
+				lang conf)))
 		   (if (memq (special-tag item) tags)
 		       (loop acc nitem)
 		       (begin
 			  (list (make-dom-create tag attributes
-				   (reverse! acc) conf) nitem)))))
+				   (reverse! acc) lang conf)
+			     nitem)))))
 	       ((eof-object? item)
 		(xml-parse-error
 		   (format "Premature end of HTML, expecting tag `</~a>'"
@@ -400,15 +407,15 @@
 	 ((not spec)
 	  (collect ignore '()))
 	 ((null? (cdr spec))
-	  (make-dom-create tag attributes '() conf))
+	  (make-dom-create tag attributes '() lang conf))
 	 ((procedure? (cdr spec))
-	  (make-dom-create tag attributes ((cdr spec) port) conf))
+	  (make-dom-create tag attributes ((cdr spec) port) lang conf))
 	 ((pair? (cdr spec))
 	  (let ((ignore (lambda ()
 			   (read/rp xml-grammar port
 				    (lambda (t a b) (special t a b tag))
 				    specials strict decoder encoding
-				    conf)))) 
+				    lang conf)))) 
 	     (collect ignore (cdr spec))))
 	 (else
 	  (error "xml-parse" "Illegal special handler" spec)))))

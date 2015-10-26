@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sat Oct 24 05:38:27 2015 (serrano)                */
+/*    Last change :  Mon Oct 26 08:20:45 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -355,7 +355,7 @@ if( process.argv[ 2 ] == "mkidx" ) {
    compileIdx( "./" + process.argv[ 3 ] );
 } else if( process.argv[ 2 ].match( /[.]md$/ ) ) {
    if( process.argv[ 2 ] === "_index.md" ) {
-      compileIndex( "./" + process.argv[ 2 ] );
+      compileIndex( process.argv[ 2 ] );
    } else {
       compileSection( process.argv[ 2 ] );
    }

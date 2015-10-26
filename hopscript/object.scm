@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Oct 24 06:21:27 2015 (serrano)                */
+;*    Last change :  Mon Oct 26 16:18:35 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -415,8 +415,8 @@
 	       A ABBR ACRONYM ADDRESS APPLET AREA B BASE
 	       BASEFONT BDO BIG BLOCKQUOTE BODY BR BUTTON
 	       CANVAS CAPTION CENTER CITE CODE COL COLGROUP
-	       DATALIST DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET
-	       FONT FOOTER FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
+	       DATALIST DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET FIGURE
+	       FIGCAPTION FONT FOOTER FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
 	       HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
 	       LI MAP MARQUEE MENU META NAV NOFRAMES NOSCRIPT
 	       OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS

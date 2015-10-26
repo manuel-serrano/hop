@@ -273,7 +273,8 @@ server.addEventListener( 'refreshScore', function( event ) {
 
 On the server side, server objects are instances of the Server class.
 
-### new Server( hostname, port [, authorization ] ) ###
+### new Server( hostname, port [, authorization] ) ###
+[:@glyphicon glyphicon-tag function]
 
 the arguments are as follows:
 
@@ -320,7 +321,7 @@ named arguments you want to send to the WebService. The returned value
 is a WebServiceFrame (very similar in use to Service Frames).
 
 
-###WebServiceFrame.post([ success, [ fail-or-options ]] ) ###
+###WebServiceFrame.post([ success [, fail-or-options]] ) ###
 [:@glyphicon glyphicon-tag function]
 
 Invokes asynchronously the webService. The optional `success`argument,
@@ -332,7 +333,7 @@ invoked if an error occurs during the WebService invocation. If
 `fail-or-options` is an object, it contains optional parameters to the
 WebService invocation.
 
-###WebServiceFrame.postSync([ success, [ fail-or-option ]] ) ###
+###WebServiceFrame.postSync([ success [, fail-or-option]] ) ###
 [:@glyphicon glyphicon-tag function]
 
 The synchronous version of `post`. Returns the value returned by the

@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sat Oct 24 06:31:37 2015 (serrano)                */
+;*    Last change :  Mon Oct 26 18:50:22 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -48,6 +48,12 @@
   "The special HTML tag that have no close tag"
   :type '(repeat (string))
   :group 'js)
+
+(defcustom hopjs-html-doc-url "http://"
+  "The base URL of the HTML4.01 documentation"
+  :type 'string
+  :safe 'stringp
+  :group 'js)
   
 ;*---------------------------------------------------------------------*/
 ;*    Highlighting                                                     */
@@ -64,7 +70,21 @@
   "Face used for marking a matched tag."
   :group 'hopjs)
 
+(defface hopjs-doc-face
+  '((((class color)) (:background "Yellow" :underline t))
+    (t (:underline t)))
+  "Face used for marking a document entry."
+  :group 'hopjs)
+
 (defvar hopjs-tag-overlays nil)
+
+;*---------------------------------------------------------------------*/
+;*    tooltip ...                                                      */
+;*---------------------------------------------------------------------*/
+(defvar hopjs-tooltip-map (make-sparse-keymap))
+;; mouse-2
+(define-key hopjs-tooltip-map ude-mouse-2-binding
+  (function hopjs-doc-entry))
 
 ;*---------------------------------------------------------------------*/
 ;*    global state                                                     */
@@ -86,7 +106,10 @@
   ;; (setq beginning-of-defun-function 'hopjs-beginning-of-defun)      */
   ;; (setq end-of-defun-function 'hopjs-end-of-defun)
   ;; index
-  (hopjs-load-index (concat hopjs-doc-dir "/idx.json") hopjs-doc-index-table)
+  (hopjs-load-index
+   (concat hopjs-doc-dir "/idx.json") nil hopjs-doc-index-table)
+  (hopjs-load-index
+   (concat hopjs-doc-dir "/html-idx.json") hopjs-html-doc-url hopjs-doc-index-table)
   ;; balloons
 ;*   (hopjs-balloon-start)                                             */
 ;*   ;; (setq l (json-read-file "toto.json"))                          */
@@ -103,8 +126,7 @@
 ;*    '(lambda ()                                                      */
 ;*       (message "action")))                                          */
   ;; tag matching
-  (message "installating post-command-hook...")
-  (add-hook 'post-command-hook (function hopjs-tag-matching) t t)
+  (add-hook 'post-command-hook (function hopjs-post-command-hook) t t)
   ;; user hooks
   (run-hooks 'hopjs-mode-hook))
 
@@ -153,7 +175,8 @@
 ;*    hopjs-re-open-tag ...                                            */
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-re-open-tag
-  "<[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*[^<>/{ \t]*\\)")
+;;  "<[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*[^<>/{ \t;]*\\)")
+  "<[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*\\)\\(?:[ \t\n]*>\\|[ \t\n]+[a-zA-Z0-9_-]\\)")
 (defconst hopjs-re-close-tag
   "</[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*\\)[ \t]*>")
 (defconst hopjs-re-end-tag
@@ -246,16 +269,27 @@
   "Indent curent statement."
   (interactive)
   (save-excursion
-    (c-beginning-of-statement
-     0
-     (save-excursion
-       (hopjs-beginning-of-defun)
-       (point))
-     nil)
-    (let ((start (point)))
-      (c-forward-sexp)
-      (let ((end (point)))
-	(indent-region start end)))))
+    (if (hopjs-opening-tag-p (point))
+	(if (looking-at hopjs-re-special-tag)
+	    (indent-according-to-mode)
+	  (let ((beg (point)))
+	    (message "opening beg=%s" beg)
+	    (if (hopjs-find-closing-tag (1+ (match-end 0)))
+		(let ((end (match-end 0)))
+		  (message "opening end=%s" end)
+		  (indent-region beg end))
+	      (indent-according-to-mode))))
+      (progn
+	(c-beginning-of-statement
+	 0
+	 (save-excursion
+	   (hopjs-beginning-of-defun)
+	   (point))
+	 nil)
+	(let ((start (point)))
+	  (c-forward-sexp)
+	  (let ((end (point)))
+	    (indent-region start end)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-return ...                                                 */
@@ -558,167 +592,6 @@ usage: (js-return)  -- [RET]"
       (> open 0))))
 
 ;*---------------------------------------------------------------------*/
-;*    hopjs-html-line-type ...                                         */
-;*---------------------------------------------------------------------*/
-(defun hopjs-html-line-type ()
-  (interactive)
-  (save-excursion
-    (beginning-of-line)
-    (back-to-indentation)
-    (cond
-     ((looking-at "$")
-      ;; empty
-      'newline)
-     ((looking-at "[ \t]+$")
-      ;; empty line
-      'blank)
-     ((looking-at hopjs-re-entering-attr-html)
-      ;; entering-attr
-      'entering-attr)
-     ((looking-at hopjs-re-entering-html)
-      ;; entering
-      'entering)
-     ((looking-at "<\\([^>/\n]\\|/[^>]\\)*/>[ \t]*$")
-      ;; standlone tag
-      'tag)
-     ((looking-at "<[a-zA-Z_$][:.0-9a-zA-Z_$]*[ ]+\\([^>\n]\\)[^>]*$")
-      ;; open tag + attribute
-      (if (looking-at hopjs-re-special-tag) 'tag 'otag-attr))
-     ((looking-at "<[a-zA-Z_$][:.0-9a-zA-Z_$]*[ ]*$")
-      ;; open tag - attribute
-      (if (looking-at hopjs-re-special-tag) 'tag 'otag-sans))
-     ((looking-at "\\([^<>\n=]+=[^<>\n=]+[ \t]*\\)+/>[ \t]*$")
-      ;; attribute + closing
-      'attr-tag)
-     ((looking-at "\\([^<>\n=]+=[^<>\n=]+[ \t]*\\)+>[ \t]*$")
-      ;; attribute + tag
-      'attr-otag)
-     ((looking-at "\\([^<> [\n]+=[^<>\n]+[ \t]*\\)+$")
-      ;; attribute
-      'attr)
-     ((looking-at "\\(</[^>]*>\\)+[ \t;)}]*$")
-      ;; closing
-      'ctag)
-     ((looking-at "<\\([a-zA-Z_$][:.0-9a-zA-Z_$]*\\).*</\\1>[ \t]*$")
-      ;; single line open/closing
-      'tag)
-     ((looking-at "<!--\\([^-]\\|-[^-]\\|--[^>]\\)+-->[ \t]*$")
-      ;; comment
-      'comment)
-     ((looking-at "<!--")
-      ;; open comment
-      'ocomment)
-     ((looking-at "-->[ \t]*$")
-      ;; close comment
-      'comment)
-     ((looking-at "<\\([^/<>]\\|/[^>]\\)+\\(>\\| \\)$")
-      ;; opening
-      (if (looking-at hopjs-re-special-tag) 'tag 'otag))
-     ((looking-at "<\\([^/<>]\\|/[^>]\\)+>\\([^/]\\|/[^>]\\)*$")
-      ;; opening with content
-      (if (looking-at hopjs-re-special-tag) 'tag 'otag))
-     ((looking-at "~{")
-      ;; script code
-      'script)
-     (t
-      (save-excursion
-	(let ((min (point)))
-	  (end-of-line)
-	  (if (re-search-backward "<" min t)
-	      (progn
-		;; check of a closing tag at eol
-		(goto-char (match-beginning 0))
-		(cond
-		 ((looking-at "</[^>]*>[ \t;]*$") 'ctag)
-		 (t 'text)))
-	    ;; plain text
-	    'text)))))))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-goto-html-line ...                                         */
-;*---------------------------------------------------------------------*/
-(defun hopjs-goto-html-line (types pmin attr-or-tag goto-prev in-attr-tag)
-  (hopjs-debug "  ### hopjs-goto-html-line point=%s pmin=%s attr-or-tag=%s types=%s"
-	       (point) pmin attr-or-tag types)
-  (if (> (point) pmin)
-      (progn
-	(when goto-prev (previous-line))
-	(beginning-of-line)
-	(back-to-indentation)
-	(cond
-	 ((call-sans-debug 'hopjs-html-p (point))
-	  (let ((type (hopjs-html-line-type)))
-	    (hopjs-debug "  ###### hopjs-goto-html-line.1 type=%s point=%s attr-or-tag=%s"
-			 type (point) attr-or-tag)
-	    (cond
-	     ((memq type types)
-	      (goto-char (match-beginning attr-or-tag))
-	      (if (and in-attr-tag (memq type '(otag otag-attr otag-sans)))
-		  'tag type))
-	     ((eq type 'attr-tag)
-	      (hopjs-goto-html-line types pmin attr-or-tag t t))
-	     ((eq type 'attr-otag)
-	      (hopjs-goto-html-line types pmin 0 t t))
-	     (t
-	      (hopjs-goto-html-line types pmin attr-or-tag t in-attr-tag)))))
-	 ((eq (hopjs-html-line-type) 'entering-attr)
-	  (hopjs-debug "  ###### hopjs-goto-html-line.2 type=entering-attr attr-or-tag=%s beg=%s"
-		       attr-or-tag (match-beginning attr-or-tag))
-	  (if (memq 'entering-attr types)
-	      (progn
-		(goto-char (match-beginning attr-or-tag))
-		'entering-attr)
-	    (hopjs-goto-html-line types pmin attr-or-tag t nil)))
-	 ((eq (hopjs-html-line-type) 'entering)
-	  (hopjs-debug "  ###### hopjs-goto-html-line.3 type-entering attr-or-tag=%s beg=%s"
-		       attr-or-tag (match-beginning attr-or-tag))
-	  (if (memq 'entering types)
-	      (progn
-		(goto-char (match-beginning attr-or-tag))
-		'entering)
-	    (hopjs-goto-html-line types pmin attr-or-tag t nil)))
-	 (t
-	  (hopjs-debug "  ###### hopjs-goto-html-line.4 else... %s" (point))
-	  (let ((p (point)))
-	    (condition-case nil
-		(progn
-		  (end-of-line)
-		  (backward-sexp 1)
-		  (if (< (point) p)
-		      (hopjs-goto-html-line types pmin attr-or-tag nil nil)
-		    'text))
-	      (error
-	       (hopjs-debug "  !!!hopjs-goto-html-line: cannot forward sexp %s" (point))
-	       'text))))))
-    'text))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-html-statement-indentation-text ...                        */
-;*---------------------------------------------------------------------*/
-(defun hopjs-html-statement-indentation-text ()
-  (save-excursion
-    (beginning-of-line)
-    (previous-line)
-    (back-to-indentation)
-    (current-column)))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-html-statement-indentation-tag ...                         */
-;*---------------------------------------------------------------------*/
-(defun hopjs-html-statement-indentation-tag (ptype pmin)
-  (case ptype
-    ((attr-tag)
-     (hopjs-goto-html-line '(otag otag-attr otag-sans entering) pmin 0 t nil)
-     (current-column))
-    ((ctag tag)
-     (current-column))
-    ((entering-attr)
-     (goto-char (match-beginning 1))
-     (current-column))
-    (t
-     (+ (current-column) hopjs-indent-level-html))))
-
-;*---------------------------------------------------------------------*/
 ;*    hopjs-column-at ...                                              */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-column-at (pos)
@@ -856,111 +729,6 @@ usage: (js-return)  -- [RET]"
   (let ((pmin (save-excursion (hopjs-beginning-of-defun) (point))))
     (message "%s" (hopjs-indent-new-line pmin nil 0))))
 
-(defun js--html-statement-indentation-old ()
-  (hopjs-debug ">>> js--html-statement-indentation %s" (point))
-  (when (call-sans-debug 'hopjs-html-p (point))
-    (let ((pmin (save-excursion (hopjs-beginning-of-defun) (point))))
-      (save-excursion
-	(let ((ltype (hopjs-html-line-type)))
-	  (hopjs-debug "--- js--html-statement-indentation... in HTML %s type=%s"
-		       (point) ltype)
-	  (case ltype
-	    ((text blank entering)
-	     (back-to-indentation)
-	     (hopjs-debug "<<<.1 js--html-statement-indentation... text -> %s"
-			  (current-column))
-	     (current-column))
-	    ((newline)
-	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr attr-otag otag-sans entering entering-attr ctag ctag-attr tag text)
-			   pmin 0 t nil)))
-	       (hopjs-debug "<<<.2 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
-			    ltype ptype (current-column) (point))
-	       (cond
-		((eq ptype 'text)
-		 ;; a newline after plain text
-		 (hopjs-html-statement-indentation-text))
-		((eq ptype 'attr-otag)
-		 (let ((ptype (hopjs-goto-html-line
-			       '(otag entering-attr)
-			       pmin 0 t nil)))
-		   (+ (current-column) hopjs-indent-level-html)))
-		(t
-		 (hopjs-html-statement-indentation-tag ptype pmin)))))
-	    ((tag otag otag-attr otag-sans script)
-	     (let ((ptype (hopjs-goto-html-line
-			   '(ctag otag otag-attr otag-sans tag
-				  entering entering-attr attr-tag)
-			   pmin 0 t nil)))
-	       (hopjs-debug "<<<.3 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
-			    ltype ptype (current-column) (point))
-	       (case ptype
-		 ((entering-attr entering)
-		  (+ (current-column) hopjs-indent-level-html))
-		 (t
-		  (hopjs-html-statement-indentation-tag ptype pmin)))))
-	    ((ctag)
-	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr otag-sans entering entering-attr
-				  ctag ctag-attr tag)
-			   pmin 0 t nil)))
-	       (hopjs-debug "<<<.4 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
-			    ltype ptype (current-column) (point))
-	       (case ptype
-		 ((tag ctag ctag-attr tag)
-		  (- (current-column) hopjs-indent-level-html))
-		 ((otag otag-attr otag-sans)
-		  (current-column))
-		 (t
-		  (current-column)))))
-	    ((comment ocomment)
-	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr otag-sans entering entering-attr ctag attr-tag ctag-attr tag
-				  comment ocomment comment)
-			   pmin 0 t nil)))
-	       (hopjs-debug "<<<.5 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
-			    ltype ptype (current-column) (point))
-	       (case ptype
-		 ((comment ocomment tag)
-		  (current-column))
-		 ((otag attr-tag)
-		  (+ (current-column) hopjs-indent-level-html))
-		 (else
-		  (current-column)))))
-	    ((attr attr-tag)
-	     (let ((ptype (hopjs-goto-html-line
-			   '(otag-attr otag-sans attr-tag attr entering-attr)
-			   pmin 1 t nil)))
-	       (hopjs-debug "<<<.6 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
-			    ltype ptype (current-column) (point))
-	       (case ptype
-		 ((attr attr-tag entering-attr)
-		  (current-column))
-		 ((otag-sans)
-		  (+ (current-column) hopjs-indent-level-html))
-		 ((otag-attr)
-		  (goto-char (match-beginning 1))
-		  (current-column))
-		 (else
-		  (current-column)))))
-	    ((attr-otag)
-	     (let ((ptype (hopjs-goto-html-line
-			   '(otag otag-attr attr-tag attr
-				  entering entering-attr)
-			   pmin 1 t nil)))
-	       (hopjs-debug "<<<.7 js--html-statement-indentation... ltype=%s ptype=%s col=%s:%s"
-			    ltype ptype (current-column) (point))
-	       (case ptype
-		 ((entering-attr)
-		  (goto-char (match-beginning 1))
-		  (current-column))
-		 ((entering)
-		  (+ (current-column) hopjs-indent-level-html))
-		 (t
-		  (current-column)))))
-	    (t
-	     (current-column))))))))
-
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-search-code-regexp ...                                     */
 ;*---------------------------------------------------------------------*/
@@ -1050,7 +818,7 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-load-index ...                                             */
 ;*---------------------------------------------------------------------*/
-(defun hopjs-load-index (file table)
+(defun hopjs-load-index (file base table)
   (when (file-exists-p file)
     (let* ((i 0)
 	   (v (json-read-file file))
@@ -1063,7 +831,11 @@ usage: (js-return)  -- [RET]"
 	       (m (cond
 		   ((and (>= c ?A) (<= c ?Z)) (- c ?A))
 		   ((and (>= c ?a) (<= c ?z)) (- c ?a))
-		   (else 27))))
+		   (t 27))))
+	  (when base
+	    (let ((c (assq 'url en)))
+	      (when (consp c)
+		(rplacd c (concat base "/" (cdr c))))))
 	  (aset table m (cons (cons (cdr k) en) (aref table m)))
 	  (setq i (+ i 1)))))))
 	
@@ -1180,6 +952,14 @@ usage: (js-return)  -- [RET]"
 	      (goto-char end))
 	  (setq res nil)))
       res)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-post-command-hook ...                                      */
+;*---------------------------------------------------------------------*/
+(defun hopjs-post-command-hook ()
+  (interactive)
+  (hopjs-tag-matching)
+  (hopjs-doc-at-point (point)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-tag-matching ...                                           */
@@ -1382,14 +1162,6 @@ usage: (js-return)  -- [RET]"
       (when found (funcall (cdr (cdr found)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hopjs-word-at-point ...                                          */
-;*---------------------------------------------------------------------*/
-(defun hopjs-word-at-point (pos)
-  (let ((beg (progn (backward-word) (point)))
-	(end (progn (forward-word 1) (point))))
-    (buffer-substring-no-properties beg end)))
-
-;*---------------------------------------------------------------------*/
 ;*    hopjs-doc-index-find ...                                         */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-doc-index-find (word table)
@@ -1398,20 +1170,83 @@ usage: (js-return)  -- [RET]"
 	   (idx (if (and (>= key ?a) (<= key ?z)) (- key ?a) 26))
 	   (bucket (aref table idx)))
       (assoc word bucket))))
-      
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-doc-word ...                                               */
+;*---------------------------------------------------------------------*/
+(defvar hopjs-doc-word nil)
+(defvar hopjs-doc-url nil)
+(defvar hopjs-doc-beg nil)
+(defvar hopjs-doc-end nil)
+
+(make-variable-buffer-local 'hopjs-doc-word)
+(make-variable-buffer-local 'hopjs-doc-url)
+(make-variable-buffer-local 'hopjs-doc-beg)
+(make-variable-buffer-local 'hopjs-doc-end)
+
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-doc-at-point ...                                           */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-doc-at-point (pos)
   (interactive "d")
-  (let* ((word (downcase (hopjs-word-at-point pos)))
-	 (entry (hopjs-doc-index-find word hopjs-doc-index-table)))
-    (when entry
-      (let ((url (assq 'url (cdr entry))))
-	(when url
-	  (start-process "system" nil "sh" "-c"
-			 (format "%s file://%s/%s" hopjs-navigator hopjs-doc-dir
-				 (cdr url))))))))
+  (save-excursion
+    (unless (hopjs-in-string-comment-p (point))
+      (let* ((beg (progn (backward-word) (point)))
+	     (end (progn (forward-word 1) (point)))
+	     (word (buffer-substring-no-properties beg end)))
+	(cond
+	 ((string-equal word "")
+	  (hopjs-undoc))
+	 ((not (string-equal word hopjs-doc-word))
+	  (setq hopjs-doc-word word)
+	  (hopjs-undoc)
+	  (setq hopjs-doc-beg beg)
+	  (setq hopjs-doc-end end)
+	  (let ((entry (hopjs-doc-index-find word hopjs-doc-index-table)))
+	    (when entry
+	      (let* ((url (assq 'url (cdr entry)))
+		     (proto (assq 'proto (cdr entry)))
+		     (tooltip (replace-regexp-in-string
+			       "&gt;" ">"
+			       (replace-regexp-in-string
+				"&lt;" "<" (cdr proto)))))
+		(when url
+		  (message tooltip)
+		  (setq hopjs-doc-url (cdr url))
+		  (let ((mod (buffer-modified-p)))
+		    (put-text-properties beg end
+					 'keymap hopjs-tooltip-map
+					 'face 'highlight
+					 'help-echo tooltip)
+		    (set-buffer-modified-p mod))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-undoc ...                                                  */
+;*---------------------------------------------------------------------*/
+(defun hopjs-undoc ()
+  (when hopjs-doc-beg
+    (let ((mod (buffer-modified-p))
+	  (l '(help-echo mouse-face keymap)))
+      (while (consp l)
+	(remove-text-property hopjs-doc-beg hopjs-doc-end (car l))
+	(setq l (cdr l)))
+      (set-buffer-modified-p mod))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-doc-entry ...                                              */
+;*---------------------------------------------------------------------*/
+(defun hopjs-doc-entry (point)
+  (interactive "d")
+  (let* ((url (cond
+	       ((posix-string-match "http[s]?://" hopjs-doc-url)
+		hopjs-doc-url)
+	       ((eq (aref hopjs-doc-url 0) ?/)
+		(format "file://%s" hopjs-doc-url))
+	       (t 
+		(format "file://%s/%s" hopjs-doc-dir hopjs-doc-url))))
+	 (cmd (concat hopjs-navigator " " url)))
+    (message cmd)
+    (start-process "system" nil "sh" "-c" cmd)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init                                                             */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Oct 19 07:07:14 2015 (serrano)                */
+;*    Last change :  Mon Oct 26 18:12:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -524,28 +524,39 @@
       (with-trace 'require "require@load-module-html"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
-	       (let ((hopscript (loadso-or-compile filename 'hopscript))
-		     (this (js-new0 %this js-object))
-		     (scope (nodejs-new-scope-object %this))
-		     (mod (nodejs-module (if js-main filename ".")
-			     filename worker %this)))
-		  ;; prehooking
-		  (when (procedure? prehook)
-		     (prehook %this this scope mod))
-		  ;; main module
-		  (when (eq? js-main (js-null)) (set! js-main mod))
-		  ;; create the module
-		  (with-handler
-		     (lambda (e)
-			(with-access::WorkerHopThread worker (module-cache %this)
-			   (js-delete! module-cache filename #f %this))
-			(raise e))
-		     ;; exports the HTML value
-		     (js-put! mod 'exports (hopscript %this this scope mod)
-			#f %this))
-		  ;; return the newly created module
-		  (trace-item "mod=" (typeof mod))
-		  mod)))))
+	       (if (eq? lang 'html)
+		   (call-with-input-file filename
+		      (lambda (ip)
+			 (let* ((mod (nodejs-module (if js-main filename ".")
+					filename worker %this))
+				(v (parse-html ip -1))
+				(obj (find (lambda (o)
+					      (isa? o xml))
+					v)))
+			    (js-put! mod 'exports obj #f %this)
+			    mod)))
+		   (let ((hopscript (loadso-or-compile filename lang))
+			 (this (js-new0 %this js-object))
+			 (scope (nodejs-new-scope-object %this))
+			 (mod (nodejs-module (if js-main filename ".")
+				 filename worker %this)))
+		      ;; prehooking
+		      (when (procedure? prehook)
+			 (prehook %this this scope mod))
+		      ;; main module
+		      (when (eq? js-main (js-null)) (set! js-main mod))
+		      ;; create the module
+		      (with-handler
+			 (lambda (e)
+			    (with-access::WorkerHopThread worker (module-cache %this)
+			       (js-delete! module-cache filename #f %this))
+			    (raise e))
+			 ;; exports the HTML value
+			 (js-put! mod 'exports (hopscript %this this scope mod)
+			    #f %this))
+		      ;; return the newly created module
+		      (trace-item "mod=" (typeof mod))
+		      mod))))))
    
    (define (hop-load/cache filename)
       (let ((old (hashtable-get hop-load-cache filename)))

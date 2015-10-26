@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Oct 25 12:59:41 2015 (serrano)                */
+#*    Last change :  Mon Oct 26 18:36:26 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -350,7 +350,6 @@ while : ; do
       link=felix;
       hopsrfis="$hopsrfis boot-from-java"
       ;;
-
 
     -*)
       echo "*** Configure error, unknown option $1" >&2;

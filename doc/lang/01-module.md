@@ -18,6 +18,7 @@ The arguments are as follows:
  * `language` is an optional string denoting the implementation language
  of the module. The supported languages are:
    * `javascript`;
+   * `html`;
    * `hopscript`.
    
 When a language is specified and when this language is not `hopscript`,
@@ -35,8 +36,8 @@ Modules are loaded differently depending on their source file suffix.
  * `.html`, the module is a HopScript HTML expression, which is the result
  of the `require` call.
 
-When `id`is a directory, the loader looks in the directory for a file named package.json
-to tell how to load the module.
+When `id`is a directory, the loader looks in the directory for a file
+named package.json to tell how to load the module.
 
 When `id` is an http url, Hop.js assumes that the file is to be
 retrieved from a remote Hop.js server, and issues http requests to the
