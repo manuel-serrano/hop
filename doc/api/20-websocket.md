@@ -38,7 +38,7 @@ Constructors
 ------------
 
 ### new WebSocketServer( url [, option ] ) ###
-[:@glyphicon glyphicon-tag function]
+[:@glyphicon glyphicon-tag constructor]
 
 The argument `option` is either:
 
@@ -50,7 +50,7 @@ The argument `option` is either:
 
 
 ### new WebSocket( uri [, option ] ) ###
-[:@glyphicon glyphicon-tag function]
+[:@glyphicon glyphicon-tag constructor]
 
 The argument `uri` is a complete URI, prefixed with either `ws:`or
 `wss:` depending on whether http or https is to be used. Contrary to

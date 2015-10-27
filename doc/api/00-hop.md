@@ -274,7 +274,7 @@ server.addEventListener( 'refreshScore', function( event ) {
 On the server side, server objects are instances of the Server class.
 
 ### new Server( hostname, port [, authorization] ) ###
-[:@glyphicon glyphicon-tag function]
+[:@glyphicon glyphicon-tag constructor]
 
 the arguments are as follows:
 

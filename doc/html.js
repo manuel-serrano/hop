@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/doc/html40.js                     */
+/*    serrano/prgm/project/hop/3.0.x/doc/html.js                       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 26 11:41:07 2015                          */
-/*    Last change :  Mon Oct 26 16:44:06 2015 (serrano)                */
+/*    Last change :  Tue Oct 27 11:36:54 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Parses the HTML4.01 documentation for generating the index.      */
@@ -38,9 +38,10 @@ function compileHTML40Index( file ) {
 		var key = el.childNodes[ 0 ].childNodes[ 0 ]
 		    .toString()
 		    .replace( /\n/g, '' );
-		var o = { key: key.toLowerCase(),
+		var o = { key: key,
 			  proto: "&lt;" + key + " [attributes]&gt;",
 			  chapter: chapterTitle,
+			  type: "tag",
 			  url: path.join( base, href )
 			};
 
