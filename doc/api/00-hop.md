@@ -248,6 +248,12 @@ xml-elements. Clients register to specific broadcast events with the
 hop.broadcast( 'refreshScore', 14 );
 ```
 
+### hop.signal() ###
+[:@glyphicon glyphicon-tag function]
+
+This function is similar to `broadcast` but only one receiver will be
+notified of the message.
+
 ### Server.addEventListener( eventName, handler [, options] ) ###
 [:@glyphicon glyphicon-tag function]
 
@@ -345,30 +351,56 @@ the asynchronous `post` when applicable.
 Miscellaneous
 -------------
 
-### hop.charsetConvert() ###
+### hop.charsetConvert( text, source, target ) ###
 [:@glyphicon glyphicon-tag function]
+
+Converts the `text` string from charset `source` into charset `target`.
+
+${ <span class="label label-info">url/url.js</span> }
+
+```hopscript
+${ doc.include( doc.ROOT + "/examples/url/url.js", 14 ) }
+```
+
+### hop.encodeURIComponent( string ) ###
+[:@glyphicon glyphicon-tag function]
+
+Encodes a string into a valid URI component.
+
+```hopscript
+hop.encodeURIComponent( 'jean dupont' );
+// "jean%20dupont"
+```
 
 ### hop.Cons() ###
 [:@glyphicon glyphicon-tag function]
 
 This function is a constructor to create native (Bigloo) objects. 
 
-### hop.encodeURIComponent() ###
-[:@glyphicon glyphicon-tag function]
-
 ### hop.List() ###
 [:@glyphicon glyphicon-tag function]
 
 This function is a constructor to create native (Bigloo) objects. 
 
-### hop.md5sum() ###
+### hop.md5sum( string ) ###
 [:@glyphicon glyphicon-tag function]
 
-### hop.sha1sum() ###
+Computes the md5sum of a string.
+
+```hopscript
+hop.md5sum( 'jean dupont' );
+// "b38bed581de7b86dd6fc8355c73cebf2"
+```
+
+### hop.sha1sum( string ) ###
 [:@glyphicon glyphicon-tag function]
 
-### hop.signal() ###
-[:@glyphicon glyphicon-tag function]
+Computes the sha1 sum of a string.
+
+```hopscript
+hop.sha1sum( 'jean dupont' );
+// "7461340811509ec24dd1c1a32504a01e24423768"
+```
 
 ### hop.xmlCompile( node [, ofile] [, backend] ) ###
 [:@glyphicon glyphicon-tag function]
