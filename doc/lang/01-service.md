@@ -127,7 +127,7 @@ Service Constructor
 Hop.js services are instances of the `Service` constructor.
 
 ### new Service( function [, name ] [, args] ) ###
-[:@glyphicon glyphicon-tag function]
+[:@glyphicon glyphicon-tag constructor]
 
  * `function`, is the function implementing the service. When invoked,
 `this` is bound to the request object.

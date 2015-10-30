@@ -33,7 +33,7 @@ Constructor
 -----------
 
 ### new Worker( path ) ###
-[:@glyphicon glyphicon-tag function]
+[:@glyphicon glyphicon-tag constructor]
 
 Workers are created using the `Worker` function which takes as parameter
 the source file of the worker. The path is resolved using the same rules

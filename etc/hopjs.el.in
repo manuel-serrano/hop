@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Oct 26 18:50:22 2015 (serrano)                */
+;*    Last change :  Wed Oct 28 12:38:30 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -26,12 +26,6 @@
   :safe 'integerp
   :group 'js)
 
-(defcustom hopjs-balloon-binding
-  (if (featurep 'xemacs) [(button1)] [(down-mouse-1)])
-  "*The mouse binding for the pseudo-balloon event."
-  :group 'ude
-  :type 'vector)
-
 (defcustom hopjs-doc-dir "@DOCDIR@"
   "The json directory containing the documentation indexes"
   :type 'string
@@ -49,7 +43,7 @@
   :type '(repeat (string))
   :group 'js)
 
-(defcustom hopjs-html-doc-url "http://"
+(defcustom hopjs-html-doc-url "http://www.w3.org/TR/html4"
   "The base URL of the HTML4.01 documentation"
   :type 'string
   :safe 'stringp
@@ -110,21 +104,6 @@
    (concat hopjs-doc-dir "/idx.json") nil hopjs-doc-index-table)
   (hopjs-load-index
    (concat hopjs-doc-dir "/html-idx.json") hopjs-html-doc-url hopjs-doc-index-table)
-  ;; balloons
-;*   (hopjs-balloon-start)                                             */
-;*   ;; (setq l (json-read-file "toto.json"))                          */
-;*   (hopjs-add-balloon-action                                         */
-;*    "popup"                                                          */
-;*    '(lambda (point win)                                             */
-;*       (save-excursion                                               */
-;* 	(goto-char point)                                              */
-;* 	(let* ((beg (progn (backward-word ) (point)))                  */
-;* 	       (end (progn (forward-word 1) (point)))                  */
-;* 	       (str (buffer-substring-no-properties beg end)))         */
-;* 	  (message "point=%s beg=%s end=%sstr=[%s]" point beg end str) */
-;* 	  nil)))                                                       */
-;*    '(lambda ()                                                      */
-;*       (message "action")))                                          */
   ;; tag matching
   (add-hook 'post-command-hook (function hopjs-post-command-hook) t t)
   ;; user hooks
@@ -826,6 +805,7 @@ usage: (js-return)  -- [RET]"
       (while (< i len)
 	(let* ((en (aref v i))
 	       (k (assq 'key en))
+	       (y (assq 'type en))
 	       (n (string-match (cdr k) "[^.]+$"))
 	       (c (aref (cdr k) (or n 0)))
 	       (m (cond
@@ -1063,111 +1043,15 @@ usage: (js-return)  -- [RET]"
 	      (forward-sexp arg))))))
 
 ;*---------------------------------------------------------------------*/
-;*    hopjs-balloon-started-p ...                                      */
-;*    -------------------------------------------------------------    */
-;*    A buffer local variable that tells if balloon is already all     */
-;*    set on the requesting buffer.                                    */
-;*---------------------------------------------------------------------*/
-(defvar hopjs-balloon-started-p nil)
-(make-variable-buffer-local 'hopjs-balloon-started-p)
-(defvar hopjs-balloon-old-binding nil)
-(make-variable-buffer-local 'hopjs-balloon-old-binding)
-(defvar hopjs-balloon-old-global-binding nil)
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-balloon-start ...                                          */
-;*---------------------------------------------------------------------*/
-(defun hopjs-balloon-start ()
-  (unless hopjs-balloon-started-p
-    (setq hopjs-balloon-started-p t)
-    (setq hopjs-balloon-old-binding
-	  (global-key-binding hopjs-balloon-binding))
-    (unless hopjs-balloon-old-global-binding
-      (setq hopjs-balloon-old-global-binding 
-	    hopjs-balloon-old-binding)))
-  (local-set-key hopjs-balloon-binding
-		 #'(lambda (event)
-		     (interactive "e")
-		     (hopjs-balloon-mouse-hook event)
-		     (cond
-		      (hopjs-balloon-old-binding
-		       (funcall hopjs-balloon-old-binding event))
-		      (hopjs-balloon-old-global-binding
-		       (funcall hopjs-balloon-old-global-binding event))))))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-balloon-stop ...                                           */
-;*---------------------------------------------------------------------*/
-(defun hopjs-balloon-stop ()
-  (local-unset-key hopjs-balloon-binding)
-  (if hopjs-balloon-old-binding
-      (local-set-key hopjs-balloon-binding hopjs-balloon-old-binding)))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-balloon-actions ...                                        */
-;*---------------------------------------------------------------------*/
-(defvar hopjs-balloon-actions '())
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-add-balloon-action ...                                     */
-;*---------------------------------------------------------------------*/
-(defun hopjs-add-balloon-action (label pred action)
-  (setq hopjs-balloon-actions
-	(cons (cons label (cons pred action))
-	      hopjs-balloon-actions)))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-remove-balloon-action ...                                  */
-;*---------------------------------------------------------------------*/
-(defun hopjs-remove-balloon-action (label)
-  (let ((cell (assq label hopjs-balloon-actions)))
-    (when (consp cell)
-      (setq hopjs-balloon-actions (delq cell hopjs-balloon-actions)))
-    (when (null hopjs-balloon-actions)
-      (hopjs-balloon-stop))))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-balloon-mouse-point ...                                    */
-;*---------------------------------------------------------------------*/
-(defvar hopjs-balloon-mouse-point nil)
-(defvar hopjs-balloon-mouse-buffer nil)
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-balloon-get-buffer ...                                     */
-;*---------------------------------------------------------------------*/
-(defun hopjs-balloon-get-buffer ()
-  hopjs-balloon-mouse-buffer)
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-balloon-get-point ...                                      */
-;*---------------------------------------------------------------------*/
-(defun hopjs-balloon-get-point ()
-  hopjs-balloon-mouse-point)
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-balloon-mouse-hook ...                                     */
-;*---------------------------------------------------------------------*/
-(defun hopjs-balloon-mouse-hook (event)
-  (when (eventp event)
-    (let ((point (event-closest-point event))
-	  (win (event-window event))
-	  (l hopjs-balloon-actions)
-	  (found nil))
-      (setq hopjs-balloon-mouse-buffer (event-buffer event))
-      (setq hopjs-balloon-mouse-point point)
-      (while (and (not found) (consp l))
-	(if (funcall (car (cdr (car l))) point win)
-	    (setq found (car l))
-	  (setq l (cdr l))))
-      (when found (funcall (cdr (cdr found)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    hopjs-doc-index-find ...                                         */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-doc-index-find (word table)
   (when (> (length word) 0)
     (let* ((key (aref word 0))
-	   (idx (if (and (>= key ?a) (<= key ?z)) (- key ?a) 26))
+	   (idx (cond
+		 ((and (>= key ?a) (<= key ?z)) (- key ?a))
+		 ((and (>= key ?A) (<= key ?Z)) (- key ?A))
+		 (t 26)))
 	   (bucket (aref table idx)))
       (assoc word bucket))))
 
@@ -1193,7 +1077,23 @@ usage: (js-return)  -- [RET]"
     (unless (hopjs-in-string-comment-p (point))
       (let* ((beg (progn (backward-word) (point)))
 	     (end (progn (forward-word 1) (point)))
-	     (word (buffer-substring-no-properties beg end)))
+	     (word (buffer-substring-no-properties beg end))
+	     (y '*))
+	(cond
+	 ((progn (goto-char (1- beg)) (looking-at hopjs-re-open-tag))
+	  ;; a tag
+	  (setq y "tag")
+	  (setq word (upcase word)))
+	 ((and (> (point) 2)
+	       (progn (goto-char (- beg 2)) (looking-at hopjs-re-close-tag)))
+	  ;; a tag
+	  (setq y "tag")
+	  (setq word (upcase word)))
+	 ((progn (goto-char (1+ end)) (looking-at "[ \t\n]*[=,;})]"))
+	  (setq y "parameter"))
+	 ((progn (goto-char (- beg 4)) (looking-at "new "))
+	  ;; a constructor
+	  (setq y "constructor")))
 	(cond
 	 ((string-equal word "")
 	  (hopjs-undoc))
@@ -1204,21 +1104,26 @@ usage: (js-return)  -- [RET]"
 	  (setq hopjs-doc-end end)
 	  (let ((entry (hopjs-doc-index-find word hopjs-doc-index-table)))
 	    (when entry
-	      (let* ((url (assq 'url (cdr entry)))
-		     (proto (assq 'proto (cdr entry)))
-		     (tooltip (replace-regexp-in-string
-			       "&gt;" ">"
-			       (replace-regexp-in-string
-				"&lt;" "<" (cdr proto)))))
-		(when url
-		  (message tooltip)
-		  (setq hopjs-doc-url (cdr url))
-		  (let ((mod (buffer-modified-p)))
-		    (put-text-properties beg end
-					 'keymap hopjs-tooltip-map
-					 'face 'highlight
-					 'help-echo tooltip)
-		    (set-buffer-modified-p mod))))))))))))
+	      (if (or (eq y '*)
+		      (let ((type (assq 'type (cdr entry))))
+			(or (not (consp type))
+			    (string-equal (cdr type) y))))
+		  (let* ((url (assq 'url (cdr entry)))
+			 (proto (assq 'proto (cdr entry)))
+		     
+			 (tooltip (replace-regexp-in-string
+				   "&gt;" ">"
+				   (replace-regexp-in-string
+				    "&lt;" "<" (cdr proto)))))
+		    (when url
+		      (message tooltip)
+		      (setq hopjs-doc-url (cdr url))
+		      (let ((mod (buffer-modified-p)))
+			(put-text-properties beg end
+					     'keymap hopjs-tooltip-map
+					     'face 'highlight
+					     'help-echo tooltip)
+			(set-buffer-modified-p mod)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-undoc ...                                                  */
@@ -1245,6 +1150,7 @@ usage: (js-return)  -- [RET]"
 	       (t 
 		(format "file://%s/%s" hopjs-doc-dir hopjs-doc-url))))
 	 (cmd (concat hopjs-navigator " " url)))
+    (message url)
     (message cmd)
     (start-process "system" nil "sh" "-c" cmd)))
 
