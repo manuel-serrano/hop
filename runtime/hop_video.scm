@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Sun Jan 11 20:41:07 2015 (serrano)                */
+;*    Last change :  Wed Oct 21 10:29:28 2015 (serrano)                */
 ;*    Copyright   :  2007-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
@@ -42,7 +42,7 @@
 ;*    The current version of the Hop player uses JW FLV player         */
 ;*        http://www.longtailvideo.com/players/jw-flv-player/          */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <VIDEO> ((id #unspecified string)
+(define-xml-compound <VIDEO> ((id #unspecified)
 			      (src #f)
 			      (img #f)
 			      (width 640)
@@ -51,7 +51,11 @@
 			      (attr)
 			      body)
    (let ((dummy (symbol->string (gensym 'video-container)))
-	 (tmp (gensym 'video_tmp)))
+	 (tmp (gensym 'video_tmp))
+	 (src (xml-primitive-value src))
+	 (img (xml-primitive-value src))
+	 (bg (xml-primitive-value bg))
+	 (id (xml-primitive-value id)))
       (<DIV> :id dummy
 	 (<SCRIPT> :type "text/javascript"
 	    (format "var ~a = new SWFObject('~a','~a','~a','~a','9','#FFFFFF');"

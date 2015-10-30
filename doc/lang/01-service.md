@@ -127,7 +127,7 @@ Service Constructor
 Hop.js services are instances of the `Service` constructor.
 
 ### new Service( function [, name ] [, args] ) ###
-[:@glyphicon glyphicon-tag function]
+[:@glyphicon glyphicon-tag constructor]
 
  * `function`, is the function implementing the service. When invoked,
 `this` is bound to the request object.
@@ -162,6 +162,19 @@ pub( { lname: "martin", fname: "henri" }.post();
 //will return <html> henri, martin </html>
 ```
 
+### Service.exists( name ) ###
+[:@glyphicon glyphicon-tag function]
+
+Returns `true` if the service exists, returns `false` otherwise.
+
+Example:
+
+```hopscript
+Service.exists( "public" )
+// true
+Service.exists( "private" );
+// false
+```
 
 Service Frames
 --------------

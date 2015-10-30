@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Oct 10 11:19:31 2015 (serrano)                */
+#*    Last change :  Sat Oct 24 10:25:17 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -80,6 +80,8 @@ POPULATION = Makefile \
   widget/node_modules/flipcounter/etc/img/digits.png \
   widget/node_modules/flipcounter-1.0.0.tgz \
   widget/widget.js \
+  custom/custom.js custom/README.md custom/example.json \
+  custom/foo-bar.js custom/foo-bar.css \
   keepalive/keepalive.js keepalive/keepalive.hss keepalive/example.json \
   keepalive/README.md \
   authentication/authentication.js authentication/example.json \

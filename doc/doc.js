@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Wed Oct 21 18:06:08 2015 (serrano)                */
+/*    Last change :  Mon Oct 26 08:20:45 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -203,7 +203,7 @@ function compileSection( page ) {
      </body>
    </html>;
 
-   console.log( hop.xmlCompile( document ) );
+   console.log( hop.compileXML( document ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -249,7 +249,7 @@ function compileChapter( json ) {
      </body>
    </html>;
 
-   console.log( hop.xmlCompile( document ) );
+   console.log( hop.compileXML( document ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -275,7 +275,7 @@ function compileIndex( content ) {
      </body>
    </html>;
 
-   console.log( hop.xmlCompile( document ) );
+   console.log( hop.compileXML( document ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -343,7 +343,7 @@ function compileIdx( json ) {
      </body>
    </html>;
 
-   console.log( hop.xmlCompile( document ) );
+   console.log( hop.compileXML( document ) );
 }
 
 /*---------------------------------------------------------------------*/
@@ -355,7 +355,7 @@ if( process.argv[ 2 ] == "mkidx" ) {
    compileIdx( "./" + process.argv[ 3 ] );
 } else if( process.argv[ 2 ].match( /[.]md$/ ) ) {
    if( process.argv[ 2 ] === "_index.md" ) {
-      compileIndex( "./" + process.argv[ 2 ] );
+      compileIndex( process.argv[ 2 ] );
    } else {
       compileSection( process.argv[ 2 ] );
    }

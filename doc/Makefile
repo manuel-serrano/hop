@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Oct 13 14:13:07 2015 (serrano)                */
+#*    Last change :  Mon Oct 26 18:46:39 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -35,7 +35,7 @@ JQUERY_POP=js/jquery.min.js
 
 POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   $(ICONS_POP:%/icons/%) \
-  Makefile doc.js xml.js \
+  Makefile doc.js xml.js html.js ecma-262-60.js \
   doc.json \
   api/api.json api/00-hop.md api/10-dom.md api/20-websocket.md api/01-html.md \
   widget/widget.json \
@@ -49,7 +49,8 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
-  xml-ignore.json
+  xml-ignore.json \
+  html-idx.json
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
   hss.html config.html user.html 01-html.html markdown.html
@@ -64,6 +65,8 @@ DEV_TARGETS=dev.html 00-command.html 10-edit.html
 ALL_TARGETS=index.html download.html nodejs.html \
   $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
   idx.html
+
+HTML="/usr/local/doc/html40/index/elements.html"
 
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
@@ -82,6 +85,7 @@ VPATH=api lang dev widget \
 .PHONY: build clean install uninstall
 
 build: $(ALL_TARGETS) hss/markdown.css hss/fontifier.css hss/doc.css
+build+: html-idx.json
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -124,6 +128,9 @@ install:
 	chmod $(MODFILE) $(BOOTSTRAP_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/%)
 	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/css/*
 
+install+:
+	$(INSTALL) html-idx.json $(DESTDIR)$(HOPDOCDIR)
+
 uninstall:
 
 #*---------------------------------------------------------------------*/
@@ -164,11 +171,19 @@ idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
-#*    apiindex.html ...                                                */
+#*    idx.html ...                                                     */
 #*---------------------------------------------------------------------*/
 idx.html: idx.json
 	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
           $(BUILDDIR)/doc/doc.js cmpidx $< > $@ \
+          || ($(RM) $@; exit 1)
+
+#*---------------------------------------------------------------------*/
+#*    html-idx.json ...                                                */
+#*---------------------------------------------------------------------*/
+html-idx.json: 
+	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
+          $(BUILDDIR)/doc/html.js $(HTML) > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/

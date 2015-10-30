@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Oct 19 08:17:42 2015 (serrano)                */
+;*    Last change :  Sat Oct 24 05:56:52 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -231,8 +231,8 @@
 
 	       `(Server . ,js-server)
 	       
-	       ;; xml
-	       (define-js xmlCompile 3
+	       ;; XML
+	       (define-js compileXML 3
 		  (lambda (this xml ofile backend)
 		     (let ((be (hop-get-xml-backend
 				  (if (eq? backend (js-undefined))
@@ -248,6 +248,14 @@
 			       (lambda (op)
 				  (xml-write xml op be)
 				  (js-undefined)))))))
+
+	       (define-js createElement 1
+		  (lambda (this tag)
+		     (instantiate::xml-element
+			(tag (string->symbol (js-tostring tag %this)))
+			(id (xml-make-id))
+			(attributes '())
+			(body '()))))
 	       
 	       ;; lib
 	       (define-js encodeURIComponent 1

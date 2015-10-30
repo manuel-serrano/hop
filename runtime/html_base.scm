@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Wed Sep 30 13:28:52 2015 (serrano)                */
+;*    Last change :  Mon Oct 26 16:18:48 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -55,6 +55,8 @@
 	    (<EM> . ::obj)
 	    (<EMBED> . ::obj)
 	    (<FIELDSET> . ::obj)
+	    (<FIGURE> . ::obj)
+	    (<FIGCAPTION> . ::obj)
 	    (<FONT> . ::obj)
 	    (<FOOTER> . ::obj)
 	    (<FORM> . ::obj)
@@ -155,6 +157,8 @@
 (define-xml-element <EM>)
 (define-xml-element <EMBED>)
 (define-xml-element <FIELDSET>)
+(define-xml-element <FIGURE>)
+(define-xml-element <FIGCAPTION>)
 (define-xml-element <FONT>)
 (define-xml-element <FOOTER>)
 (define-xml xml-empty-element #t <FRAME>)

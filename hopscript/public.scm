@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Oct 10 11:14:53 2015 (serrano)                */
+;*    Last change :  Fri Oct 30 13:03:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -67,9 +67,6 @@
 	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-calln/debug ::JsGlobalObject loc fun::obj this . args)
 
-	   (js-object->keyword-arguments ::JsObject ::JsGlobalObject)
-	   (js-object->keyword-arguments* ::JsObject ::JsGlobalObject)
-	   
 	   (js-instanceof?::bool ::JsGlobalObject v f)
 	   (js-instanceof?/debug::bool ::JsGlobalObject loc v f)
 	   
@@ -379,7 +376,7 @@
 		     (apply proc this ,@args
 			(make-list (-fx min ,n) (js-undefined)))))
 		 ((=fx arity ,n)
-		  (apply proc this ,@args))
+		  (proc this ,@args))
 		 ((>=fx minlen 0)
 		  (js-raise-arity-error %this fun ,(-fx n 1)))
 		 (else
@@ -605,52 +602,6 @@
 	     (let ((aux (js-calln% %this fun this args)))
 		($env-pop-trace env)
 		aux)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object->keyword-arguments ...                                 */
-;*---------------------------------------------------------------------*/
-(define (js-object->keyword-arguments obj %this)
-   (let ((acc '()))
-      (js-for-in obj
-	 (lambda (k)
-	    (set! acc
-	       (cons* (js-get obj k %this)
-		  (string->keyword (js-jsstring->string k))
-		  acc)))
-	 %this)
-      (reverse! acc)))
-
-;*---------------------------------------------------------------------*/
-;*    js-object->keyword-arguments* ...                                */
-;*---------------------------------------------------------------------*/
-(define (js-object->keyword-arguments* obj %this)
-   
-   (define (flatten lst)
-      (let flatten ((lst lst)
-		    (res '()))
-	 (cond
-	    ((null? lst)
-	     (reverse! res))
-	    ((isa? (car lst) JsArray)
-	     (flatten (append (xml-unpack (car lst)) (cdr lst)) res))
-	    (else
-	     (flatten (cdr lst) (cons (car lst) res))))))
-
-   (let ((acc '()))
-      (js-for-in obj
-	 (lambda (k)
-	    (let ((val (js-get obj k %this))
-		  (key (string->keyword (js-jsstring->string k))))
-	       (if (isa? val JsArray)
-		   (with-access::JsArray val (vec)
-		      (let ((l (flatten (vector->list vec))))
-			 (if (pair? l)
-			     (set! acc (append (reverse! l) (cons key acc)))
-			     (set! acc (cons* '() (cons key acc))))))
-		   (set! acc
-		      (cons* val key acc)))))
-	 %this)
-      (reverse! acc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instanceof? ...                                               */
@@ -1451,6 +1402,38 @@
 	  (call-with-output-string
 	     (lambda (op)
 		(write-circle o op)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object->keyword-arguments* ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-object->keyword-arguments* obj %this)
+   
+   (define (flatten lst)
+      (let flatten ((lst lst)
+		    (res '()))
+	 (cond
+	    ((null? lst)
+	     (reverse! res))
+	    ((isa? (car lst) JsArray)
+	     (flatten (append (xml-unpack (car lst)) (cdr lst)) res))
+	    (else
+	     (flatten (cdr lst) (cons (car lst) res))))))
+
+   (let ((acc '()))
+      (js-for-in obj
+	 (lambda (k)
+	    (let ((val (js-get obj k %this))
+		  (key (string->keyword (js-jsstring->string k))))
+	       (if (isa? val JsArray)
+		   (with-access::JsArray val (vec)
+		      (let ((l (flatten (vector->list vec))))
+			 (if (pair? l)
+			     (set! acc (append (reverse! l) (cons key acc)))
+			     (set! acc (cons* '() (cons key acc))))))
+		   (set! acc
+		      (cons* val key acc)))))
+	 %this)
+      (reverse! acc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-html-head ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Sun Sep 13 05:50:58 2015 (serrano)                */
+;*    Last change :  Sat Oct 24 05:58:09 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -70,11 +70,11 @@
 	    (class xml-html::xml-markup)
 
 	    (class xml-document::xml-html
-	       (id read-only)
+	       id
 	       (%idtable read-only (default (make-hashtable))))
 
 	    (class xml-element::xml-markup
-	       (id read-only (default #unspecified))
+	       (id (default #unspecified))
 	       (parent (default #f)))
 
 	    (class xml-empty-element::xml-element)

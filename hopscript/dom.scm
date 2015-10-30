@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Oct 16 10:24:54 2015 (serrano)                */
+;*    Last change :  Sat Oct 24 06:25:30 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -140,13 +140,21 @@
       (js-make-function %this
 	 (lambda (this txt)
 	    (instantiate::xml-element
-	       (tag (string->symbol
-		       (string-upcase
-			  (js-tostring txt %this))))
+	       (tag (string->symbol (js-tostring txt %this)))
 	       (body '())))
 	 1 'createElement))
      (else
       (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-put! ::xml-html ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-put! o::xml-html prop v throw::bool %this::JsGlobalObject)
+   (case (js-toname prop %this)
+      ((body)
+       #f)
+      (else
+       (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::xml-document ...                                        */
@@ -158,6 +166,17 @@
 	 (js-string->jsstring id)))
      (else
       (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-put! ::xml-document ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-put! o::xml-document prop v throw::bool %this::JsGlobalObject)
+   (case (js-toname prop %this)
+      ((id)
+       (with-access::xml-document o (id)
+	  (set! id (js-tostring v %this))))
+      (else
+       (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::xml-verbatim ...                                        */
@@ -184,6 +203,17 @@
        (dom-previous-sibling o))
       ((childNodes)
        (js-vector->jsarray '#() %this))
+      (else
+       (js-undefined))))
+
+;*---------------------------------------------------------------------*/
+;*    js-put! ::xml-verbatim ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-put! o::xml-verbatim prop v throw::bool %this::JsGlobalObject)
+   (case (js-toname prop %this)
+      ((data)
+       (with-access::xml-verbatim o (data)
+	  (set! data (js-tostring v %this))))
       (else
        (js-undefined))))
 
@@ -219,6 +249,12 @@
 	 ((tagName)
 	  (with-access::xml-markup o (tag)
 	     (js-string->jsstring (symbol->string tag))))
+	 ((attributes)
+	  (with-access::xml-markup o (attributes)
+	     (js-plist->jsobject attributes %this)))
+	 ((children)
+	  (with-access::xml-markup o (body)
+	     body))
 	 ((inspect)
 	  (js-make-function %this js-inspect 1 'inspect))
 	 ((constructor)
@@ -294,6 +330,34 @@
 		    (js-undefined))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-put! ::xml-markup ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-put! o::xml-markup prop v throw::bool %this::JsGlobalObject)
+   
+   (define (->obj v)
+      (cond
+	 ((isa? v JsStringLiteral) (js-jsstring->string v))
+	 (else v)))
+   
+   (let loop ((pname (js-toname prop %this)))
+      (case pname
+	 ((className)
+	  (loop 'class))
+	 ((attributes)
+	  (when (isa? v JsObject)
+	     (with-access::xml-markup o (attributes)
+		(set! attributes (js-jsobject->keyword-plist v %this)))))
+	 ((children)
+	  (with-access::xml-markup o (body)
+	     (if (isa? v JsArray)
+		 (set! body (map! car (jsarray->list v %this)))
+		 (js-raise-type-error %this
+		    (format "Bad children (~a)" (typeof v))
+		    v))))
+	 (else
+	  (dom-set-attribute! o (symbol->string pname) (->obj v))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get ::xml-element ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::xml-element prop %this::JsGlobalObject)
@@ -321,55 +385,6 @@
        (call-next-method))))
    
 ;*---------------------------------------------------------------------*/
-;*    js-put! ::xml-html ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (js-put! o::xml-html prop v throw::bool %this::JsGlobalObject)
-   (case (js-toname prop %this)
-      ((body)
-       #f)
-      (else
-       (call-next-method))))
-
-;*---------------------------------------------------------------------*/
-;*    js-put! ::xml-document ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (js-put! o::xml-document prop v throw::bool %this::JsGlobalObject)
-   (case (js-toname prop %this)
-      ((id)
-       (with-access::xml-document o (id)
-	  (set! id (js-tostring v %this))))
-      (else
-       (call-next-method))))
-
-;*---------------------------------------------------------------------*/
-;*    js-put! ::xml-verbatim ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (js-put! o::xml-verbatim prop v throw::bool %this::JsGlobalObject)
-   (case (js-toname prop %this)
-      ((data)
-       (with-access::xml-verbatim o (data)
-	  (set! data (js-tostring v %this))))
-      (else
-       (js-undefined))))
-
-;*---------------------------------------------------------------------*/
-;*    js-put! ::xml-markup ...                                         */
-;*---------------------------------------------------------------------*/
-(define-method (js-put! o::xml-markup prop v throw::bool %this::JsGlobalObject)
-   
-   (define (->obj v)
-      (cond
-	 ((isa? v JsStringLiteral) (js-jsstring->string v))
-	 (else v)))
-   
-   (let loop ((pname (symbol->keyword (js-toname prop %this))))
-      (case pname
-	 ((className:)
-	  (loop 'class:))
-	 (else
-	  (dom-set-attribute! o (keyword->string pname) (->obj v))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-put! ::xml-element ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::xml-element prop v throw::bool %this::JsGlobalObject)
@@ -377,6 +392,17 @@
       ((id)
        (with-access::xml-element o (id)
 	  (set! id (js-tostring v %this))))
+      ((attributes)
+       (when (isa? v JsObject)
+	  (let* ((attrs (js-jsobject->keyword-plist v %this))
+		 (lid (memq id: attrs)))
+	     (with-access::xml-element o (attributes id)
+		(if lid
+		    (begin
+		       (set! id (car lid))
+		       (set! lid (remq! (cadr lid) lid))
+		       (set! attributes (remq! lid (car lid))))
+		    (set! attributes attrs))))))
       ((childNodes)
        #f)
       ((parentNode)
@@ -439,6 +465,7 @@
       (let loop ((attributes attributes)
 		 (attrs `(,(js-string->jsstring "nodeType")
 			  ,(js-string->jsstring "tagName")
+			  ,(js-string->jsstring "attributes")
 			  ,(js-string->jsstring "className")
 			  ,(js-string->jsstring "attributes")
 			  ,(js-string->jsstring "childNodes")
