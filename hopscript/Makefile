@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/hopscript/Makefile                */
+#*    serrano/prgm/project/hop/3.1.x/hopscript/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Aug 19 08:18:52 2015 (serrano)                */
+#*    Last change :  Thu Oct 29 21:13:41 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -44,7 +44,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 _OBJECTS = types rts object function string number regexp boolean \
   error array arguments date json math worker private public lib service \
   property websocket pair arraybuffer arraybufferview stringliteral dom \
-  symbol promise
+  symbol promise generator
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

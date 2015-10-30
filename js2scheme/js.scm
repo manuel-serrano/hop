@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/js.scm                  */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/js.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Oct 21 06:48:40 2015 (serrano)                */
+;*    Last change :  Fri Oct 30 11:05:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -46,7 +46,7 @@
 			      (list
 				 (call-with-output-string
 				    (lambda (op)
-				       (let ((expr (j2s-scheme node mode evalp conf)))
+				       (let ((expr (j2s-scheme node mode evalp #f conf)))
 					  (write (eval! expr) op)))))))
 			'normal (lambda (x) x) conf)))))))
 	 
@@ -356,7 +356,7 @@
       (list this (symbol->string id))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SHopRef ...                                       */
+;*    j2s-js ::J2SHopRef ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SHopRef tildec dollarc mode evalp conf)
    ;; MS 1 jul 2014: not quit sure, what about client-side scheme modules?
@@ -660,7 +660,7 @@
       (list this
 	 `(call-with-output-string
 	     (lambda (op)
-		(obj->javascript-attr ,(j2s-scheme node mode evalp conf) op))))))
+		(obj->javascript-attr ,(j2s-scheme node mode evalp #f conf) op))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-client-dollar ...                                         */
@@ -730,4 +730,11 @@
 (define-method (j2s-js this::J2SNop tildec dollarc mode evalp conf)
    '())
 
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SYield ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SYield tildec dollarc mode evalp conf)
+   (with-access::J2SYield this (expr)
+      (cons* this "yield "
+	 (j2s-js expr tildec dollarc mode evalp conf))))
 

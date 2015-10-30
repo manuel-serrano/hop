@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/return.scm              */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/return.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Jul  3 17:12:48 2015 (serrano)                */
+;*    Last change :  Fri Oct 30 10:47:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -191,7 +191,7 @@
 		(set! tail #t)
 		(set! tail? #t)
 		(set! expr (walk! expr target #f args)))
-	     (syntax-error this "Illegal return statement")))
+	     (syntax-error this "Illegal \"return\" statement")))
       (unless tail?
 	 ;; mark the return as non-tail
 	 (set! tail #f)
@@ -264,6 +264,19 @@
 (define-walk-method (unreturn! this::J2SLetOpt target tail? args)
    (with-access::J2SLetOpt this (val)
       (set! val (walk! val target #f args)))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    unreturn! ::J2SYield ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unreturn! this::J2SYield target tail? args)
+   (with-access::J2SYield this (expr)
+      (cond
+	 ((not target)
+	  (syntax-error this "Illegal \"yield\" statement"))
+	 ((with-access::J2SFun target (generator) (not generator))
+	  (syntax-error this "Illegal \"yield\" statement outside generator" )))
+      (set! expr (walk! expr target #f args)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -344,4 +357,3 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (return? this::J2SReturn)
    #t)
-

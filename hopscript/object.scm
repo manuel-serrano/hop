@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/object.scm              */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/object.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Oct 26 16:18:35 2015 (serrano)                */
+;*    Last change :  Thu Oct 29 21:34:03 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -26,6 +26,7 @@
 	   __hopscript_stringliteral
 	   __hopscript_symbol
 	   __hopscript_promise
+	   __hopscript_generator
 	   __hopscript_function
 	   __hopscript_number
 	   __hopscript_math
@@ -248,6 +249,7 @@
 	    (js-init-worker! %this)
 	    (js-init-websocket! %this)
 	    (js-init-promise! %this)
+	    (js-init-generator! %this)
 	    (js-init-object! %this)
 	    (js-init-object-prototype! %this)
 

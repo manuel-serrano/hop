@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Oct 12 08:04:56 2015 (serrano)                */
+;*    Last change :  Fri Oct 30 10:46:15 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -106,7 +106,7 @@
 	   
 	   (final-class J2SDefault::J2SCase)
 	   
-	   (final-class J2SReturn::J2SStmt
+	   (class J2SReturn::J2SStmt
 	      (exit::bool (default #f))
 	      (tail::bool (default #t))
 	      expr::J2SExpr)
@@ -126,6 +126,7 @@
 	      (need-bind-exit-return::bool (default #f))
 	      (vararg::obj (default #f))
 	      (name::symbol read-only)
+	      (generator::bool (default #f))
 	      params::pair-nil
 	      body::J2SBlock)
 	   
@@ -287,6 +288,9 @@
 	   (final-class J2SNew::J2SExpr
 	      clazz::J2SNode
 	      args::pair-nil)
+
+	   (final-class J2SYield::J2SExpr
+	      expr::J2SExpr)
 	   
 	   (class J2SInit::J2SAssig)
 	   
@@ -716,6 +720,7 @@
 (gen-walks J2SCond test then else)
 (gen-walks J2SDollar node)
 (gen-walks J2SComprehension (iterables) test expr)
+(gen-walks J2SYield expr)
 
 (gen-traversals J2STilde)
 

@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/configure                         */
+#*    serrano/prgm/project/hop/3.1.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Oct 26 18:36:26 2015 (serrano)                */
+#*    Last change :  Thu Oct 29 18:51:59 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -66,8 +66,8 @@ bglextracloselibs=
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="3.0.0"
-devel=rc
+version="3.1.0"
+devel=pre
 
 hopc=$PWD/bin/hopc
 hop=$PWD/bin/hop

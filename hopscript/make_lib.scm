@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/make_lib.scm            */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/make_lib.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Wed Dec 17 15:41:34 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Thu Oct 29 22:20:50 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
 ;*=====================================================================*/
@@ -36,7 +36,9 @@
 	   __hopscript_error
 	   __hopscript_json
 	   __hopscript_worker
-	   __hopscript_websocket)
+	   __hopscript_websocket
+	   __hopscript_promise
+	   __hopscript_generator)
    
    (eval   (export-all)
 
@@ -56,6 +58,8 @@
 	   (class JsError)
 	   
 	   (class JsWorker)
+	   (class JsPromise)
+	   (class JsGenerator)
 	   
 	   (class JsWebSocket)
 	   (class JsWebSocketClient)

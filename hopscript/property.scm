@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/property.scm            */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Aug 25 09:30:55 2015 (serrano)                */
+;*    Last change :  Thu Oct 29 22:19:58 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -92,11 +92,11 @@
 	      (enumerable #t)
 	      (configurable #t))))
 
-(define-macro (vector-ref-ur v i)
-   `(vector-ref ,v ,i))
-
-(define-macro (vector-set-ur! v i o)
-   `(vector-set! ,v ,i ,o))
+;* (define-macro (vector-ref-ur v i)                                   */
+;*    `(vector-ref ,v ,i))                                             */
+;*                                                                     */
+;* (define-macro (vector-set-ur! v i o)                                */
+;*    `(vector-set! ,v ,i ,o))                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    property-flags ...                                               */

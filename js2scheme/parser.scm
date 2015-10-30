@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/parser.scm              */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/parser.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Oct 12 07:53:53 2015 (serrano)                */
+;*    Last change :  Fri Oct 30 11:12:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -543,7 +543,7 @@
 		(instantiate::J2SReturn
 		   (loc loc)
 		   (expr expr)))))))
-   
+
    (define (with)
       (let ((token (consume-token! 'with)))
 	 (push-open-token (consume! 'LPAREN))
@@ -768,6 +768,8 @@
    
    (define (function declaration?)
       (let* ((token (consume-token! 'function))
+	     (gen (when (eq? (peek-token-type) '*)
+		     (consume-any!) '*))
 	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
 		    (consume-token! 'ID)))
 	     (params (params))
@@ -780,8 +782,8 @@
 			   (params params)
 			   (name (cdr id))
 			   (mode mode)
+			   (generator gen)
 			   (body body)
-			   (vararg (rest-params params))
 			   (vararg (rest-params params))
 			   (decl (instantiate::J2SDecl
 				    (loc (token-loc token))
@@ -799,11 +801,11 @@
 	     (co-instantiate ((fun (instantiate::J2SFun
 				      (loc (token-loc token))
 				      (decl decl)
+				      (mode mode)
+				      (generator gen)
 				      (name (cdr id))
 				      (params params)
 				      (vararg (rest-params params))
-				      (vararg (rest-params params))
-				      (mode mode)
 				      (body body)))
 			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
@@ -816,11 +818,11 @@
 	    (else
 	     (instantiate::J2SFun
 		(loc (token-loc token))
-		(params params)
-		(vararg (rest-params params))
-		(vararg (rest-params params))
 		(name '||)
 		(mode mode)
+		(generator gen)
+		(params params)
+		(vararg (rest-params params))
 		(body body))))))
 
    (define (init->params init)
@@ -1262,7 +1264,8 @@
       (access-or-call (new-expr loc) loc #t))
    
    (define (new-expr loc)
-      (if (eq? (peek-token-type) 'new)
+      (case (peek-token-type)
+	 ((new)
 	  (let* ((ignore (consume-any!))
 		 (clazz (new-expr (token-loc ignore)))
 		 (args (if (eq? (peek-token-type) 'LPAREN)
@@ -1271,10 +1274,29 @@
 	     (instantiate::J2SNew
 		(loc (token-loc ignore))
 		(clazz clazz)
-		(args args)))
-	  (access-or-call (primary) loc #f)))
+		(args args))))
+	 ((yield)
+	  (yield-expr))
+	 (else
+	  (access-or-call (primary) loc #f))))
 
-
+   (define (yield-expr)
+      (let ((loc (token-loc (consume-token! 'yield))))
+	 (cond
+	    ((or (case (peek-token-type)
+		    ((EOF ERROR SEMICOLON) #t)
+		    (else #f))
+		 (at-new-line-token?))
+	     (instantiate::J2SYield
+		(loc loc)
+		(expr (instantiate::J2SUndefined
+			 (loc loc)))))
+	    (else
+	     (let ((expr (expression #f)))
+		(instantiate::J2SYield
+		   (loc loc)
+		   (expr expr)))))))
+   
    (define (tag-call-arguments loc)
       (let* ((exprs (template-expressions))
 	     (strs (filter (lambda (e) (isa? e J2SString)) exprs))

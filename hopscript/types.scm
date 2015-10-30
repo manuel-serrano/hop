@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct  1 13:43:32 2015 (serrano)                */
+;*    Last change :  Thu Oct 29 22:45:19 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -140,6 +140,7 @@
 	      (js-reference-error::JsFunction (default (class-nil JsFunction)))
 	      (js-worker::JsFunction (default (class-nil JsFunction)))
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
+	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-table read-only (default (js-symbol-table)))
@@ -238,6 +239,9 @@
 	      (resolvers::pair-nil (default '()))
 	      (rejecters::pair-nil (default '()))
 	      (watches::pair-nil (default '())))
+
+	   (class JsGenerator::JsObject
+	      %next)
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
