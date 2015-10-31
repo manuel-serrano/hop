@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Oct 26 16:18:35 2015 (serrano)                */
+;*    Last change :  Sat Oct 31 13:29:35 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -97,6 +97,12 @@
 			#f %this))
 		  %this)
 	       nobj)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::JsObject ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (xml-primitive-value obj::JsObject)
+   (js-jsobject->plist obj (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsGlobalObject ...                                   */
@@ -433,7 +439,7 @@
 	       (js-make-function %this
 		  (lambda (this attrs . nodes)
 		     (if (isa? attrs JsObject)
-			 (apply <HTML>
+			 (apply <HTML> :idiom "javascript" :context %this
 			    (append
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
