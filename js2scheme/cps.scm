@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sun Nov  1 15:27:20 2015 (serrano)                */
+;*    Last change :  Sun Nov  1 16:08:58 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -356,6 +356,30 @@
 		(set! exprs kexprs)
 		(cps this k)))
 	  (k this))))
+
+;*---------------------------------------------------------------------*/
+;*    J2SCond ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (J2SCond this::J2SCond k)
+   (with-access::J2SCond this (test then else)
+      (cond
+	 ((yield-expr? test)
+	  (cps test
+	     (lambda (ktest::J2SExpr)
+		(set! test ktest)
+		(cps this k))))
+	 ((yield-expr? then)
+	  (cps then
+	     (lambda (kthen::J2SExpr)
+		(set! then kthen)
+		(cps this k))))
+	 ((yield-expr? else)
+	  (cps else
+	     (lambda (kelse::J2SExpr)
+		(set! else kelse)
+		(cps this k))))
+	 (else
+	  (k this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr? ...                                                  */
