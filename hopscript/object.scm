@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Oct 29 21:34:03 2015 (serrano)                */
+;*    Last change :  Sun Nov  1 11:24:53 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -1025,7 +1025,7 @@
    
    (define (err)
       (js-raise-type-error %this
-	 "toPrimitive: illegal default value \"~s\""
+	 "toPrimitive: illegal default value \"~a\""
 	 (class-name (object-class o))))
    
    (define (get-field-value . fields)

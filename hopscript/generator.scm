@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Oct 30 11:34:07 2015 (serrano)                */
+;*    Last change :  Fri Oct 30 20:41:05 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -52,16 +52,22 @@
    (lambda (o %this) o))
 
 ;*---------------------------------------------------------------------*/
+;*    js-toprimitive ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-toprimitive o::JsGenerator preferredtype %this::JsGlobalObject)
+   (js-undefined))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-init-generator! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-init-generator! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (__proto__ js-generator-prototype)
 
-      (define (js-generator-next this)
+      (define (js-generator-next this val)
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
 		(if (procedure? %next)
-		    (%next)
+		    (%next val)
 		    (js-generator-yield (js-undefined) #t %this)))
 	     (js-raise-type-error %this "argument not a generator ~a"
 		(typeof this))))
@@ -71,7 +77,7 @@
 	 
 	 (js-bind! %this js-gen-proto 'next
 	    :configurable #f :enumerable #f
-	    :value (js-make-function %this js-generator-next 0 'next))
+	    :value (js-make-function %this js-generator-next 1 'next))
 	 
 	 (set! js-generator-prototype js-gen-proto))))
 	    

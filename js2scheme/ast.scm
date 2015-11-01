@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Oct 30 10:46:15 2015 (serrano)                */
+;*    Last change :  Sun Nov  1 11:51:02 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -270,6 +270,21 @@
 	   (final-class J2SPostfix::J2SAssig
 	      op::symbol)
 	   
+	   (class J2SInit::J2SAssig)
+	   
+	   (class J2SInitLet::J2SInit)
+	   
+	   (final-class J2SAssigOp::J2SAssig
+	      op::symbol)
+	   
+	   (final-class J2SVAssig::J2SAssig)
+	   (final-class J2SCAssig::J2SAssig)
+	   
+	   (final-class J2SFunBinding::J2SInit)
+	   
+	   (final-class J2SObjInit::J2SExpr
+	      inits::pair-nil)
+	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f))
 	      obj::J2SExpr
@@ -290,22 +305,9 @@
 	      args::pair-nil)
 
 	   (final-class J2SYield::J2SExpr
-	      expr::J2SExpr)
-	   
-	   (class J2SInit::J2SAssig)
-	   
-	   (class J2SInitLet::J2SInit)
-	   
-	   (final-class J2SAssigOp::J2SAssig
-	      op::symbol)
-	   
-	   (final-class J2SVAssig::J2SAssig)
-	   (final-class J2SCAssig::J2SAssig)
-	   
-	   (final-class J2SFunBinding::J2SInit)
-	   
-	   (final-class J2SObjInit::J2SExpr
-	      inits::pair-nil)
+	      expr::J2SExpr
+	      (done::bool (default #f))
+	      (kont (default #f)))
 	   
 	   (abstract-class J2SPropertyInit::J2SNode
 	      name::J2SLiteralValue)
@@ -316,6 +318,10 @@
 	   (final-class J2SAccessorPropertyInit::J2SPropertyInit
 	      (get::obj (default #f))
 	      (set::obj (default #f)))
+
+	   (final-class J2SKont::J2SExpr
+	      (param::symbol read-only)
+	      (body::J2SNode read-only))
 	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
@@ -496,7 +502,7 @@
 	  `(p ,f ,@(map (lambda (i)
 			   (string->symbol (format "arg~a" i)))
 		      (iota nb-args)))))
-   
+
    (define (visit* f nb-args)
       (if (pair? f)
 	  `(append-map (lambda (f)
@@ -705,7 +711,6 @@
 (gen-walks J2SAccess obj field)
 (gen-walks J2SCall fun (args))
 (gen-walks J2SNew clazz (args))
-(gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body (params))
 (gen-walks J2SSvc body init (params))
 (gen-walks J2SObjInit (inits))
@@ -721,6 +726,7 @@
 (gen-walks J2SDollar node)
 (gen-walks J2SComprehension (iterables) test expr)
 (gen-walks J2SYield expr)
+(gen-walks J2SKont body)
 
 (gen-traversals J2STilde)
 

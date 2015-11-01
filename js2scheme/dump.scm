@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/dump.scm                */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/dump.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Oct 10 10:09:38 2015 (serrano)                */
+;*    Last change :  Sat Oct 31 23:15:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -406,6 +406,21 @@
 (define-method (j2s->list this::J2SNew)
    (with-access::J2SNew this (clazz args)
       `(,@(call-next-method) ,(j2s->list clazz) ,@(map j2s->list args))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SYield ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SYield)
+   (with-access::J2SYield this (expr kont)
+      `(,@(call-next-method) ,(j2s->list expr)
+	  ,(when kont (j2s->list kont)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SKont ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SKont)
+   (with-access::J2SKont this (param body)
+      `(,@(call-next-method) (,param) ,(j2s->list body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SHopRef ...                                        */

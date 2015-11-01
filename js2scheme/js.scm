@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Oct 30 11:05:32 2015 (serrano)                */
+;*    Last change :  Fri Oct 30 22:40:21 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -46,7 +46,7 @@
 			      (list
 				 (call-with-output-string
 				    (lambda (op)
-				       (let ((expr (j2s-scheme node mode evalp #f conf)))
+				       (let ((expr (j2s-scheme node mode evalp conf)))
 					  (write (eval! expr) op)))))))
 			'normal (lambda (x) x) conf)))))))
 	 
@@ -660,7 +660,7 @@
       (list this
 	 `(call-with-output-string
 	     (lambda (op)
-		(obj->javascript-attr ,(j2s-scheme node mode evalp #f conf) op))))))
+		(obj->javascript-attr ,(j2s-scheme node mode evalp conf) op))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-client-dollar ...                                         */

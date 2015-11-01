@@ -1,4 +1,4 @@
 #!/bin/sh
-major=3.0.0
-state=rc
-minor=4
+major=3.1.0
+state=pre
+minor=1

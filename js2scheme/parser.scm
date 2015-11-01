@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Oct 30 11:12:32 2015 (serrano)                */
+;*    Last change :  Sun Nov  1 15:22:11 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1292,7 +1292,7 @@
 		(expr (instantiate::J2SUndefined
 			 (loc loc)))))
 	    (else
-	     (let ((expr (expression #f)))
+	     (let ((expr (lhs loc)))
 		(instantiate::J2SYield
 		   (loc loc)
 		   (expr expr)))))))

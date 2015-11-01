@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/compile.scm             */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/compile.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Jul  3 09:29:03 2015 (serrano)                */
+;*    Last change :  Fri Oct 30 22:38:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -33,7 +33,8 @@
 	   __js2scheme_scheme
 	   __js2scheme_js
 	   __js2scheme_debug
-	   __js2scheme_stage)
+	   __js2scheme_stage
+	   __js2scheme_cps)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -121,6 +122,7 @@
       j2s-ronly-stage
       j2s-return-stage
       j2s-property-stage
+      j2s-cps-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -137,6 +139,7 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
+      j2s-cps-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -154,6 +157,7 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
+      j2s-cps-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -170,6 +174,7 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
+      j2s-cps-stage
       j2s-scheme-eval-stage))
 
 ;*---------------------------------------------------------------------*/
