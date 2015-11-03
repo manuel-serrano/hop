@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Oct 31 14:02:01 2015 (serrano)                */
+;*    Last change :  Tue Nov  3 11:37:29 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -72,7 +72,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    <HTML> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-tag <HTML> ((idiom #f)
+(define-tag <HTML> ((idiom "scheme")
 		    (context #f)
 		    (%location #f)
 		    (attr)
@@ -90,8 +90,7 @@
 		      ((and (not (xml-markup-is? (car body) 'head))
 			    (let ((l (memq :hopautohead attr)))
 			       (or (not (pair? l)) (cadr l))))
-		       (cons (<HEAD>
-				:idiom idiom :context context
+		       (cons (<HEAD> :idiom idiom :context context
 				:%location %location) 
 			  (append-map (lambda (n)
 					 (or (xml-unpack n) (list n)))

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 10:09:31 2014                          */
-/*    Last change :  Sun Dec 21 11:18:41 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Tue Nov  3 11:31:53 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Services in workers example                                      */
 /*    -------------------------------------------------------------    */
@@ -14,19 +14,17 @@
 var counter = 0;
 
 function html( title ) {
-   var count = <SPAN> { id: "counter", counter };
+   var count = <span id="counter">${counter}</span>;
    
-   return <HTML> {
-      <H1> { title },
-      <DIV> { "counter=", count },
-      <BUTTON> {
-	 onclick: ~{
-	    ${service () { return ++counter }}()
-	       .post( function( v ) { ${count}.innerHTML = v } )
-	 },
-	 "inc me"
-      }
-   }
+   return <html>
+     <h1>${title}</h1>
+     <div>counter:${count}</div>
+     <button onclick=~{
+	${service () { return ++counter }}()
+	   .post( function( v ) { ${count}.innerHTML = v } ) }>
+	inc me
+     </button>
+   </html>
 }
 
 exports.html = html;

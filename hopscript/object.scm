@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Nov  1 11:26:40 2015 (serrano)                */
+;*    Last change :  Tue Nov  3 11:36:25 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -443,7 +443,7 @@
 			    (append
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
-			 (apply <HTML> nodes)))
+			 (apply <HTML> :idiom "javascript" nodes)))
 		  1 'HTML))
 	    
 	    (js-bind! %this %this 'HTML
