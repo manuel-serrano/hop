@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Sep 25 10:06:36 2015 (serrano)                */
+;*    Last change :  Wed Nov  4 11:27:23 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -19,8 +19,7 @@
    (import  hopc_param
 	    hopc_driver)
    
-   (export  (parse-args ::pair-nil)
-	    (hopc-load-rc ::bstring)))
+   (export  (parse-args ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
@@ -174,7 +173,7 @@
 		    (stop #t))
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
       (when loadp
-	 (%hopc-load-rc
+	 (hopc-load-rc
 	    (if (string? rc-file)
 		rc-file
 		(let ((path (make-file-name (hop-rc-directory) (hopc-rc-file))))
@@ -184,20 +183,11 @@
       exprs))
 
 ;*---------------------------------------------------------------------*/
-;*    %hopc-load-rc ...                                                */
+;*    hopc-load-rc ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (%hopc-load-rc path)
+(define (hopc-load-rc path)
    (if (string? path)
        (when (file-exists? path)
 	  (hop-verb 2 "Loading `" path "'...\n")
-	  (hop-load path :menv #unspecified))))
-      
-;*---------------------------------------------------------------------*/
-;*    hopc-load-rc ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (hopc-load-rc file)
-   (let ((path (make-file-name (hop-rc-directory) file)))
-      (when (file-exists? path)
-	 (%hopc-load-rc path))))
-      
+	  (hop-load path :menv #unspecified))))      
 
