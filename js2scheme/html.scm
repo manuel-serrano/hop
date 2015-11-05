@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Mon Oct 26 16:05:02 2015 (serrano)                */
+;*    Last change :  Sat Oct 31 13:39:00 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -282,7 +282,7 @@
 ;*---------------------------------------------------------------------*/
 (define (make-dom-create tag::pair attributes body lang conf)
    
-   (define (debug-init-val loc)
+   (define (debug-init-val loc name)
       (match-case loc
 	 ((at ?fname ?pos)
 	  (instantiate::J2SObjInit
@@ -303,18 +303,26 @@
 				   (loc loc)))
 			  (val (instantiate::J2SNumber
 				  (val pos)
+				  (loc loc))))
+		       (instantiate::J2SDataPropertyInit
+			  (loc loc)
+			  (name (instantiate::J2SString
+				   (val "name")
+				   (loc loc)))
+			  (val (instantiate::J2SString
+				  (val (symbol->string name))
 				  (loc loc))))))))
 	 (else
 	  (instantiate::J2SUndefined
 	     (loc loc)))))
    
-   (define (debug-init loc)
+   (define (debug-init loc name)
       (instantiate::J2SDataPropertyInit
 	 (loc loc)
 	 (name (instantiate::J2SString
 		  (val "%location")
 		  (loc loc)))
-	 (val (debug-init-val loc))))
+	 (val (debug-init-val loc name))))
    
    (define (hopautohead-init loc)
       (instantiate::J2SDataPropertyInit
@@ -343,7 +351,7 @@
 		       (reverse! attrs)))
 	     (dbg (> (config-get conf :debug 0) 0))
 	     (inits (if dbg
-			(cons (debug-init loc) inits)
+			(cons (debug-init loc (token-value tag)) inits)
 			inits))
 	     (inits (if (or (eq? lang 'hopscript) (not (html? tag)))
 			inits

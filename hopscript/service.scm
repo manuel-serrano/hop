@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Oct 25 05:54:10 2015 (serrano)                */
+;*    Last change :  Wed Nov  4 11:54:42 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -124,6 +124,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop-register-value o::object register::procedure)
    #t)
+
+;*---------------------------------------------------------------------*/
+;*    json->obj ::JsObject ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (json->obj %this::JsObject ip::input-port)
+   (js-json-parser ip #f #f #t %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-service! ...                                             */

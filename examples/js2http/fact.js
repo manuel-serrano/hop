@@ -1,6 +1,8 @@
+var info = { default: 1 };
+
 function fact( x ) {
    if( x <= 1 ) {
-      return 1;
+      return info.default;
    } else {
       return x * fact( x - 1 );
    }

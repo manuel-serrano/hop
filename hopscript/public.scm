@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Oct 30 13:03:31 2015 (serrano)                */
+;*    Last change :  Sat Oct 31 13:52:56 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -66,6 +66,8 @@
 	   (js-call7/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-calln/debug ::JsGlobalObject loc fun::obj this . args)
+
+	   (js-service/debug ::obj ::obj ::procedure)
 
 	   (js-instanceof?::bool ::JsGlobalObject v f)
 	   (js-instanceof?/debug::bool ::JsGlobalObject loc v f)
@@ -603,6 +605,16 @@
 		($env-pop-trace env)
 		aux)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-service/debug ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-service/debug name loc thunk)
+   (let ((env (current-dynamic-env)))
+      ($env-push-trace env name loc)
+      (let ((aux (thunk)))
+	 ($env-pop-trace env)
+	 aux)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-instanceof? ...                                               */
 ;*    -------------------------------------------------------------    */

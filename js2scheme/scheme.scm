@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Oct 25 05:49:30 2015 (serrano)                */
+;*    Last change :  Tue Nov  3 20:25:54 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -100,11 +100,11 @@
 ;*    j2s-decl-scheme-id ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-decl-scheme-id decl::J2SDecl)
-   (with-access::J2SDecl decl (%scmid id)
-      (if %scmid
-	  %scmid
+   (with-access::J2SDecl decl (_scmid id)
+      (if _scmid
+	  _scmid
 	  (let ((sid (j2s-scheme-id id)))
-	     (set! %scmid sid)
+	     (set! _scmid sid)
 	     sid))))
 
 ;*---------------------------------------------------------------------*/
@@ -1027,12 +1027,19 @@
 			 (j2s-scheme body mode return conf))))
 		(flatten-stmt
 		   (j2s-scheme body mode return conf)))))
+
+      (define (service-debug name loc body)
+	 (if (>fx (bigloo-debug) 0)
+	     `(lambda () (js-service/debug ',name ',loc ,body))
+	     body))
       
       (define (service-fix-proc->scheme this)
-	 (with-access::J2SSvc this (loc vararg)
+	 (with-access::J2SSvc this (name loc vararg)
 	    (let ((imp `(lambda ,(cons 'this args)
-			    (js-worker-exec @worker ,(symbol->string scmid)
-			       (lambda () ,(service-body this))))))
+			   (js-worker-exec @worker ,(symbol->string scmid)
+			      ,(service-debug name loc
+				  `(lambda ()
+				      ,(service-body this)))))))
 	       (epairify-deep loc
 		  `(lambda (this . params)
 		      (map! (lambda (a) (js-obj->jsobject a %this)) params)
@@ -1056,8 +1063,9 @@
 	    (with-access::J2SObjInit init (inits)
 	       (let ((imp `(lambda (this #!key ,@(map init->formal inits))
 			      (js-worker-exec @worker ,(symbol->string scmid)
-				 (lambda ()
-				    ,(service-body this))))))
+				 ,(service-debug name loc
+				     `(lambda ()
+					 ,(service-body this)))))))
 		  (epairify-deep loc
 		     `(lambda (this . args)
 			 (let ((fun ,imp))

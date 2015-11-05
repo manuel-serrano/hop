@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Mon Oct 12 15:00:13 2015 (serrano)                */
+;*    Last change :  Tue Nov  3 11:37:29 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -72,8 +72,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    <HTML> ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-xml xml-html #f <HTML>
-   ;; the macro define-xml binds attr, init, and body
+(define-tag <HTML> ((idiom "scheme")
+		    (context #f)
+		    (%location #f)
+		    (attr)
+		    body)
    (let ((nbody (let loop ((body body))
 		   (cond
 		      ((not (pair? body))
@@ -87,7 +90,8 @@
 		      ((and (not (xml-markup-is? (car body) 'head))
 			    (let ((l (memq :hopautohead attr)))
 			       (or (not (pair? l)) (cadr l))))
-		       (cons (<HEAD>)
+		       (cons (<HEAD> :idiom idiom :context context
+				:%location %location) 
 			  (append-map (lambda (n)
 					 (or (xml-unpack n) (list n)))
 			     body)))
@@ -117,6 +121,34 @@ function hop_debug() {return " (integer->string (bigloo-debug)) ";}
 function hop_session() {return " (integer->string (hop-session)) ";}
 function hop_realm() {return \"" (hop-realm) "\";}")))
 
+;*---------------------------------------------------------------------*/
+;*    server-initial-context ...                                       */
+;*---------------------------------------------------------------------*/
+(define (server-initial-context location stack)
+
+   (let* ((stk (filter-map (lambda (f)
+			      (match-case f
+				 ((?name ?loc . ?rest)
+				  `(,name ,loc (type . server) (format . "$~a")))
+				 (else
+				  f)))
+		  stack))
+	  (loc (match-case (xml-primitive-value location)
+		  ((or (:filename ?fname :pos ?pos :name ?name)
+		       (:name ?name :pos ?pos :filename ?fname))
+		   `(,(xml-primitive-value name)
+		       (at ,(xml-primitive-value fname)
+			  ,(xml-primitive-value pos))
+		       (type . server) (format . "$~a")))
+		  ((?name ?loc . ?rest)
+		   `(,name ,loc (type . server) (format . "$~a")))
+		  (else
+		   #f)))
+	  (ctx (if loc (cons loc (cdr stk)) stk)))
+      (string-append "hop_initial_stack_context = hop_url_encoded_to_obj('"
+	 (url-path-encode (obj->string ctx))
+	 "');")))
+      
 ;*---------------------------------------------------------------------*/
 ;*    <HOP-SERVER> ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -373,6 +405,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 
    (define favico #f)
 
+   (define location #f)
+
    (let loop ((a args)
 	      (mode #f)
 	      (rts #t)
@@ -395,7 +429,10 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		    (cons
 		       (<SCRIPT> :type (hop-mime-type)
 			  (string-append "function hop_idiom() { return '"
-			     idiom "'}"))
+			     idiom "'}\n")
+			  (when (> (bigloo-debug)0)
+			     (server-initial-context location
+				(get-trace-stack))))
 		       body))
 		 body)))
 	 ((pair? (car a))
@@ -471,6 +508,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 			    (loop (cddr a) #f rts dir path base inl packed els))
 			 (error "<HEAD>" "Illegal :idiom argument" (cadr a)))))
 		 ((:%location)
+		  (set! location (xml-primitive-value (cadr a)))
 		  (loop (cddr a) mode rts dir path base inl packed els))
 		 (else
 		  (error "<HEAD>"

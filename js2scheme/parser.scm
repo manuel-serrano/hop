@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Oct 12 07:53:53 2015 (serrano)                */
+;*    Last change :  Wed Nov  4 13:02:27 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -597,11 +597,12 @@
 		  (body body))))))
    
    (define (default-clause)
-      (let ((token (consume-token! 'default)))
+      (let* ((token (consume-token! 'default))
+	     (loc (token-loc token)))
 	 (consume! ':)
 	 (instantiate::J2SDefault
-	    (loc (token-loc token))
-	    (expr (class-nil J2SExpr))
+	    (loc loc)
+	    (expr (instantiate::J2SUndefined (loc loc)))
 	    (body (switch-clause-statements (token-loc token))))))
    
    (define (switch-clause-statements loc)
@@ -1196,13 +1197,14 @@
       (case (peek-token-type)
 	 ((++ --)
 	  (let* ((token (consume-any!))
-		 (expr (unary)))
+		 (expr (unary))
+		 (loc (token-loc token)))
 	     (if (or (isa? expr J2SUnresolvedRef)
 		     (isa? expr J2SAccess)
 		     (isa? expr J2SParen))
 		 (instantiate::J2SPrefix
-		       (loc (token-loc token))
-		       (rhs (class-nil J2SExpr))
+		       (loc loc)
+		       (rhs (instantiate::J2SUndefined (loc loc)))
 		       (lhs expr)
 		       (op (token-tag token)))
 		 (parse-token-error
@@ -1242,7 +1244,7 @@
 			    (isa? expr J2SParen))
 			(instantiate::J2SPostfix
 			   (loc (token-loc token))
-			   (rhs (class-nil J2SExpr))
+			   (rhs (instantiate::J2SUndefined (loc loc)))
 			   (lhs expr)
 			   (op (token-tag token)))
 			(parse-token-error

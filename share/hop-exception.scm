@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Oct 16 08:49:40 2015 (serrano)                */
+;*    Last change :  Sat Oct 31 13:08:25 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -21,6 +21,7 @@
    (export
       hop-name-aliases
       hop_current_stack_context
+      hop_initial_stack_context
       (hop-callback-handler exc ctx)
       (hop-callback-html-context el file line)
       (hop-callback-listener-context msg)
@@ -37,6 +38,7 @@
    
    (scheme2js-pragma
       (hop-name-aliases (JS "hop_name_aliases"))
+      (hop_initial_stack_context (JS "hop_initial_stack_context"))
       (hop_current_stack_context (JS "hop_current_stack_context"))
       (hop-callback-handler (JS "hop_callback_handler"))
       (hop-callback-html-context (JS "hop_callback_html_context"))
@@ -49,7 +51,9 @@
 ;*    hop_current_stack_context ...                                    */
 ;*---------------------------------------------------------------------*/
 (define hop_current_stack_context '())
-
+(define hop_initial_stack_context '())
+(let ((console (@ console js)))
+      (console.log "hop-exception.scm main init " hop_initial_stack_context))
 ;*---------------------------------------------------------------------*/
 ;*    hop-default-source-map ...                                       */
 ;*---------------------------------------------------------------------*/
@@ -444,6 +448,8 @@
 ;*    See HOP_CALLBACK, hop-lib.js.                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-handler e ctx)
+   (let ((console (@ console js)))
+      (console.log "ctx=" hop_initial_stack_context))
    ;; store the exception for the default handler to display it, don't
    ;; display it now, otherwise we would have to implement a complex
    ;; machinery to prevent hop-onerror-handler to also display it
@@ -469,14 +475,14 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-html-context site file line)
    (let ((frame (list site `(at ,file ,line) '(format . "~~~a") '(type . html))))
-      (list frame)))
+      (cons frame hop_initial_stack_context)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-callback-listener-context ...                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-listener-context msg)
    (let ((frame (list msg #f '(format . "~~~a") '(type . html))))
-      (list frame)))
+      (cons frame hop_initial_stack_context)))
 
 ;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */

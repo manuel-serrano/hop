@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Oct 26 16:18:35 2015 (serrano)                */
+;*    Last change :  Tue Nov  3 11:36:25 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -97,6 +97,12 @@
 			#f %this))
 		  %this)
 	       nobj)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::JsObject ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (xml-primitive-value obj::JsObject)
+   (js-jsobject->plist obj (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsGlobalObject ...                                   */
@@ -433,11 +439,11 @@
 	       (js-make-function %this
 		  (lambda (this attrs . nodes)
 		     (if (isa? attrs JsObject)
-			 (apply <HTML>
+			 (apply <HTML> :idiom "javascript" :context %this
 			    (append
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
-			 (apply <HTML> nodes)))
+			 (apply <HTML> :idiom "javascript" nodes)))
 		  1 'HTML))
 	    
 	    (js-bind! %this %this 'HTML
@@ -1023,7 +1029,7 @@
    
    (define (err)
       (js-raise-type-error %this
-	 "toPrimitive: illegal default value \"~s\""
+	 "toPrimitive: illegal default value \"~a\""
 	 (class-name (object-class o))))
    
    (define (get-field-value . fields)

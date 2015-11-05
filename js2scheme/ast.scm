@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Oct 12 08:04:56 2015 (serrano)                */
+;*    Last change :  Wed Nov  4 13:55:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -184,7 +184,7 @@
 	   
 	   (class J2SDecl::J2SStmt
 	      (id::symbol read-only)
-	      (%scmid (default #f))
+	      (_scmid (default #f))
 	      (key (default (ast-decl-key)))
 	      (writable (default #t))
 	      (ronly (default #f))
@@ -676,6 +676,7 @@
 ;*---------------------------------------------------------------------*/
 (gen-walks J2SNode)
 (gen-walks J2SSeq (nodes))
+(gen-walks J2SProgram (decls) (headers) (nodes))
 (gen-walks J2SReturn expr)
 (gen-walks J2SWith obj block)
 (gen-walks J2SThrow expr)
@@ -836,7 +837,7 @@
 ;*    json->ast ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (json->ast ip::input-port)
-   
+
    (define (alist->node cname l)
       (let* ((clazz (find-class cname))
 	     (ctor (class-constructor clazz))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Oct 20 18:19:48 2015 (serrano)                */
+;*    Last change :  Tue Nov  3 20:49:03 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -37,6 +37,7 @@
 	    __hop_user
 	    __hop_weblets
 	    __hop_hop
+	    __hop_json
 	    __hop_http-lib)
    
    (export  (init-hop-services!)
@@ -534,6 +535,9 @@
 			  (map multipart-arg-value args)))))))
 	    ((not (string? ctype))
 	     '())
+	    ((string=? ctype "application/json")
+	     (with-access::hop-service svc (ctx)
+		(json->obj ctx pi)))
 	    ((string=? ctype "application/x-www-form-urlencoded")
 	     (let ((body (read-chars (elong->fixnum content-length) pi)))
 		(service-parse-request-get-args (cgi-args->list body))))

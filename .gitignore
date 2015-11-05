@@ -112,7 +112,9 @@ README.hg
 doc/idx.json
 
 doc/hss/fontifier.hss
-
+doc/hss/fontifier.css
 doc/hss/markdown.hss
+doc/hss/markdown.css
+doc/hss/doc.css
 
 test/hopjs/TEST

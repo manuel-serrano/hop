@@ -1,6 +1,6 @@
 {
    "version": "3.0.0",
-   "bglversion": "4.2a",
+   "bglversion": "4.2b",
    "urlbase": "ftp://ftp-sop.inria.fr/indes/fp/Hop",
    "github": "https://github.com/manuel-serrano/hop.git",
    "bglurlbase": "ftp://ftp-sop.inria.fr/indes/fp/Bigloo",
