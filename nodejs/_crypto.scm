@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Tue Jul  7 11:11:42 2015 (serrano)                */
+;*    Last change :  Wed Nov  4 20:13:53 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -22,44 +22,46 @@
    
    (library hopscript)
 
-   (static  (class JsSecureContext::JsObject
-	       (ctx (default #unspecified)))
-
-	    (class JsSSLConnection::JsObject
-	       (hparser::HelloParser read-only)
-	       (ssl (default #unspecified))
-	       (next-session::pair-nil (default '())))
-
-	    (class JsDH::JsObject
-	       (dh (default #unspecified))
-	       (initp::bool (default #f)))
-
-	    (class JsHash::JsObject
-	       (hash::ssl-hash read-only))
-	    
-	    (class JsHmac::JsObject
-	       (hmac::obj (default #unspecified)))
-	    
-	    (class JsSign::JsObject
-	       (sign::ssl-sign read-only))
-	    
-	    (class JsVerify::JsObject
-	       (verify::ssl-verify read-only))
-	    
-	    (class JsCipher::JsObject
-	       (cipher::ssl-cipher read-only))
-	    
-	    (class JsDecipher::JsCipher)
-	    
-	    (class HelloParser
-	       (%worker::WorkerHopThread read-only)
-	       (%this::JsGlobalObject read-only)
-	       (state::symbol (default 'kWaiting))
-	       (data::bstring (default (make-string 18432)))
-	       (offset::long (default 0))
-	       (body-offset::long (default 0))
-	       (frame-len::long (default 0))
-	       (conn::JsSSLConnection read-only)))
+   (cond-expand
+      (enable-ssl
+       (static  (class JsSecureContext::JsObject
+		   (ctx (default #unspecified)))
+	  
+	  (class JsSSLConnection::JsObject
+	     (hparser::HelloParser read-only)
+	     (ssl (default #unspecified))
+	     (next-session::pair-nil (default '())))
+	  
+	  (class JsDH::JsObject
+	     (dh (default #unspecified))
+	     (initp::bool (default #f)))
+	  
+	  (class JsHash::JsObject
+	     (hash::ssl-hash read-only))
+	  
+	  (class JsHmac::JsObject
+	     (hmac::obj (default #unspecified)))
+	  
+	  (class JsSign::JsObject
+	     (sign::ssl-sign read-only))
+	  
+	  (class JsVerify::JsObject
+	     (verify::ssl-verify read-only))
+	  
+	  (class JsCipher::JsObject
+	     (cipher::ssl-cipher read-only))
+	  
+	  (class JsDecipher::JsCipher)
+	  
+	  (class HelloParser
+	     (%worker::WorkerHopThread read-only)
+	     (%this::JsGlobalObject read-only)
+	     (state::symbol (default 'kWaiting))
+	     (data::bstring (default (make-string 18432)))
+	     (offset::long (default 0))
+	     (body-offset::long (default 0))
+	     (frame-len::long (default 0))
+	     (conn::JsSSLConnection read-only)))))
 	       
    (import  __nodejs_process
 	    __nodejs__buffer

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Nov  4 13:55:43 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 11:57:13 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -694,6 +694,7 @@
 (gen-walks J2SForIn lhs obj body)
 (gen-walks J2SWhile test body)
 (gen-walks J2SCase expr body)
+(gen-walks J2SDefault body)
 (gen-walks J2STemplate (exprs))
 (gen-walks J2SParen expr)
 (gen-walks J2SUnary expr)

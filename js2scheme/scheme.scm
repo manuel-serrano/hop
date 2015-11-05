@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Nov  3 20:25:54 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 12:02:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1926,7 +1926,7 @@
 		   ,@(filter-map (lambda (case::J2SCase fun)
 				    (with-access::J2SCase case (loc expr body)
 				       (cond
-					  ((nil? expr)
+					  ((isa? case J2SDefault)
 					   (set! elseclause expr)
 					   (set! elsefun fun)
 					   #f)
@@ -1960,7 +1960,7 @@
 		   ,@(filter-map (lambda (case::J2SCase fun)
 				    (with-access::J2SCase case (loc expr body)
 				       (cond
-					  ((nil? expr)
+					  ((isa? case J2SDefault)
 					   (set! elseclause expr)
 					   (set! elsefun fun)
 					   #f)

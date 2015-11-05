@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Sat Oct 31 13:08:25 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 11:39:27 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -52,8 +52,7 @@
 ;*---------------------------------------------------------------------*/
 (define hop_current_stack_context '())
 (define hop_initial_stack_context '())
-(let ((console (@ console js)))
-      (console.log "hop-exception.scm main init " hop_initial_stack_context))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-default-source-map ...                                       */
 ;*---------------------------------------------------------------------*/
