@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Nov  4 11:54:42 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 14:06:44 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -469,8 +469,8 @@
    
    (define (source::bstring proc)
       (with-access::JsFunction proc (src)
-	 (match-case (car src)
-	    ((at ?path ?-) path)
+	 (match-case src
+	    (((at ?path ?-)) path)
 	    (else (pwd)))))
 
    (define (fix-args len)
