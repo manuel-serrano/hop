@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu Nov  5 12:08:25 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 12:42:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -132,7 +132,6 @@
 		(cdr sesac))
 	     (with-access::J2SCase (car sesac) (expr body)
 		(unless (isa? (car sesac) J2SDefault)
-		   (tprint "PAS GLOP...")
 		   (set! expr (unreturn! expr target #f args)))
 		(set! body (unreturn! body target #f args))))))
       this))
