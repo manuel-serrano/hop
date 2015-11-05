@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun 25 08:36:20 2014                          */
-/*    Last change :  Wed Nov  4 13:57:18 2015 (serrano)                */
+/*    Last change :  Wed Nov  4 14:02:57 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    This shows how to implement a JavaScript HTTP plugin to the      */
@@ -44,9 +44,9 @@ service js2http( a ) {
 
    w.J2SAccess = function( node ) {
       console.log( 'profiling access' );
-      
-      var con = new ast.J2SUnresolvedRef( node.loc, undefined, false,
-					  { __symbol__: "console" } );
+
+      var sym = { __symbol__: "console" };
+      var con = new ast.J2SUnresolvedRef( node.loc, undefined, false, sym );
       var log = new ast.J2SString( node.loc, undefined, "log", false );
       var access = new ast.J2SAccess( node.loc, undefined, false, con, log )
       var name = new ast.J2SString( node.loc, undefined, accessName( node.obj ), false );
