@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Nov  5 13:10:00 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 14:58:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -87,7 +87,7 @@
    (with-access::JsDate o (val)
       (if (date? val)
 	  (display (llong->flonum (/llong (date->nanoseconds val) #l1000000)) op)
-	  (display "undefined")))
+	  (display "undefined" op)))
    (display ")" op))
 
 ;*---------------------------------------------------------------------*/
