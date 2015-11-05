@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Nov  2 23:47:10 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 14:48:01 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -200,7 +200,10 @@
   "[a-zA-Z0-9_-]+[ \t]*=")
 
 (defconst hopjs-re-any-tag
-  (concat hopjs-re-open-tag "\\|" hopjs-re-close-tag "\\|" hopjs-re-end-tag))
+  (concat hopjs-re-open-tag
+	  "\\|" hopjs-re-close-tag
+	  "\\|" hopjs-re-end-tag
+	  "\\|" hopjs-re-standalone-tag))
 
 ;*---------------------------------------------------------------------*/
 ;*    debugging                                                        */
@@ -451,6 +454,9 @@ usage: (js-return)  -- [RET]"
 	    (match-beginning 0) (match-end 0)))
    ((looking-at hopjs-re-end-tag)
     (vector 'end-tag
+	    (match-beginning 0) (match-end 0)))
+   ((looking-at hopjs-re-standalone-tag)
+    (vector 'tag
 	    (match-beginning 0) (match-end 0)))
    ((looking-at ">")
     (vector 'end-otag
@@ -888,13 +894,17 @@ usage: (js-return)  -- [RET]"
 	    (progn
 	      (unless (hopjs-in-string-comment-p (match-beginning 0))
 		(cond
-;* 		 ((looking-at hopjs-re-standalone-tag)                 */
-;* 		  (message "hopjs-find-opening-tag, standalone [%s]"   */
-;* 			   (buffer-substring-no-properties             */
-;* 			    (match-beginning 0) (match-end 0)))        */
-;* 		  nil)                                                 */
 		 ((looking-at hopjs-re-end-tag)
-		  (setq depth (1+ depth)))
+		  ;; we still have to check stand alone tag that are confused
+		  ;; with closing tar parts during the re-search
+		  (if (save-excursion
+			(goto-char (+ (point) 2))
+			(let ((pt (point)))
+			  (when (re-search-backward
+				 hopjs-re-standalone-tag nil t 1)
+			    (= (match-end 0) pt))))
+		      (goto-char (match-beginning 0))
+		    (setq depth (1+ depth))))
 		 ((looking-at hopjs-re-close-tag)
 		  (setq depth (1+ depth)))
 		 (t
@@ -925,8 +935,9 @@ usage: (js-return)  -- [RET]"
 	      (unless (hopjs-in-string-comment-p beg)
 		(goto-char beg)
 		(cond
-;* 		 ((looking-at hopjs-re-standalone-tag)                 */
-;* 		  nil)                                                 */
+		 ((looking-at hopjs-re-standalone-tag)
+		  (setq end (match-end 0))
+		  nil)
 		 ((looking-at hopjs-re-open-tag)
 		  (unless (member (buffer-substring-no-properties
 				   (match-beginning 1) (match-end 1))
@@ -994,6 +1005,7 @@ usage: (js-return)  -- [RET]"
 	     (beg (match-beginning 1))
 	     (end (match-end 1))
 	     (otag (hopjs-find-closing-tag (+ 1 (match-end 0)))))
+	(message "otag=%s" otag)
 	(cond
 	 ((not otag)
 	  (hopjs-highlight-tag 'hopjs-nomatch-face beg end))
