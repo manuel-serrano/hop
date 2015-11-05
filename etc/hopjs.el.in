@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Nov  5 14:48:01 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 23:45:18 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -168,12 +168,6 @@
   "/>")
 (defconst hopjs-re-code
   "{")
-(defconst hopjs-re-tag
-  (concat hopjs-re-open-tag
-	  "\\|" hopjs-re-close-tag
-	  "\\|" hopjs-re-end-tag
-	  "\\|" hopjs-re-code))
-
 (defconst hopjs-re-standalone-tag
   "<\\([^>/\n]\\|/[^>]\\)*/>")
 
@@ -204,6 +198,9 @@
 	  "\\|" hopjs-re-close-tag
 	  "\\|" hopjs-re-end-tag
 	  "\\|" hopjs-re-standalone-tag))
+(defconst hopjs-re-tag
+  (concat hopjs-re-any-tag
+	  "\\|" hopjs-re-code))
 
 ;*---------------------------------------------------------------------*/
 ;*    debugging                                                        */
@@ -582,6 +579,9 @@ usage: (js-return)  -- [RET]"
 		  (hopjs-debug "    (re-end-tag)")
 		  (setq open (- open 1))
 		  (goto-char next))
+		 ((looking-at hopjs-re-standalone-tag)
+		  (hopjs-debug "    (re-standalone-tag)")
+		  (goto-char next))
 		 (t
 		  (forward-char 1)
 		  (forward-sexp 1)
@@ -636,6 +636,10 @@ usage: (js-return)  -- [RET]"
 		  (t
 		   col0))
 	      col0)))))))
+
+(defun hopjs-indent ()
+    (interactive)
+    (js--html-statement-indentation))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-new-line ...                                        */
@@ -1106,51 +1110,52 @@ usage: (js-return)  -- [RET]"
 	     (end (progn (forward-word 1) (point)))
 	     (word (buffer-substring-no-properties beg end))
 	     (y '*))
-	(cond
-	 ((progn (goto-char (1- beg)) (looking-at hopjs-re-open-tag))
-	  ;; a tag
-	  (setq y "tag")
-	  (setq word (upcase word)))
-	 ((and (> (point) 2)
-	       (progn (goto-char (- beg 2)) (looking-at hopjs-re-close-tag)))
-	  ;; a tag
-	  (setq y "tag")
-	  (setq word (upcase word)))
-	 ((progn (goto-char (1+ end)) (looking-at "[ \t\n]*[=,;})]"))
-	  (setq y "parameter"))
-	 ((progn (goto-char (- beg 4)) (looking-at "new "))
-	  ;; a constructor
-	  (setq y "constructor")))
-	(cond
-	 ((string-equal word "")
-	  (hopjs-undoc))
-	 ((not (string-equal word hopjs-doc-word))
-	  (setq hopjs-doc-word word)
-	  (hopjs-undoc)
-	  (setq hopjs-doc-beg beg)
-	  (setq hopjs-doc-end end)
-	  (let ((entry (hopjs-doc-index-find word hopjs-doc-index-table)))
-	    (when entry
-	      (if (or (eq y '*)
-		      (let ((type (assq 'type (cdr entry))))
-			(or (not (consp type))
-			    (string-equal (cdr type) y))))
-		  (let* ((url (assq 'url (cdr entry)))
-			 (proto (assq 'proto (cdr entry)))
+	(when (>= end pos)
+	  (cond
+	   ((progn (goto-char (1- beg)) (looking-at hopjs-re-open-tag))
+	    ;; a tag
+	    (setq y "tag")
+	    (setq word (upcase word)))
+	   ((and (> (point) 2)
+		 (progn (goto-char (- beg 2)) (looking-at hopjs-re-close-tag)))
+	    ;; a tag
+	    (setq y "tag")
+	    (setq word (upcase word)))
+	   ((progn (goto-char (1+ end)) (looking-at "[ \t\n]*[=,;})]"))
+	    (setq y "parameter"))
+	   ((progn (goto-char (- beg 4)) (looking-at "new "))
+	    ;; a constructor
+	    (setq y "constructor")))
+	  (cond
+	   ((string-equal word "")
+	    (hopjs-undoc))
+	   ((not (string-equal word hopjs-doc-word))
+	    (setq hopjs-doc-word word)
+	    (hopjs-undoc)
+	    (setq hopjs-doc-beg beg)
+	    (setq hopjs-doc-end end)
+	    (let ((entry (hopjs-doc-index-find word hopjs-doc-index-table)))
+	      (when entry
+		(if (or (eq y '*)
+			(let ((type (assq 'type (cdr entry))))
+			  (or (not (consp type))
+			      (string-equal (cdr type) y))))
+		    (let* ((url (assq 'url (cdr entry)))
+			   (proto (assq 'proto (cdr entry)))
 		     
-			 (tooltip (replace-regexp-in-string
-				   "&gt;" ">"
-				   (replace-regexp-in-string
-				    "&lt;" "<" (cdr proto)))))
-		    (when url
-		      (message tooltip)
-		      (setq hopjs-doc-url (cdr url))
-		      (let ((mod (buffer-modified-p)))
-			(put-text-properties beg end
-					     'keymap hopjs-tooltip-map
-					     'face 'highlight
-					     'help-echo tooltip)
-			(set-buffer-modified-p mod)))))))))))))
+			   (tooltip (replace-regexp-in-string
+				     "&gt;" ">"
+				     (replace-regexp-in-string
+				      "&lt;" "<" (cdr proto)))))
+		      (when url
+			(message tooltip)
+			(setq hopjs-doc-url (cdr url))
+			(let ((mod (buffer-modified-p)))
+			  (put-text-properties beg end
+					       'keymap hopjs-tooltip-map
+					       'face 'highlight
+					       'help-echo tooltip)
+			  (set-buffer-modified-p mod))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-undoc ...                                                  */

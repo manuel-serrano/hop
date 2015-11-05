@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct  1 13:43:32 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 21:56:24 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -256,6 +256,27 @@
 
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::JsWrapper ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-primitive-value o::JsWrapper)
+   (with-access::JsWrapper o (obj)
+      (obj)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::JsWrapper ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write o::JsWrapper p backend)
+   (with-access::JsWrapper o (obj)
+      (xml-write obj p backend)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::JsWrapper ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute o::JsWrapper id p backend)
+   (with-access::JsWrapper o (obj)
+      (xml-write-attribute obj id p backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ...                                                 */

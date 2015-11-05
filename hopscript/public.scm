@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Oct 31 13:52:56 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 22:08:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1003,6 +1003,20 @@
        (bigloo-type-error "js-tostring" "JsStringLiteral" obj))
       (else
        (typeof obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring ::JsWrapper ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring obj::JsWrapper %this::JsGlobalObject)
+   (with-access::JsWrapper obj (obj)
+      (js-tostring obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive ::JsWrapper ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (js-toprimitive obj::JsWrapper preferredtype %this::JsGlobalObject)
+   (with-access::JsWrapper obj (obj)
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tojsstring ...                                                */
