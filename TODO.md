@@ -9,7 +9,7 @@ HopScript
   1. (2015-09-12) Fix .post arguments passing
   2. (2015-10-03) mmap binding
   3. (2015-10-19) Server side cooking  
-
+  4. (2015-11-03) new Tilde()
 
 EcmaScript 6
 ------------

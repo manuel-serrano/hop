@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Sun Nov  1 16:07:14 2015 (serrano)                */
+/*    Last change :  Fri Nov  6 12:54:06 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
@@ -61,6 +61,14 @@ function* gen1d( i ) {
    }
 }
 
+function* gen1e( i ) {
+   yield i + 1;
+}
+
+function* gen1f()  {
+   yield;
+}
+
 console.log( "basic..." );
 
 console.log( "   gen1a()" );
@@ -88,6 +96,16 @@ assert.ok( equal( g.next(), { value: 3, done: false } ) );
 assert.ok( equal( g.next(), { value: 11, done: false } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 
+console.log( "   gen1e(10)" );
+g = gen1e( 10 );
+assert.ok( equal( g.next(), { value: 11, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen1f()" );
+g = gen1f();
+assert.ok( equal( g.next(), { value: undefined, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
 /*---------------------------------------------------------------------*/
 /*    nested                                                           */
 /*---------------------------------------------------------------------*/
@@ -97,6 +115,22 @@ function* gen2a() {
 
 function* gen2b() {
    yield( 5 + (yield 23) );
+}
+
+function* gen2c( i ) {
+   yield( yield( yield i ) );
+}
+
+function* gen2d( i ) {
+   return( yield i );
+}
+
+function* gen2e( i ) {
+   return( 1 + (yield i) );
+}
+
+function* gen2f( i ) {
+   return bar2( yield i + 1, 3 );
 }
 
 console.log( "nested..." );
@@ -113,8 +147,28 @@ assert.ok( equal( g.next(), { value: 23, done: false } ) );
 assert.ok( equal( g.next( 10 ), { value: 15, done: false } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 
+console.log( "   gen2d()" );
+g = gen2d( 10 );
+assert.ok( equal( g.next( 1 ), { value: 10, done: false } ) );
+assert.ok( equal( g.next( 2 ), { value: 2, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen2e()" );
+g = gen2e( 10 );
+assert.ok( equal( g.next( 1 ), { value: 10, done: false } ) );
+assert.ok( equal( g.next( 2 ), { value: 3, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen2f()" );
+g = gen2f( 10 );
+assert.ok( equal( g.next( 1 ), { value: 11, done: false } ) );
+assert.ok( equal( g.next( 2 ), { value: -1, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
 /*---------------------------------------------------------------------*/
-/*    cond                                                             */
+/*    if                                                               */
 /*---------------------------------------------------------------------*/
 function *gen3a( i ) {
    x = 1111;
@@ -158,7 +212,18 @@ function *gen3d( i ) {
    yield 5555;
 }
 
-console.log( "cond..." );
+function *gen3e( i ) {
+   x = 1111;
+   yield i;
+   if( i > 10 ) {
+   } else {
+      yield 2222;
+   }
+   yield 3333;
+   yield 4444;
+}
+
+console.log( "if..." );
 
 console.log( "   gen3a(5)" );
 g = gen3a( 5 );
@@ -227,6 +292,23 @@ assert.ok( equal( g.next(), { value: 5555, done: false } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 
+console.log( "   gen3e(5)" );
+g = gen3e( 5 );
+assert.ok( equal( g.next(), { value: 5, done: false } ) );
+assert.ok( equal( g.next(), { value: 2222, done: false } ) );
+assert.ok( equal( g.next(), { value: 3333, done: false } ) );
+assert.ok( equal( g.next(), { value: 4444, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+   
+console.log( "   gen3e(11)" );
+g = gen3e( 11 );
+assert.ok( equal( g.next(), { value: 11, done: false } ) );
+assert.ok( equal( g.next(), { value: 3333, done: false } ) );
+assert.ok( equal( g.next(), { value: 4444, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+   
 /*---------------------------------------------------------------------*/
 /*    assig ...                                                        */
 /*---------------------------------------------------------------------*/
@@ -343,6 +425,16 @@ function* gen7d( i ) {
    yield 4;
 }
 
+function* gen7e() {
+   (yield( 0 ) > 2) ? yield 1 : yield 3;
+   yield 4;
+}
+
+function* gen7f() {
+   (yield( 0 ) > 2) ? (yield 1, yield 11) : (yield 3, yield 33);
+   yield 4;
+}
+
 console.log( "cond..." );
 
 console.log( "   gen7a(1)" );
@@ -395,22 +487,149 @@ assert.ok( equal( g.next(5), { value: 5, done: false } ) );
 assert.ok( equal( g.next(), { value: 4, done: false } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 
+console.log( "   gen7e()" );
+g = gen7e();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(3), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 4, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen7e()" );
+g = gen7f();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(3), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 11, done: false } ) );
+assert.ok( equal( g.next(), { value: 4, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
 /*---------------------------------------------------------------------*/
 /*    for ...                                                          */
 /*---------------------------------------------------------------------*/
-/* function* gen8() {                                                  */
-/*    for( var i = 0; i < 3; i++ ) {                                   */
-/*       yield i;                                                      */
-/*    }                                                                */
-/* }                                                                   */
-/*                                                                     */
-/* console.log( "for..." );                                            */
-/*                                                                     */
-/* console.log( "   gen8()" );                                         */
-/* g = gen8();                                                         */
-/* assert.ok( equal( g.next(), { value: 0, done: false } ) );          */
-/* assert.ok( equal( g.next(), { value: 1, done: false } ) );          */
-/* assert.ok( equal( g.next(), { value: 2, done: false } ) );          */
-/* assert.ok( equal( g.next(), { value: undefined, done: true } ) );   */
+function* gen8a() {
+   for( var i = 0; i < 3; i++ ) {
+      yield i;
+   }
+}
 
+function* gen8b() {
+   var k =  10;
+   for( var i = 0; i < 3; i = yield( i ) ) {
+      k++;
+   }
+   return k;
+}
 
+function* gen8c() {
+   var k =  10;
+   for( var i = 0; (yield( i )) < 3; i++ ) {
+      k++;
+   }
+   return k;
+}
+
+function* gen8d() {
+   var k =  10;
+   for( var i = 0; yield( i ) < 3; i++ ) {
+      k++;
+   }
+   return k;
+}
+
+function* gen8e() {
+   for( var i = 0; i < 3; i++ ) {
+      yield i;
+   }
+   yield i;
+}
+
+function* gen8f( j ) {
+   var k =  10;
+   for( var i = 0; i < 10; i++ ) {
+      yield i;
+      if( i >= j ) {
+	 break;
+      }
+   }
+   return k;
+}
+
+function* gen8g( j ) {
+   var i;
+   for( (yield), i = 0; i < 3; i++ ) {
+      yield i;
+   }
+   yield i;
+}
+	
+function* gen8h() {
+   var i;
+   for( i = 0; i < 3; i++ ) {
+      yield i;
+      continue;
+   }
+}
+	
+console.log( "for..." );
+
+console.log( "   gen8a()" );
+g = gen8a();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen8b()" );
+g = gen8b();
+assert.ok( equal( g.next(1), { value: 0, done: false } ) );
+assert.ok( equal( g.next(2), { value: 2, done: false } ) );
+assert.ok( equal( g.next(3), { value: 12, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen8c()" );
+g = gen8c();
+assert.ok( equal( g.next(1), { value: 0, done: false } ) );
+assert.ok( equal( g.next(2), { value: 1, done: false } ) );
+assert.ok( equal( g.next(3), { value: 11, done: true } ) );
+assert.ok( equal( g.next(4), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(5), { value: undefined, done: true } ) );
+
+console.log( "   gen8d()" );
+g = gen8d();
+assert.ok( equal( g.next(1), { value: true, done: false } ) );
+assert.ok( equal( g.next(2), { value: true, done: false } ) );
+assert.ok( equal( g.next(3), { value: true, done: false } ) );
+assert.ok( equal( g.next(4), { value: false, done: false } ) );
+assert.ok( equal( g.next(), { value: 13, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen8e()" );
+g = gen8e();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: 3, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen8f()" );
+g = gen8f( 2 );
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: 10, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen8g()" );
+g = gen8g( 2 );
+assert.ok( equal( g.next(), { value: undefined, done: false } ) );
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: 3, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen8h()" );
+g = gen8h();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );

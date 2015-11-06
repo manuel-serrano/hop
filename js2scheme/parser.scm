@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Nov  1 15:22:11 2015 (serrano)                */
+;*    Last change :  Mon Nov  2 15:27:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1284,7 +1284,7 @@
       (let ((loc (token-loc (consume-token! 'yield))))
 	 (cond
 	    ((or (case (peek-token-type)
-		    ((EOF ERROR SEMICOLON) #t)
+		    ((EOF ERROR SEMICOLON RPAREN RBRACKET) #t)
 		    (else #f))
 		 (at-new-line-token?))
 	     (instantiate::J2SYield
@@ -1292,7 +1292,7 @@
 		(expr (instantiate::J2SUndefined
 			 (loc loc)))))
 	    (else
-	     (let ((expr (lhs loc)))
+	     (let ((expr (assig-expr #f)))
 		(instantiate::J2SYield
 		   (loc loc)
 		   (expr expr)))))))
