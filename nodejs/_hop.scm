@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Oct 24 05:56:52 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 02:07:24 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -472,13 +472,13 @@
        (instantiate::http-response-hop
 	  (backend (get/default req 'backend %this (hop-xml-backend)))
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (content-type (get/default req 'contentType %this "application/x-javascript"))
+	  (content-type (get/default req 'contentType %this "application/x-json-hop"))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (header (get/list req 'header %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (value obj))
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
-	  (content-type "application/x-javascript")
+	  (content-type "application/x-json-hop")
 	  (value obj))))
 
 ;*---------------------------------------------------------------------*/

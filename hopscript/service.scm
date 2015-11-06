@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Nov  5 14:06:44 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 02:13:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -424,28 +424,50 @@
 	    :ctx %this
 	    :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
 	    :args args))
+
+      (define (spawn-thread)
+	 (thread-start!
+	    (instantiate::hopthread
+	       (body (lambda ()
+			(with-handler
+			   (lambda (e)
+			      (if failjs
+				  (js-worker-push-thunk! worker svc
+				     (lambda ()
+					(js-call1 %this failjs %this e)))
+				  (exception-notify e)))
+			   (post-request
+			      (lambda (x)
+				 (js-worker-push-thunk! worker svc
+				    (lambda ()
+				       (js-call1 %this success %this
+					  (scheme->js x)))))))))))
+	 (js-undefined))
+
+      (define (spawn-promise)
+	 (with-access::JsGlobalObject %this (js-promise)
+	    (js-new %this js-promise
+	       (js-make-function %this
+		  (lambda (this resolve reject)
+		     (set! fail
+			(lambda (obj)
+			   (js-call1 %this reject %this obj)))
+		     (thread-start!
+			(instantiate::hopthread
+			   (body (lambda ()
+				    (with-handler
+				       (lambda (e)
+					  (js-call1 %this reject %this e))
+				       (post-request
+					  (lambda (x)
+					     (js-call1 %this resolve %this
+						(scheme->js x))))))))))
+		  2 "executor"))))
       
       (if asynchronous
-	  (begin
-	     (thread-start!
-		(instantiate::hopthread
-		   (body (lambda ()
-			    (with-handler
-			       (lambda (e)
-				  (if failjs
-				      (js-worker-push-thunk! worker svc
-					 (lambda ()
-					    (js-call1 %this failjs %this e)))
-				      (exception-notify e)))
-			       (post-request
-				  (if (isa? success JsFunction)
-				      (lambda (x)
-					 (js-worker-push-thunk! worker svc
-					    (lambda ()
-					       (js-call1 %this success %this
-						  (scheme->js x)))))
-				      scheme->js)))))))
-	     (js-undefined))
+	  (if (isa? success JsFunction)
+	      (spawn-thread)
+	      (spawn-promise))
 	  (post-request
 	     (if (isa? success JsFunction)
 		 (lambda (x) (js-call1 %this success %this (scheme->js x)))

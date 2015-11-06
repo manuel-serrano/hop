@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Oct 20 08:00:22 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 02:12:15 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -228,6 +228,51 @@
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (make-http-callback url req success fail user-or-auth ctx responsetype json-parser)
+   
+   (define (http-callback-decode ctype clength p ctx)
+      (case ctype
+	 ((application/x-hop)
+	  (let* ((chars (read-chars clength p))
+		 (s (if (eq? responsetype 'arraybuffer)
+			chars
+			(string-hex-intern chars))))
+	     (string->obj s #f ctx)))
+	 ((application/x-url-hop)
+	  (string->obj
+	     (url-decode
+		(if (>elong clength #e0)
+		    (read-chars clength p)
+		    (read-string p)))
+	     #f ctx))
+	 ((application/x-json-hop)
+	  (string->obj
+	     (byte-array->string 
+		(javascript->obj
+		   (if (>elong clength #e0)
+		       (read-chars clength p)
+		       (read-string p))))
+	     #f ctx))
+	 ((application/json)
+	  (json-parser p ctx))
+	 ((application/x-javascript)
+	  (json-parser p ctx))
+	 ((text/html application/xhtml+xml)
+	  (car (last-pair (parse-html p (elong->fixnum clength)))))
+	 (else
+	  (read-string p))))
+   
+   (define (default-error-handling status header p)
+      (if (procedure? fail)
+	  (fail (instantiate::xml-http-request
+		   (status status)
+		   (header header)
+		   (input-port p)))
+	  (raise
+	     (instantiate::&error
+		(proc url)
+		(msg (format "Illegal status `~a'" status))
+		(obj (when (input-port? p) (read-string p)))))))
+   
    (lambda (p status header clength tenc)
       (with-trace 'with-hop "make-http-callback"
 	 (trace-item "status=" status " content-length=" clength)
@@ -238,29 +283,8 @@
 	     (trace-item "ctype=" (header-content-type header))
 	     (trace-item "header=" header)
 	     ;; see hop-json-mime-type and hop-bigloo-mime-type
-	     (let ((obj (case (header-content-type header)
-			   ((application/x-hop)
-			    (let* ((chars (read-chars clength p))
-				   (s (if (eq? responsetype 'arraybuffer)
-					  chars
-					  (string-hex-intern chars))))
-			       (string->obj s #f ctx)))
-			   ((application/x-url-hop)
-			    (string->obj (url-decode (read-chars clength p))
-			       #f ctx))
-			   ((application/x-json-hop)
-			    (string->obj
-			       (byte-array->string 
-				  (javascript->obj (read-chars clength p)))
-			       #f ctx))
-			   ((application/json)
-			    (json-parser p ctx))
-			   ((application/x-javascript)
-			    (json-parser p ctx))
-			   ((text/html application/xhtml+xml)
-			    (car (last-pair (parse-html p (elong->fixnum clength)))))
-			   (else
-			    (read-string p)))))
+	     (let ((obj (http-callback-decode (header-content-type header)
+			   clength p ctx)))
 		(success obj)))
 	    ((201 204 304)
 	     ;; no message body
@@ -279,17 +303,27 @@
 		       (proc url)
 		       (msg "Authentication requested by remote server")
 		       (obj user-or-auth)))))
+	    ((500)
+	     (cond
+		((assq :hop-error header)
+		 =>
+		 (lambda (c)
+		    (if (equal? (cdr c) "true")
+			(let ((val (http-callback-decode
+				      (header-content-type header)
+				      clength p ctx)))
+			   (if (procedure? fail)
+			       (fail val)
+			       (raise
+				  (instantiate::&error
+				     (proc url)
+				     (msg (format "Illegal status `~a'" status))
+				     (obj (when (input-port? p) (read-string p)))))))
+			(default-error-handling status header p))))
+		(else
+		 (default-error-handling status header p))))
 	    (else
-	     (if (procedure? fail)
-		 (fail (instantiate::xml-http-request
-			  (status status)
-			  (header header)
-			  (input-port p)))
-		 (raise
-		    (instantiate::&error
-		       (proc url)
-		       (msg (format "Illegal status `~a'" status))
-		       (obj (when (input-port? p) (read-string p)))))))))))
+	     (default-error-handling status header p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-to-hop-id ...                                                */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Nov  5 11:39:27 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 02:14:58 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -447,8 +447,6 @@
 ;*    See HOP_CALLBACK, hop-lib.js.                                    */
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-handler e ctx)
-   (let ((console (@ console js)))
-      (console.log "ctx=" hop_initial_stack_context))
    ;; store the exception for the default handler to display it, don't
    ;; display it now, otherwise we would have to implement a complex
    ;; machinery to prevent hop-onerror-handler to also display it
