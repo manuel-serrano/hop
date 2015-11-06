@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Wed Oct 14 15:27:06 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 11:52:43 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
@@ -114,7 +114,9 @@
 		 "Illegal procedure in JavaScript conversion"
 		 obj)))))
       ((number? obj)
-       (display obj op))
+       (if (and (flonum? obj) (nanfl? obj))
+	   (display "NaN" op)
+	   (display obj op)))
       ((string? obj)
        (display "\"" op)
        (display (string-for-read (string-replace obj #\" #\')) op)

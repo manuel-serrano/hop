@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Nov  5 12:02:05 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 11:43:23 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -665,7 +665,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLiteralValue mode return conf)
    (with-access::J2SLiteralValue this (val)
-      val))
+      (if (and (flonum? val) (nanfl? val))
+	  "NaN"
+	  val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNumber ...                                       */

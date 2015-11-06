@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Sep 26 07:57:10 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 11:42:14 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -364,6 +364,12 @@
 		    (when (string? s)
 		       (display s p))))
 	      (display obj p))))
+      ((integer? obj)
+       (display obj p))
+      ((flonum? obj)
+       (if (nanfl? obj)
+	   (display "NaN" p)
+	   (display obj p)))
       ((number? obj)
        (display obj p))
       ((symbol? obj)

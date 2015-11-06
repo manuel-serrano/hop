@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Fri Aug 14 06:27:42 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 11:56:45 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
@@ -402,9 +402,11 @@
 	  ;; CARE: initially I had "($val)" here. and I suppose there was a
 	  ;; reason I put the parenthesis around. this will probably
 	  ;; come back and bite me...
-	  (template-display p
-	     (?@ (< val 0) "(~@)")
-	     "$val"))
+	  (if (and (flonum? val) (nanfl? val))
+	      (display-string "NaN" p)
+	      (template-display p
+		 (?@ (< val 0) "(~@)")
+		 "$val")))
 	 ((string? val)
 	  (template-display p
 	     (?@ (use-mutable-strings?) "(new sc_String(~@))")
