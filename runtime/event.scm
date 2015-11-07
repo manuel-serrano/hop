@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Oct  9 16:04:05 2015 (serrano)                */
+;*    Last change :  Sat Nov  7 10:00:31 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -93,7 +93,7 @@
 	       (ssl::bool (default #f))
 	       (authorization read-only (default #f))
 	       (listeners::pair-nil (default '()))
-	       (%websocket read-only (default #f))
+	       (%websocket (default #f))
 	       (%key (default #f)))
 	    
 	    (generic server-init! ::server)

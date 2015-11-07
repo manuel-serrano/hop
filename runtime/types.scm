@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Sep 23 11:23:34 2015 (serrano)                */
+;*    Last change :  Sat Nov  7 10:11:02 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -73,7 +73,7 @@
 	      (input-port read-only))
 	   
 	   (abstract-class %http-response::%http-message
-	      (content-type::obj read-only (default #f))
+	      (content-type::obj (default #f))
 	      (bodyp::bool read-only (default #t)))
 	   
 	   (class http-response-abort::%http-response)
@@ -162,11 +162,11 @@
 	   
 	   (class hop-service
 	      ;; the service identifier (e.g., doc/example)
-	      (id::symbol read-only)
+	      id::symbol
 	      ;; the weblet identifier (e.g., doc)
-	      (wid::symbol read-only)
+	      wid::symbol
 	      ;; the path associated with the service
-	      (path::bstring read-only)
+	      path::bstring
 	      ;; the service formals
 	      (args::obj read-only)
 	      ;; the user procedure associated

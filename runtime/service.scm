@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Nov  3 20:49:03 2015 (serrano)                */
+;*    Last change :  Sat Nov  7 07:35:37 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -822,8 +822,6 @@
 	    "(" (/fx sz 2) "): "
 	    svc " " path "\n")
 	 (synchronize *service-mutex*
-	    ;; CARE: for security matters, service re-definition should probably
-	    ;; be for
 	    (when (hashtable-get *service-table* path)
 	       (cond
 		  ((not (hop-allow-redefine-service))
