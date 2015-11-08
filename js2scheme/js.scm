@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Nov  4 13:15:12 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 11:44:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -497,7 +497,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SLiteralValue tildec dollarc mode evalp conf)
    (with-access::J2SLiteralValue this (val)
-      (list this (format "~a" val))))
+      (list this (format "~a" (if (and (flonum? val) (nanfl? val)) "NaN" val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SBool ...                                             */

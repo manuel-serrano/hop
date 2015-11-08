@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Nov  5 14:06:44 2015 (serrano)                */
+;*    Last change :  Sat Nov  7 10:24:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -424,28 +424,50 @@
 	    :ctx %this
 	    :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
 	    :args args))
+
+      (define (spawn-thread)
+	 (thread-start!
+	    (instantiate::hopthread
+	       (body (lambda ()
+			(with-handler
+			   (lambda (e)
+			      (if failjs
+				  (js-worker-push-thunk! worker svc
+				     (lambda ()
+					(js-call1 %this failjs %this e)))
+				  (exception-notify e)))
+			   (post-request
+			      (lambda (x)
+				 (js-worker-push-thunk! worker svc
+				    (lambda ()
+				       (js-call1 %this success %this
+					  (scheme->js x)))))))))))
+	 (js-undefined))
+
+      (define (spawn-promise)
+	 (with-access::JsGlobalObject %this (js-promise)
+	    (js-new %this js-promise
+	       (js-make-function %this
+		  (lambda (this resolve reject)
+		     (set! fail
+			(lambda (obj)
+			   (js-call1 %this reject %this obj)))
+		     (thread-start!
+			(instantiate::hopthread
+			   (body (lambda ()
+				    (with-handler
+				       (lambda (e)
+					  (js-call1 %this reject %this e))
+				       (post-request
+					  (lambda (x)
+					     (js-call1 %this resolve %this
+						(scheme->js x))))))))))
+		  2 "executor"))))
       
       (if asynchronous
-	  (begin
-	     (thread-start!
-		(instantiate::hopthread
-		   (body (lambda ()
-			    (with-handler
-			       (lambda (e)
-				  (if failjs
-				      (js-worker-push-thunk! worker svc
-					 (lambda ()
-					    (js-call1 %this failjs %this e)))
-				      (exception-notify e)))
-			       (post-request
-				  (if (isa? success JsFunction)
-				      (lambda (x)
-					 (js-worker-push-thunk! worker svc
-					    (lambda ()
-					       (js-call1 %this success %this
-						  (scheme->js x)))))
-				      scheme->js)))))))
-	     (js-undefined))
+	  (if (isa? success JsFunction)
+	      (spawn-thread)
+	      (spawn-promise))
 	  (post-request
 	     (if (isa? success JsFunction)
 		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
@@ -605,6 +627,17 @@
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-make-service %this proc name register arity worker svc)
+
+   (define (set-service-path! svc v)
+      (let ((p (js-tostring v %this)))
+	 (with-access::hop-service svc (path id wid)
+	    (set! path p)
+	    (when (string=? (dirname p) (hop-service-base))
+	       (let ((apath (substring path
+			       (+fx 1 (string-length (hop-service-base))))))
+		  (set! id (string->symbol apath))
+		  (set! wid (string->symbol (basename apath))))))))
+   
    (with-access::JsGlobalObject %this (js-service-prototype)
       (when register (register-service! svc))
       (with-access::WorkerHopThread worker (services)
@@ -639,10 +672,9 @@
 				      (with-access::JsService o (svc)
 					 (when register
 					    (unregister-service! svc))
-					 (with-access::hop-service svc (path)
-					    (set! path (js-tostring v %this))
-					    (when register
-					       (register-service! svc)))))
+					 (set-service-path! svc v)
+					 (when register
+					    (register-service! svc))))
 				   2 'path)))))
 	 (svc svc))))
 

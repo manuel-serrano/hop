@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Wed Sep 23 13:05:18 2015 (serrano)                */
+;*    Last change :  Fri Nov  6 01:36:32 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -257,6 +257,10 @@
    ;; bind Promise in the global object
    (js-bind! %this %this 'Promise
       :configurable #f :enumerable #f :value js-promise)
+
+   ;; bind the promise object in the global environment
+   (with-access::JsGlobalObject %this ((%js-promise js-promise))
+      (set! %js-promise js-promise))
    
    js-promise)
    
@@ -317,7 +321,7 @@
 	  (when (isa? proc JsFunction)
 	     (set! thens (cons proc thens)))
 	  (when (isa? fail JsFunction)
-	     (set! catches (cons fail rejecters)))))
+	     (set! catches (cons fail catches)))))
       this))
 
 ;*---------------------------------------------------------------------*/

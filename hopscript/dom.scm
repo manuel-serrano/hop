@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Sat Oct 24 06:25:30 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 22:11:28 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -70,6 +70,20 @@
 (define-method (js-tostring o::xml-verbatim %this)
    (with-access::xml-verbatim o (data)
       data))
+
+;*---------------------------------------------------------------------*/
+;*    js-inspect ::xml-tilde ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect o::xml-tilde cnt)
+   (with-access::xml-tilde o (%js-expression)
+      (js-inspect (js-string->jsstring (format "~~{~a}" %js-expression)) cnt)))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring ::xml-tilde ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring o::xml-tilde %this)
+   (with-access::xml-tilde o (%js-expression)
+      (format "~~{~a}" %js-expression)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-inspect ::xml-comment ...                                     */

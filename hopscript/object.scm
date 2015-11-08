@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Nov  3 11:36:25 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 22:13:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -482,6 +482,27 @@
 			 1 '<!--)
 	       :enumerable #f :writable #f :configurable #f)
 
+	    (define (string->xml-tilde body)
+	       (let ((expr (js-tostring body %this)))
+		  (instantiate::JsWrapper
+		     (__proto__ %prototype)
+		     (data body)
+		     (obj (instantiate::xml-tilde
+			     (lang 'javascript)
+			     (%js-expression expr)
+			     (body (vector body '() '() '() expr #f)))))))
+	    
+	    ;; tilde object
+	    (js-bind! %this %this 'Tilde
+	       :value (js-make-function %this
+			 (lambda (this body)
+			    (string->xml-tilde body))
+			 1 'Tilde
+			 :__proto__ js-function-prototype
+			 :construct (lambda (this body)
+				       (string->xml-tilde body)))
+	       :enumerable #f :writable #f :configurable #f)
+	    
 	    ;; return the newly created object
 	    %this))))
 
@@ -751,6 +772,9 @@
 	     (js-string->jsstring "[object Undefined]"))
 	    ((eq? this (js-null))
 	     (js-string->jsstring "[object Null]"))
+	    ((isa? this JsWrapper)
+	     (with-access::JsWrapper this (obj)
+		(js-string->jsstring (js-tostring obj %this))))
 	    (else
 	     (let* ((obj (js-toobject %this this))
 		    (name (symbol->string! (class-name (object-class obj)))))
