@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Nov  7 10:28:51 2015 (serrano)                */
+;*    Last change :  Sat Nov 14 08:50:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1120,13 +1120,14 @@
    (define (svc-proc-entry this)
       (with-access::J2SSvc this (name params loc path mode)
 	 (let ((params (j2s-scheme params mode return conf))
-	       (tmpp (if name name (gensym 'servicep)))
+	       (tmpp (gensym 'servicep))
 	       (tmps (gensym 'services)))
 	    `(letrec* ((,tmpp (lambda (this . args)
 				 (with-access::JsService ,tmps (svc)
 				    (with-access::hop-service svc (path)
 				       (js-make-hopframe %this path args)))))
-		       (,tmps ,(j2sscheme-service this tmpp (or scmid tmpp)
+		       (,tmps ,(j2sscheme-service this tmpp
+				  (or scmid name tmpp)
 				  (epairify loc
 				     `(make-hop-url-name
 					 ,(if (symbol? path)

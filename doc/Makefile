@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Oct 26 18:46:39 2015 (serrano)                */
+#*    Last change :  Sat Nov 14 11:39:50 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -49,7 +49,6 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
-  xml-ignore.json \
   html-idx.json
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
@@ -166,8 +165,9 @@ index.html: _index.md doc.js xml.js
 #*    idx.json ...                                                     */
 #*---------------------------------------------------------------------*/
 idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js mkidx . $^ > $@ \
+	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server \
+	  --evaljs 'require( "hopdoc" ).htmlToIdx( process.argv[ 2 ], process.argv.slice( 3 ) )' \
+          -- /dev/null . $^ > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
