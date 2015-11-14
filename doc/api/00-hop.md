@@ -279,7 +279,7 @@ server.addEventListener( 'refreshScore', function( event ) {
 
 On the server side, server objects are instances of the Server class.
 
-### new Server( hostname, port [, authorization] ) ###
+### new hop.Server( hostname, port [, authorization] ) ###
 [:@glyphicon glyphicon-tag constructor]
 
 the arguments are as follows:
@@ -292,7 +292,7 @@ the arguments are as follows:
   frame `[post](01-service.html#post) method.
   
 ```hopscript
-var srv = new Server( "localhost", 9999 );
+var srv = new hop.Server( "localhost", 9999 );
 
 srv.addEventListener( 'refreshScore', function( event ) {
    var score = event.value;

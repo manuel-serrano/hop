@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Mon Oct 26 08:20:45 2015 (serrano)                */
+/*    Last change :  Sat Nov 14 11:39:08 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -276,44 +276,6 @@ function compileIndex( content ) {
    </html>;
 
    console.log( hop.compileXML( document ) );
-}
-
-/*---------------------------------------------------------------------*/
-/*    bind dummy xml construct                                         */
-/*---------------------------------------------------------------------*/
-(function( tags ) {
-   function ignore( attr, ... _ ) { return undefined; };
-
-   tags.forEach( function( tag, idx = undefined, arr = undefined ) {
-      GLOBAL[ tag ] = ignore;
-   } );
-})( require( "./xml-ignore.json" ) );
-
-/*---------------------------------------------------------------------*/
-/*    mkIdx ...                                                        */
-/*---------------------------------------------------------------------*/
-function mkIdx( base, files ) {
-   var table = [];
-
-   for( i = 0; i < files.length; i++ ) {
-      var file = files[ i ];
-      var xml = require( "./" + file );
-      var chapter = path.basename( file, ".html" ).replace( /^[0-9]+-/, "" );
-
-      var idx = doc.index( { XML: xml } )
-	  .map( function( e, idx = undefined, arr = undefined ) {
-	 e.chapter = chapter;
-	 e.url = file + "#" + e.id;
-	 return e;
-      } );
-
-      table = table.concat( idx );
-   }
-   
-   console.log(
-      JSON.stringify(
-	 table.sort( function( l, r ) {
-	    return l.key.localeCompare( r.key ); } ) ) );
 }
 
 /*---------------------------------------------------------------------*/

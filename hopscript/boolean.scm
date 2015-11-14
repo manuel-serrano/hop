@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Aug 21 17:22:38 2015 (serrano)                */
+;*    Last change :  Thu Nov 12 10:50:21 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -47,7 +47,7 @@
       (js-bool->jsboolean o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-donate ::JsBoolean ...                                         */
+;*    js-donate ::JsBoolean ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-donate obj::JsBoolean worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
