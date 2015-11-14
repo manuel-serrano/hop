@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Nov  7 10:08:31 2015 (serrano)                */
+;*    Last change :  Sun Nov  8 07:12:48 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -106,7 +106,7 @@
 	   
 	   (final-class J2SDefault::J2SCase)
 	   
-	   (final-class J2SReturn::J2SStmt
+	   (class J2SReturn::J2SStmt
 	      (exit::bool (default #f))
 	      (tail::bool (default #t))
 	      expr::J2SExpr)
@@ -149,7 +149,7 @@
 	      expr)
 	   
 	   (class J2SSequence::J2SExpr
-	      (exprs::pair read-only))
+	      exprs::pair)
 	   
 	   (class J2SUnresolvedRef::J2SExpr
 	      (cache (default #f))
@@ -269,6 +269,21 @@
 	   (final-class J2SPostfix::J2SAssig
 	      op::symbol)
 	   
+	   (class J2SInit::J2SAssig)
+	   
+	   (class J2SInitLet::J2SInit)
+	   
+	   (final-class J2SAssigOp::J2SAssig
+	      op::symbol)
+	   
+	   (final-class J2SVAssig::J2SAssig)
+	   (final-class J2SCAssig::J2SAssig)
+	   
+	   (final-class J2SFunBinding::J2SInit)
+	   
+	   (final-class J2SObjInit::J2SExpr
+	      inits::pair-nil)
+	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f))
 	      obj::J2SExpr
@@ -287,21 +302,6 @@
 	   (final-class J2SNew::J2SExpr
 	      clazz::J2SNode
 	      args::pair-nil)
-	   
-	   (class J2SInit::J2SAssig)
-	   
-	   (class J2SInitLet::J2SInit)
-	   
-	   (final-class J2SAssigOp::J2SAssig
-	      op::symbol)
-	   
-	   (final-class J2SVAssig::J2SAssig)
-	   (final-class J2SCAssig::J2SAssig)
-	   
-	   (final-class J2SFunBinding::J2SInit)
-	   
-	   (final-class J2SObjInit::J2SExpr
-	      inits::pair-nil)
 	   
 	   (abstract-class J2SPropertyInit::J2SNode
 	      name::J2SLiteralValue)

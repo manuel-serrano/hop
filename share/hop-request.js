@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Nov  6 02:18:28 2015 (serrano)                */
+/*    Last change :  Wed Nov 11 18:08:45 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -322,20 +322,20 @@ function ab2string( abuf ) {
 	 var code2 = buf[ pointer++ ];
 	 if( code < 224 ) {
 	    code2 = ((code - 192) << 6) + (code2 - 128);
-	    res += String.fromCharCode( code, code2 );
+	    res += String.fromCharCode( code2 );
 	 } else {
 	    var code3 = buf[ pointer++ ];
 	    if( code < 240 ) {
 	       code3 = ((code - 224) << 12)
 		  + ((code2 - 128) << 6) + (code3 - 128);
-	       res += String.fromCharCode( code, code2, code3 );
+	       res += String.fromCharCode( code3 );
 	    } else {
 	       var code4 = buf[ pointer++ ];
 	       code4 = ((code - 240) << 18)
 		  + ((code2 - 128) << 12)
 		  + ((code3 - 128) << 6)
 		  + (code4 - 128);
-	       res += String.fromCharCode( code, code2, code3, code4 );
+	       res += String.fromCharCode( code4 );
 	    }
 	 }
       }
@@ -354,6 +354,7 @@ function hop_request_unserialize( xhr, svc ) {
    var ctype = ("content_type" in xhr) ?
        xhr[ "content_type" ] : hop_header_content_type( xhr );
 
+   console.log( svc, " hop_request_unserialize ctype=", ctype );
    if( ctype === "application/x-hop" ) {
       if( xhr.responseType === "arraybuffer" ) {
 	 return hop_bytearray_to_obj( new Uint8Array( xhr.response ) );
@@ -415,7 +416,7 @@ function hop_request_onready( xhr, svc, succ, fail ) {
       switch( xhr.status ) {
          case 200: {
 	    var o;
-	    
+
 	    if( hop_debug() > 0 ) {
 	       succ = xhr_hop_success_callback( succ );
 	       
@@ -656,7 +657,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
       }
    }
    
-   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
+   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8' );
    if( hop_config.navigator_family != "safari" &&
        hop_config.navigator_family != "chrome" &&
        hop_config.navigator_family != "webkit" ) {
