@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sat Nov 14 11:39:08 2015 (serrano)                */
+/*    Last change :  Sun Nov 15 08:57:39 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -17,7 +17,7 @@ const path = require( "path" );
 const fs = require( "fs" );
 const markdown = require( hop.markdown );
 const fontifier = require( hop.fontifier );
-const doc = require( "hopdoc" );
+const hopdoc = require( "hopdoc" )
 const docxml = require( "./xml.js" );
 
 /*---------------------------------------------------------------------*/
@@ -150,8 +150,8 @@ function makeToc( els, k, proc = false ) {
 /*    compileSection ...                                               */
 /*---------------------------------------------------------------------*/
 function compileSection( page ) {
-   var ast = doc.load( path.join( path.dirname( module.filename ), page ) )
-   var toc = doc.toc( ast );
+   var ast = hopdoc.load( path.join( path.dirname( module.filename ), page ) )
+   var toc = hopdoc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
    var chapter = path.basename( path.dirname( path ) );
    var key = path.basename( path.dirname( page ) ).toLowerCase();
@@ -210,7 +210,7 @@ function compileSection( page ) {
 /*    compileChapter ...                                               */
 /*---------------------------------------------------------------------*/
 function compileChapter( json ) {
-   var chapter = require( json );
+   var chapter = require( "./" + json );
    var toc = chapterEntries( chapter );
 
    var document = <html>
@@ -229,8 +229,8 @@ function compileChapter( json ) {
        <div class="container">
          ${chapter.description ? <div class="chapter-header">
 	   ${ fs.existsSync( ROOT + "/" + chapter.description ) ?
-	      doc.load( ROOT + "/" + chapter.description ).XML
-	      : doc.eval( chapter.description ).XML }
+	      hopdoc.load( ROOT + "/" + chapter.description ).XML
+	      : hopdoc.eval( chapter.description ).XML }
 	   </div> : ""}
 	 
          <h1 class="toc" id="toc">Table of Contents</h1>
@@ -239,7 +239,7 @@ function compileChapter( json ) {
               return <li>
 	        <a href=${el.href}>${el.title}</a>
                 <span class="toc-description">
-                  ${doc.eval( el.description )}
+                  ${hopdoc.eval( el.description )}
                 </span>
 	      </li>
 	   } )}
@@ -253,9 +253,9 @@ function compileChapter( json ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    compileIndex ...                                                 */
+/*    compileMain ...                                                  */
 /*---------------------------------------------------------------------*/
-function compileIndex( content ) {
+function compileMain( content ) {
    var document = <html>
      <head css=${css}
 	   title="Hop.js"
@@ -269,7 +269,33 @@ function compileIndex( content ) {
        <docxml.title root=${ROOT}/>
 
        <div class="container home-body">
-         ${doc.load( path.join( path.dirname( module.filename ), "_index.md" ) ).XML}
+         ${hopdoc.load( path.join( path.dirname( module.filename ), content ) ).XML}
+	 <docxml.footer root=${ROOT}/>
+       </div>
+     </body>
+   </html>;
+
+   console.log( hop.compileXML( document ) );
+}
+
+/*---------------------------------------------------------------------*/
+/*    compileLibrary ...                                               */
+/*---------------------------------------------------------------------*/
+function compileLibrary( content, logo, script, css ) {
+   var document = <html>
+     <head css=${css}
+	   title="Hop.js"
+           jscript=${jscript}
+           rts=${false}/>
+
+     <body class="home" data-spy="scroll" data-target="#navbar">
+       <docxml.navbar title="Hop.js" key="home">
+         ${chapters}
+       </docxml.navbar>
+       <docxml.title root=${ROOT}/>
+
+       <div class="container home-body">
+         ${hopdoc.load( path.join( path.dirname( module.filename ), content ) ).XML}
 	 <docxml.footer root=${ROOT}/>
        </div>
      </body>
@@ -280,9 +306,11 @@ function compileIndex( content ) {
 
 /*---------------------------------------------------------------------*/
 /*    compileIdx ...                                                   */
+/*    -------------------------------------------------------------    */
+/*    compile the HTML index page.                                     */
 /*---------------------------------------------------------------------*/
 function compileIdx( json ) {
-   var idx = require( json );
+   var idx = require( "./" + json );
    var chapter = { title: "Index", key: "index" };
 
    var document = <html>
@@ -309,23 +337,41 @@ function compileIdx( json ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    top level forms                                                  */
+/*    main ...                                                         */
 /*---------------------------------------------------------------------*/
-if( process.argv[ 2 ] == "mkidx" ) {
-   mkIdx( process.argv[ 3 ], process.argv.slice( 4 ) );
-} else if( process.argv[ 2 ] == "cmpidx" ) {
-   compileIdx( "./" + process.argv[ 3 ] );
-} else if( process.argv[ 2 ].match( /[.]md$/ ) ) {
-   if( process.argv[ 2 ] === "_index.md" ) {
-      compileIndex( process.argv[ 2 ] );
-   } else {
-      compileSection( process.argv[ 2 ] );
+function main() {
+   switch( process.argv[ 2 ] ) {
+      case "html-to-idx":
+	 var pwd = path.dirname( module.filename );
+	 hopdoc.htmlToIdx( process.argv[ 3 ],
+			   process.argv.slice( 4 ).map( function( f, _, __ ) {
+			      return path.join( pwd, f );
+			   } ) );
+	 break;
+
+      case "compile-idx":
+	 compileIdx( process.argv[ 3 ] );
+	 break;
+
+      case "compile-main":
+	 compileMain( process.argv[ 3 ] );
+	 break;
+
+      case "compile-library":
+	 compileMain( process.argv[ 3 ], process.argv[ 4 ] );
+	 break;
+
+      case "compile-section":
+	 compileSection( process.argv[ 3 ] );
+	 break;
+
+      case "compile-chapter":
+	 compileChapter( process.argv[ 3 ] );
+	 break;
+	 
+      default:
+	 throw( "Unknown command: " + process.argv[ 2 ] );
    }
-} else if( process.argv[ 2 ].match( /[.]json$/ ) ) {
-   compileChapter( "./" + process.argv[ 2 ] );
-} else if( process.argv[ 2 ].match( /[.]html$/ ) ) {
-   compileIndex( "./" + process.argv[ 2 ] );
-} else if( fs.lstatSync( process.argv[ 2 ] ).isDirectory() ) {
-   compileChapter( { title: path.basename( process.argv[ 2 ] ),
-		     files: [ process.argv[ 2 ] ] } )
 }
+
+main();

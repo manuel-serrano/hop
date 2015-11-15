@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Nov 14 11:39:50 2015 (serrano)                */
+#*    Last change :  Sun Nov 15 08:21:13 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -142,7 +142,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 %.html: %.md doc.js xml.js
 	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js $< > $@ \
+          $(BUILDDIR)/doc/doc.js "compile-section" $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
@@ -150,7 +150,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 %.html: %.json doc.js xml.js
 	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js $< > $@ \
+          $(BUILDDIR)/doc/doc.js "compile-chapter" $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
@@ -158,16 +158,15 @@ uninstall:
 #*---------------------------------------------------------------------*/
 index.html: _index.md doc.js xml.js
 	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js $< > $@ \
+          $(BUILDDIR)/doc/doc.js "compile-main" $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    idx.json ...                                                     */
 #*---------------------------------------------------------------------*/
 idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server \
-	  --evaljs 'require( "hopdoc" ).htmlToIdx( process.argv[ 2 ], process.argv.slice( 3 ) )' \
-          -- /dev/null . $^ > $@ \
+	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
+          $(BUILDDIR)/doc/doc.js "html-to-idx" . $^ > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
@@ -175,7 +174,7 @@ idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
 #*---------------------------------------------------------------------*/
 idx.html: idx.json
 	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js cmpidx $< > $@ \
+          $(BUILDDIR)/doc/doc.js "compile-idx" $^ > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
