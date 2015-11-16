@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Oct 15 05:46:42 2015 (serrano)                */
+;*    Last change :  Mon Nov 16 08:04:44 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1248,7 +1248,7 @@
 		(cons 'loop t))
 	       (else
 		(cons 'error t))))))
-   
+
    (with-trace 'read "%hop-load"
       (trace-item "file=" file)
       (trace-item "env=" (if (evmodule? env) (evmodule-name env) ""))

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Nov 15 19:58:41 2015 (serrano)                */
+#*    Last change :  Mon Nov 16 07:57:40 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -985,7 +985,7 @@ cat $mkmf.in \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir/$version|" \
+          -e "s|@SHAREDIR@|$sharedir|" \
           -e "s|@MANDIR@|$mandir|" \
           -e "s|@PREFIX@|$prefix|" \
           -e "s|@ETCDIR@|$etcdir|" \
