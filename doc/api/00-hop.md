@@ -279,17 +279,21 @@ server.addEventListener( 'refreshScore', function( event ) {
 
 On the server side, server objects are instances of the Server class.
 
-### new hop.Server( hostname, port [, authorization] ) ###
-[:@glyphicon glyphicon-tag constructor]
+### new hop.Server( [ hostname [, port [, authorization [, ssl ] ] ] ) ###
+[:server@glyphicon glyphicon-tag constructor]
 
 the arguments are as follows:
 
   * `hostname`: a string, the name or IP number of the remote host that
-  will emit signals.
-  * `port`: the port number of the remote host.
+  will emit signals. If omitted, defaults to the running host name.
+  * `port`: the port number of the remote host. If omitted, defaults to
+  the running Hop port.
   * `authorization`: a string, an optional authorization for accessing
   the remote host. This has the syntax of the
-  frame `[post](01-service.html#post) method.
+  frame `[post](01-service.html#post)` method.
+  * `ssl`: a optional boolean. When true, the established channel between
+  the two servers uses SSL.
+  
   
 ```hopscript
 var srv = new hop.Server( "localhost", 9999 );
@@ -298,6 +302,9 @@ srv.addEventListener( 'refreshScore', function( event ) {
    var score = event.value;
    ...
 } )
+
+import service getScore();
+getScore( "jean dupont", srv, function( val ) { ... } );
 ```
 
 

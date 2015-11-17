@@ -17,6 +17,13 @@ service iserv2( val ) {
    return arguments.length;
 }
 
+var iserv3 = new Service( function( n, m ) {
+   assert.ok( n > 0 );
+   assert.ok( m > n );
+   
+   return n + m;
+}, "iserv3", {n: 10, m: 20} );
+
 if( process.argv.indexOf( "serv/service2.js" ) ) {
    process.exit( 0 );
 }

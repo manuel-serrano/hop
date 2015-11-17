@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Nov  6 02:07:24 2015 (serrano)                */
+;*    Last change :  Tue Nov 17 16:28:05 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -110,18 +110,23 @@
       
       (define js-server
 	 (js-make-function %this
-	    (lambda (this host port auth)
+	    (lambda (this host port auth ssl)
 	       (js-new %this host port auth))
-	    3 'Server
+	    4 'Server
 	    :__proto__ js-function-prototype
 	    :prototype js-server-prototype
-	    :construct (lambda (this host port auth)
+	    :construct (lambda (this host port auth ssl)
 			  (instantiate::JsWrapper
 			     (__proto__ js-server-prototype)
 			     (data '())
 			     (obj (instantiate::server
-				     (host (js-tostring host %this))
-				     (port (js-tointeger port %this))
+				     (ssl (js-toboolean ssl))
+				     (host (if (eq? host (js-undefined))
+					       (hop-server-hostname)
+					       (js-tostring host %this)))
+				     (port (if (eq? port (js-undefined))
+					       (hop-port)
+					       (js-tointeger port %this)))
 				     (authorization (if (eq? auth (js-undefined))
 							#f
 							(js-tostring auth %this)))))))))
@@ -164,6 +169,44 @@
 				  (remove-event-listener! server
 					(js-tostring event %this) (cdr f)))))))
 		   3 'removeEventListener))
+      (js-bind! %this js-server-prototype 'port
+	 :get (js-make-function %this
+		 (lambda (this::JsWrapper)
+		    (with-access::JsWrapper this (obj)
+		       (when (isa? obj server)
+			  (with-access::server obj (port)
+			     port))))
+		 0 'port)
+	 :writable #f)
+      (js-bind! %this js-server-prototype 'host
+	 :get (js-make-function %this
+		 (lambda (this::JsWrapper)
+		    (with-access::JsWrapper this (obj)
+		       (when (isa? obj server)
+			  (with-access::server obj (host)
+			     (js-string->jsstring host)))))
+		 0 'host)
+	 :writable #f)
+      (js-bind! %this js-server-prototype 'authorization
+	 :get (js-make-function %this
+		 (lambda (this::JsWrapper)
+		    (with-access::JsWrapper this (obj)
+		       (when (isa? obj server)
+			  (with-access::server obj (authorization)
+			     (when (string? authorization)
+				(js-string->jsstring authorization))))))
+		 0 'authorization)
+	 :writable #f)
+      (js-bind! %this js-server-prototype 'ssl
+	 :get (js-make-function %this
+		 (lambda (this::JsWrapper)
+		    (with-access::JsWrapper this (obj)
+		       (when (isa? obj server)
+			  (with-access::server obj (ssl)
+			     ssl))))
+		 0 'ssl)
+	 :writable #f)
+				
 				  
       (with-access::JsGlobalObject %this (js-object)
 	 (js-alist->jsobject

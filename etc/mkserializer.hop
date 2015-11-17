@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 16 07:56:29 2015                          */
-;*    Last change :  Fri Jul 17 18:00:15 2015 (serrano)                */
+;*    Last change :  Tue Nov 17 14:41:51 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    A tool to produce the client-side HopScript class serializers    */
@@ -85,7 +85,12 @@
    ;; JsStringLiteral
    (printf "  ~a: { unserializer: function( s ) { return s } },\n"
       (class-hash JsStringLiteral))
-   (display "}\n"))
+   ;; JsHopFrame
+   (printf "  ~a: { unserializer: function( u ) { console.log( 'glop' ); return new HopFrame( u ) } },\n"
+      (class-hash JsHopFrame))
+   (display "};\n")
+   (printf "\nHopFrame.prototype.hash = ~a;\n" (class-hash JsHopFrame))
+   )
 
 ;*---------------------------------------------------------------------*/
 ;*    run                                                              */

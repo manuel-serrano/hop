@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Wed Oct 21 18:06:19 2015 (serrano)                */
+/*    Last change :  Mon Nov 16 14:52:05 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -14,6 +14,9 @@
 /*    imports                                                          */
 /*---------------------------------------------------------------------*/
 const path = require( "path" );
+const config = require( hop.config );
+
+const ipath = path.join( config.shareDir, "icons", "hop" );
 
 /*---------------------------------------------------------------------*/
 /*    title ...                                                        */
@@ -24,15 +27,18 @@ function title( attrs, subtitle = false, ... nodes ) {
        <div class="row">
 	 <div class="col-md-2">
 	   <svg:img
-             src=${path.join( attrs.root, "../share/icons/hop/hop.svg" )}
+             src=${path.join( ipath, "hop.svg" )}
              height="20ex" width="10em"/>
 	 </div>
 	 <div class="col-md-10">
 	   <h1>
-              Hop.js ${subtitle ? <small>/${subtitle}</small> : ""}
+              ${attrs.title ? attrs.title : "Hop.js"}
+              ${subtitle ? <small>/${subtitle}</small> : ""}
 	   </h1>
 	   <p>
-             <span class="label label-default lbl-lg">version ${hop.version}</span>
+             <span class="label label-default lbl-lg">
+              version ${attrs.version ? attrs.version : config.version}
+	     </span>
 	   </p>
 	 </div>
        </div>
@@ -156,7 +162,7 @@ function docfooter( attrs ) {
 	 <button type="button" class="inria btn btn-danger">
            <a href="http://www.inria.fr">
            <svg:img class="inria"
-		    src=${path.join( attrs.root, "../share/icons/hop/inria.svg" )}
+		    src=${path.join( ipath, "inria.svg" )}
 		    height="1.6ex" width="4em"/>
            </a>
 	 </button>

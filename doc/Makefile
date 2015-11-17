@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Nov 15 08:21:13 2015 (serrano)                */
+#*    Last change :  Mon Nov 16 08:33:53 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -83,8 +83,9 @@ VPATH=api lang dev widget \
 #*---------------------------------------------------------------------*/
 .PHONY: build clean install uninstall
 
-build: $(ALL_TARGETS) hss/markdown.css hss/fontifier.css hss/doc.css
-build+: html-idx.json
+build: $(ALL_TARGETS) \
+  hss/markdown.css hss/fontifier.css hss/doc.css html-idx.json
+
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -112,6 +113,8 @@ install:
 	cp -r lib/jquery $(DESTDIR)$(HOPDOCDIR)/lib
 	$(RM) -r -f $(DESTDIR)$(HOPDOCDIR)/hss
 	cp -r hss $(DESTDIR)$(HOPDOCDIR)/hss
+	$(INSTALL) doc.js $(DESTDIR)$(HOPDOCDIR)
+	$(INSTALL) xml.js $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/hss
 	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/hss/*
@@ -126,8 +129,6 @@ install:
 	chmod $(MODFILE) $(JQUERY_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/jquery/%)
 	chmod $(MODFILE) $(BOOTSTRAP_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/%)
 	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/css/*
-
-install+:
 	$(INSTALL) html-idx.json $(DESTDIR)$(HOPDOCDIR)
 
 uninstall:

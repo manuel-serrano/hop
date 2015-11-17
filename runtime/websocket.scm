@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Oct  2 17:52:04 2015 (serrano)                */
+;*    Last change :  Tue Nov 17 19:49:26 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -673,6 +673,7 @@
 							  (condition-variable-wait! %condvar %mutex)))
 						    (with-handler
 						       (lambda (e)
+							  (exception-notify e)
 							  (if (eof-error? e)
 							      (close)
 							      (abort e)))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sun Nov 15 08:57:39 2015 (serrano)                */
+/*    Last change :  Mon Nov 16 14:52:18 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -23,7 +23,16 @@ const docxml = require( "./xml.js" );
 /*---------------------------------------------------------------------*/
 /*    global parameters                                                */
 /*---------------------------------------------------------------------*/
-const ROOT = path.dirname( module.filename );
+const ROOT = process.cwd();
+const DOC = path.join( ROOT, "doc.json" );
+
+const doc = fs.existsSync( DOC ) ? require( DOC ) : undefined;
+
+const chapters = doc ?
+      doc.chapters.map( function( c, idx = undefined, arr = undefined ) {
+	 c.entries = chapterEntries( c );
+	 return c;
+      } ) : [];
 
 function P( file ) {
    return path.normalize( "./" + file );
@@ -45,15 +54,6 @@ const alias = {
    "spage.md": "widget"
 }
 
-/*---------------------------------------------------------------------*/
-/*    chapters ...                                                     */
-/*---------------------------------------------------------------------*/
-const chapters = require( "./doc.json" )
-      .chapters
-      .map( function( c, idx = undefined, arr = undefined ) {
-	 c.entries = chapterEntries( c );
-	 return c;
-      } );
 
 /*---------------------------------------------------------------------*/
 /*    chapterEntries ...                                               */
@@ -153,7 +153,6 @@ function compileSection( page ) {
    var ast = hopdoc.load( path.join( path.dirname( module.filename ), page ) )
    var toc = hopdoc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
-   var chapter = path.basename( path.dirname( path ) );
    var key = path.basename( path.dirname( page ) ).toLowerCase();
 
    if( key == "doc" ) {
@@ -258,18 +257,18 @@ function compileChapter( json ) {
 function compileMain( content ) {
    var document = <html>
      <head css=${css}
-	   title="Hop.js"
+	   title=${doc.title}
            jscript=${jscript}
            rts=${false}/>
 
      <body class="home" data-spy="scroll" data-target="#navbar">
-       <docxml.navbar title="Hop.js" key="home">
+       <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
        <docxml.title root=${ROOT}/>
 
        <div class="container home-body">
-         ${hopdoc.load( path.join( path.dirname( module.filename ), content ) ).XML}
+         ${hopdoc.load( content ).XML}
 	 <docxml.footer root=${ROOT}/>
        </div>
      </body>
@@ -281,22 +280,24 @@ function compileMain( content ) {
 /*---------------------------------------------------------------------*/
 /*    compileLibrary ...                                               */
 /*---------------------------------------------------------------------*/
-function compileLibrary( content, logo, script, css ) {
+function compileLibrary( content ) {
+   var footer = path.join( path.dirname( content ), "footer.md" );
+   
    var document = <html>
      <head css=${css}
-	   title="Hop.js"
+	   title=${doc.title}
            jscript=${jscript}
            rts=${false}/>
 
-     <body class="home" data-spy="scroll" data-target="#navbar">
-       <docxml.navbar title="Hop.js" key="home">
+     <body class="library" data-spy="scroll" data-target="#navbar">
+       <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
-       <docxml.title root=${ROOT}/>
+       <docxml.title title=${doc.title} version=${doc.version} root=${ROOT}/>
 
        <div class="container home-body">
-         ${hopdoc.load( path.join( path.dirname( module.filename ), content ) ).XML}
-	 <docxml.footer root=${ROOT}/>
+         ${hopdoc.load( content ).XML}
+	 ${fs.existsSync( footer ) ? hopdoc.load( footer ).XML : ""}
        </div>
      </body>
    </html>;
@@ -358,7 +359,7 @@ function main() {
 	 break;
 
       case "compile-library":
-	 compileMain( process.argv[ 3 ], process.argv[ 4 ] );
+	 compileLibrary( process.argv[ 3 ] );
 	 break;
 
       case "compile-section":

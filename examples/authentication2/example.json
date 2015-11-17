@@ -3,7 +3,7 @@
    "description": "Service authentication",
    "doc": "This example shows how to implement custom access rules.",
    "level": 1.1,
-   "files": [ "authentication2.js", "remote.js", "passwd.json" ],
+   "files": [ "authentication2.js", "remote.js", "passwd.js" ],
    "commands": [ "hop --no-color --no-zeroconf -p $(PORT) --rc-file $(RCFILE) -- authentication2.js $(NEXTPORT)",
 		 "hop --no-color --no-zeroconf -p $(PORT) --rc-file passwd.js remote.js" ],
    "service": false

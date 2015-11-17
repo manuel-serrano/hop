@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Nov  7 10:24:05 2015 (serrano)                */
+;*    Last change :  Tue Nov 17 17:20:48 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -31,11 +31,6 @@
 	   __hopscript_lib
 	   __hopscript_array)
 
-   (static (class JsHopFrame::JsObject
-	      (%this read-only)
-	      (args read-only (default #f))
-	      (url read-only)))
-
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj)
 	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::hop-service)))
@@ -53,6 +48,36 @@
       (js-raise-type-error (js-initial-global-object)
 	 "[[SerializeTypeError]] ~a" o))
    (lambda (o) o))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsHopFrame ...                               */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsHopFrame
+   (lambda (o)
+      (hopframe->string o (js-initial-global-object)))
+   (lambda (o ctx)
+      (define enc "?hop-encoding=hop&vals=")
+      (with-access::JsGlobalObject ctx (js-hopframe-prototype)
+	 (let ((i (string-index o #\?)))
+	    (cond
+	       ((not i)
+		(instantiate::JsHopFrame
+		   (__proto__ js-hopframe-prototype)
+		   (%this ctx)
+		   (args '())
+		   (url o)))
+	       ((substring-at? o enc i)
+		(let* ((urlargs (substring o (+fx i (string-length enc))))
+		       (val (string->obj (url-decode urlargs)))
+		       (args `("hop" ,(obj->string val 'hop-to-hop)
+				 "hop-encoding: hop")))
+		   (instantiate::JsHopFrame
+		      (__proto__ js-hopframe-prototype)
+		      (%this ctx)
+		      (args (list args))
+		      (url (substring o 0 i)))))
+	       (else
+		(error "HopFrame" "wrong frame" o)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsHopFrame ...                                     */
@@ -206,16 +231,16 @@
 	 
 	 (js-bind! %this js-hopframe-prototype 'post
 	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame success opt)
+		      (lambda (this::JsHopFrame success srv opt)
 			 (with-access::JsHopFrame this (url args)
-			    (post url args success opt %this #f)))
-		      2 'post))
+			    (post url args success srv opt %this #t)))
+		      3 'post))
 	 (js-bind! %this js-hopframe-prototype 'postSync
 	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame opt)
+		      (lambda (this::JsHopFrame srv opt)
 			 (with-access::JsHopFrame this (url args)
-			    (post url args #f opt %this #t)))
-		      1 'postSync))
+			    (post url args #f srv opt %this #f)))
+		      2 'postSync))
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
@@ -346,7 +371,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (post svc::bstring args success opt %this force-sync)
+(define (post svc::bstring args success srv opt %this async)
    
    (let ((host "localhost")
 	 (port (hop-port))
@@ -355,17 +380,26 @@
 	 (authorization #f)
 	 (fail #f)
 	 (failjs #f)
-	 (asynchronous (not force-sync))
+	 (asynchronous async)
 	 (header #f)
 	 (scheme 'http)
 	 (worker (js-current-worker)))
+      (when (and (eq? opt (js-undefined)) (not (isa? srv JsWrapper)))
+	 (set! opt srv)
+	 (set! srv #f))
       (cond
 	 ((isa? opt JsFunction)
 	  (set! fail
-	     (lambda (xhr)
-		(with-access::xml-http-request xhr (header)
-		   (js-call1 %this opt %this
-		      (js-alist->jsobject header %this))))))
+	     (if asynchronous
+		 (lambda (xhr)
+		    (with-access::xml-http-request xhr (header)
+		       (js-call1 %this opt %this
+			  (js-alist->jsobject header %this))))
+		 (lambda (xhr)
+		    (js-worker-push-thunk! worker svc
+		       (lambda ()
+			  (js-call1 %this opt %this
+			     (js-alist->jsobject header %this))))))))
 	 ((not (eq? opt (js-undefined)))
 	  (let ((h (js-get opt 'host %this))
 		(p (js-get opt 'port %this))
@@ -408,6 +442,20 @@
 				(js-alist->jsobject header %this)))))))
 	     (when (isa? r JsObject)
 		(set! header (js-jsobject->alist r %this))))))
+
+      (when (isa? srv JsWrapper)
+	 (with-access::JsWrapper srv (obj)
+	    (when (isa? obj server)
+	       (with-access::server obj ((srvssl ssl)
+					 (srvhost host)
+					 (srvport port)
+					 (srvauthorization authorization))
+		  (when srvssl
+		     (set! scheme 'https))
+		  (when (string? srvauthorization)
+		     (set! authorization srvauthorization))
+		  (set! host srvhost)
+		  (set! port srvport)))))
       
       (define (scheme->js val)
 	 ;; a string might be received on internal server error
@@ -560,6 +608,13 @@
 			    (js-get obj k %this)
 			    (cdr arg))))
 		defaults)))
+	 ((and (pair? objs) (null? (cdr objs)) (pair? (car objs)))
+	  (map (lambda (arg)
+		  (let ((l (memq (car arg) (car objs))))
+		     (if (pair? l)
+			 (cadr l)
+			 (cdr arg))))
+	     defaults))
 	 ((null? objs)
 	  (map (lambda (arg)
 		  (let ((c (memq (car arg) objs)))

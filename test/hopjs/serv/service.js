@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jan 11 18:14:33 2015                          */
-/*    Last change :  Fri Jan 16 09:32:47 2015 (serrano)                */
+/*    Last change :  Tue Nov 17 17:24:37 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing server-to-server services                                */
@@ -36,6 +36,7 @@ service serv2( val ) {
 import service iserv0();
 import service iserv1();
 import service iserv2();
+import service iserv3();
 
 function test() {
    serv0( 3 ).post( function( v ) { assert.ok( v == 4 ); res++; } );
@@ -58,6 +59,9 @@ function test() {
    iserv1( {n: 15, m: 25} ).post( function( v ) { assert.ok( v == 40 ); res++; } );
    iserv2( 1 ).post( function( v ) { assert.ok( v === 1 ); res++ } );
    iserv2( 1, 2 ).post( function( v ) { assert.ok( v === 2 ); res++ } );
+   
+   iserv3( 1 ).post( function( v ) { assert.ok( v === 1 ); res++ } );
+   iserv3( 1, 2 ).post( function( v ) { assert.ok( v === 2 ); res++ } );
    
    iserv0( 3 ).post( function( v ) { assert.ok( v == 4 ); res++; } );
 }

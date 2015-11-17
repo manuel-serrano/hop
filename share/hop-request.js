@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Nov 11 18:08:45 2015 (serrano)                */
+/*    Last change :  Tue Nov 17 14:41:26 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -354,7 +354,6 @@ function hop_request_unserialize( xhr, svc ) {
    var ctype = ("content_type" in xhr) ?
        xhr[ "content_type" ] : hop_header_content_type( xhr );
 
-   console.log( svc, " hop_request_unserialize ctype=", ctype );
    if( ctype === "application/x-hop" ) {
       if( xhr.responseType === "arraybuffer" ) {
 	 return hop_bytearray_to_obj( new Uint8Array( xhr.response ) );
@@ -542,7 +541,9 @@ HopFrame.prototype.post = function post( success, opt ) {
 HopFrame.prototype.postSync = function call( opt ) {
    return withHOP( this.url, function( v ) { return v }, opt, true );
 }
-   
+
+HopFrame.prototype.hop_bigloo_serialize = hop_bigloo_serialize_hopframe;
+
 /*---------------------------------------------------------------------*/
 /*    withHOP ...                                                      */
 /*---------------------------------------------------------------------*/

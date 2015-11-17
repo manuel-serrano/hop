@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Fri Oct 23 08:01:57 2015 (serrano)                */
+/*    Last change :  Tue Nov 17 14:48:30 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -213,6 +213,39 @@ function hop_bigloo_serialize_sc_object() {
    return str;
 }
 
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_hopframe ...                                */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_hopframe() {
+   var item = this;
+   var classname = "JsHopFrame";
+   var hash = HopFrame.prototype.hash;
+   var str = "O";
+
+   if( "defineProperty" in Object ) {
+      Object.defineProperty( item, "hop_serialize_context_key", {
+	 value: hop_serialize_context.key,
+	 enumerable: false,
+	 configurable: false
+      } );
+      Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: false
+      } );
+   } else {
+      item.hop_serialize_context_key = hop_serialize_context.key;
+      item.hop_serialize_context_def = hop_serialize_context.def++;
+   }
+
+   str += hop_bigloo_serialize_context( sc_cons( hash, this.url ) );
+   str += hop_bigloo_serialize_context( 0 );
+
+   str = "=" + hop_serialize_word( item.hop_serialize_context_def ) + str;
+
+   return str;
+}   
+   
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_sc_class ...                                */
 /*---------------------------------------------------------------------*/

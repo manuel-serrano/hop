@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sat Nov  7 10:00:31 2015 (serrano)                */
+;*    Last change :  Tue Nov 17 19:47:19 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -87,7 +87,6 @@
 	    (class server-event::websocket-event)
 
 	    (class server
-	       (server-init!)
 	       (host::bstring read-only)
 	       (port::int read-only)
 	       (ssl::bool (default #f))
@@ -157,7 +156,7 @@
 ;*    server-init! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-generic (server-init! srv::server)
-
+   
    (define (message->event k id text)
       (case (string-ref k 0)
 	 ((#\i)
@@ -200,7 +199,7 @@
 		(name id)
 		(value val)
 		(data val))))))
-      
+   
    (define (parse-message v)
       (with-access::websocket-event v (data)
 	 (let ((m (pregexp-match envelope-re data)))
@@ -216,31 +215,33 @@
 			(when (pair? ltns)
 			   (let ((event (message->event k id text)))
 			      (apply-listeners ltns event))))))))))
-      
+   
    (with-access::server srv (host port ssl authorization %websocket %key)
-      (with-hop (string-append (hop-service-base) "/public/server-event/info")
-	 :host host :port port
-	 :authorization authorization
-	 :ssl ssl
-	 :sync #t
-	 (lambda (v)
-	    (let* ((key (vector-ref v 2))
-		   (url (format "~a://~a:~a~a/public/server-event/websocket?key=~a"
-			   (if ssl "wss" "ws") host port (hop-service-base)
-			   key)))
-	       (set! %key key)
-	       (set! %websocket
-		  (instantiate::websocket
-		     (url url)
-		     (authorization authorization)
-		     (onmessages (list parse-message))))
-	       (websocket-connect! %websocket))))))
+      (unless %websocket
+	 (with-hop (string-append (hop-service-base) "/public/server-event/info")
+	    :host host :port port
+	    :authorization authorization
+	    :ssl ssl
+	    :sync #t
+	    (lambda (v)
+	       (let* ((key (vector-ref v 2))
+		      (url (format "~a://~a:~a~a/public/server-event/websocket?key=~a"
+			      (if ssl "wss" "ws") host port (hop-service-base)
+			      key)))
+		  (set! %key key)
+		  (set! %websocket
+		     (instantiate::websocket
+			(url url)
+			(authorization authorization)
+			(onmessages (list parse-message))))
+		  (websocket-connect! %websocket)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::server ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! obj::server event proc . capture)
-   (with-access::server obj (host port ssl authorization %websocket %key listeners)
+   (server-init! obj)
+   (with-access::server obj (host port ssl authorization %key listeners)
       (with-hop (format "~a/public/server-event/register?event=~a&key=~a&mode=websocket"
 		   (hop-service-base) event %key)
 	 :host host :port port

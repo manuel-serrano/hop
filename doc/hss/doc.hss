@@ -136,6 +136,7 @@ h2 {
 
 body.home h2:before,
 body.home h3:before,
+body.library h2:before,
 body.download h2:before,
 body.download h3:before,
 h1.nonumber:before,
