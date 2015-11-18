@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:35 2014                          */
-/*    Last change :  Tue Nov 17 16:37:19 2015 (serrano)                */
+/*    Last change :  Wed Nov 18 10:22:08 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    show how to authenticate server-to-server requests               */
@@ -16,18 +16,18 @@ import service s_private();
 
 var port = parseInt( process.argv[ process.argv.length - 1 ] );
 
-var srv = new hop.Server( "localhost", port );
+var opt = { server: new hop.Server( "localhost", port ) };
 
 function connect() {
    /* accepted connection */
    try {
-      console.log( s_public( "no password" ).postSync( srv ) );
+      console.log( s_public( "no password" ).postSync( opt ) );
    } catch( err ) {
       console.log( "public, no password, connection refused: ", err )
    }
 
    try {
-      console.log( s_public( "password" ).postSync( srv, {
+      console.log( s_public( "password" ).postSync( opt, {
 	 user: "foo",
 	 password: "foo"
       } ) );
@@ -37,7 +37,7 @@ function connect() {
 
    /* accepted connection */
    try {
-      console.log( s_private( "password" ).postSync( srv, {
+      console.log( s_private( "password" ).postSync( opt, {
 	 user: "foo",
 	 password: "foo"
       } ) );
@@ -47,7 +47,7 @@ function connect() {
    
    /* refused connection */
    try {
-      console.log( s_private( "no password" ).postSync( srv ) );
+      console.log( s_private( "no password" ).postSync( opt ) );
    } catch( err ) {
       console.log( "private, no password, connection refused: ", err )
    }

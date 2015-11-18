@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Nov 18 08:40:28 2015 (serrano)                */
+;*    Last change :  Wed Nov 18 10:56:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -237,15 +237,15 @@
 	 
 	 (js-bind! %this js-hopframe-prototype 'post
 	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame success srv opt)
+		      (lambda (this::JsHopFrame success opt)
 			 (with-access::JsHopFrame this (url args)
-			    (post url args success srv opt %this #t)))
+			    (post url args success opt %this #t)))
 		      3 'post))
 	 (js-bind! %this js-hopframe-prototype 'postSync
 	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame srv opt)
+		      (lambda (this::JsHopFrame opt)
 			 (with-access::JsHopFrame this (url args)
-			    (post url args #f srv opt %this #f)))
+			    (post url args #f opt %this #f)))
 		      2 'postSync))
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
@@ -377,7 +377,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (post svc::bstring args success srv opt %this async)
+(define (post svc::bstring args success opt %this async)
    
    (let ((host "localhost")
 	 (port (hop-port))
@@ -390,9 +390,6 @@
 	 (header #f)
 	 (scheme 'http)
 	 (worker (js-current-worker)))
-      (when (and (eq? opt (js-undefined)) (not (isa? srv JsWrapper)))
-	 (set! opt srv)
-	 (set! srv #f))
       (cond
 	 ((isa? opt JsFunction)
 	  (set! fail
@@ -407,16 +404,18 @@
 			  (js-call1 %this opt %this
 			     (js-alist->jsobject header %this))))))))
 	 ((not (eq? opt (js-undefined)))
-	  (let ((h (js-get opt 'host %this))
-		(p (js-get opt 'port %this))
-		(u (js-get opt 'user %this))
-		(w (js-get opt 'password %this))
-		(a (js-get opt 'authorization %this))
-		(f (js-get opt 'fail %this))
-		(y (js-get opt 'asynchronous %this))
-		(s (js-get opt 'scheme %this))
-		(c (js-get opt 'ssl %this))
-		(r (js-get opt 'header %this)))
+	  (let* ((v (js-get opt 'server %this))
+		 (o (if (eq? v (js-undefined)) opt v))
+		 (a (js-get o 'authorization %this))
+		 (h (js-get o 'host %this))
+		 (p (js-get o 'port %this))
+		 (u (js-get opt 'user %this))
+		 (w (js-get opt 'password %this))
+		 (f (js-get opt 'fail %this))
+		 (y (js-get opt 'asynchronous %this))
+		 (s (js-get opt 'scheme %this))
+		 (c (js-get opt 'ssl %this))
+		 (r (js-get opt 'header %this)))
 	     (unless (eq? h (js-undefined))
 		(set! host (js-tostring h %this)))
 	     (unless (eq? p (js-undefined))
@@ -449,20 +448,6 @@
 	     (when (isa? r JsObject)
 		(set! header (js-jsobject->alist r %this))))))
 
-      (when (isa? srv JsWrapper)
-	 (with-access::JsWrapper srv (obj)
-	    (when (isa? obj server)
-	       (with-access::server obj ((srvssl ssl)
-					 (srvhost host)
-					 (srvport port)
-					 (srvauthorization authorization))
-		  (when srvssl
-		     (set! scheme 'https))
-		  (when (string? srvauthorization)
-		     (set! authorization srvauthorization))
-		  (set! host srvhost)
-		  (set! port srvport)))))
-      
       (define (scheme->js val)
 	 ;; a string might be received on internal server error
 	 (if (string? val)
@@ -517,7 +502,7 @@
 					     (js-call1 %this resolve %this
 						(scheme->js x))))))))))
 		  2 "executor"))))
-      
+
       (if asynchronous
 	  (if (isa? success JsFunction)
 	      (spawn-thread)
@@ -626,6 +611,26 @@
 		  (let ((c (memq (car arg) objs)))
 		     (if (pair? c)
 			 (js-obj->jsobject (cadr c) %this)
+			 (cdr arg))))
+	     defaults))
+	 ((list? objs)
+	  (let loop ((objs objs))
+	     (when (pair? objs)
+		(if (or (null? (cdr objs))
+			(not (keyword? (car objs)))
+			(not (assq (car objs) defaults)))
+		    (js-raise-type-error %this
+		       (format "~s: bad named service argument ~s"
+			  (if (eq? args (js-undefined))
+			      (js-tostring proc %this)
+			      name)
+			  (car objs))
+		       #f)
+		    (loop (cddr objs)))))
+	  (map (lambda (arg)
+		  (let ((l (memq (car arg) objs)))
+		     (if (pair? l)
+			 (cadr l)
 			 (cdr arg))))
 	     defaults))
 	 (else

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Tue Sep 29 07:50:19 2015 (serrano)                */
+/*    Last change :  Wed Nov 18 10:57:05 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
