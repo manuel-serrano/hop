@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Mon Nov 16 08:21:27 2015 (serrano)                */
+#*    Last change :  Wed Nov 18 08:21:31 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -246,8 +246,8 @@ uninstall:
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
 hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
-  hop-exception.js hop-builtin-serializers.js hop-nodejs.js \
-  $(RTSCONFIG)
+  hop-exception.js hop-nodejs.js \
+  $(RTSCONFIG) hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -261,8 +261,8 @@ hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
                >> $@
 
 hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
-  hop-exception.js hop-debug.js hop-builtin-serializers.js hop-nodejs.js \
-  $(RTSCONFIG)
+  hop-exception.js hop-debug.js hop-nodejs.js \
+  $(RTSCONFIG) hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Nov 17 17:20:48 2015 (serrano)                */
+;*    Last change :  Wed Nov 18 08:40:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -33,7 +33,7 @@
 
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj)
-	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::hop-service)))
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -45,9 +45,15 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsService
    (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
-   (lambda (o) o))
+      (with-access::JsService o (svc)
+	 (with-access::hop-service svc (path)
+	    path)))
+   (lambda (o ctx)
+      (let* ((svcp (lambda (this . args)
+		      (js-make-hopframe ctx o args)))
+	     (svcjs (js-make-service ctx svcp (basename o) #f -1
+		       (js-current-worker) #f)))
+	 svcjs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsHopFrame ...                               */
@@ -694,9 +700,10 @@
 		  (set! wid (string->symbol (basename apath))))))))
    
    (with-access::JsGlobalObject %this (js-service-prototype)
-      (when register (register-service! svc))
-      (with-access::WorkerHopThread worker (services)
-	 (set! services (cons svc services)))
+      (when svc
+	 (when register (register-service! svc))
+	 (with-access::WorkerHopThread worker (services)
+	    (set! services (cons svc services))))
       (instantiate::JsService
 	 (procedure proc)
 	 (len arity)
