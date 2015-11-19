@@ -1,5 +1,5 @@
 ${ var doc = require( "hopdoc" ) }
-${ var xml = require( doc.ROOT + "/doc/xml.js" ) }
+${ var xml = require( doc.BUILDDIR + "/doc/xml.js" ) }
 
     HOP, a web development kit
        

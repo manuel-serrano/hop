@@ -116,12 +116,12 @@ the full path of a existing file.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/file/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/file/README.md" ) }
 
 ${ <span class="label label-info">file/file.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/file/file.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/file/file.js", 14 ) }
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -144,12 +144,12 @@ and passing a `tagstLine` value in the optional argument.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/authentication/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/authentication/README.md" ) }
 
 ${ <span class="label label-info">authentication/authentication.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/authentication/authentication.js", 14 ) }
 ```
 
 ### hop.HTTPResponseError( obj, [option] ) ###
@@ -174,12 +174,12 @@ the service invokation.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/svc3/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/svc3/README.md" ) }
 
 ${ <span class="label label-info">svc3/svc3.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/svc3/svc3.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/svc3/svc3.js", 14 ) }
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -215,12 +215,12 @@ remote resources by the server.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/image/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/image/README.md" ) }
 
 ${ <span class="label label-info">image/image.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/image/image.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/image/image.js", 14 ) }
 ```
 
 Broadcast
@@ -366,7 +366,7 @@ Converts the `text` string from charset `source` into charset `target`.
 ${ <span class="label label-info">url/url.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/url/url.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/url/url.js", 14 ) }
 ```
 
 ### hop.encodeURIComponent( string ) ###

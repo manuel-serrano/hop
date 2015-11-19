@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Nov 18 10:56:38 2015 (serrano)                */
+;*    Last change :  Thu Nov 19 11:47:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -686,6 +686,8 @@
 	      (create-dsssl-service proc name args))))
       ((isa? name JsObject)
        (create-dsssl-service proc #f name))
+      ((and (eq? name (js-undefined)) (isa? args JsObject))
+       (create-dsssl-service proc #f args))
       (else
        (create-fix-service proc #f))))
 

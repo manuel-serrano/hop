@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Mon Nov 16 14:52:18 2015 (serrano)                */
+/*    Last change :  Thu Nov 19 10:39:30 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -23,6 +23,7 @@ const docxml = require( "./xml.js" );
 /*---------------------------------------------------------------------*/
 /*    global parameters                                                */
 /*---------------------------------------------------------------------*/
+const PWD = process.cwd();
 const ROOT = process.cwd();
 const DOC = path.join( ROOT, "doc.json" );
 
@@ -53,7 +54,6 @@ const alias = {
    "tree.md": "widget",
    "spage.md": "widget"
 }
-
 
 /*---------------------------------------------------------------------*/
 /*    chapterEntries ...                                               */
@@ -86,7 +86,7 @@ function chapterEntries( chapter ) {
    }
 
    if( chapter.json ) {
-      var c = require( "./" + chapter.json );
+      var c = require( path.join( PWD, chapter.json ) );
       return Array.prototype.concat.apply( [], c.files.map( chapterEntry ) );
    } else if( chapter.files ) {
       return Array.prototype.concat.apply( [], chapter.files.map( chapterEntry ) );
@@ -150,7 +150,7 @@ function makeToc( els, k, proc = false ) {
 /*    compileSection ...                                               */
 /*---------------------------------------------------------------------*/
 function compileSection( page ) {
-   var ast = hopdoc.load( path.join( path.dirname( module.filename ), page ) )
+   var ast = hopdoc.load( path.join( PWD, page ) )
    var toc = hopdoc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
    var key = path.basename( path.dirname( page ) ).toLowerCase();
@@ -163,7 +163,7 @@ function compileSection( page ) {
 
    var document = <html>
      <head css=${css}
-	   title=${title}
+	   title=${doc.title + "/" + title}
            jscript=${jscript}
            rts=${false}/>
 
@@ -173,7 +173,12 @@ function compileSection( page ) {
          ${chapters}
        </docxml.navbar>
        
-       <docxml.title root=${ROOT}>${title}</docxml.title>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}>
+          ${title}
+       </docxml.title>
        <div class="container">
          <div class=${toc == [] ? "col-md-12" : "col-md-9"} role="main">
            <h1 class="toc" id="toc">Table of Contents</h1>
@@ -209,21 +214,25 @@ function compileSection( page ) {
 /*    compileChapter ...                                               */
 /*---------------------------------------------------------------------*/
 function compileChapter( json ) {
-   var chapter = require( "./" + json );
+   var chapter = require( path.join( PWD, json ) );
    var toc = chapterEntries( chapter );
 
    var document = <html>
      <head css=${css}
-	   title=${chapter.title}
+	   title=${doc.title + "/" + chapter.title}
            jscript=${jscript}
            rts=${false}/>
 
      <body data-spy="scroll" data-target="#navbar">
-       <docxml.navbar title=${chapter.title}
-                      key=${chapter.key}>
+       <docxml.navbar title=${chapter.title} key=${chapter.key}>
          ${chapters}
        </docxml.navbar>
-       <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}>
+          ${chapter.title}
+       </docxml.title>
 
        <div class="container">
          ${chapter.description ? <div class="chapter-header">
@@ -265,7 +274,10 @@ function compileMain( content ) {
        <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
-       <docxml.title root=${ROOT}/>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}/>
 
        <div class="container home-body">
          ${hopdoc.load( content ).XML}
@@ -293,7 +305,10 @@ function compileLibrary( content ) {
        <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
-       <docxml.title title=${doc.title} version=${doc.version} root=${ROOT}/>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}/>
 
        <div class="container home-body">
          ${hopdoc.load( content ).XML}
@@ -311,12 +326,12 @@ function compileLibrary( content ) {
 /*    compile the HTML index page.                                     */
 /*---------------------------------------------------------------------*/
 function compileIdx( json ) {
-   var idx = require( "./" + json );
+   var idx = require( path.join( PWD, json ) );
    var chapter = { title: "Index", key: "index" };
 
    var document = <html>
      <head css=${css}
-	   title=${chapter.title}
+	   title=${doc.title + "/" + chapter.title}
            jscript=${jscript}
            rts=${false}/>
 
@@ -325,7 +340,12 @@ function compileIdx( json ) {
                       key=${chapter.key}>
          ${chapters}
        </docxml.navbar>
-       <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}>
+          ${chapter.title}
+       </docxml.title>
 
        <div class="container">
 	 <docxml.idx>${idx}</docxml.idx>
@@ -343,10 +363,9 @@ function compileIdx( json ) {
 function main() {
    switch( process.argv[ 2 ] ) {
       case "html-to-idx":
-	 var pwd = path.dirname( module.filename );
 	 hopdoc.htmlToIdx( process.argv[ 3 ],
 			   process.argv.slice( 4 ).map( function( f, _, __ ) {
-			      return path.join( pwd, f );
+			      return path.join( PWD, f );
 			   } ) );
 	 break;
 

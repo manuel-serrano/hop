@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Mon Nov 16 14:52:05 2015 (serrano)                */
+/*    Last change :  Thu Nov 19 10:40:44 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -21,19 +21,19 @@ const ipath = path.join( config.shareDir, "icons", "hop" );
 /*---------------------------------------------------------------------*/
 /*    title ...                                                        */
 /*---------------------------------------------------------------------*/
-function title( attrs, subtitle = false, ... nodes ) {
+function title( attrs, ... subtitle ) {
    return <div class="jumbotron">
      <div class="container">
        <div class="row">
 	 <div class="col-md-2">
 	   <svg:img
-             src=${path.join( ipath, "hop.svg" )}
+             src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
              height="20ex" width="10em"/>
 	 </div>
 	 <div class="col-md-10">
 	   <h1>
               ${attrs.title ? attrs.title : "Hop.js"}
-              ${subtitle ? <small>/${subtitle}</small> : ""}
+              ${subtitle.length > 0 ? <small>/${subtitle}</small> : ""}
 	   </h1>
 	   <p>
              <span class="label label-default lbl-lg">

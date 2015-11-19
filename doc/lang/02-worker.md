@@ -130,18 +130,18 @@ implicit parent.
 
 ### Basic communications ###
 
-${ doc.include( doc.ROOT + "/examples/worker/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/worker/README.md" ) }
 
 ${ <span class="label label-info">worker/worker.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker/worker.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/worker/worker.js", 14 ) }
 ```
 
 ${ <span class="label label-info">worker/slave.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker/slave.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/worker/slave.js", 14 ) }
 ```
 
 ${ <span class="label label-info">worker/bar.js</span> } Note that the
@@ -149,7 +149,7 @@ parent thread and the Worker thread each get their instance of
 `bar.js`.
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker/bar.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/worker/bar.js", 14 ) }
 ```
 
 ### Worker.terminate() ###
@@ -182,17 +182,17 @@ ${ doc.include( doc.EXAMPLES_DIR + "/worker2/slave.js", 14 ) }
 Workers and Services
 --------------------
 
-${ doc.include( doc.ROOT + "/examples/worker5/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/worker5/README.md" ) }
 
 ${ <span class="label label-info">worker5/worker5.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker5/worker5.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/worker5/worker5.js", 14 ) }
 ```
 
 ${ <span class="label label-info">worker5/slave.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/worker5/slave.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/worker5/slave.js", 14 ) }
 ```
 
