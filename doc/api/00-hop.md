@@ -409,7 +409,7 @@ hop.sha1sum( 'jean dupont' );
 // "7461340811509ec24dd1c1a32504a01e24423768"
 ```
 
-### hop.xmlCompile( node [, ofile] [, backend] ) ###
+### hop.compileXML( node [, ofile] [, backend] ) ###
 [:@glyphicon glyphicon-tag function]
 
 Compile a XML `node` into HTML. If no output file is specified,
@@ -419,11 +419,11 @@ used for the compilation.
 
 ```hopscript
 var node = <html><div onclick=~{alert( "clicked" )}>click me</div></html>
-console.log( hop.XMLCompile( node, false, "html5" ) );
+console.log( hop.compileXML( node, false, "html5" ) );
 ```
 
 ${ <span class="label label-warning">Note:</span> }
- explicit compilation to HTML using `hop.XMLCompile` is unncessary
+ explicit compilation to HTML using `hop.compileXML` is unncessary
 for service responses. Services can directly return XML objects
 in response to HTTP requests.
 [:@warning]

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Nov 19 11:47:12 2015 (serrano)                */
+;*    Last change :  Fri Nov 20 08:04:36 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -60,7 +60,13 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsHopFrame
    (lambda (o)
-      (hopframe->string o (js-initial-global-object)))
+      (let ((url (hopframe->string o (js-initial-global-object))))
+	 (if (char=? (string-ref url 0) #\/)
+	     ;; relative url
+	     (format "~a://~a:~a~a"
+		(if #f "https" "http")
+		(hop-server-hostname) (hop-port) url)
+	     url)))
    (lambda (o ctx)
       (define enc "?hop-encoding=hop&vals=")
       (with-access::JsGlobalObject ctx (js-hopframe-prototype)
@@ -75,12 +81,14 @@
 	       ((substring-at? o enc i)
 		(let* ((urlargs (substring o (+fx i (string-length enc))))
 		       (val (string->obj (url-decode urlargs)))
-		       (args `("hop" ,(obj->string val 'hop-to-hop)
-				 "hop-encoding: hop")))
+		       (args (map (lambda (v)
+				     `("hop" ,(obj->string v 'hop-to-hop)
+					"hop-encoding: hop"))
+				val)))
 		   (instantiate::JsHopFrame
 		      (__proto__ js-hopframe-prototype)
 		      (%this ctx)
-		      (args (list args))
+		      (args args)
 		      (url (substring o 0 i)))))
 	       (else
 		(error "HopFrame" "wrong frame" o)))))))
@@ -252,6 +260,11 @@
 		      (lambda (this::JsHopFrame)
 			 (js-string->jsstring (hopframe->string this %this)))
 		      0 'toString))
+	 (js-bind! %this js-hopframe-prototype 'toURL
+	    :value (js-make-function %this
+		      (lambda (this::JsHopFrame)
+			 (js-string->jsstring (hopframe->string this %this)))
+		      0 'toURL))
 	 (js-bind! %this js-hopframe-prototype 'inspect
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)

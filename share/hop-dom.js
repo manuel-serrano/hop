@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Sep 22 10:00:40 2015 (serrano)                */
+/*    Last change :  Fri Nov 20 14:43:27 2015 (serrano)                */
 /*    Copyright   :  2006-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -1599,7 +1599,8 @@ var hop_tags_parent = {
    'tr' : 'tbody',
    'td' : 'tr',
    'th' : 'tr',
-   'li' : 'ul'
+   'li' : 'ul',
+   'body': 'html'
 };
 
 /*---------------------------------------------------------------------*/
@@ -1608,12 +1609,15 @@ var hop_tags_parent = {
 function hop_create_element( html ) {
    var m = html.match( hop_start_tag );
    var tag;
-   
+   var idx = 0;
+
    if( m ) {
       var t = m[ 1 ];
       tag = ( t in hop_tags_parent ) ? hop_tags_parent[ t ] : "div";
+      idx = ( tag == "html" ) ? 1 : 0;
    } else {
       tag = "div";
+      idx = 0;
    }
 
    var el = document.createElement( tag );
@@ -1624,15 +1628,15 @@ function hop_create_element( html ) {
       // clone to accept evaluating embedded scripts when the resulting
       // node is inserted in the DOM!
       if( html.search( /<script[ >]/i ) >= 0 ) {
-	 return cloneScriptNode( el.childNodes[ 0 ] );
+	 return cloneScriptNode( el.childNodes[ idx ] );
       } else {
 	 // Remove the node otherwise it has a parentNode set to non-null
 	 // which confused functions such as dom_add_child
-	 return el.removeChild( el.childNodes[ 0 ] );
+	 return el.removeChild( el.childNodes[ idx ] );
       }
    } else {
       // See the remark above for removeChild
-      return el.removeChild( el.childNodes[ 0 ] );
+      return el.removeChild( el.childNodes[ idx ] );
    }
 }
 

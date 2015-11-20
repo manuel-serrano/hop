@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Nov 18 08:21:39 2015 (serrano)                */
+/*    Last change :  Fri Nov 20 10:57:48 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -380,7 +380,6 @@ function hop_request_unserialize( xhr, svc ) {
    } else {
       var rep = (xhr.responseType === "arraybuffer") ?
 	  ab2string( xhr.response ) : xhr.responseText;
-      
       if( ctype === "application/x-javascript" ) {
 	 return eval( rep );
       } else if( ctype === "application/x-url-hop" ) {

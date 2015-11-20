@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Mon Nov  9 13:24:09 2015 (serrano)                */
+#*    Last change :  Thu Nov 19 13:23:20 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -181,25 +181,25 @@ install-init: hop-dirs
 
 hop-dirs:
 	if [ ! -d $(DESTDIR)$(HOPBINDIR) ]; then \
-          $(MAKE) mkdir DIR=$(DESTDIR)$(HOPBINDIR); \
+          $(MAKE) mkdir -p DIR=$(DESTDIR)$(HOPBINDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR) ]; then \
-          $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR); \
+          $(MAKE) mkdir -p DIR=$(DESTDIR)$(HOPLIBDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPSHAREDIR) ]; then \
-	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPSHAREDIR); \
+	  $(MAKE) mkdir -p DIR=$(DESTDIR)$(HOPSHAREDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPETCDIR) ]; then \
-	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPETCDIR); \
+	  $(MAKE) mkdir -p DIR=$(DESTDIR)$(HOPETCDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/hop ]; then \
-	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR)/hop; \
+	  $(MAKE) mkdir -p DIR=$(DESTDIR)$(HOPLIBDIR)/hop; \
         fi
 	if [ ! -d $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR) ]; then \
-	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
+	  $(MAKE) mkdir -p DIR=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR); \
         fi
 	if [ ! -d $(DESTDIR)$(HOPWEBLETSDIR) ]; then \
-	  $(MAKE) mkdir DIR=$(DESTDIR)$(HOPWEBLETSDIR); \
+	  $(MAKE) mkdir -p DIR=$(DESTDIR)$(HOPWEBLETSDIR); \
         fi
 
 install-android: hop-dirs
