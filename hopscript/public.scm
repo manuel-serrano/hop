@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Nov  5 22:08:43 2015 (serrano)                */
+;*    Last change :  Mon Nov 23 12:16:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -154,8 +154,7 @@
 (define (js-new/debug %this loc f . args)
    (if (isa? f JsFunction)
        (js-new/function %this f args)
-       (js-raise-type-error/loc %this loc
-	  "new: object is not a function ~s" f)))
+       (js-raise-type-error/loc %this loc "new: object is not a function ~s" f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-return ...                                                */
@@ -247,16 +246,20 @@
 ;*    js-apply% ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-apply% %this fun::JsFunction proc::procedure obj args::pair-nil)
-   (with-access::JsFunction fun (arity rest len)
+   (with-access::JsFunction fun (arity rest len minlen)
       (let ((n (+fx 1 (length args))))
 	 (cond
 	    ((=fx arity n)
 	     (apply proc obj args))
 	    ((>fx arity n)
-	     (let ((rest (make-list (-fx arity n) (js-undefined))))
-		(apply proc obj (append args rest))))
+	     (if (>=fx minlen 0)
+		 (js-raise-arity-error %this fun (-fx n 1))
+		 (let ((rest (make-list (-fx arity n) (js-undefined))))
+		    (apply proc obj (append args rest)))))
 	    ((>=fx arity 0)
-	     (apply proc obj (take args (-fx arity 1))))
+	     (if (>fx minlen 0)
+		 (js-raise-arity-error %this fun (-fx n 1))
+		 (apply proc obj (take args (-fx arity 1)))))
 	    (rest
 	     (js-apply-rest% %this proc obj args len n))
 	    (else
@@ -333,7 +336,6 @@
 		      (proc this (js-vector->jsarray (vector ,@args) %this)))
 		     ,@(map (lambda (i)
 			       `((,i)
-				 ;;(tprint "name=" name " n=" ,n " i=" ,i " minlen=" minlen " arity=" arity)
 				 ,(if (<=fx n i)
 				      `(if (and (<=fx ,n minlen) (>=fx minlen 0))
 					   (js-raise-arity-error %this fun ,(-fx n 1))
