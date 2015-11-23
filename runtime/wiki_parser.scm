@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr  3 07:05:06 2006                          */
-;*    Last change :  Sun Dec 21 12:00:27 2014 (serrano)                */
-;*    Copyright   :  2006-14 Manuel Serrano                            */
+;*    Last change :  Sat Nov  7 09:59:24 2015 (serrano)                */
+;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP wiki syntax tools                                        */
 ;*=====================================================================*/
@@ -34,7 +34,7 @@
 	       value::obj)
 	    (class WikiExpr::WikiState)
 	    (class WikiBlock::WikiState
-	       (is-subblock read-only (default #f)))
+	       (is-subblock (default #f)))
 	    (class plugin::WikiState))
 
    (include "wiki_syntax.sch"

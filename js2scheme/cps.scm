@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Nov  6 12:40:45 2015 (serrano)                */
+;*    Last change :  Tue Nov 10 09:25:44 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -76,6 +76,11 @@
    `(instantiate::J2SUndefined
        (loc loc)))
 
+(define-macro (J2SBool val)
+   `(instantiate::J2SBool
+       (loc loc)
+       (val ,val)))
+
 (define-macro (J2SNop)
    `(instantiate::J2SNop
        (loc loc)))
@@ -122,6 +127,13 @@
        (decls ,decls)
        (nodes ,(if (pair? nodes) `(list ,@nodes) ''()))))
 
+(define-macro (J2STry body catch . finally)
+   `(instantiate::J2STry
+       (loc loc)
+       (body ,body)
+       (catch ,catch)
+       (finally ,(if (pair? finally) (car finally) '(J2SNop)))))
+
 (define-macro (J2SKont param body)
    `(instantiate::J2SKont
        (loc loc)
@@ -138,6 +150,11 @@
    `(instantiate::J2SStmtExpr
        (loc loc)
        (expr ,expr)))
+
+(define-macro (J2SExprStmt stmt)
+   `(instantiate::J2SExprStmt
+       (loc loc)
+       (stmt ,stmt)))
 
 (define-macro (J2SLetOpt usage id val)
    `(instantiate::J2SLetOpt
@@ -159,6 +176,13 @@
        (then ,then)
        (else ,else)))
 
+(define-macro (J2SCond test then else)
+   `(instantiate::J2SCond
+       (loc loc)
+       (test ,test)
+       (then ,then)
+       (else ,else)))
+
 (define-macro (J2SParam id usage)
    `(instantiate::J2SParam
        (loc loc)
@@ -170,6 +194,12 @@
        (loc loc)
        (tail ,tail)
        (expr ,expr)))
+
+(define-macro (J2SAssig lhs rhs)
+   `(instantiate::J2SAssig
+       (loc loc)
+       (lhs ,lhs)
+       (rhs ,rhs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps* ...                                                         */
@@ -189,6 +219,7 @@
 ;*    cps ::J2SNode ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-generic (cps this::J2SNode k kbreaks kcontinues)
+   (warning "cps: should not be here " (typeof this))
    (k this))
 
 ;*---------------------------------------------------------------------*/
@@ -215,6 +246,12 @@
 		      (expr kexpr))))
 	     kbreaks kcontinues)
 	  (k this))))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SRef ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SRef k kbreaks kcontinues)
+   (k this))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SUnary ...                                               */
@@ -305,10 +342,78 @@
 		   (cps (car nodes)
 		      (lambda (n::J2SNode)
 			 (let ((kseq (duplicate::J2SSeq this
-					(nodes (cons n knodes)))))
-			    (cps kseq k kbreaks kcontinues)))
+					(nodes knodes))))
+			    (let ((res (cps kseq k kbreaks kcontinues)))
+			       (with-access::J2SSeq res (nodes)
+				  (set! nodes (cons n nodes)))
+			       res)))
 		      kbreaks kcontinues))
 		this))))))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SDecl ...                                                */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SDecl k kbreaks kcontinues)
+   (k this))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SDeclInit ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SDeclInit k kbreaks kcontinues)
+   (with-access::J2SDeclInit this (val)
+      (if (yield-expr? val kbreaks kcontinues)
+	 (cps val
+	    (lambda (v::J2SExpr)
+	       (set! val v)
+	       (k this))
+	    kbreaks kcontinues)
+	 (k this))))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SLetInit ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SLetInit k kbreaks kcontinues)
+   (with-access::J2SLetInit this (val)
+      (if (yield-expr? val kbreaks kcontinues)
+	 (cps val
+	    (lambda (v::J2SExpr)
+	       (set! val v)
+	       (k this))
+	    kbreaks kcontinues)
+	 (k this))))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SLetOpt ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SLetOpt k kbreaks kcontinues)
+   (with-access::J2SLetOpt this (val)
+      (if (yield-expr? val kbreaks kcontinues)
+	 (cps val
+	    (lambda (v::J2SExpr)
+	       (set! val v)
+	       (k this))
+	    kbreaks kcontinues)
+	 (k this))))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SVarDecls ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SVarDecls k kbreaks kcontinues)
+   (with-access::J2SVarDecls this (decls)
+      (map! (lambda (decl)
+	       (cps decl k kbreaks kcontinues))
+	 decls)
+      (k this)))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::j2sletblock ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SLetBlock k kbreaks kcontinues)
+   (with-access::J2SLetBlock this (decls)
+      (map! (lambda (decl)
+	       (cps decl (lambda (n) n) kbreaks kcontinues))
+	 decls)
+      (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SIf ...                                                  */
@@ -363,12 +468,23 @@
 	  (k this))))
 
 ;*---------------------------------------------------------------------*/
+;*    cps ::J2SExprStmt ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SExprStmt k kbreaks kcontinues)
+   (with-access::J2SExprStmt this (stmt)
+      (if (yield-expr? stmt kbreaks kcontinues)
+	  (cps stmt
+	     (lambda (kstmt::J2SNode)
+		(set! stmt kstmt)
+		(k this))
+	     kbreaks kcontinues)
+	  (k this))))
+
+;*---------------------------------------------------------------------*/
 ;*    cps ::J2SFor ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SFor k kbreaks kcontinues)
-   (with-access::J2SFor this (loc
-				init test incr body id
-				need-bind-exit-break need-bind-exit-continue)
+   (with-access::J2SFor this (loc init test incr body id)
       (cond
 	 ((yield-expr? init kbreaks kcontinues)
 	  (let ((i init))
@@ -377,8 +493,8 @@
 	 ((let* ((cell (cons this #t))
 		 (kbreaks+ (cons cell kbreaks))
 		 (kcontinues+ (cons cell kcontinues)))
-	     (or (yield-expr? test kbreaks+ kcontinues+)
-		 (yield-expr? incr kbreaks+ kcontinues+)
+	     (or (yield-expr? test kbreaks kcontinues)
+		 (yield-expr? incr kbreaks kcontinues)
 		 (yield-expr? body kbreaks+ kcontinues+)))
 	  ;; K( for( ; test; incr ) body )
 	  ;;   -->
@@ -426,6 +542,88 @@
 	 (else
 	  (k this)))))
 
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SWhile ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SWhile k kbreaks kcontinues)
+   (with-access::J2SWhile this (test body loc)
+      (let* ((cell (cons this #t))
+	     (kbreaks+ (cons cell kbreaks))
+	     (kcontinues+ (cons cell kcontinues)))
+	 (if (or (yield-expr? test kbreaks kcontinues)
+		 (yield-expr? body kbreaks+ kcontinues+))
+	     (let* ((name (gensym '%kwhile))
+		    (bname (gensym '%kbreak))
+		    (cname (gensym '%kcontinue))
+		    (block (J2SBlock))
+		    (while (J2SFun name '() block))
+		    (decl (J2SLetOpt '(call) name while))
+		    (break (J2SFun name '() (J2SBlock (k (J2SUndefined)))))
+		    (conti (J2SFun name '()
+			      (cps (J2SBlock
+				      (J2SStmtExpr
+					 (J2SCall (J2SRef decl))))
+				 (lambda (n) n)
+				 kbreaks
+				 kcontinues)))
+		    (bdecl (J2SLetOpt '(call) bname break))
+		    (cdecl (J2SLetOpt '(call) cname conti))
+		    (then (J2SBlock body (%J2STail (J2SCall (J2SRef cdecl)))))
+		    (else (J2SBlock (%J2STail (J2SCall (J2SRef bdecl)))))
+		    (node (J2SIf test then else)))
+		(with-access::J2SBlock block (nodes)
+		   (set! nodes
+		      (list (cps node (lambda (n) n)
+			       (cons (cons this bdecl) kbreaks)
+			       (cons (cons this cdecl) kcontinues)))))
+		(J2SLetBlock (list decl bdecl cdecl)
+		   (J2SStmtExpr (J2SCall (J2SRef decl)))))
+	     (k this)))))
+      
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SDo ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SDo k kbreaks kcontinues)
+   (with-access::J2SDo this (test body loc)
+      (let* ((cell (cons this #t))
+	     (kbreaks+ (cons cell kbreaks))
+	     (kcontinues+ (cons cell kcontinues)))
+	 (if (or (yield-expr? test kbreaks kcontinues)
+		 (yield-expr? body kbreaks+ kcontinues+))
+	     (let* ((name (gensym '%kdo))
+		    (bname (gensym '%kbreak))
+		    (cname (gensym '%kcontinue))
+		    (tname (gensym '%ktmp))
+		    (block (J2SBlock))
+		    (while (J2SFun name '() block))
+		    (decl (J2SLetOpt '(call) name while))
+		    (declv (J2SLetOpt '(ref) tname (J2SBool #t)))
+		    (conti (J2SFun name '()
+			      (cps (J2SBlock
+				      (J2SIf (J2SCond test
+						(J2SRef declv)
+						(J2SBool #f))
+					 (%J2STail (J2SCall (J2SRef decl)))
+					 (J2SNop)))
+				 k
+				 kbreaks kcontinues)))
+		    (cdecl (J2SLetOpt '(call) cname conti))
+		    (break (J2SFun name '()
+			      (J2SBlock
+				 (J2SAssig (J2SRef declv) (J2SBool #f))
+				 (%J2STail (J2SCall (J2SRef cdecl))))))
+		    (bdecl (J2SLetOpt '(call) bname break))
+		    (else (J2SBlock (%J2STail (J2SCall (J2SRef bdecl)))))
+		    (body (cps (J2SSeq body (%J2STail (J2SCall (J2SRef cdecl))))
+			     (lambda (n) n)
+			     (cons (cons this bdecl) kbreaks)
+			     (cons (cons this cdecl) kcontinues))))
+		(with-access::J2SBlock block (nodes)
+		   (set! nodes (list body)))
+		(J2SLetBlock (list decl bdecl cdecl declv)
+		   (J2SStmtExpr (J2SCall (J2SRef decl)))))
+	     (k this)))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SBreak ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -559,6 +757,28 @@
 	  (k this)))))
 
 ;*---------------------------------------------------------------------*/
+;*    cps ::J2STry ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2STry k kbreaks kcontinues)
+   (with-access::J2STry this (loc body catch finally)
+      (cond
+	 ((not (or (yield-expr? body kbreaks kcontinues)
+		   (yield-expr? catch kbreaks kcontinues)
+		   (yield-expr? finally kbreaks kcontinues)))
+	  (k this))
+	 ((isa? finally J2SNop)
+	  (if (isa? catch J2SNop)
+	      (cps body k kbreaks kcontinues)
+	      (k this)))
+	 (else
+	  (let* ((tname (gensym '%ktem))
+		 (declv (J2SLetOpt '(ref) tname
+			   (J2SExprStmt (J2STry body catch)))))
+	     (cps (J2SLetBlock (list declv)
+		     (J2SSeq finally (J2SRef declv)))
+		k kbreaks kcontinues))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    yield-expr? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (yield-expr? this::J2SNode kbreaks kcontinues)
@@ -591,16 +811,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (yield-expr* this::J2SBreak kbreaks kcontinues)
    (with-access::J2SBreak this (target)
-      (if (pair? (assq target kbreaks))
+      (if (assq target kbreaks)
 	  (list this)
 	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    yield-expr* ::J2SContinue ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (yield-expr* this::J2SContinue kcontinues kcontinues)
+(define-walk-method (yield-expr* this::J2SContinue kbreaks kcontinues)
    (with-access::J2SContinue this (target)
-      (if (pair? (assq target kcontinues))
+      (if (assq target kcontinues)
 	  (list this)
 	  '())))
 

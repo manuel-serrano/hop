@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Fri Nov  6 12:54:06 2015 (serrano)                */
+/*    Last change :  Tue Nov 10 08:31:55 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
@@ -357,7 +357,7 @@ function* gen5d( i ) {
    yield bar2( yield i, yield 45 );
 }
 
-console.log( "function call..." );
+console.log( "call..." );
 
 console.log( "   gen5a()" );
 g = gen5a();
@@ -633,3 +633,279 @@ assert.ok( equal( g.next(), { value: 0, done: false } ) );
 assert.ok( equal( g.next(), { value: 1, done: false } ) );
 assert.ok( equal( g.next(), { value: 2, done: false } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+/*---------------------------------------------------------------------*/
+/*    while                                                            */
+/*---------------------------------------------------------------------*/
+function* gen9a() {
+   var i = 0;
+
+   while( i < 3 ) {
+      yield i;
+      i++;
+   }
+}
+
+function* gen9b() {
+   var i = 0;
+   var k =  10;
+
+   while( i < 3 ) {
+      i = yield i;
+      k++;
+   }
+   return k;
+}
+
+function* gen9c() {
+   var i = 0;
+
+   while( i < 3 ) {
+      yield i++;
+   }
+   yield i;
+}
+
+function* gen9d( j ) {
+   var k =  10;
+   var i = 0;
+
+   while( i < 10 ) {
+      yield i;
+      if( i >= j ) {
+	 break;
+      }
+      i++;
+   }
+   return k;
+}
+
+function* gen9e() {
+   var i = 0;
+
+   while( i < 3 ) {
+      yield i;
+      i++;
+      continue;
+   }
+}
+
+function* gen9f() {
+   var i = 0;
+
+   while( yield i ) {
+      i++;
+   }
+}
+
+function* gen9g() {
+   var i = 0;
+   var k = 0;
+
+   while( i < 3 ) {
+      yield i;
+      i++;
+
+      if( i > 1 ) {
+	 continue;
+      }
+
+      k++;
+   }
+
+   return k;
+}
+
+console.log( "while..." );
+
+console.log( "   gen9a()" );
+g = gen9a();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen9b()" );
+g = gen9b();
+assert.ok( equal( g.next(1), { value: 0, done: false } ) );
+assert.ok( equal( g.next(2), { value: 2, done: false } ) );
+assert.ok( equal( g.next(3), { value: 12, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen9c()" );
+g = gen9c();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: 3, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen9d()" );
+g = gen9d( 2 );
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: 10, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen9e()" );
+g = gen9e();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen9f()" );
+g = gen9f();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(1), { value: 1, done: false } ) );
+assert.ok( equal( g.next(2), { value: 2, done: false } ) );
+assert.ok( equal( g.next(3), { value: 3, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen9g()" );
+g = gen9g();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(1), { value: 1, done: false } ) );
+assert.ok( equal( g.next(2), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+/*---------------------------------------------------------------------*/
+/*    do                                                               */
+/*---------------------------------------------------------------------*/
+function* gen10a() {
+   var i = 0;
+
+   do {
+      yield i;
+      i++;
+   } while( i < 3 )
+}
+
+function* gen10b() {
+   var i = 0;
+   var k =  10;
+
+   do {
+      i = yield i;
+      k++;
+   } while( i < 3 )
+   return k;
+}
+
+function* gen10c() {
+   var i = 0;
+
+   do {
+      yield i++;
+   } while( i < 3 )
+   yield i;
+}
+
+function* gen10d( j ) {
+   var k =  10;
+   var i = 0;
+
+   do {
+      yield i;
+      if( i >= j ) {
+	 break;
+      } 
+      i++;
+   } while( i < 10 )
+   return k;
+}
+
+function* gen10e() {
+   var i = 0;
+
+   do {
+      yield i;
+      i++;
+      continue;
+   } while( i < 3 )
+}
+
+function* gen10f() {
+   var i = 0;
+
+   do {
+      i++;
+   } while( yield i )
+}
+
+console.log( "do..." );
+
+console.log( "   gen10a()" );
+g = gen10a();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen10b()" );
+g = gen10b();
+assert.ok( equal( g.next(1), { value: 0, done: false } ) );
+assert.ok( equal( g.next(2), { value: 2, done: false } ) );
+assert.ok( equal( g.next(3), { value: 12, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen10c()" );
+g = gen10c();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: 3, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen10d()" );
+g = gen10d( 2 );
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: 10, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen10e()" );
+g = gen10e();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   gen10f()" );
+g = gen10f();
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(1), { value: 2, done: false } ) );
+assert.ok( equal( g.next(2), { value: 3, done: false } ) );
+assert.ok( equal( g.next(3), { value: 4, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+/*---------------------------------------------------------------------*/
+/*    try                                                              */
+/*---------------------------------------------------------------------*/
+function* gen11a() {
+   try {
+      1;
+   } catch( e ) {
+      ;
+   } finally {
+      yield 0;
+      yield 1;
+      yield 2;
+   }
+   return 3;
+}
+
+console.log( "try..." );
+
+console.log( "   gen11a()" );
+g = gen11a();
+assert.ok( equal( g.next(), { value: 0, done: false } ) );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: 2, done: false } ) );
+assert.ok( equal( g.next(), { value: 3, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+

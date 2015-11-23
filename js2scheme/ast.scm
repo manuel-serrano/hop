@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Nov  1 11:51:02 2015 (serrano)                */
+;*    Last change :  Tue Nov 10 08:12:35 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -60,9 +60,9 @@
 	   (final-class J2SLetBlock::J2SBlock
 	      decls::pair)
 	   
-	   (class J2SIdStmt::J2SStmt
+	   (abstract-class J2SIdStmt::J2SStmt
 	      (need-bind-exit-break::bool (default #t))
-	      (id::obj read-only (default #unspecified)))
+	      (id::obj (default #unspecified)))
 	   
 	   (final-class J2SSwitch::J2SIdStmt
 	      key::J2SNode
@@ -121,7 +121,7 @@
 	   
 	   (class J2SFun::J2SExpr
 	      (idthis read-only (default 'this))
-	      (mode read-only (default #f))
+	      (mode (default #f))
 	      (decl read-only (default #f))
 	      (need-bind-exit-return::bool (default #f))
 	      (vararg::obj (default #f))
@@ -131,7 +131,7 @@
 	      body::J2SBlock)
 	   
 	   (class J2SSvc::J2SFun
-	      (init::J2SNode read-only)
+	      init::J2SNode
 	      (path::obj read-only (default #f))
 	      (register::bool read-only (default #t)))
 
@@ -147,10 +147,10 @@
 	      finally::J2SStmt)
 	   
 	   (class J2SPragma::J2SExpr
-	      (expr read-only))
+	      expr)
 	   
 	   (class J2SSequence::J2SExpr
-	      (exprs::pair read-only))
+	      exprs::pair)
 	   
 	   (class J2SUnresolvedRef::J2SExpr
 	      (cache (default #f))
@@ -162,7 +162,7 @@
 	   (class J2SWithRef::J2SExpr
 	      (id::symbol read-only)
 	      withs::pair
-	      (expr::J2SExpr read-only))
+	      expr::J2SExpr)
 	   
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
@@ -178,14 +178,14 @@
 	      else::J2SExpr)
 
 	   (class J2SComprehension::J2SExpr
-	      (decls::pair read-only)
-	      (iterables::pair read-only)
-	      (test::J2SExpr read-only)
-	      (expr::J2SExpr read-only))
+	      decls::pair
+	      iterables::pair
+	      test::J2SExpr
+	      expr::J2SExpr)
 	   
 	   (class J2SDecl::J2SStmt
-	      (id::symbol read-only)
-	      (%scmid (default #f))
+	      id::symbol
+	      (_scmid (default #f))
 	      (key (default (ast-decl-key)))
 	      (writable (default #t))
 	      (ronly (default #f))
@@ -195,16 +195,16 @@
 	      (type::obj (default #unspecified)))
 	   
 	   (class J2SDeclInit::J2SDecl
-	      (val::J2SExpr read-only))
+	      val::J2SExpr)
 
 	   (final-class J2SLet::J2SDecl
 	      (isconst::bool read-only (default #f)))
 	   
 	   (wide-class J2SLetInit::J2SLet
-	      (val::J2SExpr read-only))
+	      val::J2SExpr)
 	   
 	   (wide-class J2SLetOpt::J2SLet
-	      (val::J2SExpr read-only))
+	      val::J2SExpr)
 	   
 	   (class J2SDeclFun::J2SDeclInit
 	      (expression::bool (default #f)))
@@ -321,7 +321,7 @@
 
 	   (final-class J2SKont::J2SExpr
 	      (param::symbol read-only)
-	      (body::J2SNode read-only))
+	      body::J2SNode)
 	   
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)

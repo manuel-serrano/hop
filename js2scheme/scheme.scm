@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Oct 31 22:43:09 2015 (serrano)                */
+;*    Last change :  Sun Nov  8 07:13:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -100,11 +100,11 @@
 ;*    j2s-decl-scheme-id ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-decl-scheme-id decl::J2SDecl)
-   (with-access::J2SDecl decl (%scmid id)
-      (if %scmid
-	  %scmid
+   (with-access::J2SDecl decl (_scmid id)
+      (if _scmid
+	  _scmid
 	  (let ((sid (j2s-scheme-id id)))
-	     (set! %scmid sid)
+	     (set! _scmid sid)
 	     sid))))
 
 ;*---------------------------------------------------------------------*/

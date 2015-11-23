@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct 29 22:45:19 2015 (serrano)                */
+;*    Last change :  Mon Nov  9 07:57:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -94,7 +94,7 @@
 	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))
-	      (extensible::bool read-only (default #t))
+	      (extensible::bool (default #t))
 	      (properties::pair-nil (default '()))
 	      (cmap (default #f))
 	      (elements::vector (default '#())))
@@ -164,7 +164,7 @@
 
 	   (abstract-class JsTypedArray::JsArrayBufferView
 	      (length::uint32 (default #u32:0))
-	      (bpe::uint32 read-only))
+	      bpe::uint32)
 
 	   (class JsInt8Array::JsTypedArray)
 	   (class JsUint8Array::JsTypedArray)
@@ -182,10 +182,10 @@
 	      vec::vector)
 
 	   (class JsString::JsObject
-	      (val::JsStringLiteral read-only))
+	      val::JsStringLiteral)
 
 	   (class JsSymbol::JsObject
-	      (val::bstring read-only))
+	      val::bstring)
 	   
 	   (class JsFunction::JsObject
 	      (name::bstring read-only)
@@ -205,12 +205,12 @@
 	      (svc::obj read-only))
 	   
 	   (class JsNumber::JsObject
-	      (val::obj read-only (default 0)))
+	      (val::obj (default 0)))
 	   
 	   (class JsMath::JsObject)
 	   
 	   (class JsRegExp::JsObject
-	      (rx::obj read-only))
+	      rx::obj)
 	   
 	   (class JsBoolean::JsObject
 	      (val::bool (default #t)))
@@ -223,7 +223,7 @@
 	      (location (default #f)))
 	   
 	   (class JsDate::JsObject
-	      (val read-only (default #f)))
+	      (val (default #f)))
 
 	   (class JsJSON::JsObject)
 
@@ -260,6 +260,27 @@
 
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::JsWrapper ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-primitive-value o::JsWrapper)
+   (with-access::JsWrapper o (obj)
+      (obj)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write ::JsWrapper ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write o::JsWrapper p backend)
+   (with-access::JsWrapper o (obj)
+      (xml-write obj p backend)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-write-attribute ::JsWrapper ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (xml-write-attribute o::JsWrapper id p backend)
+   (with-access::JsWrapper o (obj)
+      (xml-write-attribute obj id p backend)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-print ...                                                 */
