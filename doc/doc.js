@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Thu Nov 19 10:39:30 2015 (serrano)                */
+/*    Last change :  Sat Nov 21 07:31:25 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -150,6 +150,7 @@ function makeToc( els, k, proc = false ) {
 /*    compileSection ...                                               */
 /*---------------------------------------------------------------------*/
 function compileSection( page ) {
+   var footer = path.join( PWD, "footer.md" );
    var ast = hopdoc.load( path.join( PWD, page ) )
    var toc = hopdoc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
@@ -202,7 +203,9 @@ function compileSection( page ) {
 	   </div>
            : undefined}
 	 </div>
-	 <docxml.footer root=${ROOT}/>
+	 ${fs.existsSync( footer )
+	   ? hopdoc.load( footer ).XML 
+	   : <docxml.footer root=${ROOT}/>}
        </div>
      </body>
    </html>;
@@ -214,6 +217,7 @@ function compileSection( page ) {
 /*    compileChapter ...                                               */
 /*---------------------------------------------------------------------*/
 function compileChapter( json ) {
+   var footer = path.join( PWD, "footer.md" );
    var chapter = require( path.join( PWD, json ) );
    var toc = chapterEntries( chapter );
 
@@ -252,7 +256,9 @@ function compileChapter( json ) {
 	      </li>
 	   } )}
          </ul>
-	 <docxml.footer root=${ROOT}/>
+	 ${fs.existsSync( footer ) 
+	   ? hopdoc.load( footer ).XML 
+	   : <docxml.footer root=${ROOT}/>}
        </div>
      </body>
    </html>;
@@ -293,7 +299,7 @@ function compileMain( content ) {
 /*    compileLibrary ...                                               */
 /*---------------------------------------------------------------------*/
 function compileLibrary( content ) {
-   var footer = path.join( path.dirname( content ), "footer.md" );
+   var footer = path.join( PWD, "footer.md" );
    
    var document = <html>
      <head css=${css}
@@ -312,7 +318,9 @@ function compileLibrary( content ) {
 
        <div class="container home-body">
          ${hopdoc.load( content ).XML}
-	 ${fs.existsSync( footer ) ? hopdoc.load( footer ).XML : ""}
+	 ${fs.existsSync( footer )
+	   ? hopdoc.load( footer ).XML
+	   : ""}
        </div>
      </body>
    </html>;

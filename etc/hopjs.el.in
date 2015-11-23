@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Nov 19 10:31:45 2015 (serrano)                */
+;*    Last change :  Sat Nov 21 07:22:21 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -32,9 +32,15 @@
   :group 'js)
 
 (defcustom hopjs-doc-dir "@DOCDIR@"
-  "The json directory containing the documentation indexes"
+  "The main directory containing the documentation indexes"
   :type 'string
   :safe 'stringp
+  :group 'js)
+
+(defcustom hopjs-doc-extra-dir
+  (list "~/.config/hop/weblets")
+  "Directories containing the extra documentation indexes"
+  :type '(repeat (string))
   :group 'js)
 
 (defcustom hopjs-navigator "firefox"
@@ -137,6 +143,9 @@
 (defvar hopjs-doc-index-table
   (make-vector 27 '()))
 
+(defvar hopjs-indexes
+  '())
+
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-mode-hook ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -151,15 +160,75 @@
   ;; (setq beginning-of-defun-function 'hopjs-beginning-of-defun)      */
   ;; (setq end-of-defun-function 'hopjs-end-of-defun)
   ;; index
-  (hopjs-load-index
-   (concat hopjs-doc-dir "/idx.json") nil hopjs-doc-index-table)
-  (hopjs-load-index
-   (concat hopjs-doc-dir "/html-idx.json") hopjs-html-doc-url hopjs-doc-index-table)
+  (run-at-time "1 sec" nil 'hopjs-load-indexes)
+  (run-at-time "3 sec" nil 'hopjs-load-node-modules-indexes)
   ;; tag matching
   (add-hook 'post-command-hook (function hopjs-post-command-hook) t t)
   ;; user hooks
   (run-hooks 'hopjs-mode-hook))
 
+;*---------------------------------------------------------------------*/
+;*    hopjs-load-repo-indexes ...                                      */
+;*---------------------------------------------------------------------*/
+(defun hopjs-load-repo-indexes (p)
+  ;; load all the idx.json files located in XXX/doc directory under P
+  (let ((path (expand-file-name p)))
+    (when (file-directory-p path)
+      (mapc #'(lambda (d)
+		(let* ((dir (concat path "/" d "/doc"))
+		       (idx (concat dir "/idx.json")))
+		  (when (file-exists-p idx)
+		    (hopjs-load-index idx dir hopjs-doc-index-table))))
+	    (directory-files path)))))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-load-indexes ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-load-indexes ()
+  (hopjs-load-index
+   (concat hopjs-doc-dir "/idx.json") nil hopjs-doc-index-table)
+  (hopjs-load-index
+   (concat hopjs-doc-dir "/html-idx.json") hopjs-html-doc-url hopjs-doc-index-table)
+  (mapc 'hopjs-load-repo-indexes hopjs-doc-extra-dir))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-load-node-modules-indexes ...                              */
+;*---------------------------------------------------------------------*/
+(defun hopjs-load-node-modules-indexes ()
+  (let ((dir default-directory)
+	(count 5))
+    (while (and (file-directory-p dir) (not (equal dir "//")) (> count 0))
+      (let ((nm (concat dir "node_modules")))
+	(when (file-directory-p nm) (hopjs-load-repo-indexes nm))
+	(setq dir (expand-file-name (concat dir "../")))
+	(setq count (1- count))))))
+  
+;*---------------------------------------------------------------------*/
+;*    hopjs-load-index ...                                             */
+;*---------------------------------------------------------------------*/
+(defun hopjs-load-index (file base table)
+  (unless (member file hopjs-indexes)
+    (when (file-exists-p file)
+      (let* ((i 0)
+	     (v (json-read-file file))
+	     (len (length v)))
+	(while (< i len)
+	  (let* ((en (aref v i))
+		 (k (assq 'key en))
+		 (y (assq 'type en))
+		 (n (string-match (cdr k) "[^.]+$"))
+		 (c (aref (cdr k) (or n 0)))
+		 (m (cond
+		     ((and (>= c ?A) (<= c ?Z)) (- c ?A))
+		     ((and (>= c ?a) (<= c ?z)) (- c ?a))
+		     (t 27))))
+	    (when base
+	      (let ((c (assq 'url en)))
+		(when (consp c)
+		  (rplacd c (concat base "/" (cdr c))))))
+	    (aset table m (cons (cons (cdr k) en) (aref table m)))
+	    (setq i (+ i 1))))))))
+	
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-syntax ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -870,31 +939,6 @@ usage: (js-return)  -- [RET]"
     (setq arg (1- arg))
     (hopjs-goto-defun 'cdr (point))))
 
-;*---------------------------------------------------------------------*/
-;*    hopjs-load-index ...                                             */
-;*---------------------------------------------------------------------*/
-(defun hopjs-load-index (file base table)
-  (when (file-exists-p file)
-    (let* ((i 0)
-	   (v (json-read-file file))
-	   (len (length v)))
-      (while (< i len)
-	(let* ((en (aref v i))
-	       (k (assq 'key en))
-	       (y (assq 'type en))
-	       (n (string-match (cdr k) "[^.]+$"))
-	       (c (aref (cdr k) (or n 0)))
-	       (m (cond
-		   ((and (>= c ?A) (<= c ?Z)) (- c ?A))
-		   ((and (>= c ?a) (<= c ?z)) (- c ?a))
-		   (t 27))))
-	  (when base
-	    (let ((c (assq 'url en)))
-	      (when (consp c)
-		(rplacd c (concat base "/" (cdr c))))))
-	  (aset table m (cons (cons (cdr k) en) (aref table m)))
-	  (setq i (+ i 1)))))))
-	
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-unhighlight-tags ...                                       */
 ;*---------------------------------------------------------------------*/

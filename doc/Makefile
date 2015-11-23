@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Nov 16 08:33:53 2015 (serrano)                */
+#*    Last change :  Mon Nov 23 07:37:34 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -22,8 +22,8 @@ HOP_LIBS_PATH=$(HOP_MODULES)/markdown/lib/.libs/$(HOPRELEASE)/$(MACH):$(HOP_MODU
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-BOOTSTRAP_POP=css/bootstrap-theme.css css/bootstrap-theme.min.css \
-  css/bootstrap.css css/bootstrap.min.css \
+BOOTSTRAP_POP=css/bootstrap.css css/bootstrap.min.css css/bootstrap.css.map \
+  css/bootstrap-theme.css css/bootstrap-theme.min.css css/bootstrap-theme.css.map \
   js/bootstrap.js js/bootstrap.min.js  js/npm.js \
   fonts/glyphicons-halflings-regular.eot \
   fonts/glyphicons-halflings-regular.woff \
