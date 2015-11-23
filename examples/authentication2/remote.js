@@ -11,13 +11,16 @@
 /*    run: hop -p 9999 remote.js --rc-file passwd.js                   */
 /*         hop authentication2.js -- 9999                              */
 /*=====================================================================*/
-service s_private(type) {
-   return '"private" authorized with ' + type;
+service publicOnly(type) {
+   return '"publicOnly" authorized with ' + type;
 }
 
-service s_public(type) {
-   console.log( "foo" );
-   return '"public" authorized with ' + type;
+service protectedOnly(type) {
+   return '"protectedOnly" authorized with ' + type;
+}
+
+service publicOrProtected(type) {
+   return '"publicOrProtected" authorized with ' + type;
 }
 
 console.log( "Run the other Hop server and go to \"http://%s/hop/authentication2\"", hop.hostname );
