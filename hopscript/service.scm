@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Nov 20 08:04:36 2015 (serrano)                */
+;*    Last change :  Mon Nov 23 12:43:17 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -616,7 +616,7 @@
 	  (map (lambda (arg)
 		  (let ((l (memq (car arg) (car objs))))
 		     (if (pair? l)
-			 (cadr l)
+			 (js-obj->jsobject (cadr l) %this)
 			 (cdr arg))))
 	     defaults))
 	 ((null? objs)
