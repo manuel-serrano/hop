@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Nov 14 08:50:12 2015 (serrano)                */
+;*    Last change :  Wed Nov 18 10:39:20 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1001,9 +1001,7 @@
       
       (define (jscript-funcall init)
 	 ;; see runtime/service_expd.sch
-	 "(sc_lambda = function () { return new HopFrame( hop_apply_url( ~s, arguments ) ); },
-              sc_lambda.resource = function( file ) { return ~s + \"/\" + file; },
-              sc_lambda)")
+	 "HopService( ~s )")
 
       (define (service-call-error this::J2SSvc)
 	 (with-access::J2SSvc this (loc name)

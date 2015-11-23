@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  2 08:22:25 2007                          */
-;*    Last change :  Sat Sep 26 08:03:44 2015 (serrano)                */
+;*    Last change :  Thu Nov 19 10:55:34 2015 (serrano)                */
 ;*    Copyright   :  2007-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop SVG support.                                                 */
@@ -55,7 +55,9 @@
 	   (<SVG:TEXT> . ::obj)
 	   (<SVG:TEXTPATH> . ::obj)
 	   (<SVG:TREF> . ::obj)
-	   (<SVG:TSPAN> . ::obj)))
+	   (<SVG:TSPAN> . ::obj)
+	   (<SVG:RADIALGRADIENT> . ::obj)
+	   (<SVG:LINEARGRADIENT> . ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    svg-img-tree-cache ...                                           */
@@ -140,6 +142,9 @@
 (define-xml xml-element #t <SVG:TSPAN> :tag tspan)
 (define-xml xml-element #t <SVG:TREF> :tag tref)
 (define-xml xml-element #t <SVG:TEXTPATH> :tag textPath)
+;; gradients
+(define-xml xml-element #t <SVG:RADIALGRADIENT> :tag radialGradient)
+(define-xml xml-element #t <SVG:LINEARGRADIENT> :tag linearGradient)
 
 ;*---------------------------------------------------------------------*/
 ;*    read-attribute-value ...                                         */

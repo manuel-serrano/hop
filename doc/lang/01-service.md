@@ -118,7 +118,7 @@ value is sent to the client. The rules for converting values into
  * Otherwise, a `hop.HTTPResponseHop` is constructed. This will have the
  effect of serializing the JavaScript object and re-creating it on the client.
 
-The various Hop responses classes are documented [here](00-hop.html#responses).
+The various Hop responses classes are documented [here](00-hop.html#server).
 
 
 Service Constructor
@@ -193,7 +193,7 @@ frame.toString();          // /hop/svc2?hop-encoding=hop&vals=c%01%02(%01%0...
 
 A `HopFrame` implements the methods described in the section.
 
-### frame.post( [ success, [ fail-or-option ] ] ) ###
+### frame.post( [ success [, fail-or-option ] ] ) ###
 [:post@glyphicon glyphicon-tag function]
 
 
@@ -208,41 +208,33 @@ svc2( { name: "dupond" } )
    .post( function( r ) { console.log( r ); } );
 ```
 
+
 If the optional argument `fail-or-option` is a procedure, it is invoked
 if an error occurs while invoking the service. If `fail-or-option` is
 an object, here are the attributes this object may contain:
 
- * `host`, the host name on which the service is invoked. This option is
-only used when invoking service from servers to servers, and defaults
-to `hop.host`.
- * `port`, the port number of the remote host. This option is
-only used when invoking service from servers to servers, and defaults
-to `hop.port`.
+ * `server`, On the server code, this optional argument can be passed a
+   [server](00-hop.html#server) object that designates
+   the host running the invoked service.
  * `user`, a user identity on behalf of who the service is invoked.
  * `password`, the user password.
  * `fail`, a failure procedure.
- * `scheme`, the schema to be used to invoke the service. Should normally be
-either `http` or `https`. Defaults to `http`.
- * `ssl`, a boolean which specifies if SSL is to be used to invoke the
    service. Defaults to `false`.
  * `header`, a JavaScript object to add properties to the HTTP header of the request.
 
 Example:
 
 ```hopscript
+var srv = new hop.server( "remote.org", 443, true );
 var config = {
-  host: "remote.org",
-  port: 443,
-  schema: "https",
-  ssl: true,
   header: { "X-encoding", "my-encoding" }
 };
 
 svc2( { name: "dupond" } )
-   .post( function( r ) { console.log( r ); }, config );
+   .post( function( r ) { console.log( r ); }, srv, config );
 
 ```
-### frame.postSync( [ fail-or-option ]  ) ###
+### frame.postSync( [ srv [, fail-or-option ] ] ) ###
 [:@glyphicon glyphicon-tag function]
 
 The synchronous version of `post`. Returns the value returned by the

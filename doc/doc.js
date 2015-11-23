@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sat Nov 14 11:39:08 2015 (serrano)                */
+/*    Last change :  Sat Nov 21 07:31:25 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -17,13 +17,23 @@ const path = require( "path" );
 const fs = require( "fs" );
 const markdown = require( hop.markdown );
 const fontifier = require( hop.fontifier );
-const doc = require( "hopdoc" );
+const hopdoc = require( "hopdoc" )
 const docxml = require( "./xml.js" );
 
 /*---------------------------------------------------------------------*/
 /*    global parameters                                                */
 /*---------------------------------------------------------------------*/
-const ROOT = path.dirname( module.filename );
+const PWD = process.cwd();
+const ROOT = process.cwd();
+const DOC = path.join( ROOT, "doc.json" );
+
+const doc = fs.existsSync( DOC ) ? require( DOC ) : undefined;
+
+const chapters = doc ?
+      doc.chapters.map( function( c, idx = undefined, arr = undefined ) {
+	 c.entries = chapterEntries( c );
+	 return c;
+      } ) : [];
 
 function P( file ) {
    return path.normalize( "./" + file );
@@ -44,16 +54,6 @@ const alias = {
    "tree.md": "widget",
    "spage.md": "widget"
 }
-
-/*---------------------------------------------------------------------*/
-/*    chapters ...                                                     */
-/*---------------------------------------------------------------------*/
-const chapters = require( "./doc.json" )
-      .chapters
-      .map( function( c, idx = undefined, arr = undefined ) {
-	 c.entries = chapterEntries( c );
-	 return c;
-      } );
 
 /*---------------------------------------------------------------------*/
 /*    chapterEntries ...                                               */
@@ -86,7 +86,7 @@ function chapterEntries( chapter ) {
    }
 
    if( chapter.json ) {
-      var c = require( "./" + chapter.json );
+      var c = require( path.join( PWD, chapter.json ) );
       return Array.prototype.concat.apply( [], c.files.map( chapterEntry ) );
    } else if( chapter.files ) {
       return Array.prototype.concat.apply( [], chapter.files.map( chapterEntry ) );
@@ -150,10 +150,10 @@ function makeToc( els, k, proc = false ) {
 /*    compileSection ...                                               */
 /*---------------------------------------------------------------------*/
 function compileSection( page ) {
-   var ast = doc.load( path.join( path.dirname( module.filename ), page ) )
-   var toc = doc.toc( ast );
+   var footer = path.join( PWD, "footer.md" );
+   var ast = hopdoc.load( path.join( PWD, page ) )
+   var toc = hopdoc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
-   var chapter = path.basename( path.dirname( path ) );
    var key = path.basename( path.dirname( page ) ).toLowerCase();
 
    if( key == "doc" ) {
@@ -164,7 +164,7 @@ function compileSection( page ) {
 
    var document = <html>
      <head css=${css}
-	   title=${title}
+	   title=${doc.title + "/" + title}
            jscript=${jscript}
            rts=${false}/>
 
@@ -174,7 +174,12 @@ function compileSection( page ) {
          ${chapters}
        </docxml.navbar>
        
-       <docxml.title root=${ROOT}>${title}</docxml.title>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}>
+          ${title}
+       </docxml.title>
        <div class="container">
          <div class=${toc == [] ? "col-md-12" : "col-md-9"} role="main">
            <h1 class="toc" id="toc">Table of Contents</h1>
@@ -198,7 +203,9 @@ function compileSection( page ) {
 	   </div>
            : undefined}
 	 </div>
-	 <docxml.footer root=${ROOT}/>
+	 ${fs.existsSync( footer )
+	   ? hopdoc.load( footer ).XML 
+	   : <docxml.footer root=${ROOT}/>}
        </div>
      </body>
    </html>;
@@ -210,27 +217,32 @@ function compileSection( page ) {
 /*    compileChapter ...                                               */
 /*---------------------------------------------------------------------*/
 function compileChapter( json ) {
-   var chapter = require( json );
+   var footer = path.join( PWD, "footer.md" );
+   var chapter = require( path.join( PWD, json ) );
    var toc = chapterEntries( chapter );
 
    var document = <html>
      <head css=${css}
-	   title=${chapter.title}
+	   title=${doc.title + "/" + chapter.title}
            jscript=${jscript}
            rts=${false}/>
 
      <body data-spy="scroll" data-target="#navbar">
-       <docxml.navbar title=${chapter.title}
-                      key=${chapter.key}>
+       <docxml.navbar title=${chapter.title} key=${chapter.key}>
          ${chapters}
        </docxml.navbar>
-       <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}>
+          ${chapter.title}
+       </docxml.title>
 
        <div class="container">
          ${chapter.description ? <div class="chapter-header">
 	   ${ fs.existsSync( ROOT + "/" + chapter.description ) ?
-	      doc.load( ROOT + "/" + chapter.description ).XML
-	      : doc.eval( chapter.description ).XML }
+	      hopdoc.load( ROOT + "/" + chapter.description ).XML
+	      : hopdoc.eval( chapter.description ).XML }
 	   </div> : ""}
 	 
          <h1 class="toc" id="toc">Table of Contents</h1>
@@ -239,11 +251,42 @@ function compileChapter( json ) {
               return <li>
 	        <a href=${el.href}>${el.title}</a>
                 <span class="toc-description">
-                  ${doc.eval( el.description )}
+                  ${hopdoc.eval( el.description )}
                 </span>
 	      </li>
 	   } )}
          </ul>
+	 ${fs.existsSync( footer ) 
+	   ? hopdoc.load( footer ).XML 
+	   : <docxml.footer root=${ROOT}/>}
+       </div>
+     </body>
+   </html>;
+
+   console.log( hop.compileXML( document ) );
+}
+
+/*---------------------------------------------------------------------*/
+/*    compileMain ...                                                  */
+/*---------------------------------------------------------------------*/
+function compileMain( content ) {
+   var document = <html>
+     <head css=${css}
+	   title=${doc.title}
+           jscript=${jscript}
+           rts=${false}/>
+
+     <body class="home" data-spy="scroll" data-target="#navbar">
+       <docxml.navbar title=${doc.title} key="home">
+         ${chapters}
+       </docxml.navbar>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}/>
+
+       <div class="container home-body">
+         ${hopdoc.load( content ).XML}
 	 <docxml.footer root=${ROOT}/>
        </div>
      </body>
@@ -253,24 +296,31 @@ function compileChapter( json ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    compileIndex ...                                                 */
+/*    compileLibrary ...                                               */
 /*---------------------------------------------------------------------*/
-function compileIndex( content ) {
+function compileLibrary( content ) {
+   var footer = path.join( PWD, "footer.md" );
+   
    var document = <html>
      <head css=${css}
-	   title="Hop.js"
+	   title=${doc.title}
            jscript=${jscript}
            rts=${false}/>
 
-     <body class="home" data-spy="scroll" data-target="#navbar">
-       <docxml.navbar title="Hop.js" key="home">
+     <body class="library" data-spy="scroll" data-target="#navbar">
+       <docxml.navbar title=${doc.title} key="home">
          ${chapters}
        </docxml.navbar>
-       <docxml.title root=${ROOT}/>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}/>
 
        <div class="container home-body">
-         ${doc.load( path.join( path.dirname( module.filename ), "_index.md" ) ).XML}
-	 <docxml.footer root=${ROOT}/>
+         ${hopdoc.load( content ).XML}
+	 ${fs.existsSync( footer )
+	   ? hopdoc.load( footer ).XML
+	   : ""}
        </div>
      </body>
    </html>;
@@ -280,14 +330,16 @@ function compileIndex( content ) {
 
 /*---------------------------------------------------------------------*/
 /*    compileIdx ...                                                   */
+/*    -------------------------------------------------------------    */
+/*    compile the HTML index page.                                     */
 /*---------------------------------------------------------------------*/
 function compileIdx( json ) {
-   var idx = require( json );
+   var idx = require( path.join( PWD, json ) );
    var chapter = { title: "Index", key: "index" };
 
    var document = <html>
      <head css=${css}
-	   title=${chapter.title}
+	   title=${doc.title + "/" + chapter.title}
            jscript=${jscript}
            rts=${false}/>
 
@@ -296,7 +348,12 @@ function compileIdx( json ) {
                       key=${chapter.key}>
          ${chapters}
        </docxml.navbar>
-       <docxml.title root=${ROOT}>${chapter.title}</docxml.title>
+       <docxml.title title=${doc.title}
+		     version=${doc.version}
+		     logo=${doc.logo}
+		     root=${ROOT}>
+          ${chapter.title}
+       </docxml.title>
 
        <div class="container">
 	 <docxml.idx>${idx}</docxml.idx>
@@ -309,23 +366,40 @@ function compileIdx( json ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    top level forms                                                  */
+/*    main ...                                                         */
 /*---------------------------------------------------------------------*/
-if( process.argv[ 2 ] == "mkidx" ) {
-   mkIdx( process.argv[ 3 ], process.argv.slice( 4 ) );
-} else if( process.argv[ 2 ] == "cmpidx" ) {
-   compileIdx( "./" + process.argv[ 3 ] );
-} else if( process.argv[ 2 ].match( /[.]md$/ ) ) {
-   if( process.argv[ 2 ] === "_index.md" ) {
-      compileIndex( process.argv[ 2 ] );
-   } else {
-      compileSection( process.argv[ 2 ] );
+function main() {
+   switch( process.argv[ 2 ] ) {
+      case "html-to-idx":
+	 hopdoc.htmlToIdx( process.argv[ 3 ],
+			   process.argv.slice( 4 ).map( function( f, _, __ ) {
+			      return path.join( PWD, f );
+			   } ) );
+	 break;
+
+      case "compile-idx":
+	 compileIdx( process.argv[ 3 ] );
+	 break;
+
+      case "compile-main":
+	 compileMain( process.argv[ 3 ] );
+	 break;
+
+      case "compile-library":
+	 compileLibrary( process.argv[ 3 ] );
+	 break;
+
+      case "compile-section":
+	 compileSection( process.argv[ 3 ] );
+	 break;
+
+      case "compile-chapter":
+	 compileChapter( process.argv[ 3 ] );
+	 break;
+	 
+      default:
+	 throw( "Unknown command: " + process.argv[ 2 ] );
    }
-} else if( process.argv[ 2 ].match( /[.]json$/ ) ) {
-   compileChapter( "./" + process.argv[ 2 ] );
-} else if( process.argv[ 2 ].match( /[.]html$/ ) ) {
-   compileIndex( "./" + process.argv[ 2 ] );
-} else if( fs.lstatSync( process.argv[ 2 ] ).isDirectory() ) {
-   compileChapter( { title: path.basename( process.argv[ 2 ] ),
-		     files: [ process.argv[ 2 ] ] } )
 }
+
+main();

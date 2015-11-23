@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Nov  7 10:24:05 2015 (serrano)                */
+;*    Last change :  Fri Nov 20 08:04:36 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -31,14 +31,9 @@
 	   __hopscript_lib
 	   __hopscript_array)
 
-   (static (class JsHopFrame::JsObject
-	      (%this read-only)
-	      (args read-only (default #f))
-	      (url read-only)))
-
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj)
-	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::hop-service)))
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -50,9 +45,53 @@
 ;*---------------------------------------------------------------------*/
 (register-class-serialization! JsService
    (lambda (o)
-      (js-raise-type-error (js-initial-global-object)
-	 "[[SerializeTypeError]] ~a" o))
-   (lambda (o) o))
+      (with-access::JsService o (svc)
+	 (with-access::hop-service svc (path)
+	    path)))
+   (lambda (o ctx)
+      (let* ((svcp (lambda (this . args)
+		      (js-make-hopframe ctx o args)))
+	     (svcjs (js-make-service ctx svcp (basename o) #f -1
+		       (js-current-worker) #f)))
+	 svcjs)))
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsHopFrame ...                               */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsHopFrame
+   (lambda (o)
+      (let ((url (hopframe->string o (js-initial-global-object))))
+	 (if (char=? (string-ref url 0) #\/)
+	     ;; relative url
+	     (format "~a://~a:~a~a"
+		(if #f "https" "http")
+		(hop-server-hostname) (hop-port) url)
+	     url)))
+   (lambda (o ctx)
+      (define enc "?hop-encoding=hop&vals=")
+      (with-access::JsGlobalObject ctx (js-hopframe-prototype)
+	 (let ((i (string-index o #\?)))
+	    (cond
+	       ((not i)
+		(instantiate::JsHopFrame
+		   (__proto__ js-hopframe-prototype)
+		   (%this ctx)
+		   (args '())
+		   (url o)))
+	       ((substring-at? o enc i)
+		(let* ((urlargs (substring o (+fx i (string-length enc))))
+		       (val (string->obj (url-decode urlargs)))
+		       (args (map (lambda (v)
+				     `("hop" ,(obj->string v 'hop-to-hop)
+					"hop-encoding: hop"))
+				val)))
+		   (instantiate::JsHopFrame
+		      (__proto__ js-hopframe-prototype)
+		      (%this ctx)
+		      (args args)
+		      (url (substring o 0 i)))))
+	       (else
+		(error "HopFrame" "wrong frame" o)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsHopFrame ...                                     */
@@ -208,19 +247,24 @@
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame success opt)
 			 (with-access::JsHopFrame this (url args)
-			    (post url args success opt %this #f)))
-		      2 'post))
+			    (post url args success opt %this #t)))
+		      3 'post))
 	 (js-bind! %this js-hopframe-prototype 'postSync
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame opt)
 			 (with-access::JsHopFrame this (url args)
-			    (post url args #f opt %this #t)))
-		      1 'postSync))
+			    (post url args #f opt %this #f)))
+		      2 'postSync))
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
 			 (js-string->jsstring (hopframe->string this %this)))
 		      0 'toString))
+	 (js-bind! %this js-hopframe-prototype 'toURL
+	    :value (js-make-function %this
+		      (lambda (this::JsHopFrame)
+			 (js-string->jsstring (hopframe->string this %this)))
+		      0 'toURL))
 	 (js-bind! %this js-hopframe-prototype 'inspect
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
@@ -346,7 +390,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
-(define (post svc::bstring args success opt %this force-sync)
+(define (post svc::bstring args success opt %this async)
    
    (let ((host "localhost")
 	 (port (hop-port))
@@ -355,28 +399,36 @@
 	 (authorization #f)
 	 (fail #f)
 	 (failjs #f)
-	 (asynchronous (not force-sync))
+	 (asynchronous async)
 	 (header #f)
 	 (scheme 'http)
 	 (worker (js-current-worker)))
       (cond
 	 ((isa? opt JsFunction)
 	  (set! fail
-	     (lambda (xhr)
-		(with-access::xml-http-request xhr (header)
-		   (js-call1 %this opt %this
-		      (js-alist->jsobject header %this))))))
+	     (if asynchronous
+		 (lambda (xhr)
+		    (with-access::xml-http-request xhr (header)
+		       (js-call1 %this opt %this
+			  (js-alist->jsobject header %this))))
+		 (lambda (xhr)
+		    (js-worker-push-thunk! worker svc
+		       (lambda ()
+			  (js-call1 %this opt %this
+			     (js-alist->jsobject header %this))))))))
 	 ((not (eq? opt (js-undefined)))
-	  (let ((h (js-get opt 'host %this))
-		(p (js-get opt 'port %this))
-		(u (js-get opt 'user %this))
-		(w (js-get opt 'password %this))
-		(a (js-get opt 'authorization %this))
-		(f (js-get opt 'fail %this))
-		(y (js-get opt 'asynchronous %this))
-		(s (js-get opt 'scheme %this))
-		(c (js-get opt 'ssl %this))
-		(r (js-get opt 'header %this)))
+	  (let* ((v (js-get opt 'server %this))
+		 (o (if (eq? v (js-undefined)) opt v))
+		 (a (js-get o 'authorization %this))
+		 (h (js-get o 'host %this))
+		 (p (js-get o 'port %this))
+		 (u (js-get opt 'user %this))
+		 (w (js-get opt 'password %this))
+		 (f (js-get opt 'fail %this))
+		 (y (js-get opt 'asynchronous %this))
+		 (s (js-get opt 'scheme %this))
+		 (c (js-get opt 'ssl %this))
+		 (r (js-get opt 'header %this)))
 	     (unless (eq? h (js-undefined))
 		(set! host (js-tostring h %this)))
 	     (unless (eq? p (js-undefined))
@@ -408,7 +460,7 @@
 				(js-alist->jsobject header %this)))))))
 	     (when (isa? r JsObject)
 		(set! header (js-jsobject->alist r %this))))))
-      
+
       (define (scheme->js val)
 	 ;; a string might be received on internal server error
 	 (if (string? val)
@@ -463,7 +515,7 @@
 					     (js-call1 %this resolve %this
 						(scheme->js x))))))))))
 		  2 "executor"))))
-      
+
       (if asynchronous
 	  (if (isa? success JsFunction)
 	      (spawn-thread)
@@ -560,11 +612,38 @@
 			    (js-get obj k %this)
 			    (cdr arg))))
 		defaults)))
+	 ((and (pair? objs) (null? (cdr objs)) (pair? (car objs)))
+	  (map (lambda (arg)
+		  (let ((l (memq (car arg) (car objs))))
+		     (if (pair? l)
+			 (cadr l)
+			 (cdr arg))))
+	     defaults))
 	 ((null? objs)
 	  (map (lambda (arg)
 		  (let ((c (memq (car arg) objs)))
 		     (if (pair? c)
 			 (js-obj->jsobject (cadr c) %this)
+			 (cdr arg))))
+	     defaults))
+	 ((list? objs)
+	  (let loop ((objs objs))
+	     (when (pair? objs)
+		(if (or (null? (cdr objs))
+			(not (keyword? (car objs)))
+			(not (assq (car objs) defaults)))
+		    (js-raise-type-error %this
+		       (format "~s: bad named service argument ~s"
+			  (if (eq? args (js-undefined))
+			      (js-tostring proc %this)
+			      name)
+			  (car objs))
+		       #f)
+		    (loop (cddr objs)))))
+	  (map (lambda (arg)
+		  (let ((l (memq (car arg) objs)))
+		     (if (pair? l)
+			 (cadr l)
 			 (cdr arg))))
 	     defaults))
 	 (else
@@ -620,6 +699,8 @@
 	      (create-dsssl-service proc name args))))
       ((isa? name JsObject)
        (create-dsssl-service proc #f name))
+      ((and (eq? name (js-undefined)) (isa? args JsObject))
+       (create-dsssl-service proc #f args))
       (else
        (create-fix-service proc #f))))
 
@@ -639,9 +720,10 @@
 		  (set! wid (string->symbol (basename apath))))))))
    
    (with-access::JsGlobalObject %this (js-service-prototype)
-      (when register (register-service! svc))
-      (with-access::WorkerHopThread worker (services)
-	 (set! services (cons svc services)))
+      (when svc
+	 (when register (register-service! svc))
+	 (with-access::WorkerHopThread worker (services)
+	    (set! services (cons svc services))))
       (instantiate::JsService
 	 (procedure proc)
 	 (len arity)

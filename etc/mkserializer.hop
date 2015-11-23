@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 16 07:56:29 2015                          */
-;*    Last change :  Fri Jul 17 18:00:15 2015 (serrano)                */
+;*    Last change :  Wed Nov 18 08:18:02 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    A tool to produce the client-side HopScript class serializers    */
@@ -23,7 +23,8 @@
 ;*    main ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (main argv)
-   (display "\n\nvar hop_class_serializers = {\n")
+   (display "// generated file, don't edit (see etc/mkserializer.hop)\n\n")
+   (display "var hop_class_serializers = {\n")
    ;; JsArguments
    (printf "  ~a: { unserializer: function( a ) { return a } },\n"
       (class-hash JsArguments))
@@ -85,7 +86,16 @@
    ;; JsStringLiteral
    (printf "  ~a: { unserializer: function( s ) { return s } },\n"
       (class-hash JsStringLiteral))
-   (display "}\n"))
+   ;; JsHopFrame
+   (printf "  ~a: { unserializer: function( u ) { return new HopFrame( u ) } },\n"
+      (class-hash JsHopFrame))
+   ;; JsService
+   (printf "  ~a: { unserializer: function( u ) { return HopService( u ) } },\n"
+      (class-hash JsService))
+   (display "};\n\n")
+   (printf "HopFrame.prototype.hash = ~a;\n" (class-hash JsHopFrame))
+   (printf "HopService.prototype.hash = ~a;\n" (class-hash JsService))
+   )
 
 ;*---------------------------------------------------------------------*/
 ;*    run                                                              */

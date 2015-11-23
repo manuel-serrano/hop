@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Oct  1 11:54:52 2015 (serrano)                */
+#*    Last change :  Mon Nov 23 05:48:38 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -49,6 +49,7 @@ POPULATION = Makefile \
   hopjs/noserv/es6-promise.js \
   hopjs/noserv/es6-arrow.js \
   hopjs/noserv/es6-defval.js \
+  hopjs/noserv/es6-rest.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \
   hopjs/noserv/aux/worker1.js \
