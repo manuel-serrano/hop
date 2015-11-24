@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 16 07:56:29 2015                          */
-;*    Last change :  Wed Nov 18 08:18:02 2015 (serrano)                */
+;*    Last change :  Tue Nov 24 10:58:56 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    A tool to produce the client-side HopScript class serializers    */
@@ -90,7 +90,7 @@
    (printf "  ~a: { unserializer: function( u ) { return new HopFrame( u ) } },\n"
       (class-hash JsHopFrame))
    ;; JsService
-   (printf "  ~a: { unserializer: function( u ) { return HopService( u ) } },\n"
+   (printf "  ~a: { unserializer: function( s ) { return HopService( s[ 0 ], s[ 1 ] ) } },\n"
       (class-hash JsService))
    (display "};\n\n")
    (printf "HopFrame.prototype.hash = ~a;\n" (class-hash JsHopFrame))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Fri Nov 20 10:57:48 2015 (serrano)                */
+/*    Last change :  Tue Nov 24 11:01:56 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -32,9 +32,10 @@ var hop_busy_anim_32_32 = "data:image/gif;base64,R0lGODlhIAAgAOf/AAMABQACAAABDgA
 /*---------------------------------------------------------------------*/
 /*    HopService ...                                                   */
 /*---------------------------------------------------------------------*/
-function HopService( base ) {
+function HopService( base, dir ) {
    var o = function() { return new HopFrame( hop_apply_url( base, arguments ) ) };
    o.base = base;
+   o.dir = dir;
    o.__proto__ = HopService.prototype;
    
    return o;
@@ -42,7 +43,7 @@ function HopService( base ) {
 
 HopService.prototype = {
    hop_bigloo_serialize: hop_bigloo_serialize_service,
-   resource: function( file ) { return this.base + "/" + file },
+   resource: function( file ) { return this.dir + "/" + file },
    __proto__: Function.prototype
 }
 
