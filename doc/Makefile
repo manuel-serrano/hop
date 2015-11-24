@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Nov 23 07:37:34 2015 (serrano)                */
+#*    Last change :  Tue Nov 24 08:31:08 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -16,6 +16,7 @@ do: build
 -include ../etc/Makefile.hopconfig
 -include ../etc/Makefile.version
 
+HOPFLAGS=-q --no-autoload --no-clear-cache --no-cache --no-server
 HOP_MODULES=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/node_modules
 HOP_LIBS_PATH=$(HOP_MODULES)/markdown/lib/.libs/$(HOPRELEASE)/$(MACH):$(HOP_MODULES)/fontifier/lib/.libs/$(HOPRELEASE)/$(MACH)
 
@@ -142,7 +143,7 @@ uninstall:
 #*    .md -> .html                                                     */
 #*---------------------------------------------------------------------*/
 %.html: %.md doc.js xml.js
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/doc.js "compile-section" $< > $@ \
           || ($(RM) $@; exit 1)
 
@@ -150,7 +151,7 @@ uninstall:
 #*    .json -> .html                                                   */
 #*---------------------------------------------------------------------*/
 %.html: %.json doc.js xml.js
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/doc.js "compile-chapter" $< > $@ \
           || ($(RM) $@; exit 1)
 
@@ -158,7 +159,7 @@ uninstall:
 #*    index.html ...                                                   */
 #*---------------------------------------------------------------------*/
 index.html: _index.md doc.js xml.js
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/doc.js "compile-main" $< > $@ \
           || ($(RM) $@; exit 1)
 
@@ -166,7 +167,7 @@ index.html: _index.md doc.js xml.js
 #*    idx.json ...                                                     */
 #*---------------------------------------------------------------------*/
 idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/doc.js "html-to-idx" . $^ > $@ \
           || ($(RM) $@; exit 1)
 
@@ -174,7 +175,7 @@ idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
 #*    idx.html ...                                                     */
 #*---------------------------------------------------------------------*/
 idx.html: idx.json
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/doc.js "compile-idx" $^ > $@ \
           || ($(RM) $@; exit 1)
 
@@ -182,7 +183,7 @@ idx.html: idx.json
 #*    html-idx.json ...                                                */
 #*---------------------------------------------------------------------*/
 html-idx.json: 
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/html.js $(HTML) > $@ \
           || ($(RM) $@; exit 1)
 
