@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Nov 23 12:43:17 2015 (serrano)                */
+;*    Last change :  Tue Nov 24 19:37:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -46,8 +46,8 @@
 (register-class-serialization! JsService
    (lambda (o)
       (with-access::JsService o (svc)
-	 (with-access::hop-service svc (path)
-	    path)))
+	 (with-access::hop-service svc (path resource)
+	    (vector path resource))))
    (lambda (o ctx)
       (let* ((svcp (lambda (this . args)
 		      (js-make-hopframe ctx o args)))
@@ -591,6 +591,7 @@
 	 svcjs))
 
    (define (dsssl-actuals defaults objs)
+      (tprint "DSSSL objs=" objs)
       (cond
 	 ((and (pair? objs) (null? (cdr objs)) (isa? (car objs) JsObject))
 	  (let ((obj (car objs)))
@@ -643,7 +644,7 @@
 	  (map (lambda (arg)
 		  (let ((l (memq (car arg) objs)))
 		     (if (pair? l)
-			 (cadr l)
+			 (js-obj->jsobject (cadr l) %this)
 			 (cdr arg))))
 	     defaults))
 	 (else

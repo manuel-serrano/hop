@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Nov 23 12:16:05 2015 (serrano)                */
+;*    Last change :  Mon Nov 23 18:20:39 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -252,12 +252,12 @@
 	    ((=fx arity n)
 	     (apply proc obj args))
 	    ((>fx arity n)
-	     (if (>=fx minlen 0)
+	     (if (and (>=fx minlen 0) (>fx minlen (-fx n 1)))
 		 (js-raise-arity-error %this fun (-fx n 1))
 		 (let ((rest (make-list (-fx arity n) (js-undefined))))
 		    (apply proc obj (append args rest)))))
 	    ((>=fx arity 0)
-	     (if (>fx minlen 0)
+	     (if (>=fx minlen 0)
 		 (js-raise-arity-error %this fun (-fx n 1))
 		 (apply proc obj (take args (-fx arity 1)))))
 	    (rest

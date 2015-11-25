@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Nov 18 08:21:31 2015 (serrano)                */
+#*    Last change :  Tue Nov 24 09:17:30 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -317,7 +317,7 @@ hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch
 	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 hop-builtin-serializers.js: $(BUILDETCDIR)/mkserializer.hop
-	$(call compile,$(HOP),,--eval "(hop-load-afile \".afile\")" -q --no-server,$< > $@) || ($(RM) -f $@; exit 1)
+	$(call compile,$(HOP),--no-autoload --no-cache,--eval "(hop-load-afile \".afile\")" -q --no-server,$< > $@) || ($(RM) -f $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */
