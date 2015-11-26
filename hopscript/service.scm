@@ -739,6 +739,7 @@
 			     (source src)))))
 	 svcjs))
 
+      (tprint "DSSSL objs=" objs)
    (cond
       ((string? name)
        (create-service proc name))
