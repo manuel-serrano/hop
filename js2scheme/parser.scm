@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Nov  9 13:59:43 2015 (serrano)                */
+;*    Last change :  Wed Nov 25 10:37:48 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -850,6 +850,14 @@
 			  (loc (token-loc token)))))
 	     (body (fun-body params))
 	     (mode (or (javascript-mode body) 'normal)))
+	 (when (isa? inits J2SObjInit)
+	    (if (config-get conf :dsssl #f)
+		(with-handler
+		   (lambda (e)
+		      (exception-notify e)
+		      #f)
+		   (parse-token-error "Deprecated parameter declaration" (or id token)))
+		(parse-token-error "Illegal parameter declaration" (or id token))))
 	 (cond
 	    (declaration?
 	     (instantiate::J2SDeclSvc

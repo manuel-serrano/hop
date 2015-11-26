@@ -12,45 +12,40 @@
 /*    browser: http://localhost:8080/hop/sqlite                        */
 /*=====================================================================*/
 var Sqlite = require( './sqlite_core.js' ).Sqlite;
-var Path = require( 'path' );
-var Hop = require( 'hop' );
-var NP = require( Hop.notepad );
+var path = require( 'path' );
+var np = require( hop.notepad );
 
-var defpath = Path.join( Path.dirname( module.filename ), "db.sqlite" );
+var defpath = path.join( path.dirname( module.filename ), "db.sqlite" );
 
-service sqlite( { path: defpath } ) {
+service sqlite( o ) {
+   var path = o && "path" in o ? o.path : defpath;
    var db = new Sqlite( path );
 
-   return <HTML> {
-      <HEAD> {
-	 css: NP.css,
-	 jscript: NP.jscript
-      },
-      <NP.NOTEPAD> {
-	db.tables().map( function( t ) {
-	   return <NP.NPTAB> {
-	      <NP.NPTABHEAD> { t },
-	      dbTable( db, t )
-	   }
-	} )
-      }
-   }
+   return <html>
+     <head css=${np.css} jscript=${np.jscript}/>
+     <np.notepad>
+	${db.tables().map( function( t ) {
+	   return <np.nptab>
+	     <np.nptabhead> ${ t } </np.nptabhead>
+	      ${dbTable( db, t )}
+	   </np.nptab>
+	} )}
+     </np.notepad>
+   </html>
 }
 
 function dbTable( db, table ) {
    var cols = db.columns( table );
 
-   return <TABLE> {
-      <TR> {
-	 <TH> {},
-	 cols.map( function( c ) { return <TH> {} } )
-      },
-      db.map( function( row ) {
-	 return <TR> {
-	    row.map( function( e ) { return <TD> { e } } )
-	 }
-      }, "SELECT rowid, * FROM " + table +" ORDER BY rowid" )
-   }
+   return <table>
+     <tr>
+       <th/>
+       ${cols.map( function( c ) { return <th/> })}
+     </tr>
+      ${db.map( function( row ) {
+	 return <tr>${row.map( function( e ) { return <td> ${ e } </td> } )}</tr>
+      }, "SELECT rowid, * FROM " + table +" ORDER BY rowid" )}
+   </table>
 }
    
-console.log( "Go to \"http://%s:%d/hop/sqlite\"", Hop.hostname, Hop.port );
+console.log( "Go to \"http://%s:%d/hop/sqlite\"", hop.hostname, hop.port );

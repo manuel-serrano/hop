@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/2.2.x/weblets/home/Makefile             */
+#*    serrano/prgm/project/hop/3.0.x/weblets/home/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:35:57 2006                          */
-#*    Last change :  Mon Mar  7 14:16:13 2011 (serrano)                */
-#*    Copyright   :  2006-11 Manuel Serrano                            */
+#*    Last change :  Thu Nov 26 09:32:31 2015 (serrano)                */
+#*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile of the HZ weblet                                    */
 #*=====================================================================*/
@@ -111,7 +111,7 @@ config.hop: config.hop.in Makefile ../../etc/Makefile.hopconfig
 license.wiki: ../../LICENSE
 	cp $< $@
 
-install.wiki: ../../INSTALL
+install.wiki: ../../INSTALL.md
 	cp $< $@
 
 install-jvm.wiki: ../../INSTALL.jvm

@@ -3,13 +3,13 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  11 14:00:00 2015                         */
-/*    Last change :  Fri Sep 18 06:21:57 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 07:56:27 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Testing WebService                                               */
 /*=====================================================================*/
+"use hopscript";
 
-var hop = require( 'hop' );
 var assert = require( 'assert' );
 
 function test3rdPartyWS() {
@@ -28,16 +28,18 @@ function test3rdPartyWS() {
    }});
 }
 
-service myNamedArgsService( { arg : 'default' } ) {
+service myNamedArgsService( o ) {
+   var arg = (o && "arg" in o) ? o.arg : "default";
    console.log( 'server side: arg = %s, (%s)', arg, typeof( arg ));
    return arg ;
 }
 
 function testLocalWS() {
 
-   var myWebService = hop.webService( 'http://' + hop.hostname + ':' + hop.port + '/hop/myNamedArgsService' );
+   var myWebService =
+       hop.webService( 'http://' + hop.hostname + ':' + hop.port + '/hop/myNamedArgsService' );
 
-   function test( count ) {
+   function test( count = undefined ) {
       var expected;
       var positive;
       var args;
@@ -90,8 +92,7 @@ function testLocalWS() {
    var testValues = [
       { positive: true, args: {} },
       { positive: true, args: { arg: 'my string' }},
-      { positive: false, args: { arg2: 'ignored' }},
-      { positive: false, args: { arg: 'used', arg2: 'ignored' } },
+      { positive: true, args: { arg: 'used' }},
       { positive: true, args: { arg: 2015 }},
    ];
 

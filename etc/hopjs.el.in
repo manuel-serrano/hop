@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Nov 24 10:50:05 2015 (serrano)                */
+;*    Last change :  Thu Nov 26 09:46:34 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -201,7 +201,10 @@
       (let ((nm (concat dir "node_modules")))
 	(when (file-directory-p nm) (hopjs-load-repo-indexes nm))
 	(setq dir (expand-file-name (concat dir "../")))
-	(setq count (1- count))))))
+	(setq count (1- count))))
+    (let ((nm (expand-file-name "~/.node_modules")))
+      (when (file-directory-p nm)
+	(hopjs-load-repo-indexes nm)))))
   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-load-index ...                                             */
@@ -375,7 +378,7 @@
     (if tag
 	(if (save-excursion
 	      (goto-char (match-end 0))
-	      (looking-at "[ \t]*$"))
+	      (looking-at "[^<]*$"))
 	    ;; tag at the end of line
 	    (progn
 	      (unless (save-excursion
@@ -1235,12 +1238,12 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-doc-word ...                                               */
 ;*---------------------------------------------------------------------*/
-(defvar hopjs-doc-word nil)
+(defvar hopjs-doc-point 1)
 (defvar hopjs-doc-url nil)
 (defvar hopjs-doc-beg nil)
 (defvar hopjs-doc-end nil)
 
-(make-variable-buffer-local 'hopjs-doc-word)
+(make-variable-buffer-local 'hopjs-doc-point)
 (make-variable-buffer-local 'hopjs-doc-url)
 (make-variable-buffer-local 'hopjs-doc-beg)
 (make-variable-buffer-local 'hopjs-doc-end)
@@ -1265,10 +1268,10 @@ usage: (js-return)  -- [RET]"
     (unless (hopjs-in-string-comment-p (point))
       (let* ((beg (if (eq (char-after (1- (point))) ?<)
 		      (point)
-		      (progn (backward-word) (point))))
+		    (progn (backward-word) (point))))
 	     (end (progn (forward-word 1) (point)))
 	     (word (buffer-substring-no-properties beg end))
-	     (y '*))
+	     (y "*"))
 	(when (>= end pos)
 	  (cond
 	   ((progn (backward-hopjs-expr) (looking-at hopjs-re-open-tag))
@@ -1288,33 +1291,34 @@ usage: (js-return)  -- [RET]"
 	  (cond
 	   ((string-equal word "")
 	    (hopjs-undoc))
-	   ((not (string-equal word hopjs-doc-word))
-	    (setq hopjs-doc-word word)
+	   ((not (= (point) hopjs-doc-point))
+	    (setq hopjs-doc-point (point))
 	    (hopjs-undoc)
 	    (setq hopjs-doc-beg beg)
 	    (setq hopjs-doc-end end)
 	    (let ((entry (hopjs-doc-index-find word hopjs-doc-index-table)))
 	      (when entry
-		(if (or (eq y '*)
-			(let ((type (assq 'type (cdr entry))))
-			  (or (not (consp type))
-			      (string-equal (cdr type) y))))
-		    (let* ((url (assq 'url (cdr entry)))
-			   (proto (assq 'proto (cdr entry)))
+		(let ((type (assq 'type (cdr entry))))
+		  (if (or (not (consp type))
+			  (string-equal (cdr type) y)
+			  (and (not (string-equal (cdr type) "tag"))
+			       (string-equal y "*")))
+		      (let* ((url (assq 'url (cdr entry)))
+			     (proto (assq 'proto (cdr entry)))
 		     
-			   (tooltip (replace-regexp-in-string
-				     "&gt;" ">"
-				     (replace-regexp-in-string
-				      "&lt;" "<" (cdr proto)))))
-		      (when url
-			(message tooltip)
-			(setq hopjs-doc-url (cdr url))
-			(let ((mod (buffer-modified-p)))
-			  (put-text-properties beg end
-					       'keymap hopjs-tooltip-map
-					       'face 'highlight
-					       'help-echo tooltip)
-			  (set-buffer-modified-p mod))))))))))))))
+			     (tooltip (replace-regexp-in-string
+				       "&gt;" ">"
+				       (replace-regexp-in-string
+					"&lt;" "<" (cdr proto)))))
+			(when url
+			  (message tooltip)
+			  (setq hopjs-doc-url (cdr url))
+			  (let ((mod (buffer-modified-p)))
+			    (put-text-properties beg end
+						 'keymap hopjs-tooltip-map
+						 'face 'highlight
+						 'help-echo tooltip)
+			    (set-buffer-modified-p mod)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    put-text-properties ...                                          */

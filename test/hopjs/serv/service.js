@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jan 11 18:14:33 2015                          */
-/*    Last change :  Tue Nov 17 17:24:37 2015 (serrano)                */
+/*    Last change :  Wed Nov 25 20:34:00 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing server-to-server services                                */
@@ -19,7 +19,9 @@ service serv0( val ) {
    return val + 1;
 }
 
-service serv1( { n: 10, m: 20 } ) {
+service serv1( o ) {
+   var n = ("n" in o) ? o.n : 10;
+   var m = ("m" in o) ? o.m : 20;
    assert.ok( n > 0 );
    assert.ok( m > n );
    res++;

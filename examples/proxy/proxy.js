@@ -11,8 +11,6 @@
 /*         hop -v -g proxy.js -p 8888                                  */
 /*    browser: http://localhost:8080/hop/proxy                         */
 /*=====================================================================*/
-var hop = require( "hop" );
-
 var port = parseInt( process.argv[ process.argv.length - 1 ] );
 
 service proxy() {

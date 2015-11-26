@@ -11,10 +11,8 @@
 /*    run: hop -v -g pdfviewer.js                                      */
 /*    browser: http://localhost:8080/hop/pdfviewer                     */
 /*=====================================================================*/
-var hop = require( "hop" );
-
-
-service pdfviewer( { path: pdfviewer.resource( "example.pdf" ) } ) {
+service pdfviewer( o ) {
+   var path = o && "path" in o ? o.path : pdfviewer.resource( "example.pdf" );
    var ca = <canvas style="width: 200px; height: 200px; border: 1px solid #ccc"/>;
    
    return <html>

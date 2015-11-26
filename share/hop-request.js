@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Nov 24 11:01:56 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 18:34:17 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -33,7 +33,7 @@ var hop_busy_anim_32_32 = "data:image/gif;base64,R0lGODlhIAAgAOf/AAMABQACAAABDgA
 /*    HopService ...                                                   */
 /*---------------------------------------------------------------------*/
 function HopService( base, dir ) {
-   var o = function() { return new HopFrame( hop_apply_url( base, arguments ) ) };
+   var o = function() { return new HopFrame( false, base, arguments ) };
    o.base = base;
    o.dir = dir;
    o.__proto__ = HopService.prototype;
@@ -427,7 +427,7 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 	 return hop_callback( fail, ctx, "with-hop" )
       }
    }
-      
+
    try {
       switch( xhr.status ) {
          case 200: {
@@ -485,7 +485,7 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 		  o = hop_request_unserialize( xhr, svc );
 	       }
 
-	       return fail( o );
+	       return fail( o, xhr );
 	    } else {
 	       fail( xhr.status, xhr );
 	       return false;
@@ -524,39 +524,48 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 /*    Hop ...                                                          */
 /*---------------------------------------------------------------------*/
 function Hop( svc, success, failure ) {
-   return withHOP( svc.url, success, { fail: failure } );
+   return withHOP( svc.url, success, failure, undefined, false );
 }
 
 /*---------------------------------------------------------------------*/
 /*    HopFrame ...                                                     */
 /*---------------------------------------------------------------------*/
-function HopFrame( url ) {
-   this.url = url;
+function HopFrame( srv, path, args, options, header ) {
+   this.path = path;
+   this.args = args;
+   this.options = options;
+   this.header = header;
 }
 
 HopFrame.prototype.toString = function() {
-   return this.url;
+   return hop_apply_url( this.path, this.args );
 }
 
-HopFrame.prototype.post = function post( success, opt ) {
-   var svc = this.url;
-   
+HopFrame.prototype.post = function post( success, opt_or_fail ) {
+   var svc = hop_apply_url( this.path, this.args );
    if( success ) {
-      return withHOP( svc, success, opt, false );
+      if( opt_or_fail instanceof Function || opt_or_fail == undefined ) {
+	 return withHOP( svc, success, opt_or_fail, this.options, false );
+      } else {
+	 return withHOP( svc, success, false, opt_or_fail, false );
+      }
    } else if( "Promise" in window ) {
+      var frame = this;
       return new Promise( function( resolve, reject ) {
-	 if( opt ) {
-	    opt.fail = reject;
-	 } else {
-	    opt = { fail: reject }
-	 }
-	 return withHOP( svc, resolve, opt, false );
+	 return withHOP( svc, resolve, reject, frame.options, false );
       } );
    }
 }
 
 HopFrame.prototype.postSync = function call( opt ) {
-   return withHOP( this.url, function( v ) { return v }, opt, true );
+   return withHOP( this.url, function( v ) { return v }, false, opt, true );
+}
+
+HopFrame.prototype.setOptions = function( opts ) {
+   this.options = opts; return this;
+}
+HopFrame.prototype.setHeader = function( header ) {
+   this.header = header; return this;
 }
 
 HopFrame.prototype.hop_bigloo_serialize = hop_bigloo_serialize_hopframe;
@@ -564,15 +573,12 @@ HopFrame.prototype.hop_bigloo_serialize = hop_bigloo_serialize_hopframe;
 /*---------------------------------------------------------------------*/
 /*    withHOP ...                                                      */
 /*---------------------------------------------------------------------*/
-function withHOP( svc, success, opt, force_sync ) {
+function withHOP( svc, success, fail, opt, force_sync ) {
    var sync = force_sync;
-   var fail = false;
    var anim = true;
    var header = false;
 
-   if( opt instanceof Function ) {
-      fail = opt;
-   } else if( opt instanceof Object ) {
+   if( opt instanceof Object ) {
       if( "sync" in opt ) sync = opt.sync;
       if( "asynchronous" in opt ) sync = !opt.asynchronous;
       if( "fail" in opt ) fail = opt.fail;

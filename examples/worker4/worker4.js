@@ -43,7 +43,6 @@ service counter() {
 
 service counter2() {
    return new Promise( function( resolve, reject ) {
-      console.log( "resolve=", resolve.toString() );
       w.postMessage( resolve );
    } );
 }

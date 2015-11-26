@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Oct 31 14:14:48 2015 (serrano)                */
+;*    Last change :  Thu Nov 26 15:48:12 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -39,7 +39,7 @@
 	    (http-method-error obj)
 	    (http-parse-error obj)
 	    (http-bad-request obj)
-	    (http-internal-error ::&exception ::obj)
+	    (http-internal-error ::&exception ::obj ::obj)
 	    (http-service-error ::http-request ::symbol ::bstring)
 	    (http-invalidated-service-error ::http-request)
 	    (http-corrupted-service-error ::http-request)
@@ -66,7 +66,7 @@
    (let ((defhd '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
       (if (>fx (bigloo-debug) 0)
 	  (let ((estack (url-path-encode (obj->string (server-stack stack) 'hop-client))))
-	     (cons* `(Hop-Error: . #t)`(Hop-Debug-Stack: . ,estack) defhd))
+	     (cons* `(Hop-Error: . "true")`(Hop-Debug-Stack: . ,estack) defhd))
 	  defhd)))
 
 ;*---------------------------------------------------------------------*/
@@ -94,63 +94,90 @@
 		 ,(string-append "HTTP/1.1 " msg))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-error-response ...                                           */
+;*---------------------------------------------------------------------*/
+(define (hop-error-response e)
+   (instantiate::http-response-hop
+      (start-line "HTTP/1.1 500 Internal Server Error")
+      (backend (hop-xml-backend-secure))
+      (charset (hop-charset))
+      (header (error-http-header))
+      (bodyp #t)
+      (content-type "application/x-hop")
+      (value e)))
+
+;*---------------------------------------------------------------------*/
+;*    hop-request? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (hop-request? req)
+   (when (isa? req http-request)
+      (with-access::http-request req (header)
+	 (assq :hop-responsetype header))))
+
+;*---------------------------------------------------------------------*/
 ;*    http-error ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-generic (http-error e::obj req)
-   (let* ((ths "text-align: right; color: #777; vertical-align: top;")
-	  (msg (with-access::http-request req (host port path)
-		  (<TABLE> :style "font-size: 12pt"
-		     (<COLGROUP> (<COL> :width "0*"))
-		     (<TR>
-			(<TD> :style ths "host:")
-			(<TD> 
-			   (<TT> :style "font-size: 10pt; font-weight: bold"
-			      host ":" port)))
-		     (<TR>
-			(<TD> :style ths "path:")
-			(<TD> (<TT> :style "font-size: 9pt"
-				 (html-string-encode path)))))))
-	  (s (cond
-		((string? e)
-		 e)
-		((isa? e &exception)
-		 (with-error-to-string (lambda () (exception-notify e))))
-		(else
-		 (with-output-to-string (lambda () (display e)))))))
-      (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-xml
-	    (start-line "HTTP/1.1 500 Internal Server Error")
-	    (header (error-http-header))
-	    (backend (hop-xml-backend))
-	    (content-type mime-type)
-	    (charset (hop-charset))
-	    (xml (<HTML-ERROR> :class "error"
-		    :title "Server Error"
-		    :msg msg
-		    :request req
-		    (<DIV> :hssclass "hop-error-trace"
-		       (<DIV> "Hop server stack:")
-		       (<PRE> :hssclass "hop-error-notification"
-			  (html-string-encode s)))))))))
+   (if (hop-request? req)
+       (hop-error-response e)
+       (with-access::xml-backend (hop-xml-backend) (mime-type)
+	  (let* ((ths "text-align: right; color: #777; vertical-align: top;")
+		 (msg (with-access::http-request req (host port path)
+			 (<TABLE> :style "font-size: 12pt"
+			    (<COLGROUP> (<COL> :width "0*"))
+			    (<TR>
+			       (<TD> :style ths "host:")
+			       (<TD> 
+				  (<TT> :style "font-size: 10pt; font-weight: bold"
+				     host ":" port)))
+			    (<TR>
+			       (<TD> :style ths "path:")
+			       (<TD> (<TT> :style "font-size: 9pt"
+					(html-string-encode path)))))))
+		 (s (cond
+		       ((string? e)
+			e)
+		       ((isa? e &exception)
+			(with-error-to-string
+			   (lambda () (exception-notify e))))
+		       (else
+			(with-output-to-string
+			   (lambda () (display e)))))))
+	     (instantiate::http-response-xml
+		(start-line "HTTP/1.1 500 Internal Server Error")
+		(header (error-http-header))
+		(backend (hop-xml-backend))
+		(content-type mime-type)
+		(charset (hop-charset))
+		(xml (<HTML-ERROR> :class "error"
+			:title "Server Error"
+			:msg msg
+			:request req
+			(<DIV> :hssclass "hop-error-trace"
+			   (<DIV> "Hop server stack:")
+			   (<PRE> :hssclass "hop-error-notification"
+			      (html-string-encode s))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-error ::&exception ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&exception req)
-   (let* ((ths "text-align: right; color: #777; vertical-align: top;")
-	  (msg (with-access::http-request req (host port path)
-		  (<TABLE> :style "font-size: 12pt"
-		     (<COLGROUP> (<COL> :width "0*"))
-		     (<TR>
-			(<TD> :style ths "host:")
-			(<TD> 
-			   (<TT> :style "font-size: 10pt; font-weight: bold"
-			      host ":" port)))
-		     (<TR>
-			(<TD> :style ths "path:")
-			(<TD> (<TT> :style "font-size: 9pt"
-				 (html-string-encode path))))))))
-      (http-internal-error e msg)))
+   (if (hop-request? req)
+       (hop-error-response e)
+       (let* ((ths "text-align: right; color: #777; vertical-align: top;")
+	      (msg (with-access::http-request req (host port path)
+		      (<TABLE> :style "font-size: 12pt"
+			 (<COLGROUP> (<COL> :width "0*"))
+			 (<TR>
+			    (<TD> :style ths "host:")
+			    (<TD> 
+			       (<TT> :style "font-size: 10pt; font-weight: bold"
+				  host ":" port)))
+			 (<TR>
+			    (<TD> :style ths "path:")
+			    (<TD> (<TT> :style "font-size: 9pt"
+				     (html-string-encode path))))))))
+	  (http-internal-error e msg req))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-error ::&io-unknown-host-error ...                          */
@@ -197,45 +224,49 @@
 ;*    http-error ::&hop-security-error ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&hop-security-error req)
-   (let ((s (with-error-to-string (lambda () (exception-notify e)))))
-      (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-xml
-	    (start-line "HTTP/1.1 200 ok")
-	    (header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
-	    (backend (hop-xml-backend))
-	    (content-type mime-type)
-	    (charset (hop-charset))
-	    (xml (with-access::&error e (msg)
-		    (<HTML-ERROR> :class "security"
-		       :title "Security Error"
-		       :msg msg
-		       :request req
-		       (<PRE> (html-string-encode s)))))))))
+   (if (hop-request? e)
+       (hop-error-response e)
+       (let ((s (with-error-to-string (lambda () (exception-notify e)))))
+	  (with-access::xml-backend (hop-xml-backend) (mime-type)
+	     (instantiate::http-response-xml
+		(start-line "HTTP/1.1 200 ok")
+		(header '((Cache-Control: . "no-cache") (Pragma: . "no-cache")))
+		(backend (hop-xml-backend))
+		(content-type mime-type)
+		(charset (hop-charset))
+		(xml (with-access::&error e (msg)
+			(<HTML-ERROR> :class "security"
+			   :title "Security Error"
+			   :msg msg
+			   :request req
+			   (<PRE> (html-string-encode s))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    http-error ::&hop-autoload-error ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (http-error e::&hop-autoload-error req)
-   (let ((s (with-error-to-string
-	       (lambda ()
-		  (with-access::&hop-autoload-error e (obj)
-		     (if (isa? obj &exception)
-			 (exception-notify obj)
-			 (exception-notify e)))))))
-      (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-xml
-	    (start-line "HTTP/1.1 200 ok")
-	    (header (exception-http-header e))
-	    (backend (hop-xml-backend))
-	    (content-type mime-type)
-	    (charset (hop-charset))
-	    (xml (with-access::&error e (msg)
-		    (<HTML-ERROR> :class "service"
-		       :title "Service Autoload Error"
-		       :msg msg
-		       :request req
-		       (<PRE> :data-hss-class "hop-exception-notification"
-			  (html-string-encode s)))))))))
+   (if (hop-request? e)
+       (hop-error-response e)
+       (let ((s (with-error-to-string
+		   (lambda ()
+		      (with-access::&hop-autoload-error e (obj)
+			 (if (isa? obj &exception)
+			     (exception-notify obj)
+			     (exception-notify e)))))))
+	  (with-access::xml-backend (hop-xml-backend) (mime-type)
+	     (instantiate::http-response-xml
+		(start-line "HTTP/1.1 200 ok")
+		(header (exception-http-header e))
+		(backend (hop-xml-backend))
+		(content-type mime-type)
+		(charset (hop-charset))
+		(xml (with-access::&error e (msg)
+			(<HTML-ERROR> :class "service"
+			   :title "Service Autoload Error"
+			   :msg msg
+			   :request req
+			   (<PRE> :data-hss-class "hop-exception-notification"
+			      (html-string-encode s))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <HTML-ERROR> ...                                                 */
@@ -362,23 +393,25 @@ a timeout which has now expired. The service is then no longer available."))
 ;*---------------------------------------------------------------------*/
 ;*    http-internal-error ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (http-internal-error e msg)
-   (let ((s (with-error-to-string (lambda () (exception-notify e)))))
-      (with-access::xml-backend (hop-xml-backend) (mime-type)
-	 (instantiate::http-response-xml
-	    (start-line "HTTP/1.1 500 Internal Server Error")
-	    (header (exception-http-header e))
-	    (backend (hop-xml-backend))
-	    (content-type mime-type)
-	    (charset (hop-charset))
-	    (xml (<HTML-ERROR>
-		    :class (if (isa? e &io-timeout-error) "timeour" "error")
-		    :title "Server Error"
-		    :msg msg
-		    (<DIV> :data-hss-class "hop-exception-trace"
-		       (<DIV> "Hop server stack:")
-		       (<PRE> :data-hss-class "hop-exception-notification"
-			  (html-string-encode s)))))))))
+(define (http-internal-error e msg req)
+   (if (hop-request? req)
+       (hop-error-response e)
+       (let ((s (with-error-to-string (lambda () (exception-notify e)))))
+	  (with-access::xml-backend (hop-xml-backend) (mime-type)
+	     (instantiate::http-response-xml
+		(start-line "HTTP/1.1 500 Internal Server Error")
+		(header (exception-http-header e))
+		(backend (hop-xml-backend))
+		(content-type mime-type)
+		(charset (hop-charset))
+		(xml (<HTML-ERROR>
+			:class (if (isa? e &io-timeout-error) "timeour" "error")
+			:title "Server Error"
+			:msg msg
+			(<DIV> :data-hss-class "hop-exception-trace"
+			   (<DIV> "Hop server stack:")
+			   (<PRE> :data-hss-class "hop-exception-notification"
+			      (html-string-encode s))))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    http-service-error ...                                           */

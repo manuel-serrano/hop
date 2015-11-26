@@ -11,10 +11,10 @@
 /*    run: hop -v -g mdtag.js                                          */
 /*    browser: http://localhost:8080/hop/mdtag                         */
 /*=====================================================================*/
-var hop = require( "hop" );
 var md = require( hop.markdown );
 
-service mdtag( {name: "bar"} ) {
+service mdtag( o ) {
+   var name = o && "name" in o ? o.name : "bar";
    return <html>
      <md.markdown>
 toto n'est pas content
@@ -29,4 +29,3 @@ tutu non plus.
 }
 
 console.log( "Go to \"http://%s:%d/hop/mtag\"", hop.hostname, hop.port );
-

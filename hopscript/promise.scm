@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Nov  6 01:36:32 2015 (serrano)                */
+;*    Last change :  Wed Nov 25 08:59:48 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -74,7 +74,7 @@
 		     (k (instantiate::http-response-hop
 			   (start-line "HTTP/1.1 500 Internal Server Error")
 			   (backend (hop-xml-backend))
-			   (content-type "application/x-javascript")
+			   (content-type "application/x-hop")
 			   (header '((Hop-Error: . "true")))
 			   (value rej))))
 		  1 "reject")))))

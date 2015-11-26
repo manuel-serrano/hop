@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Nov 18 08:23:28 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 16:36:46 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -187,12 +187,12 @@ function hop_bigloo_serialize_sc_object() {
       Object.defineProperty( item, "hop_serialize_context_key", {
 	 value: hop_serialize_context.key,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
       Object.defineProperty( item, "hop_serialize_context_def", {
 	 value: hop_serialize_context.def++,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
    } else {
       item.hop_serialize_context_key = hop_serialize_context.key;
@@ -226,19 +226,20 @@ function hop_bigloo_serialize_hopframe() {
       Object.defineProperty( item, "hop_serialize_context_key", {
 	 value: hop_serialize_context.key,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
       Object.defineProperty( item, "hop_serialize_context_def", {
 	 value: hop_serialize_context.def++,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
    } else {
       item.hop_serialize_context_key = hop_serialize_context.key;
       item.hop_serialize_context_def = hop_serialize_context.def++;
    }
 
-   str += hop_bigloo_serialize_context( sc_cons( hash, this.url ) );
+   var obj = [ this.srv, this.path, this.args, this.options, this.header ];
+   str += hop_bigloo_serialize_context( sc_cons( hash, obj ) );
    str += hop_bigloo_serialize_context( 0 );
 
    str = "=" + hop_serialize_word( item.hop_serialize_context_def ) + str;
@@ -259,12 +260,12 @@ function hop_bigloo_serialize_service() {
       Object.defineProperty( item, "hop_serialize_context_key", {
 	 value: hop_serialize_context.key,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
       Object.defineProperty( item, "hop_serialize_context_def", {
 	 value: hop_serialize_context.def++,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
    } else {
       item.hop_serialize_context_key = hop_serialize_context.key;
@@ -477,12 +478,12 @@ function hop_serialize_array( item ) {
       Object.defineProperty( item, "hop_serialize_context_key", {
 	 value: hop_serialize_context.key,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
       Object.defineProperty( item, "hop_serialize_context_def", {
 	 value: hop_serialize_context.def++,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
    } else {
       item.hop_serialize_context_key = hop_serialize_context.key;
@@ -508,12 +509,12 @@ function hop_bigloo_serialize_hvector( item, tag, size ) {
       Object.defineProperty( item, "hop_serialize_context_key", {
 	 value: hop_serialize_context.key,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
       Object.defineProperty( item, "hop_serialize_context_def", {
 	 value: hop_serialize_context.def++,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
    } else {
       item.hop_serialize_context_key = hop_serialize_context.key;
@@ -539,12 +540,12 @@ function hop_bigloo_serialize_fvector( item, tag, size ) {
       Object.defineProperty( item, "hop_serialize_context_key", {
 	 value: hop_serialize_context.key,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
       Object.defineProperty( item, "hop_serialize_context_def", {
 	 value: hop_serialize_context.def++,
 	 enumerable: false,
-	 configurable: false
+	 configurable: true
       } );
    } else {
       item.hop_serialize_context_key = hop_serialize_context.key;

@@ -3,15 +3,14 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Wed Dec 17 16:54:07 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Thu Nov 26 17:15:31 2015 (serrano)                */
+/*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    basic example FS examples                                        */
 /*    -------------------------------------------------------------    */
 /*    run: hop -v -g file.js                                           */
 /*    browser: http://localhost:8080/hop/fs                            */
 /*=====================================================================*/
-var hop = require( "hop" );
 var sys = require( "fs" );
 
 function readCheck( name ) {
@@ -23,18 +22,18 @@ function readCheck( name ) {
 }
 
 service fs() {
-   return <HTML> {
-      <TABLE> {
-         <TR> {
-	    <TH> { "exists" },
-	    <TD> { sys.existsSync( fs.resource( "fs.js" ) ) ? "ok" : "error" }
-	 },
-         <TR> {
-            <TH> { "read" },
-            <TD> { readCheck( fs.resource( "fs.js" ) ) ? "ok" : "error" }
-	 }
-      }
-   }
+   return <html>
+      <table>
+         <tr> 
+	   <th>exists</th>
+	   <td>${ sys.existsSync( fs.resource( "fs.js" ) ) ? "ok" : "error" }</td>
+	 </tr>
+	 <tr>
+           <th>read</th>
+           <td>${ readCheck( fs.resource( "fs.js" ) ) ? "ok" : "error" }</td>
+	 </tr>
+      </table>
+   </html>
 }
 
 console.log( "Go to \"http://%s:%d/hop/fs\"", hop.hostname, hop.port );

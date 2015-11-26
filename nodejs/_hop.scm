@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Nov 17 16:28:05 2015 (serrano)                */
+;*    Last change :  Thu Nov 26 18:20:03 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -116,7 +116,7 @@
 	    :__proto__ js-function-prototype
 	    :prototype js-server-prototype
 	    :construct (lambda (this host port auth ssl)
-			  (instantiate::JsWrapper
+			  (instantiate::JsServer
 			     (__proto__ js-server-prototype)
 			     (data '())
 			     (obj (instantiate::server
@@ -127,9 +127,8 @@
 				     (port (if (eq? port (js-undefined))
 					       (hop-port)
 					       (js-tointeger port %this)))
-				     (authorization (if (eq? auth (js-undefined))
-							#f
-							(js-tostring auth %this)))))))))
+				     (authorization (when (js-totest auth)
+						       (js-tostring auth %this)))))))))
       
       (js-bind! %this js-urlframe-prototype 'post
 	 :value (js-make-function %this
@@ -149,8 +148,8 @@
 
       (js-bind! %this js-server-prototype 'addEventListener
 	 :value (js-make-function %this
-		   (lambda (this::JsWrapper event proc . capture)
-		      (with-access::JsWrapper this (obj data)
+		   (lambda (this::JsServer event proc . capture)
+		      (with-access::JsServer this (obj data)
 			 (let ((f (lambda (evt)
 				     (js-call1 %this proc this evt))))
 			    (set! data (cons (cons proc f) data))
@@ -161,8 +160,8 @@
       
       (js-bind! %this js-server-prototype 'removeEventListener
 	 :value (js-make-function %this
-		   (lambda (this::JsWrapper event proc . capture)
-		      (with-access::JsWrapper this (obj data)
+		   (lambda (this::JsServer event proc . capture)
+		      (with-access::JsServer this (obj data)
 			 (when (isa? obj server)
 			    (let ((f (assq proc data)))
 			       (when (pair? f)
@@ -171,8 +170,8 @@
 		   3 'removeEventListener))
       (js-bind! %this js-server-prototype 'port
 	 :get (js-make-function %this
-		 (lambda (this::JsWrapper)
-		    (with-access::JsWrapper this (obj)
+		 (lambda (this::JsServer)
+		    (with-access::JsServer this (obj)
 		       (when (isa? obj server)
 			  (with-access::server obj (port)
 			     port))))
@@ -180,8 +179,8 @@
 	 :writable #f)
       (js-bind! %this js-server-prototype 'host
 	 :get (js-make-function %this
-		 (lambda (this::JsWrapper)
-		    (with-access::JsWrapper this (obj)
+		 (lambda (this::JsServer)
+		    (with-access::JsServer this (obj)
 		       (when (isa? obj server)
 			  (with-access::server obj (host)
 			     (js-string->jsstring host)))))
@@ -189,8 +188,8 @@
 	 :writable #f)
       (js-bind! %this js-server-prototype 'authorization
 	 :get (js-make-function %this
-		 (lambda (this::JsWrapper)
-		    (with-access::JsWrapper this (obj)
+		 (lambda (this::JsServer)
+		    (with-access::JsServer this (obj)
 		       (when (isa? obj server)
 			  (with-access::server obj (authorization)
 			     (when (string? authorization)
@@ -199,8 +198,8 @@
 	 :writable #f)
       (js-bind! %this js-server-prototype 'ssl
 	 :get (js-make-function %this
-		 (lambda (this::JsWrapper)
-		    (with-access::JsWrapper this (obj)
+		 (lambda (this::JsServer)
+		    (with-access::JsServer this (obj)
 		       (when (isa? obj server)
 			  (with-access::server obj (ssl)
 			     ssl))))

@@ -13,7 +13,6 @@
 /*=====================================================================*/
 var fs = require( 'fs' );
 var path = require( 'path' );
-var hop = require( 'hop' );
 var SP = require( hop.spage );
 
 function base( dir ) {
@@ -37,18 +36,22 @@ function dirToSpage( dir ) {
    </SP.sptab>
 }
 
-service spage( { dir: path.dirname( path.dirname( module.filename ) ) } ) {
+service spage( o ) {
+   var dir = o && "dir" in o ?
+       o.dir : path.dirname( path.dirname( module.filename ) );
    var d = <span>0</span>;
+   
    return <html>
      <head css=${SP.css} jscript=${SP.jscript}/>
      <body>
        <div>depth: ${d}</div>
+       <br/>
        <SP.spage id="sp" onchange=~{${d}.innerHTML = HopSpage.depth( "sp" )}>
 	 <SP.sphead>${ dir }</SP.sphead>
 	 ${dirToSpage( dir )}
        </SP.spage>
      </body>
    </html>;
-   }
+}
 
 console.log( "Go to \"http://%s:%d/hop/spage\"", hop.hostname, hop.port );

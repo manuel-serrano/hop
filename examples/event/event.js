@@ -11,29 +11,22 @@
 /*    run: hop -v -g event.js                                          */
 /*    browser: http://localhost:8080/hop/event                         */
 /*=====================================================================*/
-var hop = require( "hop" );
-
-var canvas = <CANVAS> {
-   width: 550,
-   height: 200,
-   style: "border: 1px solid black"
-};
+var canvas = <canvas width=550 height=200 style="border: 1px solid black"/>;
 
 service event() {
-   return <HTML> {
-      canvas,
-      <BR> {},
-      <BUTTON> {
-	 onclick: ~{
-	    function rndColor() {
-	       return Math.round( Math.random() * 255 );
-	    }
-	    window.open( ${eventSlave}( { red: rndColor(), green: rndColor(), blue: rndColor() } ),
-			 "slave-" + count++,
-			 "width=600,height=300" );
-	 },
-	 "new window"
-      },
+   return <html>
+      ${canvas}
+      <br/>
+      <button onclick=~{
+	 function rndColor() {
+	    return Math.round( Math.random() * 255 );
+	 }
+	 window.open( ${eventSlave}( { red: rndColor(), green: rndColor(), blue: rndColor() } ),
+		      "slave-" + count++,
+		      "width=600,height=300" );
+      }>
+	 new window
+      </button>
 
       ~{
 	 var count = 0;
@@ -57,12 +50,16 @@ service event() {
 	       svc( { pageX: evt.pageX, pageY: evt.pageY } ).post();
 	    } );
       }
-   }
+   </html>
 }
 
-service eventSlave( {red: 200, green: 0, blue: 0} ) {
-   return <HTML> {
-      canvas,
+service eventSlave( o ) {
+   var red = o && "red" in o ? o.red : 200;
+   var green = o && "green" in o ? o.green : 0;
+   var blue = o && "blue" in o ? o.blue : 0;
+   
+   return <html>
+      ${canvas}
       ~{
 	 window.onload = function() {
 	    var canvas = ${canvas};
@@ -79,7 +76,7 @@ service eventSlave( {red: 200, green: 0, blue: 0} ) {
 	       } );
 	 }
       }
-   } </HTML>
+   </html>
 }
 	    
 console.log( "Go to \"http://%s:%d/hop/event\"", hop.hostname, hop.port );

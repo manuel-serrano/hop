@@ -13,7 +13,6 @@
 /*=====================================================================*/
 var fs = require( 'fs' );
 var path = require( 'path' );
-var hop = require( 'hop' );
 var tr = require( hop.tree );
 
 function base( dir ) {
@@ -39,7 +38,9 @@ function dirToTree( dir ) {
  </tr.tree>
  }
 
-service tree( { dir: path.dirname( path.dirname( module.filename ) ) } ) {
+service tree( o ) {
+   var dir = o && "dir" in o ?
+       o.dir : path.dirname( path.dirname( module.filename ) );
    var t = dirToTree( dir );
    return <html>
      <head css=${tr.css} jscript=${tr.jscript}/>

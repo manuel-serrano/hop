@@ -1,4 +1,3 @@
-var hop = require( "hop" );
 var assert = require( "assert" );
 var fs = require( "fs" );
 
@@ -13,7 +12,10 @@ var fakeupload = '--' + boundary + '\r\n'
     + '\r\n--' + boundary + '--\r\n';
 
 /* server */ 		
-service serv1( { x: 10, y: 100 } ) {
+service serv1( o ) {
+   var x = (o && "x" in o) ? o.x : 10;
+   var y = (o && "y" in o) ? o.y : 100;
+   
    var x1 = Number( x ), y1 = Number( y );
 
    assert.ok( x1 > 0 );
@@ -23,7 +25,8 @@ service serv1( { x: 10, y: 100 } ) {
    return x1 + y1;
 }
 
-service upload( { file: 'no file' } ) {
+service upload( o ) {
+   var file = (o && "file" in o) ? o.file : "no file";
    var stats = fs.statSync( file );
    var chars = fs.readFileSync( file );
 

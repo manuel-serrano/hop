@@ -12,7 +12,6 @@
 /*    browser: http://localhost:8080/hop/requirew                      */
 /*=====================================================================*/
 var util = require( "util" );
-var hop = require( "hop" );
 
 var url = util.format( "http://%s:%d/hop/providerGetModule?file=foo.js",
 		       hop.hostname, hop.port );
@@ -20,13 +19,12 @@ var url = util.format( "http://%s:%d/hop/providerGetModule?file=foo.js",
 var w = new Worker( "./provider.js" );
 
 service requirew() {
-   return hop.HTTPResponseAsync(
-      function( sendResponse ) {
-	 setTimeout( function() {
-	    var imp = require( url );
-	    sendResponse( imp.hello() );
-	 }, 1000 );
-      }, this );
+   return new Promise( function( resolve, reject ) {
+      setTimeout( function() {
+	 var imp = require( url );
+	 resolve( imp.hello() );
+      }, 1000 );
+   } )
 }
 
 console.log( "Go to \"http://%s:%d/hop/requirew\"", hop.hostname, hop.port );

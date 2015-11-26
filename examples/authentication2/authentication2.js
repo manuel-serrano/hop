@@ -17,84 +17,84 @@ import service protectedOnly()
 
 var port = parseInt( process.argv[ process.argv.length - 1 ] );
 
-var optAnonymous = { server: new hop.Server( "localhost", port ) };
-var optAuthenticated = { server: new hop.Server( "localhost", port ),
-			 user: "foo",
-			 password: "bar" };
+var server = new hop.Server( "localhost", port );
+var auth = { user: "foo", password: "bar" };
+
+server.publicOnly = publicOnly;
+server.publicOrProtected = publicOrProtected;
+server.protectedOnly = protectedOnly;
 
 //  result handler for asynchronous service calls
 function resultHandler( result ) {
    console.log( 'Asynchronous call', result );
 }
 
-//  error handler (added to options) for asynchrounous service calls
-function addErrorHandler ( options, message ) {
-   var opt = {};
-   for (var key in options) {
-      opt[key] = options[key];
-   }
-   opt.fail = function( error ) {
+//  error handler for asynchrounous service calls
+function errorHandler( message ) {
+   return function( error ) {
       console.log( 'asynchronous call: %s, connection refused:', message );
    };
-   return opt;
 }
 
 function connect() {
-
    /* accepted connection */
    try {
-      console.log( publicOnly( "no password" ).postSync( optAnonymous ) );
+      console.log( server.publicOnly( "no password" ).postSync() );
    } catch( err ) {
       console.log( "publicOnly, no password, connection refused: ", err )
    }
 
    /* refused connection */
    try {
-      console.log( publicOnly( "password" ).postSync( optAuthenticated ) );
+      console.log( server.publicOnly( "password" ).setOptions( auth ).postSync() );
    } catch( err ) {
       console.log( "publicOnly, with password, connection refused: ", err );
    }
 
    /* accepted connection */
    try {
-      console.log( protectedOnly( "password" ).postSync( optAuthenticated ) );
+      console.log( server.protectedOnly( "password" ).setOptions( auth ).postSync() );
    } catch( err ) {
       console.log( "protectedOnly, with password, connection refused: ", err );
    }
-   
+
    /* refused connection */
    try {
-      console.log( protectedOnly( "no password" ).postSync( optAnonymous ) );
+      console.log( server.protectedOnly( "no password" ).postSync() );
    } catch( err ) {
       console.log( "protectedOnly, no password, connection refused: ", err )
    }
 
    /* accepted connection */
    try {
-      console.log( publicOrProtected( "no password" ).postSync( optAnonymous ) );
+      console.log( server.publicOrProtected( "no password" ).postSync() );
    } catch( err ) {
       console.log( "publicOrProtected, no password, connection refused: ", err )
    }
 
    /* accepted connection */
    try {
-      console.log( publicOrProtected( "password" ).postSync( optAuthenticated ) );
+      console.log( server.publicOrProtected( "password" ).setOptions( auth ).postSync() );
    } catch( err ) {
       console.log( "publicOrProtected, with password, connection refused: ", err );
    }
 
    /* asynchronous calls */
-   publicOnly( "no password" ).post( resultHandler, optAnonymous );
-   publicOnly( "password" ).post(
-      resultHandler,
-      addErrorHandler( optAuthenticated, 'publicOnly with password' ) );
-   protectedOnly( "no password" ).post(
-      resultHandler,
-      addErrorHandler( optAnonymous, 'protectedOnly without password' ) );
-   protectedOnly( "password" ).post( resultHandler, optAuthenticated );
-   publicOrProtected( "no password" ).post( resultHandler, optAnonymous );
-   publicOrProtected( "password" ).post( resultHandler, optAuthenticated );
-   
+   server.publicOnly( "no password" )
+      .post( resultHandler );
+   server.publicOnly( "password" )
+      .setOptions( auth )
+      .post( resultHandler, errorHandler( 'publicOnly with password' ) );
+   server.protectedOnly( "no password" )
+      .post( resultHandler, errorHandler( 'protectedOnly without password' ) );
+   server.protectedOnly( "password" )
+      .setOptions( auth )
+      .post( resultHandler );
+   server.publicOrProtected( "no password" )
+      .post( resultHandler );
+   server.publicOrProtected( "password" )
+      .setOptions( auth )
+      .post( resultHandler );
 }
 
 setTimeout( connect, 1000 );

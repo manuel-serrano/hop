@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Nov  6 11:42:14 2015 (serrano)                */
+;*    Last change :  Thu Nov 26 15:24:09 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -648,7 +648,7 @@
 				       (else
 					"Unbound variables"))
 				    "Unbound variables"))
-			     (r (http-internal-error e m)))
+			     (r (http-internal-error e m #f)))
 			 (with-access::http-response-xml r (xml)
 			    (xml-write-html xml p backend))))
 		   (error/source-location "<HTML>"
