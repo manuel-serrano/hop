@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Nov  6 11:44:43 2015 (serrano)                */
+;*    Last change :  Thu Nov 26 20:31:00 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -310,6 +310,13 @@
    (with-access::J2SDeclInit this (id val)
       (cons* this "var " (symbol->string id) "="
          (append (j2s-js val tildec dollarc mode evalp conf) '(";")))))
+                                             
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SDeclFun ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SDeclFun tildec dollarc mode evalp conf)
+   (with-access::J2SDeclInit this (id val)
+      (j2s-js val tildec dollarc mode evalp conf)))
                                              
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SStmtExpr ...                                         */

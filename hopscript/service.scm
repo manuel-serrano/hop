@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Nov 26 18:24:32 2015 (serrano)                */
+;*    Last change :  Thu Nov 26 19:47:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -314,7 +314,6 @@
 				 :__proto__ js-function-prototype
 				 :prototype js-service-prototype
 				 :construct (lambda (this proc name)
-					       (tprint "CREATE name=" name)
 					       (js-create-service %this proc
 						  name
 						  (unless (eq? name (js-undefined))
