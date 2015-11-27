@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Nov 27 08:25:07 2015 (serrano)                */
+;*    Last change :  Fri Nov 27 10:24:47 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -799,6 +799,8 @@
 			      (scheme->response
 				 (service-handler svc req) req))))
 			 (else
+			  (tprint "DEGNIED wid=" wid  " " (typeof wid)
+			     " id=" id " " (typeof id))
 			  (service-denied req id)))))
 		  (else
 		   (let ((ini (hop-initial-weblet)))

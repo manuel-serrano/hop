@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Nov 26 17:47:47 2015 (serrano)                */
+;*    Last change :  Fri Nov 27 11:05:25 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -997,51 +997,51 @@
 ;*---------------------------------------------------------------------*/
 (define (jssvc->scheme this::J2SSvc id scmid mode return conf)
 
-   (define (service-debug name loc body)
-      (if (>fx (bigloo-debug) 0)
-	  `(lambda () (js-service/debug ',name ',loc ,body))
-	  body))
-   
-   (define (service-body this::J2SSvc)
-      (with-access::J2SSvc this (loc body need-bind-exit-return name mode)
-	 (if need-bind-exit-return
-	     (with-access::J2SNode body (loc)
-		(epairify loc
-		   (return-body
-		      (j2s-scheme body mode return conf))))
-	     (flatten-stmt
-		(j2s-scheme body mode return conf)))))
-   
-   (define (service-fix-proc->scheme this args)
-      (with-access::J2SSvc this (name loc vararg)
-	 (let ((imp `(lambda ,(cons 'this args)
-			(js-worker-exec @worker ,(symbol->string scmid)
-			   ,(service-debug name loc
-			       `(lambda ()
-				   ,(service-body this)))))))
-	    (epairify-deep loc
-	       `(lambda (this . args)
-		   (map! (lambda (a) (js-obj->jsobject a %this)) args)
-		   ,(case vararg
-		       ((arguments)
-			`(let* ((arguments (js-strict-arguments %this args))
-				(fun ,imp))
-			    (js-apply-service% fun this args
-			       ,(length args))))
-		       ((rest)
-			`(let ((fun ,imp))
-			    (js-apply-rest% %this fun this args
-			       ,(-fx (length args) 1) (+fx 1 (length args)))))
-		       (else
-			`(let ((fun ,imp))
-			    (js-apply-service% fun this args
-			       ,(length args))))))))))
-   
    (define (j2sscheme-service this tmp scmid path args arity mode return)
       
       (define (jscript-funcall init)
 	 ;; see runtime/service_expd.sch
 	 "HopService( ~s, ~s )")
+
+      (define (service-debug name loc body)
+	 (if (>fx (bigloo-debug) 0)
+	     `(lambda () (js-service/debug ',name ',loc ,body))
+	     body))
+
+      (define (service-body this::J2SSvc)
+	 (with-access::J2SSvc this (loc body need-bind-exit-return name mode)
+	    (if need-bind-exit-return
+		(with-access::J2SNode body (loc)
+		   (epairify loc
+		      (return-body
+			 (j2s-scheme body mode return conf))))
+		(flatten-stmt
+		   (j2s-scheme body mode return conf)))))
+
+      (define (service-fix-proc->scheme this args)
+	 (with-access::J2SSvc this (name loc vararg)
+	    (let ((imp `(lambda ,(cons 'this args)
+			   (js-worker-exec @worker ,(symbol->string scmid)
+			      ,(service-debug name loc
+				  `(lambda ()
+				      ,(service-body this)))))))
+	       (epairify-deep loc
+		  `(lambda (this . args)
+		      (map! (lambda (a) (js-obj->jsobject a %this)) args)
+		      ,(case vararg
+			  ((arguments)
+			   `(let* ((arguments (js-strict-arguments %this args))
+				   (fun ,imp))
+			       (js-apply-service% fun this args
+				  ,(length args))))
+			  ((rest)
+			   `(let ((fun ,imp))
+			       (js-apply-rest% %this fun this args
+				  ,(-fx (length args) 1) (+fx 1 (length args)))))
+			  (else
+			   `(let ((fun ,imp))
+			       (js-apply-service% fun this args
+				  ,(length args))))))))))
       
       (define (service-call-error this::J2SSvc)
 	 (with-access::J2SSvc this (loc name)
@@ -1141,8 +1141,8 @@
 	    `(js-create-service %this
 		,(j2sfun->scheme this (jsfun->lambda this mode return conf)
 		    mode return conf)
-		,(symbol->string name)
 		,(when (symbol? path) (symbol->string path))
+		',loc
 		,register (js-current-worker)))))
 
    (with-access::J2SSvc this (loc)

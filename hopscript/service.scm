@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Nov 27 08:27:27 2015 (serrano)                */
+;*    Last change :  Fri Nov 27 11:05:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -313,12 +313,11 @@
 				 3 'Service
 				 :__proto__ js-function-prototype
 				 :prototype js-service-prototype
-				 :construct (lambda (this proc name)
+				 :construct (lambda (this proc path)
 					       (js-create-service %this proc
-						  name
-						  (unless (eq? name (js-undefined))
-						     (js-tostring name %this))
-						  #t (js-current-worker)))))
+						  (unless (eq? path (js-undefined))
+						     (js-tostring path %this))
+						  #f #t (js-current-worker)))))
 		  (js-hopframe (js-make-function %this
 				  (lambda (this url args)
 				     (js-new %this js-hopframe url args))
@@ -691,7 +690,7 @@
 ;*    "args" arguments is an object, in which case, the function       */
 ;*    builds a service with optional named arguments.                  */
 ;*---------------------------------------------------------------------*/
-(define (js-create-service %this::JsGlobalObject proc name path register worker::WorkerHopThread)
+(define (js-create-service %this::JsGlobalObject proc path loc register worker::WorkerHopThread)
    
    (define (source::bstring proc)
       (if (isa? proc JsFunction)
@@ -700,53 +699,59 @@
 		(((at ?path ?-) . ?-) path)
 		(else (pwd))))
 	  (pwd)))
-
+   
    (define (fix-args len)
       (map (lambda (i)
 	      (string->symbol (format "a~a" i)))
 	 (iota len)))
 
-   (define (create-service proc name)
-      (letrec* ((id (if (string? name) (string->symbol name) (gensym 'svc)))
-		(path (make-hop-url-name
-			 (or path (gen-service-url :public #t))))
-		(src (source proc))
-		(svcp (lambda (this . args)
-			 (with-access::JsService svcjs (svc)
-			    (with-access::hop-service svc (path)
-			       (js-make-hopframe %this this path args)))))
-		(svcjs (js-make-service %this svcp id register -1 worker
-			  (instantiate::hop-service
-			     (ctx %this)
-			     (proc (if (isa? proc JsFunction)
-				       (lambda (this . args)
-					  (map! (lambda (a)
-						   (js-obj->jsobject a %this))
-					     args)
-					  (js-worker-exec worker
-					     (symbol->string! id)
-					     (lambda ()
-						(js-apply %this proc this args))))
-				       (lambda (this . args)
-					  (js-undefined))))
-			     (javascript "HopService( ~s, ~s )")
-			     (path path)
-			     (id id)
-			     (wid id)
-			     (args (fix-args (js-get proc 'length %this)))
-			     (resource (dirname src))
-			     (source src)))))
-	 svcjs))
+   (define (service-debug path proc)
+      (if (>fx (bigloo-debug) 0)
+	  (lambda ()
+	     (js-service/debug path loc proc))
+	  proc))
+   
+   (let* ((path (or path (gen-service-url :public #t)))
+	  (hoppath (make-hop-url-name path))
+	  (src (source proc)))
+      (multiple-value-bind (id wid)
+	 (service-path->ids path)
+	 (letrec* ((svcp (lambda (this . args)
+			    (with-access::JsService svcjs (svc)
+			       (with-access::hop-service svc (path)
+				  (js-make-hopframe %this this path args)))))
+		   (svcjs (js-make-service %this svcp id register -1 worker
+			     (instantiate::hop-service
+				(ctx %this)
+				(proc (if (isa? proc JsFunction)
+					  (lambda (this . args)
+					     (map! (lambda (a)
+						      (js-obj->jsobject a %this))
+						args)
+					     (js-worker-exec worker
+						(symbol->string! id)
+						(service-debug path
+						   (lambda ()
+						      (js-apply %this proc this args)))))
+					  (lambda (this . args)
+					     (js-undefined))))
+				(javascript "HopService( ~s, ~s )")
+				(path hoppath)
+				(id id)
+				(wid wid)
+				(args (fix-args (js-get proc 'length %this)))
+				(resource (dirname src))
+				(source src)))))
+	    svcjs))))
 
-   (cond
-      ((string? name)
-       (create-service proc name))
-      ((isa? name JsStringLiteral)
-       (create-service proc (js-jsstring->string name)))
-      ((isa? name JsString)
-       (create-service proc (js-tostring name %this)))
-      (else
-       (create-service proc #f))))
+;*---------------------------------------------------------------------*/
+;*    service-path->ids ...                                            */
+;*---------------------------------------------------------------------*/
+(define (service-path->ids path)
+   (let* ((id (string->symbol path))
+	  (wid (let ((j (string-index path #\/)))
+		  (if j (string->symbol (substring path 0 j)) id))))
+      (values id wid)))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-pack-cgi-arguments ...                                   */
@@ -788,8 +793,10 @@
 	    (when (string=? (dirname p) (hop-service-base))
 	       (let ((apath (substring path
 			       (+fx 1 (string-length (hop-service-base))))))
-		  (set! id (string->symbol apath))
-		  (set! wid (string->symbol (basename apath))))))))
+		  (multiple-value-bind (i w)
+		     (service-path->ids apath)
+		     (set! id i)
+		     (set! wid w)))))))
    
    (with-access::JsGlobalObject %this (js-service-prototype)
       (when svc
