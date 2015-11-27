@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Thu Nov 26 09:46:34 2015 (serrano)                */
+;*    Last change :  Fri Nov 27 08:02:00 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -369,35 +369,75 @@
   (indent-for-tab-command))
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-pos-eolp ...                                               */
+;*---------------------------------------------------------------------*/
+(defun hopjs-pos-eolp (pos)
+  (save-excursion
+    (goto-char pos)
+    (looking-at "[^<>]*>[ \t]*$")))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-pos-bolp ...                                               */
+;*---------------------------------------------------------------------*/
+(defun hopjs-pos-bolp (pos)
+  (save-excursion
+    (goto-char pos)
+    (back-to-indentation)
+    (= (point) pos)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-blank-line-p ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-blank-line-p ()
+  (save-excursion
+    (beginning-of-line)
+    (looking-at "[ \t]*$")))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-same-line-p ...                                            */
+;*---------------------------------------------------------------------*/
+(defun hopjs-same-line-p (beg pos)
+  (when (< beg pos)
+    (save-excursion
+      (goto-char beg)
+      (move-end-of-line 1)
+      (let ((eol (point)))
+	(when (>= eol pos)
+	  (goto-char pos)
+	  (move-end-of-line 1)
+	  (= (point) eol))))))
+
+;*---------------------------------------------------------------------*/
 ;*    hopjs-close-paren-tag ...                                        */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-close-paren-tag ()
   "Close parenthesis or tag"
   (interactive)
   (let ((tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point)))))
+    (message "tag=[%s]" tag)
     (if tag
-	(if (save-excursion
-	      (goto-char (match-end 0))
-	      (looking-at "[^<]*$"))
-	    ;; tag at the end of line
-	    (progn
-	      (unless (save-excursion
-			(beginning-of-line)
-			(looking-at "[ \t]*$"))
-		(indent-for-tab-command)
-		(insert "\n"))
-	      (insert "</" tag ">")
+	(let ((beg (match-beginning 0))
+	      (end (match-end 0)))
+	  (cond
+	   ((hopjs-pos-eolp end)
+	    ;; tag at the beginning of line
+	    (unless (hopjs-blank-line-p)
 	      (indent-for-tab-command)
-	      (when (save-excursion
-		      (let ((m (match-beginning 0)))
-			(goto-char m)
-			(back-to-indentation)
-			(= (point) m)))
-		;; first tag on line, insert newline
-		(newline-and-indent)))
-	  (progn
+	      (insert "\n"))
 	    (insert "</" tag ">")
-	    (newline-and-indent)))
+	    (newline-and-indent))
+	   ((hopjs-pos-bolp beg)
+	    ;; tag at the end of line
+	    (if (hopjs-same-line-p beg (point))
+		(insert "</" tag ">")
+	      (progn
+		(unless (hopjs-blank-line-p)
+		  (indent-for-tab-command)
+		  (insert "\n"))
+		(insert "</" tag ">")
+		(newline-and-indent))))
+	   (t
+	    (insert "</" tag ">"))))
       ;; no opening tag
       (let ((pe (parse-partial-sexp
 		 (point)
@@ -415,7 +455,6 @@
 	       (newline-and-indent))
 	     (hopjs-electric-paren))
 	    ((?\[) (insert "]"))))))))
-    
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-statement ...                                       */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Thu Nov 26 07:16:44 2015 (serrano)                */
+/*    Last change :  Fri Nov 27 08:28:23 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
@@ -97,159 +97,160 @@ var svc11 = new Service( fn11 );
 var testSuite = [
    function() {
       svc().post( function( result ) {
+	 console.error( "result=", result );
 	 assert.equal( result, 0 );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svc( 'foo' ).post( function( result ) {
 	 assert.equal( result, 1 );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svc( 'foo', 'bar', 'gee' ).post( function( result ) {
 	 assert.equal( result, 3 );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svc1().post( function( result ) {
 	 assert.equal( result, undefined );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svc1( 'foo' ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svc1( 'foo', 'bar', 'gee' ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svc2().post( function( result ) {
 	 assert.equal( result, undefined );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svc2( 'foo' ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svc2( 'foo', 'bar', 'gee' ).post( function( result ) {
 	 assert.equal( result, 'gee' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew().post( function( result ) {
 	 assert.equal( result, 0 );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew( 'foo' ).post( function( result ) {
 	 assert.equal( result, 1 );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew( 'foo', 'bar', 'gee' ).post( function( result ) {
 	 assert.equal( result, 3 );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew1().post( function( result ) {
 	 assert.equal( result, undefined );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew1( 'foo' ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew1( 'foo', 'bar', 'gee' ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew2().post( function( result ) {
 	 assert.equal( result, undefined );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew2( 'foo' ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew2( 'foo', 'bar', 'gee' ).post( function( result ) {
 	 assert.equal( result, 'gee' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcF().post( function( result ) {
 	 assert.equal( result, undefined );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcF( 'foo' ).post( function( result ) {
 	 assert.equal( result, undefined );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcF( 'foo', 'bar', 'gee' ).post( function( result ) {
 	 assert.equal( result, 'bar' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcN().post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcN( {} ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcN( { a : 2, b : 'bar' } ).post( function( result ) {
 	 assert.equal( result, 'bar' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcN( { b: 'bar', a: 2 } ).post( function( result ) {
 	 assert.equal( result, 'bar' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcN( { a: 2 } ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
 /*    function() {                                                     */
 /*       svcN( { c: 0 } ).post( fail, { fail: pass });                 */
@@ -258,31 +259,31 @@ var testSuite = [
       svcnew4( {} ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew4().post( function( result ) {
     	 assert.equal( result, 'foo' );
     	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew4( { a : 2, b : 'bar' } ).post( function( result ) {
 	 assert.equal( result, 'bar' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew4( { b: 'bar', a: 2 } ).post( function( result ) {
 	 assert.equal( result, 'bar' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
    function() {
       svcnew4( { a: 2 } ).post( function( result ) {
 	 assert.equal( result, 'foo' );
 	 pass();
-      }, { fail: fail });
+      }, fail );
    },
 /*    function() {                                                     */
 /*        console.log( 'this one fails' );                             */
