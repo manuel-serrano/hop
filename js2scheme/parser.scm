@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Nov 25 10:37:48 2015 (serrano)                */
+;*    Last change :  Fri Nov 27 18:20:34 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -855,6 +855,7 @@
 		(with-handler
 		   (lambda (e)
 		      (exception-notify e)
+		      (display "ignoring...\n" (current-error-port))
 		      #f)
 		   (parse-token-error "Deprecated parameter declaration" (or id token)))
 		(parse-token-error "Illegal parameter declaration" (or id token))))
@@ -1529,7 +1530,7 @@
 		    (if (eq? (peek-token-type) '=>)
 			;; zero-argument arrow function
 			(arrow-function '())
-			(parse-node-error "unexpected token" tok)))
+			(parse-token-error "unexpected token" tok)))
 		 (let* ((expr (expression #f))
 			(ignore-too (consume! 'RPAREN)))
 		    (pop-open-token)
