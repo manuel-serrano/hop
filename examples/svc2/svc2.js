@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Thu Nov 26 17:08:03 2015 (serrano)                */
+/*    Last change :  Sat Nov 28 09:03:16 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services declarations.            */
@@ -30,6 +30,6 @@ service svc2() {
    </html>;
 }
 
-import service dummy();
+service dummy();
 
 console.log( "Go to \"http://%s:%d/hop/svc2\"", hop.hostname, hop.port );

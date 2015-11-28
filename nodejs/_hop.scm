@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Nov 26 18:20:03 2015 (serrano)                */
+;*    Last change :  Fri Nov 27 20:30:46 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -206,7 +206,6 @@
 		 0 'ssl)
 	 :writable #f)
 				
-				  
       (with-access::JsGlobalObject %this (js-object)
 	 (js-alist->jsobject
 	    (list

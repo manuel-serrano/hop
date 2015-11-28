@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Nov 27 08:02:00 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 06:54:13 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -247,8 +247,8 @@
 ;*    font-lock ...                                                    */
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-font-lock-keywords
-  (list (list "^\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
-	(cons ".post\\(Sync\\|Message\\)?" 'font-lock-face-hopjs2)
+  (list (list "\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
+	(list ".\\(post\\(?:Sync\\|Message\\)?\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-face-hopjs2)
 	(cons "</?[a-zA-Z0-9_.-]+[ ]*>\\|[ ]*/>\\|<[^ /]*/>" 'font-lock-face-hopjs9)
 	(list "\\(</?[a-zA-Z0-9_.:-]+\\)[ ]+[a-zA-Z0-9_]" 1 'font-lock-face-hopjs9)
 	(cons "<!--\\([^-]\\|-[^-]\\|--[^>]\\)+-[-]+>" 'font-lock-comment-face)
@@ -374,7 +374,7 @@
 (defun hopjs-pos-eolp (pos)
   (save-excursion
     (goto-char pos)
-    (looking-at "[^<>]*>[ \t]*$")))
+    (looking-at "[^<>]*>?[ \t]*$")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-pos-bolp ...                                               */
@@ -448,11 +448,13 @@
 	  (case (char-after (cadr pe))
 	    ((?{)
 	     (when (save-excursion (goto-char (cadr pe)) (looking-at "{[ \t]*$"))
-	       (newline-and-indent))
+	       (unless (hopjs-blank-line-p)
+		 (newline-and-indent)))
 	     (hopjs-electric-brace))
 	    ((?\()
 	     (when (save-excursion (goto-char (cadr pe)) (looking-at "[(][ \t]*$"))
-	       (newline-and-indent))
+	       (unless (hopjs-blank-line-p)
+		 (newline-and-indent)))
 	     (hopjs-electric-paren))
 	    ((?\[) (insert "]"))))))))
 

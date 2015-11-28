@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Nov 27 11:05:01 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 06:43:07 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -138,22 +138,25 @@
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsHopFrame op compile isexpr)
    (with-access::JsHopFrame o (srv path args options header)
-      (display "new HopFrame( " op)
-      (hop->javascript srv op compile isexpr)
-      (display ",\"" op)
-      (display path op)
-      (display "\"," op)
-      (display "[ " op)
-      (when (pair? args)
-	 (let loop ((args args))
-	    (hop->javascript (car args) op compile isexpr)
-	    (when (pair? (cdr args))
-	       (display "," op)
-	       (loop (cdr args)))))
-      (display "], " op)
-      (display "false, " op)
-      (display "false " op)
-      (display ")" op)))
+      (display "hop_url_encoded_to_obj('" op)
+      (display (url-path-encode (obj->string o 'hop-client)) op)
+      (display "')" op)))
+;*       (display "new HopFrame( " op)                                 */
+;*       (hop->javascript srv op compile isexpr)                       */
+;*       (display ",\"" op)                                            */
+;*       (display path op)                                             */
+;*       (display "\"," op)                                            */
+;*       (display "[ " op)                                             */
+;*       (when (pair? args)                                            */
+;* 	 (let loop ((args args))                                       */
+;* 	    (hop->javascript (car args) op compile isexpr)             */
+;* 	    (when (pair? (cdr args))                                   */
+;* 	       (display "," op)                                        */
+;* 	       (loop (cdr args)))))                                    */
+;*       (display "], " op)                                            */
+;*       (display "false, " op)                                        */
+;*       (display "false " op)                                         */
+;*       (display ")" op)))                                            */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsServer ...                                   */
@@ -345,11 +348,11 @@
 ;*    js-make-hopframe ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-make-hopframe %this::JsGlobalObject srv path args)
-   (with-access::JsGlobalObject %this (js-hopframe-prototype)
+   (with-access::JsGlobalObject %this (js-hopframe-prototype js-object js-server)
       (instantiate::JsHopFrame
 	 (__proto__ js-hopframe-prototype)
 	 (%this %this)
-	 (srv srv)
+	 (srv (when (isa? srv JsServer) srv))
 	 (path path)
 	 (args args))))
 
@@ -710,6 +713,9 @@
 	  (lambda ()
 	     (js-service/debug path loc proc))
 	  proc))
+
+   (when (and (eq? proc (js-undefined)) (not (eq? path (js-undefined))))
+      (set! path (js-tostring proc %this)))
    
    (let* ((path (or path (gen-service-url :public #t)))
 	  (hoppath (make-hop-url-name path))
@@ -785,9 +791,10 @@
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-make-service %this proc name register arity worker svc)
-
-   (define (set-service-path! svc v)
-      (let ((p (js-tostring v %this)))
+   
+   (define (set-service-path! o p)
+      (with-access::JsService o (svc)
+	 (when register (unregister-service! svc))
 	 (with-access::hop-service svc (path id wid)
 	    (set! path p)
 	    (when (string=? (dirname p) (hop-service-base))
@@ -796,13 +803,18 @@
 		  (multiple-value-bind (i w)
 		     (service-path->ids apath)
 		     (set! id i)
-		     (set! wid w)))))))
+		     (set! wid w)))))
+	 (when register (register-service! svc))))
+   
+   ;; register only if there is an implementation
+   (if svc
+       (begin
+	  (when register (register-service! svc))
+	  (with-access::WorkerHopThread worker (services)
+	     (set! services (cons svc services))))
+       (set! register #f))
    
    (with-access::JsGlobalObject %this (js-service-prototype)
-      (when svc
-	 (when register (register-service! svc))
-	 (with-access::WorkerHopThread worker (services)
-	    (set! services (cons svc services))))
       (instantiate::JsService
 	 (procedure proc)
 	 (len arity)
@@ -830,13 +842,24 @@
 				   1 'path))
 			   (set (js-make-function %this
 				   (lambda (o v)
+				      (set-service-path! o
+					 (js-tostring v %this)))
+				   2 'path)))
+			(instantiate::JsAccessorDescriptor
+			   (name 'name)
+			   (get (js-make-function %this
+				   (lambda (o)
 				      (with-access::JsService o (svc)
-					 (when register
-					    (unregister-service! svc))
-					 (set-service-path! svc v)
-					 (when register
-					    (register-service! svc))))
-				   2 'path)))))
+					 (with-access::hop-service svc (id)
+					    (js-string->jsstring
+					       (symbol->string! id)))))
+				   1 'name))
+			   (set (js-make-function %this
+				   (lambda (o v)
+				      (set-service-path! o
+					 (make-file-name (hop-service-base)
+					    (js-tostring v %this))))
+				   2 'name)))))
 	 (svc svc))))
 
 ;*---------------------------------------------------------------------*/

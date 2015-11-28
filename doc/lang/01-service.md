@@ -29,6 +29,9 @@ ${ doc.include( doc.EXAMPLES_DIR + "/svc1/svc1.js", 14 ) }
 Service Declarations
 --------------------
 
+### service[ name ]( [ arguments ] ) { body } ###
+[:@glyphicon glyphicon-tag constructor]
+
 The syntax of service declarations is as follows:
 
 ```ebnf
@@ -126,40 +129,27 @@ Service Constructor
 
 Hop.js services are instances of the `Service` constructor.
 
-### new Service( function [, name ] [, args] ) ###
+### new Service( [ fun-or-name [, name ] ] ) ###
 [:@glyphicon glyphicon-tag constructor]
 
- * `function`, is the function implementing the service. When invoked,
-`this` is bound to the request object.
+ * `fun-or-name`, is either a function or a string. When it is a:
+   * function: this is the function implementing the service. When invoked,
+   `this` is bound to the request object.
+   * string: this is the name of an imported service.
  * `name`, is an optional string argument, which is the name of the
-service. 
- * `args`, is an optional object, which specifies the args
-name and default value for named argument service. At run time,
-service invocation arguments are complemented with default values and
-re-ordered according to `args`, then `function` is invoked with
-these sorted arguments.
+ service. 
 
 Example:
 
 ```hopscript
-function svcImpl( arg1, arg2 ) { return <html>${arg1},${arg2}</html> };
+function svcImpl( name, lname ) { return <html>${name},${lname}</html> };
 
 // create an anonymous service with fixed arguments
 var priv = new Service( svcImpl );
 
-// create a second service with named arguments and a public URL
-var pub = new Service( svcImpl, "public", { fname: "jean", lname: "dupond" } );
-
-// call the first service
+// call the service
 priv( "jeanne", "durand" ).post();
 // will return <html> jeanne, durand </html>
-
-// call the second service
-pub( { lname: "larivierre" }).post();
-// will return <html> jean, larivierre </html>
-
-pub( { lname: "martin", fname: "henri" }.post();
-//will return <html> henri, martin </html>
 ```
 
 ### Service.exists( name ) ###
@@ -282,6 +272,11 @@ body is executed.
 Service methods & attributes
 ----------------------------
 
+### service.name ###
+[:@glyphicon glyphicon-tag parameter]
+
+The name of the associated service, which the the `service.path` without
+the `/hop` prefix.
 
 ### service.path ###
 [:@glyphicon glyphicon-tag parameter]
@@ -366,7 +361,7 @@ service and use it as if it was locally defined. The syntax for
 importing a service is as follows:
 
 ```ebnf
-${ doc.include( ROOT + "/service.bnf" ) }
+${ doc.include( ROOT + "/iservice.bnf" ) }
 ```
 
 Imported services are used as locally defined service.
