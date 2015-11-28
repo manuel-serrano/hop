@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Fri Nov 27 19:52:17 2015 (serrano)                */
+/*    Last change :  Sat Nov 28 14:09:49 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -118,6 +118,10 @@ function hop_bigloo_serialize_context( item ) {
    if( hop_is_html_element( item ) )
       return hop_serialize_html( item );
 
+   if( item instanceof Error ) {
+      return hop_bigloo_serialize_error( item );
+   }
+   
    if( sc_isClass( item ) )
       return hop_bigloo_serialize_sc_class( item );
       
@@ -279,6 +283,48 @@ function hop_bigloo_serialize_service() {
 
    return str;
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_error_hash ...                                               */
+/*---------------------------------------------------------------------*/
+var hop_error_hash = 0;
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_error ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_error( item ) {
+   var classname = "JsError";
+   var hash = hop_error_hash;
+   var str = "O";
+
+   if( "defineProperty" in Object ) {
+      Object.defineProperty( item, "hop_serialize_context_key", {
+	 value: hop_serialize_context.key,
+	 enumerable: false,
+	 configurable: true
+      } );
+      Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: true
+      } );
+   } else {
+      item.hop_serialize_context_key = hop_serialize_context.key;
+      item.hop_serialize_context_def = hop_serialize_context.def++;
+   }
+
+   var obj = [ item.constructor.name.toString(),
+	       item.message.toString(),
+	       hop_bigloo_serialize_context( item.stack ),
+	       "fileName" in item ? item.fileName.toString() : "",
+	       "lineNumber" in item ? ~~item.lineNumber : 0 ];
+   str += hop_bigloo_serialize_context( sc_cons( hash, obj ) );
+   str += hop_bigloo_serialize_context( 0 );
+
+   str = "=" + hop_serialize_word( item.hop_serialize_context_def ) + str;
+
+   return str;
+}   
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_sc_class ...                                */

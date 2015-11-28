@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Nov 28 06:43:07 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 10:57:30 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -708,10 +708,10 @@
 	      (string->symbol (format "a~a" i)))
 	 (iota len)))
 
-   (define (service-debug path proc)
+   (define (service-debug id::symbol proc)
       (if (>fx (bigloo-debug) 0)
 	  (lambda ()
-	     (js-service/debug path loc proc))
+	     (js-service/debug id loc proc))
 	  proc))
 
    (when (and (eq? proc (js-undefined)) (not (eq? path (js-undefined))))
@@ -736,7 +736,7 @@
 						args)
 					     (js-worker-exec worker
 						(symbol->string! id)
-						(service-debug path
+						(service-debug id
 						   (lambda ()
 						      (js-apply %this proc this args)))))
 					  (lambda (this . args)

@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sat Nov 28 06:54:13 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 09:25:39 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -374,7 +374,7 @@
 (defun hopjs-pos-eolp (pos)
   (save-excursion
     (goto-char pos)
-    (looking-at "[^<>]*>?[ \t]*$")))
+    (looking-at "\\([^<>]*>\\)?[ \t]*$")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-pos-bolp ...                                               */
@@ -414,7 +414,6 @@
   "Close parenthesis or tag"
   (interactive)
   (let ((tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point)))))
-    (message "tag=[%s]" tag)
     (if tag
 	(let ((beg (match-beginning 0))
 	      (end (match-end 0)))

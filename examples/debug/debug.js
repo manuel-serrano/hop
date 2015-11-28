@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Thu Nov 26 17:13:58 2015 (serrano)                */
+/*    Last change :  Sat Nov 28 11:09:12 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Illustrates multitier error reporting                            */
@@ -13,50 +13,46 @@
 /*=====================================================================*/
 service debug() {
    return <html>
-     <head require="./bugs.js">
-        ~{ var BUGS = require( "./bugs.js" ) },
-     </head>
-     <div>
-	 Examples of error reporting.
-     </div>
+     <head require="./bugs.js">~{ var BUGS = require( "./bugs.js" ) }</head>
+     <h1>Examples of error reporting</h1>
      <ol>
        <li>
 	 <button onclick=~{ BUGS.raise( event.type ) }>
-		  raise
+            raise
 	 </button>
-               onclick throw
+         onclick throw
        </li>
        <li> 
 	 <button onclick=~{ BUGS.unbound() }>
-		  raise
+            raise
 	 </button>
-	       onclick -> variable unbound error
+         onclick -> variable unbound error
        </li>
        <li>
 	 <button onclick=~{ BUGS.interval() }>
-		  raise
+            raise
 	 </button>
-	        onclick -> interval -> exception
+         onclick -> interval -> exception
        </li>
        <li>
 	 <button id="direct-button"
 		 onclick=~{ throw new Error( "direct error" ); }>
-		  raise
+            raise
 	 </button>
-	        direct throw
+	 direct throw
        </li>
        <li>
 	 <button id="srv-button"
 		 onclick=~{ ${bug}( { y: 4 } ).post() }>
-		  raise
+            raise
 	 </button>
-	        server side service error
+	 server side service error
        </li>
        <li>
 	 <button id="srv-button"
 		 onclick=~{ setTimeout( function() {
 		    ${bug}( { y: 4 } ).post() }, 0 ) }>
-		  raise
+            raise
 	 </button>
 	        server side service error within timeout
        </li>
@@ -64,9 +60,9 @@ service debug() {
 	 <button id="srv-button"
 		 onclick=~{ setTimeout( function() {}, 0 );
 			    ${bug}( { y: 4 } ).post() }>
-		  raise
+            raise
 	 </button>
-	        server side service error after timeout
+         server side service error after timeout
        </li>
      </ol>
    </html>
@@ -76,7 +72,8 @@ service bug( query ) {
    return query[ "x" ][ "car" ];
 }
 
-if( hop.debug < 1 ) {
+
+if( process.features.debug < 1 ) {
    console.log( "This weblet needs debug mode." );
    console.log( "Re-run hop with \"-g\" option." );
    process.exit( 1 );

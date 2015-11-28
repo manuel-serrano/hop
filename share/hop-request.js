@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Nov 26 18:34:17 2015 (serrano)                */
+/*    Last change :  Sat Nov 28 12:13:01 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -428,25 +428,53 @@ function hop_request_onready( xhr, svc, succ, fail ) {
       }
    }
 
-   try {
-      switch( xhr.status ) {
-         case 200: {
+   function onSuccess( xhr, svc, succ ) {
+      var o;
+
+      if( hop_debug() > 0 ) {
+	 succ = xhr_hop_success_callback( succ );
+	 
+	 try {
+	    o = hop_request_unserialize( xhr, svc );
+	 } catch( e ) {
+	    hop_callback_handler( e, xhr.precontext );
+	 }
+      } else {
+	 o = hop_request_unserialize( xhr, svc );
+      }
+
+      return succ( o, xhr );
+   }
+
+   function onError( xhr, svc, fail ) {
+      if( hop_debug() > 0 ) {
+	 var err = xhr.getResponseHeader( "Hop-Error" );
+	 
+	 if( err ) {
 	    var o;
 
-	    if( hop_debug() > 0 ) {
-	       succ = xhr_hop_success_callback( succ );
-	       
-	       try {
-		  o = hop_request_unserialize( xhr, svc );
-	       } catch( e ) {
-		  hop_callback_handler( e, xhr.precontext );
-	       }
-	    } else {
-	       o = hop_request_unserialize( xhr, svc );
-	    }
+	    fail = xhr_hop_failure_callback( fail );
 
-	    return succ( o, xhr );
+	    try {
+	       o = hop_url_encoded_to_obj( err );
+	    } catch( e ) {
+	       hop_callback_handler( e, xhr.precontext );
+	    }
+	 } else {
+	    o = hop_request_unserialize( xhr, svc );
 	 }
+
+	 return fail( o, xhr );
+      } else {
+	 fail( xhr.status, xhr );
+	 return false;
+      }
+   }
+
+   try {
+      switch( xhr.status ) {
+         case 200:
+	    return onSuccess( xhr, svc, succ );
 	    
          case 204:
   	    return false;
@@ -456,59 +484,16 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 	    return false;
 	    
          case 400:
-	    if( hop_debug() > 0 ) {
-	       fail = xhr_hop_failure_callback( fail );
-	    }
-	    fail( 400, xhr );
-	    return false;
-	    
          case 407:
-	    if( hop_debug() > 0 ) {
-	       fail = xhr_hop_failure_callback( fail );
-	    }
-  	    fail( 407, xhr );
-	    return false;
-
 	 case 500:
-	    if( xhr.getResponseHeader( "Hop-Error" ) ) {
-	       var o;
-
-	       if( hop_debug() > 0 ) {
-		  fail = xhr_hop_success_callback( fail );
-
-		  try {
-		     o = hop_request_unserialize( xhr, svc );
-		  } catch( e ) {
-		     hop_callback_handler( e, xhr.precontext );
-		  }
-	       } else {
-		  o = hop_request_unserialize( xhr, svc );
-	       }
-
-	       return fail( o, xhr );
-	    } else {
-	       fail( xhr.status, xhr );
-	       return false;
-	    }
+	    return onError( xhr, svc, fail );
 	    
 	 default:
 	    if( (typeof xhr.status === "number") &&
   		(xhr.status > 200) && (xhr.status < 300) ) {
-	       if( hop_debug() > 0 ) {
-		  succ = xhr_hop_success_callback( succ );
-	       }
-
-	       if( xhr.responseType == "arraybuffer" ) {
-  		  return succ( ab2string( xhr.responseText ), xhr );
-	       } else {
-  		  return succ( xhr.responseText, xhr );
-	       }
+	       return onSuccess( xhr, svc, succ );
   	    } else {
-	       if( hop_debug() > 0 ) {
-		  fail = xhr_hop_failure_callback( fail );
-	       }
-  	       fail( xhr.status, xhr );
-  	       return false;
+	       return onError( xhr, svc, fail );
   	    }
       }
    } finally {
@@ -551,9 +536,26 @@ HopFrame.prototype.post = function post( success, opt_or_fail ) {
       }
    } else if( "Promise" in window ) {
       var frame = this;
-      return new Promise( function( resolve, reject ) {
+      var promise = new Promise( function( resolve, reject ) {
 	 return withHOP( svc, resolve, reject, frame.options, false );
       } );
+
+      if( hop_debug() > 0 ) {
+	 var stk;
+	 
+	 try {
+	    throw new Error( "with-hop" );
+	 } catch( e ) {
+	    stk = sc_append( hop_get_exception_stack( e ),
+			     hop_current_stack_context );
+	 }
+
+	 Promise.race( [ promise ] ).then( function( _ ) { }, function( err ) {
+	    hop_report_exception( err, stk );
+	 } );
+      }
+	 
+      return promise;
    }
 }
 

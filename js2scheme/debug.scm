@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 12:32:21 2014                          */
-;*    Last change :  Fri Jul  3 16:16:14 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 11:16:51 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript debugging instrumentation                             */
@@ -29,7 +29,8 @@
    (instantiate::J2SStageProc
       (name "debug")
       (comment "JavaScript debug intrumentation")
-      (proc (lambda (n conf) (j2s-debug n conf 'server)))))
+      (proc (lambda (n conf)
+	       (j2s-debug n conf (config-get conf :site 'server))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-debug ...                                                    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Nov  5 23:50:53 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 11:21:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -75,6 +75,7 @@
 			      :driver (if (>fx (bigloo-debug) 0)
 					  (j2s-javascript-debug-driver)
 					  (j2s-javascript-driver))
+			      :site 'client
 			      :debug (bigloo-debug))))
 		  (for-each (lambda (exp)
 			       (unless (isa? exp J2SNode)
