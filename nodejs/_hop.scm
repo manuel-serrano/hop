@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Nov 27 20:30:46 2015 (serrano)                */
+;*    Last change :  Sun Nov 29 08:05:46 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -156,8 +156,8 @@
 			    (when (isa? obj server)
 			       (add-event-listener! obj
 				     (js-tostring event %this) f)))))
-		   3 'addEventListener))
-      
+		   3 'addEventListener)
+	 :enumerable #f)
       (js-bind! %this js-server-prototype 'removeEventListener
 	 :value (js-make-function %this
 		   (lambda (this::JsServer event proc . capture)
@@ -167,7 +167,8 @@
 			       (when (pair? f)
 				  (remove-event-listener! server
 					(js-tostring event %this) (cdr f)))))))
-		   3 'removeEventListener))
+		   3 'removeEventListener)
+	 :enumerable #f)
       (js-bind! %this js-server-prototype 'port
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)

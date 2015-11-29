@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Nov 28 10:57:30 2015 (serrano)                */
+;*    Last change :  Sun Nov 29 08:26:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -77,6 +77,36 @@
 	 (error "HopFrame" "wrong frame" o))))
 
 ;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsServer ...                                 */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsServer
+   (lambda (o)
+      (with-access::JsServer o (obj)
+	 (with-access::server obj (host port ssl authorization version)
+	    (vector host port ssl
+	       (if (string? authorization) authorization #f)
+	       version
+	       (js-jsobject->plist o (js-initial-global-object))))))
+   (lambda (o ctx)
+      (if (and (vector? o) (=fx (vector-length o) 6))
+	  (let ((srv (instantiate::JsServer
+			(obj (instantiate::server
+				(host (vector-ref o 0))
+				(port (vector-ref o 1))
+				(ssl (vector-ref o 2))
+				(authorization (vector-ref o 3))
+				(version (vector-ref o 4)))))))
+	     (let loop ((rest (vector-ref o 5)))
+		(if (null? rest)
+		    srv
+		    (begin
+		       (js-put! srv (keyword->symbol (car rest))
+			  (js-obj->jsobject (cadr rest) ctx)
+			  #f ctx)
+		       (loop (cddr rest))))))
+	  (error "JsServer" "wrong server" o))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsHopFrame ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tostring o::JsHopFrame %this)
@@ -137,10 +167,9 @@
 ;*    hop->javascript ::JsHopFrame ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsHopFrame op compile isexpr)
-   (with-access::JsHopFrame o (srv path args options header)
-      (display "hop_url_encoded_to_obj('" op)
-      (display (url-path-encode (obj->string o 'hop-client)) op)
-      (display "')" op)))
+   (display "hop_url_encoded_to_obj('" op)
+   (display (url-path-encode (obj->string o 'hop-client)) op)
+   (display "')" op))
 ;*       (display "new HopFrame( " op)                                 */
 ;*       (hop->javascript srv op compile isexpr)                       */
 ;*       (display ",\"" op)                                            */
@@ -162,9 +191,9 @@
 ;*    hop->javascript ::JsServer ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsServer op compile isexpr)
-   (with-access::JsServer o (obj)
-      (with-access::server obj (host port ssl author)
-	 (display "false" op))))
+   (display "hop_url_encoded_to_obj('" op)
+   (display (url-path-encode (obj->string o 'hop-client)) op)
+   (display "')" op))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-register-value ::object ...                                  */
