@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sun Nov 29 08:34:31 2015 (serrano)                */
+/*    Last change :  Mon Nov 30 08:38:09 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -516,7 +516,7 @@ function Hop( svc, success, failure ) {
 /*    HopFrame ...                                                     */
 /*---------------------------------------------------------------------*/
 function HopFrame( srv, path, args, options, header ) {
-   this.srv = srv;
+   this.srv = srv instanceof HopServer ? srv : undefined;
    this.path = path;
    this.args = args;
    this.options = options;
@@ -524,11 +524,22 @@ function HopFrame( srv, path, args, options, header ) {
 }
 
 HopFrame.prototype.toString = function() {
-   return hop_apply_url( this.path, this.args );
+   var url = hop_apply_url( this.path, this.args );
+   
+   if( this.srv ) {
+      var srv = this.srv;
+      url = (srv.ssl ? "https://" : "http://")
+	 + (srv.authentication ? srv.authentication + "@" : "")
+	 + srv.host + ":" + srv.port
+	 + url;
+   }
+
+   return url;
 }
 
 HopFrame.prototype.post = function post( success, opt_or_fail ) {
-   var svc = hop_apply_url( this.path, this.args );
+   var svc = this.toString();
+
    if( success ) {
       if( opt_or_fail instanceof Function || opt_or_fail == undefined ) {
 	 return withHOP( svc, success, opt_or_fail, this.options, false );
