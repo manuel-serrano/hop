@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Nov 29 08:26:32 2015 (serrano)                */
+;*    Last change :  Mon Nov 30 14:40:47 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -836,12 +836,10 @@
 	 (when register (register-service! svc))))
    
    ;; register only if there is an implementation
-   (if svc
-       (begin
-	  (when register (register-service! svc))
-	  (with-access::WorkerHopThread worker (services)
-	     (set! services (cons svc services))))
-       (set! register #f))
+   (when svc
+      (when register (register-service! svc))
+      (with-access::WorkerHopThread worker (services)
+	 (set! services (cons svc services))))
    
    (with-access::JsGlobalObject %this (js-service-prototype)
       (instantiate::JsService
@@ -872,7 +870,8 @@
 			   (set (js-make-function %this
 				   (lambda (o v)
 				      (set-service-path! o
-					 (js-tostring v %this)))
+					 (js-tostring v %this))
+				      v)
 				   2 'path)))
 			(instantiate::JsAccessorDescriptor
 			   (name 'name)
@@ -887,7 +886,8 @@
 				   (lambda (o v)
 				      (set-service-path! o
 					 (make-file-name (hop-service-base)
-					    (js-tostring v %this))))
+					    (js-tostring v %this)))
+				      v)
 				   2 'name)))))
 	 (svc svc))))
 
