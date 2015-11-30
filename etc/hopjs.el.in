@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Nov 30 11:06:03 2015 (serrano)                */
+;*    Last change :  Mon Nov 30 15:48:38 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -413,35 +413,35 @@
 (defun hopjs-close-paren-tag ()
   "Close parenthesis or tag"
   (interactive)
-  (let* ((tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point))))
-	 (pe (parse-partial-sexp
+  (let* ((pe (parse-partial-sexp
 	      (point)
 	      (save-excursion (hopjs-beginning-of-defun) (point))))
-	 (bra (car pe)))
+	 (bra (car pe))
+	 (tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point))))
+	 (beg (match-beginning 0))
+	 (end (match-end 0)))
     (cond
-     ((and tag (or (not bra) (> tag bra)))
-      (let ((beg (match-beginning 0))
-	    (end (match-end 0)))
-	(cond
-	 ((hopjs-pos-eolp end)
-	  ;; tag at the beginning of line
-	  (unless (hopjs-blank-line-p)
-	    (indent-for-tab-command)
-	    (insert "\n"))
-	  (insert "</" tag ">")
-	  (newline-and-indent))
-	 ((hopjs-pos-bolp beg)
-	  ;; tag at the end of line
-	  (if (hopjs-same-line-p beg (point))
-	      (insert "</" tag ">")
-	    (progn
-	      (unless (hopjs-blank-line-p)
-		(indent-for-tab-command)
-		(insert "\n"))
-	      (insert "</" tag ">")
-	      (newline-and-indent))))
-	 (t
-	  (insert "</" tag ">")))))
+     ((and tag (or (not bra) (> end bra)))
+      (cond
+       ((hopjs-pos-eolp end)
+	;; tag at the beginning of line
+	(unless (hopjs-blank-line-p)
+	  (indent-for-tab-command)
+	  (insert "\n"))
+	(insert "</" tag ">")
+	(newline-and-indent))
+       ((hopjs-pos-bolp beg)
+	;; tag at the end of line
+	(if (hopjs-same-line-p beg (point))
+	    (insert "</" tag ">")
+	  (progn
+	    (unless (hopjs-blank-line-p)
+	      (indent-for-tab-command)
+	      (insert "\n"))
+	    (insert "</" tag ">")
+	    (newline-and-indent))))
+       (t
+	(insert "</" tag ">"))))
      ((> bra 0)
       ;; no opening tag
       (case (char-after (cadr pe))
