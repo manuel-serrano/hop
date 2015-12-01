@@ -3997,7 +3997,7 @@ function sc_object_class( o ) {
    if( proto ) {
       return proto.constructor;
    } else {
-      return sc_Object;;
+      return sc_Object;
    }
 }
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep 14 17:00:00 2015                          */
-/*    Last change :  Tue Sep 15 16:30:38 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 17:02:16 2015 (serrano)                */
 /*    Copyright   :  2014-15 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Hop.js syntax extensions                                         */
@@ -49,13 +49,20 @@ list( 'foo', 'bar' ).post(); // { '0': 'foo', '1': 'bar' };
 // service declaration with named formal arguments and default values
 var scale = 100;
 
-service figure(	{x: 0, y: 0, w: 2* scale, h: scale , r: 20, shape: 'rectangle' } ) {
-    switch (shape) {
-    case 'square': return { x: x, y: y, w: w, shape: shape };
-    case 'rectangle': return {x: x, y: y, w: w, h: h, shape: shape };
-    case 'circle': return { x: x, y:y, r: r, shape: shape };
-    default: return { x: x, y: y, shape: 'point' };
-    };
+service figure(	o ) {
+   var x = o && ("x" in o) ? o.x : 0;
+   var y = o && ("y" in o) ? o.y : 0;
+   var w = o && ("w" in o) ? o.w : 2 * scale;
+   var h = o && ("h" in o) ? o.h : scale;
+   var r = o && ("r" in o) ? o.r : 20;
+   var shape = o && ("shape" in o) ? o.shape : "rectangle";
+	    
+   switch (shape) {
+      case 'square': return { x: x, y: y, w: w, shape: shape };
+      case 'rectangle': return {x: x, y: y, w: w, h: h, shape: shape };
+      case 'circle': return { x: x, y:y, r: r, shape: shape };
+      default: return { x: x, y: y, shape: 'point' };
+   };
 }
 
 
