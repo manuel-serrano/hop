@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Mon Nov 30 17:41:52 2015 (serrano)                */
+/*    Last change :  Tue Dec  1 19:11:53 2015 (serrano)                */
 /*    Copyright   :  2006-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -51,7 +51,7 @@ function HopServer( host, port, version, ssl, authorization ) {
    Object.defineProperty( this, "name", { value: hop_name() } );
    Object.defineProperty( this, "url", { value: hop_url() } );
    Object.defineProperty( this, "backend", { value: hop_backend() } );
-   Object.defineProperty( this, "state", { value: 0 } );
+   Object.defineProperty( this, "state", { value: 0, writable: true } );
 }
 
 Object.defineProperty( HopServer.prototype, "sc_toDisplayString", {
@@ -78,18 +78,18 @@ Object.defineProperty( HopServer.prototype, "reconnect", {
 	    hop_servevt_proxy.reconnect( wait, max );
 	 }
       }
-   }
+   },
 } );
 
 Object.defineProperty( HopServer.prototype, "addEventListener", {
    value: function( event, proc, capture ) {
-      return hop_add_server_event_listener( this, event, proc, capture );
+      return hop_add_event_listener( this, event, proc, capture );
    }
 } );
 
 Object.defineProperty( HopServer.prototype, "removeEventListener", {
    value: function( event, proc, capture ) {
-      return hop_remove_server_event_listener( this, event, proc, capture );
+      return hop_remove_event_listener( this, event, proc, capture );
    }
 } );
 
