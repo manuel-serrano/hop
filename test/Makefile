@@ -58,6 +58,7 @@ POPULATION = Makefile \
   hopjs/serv/asyncSrvWS.js \
   hopjs/serv/authentication.js \
   hopjs/serv/authentication.js.rc.js \
+  hopjs/serv/discover.js \
   hopjs/serv/http.js \
   hopjs/serv/https.js \
   hopjs/serv/https.js.args \
@@ -78,6 +79,7 @@ POPULATION = Makefile \
   hopjs/serv/webSocketErrors.js \
   hopjs/serv/webSocketOpen.js \
   hopjs/serv/worker.js \
+  hopjs/serv/aux/discoverServer.js \
   hopjs/serv/aux/launchWorkers.js \
   hopjs/serv/aux/objectEqual.js \
   hopjs/serv/aux/stdClient.js \
