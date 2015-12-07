@@ -14,6 +14,9 @@ during the automatic configuration phase of bigloo and hop software:
   - curl
   - pkg-config
   - libtool
+  - libunistring
+  - pcre
+  - openssl
   - sqlite3
 
 At configuration time, the system checks the availability of
@@ -42,7 +45,6 @@ required to get full functionality or enhanced compatibility with Node.js):
 
   - autoconf
   - automake
-  - cmake
   - curl
   - gawk
   - getopt
@@ -50,13 +52,16 @@ required to get full functionality or enhanced compatibility with Node.js):
   - gmp
   - libtool
   - libunistring
+  - pcre
   - openssl
   - sqlite3
 
 Important notice: the openssl version shiped with OSX is too old and
 deprecated by Apple, please install openssl 1.0.2 or a newer version.
 
-Tools and libs installed using *macports* are located in
+##### Macports #####
+
+Tools and libs installed using macports are located in
 `/opt/local/{bin,lib}`.  Macports updates the `PATH` environment
 variable to look for executable files into `/opt/local/bin` but does not
 change other env. variables. You must set `C\_INCLUDE\_PATH` and
@@ -74,12 +79,15 @@ autocofiguration tool work as expected.
 
     export PKG_CONFIG_PATH=/opt/local/lib/pkgconfig:/usr/lib/pkgconfig
 
+##### Brew #####
 
-The setting for *brew* is
+The setting for brew is
 
     export C_INCLUDE_PATH=$(brew --prefix)/opt/openssl/include:$C_INCLUDE_PATH
     export LIBRARY_PATH=$(brew --prefix)/opt/openssl/lib:$LIBRARY_PATH
     export PKG_CONFIG_PATH=$(brew --prefix)/opt/openssl/lib/pkgconfig
+
+##### Other package systems #####
 
 If you use another package manager such fink, or if you install
 libraries from sources, please change above paths and install commands
