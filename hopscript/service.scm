@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Dec  7 14:35:53 2015 (serrano)                */
+;*    Last change :  Mon Dec  7 18:02:19 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -52,9 +52,9 @@
 		(vector path resource))
 	     (vector #t #t))))
    (lambda (o ctx)
-      (let* ((svcp (lambda (this . args)
-		      (js-make-hopframe ctx this o args)))
-	     (path (vector-ref o 0))
+      (let* ((path (vector-ref o 0))
+	     (svcp (lambda (this . args)
+		      (js-make-hopframe ctx this path args)))
 	     (svcjs (js-make-service ctx svcp
 		       (js-string->jsstring (basename path))
 		       #f -1 (js-current-worker)
