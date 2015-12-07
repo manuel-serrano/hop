@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Nov 24 08:31:08 2015 (serrano)                */
+#*    Last change :  Fri Dec  4 17:00:02 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -190,7 +190,7 @@ html-idx.json:
 #*---------------------------------------------------------------------*/
 #*    dependencies                                                     */
 #*---------------------------------------------------------------------*/
-download.html: license.md
+download.html: license.md ../INSTALL.md
 lang.html: _lang.md
 
 hss/markdown.css: ../node_modules/markdown/hss/markdown.hss

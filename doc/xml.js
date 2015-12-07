@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Thu Nov 19 10:40:44 2015 (serrano)                */
+/*    Last change :  Sun Dec  6 19:16:29 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -191,7 +191,7 @@ function downloadButton( attrs ) {
 /*    entryLetter ...                                                  */
 /*---------------------------------------------------------------------*/
 function entryLetter( en ) {
-   return en.key.charAt( 0 );
+   return en.key.charAt( 0 ).toUpperCase();
 }
 
 /*---------------------------------------------------------------------*/
