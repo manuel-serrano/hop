@@ -10,7 +10,6 @@
 /*=====================================================================*/
 
 
-var hop = require( 'hop' );
 
 function createWorker( title ) {
    var w = new Worker( "./slave.js" );

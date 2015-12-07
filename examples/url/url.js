@@ -13,8 +13,6 @@
 /*=====================================================================*/
 "use hopscript";
 
-var hop = require( "hop" );
-
 var mymemory = hop.webService( "http://mymemory.translated.net/api/get" );
 
 function translateText( text, lang = "en|fr" ) {

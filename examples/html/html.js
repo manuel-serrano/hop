@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Jun  4 09:19:16 2014                          */
-/*    Last change :  Wed Jul 29 15:12:27 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 17:15:48 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HTML new tag                                                     */
@@ -11,8 +11,6 @@
 /*    run: hop -v -g html.js                                           */
 /*    browser: http://localhost:8080/hop/html                          */
 /*=====================================================================*/
-var hop = require( "hop" );
-
 service html() {
    return <HTML>
      <HEAD css=${html.resource( "html.hss" )}/>

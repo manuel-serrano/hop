@@ -1,3 +1,5 @@
+"use hopscript";
+
 var path = require( 'path' );
 var fs = require( 'fs' );
 var assert = require( 'assert' );
@@ -16,11 +18,13 @@ service getPayload( filename ) {
    return hop.HTTPResponseJson( { filename: filename, payloadType: 'Buffer', payload: refData[ filename ] } );
 }
 
-service getPayloadWebService( { filename: smallFile } ) {
+service getPayloadWebService( o ) {
+   var filename = (o && "filename" in o) ? o.filename : smallFile;
    return hop.HTTPResponseJson( { filename: filename, payloadType: 'Buffer', payload: refData[ filename ]});
 }
 
-service getPayloadWSBase64( { filename: smallFile } ) {
+service getPayloadWSBase64( o ) {
+   var filename = (o && "filename" in o) ? o.filename : smallFile;
    return hop.HTTPResponseJson( { filename: filename, payloadType: 'String', payloadEncoding: 'base64', payload: refData[ filename ].toString( 'base64' )});
 }
 

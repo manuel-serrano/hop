@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Nov  6 02:12:15 2015 (serrano)                */
+;*    Last change :  Fri Nov 27 08:25:10 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -451,7 +451,7 @@
 				    '(hop-responsetype: . "arraybuffer")
 				    '(hop-client: . "hop")
 				    header))
-			 (method (if args 'post 'put))
+			 (method (if (pair? args) 'post 'put))
 			 (authorization authorization)
 			 (scheme scheme)
 			 (path (or abspath path))))

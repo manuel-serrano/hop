@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Nov 24 11:01:56 2015 (serrano)                */
+/*    Last change :  Mon Nov 30 17:57:00 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -33,7 +33,7 @@ var hop_busy_anim_32_32 = "data:image/gif;base64,R0lGODlhIAAgAOf/AAMABQACAAABDgA
 /*    HopService ...                                                   */
 /*---------------------------------------------------------------------*/
 function HopService( base, dir ) {
-   var o = function() { return new HopFrame( hop_apply_url( base, arguments ) ) };
+   var o = function() { return new HopFrame( this, base, arguments ) };
    o.base = base;
    o.dir = dir;
    o.__proto__ = HopService.prototype;
@@ -92,10 +92,14 @@ function hop_apply_url( service, args ) {
          if( (args.length == 1) && hop_is_dom_form_element( args[ 0 ] ) ) {
 	    return hop_apply_form_url( service, args );
          } else {
-	    return service
-	       + "?hop-encoding=hop"
-   	       + "&vals=" + hop_bigloo_serialize( sc_vector2list( args ) );
-         }
+            if( (args.length == 1) && hop_is_dom_formdata_element( args[ 0 ] ) ) {
+	       return service;
+            } else {
+	       return service
+		  + "?hop-encoding=hop"
+   		  + "&vals=" + hop_bigloo_serialize( sc_vector2list( args ) );
+            }
+	 }
       }
    }
 }
@@ -427,26 +431,54 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 	 return hop_callback( fail, ctx, "with-hop" )
       }
    }
-      
-   try {
-      switch( xhr.status ) {
-         case 200: {
+
+   function onSuccess( xhr, svc, succ ) {
+      var o;
+
+      if( hop_debug() > 0 ) {
+	 succ = xhr_hop_success_callback( succ );
+	 
+	 try {
+	    o = hop_request_unserialize( xhr, svc );
+	 } catch( e ) {
+	    hop_callback_handler( e, xhr.precontext );
+	 }
+      } else {
+	 o = hop_request_unserialize( xhr, svc );
+      }
+
+      return succ( o, xhr );
+   }
+
+   function onError( xhr, svc, fail ) {
+      if( hop_debug() > 0 ) {
+	 var err = xhr.getResponseHeader( "Hop-Error" );
+	 
+	 if( err ) {
 	    var o;
 
-	    if( hop_debug() > 0 ) {
-	       succ = xhr_hop_success_callback( succ );
-	       
-	       try {
-		  o = hop_request_unserialize( xhr, svc );
-	       } catch( e ) {
-		  hop_callback_handler( e, xhr.precontext );
-	       }
-	    } else {
-	       o = hop_request_unserialize( xhr, svc );
-	    }
+	    fail = xhr_hop_failure_callback( fail );
 
-	    return succ( o, xhr );
+	    try {
+	       o = hop_url_encoded_to_obj( err );
+	    } catch( e ) {
+	       hop_callback_handler( e, xhr.precontext );
+	    }
+	 } else {
+	    o = hop_request_unserialize( xhr, svc );
 	 }
+
+	 return fail( o, xhr );
+      } else {
+	 fail( xhr.status, xhr );
+	 return false;
+      }
+   }
+
+   try {
+      switch( xhr.status ) {
+         case 200:
+	    return onSuccess( xhr, svc, succ );
 	    
          case 204:
   	    return false;
@@ -456,59 +488,16 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 	    return false;
 	    
          case 400:
-	    if( hop_debug() > 0 ) {
-	       fail = xhr_hop_failure_callback( fail );
-	    }
-	    fail( 400, xhr );
-	    return false;
-	    
          case 407:
-	    if( hop_debug() > 0 ) {
-	       fail = xhr_hop_failure_callback( fail );
-	    }
-  	    fail( 407, xhr );
-	    return false;
-
 	 case 500:
-	    if( xhr.getResponseHeader( "Hop-Error" ) ) {
-	       var o;
-
-	       if( hop_debug() > 0 ) {
-		  fail = xhr_hop_success_callback( fail );
-
-		  try {
-		     o = hop_request_unserialize( xhr, svc );
-		  } catch( e ) {
-		     hop_callback_handler( e, xhr.precontext );
-		  }
-	       } else {
-		  o = hop_request_unserialize( xhr, svc );
-	       }
-
-	       return fail( o );
-	    } else {
-	       fail( xhr.status, xhr );
-	       return false;
-	    }
+	    return onError( xhr, svc, fail );
 	    
 	 default:
 	    if( (typeof xhr.status === "number") &&
   		(xhr.status > 200) && (xhr.status < 300) ) {
-	       if( hop_debug() > 0 ) {
-		  succ = xhr_hop_success_callback( succ );
-	       }
-
-	       if( xhr.responseType == "arraybuffer" ) {
-  		  return succ( ab2string( xhr.responseText ), xhr );
-	       } else {
-  		  return succ( xhr.responseText, xhr );
-	       }
+	       return onSuccess( xhr, svc, succ );
   	    } else {
-	       if( hop_debug() > 0 ) {
-		  fail = xhr_hop_failure_callback( fail );
-	       }
-  	       fail( xhr.status, xhr );
-  	       return false;
+	       return onError( xhr, svc, fail );
   	    }
       }
    } finally {
@@ -524,39 +513,79 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 /*    Hop ...                                                          */
 /*---------------------------------------------------------------------*/
 function Hop( svc, success, failure ) {
-   return withHOP( svc.url, success, { fail: failure } );
+   return withHOP( svc.url, success, failure, undefined, false, null );
 }
 
 /*---------------------------------------------------------------------*/
 /*    HopFrame ...                                                     */
 /*---------------------------------------------------------------------*/
-function HopFrame( url ) {
-   this.url = url;
+function HopFrame( srv, path, args, options, header ) {
+   this.srv = srv instanceof HopServer ? srv : undefined;
+   this.path = path;
+   this.args = args;
+   this.options = options;
+   this.header = header;
 }
 
 HopFrame.prototype.toString = function() {
-   return this.url;
+   var url = hop_apply_url( this.path, this.args );
+   
+   if( this.srv ) {
+      var srv = this.srv;
+      url = (srv.ssl ? "https://" : "http://")
+	 + (srv.authentication ? srv.authentication + "@" : "")
+	 + srv.host + ":" + srv.port
+	 + url;
+   }
+
+   return url;
 }
 
-HopFrame.prototype.post = function post( success, opt ) {
-   var svc = this.url;
-   
+HopFrame.prototype.post = function post( success, opt_or_fail ) {
+   var svc = this.toString();
+   var arg = hop_is_dom_formdata_element( this.args[ 0 ] ) ?
+       this.args[ 0 ] : null;
+
    if( success ) {
-      return withHOP( svc, success, opt, false );
+      if( opt_or_fail instanceof Function || opt_or_fail == undefined ) {
+	 return withHOP( svc, success, opt_or_fail, this.options, false, arg );
+      } else {
+	 return withHOP( svc, success, false, opt_or_fail, false, arg );
+      }
    } else if( "Promise" in window ) {
-      return new Promise( function( resolve, reject ) {
-	 if( opt ) {
-	    opt.fail = reject;
-	 } else {
-	    opt = { fail: reject }
-	 }
-	 return withHOP( svc, resolve, opt, false );
+      var frame = this;
+      var promise = new Promise( function( resolve, reject ) {
+	 return withHOP( svc, resolve, reject, frame.options, false, arg );
       } );
+
+      if( hop_debug() > 0 ) {
+	 var stk;
+	 
+	 try {
+	    throw new Error( "with-hop" );
+	 } catch( e ) {
+	    stk = sc_append( hop_get_exception_stack( e ),
+			     hop_current_stack_context );
+	 }
+
+	 Promise.race( [ promise ] ).then( function( _ ) { }, function( err ) {
+	    hop_report_exception( err, stk );
+	 } );
+      }
+	 
+      return promise;
    }
 }
 
 HopFrame.prototype.postSync = function call( opt ) {
-   return withHOP( this.url, function( v ) { return v }, opt, true );
+   return withHOP( this.url, function( v ) { return v }, false, opt, true );
+}
+
+HopFrame.prototype.setOptions = function( opts ) {
+   this.options = opts; return this;
+}
+HopFrame.prototype.setHeader = function( header ) {
+   this.header = header; return this;
 }
 
 HopFrame.prototype.hop_bigloo_serialize = hop_bigloo_serialize_hopframe;
@@ -564,15 +593,12 @@ HopFrame.prototype.hop_bigloo_serialize = hop_bigloo_serialize_hopframe;
 /*---------------------------------------------------------------------*/
 /*    withHOP ...                                                      */
 /*---------------------------------------------------------------------*/
-function withHOP( svc, success, opt, force_sync ) {
+function withHOP( svc, success, fail, opt, force_sync, arg ) {
    var sync = force_sync;
-   var fail = false;
    var anim = true;
    var header = false;
 
-   if( opt instanceof Function ) {
-      fail = opt;
-   } else if( opt instanceof Object ) {
+   if( opt instanceof Object ) {
       if( "sync" in opt ) sync = opt.sync;
       if( "asynchronous" in opt ) sync = !opt.asynchronous;
       if( "fail" in opt ) fail = opt.fail;
@@ -582,7 +608,9 @@ function withHOP( svc, success, opt, force_sync ) {
 
    return hop_send_request( svc, sync, success, fail, anim,
 			    hop_serialize_request_env(),
-			    false, false, false, false, header, "javascript" );
+			    false, false, false, false, header,
+			    "javascript",
+			    arg );
 }
 			    
 /*---------------------------------------------------------------------*/
@@ -592,7 +620,7 @@ function withHOP( svc, success, opt, force_sync ) {
 /*    functions.                                                       */
 /*---------------------------------------------------------------------*/
 /*** META ((export #t) (arity #t)) */
-function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, loc, header, idiom ) {
+function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, loc, header, idiom, arg ) {
    var xhr = x ? x : hop_make_xml_http_request();
 
    /* MS, 20 Jun 08: I cannot understand why but sometime global functions */
@@ -610,7 +638,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
    }
 
    if( !sync ) {
-      xhr.open( "PUT", svc, true );
+      xhr.open( arg ? "POST" : "PUT", svc, true );
 
       if( ("responseType" in xhr) && hop_config.uint8array ) {
 	 xhr.onload = onreadystatechange;
@@ -625,7 +653,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 	 xhr.setRequestHeader( "Hop-Serialize", "javascript" );
       }
    } else {
-      xhr.open( "PUT", svc, false );
+      xhr.open( arg ? "POST" : "PUT", svc, false );
       
       xhr.onreadystatechange = onreadystatechange;
       xhr.setRequestHeader( "Hop-Serialize", "javascript" );
@@ -674,35 +702,38 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
          xhr.setRequestHeader( 'Hop-Debug-Stack', hop_bigloo_serialize( stk ) );
       }
    }
-   
-   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8' );
-   if( hop_config.navigator_family != "safari" &&
-       hop_config.navigator_family != "chrome" &&
-       hop_config.navigator_family != "webkit" ) {
-      xhr.setRequestHeader( 'Connection', 'close' );
-   }
-   if( henv.length > 0 ) {
-      xhr.setRequestHeader( 'Hop-Env', henv );
-   }
-   if( header instanceof Object ) {
-      for( var k in header ) {
-	 xhr.setRequestHeader( k, header[ k ] );
+
+   if( arg == null ) {
+      xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=UTF-8' );
+      if( hop_config.navigator_family != "safari" &&
+	  hop_config.navigator_family != "chrome" &&
+	  hop_config.navigator_family != "webkit" ) {
+	 xhr.setRequestHeader( 'Connection', 'close' );
+      }
+      if( henv.length > 0 ) {
+	 xhr.setRequestHeader( 'Hop-Env', henv );
+      }
+      if( header instanceof Object ) {
+	 for( var k in header ) {
+	    xhr.setRequestHeader( k, header[ k ] );
+	 }
+      }
+      if( ("multipart" in xhr) && (xhr.multipart === true) ) {
+	 /* This header is needed to let the server */
+	 /* disable timeout for this connection     */
+	 xhr.setRequestHeader( 'Xhr-Multipart', "true" );
       }
    }
+   
    if( auth ) {
       xhr.setRequestHeader( 'Authorization', auth );
-   }
-   if( ("multipart" in xhr) && (xhr.multipart === true) ) {
-      /* This header is needed to let the server */
-      /* disable timeout for this connection     */
-      xhr.setRequestHeader( 'Xhr-Multipart', "true" );
    }
 
    xhr.svc = svc;
    xhr.onerror = function( e ) { return fail( e, xhr ) };
    
    try {
-      xhr.send( null );
+      xhr.send( arg );
 
       if( anim ) {
 	 var a = (anim instanceof Function) ? anim : hop_default_anim_get();
@@ -740,62 +771,6 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
 
       return fail( e, xhr );
    }
-
-   return xhr;
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_send_request_xdomain ...                                     */
-/*    -------------------------------------------------------------    */
-/*    In this function SUCCESS and FAILURE are *always* bound to       */
-/*    functions.                                                       */
-/*---------------------------------------------------------------------*/
-function hop_send_request_xdomain( e ) {
-   var xhr = hop_make_xml_http_request();
-   var m = e.data.match( "([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*) ([^ ]*)" );
-   var key = m[ 1 ];
-   var svc = m[ 2 ];
-   var henv = m[ 3 ];
-   var auth = m[ 4 ];
-   var header = (typeof m[ 5 ] == "string" ? JSON.parse( m[ 5 ] ) : false);
-
-   function onreadystatechange() {
-      if( xhr.readyState == 4 ) {
-	 var ctype = hop_header_content_type( xhr );
-	 var serialize = hop_header_hop_serialize( xhr );
-
-	 e.source.postMessage(
-	    key
-	       + " " + xhr.status
-	       + " " + ctype
-	       + " " + serialize 
-	       + " " + xhr.responseText,
-	    e.origin );
-      }
-   }
-
-   xhr.onreadystatechange = onreadystatechange;
-   xhr.open( "PUT", svc, true );
-   
-   xhr.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded; charset=ISO-8859-1' );
-   if( hop_config.navigator_family != "safari" &&
-       hop_config.navigator_family != "chrome" &&
-       hop_config.navigator_family != "webkit" ) {
-      xhr.setRequestHeader( 'Connection', 'close' );
-   }
-   if( henv.length > 0 ) {
-      xhr.setRequestHeader( 'Hop-Env', henv );
-   }
-   if( header instanceof Object ) {
-      for( var k in header ) {
-	 xhr.setRequestHeader( k, header[ k ] );
-      }
-   }
-   if( auth.length > 0 ) {
-      xhr.setRequestHeader( 'Authorization', auth );
-   }
-
-   xhr.send( null );
 
    return xhr;
 }
@@ -885,7 +860,7 @@ function with_hop( svc, success, failure, sync, anim, timeout, header ) {
    return hop_send_request( svc, sync,
 			    success, failure,
 			    anim, hop_serialize_request_env(), false,
-			    timeout, header, "hop" );
+			    timeout, header, "hop", null );
 }
 
 /*---------------------------------------------------------------------*/
@@ -925,7 +900,8 @@ function with_hop( svc, success, failure, sync, anim, timeout, header ) {
 			(string-append "Basic "
 			   (base64-encode (string-append user ":" password)))))
 		   ,timeout
-		   ,header)
+		   ,header
+		   '())
 		 ;; same origin with-hop
 		 `((@ hop-send-request __hop)
 		   ,svc
@@ -944,7 +920,8 @@ function with_hop( svc, success, failure, sync, anim, timeout, header ) {
 		   #f
 		   ,(when (epair? svc) `',(cer svc))
 		   ,header
-		   "hop")))
+		   "hop"
+		   '())))
 	    ((eq? (car rest) :anim)
 	     (if (null? (cdr rest))
 		 (error 'with-hop "Illegal :anim argument" rest)

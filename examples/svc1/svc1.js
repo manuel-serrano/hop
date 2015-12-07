@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Colin Vidal                                       */
 /*    Creation    :  Tue Sep 08 13:59:31 2015                          */
-/*    Last change :  Tue Sep  8 16:48:13 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 17:07:52 2015 (serrano)                */
 /*    Copyright   :  2015 Colin Vidal                                  */
 /*    -------------------------------------------------------------    */
 /*    Service example                                                  */
@@ -11,8 +11,6 @@
 /*    run: hop -v -g svc1.js                                           */
 /*    browser: http://localhost:8080/hop/svc1                          */
 /*=====================================================================*/
-var hop = require( "hop" );
-
 function computeFact( n ) {
    if( n <= 1 ) {
       return n;

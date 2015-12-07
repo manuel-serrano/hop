@@ -303,8 +303,8 @@ srv.addEventListener( 'refreshScore', function( event ) {
    ...
 } )
 
-import service getScore();
-getScore( "jean dupont", srv, function( val ) { ... } );
+service getScore();
+getScore.call( srv, "jean dupont" ).post( v => ... );
 ```
 
 

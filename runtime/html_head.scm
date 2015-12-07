@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Nov  3 11:37:29 2015 (serrano)                */
+;*    Last change :  Sun Nov 29 06:47:34 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -155,8 +155,9 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 (define (<HOP-SERVER>)
    (<SCRIPT> :type (hop-mime-type)
       (string-append "var hop_server = new HopServer(\""
-	 (hop-server-hostname) "\", \""
-	 (hop-server-hostip) "\"); var server = hop_server;")))
+	 (hop-server-hostname) "\", undefined, \""
+	 (hop-version)
+	 "\");var server = hop_server;")))
 
 ;*---------------------------------------------------------------------*/
 ;*    preload-css ...                                                  */
@@ -430,7 +431,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		       (<SCRIPT> :type (hop-mime-type)
 			  (string-append "function hop_idiom() { return '"
 			     idiom "'}\n")
-			  (when (> (bigloo-debug)0)
+			  (when (>fx (bigloo-debug) 0)
 			     (server-initial-context location
 				(get-trace-stack))))
 		       body))

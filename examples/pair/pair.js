@@ -11,27 +11,24 @@
 /*    run: hop -v -g pair.js                                           */
 /*    browser: http://localhost:8080/hop/pair                          */
 /*=====================================================================*/
-var hop = require( "hop" );
-
 service pair() {
    var l = hop.List( 1, 2, 3, 4, 5, 6, 7, 8, 9 );
-   return <HTML> {
-      l.map( function( n ) { return <DIV> { n } } ),
-      <BUTTON> {
-	 onclick: ~{
+   return <html>
+      ${l.map( function( n ) { return <div> ${ n }</div> } )}
+      <button onclick=~{
 	    var hop = require( "hop" );
 	    
 	    ${reverse}( ${l} )
 	       .post( function( r ) {
 		  hop.List( "A", "B", "C" ).concat( r ).forEach( function( n ) {
-		     document.body.appendChild( <DIV> {
-			onclick: ~{ alert( "n=" + ${n} ) }, n } );
+		     document.body.appendChild(
+			<div onclick=~{ alert( "n=" + ${n} ) }>${n}</div> )
 	          } );
 	       } );
-	 },
-	 "Click to mirror."
-      } </BUTTON>
-   }
+      }>
+      Click to mirror (add A, B, C)
+      </button>
+   </html>
 }
 
 service reverse( p ) {

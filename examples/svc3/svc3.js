@@ -11,8 +11,6 @@
 /*    run: hop -v -g svc3.js                                           */
 /*    browser: http://localhost:8080/hop/svc3                          */
 /*=====================================================================*/
-var hop = require( 'hop' );
-
 service svc3() {
    return <html>
       <button onclick=~{

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Sep 24 11:46:35 2015 (serrano)                */
+;*    Last change :  Wed Dec  2 17:19:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -218,7 +218,7 @@
 		      (else
 		       (string->number (the-string))))))
 	  (token 'NUMBER val len)))
-      ((: (+ #\0) nonzero_digit (* digit))
+      ((: (+ #\0) (in ("17")) (* (in ("07"))))
        ;; integer constant
        (let* ((len (the-length))
 	      (val (if (>=fx len 18)

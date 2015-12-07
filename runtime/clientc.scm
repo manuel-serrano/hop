@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Fri Aug 14 16:05:58 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 11:10:46 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -152,13 +152,11 @@
 		      (if (and (string? etag)
 			       (=elong (string->elong etag) signature))
 			  (instantiate::http-response-string
-			     #;(request req)
 			     (start-line "HTTP/1.1 304 Not Modified")
 			     (content-type mime)
 			     (header hd)
 			     (charset (hop-locale)))
 			  (instantiate::http-response-file
-			     #;(request req)
 			     (charset (hop-locale))
 			     (content-type mime)
 			     (bodyp (eq? method 'GET))

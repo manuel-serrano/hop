@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Nov 17 12:10:05 2015 (serrano)                */
+;*    Last change :  Fri Nov 27 20:30:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -207,7 +207,14 @@
 	   (class JsHopFrame::JsObject
 	      (%this read-only)
 	      (args read-only (default #f))
-	      (url read-only))
+	      (srv read-only (default #f))
+	      (options (default #f))
+	      (header (default #f))
+	      (path read-only))
+
+	   (class JsServer::JsObject
+	      (data::pair-nil (default '()))
+	      (obj::server read-only))
 	   
 	   (class JsNumber::JsObject
 	      (val::obj (default 0)))

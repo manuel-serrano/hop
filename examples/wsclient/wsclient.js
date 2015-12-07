@@ -10,29 +10,28 @@
 /*    -------------------------------------------------------------    */
 /*    run: hop -v -g wsclient.js                                       */
 /*=====================================================================*/
-var hop = require ("hop");
-
 service wsclient () {
-   return <HTML> {
-      <BUTTON> {
-	 onclick: ~{
+   return <html>
+      <button onclick=~{
 	    var ws = new WebSocket( "ws://"
 				    + ${hop.hostname} + ":"
 				    + ${hop.port} + "/hop/wss",
 				    [ "bar", "foo" ] );
 	    
 	    ws.onopen = function( event ) {
-	       document.body.appendChild( (<DIV> { "WebSocket opened" } ) );
+	       document.body.appendChild( (<div>WebSocket opened</div> ) );
 	       this.send( "toto n'est pas content" );
 	       this.send( "tutu non plus" );
 	    };
 
 	    ws.onmessage = function( event ) {
-	       document.body.appendChild( <DIV> { event.data } );
+	       document.body.appendChild( <div>${event.data}</div> );
 	    };
-	 },
-	 "Open WebSocket"
-      }}};
+      }>
+	 Open WebSocket
+      </button>
+   </html>
+}
 
 var wss = new WebSocketServer( { path: "wss", protocol: ["foo"] } );
 

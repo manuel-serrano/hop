@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Nov 24 11:01:12 2015 (serrano)                */
+;*    Last change :  Fri Dec  4 09:13:47 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -92,9 +92,13 @@
 ;*    j2s-scheme-id ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-id id)
-   (if (memq id '(raise error eval quote module dirname worker))
-       (symbol-append '^ id)
-       id))
+   (cond
+      ((char=? (string-ref (symbol->string! id) 0) #\%) id)
+      ((memq id '(GLOBAL arguments)) id)
+      (else (symbol-append '^ id))))
+;*    (if (memq id '(raise error eval quote module dirname worker))    */
+;*        (symbol-append '^ id)                                        */
+;*        id))                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-decl-scheme-id ...                                           */
@@ -987,22 +991,63 @@
 			 ,(j2sfun->scheme this tmp mode return conf))))
 	 (epairify-deep loc
 	    (if id
-		`(let ((,id (js-undefined)))
-		    (set! ,id ,fundef)
-		    ,id)
+		(let ((scmid (j2s-scheme-id id)))
+		   `(let ((,scmid (js-undefined)))
+		       (set! ,scmid ,fundef)
+		       ,scmid))
 		fundef)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    jssvc->scheme ::J2SSvc ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (jssvc->scheme this::J2SSvc id scmid mode return conf)
-   
+
    (define (j2sscheme-service this tmp scmid path args arity mode return)
       
       (define (jscript-funcall init)
 	 ;; see runtime/service_expd.sch
 	 "HopService( ~s, ~s )")
 
+      (define (service-debug name loc body)
+	 (if (>fx (bigloo-debug) 0)
+	     `(lambda () (js-service/debug ',name ',loc ,body))
+	     body))
+
+      (define (service-body this::J2SSvc)
+	 (with-access::J2SSvc this (loc body need-bind-exit-return name mode)
+	    (if need-bind-exit-return
+		(with-access::J2SNode body (loc)
+		   (epairify loc
+		      (return-body
+			 (j2s-scheme body mode return conf))))
+		(flatten-stmt
+		   (j2s-scheme body mode return conf)))))
+
+      (define (service-fix-proc->scheme this args)
+	 (with-access::J2SSvc this (name loc vararg)
+	    (let ((imp `(lambda ,(cons 'this args)
+			   (js-worker-exec @worker ,(symbol->string scmid)
+			      ,(service-debug name loc
+				  `(lambda ()
+				      ,(service-body this)))))))
+	       (epairify-deep loc
+		  `(lambda (this . args)
+		      (map! (lambda (a) (js-obj->jsobject a %this)) args)
+		      ,(case vararg
+			  ((arguments)
+			   `(let* ((arguments (js-strict-arguments %this args))
+				   (fun ,imp))
+			       (js-apply-service% fun this args
+				  ,(length args))))
+			  ((rest)
+			   `(let ((fun ,imp))
+			       (js-apply-rest% %this fun this args
+				  ,(-fx (length args) 1) (+fx 1 (length args)))))
+			  (else
+			   `(let ((fun ,imp))
+			       (js-apply-service% fun this args
+				  ,(length args))))))))))
+      
       (define (service-call-error this::J2SSvc)
 	 (with-access::J2SSvc this (loc name)
 	    `(js-raise
@@ -1015,49 +1060,9 @@
 			    ,fname ,loc))
 		       (else
 			`(js-new %this js-type-error
-			  (js-string->jsstring
-			     ,(format "wrong service call \"~s\"" name)))))))))
-
-      (define (service-body this::J2SSvc)
-	 (with-access::J2SSvc this (loc body need-bind-exit-return name mode)
-	    (if need-bind-exit-return
-		(with-access::J2SNode body (loc)
-		   (epairify loc
-		      (return-body
-			 (j2s-scheme body mode return conf))))
-		(flatten-stmt
-		   (j2s-scheme body mode return conf)))))
-
-      (define (service-debug name loc body)
-	 (if (>fx (bigloo-debug) 0)
-	     `(lambda () (js-service/debug ',name ',loc ,body))
-	     body))
+			    (js-string->jsstring
+			       ,(format "wrong service call \"~s\"" name)))))))))
       
-      (define (service-fix-proc->scheme this)
-	 (with-access::J2SSvc this (name loc vararg)
-	    (let ((imp `(lambda ,(cons 'this args)
-			   (js-worker-exec @worker ,(symbol->string scmid)
-			      ,(service-debug name loc
-				  `(lambda ()
-				      ,(service-body this)))))))
-	       (epairify-deep loc
-		  `(lambda (this . params)
-		      (map! (lambda (a) (js-obj->jsobject a %this)) params)
-		      ,(case vararg
-			  ((arguments)
-			   `(let* ((arguments (js-strict-arguments %this params))
-				   (fun ,imp))
-			       (js-apply-service% fun this params
-				  ,(length args))))
-			  ((rest)
-			   `(let ((fun ,imp))
-			       (js-apply-rest% %this fun this params
-				  ,(-fx (length args) 1) (+fx 1 (length params)))))
-			  (else
-			   `(let ((fun ,imp))
-			       (js-apply-service% fun this params
-				   ,(length args))))))))))
-
       (define (service-dsssl-proc->scheme this)
 	 (with-access::J2SSvc this (loc init name)
 	    (with-access::J2SObjInit init (inits)
@@ -1086,15 +1091,15 @@
 				   (js-dsssl-args->jsargs (car args) %this)))
 			       (else
 				,(service-call-error this))))))))))
-
-      (define (service-proc->scheme this)
+      
+      (define (service-proc->scheme this args)
 	 (with-access::J2SSvc this (init)
 	    (if (isa? init J2SObjInit)
 		(service-dsssl-proc->scheme this)
-		(service-fix-proc->scheme this))))
-	 
+		(service-fix-proc->scheme this args))))
+      
       (with-access::J2SSvc this (init register name)
-	 (let ((proc (service-proc->scheme this)))
+	 (let ((proc (service-proc->scheme this args)))
 	    `(let ((@worker (js-current-worker)))
 		(js-make-service %this ,tmp ',scmid ,register ,arity @worker
 		   (instantiate::hop-service
@@ -1123,7 +1128,7 @@
 	    `(letrec* ((,tmpp (lambda (this . args)
 				 (with-access::JsService ,tmps (svc)
 				    (with-access::hop-service svc (path)
-				       (js-make-hopframe %this path args)))))
+				       (js-make-hopframe %this this path args)))))
 		       (,tmps ,(j2sscheme-service this tmpp
 				  (or scmid name tmpp)
 				  (epairify loc
@@ -1135,8 +1140,20 @@
 				  mode return)))
 		,tmps))))
 
+   (define (svc->scheme this)
+      (with-access::J2SSvc this (name params loc path mode register)
+	 (let ((args (j2s-scheme params mode return conf)))
+	    `(js-create-service %this
+		,(j2sfun->scheme this (jsfun->lambda this mode return conf)
+		    mode return conf)
+		,(when (symbol? path) (symbol->string path))
+		',loc
+		,register (js-current-worker)))))
+
    (with-access::J2SSvc this (loc)
-      (epairify-deep loc (svc-proc-entry this))))
+      (if (config-get conf dsssl: #f) 
+	  (epairify-deep loc (svc-proc-entry this))
+	  (epairify-deep loc (svc->scheme this)))))
 	   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SSvc ...                                          */

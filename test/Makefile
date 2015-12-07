@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Nov 23 05:48:38 2015 (serrano)                */
+#*    Last change :  Thu Nov 26 09:49:29 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -64,6 +64,7 @@ POPULATION = Makefile \
   hopjs/serv/https.js.rc.js \
   hopjs/serv/JsonPayload.js \
   hopjs/serv/post.js \
+  hopjs/serv/frame.js \
   hopjs/serv/serialization.js \
   hopjs/serv/service.js \
   hopjs/serv/service2.js \

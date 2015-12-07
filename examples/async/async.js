@@ -11,7 +11,6 @@
 /*    run: hop -v -g async.js                                          */
 /*    browser: http://localhost:8080/hop/async                         */
 /*=====================================================================*/
-var hop = require( "hop" );
 var fs = require( "fs" );
 var fontifier = require( hop.fontifier );
 

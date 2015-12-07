@@ -14,12 +14,12 @@
 console.log( "in foo.js ", module.filename );
 
 function hello() {
-   return <HTML> {
-      <DIV> {
-	 "I'm an imported function from the source file",
-	 <DIV> { <TT> { __filename } }
-      }
-   };
+   return <html>
+      <div>
+	 I am an imported function from the source file
+         <div><tt> ${ __filename }</tt></div>
+      </div>
+   </html>
 }
 
 exports.hello = hello;

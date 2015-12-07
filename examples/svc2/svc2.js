@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Thu Aug  6 12:38:24 2015 (serrano)                */
+/*    Last change :  Sat Nov 28 09:03:16 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services declarations.            */
@@ -11,7 +11,6 @@
 /*    run: hop -v -g svc2.js                                           */
 /*    browser: http://localhost:8080/hop/svc2                          */
 /*=====================================================================*/
-var hop = require( 'hop' );
 require( "./extern.js" );
 
 service svc2() {
@@ -31,6 +30,6 @@ service svc2() {
    </html>;
 }
 
-import service dummy();
+service dummy();
 
 console.log( "Go to \"http://%s:%d/hop/svc2\"", hop.hostname, hop.port );

@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Nov 24 20:25:15 2015 (serrano)                */
+;*    Last change :  Mon Nov 30 16:56:19 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -247,8 +247,8 @@
 ;*    font-lock ...                                                    */
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-font-lock-keywords
-  (list (list "^\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
-	(cons ".post\\(Sync\\|Message\\)?" 'font-lock-face-hopjs2)
+  (list (list "\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
+	(list ".\\(post\\(?:Sync\\|Message\\)?\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-face-hopjs2)
 	(cons "</?[a-zA-Z0-9_.-]+[ ]*>\\|[ ]*/>\\|<[^ /]*/>" 'font-lock-face-hopjs9)
 	(list "\\(</?[a-zA-Z0-9_.:-]+\\)[ ]+[a-zA-Z0-9_]" 1 'font-lock-face-hopjs9)
 	(cons "<!--\\([^-]\\|-[^-]\\|--[^>]\\)+-[-]+>" 'font-lock-comment-face)
@@ -369,53 +369,93 @@
   (indent-for-tab-command))
 
 ;*---------------------------------------------------------------------*/
+;*    hopjs-pos-eolp ...                                               */
+;*---------------------------------------------------------------------*/
+(defun hopjs-pos-eolp (pos)
+  (save-excursion
+    (goto-char pos)
+    (looking-at "\\([^<>]*>\\)?[ \t]*$")))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-pos-bolp ...                                               */
+;*---------------------------------------------------------------------*/
+(defun hopjs-pos-bolp (pos)
+  (save-excursion
+    (goto-char pos)
+    (back-to-indentation)
+    (= (point) pos)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-blank-line-p ...                                           */
+;*---------------------------------------------------------------------*/
+(defun hopjs-blank-line-p ()
+  (save-excursion
+    (beginning-of-line)
+    (looking-at "[ \t]*$")))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-same-line-p ...                                            */
+;*---------------------------------------------------------------------*/
+(defun hopjs-same-line-p (beg pos)
+  (when (< beg pos)
+    (save-excursion
+      (goto-char beg)
+      (move-end-of-line 1)
+      (let ((eol (point)))
+	(when (>= eol pos)
+	  (goto-char pos)
+	  (move-end-of-line 1)
+	  (= (point) eol))))))
+
+;*---------------------------------------------------------------------*/
 ;*    hopjs-close-paren-tag ...                                        */
 ;*---------------------------------------------------------------------*/
 (defun hopjs-close-paren-tag ()
   "Close parenthesis or tag"
   (interactive)
-  (let ((tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point)))))
-    (if tag
-	(if (save-excursion
-	      (goto-char (match-end 0))
-	      (looking-at "[^<]*$"))
-	    ;; tag at the end of line
-	    (progn
-	      (unless (save-excursion
-			(beginning-of-line)
-			(looking-at "[ \t]*$"))
-		(indent-for-tab-command)
-		(insert "\n"))
-	      (insert "</" tag ">")
-	      (indent-for-tab-command)
-	      (when (save-excursion
-		      (let ((m (match-beginning 0)))
-			(goto-char m)
-			(back-to-indentation)
-			(= (point) m)))
-		;; first tag on line, insert newline
-		(newline-and-indent)))
-	  (progn
+  (let* ((pe (parse-partial-sexp
+	      (point)
+	      (save-excursion (hopjs-beginning-of-defun) (point))))
+	 (bra (cadr pe))
+	 (tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point))))
+	 (beg (match-beginning 0))
+	 (end (match-end 0)))
+    (cond
+     ((and tag (or (not bra) (> end bra)))
+      (cond
+       ((hopjs-pos-eolp end)
+	;; tag at the beginning of line
+	(unless (hopjs-blank-line-p)
+	  (indent-for-tab-command)
+	  (insert "\n"))
+	(insert "</" tag ">")
+	(newline-and-indent))
+       ((hopjs-pos-bolp beg)
+	;; tag at the end of line
+	(if (hopjs-same-line-p beg (point))
 	    (insert "</" tag ">")
-	    (newline-and-indent)))
+	  (progn
+	    (unless (hopjs-blank-line-p)
+	      (indent-for-tab-command)
+	      (insert "\n"))
+	    (insert "</" tag ">")
+	    (newline-and-indent))))
+       (t
+	(insert "</" tag ">"))))
+     ((> bra 0)
       ;; no opening tag
-      (let ((pe (parse-partial-sexp
-		 (point)
-		 (save-excursion
-		   (hopjs-beginning-of-defun)
-		   (point)))))
-	(when (> (car pe) 0)
-	  (case (char-after (cadr pe))
-	    ((?{)
-	     (when (save-excursion (goto-char (cadr pe)) (looking-at "{[ \t]*$"))
-	       (newline-and-indent))
-	     (hopjs-electric-brace))
-	    ((?\()
-	     (when (save-excursion (goto-char (cadr pe)) (looking-at "[(][ \t]*$"))
-	       (newline-and-indent))
-	     (hopjs-electric-paren))
-	    ((?\[) (insert "]"))))))))
-    
+      (case (char-after (cadr pe))
+	((?{)
+	 (when (save-excursion (goto-char (cadr pe)) (looking-at "{[ \t]*$"))
+	   (unless (hopjs-blank-line-p)
+	     (newline-and-indent)))
+	 (hopjs-electric-brace))
+	((?\()
+	 (when (save-excursion (goto-char (cadr pe)) (looking-at "[(][ \t]*$"))
+	   (unless (hopjs-blank-line-p)
+	     (newline-and-indent)))
+	 (hopjs-electric-paren))
+	((?\[) (insert "]")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-indent-statement ...                                       */
@@ -1238,12 +1278,12 @@ usage: (js-return)  -- [RET]"
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-doc-word ...                                               */
 ;*---------------------------------------------------------------------*/
-(defvar hopjs-doc-word nil)
+(defvar hopjs-doc-point 1)
 (defvar hopjs-doc-url nil)
 (defvar hopjs-doc-beg nil)
 (defvar hopjs-doc-end nil)
 
-(make-variable-buffer-local 'hopjs-doc-word)
+(make-variable-buffer-local 'hopjs-doc-point)
 (make-variable-buffer-local 'hopjs-doc-url)
 (make-variable-buffer-local 'hopjs-doc-beg)
 (make-variable-buffer-local 'hopjs-doc-end)
@@ -1268,10 +1308,10 @@ usage: (js-return)  -- [RET]"
     (unless (hopjs-in-string-comment-p (point))
       (let* ((beg (if (eq (char-after (1- (point))) ?<)
 		      (point)
-		      (progn (backward-word) (point))))
+		    (progn (backward-word) (point))))
 	     (end (progn (forward-word 1) (point)))
 	     (word (buffer-substring-no-properties beg end))
-	     (y '*))
+	     (y "*"))
 	(when (>= end pos)
 	  (cond
 	   ((progn (backward-hopjs-expr) (looking-at hopjs-re-open-tag))
@@ -1291,33 +1331,34 @@ usage: (js-return)  -- [RET]"
 	  (cond
 	   ((string-equal word "")
 	    (hopjs-undoc))
-	   ((not (string-equal word hopjs-doc-word))
-	    (setq hopjs-doc-word word)
+	   ((not (= (point) hopjs-doc-point))
+	    (setq hopjs-doc-point (point))
 	    (hopjs-undoc)
 	    (setq hopjs-doc-beg beg)
 	    (setq hopjs-doc-end end)
 	    (let ((entry (hopjs-doc-index-find word hopjs-doc-index-table)))
 	      (when entry
-		(if (or (eq y '*)
-			(let ((type (assq 'type (cdr entry))))
-			  (or (not (consp type))
-			      (string-equal (cdr type) y))))
-		    (let* ((url (assq 'url (cdr entry)))
-			   (proto (assq 'proto (cdr entry)))
+		(let ((type (assq 'type (cdr entry))))
+		  (if (or (not (consp type))
+			  (string-equal (cdr type) y)
+			  (and (not (string-equal (cdr type) "tag"))
+			       (string-equal y "*")))
+		      (let* ((url (assq 'url (cdr entry)))
+			     (proto (assq 'proto (cdr entry)))
 		     
-			   (tooltip (replace-regexp-in-string
-				     "&gt;" ">"
-				     (replace-regexp-in-string
-				      "&lt;" "<" (cdr proto)))))
-		      (when url
-			(message tooltip)
-			(setq hopjs-doc-url (cdr url))
-			(let ((mod (buffer-modified-p)))
-			  (put-text-properties beg end
-					       'keymap hopjs-tooltip-map
-					       'face 'highlight
-					       'help-echo tooltip)
-			  (set-buffer-modified-p mod))))))))))))))
+			     (tooltip (replace-regexp-in-string
+				       "&gt;" ">"
+				       (replace-regexp-in-string
+					"&lt;" "<" (cdr proto)))))
+			(when url
+			  (message tooltip)
+			  (setq hopjs-doc-url (cdr url))
+			  (let ((mod (buffer-modified-p)))
+			    (put-text-properties beg end
+						 'keymap hopjs-tooltip-map
+						 'face 'highlight
+						 'help-echo tooltip)
+			    (set-buffer-modified-p mod)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    put-text-properties ...                                          */

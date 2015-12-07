@@ -90,3 +90,9 @@ ${<a href=${cfg.github}>${cfg.github}</a>}
 Old Hop releases can be obtain at the following address:
 
 <ftp://ftp-sop.inria.fr/indes/fp/Hop/>
+
+
+## Complete Installation Guide ##
+
+
+${doc.include( "../INSTALL.md" )}

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Nov  7 07:35:37 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 14:10:04 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -47,6 +47,8 @@
 	    (generic service->hop-service::hop-service ::obj)
 	    (service-path::bstring ::obj)
 	    (service-resource::bstring ::obj #!optional file)
+	    (generic service-pack-cgi-arguments ::obj ::hop-service ::pair-nil)
+	    (generic post-multipart->obj ::obj ::obj ::bstring)
 	    (generic service-base-url::bstring ::obj ::http-request)
 	    (service-exists? ::bstring)
 	    (get-all-services ::http-request)
@@ -335,6 +337,12 @@
       (hop-apply-url path vals)))
 
 ;*---------------------------------------------------------------------*/
+;*    service-pack-cgi-arguments ::obj ...                             */
+;*---------------------------------------------------------------------*/
+(define-generic (service-pack-cgi-arguments ctx::obj svc alist)
+   alist)
+
+;*---------------------------------------------------------------------*/
 ;*    service-parse-request-get-args ...                               */
 ;*---------------------------------------------------------------------*/
 (define (service-parse-request-get-args args)
@@ -376,17 +384,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    service-parse-request-get ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (service-parse-request-get svc::hop-service req::http-request)
+(define-generic (service-parse-request-get svc::hop-service req::http-request)
    (with-access::http-request req (query path)
-      (if (string? query)
-	  (let ((args (cgi-args->list query)))
-	     (match-case args
-		((("hop-encoding" . "hop") ("vals" . ?vals))
-		 (with-access::hop-service svc (ctx)
-		    (string->obj vals #f ctx)))
-		(else
-		 (with-access::hop-service svc (id)
+      (with-access::hop-service svc (id ctx)
+	 (if (string? query)
+	     (let ((args (cgi-args->list query)))
+		(match-case args
+		   ((("hop-encoding" . "hop") ("vals" . ?vals))
+		    (string->obj vals #f ctx))
+		   (else
 		    (cond
+		       ((and ctx (not (dsssl-service? svc)))
+			(service-pack-cgi-arguments ctx svc args))
 		       ((every string? args)
 			(if (dsssl-service? svc)
 			    (error id "bad arguments" path)
@@ -394,120 +403,135 @@
 		       ((every pair? args)
 			(if (dsssl-service? svc)
 			    (service-parse-request-get-args args)
-			    
 			    (error id "bad arguments" path)))
 		       (else
-			(error id "bad arguments" path)))))))
-	  '())))
+			(error id "bad arguments" path))))))
+	     (service-pack-cgi-arguments ctx svc '())))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-parse-request-put ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (service-parse-request-put svc::hop-service req::http-request)
    (with-access::http-request req (query abspath)
-      (if (string? query)
-	  (let ((args (cgi-args->list query)))
-	     (match-case args
-		((("hop-encoding" . "hop") ("vals" . ?vals))
-		 (with-access::hop-service svc (ctx)
-		    (string->obj vals #f ctx)))
-		(else
-		 (service-parse-request-get-args args))))
-	  '())))
+      (with-access::hop-service svc (ctx)
+	 (if (string? query)
+	     (let ((args (cgi-args->list query)))
+		(match-case args
+		   ((("hop-encoding" . "hop") ("vals" . ?vals))
+		    (string->obj vals #f ctx))
+		   (else
+		    (service-pack-cgi-arguments ctx svc
+		       (service-parse-request-get-args args)))))
+	     (service-pack-cgi-arguments ctx svc '())))))
+
+;*---------------------------------------------------------------------*/
+;*    post-multipart->obj ...                                          */
+;*---------------------------------------------------------------------*/
+(define-generic (post-multipart->obj ctx val enc)
+   (cond
+      ((string=? enc "string") val)
+      ((string=? enc "file") val)
+      ((string=? enc "integer") (string->integer val))
+      ((string=? enc "keyword") (string->keyword val))
+      (else (string->obj val #f ctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-parse-request-post ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (service-parse-request-post svc::hop-service req::http-request)
    
-   (define (multipart-boundary ctype)
-      (when (and (string? ctype)
-		 (substring-ci-at? ctype "multipart/form-data; boundary=" 0))
-	 (substring ctype (string-length "multipart/form-data; boundary=")
-	    (string-length ctype))))
-   
    (define (multipart-value! v)
-      (let ((header (memq :header v)))
+      (with-access::hop-service svc (ctx)
 	 (cond
 	    ((memq :data v)
 	     =>
 	     (lambda (data)
-		(let ((val (cadr data)))
+		(let ((val (cadr data))
+		      (header (memq :header v)))
 		   (cond
 		      ((not header)
-		       val)
+		       (post-multipart->obj ctx val "string"))
 		      ((memq :hop-encoding (cadr header))
 		       =>
 		       (lambda (hop-enc)
-			  (let ((enc (cadr hop-enc)))
-			     (cond
-				((string=? enc "string")
-				 val)
-				((string=? enc "integer")
-				 (string->integer val))
-				((string=? enc "keyword")
-				 (string->keyword val))
-				(else
-				 (with-access::hop-service svc (ctx)
-				    (string->obj val #f ctx)))))))
+			  (post-multipart->obj ctx val (cadr hop-enc))))
 		      (else
-		       val)))))
+		       (post-multipart->obj ctx val "string"))))))
 	    ((memq :file v)
 	     =>
 	     (lambda (file)
-		(let ((val (cadr file)))
-		   val)))
+		(post-multipart->obj ctx (cadr file) "file")))
 	    (else
-	     (error "service-parse-request-post"
-		"unknown error" v)))))
+	     (error "service-parse-request-post" "unknown error" v)))))
+
+   (define (multipart-named-value v)
+      (with-access::hop-service svc (ctx)
+	 (cond
+	    ((memq :data v)
+	     =>
+	     (lambda (data) (cons (car v) (cadr data))))
+	    ((memq :file v)
+	     =>
+	     (lambda (file) (cons (car v) (cadr file))))
+	    (else
+	     (error "service-parse-request-post" "unknown error" v)))))
    
    (define (multipart-dsssl-arg-value v)
-      (let ((header (memq :header v)))
-	 (cond
-	    ((memq :data v)
-	     =>
-	     (lambda (data)
-		(list (string->keyword (car v)) (cadr data))))
-	    ((memq :file v)
-	     =>
-	     (lambda (file)
-		(let ((val (cadr file)))
-		   (list (string->keyword (car v)) val))))
-	    (else
-	     (error "service-parse-request-post"
-		"unknown error" v)))))
+      (cond
+	 ((memq :data v)
+	  =>
+	  (lambda (data)
+	     (list (string->keyword (car v)) (cadr data))))
+	 ((memq :file v)
+	  =>
+	  (lambda (file)
+	     (let ((val (cadr file)))
+		(list (string->keyword (car v)) val))))
+	 (else
+	  (error "service-parse-request-post" "unknown error" v))))
    
    (define (multipart-arg-value v)
-      (let ((header (memq :header v)))
-	 (cond
-	    ((memq :data v)
-	     =>
-	     (lambda (data)
-		(cadr data)))
-	    ((memq :file v)
-	     =>
-	     (lambda (file)
-		(let ((val (cadr file)))
-		   (list (string->keyword (car v)) val))))
-	    (else
-	     (error "service-parse-request-post"
-		"unknown error" v)))))
+      (cond
+	 ((memq :data v)
+	  =>
+	  (lambda (data)
+	     (cadr data)))
+	 ((memq :file v)
+	  =>
+	  (lambda (file)
+	     (let ((val (cadr file)))
+		(list (string->keyword (car v)) val))))
+	 (else
+	  (error "service-parse-request-post" "unknown error" v))))
    
-   (define (hopjs-encoded-arguments? args)
+   (define (multipart-dir)
+      (let ((dir (make-file-path (hop-cache-directory)
+		    (integer->string (hop-port))
+		    (hop-upload-directory))))
+	 (unless (directory? dir) (make-directories dir))
+	 dir))
+      
+   (define (multipart->list pi content-length boundary transfer-encoding)
+      (if (eq? transfer-encoding 'chunked)
+	  (let ((pic (http-chunks->port pi)))
+	     (unwind-protect
+		(cgi-multipart->list multipart-dir pic content-length boundary)
+		(close-input-port pic)))
+	  (cgi-multipart->list multipart-dir pi content-length boundary)))
+   
+   (define (hop-multipart? args)
       (match-case args
 	 ((((? string?) :data ?- :header (:hop-encoding ?-)) . ?-)
 	  #t)
 	 ((((? string?) :data ?- :header (and (? pair?) ?val)) . ?-)
 	  (memq :hop-encoding val))
 	 (else #f)))
-   
-   (define (multipart->list dir pi content-length boundary transfer-encoding)
-      (if (eq? transfer-encoding 'chunked)
-	  (let ((pic (http-chunks->port pi)))
-	     (unwind-protect
-		(cgi-multipart->list dir pic content-length boundary)
-		(close-input-port pic)))
-	  (cgi-multipart->list dir pi content-length boundary)))
+
+   (define (multipart-boundary ctype)
+      (when (and (string? ctype)
+		 (substring-ci-at? ctype "multipart/form-data; boundary=" 0))
+	 (substring ctype (string-length "multipart/form-data; boundary=")
+	    (string-length ctype))))
    
    (with-access::http-request req (content-length header socket transfer-encoding)
       (let* ((pi (socket-input socket))
@@ -516,36 +540,45 @@
 	    ((multipart-boundary ctype)
 	     =>
 	     (lambda (boundary)
-		(let ((dir (make-file-path (hop-cache-directory)
-			      (integer->string (hop-port))
-			      (hop-upload-directory))))
-		   (unless (directory? dir)
-		      (make-directories dir))
-		   (let ((args (multipart->list dir
+		(with-access::hop-service svc (ctx)
+		   (let ((args (multipart->list
 				  pi content-length boundary
 				  transfer-encoding)))
 		      (cond
-			 ((hopjs-encoded-arguments? args)
-			  (if (dsssl-service? svc)
-			      (multipart-value! (car args))
-			      (map multipart-value! args)))
+			 ((hop-multipart? args)
+			  ;; hop-multipart is used for fix arity services.
+			  ;; arguments are unamed.
+			  (cond
+			     ((dsssl-service? svc)
+			      (multipart-value! (car args)))
+			     (else
+			      (map! multipart-value! args))))
 			 ((dsssl-service? svc)
 			  (append-map multipart-dsssl-arg-value args))
+			 (ctx
+			  ;; standard post call, named string arguments
+			  (service-pack-cgi-arguments ctx svc
+			     (map multipart-named-value args)))
 			 (else
 			  (map multipart-arg-value args)))))))
-	    ((not (string? ctype))
-	     '())
-	    ((string=? ctype "application/json")
-	     (with-access::hop-service svc (ctx)
-		(json->obj ctx pi)))
-	    ((string=? ctype "application/x-www-form-urlencoded")
-	     (let ((body (read-chars (elong->fixnum content-length) pi)))
-		(service-parse-request-get-args (cgi-args->list body))))
-	    (else
-	     (with-access::hop-service svc (id)
-		(error "service-parse-request"
-		   (format "Illegal HTTP POST request type (~a)" id)
-		   ctype)))))))
+	     ((not (string? ctype))
+	      '())
+	     ((string=? ctype "application/json")
+	      (with-access::hop-service svc (ctx)
+		 (json->obj ctx pi)))
+	     ((string=? ctype "application/x-www-form-urlencoded")
+	      (let ((body (read-chars (elong->fixnum content-length) pi)))
+		 (with-access::hop-service svc (ctx)
+		    (if (and ctx (not (dsssl-service? svc)))
+			(service-pack-cgi-arguments ctx svc
+			   (cgi-args->list body))
+			(service-parse-request-get-args
+			   (cgi-args->list body))))))
+	     (else
+	      (with-access::hop-service svc (id)
+		 (error "service-parse-request"
+		    (format "Illegal HTTP POST request type (~a)" id)
+		    ctype)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-parse-request ...                                        */
@@ -589,7 +622,7 @@
 	 "\n"))
    
    (define (invoke vals)
-      (with-access::hop-service svc (id proc args)
+      (with-access::hop-service svc (id proc args ctx)
 	 (invoke-trace req id vals)
 	 (cond
 	    ((not vals)
@@ -606,7 +639,7 @@
 		    (format "Wrong number of arguments (~a/~a)" (length vals)
 		       (-fx (procedure-arity proc) 1))
 		    `(,id ,@vals))))
-	    ((correct-arity? proc 1)
+	    ((correct-arity? proc 2)
 	     (let ((env (current-dynamic-env))
 		   (name id))
 		($env-push-trace env name #f)

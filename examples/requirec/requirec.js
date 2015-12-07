@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Mon Aug 24 09:12:09 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 17:06:33 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    multitier require                                                */
@@ -11,8 +11,6 @@
 /*    run: hop -v -g requirec.js                                       */
 /*    browser: http://localhost:8080/hop/requirec                      */
 /*=====================================================================*/
-var hop = require( 'hop' );
-
 service requirec() {
    return <html> 
      <head require= ${[ "./mod1.js", "./mod2.js" ]}>

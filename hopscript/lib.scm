@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sat Oct 24 06:19:48 2015 (serrano)                */
+;*    Last change :  Wed Nov 25 20:30:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -81,7 +81,7 @@
 (define (js-pair->jsobject l %this)
    
    (define (plist? l)
-      (and (or (keyword? (car l)) (symbol? (car l))) (list? l)))
+      (and (or (keyword? (car l)) (symbol? (car l))) (list? (cdr l))))
 
    (define (alist? l)
       (when (list? l)

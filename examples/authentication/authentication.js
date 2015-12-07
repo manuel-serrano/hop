@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:35 2014                          */
-/*    Last change :  Sun Aug  2 10:24:23 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 17:09:10 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    show how to ask user authentication                              */
@@ -11,8 +11,6 @@
 /*    run: hop -v -g authentication.js                                 */
 /*    browser: http://localhost:8080/hop/authentication                */
 /*=====================================================================*/
-var hop = require( "hop" );
-
 var count = 2;
 
 service authenticationAccept() {
@@ -30,21 +28,21 @@ service authenticationAccept() {
 }
 
 service authentication() {
-   var console = <DIV/>;
+   var console = <div/>;
 
-   return <HTML>
-      <DIV>
+   return <html>
+      <div>
         Click 3 times the "click me" button.
         Permission granted on the third request.
-      </DIV>
-      <BUTTON onclick=~{
+      </div>
+      <button onclick=~{
         ${authenticationAccept}()
           .post( function( v ) { ${console}.innerHTML = v },
    		 { fail: function( v ) { ; } } ) }>
         click me
-      </BUTTON>
+      </button>
       ${console}
-   </HTML>
+   </html>
 }
 
 console.log( "Go to \"http://%s:%d/hop/authentication\"", hop.hostname, hop.port );

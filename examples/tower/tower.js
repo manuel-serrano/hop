@@ -11,8 +11,6 @@
 /*    run: hop -v tower.js                                             */
 /*    browser: http://localhost:8080/hop/tower                         */
 /*=====================================================================*/
-var hop = require( 'hop' );
-
 service tower() {
    return <HTML>
      ~{

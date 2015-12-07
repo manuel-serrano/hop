@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Nov 17 19:47:19 2015 (serrano)                */
+;*    Last change :  Sun Nov 29 06:22:54 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -91,6 +91,7 @@
 	       (port::int read-only)
 	       (ssl::bool (default #f))
 	       (authorization read-only (default #f))
+	       (version::bstring read-only (default (hop-version)))
 	       (listeners::pair-nil (default '()))
 	       (%websocket (default #f))
 	       (%key (default #f)))

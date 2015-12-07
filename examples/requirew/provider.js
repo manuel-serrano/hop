@@ -10,9 +10,6 @@
 /*    -------------------------------------------------------------    */
 /*    See requirew.js                                                  */
 /*=====================================================================*/
-
-var hop = require( "hop" );
-
-service providerGetModule( { file: "" } ) {
-   return hop.HTTPResponseFile( providerGetModule.resource( file ) );
+service providerGetModule( o ) {
+   return hop.HTTPResponseFile( providerGetModule.resource( o.file ) );
 }
