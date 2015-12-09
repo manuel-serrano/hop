@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Nov 29 06:22:54 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 15:15:40 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1575,12 +1575,12 @@
 		   (values name (string->real real)))))
 	 ((pregexp-match "<j name='([^']*)'><![[]CDATA[[]" buf)
 	  => (lambda (m)
-		(tprint "javascript->obj TO BE FIXED FOR JS")
 		(let* ((name (cadr m))
-		       (js (substring buf
-			      (+fx (string-length name) 20)
-			      (-fx  len 7))))
-		   (values name (call-with-input-string js javascript->obj)))))
+		       (js (url-decode
+			      (substring buf
+				 (+fx (string-length name) 20)
+				 (-fx  len 7)))))
+		   (values name (string->obj js)))))
 	 (else
 	  (error "hopsocket" "Illegal websocket envelope" buf))))
 

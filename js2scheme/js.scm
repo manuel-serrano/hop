@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec  9 08:17:56 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 09:03:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -746,18 +746,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2STry tildec dollarc mode evalp conf)
    (with-access::J2STry this (body catch finally)
-      (cons* this "try {"
+      (cons* this "try "
 	 (append (j2s-js body tildec dollarc mode evalp conf)
-	    '("}")
 	    (if (isa? catch J2SNop)
 		'()
 		(j2s-js catch tildec dollarc mode evalp conf) )
 	    (if (isa? finally J2SNop)
 		'()
-		(cons* this "finally {"
-		   (append 
-		      (j2s-js finally tildec dollarc mode evalp conf)
-		      '("}"))))))))
+		(cons* this "finally "
+		   (j2s-js finally tildec dollarc mode evalp conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SCatch ...                                            */
@@ -766,9 +763,8 @@
    (with-access::J2SCatch this (param body)
       (cons* this "catch("
 	 (append (j2s-js param tildec dollarc mode evalp conf)
-	    '(") {")
-	    (j2s-js body tildec dollarc mode evalp conf)
-	    '("}")))))	    
+	    '(")")
+	    (j2s-js body tildec dollarc mode evalp conf)))))
 	    
 	 
 	    

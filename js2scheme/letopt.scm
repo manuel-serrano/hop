@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue Aug 25 10:11:01 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 08:31:45 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -190,8 +190,6 @@
 ;*---------------------------------------------------------------------*/
 (define (tail-let! this::J2SLetBlock resnode::J2SStmt)
    
-   
-   
    (define (init-let->let::J2SLet this::J2SInitLet)
       (with-access::J2SInitLet this (rhs loc lhs)
 	 (with-access::J2SRef lhs (decl)
@@ -231,7 +229,7 @@
 		    (loop (cdr udecls) (cons (car udecls) res))))))))
    
    ;; the main optimization loop
-   (with-access::J2SLetBlock this (nodes decls)
+   (with-access::J2SLetBlock this (nodes decls loc)
       (let loop ((n nodes)
 		 (ndecls decls)
 		 (ninits '())
@@ -303,11 +301,14 @@
 				 ;; its dependencies
 				 (let* ((decl (init-decl init))
 					(used (get-used-decls rhs decls))
-					(ninit (init-let->let init)))
+					(ninit (init-let->let init))
+					(body (instantiate::J2SStmtExpr
+						 (loc loc)
+						 (expr init))))
 				    (liip (cdr inits)
 				       (remq decl ndecls)
 				       (append ninits (list ninit))
-				       (cons init nbody)
+				       (cons body nbody)
 				       (append used disabled)
 				       deps)))))))))))
 	    ((null? (cdr n))

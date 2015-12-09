@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov 28 14:13:06 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 14:43:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -56,14 +56,21 @@
 	       (js-tonumber location %this)))))
    (lambda (o ctx)
       (if (and (vector? o) (=fx (vector-length o) 5))
-	  (with-access::JsGlobalObject ctx (js-error)
-	     (instantiate::JsError
-		(__proto__ (js-get js-error 'prototype ctx))
-		(name (js-string->jsstring (vector-ref o 0)))
-		(msg (js-string->jsstring (vector-ref o 1)))
-		(stack (string->obj (url-decode (vector-ref o 2)) ctx))
-		(fname (js-string->jsstring (vector-ref o 3)))
-		(location (vector-ref o 4))))
+	  (if (eq? ctx 'hop)
+	      (instantiate::&error
+		 (obj (js-string->jsstring (vector-ref o 0)))
+		 (msg (js-string->jsstring (vector-ref o 1)))
+		 (stack (string->obj (url-decode (vector-ref o 2)) ctx))
+		 (proc (js-string->jsstring (vector-ref o 3)))
+		 (location (vector-ref o 4)))
+	      (with-access::JsGlobalObject ctx (js-error)
+		 (instantiate::JsError
+		    (__proto__ (js-get js-error 'prototype ctx))
+		    (name (js-string->jsstring (vector-ref o 0)))
+		    (msg (js-string->jsstring (vector-ref o 1)))
+		    (stack (string->obj (url-decode (vector-ref o 2)) ctx))
+		    (fname (js-string->jsstring (vector-ref o 3)))
+		    (location (vector-ref o 4)))))
 	  (error "Error" "wrong error" o))))
 
 ;*---------------------------------------------------------------------*/

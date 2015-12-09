@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Dec  9 07:06:23 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 14:27:10 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -357,8 +357,10 @@
 	 (((and (? symbol?) ?sym) (and (? string?) ?path))
 	  (load-module sym path))
 	 ((? symbol?)
-	  (load-module module
-	     (car ((bigloo-module-resolver) module '() abase))))
+	  (let ((resolved ((bigloo-module-resolver) module '() abase)))
+	     (if (pair? resolved)
+		 (load-module module (car resolved))
+		 (error "hopc" "Cannot find module" module))))
 	 (else
 	  (error "hopc" "Illegal module clause" module))))
 	     

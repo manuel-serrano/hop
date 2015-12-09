@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Dec  4 07:37:57 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 08:29:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -713,6 +713,7 @@
 (gen-walks J2SDeclInit val)
 (gen-walks J2SDeclFunCnst)
 (gen-walks J2SLetInit val)
+(gen-walks J2SLetOpt val)
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
 (gen-walks J2SCond test then else)

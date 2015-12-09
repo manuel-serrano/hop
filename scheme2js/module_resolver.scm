@@ -25,7 +25,9 @@
       (trace-item "mod=" mod)
       (trace-item "files=" files)
       (trace-item "file=" file)
-      (let ((abase (dirname file)))
+      (let ((abase (if (not (string? file))
+		       (pwd)
+		       (or (find-afile file) (dirname file)))))
 	 (trace-item "abase=" abase)
 	 (or ((config 'module-resolver) mod files abase)
 	     ((bigloo-module-resolver) mod files abase)
@@ -33,6 +35,21 @@
 			     (cons abase (config 'include-paths))
 			     (config 'include-paths))))
 		(extension-resolver mod path))))))
+
+;*---------------------------------------------------------------------*/
+;*    find-afile ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (find-afile file)
+   (when (string? file)
+      (let loop ((dir (dirname file)))
+	 (if (file-exists? (make-file-name dir ".afile"))
+	     dir
+	     (let ((parent (dirname dir)))
+		(unless (string=? parent dir)
+		   (if (string=? parent ".")
+		       (when (file-exists? ".afile")
+			  ".")
+		       (find-afile parent))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    config-runtime-resolver ...                                      */

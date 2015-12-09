@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu Nov  5 12:42:40 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 08:33:42 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -192,7 +192,7 @@
 		(set! tail #t)
 		(set! tail? #t)
 		(set! expr (walk! expr target #f args)))
-	     (syntax-error this "Illegal return statement")))
+	     (syntax-error this "Illegal \"return\" statement")))
       (unless tail?
 	 ;; mark the return as non-tail
 	 (set! tail #f)

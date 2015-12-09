@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Fri Nov  6 11:56:45 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 10:08:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
@@ -1040,7 +1040,7 @@
 	 (cond
 	    ((not (lambda-call? this))
 	     (template-display p
-		(?@ toplevel?
+		(?@ (and debug? toplevel?)
 		   "sc_context=hop_callback_html_context( \"~a\", \"~a\", ~a ); hop_current_stack_context=sc_context; try { ~@ } catch( e ) { hop_callback_handler(e, sc_context); }"
 		   (match-case location
 		      ((at ?fname ?-) fname)

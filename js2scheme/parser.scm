@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec  7 13:52:57 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 14:00:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -791,7 +791,6 @@
 			   (mode mode)
 			   (body body)
 			   (vararg (rest-params params))
-			   (vararg (rest-params params))
 			   (decl (instantiate::J2SDecl
 				    (loc (token-loc token))
 				    (id (cdr id))
@@ -809,10 +808,9 @@
 				      (loc (token-loc token))
 				      (decl decl)
 				      (name (cdr id))
+				      (mode mode)
 				      (params params)
 				      (vararg (rest-params params))
-				      (vararg (rest-params params))
-				      (mode mode)
 				      (body body)))
 			      (decl (instantiate::J2SDeclFunCnst
 				       (loc (token-loc id))
@@ -825,11 +823,10 @@
 	    (else
 	     (instantiate::J2SFun
 		(loc (token-loc token))
-		(params params)
-		(vararg (rest-params params))
-		(vararg (rest-params params))
 		(name '||)
 		(mode mode)
+		(params params)
+		(vararg (rest-params params))
 		(body body))))))
 
    (define (init->params init)
