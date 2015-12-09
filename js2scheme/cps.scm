@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Dec  9 17:32:21 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 19:29:16 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -89,6 +89,16 @@
        (loc loc)
        (val ,val)))
 
+(define-macro (J2SNumber val)
+   `(instantiate::J2SNumber
+       (loc loc)
+       (val ,val)))
+
+(define-macro (J2SString val)
+   `(instantiate::J2SString
+       (loc loc)
+       (val ,val)))
+
 (define-macro (J2SNop)
    `(instantiate::J2SNop
        (loc loc)))
@@ -110,16 +120,34 @@
        (lhs ,lhs)
        (rhs ,rhs)))
 
+(define-macro (J2SPostfix op lhs rhs)
+   `(instantiate::J2SPostfix
+       (loc loc)
+       (op ,op)
+       (lhs ,lhs)
+       (rhs ,rhs)))
+
 (define-macro (J2SCall fun . args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
        (args ,(if (pair? args) `(list ,(car args)) ''()))))
 
+(define-macro (J2SAccess obj field)
+   `(instantiate::J2SAccess
+       (loc loc)
+       (obj ,obj)
+       (field ,field)))
+
 (define-macro (J2SRef decl)
    `(instantiate::J2SRef
        (loc loc)
        (decl ,decl)))
+
+(define-macro (J2SUnresolvedRef id)
+   `(instantiate::J2SUnresolvedRef
+       (loc loc)
+       (id ,id)))
 
 (define-macro (J2SHopRef id)
    `(instantiate::J2SHopRef
@@ -210,6 +238,13 @@
        (val ,val)
        (id ,id)))
 
+(define-macro (J2SDeclInit usage id val)
+   `(instantiate::J2SDeclInit
+       (loc loc)
+       (usage ,usage)
+       (val ,val)
+       (id ,id)))
+
 (define-macro (%J2STail expr)
    `(instantiate::%J2STail
        (loc loc)
@@ -262,6 +297,14 @@
    `(instantiate::J2SDefault
        (loc loc)
        (expr (J2SUndefined))
+       (body ,body)))
+
+(define-macro (J2SFor init test incr body)
+   `(instantiate::J2SFor
+       (loc loc)
+       (init ,init)
+       (test ,test)
+       (incr ,incr)
        (body ,body)))
 
 ;*---------------------------------------------------------------------*/
@@ -661,7 +704,7 @@
 			   (cps (J2SBlock
 				   (J2SSeq
 				      (J2SStmtExpr incr)
-				      (J2SStmtExpr (J2SCall (J2SRef decl)))))
+				      (%J2STail (J2SCall (J2SRef decl)))))
 			      kid
 			      pack kbreaks
 			      kcontinues)))
@@ -677,7 +720,48 @@
 			    (cons (cons this cdecl) kcontinues)))))
 	     (J2SLetBlock (list decl bdecl cdecl)
 		init
-		(J2SStmtExpr (J2SCall (J2SRef decl))))))
+		(%J2STail (J2SCall (J2SRef decl))))))
+	 (else
+	  (k this)))))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SForIn ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SForIn k pack kbreaks kcontinues)
+   (with-access::J2SForIn this (loc lhs obj body)
+      (cond
+	 ((yield-expr? obj kbreaks kcontinues)
+	  (cps obj
+	     (lambda (kobj)
+		(cps (duplicate::J2SForIn this (obj kobj))
+		   k pack kbreaks kcontinues))
+	     pack kbreaks kcontinues))
+	 ((let* ((cell (cons this #t))
+		 (kbreaks+ (cons cell kbreaks))
+		 (kcontinues+ (cons cell kcontinues)))
+	     (yield-expr? body kbreaks+ kcontinues+))
+	  (let* ((v (gensym '%kkeys))
+		 (l (gensym '%klen))
+		 (i (gensym '%ki))
+		 (keys (J2SLetOpt '(ref) v
+			  (J2SCall
+			     (J2SAccess
+				(J2SUnresolvedRef 'Object)
+				(J2SString "keys"))
+			     obj)))
+		 (len (J2SLetOpt '(ref) l
+			 (J2SAccess (J2SRef keys) (J2SString "length"))))
+		 (idx (J2SDeclInit '(ref write) i (J2SNumber 0)))
+		 (for (J2SFor idx
+			 (J2SBinary '< (J2SRef idx) (J2SRef len))
+			 (J2SPostfix '++ (J2SRef idx) (J2SUndefined))
+			 (J2SBlock
+			    (J2SStmtExpr
+			       (J2SAssig lhs
+				  (J2SAccess (J2SRef keys) (J2SRef idx))))
+			    body))))
+	     (J2SLetBlock (list keys len)
+		(cps for k pack kbreaks kcontinues))))
 	 (else
 	  (k this)))))
 

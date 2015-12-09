@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Wed Dec  9 17:34:19 2015 (serrano)                */
+/*    Last change :  Wed Dec  9 19:42:08 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
@@ -1575,3 +1575,55 @@ g = switchg( 15 );
 assert.ok( equal( g.next(), { value: 1, done: false } ) );
 assert.ok( equal( g.next(20), { value: 30, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+/*---------------------------------------------------------------------*/
+/*    for..in                                                          */
+/*---------------------------------------------------------------------*/
+function* forina( x ) {
+   for( var y in x ) {
+      yield y;
+   }
+}
+
+function* forinb() {
+   for( var y in yield 1 ) {
+      yield y;
+   }
+}
+
+console.log( "forin..." );
+
+console.log( "   forina()" );
+g = forina( { a: 15, b: 20 } );
+assert.ok( equal( g.next(), { value: 'a', done: false } ) );
+assert.ok( equal( g.next(), { value: 'b', done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   forina2()" );
+g = forina( [1, 2, 3] );
+assert.ok( equal( g.next(), { value: '0', done: false } ) );
+assert.ok( equal( g.next(), { value: '1', done: false } ) );
+assert.ok( equal( g.next(), { value: '2', done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   forinb()" );
+g = forinb();
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next( { a: 15, b: 20 } ), { value: 'a', done: false } ) );
+assert.ok( equal( g.next(), { value: 'b', done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   forina2()" );
+g = forinb();
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next( [1, 2, 3] ), { value: '0', done: false } ) );
+assert.ok( equal( g.next(), { value: '1', done: false } ) );
+assert.ok( equal( g.next(), { value: '2', done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+
+   
