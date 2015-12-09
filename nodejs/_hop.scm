@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Oct 24 05:56:52 2015 (serrano)                */
+;*    Last change :  Sun Nov 29 08:05:46 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -110,21 +110,25 @@
       
       (define js-server
 	 (js-make-function %this
-	    (lambda (this host port auth)
+	    (lambda (this host port auth ssl)
 	       (js-new %this host port auth))
-	    3 'Server
+	    4 'Server
 	    :__proto__ js-function-prototype
 	    :prototype js-server-prototype
-	    :construct (lambda (this host port auth)
-			  (instantiate::JsWrapper
+	    :construct (lambda (this host port auth ssl)
+			  (instantiate::JsServer
 			     (__proto__ js-server-prototype)
 			     (data '())
 			     (obj (instantiate::server
-				     (host (js-tostring host %this))
-				     (port (js-tointeger port %this))
-				     (authorization (if (eq? auth (js-undefined))
-							#f
-							(js-tostring auth %this)))))))))
+				     (ssl (js-toboolean ssl))
+				     (host (if (eq? host (js-undefined))
+					       (hop-server-hostname)
+					       (js-tostring host %this)))
+				     (port (if (eq? port (js-undefined))
+					       (hop-port)
+					       (js-tointeger port %this)))
+				     (authorization (when (js-totest auth)
+						       (js-tostring auth %this)))))))))
       
       (js-bind! %this js-urlframe-prototype 'post
 	 :value (js-make-function %this
@@ -144,27 +148,65 @@
 
       (js-bind! %this js-server-prototype 'addEventListener
 	 :value (js-make-function %this
-		   (lambda (this::JsWrapper event proc . capture)
-		      (with-access::JsWrapper this (obj data)
+		   (lambda (this::JsServer event proc . capture)
+		      (with-access::JsServer this (obj data)
 			 (let ((f (lambda (evt)
 				     (js-call1 %this proc this evt))))
 			    (set! data (cons (cons proc f) data))
 			    (when (isa? obj server)
 			       (add-event-listener! obj
 				     (js-tostring event %this) f)))))
-		   3 'addEventListener))
-      
+		   3 'addEventListener)
+	 :enumerable #f)
       (js-bind! %this js-server-prototype 'removeEventListener
 	 :value (js-make-function %this
-		   (lambda (this::JsWrapper event proc . capture)
-		      (with-access::JsWrapper this (obj data)
+		   (lambda (this::JsServer event proc . capture)
+		      (with-access::JsServer this (obj data)
 			 (when (isa? obj server)
 			    (let ((f (assq proc data)))
 			       (when (pair? f)
 				  (remove-event-listener! server
 					(js-tostring event %this) (cdr f)))))))
-		   3 'removeEventListener))
-				  
+		   3 'removeEventListener)
+	 :enumerable #f)
+      (js-bind! %this js-server-prototype 'port
+	 :get (js-make-function %this
+		 (lambda (this::JsServer)
+		    (with-access::JsServer this (obj)
+		       (when (isa? obj server)
+			  (with-access::server obj (port)
+			     port))))
+		 0 'port)
+	 :writable #f)
+      (js-bind! %this js-server-prototype 'host
+	 :get (js-make-function %this
+		 (lambda (this::JsServer)
+		    (with-access::JsServer this (obj)
+		       (when (isa? obj server)
+			  (with-access::server obj (host)
+			     (js-string->jsstring host)))))
+		 0 'host)
+	 :writable #f)
+      (js-bind! %this js-server-prototype 'authorization
+	 :get (js-make-function %this
+		 (lambda (this::JsServer)
+		    (with-access::JsServer this (obj)
+		       (when (isa? obj server)
+			  (with-access::server obj (authorization)
+			     (when (string? authorization)
+				(js-string->jsstring authorization))))))
+		 0 'authorization)
+	 :writable #f)
+      (js-bind! %this js-server-prototype 'ssl
+	 :get (js-make-function %this
+		 (lambda (this::JsServer)
+		    (with-access::JsServer this (obj)
+		       (when (isa? obj server)
+			  (with-access::server obj (ssl)
+			     ssl))))
+		 0 'ssl)
+	 :writable #f)
+				
       (with-access::JsGlobalObject %this (js-object)
 	 (js-alist->jsobject
 	    (list
@@ -472,13 +514,13 @@
        (instantiate::http-response-hop
 	  (backend (get/default req 'backend %this (hop-xml-backend)))
 	  (start-line (get/default req 'startLine %this "HTTP/1.1 200 Ok"))
-	  (content-type (get/default req 'contentType %this "application/x-javascript"))
+	  (content-type (get/default req 'contentType %this "application/x-json-hop"))
 	  (charset (get/default req 'charset %this (hop-charset)))
 	  (header (get/list req 'header %this '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
 	  (value obj))
        (instantiate::http-response-hop
 	  (backend (hop-xml-backend))
-	  (content-type "application/x-javascript")
+	  (content-type "application/x-json-hop")
 	  (value obj))))
 
 ;*---------------------------------------------------------------------*/

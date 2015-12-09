@@ -11,9 +11,6 @@
 /*    run: hop -v image.js                                             */
 /*    browser: http://localhost:8080/hop/image                         */
 /*=====================================================================*/
-
-var hop = require( 'hop' );
-
 var img_default = "http://t1.gstatic.com/images?q=tbn:ANd9GcRUADxj_7NEl8RAFNM-s6x3Wgp1QIg81QHRMVeOuMHBklr1JWddmQ";
 
 var colors_default = [
@@ -26,7 +23,9 @@ service imgProxy( url ) {
    return hop.HTTPResponseProxy( url );
 }
 
-service image( { url: img_default } ) {
+service image( o ) {
+   var url = o && "url" in o ? o.url : img_default;
+   
    return <html>
      ~{
 	function drawImage( url, colors ) {

@@ -218,3 +218,13 @@ Hop.js supports the following MathML tags.
 [:@glyphicon glyphicon-tag tag]
 
 
+Tilde
+-----
+
+### new Tilde( string ) ###
+[:@glyphicon glyphicon-tag constructor]
+
+Constructs a new client-side program. This constructor is to used to
+generate client-side programs whose contained are obtained by a
+computation. In most situations, one should normaly prefer using
+the `\~` syntax.

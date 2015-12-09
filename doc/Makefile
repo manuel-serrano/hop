@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Oct 26 18:46:39 2015 (serrano)                */
+#*    Last change :  Tue Nov 24 08:31:08 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -16,14 +16,15 @@ do: build
 -include ../etc/Makefile.hopconfig
 -include ../etc/Makefile.version
 
+HOPFLAGS=-q --no-autoload --no-clear-cache --no-cache --no-server
 HOP_MODULES=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/node_modules
 HOP_LIBS_PATH=$(HOP_MODULES)/markdown/lib/.libs/$(HOPRELEASE)/$(MACH):$(HOP_MODULES)/fontifier/lib/.libs/$(HOPRELEASE)/$(MACH)
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
 #*---------------------------------------------------------------------*/
-BOOTSTRAP_POP=css/bootstrap-theme.css css/bootstrap-theme.min.css \
-  css/bootstrap.css css/bootstrap.min.css \
+BOOTSTRAP_POP=css/bootstrap.css css/bootstrap.min.css css/bootstrap.css.map \
+  css/bootstrap-theme.css css/bootstrap-theme.min.css css/bootstrap-theme.css.map \
   js/bootstrap.js js/bootstrap.min.js  js/npm.js \
   fonts/glyphicons-halflings-regular.eot \
   fonts/glyphicons-halflings-regular.woff \
@@ -49,7 +50,6 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
-  xml-ignore.json \
   html-idx.json
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
@@ -84,8 +84,9 @@ VPATH=api lang dev widget \
 #*---------------------------------------------------------------------*/
 .PHONY: build clean install uninstall
 
-build: $(ALL_TARGETS) hss/markdown.css hss/fontifier.css hss/doc.css
-build+: html-idx.json
+build: $(ALL_TARGETS) \
+  hss/markdown.css hss/fontifier.css hss/doc.css html-idx.json
+
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
@@ -113,6 +114,8 @@ install:
 	cp -r lib/jquery $(DESTDIR)$(HOPDOCDIR)/lib
 	$(RM) -r -f $(DESTDIR)$(HOPDOCDIR)/hss
 	cp -r hss $(DESTDIR)$(HOPDOCDIR)/hss
+	$(INSTALL) doc.js $(DESTDIR)$(HOPDOCDIR)
+	$(INSTALL) xml.js $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/hss
 	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/hss/*
@@ -127,8 +130,6 @@ install:
 	chmod $(MODFILE) $(JQUERY_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/jquery/%)
 	chmod $(MODFILE) $(BOOTSTRAP_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/%)
 	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/css/*
-
-install+:
 	$(INSTALL) html-idx.json $(DESTDIR)$(HOPDOCDIR)
 
 uninstall:
@@ -142,47 +143,47 @@ uninstall:
 #*    .md -> .html                                                     */
 #*---------------------------------------------------------------------*/
 %.html: %.md doc.js xml.js
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js $< > $@ \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
+          $(BUILDDIR)/doc/doc.js "compile-section" $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    .json -> .html                                                   */
 #*---------------------------------------------------------------------*/
 %.html: %.json doc.js xml.js
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js $< > $@ \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
+          $(BUILDDIR)/doc/doc.js "compile-chapter" $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    index.html ...                                                   */
 #*---------------------------------------------------------------------*/
 index.html: _index.md doc.js xml.js
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js $< > $@ \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
+          $(BUILDDIR)/doc/doc.js "compile-main" $< > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    idx.json ...                                                     */
 #*---------------------------------------------------------------------*/
 idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js mkidx . $^ > $@ \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
+          $(BUILDDIR)/doc/doc.js "html-to-idx" . $^ > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    idx.html ...                                                     */
 #*---------------------------------------------------------------------*/
 idx.html: idx.json
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
-          $(BUILDDIR)/doc/doc.js cmpidx $< > $@ \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
+          $(BUILDDIR)/doc/doc.js "compile-idx" $^ > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    html-idx.json ...                                                */
 #*---------------------------------------------------------------------*/
 html-idx.json: 
-	$(HOP) $(EFLAGS) -q --no-clear-cache --no-cache --no-server -- \
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/html.js $(HTML) > $@ \
           || ($(RM) $@; exit 1)
 

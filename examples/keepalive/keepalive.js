@@ -11,8 +11,6 @@
 /*    run: hop -v -g keepalive.js                                      */
 /*    browser: http://localhost:8080/hop/keepalive                     */
 /*=====================================================================*/
-var hop = require( "hop" );
-
 service keepalive() {
    return new Promise(
       function( resolve, reject ) {

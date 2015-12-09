@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Oct 13 14:12:43 2015 (serrano)                */
+#*    Last change :  Thu Nov 26 15:50:23 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -21,7 +21,7 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    POPULATION                                                       */
 #*---------------------------------------------------------------------*/
-POPULATION	= Makefile LICENSE README INSTALL INSTALL.jvm \
+POPULATION	= Makefile LICENSE README INSTALL.md INSTALL.jvm \
                   configure .hoprelease .hgignore .gitignore README.md \
                   TODO.md
 POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \

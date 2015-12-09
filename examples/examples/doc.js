@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 19 10:32:06 2014                          */
-/*    Last change :  Tue Sep  8 15:27:58 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 15:55:12 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Read and fontify the examples source codes.                      */
@@ -11,7 +11,6 @@
 /*    run: hop -v -g examples.js                                       */
 /*    browser: http://localhost:8080/hop/examples                      */
 /*=====================================================================*/
-var hop = require( "hop" );
 var fs = require( "fs" );
 var path = require( "path" );
 var doc = require( "hopdoc" );

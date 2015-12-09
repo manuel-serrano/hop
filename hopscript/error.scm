@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Sep  4 15:51:27 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 14:13:06 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -41,6 +41,30 @@
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    object-serializer ::JsError ...                                  */
+;*---------------------------------------------------------------------*/
+(register-class-serialization! JsError
+   (lambda (o ctx)
+      (let ((%this (js-initial-global-object)))
+	 (with-access::JsError o (name msg stack fname location)
+	    (vector (string-append "Server" (js-tostring name %this))
+	       (js-tostring msg %this)
+	       (obj->string stack %this)
+	       (js-tostring fname %this)
+	       (js-tonumber location %this)))))
+   (lambda (o ctx)
+      (if (and (vector? o) (=fx (vector-length o) 5))
+	  (with-access::JsGlobalObject ctx (js-error)
+	     (instantiate::JsError
+		(__proto__ (js-get js-error 'prototype ctx))
+		(name (js-string->jsstring (vector-ref o 0)))
+		(msg (js-string->jsstring (vector-ref o 1)))
+		(stack (string->obj (url-decode (vector-ref o 2)) ctx))
+		(fname (js-string->jsstring (vector-ref o 3)))
+		(location (vector-ref o 4))))
+	  (error "Error" "wrong error" o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsError ...                                          */

@@ -131,7 +131,8 @@
 			     (set! body (unreturn! body target #f args))))
 		(cdr sesac))
 	     (with-access::J2SCase (car sesac) (expr body)
-		(set! expr (unreturn! expr target #f args))
+		(unless (isa? (car sesac) J2SDefault)
+		   (set! expr (unreturn! expr target #f args)))
 		(set! body (unreturn! body target #f args))))))
       this))
 
@@ -339,8 +340,23 @@
 ;*    return? ::J2SSwitch ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (return? this::J2SSwitch)
+
+   (define (empty-block? this)
+      (with-access::J2SCase this (body)
+	 (and (isa? body J2SBlock)
+	      (with-access::J2SBlock body (nodes)
+		 (null? nodes)))))
+      
    (with-access::J2SSwitch this (cases)
-      (every return? cases)))
+      (let loop ((cases cases))
+	 (cond
+	    ((null? cases)
+	     #t)
+	    ((or (return? (car cases))
+		 (and (empty-block? (car cases)) (pair? (cdr cases))))
+	     (loop (cdr cases)))
+	    (else
+	     #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    return? ::J2SDo ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Sun Jan 18 08:50:08 2015 (serrano)                */
+;*    Last change :  Wed Nov  4 11:27:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -79,10 +79,11 @@
 	       (lambda (op)
 		  (ast->json ast op)))
 	    (with-url (string-append url "?hop-encoding=json")
-	       json->ast
+	       (lambda (ast) ast)
 	       :method 'POST
 	       :header '((content-type: . "application/json"))
 	       :connection 'close
+	       :json-parser (lambda (ip ctx) (json->ast ip))
 	       :body (call-with-output-string
 			(lambda (op)
 			   (ast->json ast op))))))))
@@ -94,8 +95,11 @@
    (with-access::J2SStageFile stage (path)
       (driver-debug-post stage tmp count ast args
 	 (lambda (ast args)
-	    (if (string-suffix? ".hop" path)
+	    (cond
+	       ((string-suffix? ".hop" path)
 		(let ((stage (hop-load path)))
 		   (if (isa? stage J2SStage)
 		       (stage-exec stage ast tmp count args)
-		       (error "j2scheme" "Illegal plugin file" path))))))))
+		       (error "j2scheme" "Illegal plugin file" path))))
+	       (else
+		(error "j2sscheme" "Illegal plugin file" path)))))))

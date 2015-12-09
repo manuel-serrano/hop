@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Nov  9 07:57:51 2015 (serrano)                */
+;*    Last change :  Fri Nov 27 20:30:51 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -139,6 +139,7 @@
 	      (js-range-error::JsFunction (default (class-nil JsFunction)))
 	      (js-reference-error::JsFunction (default (class-nil JsFunction)))
 	      (js-worker::JsFunction (default (class-nil JsFunction)))
+	      (js-promise (default (class-nil JsFunction)))
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
@@ -203,6 +204,18 @@
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
 	      (svc::obj read-only))
+
+	   (class JsHopFrame::JsObject
+	      (%this read-only)
+	      (args read-only (default #f))
+	      (srv read-only (default #f))
+	      (options (default #f))
+	      (header (default #f))
+	      (path read-only))
+
+	   (class JsServer::JsObject
+	      (data::pair-nil (default '()))
+	      (obj::server read-only))
 	   
 	   (class JsNumber::JsObject
 	      (val::obj (default 0)))

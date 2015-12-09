@@ -96,7 +96,7 @@ buildbindir=$PWD/bin
 buildspecific=
 installspecific=
 
-bigloorequired=4.2b
+bigloorequired=4.2c
 bigloourl=http://www-sop.inria.fr/indes/fp/Bigloo
 
 svn=ssh://hop@hop.inria.fr/hop
@@ -363,7 +363,7 @@ while : ; do
       echo "   --mandir=dir.......... alternative Hop man directory" >&2;
       echo "   --webletsdir=dir...... alternative Hop weblets directory" >&2;
       echo "   --contribsdir=dir..... alternative Hop contribs directory" >&2;
-      echo "   --docdir=dir..... alternative Hop doc directory" >&2;
+      echo "   --docdir=dir.......... alternative Hop doc directory" >&2;
       echo "   --mimetypes=file...... default mime.types file" >&2;
       echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
       echo "   --cssmimetype=type.... default 'text/css'" >&2;
@@ -1023,7 +1023,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
             -e "s|@BINDIR@|$bindir|" \
             -e "s|@LIBDIR@|$libdir|" \
             -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@SHAREDIR@|$sharedir/$version|" \
             -e "s|@ETCDIR@|$etcdir|" \
             -e "s|@WEBLETSDIR@|$webletsdir|" \
             -e "s|@CONTRIBSDIR@|$contribsdir|" \
@@ -1056,7 +1056,7 @@ for p in nodejs.sch; do
             -e "s|@BINDIR@|$bindir|" \
             -e "s|@LIBDIR@|$libdir|" \
             -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@SHAREDIR@|$sharedir/$version|" \
             -e "s|@ETCDIR@|$etcdir|" \
             -e "s|@WEBLETSDIR@|$webletsdir|" \
             -e "s|@CONTRIBSDIR@|$contribsdir|" \
@@ -1087,7 +1087,7 @@ for script in test/nodejs/TEST test/nodejs/HOP.exe test/hopjs/TEST; do
             -e "s|@BINDIR@|$bindir|" \
             -e "s|@LIBDIR@|$libdir|" \
             -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@SHAREDIR@|$sharedir/$version|" \
             -e "s|@ETCDIR@|$etcdir|" \
             -e "s|@WEBLETSDIR@|$webletsdir|" \
             -e "s|@CONTRIBSDIR@|$contribsdir|" \
@@ -1124,7 +1124,7 @@ for file in etc/hopjs.el; do
             -e "s|@BINDIR@|$bindir|" \
             -e "s|@LIBDIR@|$libdir|" \
             -e "s|@LIBPATH@|$libdir/hop/$version|" \
-            -e "s|@SHAREDIR@|$sharedir|" \
+            -e "s|@SHAREDIR@|$sharedir/$version|" \
             -e "s|@ETCDIR@|$etcdir|" \
             -e "s|@WEBLETSDIR@|$webletsdir|" \
             -e "s|@CONTRIBSDIR@|$contribsdir|" \
@@ -1153,7 +1153,7 @@ done
 #*             -e "s|@BINDIR@|$bindir|" \                              */
 #*             -e "s|@LIBDIR@|$libdir|" \                              */
 #*             -e "s|@LIBPATH@|$libdir/hop/$version|" \                */
-#*             -e "s|@SHAREDIR@|$sharedir|" \                          */
+#*             -e "s|@SHAREDIR@|$sharedir/$version|" \                 */
 #*             -e "s|@ETCDIR@|$etcdir|" \                              */
 #*             -e "s|@WEBLETSDIR@|$webletsdir|" \                      */
 #*             -e "s|@CONTRIBSDIR@|$contribsdir|" \                    */
@@ -1181,7 +1181,7 @@ cat etc/hoprc.hop.in \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
@@ -1198,7 +1198,7 @@ cat etc/hopshrc.hop.in \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@WEBLETSDIR@|$webletsdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
@@ -1346,7 +1346,8 @@ chmod a-w $init
 
 # share/hop-autoconf.js
 init=share/hop-autoconf.js
-mkdir -p share
+
+
 rm -f $init 2> /dev/null
 echo "/* Automatically generated file (don't edit) */" > $init
 
@@ -1359,7 +1360,7 @@ cat etc/hop-autoconf.js.in \
           -e "s|@BINDIR@|$bindir|" \
           -e "s|@LIBDIR@|$libdir|" \
           -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir|" \
+          -e "s|@SHAREDIR@|$sharedir/$version|" \
           -e "s|@ETCDIR@|$etcdir|" \
           -e "s|@CONTRIBSDIR@|$contribsdir|" \
           -e "s|@DOCDIR@|$docdir|" \

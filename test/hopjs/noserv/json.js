@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jun 24 10:24:02 2015 (serrano)                */
+/*    Last change :  Wed Nov  4 11:41:02 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JSON encoding/decoding                                   */
@@ -27,3 +27,4 @@ assert.deepEqual( obj, JSON.parse( JSON.stringify( obj ) ) );
 /*    parse                                                            */
 /*---------------------------------------------------------------------*/
 assert.strictEqual( JSON.parse( "[1,2,3]" ).join( ","), "1,2,3" );
+assert.deepEqual( JSON.parse( "[false]" ), [ false ] );

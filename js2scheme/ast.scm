@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Nov 10 08:12:35 2015 (serrano)                */
+;*    Last change :  Sat Dec  5 16:05:24 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -60,7 +60,7 @@
 	   (final-class J2SLetBlock::J2SBlock
 	      decls::pair)
 	   
-	   (abstract-class J2SIdStmt::J2SStmt
+	   (class J2SIdStmt::J2SStmt
 	      (need-bind-exit-break::bool (default #t))
 	      (id::obj (default #unspecified)))
 	   
@@ -111,6 +111,10 @@
 	      (tail::bool (default #t))
 	      expr::J2SExpr)
 	   
+	   (final-class J2SYield::J2SExpr
+	      expr::J2SExpr
+	      (kont read-only (default #f)))
+	   
 	   (final-class J2SWith::J2SStmt
 	      (id::symbol read-only (default (gensym '__with)))
 	      obj::J2SExpr
@@ -125,7 +129,7 @@
 	      (decl read-only (default #f))
 	      (need-bind-exit-return::bool (default #f))
 	      (vararg::obj (default #f))
-	      (name::symbol read-only)
+	      (name read-only (default #f))
 	      (generator::bool (default #f))
 	      params::pair-nil
 	      body::J2SBlock)
@@ -304,11 +308,6 @@
 	      clazz::J2SNode
 	      args::pair-nil)
 
-	   (final-class J2SYield::J2SExpr
-	      expr::J2SExpr
-	      (done::bool (default #f))
-	      (kont (default #f)))
-	   
 	   (abstract-class J2SPropertyInit::J2SNode
 	      name::J2SLiteralValue)
 	   
@@ -686,6 +685,7 @@
 ;*---------------------------------------------------------------------*/
 (gen-walks J2SNode)
 (gen-walks J2SSeq (nodes))
+(gen-walks J2SProgram (decls) (headers) (nodes))
 (gen-walks J2SReturn expr)
 (gen-walks J2SWith obj block)
 (gen-walks J2SThrow expr)
@@ -703,6 +703,7 @@
 (gen-walks J2SForIn lhs obj body)
 (gen-walks J2SWhile test body)
 (gen-walks J2SCase expr body)
+(gen-walks J2SDefault body)
 (gen-walks J2STemplate (exprs))
 (gen-walks J2SParen expr)
 (gen-walks J2SUnary expr)
@@ -720,6 +721,7 @@
 (gen-walks J2SDeclInit val)
 (gen-walks J2SDeclFunCnst)
 (gen-walks J2SLetInit val)
+(gen-walks J2SLetOpt val)
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
 (gen-walks J2SCond test then else)
@@ -847,7 +849,7 @@
 ;*    json->ast ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (json->ast ip::input-port)
-   
+
    (define (alist->node cname l)
       (let* ((clazz (find-class cname))
 	     (ctor (class-constructor clazz))

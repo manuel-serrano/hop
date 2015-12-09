@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Fri Oct 16 08:49:40 2015 (serrano)                */
+;*    Last change :  Sat Nov 28 12:06:46 2015 (serrano)                */
 ;*    Copyright   :  2009-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
@@ -21,10 +21,12 @@
    (export
       hop-name-aliases
       hop_current_stack_context
+      hop_initial_stack_context
       (hop-callback-handler exc ctx)
       (hop-callback-html-context el file line)
       (hop-callback-listener-context msg)
       (hop-get-exception-stack e)
+      (hop-report-exception e stk)
       (bigloo-mangled? str)
       (hop-demangle str)
       (hop-source-map-register! proc))
@@ -37,10 +39,12 @@
    
    (scheme2js-pragma
       (hop-name-aliases (JS "hop_name_aliases"))
+      (hop_initial_stack_context (JS "hop_initial_stack_context"))
       (hop_current_stack_context (JS "hop_current_stack_context"))
       (hop-callback-handler (JS "hop_callback_handler"))
       (hop-callback-html-context (JS "hop_callback_html_context"))
       (hop-callback-listener-context (JS "hop_callback_listener_context"))
+      (hop-report-exception (JS "hop_report_exception"))
       (hop-get-exception-stack (JS "hop_get_exception_stack"))
       (hop-mangled? (JS "hop_mangledp"))
       (hop-demangle (JS "hop_demangle"))))
@@ -49,6 +53,7 @@
 ;*    hop_current_stack_context ...                                    */
 ;*---------------------------------------------------------------------*/
 (define hop_current_stack_context '())
+(define hop_initial_stack_context '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-default-source-map ...                                       */
@@ -430,13 +435,13 @@
 				  (string-append
 				     (hop-demangle (substring msg i j))
 				     (substring msg j len)))))))))))
-	       
+
    (cond
-      ((not (isa? e (@ Object js))) e)
+      ((not (isa? e (@ Object js))) (string-append e ""))
       ((isa? e (@ ReferenceError js)) (reference-error e.message))
       ((js-in? "message" e) (demangle-string e.message))
       ((js-in? "description" e) (demangle-string e.description))
-      (else e)))
+      (else (string-append e ""))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-callback-handler ...                                         */
@@ -469,14 +474,14 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-html-context site file line)
    (let ((frame (list site `(at ,file ,line) '(format . "~~~a") '(type . html))))
-      (list frame)))
+      (cons frame hop_initial_stack_context)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-callback-listener-context ...                                */
 ;*---------------------------------------------------------------------*/
 (define (hop-callback-listener-context msg)
    (let ((frame (list msg #f '(format . "~~~a") '(type . html))))
-      (list frame)))
+      (cons frame hop_initial_stack_context)))
 
 ;*---------------------------------------------------------------------*/
 ;*    install the default error handler ...                            */

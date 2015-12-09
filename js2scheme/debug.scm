@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/debug.scm               */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/debug.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 12:32:21 2014                          */
-;*    Last change :  Fri Jul  3 16:16:14 2015 (serrano)                */
+;*    Last change :  Fri Dec  4 16:06:15 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript debugging instrumentation                             */
@@ -29,7 +29,8 @@
    (instantiate::J2SStageProc
       (name "debug")
       (comment "JavaScript debug intrumentation")
-      (proc (lambda (n conf) (j2s-debug n conf 'server)))))
+      (proc (lambda (n conf)
+	       (j2s-debug n conf (config-get conf :site 'server))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-debug ...                                                    */

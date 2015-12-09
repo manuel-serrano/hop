@@ -116,12 +116,12 @@ the full path of a existing file.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/file/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/file/README.md" ) }
 
 ${ <span class="label label-info">file/file.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/file/file.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/file/file.js", 14 ) }
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -144,12 +144,12 @@ and passing a `tagstLine` value in the optional argument.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/authentication/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/authentication/README.md" ) }
 
 ${ <span class="label label-info">authentication/authentication.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/authentication/authentication.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/authentication/authentication.js", 14 ) }
 ```
 
 ### hop.HTTPResponseError( obj, [option] ) ###
@@ -174,12 +174,12 @@ the service invokation.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/svc3/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/svc3/README.md" ) }
 
 ${ <span class="label label-info">svc3/svc3.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/svc3/svc3.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/svc3/svc3.js", 14 ) }
 ```
 
 ${ <span class="label label-warning">Note:</span> }
@@ -215,12 +215,12 @@ remote resources by the server.
 
 #### Example ####
 
-${ doc.include( doc.ROOT + "/examples/image/README.md" ) }
+${ doc.include( doc.BUILDDIR + "/examples/image/README.md" ) }
 
 ${ <span class="label label-info">image/image.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/image/image.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/image/image.js", 14 ) }
 ```
 
 Broadcast
@@ -279,25 +279,32 @@ server.addEventListener( 'refreshScore', function( event ) {
 
 On the server side, server objects are instances of the Server class.
 
-### new Server( hostname, port [, authorization] ) ###
-[:@glyphicon glyphicon-tag constructor]
+### new hop.Server( [ hostname [, port [, authorization [, ssl ] ] ] ) ###
+[:server@glyphicon glyphicon-tag constructor]
 
 the arguments are as follows:
 
   * `hostname`: a string, the name or IP number of the remote host that
-  will emit signals.
-  * `port`: the port number of the remote host.
+  will emit signals. If omitted, defaults to the running host name.
+  * `port`: the port number of the remote host. If omitted, defaults to
+  the running Hop port.
   * `authorization`: a string, an optional authorization for accessing
   the remote host. This has the syntax of the
-  frame `[post](01-service.html#post) method.
+  frame `[post](01-service.html#post)` method.
+  * `ssl`: a optional boolean. When true, the established channel between
+  the two servers uses SSL.
+  
   
 ```hopscript
-var srv = new Server( "localhost", 9999 );
+var srv = new hop.Server( "localhost", 9999 );
 
 srv.addEventListener( 'refreshScore', function( event ) {
    var score = event.value;
    ...
 } )
+
+import service getScore();
+getScore( "jean dupont", srv, function( val ) { ... } );
 ```
 
 
@@ -359,7 +366,7 @@ Converts the `text` string from charset `source` into charset `target`.
 ${ <span class="label label-info">url/url.js</span> }
 
 ```hopscript
-${ doc.include( doc.ROOT + "/examples/url/url.js", 14 ) }
+${ doc.include( doc.BUILDDIR + "/examples/url/url.js", 14 ) }
 ```
 
 ### hop.encodeURIComponent( string ) ###
@@ -402,7 +409,7 @@ hop.sha1sum( 'jean dupont' );
 // "7461340811509ec24dd1c1a32504a01e24423768"
 ```
 
-### hop.xmlCompile( node [, ofile] [, backend] ) ###
+### hop.compileXML( node [, ofile] [, backend] ) ###
 [:@glyphicon glyphicon-tag function]
 
 Compile a XML `node` into HTML. If no output file is specified,
@@ -412,11 +419,11 @@ used for the compilation.
 
 ```hopscript
 var node = <html><div onclick=~{alert( "clicked" )}>click me</div></html>
-console.log( hop.XMLCompile( node, false, "html5" ) );
+console.log( hop.compileXML( node, false, "html5" ) );
 ```
 
 ${ <span class="label label-warning">Note:</span> }
- explicit compilation to HTML using `hop.XMLCompile` is unncessary
+ explicit compilation to HTML using `hop.compileXML` is unncessary
 for service responses. Services can directly return XML objects
 in response to HTTP requests.
 [:@warning]

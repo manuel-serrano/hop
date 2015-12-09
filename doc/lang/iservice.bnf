@@ -1,2 +1,2 @@
 <ServiceImport> -->
-    import service <Identifier> () 
+    service <Identifier> () 

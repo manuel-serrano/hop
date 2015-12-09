@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Sep 26 06:28:26 2015 (serrano)                */
+;*    Last change :  Tue Nov  3 00:32:00 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -52,6 +52,12 @@
    (lambda (o)
       (js-undefined))
    (lambda (o %this) o))
+
+;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::JsFunction ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (xml-primitive-value obj::JsFunction)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::Jsfunction ...                                       */

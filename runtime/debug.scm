@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Fri Oct 16 08:38:27 2015 (serrano)                */
+;*    Last change :  Thu Nov 26 15:32:33 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
@@ -82,7 +82,6 @@
 	 (file)
 	 (if (file-exists? file)
 	     (instantiate::http-response-file
-		#;(request (current-request))
 		(file file)
 		(content-type "application/json")
 		(bodyp #t)

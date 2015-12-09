@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Sep 25 10:06:03 2015 (serrano)                */
+;*    Last change :  Wed Nov 25 10:36:26 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -306,6 +306,8 @@
 			  (nodejs-compiler-options-add! ext #t))
 		'(es6-let: es6-const: es6-arrow-function: es6-default-value:
 		  es6-rest-argument:)))
+	    (("--js-dsssl" (help "Enable DSSSL like JS services (deprecated)"))
+	     (nodejs-compiler-options-add! :dsssl #t))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
 	     (nodejs-compiler-options-add! (string->keyword opt)
 		(cond

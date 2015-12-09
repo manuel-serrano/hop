@@ -11,9 +11,8 @@
 /*    run: hop -v -g svc4.js                                           */
 /*    browser: http://localhost:8080/hop/svc4                          */
 /*=====================================================================*/
-var hop = require( 'hop' );
-
-service svc4( { name: "foo" } ) {
+service svc4( o ) {
+   var name = o && "name" in o ? o.name : "foo";
    import service svc();
    svc.path = "/hop/" + name;
 
@@ -24,19 +23,19 @@ service svc4( { name: "foo" } ) {
 }
 	    
 service foo( a, b ) {
-   return <HTML> {
-      <H1> { "foo" },
-      <DIV> { a },
-      <DIV> { b }
-   }
+   return <html>
+     <h1>foo</h1>
+     <div> ${ a } </div>
+     <div> ${ b } </div>
+   </html>
 }
 
 service bar( a, b ) {
-   return <HTML> {
-      <H1> { "bar" },
-      <DIV> { a },
-      <DIV> { b }
-   }
+   return <html>
+     <h1>bar</h1>
+     <div> ${ a } </div>
+     <div> ${ b } </div>
+   </html>
 }
 
 console.log( "Go to \"http://%s:%d/hop/svc4?name=foo\"", hop.hostname, hop.port );

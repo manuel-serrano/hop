@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 19 11:52:55 2010                          */
-;*    Last change :  Thu Apr 16 07:32:01 2015 (serrano)                */
+;*    Last change :  Tue Nov  3 20:41:37 2015 (serrano)                */
 ;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JSON lib.                                                        */
@@ -25,6 +25,7 @@
 	    __hop_js-comp)
    
    (export  (generic obj->json ::obj ::output-port)
+	    (generic json->obj ::obj ::input-port)
             (byte-array->json ::bstring ::output-port)
 	    (javascript->obj ::obj)
 	    (generic javascript-class-all-fields ::object)))
@@ -46,6 +47,12 @@
 	      obj)))
       (else
        (obj->javascript-expr obj op))))
+
+;*---------------------------------------------------------------------*/
+;*    json->obj ::obj ...                                              */
+;*---------------------------------------------------------------------*/
+(define-generic (json->obj ctx::obj ip::input-port)
+   (javascript-parser ip))
 
 ;*---------------------------------------------------------------------*/
 ;*    byte-array->json ...                                             */

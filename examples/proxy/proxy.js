@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 17 08:51:31 2014                          */
-/*    Last change :  Mon Jan  5 17:36:24 2015 (serrano)                */
+/*    Last change :  Tue Nov 17 16:48:55 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Proxied server-to-server requests                                */
@@ -11,26 +11,22 @@
 /*         hop -v -g proxy.js -p 8888                                  */
 /*    browser: http://localhost:8080/hop/proxy                         */
 /*=====================================================================*/
-var hop = require( "hop" );
-
 var port = parseInt( process.argv[ process.argv.length - 1 ] );
 
 service proxy() {
-   return <HTML> {
+   return <html>
       ~{ function cb( el ) {
 	 el.forEach( function( e ) {
-	    document.body.appendChild( <DIV> { e } )
-	 } ) } },
-      <BUTTON> {
-	 style: "margin-right: 20px",
-	 onclick: ~{ ${svc}( "Foo", "" ).post( cb ) },
-	 "direct call"
-      },
-      <BUTTON> {
-	 onclick: ~{ ${proxysvc}( "Foo", "" ).post( cb ) },
-	 "svc call"
-      }
-   }
+	    document.body.appendChild( <div> ${ e } </div> )
+	 } ) } }
+      <button style="margin-right: 20px"
+	       onclick=~{ ${svc}( "Foo", "" ).post( cb ) }>
+        direct call
+      </button>
+      <button onclick=~{ ${proxysvc}( "Foo", "" ).post( cb ) }>
+	svc call
+      </button>
+   </html>
 }
 
 function hostId( req ) {

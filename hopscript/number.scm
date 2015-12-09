@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Oct  2 15:00:04 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 21:11:24 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -85,7 +85,7 @@
 (define-method (hop->javascript o::JsNumber op compile isexpr)
    (with-access::JsNumber o (val)
       (display "new Number(" op)
-      (display val op)
+      (display (if (and (flonum? val) (nanfl? val)) "undefined" val) op)
       (display ")" op)))
 
 ;*---------------------------------------------------------------------*/

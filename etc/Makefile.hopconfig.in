@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Oct 26 18:36:29 2015 (serrano)                */
+#*    Last change :  Tue Nov 24 08:29:08 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -170,7 +170,9 @@ link = echo '$(COLOR_CC)$(1)$(COLOR_STOP) $(2) $(3) $(4) $(5) $(COLOR_DEST)$(6)$
 #*    mkdir                                                            */
 #*---------------------------------------------------------------------*/
 mkdir:
-	if [ ! -d $(DIR) ]; then \
-          $(MAKE) mkdir DIR=`dirname $(DIR)`; \
-          mkdir $(DIR) && chmod $(MODDIR) $(DIR); \
+	if [ ! -f $(DIR) ]; then \
+	   if [ ! -d $(DIR) ]; then \
+             $(MAKE) mkdir DIR=`dirname $(DIR)`; \
+             mkdir $(DIR) && chmod $(MODDIR) $(DIR); \
+           fi \
         fi

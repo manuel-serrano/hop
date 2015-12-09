@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Fri Oct 23 11:35:43 2015 (serrano)                */
+/*    Last change :  Sat Nov 28 10:39:31 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -25,10 +25,10 @@ var SHELL = "/bin/sh";
 var CMD = "hop -g --no-color --no-zeroconf -p $(PORT) $(SRC) --rc-file $(RCFILE)";
 var PASSWD = path.join( __dirname, "passwd.hop" );
 
-var CLASSLEVELS = [ "success", "info", "warning", "danger" ];
+var CLASSLEVELS = [ "success", "info", "warning", "danger", "default" ];
 
-import service examplesSrc();
-import service examplesDoc();
+service examplesSrc();
+service examplesDoc();
 
 /*---------------------------------------------------------------------*/
 /*    src.js and doc.js                                                */
@@ -45,231 +45,197 @@ var doc = new Worker( "./doc.js" );
 /*---------------------------------------------------------------------*/
 service examples() {
    
-   var title = <SPAN> {};
-   var description = <SPAN> { class: "description" };
-   var tags = <SPAN> {};
-   var docn = <DIV> {};
-   var sources = <DIV> {};
-   var consoles = <DIV> { class: "consoles" };
-   var stitle = <SPAN> {};
-   var iframe = <IFRAME> {};
-   var url = <A> { class: "panel-heading-url" };
+   var title = <span/>;
+   var description = <span class="description"/>;
+   var tags = <span/>;
+   var docn = <div/>;
+   var sources = <div/>;
+   var consoles = <div class="consoles"/>;
+   var stitle = <span/>;
+   var iframe = <iframe/>;
+   var url = <a  class="panel-heading-url"/>;
    var root = path.dirname( __dirname );
+   
+   var css = [ examples.resource( "libs/bootstrap/css/bootstrap.min.css" ),
+	       examples.resource( "examples.hss" ),
+	       fontifier.css,
+	       doc.css ]
 
-   var panel = <DIV> {
-      class: "panel panel-primary",
-      <DIV> {
-	 class: "panel-heading",
-	 <SPAN> { class: "glyphicon glyphicon-globe", "aria-hidden": "true" },
-	 url
-      },
-      <DIV> {
-	 class: "panel-body",
-	 <DIV> {
-	    class: "embed-responsive embed-responsive-4by3",
-	    iframe
-	 }
-      }
-   };
+   var panel = <div class="panel panel-primary">
+     <div class="panel-heading">
+       <span class="glyphicon glyphicon-globe" aria-hidden="true"/>
+       ${url}
+     </div>
+     <div class="panel-body">
+       <div class="embed-responsive embed-responsive-4by3">
+	  ${iframe}
+       </div>
+     </div>
+   </div>
 
-   return <HTML> {
-      <HEAD> {
-	 title: "Hop.js example driver",
-	 include: "md5",
-	 css: [ examples.resource( "libs/bootstrap/css/bootstrap.min.css" ),
-		examples.resource( "examples.hss" ),
-	        fontifier.css,
-	        doc.css ],
-	 <META> {
-	    charset: "utf-8"
-	 },
-	 <META> {
-	    "http-equiv": "X-UA-Compatible",
-	    content: "IE=edge"
-	 },
-	 <META> {
-	    name: "viewport",
-	    content: "width=device-width, initial-scale=1"
-	 },
+   return <html>
+      <head title="Hop.js example driver"
+	    include="md5"
+	    css=${css}>
+	<meta charset="utf-8"/>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1"/>
 	 ~{
 	    var listeners = [];
-	 }
-      },
-      
-      <BODY> {
-	 <DIV> {
-	    class: "container-fluid",
-	    <DIV> {
-	       class: "jumbotron",
-	       <H1> { "Hop v", hop.version },
-	       <H2> { "Examples suite" }
-	    },
+	    
+	    function run( event, o, level, glyph ) {
+	       var files = o.files;
+	       var commands = o.commands;
 
-	    <DIV> {
-	       class: "row",
-	       <DIV> {
-		  class: "col-md-3",
-		  <UL> {
-		     class: "list-group",
-		     getExamples( root )
-			.map( function( o ) {
-			   var level = CLASSLEVELS[ Math.round( o.level ) ];
-			   return <A> {
-			      class: "list-group-item list-group-item-" + level,
-			      onclick: ~{
-				 var glyph = this.firstChild;
-				 var files = ${o.files};
-				 var commands = ${o.commands};
+	       event.stopPropagation = true;
 
-				 event.stopPropagation = true;
+	       ${title}.className = "label label-" + level;
+	       ${title}.innerHTML = o.title;
+	       ${url}.innerHTML = o.url;
+	       ${url}.href = o.url;
+	       ${description}.innerHTML = o.description;
+	       ${tags}.innerHTML = o.tags.join( ", " );
+	       ${docn}.innerHTML = "";
 
-				 ${title}.className = "label label-" + ${level};
-				 ${title}.innerHTML = ${o.title};
-				 ${url}.innerHTML = ${o.url};
-				 ${url}.href = ${o.url};
-				 ${description}.innerHTML = ${o.description};
-				 ${tags}.innerHTML = ${o.tags.join( ", " )};
-				 ${docn}.innerHTML = "";
+	       // get the documentation
+	       ${examplesDoc}( o )
+		  .post( function( n ) {
+		     ${docn}.appendChild( n );
+		  } );
 
-				 // get the documentation
-				 ${examplesDoc}( ${o} )
-				    .post( function( n ) {
-				       ${docn}.appendChild( n );
-				    } );
+	       var el = document.getElementById( "example" );
+	       dom_remove_class( el, "no-display" );
+	       var el = document.getElementById( "init" );
+	       dom_add_class( el, "no-display" );
 
-				 var el = document.getElementById( "example" );
-				 dom_remove_class( el, "no-display" );
-				 var el = document.getElementById( "init" );
-				 dom_add_class( el, "no-display" );
+	       ${sources}.innerHTML = "";
+	       // walk over all the sources, one after the other
+	       (function loop( i ) {
+		  if( i < files.length ) {
+		     var s = files[ i ];
+		     var box = <div class="panel-body"/>;
+		     var el = <div class="panel panel-default">
+		       <div class="panel-heading">
+			 <span class="glyphicon glyphicon-book" aria-hidden="true"/>
+                         ${s.substr( o.dir.length + 1 )}
+		       </div>
+		       ${box}
+		     </div>
 
-				 ${sources}.innerHTML = "";
-
-				 // walk over all the sources, one after the other
-				 (function loop( i ) {
-				    if( i < files.length ) {
-				       var s = files[ i ];
-				       var box = <DIV> { class: "panel-body" };
-				       var el = <DIV> {
-					  class: "panel panel-default",
-					  <DIV> {
-					     class: "panel-heading",
-					     <SPAN> { class: "glyphicon glyphicon-book", "aria-hidden": "true" },
-					     s.substr( ${o.dir.length + 1} )
-					  },
-					  box
-				       };
-
-				       ${sources}.appendChild( el );
-
-				       ${examplesSrc}( s )
-					  .post( function( code ) {
-					     box.appendChild( code );
-					     loop( i + 1 );
-					  } );
-				    }
-				 })( 0 );
-
-				 // add the consoles
-				 ${consoles}.innerHTML = "";
-
-				 listeners.forEach( function( ltn ) {
-				    server.removeEventListener( ltn.name, ltn.proc );
-				 } );
-				 listeners = [];
-
-				 for( var i = 0; i < commands.length; i++ ) {
-				    (function() {
-				       var cmd = commands[ i ];
-				       var pre = <PRE> { class: "console" };
-				       var con = <DIV> {
-					  class: "panel panel-info console",
-					  <DIV> {
-					     class: "panel-heading",
-					     <SPAN> { class: "glyphicon glyphicon-cog", "aria-hidden": "true" },
-					     cmd
-					  },
-					  pre
-				       };
-
-				       // add the new listener
-				       var ltn = {
-					  name: files[ i ],
-					  proc: function( e ) {
-					     pre.appendChild( e.value );
-					  }
-				       };
-
-				       server.addEventListener( ltn.name, ltn.proc );
-				       listeners.push( ltn );
-
-				       ${consoles}.appendChild( con );
-				    })();
-				 }
-
-				 ${examplesRun}( ${o} )
-				    .post( function( url ) {
-				       if( url ) {
-					  ${url}.innerHTML = url;
-					  ${url}.href = url;
-					  ${iframe}.src = url;
-					  ${panel}.style.display = "block";
-				       } else {
-					  ${panel}.style.display = "none";
-				       }
-				       glyph.style.visibility = "visible";
-				    } );
-			      },
-			      title: o.description,
-			      <SPAN> {
-				 class: "glyphicon glyphicon-ok",
-				 style: "visibility: hidden"
-			      },
-			      <SPAN> {
-				 class: "title",
-				 o.title
-			      }
-			   }
-			} )
+		     ${sources}.appendChild( el );
+		     ${examplesSrc}( s )
+			.post( function( code ) {
+			   box.appendChild( code );
+			   loop( i + 1 );
+			} );
 		  }
-	       } </DIV>,
-	       <DIV> {
-		  class: "col-md-9", id: "init",
-		  "This hop.js program shows various examples, which illustrate various features of the system. Click the navigation bar to access the examples."
-	       },
-	       <DIV> {
-		  class: "col-md-9 no-display", role: "main", id: "example",
-		  <DIV> {
-		     class: "panel panel-default",
-		     <DIV> {
-			class: "panel-heading",
-			<H3> { title, description },
-			<DIV> {
-			   class: "tags",
-			   <SPAN> {
-			      class: "glyphicon glyphicon-tags"
-			   },
-			   tags
+	       })( 0 );
+
+	       // add the consoles
+	       ${consoles}.innerHTML = "";
+
+	       listeners.forEach( function( ltn ) {
+		  server.removeEventListener( ltn.name, ltn.proc );
+	       } );
+	       listeners = [];
+
+	       for( var i = 0; i < commands.length; i++ ) {
+		  (function() {
+		     var cmd = commands[ i ];
+		     var pre = <pre class="console"/>;
+		     var con = <div class="panel panel-info console">
+		       <div class="panel-heading">
+			 <span class="glyphicon glyphicon-cog" aria-hidden="true"/>
+                         ${cmd}
+		       </div>
+                       ${pre}
+		     </div>;
+
+		     // add the new listener
+		     var ltn = {
+			name: files[ i ],
+			proc: function( e ) {
+			   pre.appendChild( e.value );
 			}
-		     },
-		     <DIV> {
-			class: "panel-body",
-			docn,
-		     }
-		  },
-		  sources,
-		  consoles,
-		  panel
+		     };
+
+		     server.addEventListener( ltn.name, ltn.proc );
+		     listeners.push( ltn );
+
+		     ${consoles}.appendChild( con );
+		  })();
 	       }
-	    } </DIV>
-	 },
-	 <SCRIPT> {
-	    src: examples.resource( "libs/jquery/js/jquery.min.js" )
-	 },
-	 <SCRIPT> {
-	    src: examples.resource( "libs/bootstrap/js/bootstrap.min.js" )
+
+	       ${examplesRun}( o )
+		  .post( function( url ) {
+		     if( url ) {
+			${url}.innerHTML = url;
+			${url}.href = url;
+			${iframe}.src = url;
+			${panel}.style.display = "block";
+		     } else {
+			${panel}.style.display = "none";
+		     }
+		     glyph.style.visibility = "visible";
+		  } );
+	    }
 	 }
-      }
-   }
+      </head>
+      
+      <body>
+	<div class="container-fluid">
+	  <div class="jumbotron">
+	    <h1>Hop v${hop.version}</h1>
+	    <h2>Examples suite</h2>
+	  </div>
+
+	  <div class="row">
+	    <div class="col-md-3">
+	      <ul class="list-group">
+		${getExamples( root )
+		  .map( function( o ) {
+		     var level = CLASSLEVELS[ Math.round( o.level ) ];
+		     var glyph = <span class="glyphicon glyphicon-ok"
+				       style="visibility: hidden"/>
+		     return <a class=${"list-group-item list-group-item-" + level}
+			       title=${o.description}
+			       onclick=~{run( event, ${o}, ${level}, ${glyph} )}>
+		       <span class="title">
+			 ${glyph}
+                         ${o.title}
+		       </span>
+		     </a>
+		  })}
+	      </ul>
+	    </div>
+	    <div class="col-md-9" id="init">
+                This hop.js program shows various examples, which illustrate various
+                features of the system. Click the navigation bar to access the examples.
+	    </div>
+	    <div class="col-md-9 no-display" role="main" id="example">
+	      <div class="panel panel-default">
+		<div class="panel-heading">
+		  <h3> ${title} ${description} </h3>
+		  <div class="tags">
+		    <span class="glyphicon glyphicon-tags">
+			${tags}
+		    </span>
+		  </div>
+		</div>
+		<div class="panel-body">
+                      ${docn}
+		</div>
+	      </div>
+	      ${sources}
+	      ${consoles}
+	      ${panel}
+	    </div>
+	  </div>
+	</div>
+	<script src=${examples.resource( "libs/jquery/js/jquery.min.js")}/>
+	<script src=${examples.resource( "libs/bootstrap/js/bootstrap.min.js")}/>
+      </body>
+   </html>
 }
 
 /*---------------------------------------------------------------------*/
@@ -359,7 +325,7 @@ service examplesRun( o ) {
 	    var proc = spawn( SHELL, [ "-c", cmd ], { env: env, cwd: o.dir } );
 
 	    proc.stdout.on( "data", function( data ) {
-	       hop.broadcast( file, <SPAN> { class: "stdout", data.toString() } );
+	       hop.broadcast( file, <span class="stdout">${data.toString()}</span> );
 	       if( rep ) {
 		  rep = false;
 		  if( o.service ) {
@@ -371,7 +337,7 @@ service examplesRun( o ) {
 	    } );
 
 	    proc.stderr.on( "data", function( data ) {
-	       hop.broadcast( file, <SPAN> { class: "stderr", data.toString() } );
+	       hop.broadcast( file, <span> class="stderr">${data.toString()}</span> );
 	    } );
 
 	    // remove ended process from the running processes list

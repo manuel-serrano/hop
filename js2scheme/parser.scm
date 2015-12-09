@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Nov  2 15:27:08 2015 (serrano)                */
+;*    Last change :  Mon Nov 30 18:32:25 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -67,6 +67,14 @@
 		(msg (if (eq? (token-tag token) 'BAD) (cadr token) msg))
 		(obj (if (eq? (token-tag token) 'BAD) (cddr token) (token-value token))))))))
 
+   (define (parse-token-warning msg token)
+      (with-handler
+	 (lambda (e)
+	    (exception-notify e)
+	    (display "ignoring...\n" (current-error-port))
+	    #f)
+	 (parse-token-error msg token)))
+
    (define (parse-node-error msg node::J2SNode)
       (with-access::J2SNode node (loc)
 	 (let ((l (read-line input-port)))
@@ -96,7 +104,7 @@
 	       (obj (read-line input-port))
 	       (fname fname)
 	       (location loc)))))
-   
+
    (define *peeked-tokens* '())
    (define *previous-token-type* #unspecified)
    (define *open-tokens* #unspecified)
@@ -213,7 +221,7 @@
 	  (if (eq? (peek-token-value) 'import)
 	      (begin
 		 (consume-any!)
-		 (service-import))
+		 (import))
 	      (statement)))
 	 ((EOF)
 	  (parse-token-error "unexpected end of file"
@@ -597,11 +605,12 @@
 		  (body body))))))
    
    (define (default-clause)
-      (let ((token (consume-token! 'default)))
+      (let* ((token (consume-token! 'default))
+	     (loc (token-loc token)))
 	 (consume! ':)
 	 (instantiate::J2SDefault
-	    (loc (token-loc token))
-	    (expr (class-nil J2SExpr))
+	    (loc loc)
+	    (expr (instantiate::J2SUndefined (loc loc)))
 	    (body (switch-clause-statements (token-loc token))))))
    
    (define (switch-clause-statements loc)
@@ -836,12 +845,79 @@
 		 (parse-node-error "Illegal parameter declaration" init)))
 	  (parse-node-error "Illegal parameter declaration" init)))
 
-   (define (service declaration?)
-      (let* ((token (consume-token! 'service))
-	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
-		    (consume-token! 'ID)))
-	     (inits (service-params))
-	     (params (if (isa? inits J2SObjInit)
+   (define (service-create token id params init body mode register declaration?)
+      (cond
+	 (declaration?
+	  (instantiate::J2SDeclSvc
+	     (loc (token-loc token))
+	     (id (cdr id))
+	     (val (instantiate::J2SSvc
+		     (loc (token-loc token))
+		     (register register)
+		     (params params)
+		     (vararg (rest-params params))
+		     (name (cdr id))
+		     (init init)
+		     (mode 'strict)
+		     (path (cdr id))
+		     (body body)
+		     (decl (instantiate::J2SDecl
+			      (loc (token-loc token))
+			      (id (cdr id))
+			      (writable #f)
+			      (ronly #t)
+			      (global #t)))))))
+	 (id
+	  (co-instantiate ((fun (instantiate::J2SSvc
+				   (loc (token-loc id))
+				   (register register)
+				   (decl decl)
+				   (params params)
+				   (vararg (rest-params params))
+				   (name (cdr id))
+				   (init init)
+				   (mode (if (eq? mode 'hopscript)
+					     'hopscript
+					     'strict))
+				   (path (cdr id))
+				   (body body)))
+			   (decl (instantiate::J2SDeclFunCnst
+				    (loc (token-loc id))
+				    (id (cdr id))
+				    (writable #f)
+				    (ronly #t)
+				    (global #t)
+				    (val fun))))
+	     fun))
+	 (else
+	  (instantiate::J2SSvc
+	     (loc (token-loc token))
+	     (register register)
+	     (params params)
+	     (vararg (rest-params params))
+	     (name (gensym))
+	     (init init)
+	     (mode 'strict)
+	     (body body)))))
+   
+   (define (service-import token id params declaration?)
+      (let ((loc (token-loc id)))
+	 (unless (null? params)
+	    (parse-node-error "Imported service must not declare parameters"
+	       (car params)))
+	 (let ((body (instantiate::J2SBlock
+			(loc loc)
+			(endloc loc)
+			(nodes (list
+				  (instantiate::J2SPragma
+				     (loc loc)
+				     (expr "(current-request)"))))))
+	       (init (instantiate::J2SNop
+			(loc loc))))
+	    (service-create token id params init body 'strict #f declaration?))))
+      
+   (define (service-implement token id inits declaration?)
+      (let* ((params (if (isa? inits J2SObjInit)
 			 (with-access::J2SObjInit inits (inits)
 			    (map init->params inits))
 			 inits))
@@ -849,90 +925,33 @@
 		       inits
 		       (instantiate::J2SNop
 			  (loc (token-loc token)))))
+	     
 	     (body (fun-body params))
-	     (mode (or (javascript-mode body) 'normal)))
-	 (cond
-	    (declaration?
-	     (instantiate::J2SDeclSvc
-		(loc (token-loc token))
-		(id (cdr id))
-		(val (instantiate::J2SSvc
-			(loc (token-loc token))
-			(params params)
-			(vararg (rest-params params))
-			(name (cdr id))
-			(init init)
-			(mode 'strict)
-			(body body)
-			(path (cdr id))
-			(decl (instantiate::J2SDecl
-				 (loc (token-loc token))
-				 (id (cdr id))
-				 (writable #f)
-				 (ronly #t)
-				 (global #t)))))))
-	    (id
-	     (co-instantiate ((fun (instantiate::J2SSvc
-				      (loc (token-loc id))
-				      (decl decl)
-				      (params params)
-				      (vararg (rest-params params))
-				      (name (cdr id))
-				      (init init)
-				      (mode (if (eq? mode 'hopscript)
-						'hopscript
-						'strict))
-				      (path (cdr id))
-				      (body body)))
-			      (decl (instantiate::J2SDeclFunCnst
-				       (loc (token-loc id))
-				       (id (cdr id))
-				       (writable #f)
-				       (ronly #t)
-				       (global #t)
-				       (val fun))))
-		fun))
-	    (else
-	     (instantiate::J2SSvc
-		(loc (token-loc token))
-		(params params)
-		(vararg (rest-params params))
-		(name (gensym))
-		(init init)
-		(mode 'strict)
-		(body body))))))
+	     (mode (or (if (eq? (javascript-mode body) 'hopscript)
+			   'hopscript 'strict))))
+	 (when (isa? inits J2SObjInit)
+	    (if (config-get conf :dsssl #f)
+		(parse-token-warning "Deprecated parameter declaration"
+		   (or id token))
+		(parse-token-error "Illegal parameter declaration"
+		   (or id token))))
+	 (service-create token id params init body mode #t declaration?)))
 
-   (define (service-import)
+   (define (import)
       (let* ((token (consume-token! 'service))
-	     (loc (token-loc token))
 	     (id (consume-token! 'ID))
 	     (inits (service-params)))
-	 (unless (null? inits)
-	    (parse-node-error "Imported service must not declare parameters"
-	       (car inits)))
-	 (instantiate::J2SDeclSvc
-	    (loc loc)
-	    (id (cdr id))
-	    (val (instantiate::J2SSvc
-		    (decl (instantiate::J2SDecl
-			     (loc loc)
-			     (id (cdr id))))
-		    (loc loc)
-		    (vararg (rest-params inits))
-		    (params inits)
-		    (name (cdr id))
-		    (init (instantiate::J2SNop
-			     (loc (token-loc token))))
-		    (register #f)
-		    (mode 'strict)
-		    (path (cdr id))
-		    (body (instantiate::J2SBlock
-			     (loc loc)
-			     (endloc loc)
-			     (nodes (list
-				       (instantiate::J2SPragma
-					  (loc loc)
-					  (expr "(current-request)")))))))))))
+	 (parse-token-warning "Deprecated import declaration" (or id token))
+	 (service-import token id inits #t)))
+
+   (define (service declaration?)
+      (let* ((token (consume-token! 'service))
+	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
+		    (consume-token! 'ID)))
+	     (inits (service-params)))
+	 (if (and (null? inits) (not (eq? (peek-token-type) 'LBRACE)))
+	     (service-import token id inits declaration?)
+	     (service-implement token id inits declaration?))))
 
    (define (consume-param!)
       (let* ((token (consume-token! 'ID))
@@ -1198,13 +1217,14 @@
       (case (peek-token-type)
 	 ((++ --)
 	  (let* ((token (consume-any!))
-		 (expr (unary)))
+		 (expr (unary))
+		 (loc (token-loc token)))
 	     (if (or (isa? expr J2SUnresolvedRef)
 		     (isa? expr J2SAccess)
 		     (isa? expr J2SParen))
 		 (instantiate::J2SPrefix
-		       (loc (token-loc token))
-		       (rhs (class-nil J2SExpr))
+		       (loc loc)
+		       (rhs (instantiate::J2SUndefined (loc loc)))
 		       (lhs expr)
 		       (op (token-tag token)))
 		 (parse-token-error
@@ -1244,7 +1264,7 @@
 			    (isa? expr J2SParen))
 			(instantiate::J2SPostfix
 			   (loc (token-loc token))
-			   (rhs (class-nil J2SExpr))
+			   (rhs (instantiate::J2SUndefined (loc loc)))
 			   (lhs expr)
 			   (op (token-tag token)))
 			(parse-token-error
@@ -1471,8 +1491,8 @@
 
    (define (dollar-expression)
       (let* ((ignore (consume-any!))
-	    (expr (expression #f))
-	    (ignore-too (consume! 'RBRACE)))
+	     (expr (expression #f))
+	     (ignore-too (consume! 'RBRACE)))
 	 expr))
 
    (define (template-expressions::pair)
@@ -1541,7 +1561,7 @@
 		    (if (eq? (peek-token-type) '=>)
 			;; zero-argument arrow function
 			(arrow-function '())
-			(parse-node-error "unexpected token" tok)))
+			(parse-token-error "unexpected token" tok)))
 		 (let* ((expr (expression #f))
 			(ignore-too (consume! 'RPAREN)))
 		    (pop-open-token)
@@ -2142,7 +2162,7 @@
    (hopscript-mode-fun! node mode)
    ;; make hopscript function constant
    (hopscript-cnst-fun! node)
-   (unless (memq mode '(hopscript ecmascript6))
+   (unless (memq mode '(strict hopscript ecmascript6))
       (unless (config-get conf :es6-let #f)
 	 (disable-es6-let node))
       (unless (config-get conf :es6-default-value #f)

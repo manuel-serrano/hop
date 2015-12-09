@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Thu Aug  6 12:45:31 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 17:07:14 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services API.                     */
@@ -50,7 +50,10 @@ service svc() {
    </html>;
 }
 
-service svc1( { a: 10, b: 11, c: 12 } ) {
+service svc1( o ) {
+   var a = o && "a" in o ? o.a : 10;
+   var b = o && "a" in o ? o.b : 11;
+   var c = o && "c" in o ? o.c : 12;
    return <div> 
      <span>${a}</span>, 
      <span>${b}</span>, 

@@ -3,12 +3,19 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Oct 21 11:09:11 2015 (serrano)                */
+/*    Last change :  Thu Nov  5 13:08:12 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
 /*=====================================================================*/
 var assert = require( "assert" );
+
+/*---------------------------------------------------------------------*/
+/*    prototypes                                                       */
+/*---------------------------------------------------------------------*/
+assert.strictEqual( (new Date().__proto__), Date.prototype );
+assert.strictEqual( (new Date( undefined ).__proto__), Date.prototype );
+assert.strictEqual( (new Date( 1245 ).__proto__), Date.prototype );
 
 /*---------------------------------------------------------------------*/
 /*    parse                                                            */
@@ -316,3 +323,7 @@ var date = new Date();
 date.setDate( 2.9 );
 
 assert.ok( date.getDate() == 2 );
+
+var invalid = new Date( undefined );
+assert.ok( isNaN( invalid ) );
+assert.ok( invalid != invalid.valueOf() );

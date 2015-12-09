@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  14 11:43:00 2015                         */
-/*    Last change :  Fri Sep 18 16:13:24 2015 (serrano)                */
+/*    Last change :  Thu Nov 26 07:30:46 2015 (serrano)                */
 /*    Copyright   :  2015 Inria                                        */
 /*    -------------------------------------------------------------    */
 /*    Stress test for services                                         */
@@ -12,7 +12,7 @@
 /* Usage: set <numClients> to specify how many clients will send
  * service requests */
 
-service toTest( { str: undefined, id: undefined, file: undefined } ) {
+service toTest( o ) {
 //   console.log( id );
    return true;
 }

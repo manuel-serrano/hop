@@ -29,6 +29,9 @@ ${ doc.include( doc.EXAMPLES_DIR + "/svc1/svc1.js", 14 ) }
 Service Declarations
 --------------------
 
+### service[ name ]( [ arguments ] ) { body } ###
+[:@glyphicon glyphicon-tag constructor]
+
 The syntax of service declarations is as follows:
 
 ```ebnf
@@ -118,7 +121,7 @@ value is sent to the client. The rules for converting values into
  * Otherwise, a `hop.HTTPResponseHop` is constructed. This will have the
  effect of serializing the JavaScript object and re-creating it on the client.
 
-The various Hop responses classes are documented [here](00-hop.html#responses).
+The various Hop responses classes are documented [here](00-hop.html#server).
 
 
 Service Constructor
@@ -126,40 +129,27 @@ Service Constructor
 
 Hop.js services are instances of the `Service` constructor.
 
-### new Service( function [, name ] [, args] ) ###
+### new Service( [ fun-or-name [, name ] ] ) ###
 [:@glyphicon glyphicon-tag constructor]
 
- * `function`, is the function implementing the service. When invoked,
-`this` is bound to the request object.
+ * `fun-or-name`, is either a function or a string. When it is a:
+   * function: this is the function implementing the service. When invoked,
+   `this` is bound to the request object.
+   * string: this is the name of an imported service.
  * `name`, is an optional string argument, which is the name of the
-service. 
- * `args`, is an optional object, which specifies the args
-name and default value for named argument service. At run time,
-service invocation arguments are complemented with default values and
-re-ordered according to `args`, then `function` is invoked with
-these sorted arguments.
+ service. 
 
 Example:
 
 ```hopscript
-function svcImpl( arg1, arg2 ) { return <html>${arg1},${arg2}</html> };
+function svcImpl( name, lname ) { return <html>${name},${lname}</html> };
 
 // create an anonymous service with fixed arguments
 var priv = new Service( svcImpl );
 
-// create a second service with named arguments and a public URL
-var pub = new Service( svcImpl, "public", { fname: "jean", lname: "dupond" } );
-
-// call the first service
+// call the service
 priv( "jeanne", "durand" ).post();
 // will return <html> jeanne, durand </html>
-
-// call the second service
-pub( { lname: "larivierre" }).post();
-// will return <html> jean, larivierre </html>
-
-pub( { lname: "martin", fname: "henri" }.post();
-//will return <html> henri, martin </html>
 ```
 
 ### Service.exists( name ) ###
@@ -193,7 +183,7 @@ frame.toString();          // /hop/svc2?hop-encoding=hop&vals=c%01%02(%01%0...
 
 A `HopFrame` implements the methods described in the section.
 
-### frame.post( [ success, [ fail-or-option ] ] ) ###
+### frame.post( [ success [, fail-or-option ] ] ) ###
 [:post@glyphicon glyphicon-tag function]
 
 
@@ -208,41 +198,33 @@ svc2( { name: "dupond" } )
    .post( function( r ) { console.log( r ); } );
 ```
 
+
 If the optional argument `fail-or-option` is a procedure, it is invoked
 if an error occurs while invoking the service. If `fail-or-option` is
 an object, here are the attributes this object may contain:
 
- * `host`, the host name on which the service is invoked. This option is
-only used when invoking service from servers to servers, and defaults
-to `hop.host`.
- * `port`, the port number of the remote host. This option is
-only used when invoking service from servers to servers, and defaults
-to `hop.port`.
+ * `server`, On the server code, this optional argument can be passed a
+   [server](00-hop.html#server) object that designates
+   the host running the invoked service.
  * `user`, a user identity on behalf of who the service is invoked.
  * `password`, the user password.
  * `fail`, a failure procedure.
- * `scheme`, the schema to be used to invoke the service. Should normally be
-either `http` or `https`. Defaults to `http`.
- * `ssl`, a boolean which specifies if SSL is to be used to invoke the
    service. Defaults to `false`.
  * `header`, a JavaScript object to add properties to the HTTP header of the request.
 
 Example:
 
 ```hopscript
+var srv = new hop.server( "remote.org", 443, true );
 var config = {
-  host: "remote.org",
-  port: 443,
-  schema: "https",
-  ssl: true,
   header: { "X-encoding", "my-encoding" }
 };
 
 svc2( { name: "dupond" } )
-   .post( function( r ) { console.log( r ); }, config );
+   .post( function( r ) { console.log( r ); }, srv, config );
 
 ```
-### frame.postSync( [ fail-or-option ]  ) ###
+### frame.postSync( [ srv [, fail-or-option ] ] ) ###
 [:@glyphicon glyphicon-tag function]
 
 The synchronous version of `post`. Returns the value returned by the
@@ -290,6 +272,11 @@ body is executed.
 Service methods & attributes
 ----------------------------
 
+### service.name ###
+[:@glyphicon glyphicon-tag parameter]
+
+The name of the associated service, which the the `service.path` without
+the `/hop` prefix.
 
 ### service.path ###
 [:@glyphicon glyphicon-tag parameter]
@@ -374,7 +361,7 @@ service and use it as if it was locally defined. The syntax for
 importing a service is as follows:
 
 ```ebnf
-${ doc.include( ROOT + "/service.bnf" ) }
+${ doc.include( ROOT + "/iservice.bnf" ) }
 ```
 
 Imported services are used as locally defined service.

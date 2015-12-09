@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Fri Oct  2 18:10:06 2015 (serrano)                */
+;*    Last change :  Tue Nov 17 19:23:09 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -394,10 +394,11 @@
 ;*---------------------------------------------------------------------*/
 (define (action->listener worker %this action::pair this)
    (lambda (evt)
-      (js-worker-push-thunk! worker "ws-listener"
-	 (lambda ()
-	    (when (isa? (cdr action) JsFunction)
-	       (js-call1 %this (cdr action) this evt))))))
+      (let ((g (gensym)))
+	 (js-worker-push-thunk! worker "ws-listener"
+	    (lambda ()
+	       (when (isa? (cdr action) JsFunction)
+		  (js-call1 %this (cdr action) this evt)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-listener! ...                                     */
@@ -530,7 +531,6 @@
       (with-access::JsWebSocketClient ws (onerrors socket state %mutex)
 	 (synchronize %mutex
 	    (when socket
-	       (tprint "onerror socket=" socket)
 	       (socket-shutdown socket)
 	       (set! socket #f)
 	       (set! state 'closed)

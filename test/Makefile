@@ -50,6 +50,7 @@ POPULATION = Makefile \
   hopjs/noserv/es6-arrow.js \
   hopjs/noserv/es6-defval.js \
   hopjs/noserv/es6-generator.js \
+  hopjs/noserv/es6-rest.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \
   hopjs/noserv/aux/worker1.js \
@@ -64,6 +65,7 @@ POPULATION = Makefile \
   hopjs/serv/https.js.rc.js \
   hopjs/serv/JsonPayload.js \
   hopjs/serv/post.js \
+  hopjs/serv/frame.js \
   hopjs/serv/serialization.js \
   hopjs/serv/service.js \
   hopjs/serv/service2.js \

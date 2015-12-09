@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct 21 11:06:26 2015 (serrano)                */
+;*    Last change :  Thu Nov  5 14:58:08 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -85,7 +85,9 @@
 (define-method (hop->javascript o::JsDate op compile isexpr)
    (display "new Date(" op)
    (with-access::JsDate o (val)
-      (display (llong->flonum (/llong (date->nanoseconds val) #l1000000)) op))
+      (if (date? val)
+	  (display (llong->flonum (/llong (date->nanoseconds val) #l1000000)) op)
+	  (display "undefined" op)))
    (display ")" op))
 
 ;*---------------------------------------------------------------------*/
@@ -128,7 +130,7 @@
 
 	    (if (any (lambda (a) (eq? a (js-undefined))) args)
 		(instantiate::JsDate
-		   (__proto__ __proto__))
+		   (__proto__ js-date-prototype))
 		(match-case args
 		   ((?year ?month ?date ?hours ?minutes ?seconds ?ms)
 		    (let* ((y (js-tonumber year %this))

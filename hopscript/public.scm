@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Oct 30 13:03:31 2015 (serrano)                */
+;*    Last change :  Fri Dec  4 16:33:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -66,6 +66,8 @@
 	   (js-call7/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
 	   (js-calln/debug ::JsGlobalObject loc fun::obj this . args)
+
+	   (js-service/debug ::obj ::obj ::procedure)
 
 	   (js-instanceof?::bool ::JsGlobalObject v f)
 	   (js-instanceof?/debug::bool ::JsGlobalObject loc v f)
@@ -152,8 +154,7 @@
 (define (js-new/debug %this loc f . args)
    (if (isa? f JsFunction)
        (js-new/function %this f args)
-       (js-raise-type-error/loc %this loc
-	  "new: object is not a function ~s" f)))
+       (js-raise-type-error/loc %this loc "new: object is not a function ~s" f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-return ...                                                */
@@ -245,16 +246,20 @@
 ;*    js-apply% ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-apply% %this fun::JsFunction proc::procedure obj args::pair-nil)
-   (with-access::JsFunction fun (arity rest len)
+   (with-access::JsFunction fun (arity rest len minlen)
       (let ((n (+fx 1 (length args))))
 	 (cond
 	    ((=fx arity n)
 	     (apply proc obj args))
 	    ((>fx arity n)
-	     (let ((rest (make-list (-fx arity n) (js-undefined))))
-		(apply proc obj (append args rest))))
+	     (if (and (>=fx minlen 0) (>fx minlen (-fx n 1)))
+		 (js-raise-arity-error %this fun (-fx n 1))
+		 (let ((rest (make-list (-fx arity n) (js-undefined))))
+		    (apply proc obj (append args rest)))))
 	    ((>=fx arity 0)
-	     (apply proc obj (take args (-fx arity 1))))
+	     (if (>=fx minlen 0)
+		 (js-raise-arity-error %this fun (-fx n 1))
+		 (apply proc obj (take args (-fx arity 1)))))
 	    (rest
 	     (js-apply-rest% %this proc obj args len n))
 	    (else
@@ -602,6 +607,16 @@
 		($env-pop-trace env)
 		aux)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-service/debug ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-service/debug name loc thunk)
+   (let ((env (current-dynamic-env)))
+      ($env-push-trace env name loc)
+      (let ((aux (thunk)))
+	 ($env-pop-trace env)
+	 aux)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-instanceof? ...                                               */
 ;*    -------------------------------------------------------------    */
@@ -990,6 +1005,20 @@
        (bigloo-type-error "js-tostring" "JsStringLiteral" obj))
       (else
        (typeof obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring ::JsWrapper ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring obj::JsWrapper %this::JsGlobalObject)
+   (with-access::JsWrapper obj (obj)
+      (js-tostring obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive ::JsWrapper ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (js-toprimitive obj::JsWrapper preferredtype %this::JsGlobalObject)
+   (with-access::JsWrapper obj (obj)
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tojsstring ...                                                */

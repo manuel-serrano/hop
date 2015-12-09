@@ -3,6 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
+;*    Last change :  Sat Nov 28 12:14:35 2015 (serrano)                */
 ;*    Last change :  Sun Nov  1 11:24:53 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
@@ -98,6 +99,12 @@
 			#f %this))
 		  %this)
 	       nobj)))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-primitive-value ::JsObject ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (xml-primitive-value obj::JsObject)
+   (js-jsobject->plist obj (js-initial-global-object)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsGlobalObject ...                                   */
@@ -435,11 +442,11 @@
 	       (js-make-function %this
 		  (lambda (this attrs . nodes)
 		     (if (isa? attrs JsObject)
-			 (apply <HTML>
+			 (apply <HTML> :idiom "javascript" :context %this
 			    (append
 			       (js-jsobject->keyword-plist attrs %this)
 			       nodes))
-			 (apply <HTML> nodes)))
+			 (apply <HTML> :idiom "javascript" nodes)))
 		  1 'HTML))
 	    
 	    (js-bind! %this %this 'HTML
@@ -460,7 +467,8 @@
 	       SVG SVG:DEFS SVG:RECT SVG:CIRCLE SVG:ELLIPSE SVG:FILTER
 	       SVG:FEGAUSSIANBLUR SVG:FECOLORMATRIX SVG:FOREIGNOBJECT SVG:G
 	       SVG:LINE SVG:PATH SVG:POLYLINE SVG:POLYGON SVG:TEXT
-	       SVG:TEXTPATH SVG:TREF SVG:TSPAN SVG:IMG)
+	       SVG:TEXTPATH SVG:TREF SVG:TSPAN
+	       SVG:RADIALGRADIENT SVG:LINEARGRADIENT SVG:IMG)
 
 	    ;; mathml
 	    (js-bind-tags! %this %this
@@ -478,6 +486,27 @@
 			 1 '<!--)
 	       :enumerable #f :writable #f :configurable #f)
 
+	    (define (string->xml-tilde body)
+	       (let ((expr (js-tostring body %this)))
+		  (instantiate::JsWrapper
+		     (__proto__ %prototype)
+		     (data body)
+		     (obj (instantiate::xml-tilde
+			     (lang 'javascript)
+			     (%js-expression expr)
+			     (body (vector body '() '() '() expr #f)))))))
+	    
+	    ;; tilde object
+	    (js-bind! %this %this 'Tilde
+	       :value (js-make-function %this
+			 (lambda (this body)
+			    (string->xml-tilde body))
+			 1 'Tilde
+			 :__proto__ js-function-prototype
+			 :construct (lambda (this body)
+				       (string->xml-tilde body)))
+	       :enumerable #f :writable #f :configurable #f)
+	    
 	    ;; return the newly created object
 	    %this))))
 
@@ -747,6 +776,9 @@
 	     (js-string->jsstring "[object Undefined]"))
 	    ((eq? this (js-null))
 	     (js-string->jsstring "[object Null]"))
+	    ((isa? this JsWrapper)
+	     (with-access::JsWrapper this (obj)
+		(js-string->jsstring (js-tostring obj %this))))
 	    (else
 	     (let* ((obj (js-toobject %this this))
 		    (name (symbol->string! (class-name (object-class obj)))))
