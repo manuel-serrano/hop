@@ -92,10 +92,13 @@
 ;*    j2s-scheme-id ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-id id)
-   (if (memq id '(raise error eval quote module dirname worker
-		  define begin lambda letrec))
-       (symbol-append '^ id)
-       id))
+   (cond
+      ((char=? (string-ref (symbol->string! id) 0) #\%) id)
+      ((memq id '(GLOBAL arguments)) id)
+      (else (symbol-append '^ id))))
+;*    (if (memq id '(raise error eval quote module dirname worker))    */
+;*        (symbol-append '^ id)                                        */
+;*        id))                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-decl-scheme-id ...                                           */
@@ -1000,9 +1003,10 @@
 			 ,(j2sfun->scheme this tmp mode return conf))))
 	 (epairify-deep loc
 	    (if id
-		`(let ((,id (js-undefined)))
-		    (set! ,id ,fundef)
-		    ,id)
+		(let ((scmid (j2s-scheme-id id)))
+		   `(let ((,scmid (js-undefined)))
+		       (set! ,scmid ,fundef)
+		       ,scmid))
 		fundef)))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Oct 16 08:49:42 2015 (serrano)                */
+/*    Last change :  Wed Dec  2 10:46:04 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */

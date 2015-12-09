@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Oct 30 17:54:21 2015 (serrano)                */
+#*    Last change :  Thu Nov 26 09:49:29 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -59,6 +59,7 @@ POPULATION = Makefile \
   hopjs/serv/asyncSrvWS.js \
   hopjs/serv/authentication.js \
   hopjs/serv/authentication.js.rc.js \
+  hopjs/serv/discover.js \
   hopjs/serv/http.js \
   hopjs/serv/https.js \
   hopjs/serv/https.js.args \
@@ -79,6 +80,7 @@ POPULATION = Makefile \
   hopjs/serv/webSocketErrors.js \
   hopjs/serv/webSocketOpen.js \
   hopjs/serv/worker.js \
+  hopjs/serv/aux/discoverServer.js \
   hopjs/serv/aux/launchWorkers.js \
   hopjs/serv/aux/objectEqual.js \
   hopjs/serv/aux/stdClient.js \

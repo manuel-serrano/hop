@@ -218,7 +218,7 @@
 		      (else
 		       (string->number (the-string))))))
 	  (token 'NUMBER val len)))
-      ((: (+ #\0) nonzero_digit (* digit))
+      ((: (+ #\0) (in ("17")) (* (in ("07"))))
        ;; integer constant
        (let* ((len (the-length))
 	      (val (if (>=fx len 18)

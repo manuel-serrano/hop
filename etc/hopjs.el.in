@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Nov 30 15:48:38 2015 (serrano)                */
+;*    Last change :  Mon Nov 30 16:56:19 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -416,7 +416,7 @@
   (let* ((pe (parse-partial-sexp
 	      (point)
 	      (save-excursion (hopjs-beginning-of-defun) (point))))
-	 (bra (car pe))
+	 (bra (cadr pe))
 	 (tag (when (hopjs-html-p (point)) (hopjs-find-opening-tag (point))))
 	 (beg (match-beginning 0))
 	 (end (match-end 0)))

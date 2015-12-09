@@ -46,6 +46,9 @@ function checkDB( fname, lname ) {
 }
 service svc1( fname, lname ) { return checkDB( fname, lname ) }
 service svc2( {fname: "jean", lname: "dupond"} ) { return checkDB( fname, lname ) }
+
+var srv = new hop.Server( "cloud.net" );
+srv.getVersion = service getVersion();
 ```
 
 Services have a lot in common with ordinary functions, they can be
@@ -73,7 +76,7 @@ the information about the current HTTP request.  [:@warning]
 Example:
 
 ```hopscript
-service svc( { name: "durand" } ) {
+service svc( name ) {
   console.log( "host=", this.host, " port=", this.port );
   console.log( "abspath=", this.abspath );
   return true;
@@ -181,9 +184,21 @@ frame instanceof HopFrame; // true
 frame.toString();          // /hop/svc2?hop-encoding=hop&vals=c%01%02(%01%0...
 ```
 
+When a service is used as a method of a [server](00-hop.html#server) object,
+the returned frame is bound to that server.
+
+```hopscript
+var srv = new hop.Server( "cloud.net", 8888 );
+srv.svc2 = service catalog();
+var frame = srv.svc2( "music" );
+typeof( frame );           // "object"
+frame instanceof HopFrame; // true
+frame.toString();          // http://cloud.net:8888/hop/catalog?hop-encoding=hop&vals=...
+```
+
 A `HopFrame` implements the methods described in the section.
 
-### frame.post( [ success [, fail-or-option ] ] ) ###
+### frame.post( [ success [, fail ] ] ) ###
 [:post@glyphicon glyphicon-tag function]
 
 
@@ -199,15 +214,13 @@ svc2( { name: "dupond" } )
 ```
 
 
-If the optional argument `fail-or-option` is a procedure, it is invoked
-if an error occurs while invoking the service. If `fail-or-option` is
-an object, here are the attributes this object may contain:
+
+If the optional argument `fail` is a procedure, it is invoked
+if an error occurs while invoking the service.
 
  * `server`, On the server code, this optional argument can be passed a
    [server](00-hop.html#server) object that designates
    the host running the invoked service.
- * `user`, a user identity on behalf of who the service is invoked.
- * `password`, the user password.
  * `fail`, a failure procedure.
    service. Defaults to `false`.
  * `header`, a JavaScript object to add properties to the HTTP header of the request.
@@ -224,7 +237,7 @@ svc2( { name: "dupond" } )
    .post( function( r ) { console.log( r ); }, srv, config );
 
 ```
-### frame.postSync( [ srv [, fail-or-option ] ] ) ###
+### frame.postSync() ###
 [:@glyphicon glyphicon-tag function]
 
 The synchronous version of `post`. Returns the value returned by the
@@ -233,6 +246,36 @@ until the service returns a value, it is strongly advised to use the
 asynchronous version of `post`instead.
 
 
+### frame.setHeaders( obj ) ###
+[:@glyphicon glyphicon-tag function]
+
+Returns the frame object. Set header attributes to the frame.
+
+```
+service svc();
+
+svc( "jean", "dupont" )
+  .setHeaders( { "X-Version: "v1.0" } )
+  .post( v => console.log );
+```
+
+### frame.setOptions( obj ) ###
+[:@glyphicon glyphicon-tag function]
+
+Returns the frame object. Set options to the frame, the attributes of
+`obj` can be:
+
+ * `user`, a user identity on behalf of who the service is invoked.
+ * `password`, the user password.
+
+```
+service svc();
+
+svc( "jean", "dupont" )
+  .setOptions( { password: "nopass" } )
+  .post( v => console.log );
+```
+  
 ### HopFrame as URLs ###
 
 HopFrame can be everywhere a URL is expected, in particular, in HTML
@@ -406,14 +449,15 @@ HTML values are received as `\[text/html\]`.
 Server Example
 
 ```hopscript
-service getRecord( { name: 'main' } ) {
+service getRecord( o ) {
+   var name = "name" in o ? o.name : "main";
    var record;
    switch (name) {
-   case 'main': record = { host: 'hop.inria.fr', port : 80 };
-      break;
-   case 'game': record = { host: 'game.inria.fr', port: 8080 };
-      break;
-   default: record = {};
+     case 'main': record = { host: 'hop.inria.fr', port : 80 };
+        break;
+     case 'game': record = { host: 'game.inria.fr', port: 8080 };
+        break;
+     default: record = {};
    };
    return JSON.stringify( record );
 }

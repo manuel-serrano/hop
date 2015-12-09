@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Tue Oct 13 14:11:25 2015 (serrano)                */
+#*    Last change :  Mon Nov 30 18:15:13 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -163,12 +163,13 @@ dep:
 install: install-$(BACKEND)
 
 install-native:
-	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)
-	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/$(EXEC)
+	$(INSTALL) $(BUILDBINDIR)/$(EXEC) $(DESTDIR)$(HOPBINDIR)/hopc-$(HOPRELEASE)
+	chmod $(MODEXE) $(DESTDIR)$(HOPBINDIR)/hopc-$(HOPRELEASE)
+	(cd $(DESTDIR)$(HOPBINDIR) && $(RM) -f hopc && ln hopc-$(HOPRELEASE) hopc)
 
 install-jvm:
 	$(INSTALL) $(BUILDBINDIR)/$(EXEC).jar $(DESTDIR)$(HOPBINDIR)
-	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/$(EXEC).jar
+	chmod $(MODFILE) $(DESTDIR)$(HOPBINDIR)/hopc.jar
 
 #*---------------------------------------------------------------------*/
 #*    uninstall                                                        */

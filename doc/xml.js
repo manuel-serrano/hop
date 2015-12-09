@@ -175,23 +175,23 @@ function docfooter( attrs ) {
 /*    downloadButton ...                                               */
 /*---------------------------------------------------------------------*/
 function downloadButton( attrs ) {
-   return <button class=${"download btn btn-" + attrs.class}>
-      <a href=${attrs.href}>
+   return  <a href=${attrs.href}>
+     <button class=${"download btn btn-" + attrs.class}>
        <table>
          <tr>
            <td rowspan=2><span class=${"glyphicon " + attrs.icon}/></td>
            <td class="content">${path.basename(attrs.href)}</td>
          </tr>
        </table>
-     </a>
-   </button>;
+     </button>
+   </a>;
 }
 
 /*---------------------------------------------------------------------*/
 /*    entryLetter ...                                                  */
 /*---------------------------------------------------------------------*/
 function entryLetter( en ) {
-   return en.key.charAt( 0 );
+   return en.key.charAt( 0 ).toUpperCase();
 }
 
 /*---------------------------------------------------------------------*/

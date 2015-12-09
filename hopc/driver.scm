@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Oct 15 05:47:51 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 07:06:23 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -88,6 +88,10 @@
    (cond
       ((string? (hopc-js-driver))
        (j2s-make-driver (string-split (hopc-js-driver) ",")))
+      ((eq? (hopc-pass) 'client-js)
+       (if (eq? (hopc-js-target) 'es5)
+	   (j2s-javascript-driver)
+	   (j2s-ecmascript5-driver)))
       ((>=fx (hopc-optim-level) 1)
        (j2s-optim-driver))
       (else
@@ -116,9 +120,12 @@
 	     (format "__~a_~a" (basename dir) mod))))
    
    (define (compile-javascript p)
-      (hopscheme-compile-file p
-	 (if (string? (hopc-destination)) (hopc-destination) "-")
-	 '()))
+      (if (string-suffix? ".js" p)
+	  (call-with-input-file p
+	     (lambda (in) (compile in (language p))))
+	  (hopscheme-compile-file p
+	     (if (string? (hopc-destination)) (hopc-destination) "-")
+	     '())))
 
    (define (compile-module exp)
       (match-case exp
@@ -167,8 +174,30 @@
 		  :hopscript-header (hopc-js-header)
 		  :debug (bigloo-debug)))))
 
+      (define (generate-js out::output-port)
+	 (let* ((fname (input-port-name in))
+		(mmap (when (and (string? fname) (file-exists? fname))
+			 (open-mmap fname :read #t :write #f))))
+	    (for-each (lambda (exp)
+			 (unless (isa? exp J2SNode)
+			    (display exp out)))
+	       (j2s-compile in
+		  :return-as-exit (hopc-js-return-as-exit)
+		  :mmap-src mmap
+		  :driver (js-driver)
+		  :worker (hopc-js-worker)
+		  :module-main (if (boolean? (hopc-js-module-main))
+				   (hopc-js-module-main)
+				   (not (eq? (hopc-pass) 'object)))
+		  :module-name (or (hopc-js-module-name)
+				   (input-file->module-name in))
+		  :module-path (hopc-js-module-path)
+		  :hopscript-header (hopc-js-header)
+		  :debug (bigloo-debug)))))
+
       (define (generate out::output-port lang::symbol)
 	 (case lang
+	    ((js) (generate-js out))
 	    ((hop) (generate-hop out))
 	    ((hopscript) (generate-hopscript out))))
       
@@ -274,9 +303,13 @@
 	    ((hopscript) (compile-hopscript in opts file exec)))))
    
    (define (compile::int in lang::symbol)
-      (if (eq? (hopc-pass) 'bigloo)
-	  (generate-bigloo in lang)
-	  (compile-bigloo in lang)))
+      (cond
+	 ((eq? (hopc-pass) 'client-js)
+	  (generate-bigloo in 'js))
+	 ((eq? (hopc-pass) 'bigloo)
+	  (generate-bigloo in lang))
+	 (else
+	  (compile-bigloo in lang))))
 
    (define (language src)
       (if (eq? (hopc-source-language) 'auto)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Dec  6 14:28:31 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 06:59:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -51,6 +51,7 @@
 	   (j2s-debug-driver)
 	   (j2s-eval-driver)
 	   (j2s-javascript-driver)
+	   (j2s-ecmascript5-driver)
 	   (j2s-javascript-debug-driver)))
 
 ;*---------------------------------------------------------------------*/
@@ -85,7 +86,8 @@
 	 ((find (lambda (s::J2SStage)
 		   (with-access::J2SStage s ((sname name))
 		      (string=? sname name-or-proc)))
-	     (j2s-optim-driver))
+	     (cons* j2s-javascript-stage j2s-debug-stage
+		(j2s-optim-driver)))
 	  =>
 	  (lambda (x) x))
 	 (else
@@ -181,6 +183,17 @@
 ;*    j2s-javascript-driver ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (j2s-javascript-driver)
+   (list
+      j2s-syntax-stage
+      j2s-loopexit-stage
+      j2s-bestpractice-stage
+      j2s-symbol-stage
+      j2s-javascript-stage))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-ecmascript5-driver ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-ecmascript5-driver)
    (list
       j2s-syntax-stage
       j2s-loopexit-stage

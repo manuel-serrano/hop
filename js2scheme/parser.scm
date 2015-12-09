@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Nov 30 18:32:25 2015 (serrano)                */
+;*    Last change :  Mon Dec  7 13:52:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -950,7 +950,9 @@
 		    (consume-token! 'ID)))
 	     (inits (service-params)))
 	 (if (and (null? inits) (not (eq? (peek-token-type) 'LBRACE)))
-	     (service-import token id inits declaration?)
+	     (if (not id)
+		 (parse-token-error "Bad service import" token)
+		 (service-import token id inits declaration?))
 	     (service-implement token id inits declaration?))))
 
    (define (consume-param!)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Nov 30 14:47:00 2015 (serrano)                */
+;*    Last change :  Mon Dec  7 18:02:19 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -47,13 +47,27 @@
 (register-class-serialization! JsService
    (lambda (o)
       (with-access::JsService o (svc)
-	 (with-access::hop-service svc (path resource)
-	    (vector path resource))))
+	 (if svc
+	     (with-access::hop-service svc (path resource)
+		(vector path resource))
+	     (vector #t #t))))
    (lambda (o ctx)
-      (let* ((svcp (lambda (this . args)
-		      (js-make-hopframe ctx this o args)))
-	     (svcjs (js-make-service ctx svcp (basename o) #f -1
-		       (js-current-worker) #f)))
+      (let* ((path (vector-ref o 0))
+	     (svcp (lambda (this . args)
+		      (js-make-hopframe ctx this path args)))
+	     (svcjs (js-make-service ctx svcp
+		       (js-string->jsstring (basename path))
+		       #f -1 (js-current-worker)
+		       (instantiate::hop-service
+			  (id (string->symbol path))
+			  (wid (let ((i (string-index path #\?)))
+				  (string->symbol
+				     (if i (substring path 0 i) path))))
+			  (args '())
+			  (proc (lambda l l))
+			  (javascript "")
+			  (path path)
+			  (resource (vector-ref o 1))))))
 	 svcjs)))
 
 ;*---------------------------------------------------------------------*/
@@ -820,20 +834,33 @@
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-make-service %this proc name register arity worker svc)
+
+   (define (default-service)
+      (instantiate::hop-service
+	 (id (string->symbol name))
+	 (wid (let ((i (string-index name #\?)))
+		 (string->symbol
+		    (if i (substring name 0 i) name))))
+	 (args '())
+	 (proc (lambda l l))
+	 (javascript "")
+	 (path (hop-service-base))
+	 (resource "/")))
    
    (define (set-service-path! o p)
       (with-access::JsService o (svc)
-	 (when register (unregister-service! svc))
-	 (with-access::hop-service svc (path id wid)
-	    (set! path p)
-	    (when (string=? (dirname p) (hop-service-base))
-	       (let ((apath (substring path
-			       (+fx 1 (string-length (hop-service-base))))))
-		  (multiple-value-bind (i w)
-		     (service-path->ids apath)
-		     (set! id i)
-		     (set! wid w)))))
-	 (when register (register-service! svc))))
+	 (when svc
+	    (when register (unregister-service! svc))
+	    (with-access::hop-service svc (path id wid)
+	       (set! path p)
+	       (when (string=? (dirname p) (hop-service-base))
+		  (let ((apath (substring path
+				  (+fx 1 (string-length (hop-service-base))))))
+		     (multiple-value-bind (i w)
+			(service-path->ids apath)
+			(set! id i)
+			(set! wid w)))))
+	    (when register (register-service! svc)))))
    
    ;; register only if there is an implementation
    (when svc
@@ -864,8 +891,9 @@
 			   (get (js-make-function %this
 				   (lambda (o)
 				      (with-access::JsService o (svc)
-					 (with-access::hop-service svc (path)
-					    (js-string->jsstring path))))
+					 (when svc
+					    (with-access::hop-service svc (path)
+					       (js-string->jsstring path)))))
 				   1 'path))
 			   (set (js-make-function %this
 				   (lambda (o v)
@@ -878,9 +906,10 @@
 			   (get (js-make-function %this
 				   (lambda (o)
 				      (with-access::JsService o (svc)
-					 (with-access::hop-service svc (id)
-					    (js-string->jsstring
-					       (symbol->string! id)))))
+					 (when svc
+					    (with-access::hop-service svc (id)
+					       (js-string->jsstring
+						  (symbol->string! id))))))
 				   1 'name))
 			   (set (js-make-function %this
 				   (lambda (o v)
@@ -889,7 +918,7 @@
 					    (js-tostring v %this)))
 				      v)
 				   2 'name)))))
-	 (svc svc))))
+	 (svc (or svc (default-service))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service? ::JsService ...                                         */
