@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Oct 30 20:41:05 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 15:43:09 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -36,7 +36,7 @@
    
    (export (js-init-generator! ::JsGlobalObject)
 	   (js-make-generator::JsGenerator ::procedure ::JsGlobalObject)
-	   (js-generator-yield ::obj ::bool ::JsGlobalObject)))
+	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Jsstringliteral begin                                            */
@@ -63,12 +63,18 @@
 (define (js-init-generator! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (__proto__ js-generator-prototype)
 
+      (define (js-generator-done)
+	 (let ((obj (instantiate::JsObject)))
+	    (js-put! obj 'value (js-undefined) #f %this)
+	    (js-put! obj 'done #t #f %this)
+	    obj))
+      
       (define (js-generator-next this val)
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
 		(if (procedure? %next)
 		    (%next val)
-		    (js-generator-yield (js-undefined) #t %this)))
+		    (js-generator-done)))
 	     (js-raise-type-error %this "argument not a generator ~a"
 		(typeof this))))
       
@@ -93,8 +99,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-generator-yield ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-generator-yield val done %this)
-   (let ((obj (instantiate::JsObject)))
-      (js-put! obj 'value val #f %this)
-      (js-put! obj 'done done #f %this)
-      obj))
+(define (js-generator-yield gen val done kont %this)
+   (with-access::JsGenerator gen (%next)
+      (set! %next kont)
+      (let ((obj (instantiate::JsObject)))
+	 (js-put! obj 'value val #f %this)
+	 (js-put! obj 'done done #f %this)
+	 obj)))

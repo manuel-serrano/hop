@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopc/driver.scm                   */
+;*    serrano/prgm/project/hop/3.1.x/hopc/driver.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Dec  9 07:06:23 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 08:59:24 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -90,8 +90,8 @@
        (j2s-make-driver (string-split (hopc-js-driver) ",")))
       ((eq? (hopc-pass) 'client-js)
        (if (eq? (hopc-js-target) 'es5)
-	   (j2s-javascript-driver)
-	   (j2s-ecmascript5-driver)))
+	   (j2s-ecmascript5-driver)
+	   (j2s-javascript-driver)))
       ((>=fx (hopc-optim-level) 1)
        (j2s-optim-driver))
       (else

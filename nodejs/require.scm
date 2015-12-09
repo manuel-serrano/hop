@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Dec  4 20:47:19 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 08:36:17 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -76,7 +76,7 @@
 					  (j2s-javascript-debug-driver)
 					  (j2s-javascript-driver))
 			      :site 'client
-			      :debug 0#;(bigloo-debug))))
+			      :debug (bigloo-debug))))
 		  (for-each (lambda (exp)
 			       (unless (isa? exp J2SNode)
 				  ;; skip node information, used for sourcemap

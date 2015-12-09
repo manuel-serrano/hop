@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Dec  4 07:37:57 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 09:00:47 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -129,7 +129,7 @@
 	      (decl read-only (default #f))
 	      (need-bind-exit-return::bool (default #f))
 	      (vararg::obj (default #f))
-	      (name read-only (default #f))
+	      (name read-only)
 	      (generator::bool (default #f))
 	      params::pair-nil
 	      body::J2SBlock)
@@ -146,11 +146,12 @@
 	      body::J2SNode)
 	   
 	   (final-class J2STry::J2SStmt
-	      body::J2SStmt
+	      body::J2SBlock
 	      catch::J2SStmt
 	      finally::J2SStmt)
 	   
 	   (class J2SPragma::J2SExpr
+	      (lang::symbol (default 'scheme))
 	      expr)
 	   
 	   (class J2SSequence::J2SExpr
@@ -712,6 +713,7 @@
 (gen-walks J2SAccess obj field)
 (gen-walks J2SCall fun (args))
 (gen-walks J2SNew clazz (args))
+(gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body (params))
 (gen-walks J2SSvc body init (params))
 (gen-walks J2SObjInit (inits))
@@ -835,12 +837,16 @@
 ;*    j2s->json ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SPragma op::output-port)
-   (with-access::J2SPragma this (expr loc)
+   (with-access::J2SPragma this (expr loc lang)
       (display "{ \"__node__\": \"J2SPragma\", \"expr\": \"" op)
       (display (string-for-read
 		  (call-with-output-string
 		     (lambda (op) (write expr op))))
 	 op)
+      (display "\", \"lang\": " op)
+      (display #\" op)
+      (display lang op)
+      (display #\" op)
       (display "\", \"loc\": " op)
       (j2s->json loc op)
       (display " }" op)))

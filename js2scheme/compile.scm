@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Dec  9 06:59:04 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 10:51:58 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -34,6 +34,7 @@
 	   __js2scheme_js
 	   __js2scheme_debug
 	   __js2scheme_stage
+	   __js2scheme_ecmascript5
 	   __js2scheme_cps)
 
    (export (j2s-compile-options::pair-nil)
@@ -199,6 +200,8 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
+      j2s-cps-stage
+      j2s-ecmascript5-stage
       j2s-javascript-stage))
 
 ;*---------------------------------------------------------------------*/

@@ -1,15 +1,16 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/loopexit.scm            */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/loopexit.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Sep 26 09:59:16 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 17:00:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
 ;*    -------------------------------------------------------------    */
 ;*    This module implements a walker that traverses the tree to       */
-;*    find FOR an WHILE loops that don't need a bind-exit form.        */
+;*    find FOR and WHILE loops and SWITCH that don't need a bind-exit  */
+;*    form.                                                            */
 ;*    -------------------------------------------------------------    */
 ;*    This is an optional stage                                        */
 ;*=====================================================================*/
@@ -105,7 +106,8 @@
 ;*    mark-exit! ::J2SSwitch ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark-exit! this::J2SSwitch targets label)
-   (with-access::J2SSwitch this (key cases id)
+   (with-access::J2SSwitch this (key cases id need-bind-exit-break)
+      (set! need-bind-exit-break #f)
       (set! id label)
       (set! key (walk! key targets #f))
       (let ((targets (cons this targets)))

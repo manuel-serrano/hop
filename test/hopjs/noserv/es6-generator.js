@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Tue Dec  8 09:30:15 2015 (serrano)                */
+/*    Last change :  Wed Dec  9 17:34:19 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
@@ -1484,6 +1484,34 @@ function* switchd() {
    }
 }
 
+function* switche( x ) {
+   switch( x ) {
+      case 14: return 24;
+      case yield 1: return 25;
+      case 16: return 26;
+   }
+}
+
+function* switchf( x ) {
+   switch( x ) {
+      case 14: return 24;
+      case yield 1: break
+      case 16: return 26;
+      default: return 30;
+   }
+   return 25;
+}
+
+function* switchg( x ) {
+   switch( x ) {
+      case 14: return 24;
+      case yield 1: break
+      case 16: return 26;
+      default: return 30;
+   }
+   return 25;
+}
+
 console.log( "switch" );
 
 console.log( "   switcha()" );
@@ -1503,8 +1531,7 @@ assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 console.log( "   switchc()" );
 g = switchc();
 assert.ok( equal( g.next(), { value: 1, done: false } ) );
-assert.ok( equal( g.next(20), { value: 200, done: false } ) );
-assert.ok( equal( g.next(), { value: 201, done: true } ) );
+assert.ok( equal( g.next(20), { value: 200, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
    
@@ -1516,3 +1543,35 @@ assert.ok( equal( g.next(), { value: 201, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
    
+console.log( "   switche()" );
+g = switche( 15 );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(20), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+g = switche( 15 );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(15), { value: 25, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   switchf()" );
+g = switchf( 15 );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(15), { value: 25, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+g = switchf( 15 );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(20), { value: 30, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   switchg()" );
+g = switchg( 15 );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(15), { value: 25, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+g = switchg( 15 );
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(20), { value: 30, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );

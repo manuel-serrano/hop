@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/share/hop-request.js              */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-request.js              */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Mon Nov 30 17:57:00 2015 (serrano)                */
+/*    Last change :  Wed Dec  9 08:50:43 2015 (serrano)                */
 /*    Copyright   :  2004-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -583,13 +583,6 @@ HopFrame.prototype.postSync = function call( opt ) {
 
 HopFrame.prototype.setOptions = function( opts ) {
    this.options = opts; return this;
-}
-HopFrame.prototype.setHeader = function( header ) {
-   this.header = header; return this;
-}
-
-HopFrame.prototype.hop_bigloo_serialize = hop_bigloo_serialize_hopframe;
-
 }
 HopFrame.prototype.setHeader = function( header ) {
    this.header = header; return this;

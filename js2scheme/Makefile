@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Oct 30 22:35:33 2015 (serrano)                */
+#*    Last change :  Wed Dec  9 10:54:49 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -38,7 +38,8 @@ BLIBFLAGS = $(BCFLAGSRTS)
 _OBJECTS = lexer header parser html ast dump utils \
   stage compile js \
   syntax return loopexit symbol scheme ronly resolve this \
-  use property bestpractice sourcemap debug stmtassign letopt cps
+  use property bestpractice sourcemap debug stmtassign letopt \
+  cps ecmascript5
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o
@@ -46,7 +47,7 @@ EOBJECTS = o/make_lib.o
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-SOURCES = $(_OBJECTS:%=%.scm)
+SOURCES = $(_OBJECTS:%=%.scm) ecmascript5.js
 
 INCLUDES = 
 
@@ -91,6 +92,7 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
+o/ecmascript5.o: ecmascript5.js
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/

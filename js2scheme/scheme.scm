@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Dec  4 16:19:06 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 16:19:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -96,9 +96,6 @@
       ((char=? (string-ref (symbol->string! id) 0) #\%) id)
       ((memq id '(GLOBAL arguments)) id)
       (else (symbol-append '^ id))))
-;*    (if (memq id '(raise error eval quote module dirname worker))    */
-;*        (symbol-append '^ id)                                        */
-;*        id))                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-decl-scheme-id ...                                           */
@@ -285,9 +282,8 @@
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
 	    (if global
-		(let ((fun-name (string->symbol
-				   (format "function:~a:~a"
-				      (cadr loc) (caddr loc)))))
+		(let ((fun-name (format "function:~a:~a"
+				   (cadr loc) (caddr loc))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
 		       `(js-decl-eval-put! %scope
 			   ',ident ,value ,(eq? mode 'strict) %this)
@@ -297,7 +293,7 @@
 			      :configurable #f
 			      :get (js-make-function %this
 				      (lambda (%) ,ident)
-				      1 ',fun-name)
+				      1 ,fun-name)
 			      :set ,(when writable
 				      `(js-make-function %this
 					  (lambda (% %v)
@@ -1238,8 +1234,10 @@
 ;*    j2s-scheme ::J2SPragma ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SPragma mode return conf)
-   (with-access::J2SPragma this (loc expr)
-      (epairify-deep loc expr)))
+   (with-access::J2SPragma this (loc expr lang)
+      (if (eq? lang 'scheme)
+	  (epairify-deep loc expr)
+	  "#unspecified")))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SSequence ...                                     */
@@ -2447,13 +2445,24 @@
 ;*    j2s-scheme ::J2SYield ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SYield mode return conf)
+   
+   (define (identity-kont? kont)
+      (or (not (isa? kont J2SKont))
+	  (with-access::J2SKont kont (body param)
+	     (when (isa? body J2SStmtExpr)
+		(with-access::J2SStmtExpr body (expr)
+		   (when (isa? expr J2SHopRef)
+		      (with-access::J2SHopRef expr (id)
+			 (eq? id param))))))))
+   
    (with-access::J2SYield this (loc expr kont)
       (epairify loc
-	 `(with-access::JsGenerator %gen (%next)
-	     (set! %next ,(j2s-scheme kont mode return conf))
-	     (js-generator-yield ,(j2s-scheme expr mode return conf)
-		,(eq? kont #t)
-		%this)))))
+	 `(js-generator-yield %gen ,(j2s-scheme expr mode return conf)
+	     ,(eq? kont #t)
+	     ,(if (identity-kont? kont)
+		  #f
+		  (j2s-scheme kont mode return conf))
+	     %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SKont ...                                         */
