@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec  9 07:04:14 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 08:17:56 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -367,7 +367,7 @@
       (list this (symbol->string id))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SHopRef ...                                       */
+;*    j2s-js ::J2SHopRef ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SHopRef tildec dollarc mode evalp conf)
    ;; MS 1 jul 2014: not quit sure, what about client-side scheme modules?
