@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Nov 28 11:18:09 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 07:04:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -101,9 +101,13 @@
 ;*    j2s-js::pair-nil ::J2SProgram ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js::pair-nil this::J2SProgram tildec dollarc mode evalp conf)
-   (with-access::J2SProgram this (headers decls nodes)
-      (let ((body (append headers decls nodes)))
-	 (j2s-js* this "{" "}" "" body tildec dollarc mode evalp conf))))
+   (with-access::J2SProgram this (headers decls nodes mode)
+      (let* ((body (append headers decls nodes))
+	     (prgm (j2s-js* this "{" "}" "" body tildec dollarc mode evalp conf)))
+	 (case mode
+	    ((normal) prgm)
+	    ((strict hopscript) (cons "\"use strict\";\n" prgm))
+	    (else prgm)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SSeq ...                                              */

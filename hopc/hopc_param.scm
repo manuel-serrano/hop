@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Feb 14 10:35:57 2015 (serrano)                */
+;*    Last change :  Wed Dec  9 06:57:15 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -26,7 +26,10 @@
 
 	    (hopc-pass::symbol)
 	    (hopc-pass-set! ::symbol)
-	    
+
+	    (hopc-js-target::symbol)
+	    (hopc-js-target-set! ::symbol)
+
 	    (hopc-sources::pair-nil)
 	    (hopc-sources-set! ::pair-nil)
 	    (hopc-destination::obj)
@@ -121,6 +124,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-pass
    'link)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-target ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-target
+   'es6)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-sources ...                                                 */
