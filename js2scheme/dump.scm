@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Dec  9 08:30:49 2015 (serrano)                */
+;*    Last change :  Thu Dec 10 12:18:07 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -88,6 +88,13 @@
 (define-method (j2s->list this::J2SAssig)
    (with-access::J2SAssig this (lhs rhs loc)
       `(,@(call-next-method) ,(j2s->list lhs) ,(j2s->list rhs))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SAssigOp ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SAssigOp)
+   (with-access::J2SAssigOp this (lhs rhs loc op)
+      `(,(call-next-method) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPrefix ...                                        */

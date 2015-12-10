@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Nov 28 11:21:18 2015 (serrano)                */
+;*    Last change :  Thu Dec 10 11:21:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -60,7 +60,8 @@
       (fprintf op "hop_requires[ ~s ] = function() { "
 	 (url-decode id))
       (display "var exports = {}; " op)
-      (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports }; " id filename)
+      (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports };" id filename)
+      (fprintf op "hop_modules[ ~s ] = exports;" (string-append "./" (basename filename)))
       (flush-output-port op)
       (let ((offset (output-port-position op)))
 	 (call-with-input-file filename
@@ -820,7 +821,8 @@
    (define (resolve-error x)
       (with-access::JsGlobalObject %this (js-uri-error)
 	 (let ((exn (js-new %this js-uri-error
-		       (format "Cannot find module ~s" name) 7)))
+		       (js-string->jsstring (format "Cannot find module ~s" name))
+		       7)))
 	    (js-put! exn 'code (js-string->jsstring "MODULE_NOT_FOUND")
 	       #f %this)
 	    (js-raise exn))))
