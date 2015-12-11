@@ -1,4 +1,4 @@
 #!/bin/sh
 major=3.0.0
 state=rc
-minor=7
+minor=8
