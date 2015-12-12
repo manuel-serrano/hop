@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue Nov 17 19:49:26 2015 (serrano)                */
+;*    Last change :  Sat Dec 12 13:32:46 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -352,13 +352,16 @@
 		(when protocol
 		   (http-write-line p "Sec-WebSocket-Protocol: " protocol))
 		(http-write-line p)))
-	    ;; set the socket in non blocking mode to prevent
-	    ;; down connections to block all event broadcasts
-	    (output-timeout-set! p 5000)
 	    ;; run the onconnection listener before flushing the output
 	    (when (procedure? onconnect) (onconnect r))
 	    ;; the server is up and running, notify the client
 	    (flush-output-port p)
+	    ;; set the socket in non blocking mode to prevent
+	    ;; down connections to block all event broadcasts
+	    (output-timeout-set! p 5000)
+	    ;; detach the input and output buffer as they belong
+	    ;; to the thread
+	    (socket-buffers-detach! socket)
 	    'persistent))))
 
 ;*---------------------------------------------------------------------*/
@@ -673,23 +676,25 @@
 							  (condition-variable-wait! %condvar %mutex)))
 						    (with-handler
 						       (lambda (e)
-							  (exception-notify e)
-							  (if (eof-error? e)
+							  (if (not %socket)
 							      (close)
-							      (abort e)))
-						       (with-access::websocket ws (%socket)
-							  (let ((in (socket-input %socket)))
-							     (input-timeout-set! in 0)
-							     (let loop ()
-								(let ((msg (websocket-read %socket)))
-								   (cond
-								      ((string? msg)
-								       (message msg)
-								       (if %socket (loop) (close)))
-								      ((eof-object? msg)
-								       (close))
-								      (else
-								       (abort msg)))))))))))))))
+							      (begin
+								 (exception-notify e)
+								 (if (eof-error? e)
+								     (close)
+								     (abort e)))))
+						       (let ((in (socket-input sock)))
+							  (input-timeout-set! in 0)
+							  (let loop ()
+							     (let ((msg (websocket-read sock)))
+								(cond
+								   ((string? msg)
+								    (message msg)
+								    (if %socket (loop) (close)))
+								   ((eof-object? msg)
+								    (close))
+								   (else
+								    (abort msg))))))))))))))
 			    (close))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -798,7 +803,7 @@
 		       (write-byte (remainderfx len 256) port))))))
 	 (if mask
 	     ;; masked payload data
-	  (let ((key (vector (random 256) (random 256) (random 256) (random 256))))
+	     (let ((key (vector (random 256) (random 256) (random 256) (random 256))))
 		;; key
 		(write-byte (vector-ref-ur key 0) port)
 		(write-byte (vector-ref-ur key 1) port)
@@ -880,7 +885,7 @@
 		 b0)))
 	 (else
 	  #f)))
-   
+
    (define (unmask payload key)
       (let ((len (string-length payload)))
 	 (let loop ((i 0))
@@ -897,7 +902,7 @@
 			    (liip (+fx j 1)))
 			 (loop (+fx i 4))))))))
       payload)
-   
+
    (let ((in (socket-input sock)))
       ;; MS: to be complete, binary, ping, etc. must be supported
       (let ((b (read-byte in)))

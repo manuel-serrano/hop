@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Tue Nov 17 19:23:09 2015 (serrano)                */
+;*    Last change :  Sat Dec 12 13:23:22 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -360,9 +360,11 @@
       :value (js-make-function %this
 		(lambda (this value)
 		   (with-access::JsWebSocket this (ws)
-		      (with-access::websocket ws (%socket)
-			 (when (socket? %socket)
-			    (websocket-send %socket (js-tostring value %this))))))
+		      (with-access::websocket ws (%socket %mutex)
+			 (synchronize %mutex
+			    (when (socket? %socket)
+			       (websocket-send %socket
+				  (js-tostring value %this)))))))
 		1 'send))
    ;; close
    (js-bind! %this obj 'close
@@ -629,8 +631,11 @@
    (js-bind! %this obj 'send
       :value (js-make-function %this
 		(lambda (this value)
-		   (with-access::JsWebSocketClient this (socket)
-		      (websocket-send socket (js-tostring value %this) :mask #f)))
+		   (with-access::JsWebSocketClient this (socket %mutex)
+		      (synchronize %mutex
+			 (when socket
+			    (websocket-send socket
+			       (js-tostring value %this) :mask #f)))))
 		1 'send))
    ;; addEventListner
    (js-bind! %this obj 'addEventListener

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Tue Nov 17 19:48:51 2015 (serrano)                */
+;*    Last change :  Sat Dec 12 13:33:44 2015 (serrano)                */
 ;*    Copyright   :  2008-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -304,6 +304,7 @@
    (with-stage-handler exec-error-handler (scd req)
       (with-access::http-request req (socket method scheme port host path connection)
 	 (socket-timeout-set! socket 0 0)
+	 (socket-buffers-detach! socket)
 	 (with-access::http-response-async resp (async)
 	    (async
 	       (lambda (resp)
