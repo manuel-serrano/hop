@@ -26,12 +26,14 @@
 	   %bin-directory
 	   %lib-directory
 	   %share-directory
+	   %doc-directory
 	   %contribs-directory
 	   %weblets-directory
 	   (inline hop-bin-directory)
 	   (inline hop-lib-directory)
 	   (inline hop-etc-directory)
 	   (inline hop-share-directory)
+	   (inline hop-doc-directory)
 	   (inline hop-contribs-directory)
            (inline hop-weblets-directory)
            (inline hop-library-path)
@@ -54,6 +56,7 @@
 	   (export hop-bin-directory)
 	   (export hop-lib-directory)
 	   (export hop-share-directory)
+	   (export hop-doc-directory)
 	   (export hop-contribs-directory)
            (export hop-weblets-directory)
            (export hop-library-path)
@@ -98,6 +101,8 @@
        (print (hop-lib-directory)))
       ((--sharedir)
        (print (hop-share-directory)))
+      ((--docdir)
+       (print (hop-doc-directory)))
       ((--contribsdir)
        (print (hop-contribs-directory)))
       ((--webletsdir)
@@ -129,6 +134,7 @@
 	     (print "  [--bindir]")
 	     (print "  [--libdir]")
 	     (print "  [--sharedir]")
+	     (print "  [--docdir]")
 	     (print "  [--contribsdir]")
              (print "  [--webletsdir]")
 	     (print "  [--library-path]")
@@ -157,6 +163,8 @@
    (make-file-path *macosx-bundle-dir* "@LIBDIR@"))
 (define %share-directory
    (make-file-path *macosx-bundle-dir* "@SHAREDIR@"))
+(define %doc-directory
+   (make-file-path *macosx-bundle-dir* "@DOCDIR@"))
 (define %contribs-directory
    (make-file-path *macosx-bundle-dir* "@CONTRIBSDIR@"))
 (define %weblets-directory
@@ -166,6 +174,7 @@
 (define-inline (hop-bin-directory) %bin-directory)
 (define-inline (hop-lib-directory) %lib-directory)
 (define-inline (hop-share-directory) %share-directory)
+(define-inline (hop-doc-directory) %doc-directory)
 (define-inline (hop-contribs-directory) %contribs-directory)
 (define-inline (hop-weblets-directory) %weblets-directory)
 

@@ -912,36 +912,45 @@ sc_Pair.prototype.sc_toCircleString = function(symb, writeOrDisplay, inList) {
 	res += ")";
     return res;
 };
-sc_Vector.prototype.sc_toCircleString = function(symb, writeOrDisplay) {
-    if (this[symb + "use"]) { // use-flag is set. Just use it.
-	var nb = this[symb + "nb"];
-	if (this[symb]-- === 0) { // if we are the last use. remove all fields.
-	    delete this[symb];
-	    delete this[symb + "nb"];
-	    delete this[symb + "use"];
-	}
-	return '#' + nb + '#';
-    }
-    if (this[symb]-- === 0) { // if we are the last use. remove all fields.
-	delete this[symb];
-	delete this[symb + "nb"];
-	delete this[symb + "use"];
-    }
 
-    var res = "";
-    if (this[symb] !== undefined) { // implies > 0
-	this[symb + "use"] = true;
-	res += '#' + this[symb + "nb"] + '=';
+function sc_VectorToCircleString( symb, writeOrDisplay ) {
+   if (this[symb + "use"]) { // use-flag is set. Just use it.
+      var nb = this[symb + "nb"];
+      if (this[symb]-- === 0) { // if we are the last use. remove all fields.
+	 delete this[symb];
+	 delete this[symb + "nb"];
+	 delete this[symb + "use"];
+      }
+      return '#' + nb + '#';
+   }
+   if (this[symb]-- === 0) { // if we are the last use. remove all fields.
+      delete this[symb];
+      delete this[symb + "nb"];
+      delete this[symb + "use"];
+   }
+
+   var res = "";
+   if (this[symb] !== undefined) { // implies > 0
+      this[symb + "use"] = true;
+      res += '#' + this[symb + "nb"] + '=';
+   }
+   res += "#(";
+   for (var i = 0; i < this.length; i++) {
+      res += sc_genToCircleString(this[i], symb, writeOrDisplay);
+      if (i < this.length - 1) res += " ";
     }
-    res += "#(";
-    for (var i = 0; i < this.length; i++) {
-	res += sc_genToCircleString(this[i], symb, writeOrDisplay);
-	if (i < this.length - 1) res += " ";
-    }
-    res += ")";
-    return res;
+   res += ")";
+   return res;
+}
+
+if( "defineProperty" in Object ) {
+   Object.defineProperty( sc_Vector, "sc_toCircleString", {
+      value: sc_VectorToCircleString,
+      enumerable: false
+   } );
+} else {
+   sc_Vector.prototype.sc_toCircleString = sc_VectorToCircleString;
 };
-
 
 /* ------------------ print ---------------------------------------------------*/
 

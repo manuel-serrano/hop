@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Dec 10 11:21:43 2015 (serrano)                */
+;*    Last change :  Sun Dec 13 07:13:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -57,11 +57,12 @@
 ;*---------------------------------------------------------------------*/
 (define (module->javascript filename::bstring id op compile isexpr srcmap)
    (let ((this (nodejs-new-global-object)))
-      (fprintf op "hop_requires[ ~s ] = function() { "
-	 (url-decode id))
+      (fprintf op "hop_requires[ ~s ] = function() { " (url-decode id))
       (display "var exports = {}; " op)
+      (fprintf op "var require = function require( m ) { return hop[ '%require' ]( m, ~s ) }\n"
+	 (dirname filename))
       (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports };" id filename)
-      (fprintf op "hop_modules[ ~s ] = exports;" (string-append "./" (basename filename)))
+      (fprintf op "hop_modules[ ~s ] = exports;" filename)
       (flush-output-port op)
       (let ((offset (output-port-position op)))
 	 (call-with-input-file filename
