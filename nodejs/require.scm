@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Dec 13 07:13:50 2015 (serrano)                */
+;*    Last change :  Sun Dec 13 08:44:22 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -57,12 +57,11 @@
 ;*---------------------------------------------------------------------*/
 (define (module->javascript filename::bstring id op compile isexpr srcmap)
    (let ((this (nodejs-new-global-object)))
-      (fprintf op "hop_requires[ ~s ] = function() { " (url-decode id))
+      (fprintf op "hop[ '%requires' ][ ~s ] = function() { " (url-decode id))
       (display "var exports = {}; " op)
-      (fprintf op "var require = function require( m ) { return hop[ '%require' ]( m, ~s ) }\n"
-	 (dirname filename))
-      (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports };" id filename)
-      (fprintf op "hop_modules[ ~s ] = exports;" filename)
+      (fprintf op "var require = function require( m ) { return hop[ '%require' ]( m, module ) }\n")
+      (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: {} };\n" id filename)
+      (fprintf op "hop[ '%modules' ][ ~s ] = exports;\n" filename)
       (flush-output-port op)
       (let ((offset (output-port-position op)))
 	 (call-with-input-file filename
@@ -780,7 +779,7 @@
 		(resolve-directory dir)
 		#f))))
    
-   (define (resolve-package pkg)
+   (define (resolve-package pkg dir)
       (call-with-input-file pkg
 	 (lambda (ip)
 	    (let* ((o (json-parse ip
@@ -799,14 +798,14 @@
 		   (m (assoc "main" o)))
 	       (if (and (pair? m) (string? (cdr m)))
 		   (cdr m)
-		   (let ((idx (make-file-name (dirname pkg) "index.js")))
+		   (let ((idx (make-file-name dir "index.js")))
 		      (when (file-exists? idx)
 			 idx)))))))
    
    (define (resolve-directory x)
       (let ((json (make-file-name x "package.json")))
 	 (or (and (file-exists? json)
-		  (let* ((m (resolve-package json)))
+		  (let* ((m (resolve-package json x)))
 		     (when (string? m)
 			 (let ((p (make-file-name x m)))
 			    (resolve-file-or-directory m x)))))
