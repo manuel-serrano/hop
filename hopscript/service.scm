@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Dec  7 18:02:19 2015 (serrano)                */
+;*    Last change :  Mon Dec 14 07:29:36 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -33,8 +33,8 @@
 
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj ::obj)
-	   (js-create-service::JsService ::JsGlobalObject ::obj ::obj ::obj ::bool ::WorkerHopThread)
-	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::int ::obj ::obj)))
+	   (js-create-service::JsService ::JsGlobalObject ::obj ::obj ::obj ::bool ::bool ::WorkerHopThread)
+	   (js-make-service::JsService ::JsGlobalObject ::procedure ::obj ::bool ::bool ::int ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -57,7 +57,7 @@
 		      (js-make-hopframe ctx this path args)))
 	     (svcjs (js-make-service ctx svcp
 		       (js-string->jsstring (basename path))
-		       #f -1 (js-current-worker)
+		       #f #f -1 (js-current-worker)
 		       (instantiate::hop-service
 			  (id (string->symbol path))
 			  (wid (let ((i (string-index path #\?)))
@@ -363,7 +363,7 @@
 					       (js-create-service %this proc
 						  (unless (eq? path (js-undefined))
 						     (js-tostring path %this))
-						  #f #t (js-current-worker)))))
+						  #f #t #f (js-current-worker)))))
 		  (js-hopframe (js-make-function %this
 				  (lambda (this url args)
 				     (js-new %this js-hopframe url args))
@@ -736,7 +736,7 @@
 ;*    "args" arguments is an object, in which case, the function       */
 ;*    builds a service with optional named arguments.                  */
 ;*---------------------------------------------------------------------*/
-(define (js-create-service %this::JsGlobalObject proc path loc register worker::WorkerHopThread)
+(define (js-create-service %this::JsGlobalObject proc path loc register import worker::WorkerHopThread)
    
    (define (source::bstring proc)
       (if (isa? proc JsFunction)
@@ -769,7 +769,8 @@
 			    (with-access::JsService svcjs (svc)
 			       (with-access::hop-service svc (path)
 				  (js-make-hopframe %this this path args)))))
-		   (svcjs (js-make-service %this svcp id register -1 worker
+		   (svcjs (js-make-service %this svcp id register import
+			     -1 worker
 			     (instantiate::hop-service
 				(ctx %this)
 				(proc (if (isa? proc JsFunction)
@@ -833,7 +834,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-make-service %this proc name register arity worker svc)
+(define (js-make-service %this proc name register import arity worker svc)
 
    (define (default-service)
       (instantiate::hop-service
@@ -865,8 +866,9 @@
    ;; register only if there is an implementation
    (when svc
       (when register (register-service! svc))
-      (with-access::WorkerHopThread worker (services)
-	 (set! services (cons svc services))))
+      (unless import
+	 (with-access::WorkerHopThread worker (services)
+	    (set! services (cons svc services)))))
    
    (with-access::JsGlobalObject %this (js-service-prototype)
       (instantiate::JsService

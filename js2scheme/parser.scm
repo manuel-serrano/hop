@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec 11 21:06:41 2015 (serrano)                */
+;*    Last change :  Mon Dec 14 07:26:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -840,7 +840,7 @@
 		 (parse-node-error "Illegal parameter declaration" init)))
 	  (parse-node-error "Illegal parameter declaration" init)))
 
-   (define (service-create token id params init body mode register declaration?)
+   (define (service-create token id params init body mode register declaration? import?)
       (cond
 	 (declaration?
 	  (instantiate::J2SDeclSvc
@@ -856,6 +856,7 @@
 		     (mode mode)
 		     (path (cdr id))
 		     (body body)
+		     (import import?)
 		     (decl (instantiate::J2SDecl
 			      (loc (token-loc token))
 			      (id (cdr id))
@@ -873,6 +874,7 @@
 				   (init init)
 				   (mode mode)
 				   (path (cdr id))
+				   (import import?)
 				   (body body)))
 			   (decl (instantiate::J2SDeclFunCnst
 				    (loc (token-loc id))
@@ -891,7 +893,8 @@
 	     (name (gensym))
 	     (init init)
 	     (mode mode)
-	     (body body)))))
+	     (body body)
+	     (import import)))))
    
    (define (service-import token id params declaration?)
       (let ((loc (token-loc id)))
@@ -907,7 +910,7 @@
 				     (expr "(current-request)"))))))
 	       (init (instantiate::J2SNop
 			(loc loc))))
-	    (service-create token id params init body 'strict #f declaration?))))
+	    (service-create token id params init body 'strict #f declaration? #t))))
       
    (define (service-implement token id inits declaration?)
       (let* ((params (if (isa? inits J2SObjInit)
@@ -928,7 +931,7 @@
 		   (or id token))
 		(parse-token-error "Illegal parameter declaration"
 		   (or id token))))
-	 (service-create token id params init body mode #t declaration?)))
+	 (service-create token id params init body mode #t declaration? #f)))
 
    (define (import)
       (let* ((token (consume-token! 'service))

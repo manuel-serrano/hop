@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Dec  4 09:13:47 2015 (serrano)                */
+;*    Last change :  Mon Dec 14 07:26:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1141,14 +1141,14 @@
 		,tmps))))
 
    (define (svc->scheme this)
-      (with-access::J2SSvc this (name params loc path mode register)
+      (with-access::J2SSvc this (name params loc path mode register import)
 	 (let ((args (j2s-scheme params mode return conf)))
 	    `(js-create-service %this
 		,(j2sfun->scheme this (jsfun->lambda this mode return conf)
 		    mode return conf)
 		,(when (symbol? path) (symbol->string path))
 		',loc
-		,register (js-current-worker)))))
+		,register ,import (js-current-worker)))))
 
    (with-access::J2SSvc this (loc)
       (if (config-get conf dsssl: #f) 
