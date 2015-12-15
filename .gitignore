@@ -26,6 +26,7 @@ etc/hopshrc.hop
 etc/hopjs.el
 
 share/hop-autoconf.js
+share/hop-boot.js
 share/hop-runtime.sch
 
 src/libraries.sch
@@ -82,6 +83,7 @@ weblets/**/config.hop
 weblets/**/weblet.info
 weblets/**/etc/*.wiki
 weblets/home/release.info
+weblets/home/install.wiki
 
 # man pages
 etc/hop.man
