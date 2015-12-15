@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Tue Dec 15 08:12:33 2015 (serrano)                */
+/*    Last change :  Tue Dec 15 13:42:00 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
@@ -94,7 +94,6 @@ hop[ '%require' ] = function( name, mod ) {
    
    function resolveFileOrDirectory( x, dir ) {
       var file = filenameCanonicalize( dir + "/" + x );
-
       return resolveFile( file ) || resolveDirectory( file );
    }
    
@@ -111,7 +110,7 @@ hop[ '%require' ] = function( name, mod ) {
    }
    
    function resolveError( name ) {
-      throw new Error( "Cannot require client-side module \"" + url + "\"" );
+      throw new Error( "Cannot require client-side module \"" + name + "\"" );
    }
    
    function resolve( name ) {
@@ -132,7 +131,6 @@ hop[ '%require' ] = function( name, mod ) {
       return resolveModules( mod, name )
 	 || resolveError( name );
    }
-
 
    return require( resolve( name ) );
 }
