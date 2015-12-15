@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Sun Dec 13 09:03:22 2015 (serrano)                */
+/*    Last change :  Tue Dec 15 08:12:33 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
@@ -11,31 +11,20 @@
 
 /*---------------------------------------------------------------------*/
 /*    hop_modules ...                                                  */
-/*    -------------------------------------------------------------    */
-/*    Builtin modules                                                  */
 /*---------------------------------------------------------------------*/
-hop[ '%modules' ] = {
-   hop: hop
-}
-
-/*---------------------------------------------------------------------*/
-/*    hop_requires ...                                                 */
-/*---------------------------------------------------------------------*/
-hop[ '%requires' ] = {};
+// see hop-boot.js, which is included first in hop_[su].js
 
 /*---------------------------------------------------------------------*/
 /*    require ...                                                      */
 /*---------------------------------------------------------------------*/
 function require( url ) {
-   if( hop[ '%modules' ][ url ] ) {
-      return hop[ '%modules' ][ url ];
+   if( window.hop[ '%modules' ][ url ] ) {
+      return window.hop[ '%modules' ][ url ];
    } else {
-      if( hop[ '%requires' ][ url ] ) {
-	 var exports = hop[ '%requires' ][ url ]();
-	 hop[ '%modules' ][ url ] = exports;
-	 return exports;
+      if( window.hop[ '%requires' ][ url ] ) {
+	 return window.hop[ '%requires' ][ url ]();
       } else {
-	 throw new Error( "Cannot require client-side module \"" + url + "\"" );
+	 throw new Error( "Client-side module \"" + url + "\" not requirable" );
       }
    }
 }
@@ -143,6 +132,7 @@ hop[ '%require' ] = function( name, mod ) {
       return resolveModules( mod, name )
 	 || resolveError( name );
    }
+
 
    return require( resolve( name ) );
 }

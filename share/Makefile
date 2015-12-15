@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Nov 24 09:17:30 2015 (serrano)                */
+#*    Last change :  Tue Dec 15 07:52:01 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -245,7 +245,7 @@ uninstall:
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
+hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
   hop-exception.js hop-nodejs.js \
   $(RTSCONFIG) hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
@@ -260,7 +260,7 @@ hop_u.js: hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
                | $(BGLCPP) \
                >> $@
 
-hop_s.js: hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
+hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
   hop-exception.js hop-debug.js hop-nodejs.js \
   $(RTSCONFIG) hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@

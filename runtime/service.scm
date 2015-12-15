@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Nov 28 14:10:04 2015 (serrano)                */
+;*    Last change :  Tue Dec 15 09:08:52 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -50,6 +50,7 @@
 	    (generic service-pack-cgi-arguments ::obj ::hop-service ::pair-nil)
 	    (generic post-multipart->obj ::obj ::obj ::bstring)
 	    (generic service-base-url::bstring ::obj ::http-request)
+	    (get-service::hop-service ::bstring)
 	    (service-exists? ::bstring)
 	    (get-all-services ::http-request)
 	    (gen-service-url::bstring #!key (prefix "") (public #f))
@@ -752,18 +753,24 @@
 			  (+fx r (+fx (bit-lsh r 3) (char->integer c))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    get-service ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (get-service abspath)
+   (or (synchronize *service-mutex*
+	  (hashtable-get *service-table* abspath))
+       (let ((req (instantiate::http-server-request
+		     (abspath abspath)
+		     (method 'GET))))
+	  (autoload-filter req))))
+   
+;*---------------------------------------------------------------------*/
 ;*    service-exists? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-exists? svc)
-   (let* ((abspath (string-append (hop-service-base) "/" svc))
-	  (loaded (synchronize *service-mutex*
-		     (hashtable-get *service-table* abspath))))
-      (or loaded
-	  (let ((req (instantiate::http-server-request
-			(abspath abspath)
-			(method 'GET))))
-	     (autoload-filter req)))))
-   
+   (with-handler
+      (lambda (e) #f)
+      (isa? (get-service svc) hop-service)))
+
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Dec 14 07:29:36 2015 (serrano)                */
+;*    Last change :  Tue Dec 15 09:09:00 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -55,20 +55,24 @@
       (let* ((path (vector-ref o 0))
 	     (svcp (lambda (this . args)
 		      (js-make-hopframe ctx this path args)))
-	     (svcjs (js-make-service ctx svcp
-		       (js-string->jsstring (basename path))
-		       #f #f -1 (js-current-worker)
-		       (instantiate::hop-service
-			  (id (string->symbol path))
-			  (wid (let ((i (string-index path #\?)))
-				  (string->symbol
-				     (if i (substring path 0 i) path))))
-			  (args '())
-			  (proc (lambda l l))
-			  (javascript "")
-			  (path path)
-			  (resource (vector-ref o 1))))))
-	 svcjs)))
+	     (hopsvc (cond
+			((service-exists? path)
+			 (get-service path))
+			(else
+			 (instantiate::hop-service
+			    (id (string->symbol path))
+			    (wid (let ((i (string-index path #\?)))
+				    (string->symbol
+				       (if i (substring path 0 i) path))))
+			    (args '())
+			    (proc (lambda l l))
+			    (javascript "")
+			    (path path)
+			    (resource (vector-ref o 1)))))))
+	 (js-make-service ctx svcp
+	    (js-string->jsstring (basename path))
+	    #f #f -1 (js-current-worker)
+	    hopsvc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsHopFrame ...                               */
@@ -382,7 +386,7 @@
 	       :configurable #f :enumerable #f
 	       :value (js-make-function %this
 			 (lambda (this svc)
-			    (if (service-exists? (js-tostring svc %this)) #t #f))
+			    (service-exists? (js-tostring svc %this)))
 			 1 'exists)))
 
 	 (js-undefined))))

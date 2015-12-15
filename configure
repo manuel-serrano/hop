@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Dec 12 14:39:43 2015 (serrano)                */
+#*    Last change :  Tue Dec 15 07:57:36 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -124,13 +124,13 @@ uv=""
 
 hopsrfis=""
 
-rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js hop-require.js"
+rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js hop-require.js hop-boot.js"
 
 bglfail=false;
 
 hopservicebase="/hop"
 hopjssanssuffix='"hop"'
-hopjsfiles='"hop-autoconf.js" "runtime.js"'
+hopjsfiles='"hop-autoconf.js" "runtime.js" "hop-boot.js"'
  
 for p in $rts; do
   hopjsfiles="$hopjsfiles \"$p\""; 
@@ -1347,31 +1347,32 @@ echo "" >> $init
 chmod a-w $init
 
 # share/hop-autoconf.js
-init=share/hop-autoconf.js
+for init in hop-autoconf.js hop-boot.js; do
+  rm -f share/$init 2> /dev/null
+  echo "/* Automatically generated file (don't edit) */" > $init
 
-
-rm -f $init 2> /dev/null
-echo "/* Automatically generated file (don't edit) */" > $init
-
-cat etc/hop-autoconf.js.in \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@BRANCH@|$branch|" \
-          -e "s|@BACKEND@|$backend|" \
-          -e "s|@LINK@|$link|" \
-          -e "s|@URL@|$url|" \
-          -e "s|@BINDIR@|$bindir|" \
-          -e "s|@LIBDIR@|$libdir|" \
-          -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir/$version|" \
-          -e "s|@ETCDIR@|$etcdir|" \
-          -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@DOCDIR@|$docdir|" \
-          -e "s|@WEBLETSDIR@|$webletsdir|" \
-          -e "s|@LOCEVENT@|$locevent|" \
-          -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-    >> $init
-echo "" >> $init
-chmod a-w $init
+  cat etc/$init.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
+            -e "s|@URL@|$url|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+            -e "s|@SHAREDIR@|$sharedir/$version|" \
+            -e "s|@ETCDIR@|$etcdir|" \
+            -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@DOCDIR@|$docdir|" \
+            -e "s|@WEBLETSDIR@|$webletsdir|" \
+            -e "s|@LOCEVENT@|$locevent|" \
+            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|//[^\"]*$$||g" \
+            -e "/^[ \t]*$$/D" \
+      >> share/$init
+  echo "" >> share/$init
+  chmod a-w share/$init
+done
 
 # src/libraries.sch
 lib=src/libraries.sch

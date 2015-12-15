@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Dec 13 08:44:22 2015 (serrano)                */
+;*    Last change :  Tue Dec 15 08:17:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -53,15 +53,22 @@
 	       (generate-source-map tree ifile ofile p))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-boot ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (hop-boot)
+   (file->string "../share/hop-boot.js"))
+
+;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (module->javascript filename::bstring id op compile isexpr srcmap)
    (let ((this (nodejs-new-global-object)))
-      (fprintf op "hop[ '%requires' ][ ~s ] = function() { " (url-decode id))
+      (fprintf op (hop-boot))
+      (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
       (display "var exports = {}; " op)
-      (fprintf op "var require = function require( m ) { return hop[ '%require' ]( m, module ) }\n")
-      (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: {} };\n" id filename)
-      (fprintf op "hop[ '%modules' ][ ~s ] = exports;\n" filename)
+      (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports };\n" id filename)
+      (fprintf op "hop[ '%modules' ][ '~a' ] = module.exports;\n" filename)
+      (display "function require( url ) { return hop[ '%require' ]( url, module ) }\n" op)
       (flush-output-port op)
       (let ((offset (output-port-position op)))
 	 (call-with-input-file filename
@@ -84,7 +91,10 @@
 				  ;; generation
 				  (display exp op)))
 		     tree)
-		  (display "\nreturn module.exports;}" op)
+		  (display "\nreturn module.exports;}\n" op)
+		  (display "console.log( 'after', '" op)
+		  (display filename op)
+		  (display "');\n" op)
 		  (when srcmap
 		     (fprintf op "\n\nhop_source_mapping_url( ~s, \"~a\" );\n"
 			filename srcmap)
