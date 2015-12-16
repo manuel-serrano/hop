@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Dec 16 08:45:38 2015 (serrano)                */
+;*    Last change :  Wed Dec 16 16:26:41 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -65,7 +65,6 @@
 (define (module->javascript filename::bstring id op compile isexpr srcmap)
    (let ((this (nodejs-new-global-object)))
       (fprintf op (hop-boot))
-      (fprintf op "console.log( 'binding ', ~s );" filename)
       (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
       (flush-output-port op)
       (let ((header (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n" id filename filename)))

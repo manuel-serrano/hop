@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Wed Dec 16 08:47:57 2015 (serrano)                */
+/*    Last change :  Wed Dec 16 16:26:58 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
@@ -34,10 +34,7 @@ function require( url ) {
 /*    %requireAlias ...                                                */
 /*---------------------------------------------------------------------*/
 hop[ '%requireAlias' ] = function( name, mod ) {
-   console.log( "ALIAS ", name, " -> ", mod );
    window.hop[ '%requires' ][ name ] = function() {
-      console.log( "ALIAS name=", name, " mode=", mod, " => ",
-		   require( mod ) );
       return require( mod );
    }
 }
