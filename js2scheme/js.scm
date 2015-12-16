@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Dec 15 20:47:13 2015 (serrano)                */
+;*    Last change :  Wed Dec 16 16:08:58 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -748,7 +748,7 @@
    (with-access::J2SAssigOp this (op lhs rhs)
       (cons this
 	 (append (j2s-js lhs tildec dollarc mode evalp conf)
-	    (list (j2s-js-id op) "=")
+	    (list (j2s-op op) "=")
 	    (j2s-js rhs tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
