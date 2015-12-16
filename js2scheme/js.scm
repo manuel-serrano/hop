@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Dec 10 18:48:42 2015 (serrano)                */
+;*    Last change :  Tue Dec 15 20:47:13 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -32,6 +32,7 @@
       (name "javascript")
       (comment "JavaScript code generation")
       (proc (lambda (ast conf)
+	       (add-header! ast conf)
 	       (call-with-eval-module (eval! `(module ,(gensym)))
 		  (lambda ()
 		     (eval! `(define %this ,(config-get conf :%this)))
@@ -49,6 +50,19 @@
 				       (let ((expr (j2s-scheme node mode evalp conf)))
 					  (write (eval! expr) op)))))))
 			'normal (lambda (x) x) conf)))))))
+	 
+;*---------------------------------------------------------------------*/
+;*    add-header! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (add-header! ast conf)
+   (let ((header (config-get conf :header #f)))
+      (when (and header (isa? ast J2SProgram))
+	 (with-access::J2SProgram ast (headers loc)
+	    (set! headers (cons (instantiate::J2SPragma
+				   (loc loc)
+				   (lang 'javascript)
+				   (expr header))
+			     headers))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-id ...                                                    */
@@ -792,7 +806,12 @@
 	 (append (j2s-js param tildec dollarc mode evalp conf)
 	    '(")")
 	    (j2s-js body tildec dollarc mode evalp conf)))))
-	    
-	 
-	    
 
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SPragma ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SPragma tildec dollarc mode evalp conf)
+   (with-access::J2SPragma this (expr lang)
+      (if (eq? lang 'javascript)
+	  (list this expr)
+	  (list this "undefined"))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Dec 15 13:42:23 2015 (serrano)                */
+;*    Last change :  Wed Dec 16 08:45:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -21,12 +21,13 @@
 
    (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::symbol)
+	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring)
-	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj)
+	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj ::symbol)
 	   (nodejs-resolve-extend-path! ::pair-nil)
 	   (nodejs-new-global-object::JsGlobalObject)
 	   (nodejs-new-scope-object ::JsGlobalObject)
@@ -64,41 +65,40 @@
 (define (module->javascript filename::bstring id op compile isexpr srcmap)
    (let ((this (nodejs-new-global-object)))
       (fprintf op (hop-boot))
+      (fprintf op "console.log( 'binding ', ~s );" filename)
       (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
-      (display "var exports = {}; " op)
-      (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [] };\n" id filename)
-      (fprintf op "hop[ '%modules' ][ '~a' ] = module.exports;\n" filename)
-      (display "function require( url ) { return hop[ '%require' ]( url, module ) }\n" op)
       (flush-output-port op)
-      (let ((offset (output-port-position op)))
-	 (call-with-input-file filename
-	    (lambda (in)
-	       (let ((tree (j2s-compile in
-			      :%this this
-			      :source filename
-			      :resource (dirname filename)
-			      :filename filename
-			      :worker (js-current-worker)
-			      :parser 'client-program
-			      :driver (if (>fx (bigloo-debug) 0)
-					  (j2s-javascript-debug-driver)
-					  (j2s-javascript-driver))
-			      :site 'client
-			      :debug (bigloo-debug))))
-		  (for-each (lambda (exp)
-			       (unless (isa? exp J2SNode)
-				  ;; skip node information, used for sourcemap
-				  ;; generation
-				  (display exp op)))
-		     tree)
-		  (display "\nreturn module.exports;}\n" op)
-		  (when srcmap
-		     (fprintf op "\n\nhop_source_mapping_url( ~s, \"~a\" );\n"
-			filename srcmap)
-		     (fprintf op "\n//# sourceMappingURL=~a\n" srcmap))
-		  ;; first element of the tree is a position offset
-		  ;; see sourcemap generation
-		  (cons offset tree)))))))
+      (let ((header (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n" id filename filename)))
+	 (let ((offset (output-port-position op)))
+	    (call-with-input-file filename
+	       (lambda (in)
+		  (let ((tree (j2s-compile in
+				 :%this this
+				 :source filename
+				 :resource (dirname filename)
+				 :filename filename
+				 :worker (js-current-worker)
+				 :header header
+				 :parser 'client-program
+				 :driver (if (>fx (bigloo-debug) 0)
+					     (j2s-javascript-debug-driver)
+					     (j2s-javascript-driver))
+				 :site 'client
+				 :debug (bigloo-debug))))
+		     (for-each (lambda (exp)
+				  (unless (isa? exp J2SNode)
+				     ;; skip node information, used for sourcemap
+				     ;; generation
+				     (display exp op)))
+			tree)
+		     (display "\nreturn module.exports;}\n" op)
+		     (when srcmap
+			(fprintf op "\n\nhop_source_mapping_url( ~s, \"~a\" );\n"
+			   filename srcmap)
+			(fprintf op "\n//# sourceMappingURL=~a\n" srcmap))
+		     ;; first element of the tree is a position offset
+		     ;; see sourcemap generation
+		     (cons offset tree))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-driver ...                                                */
@@ -194,7 +194,7 @@
 	    (let ((name (js-tostring name this)))
 	       (if (core-module? name)
 		   (js-string->jsstring name)
-		   (js-string->jsstring (nodejs-resolve name this %module)))))
+		   (js-string->jsstring (nodejs-resolve name this %module 'body)))))
 	 1 "resolve")
       #f this)
 
@@ -226,6 +226,28 @@
    require)
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-head ...                                                  */
+;*    -------------------------------------------------------------    */
+;*    Per module version of js-html-head@__hopscript_public            */
+;*    (see hopscript/public.scm).                                      */
+;*---------------------------------------------------------------------*/
+(define (nodejs-head worker::WorkerHopThread %this::JsGlobalObject %scope::JsObject)
+
+   ;; head
+   (define head
+      (js-make-function %this
+	 (lambda (this attrs . nodes)
+	    (apply <HEAD> :idiom "javascript" :context %scope
+	       (when (isa? attrs JsObject)
+		  (js-object->keyword-arguments* attrs %this))
+	       (filter (lambda (n)
+			  (or (isa? n xml-tilde) (isa? n xml-markup)))
+		  nodes)))
+	 -1 "HEAD"))
+
+   head)
+
+;*---------------------------------------------------------------------*/
 ;*    *resolve-service* ...                                            */
 ;*---------------------------------------------------------------------*/
 (define *resolve-service* #f)
@@ -252,7 +274,7 @@
 			(js-vector->jsarray (nodejs-filename->paths filename) this)
 			#f this)
 		     ;; the resolution
-		     (nodejs-resolve name this m)))))))
+		     (nodejs-resolve name this m 'body)))))))
    (nodejs-v8-global-object-init! (js-new-global-object)))
 
 ;*---------------------------------------------------------------------*/
@@ -680,7 +702,7 @@
    (with-trace 'require "nodejs-require-module"
       (trace-item "name=" name)
       (with-access::WorkerHopThread worker (module-cache)
-	 (let* ((path (nodejs-resolve name %this %module))
+	 (let* ((path (nodejs-resolve name %this %module 'body))
 		(mod (js-get-property-value module-cache module-cache path %this)))
 	    (trace-item "path=" path)
 	    (trace-item "mode=" (typeof mod))
@@ -745,7 +767,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://nodejs.org/api/modules.html#modules_all_together          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-resolve name::bstring %this::JsGlobalObject %module)
+(define (nodejs-resolve name::bstring %this::JsGlobalObject %module mode)
    
    (define (resolve-file x)
       (cond
@@ -790,9 +812,12 @@
       (call-with-input-file pkg
 	 (lambda (ip)
 	    (let* ((o (json-parse ip
-			 :array-alloc list
-			 :array-set (lambda (o i v) #f)
-			 :array-return (lambda (o i) #f)
+			 :array-alloc (lambda ()
+					 (make-cell '()))
+			 :array-set (lambda (a i val)
+				       (cell-set! a (cons val (cell-ref a))))
+			 :array-return (lambda (a i)
+					  (reverse! (cell-ref a)))
 			 :object-alloc (lambda () (make-cell '()))
 			 :object-set (lambda (o p val)
 					(cell-set! o
@@ -802,8 +827,8 @@
 			 :parse-error (lambda (msg token loc)
 					 (js-raise-syntax-error
 					    (js-new-global-object) msg ""))))
-		   (m (assoc "main" o)))
-	       (if (and (pair? m) (string? (cdr m)))
+		   (m (assoc (if (eq? mode 'head) "client" "main") o)))
+	       (if (pair? m)
 		   (cdr m)
 		   (let ((idx (make-file-name dir "index.js")))
 		      (when (file-exists? idx)
@@ -813,9 +838,16 @@
       (let ((json (make-file-name x "package.json")))
 	 (or (and (file-exists? json)
 		  (let* ((m (resolve-package json x)))
-		     (when (string? m)
-			 (let ((p (make-file-name x m)))
-			    (resolve-file-or-directory m x)))))
+		     (cond
+			((pair? m)
+			 (cons name
+			    (map (lambda (m)
+				    (resolve-file-or-directory m x))
+			       m)))
+			((string? m)
+			 (resolve-file-or-directory m x))
+			(else
+			 #f))))
 	     (let ((p (make-file-name x "index.js")))
 		(when (file-exists? p)
 		   (file-name-canonicalize p))))))

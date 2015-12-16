@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Dec 15 18:01:06 2015 (serrano)                */
+;*    Last change :  Wed Dec 16 08:31:38 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -77,33 +77,28 @@
 		    (%location #f)
 		    (attr)
 		    body)
-   (let ((nbody (let loop ((body body))
-		   (cond
-		      ((not (pair? body))
-		       body)
-		      ((xml-unpack (car body))
-		       =>
-		       (lambda (v) (loop (append v (cdr body)))))
-		      ((let ((v (xml-primitive-value (car body))))
-			  (and (string? v) (not (string-skip v "\n\t "))))
-		       (loop (cdr body)))
-		      ((and (not (any (lambda (o) (xml-markup-is? o 'head))
-				    body))
-			    (let ((l (memq :hopautohead attr)))
-			       (or (not (pair? l)) (cadr l))))
-		       (cons (<HEAD> :idiom idiom :context context
-				:%location %location) 
-			  (append-map (lambda (n)
-					 (or (xml-unpack n) (list n)))
-			     body)))
-		      (else
-		       (append-map (lambda (n)
-				      (or (xml-unpack n) (list n)))
-			  body))))))
+   (let* ((nbody (let loop ((body body))
+		    (cond
+		       ((not (pair? body))
+			body)
+		       ((xml-unpack (car body))
+			=>
+			(lambda (v) (loop (append v (cdr body)))))
+		       ((let ((v (xml-primitive-value (car body))))
+			   (and (string? v) (not (string-skip v "\n\t "))))
+			(loop (cdr body)))
+		       (else
+			(append-map (lambda (n) (or (xml-unpack n) (list n)))
+			   body)))))
+	  (hbody (if (not (any (lambda (o) (xml-markup-is? o 'head)) body))
+		     (cons (<HEAD> :idiom idiom :context context
+			      :%location %location)
+			nbody)
+		     nbody)))
       (instantiate::xml-html
 	 (tag 'html)
 	 (attributes attr)
-	 (body nbody))))
+	 (body hbody))))
  
 ;*---------------------------------------------------------------------*/
 ;*    <HOP-SETUP> ...                                                  */
@@ -446,7 +441,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	  (if (null? (cdr a))
 	      (error "<HEAD>" (format "Missing ~a value" (car a)) a)
 	      (case (car a)
-		 ((:css :jscript :require :include :hz :library)
+		 ((:css :jscript :script :require :module :include :hz :library)
 		  (loop (cdr a) (car a) rts dir path base inl packed els))
 		 ((:favicon)
 		  (set! favico #t)
@@ -522,11 +517,11 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	      (let ((file (or (find-file/path (car a) path) (car a))))
 		 (loop (cdr a) mode rts dir path base inl packed 
 		       (cons (css (absolute-path file dir) base inl) els))))
-	     ((:jscript)
+	     ((:jscript :script)
 	      (let ((file (or (find-file/path (car a) path) (car a))))
 		 (loop (cdr a) mode rts dir path base inl packed 
 		       (cons (script (absolute-path file dir) inl) els))))
-	     ((:require)
+	     ((:require :module)
 	      (let* ((v (xml-primitive-value (car a)))
 		     (file (clientc-resolve-filename v (or context path))))
 		 (if (not file)
@@ -718,7 +713,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*    REQUIRE ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-tag <REQUIRE> ((inline #f boolean)
-		       (src #unspecified string)
+		       (src #unspecified)
 		       (mod #unspecified string)
 		       (id #unspecified string)
 		       (type (hop-mime-type) string)
@@ -751,11 +746,26 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 		(body (list "\n" body)))
 	     (default src))))
 
-   (if (and inline (string? src))
-       (if (file-exists? src)
-	   (inl src)
-	   (default src))
-       (default src)))
+   (define (require src)
+      (if (and inline (string? src))
+	  (if (file-exists? src)
+	      (inl src)
+	      (default src))
+	  (default src)))
+
+   (cond
+      ((string? src)
+       (require src))
+      ((pair? src)
+       (cons (instantiate::xml-cdata
+		(tag 'script)
+		(attributes `(:type ,type ,@attributes))
+		(body (list
+			 (format "hop[ '%requireAlias' ]( ~s, ~s );"
+			    (car src) (cadr src)))))
+	  (map require (cdr src))))
+      (else
+       (error "<REQUIRE>" "bad src" src))))
  
 ;*---------------------------------------------------------------------*/
 ;*    <STYLE> ...                                                      */

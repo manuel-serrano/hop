@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Tue Dec 15 13:42:00 2015 (serrano)                */
+/*    Last change :  Wed Dec 16 08:47:57 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
@@ -18,6 +18,7 @@
 /*    require ...                                                      */
 /*---------------------------------------------------------------------*/
 function require( url ) {
+   console.log( "require url=", url );
    if( window.hop[ '%modules' ][ url ] ) {
       return window.hop[ '%modules' ][ url ];
    } else {
@@ -30,7 +31,19 @@ function require( url ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*       %require                                                      */
+/*    %requireAlias ...                                                */
+/*---------------------------------------------------------------------*/
+hop[ '%requireAlias' ] = function( name, mod ) {
+   console.log( "ALIAS ", name, " -> ", mod );
+   window.hop[ '%requires' ][ name ] = function() {
+      console.log( "ALIAS name=", name, " mode=", mod, " => ",
+		   require( mod ) );
+      return require( mod );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    %require ...                                                     */
 /*---------------------------------------------------------------------*/
 hop[ '%require' ] = function( name, mod ) {
    
@@ -63,7 +76,17 @@ hop[ '%require' ] = function( name, mod ) {
    }
    
    function resolveFile( file ) {
-      return  fileExists( file ) ? file : false;
+      if( fileExists( file ) ) {
+	 return file;
+      } else {
+	 var filejs = file + ".js";
+	 if( fileExists( filejs ) ) return filejs;
+	 
+	 filejs = file + ".json";
+	 if( fileExists( filejs ) ) return filejs;
+	 
+	 return false;
+      }
    }
 
    function resolvePackage( json, dir ) {
