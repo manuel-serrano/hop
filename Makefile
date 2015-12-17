@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Thu Nov 26 15:50:23 2015 (serrano)                */
+#*    Last change :  Thu Dec 17 05:53:06 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -37,7 +37,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
   share-afile scheme2js hopscript js2scheme nodejs \
   android node_modules doc
 
-build: bindir libdir lib weblets widget nodejs \
+build: bindir libdir lib weblets widget nodejs doc \
   $(BUILDSPECIFIC) bin share node_modules
 
 bindir:
@@ -162,6 +162,7 @@ install-quick: hop-dirs install-init
 	$(MAKE) -C hophz install && \
 	$(MAKE) -C node_modules install && \
 	$(MAKE) -C etc install
+	$(MAKE) -C doc install
 
 install-init: hop-dirs
 	$(INSTALL) $(BUILDLIBDIR)/hop.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hop.init && \

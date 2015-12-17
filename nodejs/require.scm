@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Dec 16 16:26:41 2015 (serrano)                */
+;*    Last change :  Thu Dec 17 07:48:31 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -21,7 +21,7 @@
 
    (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::symbol)
-	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject)
+	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
@@ -230,13 +230,17 @@
 ;*    Per module version of js-html-head@__hopscript_public            */
 ;*    (see hopscript/public.scm).                                      */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-head worker::WorkerHopThread %this::JsGlobalObject %scope::JsObject)
+(define (nodejs-head worker::WorkerHopThread %this::JsGlobalObject %scope::JsObject %module)
 
    ;; head
    (define head
       (js-make-function %this
 	 (lambda (this attrs . nodes)
 	    (apply <HEAD> :idiom "javascript" :context %scope
+	       (<SCRIPT>
+		  (format "hop[ '%root' ] = ~s"
+		     (dirname
+			(js-jsstring->string (js-get %module 'filename %scope)))))
 	       (when (isa? attrs JsObject)
 		  (js-object->keyword-arguments* attrs %this))
 	       (filter (lambda (n)

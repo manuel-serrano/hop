@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:10 2014                          */
-/*    Last change :  Sat Nov 28 11:09:12 2015 (serrano)                */
+/*    Last change :  Thu Dec 17 08:02:18 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Illustrates multitier error reporting                            */
@@ -13,7 +13,7 @@
 /*=====================================================================*/
 service debug() {
    return <html>
-     <head require="./bugs.js">~{ var BUGS = require( "./bugs.js" ) }</head>
+     <head module="./bugs.js">~{ var BUGS = require( "./bugs.js" ) }</head>
      <h1>Examples of error reporting</h1>
      <ol>
        <li>
