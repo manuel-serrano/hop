@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Mon Dec  7 13:11:50 2015 (serrano)                */
+/*    Last change :  Wed Dec 16 21:36:56 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -349,6 +349,41 @@ function hop_size_of_word( word ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hop_serialize_bytes ...                                          */
+/*---------------------------------------------------------------------*/
+function hop_serialize_bytes( word, size ) {
+   var rw = "";
+
+   while( --size >= 0 ) {
+      var c = ((word >> (size << 3)) & 0xff);
+
+      if( (c >= 46) && (c < 127) ) {
+	 if( c == 92 )
+	    // Chrome patch:
+	    // Chrome (at least Chrome <= 12) escapes \ characters when
+	    // sending the request via an XHR. The consequence is the
+	    // client-side DIGEST authentication is computed on a different
+	    // string from the one actually sent to the client. As a
+	    // workaround we explicitly escape \ character using the URL
+	    // escaping mechanism.
+	    rw += "%5c";
+	 else
+	    rw += String.fromCharCode( c );
+      } else {
+         var i1 = (c >> 4);
+         var i2 = (c & 0xf);
+         var c1 = i1 + ((i1 < 10) ? 48 : 55);
+         var c2 = i2 + ((i2 < 10) ? 48 : 55);
+         
+         rw += String.fromCharCode( 37, c1, c2 );
+      }
+      
+      size--;
+   }
+   return rw;
+}
+   
+/*---------------------------------------------------------------------*/
 /*    hop_serialize_word_size ...                                      */
 /*---------------------------------------------------------------------*/
 function hop_serialize_word_size( word, size ) {
@@ -551,6 +586,7 @@ function hop_bigloo_serialize_hvector( item, tag, size ) {
    var ra = 'h' + hop_serialize_word( l ) + hop_serialize_word( size ) + hop_serialize_string( tag );
    var i;
 
+   console.log( "serialize item=", item);
    if( "defineProperty" in Object ) {
       Object.defineProperty( item, "hop_serialize_context_key", {
 	 value: hop_serialize_context.key,
@@ -568,9 +604,10 @@ function hop_bigloo_serialize_hvector( item, tag, size ) {
    }
 
    for( i = 0; i < l; i++ ) {
-      ra += hop_serialize_word_size( item[ i ], size );
+      ra += hop_serialize_bytes( item[ i ], size );
    }
 
+   console.log( "ra=", ra );
    return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
 }
    

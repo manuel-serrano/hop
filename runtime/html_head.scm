@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Dec 16 08:31:38 2015 (serrano)                */
+;*    Last change :  Wed Dec 16 16:37:25 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -90,11 +90,20 @@
 		       (else
 			(append-map (lambda (n) (or (xml-unpack n) (list n)))
 			   body)))))
-	  (hbody (if (not (any (lambda (o) (xml-markup-is? o 'head)) body))
+	  (hbody (cond
+		    ((null? nbody)
+		     (list (<HEAD> :idiom idiom :context context
+			      :%location %location)))
+		    ((xml-markup-is? (car nbody) 'head)
+		     nbody)
+		    ((find (lambda (o) (xml-markup-is? o 'head)) body)
+		     =>
+		     (lambda (n)
+			(error "<HTML>" "wrong <HEAD> element" n)))
+		    (else
 		     (cons (<HEAD> :idiom idiom :context context
 			      :%location %location)
-			nbody)
-		     nbody)))
+			nbody)))))
       (instantiate::xml-html
 	 (tag 'html)
 	 (attributes attr)

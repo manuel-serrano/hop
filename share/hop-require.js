@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Wed Dec 16 16:26:58 2015 (serrano)                */
+/*    Last change :  Wed Dec 16 16:28:02 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
@@ -18,7 +18,6 @@
 /*    require ...                                                      */
 /*---------------------------------------------------------------------*/
 function require( url ) {
-   console.log( "require url=", url );
    if( window.hop[ '%modules' ][ url ] ) {
       return window.hop[ '%modules' ][ url ];
    } else {

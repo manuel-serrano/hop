@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Nov 28 12:08:34 2015 (serrano)                */
+;*    Last change :  Thu Dec 17 05:38:32 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP management                                              */
@@ -65,8 +65,10 @@
    
    (let ((defhd '((Cache-Control: . "no-cache") (Pragma: . "no-cache"))))
       (if (>fx (bigloo-debug) 0)
-	  (let ((estack (url-path-encode (obj->string (server-stack stack) 'hop-client)))
-		(errobj (url-path-encode (obj->string err 'hop-client))))
+	  (let ((estack (url-path-encode
+			   (obj->string (server-stack stack) 'hop-client)))
+		(errobj (url-path-encode
+			   (obj->string err 'hop-client))))
 	     (cons* `(Hop-Error: . ,errobj)
 		`(Hop-Debug-Stack: . ,estack)
 		defhd))

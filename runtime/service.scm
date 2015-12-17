@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Tue Dec 15 09:08:52 2015 (serrano)                */
+;*    Last change :  Wed Dec 16 21:19:05 2015 (serrano)                */
 ;*    Copyright   :  2006-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -769,7 +769,8 @@
 (define (service-exists? svc)
    (with-handler
       (lambda (e) #f)
-      (isa? (get-service svc) hop-service)))
+      (let ((url (string-append (hop-service-base) "/" svc)))
+	 (isa? (get-service url) hop-service))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service-filter ...                                               */
