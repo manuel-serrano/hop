@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Dec 17 07:48:31 2015 (serrano)                */
+;*    Last change :  Fri Dec 18 07:59:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -17,6 +17,7 @@
    (library hop hopscript js2scheme web)
 
    (import __nodejs
+	   __nodejs__hop
 	   __nodejs_process)
 
    (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
@@ -934,10 +935,7 @@
 ;*    nodejs-env-path ...                                              */
 ;*---------------------------------------------------------------------*/
 (define nodejs-env-path
-   ;; this function should be improved to the content of
-   ;; hop-autoload-directories, which is defined in src/hop_param.scm
-   (let* ((sys-path (make-file-path (hop-lib-directory)
-		       "hop" (hop-version) "node_modules"))
+   (let* ((sys-path (nodejs-modules-directory))
 	  (home-path (let ((home (getenv "HOME")))
 			(if (string? home)
 			    (list (make-file-name home ".node_modules")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Dec 16 16:37:25 2015 (serrano)                */
+;*    Last change :  Fri Dec 18 08:28:14 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -428,18 +428,20 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	  (let* ((els (if favico els (cons head-runtime-favicon els)))
 		 (body (reverse! els)))
 	     (if rts
-		 (append (cond
-			    (inl head-runtime-system-inline)
-			    (packed head-runtime-system-packed)
-			    (else head-runtime-system-unpacked))
-		    (cons
-		       (<SCRIPT> :type (hop-mime-type)
-			  (string-append "function hop_idiom() { return '"
-			     idiom "'}\n")
-			  (when (>fx (bigloo-debug) 0)
-			     (server-initial-context location
-				(get-trace-stack))))
-		       body))
+		 (begin
+		    (init-head!)
+		    (append (cond
+			       (inl head-runtime-system-inline)
+			       (packed head-runtime-system-packed)
+			       (else head-runtime-system-unpacked))
+		       (cons
+			  (<SCRIPT> :type (hop-mime-type)
+			     (string-append "function hop_idiom() { return '"
+				idiom "'}\n")
+			     (when (>fx (bigloo-debug) 0)
+				(server-initial-context location
+				   (get-trace-stack))))
+			  body)))
 		 body)))
 	 ((pair? (car a))
 	  (loop (append (car a) (cdr a))
@@ -584,7 +586,6 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*    Move the base on top of the HEAD body.                           */
 ;*---------------------------------------------------------------------*/
 (define (<HEAD> . args)
-   (init-head!)
    (let* ((body0 (head-parse args))
 	  (ubase (filter (lambda (x)
 			    (xml-markup-is? x 'base))

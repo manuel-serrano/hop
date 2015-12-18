@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Nov  5 14:58:08 2015 (serrano)                */
+;*    Last change :  Fri Dec 18 08:58:13 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -526,7 +526,9 @@
    (define (date-prototype-getutcfullyear this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date-year val)
+	     (let* ((tz (date-timezone val))
+		    (d (seconds->date (-elong (date->seconds val) tz))))
+		(date-year d))
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getUTCFullYear
@@ -554,7 +556,9 @@
    (define (date-prototype-getutcmonth this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (-fx (date-month val) 1)
+	     (let* ((tz (date-timezone val))
+		    (d (seconds->date (-elong (date->seconds val) tz))))
+		(-fx (date-month d) 1))
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getUTCMonth
@@ -582,7 +586,9 @@
    (define (date-prototype-getutcdate this::JsDate)
       (with-access::JsDate this (val)
 	 (if (date? val)
-	     (date-day val)
+	     (let* ((tz (date-timezone val))
+		    (d (seconds->date (-elong (date->seconds val) tz))))
+		(date-day d))
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getUTCDate
@@ -639,8 +645,12 @@
       (with-access::JsDate this (val)
 	 (if (date? val)
 	     (let* ((tz (date-timezone val))
-		    (tzh (/fx tz 3600)))
-		(-fx (date-hour val) tzh))
+		    (tzh (/fx tz 3600))
+		    (n (-fx (date-hour val) tzh)))
+		(cond
+		   ((<fx n 0) (+fx 24 n))
+		   ((>fx n 23) (-fx n 23))
+		   (else n)))
 	     +nan.0)))
 	 
    (js-bind! %this obj 'getUTCHours

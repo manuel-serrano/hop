@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Mon Dec  7 11:25:32 2015 (serrano)                */
+/*    Last change :  Fri Dec 18 08:14:33 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -16,7 +16,7 @@
 const path = require( "path" );
 const config = require( hop.config );
 
-const ipath = path.join( config.shareDir, "icons", "hop" );
+const ipath = path.join( config.iconsDir, "hop" );
 
 /*---------------------------------------------------------------------*/
 /*    title ...                                                        */

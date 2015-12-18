@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Sat Nov 28 11:27:00 2015 (serrano)                */
+/*    Last change :  Thu Dec 17 16:41:32 2015 (serrano)                */
 /*    Copyright   :  2007-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -427,13 +427,14 @@ function BgL_setTimeoutz00( proc, timeout ) {
 	    ctx.__hop_cdr.__hop_car = estk;
 	 }
 
-	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx,
+	 proc = hop_callback( sc_arity_check( proc, arguments.length - 2 ), ctx,
 			      "setTimeout( ..., " + timeout + ")" );
+	 arguments[ 0 ] = proc;
       }
    }
 #endif
 
-   return setTimeout( proc, timeout );
+   return setTimeout.apply( this, arguments );
 }
 
 /*---------------------------------------------------------------------*/
@@ -471,13 +472,14 @@ function BgL_setIntervalz00( proc, timeout ) {
 	    ctx.__hop_cdr.__hop_car = estk;
 	 }
 
-	 proc = hop_callback( sc_arity_check( proc, 0 ), ctx,
+	 proc = hop_callback( sc_arity_check( proc, arguments.length - 2 ), ctx,
 			      "setInterval( ..., " + timeout + ")" );
+	 arguments[ 0 ] = proc;
       }
    }
 #endif
 
-   return setInterval( proc, timeout );
+   return setInterval.apply( this, arguments );
 }
 
 /*---------------------------------------------------------------------*/

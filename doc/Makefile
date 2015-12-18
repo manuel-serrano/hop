@@ -3,12 +3,12 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Dec  4 17:00:02 2015 (serrano)                */
+#*    Last change :  Fri Dec 18 08:17:45 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
-do: build
+do: builddoc
 
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
@@ -19,6 +19,8 @@ do: build
 HOPFLAGS=-q --no-autoload --no-clear-cache --no-cache --no-server
 HOP_MODULES=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/node_modules
 HOP_LIBS_PATH=$(HOP_MODULES)/markdown/lib/.libs/$(HOPRELEASE)/$(MACH):$(HOP_MODULES)/fontifier/lib/.libs/$(HOPRELEASE)/$(MACH)
+HOPBOOTFLAGS=--js-modules-dir $(BUILDDIR)/node_modules --icons-dir \
+  $(BUILDDIR)/share/icons
 
 #*---------------------------------------------------------------------*/
 #*    Population                                                       */
@@ -84,7 +86,10 @@ VPATH=api lang dev widget \
 #*---------------------------------------------------------------------*/
 .PHONY: build clean install uninstall
 
-build: $(ALL_TARGETS) \
+build:
+	$(MAKE) builddoc HOPFLAGS="$(HOPFLAGS) $(HOPBOOTFLAGS)"
+
+builddoc: $(ALL_TARGETS) \
   hss/markdown.css hss/fontifier.css hss/doc.css html-idx.json
 
 

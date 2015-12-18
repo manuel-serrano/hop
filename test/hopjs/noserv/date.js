@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Nov  5 13:08:12 2015 (serrano)                */
+/*    Last change :  Fri Dec 18 08:51:49 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
@@ -327,3 +327,20 @@ assert.ok( date.getDate() == 2 );
 var invalid = new Date( undefined );
 assert.ok( isNaN( invalid ) );
 assert.ok( invalid != invalid.valueOf() );
+
+/*---------------------------------------------------------------------*/
+/*    utc                                                              */
+/*---------------------------------------------------------------------*/
+function toPostgresString( date ) {
+   return date.getUTCFullYear() + '-'
+      + (date.getUTCMonth()+1)
+      + '-' + date.getUTCDate()
+      + ' ' + date.getUTCHours()
+      + ':' + date.getUTCMinutes()
+      + ':' + date.getUTCSeconds();
+}
+
+var d = new Date( 2014, 10, 4, 00, 22, 45 );
+
+assert.ok( toPostgresString( d ) === "2014-11-3 23:22:45", "UTC date" );
+

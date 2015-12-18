@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Nov 29 08:05:46 2015 (serrano)                */
+;*    Last change :  Fri Dec 18 07:56:54 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -24,7 +24,15 @@
 	      (args read-only (default #f))
 	      (url read-only)))
 
-   (export (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
+   (export (nodejs-modules-directory::bstring)
+	   (nodejs-modules-directory-set! ::bstring)
+	   (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-modules-directory ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter nodejs-modules-directory
+   (make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-js ...                                                    */
@@ -213,7 +221,7 @@
 	       ;; info
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
-	       `(modulesDir . ,(make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
+	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
 	       (define-js port 0
 		  (lambda (this)
 		     (hop-port)))
