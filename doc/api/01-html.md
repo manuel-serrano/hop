@@ -19,9 +19,10 @@ use only. These are described in this document.
 
 Hop.js extends the HTML5 `<head>` attributes with the following list:
 
- * `require`: a string or an array of strings. The list of modules that
- can be _required_ in client side code.
- * `jscript`: a string or an array of strings. The list of client-side scripts
+ * `module`: a string or an array of strings. The list of modules that
+ can be _required_ in client side code. Requiring a module from a client-side
+ code not listed in this list raises a runtime error.
+ * `script`: a string or an array of strings. The list of client-side scripts
  that are used by the document. This attribute is automatically expanded
  into the correspondant list of `<SCRIPT>` nodes.
  * `css`: a string or an array of strings. The list of Hop.js Cascading Style
