@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Nov 25 10:36:26 2015 (serrano)                */
+;*    Last change :  Fri Dec 18 08:13:24 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -93,6 +93,8 @@
 	     (hop-upload-directory-set! (make-file-name dir "upload")))
 	    (("--cache-dir" ?dir (help "Set cache directory"))
 	     (hop-cache-directory-set! dir))
+	    (("--icons-dir" ?dir (help "Set Hop icons directory"))
+	     (hop-icons-directory-set! dir))
 	    (("--no-cache" (help "Disable server caching"))
 	     (hop-cache-enable-set! #f))
 	    (("--clear-cache" (help "Clear all caches"))
@@ -285,7 +287,8 @@
 	    ;; PATHS
 	    (section "Paths")
 	    ((("-I" "--path") ?path (help "Add <PATH> to hop load path"))
-	     (hop-path-set! (cons path (hop-path))))
+	     (hop-path-set! (cons path (hop-path)))
+	     (nodejs-resolve-extend-path! (list path)))
 	    ((("-L" "--library-path") ?path (help "Add <PATH> to hop library path"))
 	     (bigloo-library-path-set! (cons path (bigloo-library-path))))
 	    ((("-l" "--library") ?library (help "Preload additional <LIBRARY>"))
@@ -315,6 +318,8 @@
 		   ((or (string=? val "false") (string=? val "#f")) #f)
 		   ((string->number val) => (lambda (val) val))
 		   (else val))))
+	    (("--js-modules-dir" ?dir (help "Set default node_modules dir"))
+	     (nodejs-modules-directory-set! dir))
 	    ;; Internals
 	    (section "Internals")
 	    (("--configure" ?config (help "Report HOP configuration"))
@@ -665,7 +670,7 @@
    (cond
       ((or (string-suffix? ".js" name) (not (string? context-or-path)))
        (let ((scope context-or-path))
-	  (nodejs-resolve name scope (js-get scope 'module scope))))
+	  (nodejs-resolve name scope (js-get scope 'module scope) 'head)))
       (else
        (let ((path context-or-path))
 	  (find-file/path name path)))))

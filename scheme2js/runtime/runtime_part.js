@@ -2237,22 +2237,44 @@ var sc_Vector = Array;
 function sc_vector2array(v) {
    return v;
 }
+   
+function sc_VectorToWriteOrDisplayString(writeOrDisplay) {
+   if (this.length === 0) return "#()";
 
-sc_Vector.prototype.sc_toWriteOrDisplayString = function(writeOrDisplay) {
-    if (this.length === 0) return "#()";
+   var res = "#(" + writeOrDisplay(this[0]);
+   for (var i = 1; i < this.length; i++)
+      res += " " + writeOrDisplay(this[i]);
+   res += ")";
+   return res;
+}
+   
+function sc_VectorToDisplayString() {
+   return this.sc_toWriteOrDisplayString(sc_toDisplayString);
+}
 
-    var res = "#(" + writeOrDisplay(this[0]);
-    for (var i = 1; i < this.length; i++)
-	res += " " + writeOrDisplay(this[i]);
-    res += ")";
-    return res;
-};
-sc_Vector.prototype.sc_toDisplayString = function() {
-    return this.sc_toWriteOrDisplayString(sc_toDisplayString);
-};
-sc_Vector.prototype.sc_toWriteString = function() {
+function sc_VectorToWriteString() {
     return this.sc_toWriteOrDisplayString(sc_toWriteString);
-};
+}
+
+if( "defineProperty" in Object ) {
+   Object.defineProperty( sc_Vector, "sc_toWriteOrDisplayString", {
+      value: sc_VectorToWriteOrDisplayString,
+      enumerable: false
+   } );
+   Object.defineProperty( sc_Vector, "sc_toDisplayString", {
+      value: sc_VectorToDisplayString,
+      enumerable: false
+   } );
+   Object.defineProperty( sc_Vector, "sc_toWriteString", {
+      value: sc_VectorToWriteString,
+      enumerable: false
+   } );
+} else {
+   sc_Vector.prototype.sc_toWriteOrDisplayString = sc_VectorToWriteOrDisplayString;
+   sc_Vector.prototype.sc_toDisplayString = sc_VectorToDisplayString;
+   sc_Vector.prototype.sc_toWriteString = sc_VectorToWriteString;
+}
+
 
 /*** META ((export vector? array?) (arity #t)
            (type bool))

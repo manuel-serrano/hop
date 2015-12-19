@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Nov 28 10:59:47 2015 (serrano)                */
+;*    Last change :  Wed Dec 16 07:59:52 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -19,6 +19,7 @@
    (library hop js2scheme)
    
    (import __hopscript_types
+	   __hopscript_lib
 	   __hopscript_object
 	   __hopscript_function
 	   __hopscript_error
@@ -1432,39 +1433,10 @@
 		(write-circle o op)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object->keyword-arguments* ...                                */
-;*---------------------------------------------------------------------*/
-(define (js-object->keyword-arguments* obj %this)
-   
-   (define (flatten lst)
-      (let flatten ((lst lst)
-		    (res '()))
-	 (cond
-	    ((null? lst)
-	     (reverse! res))
-	    ((isa? (car lst) JsArray)
-	     (flatten (append (xml-unpack (car lst)) (cdr lst)) res))
-	    (else
-	     (flatten (cdr lst) (cons (car lst) res))))))
-
-   (let ((acc '()))
-      (js-for-in obj
-	 (lambda (k)
-	    (let ((val (js-get obj k %this))
-		  (key (string->keyword (js-jsstring->string k))))
-	       (if (isa? val JsArray)
-		   (with-access::JsArray val (vec)
-		      (let ((l (flatten (vector->list vec))))
-			 (if (pair? l)
-			     (set! acc (append (reverse! l) (cons key acc)))
-			     (set! acc (cons* '() (cons key acc))))))
-		   (set! acc
-		      (cons* val key acc)))))
-	 %this)
-      (reverse! acc)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-html-head ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Normally overriden by nodejs-head@__nodejs_require               */
+;*    (see nodejs/require.scm).                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-html-head %this)
    (js-make-function %this

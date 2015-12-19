@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sat Nov 21 07:31:25 2015 (serrano)                */
+/*    Last change :  Fri Dec 18 08:07:54 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -270,6 +270,7 @@ function compileChapter( json ) {
 /*    compileMain ...                                                  */
 /*---------------------------------------------------------------------*/
 function compileMain( content ) {
+
    var document = <html>
      <head css=${css}
 	   title=${doc.title}

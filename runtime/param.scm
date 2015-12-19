@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Oct 19 08:38:32 2015 (serrano)                */
+;*    Last change :  Fri Dec 18 08:14:04 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -228,7 +228,8 @@
 	    (hop-server-addresses::pair-nil)
 	    (hop-server-addresses-set! ::pair-nil)
 	    
-	    (hop-icons-directory)
+	    (hop-icons-directory::bstring)
+	    (hop-icons-directory-set! ::bstring)
 
 	    (hop-connection-ttl::int) 
 	    (hop-connection-ttl-set! ::int)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu Nov 26 15:24:09 2015 (serrano)                */
+;*    Last change :  Fri Dec 18 08:37:55 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -897,10 +897,22 @@
 	  (attributes attributes)
 	  (body body)))
       (else
-       (let ((a (append-map (lambda (a)
-			       (list (symbol->keyword (car a)) (cdr a)))
-			    attributes))
-	     (constr (eval constr)))
+       (let* ((a (append-map (lambda (a)
+				(list (symbol->keyword (car a)) (cdr a)))
+		    attributes))
+	      (constr (with-handler
+			 (lambda (e)
+			    (with-access::&error e (msg)
+			       (if (string=? msg "Unbound variable")
+				   ;; create an opaque XML object
+				   (lambda l
+				      (instantiate::xml-markup
+					 (tag constr)
+					 (attributes a)
+					 (body body)))
+				   ;; re-raise the other errors
+				   (raise e))))
+			 (eval constr))))
 	  (if (procedure? constr)
 	      (apply constr (append a body))
 	      (error "string->xml" "Illegal markup" constr))))))

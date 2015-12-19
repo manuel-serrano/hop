@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Nov 19 13:25:09 2015 (serrano)                */
+#*    Last change :  Tue Dec 15 07:42:51 2015 (serrano)                */
 #*    Copyright   :  2006-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -32,7 +32,8 @@ POPULATION	= Makefile Makefile.weblet Makefile.library \
                   hop.man.in hopsh.man.in hopreplay.man.in \
                   hopc.sh.in hopwidget.init.in hglog.scm hopjs.el.in \
                   node_crypto_groups.h node_crypto_groups.c \
-                  mkserializer.hop hop.sh.in hopc.sh.in
+                  mkserializer.hop hop.sh.in hopc.sh.in \
+                  hop-autoconf.js.in hop-boot.js.in
 
 install:
 	cp Makefile.hopconfig $(DESTDIR)$(HOPLIBDIR)/hop/$(HOPRELEASE)/Makefile.hopconfig

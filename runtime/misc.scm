@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 15 11:28:31 2004                          */
-;*    Last change :  Mon Oct 19 08:38:44 2015 (serrano)                */
+;*    Last change :  Sat Dec 12 13:33:30 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP misc                                                         */
@@ -49,6 +49,7 @@
 	    (inline input-timeout-set! ::input-port ::int)
 	    (inline output-timeout-set! ::output-port ::int)
 	    (inline socket-timeout-set! ::socket ::int ::int)
+	    (socket-buffers-detach! ::socket)
 	    (call-in-background ::procedure)))
 
 ;*---------------------------------------------------------------------*/
@@ -416,6 +417,19 @@
    (input-timeout-set! (socket-input socket) ti)
    '(output-timeout-set! (socket-output socket) to))
 
+;*---------------------------------------------------------------------*/
+;*    socket-buffers-detach! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    This function duplicates and rebinds the buffer associated       */
+;*    with a socket. It is used by persisent and asynchronous          */
+;*    responses.                                                       */
+;*---------------------------------------------------------------------*/
+(define (socket-buffers-detach! socket::socket)
+   (let ((in (socket-input socket))
+	 (out (socket-output socket)))
+      (input-port-buffer-set! in (string-copy (input-port-buffer in)))
+      (output-port-buffer-set! out (string-copy (output-port-buffer out)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    call-in-background ...                                           */
 ;*    -------------------------------------------------------------    */

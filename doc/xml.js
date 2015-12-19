@@ -16,7 +16,7 @@
 const path = require( "path" );
 const config = require( hop.config );
 
-const ipath = path.join( config.shareDir, "icons", "hop" );
+const ipath = path.join( config.iconsDir, "hop" );
 
 /*---------------------------------------------------------------------*/
 /*    title ...                                                        */

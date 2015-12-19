@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Nov  5 13:08:12 2015 (serrano)                */
+/*    Last change :  Sat Dec 19 08:09:03 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
@@ -327,3 +327,48 @@ assert.ok( date.getDate() == 2 );
 var invalid = new Date( undefined );
 assert.ok( isNaN( invalid ) );
 assert.ok( invalid != invalid.valueOf() );
+
+/*---------------------------------------------------------------------*/
+/*    utc                                                              */
+/*---------------------------------------------------------------------*/
+function toPostgresString( date ) {
+   return date.getUTCFullYear() + '-'
+      + (date.getUTCMonth()+1)
+      + '-' + date.getUTCDate()
+      + ' ' + date.getUTCHours()
+      + ':' + date.getUTCMinutes()
+      + ':' + date.getUTCSeconds();
+}
+
+var d = new Date( 2014, 10, 4, 00, 22, 45 );
+
+assert.ok( toPostgresString( d ) === "2014-11-3 23:22:45", "UTC date" );
+
+/*---------------------------------------------------------------------*/
+/*    parsing                                                          */
+/*---------------------------------------------------------------------*/
+function checkDate( d, year, month, date, hours, mins, secs, mils ) {
+   assert.ok( d.getFullYear() === year, "wrong year: " + d );
+   assert.ok( d.getMonth() === month, "wrong month: " + d );
+   assert.ok( d.getDate() === date, "wrong date:" + d );
+   assert.ok( d.getHours() === hours, "wrong hours: " + d );
+   assert.ok( d.getMinutes() === mins, "wrong minutes: " + d );
+   assert.ok( d.getSeconds() === secs, "wrong seconds: " + d );
+   assert.ok( d.getMilliseconds() === mils, "wrong milliseconds: " + d );
+}
+
+assert.ok( isNaN( new Date( 'not a date' ).getDate() ), "invalid date" );
+
+checkDate( new Date('2014-11-03'), 2014, 10, 3, 0, 0, 0, 0 );
+checkDate( new Date('2014-11-03 19'), 2014, 10, 3, 19, 0, 0, 0 );
+checkDate( new Date('2014-11-03 19:23'), 2014, 10, 03, 19, 23, 0, 0 );
+checkDate( new Date('2014-11-03 19:23:22'), 2014, 10, 03, 19, 23, 22, 0 );
+checkDate( new Date('2014-11-03 19:23:22.478'), 2014, 10, 03, 19, 23, 22, 478 );
+checkDate( new Date('2014-11-03 19:23:22.478+01:00'), 2014, 10, 03, 19, 23, 22, 478 );
+
+/*---------------------------------------------------------------------*/
+/*    UTC                                                              */
+/*---------------------------------------------------------------------*/
+var utc = Date.UTC( 2014, 10, 3, 19, 23, 22, 478 );
+
+assert.ok( utc === 1415042602478, "Date.UTC" );

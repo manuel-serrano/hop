@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Nov 16 08:35:21 2015 (serrano)                */
+#*    Last change :  Tue Dec 15 09:26:22 2015 (serrano)                */
 #*    Copyright   :  2004-15 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -124,13 +124,13 @@ uv=""
 
 hopsrfis=""
 
-rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js hop-require.js"
+rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js hop-require.js hop-boot.js"
 
 bglfail=false;
 
 hopservicebase="/hop"
 hopjssanssuffix='"hop"'
-hopjsfiles='"hop-autoconf.js" "runtime.js"'
+hopjsfiles='"hop-autoconf.js" "runtime.js" "hop-boot.js"'
  
 for p in $rts; do
   hopjsfiles="$hopjsfiles \"$p\""; 
@@ -355,58 +355,60 @@ while : ; do
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
       echo "Usage: configure [options]" >&2;
-      echo "   --prefix=dir.......... prefix to HOP install" >&2;
-      echo "   --etcdir=dir.......... Hop etc directory" >&2;
-      echo "   --bindir=dir.......... alternative Hop bin directory" >&2;
-      echo "   --libdir=dir.......... alternative Hop lib directory" >&2;
-      echo "   --sharedir=dir........ alternative Hop share directory" >&2;
-      echo "   --mandir=dir.......... alternative Hop man directory" >&2;
-      echo "   --webletsdir=dir...... alternative Hop weblets directory" >&2;
-      echo "   --contribsdir=dir..... alternative Hop contribs directory" >&2;
-      echo "   --docdir=dir.......... alternative Hop doc directory" >&2;
-      echo "   --mimetypes=file...... default mime.types file" >&2;
-      echo "   --jsmimetype=type..... default 'text/javascript'" >&2;
-      echo "   --cssmimetype=type.... default 'text/css'" >&2;
-      echo "   --bigloo=comp......... The Bigloo compiler ($bigloo)" >&2;
-      echo "   --bigloobindir=path... The Bigloo bin-dir path" >&2;
-      echo "   --bigloolibdir=path... The Bigloo lib-dir path" >&2;
-      echo "   --backend=backend..... The execution platform [native,jvm,dotnet]" >&2;
-      echo "   --link=method......... The link method [static,dynamic,library,felix]" >&2;
-      echo "   --afile=afile......... The Bigloo afile tool" >&2;
-      echo "   --btags=btags......... The Bigloo btags tool" >&2;
-      echo "   --bdepend=bdepend..... The Bigloo dependence tool" >&2;
-      echo "   --gzip................ The GNU zipper ($gzip)" >&2;
-      echo "   --install............. The installer ($install)" >&2;
-      echo "   --cc=cc............... The C compiler" >&2;
-      echo "   --bcflags=args........ The Bigloo C compilation options" >&2;
-      echo "   --bldflags=args....... The Bigloo C link options" >&2;
-      echo "   --extra-bcflags=args.. Additional Bigloo compilation options" >&2;
-      echo "   --bcflagsdev=args..... The devel Bigloo options" >&2;
-      echo "   --blflags=args........ The link options" >&2;
-      echo "   --bhflags=args........ The heap options" >&2;
-      echo "   --ccflags=args........ The C compilation options" >&2;
-      echo "   --devel............... Enables devel mode (safe but not debug)" >&2;
-      echo "   --debug[2]............ Enables Bigloo debug mode" >&2;
-      echo "   --pmem[2]............. Enables memory profiling mode" >&2;
-      echo "   --profile............. Enables Bigloo profiling mode" >&2;
-      echo "   --optimize............ Enables Bigloo optimization mode (default)" >&2;
-      echo "   --enable-ssl.......... Enables SSL support (default)" >&2;
-      echo "   --disable-ssl......... Disables SSL support" >&2;
-      echo "   --enable-locevent..... Enables location event support (default)" >&2;
-      echo "   --disable-locevent.... Disables location event support" >&2;
-      echo "   --enable-threads...... Enables multi-threading support (default)" >&2;
-      echo "   --disable-threads..... Disables multi-threading support" >&2;
-      echo "   --enable-avahi........ Enables AVAHI support (default)" >&2;
-      echo "   --disable-avahi....... Disables AVAHI support" >&2;
-      echo "   --enable-upnp......... Enables UPNP support (default)" >&2;
-      echo "   --disable-upnp........ Disables UPNP support" >&2;
-      echo "   --disable-libuv....... Disables LIBUV support" >&2;
-      echo "   --srfi=sym............ Activates this srfi (during compilation and runtime)" >&2;
-      echo "   --library=lib......... Add extra lib to Hop" >&2;
-      echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
-      echo "   --android............. Prepares the production of an Android apk" >&2;
-      echo "   --macosx.............. Prepares the production of a MacOSX bundle" >&2;
-      echo "   --apache-felix=path... Path to felix.jar" >&2;
+      echo "   --prefix=dir............... prefix to HOP install" >&2;
+      echo "   --etcdir=dir............... Hop etc directory" >&2;
+      echo "   --bindir=dir............... alternative Hop bin directory" >&2;
+      echo "   --libdir=dir............... alternative Hop lib directory" >&2;
+      echo "   --sharedir=dir............. alternative Hop share directory" >&2;
+      echo "   --mandir=dir............... alternative Hop man directory" >&2;
+      echo "   --webletsdir=dir........... alternative Hop weblets directory" >&2;
+      echo "   --contribsdir=dir.......... alternative Hop contribs directory" >&2;
+      echo "   --docdir=dir............... alternative Hop doc directory" >&2;
+      echo "   --mimetypes=file........... default mime.types file" >&2;
+      echo "   --jsmimetype=type.......... default 'text/javascript'" >&2;
+      echo "   --cssmimetype=type......... default 'text/css'" >&2;
+      echo "   --bigloo=comp.............. The Bigloo compiler ($bigloo)" >&2;
+      echo "   --bigloobindir=path........ The Bigloo bin-dir path" >&2;
+      echo "   --bigloolibdir=path........ The Bigloo lib-dir path" >&2;
+      echo "   --bigloo-prce=yes|no....... Enable/disable libunistring" >&2;
+      echo "   --bigloo-unistring=yes|no.. Enable/disable pcre" >&2;
+      echo "   --backend=backend.......... The execution platform [native,jvm,dotnet]" >&2;
+      echo "   --link=method.............. The link method [static,dynamic,library,felix]" >&2;
+      echo "   --afile=afile.............. The Bigloo afile tool" >&2;
+      echo "   --btags=btags.............. The Bigloo btags tool" >&2;
+      echo "   --bdepend=bdepend.......... The Bigloo dependence tool" >&2;
+      echo "   --gzip..................... The GNU zipper ($gzip)" >&2;
+      echo "   --install.................. The installer ($install)" >&2;
+      echo "   --cc=cc.................... The C compiler" >&2;
+      echo "   --bcflags=args............. The Bigloo C compilation options" >&2;
+      echo "   --bldflags=args............ The Bigloo C link options" >&2;
+      echo "   --extra-bcflags=args....... Additional Bigloo compilation options" >&2;
+      echo "   --bcflagsdev=args.......... The devel Bigloo options" >&2;
+      echo "   --blflags=args............. The link options" >&2;
+      echo "   --bhflags=args............. The heap options" >&2;
+      echo "   --ccflags=args............. The C compilation options" >&2;
+      echo "   --devel.................... Enables devel mode (safe but not debug)" >&2;
+      echo "   --debug[2]................. Enables Bigloo debug mode" >&2;
+      echo "   --pmem[2].................. Enables memory profiling mode" >&2;
+      echo "   --profile.................. Enables Bigloo profiling mode" >&2;
+      echo "   --optimize................. Enables Bigloo optimization mode (default)" >&2;
+      echo "   --enable-ssl............... Enables SSL support (default)" >&2;
+      echo "   --disable-ssl.............. Disables SSL support" >&2;
+      echo "   --enable-locevent.......... Enables location event support (default)" >&2;
+      echo "   --disable-locevent......... Disables location event support" >&2;
+      echo "   --enable-threads........... Enables multi-threading support (default)" >&2;
+      echo "   --disable-threads.......... Disables multi-threading support" >&2;
+      echo "   --enable-avahi............. Enables AVAHI support (default)" >&2;
+      echo "   --disable-avahi............ Disables AVAHI support" >&2;
+      echo "   --enable-upnp.............. Enables UPNP support (default)" >&2;
+      echo "   --disable-upnp............. Disables UPNP support" >&2;
+      echo "   --disable-libuv............ Disables LIBUV support" >&2;
+      echo "   --srfi=sym................. Activates this srfi (during compilation and runtime)" >&2;
+      echo "   --library=lib.............. Add extra lib to Hop" >&2;
+      echo "   --macosx................... Prepares the production of a MacOSX bundle" >&2;
+      echo "   --android.................. Prepares the production of an Android apk" >&2;
+      echo "   --macosx................... Prepares the production of a MacOSX bundle" >&2;
+      echo "   --apache-felix=path........ Path to felix.jar" >&2;
       exit 255;
   esac
   shift
@@ -1345,31 +1347,32 @@ echo "" >> $init
 chmod a-w $init
 
 # share/hop-autoconf.js
-init=share/hop-autoconf.js
+for init in hop-autoconf.js hop-boot.js; do
+  rm -f share/$init 2> /dev/null
+  echo "/* Automatically generated file (don't edit) */" > share/$init
 
-
-rm -f $init 2> /dev/null
-echo "/* Automatically generated file (don't edit) */" > $init
-
-cat etc/hop-autoconf.js.in \
-    | sed -e "s|@VERSION@|$version|" \
-          -e "s|@BRANCH@|$branch|" \
-          -e "s|@BACKEND@|$backend|" \
-          -e "s|@LINK@|$link|" \
-          -e "s|@URL@|$url|" \
-          -e "s|@BINDIR@|$bindir|" \
-          -e "s|@LIBDIR@|$libdir|" \
-          -e "s|@LIBPATH@|$libdir/hop/$version|" \
-          -e "s|@SHAREDIR@|$sharedir/$version|" \
-          -e "s|@ETCDIR@|$etcdir|" \
-          -e "s|@CONTRIBSDIR@|$contribsdir|" \
-          -e "s|@DOCDIR@|$docdir|" \
-          -e "s|@WEBLETSDIR@|$webletsdir|" \
-          -e "s|@LOCEVENT@|$locevent|" \
-          -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-    >> $init
-echo "" >> $init
-chmod a-w $init
+  cat etc/$init.in \
+      | sed -e "s|@VERSION@|$version|" \
+            -e "s|@BRANCH@|$branch|" \
+            -e "s|@BACKEND@|$backend|" \
+            -e "s|@LINK@|$link|" \
+            -e "s|@URL@|$url|" \
+            -e "s|@BINDIR@|$bindir|" \
+            -e "s|@LIBDIR@|$libdir|" \
+            -e "s|@LIBPATH@|$libdir/hop/$version|" \
+            -e "s|@SHAREDIR@|$sharedir/$version|" \
+            -e "s|@ETCDIR@|$etcdir|" \
+            -e "s|@CONTRIBSDIR@|$contribsdir|" \
+            -e "s|@DOCDIR@|$docdir|" \
+            -e "s|@WEBLETSDIR@|$webletsdir|" \
+            -e "s|@LOCEVENT@|$locevent|" \
+            -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|//[^\"]*$$||g" \
+            -e "/^[ \t]*$$/D" \
+      >> share/$init
+  echo "" >> share/$init
+  chmod a-w share/$init
+done
 
 # src/libraries.sch
 lib=src/libraries.sch

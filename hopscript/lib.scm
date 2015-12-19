@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Nov 25 20:30:28 2015 (serrano)                */
+;*    Last change :  Wed Dec 16 07:47:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -37,7 +37,8 @@
 	   (js-jsobject->plist ::JsObject ::JsGlobalObject)
 	   (js-jsobject->keyword-plist ::JsObject ::JsGlobalObject)
 	   (js-jsobject->alist ::JsObject ::JsGlobalObject)
-	   (js-dsssl-args->jsargs ::pair ::JsGlobalObject)))
+	   (js-dsssl-args->jsargs ::pair ::JsGlobalObject)
+	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-obj->jsobject ...                                             */
@@ -185,3 +186,35 @@
 	  (begin
 	     (set-car! (cdr as) (js-obj->jsobject (cadr as) %this))
 	     (loop (cddr as))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object->keyword-arguments* ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-object->keyword-arguments* obj %this)
+   
+   (define (flatten lst)
+      (let flatten ((lst lst)
+		    (res '()))
+	 (cond
+	    ((null? lst)
+	     (reverse! res))
+	    ((isa? (car lst) JsArray)
+	     (flatten (append (xml-unpack (car lst)) (cdr lst)) res))
+	    (else
+	     (flatten (cdr lst) (cons (car lst) res))))))
+
+   (let ((acc '()))
+      (js-for-in obj
+	 (lambda (k)
+	    (let ((val (js-get obj k %this))
+		  (key (string->keyword (js-jsstring->string k))))
+	       (if (isa? val JsArray)
+		   (with-access::JsArray val (vec)
+		      (let ((l (flatten (vector->list vec))))
+			 (if (pair? l)
+			     (set! acc (append (reverse! l) (cons key acc)))
+			     (set! acc (cons* '() (cons key acc))))))
+		   (set! acc
+		      (cons* val key acc)))))
+	 %this)
+      (reverse! acc)))

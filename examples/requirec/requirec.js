@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Thu Nov 26 17:06:33 2015 (serrano)                */
+/*    Last change :  Thu Dec 17 07:33:31 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    multitier require                                                */
@@ -13,7 +13,7 @@
 /*=====================================================================*/
 service requirec() {
    return <html> 
-     <head require= ${[ "./mod1.js", "./mod2.js" ]}>
+     <head module= ${[ "./mod1.js", "./mod2.js" ]}>
        ~{
 	  var mod1;
 

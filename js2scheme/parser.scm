@@ -813,6 +813,7 @@
 				      (mode mode)
 				      (generator gen)
 				      (name (cdr id))
+				      (mode mode)
 				      (params params)
 				      (vararg (rest-params params))
 				      (body body)))
@@ -845,7 +846,7 @@
 		 (parse-node-error "Illegal parameter declaration" init)))
 	  (parse-node-error "Illegal parameter declaration" init)))
 
-   (define (service-create token id params init body mode register declaration?)
+   (define (service-create token id params init body mode register declaration? import?::bool)
       (cond
 	 (declaration?
 	  (instantiate::J2SDeclSvc
@@ -854,11 +855,12 @@
 	     (val (instantiate::J2SSvc
 		     (loc (token-loc token))
 		     (register register)
+		     (import import?)
 		     (params params)
 		     (vararg (rest-params params))
 		     (name (cdr id))
 		     (init init)
-		     (mode 'strict)
+		     (mode mode)
 		     (path (cdr id))
 		     (body body)
 		     (decl (instantiate::J2SDecl
@@ -871,14 +873,13 @@
 	  (co-instantiate ((fun (instantiate::J2SSvc
 				   (loc (token-loc id))
 				   (register register)
+				   (import import?)
 				   (decl decl)
 				   (params params)
 				   (vararg (rest-params params))
 				   (name (cdr id))
 				   (init init)
-				   (mode (if (eq? mode 'hopscript)
-					     'hopscript
-					     'strict))
+				   (mode mode)
 				   (path (cdr id))
 				   (body body)))
 			   (decl (instantiate::J2SDeclFunCnst
@@ -893,11 +894,12 @@
 	  (instantiate::J2SSvc
 	     (loc (token-loc token))
 	     (register register)
+	     (import import?)
 	     (params params)
 	     (vararg (rest-params params))
 	     (name (gensym))
 	     (init init)
-	     (mode 'strict)
+	     (mode mode)
 	     (body body)))))
    
    (define (service-import token id params declaration?)
@@ -914,7 +916,8 @@
 				     (expr "(current-request)"))))))
 	       (init (instantiate::J2SNop
 			(loc loc))))
-	    (service-create token id params init body 'strict #f declaration?))))
+	    (service-create token id params init body 'strict
+	       #f declaration? #t))))
       
    (define (service-implement token id inits declaration?)
       (let* ((params (if (isa? inits J2SObjInit)
@@ -935,7 +938,8 @@
 		   (or id token))
 		(parse-token-error "Illegal parameter declaration"
 		   (or id token))))
-	 (service-create token id params init body mode #t declaration?)))
+	 (service-create token id params init body mode
+	    #t declaration? #f)))
 
    (define (import)
       (let* ((token (consume-token! 'service))
@@ -2327,13 +2331,13 @@
 ;*    disable-es6-rest-argument ::J2SFun ...                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-es6-rest-argument this::J2SFun)
-   (with-access::J2SFun this (vararg loc)
-      (if (eq? vararg 'rest)
+   (with-access::J2SFun this (vararg name loc mode)
+      (if (and (eq? vararg 'rest) (not (eq? mode 'hopscript)))
 	  (raise
 	     (instantiate::&io-parse-error
 		(proc "js-parser")
 		(msg "rest arguments values disabled")
-		(obj 'id)
+		(obj name)
 		(fname (cadr loc))
 		(location (caddr loc))))
 	  (call-default-walker))))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Oct 13 14:13:59 2015 (serrano)                */
+#*    Last change :  Tue Dec 15 07:50:23 2015 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -125,6 +125,8 @@ _crypto.sch: $(BUILDETCDIR)/node_crypto_groups.h \
   $(BUILDETCDIR)/node_crypto_groups.c
 	$(CC) $(BUILDETCDIR)/node_crypto_groups.c && ./a.out > $@
 	$(RM) a.out
+
+o/require.o: ../share/hop-boot.js
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/

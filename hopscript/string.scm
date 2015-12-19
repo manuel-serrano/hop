@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Sep 24 08:24:19 2015 (serrano)                */
+;*    Last change :  Sat Dec 12 11:48:15 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -190,7 +190,7 @@
 	  len
 	  (let loop ((r 0)
 		     (l 0))
-	     (if (=fx r len)
+	     (if (>=fx r len)
 		 l
 		 (let* ((c (string-ref str r))
 			(s (utf8-char-size c)))

@@ -1109,7 +1109,7 @@
       (with-access::J2SSvc this (init register name)
 	 (let ((proc (service-proc->scheme this args)))
 	    `(let ((@worker (js-current-worker)))
-		(js-make-service %this ,tmp ',scmid ,register ,arity @worker
+		(js-make-service %this ,tmp ',scmid ,register #f ,arity @worker
 		   (instantiate::hop-service
 		      (ctx %this)
 		      (proc ,proc)
@@ -1149,14 +1149,14 @@
 		,tmps))))
 
    (define (svc->scheme this)
-      (with-access::J2SSvc this (name params loc path mode register)
+      (with-access::J2SSvc this (name params loc path mode register import)
 	 (let ((args (j2s-scheme params mode return conf)))
 	    `(js-create-service %this
 		,(j2sfun->scheme this (jsfun->lambda this mode return conf)
 		    mode return conf)
 		,(when (symbol? path) (symbol->string path))
 		',loc
-		,register (js-current-worker)))))
+		,register ,import (js-current-worker)))))
 
    (with-access::J2SSvc this (loc)
       (if (config-get conf dsssl: #f) 

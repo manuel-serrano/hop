@@ -41,7 +41,7 @@
 	     (args-parse-usage #f)
 	     (exit 0))
 	    (("--version" (help "Print the version and exit"))
-	     (print (hop-name) (hop-version))
+	     (print (hop-name)"c-" (hop-version))
 	     (exit 0))
 	    (("-q" (help "Do not load an init file"))
 	     (set! loadp #f))

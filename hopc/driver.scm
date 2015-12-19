@@ -357,8 +357,10 @@
 	 (((and (? symbol?) ?sym) (and (? string?) ?path))
 	  (load-module sym path))
 	 ((? symbol?)
-	  (load-module module
-	     (car ((bigloo-module-resolver) module '() abase))))
+	  (let ((resolved ((bigloo-module-resolver) module '() abase)))
+	     (if (pair? resolved)
+		 (load-module module (car resolved))
+		 (error "hopc" "Cannot find module" module))))
 	 (else
 	  (error "hopc" "Illegal module clause" module))))
 	     

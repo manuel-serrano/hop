@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Nov 30 16:56:19 2015 (serrano)                */
+;*    Last change :  Fri Dec 11 09:23:56 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -821,7 +821,9 @@ usage: (js-return)  -- [RET]"
       (let ((col (save-excursion
 		   (beginning-of-line)
 		   (back-to-indentation)
-		   (hopjs-indent-new-line pmin nil 0)))
+		   (hopjs-indent-new-line
+		    (if (< (- (point) pmin) 800) pmin (- (point) 800))
+		    nil 0)))
 	    (col0 (current-column)))
 	(message ">> js--html-statement-indentation col=%s" col)
 	(if (looking-at "[ \t]*$")
@@ -935,9 +937,12 @@ usage: (js-return)  -- [RET]"
 		     (setq col candidate))
 		    (t
 		     (setq col (hopjs-indent-new-line pmin intag depth)))))))
-	    (if candidate
-		(setq col candidate)
-	      (setq col (hopjs-indent-new-line pmin intag depth)))))
+	    (cond
+	     (candidate
+	      (setq col candidate))
+	     ((< (point) pinit)
+	      (setq col (hopjs-indent-new-line pmin intag depth)))
+	     (t (setq col (progn (back-to-indentation) (current-column)))))))
 	(message "<<< hopjs-indent-new-line point=%s --> col=%s" pinit col)
 	col))))
 

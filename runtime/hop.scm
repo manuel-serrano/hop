@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Nov 27 08:25:10 2015 (serrano)                */
+;*    Last change :  Thu Dec 17 05:46:52 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -308,10 +308,8 @@
 		((assq :hop-error header)
 		 =>
 		 (lambda (c)
-		    (if (equal? (cdr c) "true")
-			(let ((val (http-callback-decode
-				      (header-content-type header)
-				      clength p ctx)))
+		    (if (cdr c)
+			(let ((val (string->obj (url-decode (cdr c)) ctx)))
 			   (if (procedure? fail)
 			       (fail val)
 			       (raise

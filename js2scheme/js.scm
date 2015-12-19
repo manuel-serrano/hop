@@ -56,7 +56,6 @@
 ;*---------------------------------------------------------------------*/
 (define (add-header! ast conf)
    (let ((header (config-get conf :header #f)))
-      (tprint "header=" header " type=" (typeof ast))
       (when (and header (isa? ast J2SProgram))
 	 (with-access::J2SProgram ast (headers loc)
 	    (set! headers (cons (instantiate::J2SPragma
@@ -74,6 +73,7 @@
 	  (string-append "_$" (substring s 1))
 	  s)))
 
+;*---------------------------------------------------------------------*/
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js* ...                                                      */
 ;*---------------------------------------------------------------------*/
@@ -777,7 +777,7 @@
    (with-access::J2SAssigOp this (op lhs rhs)
       (cons this
 	 (append (j2s-js lhs tildec dollarc mode evalp conf)
-	    (list (j2s-js-id op) "=")
+	    (list (j2s-op op) "=")
 	    (j2s-js rhs tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
@@ -835,7 +835,6 @@
 	 (append (j2s-js param tildec dollarc mode evalp conf)
 	    '(")")
 	    (j2s-js body tildec dollarc mode evalp conf)))))
-	    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SPragma ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -892,3 +891,11 @@
       (cons* this "function( " (j2s-js-id param) ", " (j2s-js-id exn)
 	 ") {" (append (j2s-js body tildec dollarc mode evalp conf) '("}")))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SPragma ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SPragma tildec dollarc mode evalp conf)
+   (with-access::J2SPragma this (expr lang)
+      (if (eq? lang 'javascript)
+	  (list this expr)
+	  (list this "undefined"))))

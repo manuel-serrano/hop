@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Nov 29 08:05:46 2015 (serrano)                */
+;*    Last change :  Sat Dec 19 10:30:15 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -24,7 +24,15 @@
 	      (args read-only (default #f))
 	      (url read-only)))
 
-   (export (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
+   (export (nodejs-modules-directory::bstring)
+	   (nodejs-modules-directory-set! ::bstring)
+	   (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-modules-directory ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter nodejs-modules-directory
+   (make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
 
 ;*---------------------------------------------------------------------*/
 ;*    define-js ...                                                    */
@@ -95,7 +103,7 @@
 	 (js-make-function %this
 	    (lambda (this url args)
 	       (js-new %this js-webservice url args))
-	    2 'webservice
+	    2 'webService
 	    :__proto__ js-function-prototype
 	    :prototype js-urlframe-prototype
 	    :construct (lambda (this url args)
@@ -213,12 +221,16 @@
 	       ;; info
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
-	       `(modulesDir . ,(make-file-path (hop-lib-directory) "hop" (hop-version) "node_modules"))
-	       (define-js port 0
-		  (lambda (this)
-		     (hop-port)))
+	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
+
+	       ;; port
+	       (define-js port 0 (lambda (this) (hop-port)))
+
+	       ;; services
+	       `(Service . ,(js-get %this 'Service %this))
+	       `(HopFrame . ,(js-get %this 'HopFrame %this))
 	       
-	       ;; requests
+	       ;; webService
 	       (define-js webService 1
 		  (lambda (this base)
 		     (let ((name (string->symbol (js-jsstring->string base))))

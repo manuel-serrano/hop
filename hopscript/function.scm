@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Nov  3 00:32:00 2015 (serrano)                */
+;*    Last change :  Thu Dec 10 21:33:59 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -302,6 +302,16 @@
 	 (else
 	  (js-raise-type-error %this "toString: not a function ~s"
 	     (js-typeof this)))))
+
+   (define (vector->sublist vec len)
+      (if (=fx (vector-length vec) len)
+	  (vector->list vec)
+	  (let loop ((i (-fx len 1))
+		     (acc '()))
+	     (if (=fx i -1)
+		 acc
+		 (loop (-fx i 1) (cons (vector-ref vec i) acc))))))
+
    
    (js-bind! %this obj 'toString
       :value (js-make-function %this tostring 0 "toString"
@@ -328,7 +338,7 @@
 		    (js-apply %this this thisarg
 		       (map (lambda (p)
 			       (if (eq? p (js-absent)) (js-undefined) p))
-			  (vector->list vec)))
+			  (vector->sublist vec len)))
 		    ;; slow path
 		    ;; CARE (5 jul 2014): MS NOT SURE OF THE SECOND ARGARRAY BELOW
 		    (js-apply %this this thisarg
