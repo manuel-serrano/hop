@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Dec 15 07:33:55 2015 (serrano)                */
+;*    Last change :  Sat Dec 19 15:22:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -67,7 +67,6 @@
    (let ((this (nodejs-new-global-object)))
       (fprintf op (hop-boot))
       (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
-      (fprintf op "hop[ '%requires' ][ ~s ] = function() { " (url-decode id))
       (flush-output-port op)
       (let ((header (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n" id filename filename)))
 	 (let ((offset (output-port-position op)))

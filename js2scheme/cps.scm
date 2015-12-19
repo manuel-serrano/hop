@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Dec 12 07:58:37 2015 (serrano)                */
+;*    Last change :  Sat Dec 19 19:49:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -308,6 +308,12 @@
        (incr ,incr)
        (body ,body)))
 
+(define-macro (J2SWhile test body)
+   `(instantiate::J2SWhile
+       (loc loc)
+       (test ,test)
+       (body ,body)))
+
 ;*---------------------------------------------------------------------*/
 ;*    empty-stmt? ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -420,14 +426,49 @@
    (define (make-yield-kont k loc)
       (let* ((id (gensym '%arg))
 	     (exn (gensym '%exn))
+	     (body (k (J2SHopRef id)))
 	     (cont (J2SIf (J2SBinary '=== (J2SHopRef exn) (J2SBool #t))
 		      (J2SThrow (J2SHopRef id))
-		      (k (J2SHopRef id)))))
+		      (if (isa? body J2SExpr)
+			  (J2SStmtExpr body)
+			  body))))
 	 (J2SKont id exn (pack cont))))
    
    (with-access::J2SYield this (loc expr generator)
       (if generator
-	  (tprint "TODO")
+	  (let* ((gen (gensym '%generator))
+		 (val (gensym '%next))
+		 (gendecl (J2SLetOpt '(expr) gen
+			     expr))
+		 (genval (J2SLetOpt '(expr) val
+			    (J2SCall
+			       (J2SAccess
+				  (J2SRef gendecl)
+				  (J2SString "next")))))
+		 (nexpr (J2SExprStmt
+			   (J2SLetBlock (list gendecl genval)
+			      (J2SSeq
+;* 				 (J2SWhile (J2SAccess                  */
+;* 					      (J2SRef genval)          */
+;* 					      (J2SString "done"))      */
+;* 				    (J2SSeq                            */
+;* 				       (J2SYield                       */
+;* 					  (J2SAccess                   */
+;* 					     (J2SRef genval)           */
+;* 					     (J2SString "value"))      */
+;* 					  #f)                          */
+;* 				       (J2SAssig (J2SRef genval)       */
+;* 					  (J2SCall                     */
+;* 					     (J2SAccess                */
+;* 						(J2SRef gendecl)       */
+;* 						(J2SString "next")))))) */
+				 (J2SAccess
+				    (J2SRef genval)
+				    (J2SString "value")))))))
+	     (tprint "exp=" (j2s->list nexpr))
+	     (let ((v (cps nexpr k pack kbreaks kcontinues)))
+		(tprint "<<< " (j2s->list v))
+		v))
 	  (let ((kont (make-yield-kont k loc)))
 	     (if (yield-expr? expr kbreaks kcontinues)
 		 (cps expr
@@ -463,11 +504,10 @@
 (define-method (cps this::J2SStmtExpr k pack kbreaks kcontinues)
    (with-access::J2SStmtExpr this (loc expr)
       (if (yield-expr? expr kbreaks kcontinues)
-	  (J2SStmtExpr
-	     (cps expr
-		(lambda (ke::J2SExpr)
-		   (k (J2SStmtExpr ke)))
-		pack kbreaks kcontinues))
+	  (cps expr
+	     (lambda (ke::J2SExpr)
+		(k (J2SStmtExpr ke)))
+	     pack kbreaks kcontinues)
 	  (k this))))
 
 ;*---------------------------------------------------------------------*/
@@ -506,6 +546,14 @@
 ;*    cps ::J2SSequence ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SSequence k pack kbreaks kcontinues)
+
+   (define (pack-sequence::J2SSequence this::J2SSequence prev res)
+      (if (pair? prev)
+	  (set-cdr! prev (list res))
+	  (with-access::J2SSequence this (exprs)
+	     (set! exprs (list res))))
+      this)
+   
    (with-access::J2SSequence this (loc exprs)
       (let loop ((walk exprs)
 		 (pexprs '()))
@@ -514,18 +562,17 @@
 	     (k this))
 	    ((not (yield-expr? (car walk) kbreaks kcontinues))
 	     (loop (cdr walk) walk))
+	    ((null? (cdr walk))
+	     (pack-sequence this pexprs
+		(cps (car walk)
+		   k pack kbreaks kcontinues)))
 	    (else
-	     (let ((head (cps (car walk)
-			    (lambda (khead::J2SExpr)
-			       (cps (J2SSequence* (cons khead (cdr walk)))
-				  k
-				  pack kbreaks kcontinues))
-			    pack kbreaks kcontinues)))
-		(if (pair? pexprs)
-		    (begin
-		       (set-cdr! pexprs (list head))
-		       this)
-		    head)))))))
+	     (pack-sequence this pexprs
+		(cps (car walk)
+		   (lambda (khead::J2SExpr)
+		      (cps (J2SSequence* (cons khead (cdr walk)))
+			 k pack kbreaks kcontinues))
+		   pack kbreaks kcontinues)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SDecl ...                                                */

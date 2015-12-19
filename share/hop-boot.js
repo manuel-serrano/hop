@@ -17,7 +17,7 @@
 /*---------------------------------------------------------------------*/
 if( !('hop' in window) ) {
    window.hop = {
-      'version': "3.0.0",
+      'version': "3.1.0",
       '%modules': {},
       '%requires': {},
       List: sc_list,
