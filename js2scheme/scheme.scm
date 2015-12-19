@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Dec  9 16:19:40 2015 (serrano)                */
+;*    Last change :  Fri Dec 11 18:26:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -935,7 +935,7 @@
 	       (jsfun-strict-vararg-body fun body id rest)))))
 
    (define (generator-body generator body)
-      `(letrec ((%gen (js-make-generator (lambda (%val) ,body) %this)))
+      `(letrec ((%gen (js-make-generator (lambda (%v %e) ,body) %this)))
 	  %gen))
 
    (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator)
@@ -2468,9 +2468,10 @@
 ;*    j2s-scheme ::J2SKont ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SKont mode return conf)
-   (with-access::J2SKont this (loc param body)
+   (with-access::J2SKont this (loc param exn body)
       (epairify loc
-	 `(lambda (,param) ,(j2s-scheme body mode return conf)))))
+	 `(lambda (,param ,exn)
+	     ,(j2s-scheme body mode return conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    concat-tilde ...                                                 */

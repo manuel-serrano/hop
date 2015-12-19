@@ -4,14 +4,14 @@ const hop = ((function() {
 	 this.next = kont;
 	 return { value: val, done: done }
       },
-      kid: function( n ) {
+      kid: function( n, exn ) {
 	 return { value: undefined, done: true };
       }
    }
       
    function gen( proc ) {
       this.next = proc;
-      this.done = false;
+      this.throw = function( exn ) { return this.next( exn, true ) };
    }
 
    gen.prototype = proto;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec  9 16:20:01 2015 (serrano)                */
+;*    Last change :  Tue Dec 15 20:46:49 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -32,6 +32,7 @@
       (name "javascript")
       (comment "JavaScript code generation")
       (proc (lambda (ast conf)
+	       (add-header! ast conf)
 	       (call-with-eval-module (eval! `(module ,(gensym)))
 		  (lambda ()
 		     (eval! `(define %this ,(config-get conf :%this)))
@@ -49,6 +50,20 @@
 				       (let ((expr (j2s-scheme node mode evalp conf)))
 					  (write (eval! expr) op)))))))
 			'normal (lambda (x) x) conf)))))))
+
+;*---------------------------------------------------------------------*/
+;*    add-header! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (add-header! ast conf)
+   (let ((header (config-get conf :header #f)))
+      (tprint "header=" header " type=" (typeof ast))
+      (when (and header (isa? ast J2SProgram))
+	 (with-access::J2SProgram ast (headers loc)
+	    (set! headers (cons (instantiate::J2SPragma
+				   (loc loc)
+				   (lang 'javascript)
+				   (expr header))
+			     headers))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-id ...                                                    */
@@ -214,7 +229,7 @@
 		(append
 		   (j2s-js-ellipsis this "(" ")" "," ellipsis
 		      params tildec dollarc mode evalp conf)
-		   '("{ var $GEN = new hop.Generator( function() { ")
+		   '("{ var $GEN = new hop.Generator( function(_$v,_$e) { ")
 		   (j2s-js body tildec dollarc mode evalp conf)
 		   '("}); return $GEN;}"))))))))
 
@@ -660,20 +675,22 @@
 	 (append (j2s-js expr tildec dollarc mode evalp conf) '(")")))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-op ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-op op)
+   (case op
+      ((OR) "||")
+      ((BIT_OR) "|")
+      (else (symbol->string op))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SBinary ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SBinary tildec dollarc mode evalp conf)
-
-   (define (j2s-op op)
-      (case op
-	 ((OR) '("||"))
-	 ((BIT_OR) '("|"))
-	 (else (list " " (symbol->string op) " "))))
-   
    (with-access::J2SBinary this (lhs rhs op)
       (cons this
 	 (append (j2s-js lhs tildec dollarc mode evalp conf)
-	    (j2s-op op)
+	    (list " " (j2s-op op) " ")
 	    (j2s-js rhs tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
@@ -820,6 +837,15 @@
 	    (j2s-js body tildec dollarc mode evalp conf)))))
 	    
 ;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SPragma ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SPragma tildec dollarc mode evalp conf)
+   (with-access::J2SPragma this (expr lang)
+      (if (eq? lang 'javascript)
+	  (list this expr)
+	  (list this "undefined"))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SYield ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SYield tildec dollarc mode evalp conf)
@@ -846,7 +872,7 @@
 		(if (eq? kont #t) '("true") '("false"))
 		'(",")
 		'("$GEN.kid")
-		'(");"))))
+		'(")"))))
 	 (else
 	  (cons* this "return $GEN.yield("
 	     (append (j2s-js expr tildec dollarc mode evalp conf)
@@ -856,21 +882,13 @@
 		(if (eq? kont #t)
 		    '("$GEN.done")
 		    (j2s-js kont tildec dollarc mode evalp conf))
-		'(");")))))))
+		'(")")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SKont ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SKont tildec dollarc mode evalp conf)
-   (with-access::J2SKont this (param body)
-      (cons* this "function( " (j2s-js-id param )") {"
-	 (append (j2s-js body tildec dollarc mode evalp conf) '("}")))))
+   (with-access::J2SKont this (param exn body)
+      (cons* this "function( " (j2s-js-id param) ", " (j2s-js-id exn)
+	 ") {" (append (j2s-js body tildec dollarc mode evalp conf) '("}")))))
 
-;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SPragma ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SPragma tildec dollarc mode evalp conf)
-   (with-access::J2SPragma this (expr lang)
-      (if (eq? lang 'javascript)
-	  (list this expr)
-	  (list this "undefined"))))

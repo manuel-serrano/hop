@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Wed Dec  9 19:42:08 2015 (serrano)                */
+/*    Last change :  Sat Dec 12 08:06:24 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
@@ -89,8 +89,13 @@ function* seq8( i )  {
 
 function* seq9( i )  {
    {
-      { i += (yield i++); }
+      {
+	 i++; i += (yield i );
+      }
    }
+/*       { i += (yield i++); }                                         */
+/*       { i += (yield i++); }                                         */
+/*    }                                                                */
    return i;
 }
 
@@ -1625,5 +1630,79 @@ assert.ok( equal( g.next(), { value: '2', done: false } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 
-
+/*---------------------------------------------------------------------*/
+/*    mdn                                                              */
+/*---------------------------------------------------------------------*/
+function* mdna() {
+   var index = 0;
    
+   while( index < 3 )
+      yield index++;
+}
+
+function* mdnb1() {
+  yield 2;
+  yield 3;
+  yield 4;
+}
+
+function* mdnb() {
+  yield 1;
+  yield* mdnb1();
+  yield 5;
+}
+
+function* mdnc1() {
+  yield* [1, 2, 3];
+  return "foo";
+}
+
+var mdncresult;
+
+function* mdnc2() {
+  mdncresult = yield* g4();
+}
+
+function* mdnd() {
+  yield* [1, 2];
+  yield* "34";
+  yield* Array.from(arguments);
+}
+
+console.log( "mdn..." );
+
+console.log( "mdna()" );
+g = mdna();
+
+assert.ok( equal( g.next(), { value: 0, done false } ) );
+assert.ok( equal( g.next(), { value: 1, done false } ) );
+assert.ok( equal( g.next(), { value: 2, done false } ) );
+assert.ok( equal( g.next(), { value: undefined, done true } ) );
+
+console.log( "mdnb()" );
+g = mdnb();
+
+assert.ok( equal( g.next(), { value: 0, done false } ) );
+assert.ok( equal( g.next(), { value: 1, done false } ) );
+assert.ok( equal( g.next(), { value: 2, done false } ) );
+assert.ok( equal( g.next(), { value: 3, done false } ) );
+assert.ok( equal( g.next(), { value: 4, done false } ) );
+assert.ok( equal( g.next(), { value: 5, done false } ) );
+assert.ok( equal( g.next(), { value: undefined, done true } ) );
+
+console.log( "mdnc()" );
+g = mdnc();
+
+assert.ok( equal( g.next(), { value: 1, done false } ) );
+assert.ok( equal( g.next(), { value: 2, done false } ) );
+assert.ok( equal( g.next(), { value: 3, done false } ) );
+assert.ok( equal( g.next(), { value: undefined, done true } ) );
+assert.ok( equal( mdcresult, "foo" ) );
+
+console.log( "mdnd()" );
+g = mdnd();
+assert.ok( equal( g.next(), { value: 1, done false } ) );
+assert.ok( equal( g.next(), { value: 2, done false } ) );
+assert.ok( equal( g.next(), { value: 3, done false } ) );
+assert.ok( equal( g.next(), { value: 4, done false } ) );
+assert.ok( equal( g.next(), { value: undefined, done true } ) );

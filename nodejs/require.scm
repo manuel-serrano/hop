@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Dec  9 08:36:17 2015 (serrano)                */
+;*    Last change :  Tue Dec 15 07:33:55 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -53,12 +53,19 @@
 	       (generate-source-map tree ifile ofile p))))))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-boot ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (hop-boot)
+   (file->string "../share/hop-boot.js"))
+
+;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (module->javascript filename::bstring id op compile isexpr srcmap)
    (let ((this (nodejs-new-global-object)))
-      (fprintf op "hop_requires[ ~s ] = function() { "
-	 (url-decode id))
+      ;; see nodejs/require.js
+      (fprintf op (hop-boot))
+      (fprintf op "hop[ '%requires' ][ ~s ] = function() { " (url-decode id))
       (display "var exports = {}; " op)
       (fprintf op "var module = { id: ~s, filename: ~s, loaded: true, exports: exports }; " id filename)
       (flush-output-port op)
@@ -820,7 +827,8 @@
    (define (resolve-error x)
       (with-access::JsGlobalObject %this (js-uri-error)
 	 (let ((exn (js-new %this js-uri-error
-		       (format "Cannot find module ~s" name) 7)))
+		       (js-string->jsstring (format "Cannot find module ~s" name))
+		       7)))
 	    (js-put! exn 'code (js-string->jsstring "MODULE_NOT_FOUND")
 	       #f %this)
 	    (js-raise exn))))

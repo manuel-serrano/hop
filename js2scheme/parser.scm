@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec  7 13:52:57 2015 (serrano)                */
+;*    Last change :  Sat Dec 12 07:58:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1303,7 +1303,10 @@
 	  (access-or-call (primary) loc #f))))
 
    (define (yield-expr)
-      (let ((loc (token-loc (consume-token! 'yield))))
+      (let ((loc (token-loc (consume-token! 'yield)))
+	    (gen (when (eq? (peek-token-type) '*)
+		    (consume-any!)
+		    #t)))
 	 (cond
 	    ((or (case (peek-token-type)
 		    ((EOF ERROR SEMICOLON RPAREN RBRACKET) #t)
@@ -1311,12 +1314,14 @@
 		 (at-new-line-token?))
 	     (instantiate::J2SYield
 		(loc loc)
+		(generator gen)
 		(expr (instantiate::J2SUndefined
 			 (loc loc)))))
 	    (else
 	     (let ((expr (assig-expr #f)))
 		(instantiate::J2SYield
 		   (loc loc)
+		   (generator gen)
 		   (expr expr)))))))
    
    (define (tag-call-arguments loc)

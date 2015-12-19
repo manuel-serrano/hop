@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Dec  9 09:00:47 2015 (serrano)                */
+;*    Last change :  Tue Dec 15 20:02:49 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -113,6 +113,7 @@
 	   
 	   (final-class J2SYield::J2SExpr
 	      expr::J2SExpr
+	      (generator::bool read-only (default #f))
 	      (kont read-only (default #f)))
 	   
 	   (final-class J2SWith::J2SStmt
@@ -137,7 +138,8 @@
 	   (class J2SSvc::J2SFun
 	      init::J2SNode
 	      (path::obj read-only (default #f))
-	      (register::bool read-only (default #t)))
+	      (register::bool read-only (default #t))
+	      (import::bool read-only))
 
 	   (class J2SArrow::J2SFun)
 	   
@@ -321,6 +323,7 @@
 
 	   (final-class J2SKont::J2SExpr
 	      (param::symbol read-only)
+	      (exn::symbol read-only)
 	      body::J2SNode)
 	   
 	   (generic walk0 n::J2SNode p::procedure)
