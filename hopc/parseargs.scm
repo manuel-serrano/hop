@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Dec 10 18:49:38 2015 (serrano)                */
+;*    Last change :  Sat Dec 19 15:26:16 2015 (serrano)                */
 ;*    Copyright   :  2004-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -153,6 +153,8 @@
 	     #unspecified)
 	    (("--js-target-es5" (help "Generate a client-side JavaScript 1.5 file"))
 	     (hopc-js-target-set! 'es5)
+	     (j2s-compile-options-set!
+		(cons* :target 'es5 (j2s-compile-options)))
 	     (hopc-pass-set! 'client-js))
 	    (("--js-es6" (help "Enable all EcmaScript 6 support"))
 	     (j2s-compile-options-set!

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec 16 16:08:58 2015 (serrano)                */
+;*    Last change :  Sat Dec 19 15:24:25 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -355,6 +355,14 @@
          (append (j2s-js val tildec dollarc mode evalp conf) '(";")))))
                                              
 ;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SLetOpt ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SLetOpt tildec dollarc mode evalp conf)
+   (with-access::J2SLetOpt this (id val isconst)
+      (cons* this (if isconst "const " "let ") (j2s-js-id id) "="
+         (append (j2s-js val tildec dollarc mode evalp conf) '(";")))))
+                                             
+;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDeclFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclFun tildec dollarc mode evalp conf)
@@ -376,8 +384,10 @@
    (with-access::J2SIf this (test then else)
       (cons* this "if( "
 	 (append (j2s-js test tildec dollarc mode evalp conf)
-	    (cons ") " 
-	       (append (j2s-js then tildec dollarc mode evalp conf)
+	    (cons ") "
+	       (append
+		  (if (isa? then J2SNop)
+		      '("{}") (j2s-js then tildec dollarc mode evalp conf))
 		  (if (isa? else J2SNop)
 		      '()
 		      (cons " else "
