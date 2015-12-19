@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Dec  9 19:29:16 2015 (serrano)                */
+;*    Last change :  Sat Dec 12 07:58:37 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -208,10 +208,11 @@
        (param ,param)
        (body ,body)))
 
-(define-macro (J2SKont param body)
+(define-macro (J2SKont param exn body)
    `(instantiate::J2SKont
        (loc loc)
        (param ,param)
+       (exn ,exn)
        (body ,body)))
 
 (define-macro (J2SYield expr kont)
@@ -416,17 +417,24 @@
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SYield k pack kbreaks kcontinues)
    
-   (define (make-yield-kont k id loc)
-      (J2SKont id (pack (k (J2SHopRef id)))))
+   (define (make-yield-kont k loc)
+      (let* ((id (gensym '%arg))
+	     (exn (gensym '%exn))
+	     (cont (J2SIf (J2SBinary '=== (J2SHopRef exn) (J2SBool #t))
+		      (J2SThrow (J2SHopRef id))
+		      (k (J2SHopRef id)))))
+	 (J2SKont id exn (pack cont))))
    
-   (with-access::J2SYield this (loc expr)
-      (let ((kont (make-yield-kont k (gensym '%arg) loc)))
-	 (if (yield-expr? expr kbreaks kcontinues)
-	     (cps expr
-		(lambda (kexpr::J2SExpr)
-		   (J2SYield kexpr kont))
-		pack kbreaks kcontinues)
-	     (J2SYield expr kont)))))
+   (with-access::J2SYield this (loc expr generator)
+      (if generator
+	  (tprint "TODO")
+	  (let ((kont (make-yield-kont k loc)))
+	     (if (yield-expr? expr kbreaks kcontinues)
+		 (cps expr
+		    (lambda (kexpr::J2SExpr)
+		       (J2SYield kexpr kont))
+		    pack kbreaks kcontinues)
+		 (J2SYield expr kont))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SReturn ...                                              */
@@ -993,7 +1001,7 @@
 	 ((isa? finally J2SNop)
 	  (if (isa? catch J2SNop)
 	      (cps body k pack kbreaks kcontinues)
-	      (let* ((cname (gensym '%kcatch-sans-finally))
+	      (let* ((cname (gensym '%kcatch))
 		     (catch (with-access::J2SCatch catch (param body)
 			       (J2SFun cname (list param)
 				  (J2SBlock
