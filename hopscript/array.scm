@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/array.scm               */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/array.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Dec 10 19:37:54 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 14:29:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -28,7 +28,9 @@
 	   __hopscript_public
 	   __hopscript_number
 	   __hopscript_worker
-	   __hopscript_string)
+	   __hopscript_symbol
+	   __hopscript_string
+	   __hopscript_generator)
    
    (export (js-init-array! ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
@@ -220,6 +222,7 @@
 	       :alloc (lambda (ctor) (js-array-alloc ctor %this))
 	       :construct (lambda (this . items)
 			     (apply js-array-construct %this this items))))
+	 
 	 ;; other properties of the Array constructor
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.5.1
 	 (js-bind! %this js-array 'isArray
@@ -229,6 +232,58 @@
 	    :writable #t
 	    :enumerable #f)
 
+	 ;; from
+	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-22.1.2.1
+	 (define (array-from this::obj arr mapfn T)
+	    ;; see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from
+	    ;; 1. Let C be the this value.
+	    (let ((C this)
+		  ;; 2. Let items be ToObject(arrayLike).
+		  (items (js-toobject %this arr)))
+	       ;; 3. ReturnIfAbrupt(items).
+	       (when (or (eq? arr (js-undefined)) (eq? arr '()))
+		  (js-raise-type-error %this
+		     "from requires an array-like object - not null or undefined"
+		     arr))
+	       ;; 4. If mapfn is undefined, then let mapping be false.
+	       ;; 5. a If IsCallable(mapfn) is false, throw a TypeError exception.
+	       (when (and (not (eq? mapfn (js-undefined)))
+			  (not (isa? mapfn JsFunction)))
+		  (js-raise-type-error %this
+		     "Array.from: when provided, the second argument must be a function"
+		     mapfn))
+	       ;; 5. b. If thisArg was supplied, let T be thisArg;
+	       ;; else let T be undefined.
+	       ;;  10. Let lenValue be Get(items, "length").
+	       ;; 11. Let len be ToLength(lenValue).
+	       (let ((len (js-get items 'length %this)))
+		  ;; 13. If IsConstructor(C) is true, then
+		  ;; 13. a. Let A be the result of calling the [[Construct]]
+		  ;;     internal method of C with an argument list containing
+		  ;;     the single item len.
+		  ;; 14. a. Else, Let A be ArrayCreate(len).
+		  (let ((A (if (isa? C JsFunction)
+			       (js-toobject %this (js-new1 %this C len))
+			       (js-vector->jsarray (make-vector len) %this))))
+		     ;; 16. Let k be 0.
+		     ;; 17. Repeat, while k < len… (also steps a - h)
+		     (let loop ((k 0))
+			(when (<fx k len)
+			   (let ((kvalue (js-get items k %this)))
+			      (if (eq? mapfn (js-undefined))
+				  (js-put! A k kvalue #f %this)
+				  (let ((v (js-call2 %this mapfn T kvalue k)))
+				     (js-put! A k v #f %this)))
+			      (loop (+fx k 1)))))
+		     (js-put! A 'length len #f %this)
+		     A))))
+   
+	 (js-bind! %this js-array 'from
+	    :value (js-make-function %this array-from
+		      0 'from
+		      :prototype (js-undefined))
+	    :enumerable #f)
+	 
 	 ;; init the prototype properties
 	 (init-builtin-array-prototype! %this js-array js-array-prototype)
 	 
@@ -366,7 +421,7 @@
 	 (if (or (eq? el (js-undefined)) (eq? el (js-null)))
 	     ""
 	     (js-tostring el %this)))
-
+      
       (let* ((o (js-toobject %this this))
 	     (lenval::uint32 (js-touint32 (js-get o 'length %this) %this))
 	     (sep (if (eq? separator (js-undefined))
@@ -512,7 +567,7 @@
 		   (let ((v (js-get o i %this)))
 		      (js-put! o (-fx i 1) v #f %this)
 		      (loop (+fx i 1))))))))
-
+      
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-touint32 (js-get o 'length %this) %this)))
 	 (cond
@@ -1029,6 +1084,7 @@
 		:prototype (js-undefined))
       :enumerable #f)
    
+   ;; some
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.16
    (define (array-prototype-some this::obj proc t)
       
@@ -1113,7 +1169,7 @@
 		  (unless (eq? pv (js-absent))
 		     (js-call3 %this proc t pv i o))
 		  (loop (+ i 1))))))
-
+      
       (array-prototype-iterator %this this proc t array-foreach vector-foreach)
       (js-undefined))
    
@@ -1163,7 +1219,7 @@
 			       #f %this))
 			 (loop (+ i 1)))
 		      a))))
-
+	 
 	 (array-prototype-iterator %this this proc t array-map vector-map)))
    
    (js-bind! %this js-array-prototype 'map
@@ -1239,7 +1295,7 @@
 				    (loop (+ i 1) (+ j 1)))
 				 (loop (+ i 1) j)))))
 		   a))))
-
+      
       (array-prototype-iterator %this this proc t array-filter vector-filter))
    
    (js-bind! %this js-array-prototype 'filter
@@ -1325,6 +1381,18 @@
       :value (js-make-function %this array-prototype-reduceright 1 'reduceRight
 		:prototype (js-undefined))
       :enumerable #f)
+   
+   ;; iterator
+   ;; http://www.ecma-international.org/ecma-262/6.0/#sec-22.1.3.30
+   (define (array-prototype-array-values this::obj)
+      (js-make-iterator this %this))
+   
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (js-bind! %this js-array-prototype js-symbol-iterator
+	 :value (js-make-function %this array-prototype-array-values
+		   0 '@@iterator
+		   :prototype (js-undefined))
+	 :enumerable #f))
 
    ;; arrayComprehension
    ;; http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions

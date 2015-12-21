@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/es6-sym.js      */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/es6-sym.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 12 08:24:17 2015                          */
-/*    Last change :  Wed Aug 12 09:16:54 2015 (serrano)                */
+/*    Last change :  Mon Dec 21 11:39:23 2015 (serrano)                */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 symbol support.                                      */
@@ -13,7 +13,10 @@ var assert = require( "assert" );
 
 assert.strictEqual( typeof( Symbol( "foo" ) ), "symbol" );
 assert.ok( Symbol( "foo" ) !== Symbol( "foo" ) );
+
 assert.strictEqual( Symbol( "foo" ).toString(), "Symbol(foo)" );
+assert.strictEqual( Symbol.iterator.toString(), "Symbol(Symbol.iterator)" );
+
 assert.ok( JSON.stringify( Symbol( "foo" ) == "undefined" ) );
 
 assert.throws( function() { new Symbol( "foo" ) } );
@@ -34,3 +37,15 @@ assert.equal( typeof( Symbol.iterator ), "symbol" );
 assert.equal( Symbol.keyFor( Symbol.iterator ), undefined );
 
 assert.throws( function() { new Symbol( "foo" ) + 0; } );
+
+var o = {};
+o[ Symbol.iterator ] = 5;
+
+assert.equal( Object.keys( o ).length, 0 );
+assert.deepEqual( Object.getOwnPropertySymbols( o ), [ Symbol.iterator ] );
+
+var o = {};
+o[ s ] = 5;
+
+assert.equal( Object.keys( o ).length, 0 );
+assert.deepEqual( Object.getOwnPropertySymbols( o ), [ s ] );

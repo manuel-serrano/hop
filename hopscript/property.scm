@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Oct 29 22:19:58 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 11:32:09 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -30,31 +30,33 @@
 	   __hopscript_lib)
 
    (export (js-object-unmap! ::JsObject)
-	   (js-toname::symbol ::obj ::JsGlobalObject)
+	   (js-toname::obj ::obj ::JsGlobalObject)
 	   
 	   (inline js-is-accessor-descriptor?::bool obj)
 	   (inline js-is-data-descriptor?::bool obj)
 	   (inline js-is-generic-descriptor?::bool obj)
 	   (js-from-property-descriptor ::JsGlobalObject desc ::obj)
-	   (js-to-property-descriptor ::JsGlobalObject desc ::symbol)
+	   (js-to-property-descriptor ::JsGlobalObject desc ::obj)
 	   (js-property-value ::obj ::JsObject
 	      ::JsPropertyDescriptor ::JsGlobalObject)
 	   
 	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
-	   (generic js-has-property::bool ::obj ::symbol ::JsGlobalObject)
+	   (generic js-properties-symbol::vector ::obj ::JsGlobalObject)
+	   
+	   (generic js-has-property::bool ::obj ::obj ::JsGlobalObject)
 	   (generic js-get-own-property ::obj ::obj ::JsGlobalObject)
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
-
+	   
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 
 	   (js-get-notfound ::obj ::obj ::JsGlobalObject)
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
-	   (js-get-name/cache ::obj ::symbol ::JsPropertyCache ::JsGlobalObject)
-	   (js-get-name/cache-miss ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
+	   (js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
+	   (js-get-name/cache-miss ::JsObject ::obj ::JsPropertyCache ::obj ::JsGlobalObject)
 	   
-	   (js-can-put o::JsObject ::symbol ::JsGlobalObject)
+	   (js-can-put o::JsObject ::obj ::JsGlobalObject)
 	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
 	   (js-unresolved-eval-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
 	   (js-decl-eval-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
@@ -62,8 +64,8 @@
 	   (generic js-put! ::obj ::obj ::obj ::bool ::JsGlobalObject)
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
-	   (inline js-put-name/cache! ::obj ::symbol ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
-	   (js-put-name/cache-miss! ::JsObject ::symbol ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
+	   (inline js-put-name/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
+	   (js-put-name/cache-miss! ::JsObject ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 
 	   (generic js-delete! ::obj ::obj ::bool ::JsGlobalObject)
 	   
@@ -72,7 +74,7 @@
 	      new::JsPropertyDescriptor)
 	   
 	   (js-define-own-property%::bool o::JsObject
-	      name::symbol desc::JsPropertyDescriptor throw::bool
+	      name::obj desc::JsPropertyDescriptor throw::bool
 	      ::JsGlobalObject)
 	   
 	   (generic js-define-own-property::bool o::JsObject p
@@ -84,7 +86,7 @@
 
 	   (generic js-for-in ::obj proc::procedure ::JsGlobalObject)
 
-	   (js-bind! ::JsGlobalObject ::JsObject name::symbol #!key
+	   (js-bind! ::JsGlobalObject ::JsObject name::obj #!key
 	      (value #f)
 	      (get #f)
 	      (set #f)
@@ -155,7 +157,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cmap-same-transition? ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (cmap-same-transition? cmap::JsConstructMap name::symbol flags::int)
+(define (cmap-same-transition? cmap::JsConstructMap name::obj flags::int)
    (with-access::JsConstructMap cmap ((t1 transition))
       (and (eq? (car t1) name) (=fx (cdr t1) flags))))
 
@@ -293,6 +295,8 @@
 	  (string->symbol (js-jsstring->string p)))
 	 ((symbol? p)
 	  p)
+	 ((isa? p JsSymbol)
+	  p)
 	 ((fixnum? p)
 	  (fixnum->pname p))
 	 ((uint32? p)
@@ -375,7 +379,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.5       */
 ;*---------------------------------------------------------------------*/
-(define (js-to-property-descriptor %this::JsGlobalObject obj name::symbol)
+(define (js-to-property-descriptor %this::JsGlobalObject obj name::obj)
    (let* ((obj (js-cast-object obj %this "ToPropertyDescriptor"))
 	  (enumerable (if (js-has-property obj 'enumerable %this)
 			  (js-toboolean (js-get obj 'enumerable %this))
@@ -471,9 +475,36 @@
 			   ;; not a descriptor if deleted property
 			   ;; see cmap case in js-delete!
 			   (with-access::JsPropertyDescriptor p (name enumerable)
-			      (when (or (not enump) enumerable)
+			      (when (and (or (not enump) enumerable)
+					 (symbol? name))
 				 (js-string->jsstring
 				    (symbol->string! name))))))
+	    (if cmap
+		(with-access::JsConstructMap cmap (descriptors)
+		   (vector->list descriptors))
+		properties)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-properties-symbol ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Returns a vector of the properties symbol.                       */
+;*---------------------------------------------------------------------*/
+(define-generic (js-properties-symbol::vector o %this::JsGlobalObject)
+   (js-raise-type-error %this "[[PROP]]: not an object ~s" o))
+
+;*---------------------------------------------------------------------*/
+;*    js-properties-symbol::vector ::JsObject ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-properties-symbol::vector o::JsObject %this::JsGlobalObject)
+   (with-access::JsObject o (cmap properties)
+      (apply vector
+	 (filter-map (lambda (p)
+		    (unless (eq? p (js-undefined))
+		       ;; not a descriptor if deleted property
+		       ;; see cmap case in js-delete!
+		       (with-access::JsPropertyDescriptor p (name)
+			  (when (isa? name JsSymbol)
+			     name))))
 	    (if cmap
 		(with-access::JsConstructMap cmap (descriptors)
 		   (vector->list descriptors))
@@ -484,7 +515,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.6       */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-has-property::bool o name::symbol %this)
+(define-generic (js-has-property::bool o name::obj %this)
    #f)
 
 ;*---------------------------------------------------------------------*/
@@ -492,7 +523,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.6       */
 ;*---------------------------------------------------------------------*/
-(define-method (js-has-property::bool o::JsObject name::symbol %this)
+(define-method (js-has-property::bool o::JsObject name::obj %this)
    (jsobject-find o name
       ;; cmap search
       (lambda (o i) #t)
@@ -710,7 +741,7 @@
 ;*    symbol), it is never used to access indexed object. Hence,       */
 ;*    it does not need to be generic function.                         */
 ;*---------------------------------------------------------------------*/
-(define (js-get-lookup obj::JsObject name::symbol cache::JsPropertyCache throw %this)
+(define (js-get-lookup obj::JsObject name::obj cache::JsPropertyCache throw %this)
    (let loop ((owner obj))
       (jsobject-find owner name
 	 ;; map search
@@ -745,7 +776,7 @@
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-get-name/cache obj
-		  name::symbol cache::JsPropertyCache %this::JsGlobalObject)
+		  name::obj cache::JsPropertyCache %this::JsGlobalObject)
    (if (not (isa? obj JsObject))
        (js-get obj name %this)
        (with-access::JsObject obj ((omap cmap) elements __proto__)
@@ -761,7 +792,7 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-get-name/cache-miss obj::JsObject name::symbol cache::JsPropertyCache throw %this)
+(define (js-get-name/cache-miss obj::JsObject name::obj cache::JsPropertyCache throw %this)
    (let loop ((owner obj))
       (with-access::JsObject owner ((omap cmap) elements __proto__)
 	 (with-access::JsPropertyCache cache (cmap index)
@@ -789,9 +820,9 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.4       */
 ;*---------------------------------------------------------------------*/
-(define (js-can-put o::JsObject p::symbol %this::JsGlobalObject)
+(define (js-can-put o::JsObject p::obj %this::JsGlobalObject)
 
-   (define (js-get-inherited-property o::JsObject name::symbol)
+   (define (js-get-inherited-property o::JsObject name::obj)
       (jsobject-find o name
 	 (lambda (o i) i)
 	 (lambda (o d) d)
@@ -1090,7 +1121,7 @@
 ;*    [[DefineOwnProperty]]                                            */
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9    */
 ;*---------------------------------------------------------------------*/
-(define (js-bind! %this::JsGlobalObject o::JsObject name::symbol
+(define (js-bind! %this::JsGlobalObject o::JsObject name::obj
 	   #!key
 	   (value #f)
 	   (get #f)
@@ -1244,7 +1275,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-put-name/cache! o prop::symbol v::obj throw::bool cache::JsPropertyCache %this)
+(define-inline (js-put-name/cache! o prop::obj v::obj throw::bool cache::JsPropertyCache %this)
    (if (not (isa? o JsObject))
        (js-put! o prop v throw %this)
        (js-put-name/cache-miss! o prop v throw cache %this)))
@@ -1252,7 +1283,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache-miss! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (js-put-name/cache-miss! o::JsObject prop::symbol v::obj throw::bool cache::JsPropertyCache %this)
+(define (js-put-name/cache-miss! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
    (js-put! o prop v throw %this))
 
 ;*---------------------------------------------------------------------*/
@@ -1325,7 +1356,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9       */
 ;*---------------------------------------------------------------------*/
-(define (js-define-own-property%::bool o::JsObject name::symbol desc::JsPropertyDescriptor throw %this::JsGlobalObject)
+(define (js-define-own-property%::bool o::JsObject name::obj desc::JsPropertyDescriptor throw %this::JsGlobalObject)
 
    (define rejected #f)
    

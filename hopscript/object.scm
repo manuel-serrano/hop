@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Nov 28 12:14:35 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 11:51:40 2015 (serrano)                */
 ;*    Last change :  Sun Nov  1 11:24:53 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
@@ -240,11 +240,11 @@
       (with-access::JsGlobalObject %this (js-function js-object)
 	 (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	    ;; the prototypes and other builtin classes
+	    (js-init-symbol! %this)
 	    (js-init-array! %this)
 	    (js-init-arraybuffer! %this)
 	    (js-init-arraybufferview! %this)
 	    (js-init-string! %this)
-	    (js-init-symbol! %this)
 	    (js-init-boolean! %this)
 	    (js-init-number! %this)
 	    (js-init-math! %this)
@@ -573,6 +573,19 @@
       (js-bind! %this js-object 'getOwnPropertyNames
 	 :value (js-make-function %this
 		   getownpropertynames 1 'getOwnPropertyNames)
+	 :writable #t
+	 :configurable #t
+	 :enumerable #f)
+      
+      ;; getOwnPropertySymbols
+      ;; http://www.ecma-international.org/ecma-262/6.0/#sec-19.1.2.8
+      (define (getownpropertysymbols this o p)
+	 (let ((o (js-cast-object o %this "getOwnPropertySymbols")))
+	    (js-vector->jsarray (js-properties-symbol o %this) %this)))
+      
+      (js-bind! %this js-object 'getOwnPropertySymbols
+	 :value (js-make-function %this
+		   getownpropertysymbols 1 'getOwnPropertySymbols)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)

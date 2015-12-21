@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.6.x/arch/android/hopdroid/music.scm       */
+;*    .../prgm/project/hop/3.1.x/arch/android/hopdroid/music.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Fri Feb 21 13:25:02 2014 (serrano)                */
-;*    Copyright   :  2010-14 Manuel Serrano                            */
+;*    Last change :  Mon Dec 21 08:04:49 2015 (serrano)                */
+;*    Copyright   :  2010-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
 ;*=====================================================================*/
@@ -256,7 +256,7 @@
 		o))
 	    ((pair? s)
 	     (unless (integer? (car s))
-		(bigloo-type-error '|music-play ::androidmusic| 'int (car s)))
+		(bigloo-type-error "music-play ::androidmusic" 'int (car s)))
 	     (playlist-load! o (car s) playlistid))
 	    ((eq? state 'pause)
 	     (android-send-command phone music-plugin #\b))

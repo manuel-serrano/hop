@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/symbol.scm              */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Aug 21 17:22:05 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 11:57:28 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -92,7 +92,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-symbol! %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (__proto__ js-symbol js-function
-					 js-symbol-table)
+					 js-symbol-table js-symbol-iterator)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 ;; builtin prototype
@@ -120,6 +120,18 @@
 		  (__proto__ js-symbol-prototype)
 		  (val (if (null? args) "" (js-tostring (car args) %this))))))
 
+	 (define (bind-sym! s)
+	    (let ((sym (instantiate::JsSymbol
+			  (__proto__ js-symbol-prototype)
+			  (val (string-append "Symbol."
+				  (symbol->string! s))))))
+	       (js-bind! %this js-symbol s
+		  :value sym
+		  :writable #f
+		  :enumerable #f
+		  :configurable #f)
+	       sym))
+	 
 	 ;; for
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.for
 	 (define (js-symbol-for::JsSymbol this key)
@@ -153,17 +165,12 @@
 	    :configurable #t)
 
 	 ;; global symbols
-	 (for-each (lambda (s)
-		      (js-bind! %this js-symbol s
-			 :value (instantiate::JsSymbol
-				   (__proto__ js-symbol-prototype)
-				   (val (symbol->string s)))
-			 :writable #f
-			 :enumerable #f
-			 :configurable #f))
-	    '(hasInstance isConcatSpreadable iterator match prototype
+	 (for-each bind-sym!
+	    '(hasInstance isConcatSpreadable match prototype
 	      replace search species split toPrimitive toStringTag
 	      unscopables))
+
+	 (set! js-symbol-iterator (bind-sym! 'iterator))
 	 
 	 ;; bind Symbol in the global object
 	 (js-bind! %this %this 'Symbol

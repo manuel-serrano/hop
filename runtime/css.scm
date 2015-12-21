@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/css.scm                   */
+;*    serrano/prgm/project/hop/3.1.x/runtime/css.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Thu Nov 26 15:32:28 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 08:04:26 2015 (serrano)                */
 ;*    Copyright   :  2005-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -183,7 +183,7 @@
        (let ((str (string-append "f{" val "}")))
 	  (with-access::css-ruleset (hss-parse-ruleset str) (declaration*)
 	     declaration*))
-       (bigloo-type-error 'hss-property->declaration-list "string" val)))
+       (bigloo-type-error "hss-property->declaration-list" "string" val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss-properties->ruleset-list ...                                 */
@@ -218,7 +218,7 @@
       ((and (list? val) (every string? val))
        (append-map hss-string->ruleset val))
       (else
-       (bigloo-type-error 'hss-property->ruleset-list
+       (bigloo-type-error "hss-property->ruleset-list"
 			  "string or string-list"
 			  val))))
 	       

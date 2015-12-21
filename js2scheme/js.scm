@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Dec 20 07:33:40 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 13:39:48 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -854,9 +854,9 @@
 	  (with-access::J2SKont kont (body param)
 	     (when (isa? body J2SStmtExpr)
 		(with-access::J2SStmtExpr body (expr)
-		   (when (isa? expr J2SHopRef)
-		      (with-access::J2SHopRef expr (id)
-			 (eq? id param))))))))
+		   (when (isa? expr J2SRef)
+		      (with-access::J2SRef expr (decl)
+			 (eq? decl param))))))))
    
    (with-access::J2SYield this (expr kont generator)
       (cond
@@ -888,5 +888,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SKont tildec dollarc mode evalp conf)
    (with-access::J2SKont this (param exn body)
-      (cons* this "function( " (j2s-js-id param) ", " (j2s-js-id exn)
+      (cons* this "function( " (j2s-js param tildec dollarc mode evalp conf)
+	 ", " (j2s-js exn tildec dollarc mode evalp conf)
 	 ") {" (append (j2s-js body tildec dollarc mode evalp conf) '("}")))))

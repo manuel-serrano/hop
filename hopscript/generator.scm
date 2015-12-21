@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sun Dec 20 07:35:59 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 14:29:41 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -37,7 +37,8 @@
    (export (js-init-generator! ::JsGlobalObject)
 	   (js-make-generator::JsGenerator ::procedure ::JsGlobalObject)
 	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
-	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
+	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
+	   (js-make-iterator ::object ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Jsstringliteral begin                                            */
@@ -122,12 +123,46 @@
 ;*    js-generator-yield* ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-generator-yield* gen val done kont %this)
-   (let ((next (js-get val 'next %this)))
-      (let loop ((v (js-undefined)) (e #f))
-	 (let* ((n (js-call0 %this next val))
-		(value (js-get n 'value %this))
-		(done (js-get n 'done %this)))
-	    (if done
-		(kont value #f)
-		(js-generator-yield gen value #f
-		   loop %this))))))
+   
+   (define (yield* val)
+      (let ((next (js-get val 'next %this)))
+	 (let loop ((v (js-undefined)) (e #f))
+	    (let* ((n (js-call0 %this next val))
+		   (value (js-get n 'value %this))
+		   (done (js-get n 'done %this)))
+	       (if done
+		   (kont value #f)
+		   (js-generator-yield gen value #f
+		      loop %this))))))
+
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (cond
+	 ((isa? val JsGenerator)
+	  (yield* val))
+	 ((js-get val js-symbol-iterator %this)
+	  =>
+	  (lambda (g)
+	     (yield* (js-call0 %this g val))))
+	 (else
+	  (yield* val)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-iterator ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-make-iterator obj %this)
+   (letrec ((%gen (js-make-generator
+		     (lambda (%v %e)
+			(let ((i 0))
+			   (let loop ((%v %v) (%e %e))
+			      (let ((len (js-get obj 'length %this)))
+				 (if (>=fx i len)
+				     (js-generator-yield %gen
+					(js-undefined) #t
+					loop %this)
+				     (let ((val (js-get obj i %this)))
+					(set! i (+fx i 1))
+					(js-generator-yield %gen
+					   val #f
+					   loop %this)))))))
+		     %this)))
+      %gen))				  

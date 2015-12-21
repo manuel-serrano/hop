@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Dec  9 15:40:29 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 11:55:52 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -60,7 +60,7 @@
 	      data::obj)
 
 	   (class JsPropertyDescriptor
-	      (name::symbol read-only)
+	      (name::obj read-only)
 	      (configurable (default #f))
 	      (enumerable (default #f)))
 	   (class JsDataDescriptor::JsPropertyDescriptor
@@ -75,7 +75,7 @@
 	   
 	   (class JsPropertyCache
 	      (cmap::obj (default #unspecified))
-	      (name::symbol (default '||))
+	      (name::obj (default '||))
 	      (index::long (default -1)))
 	   
 	   (class JsConstructMap
@@ -145,6 +145,7 @@
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-table read-only (default (js-symbol-table)))
+	      (js-symbol-iterator (default (js-undefined)))
 	      (js-main (default (js-null))))
 	   
 	   (class JsArray::JsObject

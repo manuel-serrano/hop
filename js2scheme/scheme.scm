@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Dec 20 07:15:18 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 13:40:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2185,29 +2185,34 @@
 	 (eq? id 'eval)))
    
    (with-access::J2SCall this (loc fun args)
-      (epairify loc
-	 (cond
-	    ((isa? fun J2SAccess)
-	     (call-method fun args))
-	    ((isa? fun J2SHopRef)
-	     (call-hop-function fun args))
-	    ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
-	     (call-fun-function fun (jsfun->lambda fun mode return conf) args))
-	    ((isa? fun J2SUnresolvedRef)
-	     (if (is-eval? fun)
-		 (call-eval-function fun args)
-		 (call-unknown-function fun '(js-undefined) args)))
-	    ((isa? fun J2SWithRef)
-	     (call-with-function fun args))
-	    ((isa? fun J2SPragma)
-	     (call-pragma fun args))
-	    ((not (isa? fun J2SRef))
-	     (call-unknown-function fun '(js-undefined) args))
-	    ((read-only-function fun)
-	     =>
-	     (lambda (fun) (call-known-function fun args)))
-	    (else
-	     (call-unknown-function fun '(js-undefined) args))))))
+      (let loop ((fun fun))
+	 (epairify loc
+	    (cond
+	       ((isa? fun J2SAccess)
+		(call-method fun args))
+	       ((isa? fun J2SParen)
+		(with-access::J2SParen fun (expr)
+		   (tprint "EXPR=" (j2s->list expr))
+		   (loop expr)))
+	       ((isa? fun J2SHopRef)
+		(call-hop-function fun args))
+	       ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
+		(call-fun-function fun (jsfun->lambda fun mode return conf) args))
+	       ((isa? fun J2SUnresolvedRef)
+		(if (is-eval? fun)
+		    (call-eval-function fun args)
+		    (call-unknown-function fun '(js-undefined) args)))
+	       ((isa? fun J2SWithRef)
+		(call-with-function fun args))
+	       ((isa? fun J2SPragma)
+		(call-pragma fun args))
+	       ((not (isa? fun J2SRef))
+		(call-unknown-function fun '(js-undefined) args))
+	       ((read-only-function fun)
+		=>
+		(lambda (fun) (call-known-function fun args)))
+	       (else
+		(call-unknown-function fun '(js-undefined) args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAssig ...                                        */
@@ -2451,9 +2456,9 @@
 	  (with-access::J2SKont kont (body param)
 	     (when (isa? body J2SStmtExpr)
 		(with-access::J2SStmtExpr body (expr)
-		   (when (isa? expr J2SHopRef)
-		      (with-access::J2SHopRef expr (id)
-			 (eq? id param))))))))
+		   (when (isa? expr J2SRef)
+		      (with-access::J2SRef expr (decl)
+			 (eq? decl param))))))))
    
    (with-access::J2SYield this (loc expr kont generator)
       (epairify loc
@@ -2471,7 +2476,8 @@
 (define-method (j2s-scheme this::J2SKont mode return conf)
    (with-access::J2SKont this (loc param exn body)
       (epairify loc
-	 `(lambda (,param ,exn)
+	 `(lambda (,(j2s-scheme param mode return conf)
+		   ,(j2s-scheme exn mode return conf))
 	     ,(j2s-scheme body mode return conf)))))
 
 ;*---------------------------------------------------------------------*/

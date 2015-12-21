@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/string.scm              */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/string.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Dec 12 11:48:15 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 14:39:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -32,6 +32,8 @@
 	   __hopscript_regexp
 	   __hopscript_array
 	   __hopscript_error
+	   __hopscript_symbol
+	   __hopscript_generator
 	   __hopscript_worker)
 
    (export (js-init-string! ::JsGlobalObject)
@@ -767,7 +769,7 @@
    (js-bind! %this obj 'search
       :value (js-make-function %this search 1 'search)
       :enumerable #f)
-
+   
    ;; slice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.13
    (define (slice this::obj start end)
@@ -1014,7 +1016,38 @@
    
    (js-bind! %this obj 'substr
       :value (js-make-function %this substr 2 'substr)
-      :enumerable #f))
+      :enumerable #f)
+   
+   ;; iterator
+   ;; http://www.ecma-international.org/ecma-262/6.0/#sec-21.1.3.27
+   (define (string-prototype-string-values this::obj)
+      ;; because of code point and code units, cannot use the generic
+      ;; js-make-iterator (see generator.scm) function
+      (letrec ((%gen (js-make-generator
+			(lambda (%v %e)
+			   (let* ((val (js-tostring this %this))
+				  (len (utf8-string-length val)))
+			      (let ((i 0))
+				 (let loop ((%v %v) (%e %e))
+				    (if (>=fx i len)
+					(js-generator-yield %gen
+					   (js-undefined) #t
+					   loop %this)
+					(let ((val (js-string->jsstring
+						      (utf8-string-ref val i))))
+					   (set! i (+fx i 1))
+					   (js-generator-yield %gen
+					      val #f
+					      loop %this)))))))
+			%this)))
+	 %gen))
+   
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (js-bind! %this obj js-symbol-iterator
+	 :value (js-make-function %this string-prototype-string-values
+		   0 '@@iterator
+		   :prototype (js-undefined))
+	 :enumerable #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsString ...                                       */

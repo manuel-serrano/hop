@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec 15 20:02:49 2015 (serrano)                */
+;*    Last change :  Mon Dec 21 13:36:30 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -65,7 +65,7 @@
 	      (id::obj (default #unspecified)))
 	   
 	   (final-class J2SSwitch::J2SIdStmt
-	      key::J2SNode
+	      key::J2SExpr
 	      cases::pair-nil)
 	   
 	   (class J2SLoop::J2SIdStmt
@@ -322,8 +322,8 @@
 	      (set::obj (default #f)))
 
 	   (final-class J2SKont::J2SExpr
-	      (param::symbol read-only)
-	      (exn::symbol read-only)
+	      (param::J2SParam read-only)
+	      (exn::J2SParam read-only)
 	      body::J2SNode)
 	   
 	   (generic walk0 n::J2SNode p::procedure)
