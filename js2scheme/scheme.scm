@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Dec 11 18:26:46 2015 (serrano)                */
+;*    Last change :  Sun Dec 20 07:15:18 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2455,9 +2455,10 @@
 		      (with-access::J2SHopRef expr (id)
 			 (eq? id param))))))))
    
-   (with-access::J2SYield this (loc expr kont)
+   (with-access::J2SYield this (loc expr kont generator)
       (epairify loc
-	 `(js-generator-yield %gen ,(j2s-scheme expr mode return conf)
+	 `(,(if generator 'js-generator-yield* 'js-generator-yield)
+	   %gen ,(j2s-scheme expr mode return conf)
 	     ,(eq? kont #t)
 	     ,(if (identity-kont? kont)
 		  #f

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Dec 19 15:24:24 2015 (serrano)                */
+;*    Last change :  Sun Dec 20 07:33:40 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -858,14 +858,14 @@
 		      (with-access::J2SHopRef expr (id)
 			 (eq? id param))))))))
    
-   (with-access::J2SYield this (expr kont)
+   (with-access::J2SYield this (expr kont generator)
       (cond
 	 ((not kont)
 	  ;; custom generators
-	  (cons* this "yield "
+	  (cons* this (if generator "yield* " "yield ")
 	     (j2s-js expr tildec dollarc mode evalp conf)))
 	 ((identity-kont? kont)
-	  (cons* this "return $GEN.yield("
+	  (cons* this (if generator "return $GEN.yieldS(" "return $GEN.yield(")
 	     (append (j2s-js expr tildec dollarc mode evalp conf)
 		'(",")
 		(if (eq? kont #t) '("true") '("false"))
@@ -873,7 +873,7 @@
 		'("$GEN.kid")
 		'(")"))))
 	 (else
-	  (cons* this "return $GEN.yield("
+	  (cons* this (if generator "return $GEN.yieldS(" "return $GEN.yield(")
 	     (append (j2s-js expr tildec dollarc mode evalp conf)
 		'(",")
 		(if (eq? kont #t) '("true") '("false"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Dec 11 18:28:10 2015 (serrano)                */
+;*    Last change :  Sun Dec 20 07:35:59 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -36,7 +36,8 @@
    
    (export (js-init-generator! ::JsGlobalObject)
 	   (js-make-generator::JsGenerator ::procedure ::JsGlobalObject)
-	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
+	   (js-generator-yield ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)
+	   (js-generator-yield* ::JsGenerator ::obj ::bool ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Jsstringliteral begin                                            */
@@ -116,3 +117,17 @@
 	 (js-put! obj 'value val #f %this)
 	 (js-put! obj 'done done #f %this)
 	 obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-generator-yield* ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-generator-yield* gen val done kont %this)
+   (let ((next (js-get val 'next %this)))
+      (let loop ((v (js-undefined)) (e #f))
+	 (let* ((n (js-call0 %this next val))
+		(value (js-get n 'value %this))
+		(done (js-get n 'done %this)))
+	    (if done
+		(kont value #f)
+		(js-generator-yield gen value #f
+		   loop %this))))))

@@ -4,6 +4,20 @@ const hop = ((function() {
 	 this.next = kont;
 	 return { value: val, done: done }
       },
+      yieldS: function( val, done, kont ) {
+	 var gen = this;
+	 function loop( v, e ) {
+	    var n = val.next();
+	    
+	    if( n.done ) {
+	       return kont( n.value, false );
+	    } else {
+	       return gen.yield( n.value, false, loop );
+	    }
+	 }
+	 
+	 return loop( undefined, undefined );
+      },
       kid: function( n, exn ) {
 	 return { value: undefined, done: true };
       }
