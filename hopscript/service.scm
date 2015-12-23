@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Dec 15 09:09:00 2015 (serrano)                */
+;*    Last change :  Wed Dec 23 07:52:20 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -869,7 +869,7 @@
    
    ;; register only if there is an implementation
    (when svc
-      (when register (register-service! svc))
+      (when (and register (>=fx (hop-port) 0)) (register-service! svc))
       (unless import
 	 (with-access::WorkerHopThread worker (services)
 	    (set! services (cons svc services)))))

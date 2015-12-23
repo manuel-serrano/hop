@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Nov 28 12:14:35 2015 (serrano)                */
+;*    Last change :  Wed Dec 23 07:47:36 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -55,8 +55,7 @@
 	   (js-get-global-object-name
 	      ::JsObject ::symbol ::obj ::JsGlobalObject)
 	   (inline js-get-global-object-name/cache
-	      ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
-	   ))
+	      ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */

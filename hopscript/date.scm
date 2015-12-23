@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Dec 18 08:58:13 2015 (serrano)                */
+;*    Last change :  Sat Dec 19 08:08:52 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -110,7 +110,7 @@
    ;; first, bind the builtin date prototype
    (with-access::JsGlobalObject %this (__proto__ js-date js-function)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
+
 	 (define js-date-prototype
 	    (instantiate::JsDate
 	       (val (current-date))
@@ -120,6 +120,107 @@
 	    (instantiate::JsDate
 	       (__proto__ (js-get constructor 'prototype %this))))
 
+	 (define (parse-date-arguments args)
+	    (match-case args
+	       ((?year ?month ?date ?hours ?minutes ?seconds ?ms)
+		(let* ((y (js-tonumber year %this))
+		       (m (js-tonumber month %this))
+		       (d (js-tonumber date %this))
+		       (h (js-tonumber hours %this))
+		       (mi (js-tonumber minutes %this))
+		       (se (js-tonumber seconds %this))
+		       (us (js-tonumber ms %this))
+		       (ns (cond
+			      ((fixnum? us)
+			       (*llong #l1000000 (fixnum->llong us)))
+			      ((flonum? us)
+			       (*llong #l1000000
+				  (fixnum->llong (flonum->fixnum us))))
+			      (else
+			       #l0))))
+		   (when (and (fixnum? y) (>fx y 0)
+			      (fixnum? m) (fixnum? d) (fixnum? h)
+			      (fixnum? mi) (fixnum? se) (llong? ns))
+		      (make-date
+			 :year y :month (+ m 1) :day d
+			 :hour h :min mi :sec se :nsec ns))))
+	       ((?year ?month ?date ?hours ?minutes ?seconds)
+		(let* ((y (js-tonumber year %this))
+		       (m (js-tonumber month %this))
+		       (d (js-tonumber date %this))
+		       (h (js-tonumber hours %this))
+		       (mi (js-tonumber minutes %this))
+		       (se (js-tonumber seconds %this)))
+		   (when (and (fixnum? y) (>fx y 0)
+			      (fixnum? m) (fixnum? d) (fixnum? h)
+			      (fixnum? mi) (fixnum? se))
+		      (make-date
+			 :year y :month (+ m 1) :day d
+			 :hour h :min mi :sec se))))
+	       ((?year ?month ?date ?hours ?minutes)
+		(let* ((y (js-tonumber year %this))
+		       (m (js-tonumber month %this))
+		       (d (js-tonumber date %this))
+		       (h (js-tonumber hours %this))
+		       (mi (js-tonumber minutes %this)))
+		   (when (and (fixnum? y) (>fx y 0)
+			      (fixnum? m) (fixnum? d) (fixnum? h)
+			      (fixnum? mi))
+		      (make-date
+			 :year y :month (+ m 1) :day d
+			 :hour h :min mi :sec 0))))
+	       ((?year ?month ?date ?hours)
+		(let* ((y (js-tonumber year %this))
+		       (m (js-tonumber month %this))
+		       (d (js-tonumber date %this))
+		       (h (js-tonumber hours %this)))
+		   (when (and (fixnum? y) (>fx y 0)
+			      (fixnum? m) (fixnum? d) (fixnum? h))
+		      (make-date
+			 :year y :month (+ m 1) :day d
+			 :hour h :min 0 :sec 0))))
+	       ((?year ?month ?date)
+		(let* ((y (js-tonumber year %this))
+		       (m (js-tonumber month %this))
+		       (d (js-tonumber date %this)))
+		   (when (and (fixnum? y) (>fx y 0)
+			      (fixnum? m) (fixnum? d))
+		      (make-date
+			 :year y :month (+ m 1) :day d
+			 :hour 0 :min 0 :sec 0))))
+	       ((?year ?month)
+		(let* ((y (js-tonumber year %this))
+		       (m (js-tonumber month %this)))
+		   (when (and (fixnum? y) (>fx y 0)
+			      (fixnum? m))
+		      (make-date
+			 :year y :month (+ m 1)
+			 :day 1 :hour 0 :min 0 :sec 0))))
+	       ((?value)
+		(let ((v (js-toprimitive value 'any %this)))
+		   (cond
+		      ((js-jsstring? v)
+		       (parse-date (js-jsstring->string v)))
+		      ((number? v)
+		       (if (flonum? v)
+			   (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
+			       +nan.0
+			       (nanoseconds->date
+				  (*llong
+				     #l1000000
+				     (flonum->llong (round v)))))
+			   (let ((n (cond
+				       ((fixnum? v) (fixnum->llong v))
+				       ((llong? v) v)
+				       ((elong? v) (elong->llong v))
+				       (else #l0))))
+			      (nanoseconds->date
+				 (*llong #l1000000 n)))))
+		      (else
+		       v))))
+	       (else
+		(current-date))))
+	 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9
 	 (define (js-date-construct this::JsDate . args)
 	    
@@ -127,118 +228,15 @@
 	       (with-access::JsDate this (val)
 		  (set! val v)
 		  this))
-
+	    
 	    (if (any (lambda (a) (eq? a (js-undefined))) args)
 		(instantiate::JsDate
 		   (__proto__ js-date-prototype))
-		(match-case args
-		   ((?year ?month ?date ?hours ?minutes ?seconds ?ms)
-		    (let* ((y (js-tonumber year %this))
-			   (m (js-tonumber month %this))
-			   (d (js-tonumber date %this))
-			   (h (js-tonumber hours %this))
-			   (mi (js-tonumber minutes %this))
-			   (se (js-tonumber seconds %this))
-			   (us (js-tonumber ms %this))
-			   (ns (cond
-				  ((fixnum? us)
-				   (*llong #l1000000 (fixnum->llong us)))
-				  ((flonum? us)
-				   (*llong #l1000000
-				      (fixnum->llong (flonum->fixnum us))))
-				  (else
-				   #l0))))
-		       (js-date->jsdate
-			  (when (and (fixnum? y) (>fx y 0)
-				     (fixnum? m) (fixnum? d) (fixnum? h)
-				     (fixnum? mi) (fixnum? se) (llong? ns))
-			     (make-date
-				:year y :month (+ m 1) :day d
-				:hour h :min mi :sec se :nsec ns)))))
-		   ((?year ?month ?date ?hours ?minutes ?seconds)
-		    (let* ((y (js-tonumber year %this))
-			   (m (js-tonumber month %this))
-			   (d (js-tonumber date %this))
-			   (h (js-tonumber hours %this))
-			   (mi (js-tonumber minutes %this))
-			   (se (js-tonumber seconds %this)))
-		       (js-date->jsdate
-			  (when (and (fixnum? y) (>fx y 0)
-				     (fixnum? m) (fixnum? d) (fixnum? h)
-				     (fixnum? mi) (fixnum? se))
-			     (make-date
-				:year y :month (+ m 1) :day d
-				:hour h :min mi :sec se)))))
-		   ((?year ?month ?date ?hours ?minutes)
-		    (let* ((y (js-tonumber year %this))
-			   (m (js-tonumber month %this))
-			   (d (js-tonumber date %this))
-			   (h (js-tonumber hours %this))
-			   (mi (js-tonumber minutes %this)))
-		       (js-date->jsdate
-			  (when (and (fixnum? y) (>fx y 0)
-				     (fixnum? m) (fixnum? d) (fixnum? h)
-				     (fixnum? mi))
-			     (make-date
-				:year y :month (+ m 1) :day d
-				:hour h :min mi :sec 0)))))
-		   ((?year ?month ?date ?hours)
-		    (let* ((y (js-tonumber year %this))
-			   (m (js-tonumber month %this))
-			   (d (js-tonumber date %this))
-			   (h (js-tonumber hours %this)))
-		       (js-date->jsdate
-			  (when (and (fixnum? y) (>fx y 0)
-				     (fixnum? m) (fixnum? d) (fixnum? h))
-			     (make-date
-				:year y :month (+ m 1) :day d
-				:hour h :min 0 :sec 0)))))
-		   ((?year ?month ?date)
-		    (let* ((y (js-tonumber year %this))
-			   (m (js-tonumber month %this))
-			   (d (js-tonumber date %this)))
-		       (js-date->jsdate
-			  (when (and (fixnum? y) (>fx y 0)
-				     (fixnum? m) (fixnum? d))
-			     (make-date
-				:year y :month (+ m 1) :day d
-				:hour 0 :min 0 :sec 0)))))
-		   ((?year ?month)
-		    (let* ((y (js-tonumber year %this))
-			   (m (js-tonumber month %this)))
-		       (js-date->jsdate
-			  (when (and (fixnum? y) (>fx y 0)
-				     (fixnum? m))
-			     (make-date
-				:year y :month (+ m 1)
-				:day 1 :hour 0 :min 0 :sec 0)))))
-		   ((?value)
-		    (let ((v (js-toprimitive value 'any %this)))
-		       (cond
-			  ((js-jsstring? v)
-			   (js-date->jsdate
-			      (parse-date (js-jsstring->string v))))
-			  ((number? v)
-			   (if (flonum? v)
-			       (js-date->jsdate 
-				  (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
-				      +nan.0
-				      (nanoseconds->date
-					 (*llong
-					    #l1000000
-					    (flonum->llong (round v))))))
-			       (let ((n (cond
-					   ((fixnum? v) (fixnum->llong v))
-					   ((llong? v) v)
-					   ((elong? v) (elong->llong v))
-					   (else #l0))))
-				  (js-date->jsdate
-				     (nanoseconds->date
-					(*llong #l1000000 n))))))
-			  (else
-			   (js-date->jsdate v)))))
-		   (else
-		    (js-date->jsdate (current-date))))))
+		(let ((d (parse-date-arguments args)))
+		   (cond
+		      ((date? d) (js-date->jsdate d))
+		      ((string? d) (js-string->jsstring d))
+		      (else d)))))
 
 	 ;; create a HopScript object
 	 (define (%js-date this . args)
@@ -255,10 +253,11 @@
 	 ;; parse
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.2
 	 (define (js-date-parse this str)
-	    (*fl 1000.
-	       (elong->flonum
-		  (date->seconds (parse-date (js-tostring str %this))))))
-
+	    (let ((d (parse-date (js-tostring str %this))))
+	       (if (date? d)
+		   (*fl 1000. (elong->flonum (date->seconds d)))
+		   +nan.0)))
+	 
 	 (js-bind! %this js-date 'parse
 	    :value (js-make-function %this js-date-parse 1 'parse)
 	    :writable #t
@@ -266,8 +265,24 @@
 	    :enumerable #f)
 
 	 ;; UTC
-	 (define (js-date-utc this . l)
-	    (apply js-date-construct (js-date-alloc js-date) l))
+	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.3
+	 (define (js-date-utc this . args)
+	    (match-case args
+	       (()
+		0)
+	       ((?year)
+		(let ((d (parse-date-arguments (list (js-tonumber year %this)))))
+		   (*fl 1000.
+		      (elong->flonum
+			 (- (date->seconds d) (date-timezone d))))))
+	       (else
+		(let* ((dt (parse-date-arguments args))
+		       (ctz (date-timezone dt)))
+		   (llong->flonum 
+		      (/llong (+ (date->nanoseconds dt)
+				 (*llong (fixnum->llong ctz)
+				    #l1000000000))
+			 #l1000000))))))
 	 
 	 (js-bind! %this js-date 'UTC
 	    :value (js-make-function %this js-date-utc 7 'UTC)
@@ -307,7 +322,7 @@
 	       (input-port-reopen! ip)
 	       (with-handler
 		  (lambda (e)
-		     (current-date))
+		     "Invalid Date")
 		  (iso8601-parse-date ip)))
 	    (rfc2822-parse-date ip))
 	 (close-input-port ip))))
@@ -333,7 +348,7 @@
 	 (if (date? val)
 	     (js-string->jsstring
 		(date->rfc2822-date (seconds->date (date->seconds val))))
-	     (js-string->jsstring "Invalid date"))))
+	     (js-string->jsstring "Invalid Date"))))
    
    (js-bind! %this obj 'toString
       :value (js-make-function %this date-prototype-tostring 0 'toString)

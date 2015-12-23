@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Dec 18 07:56:54 2015 (serrano)                */
+;*    Last change :  Sat Dec 19 10:30:15 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -103,7 +103,7 @@
 	 (js-make-function %this
 	    (lambda (this url args)
 	       (js-new %this js-webservice url args))
-	    2 'webservice
+	    2 'webService
 	    :__proto__ js-function-prototype
 	    :prototype js-urlframe-prototype
 	    :construct (lambda (this url args)
@@ -222,11 +222,15 @@
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
-	       (define-js port 0
-		  (lambda (this)
-		     (hop-port)))
+
+	       ;; port
+	       (define-js port 0 (lambda (this) (hop-port)))
+
+	       ;; services
+	       `(Service . ,(js-get %this 'Service %this))
+	       `(HopFrame . ,(js-get %this 'HopFrame %this))
 	       
-	       ;; requests
+	       ;; webService
 	       (define-js webService 1
 		  (lambda (this base)
 		     (let ((name (string->symbol (js-jsstring->string base))))
