@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Dec 15 20:03:27 2015 (serrano)                */
+;*    Last change :  Tue Dec 22 11:51:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -290,7 +290,7 @@
 				      (cadr loc) (caddr loc)))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
 		       `(js-decl-eval-put! %scope
-			   ',ident ,value ,(eq? mode 'strict) %this)
+			   ',id ,value ,(eq? mode 'strict) %this)
 		       `(begin
 			   (define ,ident ,value)
 			   (js-bind! %this ,global ',id
@@ -2177,29 +2177,33 @@
 	 (eq? id 'eval)))
    
    (with-access::J2SCall this (loc fun args)
-      (epairify loc
-	 (cond
-	    ((isa? fun J2SAccess)
-	     (call-method fun args))
-	    ((isa? fun J2SHopRef)
-	     (call-hop-function fun args))
-	    ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
-	     (call-fun-function fun (jsfun->lambda fun mode return conf) args))
-	    ((isa? fun J2SUnresolvedRef)
-	     (if (is-eval? fun)
-		 (call-eval-function fun args)
-		 (call-unknown-function fun '(js-undefined) args)))
-	    ((isa? fun J2SWithRef)
-	     (call-with-function fun args))
-	    ((isa? fun J2SPragma)
-	     (call-pragma fun args))
-	    ((not (isa? fun J2SRef))
-	     (call-unknown-function fun '(js-undefined) args))
-	    ((read-only-function fun)
-	     =>
-	     (lambda (fun) (call-known-function fun args)))
-	    (else
-	     (call-unknown-function fun '(js-undefined) args))))))
+      (let loop ((fun fun))
+	 (epairify loc
+	    (cond
+	       ((isa? fun J2SAccess)
+		(call-method fun args))
+	       ((isa? fun J2SParen)
+		(with-access::J2SParen fun (expr)
+		   (loop expr)))
+	       ((isa? fun J2SHopRef)
+		(call-hop-function fun args))
+	       ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
+		(call-fun-function fun (jsfun->lambda fun mode return conf) args))
+	       ((isa? fun J2SUnresolvedRef)
+		(if (is-eval? fun)
+		    (call-eval-function fun args)
+		    (call-unknown-function fun '(js-undefined) args)))
+	       ((isa? fun J2SWithRef)
+		(call-with-function fun args))
+	       ((isa? fun J2SPragma)
+		(call-pragma fun args))
+	       ((not (isa? fun J2SRef))
+		(call-unknown-function fun '(js-undefined) args))
+	       ((read-only-function fun)
+		=>
+		(lambda (fun) (call-known-function fun args)))
+	       (else
+		(call-unknown-function fun '(js-undefined) args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAssig ...                                        */

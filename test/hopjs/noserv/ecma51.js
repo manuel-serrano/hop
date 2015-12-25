@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Oct 30 13:35:01 2015 (serrano)                */
+/*    Last change :  Mon Dec 21 12:38:02 2015 (serrano)                */
 /*    Copyright   :  2014-15 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -249,3 +249,15 @@ assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6]), 1 );
 assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]), 1 );
 assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]), 1 );
 assert.equal( bar6.apply( this, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]), 1 );
+
+/*---------------------------------------------------------------------*/
+/*    function call                                                    */
+/*---------------------------------------------------------------------*/
+var o = {name: "toto", f: function() { return this.name }}
+
+assert.ok( o.f() === "toto" );
+assert.ok( (o["f"])() === "toto" );
+assert.ok( (o).f() === "toto" );
+assert.ok( (1,o).f() === "toto" );
+assert.ok( (2>1?o:undefined).f() === "toto" );
+assert.ok( ((function () { return o })()).f() === "toto" );
