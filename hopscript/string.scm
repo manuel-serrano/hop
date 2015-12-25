@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Dec 22 13:38:27 2015 (serrano)                */
+;*    Last change :  Tue Dec 22 16:06:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -246,7 +246,9 @@
       (let* ((val (js-tostring (js-cast-string %this this) %this))
 	     (pos (js-tointeger index %this))
 	     (fxpos (->fixnum pos)))
-	 (js-string-ref val fxpos)))
+	 (if (or (< pos 0) (>= pos (utf8-codeunit-length val)))
+	     (js-string->jsstring "")
+	     (js-string-ref val fxpos))))
    
    (js-bind! %this obj 'charAt
       :value (js-make-function %this charat 1 'charAt)

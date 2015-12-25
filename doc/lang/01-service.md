@@ -132,7 +132,7 @@ Service Constructor
 
 Hop.js services are instances of the `Service` constructor.
 
-### new Service( [ fun-or-name [, name ] ] ) ###
+### new hop.Service( [ fun-or-name [, name ] ] ) ###
 [:@glyphicon glyphicon-tag constructor]
 
  * `fun-or-name`, is either a function or a string. When it is a:
@@ -148,7 +148,7 @@ Example:
 function svcImpl( name, lname ) { return <html>${name},${lname}</html> };
 
 // create an anonymous service with fixed arguments
-var priv = new Service( svcImpl );
+var priv = new hop.Service( svcImpl );
 
 // call the service
 priv( "jeanne", "durand" ).post();

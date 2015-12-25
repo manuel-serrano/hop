@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Dec 22 08:17:44 2015 (serrano)                */
+;*    Last change :  Tue Dec 22 16:06:55 2015 (serrano)                */
 ;*    Copyright   :  2014-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -39,7 +39,7 @@
 	   (js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (utf8-codeunit-ref::long ::bstring ::long)
 	   (utf8-codeunit-length::long ::bstring)
-	   (js-string-ref::JsStringLiteral ::bstring ::long)
+	   (js-string-ref::JsStringLiteral ::bstring ::long)))
 	   (js-jsstring-ref::JsStringLiteral ::JsStringLiteral ::uint32)))
 
 ;*---------------------------------------------------------------------*/
@@ -482,27 +482,25 @@
 ;*    js-string-ref ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-string-ref::JsStringLiteral str::bstring index::long)
-   (cond
-      ((or (<fx index 0) (>=fx index (utf8-codeunit-length str)))
-       (js-string->jsstring ""))
-      ((<fx index (string-ascii-sentinel str))
+   (if (<fx index (string-ascii-sentinel str))
        (js-string->jsstring
 	  (string-ascii-sentinel-set!
 	     (string (string-ref str index))
-	     1)))
-      (else
+	     1))
        (js-string->jsstring
 	  (ucs2-string->utf8-string
 	     (ucs2-string
-		(integer->ucs2 (utf8-codeunit-ref str index))))))))
+		(integer->ucs2 (utf8-codeunit-ref str index)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-ref ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-ref::JsStringLiteral o::JsStringLiteral index::uint32)
+(define (js-jsstring-ref o::JsStringLiteral index::uint32)
    (let* ((val (js-jsstring->string o))
 	  (fxpos (uint32->fixnum index)))
-      (js-string-ref val fxpos)))
+      (if (or (<fx fxpos 0) (>=fx fxpos (utf8-codeunit-length val)))
+	  (js-undefined)
+	  (js-string-ref val fxpos))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsStringLiteral ...                                     */
@@ -517,5 +515,7 @@
 		 (js-undefined)
 		 pval))
 	  (js-jsstring-ref o i))))
+      
+
       
 

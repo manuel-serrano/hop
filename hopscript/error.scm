@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Dec 16 21:11:56 2015 (serrano)                */
+;*    Last change :  Wed Dec 23 07:56:21 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -541,7 +541,25 @@
       :enumerable #f)
    
    (set! *js-builtin-error-prototype* obj))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-get ::&error ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Accessing Bigloo errors from hopscript                           */
+;*---------------------------------------------------------------------*/
+(define-method (js-get o::&error prop %this)
+   (case (js-toname prop %this)
+      ((message)
+       (with-access::&error o (msg)
+	  (js-string->jsstring
+	     (if (string? msg)
+		 msg
+		 (call-with-output-string
+		    (lambda (op)
+		       (display msg op)))))))
+      (else
+       (call-next-method))))
+
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/

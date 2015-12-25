@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Dec 21 13:40:04 2015 (serrano)                */
+;*    Last change :  Tue Dec 22 11:51:26 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -286,7 +286,7 @@
 				   (cadr loc) (caddr loc))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
 		       `(js-decl-eval-put! %scope
-			   ',ident ,value ,(eq? mode 'strict) %this)
+			   ',id ,value ,(eq? mode 'strict) %this)
 		       `(begin
 			   (define ,ident ,value)
 			   (js-bind! %this ,global ',id
@@ -2192,7 +2192,6 @@
 		(call-method fun args))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
-		   (tprint "EXPR=" (j2s->list expr))
 		   (loop expr)))
 	       ((isa? fun J2SHopRef)
 		(call-hop-function fun args))
