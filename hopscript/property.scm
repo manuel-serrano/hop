@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Dec 21 11:32:09 2015 (serrano)                */
+;*    Last change :  Tue Dec 22 08:19:42 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -651,13 +651,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsObject prop %this::JsGlobalObject)
    (js-get-jsobject o o prop %this))
-
-;*---------------------------------------------------------------------*/
-;*    js-get ::JsStringLiteral ...                                     */
-;*---------------------------------------------------------------------*/
-(define-method (js-get o::JsStringLiteral prop %this)
-   (let ((obj (js-toobject %this o)))
-      (js-get-jsobject obj o prop %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::object ...                                              */

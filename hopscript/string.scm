@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec 21 14:39:14 2015 (serrano)                */
+;*    Last change :  Tue Dec 22 13:38:27 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -36,8 +36,7 @@
 	   __hopscript_generator
 	   __hopscript_worker)
 
-   (export (js-init-string! ::JsGlobalObject)
-	   (utf8-codeunit-length::long ::bstring)))
+   (export (js-init-string! ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -180,103 +179,6 @@
 	 js-string)))
 
 ;*---------------------------------------------------------------------*/
-;*    utf8-codeunit-length ...                                         */
-;*    -------------------------------------------------------------    */
-;*    Returns the number of code points required to encode that        */
-;*    UTF8 string (might be bigger than the UTF8 length).              */
-;*---------------------------------------------------------------------*/
-(define (utf8-codeunit-length str)
-   (let ((len (string-length str))
-	 (sen (string-ascii-sentinel str)))
-      (if (>fx sen len)
-	  len
-	  (let loop ((r 0)
-		     (l 0))
-	     (if (>=fx r len)
-		 l
-		 (let* ((c (string-ref str r))
-			(s (utf8-char-size c)))
-		    (if (and (=fx s 4)
-			     (or (=fx (char->integer c) #xf0)
-				 (=fx (char->integer c) #xf4)))
-			(loop (+fx r s) (+fx l 2))
-			(loop (+fx r s) (+fx l 1)))))))))
-
-;*---------------------------------------------------------------------*/
-;*    codepoint-length ...                                             */
-;*    -------------------------------------------------------------    */
-;*    Returns the number of code units of this code point.             */
-;*---------------------------------------------------------------------*/
-(define (codepoint-length s c)
-   (case (char->integer c)
-      ((#xf0 #xf4 #xf8 #xfc) 2)
-      (else 1)))
-
-;*---------------------------------------------------------------------*/
-;*    utf8-left-replacement-codeunit ...                               */
-;*    -------------------------------------------------------------    */
-;*    See UCS2-STRING->UTF8-STRING.                                    */
-;*---------------------------------------------------------------------*/
-(define (utf8-left-replacement-codeunit str r)
-   (let* ((b1 (char->integer (string-ref str (+fx 1 r))))
-	  (b2 (char->integer (string-ref str (+fx 2 r))))
-	  (b3 (char->integer (string-ref str (+fx 3 r))))
-	  (u4u3 (bit-lsh (bit-and b3 #x3) 2))
-	  (xx (bit-and (bit-rsh b2 4) #x3))
-	  (wwww (bit-and b1 #xf))
-	  (u2u1 (bit-and (bit-rsh b1 4) #x3))
-	  (uuuu (bit-or u4u3 u2u1))
-	  (vvvv (-fx uuuu 1))
-	  (hi #b110110))
-      (bit-or xx
-	 (bit-or
-	    (bit-lsh wwww 2)
-	    (bit-or (bit-lsh vvvv 6) (bit-lsh hi 10))))))
-   
-;*---------------------------------------------------------------------*/
-;*    utf8-right-replacement-codeunit ...                              */
-;*    -------------------------------------------------------------    */
-;*    See UCS2-STRING->UTF8-STRING.                                    */
-;*---------------------------------------------------------------------*/
-(define (utf8-right-replacement-codeunit str r)
-   (let* ((b1 (char->integer (string-ref str (+fx 1 r))))
-	  (b2 (char->integer (string-ref str (+fx 2 r))))
-	  (b3 (char->integer (string-ref str (+fx 3 r))))
-	  (zzzzzz (bit-and b3 #x3f))
-	  (yyyy (bit-and b2 #xf))
-	  (hi #b110111))
-      (bit-or zzzzzz (bit-or (bit-lsh yyyy 6) (bit-lsh hi 10)))))
-   
-;*---------------------------------------------------------------------*/
-;*    utf8-string-codeunit-ref ...                                     */
-;*    -------------------------------------------------------------    */
-;*    Returns the ith code unit (UTF16 code unit) of the UTF8 source   */
-;*    string.                                                          */
-;*---------------------------------------------------------------------*/
-(define (utf8-codeunit-ref str i::int)
-   (let ((sentinel (string-ascii-sentinel str)))
-      (if (<fx i sentinel)
-	  (char->integer (string-ref str i))
-	  (let ((len (string-length str)))
-	     (let loop ((r sentinel) (i (-fx i sentinel)))
-		(let* ((c (string-ref str r))
-		       (s (utf8-char-size c))
-		       (u (codepoint-length s c)))
-		   (cond
-		      ((>=fx i u)
-		       (loop (+fx r s) (-fx i u)))
-		      ((=fx s 1)
-		       (char->integer (string-ref str r)))
-		      ((char=? c (integer->char #xf8))
-		       (utf8-left-replacement-codeunit str r))
-		      ((char=? c (integer->char #xfc))
-		       (utf8-right-replacement-codeunit str r))
-		      (else
-		       (let* ((utf8 (substring str r (+fx r s)))
-			      (ucs2 (utf8-string->ucs2-string utf8)))
-			  (ucs2->integer (ucs2-string-ref ucs2 i)))))))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-cast-string ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-cast-string %this obj)
@@ -344,19 +246,7 @@
       (let* ((val (js-tostring (js-cast-string %this this) %this))
 	     (pos (js-tointeger index %this))
 	     (fxpos (->fixnum pos)))
-	 (cond
-	    ((or (<fx fxpos 0) (>=fx fxpos (utf8-codeunit-length val)))
-	     (js-string->jsstring ""))
-	    ((<fx fxpos (string-ascii-sentinel val))
-	     (js-string->jsstring
-		(string-ascii-sentinel-set!
-		   (string (string-ref val fxpos))
-		   1)))
-	    (else
-	     (js-string->jsstring
-		(ucs2-string->utf8-string
-		   (ucs2-string
-		      (integer->ucs2 (utf8-codeunit-ref val fxpos)))))))))
+	 (js-string-ref val fxpos)))
    
    (js-bind! %this obj 'charAt
       :value (js-make-function %this charat 1 'charAt)
@@ -1111,7 +1001,7 @@
 		    (call-next-method)
 		    (instantiate::JsValueDescriptor
 		       (name (js-toname p %this))
-		       (value (js-string->jsstring (utf8-string-ref val index)))
+		       (value (js-string-ref val index))
 		       (enumerable #t)
 		       (writable #f)
 		       (configurable #f)))))
@@ -1125,30 +1015,30 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsString base p::obj %this::JsGlobalObject)
    (let ((index (js-toindex p)))
-      (if (js-isindex? index)
+      (if (not (js-isindex? index))
+	  (call-next-method)
 	  (with-access::JsString o (val)
 	     (let* ((val (js-jsstring->string val))
 		    (len (utf8-string-length val))
 		    (index (uint32->fixnum index)))
 		(if (<=fx len index)
 		    (call-next-method)
-		    (js-string->jsstring (utf8-string-ref val index)))))
-	  (call-next-method))))
+		    (js-string-ref val index)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsString ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsString p %this)
-   (with-access::JsString o (val)
-      (let ((i (js-toindex p)))
-	 (if (not (js-isindex? i))
-	     (call-next-method)
+   (let ((index (js-toindex p)))
+      (if (not (js-isindex? index))
+	  (call-next-method)
+	  (with-access::JsString o (val)
 	     (let* ((val (js-jsstring->string val))
 		    (len (utf8-string-length val))
-		    (index (uint32->fixnum i)))
+		    (index (uint32->fixnum index)))
 		(if (<=fx len index)
 		    (call-next-method)
-		    (js-string->jsstring (utf8-string-ref val index))))))))
+		    (js-string-ref val index)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsString ...                                         */
