@@ -1,5 +1,5 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/stringliteral.scm       */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/stringliteral.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
@@ -40,7 +40,6 @@
 	   (utf8-codeunit-ref::long ::bstring ::long)
 	   (utf8-codeunit-length::long ::bstring)
 	   (js-string-ref::JsStringLiteral ::bstring ::long)))
-	   (js-jsstring-ref::JsStringLiteral ::JsStringLiteral ::uint32)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -515,7 +514,5 @@
 		 (js-undefined)
 		 pval))
 	  (js-jsstring-ref o i))))
-      
-
       
 
