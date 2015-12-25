@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Sat Dec 12 13:32:46 2015 (serrano)                */
+;*    Last change :  Thu Dec 24 07:44:02 2015 (serrano)                */
 ;*    Copyright   :  2012-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -727,7 +727,8 @@
 		    (let ((t (pregexp-match "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$" text)))
 		       (if t
 			   (websocket-trigger-event ws id
-			      (javascript->obj (cadr t)))
+			      (string->obj
+				 (url-decode (cadr t))))
 			   (raise
 			      (instantiate::&io-parse-error
 				 (proc "websocket")
