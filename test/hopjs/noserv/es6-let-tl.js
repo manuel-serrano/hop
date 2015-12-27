@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  5 07:37:47 2015                          */
-/*    Last change :  Sun Jul  5 08:27:05 2015 (serrano)                */
+/*    Last commit :  2015-08-16 [0fad193] (Manuel Serrano)             */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Top level let tests                                              */

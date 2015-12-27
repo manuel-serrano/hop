@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last commit :  197bb54 (serrano)                                 */
+/*    Last commit :  2015-12-27 [bffbda2] (Manuel Serrano)             */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 let construct                             */
@@ -343,7 +343,7 @@ console.log( "   kangaxr()");
 assert.equal( kangaxr(), true );
 
 /*---------------------------------------------------------------------*/
-/*    MDN                                                              */
+/*    mdn                                                              */
 /*---------------------------------------------------------------------*/
 function varTest() {
    var res = 0;

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Nov  5 21:11:24 2015 (serrano)                */
+;*    Last change :  Sun Dec 27 10:22:23 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -116,6 +116,16 @@
 	 (define (%js-number this . arg)
 	    (js-tonumber (if (pair? arg) (car arg) 0) %this))
 
+	 (define (is-integer?::bbool this arg)
+	    (cond
+	       ((number? arg)
+		(integer? arg))
+	       ((isa? this JsNumber)
+		(with-access::JsNumber this (val)
+		   (is-integer? this val)))
+	       (else
+		#f)))
+
 	 ;; Create a HopScript number object constructor
 	 (set! js-number
 	    (js-make-function %this %js-number 1 'Number
@@ -149,6 +159,9 @@
 	    :writable #f
 	    :enumerable #f
 	    :configurable #f)
+	 (js-bind! %this js-number 'isInteger
+	    :value (js-make-function %this is-integer? 1 'isInteger)
+	    :writable #f :configurable #f :enumerable #f)
 	 ;; bind the builtin prototype properties
 	 (init-builtin-number-prototype! %this js-number js-number-prototype)
 	 ;; bind Number in the global object

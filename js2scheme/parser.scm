@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last commit :  3167415 (serrano)                                 */
+;*    Last commit :  2015-12-27 [bffbda2] (Manuel Serrano)             */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1342,13 +1342,34 @@
 
 
    (define (tag-call-arguments loc)
-      (let* ((exprs (template-expressions))
+      (let* ((exprs (template-expressions #t))
 	     (strs (filter (lambda (e) (isa? e J2SString)) exprs))
-	     (vals (filter (lambda (e) (not (isa? e J2SString))) exprs)))
-	 (cons (instantiate::J2SArray
+	     (strse (map (lambda (s::J2SString)
+			    (with-access::J2SString s (val)
+			       (duplicate::J2SString s
+				  (val (token-value
+					  (j2s-escape-js-string val input-port))))))
+		       strs))
+	     (vals (filter-map (lambda (e)
+				  (when (cell? e)
+				     (cell-ref e)))
+		      exprs)))
+	 (cons (instantiate::J2SCall
 		  (loc loc)
-		  (exprs strs)
-		  (len (length strs)))
+		  (fun (instantiate::J2SHopRef
+			  (loc loc)
+			  (id 'js-template-raw)))
+		  (args (list (instantiate::J2SArray
+				 (loc loc)
+				 (exprs strse)
+				 (len (length strs)))
+			   (instantiate::J2SArray
+			      (loc loc)
+			      (exprs strs)
+			      (len (length strs)))
+			   (instantiate::J2SHopRef
+			      (loc loc)
+			      (id '%this)))))
 	    vals)))
 	      
    (define (access-or-call expr loc call-allowed?)
@@ -1519,7 +1540,7 @@
 	     (ignore-too (consume! 'RBRACE)))
 	 expr))
 
-   (define (template-expressions::pair)
+   (define (template-expressions::pair cellp::bool)
 
       (define (block->expresion stmt)
 	 (when (isa? stmt J2SBlock)
@@ -1542,7 +1563,7 @@
 		       (expr (block->expresion stmt)))
 		   (if expr
 		       (loop (read/rp (j2s-template-lexer) input-port)
-			  (cons* expr val vals))
+			  (cons* (if cellp (make-cell expr) expr) val vals))
 		       (parse-node-error "Expression expected" stmt))))
 	       (else
 		(parse-token-error
@@ -1552,7 +1573,7 @@
    (define (template-expression)
       (instantiate::J2STemplate
 	 (loc (token-loc (peek-token)))
-	 (exprs (template-expressions))))
+	 (exprs (template-expressions #f))))
       
    (define (primary)
       (case (peek-token-type)

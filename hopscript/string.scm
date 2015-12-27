@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Dec 22 16:06:12 2015 (serrano)                */
+;*    Last commit :  2015-12-23 [db9194b] (Manuel Serrano)             */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -34,7 +34,8 @@
 	   __hopscript_error
 	   __hopscript_worker)
 
-   (export (js-init-string! ::JsGlobalObject)))
+   (export (js-init-string! ::JsGlobalObject)
+	   (js-template-raw ::JsArray ::JsArray ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -158,8 +159,32 @@
 	 ;; raw
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#21.1.2.4
 	 (define (js-string-raw this . a)
-	    (js-stringlist->jsstring
-	       (map! (lambda (v) (js-tostring v %this)) a)))
+	    (let ((template (car a))
+		  (substitutions (cdr a)))
+	       (if (isa? template JsObject)
+		   (let ((raw (js-get template 'raw %this)))
+		      (if (isa? raw JsObject)
+			  ;; step 9
+			  (let ((literalsegments (js-get raw 'length %this)))
+			     (let loop ((strs '())
+					(nextindex 0)
+					(subs substitutions))
+				(if (=fx nextindex literalsegments)
+				    (js-stringlist->jsstring (reverse! strs))
+				    (let ((nextseg (js-tostring
+						      (js-get raw nextindex %this)
+						      %this)))
+				       (if (pair? subs)
+					   (loop (cons* (js-tostring (car subs) %this)
+						    nextseg
+						    strs)
+					      (+fx nextindex 1)
+					      (cdr subs))
+					   (loop (cons nextseg strs)
+					      (+fx nextindex 1)
+					      subs))))))
+			  (js-undefined)))
+		   (js-undefined))))
 		    
 	 (js-bind! %this js-string 'raw
 	    :value (js-make-function %this
@@ -1023,7 +1048,17 @@
 		       (loop (+fx i 1)))
 		    (call-next-method)))
 	     (call-next-method)))))
-  
+
+;*---------------------------------------------------------------------*/
+;*    js-template-raw ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-template-raw arr::JsArray raw::JsArray %this)
+   (js-bind! %this arr 'raw :value raw
+      :writable #f :enumerable #f :configurable #f)
+   (js-freeze arr %this)
+   (js-freeze raw %this)
+   arr)
+
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
