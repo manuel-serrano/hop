@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last commit :  2015-12-27 [bffbda2] (Manuel Serrano)             */
+;*    Last commit :  2015-12-27 [9d6434f] (Manuel Serrano)             */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -96,9 +96,6 @@
       ((char=? (string-ref (symbol->string! id) 0) #\%) id)
       ((memq id '(GLOBAL arguments)) id)
       (else (symbol-append '^ id))))
-;*    (if (memq id '(raise error eval quote module dirname worker))    */
-;*        (symbol-append '^ id)                                        */
-;*        id))                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-decl-scheme-id ...                                           */
@@ -316,7 +313,7 @@
 ;*    j2s-scheme ::J2SLet ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLet mode return conf)
-   (with-access::J2SLet this (loc scope)
+   (with-access::J2SLet this (loc scope id)
       (epairify loc
 	 (if (memq scope '(global fun))
 	     `(define ,(j2s-decl-scheme-id this) (js-make-let))
@@ -326,13 +323,9 @@
 ;*    j2s-scheme ::J2SLetOpt ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLetOpt mode return conf)
-   (with-access::J2SLetOpt this (scope)
+   (with-access::J2SLetOpt this (scope id)
       (if (memq scope '(global fun))
-	  (let ((l (j2s-let-decl-toplevel this mode return conf)))
-	     (cond
-		((null? l) #unspecified)
-		((null? (cdr l)) (car l))
-		(else `(begin ,@l))))
+	  (j2s-let-decl-toplevel this mode return conf)
 	  (error "js-scheme" "Should not reached (not global)"
 	     (j2s->list this)))))
 
@@ -1293,7 +1286,8 @@
 	  (epairify loc
 	     `(begin
 		 ,@(map (lambda (d)
-			   (j2s-let-decl-toplevel d mode return conf)) decls)
+			   (j2s-let-decl-toplevel d mode return conf))
+		      decls)
 		 ,@(j2s-scheme nodes mode return conf)))
 	  ;; inner letblock, create a let block
 	  (let ((opt (if (any (lambda (d) (isa? d J2SLetOpt)) decls)

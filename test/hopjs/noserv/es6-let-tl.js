@@ -3,14 +3,18 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul  5 07:37:47 2015                          */
-/*    Last commit :  2015-08-16 [0fad193] (Manuel Serrano)             */
+/*    Last commit :  2015-12-27 [9d6434f] (Manuel Serrano)             */
 /*    Copyright   :  2015 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Top level let tests                                              */
 /*=====================================================================*/
 "use hopscript";
 
-var assert = require( "assert" );
+const assert = require( "assert" );
+
+// test global const
+const fs = require( "fs" );
+const path = require( "path" );
 
 var _K0 = 1;
 const K0 = _K0;
