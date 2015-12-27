@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Dec 18 07:59:43 2015 (serrano)                */
+;*    Last change :  Sat Dec 26 21:14:05 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -87,8 +87,8 @@
 				 :debug (bigloo-debug))))
 		     (for-each (lambda (exp)
 				  (unless (isa? exp J2SNode)
-				     ;; skip node information, used for sourcemap
-				     ;; generation
+				     ;; skip node information, used
+				     ;; for sourcemap generation
 				     (display exp op)))
 			tree)
 		     (display "\nreturn module.exports;}\n" op)
@@ -442,7 +442,7 @@
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile filename::bstring #!optional lang)
-
+   
    (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
 	 (trace-item "filename=" filename)
@@ -459,7 +459,7 @@
 			:module-name (symbol->string mod)
 			:debug (bigloo-debug))
 		     (close-mmap m)))))))
-
+   
    (define (compile-url url::bstring mod)
       (with-trace 'require "compile-url"
 	 (trace-item "url=" url)
@@ -474,24 +474,27 @@
 		  :module-main #f
 		  :module-name (symbol->string mod)
 		  :debug (bigloo-debug))))))
-
+   
    (define (compile filename::bstring mod)
       (if (file-exists? filename)
 	  (compile-file filename mod)
 	  (compile-url filename mod)))
    
    (synchronize compile-mutex
-      (or (hashtable-get compile-table filename)
-	  (let* ((mod (gensym))
-		 (expr (compile filename mod))
-		 (evmod (eval-module)))
-	     (unwind-protect
-		(begin
-		   (for-each eval expr)
-		   (let ((hopscript (eval! 'hopscript)))
-		      (hashtable-put! compile-table filename hopscript)
-		      hopscript))
-		(eval-module-set! evmod))))))
+      (with-trace 'require "nodejs-compile"
+	 (trace-item "filename=" filename)
+	 (or (hashtable-get compile-table filename)
+	     (let* ((mod (gensym))
+		    (expr (compile filename mod))
+		    (evmod (eval-module)))
+		(trace-item "expr=" (format "~s" expr))
+		(unwind-protect
+		   (begin
+		      (for-each eval expr)
+		      (let ((hopscript (eval! 'hopscript)))
+			 (hashtable-put! compile-table filename hopscript)
+			 hopscript))
+		   (eval-module-set! evmod)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-cache ...                                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec 15 09:08:23 2015 (serrano)                */
+;*    Last commit :  3167415 (serrano)                                 */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -409,21 +409,65 @@
    
    (define (for)
       
-      (define (init-first-part)
-	 (case (peek-token-type)
+      (define (init-first-part tok0)
+	 (case tok0
 	    ((var) (var-decl-list #t))
+	    ((let) (let-decl-list #t))
 	    ((SEMICOLON) #f)
 	    (else (expression #t))))
+
+      (define (mark-decls-loop! decls)
+	 (for-each (lambda (decl::J2SLet)
+		      (with-access::J2SLet decl (scope _scmid id)
+			 (set! _scmid (symbol-append '% id))
+			 (set! scope 'loop)))
+	    decls))
+
+      (define (let->init d::J2SLet)
+	 (with-access::J2SLet d (loc id)
+	    (instantiate::J2SLetOpt
+	       (loc loc)
+	       (id id)
+	       (val (instantiate::J2SRef
+		       (loc loc)
+		       (decl d))))))
+
+      (define (for-let first-part for)
+	 (with-access::J2SVarDecls first-part (loc decls)
+	    (mark-decls-loop! decls)
+	    (let ((endloc `(at ,(input-port-name input-port) 0)))
+	       (with-access::J2SLoop for (body)
+		  (set! body
+		     (instantiate::J2SBlock
+			(endloc endloc)
+			(loc loc)
+			(nodes (list
+				  (instantiate::J2SVarDecls
+				     (loc loc)
+				     (decls (map let->init decls)))
+				  body)))))
+	       (instantiate::J2SBlock
+		  (endloc endloc)
+		  (loc loc)
+		  (nodes (list first-part for))))))
       
       (let ((loc (token-loc (consume-token! 'for))))
 	 (push-open-token (consume! 'LPAREN))
-	 (let ((first-part (init-first-part)))
+	 (let* ((tok0 (peek-token-type))
+		(first-part (init-first-part tok0)))
 	    (case (peek-token-type)
 	       ((SEMICOLON)
-		(for-init/test/incr loc
-		   (or first-part (instantiate::J2SNop (loc loc)))))
+		(if (eq? tok0 'let)
+		    (for-let first-part
+		       (for-init/test/incr loc
+			  (instantiate::J2SNop (loc loc))))
+		    (for-init/test/incr loc
+		       (or first-part (instantiate::J2SNop (loc loc))))))
 	       ((in)
-		(for-in loc first-part ))))))
+		(if (eq? tok0 'let)
+		    (for-let first-part
+		       (for-in loc first-part))
+		    (for-in loc first-part)))))))
    
    ;; for (init; test; incr)
    (define (for-init/test/incr loc init::J2SNode)
@@ -796,7 +840,7 @@
 				    (id (cdr id))
 				    (writable #f)
 				    (ronly #t)
-				    (global #t))))))
+				    (scope 'global))))))
 		(instantiate::J2SDeclFun
 		   (loc (token-loc token))
 		   (writable (not (eq? mode 'hopscript)))
@@ -817,7 +861,7 @@
 				       (id (cdr id))
 				       (writable #f)
 				       (ronly #t)
-				       (global #t)
+				       (scope 'global)
 				       (val fun))))
 		fun))
 	    (else
@@ -862,7 +906,7 @@
 			      (id (cdr id))
 			      (writable #f)
 			      (ronly #t)
-			      (global #t)))))))
+			      (scope 'global)))))))
 	 (id
 	  (co-instantiate ((fun (instantiate::J2SSvc
 				   (loc (token-loc id))
@@ -881,7 +925,7 @@
 				    (id (cdr id))
 				    (writable #f)
 				    (ronly #t)
-				    (global #t)
+				    (scope  'global)
 				    (val fun))))
 	     fun))
 	 (else
@@ -2037,7 +2081,7 @@
 	       (obj val)
 	       (fname (cadr loc))
 	       (location (caddr loc))))))
-
+   
    (define (check-octal-string n)
       (cond
 	 ((isa? n J2SStmtExpr)
@@ -2049,17 +2093,29 @@
 		(octal-error n))))
 	 (else
 	  #f)))
+
+   (define (stricter-mode mode m)
+      (cond
+	 ((not mode) m)
+	 ((eq? mode 'hopscript) mode)
+	 ((eq? m 'hopscript) m)
+	 ((eq? mode 'strict) mode)
+	 ((eq? m 'strict) m)
+	 (else m)))
    
-   (let loop ((nodes nnodes))
+   (let loop ((nodes nnodes)
+	      (mode #f))
       (when (pair? nodes)
-	 (let ((mode (javascript-mode (car nodes))))
+	 (let ((m (javascript-mode (car nodes))))
 	    (cond
-	       ((symbol? mode)
-		(when (eq? mode 'strict)
+	       ((symbol? m)
+		(when (eq? m 'strict)
 		   (for-each check-octal-string nnodes))
-		mode)
-	       (mode
-		(loop (cdr nodes))))))))
+		(loop (cdr nodes) (stricter-mode mode m)))
+	       (m
+		(loop (cdr nodes) mode))
+	       (else
+		mode))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    lbrace-following? ...                                            */
@@ -2142,7 +2198,7 @@
    (hopscript-mode-fun! node mode)
    ;; make hopscript function constant
    (hopscript-cnst-fun! node)
-   (unless (memq mode '(hopscript ecmascript6))
+   (unless (memq mode '(strict hopscript ecmascript6))
       (unless (config-get conf :es6-let #f)
 	 (disable-es6-let node))
       (unless (config-get conf :es6-default-value #f)

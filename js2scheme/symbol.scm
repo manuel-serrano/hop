@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Oct  9 07:44:13 2015 (serrano)                */
+;*    Last commit :  c67ee74 (serrano)                                 */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -55,14 +55,14 @@
 	     (vars (append-map (lambda (s) (collect* s)) nodes))
 	     (lets (collect-let nodes))
 	     (env (append hds vars lets))
-	     (global (config-get conf :bind-global '%scope))
-	     (vdecls (bind-decls! vars env mode global '() '())))
+	     (scope (config-get conf :bind-global '%scope))
+	     (vdecls (bind-decls! vars env mode scope '() '())))
 	 (when (pair? vars)
 	    (set! decls (filter (lambda (d) (isa? d J2SDecl)) vdecls)))
 	 (when (pair? lets)
 	    (for-each (lambda (d::J2SDecl)
-			 (with-access::J2SDecl d (global)
-			    (set! global #t)))
+			 (with-access::J2SDecl d (scope)
+			    (set! scope 'global)))
 	       lets)
 	    (set! decls (append decls lets)))
 	 (set! nodes
@@ -90,7 +90,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    bind-decls! ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (bind-decls! decls env mode global withs::pair-nil wenv::pair-nil)
+(define (bind-decls! decls env mode scope::symbol withs::pair-nil wenv::pair-nil)
    
    (define (decl->assign! decl::J2SDeclInit old::J2SDecl)
       (with-access::J2SDeclInit decl (loc id val)
@@ -107,8 +107,8 @@
       (if (null? decls)
 	  (append (reverse! acc) (reverse! funs))
 	  (let ((decl (car decls)))
-	     (with-access::J2SDecl decl (id (bglobal global))
-		(set! bglobal global)
+	     (with-access::J2SDecl decl (id (bscope scope))
+		(set! bscope scope)
 		(let ((old (find-decl id acc)))
 		   (if old
 		       (if (or (isa? decl J2SDeclFun)
@@ -121,10 +121,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    bind-let! ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (bind-let! decls env mode global widths::pair-nil wenv::pair-nil)
+(define (bind-let! decls env mode scope widths::pair-nil wenv::pair-nil)
    (map (lambda (d::J2SLetInit)
 	   (duplicate::J2SLet d
-	      (global #t)))
+	      (scope 'global)))
       decls))
 
 ;*---------------------------------------------------------------------*/
@@ -216,10 +216,16 @@
 			      (loc loc)))
 		(envl (append decls params))
 		(env1 (append envl env0))
+		(ldecls (with-access::J2SBlock body (nodes)
+			   (collect-let nodes)))
 		(nenv (if (find-decl 'arguments envl)
-			  env1
-			  (cons arguments env1)))
+			  (append ldecls env1)
+			  (cons arguments (append ldecls env1))))
 		(nwenv (cons arguments (append decls params wenv))))
+	    (for-each (lambda (ldecl::J2SLet)
+			 (with-access::J2SLet ldecl (scope)
+			    (set! scope 'fun)))
+	       ldecls)
 ;* 	    (tprint "**** fun=" id " decl=" (debug-dump-env decls))    */
 ;* 	    (tprint (j2s->list body))                                  */
 	    (if (pair? decls)
@@ -229,7 +235,7 @@
 			 (loc loc)
 			 (endloc endloc)
 			 (nodes (append
-				   (bind-decls! decls nenv fmode #f withs wenv)
+				   (bind-decls! decls nenv fmode 'inner withs wenv)
 				   (list (walk! body nenv fmode withs nwenv)))))))
 		(set! body (walk! body nenv fmode withs nwenv)))
 	    (with-access::J2SDeclArguments arguments (usecnt)
@@ -270,10 +276,6 @@
 ;*---------------------------------------------------------------------*/
 (define (resolve-let! this::J2SBlock env mode withs wenv decls)
    (with-access::J2SBlock this (loc endloc nodes)
-;*       (let* ((ndecls (map (lambda (d)                               */
-;* 			     (duplicate::J2SLet d))                    */
-;* 			decls))                                        */
-;* 	     (nenv (append decls env)))                                */
       (let ((nenv (append decls env)))
 	 (instantiate::J2SLetBlock
 	    (loc loc)
@@ -397,8 +399,6 @@
 ;*    resolve! ::J2SVarDecls ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SVarDecls env mode withs wenv)
-;*    (tprint "vardecls=" (j2s->list this))                            */
-;*    (tprint "vardecls env=" (debug-dump-env env))                    */
    (with-access::J2SVarDecls this (decls loc)
       (let ((ndecls (filter-map (lambda (d)
 				   (let ((nd (resolve! d env mode withs wenv)))
@@ -644,7 +644,10 @@
 		  (if (isa? d J2SVarDecls)
 		      (with-access::J2SVarDecls d (decls)
 			 (filter (lambda (d)
-				    (isa? d J2SLet))
+				    (when (isa? d J2SLet)
+				       (with-access::J2SLet d (scope)
+					  (unless (eq? d 'loop)
+					     d))))
 			    decls))
 		      '()))
       nodes))

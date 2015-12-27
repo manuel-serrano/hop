@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Fri Sep 25 11:11:26 2015 (serrano)                */
+;*    Last change :  Sat Dec 26 19:36:32 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -91,8 +91,8 @@
 ;*    ronly! ::J2SDecl ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ronly! this::J2SDecl)
-   (with-access::J2SDecl this (ronly id global writable)
-      (set! ronly (or (not global) (not writable))))
+   (with-access::J2SDecl this (ronly id scope writable)
+      (set! ronly (or (not (memq scope '(global %scope))) (not writable))))
    this)
    
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jul  3 16:15:34 2015 (serrano)                */
+;*    Last change :  Sat Dec 26 19:36:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Bind all the unresolved variables.                               */
@@ -71,7 +71,7 @@
 		(loc loc)
 		(decl decl))
 	     (let ((decl (instantiate::J2SDecl
-			    (global '%scope)
+			    (scope '%scope)
 			    (id id)
 			    (loc loc))))
 		(hashtable-put! env id decl)
