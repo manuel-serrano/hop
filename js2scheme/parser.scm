@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last commit :  2015-12-27 [bffbda2] (Manuel Serrano)             */
+;*    Last commit :  2015-12-27 [9d6434f] (Manuel Serrano)             */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2114,29 +2114,31 @@
 		(octal-error n))))
 	 (else
 	  #f)))
-
+   
    (define (stricter-mode mode m)
       (cond
 	 ((not mode) m)
+	 ((not m) mode)
 	 ((eq? mode 'hopscript) mode)
 	 ((eq? m 'hopscript) m)
 	 ((eq? mode 'strict) mode)
 	 ((eq? m 'strict) m)
 	 (else m)))
-   
+
    (let loop ((nodes nnodes)
 	      (mode #f))
-      (when (pair? nodes)
-	 (let ((m (javascript-mode (car nodes))))
-	    (cond
-	       ((symbol? m)
-		(when (eq? m 'strict)
-		   (for-each check-octal-string nnodes))
-		(loop (cdr nodes) (stricter-mode mode m)))
-	       (m
-		(loop (cdr nodes) mode))
-	       (else
-		mode))))))
+      (if (pair? nodes)
+	  (let ((m (javascript-mode (car nodes))))
+	     (cond
+		((symbol? m)
+		 (when (eq? m 'strict)
+		    (for-each check-octal-string nnodes))
+		 (loop (cdr nodes) (stricter-mode mode m)))
+		(m
+		 (loop (cdr nodes) mode))
+		(else
+		 mode)))
+	  mode)))
 
 ;*---------------------------------------------------------------------*/
 ;*    lbrace-following? ...                                            */
