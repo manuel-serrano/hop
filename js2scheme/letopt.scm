@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last commit :  e85d33c+ [2015-12-28] (Manuel Serrano)            */
+;*    Last change :  Mon Dec 28 10:26:53 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */

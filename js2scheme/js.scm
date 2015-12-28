@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last commit :  9d6434f [2015-12-27] (Manuel Serrano)             */
+;*    Last change :  Mon Dec 28 10:26:38 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last commit :  552f6bb [2015-12-27] (Manuel Serrano)             */
+;*    Last change :  Mon Dec 28 10:33:04 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
