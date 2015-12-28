@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last commit :                                                    */
+;*    Last commit :  f579c5e [2015-12-27] (Manuel Serrano)             */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
