@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Dec 21 13:36:30 2015 (serrano)                */
+;*    Last change :  Mon Dec 28 10:25:27 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -19,7 +19,8 @@
    (include "walk.sch")
 
    (export (abstract-class J2SNode
-	      (loc::pair read-only (info '("notraverse"))))
+	      (loc::pair read-only (info '("notraverse")))
+	      (%info (default #unspecified) (info '("notraverse"))))
 	   
 	   (abstract-class J2SStmt::J2SNode)
 	   

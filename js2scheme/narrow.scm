@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last commit :                                                    */
+;*    Last change :  Mon Dec 28 10:34:16 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -65,7 +65,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun! o::J2SDeclFun)
    (with-access::J2SDeclFun o (id)
-      (tprint "*** NARROW " id))
+      (tprint "Narrow " id))
    ;; find the declaring block of all declaration
    (j2s-find-init-blocks o #f)
    ;; get the set of narrowable declrations
@@ -99,7 +99,6 @@
 	       ;; skip let/const declarations
 	       (with-access::J2SDecl decl (%info)
 		  (unless (isa? %info J2SNarrowInfo)
-		     (tprint "INIT=" (j2s->list this) " block=" (typeof block))
 		     (set! %info
 			(instantiate::J2SNarrowInfo
 			   (defblock block))))))))))
@@ -113,7 +112,6 @@
 	 ;; skip let/const declarations
 	 (with-access::J2SDecl decl (%info)
 	    (unless (isa? %info J2SNarrowInfo)
-	       (tprint "INVALIDATE " (j2s->list this))
 	       (set! %info
 		  (instantiate::J2SNarrowInfo
 		     (narrowable #f))))))))
@@ -125,7 +123,7 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-mark-narrowable ::J2SBlock ...                              */
+;*    j2s-mark-narrowable ::J2SBlock ...                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-mark-narrowable this::J2SBlock blocks inloop)
    (let ((nblocks (cons this blocks)))
@@ -141,25 +139,7 @@
 	 (when (isa? %info J2SNarrowInfo)
 	    (with-access::J2SNarrowInfo %info (defblock narrowable)
 	       (unless (memq defblock blocks)
-		  (tprint "INVALIDATE.2 " (j2s->list this))
 		  (set! narrowable #f)))))))
-
-;*---------------------------------------------------------------------*/
-;*    show-narrowable ...                                              */
-;*---------------------------------------------------------------------*/
-(define-walk-method (show-narrowable this::J2SNode)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    show-narrowable ::J2SDecl ...                                    */
-;*---------------------------------------------------------------------*/
-(define-walk-method (show-narrowable this::J2SDecl)
-   (call-default-walker)
-   (with-access::J2SDecl this (%info)
-      (when (isa? %info J2SNarrowInfo)
-	 (with-access::J2SNarrowInfo %info (defblock narrowable)
-	    (tprint "NARROWABLE: " (j2s->list this)
-	       " defblock=" (typeof defblock) " narrowable=" narrowable)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow! ...                                                  */
@@ -183,33 +163,65 @@
 ;*    j2s-narrow! ::J2SStmtExpr ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow! this::J2SStmtExpr)
-   
-   (define (copy-decl decl::J2SDecl loc rhs)
-      (with-access::J2SDecl decl (id)
-	 (let ((res (instantiate::J2SDeclInit
-		       (id id)
-		       (loc loc)
-		       (val rhs)))
-	       (fields (class-all-fields J2SDecl)))
-	    (let loop ((i (-fx (vector-length fields) 1)))
-	       (when (>=fx i 0)
-		  (let ((f (vector-ref fields i)))
-		     (when (class-field-mutable? f)
-			(let ((set (class-field-mutator f))
-			      (get (class-field-accessor f)))
-			   (set res (get decl))))
-		     (loop (-fx i 1)))))
-	    res)))
+
+   (define (decl->let::J2SLet decl::J2SDecl)
+      (with-access::J2SDecl decl (id loc)
+	 (let ((new (if (isa? decl J2SDeclInit)
+			(with-access::J2SDeclInit decl (val)
+			   (instantiate::J2SLetInit
+			      (id id)
+			      (loc loc)
+			      (val val)))
+			(instantiate::J2SLet
+			   (id id)
+			   (loc loc)))))
+	    (let ((fields (class-all-fields (object-class decl))))
+	       (let loop ((i (-fx (vector-length fields) 1)))
+		  (when (>=fx i 0)
+		     (let* ((f (vector-ref fields i))
+			    (get (class-field-accessor f))
+			    (set (class-field-mutator f)))
+			(when set
+			   (set new (get decl))
+			   (loop (-fx i 1)))))))
+	    new)))
+	    
+   (define (init-decl->let::J2SInitLet init::J2SInit)
+      (with-access::J2SInit init (loc lhs rhs)
+	 (instantiate::J2SInitLet
+	    (lhs lhs)
+	    (rhs rhs)
+	    (loc loc))))
+
+   (define (patch-defblock! block::J2SBlock decl::J2SLet)
+      (let loop ((block block))
+	 (if (isa? block J2SLetBlock)
+	     (with-access::J2SLetBlock block (decls)
+		(set! decls (append! decls (list decl))))
+	     (with-access::J2SBlock block (endloc loc nodes %info)
+		(if (isa? %info J2SLetBlock)
+		    (loop %info)
+		    (let ((lblock (instantiate::J2SLetBlock
+				     (endloc endloc)
+				     (loc loc)
+				     (decls (list decl))
+				     (nodes nodes))))
+		       (set! nodes (list lblock))
+		       (set! %info lblock)))))))
    
    (with-access::J2SStmtExpr this (expr)
       (or (when (isa? expr J2SInit)
 	     (with-access::J2SInit expr (lhs rhs loc)
 		(with-access::J2SRef lhs (decl)
 		   (when (isa? decl J2SDecl)
-		      (tprint "INIT expr: " (j2s->list expr))
 		      (with-access::J2SDecl decl (%info)
 			 (when (isa? %info J2SNarrowInfo)
-			    (with-access::J2SNarrowInfo %info (narrowable)
+			    (with-access::J2SNarrowInfo %info (narrowable defblock)
 			       (when narrowable
-				  (copy-decl decl loc rhs)))))))))
+				  (tprint "  +-- NARROWING: " (j2s->list this))
+				  (let* ((ldecl (decl->let decl)))
+				     (set! decl ldecl)
+				     (patch-defblock! defblock ldecl)
+				     (set! expr (init-decl->let expr))
+				     this)))))))))
 	  (call-next-method))))

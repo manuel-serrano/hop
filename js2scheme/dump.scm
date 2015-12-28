@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec  6 15:20:28 2015 (serrano)                */
+;*    Last change :  Mon Dec 28 10:33:54 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -384,16 +384,24 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
    (with-access::J2SDeclInit this (val ronly writable)
+      `(,@(call-next-method) :ronly ,ronly :writable ,writable)))
+;* 	  ,(j2s->list val))))                                          */
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SDeclFun ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SDeclFun)
+   (with-access::J2SDeclInit this (val ronly writable)
       `(,@(call-next-method) :ronly ,ronly :writable ,writable
 	  ,(j2s->list val))))
 
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SLetInit ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SLetInit)
-   (with-access::J2SLetInit this (val)
-      `(,@(call-next-method) ,(j2s->list val))))
-
+;* {*---------------------------------------------------------------------*} */
+;* {*    j2s->list ::J2SLetInit ...                                       *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (j2s->list this::J2SLetInit)                         */
+;*    (with-access::J2SLetInit this (val)                              */
+;*       `(,@(call-next-method) ,(j2s->list val))))                    */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLetOpt ...                                        */
 ;*---------------------------------------------------------------------*/
