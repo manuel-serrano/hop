@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec 15 20:02:47 2015 (serrano)                */
+;*    Last change :  Sat Dec 26 19:31:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -190,7 +190,7 @@
 	      (key (default (ast-decl-key)))
 	      (writable (default #t))
 	      (ronly (default #f))
-	      (global::obj (default #f))
+	      (scope::symbol (default 'local))
 	      (usecnt::int (default 0))
 	      (usage::pair-nil (default '()))
 	      (type::obj (default #unspecified)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Dec 22 11:51:26 2015 (serrano)                */
+;*    Last change :  Mon Dec 28 10:28:00 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -96,9 +96,6 @@
       ((char=? (string-ref (symbol->string! id) 0) #\%) id)
       ((memq id '(GLOBAL arguments)) id)
       (else (symbol-append '^ id))))
-;*    (if (memq id '(raise error eval quote module dirname worker))    */
-;*        (symbol-append '^ id)                                        */
-;*        id))                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-decl-scheme-id ...                                           */
@@ -281,10 +278,10 @@
 ;*    j2s-scheme-decl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-decl this::J2SDecl value writable mode return)
-   (with-access::J2SDecl this (loc global id)
+   (with-access::J2SDecl this (loc scope id)
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
-	    (if global
+	    (if (memq scope '(global %scope))
 		(let ((fun-name (string->symbol
 				   (format "function:~a:~a"
 				      (cadr loc) (caddr loc)))))
@@ -293,7 +290,7 @@
 			   ',id ,value ,(eq? mode 'strict) %this)
 		       `(begin
 			   (define ,ident ,value)
-			   (js-bind! %this ,global ',id
+			   (js-bind! %this ,scope ',id
 			      :configurable #f
 			      :get (js-make-function %this
 				      (lambda (%) ,ident)
@@ -316,9 +313,9 @@
 ;*    j2s-scheme ::J2SLet ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLet mode return conf)
-   (with-access::J2SLet this (loc global)
+   (with-access::J2SLet this (loc scope id)
       (epairify loc
-	 (if global
+	 (if (memq scope '(global fun))
 	     `(define ,(j2s-decl-scheme-id this) (js-make-let))
 	     `(,(j2s-decl-scheme-id this) (js-make-let))))))
 
@@ -326,14 +323,9 @@
 ;*    j2s-scheme ::J2SLetOpt ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLetOpt mode return conf)
-   (with-access::J2SLetOpt this (global)
-      (if global
-	  (let ((l (map (lambda (d) (cons 'define d))
-		      (j2s-let-decl this mode return conf))))
-	     (cond
-		((null? l) #unspecified)
-		((null? (cdr l)) (car l))
-		(else `(begin ,@l))))
+   (with-access::J2SLetOpt this (scope id)
+      (if (memq scope '(global fun))
+	  (j2s-let-decl-toplevel this mode return conf)
 	  (error "js-scheme" "Should not reached (not global)"
 	     (j2s->list this)))))
 
@@ -344,17 +336,16 @@
    
    (define (set decl)
       (if (and (isa? decl J2SLet) (not (isa? decl J2SLetOpt)))
-	  (with-access::J2SLet decl (global)
-	     `(js-let-set! ,(j2s-decl-scheme-id decl) ,val))
+	  `(js-let-set! ,(j2s-decl-scheme-id decl) ,val)
 	  `(set! ,(j2s-scheme lhs mode return conf) ,val)))
    
    (with-access::J2SRef lhs (decl)
       (cond
 	 ((isa? lhs J2SRef)
-	  (with-access::J2SDecl decl (writable global id loc)
+	  (with-access::J2SDecl decl (writable scope id loc)
 	     (if writable
 		 (cond
-		    ((and global (in-eval? return))
+		    ((and (memq scope '(global %scope)) (in-eval? return))
 		     `(begin
 			 ,(j2s-put! loc '%scope `',id val (eq? mode 'strict) #f)
 			 ,result))
@@ -422,7 +413,7 @@
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
-   (with-access::J2SDeclFun this (loc id global val)
+   (with-access::J2SDeclFun this (loc id scope val)
       (with-access::J2SFun val (params mode vararg body name)
 	 (let* ((scmid (j2s-decl-scheme-id this))
 		(fastid (j2s-fast-id id))
@@ -431,12 +422,12 @@
 		(minlen (if (eq? mode 'hopscript) (j2s-minlen val) -1))
 		(len (if (eq? vararg 'rest) (-fx lparams 1) lparams)))
 	    (epairify-deep loc
-	       (if global 
+	       (if (memq scope '(global %scope))
 		   `(begin
 		       (define ,fastid
 			  ,(jsfun->lambda val mode return conf))
 		       (define ,scmid
-			  (js-bind! %this ,global ',id
+			  (js-bind! %this ,scope ',id
 			     :configurable #f
 			     :value (js-make-function %this
 				       ,fastid ,len ',id
@@ -466,15 +457,15 @@
 ;*    j2s-scheme ::J2SDeclSvc ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclSvc mode return conf)
-   (with-access::J2SDeclSvc this (loc id val global)
+   (with-access::J2SDeclSvc this (loc id val scope)
       (let ((scmid (j2s-decl-scheme-id this))
 	    (fastid (j2s-fast-id id)))
 	 (epairify-deep loc
-	    (if global
+	    (if (memq scope '(global %scope))
 		`(begin
 		    (define ,fastid ,(jssvc->scheme val id scmid mode return conf))
 		    (define ,scmid 
-		       (js-bind! %this ,global ',id
+		       (js-bind! %this ,scope ',id
 			  :configurable #f
 			  :writable #f
 			  :value ,fastid)))
@@ -507,13 +498,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return conf)
    (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (global id)
+      (with-access::J2SDecl decl (scope id)
 	 (cond
 	    ((isa? decl J2SLetOpt)
 	     (j2s-decl-scheme-id decl))
 	    ((isa? decl J2SLet)
 	     `(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this))
-	    ((and global (in-eval? return))
+	    ((and (memq scope '(global %scope)) (in-eval? return))
 	     `(js-get-global-object-name %scope ',id #f %this))
 	    (else
 	     (j2s-decl-scheme-id decl))))))
@@ -1241,9 +1232,31 @@
 	  (j2s-scheme (car exprs) mode return conf))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-let-decl ...                                                 */
+;*    j2s-let-decl-toplevel ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (j2s-let-decl::pair-nil d::J2SDecl mode return conf)
+(define (j2s-let-decl-toplevel::pair-nil d::J2SDecl mode return conf)
+   (if (not (isa? d J2SLetOpt))
+       (j2s-scheme d mode return conf)
+       (with-access::J2SLetOpt d (val usage id)
+	  (let ((ident (j2s-decl-scheme-id d)))
+	     (cond
+		((or (not (isa? val J2SFun)) (memq 'assig usage))
+		 `(define ,ident ,(j2s-scheme val mode return conf)))
+		((or (memq 'ref usage) (memq 'new usage))
+		 (let ((fun (jsfun->lambda val mode return conf))
+		       (tmp (j2s-fast-id id)))
+		    `(begin
+			(define ,tmp ,fun)
+			(define ,ident ,(j2sfun->scheme val tmp mode return conf)))))
+		((memq 'call usage)
+		 `(define ,(j2s-fast-id id) ,(jsfun->lambda val mode return conf)))
+		(else
+		 '()))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-let-decl-inner ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return conf)
    (if (not (isa? d J2SLetOpt))
        (list (j2s-scheme d mode return conf))
        (with-access::J2SLetOpt d (val usage id)
@@ -1266,13 +1279,25 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLetBlock mode return conf)
    (with-access::J2SLetBlock this (loc decls nodes)
-      (let ((opt (if (any (lambda (d) (isa? d J2SLetOpt)) decls)
-		     'letrec* 'let)))
-	 (epairify loc
-	    `(,opt ,(append-map (lambda (d)
-				   (j2s-let-decl d mode return conf))
-		       decls)
-		,@(j2s-scheme nodes mode return conf))))))
+      (if (any (lambda (decl::J2SLet)
+		  (with-access::J2SLet decl (scope) (memq scope '(global fun))))
+	     decls)
+	  ;; top-level or function level block
+	  (epairify loc
+	     `(begin
+		 ,@(map (lambda (d)
+			   (j2s-let-decl-toplevel d mode return conf))
+		      decls)
+		 ,@(j2s-scheme nodes mode return conf)))
+	  ;; inner letblock, create a let block
+	  (let ((opt (if (any (lambda (d) (isa? d J2SLetOpt)) decls)
+			 'letrec* 'let))
+		(body (j2s-scheme nodes mode return conf)))
+	     (epairify loc
+		`(,opt ,(append-map (lambda (d)
+				       (j2s-let-decl-inner d mode return conf))
+			   decls)
+		    ,@(if (pair? body) body '(#unspecified))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-binop ...                                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Sep  4 11:12:06 2015 (serrano)                */
+;*    Last change :  Sun Dec 27 19:23:42 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -37,6 +37,7 @@
 	   __nodejs__udp-wrap
 	   __nodejs__pipe-wrap
 	   __nodejs__tty-wrap
+	   __nodejs__zlib
 	   __nodejs_uv
 	   __nodejs_require)
 
@@ -452,7 +453,7 @@
 			((string=? mod "http_parser")
 			 (process-http-parser %this))
 			((string=? mod "zlib")
-			 (process-zlib %this))
+			 (process-zlib %worker %this proc))
 			((string=? mod "os")
 			 (process-os %this))
 			((string=? mod "tty_wrap")
@@ -961,12 +962,6 @@
 	   (getHostByAddr . ,(js-make-function %this gethostbyaddr 2 "gethostbyaddr"))
 	   (getHostByName . ,(js-make-function %this gethostbyname 2 "gethostbyname")))
 	 %this)))
-
-;*---------------------------------------------------------------------*/
-;*    process-zlib ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (process-zlib %this)
-   (js-alist->jsobject `() %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    process-os ...                                                   */
