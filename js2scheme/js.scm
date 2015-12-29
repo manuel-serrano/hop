@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Dec 28 10:26:38 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 09:27:50 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -172,19 +172,54 @@
 	 (j2s-js* this "" "}" "" nodes tildec dollarc mode evalp conf))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SLet ...                                              */
+;*    j2s-binder ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SLet tildec dollarc mode evalp conf)
-   (with-access::J2SLet this (isconst id val)
-      (list this (if isconst "const " "let ") (j2s-js-id id) ";")))
-   
-;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SParam ...                                            */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SParam tildec dollarc mode evalp conf)
-   (with-access::J2SParam this (id)
-      (list this (j2s-js-id id))))
+(define (j2s-binder binder)
+   (case binder
+      ((let let-opt) "let ")
+      ((const const-opt) "const ")
+      ((var) "var ")
+      ((param) "")
+      (else (error "js" "Illegal binder" binder))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SDecl ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SDecl tildec dollarc mode evalp conf)
+   (with-access::J2SDecl this (id binder)
+      (list this (j2s-binder binder) (j2s-js-id id)
+	 (unless (j2s-param? this) ";"))))
+                                             
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SDeclInit ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp conf)
+   (with-access::J2SDeclInit this (id val binder)
+      (cons* this (j2s-binder binder) (j2s-js-id id) "="
+         (append (j2s-js val tildec dollarc mode evalp conf) '(";")))))
+                                             
+;* {*---------------------------------------------------------------------*} */
+;* {*    j2s-js ::J2SLetOpt ...                                           *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (j2s-js this::J2SLetOpt tildec dollarc mode evalp conf) */
+;*    (with-access::J2SLetOpt this (id val isconst)                    */
+;*       (cons* this (if isconst "const " "let ") (j2s-js-id id) "="   */
+;*          (append (j2s-js val tildec dollarc mode evalp conf) '(";"))))) */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    j2s-js ::J2SLet ...                                              *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (j2s-js this::J2SLet tildec dollarc mode evalp conf) */
+;*    (with-access::J2SLet this (isconst id val)                       */
+;*       (list this (if isconst "const " "let ") (j2s-js-id id) ";"))) */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    j2s-js ::J2SParam ...                                            *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (j2s-js this::J2SParam tildec dollarc mode evalp conf) */
+;*    (with-access::J2SParam this (id)                                 */
+;*       (list this (j2s-js-id id))))                                  */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SReturn ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -339,29 +374,6 @@
 	    '(") ")
 	    (j2s-js body tildec dollarc mode evalp conf)))))
 
-;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SDecl ...                                             */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SDecl tildec dollarc mode evalp conf)
-   (with-access::J2SDecl this (id)
-      (list this "var " (j2s-js-id id) ";")))
-                                             
-;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SDeclInit ...                                         */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp conf)
-   (with-access::J2SDeclInit this (id val)
-      (cons* this "var " (j2s-js-id id) "="
-         (append (j2s-js val tildec dollarc mode evalp conf) '(";")))))
-                                             
-;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SLetOpt ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SLetOpt tildec dollarc mode evalp conf)
-   (with-access::J2SLetOpt this (id val isconst)
-      (cons* this (if isconst "const " "let ") (j2s-js-id id) "="
-         (append (j2s-js val tildec dollarc mode evalp conf) '(";")))))
-                                             
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDeclFun ...                                          */
 ;*---------------------------------------------------------------------*/
