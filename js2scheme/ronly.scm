@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Sat Dec 26 19:36:32 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 08:50:11 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -60,25 +60,24 @@
    (with-access::J2SAssig this (lhs rhs loc)
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
-	    (when (isa? decl J2SLet)
-	       (with-access::J2SLet decl (isconst id)
-		  (when isconst
-		     (raise
-			(instantiate::&io-error
-			   (proc "ronly")
-			   (msg "Const variables cannot be assigned")
-			   (obj id)
-			   (fname (cadr loc))
-			   (location (caddr loc)))))))
+	    (when (j2s-const? decl)
+	       (with-access::J2SDecl decl (id)
+		  (raise
+		     (instantiate::&io-error
+			(proc "ronly")
+			(msg "Const variables cannot be assigned")
+			(obj id)
+			(fname (cadr loc))
+			(location (caddr loc))))))
 	    (with-access::J2SDecl decl (ronly id)
 	       (set! ronly #f))))
       (ronly! rhs))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    ronly! ::J2SInitLet ...                                          */
+;*    ronly! ::J2SInit ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SInitLet)
+(define-walk-method (ronly! this::J2SInit)
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
@@ -104,20 +103,20 @@
       (ronly! val))
    this)
    
-;*---------------------------------------------------------------------*/
-;*    ronly! ::J2SLetInit ...                                          */
-;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SLetInit)
-   (call-next-method)
-   (with-access::J2SLetInit this (val)
-      (ronly! val))
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    ronly! ::J2SLetOpt ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SLetOpt)
-   (call-next-method)
-   (with-access::J2SLetOpt this (val id)
-      (ronly! val))
-   this)
+;* {*---------------------------------------------------------------------*} */
+;* {*    ronly! ::J2SLetInit ...                                          *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (ronly! this::J2SLetInit)                       */
+;*    (call-next-method)                                               */
+;*    (with-access::J2SLetInit this (val)                              */
+;*       (ronly! val))                                                 */
+;*    this)                                                            */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    ronly! ::J2SLetOpt ...                                           *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (ronly! this::J2SLetOpt)                        */
+;*    (call-next-method)                                               */
+;*    (with-access::J2SLetOpt this (val id)                            */
+;*       (ronly! val))                                                 */
+;*    this)                                                            */

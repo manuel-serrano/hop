@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Fri Jul 11 10:59:01 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Tue Dec 29 06:57:39 2015 (serrano)                */
+;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the js2scheme heap file.                */
 ;*=====================================================================*/
@@ -70,9 +70,8 @@
 	   (class J2SDeclInit)
 	   (class J2SDeclFun)
 	   (class J2SDeclSvc)
-	   (class J2SDeclTag)
 	   (class J2SDeclExtern)
-	   (class J2SParam)
+;* 	   (class J2SParam)                                            */
 	   (class J2SLiteral)
 	   (class J2SArrayAbsent)
 	   (class J2SNull)
