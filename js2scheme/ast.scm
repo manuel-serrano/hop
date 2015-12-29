@@ -197,7 +197,7 @@
 	      (key (default (ast-decl-key)))
 	      (writable (default #t))
 	      (ronly (default #f))
-	      (global::obj (default #f))
+	      (scope::symbol (default 'local))
 	      (usecnt::int (default 0))
 	      (usage::pair-nil (default '()))
 	      (type::obj (default #unspecified)))

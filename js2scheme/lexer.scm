@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Oct 29 19:11:29 2015 (serrano)                */
+;*    Last change :  Mon Dec 28 10:27:06 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -20,7 +20,8 @@
 	   (j2s-template-lexer)
 	   (j2s-regex-lexer)
 	   (j2s-reserved-id? ::symbol)
-	   (j2s-strict-reserved-id? ::symbol)))
+	   (j2s-strict-reserved-id? ::symbol)
+	   (j2s-escape-js-string ::bstring ::input-port)))
 
 ;*---------------------------------------------------------------------*/
 ;*    reserved identifiers                                             */
@@ -274,9 +275,9 @@
       ((: #\' (* string_char_dquote) #\')
        (token-string (the-substring 1 (-fx (the-length) 1)) (the-length)))
       ((: #\" (* (or string_char_quote (: #\\ all) line_cont)) #\")
-       (escape-js-string (the-substring 1 (-fx (the-length) 1)) (the-port)))
+       (j2s-escape-js-string (the-substring 1 (-fx (the-length) 1)) (the-port)))
       ((: #\' (* (or string_char_dquote (: #\\ all) line_cont)) #\')
-       (escape-js-string (the-substring 1 (-fx (the-length) 1)) (the-port)))
+       (j2s-escape-js-string (the-substring 1 (-fx (the-length) 1)) (the-port)))
 
       ;; template strings
       (#\`
@@ -330,7 +331,7 @@
 	      (unread-string! (substring str 0 7) (the-port))
 	      (token 'return 'return 7))
 	     (else
-	      (let ((estr (escape-js-string str (the-port))))
+	      (let ((estr (j2s-escape-js-string str (the-port))))
 		 (if (memq (car estr) '(ESTRING OSTRING))
 		     (let ((symbol (string->symbol (cdr estr))))
 			(cond
@@ -400,25 +401,27 @@
 	   (: (* (or (out "`$") (: #\$ (out "`${")))) "$`"))
        ;; template string no escape
        (let ((str (the-substring 0 -1)))
-	  (token-string  str (the-length) 'TSTRING)))
+	  (token-string (pregexp-replace* "\r\n?" str "\n")
+	     (the-length) 'TSTRING)))
       
       ((: (* (or (out "`$") (: #\$ (out "${")))) "${")
        ;; template string with escape sequence
        (rgc-buffer-unget-char (the-port) (char->integer #\{))
-       (token 'TEMPLATE (the-substring 0 -1) (the-length)))
+       (token 'TEMPLATE (pregexp-replace* "\r\n?" (the-substring 0 -1) "\n")
+	  (the-length)))
       
       ((: (* (or (out "`$") (: #\$ (out "${")))) "$$")
        ;; template string with escape, with double $$
        (let ((str (the-substring 0 -1)))
 	  (rgc-buffer-unget-char (the-port) (char->integer #\$))
-	  (token-string (pregexp-replace "[$][$]" str "$")
+	  (token-string (pregexp-replace "[$][$]" (pregexp-replace* "\r\n?" str "\n") "$")
 	     (the-length) 'TEMPLATE)))
       
       ((: (* (or (out "`$") (: #\$ (out "${")))) "$${")
        ;; template string with escape, with double $$
        (let ((str (the-substring 0 -1)))
 	  (rgc-buffer-unget-char (the-port) (char->integer #\{))
-	  (token-string (pregexp-replace "[$][$]" str "$")
+	  (token-string (pregexp-replace "[$][$]" (pregexp-replace* "\r\n?" str "\n") "$")
 	     (the-length) 'TEMPLATE)))
       
       (else
@@ -447,11 +450,11 @@
 	       (substring-at? str "2029" offset)))))
 
 ;*---------------------------------------------------------------------*/
-;*    escape-js-string ...                                             */
+;*    j2s-escape-js-string ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-7.8.4        */
 ;*---------------------------------------------------------------------*/
-(define (escape-js-string str input-port)
+(define (j2s-escape-js-string str input-port)
    
    (define (err)
       (make-token 'ERROR str

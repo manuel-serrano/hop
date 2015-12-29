@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Thu Dec 17 07:47:20 2015 (serrano)                */
+;*    Last change :  Sat Dec 26 19:34:54 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -55,7 +55,7 @@
 	 (loc loc)
 	 (id js)
 	 (writable writable)
-	 (global '%scope)
+	 (scope '%scope)
 	 (bind bind)
 	 (val (instantiate::J2SPragma
 		 (loc loc)
