@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Dec 28 10:33:54 2015 (serrano)                */
+;*    Last change :  Mon Dec 28 16:12:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -123,7 +123,8 @@
 (define-method (j2s->list this::J2SRef)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (id key)
-	 `(,@(call-next-method) :key ,key ,id))))
+	 `(,@(call-next-method) :decl ,(string->symbol (typeof decl))
+	     :key ,key ,id))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWithRef ...                                       */

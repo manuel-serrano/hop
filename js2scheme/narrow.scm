@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Dec 28 10:34:16 2015 (serrano)                */
+;*    Last change :  Mon Dec 28 19:23:49 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -26,7 +26,8 @@
 
    (static (class J2SNarrowInfo
 	      (defblock::obj (default #f))
-	      (narrowable::bool (default #t))))
+	      (narrowable::bool (default #t))
+	      (ldecl (default #f))))
 
    (export j2s-narrow-stage
 	   (generic j2s-narrow ::obj ::obj)))
@@ -160,10 +161,71 @@
 	  this)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-narrow! ::J2SRef ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-narrow! this::J2SRef)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (%info)
+	 (if (isa? %info J2SNarrowInfo)
+	     (with-access::J2SNarrowInfo %info (ldecl)
+		(tprint "ldecl=" (typeof ldecl) " ref=" (j2s->list this))
+		(set! decl ldecl)
+		this)
+	     (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-narrow! ::J2SFor ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-narrow! this::J2SFor)
+   
+   (define (init-let node::J2SNode)
+      (when (isa? node J2SStmtExpr)
+	 (with-access::J2SStmtExpr node (expr)
+	    (when (isa? expr J2SInit)
+	       (with-access::J2SInit expr (lhs)
+		  (when (isa? lhs J2SRef)
+		     (with-access::J2SRef lhs (decl)
+			(with-access::J2SDecl decl (%info)
+			   (when (isa? %info J2SNarrowInfo)
+			      expr)))))))))
+   
+   (define (get-let-inits! init)
+      (when (isa? init J2SSeq)
+	 (with-access::J2SSeq init (nodes)
+	    (let loop ((n nodes)
+		       (inits '())
+		       (decls '()))
+	       (cond
+		  ((null? n)
+		   (when (pair? decls)
+		      (set! nodes (reverse! inits))
+		      decls))
+		  ((init-let (car n))
+		   =>
+		   (lambda (decl)
+		      (loop (cdr n) inits (cons decl decls))))
+		  (else
+		   (loop (cdr n) (cons (car n) inits) decls)))))))
+   
+
+   (tprint "j2sfor " (j2s->list this))
+   (with-access::J2SFor this (init test incr loc body)
+      (let ((decls (get-let-inits! init)))
+	 (if (pair? decls)
+	     (with-access::J2SBlock body (endloc)
+		(j2s-narrow!
+		   (instantiate::J2SLetBlock
+		      (loc loc)
+		      (endloc endloc)
+		      (decls decls)
+		      (nodes (list this)))))
+	     (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-narrow! ::J2SStmtExpr ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow! this::J2SStmtExpr)
-
+   
    (define (decl->let::J2SLet decl::J2SDecl)
       (with-access::J2SDecl decl (id loc)
 	 (let ((new (if (isa? decl J2SDeclInit)
@@ -185,14 +247,14 @@
 			   (set new (get decl))
 			   (loop (-fx i 1)))))))
 	    new)))
-	    
+   
    (define (init-decl->let::J2SInitLet init::J2SInit)
       (with-access::J2SInit init (loc lhs rhs)
 	 (instantiate::J2SInitLet
 	    (lhs lhs)
 	    (rhs rhs)
 	    (loc loc))))
-
+   
    (define (patch-defblock! block::J2SBlock decl::J2SLet)
       (let loop ((block block))
 	 (if (isa? block J2SLetBlock)
@@ -216,12 +278,12 @@
 		   (when (isa? decl J2SDecl)
 		      (with-access::J2SDecl decl (%info)
 			 (when (isa? %info J2SNarrowInfo)
-			    (with-access::J2SNarrowInfo %info (narrowable defblock)
+			    (with-access::J2SNarrowInfo %info (narrowable defblock ldecl)
 			       (when narrowable
 				  (tprint "  +-- NARROWING: " (j2s->list this))
-				  (let* ((ldecl (decl->let decl)))
-				     (set! decl ldecl)
-				     (patch-defblock! defblock ldecl)
-				     (set! expr (init-decl->let expr))
-				     this)))))))))
+				  (set! ldecl (decl->let decl))
+				  (set! decl ldecl)
+				  (patch-defblock! defblock ldecl)
+				  (set! expr (init-decl->let expr))
+				  this))))))))
 	  (call-next-method))))
