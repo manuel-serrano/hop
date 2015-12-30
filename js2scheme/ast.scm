@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Dec 28 10:25:27 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 15:29:43 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -145,7 +145,7 @@
 	   (class J2SArrow::J2SFun)
 	   
 	   (final-class J2SCatch::J2SStmt
-	      param::J2SParam
+	      param::J2SDecl
 	      body::J2SNode)
 	   
 	   (final-class J2STry::J2SStmt
@@ -200,36 +200,23 @@
 	      (scope::symbol (default 'local))
 	      (usecnt::int (default 0))
 	      (usage::pair-nil (default '()))
-	      (type::obj (default #unspecified)))
+	      (type::obj (default #unspecified))
+	      (binder::symbol (default 'var)))
 	   
 	   (class J2SDeclInit::J2SDecl
 	      val::J2SExpr)
 
-	   (final-class J2SLet::J2SDecl
-	      (isconst::bool read-only (default #f)))
-	   
-	   (wide-class J2SLetInit::J2SLet
-	      val::J2SExpr)
-	   
-	   (wide-class J2SLetOpt::J2SLet
-	      val::J2SExpr)
-	   
 	   (class J2SDeclFun::J2SDeclInit
 	      (expression::bool (default #f)))
-	   
+
 	   (class J2SDeclFunCnst::J2SDecl
 	      (val::J2SExpr read-only (info '("notraverse"))))
-	   
+
 	   (class J2SDeclSvc::J2SDeclFun)
-	   
-	   (class J2SDeclTag::J2SDeclFun)
-	   
+
 	   (final-class J2SDeclExtern::J2SDeclInit
 	      (bind::bool read-only (default #f)))
 
-	   (final-class J2SParam::J2SDecl
-	      (defval::J2SExpr read-only (default (nodefval))))
-	   
 	   (abstract-class J2SLiteral::J2SExpr)
 	   
 	   (final-class J2SArrayAbsent::J2SLiteral)
@@ -279,8 +266,6 @@
 	      op::symbol)
 	   
 	   (class J2SInit::J2SAssig)
-	   
-	   (class J2SInitLet::J2SInit)
 	   
 	   (final-class J2SAssigOp::J2SAssig
 	      op::symbol)
@@ -360,7 +345,14 @@
 	   (json->ast ::input-port)
 
 	   (nodefval::J2SUndefined)
-	   (nodefval?::bool ::J2SExpr))
+	   (nodefval?::bool ::J2SExpr)
+
+	   (j2s-var?::bool ::J2SDecl)
+	   (j2s-let?::bool ::J2SDecl)
+	   (j2s-const?::bool ::J2SDecl)
+	   (j2s-param?::bool ::J2SDecl)
+	   
+	   (j2s-let-opt?::bool ::J2SDecl))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -383,6 +375,58 @@
 ;*---------------------------------------------------------------------*/
 (define (nodefval? v)
    (eq? v %nodefval))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-var? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-var? decl::J2SDecl)
+   (with-access::J2SDecl decl (binder)
+      (case binder
+	 ((var) #t)
+	 ((let let-opt) #t)
+	 ((param) #f)
+	 (else (error "j2s-var?" "wrong binder" binder)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-let? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-let? decl::J2SDecl)
+   (with-access::J2SDecl decl (binder)
+      (case binder
+	 ((let let-opt) #t)
+	 ((var param) #f)
+	 (else (error "j2s-let?" "wrong binder" binder)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-const? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-const? decl::J2SDecl)
+   (with-access::J2SDecl decl (binder writable)
+      (unless writable
+	 (case binder
+	    ((let let-opt) #t)
+	    ((var param) #f)
+	    (else (error "j2s-const?" "wrong binder" binder))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-let-opt? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-let-opt? decl::J2SDecl)
+   (with-access::J2SDecl decl (binder)
+      (case binder
+	 ((let-opt) #t)
+	 ((let var param) #f)
+	 (else (error "j2s-let-opt?" "wrong binder" binder)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-param? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (j2s-param? decl::J2SDecl)
+   (with-access::J2SDecl decl (binder)
+      (case binder
+	 ((param) #t)
+	 ((var let const let-opt const-opt) #f)
+	 (else (error "j2s-param?" "wrong binder" binder)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-id ...                                                    */
@@ -726,8 +770,8 @@
 (gen-walks J2SArray (exprs))
 (gen-walks J2SDeclInit val)
 (gen-walks J2SDeclFunCnst)
-(gen-walks J2SLetInit val)
-(gen-walks J2SLetOpt val)
+;* (gen-walks J2SLetInit val)                                          */
+;* (gen-walks J2SLetOpt val)                                           */
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
 (gen-walks J2SCond test then else)

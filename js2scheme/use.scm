@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jul  3 16:14:20 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 08:39:56 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -151,21 +151,21 @@
       (set! u (cons 'init u)))
    this)
 
-;*---------------------------------------------------------------------*/
-;*    usage ::J2SLetInit ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SLetInit ctx)
-   (with-access::J2SLetInit this ((u usage) val)
-      (usage val 'ref)
-      (set! u (cons 'init u)))
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    usage ::J2SLetOpt ...                                            */
-;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SLetOpt ctx)
-   (with-access::J2SLetOpt this ((u usage) val)
-      (usage val 'ref)
-      (set! u (cons 'init u)))
-   this)
-
+;* {*---------------------------------------------------------------------*} */
+;* {*    usage ::J2SLetInit ...                                           *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (usage this::J2SLetInit ctx)                    */
+;*    (with-access::J2SLetInit this ((u usage) val)                    */
+;*       (usage val 'ref)                                              */
+;*       (set! u (cons 'init u)))                                      */
+;*    this)                                                            */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    usage ::J2SLetOpt ...                                            *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (usage this::J2SLetOpt ctx)                     */
+;*    (with-access::J2SLetOpt this ((u usage) val)                     */
+;*       (usage val 'ref)                                              */
+;*       (set! u (cons 'init u)))                                      */
+;*    this)                                                            */
+;*                                                                     */

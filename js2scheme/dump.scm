@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Dec 28 16:12:57 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 17:55:12 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -179,15 +179,6 @@
 		 ,(map j2s->list params) ,(j2s->list body)))
 	  `(,@(call-next-method) :name ,name
 	      ,(map j2s->list params) ,(j2s->list body)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SParam ...                                         */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SParam)
-   (with-access::J2SParam this (id defval)
-      (if (isa? defval J2SUndefined)
-	  `(,@(call-next-method) ,id)
-	  `(,@(call-next-method) ,id = ,(j2s->list defval)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturn ...                                        */
@@ -377,25 +368,23 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key)
-      `(,@(call-next-method) :key ,key ,id)))
+   (with-access::J2SDecl this (id key binder)
+      `(,@(call-next-method) :binder ,binder :key ,key ,id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (val ronly writable)
+   (with-access::J2SDeclInit this (val ronly writable val)
       `(,@(call-next-method) :ronly ,ronly :writable ,writable)))
-;* 	  ,(j2s->list val))))                                          */
+	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclFun ...                                       */
-;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclFun)
    (with-access::J2SDeclInit this (val ronly writable)
       `(,@(call-next-method) :ronly ,ronly :writable ,writable
 	  ,(j2s->list val))))
-
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    j2s->list ::J2SLetInit ...                                       *} */
 ;* {*---------------------------------------------------------------------*} */
@@ -403,14 +392,6 @@
 ;*    (with-access::J2SLetInit this (val)                              */
 ;*       `(,@(call-next-method) ,(j2s->list val))))                    */
 ;*                                                                     */
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SLetOpt ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SLetOpt)
-   (with-access::J2SLetOpt this (val)
-      `(,@(call-next-method) ,(j2s->list val))))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPragma)

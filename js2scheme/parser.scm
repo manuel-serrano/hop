@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec 28 10:27:45 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 16:56:53 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -330,24 +330,27 @@
       ;; ES6 let block
       (decl-list (consume-token! 'let) in-for-init?
 	 (lambda (loc id val)
-	    (instantiate::J2SLetInit
+	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
+	       (binder 'let)
 	       (val val)))
 	 (lambda (loc id)
-	    (instantiate::J2SLetInit
+	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
+	       (binder 'let)
 	       (val (instantiate::J2SUndefined (loc loc)))))))
 
    (define (const-decl-list in-for-init?)
       ;; ES6 const block
       (decl-list (consume-token! 'const) in-for-init?
 	 (lambda (loc id val)
-	    (instantiate::J2SLetInit
-	       (isconst #t)
+	    (instantiate::J2SDeclInit
 	       (loc loc)
 	       (id id)
+	       (writable #f)
+	       (binder 'let)
 	       (val val)))
 	 (lambda (loc id)
 	    (parse-token-error "const-block" (consume-any!)))))
@@ -416,58 +419,16 @@
 	    ((SEMICOLON) #f)
 	    (else (expression #t))))
 
-      (define (mark-decls-loop! decls)
-	 (for-each (lambda (decl::J2SLet)
-		      (with-access::J2SLet decl (scope _scmid id)
-			 (set! _scmid (symbol-append '% id))
-			 (set! scope 'loop)))
-	    decls))
-
-      (define (let->init d::J2SLet)
-	 (with-access::J2SLet d (loc id)
-	    (instantiate::J2SLetOpt
-	       (loc loc)
-	       (id id)
-	       (val (instantiate::J2SRef
-		       (loc loc)
-		       (decl d))))))
-
-      (define (for-let first-part for)
-	 (with-access::J2SVarDecls first-part (loc decls)
-	    (mark-decls-loop! decls)
-	    (let ((endloc `(at ,(input-port-name input-port) 0)))
-	       (with-access::J2SLoop for (body)
-		  (set! body
-		     (instantiate::J2SBlock
-			(endloc endloc)
-			(loc loc)
-			(nodes (list
-				  (instantiate::J2SVarDecls
-				     (loc loc)
-				     (decls (map let->init decls)))
-				  body)))))
-	       (instantiate::J2SBlock
-		  (endloc endloc)
-		  (loc loc)
-		  (nodes (list first-part for))))))
-      
       (let ((loc (token-loc (consume-token! 'for))))
 	 (push-open-token (consume! 'LPAREN))
 	 (let* ((tok0 (peek-token-type))
 		(first-part (init-first-part tok0)))
 	    (case (peek-token-type)
 	       ((SEMICOLON)
-		(if (eq? tok0 'let)
-		    (for-let first-part
-		       (for-init/test/incr loc
-			  (instantiate::J2SNop (loc loc))))
-		    (for-init/test/incr loc
-		       (or first-part (instantiate::J2SNop (loc loc))))))
+		(for-init/test/incr loc
+		   (or first-part (instantiate::J2SNop (loc loc)))))
 	       ((in)
-		(if (eq? tok0 'let)
-		    (for-let first-part
-		       (for-in loc first-part))
-		    (for-in loc first-part)))))))
+		(for-in loc first-part))))))
    
    ;; for (init; test; incr)
    (define (for-init/test/incr loc init::J2SNode)
@@ -709,9 +670,10 @@
 	       ;; we'll see...
 	       (instantiate::J2SCatch
 		  (loc loc)
-		  (param (instantiate::J2SParam
+		  (param (instantiate::J2SDecl
 			    (loc loc)
-			    (id id)))
+			    (id id)
+			    (binder 'param)))
 		  (body body))))))
    
    (define (finally)
@@ -762,21 +724,24 @@
 	      (cond
 		 ((pair? p)
 		  (let ((loc (token-loc p)))
-		     (instantiate::J2SParam
+		     (instantiate::J2SDecl
 			(loc loc)
-			(id (token-value p)))))
+			(id (token-value p))
+			(binder 'param))))
 		 ((isa? p J2SAssig)
 		  (with-access::J2SAssig p (loc lhs rhs)
 		     (with-access::J2SUnresolvedRef lhs (id)
-			(instantiate::J2SParam
-			   (defval rhs)
+			(instantiate::J2SDeclInit
+			   (val rhs)
 			   (loc loc)
-			   (id id)))))
+			   (id id)
+			   (binder 'param)))))
 		 ((isa? p J2SUnresolvedRef)
 		  (with-access::J2SUnresolvedRef p (id loc)
-		     (instantiate::J2SParam
+		     (instantiate::J2SDecl
 			(loc loc)
-			(id id))))
+			(id id)
+			(binder 'param))))
 		 (else
 		  (parse-node-error "unexpected token" p))))
 	 args))
@@ -811,12 +776,12 @@
 
    (define (rest-params params)
       (when (pair? params)
-	 (with-access::J2SParam (car (last-pair params)) (usage)
+	 (with-access::J2SDecl (car (last-pair params)) (usage)
 	    (when (equal? usage '(rest)) 'rest))))
    
    (define (rest-params params)
       (when (pair? params)
-	 (with-access::J2SParam (car (last-pair params)) (usage)
+	 (with-access::J2SDecl (car (last-pair params)) (usage)
 	    (when (equal? usage '(rest)) 'rest))))
    
    (define (function declaration?)
@@ -884,7 +849,8 @@
 	  (with-access::J2SPropertyInit init (loc name)
 	     (if (isa? name J2SString)
 		 (with-access::J2SString name (val)
-		    (instantiate::J2SParam
+		    (instantiate::J2SDecl
+		       (binder 'param)
 		       (loc loc)
 		       (id (string->symbol val))))
 		 (parse-node-error "Illegal parameter declaration" init)))
@@ -1013,15 +979,17 @@
 			  (assig-expr #f))
 		       ;; no default value
 		       (nodefval))))
-	 (instantiate::J2SParam
-	    (defval expr)
+	 (instantiate::J2SDeclInit
+	    (binder 'param)
+	    (val expr)
 	    (loc loc)
 	    (id (token-value token)))))
 
    (define (consume-rest-param!)
       (let* ((token (consume-token! 'ID))
 	     (loc (token-loc token)))
-	 (instantiate::J2SParam
+	 (instantiate::J2SDecl
+	    (binder 'param)
 	    (loc loc)
 	    (usage '(rest))
 	    (id (token-value token)))))
@@ -1093,33 +1061,34 @@
 		    (pop-open-token)
 		    (reverse! rev-params)))))))
 
-   (define (param-defval p::J2SParam)
+   (define (param-defval p::J2SDecl)
       ;; generate (if (eq? id undefined) (set! id defval))
-      (with-access::J2SParam p (defval loc)
-	 (unless (isa? defval J2SUndefined)
-	    (let* ((rhs (instantiate::J2SUndefined
-			   (loc loc)))
-		   (lhs (instantiate::J2SRef
-			   (loc loc)
-			   (decl p)))
-		   (test (instantiate::J2SBinary
-			    (loc loc)
-			    (op '===)
-			    (lhs lhs)
-			    (rhs rhs)))
-		   (then (instantiate::J2SStmtExpr
-			    (loc loc)
-			    (expr (instantiate::J2SAssig
-				     (loc loc)
-				     (lhs (duplicate::J2SRef lhs))
-				     (rhs defval)))))
-		   (else (instantiate::J2SNop
-			    (loc loc))))
-	       (instantiate::J2SIf
-		  (loc loc)
-		  (test test)
-		  (then then)
-		  (else else))))))
+      (when (isa? p J2SDeclInit)
+	 (with-access::J2SDeclInit p (val loc)
+	    (unless (isa? val J2SUndefined)
+	       (let* ((rhs (instantiate::J2SUndefined
+			      (loc loc)))
+		      (lhs (instantiate::J2SRef
+			      (loc loc)
+			      (decl p)))
+		      (test (instantiate::J2SBinary
+			       (loc loc)
+			       (op '===)
+			       (lhs lhs)
+			       (rhs rhs)))
+		      (then (instantiate::J2SStmtExpr
+			       (loc loc)
+			       (expr (instantiate::J2SAssig
+					(loc loc)
+					(lhs (duplicate::J2SRef lhs))
+					(rhs val)))))
+		      (else (instantiate::J2SNop
+			       (loc loc))))
+		  (instantiate::J2SIf
+		     (loc loc)
+		     (test test)
+		     (then then)
+		     (else else)))))))
    
    (define (fun-body-params-defval params::pair-nil)
       (filter-map param-defval params))
@@ -1859,7 +1828,8 @@
 	       (format "expected \"of\" got \"~a\"" (cdr of)) of))
 	 (let* ((iterable (expression #f))
 		(loc (token-loc id))
-		(decl (instantiate::J2SLetOpt
+		(decl (instantiate::J2SDeclInit
+			 (binder 'let-opt)
 			 (id (cdr id))
 			 (val (instantiate::J2SUndefined (loc loc)))
 			 (loc loc))))
@@ -2335,15 +2305,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-let ::J2SArrow ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (disable-es6-let this::J2SLetInit)
-   (with-access::J2SLetInit this (loc id)
-      (raise
-	 (instantiate::&io-parse-error
-	    (proc "js-parser")
-	    (msg "arrow/const block disabled")
-	    (obj id)
-	    (fname (cadr loc))
-	    (location (caddr loc))))))
+;* (define-walk-method (disable-es6-let this::J2SLetInit)              */
+;*    (with-access::J2SLetInit this (loc id)                           */
+;*       (raise                                                        */
+;* 	 (instantiate::&io-parse-error                                 */
+;* 	    (proc "js-parser")                                         */
+;* 	    (msg "arrow/const block disabled")                         */
+;* 	    (obj id)                                                   */
+;* 	    (fname (cadr loc))                                         */
+;* 	    (location (caddr loc))))))                                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-arrow ...                                            */
@@ -2387,18 +2357,30 @@
 	 (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
-;*    disable-es6-default-value ::J2SParam ...                         */
+;*    disable-es6-default-value ::J2SDeclInit ...                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (disable-es6-default-value this::J2SParam)
-   (with-access::J2SParam this (defval id loc)
-      (unless (nodefval? defval)
-	 (raise
-	    (instantiate::&io-parse-error
-	       (proc "js-parser")
-	       (msg "default parameter values disabled")
-	       (obj id)
-	       (fname (cadr loc))
-	       (location (caddr loc)))))))
+(define-walk-method (disable-es6-default-value this::J2SDeclInit)
+   (when (j2s-param? this)
+      (with-access::J2SDeclInit this (val id loc)
+	 (unless (nodefval? val)
+	    (raise
+	       (instantiate::&io-parse-error
+		  (proc "js-parser")
+		  (msg "default parameter values disabled")
+		  (obj id)
+		  (fname (cadr loc))
+		  (location (caddr loc))))))))
+;*                                                                     */
+;* (define-walk-method (disable-es6-default-value this::J2SParam)      */
+;*    (with-access::J2SParam this (defval id loc)                      */
+;*       (unless (nodefval? defval)                                    */
+;* 	 (raise                                                        */
+;* 	    (instantiate::&io-parse-error                              */
+;* 	       (proc "js-parser")                                      */
+;* 	       (msg "default parameter values disabled")               */
+;* 	       (obj id)                                                */
+;* 	       (fname (cadr loc))                                      */
+;* 	       (location (caddr loc)))))))                             */
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-rest-argument ::J2SNode ...                          */

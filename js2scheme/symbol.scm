@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon Dec 28 10:28:17 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 18:12:46 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -119,15 +119,6 @@
 		       (loop (cdr decls) (cons decl acc) funs))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    bind-let! ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (bind-let! decls env mode scope widths::pair-nil wenv::pair-nil)
-   (map (lambda (d::J2SLetInit)
-	   (duplicate::J2SLet d
-	      (scope 'global)))
-      decls))
-
-;*---------------------------------------------------------------------*/
 ;*    bind! ::J2SDecl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (bind! this::J2SDecl env mode)
@@ -222,8 +213,8 @@
 			  (append ldecls env1)
 			  (cons arguments (append ldecls env1))))
 		(nwenv (cons arguments (append decls params wenv))))
-	    (for-each (lambda (ldecl::J2SLet)
-			 (with-access::J2SLet ldecl (scope)
+	    (for-each (lambda (decl::J2SDecl)
+			 (with-access::J2SDecl decl (scope)
 			    (set! scope 'fun)))
 	       ldecls)
 ;* 	    (tprint "**** fun=" id " decl=" (debug-dump-env decls))    */
@@ -242,7 +233,7 @@
 	       (when (>fx usecnt 0)
 		  (with-access::J2SFun this (vararg params)
 		     (if vararg
-			 (with-access::J2SParam (car (last-pair params)) (id loc)
+			 (with-access::J2SDecl (car (last-pair params)) (id loc)
 			    (raise
 			       (instantiate::&io-parse-error
 				  (proc "js-symbol")
@@ -322,7 +313,7 @@
       ;; propagate the compilation mode to the function
       (let ((nenv (cons param env)))
 	 (when (eq? mode 'strict)
-	    (with-access::J2SParam param (id)
+	    (with-access::J2SDecl param (id)
 	       (check-strict-mode-eval id "Catch name" loc)))
 	 (set! body (walk! body nenv mode withs wenv))))
    this)
@@ -344,23 +335,155 @@
 	     ref))))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SFor ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (resolve! this::J2SFor env mode withs wenv)
+   
+   (define (mark-decls-loop! decls)
+      (for-each (lambda (decl::J2SDecl)
+		   (with-access::J2SDecl decl (scope _scmid id)
+		      (set! _scmid (symbol-append '% id))
+		      (set! scope 'loop)))
+	 decls))
+   
+   (define (let->init d::J2SDecl)
+      (with-access::J2SDecl d (loc id)
+	 (instantiate::J2SDeclInit
+	    (loc loc)
+	    (id id)
+	    (binder 'let-opt)
+	    (val (instantiate::J2SRef
+		    (loc loc)
+		    (decl d))))))
+   
+   (define (for-let for)
+      (with-access::J2SFor for (init body)
+	 (with-access::J2SVarDecls init (loc decls)
+	    (mark-decls-loop! decls)
+	    (with-access::J2SLoop for (body)
+	       ;; create local variables for the loop body
+	       (set! body
+		  (instantiate::J2SBlock
+		     (endloc loc)
+		     (loc loc)
+		     (nodes (list
+			       (instantiate::J2SVarDecls
+				  (loc loc)
+				  (decls (map let->init decls)))
+			       body)))))
+	    (let ((lift init))
+	       (set! init (instantiate::J2SNop (loc loc)))
+	       (instantiate::J2SBlock
+		  (endloc loc)
+		  (loc loc)
+		  (nodes (list lift for)))))))
+   
+   (define (for-var for)
+      (with-access::J2SFor for (init)
+	 (with-access::J2SVarDecls init (loc decls)
+	    (let ((lift init))
+	       (set! init (instantiate::J2SNop (loc loc)))
+	       (instantiate::J2SBlock
+		  (endloc loc)
+		  (loc loc)
+		  (nodes (list lift for)))))))
+   
+   (define (let-init? init::J2SVarDecls)
+      (with-access::J2SVarDecls init (decls)
+	 (j2s-let? (car decls))))
+   
+   (with-access::J2SFor this (init)
+      (cond
+	 ((not (isa? init J2SVarDecls))
+	  (call-next-method))
+	 ((let-init? init)
+	  (resolve! (for-let this) env mode withs wenv))
+	 (else
+	  (resolve! (for-var this) env mode withs wenv)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SForIn ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SForIn env mode withs wenv)
+
+   (define (let->init d::J2SDecl)
+      (with-access::J2SDecl d (loc id)
+	 (instantiate::J2SDeclInit
+	    (loc loc)
+	    (id id)
+	    (binder 'let-opt)
+	    (val (instantiate::J2SRef
+		    (loc loc)
+		    (decl d))))))
+   
+   (define (for-in-let for)
+      (with-access::J2SForIn for (lhs loc body)
+	 (with-access::J2SVarDecls lhs (loc decls)
+	    (with-access::J2SDecl (car decls) (loc id binder)
+	       (let ((decl (instantiate::J2SDeclInit
+			      (loc loc)
+			      (id id)
+			      (_scmid (symbol-append '% id))
+			      (binder 'let-opt)
+			      (val (instantiate::J2SUndefined
+				      (loc loc)))))
+		     (lift lhs))
+		  (set! body
+		     (instantiate::J2SBlock
+			(endloc loc)
+			(loc loc)
+			(nodes (list
+				  (instantiate::J2SVarDecls
+				     (loc loc)
+				     (decls (list (let->init decl))))
+				  body))))
+		  (set! decls (list decl))
+		  (set! lhs (instantiate::J2SRef (loc loc) (decl decl)))
+		  (instantiate::J2SBlock
+		     (endloc loc)
+		     (loc loc)
+		     (nodes (list lift for))))))))
+   
+   (define (for-in-var for)
+      (with-access::J2SForIn for (lhs loc)
+	 (with-access::J2SVarDecls lhs (loc decls)
+	    (with-access::J2SDecl (car decls) (loc id binder)
+	       (let ((decl (instantiate::J2SDeclInit
+			      (loc loc)
+			      (id id)
+			      (binder binder)
+			      (val (instantiate::J2SUndefined
+				      (loc loc)))))
+		     (lift lhs))
+		  (set! decls (list decl))
+		  (set! lhs (instantiate::J2SRef (loc loc) (decl decl)))
+		  (instantiate::J2SBlock
+		     (endloc loc)
+		     (loc loc)
+		     (nodes (list lift for))))))))
+   
+   (define (let-init? init::J2SVarDecls)
+      (with-access::J2SVarDecls init (decls)
+	 (j2s-let? (car decls))))
+   
    (with-access::J2SForIn this (loc lhs obj body)
-      (if (isa? lhs J2SVarDecls)
-	  (with-access::J2SVarDecls lhs (decls)
-	     (when (eq? mode 'strict)
-		(for-each (lambda (decl)
-			     (with-access::J2SDecl (car decls) (loc id)
-				(check-strict-mode-eval id "variable name" loc)))
-		   decls))
-	     (let ((ref (j2sref (car decls) loc withs wenv)))
-		(set! lhs ref)))
-	  (set! lhs (resolve! lhs env mode withs wenv)))
-      (set! obj (resolve! obj env mode withs wenv))
-      (set! body (resolve! body env mode withs wenv))
-      this))
+      (cond
+	 ((not (isa? lhs J2SVarDecls))
+	  (call-default-walker))
+	 ((let-init? lhs)
+	  (resolve! (for-in-let this) env mode withs wenv))
+	 (else
+	  (resolve! (for-in-var this) env mode withs wenv)))))
+
+;* 	 ((isa? lhs J2SVarDecls)                                       */
+;* 	  (with-access::J2SVarDecls lhs (decls)                        */
+;* 	     (when (eq? mode 'strict)                                  */
+;* 		(for-each (lambda (decl)                               */
+;* 			     (with-access::J2SDecl (car decls) (loc id) */
+;* 				(check-strict-mode-eval id "variable name" loc))) */
+;* 		   decls))                                             */
+;* 	     (let ((ref (j2sref (car decls) loc withs wenv)))          */
+;* 		(set! lhs ref)))))                                     */
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SUnresolvedRef ...                                  */
@@ -446,42 +569,27 @@
 ;*    resolve! ::J2SDeclInit ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclInit env mode withs wenv)
-   (with-access::J2SDeclInit this (loc id val)
+   (with-access::J2SDeclInit this (loc id val binder)
       (let ((ndecl::J2SDecl (find-decl id env)))
 	 ;; strict mode restrictions
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
 	 (when (eq? mode 'strict)
 	    (check-strict-mode-eval id "Declaration name" loc))
+	 (when (j2s-let? this)
+	    (unless (eq? (find-decl id env) this)
+	       (raise
+		  (instantiate::&io-parse-error
+		     (proc "js-symbol")
+		     (msg (format "~a illegal redefinition" id))
+		     (obj id)
+		     (fname (cadr loc))
+		     (location (caddr loc))))))
 	 (instantiate::J2SStmtExpr
 	    (loc loc)
 	    (expr (instantiate::J2SInit
 		     (loc loc)
 		     (lhs (j2sref ndecl loc withs wenv))
 		     (rhs (resolve! val env mode withs wenv))))))))
-
-;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SLetInit ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SLetInit env mode withs wenv)
-   (with-access::J2SLetInit this (loc id val)
-      ;; strict mode restrictions
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1
-      (when (eq? mode 'strict)
-	 (check-strict-mode-eval id "Declaration name" loc))
-      (unless (eq? (find-decl id env) this)
-	 (raise
-	    (instantiate::&io-parse-error
-	       (proc "js-symbol")
-	       (msg (format "~a illegal redefinition" id))
-	       (obj id)
-	       (fname (cadr loc))
-	       (location (caddr loc)))))
-      (instantiate::J2SStmtExpr
-	 (loc loc)
-	 (expr (instantiate::J2SInitLet
-		  (loc loc)
-		  (lhs (j2sref this loc withs wenv))
-		  (rhs (resolve! val env mode withs wenv)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclFun ...                                        */
@@ -499,14 +607,6 @@
       (instantiate::J2SNop
 	 (loc loc))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    resolve! ::J2SLetInit ...                                        *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (resolve! this::J2SLetInit env mode withs wenv) */
-;*    (with-access::J2SLetInit this (loc val)                          */
-;*       (set! val (resolve! val env mode withs wenv)))                */
-;*    this)                                                            */
-;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SAssign ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -643,9 +743,9 @@
    (append-map (lambda (d)
 		  (if (isa? d J2SVarDecls)
 		      (with-access::J2SVarDecls d (decls)
-			 (filter (lambda (d)
-				    (when (isa? d J2SLet)
-				       (with-access::J2SLet d (scope)
+			 (filter (lambda (d::J2SDecl)
+				    (when (j2s-let? d)
+				       (with-access::J2SDecl d (scope)
 					  (unless (eq? d 'loop)
 					     d))))
 			    decls))
@@ -665,9 +765,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SVarDecls)
    (with-access::J2SVarDecls this (decls)
-      (filter-map (lambda (d)
+      (filter-map (lambda (d::J2SDecl)
 		     (cond
-			((isa? d J2SLet) #f)
+			((j2s-let? d) #f)
 			((isa? d J2SDeclFun) d)
 			((isa? d J2SDeclExtern) d)
 			((isa? d J2SDeclInit) (duplicate::J2SDecl d))
@@ -678,13 +778,7 @@
 ;*    collect* ::J2SDecl ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect* this::J2SDecl)
-   (list this))
-
-;*---------------------------------------------------------------------*/
-;*    collect* ::J2SDeclInit ...                                       */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect* this::J2SDeclInit)
-   (list this))
+   (if (j2s-var? this) (list this) '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SDeclFun ...                                        */
@@ -698,12 +792,6 @@
 (define-walk-method (collect* this::J2SDeclExtern)
    (list this))
 
-;*---------------------------------------------------------------------*/
-;*    collect* ::J2SLet ...                                            */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect* this::J2SLet)
-   '())
-		  
 ;*---------------------------------------------------------------------*/
 ;*    collect* ::J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/

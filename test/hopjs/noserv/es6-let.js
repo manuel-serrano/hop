@@ -107,6 +107,19 @@ function arity() {
    return x;
 }
 
+function forLabel() {
+   label1: for( let i = 0; i <= 0; i++ ) {
+      for( let j = 0; j <= 1; j++ ) {
+	 if( j === 0 ) {
+	    continue label1;
+	 } else {
+	    return false;
+	 }
+      }  
+   }
+   return true;
+}
+
 console.log( "basic" );
 assert.strictEqual( acc, "111 222 333" );
 
@@ -133,6 +146,9 @@ assert.strictEqual( split2( -10, 20 ), 3 );
 console.log( "   throws()" );
 assert.throws( errForward );
 assert.throws( errForward2 );
+
+console.log( "   for/label()" );
+assert.ok( forLabel() );
 
 assert.ok( arity() == 2 );
 

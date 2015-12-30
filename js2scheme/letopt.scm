@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Mon Dec 28 10:34:08 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 17:22:52 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -60,12 +60,12 @@
 	    (vars '()))
 	 (for-each (lambda (x)
 		      (cond
-			 ((isa? x J2SLet)
+			 ((not (isa? x J2SDecl))
+			  (error "j2s-letopt" "internal error" (j2s->list x)))
+			 ((j2s-let? x)
 			  (set! lets (cons x lets)))
-			 ((isa? x J2SDecl)
-			  (set! vars (cons x vars)))
 			 (else
-			  (error "j2s-letopt" "internal error" (j2s->list x)))))
+			  (set! vars (cons x vars)))))
 	    decls)
 	 (when (pair? lets)
 	    ;; this modify nodes in place
@@ -108,8 +108,9 @@
 	  (filter-map (lambda (n::J2SStmt)
 			 (when (isa? n J2SStmtExpr)
 			    (with-access::J2SStmtExpr n (expr)
-			       (when (isa? expr J2SInitLet)
-				  expr))))
+			       (when (isa? expr J2SInit)
+				  (when (j2s-let? (init-decl expr))
+				     expr)))))
 	     nodes))))
 
 ;*---------------------------------------------------------------------*/
@@ -126,8 +127,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    init-decl ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (init-decl::J2SDecl this::J2SInitLet)
-   (with-access::J2SInitLet this (lhs)
+(define (init-decl::J2SDecl this::J2SInit)
+   (with-access::J2SInit this (lhs)
       (with-access::J2SRef lhs (decl)
 	 decl)))
 
@@ -190,11 +191,6 @@
 ;*---------------------------------------------------------------------*/
 (define (tail-let! this::J2SLetBlock resnode::J2SStmt)
    
-   (define (init-let->let::J2SLet this::J2SInitLet)
-      (with-access::J2SInitLet this (rhs loc lhs)
-	 (with-access::J2SRef lhs (decl)
-	    (duplicate::J2SLet decl))))
-   
    (define (statement->expression node)
       ;; transform a statement into a expression
       (with-access::J2SNode node (loc)
@@ -205,11 +201,12 @@
    (define (new-let-opt node::J2SStmt)
       ;; create a new declaration for the statement
       (with-access::J2SNode node (loc)
-	 (instantiate::J2SLetOpt 
+	 (instantiate::J2SDeclInit
 	    (loc loc)
 	    (id (gensym))
 	    (ronly #t)
 	    (writable #f)
+	    (binder 'let-opt)
 	    (val (statement->expression node)))))
    
    (define (dependencies usedecls deps)
@@ -260,11 +257,11 @@
 		       (loop (cdr n) decls ninits nbody disabled deps))
 		      ((memq (init-decl (car inits)) disabled)
 		       ;; cannot optimize...
-		       (with-access::J2SInitLet (car inits) (rhs)
+		       (with-access::J2SInit (car inits) (rhs)
 			  (let* ((init (car inits))
 				 (decl (init-decl init))
 				 (used (get-used-decls rhs decls))
-				 (ninit (init-let->let init)))
+				 (ninit (duplicate::J2SDecl decl)))
 			     (liip (cdr inits)
 				(remq decl ndecls)
 				(append ninits (list ninit))
@@ -272,27 +269,29 @@
 				disabled
 				(cons (cons decl used) deps)))))
 		      (else
-		       (with-access::J2SInitLet (car inits) (rhs)
+		       (with-access::J2SInit (car inits) (rhs)
 			  (let ((used (get-used-decls rhs decls))
 				(init (car inits)))
 			     (cond
 				((null? used)
 				 ;; optimize this binding
-				 (let ((decl (init-decl init))
-				       (optinit (init-let->let-opt init)))
+				 (let ((decl (init-decl init)))
+				    (with-access::J2SDecl decl (binder)
+				       (set! binder 'let-opt))
 				    (liip (cdr inits)
 				       (remq decl ndecls)
-				       (cons optinit ninits)
+				       (cons decl ninits)
 				       nbody
 				       disabled deps)))
 				((isa? rhs J2SFun)
 				 ;; optimize this binding but keep tracks
 				 ;; of its dependencies
-				 (let ((decl (init-decl init))
-				       (optinit (init-let->let-opt init)))
+				 (let ((decl (init-decl init)))
+				    (with-access::J2SDecl decl (binder)
+				       (set! binder 'let-opt))
 				    (liip (cdr inits)
 				       (remq decl ndecls)
-				       (cons optinit ninits)
+				       (cons decl ninits)
 				       nbody
 				       disabled
 				       (cons (cons decl used) deps))))
@@ -300,8 +299,8 @@
 				 ;; keep a regular binding an mark
 				 ;; its dependencies
 				 (let* ((decl (init-decl init))
+					(ninit (duplicate::J2SDecl decl))
 					(used (get-used-decls rhs decls))
-					(ninit (init-let->let init))
 					(body (instantiate::J2SStmtExpr
 						 (loc loc)
 						 (expr init))))
@@ -366,23 +365,27 @@
 			(res res))
 		(if (null? inits)
 		    (loop (cdr n) decls deps res)
-		    (with-access::J2SInitLet (car inits) (rhs)
+		    (with-access::J2SInit (car inits) (rhs)
 		       (let ((used (get-used-decls rhs (append decls vars)))
 			     (init (car inits)))
 			  (cond
 			     ((null? used)
 			      ;; optimize this binding
-			      (init-let->let-opt init)
-			      (let ((ndecls (remq (init-decl init) decls)))
-				 (liip (cdr inits) ndecls deps res)))
+			      (let ((decl (init-decl init)))
+				 (with-access::J2SDecl decl (binder)
+				    (set! binder 'let-opt))
+				 (let ((ndecls (remq decl decls)))
+				    (liip (cdr inits) ndecls deps res))))
 			     ((isa? rhs J2SFun)
 			      ;; optimize this binding but keep tracks
 			      ;; of its dependencies
-			      (init-let->let-opt init)
-			      (let ((ndecls (remq (init-decl init) decls)))
-				 (liip (cdr inits) ndecls
-				    (cons (cons init used) deps)
-				    res)))
+			      (let ((decl (init-decl init)))
+				 (with-access::J2SDecl decl (binder)
+				    (set! binder 'let-opt))
+				 (let ((ndecls (remq decl decls)))
+				    (liip (cdr inits) ndecls
+				       (cons (cons init used) deps)
+				       res))))
 			     (else
 			      ;; optimize this binding but mark that
 			      ;; the variables it uses are disabled
@@ -448,13 +451,3 @@
 		 (loop (append (cdr udeps) (cdr udecls))
 		    (cons (car udecls) res))
 		 (loop (cdr udecls) (cons (car udecls) res))))))))
-
-;*---------------------------------------------------------------------*/
-;*    init-let->let-opt ...                                            */
-;*---------------------------------------------------------------------*/
-(define (init-let->let-opt::J2SLetOpt this::J2SInitLet)
-   (with-access::J2SInitLet this (rhs loc lhs)
-      (with-access::J2SRef lhs (decl)
-	 (with-access::J2SLet decl (id)
-	    (widen!::J2SLetOpt decl
-	       (val (j2s-letopt! rhs)))))))

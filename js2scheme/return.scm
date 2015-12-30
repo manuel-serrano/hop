@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Dec 28 10:21:14 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 07:17:17 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -252,21 +252,21 @@
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    unreturn! ::J2SLetInit ...                                       */
+;*    unreturn! ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SLetInit target tail? args)
-   (with-access::J2SLetInit this (val)
+(define-walk-method (unreturn! this::J2SDeclInit target tail? args)
+   (with-access::J2SDeclInit this (val)
       (set! val (walk! val target #f args)))
    this)
 
-;*---------------------------------------------------------------------*/
-;*    unreturn! ::J2SLetOpt ...                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (unreturn! this::J2SLetOpt target tail? args)
-   (with-access::J2SLetOpt this (val)
-      (set! val (walk! val target #f args)))
-   this)
-
+;* {*---------------------------------------------------------------------*} */
+;* {*    unreturn! ::J2SLetOpt ...                                        *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (unreturn! this::J2SLetOpt target tail? args)   */
+;*    (with-access::J2SLetOpt this (val)                               */
+;*       (set! val (walk! val target #f args)))                        */
+;*    this)                                                            */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SYield ...                                         */
 ;*---------------------------------------------------------------------*/
