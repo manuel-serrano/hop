@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Dec 29 17:55:12 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 19:33:55 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -375,23 +375,11 @@
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (val ronly writable val)
-      `(,@(call-next-method) :ronly ,ronly :writable ,writable)))
+   (with-access::J2SDeclInit this (val ronly writable val scope)
+      `(,@(call-next-method) :ronly ,ronly :writable ,writable :scope ,scope
 	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SDeclFun ...                                       */
-(define-method (j2s->list this::J2SDeclFun)
-   (with-access::J2SDeclInit this (val ronly writable)
-      `(,@(call-next-method) :ronly ,ronly :writable ,writable
-	  ,(j2s->list val))))
-;* {*---------------------------------------------------------------------*} */
-;* {*    j2s->list ::J2SLetInit ...                                       *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (j2s->list this::J2SLetInit)                         */
-;*    (with-access::J2SLetInit this (val)                              */
-;*       `(,@(call-next-method) ,(j2s->list val))))                    */
-;*                                                                     */
 ;*    j2s->list ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPragma)
@@ -420,13 +408,6 @@
       `(,@(call-next-method) ,(j2s->list expr)
 	  ,(if (boolean? kont) kont (j2s->list kont)))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    j2s->list ::J2SReturnYield ...                                   *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (j2s->list this::J2SReturnYield)                     */
-;*    (with-access::J2SReturnYield this (expr kont)                    */
-;*       `(,@(call-next-method) ,(j2s->list expr) ,(j2s->list kont)))) */
-;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SKont ...                                          */
 ;*---------------------------------------------------------------------*/

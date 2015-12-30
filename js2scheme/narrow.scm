@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Dec 28 19:23:49 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 19:14:38 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -96,7 +96,7 @@
    (when block
       (with-access::J2SInit this (lhs)
 	 (with-access::J2SRef lhs (decl)
-	    (unless (or (isa? decl J2SLet) (isa? decl J2SParam))
+	    (unless (or (j2s-let? decl) (j2s-param? decl))
 	       ;; skip let/const declarations
 	       (with-access::J2SDecl decl (%info)
 		  (unless (isa? %info J2SNarrowInfo)
@@ -109,7 +109,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-find-init-blocks this::J2SRef block)
    (with-access::J2SRef this (decl)
-      (unless (or (isa? decl J2SLet) (isa? decl J2SParam))
+      (unless (or (j2s-let? decl) (j2s-param? decl))
 	 ;; skip let/const declarations
 	 (with-access::J2SDecl decl (%info)
 	    (unless (isa? %info J2SNarrowInfo)
@@ -176,65 +176,67 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow! ::J2SFor ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-narrow! this::J2SFor)
-   
-   (define (init-let node::J2SNode)
-      (when (isa? node J2SStmtExpr)
-	 (with-access::J2SStmtExpr node (expr)
-	    (when (isa? expr J2SInit)
-	       (with-access::J2SInit expr (lhs)
-		  (when (isa? lhs J2SRef)
-		     (with-access::J2SRef lhs (decl)
-			(with-access::J2SDecl decl (%info)
-			   (when (isa? %info J2SNarrowInfo)
-			      expr)))))))))
-   
-   (define (get-let-inits! init)
-      (when (isa? init J2SSeq)
-	 (with-access::J2SSeq init (nodes)
-	    (let loop ((n nodes)
-		       (inits '())
-		       (decls '()))
-	       (cond
-		  ((null? n)
-		   (when (pair? decls)
-		      (set! nodes (reverse! inits))
-		      decls))
-		  ((init-let (car n))
-		   =>
-		   (lambda (decl)
-		      (loop (cdr n) inits (cons decl decls))))
-		  (else
-		   (loop (cdr n) (cons (car n) inits) decls)))))))
-   
-
-   (tprint "j2sfor " (j2s->list this))
-   (with-access::J2SFor this (init test incr loc body)
-      (let ((decls (get-let-inits! init)))
-	 (if (pair? decls)
-	     (with-access::J2SBlock body (endloc)
-		(j2s-narrow!
-		   (instantiate::J2SLetBlock
-		      (loc loc)
-		      (endloc endloc)
-		      (decls decls)
-		      (nodes (list this)))))
-	     (call-next-method)))))
-
+;* (define-method (j2s-narrow! this::J2SFor)                           */
+;*                                                                     */
+;*    (define (init-let node::J2SNode)                                 */
+;*       (when (isa? node J2SStmtExpr)                                 */
+;* 	 (with-access::J2SStmtExpr node (expr)                         */
+;* 	    (when (isa? expr J2SInit)                                  */
+;* 	       (with-access::J2SInit expr (lhs)                        */
+;* 		  (when (isa? lhs J2SRef)                              */
+;* 		     (with-access::J2SRef lhs (decl)                   */
+;* 			(with-access::J2SDecl decl (%info)             */
+;* 			   (when (isa? %info J2SNarrowInfo)            */
+;* 			      expr)))))))))                            */
+;*                                                                     */
+;*    (define (get-let-inits! init)                                    */
+;*       (when (isa? init J2SSeq)                                      */
+;* 	 (with-access::J2SSeq init (nodes)                             */
+;* 	    (let loop ((n nodes)                                       */
+;* 		       (inits '())                                     */
+;* 		       (decls '()))                                    */
+;* 	       (cond                                                   */
+;* 		  ((null? n)                                           */
+;* 		   (when (pair? decls)                                 */
+;* 		      (set! nodes (reverse! inits))                    */
+;* 		      decls))                                          */
+;* 		  ((init-let (car n))                                  */
+;* 		   =>                                                  */
+;* 		   (lambda (decl)                                      */
+;* 		      (loop (cdr n) inits (cons decl decls))))         */
+;* 		  (else                                                */
+;* 		   (loop (cdr n) (cons (car n) inits) decls)))))))     */
+;*                                                                     */
+;*                                                                     */
+;*    (tprint "j2sfor " (j2s->list this))                              */
+;*    (with-access::J2SFor this (init test incr loc body)              */
+;*       (let ((decls (get-let-inits! init)))                          */
+;* 	 (if (pair? decls)                                             */
+;* 	     (with-access::J2SBlock body (endloc)                      */
+;* 		(j2s-narrow!                                           */
+;* 		   (instantiate::J2SLetBlock                           */
+;* 		      (loc loc)                                        */
+;* 		      (endloc endloc)                                  */
+;* 		      (decls decls)                                    */
+;* 		      (nodes (list this)))))                           */
+;* 	     (call-next-method)))))                                    */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow! ::J2SStmtExpr ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow! this::J2SStmtExpr)
    
-   (define (decl->let::J2SLet decl::J2SDecl)
+   (define (decl->let::J2SDecl decl::J2SDecl)
       (with-access::J2SDecl decl (id loc)
 	 (let ((new (if (isa? decl J2SDeclInit)
 			(with-access::J2SDeclInit decl (val)
-			   (instantiate::J2SLetInit
+			   (instantiate::J2SDeclInit
+			      (binder 'let)
 			      (id id)
 			      (loc loc)
 			      (val val)))
-			(instantiate::J2SLet
+			(instantiate::J2SDecl
+			   (binder 'let)
 			   (id id)
 			   (loc loc)))))
 	    (let ((fields (class-all-fields (object-class decl))))
@@ -248,14 +250,14 @@
 			   (loop (-fx i 1)))))))
 	    new)))
    
-   (define (init-decl->let::J2SInitLet init::J2SInit)
+   (define (init-decl->let::J2SInit init::J2SInit)
       (with-access::J2SInit init (loc lhs rhs)
-	 (instantiate::J2SInitLet
+	 (instantiate::J2SInit
 	    (lhs lhs)
 	    (rhs rhs)
 	    (loc loc))))
    
-   (define (patch-defblock! block::J2SBlock decl::J2SLet)
+   (define (patch-defblock! block::J2SBlock decl::J2SDecl)
       (let loop ((block block))
 	 (if (isa? block J2SLetBlock)
 	     (with-access::J2SLetBlock block (decls)

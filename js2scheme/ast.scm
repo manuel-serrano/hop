@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec 29 15:29:43 2015 (serrano)                */
+;*    Last change :  Tue Dec 29 18:57:58 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -308,8 +308,8 @@
 	      (set::obj (default #f)))
 
 	   (final-class J2SKont::J2SExpr
-	      (param::J2SParam read-only)
-	      (exn::J2SParam read-only)
+	      (param::J2SDecl read-only)
+	      (exn::J2SDecl read-only)
 	      body::J2SNode)
 	   
 	   (generic walk0 n::J2SNode p::procedure)
@@ -550,7 +550,7 @@
 	  `(p ,f ,@(map (lambda (i)
 			   (string->symbol (format "arg~a" i)))
 		      (iota nb-args)))))
-
+   
    (define (visit* f nb-args)
       (if (pair? f)
 	  `(append-map (lambda (f)
