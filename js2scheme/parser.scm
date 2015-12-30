@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec 29 16:56:53 2015 (serrano)                */
+;*    Last change :  Wed Dec 30 19:59:17 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -965,19 +965,21 @@
 
    (define (consume-param!)
       (let* ((token (consume-token! 'ID))
-	     (loc (token-loc token))
-	     (expr (if (eq? (peek-token-type) '=)
-		       ;; a parameter with a default value
-		       (begin
-			  (consume-any!)
-			  (assig-expr #f))
-		       ;; no default value
-		       (nodefval))))
-	 (instantiate::J2SDeclInit
-	    (binder 'param)
-	    (val expr)
-	    (loc loc)
-	    (id (token-value token)))))
+	     (loc (token-loc token)))
+	 (if (eq? (peek-token-type) '=)
+	     ;; a parameter with a default value
+	     (begin
+		(consume-any!)
+		(instantiate::J2SDeclInit
+		   (binder 'param)
+		   (val (assig-expr #f))
+		   (loc loc)
+		   (id (token-value token))))
+	     ;; no default value
+	     (instantiate::J2SDecl
+		(binder 'param)
+		(loc loc)
+		(id (token-value token))))))
 
    (define (consume-rest-param!)
       (let* ((token (consume-token! 'ID))

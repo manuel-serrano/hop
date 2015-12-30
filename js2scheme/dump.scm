@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Dec 30 06:23:17 2015 (serrano)                */
+;*    Last change :  Wed Dec 30 19:56:21 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -175,8 +175,7 @@
 	  (with-access::J2SDecl decl (key id writable _scmid)
 	     `(,@(call-next-method) :id ,id :key ,key 
 		 ,@(if _scmid `(:_scmid ,_scmid) '())
-		 :mode ,mode :writable ,writable :decl
-		 ,(typeof decl)
+		 :mode ,mode :writable ,writable
 		 ,(map j2s->list params) ,(j2s->list body)))
 	  `(,@(call-next-method) :name ,name
 	      ,(map j2s->list params) ,(j2s->list body)))))
@@ -370,15 +369,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
    (with-access::J2SDecl this (id key binder _scmid)
-      `(,@(call-next-method) :binder ,binder :key ,key ,id
+      `(,(string->symbol (format "~a/~a" (typeof this) binder)) :key ,key ,id
 	  ,@(if _scmid `(:_scmid ,_scmid) '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (val ronly writable val _scmid)
-      `(,@(call-next-method) :ronly ,ronly :writable ,writable
+   (with-access::J2SDeclInit this (val ronly writable val _scmid scope)
+      `(,@(call-next-method) :ronly ,ronly :writable ,writable :scope ,scope
 	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/
