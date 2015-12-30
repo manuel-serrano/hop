@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Dec 29 18:12:46 2015 (serrano)                */
+;*    Last change :  Wed Dec 30 06:36:55 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -447,20 +447,12 @@
    (define (for-in-var for)
       (with-access::J2SForIn for (lhs loc)
 	 (with-access::J2SVarDecls lhs (loc decls)
-	    (with-access::J2SDecl (car decls) (loc id binder)
-	       (let ((decl (instantiate::J2SDeclInit
-			      (loc loc)
-			      (id id)
-			      (binder binder)
-			      (val (instantiate::J2SUndefined
-				      (loc loc)))))
-		     (lift lhs))
-		  (set! decls (list decl))
-		  (set! lhs (instantiate::J2SRef (loc loc) (decl decl)))
-		  (instantiate::J2SBlock
-		     (endloc loc)
-		     (loc loc)
-		     (nodes (list lift for))))))))
+	    (let ((lift lhs))
+	       (set! lhs (instantiate::J2SRef (loc loc) (decl (car decls))))
+	       (instantiate::J2SBlock
+		  (endloc loc)
+		  (loc loc)
+		  (nodes (list lift for)))))))
    
    (define (let-init? init::J2SVarDecls)
       (with-access::J2SVarDecls init (decls)
@@ -469,21 +461,15 @@
    (with-access::J2SForIn this (loc lhs obj body)
       (cond
 	 ((not (isa? lhs J2SVarDecls))
-	  (call-default-walker))
+	  (tprint (j2s->list this))
+	  (set! lhs (resolve! lhs env mode withs wenv))
+	  (set! obj (resolve! obj env mode withs wenv))
+	  (set! body (resolve! body env mode withs wenv))
+	  this)
 	 ((let-init? lhs)
 	  (resolve! (for-in-let this) env mode withs wenv))
 	 (else
 	  (resolve! (for-in-var this) env mode withs wenv)))))
-
-;* 	 ((isa? lhs J2SVarDecls)                                       */
-;* 	  (with-access::J2SVarDecls lhs (decls)                        */
-;* 	     (when (eq? mode 'strict)                                  */
-;* 		(for-each (lambda (decl)                               */
-;* 			     (with-access::J2SDecl (car decls) (loc id) */
-;* 				(check-strict-mode-eval id "variable name" loc))) */
-;* 		   decls))                                             */
-;* 	     (let ((ref (j2sref (car decls) loc withs wenv)))          */
-;* 		(set! lhs ref)))))                                     */
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SUnresolvedRef ...                                  */
