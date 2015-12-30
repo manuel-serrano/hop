@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Wed Dec 30 17:52:59 2015 (serrano)                */
+;*    Last change :  Wed Dec 30 18:34:04 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -146,11 +146,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-mark-narrowable this::J2SRef blocks inloop fun yield)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (%info)
+      (with-access::J2SDecl decl (%info id)
 	 (when (isa? %info J2SNarrowInfo)
 	    (with-access::J2SNarrowInfo %info (deffun defblock narrowable)
-	       (unless (and (memq defblock blocks) (eq? fun deffun)
-			    (not (cell-ref yield)))
+	       (unless (and (memq defblock blocks)
+			    (or (not inloop)
+				(and (eq? fun deffun) (not (cell-ref yield)))))
+;* 		  (tprint "PAS NARROWABLE " id " defblock="            */
+;* 		     (pair? (memq defblock blocks))                    */
+;* 		     " inloop=" inloop " fun=" (eq? fun deffun)        */
+;* 		     " yield=" (cell-ref yield))                       */
 		  (set! narrowable #f)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -207,36 +212,32 @@
 		    (begin
 		       (set! decl ldecl)
 		       this)
-		    (call-next-method)))
-	     (call-next-method)))))
+		    (call-default-walker)))
+	     (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow! ::J2SStmtExpr ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow! this::J2SStmtExpr)
    
-   (define (decl->let::J2SDecl decl::J2SDecl)
-      (with-access::J2SDecl decl (id loc)
-	 (let ((new (if (isa? decl J2SDeclInit)
-			(with-access::J2SDeclInit decl (val)
-			   (instantiate::J2SDeclInit
-			      (binder 'let)
-			      (id id)
-			      (loc loc)
-			      (val val)))
-			(instantiate::J2SDecl
-			   (binder 'let)
-			   (id id)
-			   (loc loc)))))
-	    (let ((fields (class-all-fields (object-class decl))))
-	       (let loop ((i (-fx (vector-length fields) 1)))
-		  (when (>=fx i 0)
-		     (let* ((f (vector-ref fields i))
-			    (get (class-field-accessor f))
-			    (set (class-field-mutator f)))
-			(when set
-			   (set new (get decl))
-			   (loop (-fx i 1)))))))
+   (define (decl->let::J2SDecl decl::J2SDecl val)
+      (with-access::J2SDecl decl (loc id)
+	 (let ((new (instantiate::J2SDeclInit
+		       (id id)
+		       (loc loc)
+		       (val val)))
+	       (fields (class-all-fields (object-class decl))))
+	    (let loop ((i (-fx (vector-length fields) 1)))
+	       (when (>=fx i 0)
+		  (let* ((f (vector-ref fields i))
+			 (get (class-field-accessor f))
+			 (set (class-field-mutator f)))
+		     (when set
+			(set new (get decl))
+			(loop (-fx i 1))))))
+	    (with-access::J2SDecl new (binder scope)
+	       (set! scope 'local)
+	       (set! binder 'let-opt))
 	    new)))
    
    (define (init-decl->let::J2SInit init::J2SInit)
@@ -267,22 +268,23 @@
 	     (with-access::J2SInit expr (lhs rhs loc)
 		(with-access::J2SRef lhs (decl)
 		   (when (isa? decl J2SDecl)
-		      (with-access::J2SDecl decl (%info)
+		      (with-access::J2SDecl decl (id %info)
 			 (when (isa? %info J2SNarrowInfo)
 			    (with-access::J2SNarrowInfo %info (narrowable defblock ldecl)
 			       (when narrowable
-				  (tprint "  +-- NARROWING: " (j2s->list this))
-				  (set! ldecl (decl->let decl))
+				  (tprint "  +-- NARROWING: " id " "
+				     (j2s->list this))
+				  (set! ldecl (decl->let decl rhs))
 				  (set! decl ldecl)
 				  (patch-defblock! defblock ldecl)
-				  (set! expr (init-decl->let expr))
+				  (set! expr (instantiate::J2SUndefined (loc loc)))
 				  this))))))))
-	  (call-next-method))))
+	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow! this::J2SFun)
-   (call-default-walker)
-   (j2s-narrow-fun! this))
+   (j2s-narrow-fun! this)
+   (call-default-walker))
 
