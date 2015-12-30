@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Dec 30 06:36:55 2015 (serrano)                */
+;*    Last change :  Wed Dec 30 07:06:11 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -461,7 +461,6 @@
    (with-access::J2SForIn this (loc lhs obj body)
       (cond
 	 ((not (isa? lhs J2SVarDecls))
-	  (tprint (j2s->list this))
 	  (set! lhs (resolve! lhs env mode withs wenv))
 	  (set! obj (resolve! obj env mode withs wenv))
 	  (set! body (resolve! body env mode withs wenv))
