@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec 28 10:26:20 2015 (serrano)                */
+;*    Last change :  Wed Dec 30 09:39:14 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -956,6 +956,8 @@
 					   (js-generator-yield %gen
 					      val #f
 					      loop %this)))))))
+			(with-access::JsGlobalObject %this (js-generator-prototype)
+			   js-generator-prototype)
 			%this)))
 	 %gen))
    

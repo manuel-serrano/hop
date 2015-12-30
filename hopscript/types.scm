@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Dec 21 11:55:52 2015 (serrano)                */
+;*    Last change :  Wed Dec 30 07:27:01 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -124,6 +124,7 @@
 	      (js-number::JsFunction (default (class-nil JsFunction)))
 	      (js-function::JsFunction (default (class-nil JsFunction)))
 	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
+	      (js-::JsFunction (default (class-nil JsFunction)))
 	      (js-math::JsMath (default (class-nil JsMath)))
 	      (js-regexp::JsFunction (default (class-nil JsFunction)))
 	      (js-regexp-prototype::JsRegExp (default (class-nil JsRegExp)))

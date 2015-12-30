@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Dec 29 19:33:55 2015 (serrano)                */
+;*    Last change :  Wed Dec 30 15:44:55 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -123,8 +123,7 @@
 (define-method (j2s->list this::J2SRef)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (id key)
-	 `(,@(call-next-method) :decl ,(string->symbol (typeof decl))
-	     :key ,key ,id))))
+	 `(,@(call-next-method) :key ,key ,id))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWithRef ...                                       */
@@ -173,9 +172,10 @@
 (define-method (j2s->list this::J2SFun)
    (with-access::J2SFun this (name params body decl mode)
       (if (isa? decl J2SDecl)
-	  (with-access::J2SDecl decl (key id writable)
-	     `(,@(call-next-method) :id ,id :key ,key :mode ,mode
-		 :writable ,writable :decl ,(typeof decl)
+	  (with-access::J2SDecl decl (key id writable _scmid)
+	     `(,@(call-next-method) :id ,id :key ,key 
+		 ,@(if _scmid `(:_scmid ,_scmid) '())
+		 :mode ,mode :writable ,writable
 		 ,(map j2s->list params) ,(j2s->list body)))
 	  `(,@(call-next-method) :name ,name
 	      ,(map j2s->list params) ,(j2s->list body)))))
@@ -368,14 +368,15 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder)
-      `(,@(call-next-method) :binder ,binder :key ,key ,id)))
+   (with-access::J2SDecl this (id key binder _scmid)
+      `(,(string->symbol (format "~a/~a" (typeof this) binder)) :key ,key ,id
+	  ,@(if _scmid `(:_scmid ,_scmid) '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (val ronly writable val scope)
+   (with-access::J2SDeclInit this (val ronly writable val _scmid scope)
       `(,@(call-next-method) :ronly ,ronly :writable ,writable :scope ,scope
 	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
@@ -413,7 +414,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SKont)
    (with-access::J2SKont this (param body)
-      `(,@(call-next-method) (,param) ,(j2s->list body))))
+      `(,@(call-next-method) ,(j2s->list param) ,(j2s->list body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SHopRef ...                                        */

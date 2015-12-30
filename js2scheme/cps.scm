@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Dec 29 20:06:30 2015 (serrano)                */
+;*    Last change :  Wed Dec 30 16:30:02 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -468,9 +468,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cps-fun this::J2SFun)
    (with-access::J2SFun this (generator body name)
-      (tprint "FUN name=" name " generator=" generator)
-      (when generator
-	 (set! body (cps body (KontStmt kid this #f) kid '() '())))
+      (if generator
+	  (set! body (cps body (KontStmt kid this #f) kid '() '()))
+	  (cps-fun body))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -596,7 +596,9 @@
 			     (J2SYield kexpr kont generator))
 		   this k)
 		pack kbreaks kcontinues)
-	     (J2SYield expr kont generator)))))
+	     (begin
+		(cps-fun expr)
+		(J2SYield expr kont generator))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SReturn ...                                              */
@@ -633,7 +635,9 @@
 			  (kcall k (J2SStmtExpr ke)))
 		this k "expr")
 	     pack kbreaks kcontinues)
-	  (kcall k this))))
+	  (begin
+	     (cps-fun expr)
+	     (kcall k this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SSeq ...                                                 */
@@ -655,6 +659,7 @@
 	    ((null? walk)
 	     (kcall k this))
 	    ((not (yield-expr? (car walk) kbreaks kcontinues))
+	     (cps-fun (car walk))
 	     (loop (cdr walk) walk))
 	    ((null? (cdr walk))
 	     (pack-seq this pnodes
@@ -689,6 +694,7 @@
 	    ((null? walk)
 	     (kcall k this))
 	    ((not (yield-expr? (car walk) kbreaks kcontinues))
+	     (cps-fun (car walk))
 	     (loop (cdr walk) walk))
 	    ((null? (cdr walk))
 	     (pack-sequence this pexprs
@@ -716,14 +722,18 @@
 (define-method (cps this::J2SDeclInit k pack kbreaks kcontinues)
    (assert-kont k KontStmt this)
    (with-access::J2SDeclInit this (val)
-      (if (yield-expr? val kbreaks kcontinues)
-	 (cps val
-	    (KontExpr (lambda (v::J2SExpr)
-			 (set! val v)
-			 (kcall k this))
-	       this k)
-	    pack kbreaks kcontinues)
-	 (kcall k this))))
+      (cond
+	 ((not (j2s-let-opt? this))
+	  (kcall k this))
+	 ((yield-expr? val kbreaks kcontinues)
+	  (cps val
+	     (KontExpr (lambda (v::J2SExpr)
+			  (set! val v)
+			  (kcall k this))
+		this k)
+	     pack kbreaks kcontinues))
+	 (else
+	  (kcall k this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SDeclFun ...                                             */
@@ -731,7 +741,6 @@
 (define-method (cps this::J2SDeclFun k pack kbreaks kcontinues)
    (assert-kont k KontStmt this)
    (with-access::J2SDeclFun this (val)
-      (tprint "DECLFUN val=" (typeof val))
       (cps-fun val)
       (kcall k this)))
 
@@ -759,8 +768,11 @@
 	    ((null? wdecls)
 	     (call-next-method))
 	    ((not (yield-expr? (car wdecls) kbreaks kcontinues))
+	     (cps-fun (car wdecls))
 	     (loop (cdr wdecls) wdecls (if (pair? sdecls) sdecls wdecls)))
 	    (else
+	     (with-access::J2SDecl (car wdecls) (scope)
+		(set! scope 'kont))
 	     (let* ((y (cps (car wdecls)
 			  (KontStmt (lambda (ndecl::J2SStmt)
 				       (cond
@@ -1098,6 +1110,7 @@
 		this k)
 	     pack kbreaks kcontinues))
 	 ((yield-expr? rhs kbreaks kcontinues)
+	  (cps-fun lhs)
 	  (cps rhs
 	     (KontExpr (lambda (krhs::J2SExpr)
 			  (set! rhs krhs)
@@ -1105,6 +1118,8 @@
 		this k)
 	     pack kbreaks kcontinues))
 	 (else
+	  (cps-fun lhs)
+	  (cps-fun rhs)
 	  (kcall k this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1122,6 +1137,7 @@
 		this k)
 	     pack kbreaks kcontinues))
 	 ((any (lambda (e) (yield-expr? e kbreaks kcontinues)) args)
+	  (cps-fun fun)
 	  (cps* args
 	     (KontExpr* (lambda (kargs::pair-nil)
 			   (set! args kargs)
@@ -1129,7 +1145,24 @@
 		args k)
 	     pack kbreaks kcontinues))
 	 (else
+	  (cps-fun fun)
+	  (for-each cps-fun args)
 	  (kcall k this)))))
+
+;*---------------------------------------------------------------------*/
+;*    cps ::J2SArray ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (cps this::J2SArray k pack kbreaks kcontinues)
+   (assert-kont k KontExpr this)
+   (with-access::J2SArray this (exprs)
+      (if (any (lambda (e) (yield-expr? e kbreaks kcontinues)) exprs)
+	  (cps* exprs
+	     (KontExpr* (lambda (kexprs::pair-nil)
+			   (set! exprs kexprs)
+			   (cps this k pack kbreaks kcontinues))
+		exprs k)
+	     pack kbreaks kcontinues)
+	  (kcall k this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SCond ...                                                */
