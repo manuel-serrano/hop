@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue Dec 29 17:22:52 2015 (serrano)                */
+;*    Last change :  Thu Dec 31 10:55:24 2015 (serrano)                */
 ;*    Copyright   :  2015 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -27,6 +27,9 @@
 	   __js2scheme_lexer
 	   __js2scheme_use)
 
+   (static (class J2SLetOptInit
+	      (declinit::J2SDeclInit read-only)))
+   
    (export j2s-letopt-stage
 	   (generic j2s-letopt ::obj ::obj)))
 
@@ -77,6 +80,18 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-letopt! this::J2SNode)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-letopt! ::J2SRef ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-letopt! this::J2SRef)
+   ;; patch the optimized ref nodes
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (%info)
+	 (when (isa? %info J2SLetOptInit)
+	    (with-access::J2SLetOptInit %info (declinit)
+	       (set! decl declinit)))))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-use! ...                                                   */
@@ -137,7 +152,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-letopt! this::J2SLetBlock)
    (with-access::J2SLetBlock this (decls nodes)
-      ;; reseting the occurrence counters which are used an set below
+      ;; reseting the occurrence counters which are used and set below
       (reset-use! decls)
       ;; start iterating over all the LetBlock statements to find
       ;; the first decl 
@@ -224,7 +239,7 @@
 		    (loop (append (cdr udeps) (cdr udecls))
 		       (cons (car udecls) res))
 		    (loop (cdr udecls) (cons (car udecls) res))))))))
-   
+
    ;; the main optimization loop
    (with-access::J2SLetBlock this (nodes decls loc)
       (let loop ((n nodes)
@@ -247,20 +262,20 @@
 	     (lambda (inits)
 		;; a letinit node
 		(let liip ((inits inits)
-			   (decls decls)
+			   (ndecls ndecls)
 			   (ninits ninits)
 			   (nbody nbody)
 			   (disabled disabled)
 			   (deps deps))
 		   (cond
 		      ((null? inits)
-		       (loop (cdr n) decls ninits nbody disabled deps))
+		       (loop (cdr n) ndecls ninits nbody disabled deps))
 		      ((memq (init-decl (car inits)) disabled)
 		       ;; cannot optimize...
 		       (with-access::J2SInit (car inits) (rhs)
 			  (let* ((init (car inits))
 				 (decl (init-decl init))
-				 (used (get-used-decls rhs decls))
+				 (used (get-used-decls rhs ndecls))
 				 (ninit (duplicate::J2SDecl decl)))
 			     (liip (cdr inits)
 				(remq decl ndecls)
@@ -270,37 +285,35 @@
 				(cons (cons decl used) deps)))))
 		      (else
 		       (with-access::J2SInit (car inits) (rhs)
-			  (let ((used (get-used-decls rhs decls))
+			  (let ((used (get-used-decls rhs ndecls))
 				(init (car inits)))
 			     (cond
 				((null? used)
 				 ;; optimize this binding
-				 (let ((decl (init-decl init)))
-				    (with-access::J2SDecl decl (binder)
-				       (set! binder 'let-opt))
+				 (let ((decl (init-decl init))
+				       (idecl (init->decl-init init)))
 				    (liip (cdr inits)
 				       (remq decl ndecls)
-				       (cons decl ninits)
+				       (cons idecl ninits)
 				       nbody
 				       disabled deps)))
 				((isa? rhs J2SFun)
 				 ;; optimize this binding but keep tracks
 				 ;; of its dependencies
-				 (let ((decl (init-decl init)))
-				    (with-access::J2SDecl decl (binder)
-				       (set! binder 'let-opt))
+				 (let ((decl (init-decl init))
+				       (idecl (init->decl-init init)))
 				    (liip (cdr inits)
 				       (remq decl ndecls)
-				       (cons decl ninits)
+				       (cons idecl ninits)
 				       nbody
 				       disabled
 				       (cons (cons decl used) deps))))
 				(else
-				 ;; keep a regular binding an mark
+				 ;; keep a regular binding and mark
 				 ;; its dependencies
 				 (let* ((decl (init-decl init))
 					(ninit (duplicate::J2SDecl decl))
-					(used (get-used-decls rhs decls))
+					(used (get-used-decls rhs ndecls))
 					(body (instantiate::J2SStmtExpr
 						 (loc loc)
 						 (expr init))))
@@ -318,7 +331,7 @@
 	     ;; a regular statement
 	     (with-access::J2SNode (car n) (loc)
 		(let* ((used (get-used-decls (car n) decls))
-		       (ndecl (new-let-opt (car n)))
+		       (ndecl (new-let-opt (j2s-letopt! (car n))))
 		       (ninit ndecl)
 		       (ref (instantiate::J2SRef
 			       (loc loc)
@@ -451,3 +464,37 @@
 		 (loop (append (cdr udeps) (cdr udecls))
 		    (cons (car udecls) res))
 		 (loop (cdr udecls) (cons (car udecls) res))))))))
+
+;*---------------------------------------------------------------------*/
+;*    init->decl-init ...                                              */
+;*---------------------------------------------------------------------*/
+(define (init->decl-init::J2SDeclInit this::J2SInit)
+   
+   (define (decl->declinit::J2SDecl decl::J2SDecl val)
+      (with-access::J2SDecl decl (loc id %info)
+	 (let ((new (instantiate::J2SDeclInit
+		       (id id)
+		       (loc loc)
+		       (key -1)
+		       (val val)))
+	       (fields (class-all-fields (object-class decl))))
+	    (let loop ((i (-fx (vector-length fields) 1)))
+	       (when (>=fx i 0)
+		  (let* ((f (vector-ref fields i))
+			 (get (class-field-accessor f))
+			 (set (class-field-mutator f)))
+		     (when set
+			(set new (get decl))
+			(loop (-fx i 1))))))
+	    (with-access::J2SDecl new (binder scope key)
+	       (set! key (ast-decl-key))
+	       (set! scope 'local)
+	       (set! binder 'let-opt))
+	    (set! %info (instantiate::J2SLetOptInit (declinit new)))
+	    new)))
+   
+   (with-access::J2SInit this (rhs loc lhs)
+      (with-access::J2SRef lhs (decl)
+	 (with-access::J2SDecl decl (id)
+	    (decl->declinit decl (j2s-letopt! rhs))))))
+
