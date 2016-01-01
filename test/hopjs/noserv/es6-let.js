@@ -120,6 +120,16 @@ function forLabel() {
    return true;
 }
 
+function optim( x ) {
+   var y = x;
+
+   let aaaa = x++;
+
+   return x - y;
+}
+
+bar( 20 );
+
 console.log( "basic" );
 assert.strictEqual( acc, "111 222 333" );
 
@@ -150,6 +160,10 @@ assert.throws( errForward2 );
 console.log( "   for/label()" );
 assert.ok( forLabel() );
 
+console.log( "   optim()" );
+assert.ok( optim() == 1 );
+
+console.log( "   arity()" );
 assert.ok( arity() == 2 );
 
 /*---------------------------------------------------------------------*/
