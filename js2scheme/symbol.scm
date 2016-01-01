@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/symbol.scm              */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Dec 30 07:06:11 2015 (serrano)                */
+;*    Last change :  Thu Dec 31 09:01:39 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -215,6 +215,7 @@
 		(nwenv (cons arguments (append decls params wenv))))
 	    (for-each (lambda (decl::J2SDecl)
 			 (with-access::J2SDecl decl (scope)
+			    
 			    (set! scope 'fun)))
 	       ldecls)
 ;* 	    (tprint "**** fun=" id " decl=" (debug-dump-env decls))    */
@@ -569,12 +570,14 @@
 		     (obj id)
 		     (fname (cadr loc))
 		     (location (caddr loc))))))
-	 (instantiate::J2SStmtExpr
-	    (loc loc)
-	    (expr (instantiate::J2SInit
-		     (loc loc)
-		     (lhs (j2sref ndecl loc withs wenv))
-		     (rhs (resolve! val env mode withs wenv))))))))
+	 (let ((rhs (resolve! val env mode withs wenv)))
+	    (set! val rhs)
+	    (instantiate::J2SStmtExpr
+	       (loc loc)
+	       (expr (instantiate::J2SInit
+			(loc loc)
+			(lhs (j2sref ndecl loc withs wenv))
+			(rhs rhs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclFun ...                                        */

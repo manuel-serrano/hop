@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Dec 30 15:27:10 2015 (serrano)                */
+;*    Last change :  Thu Dec 31 06:34:57 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2112,8 +2112,11 @@
 	    ((isa? decl J2SDeclFunCnst)
 	     decl)
 	    ((j2s-let-opt? decl)
-	     (with-access::J2SDecl decl (usage id)
-		(unless (memq 'assig usage) decl))))))
+	     (with-access::J2SDeclInit decl (usage id val)
+		(when (isa? val J2SFun)
+		   (unless (memq 'assig usage) decl))))
+	    (else
+	     #f))))
    
    (define (call-method fun::J2SAccess args)
       (with-access::J2SAccess fun (loc obj field)

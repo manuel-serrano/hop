@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Dec 30 20:03:57 2015 (serrano)                */
+;*    Last change :  Thu Dec 31 06:48:29 2015 (serrano)                */
 ;*    Copyright   :  2013-15 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -120,7 +120,7 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
-;*       j2s-narrow-stage                                              */
+      j2s-narrow-stage
       j2s-letopt-stage
       j2s-this-stage
       j2s-use-stage
