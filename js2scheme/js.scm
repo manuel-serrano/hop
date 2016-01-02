@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec 30 20:37:32 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Fri Jan  1 21:39:51 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
 ;*=====================================================================*/
@@ -196,9 +196,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp conf)
    (with-access::J2SDeclInit this (id val binder)
-      (cons* this (j2s-binder binder) (j2s-js-id id) "="
-         (append (j2s-js val tildec dollarc mode evalp conf)
-	    (if (j2s-param? this) '() '(";"))))))
+      (if (j2s-let-opt? this)
+	  (cons* this (j2s-binder binder) (j2s-js-id id) "="
+	     (append (j2s-js val tildec dollarc mode evalp conf)
+		(if (j2s-param? this) '() '(";"))))
+	  (list this (j2s-binder binder) (j2s-js-id id) ";"))))
                                              
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    j2s-js ::J2SLetOpt ...                                           *} */
@@ -226,9 +228,44 @@
 ;*    j2s-js ::J2SReturn ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SReturn tildec dollarc mode evalp conf)
-   (with-access::J2SReturn this (expr)
+   (with-access::J2SReturn this (expr tail)
       (cons* this "return "
 	 (append (j2s-js expr tildec dollarc mode evalp conf) '(";")))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SReturnYield ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SReturnYield tildec dollarc mode evalp conf)
+   
+   (define (identity-kont? kont)
+      (or (not (isa? kont J2SKont))
+	  (with-access::J2SKont kont (body param)
+	     (when (isa? body J2SStmtExpr)
+		(with-access::J2SStmtExpr body (expr)
+		   (when (isa? expr J2SRef)
+		      (with-access::J2SRef expr (decl)
+			 (eq? decl param))))))))
+   
+   (with-access::J2SReturnYield this (expr kont generator)
+      (cond
+	 ((identity-kont? kont)
+	  (cons* this (if generator "return $GEN.yieldS(" "return $GEN.yield(")
+	     (append (j2s-js expr tildec dollarc mode evalp conf)
+		'(",")
+		(if (eq? kont #t) '("true") '("false"))
+		'(",")
+		'("$GEN.kid")
+		'(");"))))
+	 (else
+	  (cons* this (if generator "return $GEN.yieldS(" "return $GEN.yield(")
+	     (append (j2s-js expr tildec dollarc mode evalp conf)
+		'(",")
+		(if (eq? kont #t) '("true") '("false"))
+		'(",")
+		(if (eq? kont #t)
+		    '("$GEN.done")
+		    (j2s-js kont tildec dollarc mode evalp conf))
+		'(");")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SFun ...                                              */
@@ -251,23 +288,25 @@
 		(append
 		   (j2s-js-ellipsis this "(" ")" "," ellipsis
 		      params tildec dollarc mode evalp conf)
-		   (j2s-js body tildec dollarc mode evalp conf))))
+		   (j2s-js body tildec dollarc mode evalp conf)
+		   '("\n"))))
 	    ((not (eq? (config-get conf :target) 'es5))
 	     ;; a generator, for es6
 	     (cons* this (format "function *~a" (or (j2sfun-id this) ""))
 		(append
 		   (j2s-js-ellipsis this "(" ")" "," ellipsis
 		      params tildec dollarc mode evalp conf)
-		   (j2s-js body tildec dollarc mode evalp conf))))
+		   (j2s-js body tildec dollarc mode evalp conf)
+		   '("\n"))))
 	    (else
 	     ;; a generator, for es5
 	     (cons* this (format "function ~a" (or (j2sfun-id this) ""))
 		(append
 		   (j2s-js-ellipsis this "(" ")" "," ellipsis
 		      params tildec dollarc mode evalp conf)
-		   '("{ var $GEN = new hop.Generator( function(_$v,_$e) { ")
+		   '("{ var $GEN=new hop.Generator(function(_$v,_$e){")
 		   (j2s-js body tildec dollarc mode evalp conf)
-		   '("}); return $GEN;}"))))))))
+		   '("});return $GEN;}\n"))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SObjInit ...                                          */
@@ -407,7 +446,9 @@
 (define-method (j2s-js this::J2SStmtExpr tildec dollarc mode evalp conf)
    (with-access::J2SStmtExpr this (expr)
       (cons this
-	 (append (j2s-js expr tildec dollarc mode evalp conf) '(";")))))
+	 (cons "{"
+	    (append (j2s-js expr tildec dollarc mode evalp conf)
+	       '(";}"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SIf ...                                               */
@@ -656,20 +697,33 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SCall tildec dollarc mode evalp conf)
    (with-access::J2SCall this (fun args)
-      (cons this
-	 (append (j2s-js fun tildec dollarc mode evalp conf)
-	    (j2s-js* this "(" ")" "," args tildec dollarc mode evalp conf)))))
+      (let ((f (j2s-js fun tildec dollarc mode evalp conf)))
+	 (cons this
+	    (append (if (or (isa? fun J2SRef) (isa? fun J2SAccess))
+			f
+			(cons "(" (append f '(")"))))
+	       (j2s-js* this "(" ")" "," args tildec dollarc mode evalp conf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SAccess ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SAccess tildec dollarc mode evalp conf)
+
+   (define (id-string? field)
+      (if (isa? field J2SString)
+	  (with-access::J2SString field (val)
+	     (pregexp-match "[a-zA-Z0-9_$]+" val))))
+      
    (with-access::J2SAccess this (obj field)
-      (cons this
-	 (append (j2s-js obj tildec dollarc mode evalp conf)
-	    '("[")
-	    (j2s-js field tildec dollarc mode evalp conf)
-	    '("]")))))
+      (if (id-string? field)
+	  (cons this
+	     (append (j2s-js obj tildec dollarc mode evalp conf)
+		(list "." (with-access::J2SString field (val) val))))
+	  (cons this
+	     (append (j2s-js obj tildec dollarc mode evalp conf)
+		'("[")
+		(j2s-js field tildec dollarc mode evalp conf)
+		'("]"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SParen ...                                            */
@@ -862,40 +916,9 @@
 ;*    j2s-js ::J2SYield ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SYield tildec dollarc mode evalp conf)
-   
-   (define (identity-kont? kont)
-      (or (not (isa? kont J2SKont))
-	  (with-access::J2SKont kont (body param)
-	     (when (isa? body J2SStmtExpr)
-		(with-access::J2SStmtExpr body (expr)
-		   (when (isa? expr J2SRef)
-		      (with-access::J2SRef expr (decl)
-			 (eq? decl param))))))))
-   
    (with-access::J2SYield this (expr kont generator)
-      (cond
-	 ((not kont)
-	  ;; custom generators
-	  (cons* this (if generator "yield* " "yield ")
-	     (j2s-js expr tildec dollarc mode evalp conf)))
-	 ((identity-kont? kont)
-	  (cons* this (if generator "return $GEN.yieldS(" "return $GEN.yield(")
-	     (append (j2s-js expr tildec dollarc mode evalp conf)
-		'(",")
-		(if (eq? kont #t) '("true") '("false"))
-		'(",")
-		'("$GEN.kid")
-		'(")"))))
-	 (else
-	  (cons* this (if generator "return $GEN.yieldS(" "return $GEN.yield(")
-	     (append (j2s-js expr tildec dollarc mode evalp conf)
-		'(",")
-		(if (eq? kont #t) '("true") '("false"))
-		'(",")
-		(if (eq? kont #t)
-		    '("$GEN.done")
-		    (j2s-js kont tildec dollarc mode evalp conf))
-		'(")")))))))
+      (cons* this (if generator "yield* " "yield ")
+	 (j2s-js expr tildec dollarc mode evalp conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SKont ...                                             */

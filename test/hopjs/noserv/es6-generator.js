@@ -3,12 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Tue Dec 22 13:53:51 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Sat Jan  2 07:32:14 2016 (serrano)                */
+/*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
 /*=====================================================================*/
-"use hopscript";
+"use strict";
 
 var assert = require( "assert" );
 
@@ -235,6 +235,10 @@ function* basic9() {
    return x;
 }
 
+function* basic10( i ) {
+   var x = ((yield 1), i);
+}
+
 console.log( "basic..." );
 
 console.log( "   basic1()" );
@@ -288,6 +292,12 @@ console.log( "   basic9()" );
 g = basic9();
 assert.ok( equal( g.next(), { value: 3, done: false } ) );
 assert.ok( equal( g.next( 4 ), { value: 5, done: true } ) );
+
+console.log( "   basic10()" );
+g = basic10();
+assert.ok( equal( g.next(), { value: 1, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 
 /*---------------------------------------------------------------------*/
 /*    nested                                                           */
@@ -361,7 +371,7 @@ assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 /*    if                                                               */
 /*---------------------------------------------------------------------*/
 function *ifa( i ) {
-   x = 1111;
+   var x = 1111;
    yield i;
    if( i > 10 ) {
       yield 2222;
@@ -369,7 +379,7 @@ function *ifa( i ) {
 }
 
 function *ifb( i ) {
-   x = 1111;
+   var x = 1111;
    yield i;
    if( i > 10 ) {
       yield 2222;
@@ -379,7 +389,7 @@ function *ifb( i ) {
 }
 
 function *ifc( i ) {
-   x = 1111;
+   var x = 1111;
    yield i;
    if( i > 10 ) {
       yield 2222;
@@ -392,7 +402,7 @@ function *ifc( i ) {
 }
 
 function *ifd( i ) {
-   x = 1111;
+   var x = 1111;
    yield i;
    if( i > 10 ) {
       yield 2222;
@@ -403,7 +413,7 @@ function *ifd( i ) {
 }
 
 function *ife( i ) {
-   x = 1111;
+   var x = 1111;
    yield i;
    if( i > 10 ) {
    } else {
@@ -417,7 +427,16 @@ function* iff( i ) {
    if( (yield( i )) < 3 ) i = 45; else i = 55;
    return i;
 }
-   
+
+function *ifg( i ) {
+   var x = 1111;
+   yield i;
+   if( i <= 10 ) {
+   } else {
+      yield 2222;
+   }
+}
+
 console.log( "if..." );
 
 console.log( "   ifa(5)" );
@@ -510,6 +529,18 @@ assert.ok( equal( g.next(), { value: 10, done: false } ) );
 assert.ok( equal( g.next(), { value: 55, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 
+console.log( "   ifg(5)" );
+g = ifg( 5 );
+assert.ok( equal( g.next(), { value: 5, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   ifg(11)" );
+g = ifg( 11 );
+assert.ok( equal( g.next(), { value: 11, done: false } ) );
+assert.ok( equal( g.next(), { value: 2222, done: false } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 
 /*---------------------------------------------------------------------*/
 /*    assig ...                                                        */

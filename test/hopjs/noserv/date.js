@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/date.js         */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/date.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon Dec 21 13:26:01 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Fri Jan  1 08:27:39 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
 /*=====================================================================*/
@@ -40,7 +40,7 @@ var dm = new Date();
 dm.setMonth( 0 );
 
 assert.ok( dm.getMonth() == 0 );
-assert.ok( dm.getYear() == 115 );
+assert.ok( dm.getYear() >= 116 );
 
 /*---------------------------------------------------------------------*/
 /*    ISO string conversions ::Iso string conversion ...               */

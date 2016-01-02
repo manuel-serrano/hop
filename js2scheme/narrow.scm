@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Fri Jan  1 07:25:52 2016 (serrano)                */
+;*    Last change :  Fri Jan  1 08:13:52 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -59,7 +59,7 @@
       (for-each (lambda (o)
 		   (when (isa? o J2SDeclFun)
 		      (with-access::J2SDeclFun o (id val)
-			 (tprint "Narrow " id)
+			 ;; (tprint "Narrow " id)
 			 (j2s-narrow-fun! val))))
 	 decls))
    this)
@@ -253,7 +253,7 @@
 			    (when (isa? %info J2SNarrowInfo)
 			       (with-access::J2SNarrowInfo %info (narrowable defblock ldecl)
 				  (when narrowable
-				     (tprint "  +-- NARROWING: " id)
+				     ;; (tprint "  +-- NARROWING: " id)
 				     (set! ldecl (decl->let! decl))
 				     (patch-defblock! defblock ldecl)
 				     this)))))))))

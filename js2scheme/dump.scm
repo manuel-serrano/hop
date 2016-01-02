@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Dec 30 19:56:21 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Fri Jan  1 21:36:15 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
 ;*=====================================================================*/
@@ -186,6 +186,14 @@
 (define-method (j2s->list this::J2SReturn)
    (with-access::J2SReturn this (expr tail)
       `(,@(call-next-method) :tail ,tail ,(j2s->list expr))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SReturnYield ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SReturnYield)
+   (with-access::J2SReturnYield this (expr kont)
+      `(,@(call-next-method) ,(j2s->list expr)
+	  ,(if (boolean? kont) kont (j2s->list kont)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWith ...                                          */
@@ -405,9 +413,8 @@
 ;*    j2s->list ::J2SYield ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SYield)
-   (with-access::J2SYield this (expr kont)
-      `(,@(call-next-method) ,(j2s->list expr)
-	  ,(if (boolean? kont) kont (j2s->list kont)))))
+   (with-access::J2SYield this (expr)
+      `(,@(call-next-method) ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SKont ...                                          */

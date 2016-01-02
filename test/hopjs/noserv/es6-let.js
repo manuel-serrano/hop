@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
 /*    Last commit :  2015-12-27 [bffbda2] (Manuel Serrano)             */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 let construct                             */
 /*=====================================================================*/
@@ -120,6 +120,14 @@ function forLabel() {
    return true;
 }
 
+function optim( x ) {
+   var y = x;
+
+   let aaaa = ++x;
+   
+   return aaaa - y;
+}
+
 console.log( "basic" );
 assert.strictEqual( acc, "111 222 333" );
 
@@ -150,6 +158,10 @@ assert.throws( errForward2 );
 console.log( "   for/label()" );
 assert.ok( forLabel() );
 
+console.log( "   optim()" );
+assert.ok( optim( 10 ) == 1 );
+
+console.log( "   arity()" );
 assert.ok( arity() == 2 );
 
 /*---------------------------------------------------------------------*/
