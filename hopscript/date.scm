@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Dec 19 08:08:52 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Mon Jan  4 09:22:27 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
 ;*    -------------------------------------------------------------    */
@@ -905,7 +905,7 @@
 		       (set! val sec)
 		       sec)
 		    (begin
-		       (set! val (date-copy val :sec sec))
+		       (set! val (date-copy val :sec (->fixnum-safe sec)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -926,7 +926,7 @@
 		       (set! val sec)
 		       sec)
 		    (begin
-		       (set! val (date-copy val :sec sec))
+		       (set! val (date-copy val :sec (->fixnum-safe sec)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -948,7 +948,8 @@
 		       (set! val min)
 		       min)
 		    (begin
-		       (set! val (date-copy val :min min :sec sec))
+		       (set! val
+			  (date-copy val :min (->fixnum-safe min) :sec sec))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -970,7 +971,8 @@
 		       (set! val min)
 		       min)
 		    (begin
-		       (set! val (date-copy val :min min :sec sec))
+		       (set! val (date-copy val
+				    :min (->fixnum-safe min) :sec (->fixnum-safe sec)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -993,7 +995,10 @@
 		       (set! val hour)
 		       hour)
 		    (begin
-		       (set! val (date-copy val :hour hour :min min :sec sec))
+		       (set! val (date-copy val
+				    :hour (->fixnum-safe hour)
+				    :min (->fixnum-safe min)
+				    :sec (->fixnum-safe sec)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -1015,7 +1020,10 @@
 		       hour)
 		    (let* ((min (unless (eq? min (js-undefined)) (js-tonumber min %this)))
 			   (sec (unless (eq? sec (js-undefined)) (js-tonumber sec %this)))
-			   (dt (date-copy val :hour hour :min min :sec sec))
+			   (dt (date-copy val
+				  :hour (->fixnum-safe hour)
+				  :min (->fixnum-safe min)
+				  :sec (->fixnum-safe sec)))
 			   (ns (date->nanoseconds dt)))
 		       (set! val
 			  (nanoseconds->date
@@ -1046,7 +1054,7 @@
 		       (set! val date)
 		       date)
 		    (begin
-		       (set! val (date-copy val :day day))
+		       (set! val (date-copy val :day (->fixnum-safe day)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -1067,7 +1075,7 @@
 		       (set! val date)
 		       date)
 		    (begin
-		       (set! val (date-copy val :day date))
+		       (set! val (date-copy val :day (->fixnum-safe date)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -1091,8 +1099,8 @@
 		    (begin
 		       (set! val
 			  (date-copy val :timezone 0
-			     :month (+ 1 month)
-			     :day day))
+			     :month (->fixnum-safe (+ 1 month))
+			     :day (->fixnum-safe day)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -1114,7 +1122,9 @@
 		       (set! val month)
 		       month)
 		    (begin
-		       (set! val (date-copy val :month (+ 1 month) :day date))
+		       (set! val (date-copy val
+				    :month (->fixnum-safe (+ 1 month))
+				    :day (->fixnum-safe date)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -1137,7 +1147,10 @@
 		       (set! val year)
 		       year)
 		    (begin
-		       (set! val (date-copy val :year year :month month :day date))
+		       (set! val (date-copy val
+				    :year (->fixnum-safe year)
+				    :month (->fixnum-safe month)
+				    :day (->fixnum-safe date)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -1160,7 +1173,10 @@
 		       (set! val year)
 		       year)
 		    (begin
-		       (set! val (date-copy val :year year :month month :day date))
+		       (set! val (date-copy val
+				    :year (->fixnum-safe year)
+				    :month (->fixnum-safe month)
+				    :day (->fixnum-safe date)))
 		       (date->milliseconds val))))
 	     val)))
 
@@ -1211,6 +1227,12 @@
 	 (with-access::JsDate dt ((dval val))
 	    (set! dval val)
 	    dt))))
+
+;*---------------------------------------------------------------------*/
+;*    ->fixnum-safe ...                                                */
+;*---------------------------------------------------------------------*/
+(define (->fixnum-safe num)
+   (when num (->fixnum num)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
