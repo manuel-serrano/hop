@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jan  5 08:19:25 2016 (serrano)                */
+;*    Last change :  Tue Jan  5 05:21:05 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -254,7 +254,7 @@
 	      worker 
 	      (resolvers::pair-nil (default '()))
 	      (rejecters::pair-nil (default '()))
-	      (watches::pair-nil (default '())))
+	      (watches::vector (default '#())))
 
 	   (class JsGenerator::JsObject
 	      %next)
