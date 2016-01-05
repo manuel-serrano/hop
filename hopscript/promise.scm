@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Thu Dec 17 05:37:34 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Tue Jan  5 07:58:21 2016 (serrano)                */
+;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */
@@ -88,42 +88,63 @@
 ;*    js-init-promise! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-promise! %this::JsGlobalObject)
+
+   (define (iterable->vector this iterable)
+      (if (isa? iterable JsArray)
+	  (vector-map
+	     (lambda (o)
+		(if (isa? o JsPromise)
+		    o
+		    (js-promise-resolve this o)))
+	     (jsarray->vector iterable %this))
+	  '#()))
    
-   (define (promise-resolvers promise::JsPromise)
+   (define (promise-watch-all promise::JsPromise)
       (with-access::JsPromise promise (watches)
-	 (when (pair? watches)
-	    (let ((resolved #t))
-	       (js-for-in watches
-		  (lambda (o)
-		     (when (isa? o JsPromise)
-			(with-access::JsPromise o (state)
-			   (when (eq? state 'fullfilled)
-			      (set! resolved #f)))))
-		  %this)
-	       (when resolved
-		  (promise-resolve promise watches))))))
+	 (let loop ((i (-fx (vector-length watches) 1))
+		    (fullfilledp #t))
+	    (if (=fx i -1)
+		(when fullfilledp
+		   (promise-resolve promise
+		      (js-vector->jsarray
+			 (vector-map! (lambda (o::JsPromise)
+					 (with-access::JsPromise o (val)
+					    val))
+			    watches)
+			 %this)))
+		(let ((o (vector-ref watches i)))
+		   (with-access::JsPromise o ((ostate state) (oval val))
+		      (case ostate
+			 ((rejected)
+			  (promise-reject promise oval))
+			 ((pending)
+			  (loop (-fx i 1) #f))
+			 (else
+			  (loop (-fx i 1) fullfilledp)))))))))
+      
+   (define (promise-watch-race promise::JsPromise)
+      (with-access::JsPromise promise (watches)
+	 (let loop ((i (-fx (vector-length watches) 1)))
+	    (when (>fx i -1)
+	       (let ((o (vector-ref watches i)))
+		  (with-access::JsPromise o ((ostate state) (oval val))
+		     (case ostate
+			((rejected)
+			 (promise-reject promise oval))
+			((fullfilled)
+			 (promise-resolve promise oval))
+			(else
+			 (loop (-fx i 1))))))))))
+      
+   (define (promise-resolvers promise::JsPromise)
+      (with-access::JsPromise promise (watches state)
+	 (when (eq? state 'pending)
+	    (promise-watch-all promise))))
 
    (define (promise-rejecters promise::JsPromise)
-      (with-access::JsPromise promise (watches)
-	 (when (pair? watches)
-	    (let ((resolved-or-reject #f)
-		  (rval #t))
-	       (js-for-in watches
-		  (lambda (o)
-		     (unless resolved-or-reject
-			(when (isa? o JsPromise)
-			   (with-access::JsPromise o (state val)
-			      (unless (eq? state 'fullfilled)
-				 (set! resolved-or-reject state)
-				 (set! rval val))))))
-		  %this)
-	       (case resolved-or-reject
-		  ((resolved)
-		   (promise-resolve promise rval))
-		  ((rejected)
-		   (promise-reject promise rval)))
-	       promise))))
-      
+      (with-access::JsPromise promise (watches state)
+	 (when (eq? state 'pending)
+	    (promise-watch-race promise))))
 
    ;; promise-resolve
    (define (promise-resolve o::JsPromise v)
@@ -139,7 +160,8 @@
 				  (when (isa? then JsFunction)
 				     (js-call1 %this then o v)))
 			(reverse thens)))))
-	    (for-each (lambda (w) (promise-resolvers w)) resolvers))))
+	    (for-each (lambda (w) (promise-resolvers w)) resolvers)
+	    o)))
    
    ;; promise-reject
    (define (promise-reject o::JsPromise v)
@@ -154,7 +176,8 @@
 		     (for-each (lambda (hdl)
 				  (js-call1 %this hdl o v))
 			(reverse catches)))))
-	    (for-each (lambda (w) (promise-rejecters w)) rejecters))))
+	    (for-each (lambda (w) (promise-rejecters w)) rejecters)
+	    o)))
    
    ;; builtin prototype
    (define js-promise-prototype
@@ -202,16 +225,9 @@
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.all
    (define (js-promise-all this iterable)
       (let ((promise (js-promise-alloc js-promise)))
-	 (js-for-in iterable
-	    (lambda (o)
-	       (when (isa? o JsPromise)
-		  (with-access::JsPromise o (resolvers state)
-		     (when (eq? state 'fullfilled)
-			(set! resolvers (cons this resolvers))))))
-	    %this)
 	 (with-access::JsPromise promise (watches)
-	    (set! watches iterable))
-	 (promise-resolvers promise)
+	    (set! watches (iterable->vector this iterable)))
+	 (promise-watch-all promise)
 	 promise))
    
    (js-bind! %this js-promise 'all
@@ -221,16 +237,9 @@
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.race
    (define (js-promise-race this iterable)
       (let ((promise (js-promise-alloc js-promise)))
-	 (js-for-in iterable
-	    (lambda (o)
-	       (when (isa? o JsPromise)
-		  (with-access::JsPromise o (rejecters state)
-		     (unless (eq? state 'fullfilled)
-			(set! rejecters (cons this rejecters))))))
-	    %this)
 	 (with-access::JsPromise promise (watches)
-	    (set! watches iterable))
-	 (promise-rejecters promise)
+	    (set! watches (iterable->vector this iterable)))
+	 (promise-watch-race promise)
 	 promise))
 
    (js-bind! %this js-promise 'race
@@ -247,7 +256,24 @@
 
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve
    (define (js-promise-resolve this val)
-      (promise-resolve (js-promise-alloc js-promise) val))
+      (cond
+	 ((isa? val JsPromise)
+	  val)
+	 ((isa? val JsObject)
+	  (let ((then (js-get val 'then %this)))
+	     (if (isa? then JsFunction)
+		 (let ((promise (js-promise-alloc js-promise))
+		       (reject (js-get js-promise 'reject %this)))
+		    (with-handler
+		       (lambda (e)
+			  (js-call1 %this reject promise e))
+		       (js-call2 %this then promise
+			  (js-get js-promise 'resolve %this)
+			  reject))
+		    promise)
+		 (promise-resolve (js-promise-alloc js-promise) val))))
+	 (else
+	  (promise-resolve (js-promise-alloc js-promise) val))))
    
    (js-bind! %this js-promise 'resolve
       :configurable #f :enumerable #t
