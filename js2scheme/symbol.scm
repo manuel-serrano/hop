@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Dec 31 09:01:39 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Jan  5 08:42:07 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -571,7 +571,7 @@
 		     (fname (cadr loc))
 		     (location (caddr loc))))))
 	 (let ((rhs (resolve! val env mode withs wenv)))
-	    (set! val rhs)
+	    (set! val (instantiate::J2SUndefined (loc loc)))
 	    (instantiate::J2SStmtExpr
 	       (loc loc)
 	       (expr (instantiate::J2SInit

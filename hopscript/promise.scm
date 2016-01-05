@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/promise.scm             */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/promise.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Thu Dec 17 05:37:34 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Mon Jan  4 19:59:34 2016 (serrano)                */
+;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */
@@ -91,7 +91,7 @@
    
    (define (promise-resolvers promise::JsPromise)
       (with-access::JsPromise promise (watches)
-	 (when (pair? watches)
+	 (when (isa? watches JsArray)
 	    (let ((resolved #t))
 	       (js-for-in watches
 		  (lambda (o)
@@ -105,7 +105,7 @@
 
    (define (promise-rejecters promise::JsPromise)
       (with-access::JsPromise promise (watches)
-	 (when (pair? watches)
+	 (when (isa? watches JsArray)
 	    (let ((resolved-or-reject #f)
 		  (rval #t))
 	       (js-for-in watches

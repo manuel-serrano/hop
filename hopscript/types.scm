@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Dec 30 07:27:01 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Jan  5 08:19:25 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -147,6 +147,7 @@
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-table read-only (default (js-symbol-table)))
 	      (js-symbol-iterator (default (js-undefined)))
+	      (js-symbol-species (default (js-undefined)))
 	      (js-main (default (js-null))))
 	   
 	   (class JsArray::JsObject
