@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Dec 10 19:37:54 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Fri Jan  1 10:22:06 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -1029,6 +1029,7 @@
 		:prototype (js-undefined))
       :enumerable #f)
    
+   ;; some
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.16
    (define (array-prototype-some this::obj proc t)
       
@@ -1690,6 +1691,15 @@
 	       (if (isa? __proto__ JsObject)
 		   (loop __proto__)
 		   '())))))
+
+   (define (sym->string n)
+      (cond
+	 ((symbol? n)
+ 	  (symbol->string! n))
+	 ((isa? n JsSymbol)
+	  (with-access::JsSymbol n (val) val))
+	 (else
+	  (error "js-define-own-property" "bad property" n))))
       
    (define (delete-out-of-range! a newlendesc newwritable oldlen newlen::uint32)
       ;; delete all the properties that are at an index greater that the
@@ -1725,7 +1735,7 @@
 		      (loop (-fx i 1)))))
 	     (for-each (lambda (name)
 			  (unless rejected
-			     (let ((num (js-string->number (symbol->string! name))))
+			     (let ((num (js-string->number (sym->string name))))
 				(when (and num (<=uint32 newlen num))
 				   (let ((r (js-delete! a name #f %this)))
 				      (unless r
@@ -1741,7 +1751,7 @@
 					    ;; 3.l.iii.4
 					    (reject (format "Cannot delete element ~a" num)))))))))
 		(sort (lambda (n1 n2)
-			 (string>? (symbol->string! n1) (symbol->string! n2)))
+			 (string>? (sym->string n1) (sym->string n2)))
 		   (js-array-property-names a))))))
    
    (define (define-own-property/length oldlendesc)

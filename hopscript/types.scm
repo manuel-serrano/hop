@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Nov 27 20:30:51 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Jan  5 05:21:05 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -250,7 +250,7 @@
 	      worker 
 	      (resolvers::pair-nil (default '()))
 	      (rejecters::pair-nil (default '()))
-	      (watches::pair-nil (default '())))
+	      (watches::vector (default '#())))
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)

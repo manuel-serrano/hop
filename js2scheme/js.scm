@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec 30 20:01:23 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Jan  5 08:56:53 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
 ;*=====================================================================*/
@@ -196,9 +196,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp conf)
    (with-access::J2SDeclInit this (id val binder)
-      (cons* this (j2s-binder binder) (j2s-js-id id) "="
-         (append (j2s-js val tildec dollarc mode evalp conf)
-	    (if (j2s-param? this) '() '(";"))))))
+      (if (or (j2s-let-opt? this) (not (isa? val J2SUndefined)))
+	  (cons* this (j2s-binder binder) (j2s-js-id id) "="
+	     (append (j2s-js val tildec dollarc mode evalp conf)
+		(if (j2s-param? this) '() '(";"))))
+	  (list this (j2s-binder binder) (j2s-js-id id) ";"))))
                                              
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    j2s-js ::J2SLetOpt ...                                           *} */

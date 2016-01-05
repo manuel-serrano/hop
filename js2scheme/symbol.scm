@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Dec 30 07:06:11 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Jan  5 08:49:53 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -569,12 +569,14 @@
 		     (obj id)
 		     (fname (cadr loc))
 		     (location (caddr loc))))))
-	 (instantiate::J2SStmtExpr
-	    (loc loc)
-	    (expr (instantiate::J2SInit
-		     (loc loc)
-		     (lhs (j2sref ndecl loc withs wenv))
-		     (rhs (resolve! val env mode withs wenv))))))))
+	 (let ((rhs (resolve! val env mode withs wenv)))
+	    (set! val (instantiate::J2SUndefined (loc loc)))
+	    (instantiate::J2SStmtExpr
+	       (loc loc)
+	       (expr (instantiate::J2SInit
+			(loc loc)
+			(lhs (j2sref ndecl loc withs wenv))
+			(rhs rhs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclFun ...                                        */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Dec 31 06:34:50 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Fri Jan  1 08:23:52 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -107,6 +107,12 @@
 	  (let ((sid (j2s-scheme-id id)))
 	     (set! _scmid sid)
 	     sid))))
+
+;*---------------------------------------------------------------------*/
+;*    strict-mode? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (strict-mode? mode)
+   (or (eq? mode 'strict) (eq? mode 'hopscript)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-new ...                                                      */
@@ -287,7 +293,7 @@
 				      (cadr loc) (caddr loc)))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
 		       `(js-decl-eval-put! %scope
-			   ',id ,value ,(eq? mode 'strict) %this)
+			   ',id ,value ,(strict-mode? mode) %this)
 		       `(begin
 			   (define ,ident ,value)
 			   (js-bind! %this ,scope ',id
@@ -397,7 +403,7 @@
 		 (cond
 		    ((and (memq scope '(global %scope)) (in-eval? return))
 		     `(begin
-			 ,(j2s-put! loc '%scope `',id val (eq? mode 'strict) #f)
+			 ,(j2s-put! loc '%scope `',id val (strict-mode? mode) #f)
 			 ,result))
 		    (result
 		     `(begin
@@ -588,7 +594,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SComprehension mode return conf)
    (with-access::J2SComprehension this (loc test expr decls iterables)
-      (if (not (eq? mode 'strict))
+      (if (not (strict-mode? mode))
 	  (match-case loc
 	     ((at ?fname ?loc)
 	      `(with-access::JsGlobalObject %this (js-syntax-error)
@@ -660,8 +666,8 @@
 	    (not (eq? j2s-unresolved-put-workspace
 		    j2s-unresolved-get-workspace)))
        `(js-unresolved-eval-put! %scope ,field
-	   ,expr ,(eq? mode 'strict) %this))
-      ((eq? mode 'strict)
+	   ,expr ,(strict-mode? mode) %this))
+      ((strict-mode? mode)
        `(js-unresolved-put! ,j2s-unresolved-put-workspace ,field
 	   ,expr #t %this))
       (else
@@ -1448,16 +1454,16 @@
 	  (with-access::J2SAccess expr (obj field)
 	     `(js-delete! ,(j2s-scheme obj mode return conf)
 		 ,(j2s-scheme field mode return conf)
-		 ,(eq? mode 'strict)
+		 ,(strict-mode? mode)
 		 %this)))
 	 ((isa? expr J2SUnresolvedRef)
-	  (if (eq? mode 'strict)
+	  (if (strict-mode? mode)
 	      (with-access::J2SUnresolvedRef expr (id)
 		 (err id))
 	      (with-access::J2SUnresolvedRef expr (id)
 		 `(js-delete! ,j2s-unresolved-del-workspace ',id #f %this))))
 	 ((isa? expr J2SRef)
-	  (if (eq? mode 'strict)
+	  (if (strict-mode? mode)
 	      (with-access::J2SRef expr (decl)
 		 (with-access::J2SDecl decl (id)
 		    (err id)))
@@ -1549,7 +1555,7 @@
 					      cache)
 					  %this)))
 			     ,(j2s-put! loca obj (if (string? prov) prov pro)
-				`(js+ ,inc ,tmp %this) (eq? mode 'strict)
+				`(js+ ,inc ,tmp %this) (strict-mode? mode)
 				cache)
 			     ,tmp)))))
 	       ((isa? lhs J2SUnresolvedRef)
@@ -1606,7 +1612,7 @@
 			     ,(j2s-put! loca obj
 				 (if (string? prov) prov pro)
 				 res
-				 (eq? mode 'strict) cache)
+				 (strict-mode? mode) cache)
 			     ,res)))))
 	       ((isa? lhs J2SUnresolvedRef)
 		(with-access::J2SUnresolvedRef lhs (id cache loc)
@@ -1914,7 +1920,7 @@
 		   (j2s-put! loc (j2s-scheme obj mode return conf)
 		       (j2s-scheme field mode return conf)
 		       name
-		       (eq? mode 'strict)
+		       (strict-mode? mode)
 		       #f))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
@@ -2216,7 +2222,7 @@
 	  ,(if (null? args)
 	       '(js-undefined)
 	       (j2s-scheme (car args) mode return conf))
-	  ,(eq? mode 'strict)
+	  ,(strict-mode? mode)
 	  %this this %scope))
 
    (define (is-eval? fun)
@@ -2265,7 +2271,7 @@
 		   (j2s-put! loca (j2s-scheme obj mode return conf)
 		      (j2s-scheme field mode return conf)
 		      (j2s-scheme rhs mode return conf)
-		      (eq? mode 'strict)
+		      (strict-mode? mode)
 		      cache))))
 	    ((isa? lhs J2SRef)
 	     (let ((assig (j2s-scheme-set! lhs
@@ -2329,7 +2335,7 @@
 			  (js-binop loc op
 			     (j2s-get loc tobj (if (string? prov) prov pro) #f)
 			     (j2s-scheme rhs mode return conf))
-			  (eq? mode 'strict)
+			  (strict-mode? mode)
 			  #f)))))
 	    ((isa? lhs J2SRef)
 	     (j2s-scheme-set! lhs
@@ -2446,7 +2452,7 @@
 					;; using the generic js-put! function
 					(j2s-put! loc tmp "__proto__"
 					   (j2s-scheme val mode return conf)
-					   (eq? mode 'strict) #f)
+					   (strict-mode? mode) #f)
 					(epairify loc
 					   `(js-bind! %this ,tmp
 					       ,(j2s-propname name)
