@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Thu Dec 31 10:55:24 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Tue Jan  5 09:22:16 2016 (serrano)                */
+;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
@@ -385,16 +385,20 @@
 			     ((null? used)
 			      ;; optimize this binding
 			      (let ((decl (init-decl init)))
-				 (with-access::J2SDecl decl (binder)
-				    (set! binder 'let-opt))
+				 (with-access::J2SInit init (rsh)
+				    (with-access::J2SDeclInit decl (binder val)
+				       (set! val rhs)
+				       (set! binder 'let-opt)))
 				 (let ((ndecls (remq decl decls)))
 				    (liip (cdr inits) ndecls deps res))))
 			     ((isa? rhs J2SFun)
 			      ;; optimize this binding but keep tracks
 			      ;; of its dependencies
 			      (let ((decl (init-decl init)))
-				 (with-access::J2SDecl decl (binder)
-				    (set! binder 'let-opt))
+				 (with-access::J2SInit init (rhs)
+				    (with-access::J2SDeclInit decl (binder val)
+				       (set! val rhs)
+				       (set! binder 'let-opt)))
 				 (let ((ndecls (remq decl decls)))
 				    (liip (cdr inits) ndecls
 				       (cons (cons init used) deps)
@@ -477,7 +481,7 @@
 		       (loc loc)
 		       (key -1)
 		       (val val)))
-	       (fields (class-all-fields (object-class decl))))
+	       (fields (class-all-fields J2SDecl)))
 	    (let loop ((i (-fx (vector-length fields) 1)))
 	       (when (>=fx i 0)
 		  (let* ((f (vector-ref fields i))
