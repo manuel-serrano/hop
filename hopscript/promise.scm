@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Jan  5 11:31:10 2016 (serrano)                */
+;*    Last change :  Tue Jan  5 12:08:16 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -88,19 +88,47 @@
 ;*    js-init-promise! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-init-promise! %this::JsGlobalObject)
-
+   
+   (define (iterable-vector this field iterable)
+      (vector-map
+	 (lambda (o)
+	    (let* ((p (cond
+			 ((isa? o JsPromise)
+			  o)
+			 ((eq? (class-field-name field) 'resolvers)
+			  (js-promise-resolve this o))
+			 (else
+			  (js-promise-reject this o))))
+		   (old ((class-field-accessor field) p)))
+	       ((class-field-mutator field) p (cons this p))
+	       p))
+	 iterable))
+   
    (define (iterable->vector this iterable field)
-      (if (isa? iterable JsArray)
-	  (vector-map
-	     (lambda (o)
-		(let ((p (if (isa? o JsPromise)
-			     o
-			     (js-promise-resolve this o))))
-		   (let ((old ((class-field-accessor field) p)))
-		      ((class-field-mutator field) p (cons this p)))
-		   p))
-	     (jsarray->vector iterable %this))
-	  '#()))
+      (with-access::JsGlobalObject %this (js-symbol-iterator)
+	 (let loop ((iterable iterable))
+	    (cond
+	       ((isa? iterable JsArray)
+		(iterable-vector this field
+		   (jsarray->vector iterable %this)))
+	       ((js-get iterable js-symbol-iterator %this)
+		=>
+		(lambda (iterator)
+		   (if (eq? iterator (js-undefined))
+		       '#()
+		       (let* ((it (js-call0 %this iterator iterable))
+			      (next (js-get it 'next %this)))
+			  (if (isa? next JsFunction)
+			      (let loop ((acc '()))
+				 (let* ((v (js-call0 %this next it))
+					(done (js-get v 'done %this))
+					(val (js-get v 'value %this)))
+				    (if done
+					(iterable-vector this field
+					   (list->vector (reverse! acc)))
+					(loop (cons val acc))))))))))
+	       (else
+		'#())))))
    
    (define (promise-watch-all promise::JsPromise)
       (with-access::JsPromise promise (watches)

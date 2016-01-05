@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Jan  5 11:33:32 2016 (serrano)                */
+/*    Last change :  Tue Jan  5 12:09:07 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -72,7 +72,7 @@ function mdnResolve() {
 
 function mdnResolveThen() {
    // Resolving a thenable object
-   var p1 = Promise.resolve( { 
+   var p1 = Promise.resolve( {
       then: function( onFulfill, onReject ) { onFulfill( "fulfilled!" ); }
    } );
 
@@ -114,7 +114,7 @@ function mdnResolveThen() {
 }
 
 function mdnReject() {
-   Promise.reject( "Testing static reject" ).then(function( reason ) {
+   Promise.reject( "Testing static reject" ).then( function( reason ) {
       assert.check( false, "reject: not called" );
    }, function( reason ) {
       assert.check( reason, "Testing static reject" );
@@ -132,7 +132,7 @@ function mdnAll() {
    var p2 = 1337;
    var p3 = new Promise( function( resolve, reject ) {
       setTimeout( resolve, 100, "foo" );
-   } ); 
+   } );
 
    Promise.all( [p1, p2, p3]).then( function( values ) {
       assert.strictEqual( values, [3, 37, "foo" ] );
@@ -140,11 +140,11 @@ function mdnAll() {
 }
 
 function mdnAllFail() {
-   var p1 = new Promise(function(resolve, reject) { 
-      setTimeout(resolve, 1000, "one"); 
-   }); 
-   var p2 = new Promise(function(resolve, reject) { 
-      setTimeout(resolve, 2000, "two"); 
+   var p1 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 1000, "one");
+   });
+   var p2 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 2000, "two");
    });
    var p3 = new Promise(function(resolve, reject) {
       setTimeout(resolve, 3000, "three");
@@ -156,7 +156,7 @@ function mdnAllFail() {
       reject("reject");
    });
 
-   Promise.all([p1, p2, p3, p4, p5]).then(function(value) { 
+   Promise.all([p1, p2, p3, p4, p5]).then(function(value) {
       assert.check( false, "all: not called" );
    }, function(reason) {
       assert.check( reason === "reject" );
@@ -164,11 +164,11 @@ function mdnAllFail() {
 }
 
 function mdnAllSuccess() {
-   var p1 = new Promise(function(resolve, reject) { 
-      setTimeout(resolve, 1000, "one"); 
-   }); 
-   var p2 = new Promise(function(resolve, reject) { 
-      setTimeout(resolve, 2000, "two"); 
+   var p1 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 1000, "one");
+   });
+   var p2 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 2000, "two");
    });
    var p3 = new Promise(function(resolve, reject) {
       setTimeout(resolve, 3000, "three");
@@ -177,11 +177,32 @@ function mdnAllSuccess() {
       setTimeout(resolve, 4000, "four");
    });
 
-   Promise.all([p1, p2, p3, p4]).then(function(value) { 
+   Promise.all([p1, p2, p3, p4]).then(function(value) {
       assert.check( value[ 0 ] == "one" && value[ 1 ] == "two"
 		    && value[ 2 ] == "three" && value[ 3 ] == "four" );
    }, function(reason) {
       assert.check( false, "all: not called" );
+   });
+}
+
+function mdnAllSuccess() {
+   var p1 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 1000, "one");
+   });
+   var p2 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 2000, "two");
+   });
+   var p3 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 3000, "three");
+   });
+   var p4 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 4000, "four");
+   });
+
+   Promise.all([p1, p2, p3, p4]).then(function(value) {
+      assert.strictEqual( value, ["one", "two", "three", "four" ] );
+   }, function(reason) {
+      assert.ok( false, "all: not called" );
    });
 }
 
@@ -270,6 +291,7 @@ function kangaxd() {
    rejects.catch( function( result ) { score += (result === "qux"); check(); });
 
    function check() {
+      console.log( "score.1=", score );
       assert.check( score === 2 );
    }
 }
@@ -306,6 +328,7 @@ function kangaxf() {
    rejects.catch( function( result ) { score += (result === "baz"); check(); });
 
    function check() {
+      console.log( "score.2=", score );
       assert.check( score === 2 );
    }
 }
