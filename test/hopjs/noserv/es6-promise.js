@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Jan  5 09:02:58 2016 (serrano)                */
+/*    Last change :  Tue Jan  5 11:33:32 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -11,6 +11,14 @@
 "use strict";
 
 var assert = require( "assert" );
+var ok = 0;
+var expected = 0;
+
+assert.check = function( val, name ) {
+   expected++;
+   assert.ok( val, name );
+   ok++;
+}
 
 // simple tests
 console.log( "basic" );
@@ -43,23 +51,23 @@ console.log( "mdn" );
 
 function mdnResolve() {
    Promise.resolve( "Success" ).then( function( value ) {
-      assert.ok( value === "Success" );
+      assert.check( value === "Success" );
    }, function(value) {
-      assert.ok( false, "resolve: not called" );
+      assert.check( false, "resolve: not called" );
    } );
 
    var p = Promise.resolve([ 1,2,3] );
    p.then( function( v ) {
-      assert.ok( v[ 0 ] === 1 )
+      assert.check( v[ 0 ] === 1 )
    } );
 
    var original = Promise.resolve( true );
    var cast = Promise.resolve( original );
    cast.then( function( v ) {
-      assert.ok( v === true );
+      assert.check( v === true );
    } );
 
-   assert.ok( original === cast );
+   assert.check( original === cast );
 }
 
 function mdnResolveThen() {
@@ -68,12 +76,12 @@ function mdnResolveThen() {
       then: function( onFulfill, onReject ) { onFulfill( "fulfilled!" ); }
    } );
 
-   assert.ok( p1 instanceof Promise );
+   assert.check( p1 instanceof Promise );
 
    p1.then( function( v ) {
-      assert.ok( v === "fulfilled!", "then" );
+      assert.check( v === "fulfilled!", "then" );
    }, function( e ) {
-      assert.ok( false, "Promise.resolve, not called" );
+      assert.check( false, "Promise.resolve, not called" );
    });
 
    // Thenable throws before callback
@@ -85,9 +93,9 @@ function mdnResolveThen() {
 
    var p2 = Promise.resolve( thenable );
    p2.then( function( v ) {
-      assert.ok( false, "not called" );
+      assert.check( false, "not called" );
    }, function( e ) {
-      assert.ok( e instanceof TypeError );
+      assert.check( e instanceof TypeError );
    });
 
    // Thenable throws after callback
@@ -99,23 +107,23 @@ function mdnResolveThen() {
 
    var p3 = Promise.resolve( thenable );
    p3.then( function( v ) {
-      assert.ok( v === "Resolving" );
+      assert.check( v === "Resolving" );
    }, function( e ) {
-      assert.ok( false, "not called" );
+      assert.check( false, "not called" );
    });
 }
 
 function mdnReject() {
    Promise.reject( "Testing static reject" ).then(function( reason ) {
-      assert.ok( false, "reject: not called" );
+      assert.check( false, "reject: not called" );
    }, function( reason ) {
-      assert.ok( reason, "Testing static reject" );
+      assert.check( reason, "Testing static reject" );
    });
 
-   Promise.reject(new Error("fail")).then(function(error) {
-      // not called
-   }, function(error) {
-      console.log(error); // Stacktrace
+   Promise.reject( new Error( "fail" ) ).then( function( error ) {
+      assert.check( false, "reject: not called" );
+   }, function( error ) {
+      assert.check( error instanceof Error );
    });
 }
 
@@ -149,9 +157,31 @@ function mdnAllFail() {
    });
 
    Promise.all([p1, p2, p3, p4, p5]).then(function(value) { 
-      assert.ok( false, "all: not called" );
+      assert.check( false, "all: not called" );
    }, function(reason) {
-      assert.ok( reason === "reject" );
+      assert.check( reason === "reject" );
+   });
+}
+
+function mdnAllSuccess() {
+   var p1 = new Promise(function(resolve, reject) { 
+      setTimeout(resolve, 1000, "one"); 
+   }); 
+   var p2 = new Promise(function(resolve, reject) { 
+      setTimeout(resolve, 2000, "two"); 
+   });
+   var p3 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 3000, "three");
+   });
+   var p4 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 4000, "four");
+   });
+
+   Promise.all([p1, p2, p3, p4]).then(function(value) { 
+      assert.check( value[ 0 ] == "one" && value[ 1 ] == "two"
+		    && value[ 2 ] == "three" && value[ 3 ] == "four" );
+   }, function(reason) {
+      assert.check( false, "all: not called" );
    });
 }
 
@@ -162,10 +192,13 @@ console.log( "   mdnResolveThenReject()");
 mdnResolveThen();
 
 console.log( "   mdnReject()");
-mdnResolveThen();
+mdnReject();
 
 console.log( "   mdnAll()");
 mdnAll();
+
+console.log( "   mdnAllSuccess()");
+mdnAllSuccess();
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -191,7 +224,7 @@ function kangaxa() {
    });
 
    function check() {
-      assert.ok( score, 4 );
+      assert.check( score, 4 );
    }
 }
 
@@ -219,7 +252,7 @@ function kangaxc() {
    rejects.catch( function( result ) { score += (result === "qux"); check(); });
 
    function check() {
-      assert.ok( score === 2 );
+      assert.check( score === 2 );
    }
 }
 
@@ -237,7 +270,7 @@ function kangaxd() {
    rejects.catch( function( result ) { score += (result === "qux"); check(); });
 
    function check() {
-      assert.ok( score === 2 );
+      assert.check( score === 2 );
    }
 }
 
@@ -255,7 +288,7 @@ function kangaxe() {
    rejects.catch( function( result ) { score += (result === "baz"); check(); });
 
    function check() {
-      assert.ok( score === 2 );
+      assert.check( score === 2 );
    }
 }
 
@@ -273,13 +306,13 @@ function kangaxf() {
    rejects.catch( function( result ) { score += (result === "baz"); check(); });
 
    function check() {
-      assert.ok( score === 2 );
+      assert.check( score === 2 );
    }
 }
 
 function kangaxg() {
    var prop = Object.getOwnPropertyDescriptor( Promise, Symbol.species );
-   return 'get' in prop && Promise[ Symbol.species ] === Promise;
+   assert.check( 'get' in prop && Promise[ Symbol.species ] === Promise );
 }
 
 function __createIterableObject(arr, methods) {
@@ -321,3 +354,5 @@ kangaxf();
 
 console.log( "   kangaxg()");
 kangaxg();
+
+setTimeout( function() { process.exit( ok === expected ? 0 : 1 ) }, 100 );

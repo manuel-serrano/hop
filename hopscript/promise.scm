@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Jan  5 07:58:21 2016 (serrano)                */
+;*    Last change :  Tue Jan  5 11:31:10 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -89,13 +89,16 @@
 ;*---------------------------------------------------------------------*/
 (define (js-init-promise! %this::JsGlobalObject)
 
-   (define (iterable->vector this iterable)
+   (define (iterable->vector this iterable field)
       (if (isa? iterable JsArray)
 	  (vector-map
 	     (lambda (o)
-		(if (isa? o JsPromise)
-		    o
-		    (js-promise-resolve this o)))
+		(let ((p (if (isa? o JsPromise)
+			     o
+			     (js-promise-resolve this o))))
+		   (let ((old ((class-field-accessor field) p)))
+		      ((class-field-mutator field) p (cons this p)))
+		   p))
 	     (jsarray->vector iterable %this))
 	  '#()))
    
@@ -148,7 +151,7 @@
 
    ;; promise-resolve
    (define (promise-resolve o::JsPromise v)
-      (with-access::JsPromise o (thens state val resolvers worker)
+      (with-access::JsPromise o (thens state val resolvers rejecters worker)
 	 (when (eq? state 'pending)
 	    (set! state 'fullfilled)
 	    (set! val v)
@@ -160,12 +163,13 @@
 				  (when (isa? then JsFunction)
 				     (js-call1 %this then o v)))
 			(reverse thens)))))
+	    (for-each (lambda (w) (promise-rejecters w)) rejecters)
 	    (for-each (lambda (w) (promise-resolvers w)) resolvers)
 	    o)))
    
    ;; promise-reject
    (define (promise-reject o::JsPromise v)
-      (with-access::JsPromise o (catches state val rejecters worker)
+      (with-access::JsPromise o (catches state val resolvers rejecters worker)
 	 (when (eq? state 'pending)
 	    (set! state 'rejected)
 	    (set! val v)
@@ -177,6 +181,7 @@
 				  (js-call1 %this hdl o v))
 			(reverse catches)))))
 	    (for-each (lambda (w) (promise-rejecters w)) rejecters)
+	    (for-each (lambda (w) (promise-resolvers w)) resolvers)
 	    o)))
    
    ;; builtin prototype
@@ -226,7 +231,9 @@
    (define (js-promise-all this iterable)
       (let ((promise (js-promise-alloc js-promise)))
 	 (with-access::JsPromise promise (watches)
-	    (set! watches (iterable->vector this iterable)))
+	    (set! watches
+	       (iterable->vector this iterable
+		  (find-class-field JsPromise 'resolvers))))
 	 (promise-watch-all promise)
 	 promise))
    
@@ -238,7 +245,9 @@
    (define (js-promise-race this iterable)
       (let ((promise (js-promise-alloc js-promise)))
 	 (with-access::JsPromise promise (watches)
-	    (set! watches (iterable->vector this iterable)))
+	    (set! watches
+	       (iterable->vector this iterable
+		  (find-class-field JsPromise 'rejecters))))
 	 (promise-watch-race promise)
 	 promise))
 
@@ -281,6 +290,11 @@
    
    ;; prototype properties
    (init-builtin-promise-prototype! %this js-promise-alloc js-promise-prototype)
+
+   (with-access::JsGlobalObject %this (js-symbol-species)
+      (js-bind! %this js-promise js-symbol-species
+	 :configurable #f :enumerable #f :writable #f
+	 :get (js-make-function %this (lambda (o) js-promise) 0 '@@species)))
    
    ;; bind Promise in the global object
    (js-bind! %this %this 'Promise
