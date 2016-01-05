@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Jan  5 08:20:18 2016 (serrano)                */
+/*    Last change :  Tue Jan  5 11:30:12 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -106,16 +106,16 @@ function mdnResolveThen() {
 }
 
 function mdnReject() {
-   Promise.reject( "Testing static reject" ).then(function( reason ) {
+   Promise.reject( "Testing static reject" ).then( function( reason ) {
       assert.ok( false, "reject: not called" );
    }, function( reason ) {
       assert.ok( reason, "Testing static reject" );
    });
 
-   Promise.reject(new Error("fail")).then(function(error) {
-      // not called
-   }, function(error) {
-      console.log(error); // Stacktrace
+   Promise.reject( new Error( "fail" ) ).then( function( error ) {
+      assert.ok( false, "reject: not called" );
+   }, function( error ) {
+      assert.ok( error instanceof Error );
    });
 }
 
@@ -155,6 +155,27 @@ function mdnAllFail() {
    });
 }
 
+function mdnAllSuccess() {
+   var p1 = new Promise(function(resolve, reject) { 
+      setTimeout(resolve, 1000, "one"); 
+   }); 
+   var p2 = new Promise(function(resolve, reject) { 
+      setTimeout(resolve, 2000, "two"); 
+   });
+   var p3 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 3000, "three");
+   });
+   var p4 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 4000, "four");
+   });
+
+   Promise.all([p1, p2, p3, p4]).then(function(value) { 
+      assert.strictEqual( value, ["one", "two", "three", "four" ] );
+   }, function(reason) {
+      assert.ok( false, "all: not called" );
+   });
+}
+
 console.log( "   mdnResolve()");
 mdnResolve();
 
@@ -162,10 +183,13 @@ console.log( "   mdnResolveThenReject()");
 mdnResolveThen();
 
 console.log( "   mdnReject()");
-mdnResolveThen();
+mdnReject();
 
 console.log( "   mdnAll()");
 mdnAll();
+
+console.log( "   mdnAllSuccess()");
+mdnAllSuccess();
 
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
@@ -310,14 +334,14 @@ kangaxb();
 console.log( "   kangaxc()");
 kangaxc();
 
-console.log( "   kangaxd()");
-kangaxd();
-
+/* console.log( "   kangaxd()");                                       */
+/* kangaxd();                                                          */
+/*                                                                     */
 console.log( "   kangaxe()");
 kangaxe();
 
-console.log( "   kangaxf()");
-kangaxf();
-
+/* console.log( "   kangaxf()");                                       */
+/* kangaxf();                                                          */
+/*                                                                     */
 /* console.log( "   kangaxg()");                                       */
 /* kangaxg();                                                          */
