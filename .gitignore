@@ -71,6 +71,12 @@ share/**/*.map
 
 # doc
 doc/**/*.html
+doc/idx.json
+doc/hss/fontifier.hss
+doc/hss/fontifier.css
+doc/hss/markdown.hss
+doc/hss/markdown.css
+doc/hss/doc.css
 
 # widget compiled files
 widget/colorchooser.scm
@@ -106,17 +112,13 @@ arch/android/makeapk.sh
 arch/android/androidemo/config.hop
 arch/debian/makedeb.sh
 
-# Mercurial compatibility
+# testing
+test/hopjs/TEST
+
+# Mercurial/GIT compatibility
 .hg
 .hgtags
 README.hg
+.git.*.tgz
 
-doc/idx.json
 
-doc/hss/fontifier.hss
-doc/hss/fontifier.css
-doc/hss/markdown.hss
-doc/hss/markdown.css
-doc/hss/doc.css
-
-test/hopjs/TEST
