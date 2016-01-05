@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Jan  5 16:23:23 2016 (serrano)                */
+;*    Last change :  Tue Jan  5 16:40:53 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -938,6 +938,13 @@
 (define-method (service->hop-service obj::JsService)
    (with-access::JsService obj (svc)
       svc))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring ::hop-service ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring obj::hop-service %this)
+   (with-access::hop-service obj (path)
+      (format "[Service ~a]" path)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
