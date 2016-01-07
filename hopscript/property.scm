@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Dec 23 07:56:14 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Jan  5 16:32:19 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
 ;*    deleting).                                                       */
@@ -1712,17 +1712,15 @@
 ;*    js-for-in ::Object ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in obj::object proc %this)
-   (let ((fields (class-all-fields (object-class obj))))
-      (let loop ((i 0))
-	 (when (<fx i (vector-length fields))
-	    (proc
-	       (js-string->jsstring
-		  (symbol->string (class-field-name (vector-ref-ur fields i)))))
-	    (loop (+fx i 1))))))
+   (let ((jsobj (js-toobject %this obj)))
+      (if (eq? obj jsobj)
+	  (let ((fields (class-all-fields (object-class obj))))
+	     (let loop ((i 0))
+		(when (<fx i (vector-length fields))
+		   (proc
+		      (js-string->jsstring
+			 (symbol->string (class-field-name (vector-ref-ur fields i)))))
+		   (loop (+fx i 1)))))
+	  (js-for-in jsobj proc %this))))
 
-;*---------------------------------------------------------------------*/
-;*    js-for-in ::Object ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (js-for-in obj::object proc %this)
-   (js-for-in (js-toobject %this obj) proc %this))
 

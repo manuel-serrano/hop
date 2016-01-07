@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Jan  5 12:09:07 2016 (serrano)                */
+/*    Last change :  Thu Jan  7 08:27:29 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -135,7 +135,7 @@ function mdnAll() {
    } );
 
    Promise.all( [p1, p2, p3]).then( function( values ) {
-      assert.strictEqual( values, [3, 37, "foo" ] );
+      assert.deepEqual( values, [3, 1337, "foo" ] );
    }) ;
 }
 
@@ -199,8 +199,8 @@ function mdnAllSuccess() {
       setTimeout(resolve, 4000, "four");
    });
 
-   Promise.all([p1, p2, p3, p4]).then(function(value) {
-      assert.strictEqual( value, ["one", "two", "three", "four" ] );
+   Promise.all([p1, p2, p3, p4]).then(function(value) { 
+      assert.deepEqual( value, ["one", "two", "three", "four" ] );
    }, function(reason) {
       assert.ok( false, "all: not called" );
    });
@@ -260,6 +260,7 @@ function kangaxb() {
 }
 
 function kangaxc() {
+   var n = 0;
    var fulfills = Promise.all( [
       new Promise( function( resolve ) { setTimeout( resolve, 200, "foo" ); }),
       new Promise( function( resolve ) { setTimeout( resolve, 100, "bar" ); }),
@@ -273,11 +274,12 @@ function kangaxc() {
    rejects.catch( function( result ) { score += (result === "qux"); check(); });
 
    function check() {
-      assert.check( score === 2 );
+      assert.check( score === ++n );
    }
 }
 
 function kangaxd() {
+   var n = 0;
    var fulfills = Promise.all( __createIterableObject( [
       new Promise( function( resolve ) { setTimeout( resolve, 200, "foo" ); }),
       new Promise( function( resolve ) { setTimeout(resolve, 100, "bar" ); }),
@@ -291,12 +293,12 @@ function kangaxd() {
    rejects.catch( function( result ) { score += (result === "qux"); check(); });
 
    function check() {
-      console.log( "score.1=", score );
-      assert.check( score === 2 );
+      assert.check( score === ++n );
    }
 }
 
 function kangaxe() {
+   var n = 0;
    var fulfills = Promise.race( [
       new Promise( function( resolve ) { setTimeout( resolve, 200, "foo" ); }),
       new Promise( function( _, reject ) { setTimeout( reject, 300, "bar" ); }),
@@ -310,11 +312,12 @@ function kangaxe() {
    rejects.catch( function( result ) { score += (result === "baz"); check(); });
 
    function check() {
-      assert.check( score === 2 );
+      assert.check( score === ++n );
    }
 }
 
 function kangaxf() {
+   var n = 0;
    var fulfills = Promise.race( __createIterableObject( [
       new Promise( function( resolve ) { setTimeout( resolve, 200, "foo" ); }),
       new Promise( function( _, reject ) { setTimeout( reject, 300,"bar" ); }),
@@ -328,8 +331,7 @@ function kangaxf() {
    rejects.catch( function( result ) { score += (result === "baz"); check(); });
 
    function check() {
-      console.log( "score.2=", score );
-      assert.check( score === 2 );
+      assert.check( score === ++n );
    }
 }
 
@@ -378,4 +380,7 @@ kangaxf();
 console.log( "   kangaxg()");
 kangaxg();
 
-setTimeout( function() { process.exit( ok === expected ? 0 : 1 ) }, 100 );
+setTimeout( function() {
+   process.exit( ok === expected ? 0 : 1 )
+}, 100 );
+
