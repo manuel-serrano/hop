@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Jan  5 09:14:14 2016 (serrano)                */
+;*    Last change :  Wed Jan  6 07:49:41 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -341,8 +341,9 @@
    
    (define (mark-decls-loop! decls)
       (for-each (lambda (decl::J2SDecl)
-		   (with-access::J2SDecl decl (scope _scmid id)
+		   (with-access::J2SDecl decl (scope _scmid id binder)
 		      (set! _scmid (symbol-append '% id))
+		      (set! binder 'let-opt)
 		      (set! scope 'loop)))
 	 decls))
    
@@ -570,13 +571,16 @@
 		     (fname (cadr loc))
 		     (location (caddr loc))))))
 	 (let ((rhs (resolve! val env mode withs wenv)))
-	    (set! val (instantiate::J2SUndefined (loc loc)))
-	    (instantiate::J2SStmtExpr
-	       (loc loc)
-	       (expr (instantiate::J2SInit
-			(loc loc)
-			(lhs (j2sref ndecl loc withs wenv))
-			(rhs rhs))))))))
+	    (if (j2s-let-opt? this)
+		(instantiate::J2SNop (loc loc))
+		(begin
+		   (set! val (instantiate::J2SUndefined (loc loc)))
+		   (instantiate::J2SStmtExpr
+		      (loc loc)
+		      (expr (instantiate::J2SInit
+			       (loc loc)
+			       (lhs (j2sref ndecl loc withs wenv))
+			       (rhs rhs))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclFun ...                                        */
