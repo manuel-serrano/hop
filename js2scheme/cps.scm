@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Jan  2 07:34:18 2016 (serrano)                */
+;*    Last change :  Tue Jan  5 20:53:39 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1423,13 +1423,22 @@
 	 ((yield-expr? key kbreaks kcontinues)
 	  (cps key
 	     (KontExpr (lambda (kkey::J2SExpr)
-			  (cps (duplicate::J2SSwitch this (key kkey))
-			     k pack kbreaks kcontinues))
+			  (with-access::J2SSwitch this (key)
+			     (set! key kkey)
+			     (cps this
+				k pack kbreaks kcontinues)))
 		this k)
 	     pack kbreaks kcontinues))
 	 ((not (any (lambda (c) (yield-expr? c kbreaks kcontinues)) cases))
+	  (set! key (cps-fun! key))
+	  (for-each (lambda (clause)
+		       (with-access::J2SCase clause (expr body)
+			  (set! expr (cps-fun! expr))
+			  (set! body (cps-fun! body))))
+	     cases)
 	  (kcall k this))
 	 (else
+	  (set! key (cps-fun! key))
 	  (let* ((v (gensym '%kkey))
 		 (t (gensym '%ktmp))
 		 (key (J2SLetOpt '(ref) v key))

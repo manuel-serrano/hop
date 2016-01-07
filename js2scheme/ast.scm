@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jan  1 21:35:32 2016 (serrano)                */
+;*    Last change :  Wed Jan  6 11:19:24 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -59,7 +59,7 @@
 	      decls::pair)
 
 	   (final-class J2SLetBlock::J2SBlock
-	      decls::pair)
+	      decls::pair-nil)
 	   
 	   (class J2SIdStmt::J2SStmt
 	      (need-bind-exit-break::bool (default #t))

@@ -1,10 +1,13 @@
 const hop = ((function() {
    const proto = {
-      yield: function( val, done, kont ) {
+      Yield: function( val, kont ) {
 	 this.next = kont;
-	 return { value: val, done: done }
+	 return { value: val, done: false }
       },
-      yieldS: function( val, done, kont ) {
+      Return: function( val, kont ) {
+	 return { value: val, done: true }
+      },
+      YieldS: function( val, done, kont ) {
 	 var gen = this;
 	 function loop( v, e ) {
 	    var n = val.next();
@@ -12,7 +15,7 @@ const hop = ((function() {
 	    if( n.done ) {
 	       return kont( n.value, false );
 	    } else {
-	       return gen.yield( n.value, false, loop );
+	       return gen.Yield( n.value, false, loop );
 	    }
 	 }
 	 

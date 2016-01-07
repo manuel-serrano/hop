@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Jan  1 21:36:15 2016 (serrano)                */
+;*    Last change :  Tue Jan  5 20:42:47 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -312,8 +312,8 @@
 ;*    j2s->list ::J2SBreak ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SBreak)
-   (with-access::J2SBreak this (loc id)
-      `(,@(call-next-method) ,id)))
+   (with-access::J2SBreak this (loc id target)
+      `(,@(call-next-method) ,id ,(typeof target))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SContinue ...                                      */
