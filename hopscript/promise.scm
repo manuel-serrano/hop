@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Jan  5 11:23:49 2016 (serrano)                */
+;*    Last change :  Tue Jan  5 17:24:51 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -97,7 +97,7 @@
 			     o
 			     (js-promise-resolve this o))))
 		   (let ((old ((class-field-accessor field) p)))
-		      ((class-field-mutator field) p (cons this p)))
+		      ((class-field-mutator field) p (cons this old)))
 		   p))
 	     (jsarray->vector iterable %this))
 	  '#()))
@@ -140,12 +140,12 @@
 			 (loop (-fx i 1))))))))))
       
    (define (promise-resolvers promise::JsPromise)
-      (with-access::JsPromise promise (watches state)
+      (with-access::JsPromise promise (state)
 	 (when (eq? state 'pending)
 	    (promise-watch-all promise))))
 
    (define (promise-rejecters promise::JsPromise)
-      (with-access::JsPromise promise (watches state)
+      (with-access::JsPromise promise (state)
 	 (when (eq? state 'pending)
 	    (promise-watch-race promise))))
 
@@ -232,7 +232,7 @@
       (let ((promise (js-promise-alloc js-promise)))
 	 (with-access::JsPromise promise (watches)
 	    (set! watches
-	       (iterable->vector this iterable
+	       (iterable->vector promise iterable
 		  (find-class-field JsPromise 'resolvers))))
 	 (promise-watch-all promise)
 	 promise))
@@ -246,7 +246,7 @@
       (let ((promise (js-promise-alloc js-promise)))
 	 (with-access::JsPromise promise (watches)
 	    (set! watches
-	       (iterable->vector this iterable
+	       (iterable->vector promise iterable
 		  (find-class-field JsPromise 'rejecters))))
 	 (promise-watch-race promise)
 	 promise))

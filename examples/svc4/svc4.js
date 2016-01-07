@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Thu Jan 15 21:54:14 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Thu Jan  7 07:50:51 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services declarations.            */
 /*    -------------------------------------------------------------    */
@@ -13,7 +13,7 @@
 /*=====================================================================*/
 service svc4( o ) {
    var name = o && "name" in o ? o.name : "foo";
-   import service svc();
+   service svc();
    svc.path = "/hop/" + name;
 
    return hop.HTTPResponseAsync(
