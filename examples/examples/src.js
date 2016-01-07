@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 19 10:32:06 2014                          */
-/*    Last change :  Thu Nov 26 16:59:24 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Thu Jan  7 07:58:17 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Read and fontify the examples source codes.                      */
 /*    -------------------------------------------------------------    */
@@ -26,13 +26,14 @@ service examplesSrc( path ) {
 	 fontify = fontifier.hss;
 	 lbegin = 11;
       } else if( path.match( /[.]json$/ ) ) {
-	 lbegin = 0;
+	 fontify = fontifier.javascript;
+	 lbegin = 1;
       } else if( path.match( /[.]html$/ ) ) {
 	 lbegin = 0;
 	 fontify = fontifier.xml;
       } else if( path.match( /[.]hop$/ ) ) {
 	 fontify = fontifier.hop;
-	 lbegin = 0;
+	 lbegin = 1;
       }
 
       fs.readFile( path, function( err, buf ) {
