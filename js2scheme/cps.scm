@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Jan  5 20:53:39 2016 (serrano)                */
+;*    Last change :  Thu Jan  7 08:29:49 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -1424,9 +1424,12 @@
 	  (cps key
 	     (KontExpr (lambda (kkey::J2SExpr)
 			  (with-access::J2SSwitch this (key)
+			     ;; if a duplication is preferred here to
+			     ;; the mutation, don't forget to update the
+			     ;; kbreaks set otherwise J2SBreak will be
+			     ;; badly compiled
 			     (set! key kkey)
-			     (cps this
-				k pack kbreaks kcontinues)))
+			     (cps this k pack kbreaks kcontinues)))
 		this k)
 	     pack kbreaks kcontinues))
 	 ((not (any (lambda (c) (yield-expr? c kbreaks kcontinues)) cases))
