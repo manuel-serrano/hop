@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Jan  5 17:24:51 2016 (serrano)                */
+;*    Last change :  Thu Jan  7 08:09:07 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -93,11 +93,15 @@
       (if (isa? iterable JsArray)
 	  (vector-map
 	     (lambda (o)
-		(let ((p (if (isa? o JsPromise)
-			     o
-			     (js-promise-resolve this o))))
-		   (let ((old ((class-field-accessor field) p)))
-		      ((class-field-mutator field) p (cons this old)))
+		(let* ((p (cond
+			     ((isa? o JsPromise)
+			      o)
+			     ((eq? (class-field-name field) 'resolvers)
+			      (js-promise-resolve this o))
+			     (else
+			      (js-promise-reject this o))))
+		       (old ((class-field-accessor field) p)))
+		   ((class-field-mutator field) p (cons this old))
 		   p))
 	     (jsarray->vector iterable %this))
 	  '#()))
