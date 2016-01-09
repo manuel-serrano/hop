@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/use.scm                 */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/use.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jan  8 18:55:11 2016 (serrano)                */
+;*    Last change :  Sat Jan  9 08:33:58 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -129,7 +129,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SAccess ctx)
    (with-access::J2SAccess this (obj field)
-      (tprint "ACCESS: " (j2s->list this))
       (usage obj 'ref)
       (usage field 'ref))
    this)
