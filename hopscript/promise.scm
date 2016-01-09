@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Thu Jan  7 08:07:39 2016 (serrano)                */
+;*    Last change :  Fri Jan  8 15:09:31 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -100,7 +100,7 @@
 			 (else
 			  (js-promise-reject this o))))
 		   (old ((class-field-accessor field) p)))
-	       ((class-field-mutator field) p (cons this p))
+	       ((class-field-mutator field) p (cons this old))
 	       p))
 	 iterable))
    

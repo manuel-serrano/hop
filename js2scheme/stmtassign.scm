@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Jul  3 16:16:26 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Fri Jan  8 15:05:39 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript stmt->assignment                                      */
 ;*    -------------------------------------------------------------    */
@@ -69,6 +69,12 @@
    (default-walk! this temp))
 
 ;*---------------------------------------------------------------------*/
+;*    assign! ::J2SDecl ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (assign! this::J2SDecl temps)
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    assign! ::J2SSeq ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (assign! this::J2SSeq temp)
@@ -92,9 +98,11 @@
 		       (loc loc)
 		       (lhs ref)
 		       (rhs this))))
-	 (instantiate::J2SSequence
+	 (instantiate::J2SParen
 	    (loc loc)
-	    (exprs (list assig ref))))))
+	    (expr (instantiate::J2SSequence
+		     (loc loc)
+		     (exprs (list assig ref))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    assign! ::J2SLabel ...                                           */
