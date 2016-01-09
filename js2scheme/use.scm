@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Dec 29 08:39:56 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sat Jan  9 08:33:58 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
 ;*=====================================================================*/
@@ -116,12 +116,21 @@
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    usage ::J2SAssign ...                                            */
+;*    usage ::J2SAssig ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SAssig ctx)
    (with-access::J2SAssig this (lhs rhs)
       (usage lhs 'assig)
       (usage rhs 'ref))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    usage ::J2SAccess ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (usage this::J2SAccess ctx)
+   (with-access::J2SAccess this (obj field)
+      (usage obj 'ref)
+      (usage field 'ref))
    this)
 
 ;*---------------------------------------------------------------------*/
