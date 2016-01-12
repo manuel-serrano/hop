@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Jan  8 15:03:34 2016 (serrano)                */
+;*    Last change :  Tue Jan 12 13:37:59 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -337,7 +337,7 @@
 	    (cond
 	       ((null? n)
 		(values #t predecls))
-	       ((and (isa? (car n) J2SDecl) (predecl? (car n)))
+	       ((and (isa? (car n) J2SDeclInit) (predecl? (car n)))
 		(let ((decl (car n))
 		      (next (cdr n)))
 		   (set! nodes next)
@@ -362,6 +362,8 @@
 		   (cond
 		      ((null? d)
 		       (loop* body predecls))
+		      ((not (isa? (car d) J2SDeclInit))
+		       (values #f predecls))
 		      ((predecl? (car d))
 		       (let ((decl (car d))
 			     (next (cdr d)))
