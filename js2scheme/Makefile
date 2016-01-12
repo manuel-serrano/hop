@@ -49,7 +49,7 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm) ecmascript5.js
 
-INCLUDES = 
+INCLUDES = ast.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

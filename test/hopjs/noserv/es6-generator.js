@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Sat Jan  2 07:32:14 2016 (serrano)                */
+/*    Last change :  Tue Jan 12 08:18:55 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
@@ -1403,6 +1403,14 @@ function* tryj() {
    return 7777;
 }
 
+function* tryk( o ) {
+   try {
+      o.x++;
+   } finally {
+      o.x += 20;
+   }
+}
+   
 console.log( "try..." );
 
 console.log( "   trya()" );
@@ -1487,6 +1495,13 @@ assert.ok( equal( g.next(), { value: 5555, done: false } ) );
 assert.ok( equal( g.next(), { value: 6666, done: false } ) );
 assert.ok( equal( g.next(), { value: 7777, done: true } ) );
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+
+console.log( "   tryk()" );
+var o = { x: 0 };
+g = tryk( o );
+
+assert.ok( equal( g.next(), { value: undefined, done: true } ) );
+assert.ok( o, { x: 21 } );
 
 /*---------------------------------------------------------------------*/
 /*    switch                                                           */
