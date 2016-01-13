@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/html.scm                */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/html.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Sat Oct 31 13:39:00 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Mon Jan 11 18:15:07 2016 (serrano)                */
+;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
 ;*=====================================================================*/
@@ -451,7 +451,7 @@
 	      (escape '())
 	      (loc (the-coord (the-port) (-fx (the-length) 1)))
 	      (val (the-string)))))
-      ((+ (out " ~$\t\n\r<>(){}[]@!\"'"))
+      ((+ (out " ~$\t\n\r<>(){}[]@!\"'/"))
        (if strict
 	   (xml-parse-error (format "Illegal `~a' attribute character" tag)
 	      (the-string)

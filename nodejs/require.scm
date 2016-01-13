@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Dec 29 18:11:04 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sat Jan  9 10:46:10 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
 ;*=====================================================================*/
@@ -811,6 +811,7 @@
       (with-trace 'require "nodejs-resolve.resolve-hz"
 	 (trace-item "hz=" hz)
 	 (let ((dir (hz-download-to-cache hz (hop-hz-repositories))))
+	    (trace-item "dir=" dir)
 	    (if (directory? dir)
 		(resolve-directory dir)
 		#f))))
@@ -831,9 +832,10 @@
 					   (cons (cons p val)
 					      (cell-ref o))))
 			 :object-return (lambda (o) (cell-ref o))
-			 :parse-error (lambda (msg token loc)
-					 (js-raise-syntax-error
-					    (js-new-global-object) msg ""))))
+			 :parse-error (lambda (msg path loc)
+					 (js-raise-syntax-error/loc %this
+					    `(at ,path ,loc)
+					    msg path))))
 		   (m (assoc (if (eq? mode 'head) "client" "main") o)))
 	       (if (pair? m)
 		   (cdr m)
@@ -842,22 +844,24 @@
 			 idx)))))))
    
    (define (resolve-directory x)
-      (let ((json (make-file-name x "package.json")))
-	 (or (and (file-exists? json)
-		  (let* ((m (resolve-package json x)))
-		     (cond
-			((pair? m)
-			 (cons name
-			    (map (lambda (m)
-				    (resolve-file-or-directory m x))
-			       m)))
-			((string? m)
-			 (resolve-file-or-directory m x))
-			(else
-			 #f))))
-	     (let ((p (make-file-name x "index.js")))
-		(when (file-exists? p)
-		   (file-name-canonicalize p))))))
+      (with-trace 'require "nodejs-resolve.resolve-directory"
+	 (trace-item "x=" x)
+	 (let ((json (make-file-name x "package.json")))
+	    (or (and (file-exists? json)
+		     (let* ((m (resolve-package json x)))
+			(cond
+			   ((pair? m)
+			    (cons name
+			       (map (lambda (m)
+				       (resolve-file-or-directory m x))
+				  m)))
+			   ((string? m)
+			    (resolve-file-or-directory m x))
+			   (else
+			    #f))))
+		(let ((p (make-file-name x "index.js")))
+		   (when (file-exists? p)
+		      (file-name-canonicalize p)))))))
    
    (define (resolve-file-or-directory x dir)
       (let ((file (make-file-name dir x)))
@@ -928,6 +932,10 @@
 		 (resolve-error name)))
 	    ((string-prefix? "/" name)
 	     (or (resolve-file-or-directory name "/")
+		 (resolve-modules mod name)
+		 (resolve-error name)))
+	    ((string-suffix? ".hz" name)
+	     (or (resolve-hz name)
 		 (resolve-modules mod name)
 		 (resolve-error name)))
 	    (else
