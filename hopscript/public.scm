@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Dec 29 20:45:41 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sat Jan  9 10:38:27 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -119,6 +119,7 @@
 	   (js-raise-range-error ::JsGlobalObject ::bstring ::obj)
 	   (js-raise-uri-error ::JsGlobalObject ::bstring ::obj)
 	   (js-raise-syntax-error ::JsGlobalObject ::bstring ::obj . ::obj)
+	   (js-raise-syntax-error/loc ::JsGlobalObject ::obj ::bstring ::obj)
 	   (js-raise-reference-error ::JsGlobalObject ::bstring ::obj . ::obj)
 	   (js-raise-error ::JsGlobalObject ::bstring ::obj . ::obj)
 
@@ -1371,6 +1372,19 @@
       (js-raise
 	 (apply js-new %this js-syntax-error
 	    (js-string->jsstring (format fmt obj)) args))))
+
+;*---------------------------------------------------------------------*/
+;*    js-raise-syntax-error/loc ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-raise-syntax-error/loc %this::JsGlobalObject loc fmt::bstring obj)
+   (match-case loc
+      ((at ?fname ?loc)
+       (with-access::JsGlobalObject %this (js-syntax-error)
+	  (js-raise
+	     (js-new %this js-syntax-error
+		(js-string->jsstring (format fmt obj)) fname loc))))
+      (else
+       (js-raise-syntax-error %this fmt obj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-reference-error ...                                     */
