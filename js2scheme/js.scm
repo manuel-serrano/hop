@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Jan 13 12:15:27 2016 (serrano)                */
+;*    Last change :  Thu Jan 14 18:06:33 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -665,8 +665,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SUnary tildec dollarc mode evalp conf)
    (with-access::J2SUnary this (op expr)
-      (if (memq op '(void typeof))
-	  (cons* this (symbol->string op) ""
+      (if (memq op '(void typeof delete))
+	  (cons* this (symbol->string op) " "
 	     (j2s-js expr tildec dollarc mode evalp conf))
 	  (cons* this (symbol->string op) 
 	     (j2s-js expr tildec dollarc mode evalp conf)))))
