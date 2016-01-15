@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Jan 14 18:06:33 2016 (serrano)                */
+;*    Last change :  Fri Jan 15 10:57:38 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -694,19 +694,36 @@
 ;*    j2s-js ::J2STilde ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2STilde tildec dollarc mode evalp conf)
+   ;;(tprint "tildec=" tildec " " (j2s->list this))
    (cons this
-      (if (procedure? tildec)
-	  (tildec this tildec dollarc mode evalp conf)
-	  (j2s-js-script-tilde this tildec dollarc mode evalp conf))))
+      (cond
+	 ((procedure? tildec)
+	  (tildec this tildec dollarc mode evalp conf))
+	 ((eq? tildec #t)
+	  (j2s-js-script-tilde this tildec dollarc mode evalp conf))
+	 (else
+	  (with-access::J2STilde this (loc stmt)
+	     (cons* this "<script>"
+		(append (j2s-js stmt
+			   j2s-js-script-tilde dollarc
+			   mode evalp conf)
+		   '("</script>"))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-script-tilde ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (j2s-js-script-tilde this::J2STilde tildec dollarc mode evalp conf)
    (with-access::J2STilde this (loc stmt)
-      (cons* this "<script>"
-	 (append (j2s-js stmt tildec j2s-js-client-dollar mode evalp conf)
-	    '("</script>")))))
+      (let ((ndollarc (j2s-js-client-dollar dollarc)))
+	 (cons* this "SCRIPT('"
+	    (string-for-read
+	       (call-with-output-string
+		  (lambda (port)
+		     (for-each (lambda (n)
+				  (unless (isa? n J2SNode)
+				     (display n port)))
+			(j2s-js stmt tildec ndollarc mode evalp conf)))))
+	    '("')")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-attribute-tilde ...                                       */
@@ -746,6 +763,7 @@
 (define (j2s-js-client-dollar odollarc)
    (lambda (this::J2SDollar tildec dollarc mode evalp conf)
       (with-access::J2SDollar this (node)
+	 ;;(tprint "DOLLAR=" (j2s->list node))
 	 (j2s-js node tildec odollarc mode evalp conf))))
 
 ;*---------------------------------------------------------------------*/

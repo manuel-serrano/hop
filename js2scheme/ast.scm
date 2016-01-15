@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Dec 31 10:50:40 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Fri Jan 15 08:30:40 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -38,6 +38,7 @@
 	      (name read-only (default #f))
 	      (main read-only (default #f))
 	      (module read-only (default #f))
+	      (cnsts::pair-nil (default '()))
 	      (decls::pair-nil (default '()))
 	      (headers::pair-nil (default '())))
 
@@ -292,7 +293,7 @@
 	      args::pair-nil)
 	   
 	   (abstract-class J2SPropertyInit::J2SNode
-	      name::J2SLiteralValue)
+	      name::J2SExpr)
 	   
 	   (final-class J2SDataPropertyInit::J2SPropertyInit
 	      val::J2SExpr)
@@ -1030,5 +1031,3 @@
    (with-access::J2SPragma node (expr)
       (set! expr (call-with-input-string expr read))
       node))
-
-
