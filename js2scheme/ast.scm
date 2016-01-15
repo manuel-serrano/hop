@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jan 15 08:30:40 2016 (serrano)                */
+;*    Last change :  Fri Jan 15 18:59:51 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -491,10 +491,10 @@
    (error "walk4!" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk5*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4)
-   (error "walk5!" "Internal Error: forgot Node type"
+   (error "walk5*" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk6*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
-   (error "walk6!" "Internal Error: forgot Node type"
+   (error "walk6*" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0!::J2SNode n::J2SNode p::procedure)
@@ -629,9 +629,9 @@
        (print "   return _ast;\n};\n\n")))
    
    `(begin
-       ,@(map (lambda (nb) (gen-method nb)) (iota 5))
-       ,@(map (lambda (nb) (gen-method* nb)) (iota 5))
-       ,@(map (lambda (nb) (gen-method! nb)) (iota 5))))
+       ,@(map (lambda (nb) (gen-method nb)) (iota 6))
+       ,@(map (lambda (nb) (gen-method* nb)) (iota 6))
+       ,@(map (lambda (nb) (gen-method! nb)) (iota 6))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-traversals ...                                               */

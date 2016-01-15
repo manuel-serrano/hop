@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Jan 15 10:57:38 2016 (serrano)                */
+;*    Last change :  Fri Jan 15 19:47:23 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -705,7 +705,8 @@
 	  (with-access::J2STilde this (loc stmt)
 	     (cons* this "<script>"
 		(append (j2s-js stmt
-			   j2s-js-script-tilde dollarc
+			   j2s-js-script-tilde
+			   dollarc
 			   mode evalp conf)
 		   '("</script>"))))))))
 
@@ -715,7 +716,7 @@
 (define (j2s-js-script-tilde this::J2STilde tildec dollarc mode evalp conf)
    (with-access::J2STilde this (loc stmt)
       (let ((ndollarc (j2s-js-client-dollar dollarc)))
-	 (cons* this "SCRIPT('"
+	 (cons* this "SCRIPT( undefined, '"
 	    (string-for-read
 	       (call-with-output-string
 		  (lambda (port)

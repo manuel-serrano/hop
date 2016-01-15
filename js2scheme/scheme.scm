@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan 15 08:31:28 2016 (serrano)                */
+;*    Last change :  Fri Jan 15 19:34:39 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1178,13 +1178,22 @@
 
    (define (svc->scheme this)
       (with-access::J2SSvc this (name params loc path mode register import)
-	 (let ((args (j2s-scheme params mode return conf)))
-	    `(js-create-service %this
-		,(j2sfun->scheme this (jsfun->lambda this mode return conf)
-		    mode return conf)
-		,(when (symbol? path) (symbol->string path))
-		',loc
-		,register ,import (js-current-worker)))))
+	 (let ((args (j2s-scheme params mode return conf))
+	       (lam (jsfun->lambda this mode return conf)))
+	    (match-case lam
+	       ((labels (and ?bindings ((?id . ?-))) ?id)
+		`(labels ,bindings
+		    (js-create-service %this
+		       ,(j2sfun->scheme this id mode return conf)
+		       ,(when (symbol? path) (symbol->string path))
+		       ',loc
+		       ,register ,import (js-current-worker))))
+	       (else
+		`(js-create-service %this
+		   ,(j2sfun->scheme this lam mode return conf)
+		   ,(when (symbol? path) (symbol->string path))
+		   ',loc
+		   ,register ,import (js-current-worker)))))))
 
    (with-access::J2SSvc this (loc)
       (if (config-get conf dsssl: #f) 
@@ -2552,7 +2561,9 @@
 	    `(instantiate::xml-tilde
 		(lang 'javascript)
 		(%js-expression ,expr)
-		(body (vector ',(if (bigloo-debug) (j2s->list stmt) '()) '() '() '() ,js #f))
+		(body (vector
+			 ',(if (>fx (bigloo-debug) 1) (j2s->list stmt) '())
+			 '() '() '() ,js #f))
 		(loc ',loc))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2562,7 +2573,7 @@
    (with-access::J2STilde this (loc stmt)
       (let* ((temp (gensym))
 	     (assign (j2s-stmt-assign stmt temp))
-	     (js-stmt (concat-tilde (j2s-js assign #f #f mode return conf)))
+	     (js-stmt (concat-tilde (j2s-js assign #t #f mode return conf)))
 	     (str (cond
 		     ((null? js-stmt)
 		      "")
