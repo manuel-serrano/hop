@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Jan 15 19:47:23 2016 (serrano)                */
+;*    Last change :  Sat Jan 16 07:40:37 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -637,15 +637,15 @@
 (define-method (j2s-js this::J2SAccess tildec dollarc mode evalp conf)
 
    (define (id-string? field)
-      (if (isa? field J2SString)
-	  (with-access::J2SString field (val)
-	     (pregexp-match "[a-zA-Z0-9_$]+" val))))
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val)
+	    (pregexp-match "^[a-zA-Z0-9_$]+$" val))))
       
    (with-access::J2SAccess this (obj field)
       (if (id-string? field)
 	  (cons this
 	     (append (j2s-js obj tildec dollarc mode evalp conf)
-		(list "." (with-access::J2SString field (val) val))))
+		(list "./*ici*/" (with-access::J2SString field (val) val))))
 	  (cons this
 	     (append (j2s-js obj tildec dollarc mode evalp conf)
 		'("[")

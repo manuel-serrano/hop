@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Dec 30 19:56:21 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sat Jan 16 07:39:41 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
 ;*=====================================================================*/
@@ -150,14 +150,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SString)
    (with-access::J2SLiteralValue this (val)
-      `(,(typeof this) ,(format "~s" val))))
+      `(,(string->symbol (typeof this)) ,(format "~a" val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SNativeString ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SNativeString)
    (with-access::J2SLiteralValue this (val)
-      `(,(typeof this) ,(format "~s" val))))
+      `(,(string->symbol (typeof this)) ,(format "~a" val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SArray ...                                         */
