@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jan  9 10:46:10 2016 (serrano)                */
+;*    Last change :  Sat Jan 16 07:45:34 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -785,7 +785,7 @@
 	 ((string-suffix? ".hz" x)
 	  (resolve-autoload-hz x))
 	 (else
-	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hz")))
+	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hss" ".css")))
 	     (when (pair? suffixes)
 		(let* ((suffix (car suffixes))
 		       (src (string-append x suffix)))
