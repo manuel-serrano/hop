@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Jan 17 07:22:01 2016 (serrano)                */
+;*    Last change :  Sun Jan 17 07:34:15 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -626,7 +626,9 @@
    (with-access::J2SCall this (fun args)
       (let ((f (j2s-js fun tildec dollarc mode evalp conf)))
 	 (cons this
-	    (append (if (or (isa? fun J2SRef) (isa? fun J2SAccess))
+	    (append (if (or (isa? fun J2SRef)
+			    (isa? fun J2SAccess)
+			    (isa? fun J2SUnresolvedRef))
 			f
 			(cons "(" (append f '(")"))))
 	       (j2s-js* this "(" ")" "," args tildec dollarc mode evalp conf))))))
