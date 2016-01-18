@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Fri Nov 27 08:28:23 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Mon Jan 18 09:25:02 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
 /*=====================================================================*/
@@ -63,6 +63,7 @@ var svcnew3 = new Service( function() {
 assert.equal( svcnew3.path, '/hop/path' );
 
 var svcnew4 = new Service( function( o ) {
+   console.log( "svcnew4...");
    var a = (o && "a" in o) ? o.a : 1;
    var b = (o && "b" in o) ? o.b : 'foo';
    return b;
@@ -98,7 +99,7 @@ var testSuite = [
    function() {
       svc().post( function( result ) {
 	 console.error( "result=", result );
-	 assert.equal( result, 0 );
+	 assert.equal( result, 0, "svc" );
 	 pass();
       }, fail );
    },
@@ -248,7 +249,7 @@ var testSuite = [
    },
    function() {
       svcN( { a: 2 } ).post( function( result ) {
-	 assert.equal( result, 'foo' );
+	 assert.equal( result, 'foo', "svcN" );
 	 pass();
       }, fail );
    },
@@ -257,7 +258,7 @@ var testSuite = [
 /*    },                                                               */
    function() {
       svcnew4( {} ).post( function( result ) {
-	 assert.equal( result, 'foo' );
+	 assert.equal( result, 'foo', "svcnew4" );
 	 pass();
       }, fail );
    },

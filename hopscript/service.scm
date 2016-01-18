@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sat Jan 16 07:27:37 2016 (serrano)                */
+;*    Last change :  Mon Jan 18 09:17:07 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -812,10 +812,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (service-pack-cgi-arguments ctx::JsGlobalObject svc vals)
    (with-access::JsGlobalObject ctx (js-object)
-      (with-access::hop-service svc (args)
+      (with-access::hop-service svc (args id)
+	 (tprint "pack svc=" id " vals=" vals)
 	 (cond
 	    ((null? vals)
-	     (js-new0 ctx js-object))
+	     (if (pair? args)
+		 (js-new0 ctx js-object)
+		 '()))
 	    ((and (pair? args) (eq? (car args) #!key))
 	     ;; old dsssl protocol (<=rc7)
 	     args)
