@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Mon Jan 18 09:25:02 2016 (serrano)                */
+/*    Last change :  Mon Jan 18 09:29:02 2016 (serrano)                */
 /*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
@@ -63,7 +63,6 @@ var svcnew3 = new Service( function() {
 assert.equal( svcnew3.path, '/hop/path' );
 
 var svcnew4 = new Service( function( o ) {
-   console.log( "svcnew4...");
    var a = (o && "a" in o) ? o.a : 1;
    var b = (o && "b" in o) ? o.b : 'foo';
    return b;
@@ -258,31 +257,31 @@ var testSuite = [
 /*    },                                                               */
    function() {
       svcnew4( {} ).post( function( result ) {
-	 assert.equal( result, 'foo', "svcnew4" );
+	 assert.equal( result, 'foo', "svcnew4.1" );
 	 pass();
       }, fail );
    },
    function() {
       svcnew4().post( function( result ) {
-    	 assert.equal( result, 'foo' );
+    	 assert.equal( result, 'foo', "svcnew4.2" );
     	 pass();
       }, fail );
    },
    function() {
       svcnew4( { a : 2, b : 'bar' } ).post( function( result ) {
-	 assert.equal( result, 'bar' );
+	 assert.equal( result, 'bar', "svcnew4.3" );
 	 pass();
       }, fail );
    },
    function() {
       svcnew4( { b: 'bar', a: 2 } ).post( function( result ) {
-	 assert.equal( result, 'bar' );
+	 assert.equal( result, 'bar', "svcnew4.4" );
 	 pass();
       }, fail );
    },
    function() {
       svcnew4( { a: 2 } ).post( function( result ) {
-	 assert.equal( result, 'foo' );
+	 assert.equal( result, 'foo', "svcnew4.5" );
 	 pass();
       }, fail );
    },
@@ -292,8 +291,8 @@ var testSuite = [
 /*    },                                                               */
    function() {
       svc10().post( function( result ) {
-	 assert.equal( result.name, undefined );
-	 assert.equal( result.age, undefined );
+	 assert.equal( result.name, undefined, "svc10.1" );
+	 assert.equal( result.age, undefined, "svc10.2" );
 	 pass();
       }, fail );
    },
