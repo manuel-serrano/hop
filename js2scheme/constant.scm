@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jan 15 08:26:50 2016 (serrano)                */
+;*    Last change :  Thu Jan 21 11:54:19 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -45,9 +45,9 @@
 (define-method (j2s-constant this::J2SProgram args)
    (with-access::J2SProgram this (nodes headers decls loc pcache-size cnsts)
       (let ((env (make-env)))
-	 (for-each (lambda (n) (constant! n env)) headers)
-	 (for-each (lambda (n) (constant! n env)) decls)
-	 (for-each (lambda (n) (constant! n env)) nodes)
+	 (for-each (lambda (n) (constant! n env 0)) headers)
+	 (for-each (lambda (n) (constant! n env 0)) decls)
+	 (for-each (lambda (n) (constant! n env 0)) nodes)
 	 (set! cnsts (reverse! (cdr env)))))
    this)
 
@@ -79,18 +79,38 @@
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SNode env::pair)
+(define-walk-method (constant! this::J2SNode env::pair nesting)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SString ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SString env)
-   (add-expr! this env))
+(define-walk-method (constant! this::J2SString env nesting)
+   (if (=fx nesting 0)
+       (add-expr! this env)
+       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SRegExp ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SRegExp env)
-   (add-expr! this env))
+(define-walk-method (constant! this::J2SRegExp env nesting)
+   (if (=fx nesting 0)
+       (add-expr! this env)
+       this))
 
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2STilde ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2STilde env nesting)
+   (with-access::J2STilde this (stmt)
+      (set! stmt (constant! stmt env (+fx nesting 1)))
+      this))
+   
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2SDollar ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SDollar env nesting)
+   (with-access::J2SDollar this (node)
+      (set! node (constant! node env (-fx nesting 1)))
+      this))
+   
