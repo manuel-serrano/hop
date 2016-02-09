@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sun Dec 27 19:23:42 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Feb  9 16:16:06 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -239,6 +239,8 @@
 		     (error "process" "binding not implemented" name))
 		  0 (symbol->string name))
 	       #f %this))
+
+	 (define prog-start-time::uint64 (nodejs-uptime %worker))
 
 	 (define slowbuffer
 	    (make-slowbuffer %this))
@@ -610,6 +612,16 @@
 	       1 "hrtime")
 	    #t %this)
 
+	 ;; uptime
+	 (js-put! proc 'uptime
+	    (js-make-function %this
+	       (lambda (this)
+		  (let* ((uptime (-u64 (nodejs-uptime %worker) prog-start-time))
+			 (t (uint64->flonum uptime)))
+		     (/fl t 1000.)))
+	       0 "uptime")
+	    #t %this)
+
 	 ;; kill
 	 (js-put! proc '_kill
 	    (js-make-function %this
@@ -669,8 +681,7 @@
 	      _debugProcess
 	      _debugPause
 	      _debugEnd
-	      dlopen
-	      uptime))
+	      dlopen))
 	 
 	 proc)))
 
