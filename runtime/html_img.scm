@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 18 08:04:49 2007                          */
-;*    Last change :  Thu Sep 24 16:57:46 2015 (serrano)                */
-;*    Copyright   :  2007-15 Manuel Serrano                            */
+;*    Last change :  Tue Feb  9 14:17:32 2016 (serrano)                */
+;*    Copyright   :  2007-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dealing with IMG markups.                                        */
 ;*=====================================================================*/
@@ -61,8 +61,8 @@
 ;*---------------------------------------------------------------------*/
 (define (inline-base64 src content)
    (format "data:~a;base64,~a"
-	   (mime-type src (format "image/~a" (suffix src)))
-	   (base64-encode content -1)))
+      (mime-type src (format "image/~a" (suffix src)))
+      (base64-encode content -1)))
 		       
 ;*---------------------------------------------------------------------*/
 ;*    img-base64-encode ...                                            */
