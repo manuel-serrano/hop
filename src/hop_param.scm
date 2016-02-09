@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/src/hop_param.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/src/hop_param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Oct 19 08:38:33 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Fri Feb  5 08:42:03 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -110,8 +110,8 @@
 	    (hop-client-output-port::output-port)
 	    (hop-client-output-port-set! ::output-port)
 
-	    (hop-run-server::bool)
-	    (hop-run-server-set! ::bool)
+	    (hop-run-server::obj)
+	    (hop-run-server-set! ::obj)
 
 	    (hop-server-listen-addr::obj)
 	    (hop-server-listen-addr-set! ::obj)
@@ -363,7 +363,7 @@
 ;*    hop-run-server ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-run-server
-   #t)
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-server-listen-addr ...                                       */

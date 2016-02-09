@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Jan  5 20:42:47 2016 (serrano)                */
+;*    Last change :  Mon Feb  8 13:28:34 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -121,9 +121,12 @@
 ;*    j2s->list ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SRef)
-   (with-access::J2SRef this (decl)
+   (with-access::J2SRef this (decl type hint)
       (with-access::J2SDecl decl (id key)
-	 `(,@(call-next-method) :key ,key ,id))))
+	 `(,@(call-next-method) ,id
+	     ,@(if (> (bigloo-debug) 1) `(:key ,key) '())
+	     ,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+	     ,@(if (and (> (bigloo-debug) 1) (pair? hint)) `(:hint ,hint) '())))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWithRef ...                                       */
@@ -146,18 +149,27 @@
       `(,@(call-next-method) ,val)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SLiteralCnst ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SLiteralCnst)
+   (with-access::J2SLiteralCnst this (val type)
+      `(,@(call-next-method)
+	  ,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+	  ,(j2s->list val))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SString ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SString)
    (with-access::J2SLiteralValue this (val)
-      `(,(typeof this) ,(format "~s" val))))
+      `(,(string->symbol (typeof this)) ,(format "~a" val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SNativeString ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SNativeString)
    (with-access::J2SLiteralValue this (val)
-      `(,(typeof this) ,(format "~s" val))))
+      `(,(string->symbol (typeof this)) ,(format "~a" val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SArray ...                                         */
@@ -170,22 +182,21 @@
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
-   (with-access::J2SFun this (name params body decl mode)
+   (with-access::J2SFun this (name params body decl mode type)
       (if (isa? decl J2SDecl)
-	  (with-access::J2SDecl decl (key id writable _scmid)
-	     `(,@(call-next-method) :id ,id :key ,key 
-		 ,@(if _scmid `(:_scmid ,_scmid) '())
-		 :mode ,mode :writable ,writable
-		 ,(map j2s->list params) ,(j2s->list body)))
-	  `(,@(call-next-method) :name ,name
+	  `(,@(call-next-method) :decl ,(j2s->list decl)
+	      :type ,type :mode ,mode
+	      ,(map j2s->list params) ,(j2s->list body))
+	  `(,@(call-next-method) :name ,name :type ,type
 	      ,(map j2s->list params) ,(j2s->list body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SReturn)
-   (with-access::J2SReturn this (expr tail)
-      `(,@(call-next-method) :tail ,tail ,(j2s->list expr))))
+   (with-access::J2SReturn this (expr tail type)
+      `(,@(call-next-method) :tail ,tail
+	  ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturnYield ...                                   */
@@ -229,15 +240,19 @@
 ;*    j2s->list ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SBinary)
-   (with-access::J2SBinary this (op rhs lhs)
-      `(,@(call-next-method) ,op ,(j2s->list lhs) ,(j2s->list rhs))))
+   (with-access::J2SBinary this (op rhs lhs type)
+      `(,@(call-next-method) ,op
+	  ,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+	  ,(j2s->list lhs) ,(j2s->list rhs))))
       
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SParen ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SParen)
-   (with-access::J2SParen this (expr)
-      `(,@(call-next-method) ,(j2s->list expr))))
+   (with-access::J2SParen this (expr type)
+      `(,@(call-next-method)
+	  ,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+	  ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnary ...                                         */
@@ -376,16 +391,24 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid)
-      `(,(string->symbol (format "~a/~a" (typeof this) binder)) :key ,key ,id
-	  ,@(if _scmid `(:_scmid ,_scmid) '()))))
+   (with-access::J2SDecl this (id key binder _scmid type hint usecnt)
+      `(,(string->symbol (format "~a/~a" (typeof this) binder))
+	,id
+	,@(if (> (bigloo-debug) 1) `(:key ,key) '())
+	,@(if (> (bigloo-debug) 2) `(:usecnt ,usecnt) '())
+	,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+	,@(if (and (> (bigloo-debug) 1) (pair? hint)) `(:hint ,hint) '())
+	,@(if _scmid `(:_scmid ,_scmid) '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
    (with-access::J2SDeclInit this (val ronly writable val _scmid scope)
-      `(,@(call-next-method) :ronly ,ronly :writable ,writable :scope ,scope
+      `(,@(call-next-method)
+	  ,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
+	  ,@(if (> (bigloo-debug) 2) `(:writable ,writable) '())
+	  ,@(if (> (bigloo-debug) 3) `(:scope ,scope) '())
 	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
 
 ;*---------------------------------------------------------------------*/

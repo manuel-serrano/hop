@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jan  5 05:21:05 2016 (serrano)                */
+;*    Last change :  Mon Feb  8 19:31:17 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -89,8 +89,10 @@
 	   ;; for the sake of concat performance
 	   (final-class JsStringLiteral
 	      ;; the actual characters (string, tree, list)
-	      val::obj
-	      state::uint8)
+;* 	      weight::long                                             */
+	      left::obj
+	      (right::obj (default #f)))
+;* 	      state::uint8)                                            */
 	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))
@@ -154,6 +156,7 @@
 	      (inline::bool (default #t))
 	      (sealed::bool (default #f))
 	      (frozen::bool (default #f))
+	      (length::obj (default 0))
 	      (vec::vector (default '#())))
 
 	   (class JsArrayBuffer::JsObject

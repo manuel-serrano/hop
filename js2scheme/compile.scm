@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Dec 31 06:48:29 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Fri Jan 29 17:26:00 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
 ;*=====================================================================*/
@@ -29,6 +29,9 @@
 	   __js2scheme_ronly
 	   __js2scheme_use
 	   __js2scheme_property
+	   __js2scheme_constant
+	   __js2scheme_type
+	   __js2scheme_hint
 	   __js2scheme_letopt
 	   __js2scheme_narrow
 	   __js2scheme_scheme
@@ -128,6 +131,10 @@
       j2s-return-stage
       j2s-property-stage
       j2s-cps-stage
+      j2s-constant-stage
+      j2s-type-stage
+      j2s-hint-stage
+      j2s-type2-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -146,6 +153,7 @@
       j2s-ronly-stage
       j2s-return-stage
       j2s-cps-stage
+      j2s-constant-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -181,6 +189,7 @@
       j2s-ronly-stage
       j2s-return-stage
       j2s-cps-stage
+      j2s-constant-stage
       j2s-scheme-eval-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -259,7 +268,7 @@
 			(count 0))
 		(if (null? driver)
 		    ast
-		    (loop (stage-exec (car driver) ast  tmp count opts)
+		    (loop (stage-exec (car driver) ast tmp count opts)
 		       (cdr driver)
 		       (+fx 1 count))))))))
 

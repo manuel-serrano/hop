@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/3.1.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Tue Nov 24 08:29:08 2015 (serrano)                */
-#*    Copyright   :  2004-15 Manuel Serrano                            */
+#*    Last change :  Sun Jan 24 02:50:31 2016 (serrano)                */
+#*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
 #*=====================================================================*/
@@ -16,6 +16,7 @@ HOPRELEASE	= @RELEASE@
 HOPDEVEL	= @DEVEL@
 HOPBRANCH	= @BRANCH@
 HOPDATE		= @DATE@
+HOPBUILDID	= @BUILDID@
 
 #*---------------------------------------------------------------------*/
 #*    Compilers, tools, and misc configuration                         */

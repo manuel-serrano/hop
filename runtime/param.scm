@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Dec 18 08:14:04 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Fri Feb  5 12:53:29 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
 ;*=====================================================================*/
@@ -37,8 +37,17 @@
 	    (hop-cache-enable::bool)
 	    (hop-cache-enable-set! ::bool)
 
+	    (hop-hopc::bstring)
+	    (hop-hopc-set! ::bstring)
+	    
+	    (hop-hopc-flags::bstring)
+	    (hop-hopc-flags-set! ::bstring)
+	    
 	    (hop-sofile-enable::bool)
 	    (hop-sofile-enable-set! ::bool)
+
+	    (hop-sofile-compile-policy::symbol)
+	    (hop-sofile-compile-policy-set! ::symbol)
 
 	    (hop-sofile-directory::bstring)
 	    (hop-sofile-directory-set! ::bstring)
@@ -397,10 +406,28 @@
    #t)
 
 ;*---------------------------------------------------------------------*/
+;*    hop-hopc ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hopc
+   (make-file-name (hop-bin-directory) (string-append "hopc-" (hop-version))))
+
+;*---------------------------------------------------------------------*/
+;*    hop-hopc-flags ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-hopc-flags
+   "-O3")
+
+;*---------------------------------------------------------------------*/
 ;*    hop-sofile-enable                                                */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-enable
    (bigloo-config 'have-dlopen))
+
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-compile-policy ...                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sofile-compile-policy
+   'aot)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-sofile-directory ...                                         */

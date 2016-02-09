@@ -1,11 +1,11 @@
 ;; -*- mode: lisp -*-
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/etc/hopjs.el.in                   */
+;*    serrano/prgm/project/hop/3.1.x/etc/hopjs.el.in                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Fri Dec 11 09:23:56 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Mon Feb  8 08:39:20 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
 ;*=====================================================================*/
@@ -280,11 +280,11 @@
 ;*    hopjs-re-open-tag ...                                            */
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-re-open-tag
-  "<[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*\\)\\(?:[ \t\n]*>\\|[ \t\n]+[a-zA-Z0-9_-]\\)")
+  "<\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*\\)\\(?:[ \t\n]*>\\|[ \t\n]+[a-zA-Z0-9_-]\\)")
 (defconst hopjs-re-open-tag-attr
-  "<[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*\\)\\(?:[ \t\n]+[a-zA-Z0-9_-]\\)")
+  "<\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*\\)\\(?:[ \t\n]+[a-zA-Z0-9_-]\\)")
 (defconst hopjs-re-close-tag
-  "</[ \t]*\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*\\)[ \t]*>")
+  "</\\([a-zA-Z_$][a-zA-Z0-9_.:$!-]*\\)[ \t]*>")
 (defconst hopjs-re-end-tag
   "/>")
 (defconst hopjs-re-code
@@ -779,7 +779,17 @@ usage: (js-return)  -- [RET]"
 				(forward-char 1))
 			    (goto-char p)))
 		      (error
-		       (forward-char 1))))
+		       (cond
+			((re-search-forward hopjs-re-open-tag pos t)
+			 (setq open (+ open 1))
+			 (goto-char (match-end 0)))
+			((and (> (point) (point-min))
+			      (memq (char-after (1- (point))) '(?$ $~)))
+			 ;; an error in parsing, we are creating the code...
+			 (setq loop 'code)
+			 (setq open 0))
+			(t
+			 (forward-char 1))))))
 		   ((looking-at hopjs-re-open-tag)
 		    (setq open (+ open 1))
 		    (hopjs-debug "    (re-open-tag)")

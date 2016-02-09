@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Mon Dec 28 10:27:06 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Mon Jan 18 18:28:33 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -191,6 +191,12 @@
 		     (: "\xe2" (out "\x80"))
 		     (: "\xe2\x80" (out "\xa8\xa9")))))
        (ignore))
+
+      ;; hint comments
+      ((: "/* ::" (+ letter) " */")
+       (let* ((len (-fx (the-length) 3))
+	      (hint (string->symbol (the-substring 5 len))))
+	  (token 'HINT hint len)))
       
       ;; multi-line comment on one line
       ((: "/*" (* (or (out #\*) (: (+ #\*) (out #\/ #\*)))) (+ #\*) "/")

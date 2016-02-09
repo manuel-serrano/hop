@@ -3,8 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Dec 30 16:07:20 2015 (serrano)                */
-;*    Last change :  Sat Jan  9 10:46:10 2016 (serrano)                */
+;*    Last change :  Sun Feb  7 06:55:47 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -65,14 +64,31 @@
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (module->javascript filename::bstring id op compile isexpr srcmap)
+   
+   (define (js-paths vec)
+      (let ((len (-fx (vector-length vec) 1)))
+	 (call-with-output-string
+	    (lambda (p)
+	       (let loop ((i 0))
+		  (when (<=fx i len)
+		     (display "'" p)
+		     (display (vector-ref vec i) p)
+		     (display "'" p)
+		     (if (<fx i len) (display ", " p))
+		     (loop (+fx i 1))))))))
+		  
    (let ((this (nodejs-new-global-object)))
       (fprintf op (hop-boot))
       (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
       (flush-output-port op)
-      (let ((header (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n" id filename filename)))
+      (let ((header (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
+		       id filename
+		       (js-paths (nodejs-filename->paths filename))
+		       filename)))
 	 (let ((offset (output-port-position op)))
 	    (call-with-input-file filename
 	       (lambda (in)
+		  (debug-compile-trace filename)
 		  (let ((tree (j2s-compile in
 				 :%this this
 				 :source filename
@@ -440,6 +456,15 @@
 (define compile-table (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
+;*    debug-compile-trace ...                                          */
+;*---------------------------------------------------------------------*/
+(define (debug-compile-trace filename)
+   (when (>=fx (bigloo-debug) 4)
+      (display "** " (current-error-port))
+      (display filename (current-error-port))
+      (newline (current-error-port))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile filename::bstring #!optional lang)
@@ -449,6 +474,7 @@
 	 (trace-item "filename=" filename)
 	 (call-with-input-file filename
 	    (lambda (in)
+	       (debug-compile-trace filename)
 	       (let ((m (open-mmap filename read: #t :write #f)))
 		  (unwind-protect
 		     (j2s-compile in
@@ -467,6 +493,7 @@
 	 (trace-item "filename=" filename)
 	 (call-with-input-file url
 	    (lambda (in)
+	       (debug-compile-trace filename)
 	       (input-port-name-set! in url)
 	       (j2s-compile in
 		  :driver (nodejs-driver)
@@ -521,16 +548,52 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load filename worker::WorkerHopThread #!optional lang)
 
+   (define (exec cmd)
+      (let* ((proc (run-process "sh" "-c" cmd :wait #f error: pipe:))
+	     (err (process-error-port proc)))
+	 (let ((s (read-string err)))
+	    (values (process-exit-status proc) s))))
+      
+   (define (compileso filename)
+      (let* ((sopath (hop-sofile-path filename))
+	     (cmd (format "~a ~a -y --no-js-module-main -o ~a ~a"
+		     (hop-hopc)
+		     filename sopath
+		     (hop-hopc-flags))))
+	 (make-directories (dirname sopath))
+	 (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
+	 (multiple-value-bind (ret msg)
+	    (exec cmd)
+	    (if (and (=fx ret 0) (file-exists? sopath))
+		(begin
+		   (delete-file (string-append (prefix sopath) ".o"))
+		   sopath)
+		(call-with-output-file (string-append sopath ".err")
+		   (lambda (op)
+		      (display msg (current-error-port))
+		      (display cmd op)
+		      (newline op)
+		      (display msg op)
+		      'error))))))
+		       
    (define (loadso-or-compile filename lang)
-      (let ((sopath (hop-find-sofile filename)))
-	 (if sopath
+      (let loop ((sopath (hop-find-sofile filename)))
+	 (cond
+	    ((string? sopath)
 	     (let ((p (hop-dynamic-load sopath)))
 		(if (and (procedure? p) (=fx (procedure-arity p) 4))
 		    p
 		    (js-raise-error (js-new-global-object)
 		       (format "Wrong compiled file format ~s" sopath)
-		       sopath)))
-	     (nodejs-compile filename lang))))
+		       sopath))))
+	    ((and (not (eq? sopath 'error))
+		  (hop-sofile-enable)
+		  (=fx (bigloo-debug) 0))
+	     (if (eq? (hop-sofile-compile-policy) 'aot)
+		 (loop (compileso filename))
+		 (nodejs-compile filename lang)))
+	    (else
+	     (nodejs-compile filename lang)))))
    
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
@@ -786,7 +849,7 @@
 	 ((string-suffix? ".hz" x)
 	  (resolve-autoload-hz x))
 	 (else
-	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hz")))
+	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hss" ".css")))
 	     (when (pair? suffixes)
 		(let* ((suffix (car suffixes))
 		       (src (string-append x suffix)))

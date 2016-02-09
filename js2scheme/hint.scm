@@ -1,0 +1,485 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/hint.scm                */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
+;*    Last change :  Tue Feb  9 10:48:19 2016 (serrano)                */
+;*    Copyright   :  2016 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Hint typping.                                                    */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __js2scheme_hint
+
+   (import __js2scheme_ast
+	   __js2scheme_dump
+	   __js2scheme_compile
+	   __js2scheme_stage
+	   __js2scheme_syntax
+	   __js2scheme_utils
+	   __js2scheme_alpha)
+
+   (static (class FunHintInfo
+	      hinted
+	      types::pair-nil))
+
+   (export j2s-hint-stage))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint-stage ...                                               */
+;*---------------------------------------------------------------------*/
+(define j2s-hint-stage
+   (instantiate::J2SStageProc
+      (name "hint")
+      (comment "Type HINT addition")
+      (proc j2s-hint!)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint! ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-hint! prgm args)
+   (with-access::J2SProgram prgm (decls nodes)
+      ;; first we collect all possible hints...
+      (for-each (lambda (n) (j2s-hint n '())) decls)
+      (for-each (lambda (n) (j2s-hint n '())) nodes)
+      ;; then, for each function whose parameters are "hinted", we generate
+      ;; an ad-hoc typed version
+      (let ((dups (append-map j2s-hint-function* decls)))
+	 (for-each call-hint! decls)
+	 (for-each call-hint! nodes)
+	 (set! decls
+	    (append (filter (lambda (dup::J2SDeclFun)
+			       (with-access::J2SDeclFun dup (usecnt val)
+				  (when (>fx usecnt 0)
+				     (with-access::J2SFun val (body)
+					(set! body
+					   (erase-type! (call-hint! body))))
+				     #t)))
+		       dups)
+	       decls))))
+   prgm)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-add-hint! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-add-hint! decl types)
+   (with-access::J2SDecl decl (hint)
+      (for-each (lambda (type)
+		   [assert (type) (symbol? type)]
+		   (let ((c (assq type hint)))
+		      (if (pair? c)
+			  (set-cdr! c (+fx 1 (cdr c)))
+			  (set! hint (cons (cons type 1) hint)))))
+	 types)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint! ::J2SNode ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SNode types)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SExpr ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SExpr types)
+   (if (pair? types)
+       (j2s-hint this '())
+       (call-default-walker)))
+   
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SRef ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SRef types)
+   (with-access::J2SRef this (decl loc)
+      (j2s-add-hint! decl types)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SBinary ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SBinary types)
+   (with-access::J2SBinary this (op lhs rhs)
+      (case op
+	 ((< <= >= > - * / << >> >>> ^ & BIT_OR)
+	  (j2s-hint lhs '(number))
+	  (j2s-hint rhs '(number)))
+	 ((+)
+	  (j2s-hint lhs '(number string))
+	  (j2s-hint rhs '(number string)))
+	 ((== === != !==)
+	  (cond
+	     ((eq? (j2s-type lhs) 'number) (j2s-hint rhs '(number)))
+	     ((eq? (j2s-type rhs) 'number) (j2s-hint lhs '(number)))))
+	 ((instanceof)
+	  (j2s-hint lhs '(object))
+	  (j2s-hint rhs '(function)))
+	 (else
+	  (call-default-walker)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SPostfix ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SPostfix types)
+   (with-access::J2SPostfix this (lhs)
+      (j2s-hint lhs '(number))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SPrefix ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SPrefix types)
+   (with-access::J2SPrefix this (lhs)
+      (j2s-hint lhs '(number))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SDeclInit ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SDeclInit types)
+   (with-access::J2SDeclInit this (val type hint)
+      (unless type
+	 (let ((ty (j2s-type val)))
+	    (when (symbol? ty)
+	       (j2s-add-hint! this (list ty)))))
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint-access ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-hint-access this types hints)
+   (with-access::J2SAccess this (obj field)
+      (cond
+	 ((not (isa? obj J2SRef))
+	  (j2s-hint obj '(object)))
+	 ((eq? (j2s-type field) 'number)
+	  (with-access::J2SRef obj (decl)
+	     (j2s-add-hint! decl hints)))
+	 ((isa? field J2SLiteralCnst)
+	  (with-access::J2SLiteralCnst field (val)
+	     (if (isa? val J2SString)
+		 (with-access::J2SString val (val)
+		    (if (string=? val "length")
+			(with-access::J2SRef obj (decl)
+			   (j2s-add-hint! decl hints))
+			(j2s-hint obj '(object))))
+		 (j2s-hint obj '(object)))))
+	 (else
+	  (j2s-hint obj '(object))))
+      (j2s-hint field '())))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SAccess ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SAccess types)
+   (j2s-hint-access this types '(array string)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SAssig ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SAssig types)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SAccess)
+	  (j2s-hint-access lhs types '(array))
+	  (j2s-hint lhs '(object)))
+      (j2s-hint rhs '())))
+   
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SCall ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SCall types)
+   
+   (define (j2s-hint-fun fun args)
+      (with-access::J2SFun fun (params)
+	 (let loop ((args args)
+		    (params params))
+	    (when (and (pair? args) (pair? params))
+	       (let ((ty (j2s-type (car args))))
+		  (when (symbol? ty)
+		     (j2s-add-hint! (car params) (list ty))))
+	       (loop (cdr args) (cdr params))))))
+   
+   (with-access::J2SCall this (fun args)
+      (cond
+	 ((isa? fun J2SFun)
+	  (j2s-hint-fun fun args))
+	 ((isa? fun J2SRef)
+	  (with-access::J2SRef fun (decl)
+	     (cond
+		((isa? decl J2SDeclFunCnst)
+		 (with-access::J2SDeclFunCnst decl ((fun val))
+		    (j2s-hint-fun fun args)))
+		((isa? decl J2SDeclFun)
+		 (with-access::J2SDeclFun decl (ronly (fun val))
+		    (if ronly
+			(j2s-hint-fun fun args)
+			(call-default-walker))))
+		(else
+		 (call-default-walker)))))
+	 (else
+	  (call-default-walker)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint-function ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint-function* this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint-function ::J2SDeclFun ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint-function* this::J2SDeclFun)
+   
+   (define (call-orig orig idthis params)
+      (with-access::J2SDeclFun this (loc)
+	 (instantiate::J2SCall
+	    (loc loc)
+	    (fun (instantiate::J2SRef
+		    (decl orig)
+		    (loc loc)))
+	    (this (instantiate::J2SHopRef
+		     (loc loc)
+		     (id idthis)))
+	    (args (map (lambda (p::J2SDecl)
+			  (with-access::J2SDecl p (hint)
+			     (instantiate::J2SRef
+				(loc loc)
+				(decl p))))
+		     params)))))
+
+   (define (call-hint dup idthis params)
+      (with-access::J2SDeclFun this (loc val)
+	 (with-access::J2SDeclFun dup ((fun val))
+	    (with-access::J2SFun fun ((fthis idthis))
+	       (instantiate::J2SCall
+		  (loc loc)
+		  (fun (instantiate::J2SRef
+			  (decl dup)
+			  (loc loc)))
+		  (this (when fthis
+			   (instantiate::J2SHopRef
+			      (loc loc)
+			      (id idthis))))
+		  (args (map (lambda (p::J2SDecl)
+				(with-access::J2SDecl p (hint)
+				   (instantiate::J2SRef
+				      (loc loc)
+				      (type (best-hint-type hint))
+				      (decl p))))
+			   params)))))))
+
+   (define (predicate type)
+      (case type
+	 ((number) 'number?)
+	 ((integer) 'fixnum?)
+	 ((string) 'js-jsstring?)
+	 ((array) 'js-array?)
+	 ((object) 'js-object?)
+	 ((function) 'js-function?)
+	 (else (error "hint" "Unknown hint type" type))))
+   
+   (define (test-hint-param param)
+      (with-access::J2SDecl param (type loc)
+	 (instantiate::J2SCall
+	    (loc loc)
+	    (type 'bool)
+	    (fun (instantiate::J2SHopRef
+		    (loc loc)
+		    (id (predicate type))))
+	    (args (list (instantiate::J2SRef
+			   (loc loc)
+			   (decl param)))))))
+   
+   (define (test-hint-params dup params)
+      (with-access::J2SDeclFun this (loc)
+	 (let loop ((params params))
+	    (if (null? (cdr params))
+		(test-hint-param (car params))
+		(instantiate::J2SBinary
+		   (loc loc)
+		   (op '&&)
+		   (lhs (test-hint-param (car params)))
+		   (rhs (loop (cdr params))))))))
+
+   (define (dispatch-body body pred callhint callorig)
+      (with-access::J2SBlock body (loc endloc)
+	 (instantiate::J2SBlock
+	    (loc loc)
+	    (endloc endloc)
+	    (nodes (list (instantiate::J2SIf
+			    (loc loc)
+			    (test pred)
+			    (then (instantiate::J2SReturn
+				     (loc loc)
+				     (expr callhint)))
+			    (else (instantiate::J2SReturn
+				     (loc loc)
+				     (expr callorig)))))))))
+   
+   (with-access::J2SDeclFun this (val id)
+      (with-access::J2SFun val (params body idthis)
+	 (if (and (pair? params)
+		  (every (lambda (p::J2SDecl)
+			    (with-access::J2SDecl p (hint usecnt)
+			       (and (pair? hint)
+				    (or (pair? (cdr hint))
+					(not (eq? (caar hint) 'obj)))
+				    (>fx usecnt 0))))
+		     params))
+	     (let* ((dup (fun-duplicate this))
+		    (orig (fun-orig this))
+		    (types (map (lambda (p)
+				   (with-access::J2SDecl p (hint)
+				      (best-hint-type hint)))
+			      params))
+		    (newparams (map j2sdecl-duplicate params types))
+		    (pred (test-hint-params dup newparams))
+		    (callhint (call-hint! (call-hint dup idthis newparams)))
+		    (callorig (call-orig orig idthis newparams)))
+		(set! params newparams)
+		(set! body (dispatch-body body pred callhint callorig))
+		(list dup orig))
+	     '()))))
+
+;*---------------------------------------------------------------------*/
+;*    best-hint-type ...                                               */
+;*---------------------------------------------------------------------*/
+(define (best-hint-type::symbol hint)
+   (let loop ((l hint)
+	      (t 'obj)
+	      (c 0))
+      (cond
+	 ((null? l)
+	  t)
+	 ((>fx (cdr (car l)) c)
+	  (loop (cdr l) (caar l) (cdar l)))
+	 ((and (=fx (cdr (car l)) c)
+	       (or (eq? t 'obj) (memq (caar l) '(integer number))))
+	  (loop (cdr l) (caar l) (cdar l)))
+	 (else
+	  (loop (cdr l) t c)))))
+
+;*---------------------------------------------------------------------*/
+;*    fun-orig ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (fun-orig fun::J2SDeclFun)
+   (with-access::J2SDeclFun fun (val id _scmid %info)
+      (with-access::J2SFun val (params body)
+	 (let ((newdecl (duplicate::J2SDeclFun fun
+			   (id (symbol-append id '$$))
+			   (ronly #t)
+			   (writable #f)
+			   (binder 'const)
+			   (scope 'none)
+			   (usecnt 1)
+			   (_scmid (if _scmid
+				       (symbol-append _scmid '$$)
+				       (symbol-append id '$$)))
+			   (val (duplicate::J2SFun val
+				   (params params)
+				   (body body))))))
+	    newdecl))))
+
+;*---------------------------------------------------------------------*/
+;*    j2sdecl-duplicate ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2sdecl-duplicate p::J2SDecl type)
+   (if (isa? p J2SDeclInit)
+       (duplicate::J2SDeclInit p
+	  (key (ast-decl-key))
+	  (hint '())
+	  (type type))
+       (duplicate::J2SDecl p
+	  (key (ast-decl-key))
+	  (hint '())
+	  (type type))))
+
+;*---------------------------------------------------------------------*/
+;*    fun-duplicate ...                                                */
+;*---------------------------------------------------------------------*/
+(define (fun-duplicate fun::J2SDeclFun)
+   (with-access::J2SDeclFun fun (val id _scmid %info)
+      (with-access::J2SFun val (params body idthis)
+	 (let* ((types (map (lambda (p)
+			       (with-access::J2SDecl p (hint)
+				  (best-hint-type hint)))
+			  params))
+		(newparams (map j2sdecl-duplicate params types))
+		(typeid (string->symbol
+			   (string-upcase!
+			      (apply string
+				 (map (lambda (t)
+					 (string-ref (symbol->string t) 0))
+				    types)))))
+		(newbody (j2s-alpha body params newparams))
+		(newdecl (duplicate::J2SDeclFun fun
+			    (id (symbol-append id '$$ typeid))
+			    (ronly #t)
+			    (writable #f)
+			    (binder 'const)
+			    (scope 'none)
+			    (usecnt 1)
+			    (_scmid (if _scmid
+					(symbol-append _scmid '$$ typeid)
+					(symbol-append id '$$ typeid)))
+			    (val (duplicate::J2SFun val
+				    (idthis (if (this? body) idthis #f))
+				    (params newparams)
+				    (body newbody))))))
+	    (set! %info
+	       (instantiate::FunHintInfo
+		  (hinted newdecl)
+		  (types types)))
+	    newdecl))))
+
+;*---------------------------------------------------------------------*/
+;*    call-hint! ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (call-hint! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    call-hint! ::J2SCall ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (call-hint! this::J2SCall)
+   
+   (define (normalize-type e)
+      (let ((t (j2s-type e)))
+	 (if (eq? t 'integer) 'number t)))
+   
+   (with-access::J2SCall this (fun args (callthis this))
+      (set! args (map! call-hint! args))
+      (if (isa? fun J2SRef)
+	  (with-access::J2SRef fun (decl)
+	     (with-access::J2SDecl decl (%info)
+		(if (isa? %info FunHintInfo)
+		    (with-access::FunHintInfo %info (hinted types)
+		       (if (equal? (map normalize-type args) types)
+			   (with-access::J2SDeclFun hinted (val)
+			      (with-access::J2SFun val (idthis)
+				 ;; adjust the usecnt count
+				 (with-access::J2SDecl hinted (usecnt)
+				    (set! usecnt (+fx usecnt 1)))
+				 (with-access::J2SDecl decl (usecnt)
+				    (set! usecnt (-fx usecnt 1)))
+				 (duplicate::J2SCall this
+				    (this (when idthis callthis))
+				    (fun (duplicate::J2SRef fun
+					    (decl hinted))))))
+			   this))
+		    this)))
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    erase-type! ::J2SNode ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (erase-type! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    erase-type! ::J2SExpr ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (erase-type! this::J2SExpr)
+   (with-access::J2SExpr this (type)
+      (set! type #f)
+      (call-default-walker)))
+   

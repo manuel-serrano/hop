@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Jan 12 08:12:39 2016 (serrano)                */
+;*    Last change :  Wed Jan 20 15:03:24 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -41,8 +41,7 @@
 	       (class KontExpr::Kont)
 	       (class KontExpr*::Kont))))
 
-   (export j2s-cps-stage
-	   (generic j2s-cps ::obj ::obj)))
+   (export j2s-cps-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cps-stage ...                                                */
@@ -56,17 +55,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cps ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-cps this args)
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-cps ::J2SProgram ...                                         */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-cps this::J2SProgram args)
-   (with-access::J2SProgram this (headers decls nodes)
-      (for-each (lambda (o) (cps-fun! o)) headers)
-      (for-each (lambda (o) (cps-fun! o)) decls)
-      (for-each (lambda (o) (cps-fun! o)) nodes))
+(define (j2s-cps this args)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (headers decls nodes)
+	 (for-each (lambda (o) (cps-fun! o)) headers)
+	 (for-each (lambda (o) (cps-fun! o)) decls)
+	 (for-each (lambda (o) (cps-fun! o)) nodes)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -446,7 +440,15 @@
 	  (set-cdr! prev (list res))
 	  (with-access::J2SSeq this (nodes)
 	     (set! nodes (list res))))
-      this)
+      (with-access::J2SSeq this (nodes)
+	 (set! nodes (filter (lambda (x) (not (isa? x J2SNop))) nodes))
+	 (if (and (pair? nodes) (null? (cdr nodes)))
+	     (if (isa? this J2SBlock)
+		 (if (isa? (car nodes) J2SBlock)
+		     (car nodes)
+		     this)
+		 (car nodes))
+	     this)))
 
    (assert-kont k KontStmt this)
    (with-access::J2SSeq this (loc nodes)
@@ -614,7 +616,10 @@
       (let* ((name (gensym '%kif))
 	     (kfun (J2SFun name '()
 		      (J2SBlock (kcall k (J2SNop))))))
-	 (J2SLetOpt '(call) name kfun)))
+	 (let ((decl (J2SLetOpt '(call) name kfun)))
+	    (with-access::J2SFun kfun ((fdecl decl))
+	       (set! fdecl decl))
+	    decl)))
    
    (define (make-kont-fun-call loc decl)
       (J2SCall (J2SRef decl)))
@@ -1280,4 +1285,3 @@
    (with-access::J2SCase this (expr body)
       (append (yield-expr* expr kbreaks kcontinues)
 	 (yield-expr* body kbreaks kcontinues))))
-

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/function.scm            */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/function.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Dec 10 21:33:59 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sun Feb  7 10:26:57 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
 ;*    -------------------------------------------------------------    */
@@ -29,7 +29,8 @@
 	   __hopscript_worker)
 
    (export (js-init-function! ::JsGlobalObject)
-
+	   (inline js-function?::bool ::obj)
+	   
 	   thrower-get
 	   thrower-set
 
@@ -141,6 +142,12 @@
 	 :configurable #f :enumerable #f)
       ;; return the js-function object
       js-function))
+
+;*---------------------------------------------------------------------*/
+;*    js-function? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-function? obj)
+   (isa? obj JsFunction))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-function ...                                                 */

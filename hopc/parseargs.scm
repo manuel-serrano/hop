@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Dec 19 15:26:16 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Thu Feb  4 08:16:05 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -62,7 +62,7 @@
 		 (hopc-optim-level-set! 1)
 		 (hopc-optim-level-set! (string->integer level)))
 	     (hopc-bigloo-options-set!
-		(cons (format "-O~a" level) (hopc-bigloo-options))))
+		(cons* "-unsafe" (format "-O~a" level) (hopc-bigloo-options))))
 	    (("-g?level" (help "Increase or set debug level"))
 	     (hopc-clientc-source-map-set! #t)
 	     (hopc-clientc-arity-check-set! #t)
@@ -88,6 +88,9 @@
 	     (hopc-pass-set! 'object)
 	     (hopc-bigloo-options-set!
 		(append (hopc-bigloo-options) (list "-c"))))
+	    (("-y" (help "Generate a shared library"))
+	     (hopc-js-module-main-set! #f)
+	     (hopc-pass-set! 'so))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
 	     (hopc-bigloo-set! bigloo))
 	    (("--reset-bigloo-options" (help "Reset all Bigloo options"))

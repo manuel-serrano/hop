@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jan  5 16:32:19 2016 (serrano)                */
+;*    Last change :  Sun Jan 31 00:18:55 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -54,6 +54,7 @@
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
+	   (inline js-object-get-name/cache ::JsObject ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-get-name/cache-miss ::JsObject ::obj ::JsPropertyCache ::obj ::JsGlobalObject)
 	   
 	   (js-can-put o::JsObject ::obj ::JsGlobalObject)
@@ -772,12 +773,19 @@
 		  name::obj cache::JsPropertyCache %this::JsGlobalObject)
    (if (not (isa? obj JsObject))
        (js-get obj name %this)
-       (with-access::JsObject obj ((omap cmap) elements __proto__)
-	  (with-access::JsPropertyCache cache (cmap index)
-	     (if (eq? cmap omap)
-		 (vector-ref-ur elements index)
-		 (js-get-name/cache-miss obj name cache #f %this))))))
+       (js-object-get-name/cache obj name cache %this)))
 
+;*---------------------------------------------------------------------*/
+;*    js-object-get-name/cache ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-get-name/cache obj::JsObject
+	   name::obj cache::JsPropertyCache %this::JsGlobalObject)
+   (with-access::JsObject obj ((omap cmap) elements __proto__)
+      (with-access::JsPropertyCache cache (cmap index)
+	 (if (eq? cmap omap)
+	     (vector-ref-ur elements index)
+	     (js-get-name/cache-miss obj name cache #f %this)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ...                                       */
 ;*    -------------------------------------------------------------    */

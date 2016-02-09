@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/3.1.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Mon Nov 16 08:04:44 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Sat Jan 30 17:59:57 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -74,6 +74,7 @@
 	    (hop-unload! ::bstring)
 
 	    (hop-find-sofile::obj ::bstring)
+	    (hop-sofile-path::bstring ::bstring)
 	    
 	    (read-error msg obj port)
 	    (read-error/location msg obj fname loc)))
@@ -954,6 +955,9 @@
 	 (>=elong (file-modification-time sopath)
 	    (file-modification-time path))))
    
+   (define (errfile file)
+      (string-append file ".err"))
+   
    ;; check the path directory first
    (when (hop-sofile-enable)
       (let* ((dir (dirname path))
@@ -964,28 +968,46 @@
 			 (else "_s"))
 		      "-" (hop-version) (so-suffix)))
 	     (sopath (make-file-path dir ".libs"
-			(hop-version) (so-arch-directory)
+			(hop-version) (hop-build-id) (so-arch-directory)
 			file)))
-	 (if (more-recent? sopath)
-	     sopath
+	 (cond
+	    ((more-recent? sopath)
+	     sopath)
+	    ((more-recent? (errfile sopath))
+	     'error)
+	    (else
 	     ;; if not found check the user global libs repository
-	     (let* ((soname (string-append
-			       base "-" (md5sum-string path) (so-suffix)))
-		    (sopath (make-file-path
-			       (hop-sofile-directory)
-			       (hop-version) (so-arch-directory)
-			       soname)))
-		(if (more-recent? sopath)
-		    sopath
+	     (let ((sopath (hop-sofile-path path)))
+		(cond
+		   ((more-recent? sopath)
+		    sopath)
+		   ((more-recent? (errfile sopath))
+		    'error)
+		   (else
 		    (let ((env (getenv "HOP_LIBS_PATH")))
 		       (when (string? env)
 			  (let loop ((paths (unix-path->list env)))
 			     (when (pair? paths)
 				(let ((path (make-file-path (car paths) file)))
-				   (if (more-recent? path)
-				       path
-				       (loop (cdr paths))))))))))))))
+				   (cond
+				      ((more-recent? path)
+				       path)
+				      ((more-recent? (errfile path))
+				       'error)
+				      (else
+				       (loop (cdr paths)))))))))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-path ...                                              */
+;*---------------------------------------------------------------------*/
+(define (hop-sofile-path path)
+   (let* ((base (prefix (basename path)))
+	  (soname (string-append base "-" (md5sum-string path) (so-suffix))))
+      (make-file-path
+	 (hop-sofile-directory)
+	 (hop-version) (hop-build-id) (so-arch-directory)
+	 soname)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */
 ;*    -------------------------------------------------------------    */

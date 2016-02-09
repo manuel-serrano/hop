@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/service.scm               */
+;*    serrano/prgm/project/hop/3.1.x/runtime/service.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Wed Dec 16 21:19:05 2015 (serrano)                */
-;*    Copyright   :  2006-15 Manuel Serrano                            */
+;*    Last change :  Fri Feb  5 08:31:37 2016 (serrano)                */
+;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
 ;*=====================================================================*/
@@ -652,7 +652,7 @@
 		(format "Wrong number of arguments (1/~a)"
 		   (-fx (procedure-arity proc) 1))
 		`(,id ,vals))))))
-   
+
    (invoke (service-parse-request svc req)))
 
 ;*---------------------------------------------------------------------*/
@@ -907,7 +907,7 @@
 		(mark-service-path-expired! path)
 		#f)
 	     #t))))
-			 
+
 ;*---------------------------------------------------------------------*/
 ;*    unregister-service! ...                                          */
 ;*---------------------------------------------------------------------*/

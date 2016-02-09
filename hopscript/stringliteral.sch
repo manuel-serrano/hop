@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/stringliteral.sch       */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/stringliteral.sch       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Sat Jan 17 10:34:10 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Mon Feb  8 19:33:34 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JsStringLiteral Helper macros.                                   */
 ;*=====================================================================*/
@@ -57,11 +57,12 @@
       (when (pair? (eval 'js-strings))
 	 (e `(define ,(eval 'js-strings-vector)
 		(vector
-		    ,@(map (lambda (c)
-			      `(instantiate::JsStringLiteral
-				  (state #u8:0)
-				  (val (string-ascii-sentinel-mark! ,(car c)))))
-			 (reverse! (eval 'js-strings)))))
+		   ,@(map (lambda (c)
+			     (let ((s (car c)))
+				`(instantiate::JsStringLiteral
+				    #;(weight ,(string-length s))
+				    (left (string-ascii-sentinel-mark! ,s)))))
+			(reverse! (eval 'js-strings)))))
 	    e))))
 
 

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Dec  9 08:59:24 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Sun Jan 31 07:48:55 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -167,7 +167,7 @@
 		  :worker (hopc-js-worker)
 		  :module-main (if (boolean? (hopc-js-module-main))
 				   (hopc-js-module-main)
-				   (not (eq? (hopc-pass) 'object)))
+				   (not (memq (hopc-pass) '(object so))))
 		  :module-name (or (hopc-js-module-name)
 				   (input-file->module-name in))
 		  :module-path (hopc-js-module-path)
@@ -188,7 +188,7 @@
 		  :worker (hopc-js-worker)
 		  :module-main (if (boolean? (hopc-js-module-main))
 				   (hopc-js-module-main)
-				   (not (eq? (hopc-pass) 'object)))
+				   (not (memq (hopc-pass) '(object so))))
 		  :module-name (or (hopc-js-module-name)
 				   (input-file->module-name in))
 		  :module-path (hopc-js-module-path)
@@ -207,7 +207,6 @@
 	  (generate (current-output-port) lang))
       0)
 
-
    (define (compile-bigloo::int in lang)
 
       (define (srfi-opts)
@@ -221,7 +220,7 @@
 			  (cons* "-fread-internal-src-file-name" file baseopts)
 			  baseopts))
 		(proc (apply run-process (hopc-bigloo)
-			 input: pipe: "-" 
+			 input: pipe: "-"
 			 opts))
 		(cmd (format "~a - ~l" (hopc-bigloo) opts))
 		(out (process-input-port proc)))
@@ -257,7 +256,8 @@
 			 (open-mmap fname :read #t :write #f))))
 	    (compile in
 	       (append (hopc-js-libraries)
-		  `("-rpath" ,(make-file-path (hop-lib-directory) "hop" (hop-version)))
+		  `("-rpath" ,(make-file-path (hop-lib-directory)
+				 "hop" (hop-version)))
 		  opts)
 	       (lambda (out)
 		  ;; compile
@@ -269,7 +269,7 @@
 			:worker (hopc-js-worker)
 			:module-main (if (boolean? (hopc-js-module-main))
 					 (hopc-js-module-main)
-					 (not (eq? (hopc-pass) 'object)))
+					 (not (memq (hopc-pass) '(object so))))
 			:module-name (or (hopc-js-module-name)
 					 (input-file->module-name in))
 			:module-path (hopc-js-module-path)
@@ -285,16 +285,27 @@
 		      ((string? (hopc-destination))
 		       (when (file-exists? (hopc-destination))
 			  (delete-file (hopc-destination)))
-		       (if (eq? (hopc-pass) 'object)
-			   (cons* "-c" "-o" (hopc-destination) opts)
-			   (cons* "-o" (hopc-destination) opts)))
+		       (case (hopc-pass)
+			  ((object)
+			   (cons* "-c" "-o" (hopc-destination) opts))
+			  ((so)
+			   (cons* "-dload-sym" "-y" "-o" (hopc-destination) opts))
+			  (else
+			   (cons* "-o" (hopc-destination) opts))))
 		      ((and (pair? (hopc-sources))
 			    (string? (car (hopc-sources))))
-		       (if (eq? (hopc-pass) 'object)
+		       (case (hopc-pass)
+			  ((object)
 			   (let* ((base (prefix (car (hopc-sources))))
 				  (dest (string-append base ".o")))
-			      (cons* "-c" "-o" dest opts))
-			   (cons* "-o" "a.out" opts)))
+			      (cons* "-c" "-o" dest opts)))
+			  ((so)
+			   (let* ((base (prefix (car (hopc-sources))))
+				  (dest (string-append base "."
+					   (bigloo-config 'shared-lib-suffix))))
+			      (cons* "-y" "-o" dest opts)))
+			  (else
+			   (cons* "-o" "a.out" opts))))
 		      (else
 		       (cons "--to-stdout" opts))))
 	     (exec (not (eq? (hopc-pass) 'object))))
@@ -329,6 +340,11 @@
 	      0
 	      (let ((r (call-with-input-file (car srcs)
 			  (lambda (in) (compile in (language (car srcs)))))))
+		 (call-with-output-file "/tmp/ERR"
+		    (lambda (p)
+		       (display "COMPILE r=" p)
+		       (display r p)
+		       (newline p)))
 		 (if (=fx r 0)
 		     (loop (cdr srcs))
 		     r)))))

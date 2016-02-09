@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/stringliteral.scm       */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/stringliteral.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Jan  5 08:18:01 2016 (serrano)                */
+;*    Last change :  Mon Feb  8 20:14:39 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -22,10 +22,10 @@
 	   __hopscript_property)
    
    (export (inline js-string->jsstring::JsStringLiteral ::bstring)
-	   (inline js-stringlist->jsstring::JsStringLiteral ::pair-nil)
+	   (js-stringlist->jsstring::JsStringLiteral ::pair-nil)
 	   (inline js-jsstring->string::bstring ::JsStringLiteral)
 	   (inline js-jsstring?::bool ::obj)
-	   (inline js-jsstring-length::long ::JsStringLiteral)
+	   (js-jsstring-length::long ::JsStringLiteral)
 	   (inline js-jsstring-null? ::JsStringLiteral)
 	   (inline js-jsstring=?::bool ::JsStringLiteral ::JsStringLiteral)
 	   (inline js-jsstring<?::bool ::JsStringLiteral ::JsStringLiteral)
@@ -36,7 +36,7 @@
 	   (js-jsstring->bool::bool ::JsStringLiteral)
 	   (js-jsstring-normalize!::bstring ::JsStringLiteral)
 	   
-	   (js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
+	   (inline js-jsstring-append::JsStringLiteral ::JsStringLiteral ::JsStringLiteral)
 	   (utf8-codeunit-ref::long ::bstring ::long)
 	   (utf8-codeunit-length::long ::bstring)
 	   (js-string-ref::JsStringLiteral ::bstring ::long)))
@@ -110,87 +110,91 @@
    (scheme->response (js-jsstring->string obj) req))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize! ...                                       */
-;*    -------------------------------------------------------------    */
-;*    0: S     ;; "foo" = "foo"                                        */
-;*    1: L     ;; "foobar" = ("foo" "bar")                             */
-;*    2: R     ;; "foobar" = ("bar" "foo")                             */
-;*---------------------------------------------------------------------*/
-(define (js-jsstring-normalize!::bstring js::JsStringLiteral)
-   (with-access::JsStringLiteral js (state val)
-      (case (uint8->fixnum state)
-	 ((0)
-	  val)
-	 ((1)
-	  (let ((v (apply utf8-string-append* val)))
-	     (set! state #u8:0)
-	     (set! val v)
-	     v))
-	 ((2)
-	  (let ((v (apply utf8-string-append* (reverse val))))
-	     (set! state #u8:0)
-	     (set! val v)
-	     v))
-	 (else
-	  (error "js-jsstring-normalize!" "internal error" state)))))
-
-;*---------------------------------------------------------------------*/
-;*    display-js-string ...                                            */
-;*---------------------------------------------------------------------*/
-(define (display-js-string jstr::JsStringLiteral op)
-   (with-access::JsStringLiteral jstr (state val)
-      (case (uint8->fixnum state)
-	 ((0)
-	  (display-string val op))
-	 ((1)
-	  (for-each (lambda (str) (display-string str op)) val))
-	 ((2)
-	  (with-access::JsStringLiteral jstr (state val)
-	     (let ((v (reverse val)))
-		(set! state #u8:1)
-		(set! val v)
-		(for-each (lambda (str) (display-string str op)) v)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-string->jsstring ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Create a JsStringLiteral from a Scheme string literal.           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-string->jsstring::JsStringLiteral val::bstring)
    (instantiate::JsStringLiteral
-      (state #u8:0)
-      (val val)))
+;*       (weight (string-length val))                                  */
+      (left val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-stringlist->jsstring ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    Create a JsStringLiteral from a list of Scheme string literals.  */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-stringlist->jsstring::JsStringLiteral val::pair-nil)
-   (instantiate::JsStringLiteral
-      (state #u8:1)
-      (val val)))
+(define (js-stringlist->jsstring::JsStringLiteral val::pair-nil)
+   (if (null? val)
+       (js-string->jsstring "")
+       (let loop ((val val))
+	  (if (null? (cdr val))
+	      (js-string->jsstring (car val))
+	      (instantiate::JsStringLiteral
+		 (left (car val))
+;* 		 (weight (string-length (car val)))                    */
+		 (right (loop (cdr val))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->string ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring->string::bstring js::JsStringLiteral)
-   (with-access::JsStringLiteral js (state val)
-      (if (=u8 state #u8:0)
-	  val
-	  (js-jsstring-normalize! js))))
+   (js-jsstring-normalize! js))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-normalize! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-normalize!::bstring js::JsStringLiteral)
+   (with-access::JsStringLiteral js (left right)
+      (if (and (string? left) (not right))
+	  left
+	  (let* ((len (js-string-literal-length js))
+		 (buffer (make-string len))
+		 (nlen (let loop ((i 0)
+				  (js js))
+			  (with-access::JsStringLiteral js (left right)
+			     (let ((ni (if (string? left)
+					   (utf8-string-append-fill! buffer i left)
+					   (loop i left))))
+				(if (not right)
+				    ni
+				    (loop ni right)))))))
+	     (set! left (string-shrink! buffer nlen))
+	     (set! right #f)
+	     left))))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-literal-length ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-string-literal-length::long js::JsStringLiteral)
+   (let loop ((len 0)
+	      (js js))
+      (cond
+	 ((string? js)
+	  (+fx len (string-length js)))
+	 ((not js)
+	  len)
+	 (else
+	  (with-access::JsStringLiteral js (left right)
+	     (loop (loop len left) right))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-length ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-length js::JsStringLiteral)
+   (utf8-codeunit-length (js-jsstring->string js)))
+
+;*---------------------------------------------------------------------*/
+;*    display-js-string ...                                            */
+;*---------------------------------------------------------------------*/
+(define (display-js-string jstr::JsStringLiteral op)
+   (display (js-jsstring->string jstr) op))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring? obj)
    (isa? obj JsStringLiteral))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-length ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (js-jsstring-length s::JsStringLiteral)
-   (string-length (js-jsstring->string s)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-register-value ::JsStringLiteral ...                         */
@@ -240,9 +244,10 @@
 (define-macro (make-integer-table num)
    `(vector
        ,@(map (lambda (i)
-		 `(instantiate::JsStringLiteral
-		     (val ,(integer->string i))
-		     (state #u8:0)))
+		 (let ((s (integer->string i)))
+		    `(instantiate::JsStringLiteral
+			(left ,s)
+			#;(weight ,(string-length s)))))
 	    (iota num))))
 
 ;*---------------------------------------------------------------------*/
@@ -313,72 +318,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Abandon optimization if the consed string is a utf8 replacement. */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-append::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
-   (with-access::JsStringLiteral left ((lstate state) (lval val))
-      (with-access::JsStringLiteral right ((rstate state) (rval val))
-;* 	 (tprint "append left " lstate "=" (format "~s" lval)          */
-;* 	    " right " rstate "=" (format "~s" rval))                   */
-	 (case (uint8->fixnum lstate)
-	    ((0)
-	     (case (uint8->fixnum rstate)
-		((0)
-		 (instantiate::JsStringLiteral
-		    (state #u8:1)
-		    (val (list lval rval))))
-		((1)
-		 (instantiate::JsStringLiteral
-		    (state #u8:1)
-		    (val (cons lval rval))))
-		((2)
-		 (instantiate::JsStringLiteral
-		    (state #u8:1)
-		    (val (cons lval (reverse rval)))))
-		(else
-		 left)))
-	    ((1)
-	     (case (uint8->fixnum rstate)
-		((0)
-		 (instantiate::JsStringLiteral
-		    (state #u8:2)
-		    (val (cons rval (reverse lval)))))
-		((1)
-		 (instantiate::JsStringLiteral
-		    (state #u8:1)
-		    (val (append lval rval))))
-		((2)
-		 ;; reverse the smallest list
-		 (if (<fx (length lval) (length rval))
-		     (instantiate::JsStringLiteral
-			(state #u8:2)
-			(val (append rval (reverse lval))))
-		     (instantiate::JsStringLiteral
-			(state #u8:1)
-			(val (append lval (reverse rval))))))
-		(else
-		 left)))
-	    ((2)
-	     (case (uint8->fixnum rstate)
-		((0)
-		 (instantiate::JsStringLiteral
-		    (state #u8:2)
-		    (val (cons rval lval))))
-		((1)
-		 ;; reverse the smallest list
-		 (if (<fx (length lval) (length rval))
-		     (instantiate::JsStringLiteral
-			(state #u8:1)
-			(val (append (reverse lval) rval)))
-		     (instantiate::JsStringLiteral
-			(state #u8:2)
-			(val (append (reverse rval) lval)))))
-		((2)
-		 (instantiate::JsStringLiteral
-		    (state #u8:2)
-		    (val (append rval lval))))
-		(else
-		 left)))
-	    (else
-	     left)))))
+(define-inline (js-jsstring-append::JsStringLiteral left::JsStringLiteral right::JsStringLiteral)
+   (instantiate::JsStringLiteral
+      (left left)
+      (right right)))
 
 ;*---------------------------------------------------------------------*/
 ;*    utf8-codeunit-length ...                                         */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/use.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/use.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Jan  9 08:33:58 2016 (serrano)                */
+;*    Last change :  Sat Feb  6 06:32:06 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -55,7 +55,14 @@
    (with-access::J2SProgram this (nodes headers decls)
       (use-nodes headers)
       (use-nodes decls)
-      (use-nodes nodes))
+      (use-nodes nodes)
+
+      (set! decls
+	 (filter (lambda (d::J2SDecl)
+		    (with-access::J2SDecl d (usecnt)
+		       (>fx usecnt 0)))
+	    decls))
+      (for-each dead-code! nodes))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -68,8 +75,11 @@
 ;*    use ::J2SFun ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (use-count this::J2SFun)
-   (with-access::J2SFun this (params body)
-      (use-count body))
+   (with-access::J2SFun this (params body decl)
+      (use-count body)
+      (when (isa? decl J2SDecl)
+	 (with-access::J2SDecl decl (usecnt)
+	    (when (=fx usecnt 0) (set! decl #f)))))
    this)
    
 ;*---------------------------------------------------------------------*/
@@ -79,14 +89,6 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (usecnt)
 	 (set! usecnt (+fx 1 usecnt))))
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    use ::J2SDecl ...                                                */
-;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SDecl)
-   (with-access::J2SDecl this (usecnt)
-      (set! usecnt 0))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -178,3 +180,20 @@
 ;*       (set! u (cons 'init u)))                                      */
 ;*    this)                                                            */
 ;*                                                                     */
+
+;*---------------------------------------------------------------------*/
+;*    dead-code! ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (dead-code! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    dead-code! ::J2SDecl ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (dead-code! this::J2SDecl)
+   (call-default-walker)
+   (with-access::J2SDecl this (usecnt loc binder)
+      (if (and (=fx usecnt 0) (not (eq? binder 'param)))
+	  (instantiate::J2SUndefined (loc loc))
+	  this)))
+

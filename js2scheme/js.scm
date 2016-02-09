@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Jan 12 13:37:59 2016 (serrano)                */
+;*    Last change :  Sun Jan 31 02:26:30 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -47,7 +47,7 @@
 			      (list
 				 (call-with-output-string
 				    (lambda (op)
-				       (let ((expr (j2s-scheme node mode evalp conf)))
+				       (let ((expr (j2s-scheme node mode evalp conf '())))
 					  (write (eval! expr) op)))))))
 			'normal (lambda (x) x) conf)))))))
 	 
@@ -149,7 +149,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SBlock tildec dollarc mode evalp conf)
    (with-access::J2SBlock this (nodes)
-      (j2s-js* this "{" "}" "" nodes tildec dollarc mode evalp conf)))
+      (match-case nodes
+	 (((and ?node (? (lambda (n) (isa? n J2SBlock)))))
+	  (j2s-js node tildec dollarc mode evalp conf))
+	 (else
+	  (j2s-js* this "{" "}" "" nodes tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SLabel ...                                            */
@@ -275,6 +279,13 @@
 ;*    j2s-js ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SFun tildec dollarc mode evalp conf)
+   
+   (define (fun-id this)
+      (with-access::J2SFun this (decl)
+	 (if (isa? decl J2SDecl)
+	     (j2s-js-id decl)
+	     "")))
+   
    (with-access::J2SFun this (params body idthis vararg generator)
       (let ((ellipsis (if (eq? vararg 'rest) "... " "")))
 	 (cond
@@ -288,7 +299,7 @@
 		   '(")"))))
 	    ((not generator)
 	     ;; a regular function
-	     (cons* this (format "function ~a" (or (j2sfun-id this) ""))
+	     (cons* this (format "function ~a" (fun-id this))
 		(append
 		   (j2s-js-ellipsis this "(" ")" "," ellipsis
 		      params tildec dollarc mode evalp conf)
@@ -296,7 +307,7 @@
 		   '("\n"))))
 	    ((not (eq? (config-get conf :target) 'es5))
 	     ;; a generator, for es6
-	     (cons* this (format "function *~a" (or (j2sfun-id this) ""))
+	     (cons* this (format "function *~a" (fun-id this))
 		(append
 		   (j2s-js-ellipsis this "(" ")" "," ellipsis
 		      params tildec dollarc mode evalp conf)
@@ -305,7 +316,7 @@
 	    (else
 	     ;; a generator, for es5
 	     (let ((predecls (collect-generator-predecls! body)))
-		(cons* this (format "function ~a" (or (j2sfun-id this) ""))
+		(cons* this (format "function ~a" (fun-id this))
 		   (append
 		      (j2s-js-ellipsis this "(" ")" "," ellipsis
 			 params tildec dollarc mode evalp conf)
@@ -313,9 +324,9 @@
 		      (append-map! (lambda (decl)
 				     (j2s-js decl tildec dollarc mode evalp conf))
 			 predecls)
-		      '("var $GEN=new hop.Generator(function(_$v,_$e){")
+		      '("var $GEN=new hop.Generator(function(_$v,_$e)")
 		      (j2s-js body tildec dollarc mode evalp conf)
-		      '("});return $GEN;}\n")))))))))
+		      '(");return $GEN;}\n")))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-generator-predecls! ...                                  */
@@ -773,7 +784,9 @@
    (with-access::J2SCall this (fun args)
       (let ((f (j2s-js fun tildec dollarc mode evalp conf)))
 	 (cons this
-	    (append (if (or (isa? fun J2SRef) (isa? fun J2SAccess))
+	    (append (if (or (isa? fun J2SRef)
+			    (isa? fun J2SAccess)
+			    (isa? fun J2SUnresolvedRef))
 			f
 			(cons "(" (append f '(")"))))
 	       (j2s-js* this "(" ")" "," args tildec dollarc mode evalp conf))))))
@@ -784,15 +797,15 @@
 (define-method (j2s-js this::J2SAccess tildec dollarc mode evalp conf)
 
    (define (id-string? field)
-      (if (isa? field J2SString)
-	  (with-access::J2SString field (val)
-	     (pregexp-match "[a-zA-Z0-9_$]+" val))))
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val)
+	    (pregexp-match "^[a-zA-Z0-9_$]+$" val))))
       
    (with-access::J2SAccess this (obj field)
       (if (id-string? field)
 	  (cons this
 	     (append (j2s-js obj tildec dollarc mode evalp conf)
-		(list "." (with-access::J2SString field (val) val))))
+		(list "./*ici*/" (with-access::J2SString field (val) val))))
 	  (cons this
 	     (append (j2s-js obj tildec dollarc mode evalp conf)
 		'("[")
@@ -812,8 +825,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SUnary tildec dollarc mode evalp conf)
    (with-access::J2SUnary this (op expr)
-      (cons* this (symbol->string op)
-	 (j2s-js expr tildec dollarc mode evalp conf))))
+      (if (memq op '(void typeof delete))
+	  (cons* this (symbol->string op) " "
+	     (j2s-js expr tildec dollarc mode evalp conf))
+	  (cons* this (symbol->string op) 
+	     (j2s-js expr tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-op ...                                                       */
@@ -838,19 +854,37 @@
 ;*    j2s-js ::J2STilde ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2STilde tildec dollarc mode evalp conf)
+   ;;(tprint "tildec=" tildec " " (j2s->list this))
    (cons this
-      (if (procedure? tildec)
-	  (tildec this tildec dollarc mode evalp conf)
-	  (j2s-js-script-tilde this tildec dollarc mode evalp conf))))
+      (cond
+	 ((procedure? tildec)
+	  (tildec this tildec dollarc mode evalp conf))
+	 ((eq? tildec #t)
+	  (j2s-js-script-tilde this tildec dollarc mode evalp conf))
+	 (else
+	  (with-access::J2STilde this (loc stmt)
+	     (cons* this "<script>"
+		(append (j2s-js stmt
+			   j2s-js-script-tilde
+			   dollarc
+			   mode evalp conf)
+		   '("</script>"))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-script-tilde ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (j2s-js-script-tilde this::J2STilde tildec dollarc mode evalp conf)
    (with-access::J2STilde this (loc stmt)
-      (cons* this "<script>"
-	 (append (j2s-js stmt tildec j2s-js-client-dollar mode evalp conf)
-	    '("</script>")))))
+      (let ((ndollarc (j2s-js-client-dollar dollarc)))
+	 (cons* this "SCRIPT( undefined, '"
+	    (string-for-read
+	       (call-with-output-string
+		  (lambda (port)
+		     (for-each (lambda (n)
+				  (unless (isa? n J2SNode)
+				     (display n port)))
+			(j2s-js stmt tildec ndollarc mode evalp conf)))))
+	    '("')")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-attribute-tilde ...                                       */
@@ -882,7 +916,7 @@
       (list this
 	 `(call-with-output-string
 	     (lambda (op)
-		(obj->javascript-attr ,(j2s-scheme node mode evalp conf) op))))))
+		(obj->javascript-attr ,(j2s-scheme node mode evalp conf '()) op))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-client-dollar ...                                         */
@@ -890,6 +924,7 @@
 (define (j2s-js-client-dollar odollarc)
    (lambda (this::J2SDollar tildec dollarc mode evalp conf)
       (with-access::J2SDollar this (node)
+	 ;;(tprint "DOLLAR=" (j2s->list node))
 	 (j2s-js node tildec odollarc mode evalp conf))))
 
 ;*---------------------------------------------------------------------*/

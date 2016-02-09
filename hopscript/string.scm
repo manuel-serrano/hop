@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Dec 30 09:39:14 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Feb  9 10:51:52 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -206,7 +206,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-cast-string ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (js-cast-string %this obj)
+(define-inline (js-cast-string %this obj)
    (if (js-jsstring? obj) obj (js-toobject %this obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -412,12 +412,13 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.10
    (define (match this::obj regexp)
       (with-access::JsGlobalObject %this (js-regexp js-array)
-	 (let* ((s (js-tojsstring (js-cast-string %this this) %this))
+	 (let* ((s (if (js-jsstring? this)
+		       this
+		       (js-tojsstring (js-cast-string %this this) %this)))
 		(rx (if (isa? regexp JsRegExp)
 			regexp
 			(js-new %this js-regexp regexp)))
-		(exec (js-get (js-get js-regexp 'prototype %this)
-			 'exec %this))
+		(exec (js-get (js-get js-regexp 'prototype %this) 'exec %this))
 		(global (js-get rx 'global %this)))
 	    ;; 7
 	    (if (not global)

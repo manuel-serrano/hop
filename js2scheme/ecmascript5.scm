@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  9 10:55:09 2015                          */
-;*    Last change :  Wed Dec  9 15:29:01 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Thu Jan 14 08:34:10 2016 (serrano)                */
+;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES5 transformations                                              */
 ;*=====================================================================*/
@@ -30,7 +30,7 @@
 ;*---------------------------------------------------------------------*/
 (define j2s-ecmascript5-stage
    (instantiate::J2SStageProc
-      (name "ecmascript5-ecmascript5")
+      (name "ecmascript5")
       (comment "Ecmascript5 transformations")
       (proc j2s-ecmascript5)))
 

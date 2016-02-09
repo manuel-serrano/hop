@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/doc/Makefile                      */
+#*    serrano/prgm/project/hop/3.1.x/doc/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Dec 18 08:17:45 2015 (serrano)                */
-#*    Copyright   :  2006-15 Manuel Serrano                            */
+#*    Last change :  Sat Jan 30 22:27:41 2016 (serrano)                */
+#*    Copyright   :  2006-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -16,7 +16,7 @@ do: builddoc
 -include ../etc/Makefile.hopconfig
 -include ../etc/Makefile.version
 
-HOPFLAGS=-q --no-autoload --no-clear-cache --no-cache --no-server
+HOPFLAGS=-q --no-autoload --no-clear-cache --no-cache --no-server --no-sofile
 HOP_MODULES=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/node_modules
 HOP_LIBS_PATH=$(HOP_MODULES)/markdown/lib/.libs/$(HOPRELEASE)/$(MACH):$(HOP_MODULES)/fontifier/lib/.libs/$(HOPRELEASE)/$(MACH)
 HOPBOOTFLAGS=--js-modules-dir $(BUILDDIR)/node_modules --icons-dir \

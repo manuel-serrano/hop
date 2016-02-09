@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/etc/configure.scm.in              */
+;*    serrano/prgm/project/hop/3.1.x/etc/configure.scm.in              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Sun Nov 15 09:02:36 2015 (serrano)                */
+;*    Last change :  Sun Jan 24 02:49:17 2016 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -38,7 +38,8 @@
 	    (hop-configure-var-directory)
 	    (hop-configure-cache-directory)
 	    (hop-srfis::pair-nil)
-	    (hop-zeroconf-default))
+	    (hop-zeroconf-default)
+	    (hop-build-id))
    
    (eval    (export hop-name)
 	    (export hop-version)
@@ -62,7 +63,8 @@
 	    (export hop-configure-var-directory)
 	    (export hop-configure-cache-directory)
 	    (export hop-srfis)
-	    (export hop-zeroconf-default)))
+	    (export hop-zeroconf-default)
+	    (export hop-build-id)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */
@@ -133,6 +135,8 @@
 (define (hop-branch) "@BRANCH@")
 (define (hop-backend) "@BACKEND@")
 (define (hop-url) "@URL@")
+
+(define (hop-build-id) "@BUILDID@")
 
 ;*---------------------------------------------------------------------*/
 ;*    Misc ...                                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jan  1 10:22:08 2016 (serrano)                */
+;*    Last change :  Mon Feb  8 08:10:54 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -33,6 +33,10 @@
 	   __hopscript_generator)
    
    (export (js-init-array! ::JsGlobalObject)
+	   (inline js-array?::bool ::obj)
+	   (inline js-array-length ::JsArray)
+	   (inline js-array-ref ::JsArray idx ::JsGlobalObject)
+	   (inline js-array-set! ::JsArray idx ::obj ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
@@ -59,7 +63,7 @@
 (define-method (js-donate obj::JsArray worker %_this)
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-array)
-	 (with-access::JsArray obj (vec frozen inline sealed)
+	 (with-access::JsArray obj (vec frozen sealed)
 	    (let ((nobj (js-vector->jsarray
 			   (vector-map (lambda (e)
 					  (js-donate e worker %_this))
@@ -293,6 +297,41 @@
 	 
 	 js-array)))
 
+;*---------------------------------------------------------------------*/
+;*    js-array? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array? obj)
+   (isa? obj JsArray))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-length ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-length arr::JsArray)
+   (with-access::JsArray arr (length)
+      length))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-ref ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-ref arr::JsArray idx %this)
+   (if (and (fixnum? idx) (>=fx idx 0))
+       (with-access::JsArray arr (vec)
+	  (if (<fx idx (vector-length vec))
+	      (vector-ref-ur vec idx)
+	      (js-get arr idx %this)))
+       (js-get arr idx %this)))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-set! ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-set! arr::JsArray idx val %this)
+   (if (and (fixnum? idx) (>=fx idx 0))
+       (with-access::JsArray arr (vec)
+	  (if (<fx idx (vector-length vec))
+	      (vector-set-ur! vec idx val)
+	      (js-put! arr idx val #f %this)))
+       (js-put! arr idx val #f %this)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-array-prototype! ...                                */
 ;*    -------------------------------------------------------------    */
@@ -1496,7 +1535,8 @@
 			    (value len)
 			    (configurable #f)
 			    (writable #t))))
-	 (with-access::JsArray this (vec properties)
+	 (with-access::JsArray this (vec properties length)
+	    (set! length len)
 	    (set! vec v)
 	    (set! properties (list lenproperty))))
       this)
@@ -1521,16 +1561,18 @@
 ;*    js-vector->jsarray ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-vector->jsarray::JsArray vec::vector %this::JsGlobalObject)
-   (let ((lenproperty (instantiate::JsValueDescriptor
-			 (name 'length)
-			 (value (vector-length vec))
-			 (configurable #f)
-			 (writable #t))))
+   (let* ((len (vector-length vec))
+	  (lenproperty (instantiate::JsValueDescriptor
+			  (name 'length)
+			  (value len)
+			  (configurable #f)
+			  (writable #t))))
       (with-access::JsGlobalObject %this (js-array js-array-prototype)
 	 (instantiate::JsArray
 	    (extensible #t)
 	    (__proto__ js-array-prototype)
 	    (properties (list lenproperty))
+	    (length len)
 	    (vec vec)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1821,7 +1863,7 @@
 			 (string>? (sym->string n1) (sym->string n2)))
 		   (js-array-property-names a))))))
    
-   (define (define-own-property/length oldlendesc)
+   (define (define-own-property-length oldlendesc)
       (with-access::JsValueDescriptor oldlendesc (value (owritable writable))
 	 (let ((oldlen value))
 	    (if (not (isa? desc JsValueDescriptor))
@@ -1969,7 +2011,10 @@
   (let ((oldlendesc (js-get-own-property a 'length %this)))
      (if (eq? p 'length)
 	 ;; 3
-	 (define-own-property/length oldlendesc)
+	 (let ((res (define-own-property-length oldlendesc)))
+	    (with-access::JsArray a (length)
+	       (set! length (js-get a 'length %this))
+	       res))
 	 (let ((index::uint32 (js-toindex p)))
 	    (if (js-isindex? index)
 		;; 4

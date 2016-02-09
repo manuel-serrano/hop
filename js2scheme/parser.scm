@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Dec 30 19:59:17 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sun Feb  7 09:11:09 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -971,7 +971,10 @@
 
    (define (consume-param!)
       (let* ((token (consume-token! 'ID))
-	     (loc (token-loc token)))
+	     (loc (token-loc token))
+	     (hint (if (eq? (peek-token-type) 'HINT)
+		       (list (cons (token-value (consume-any!)) 100))
+		       '())))
 	 (if (eq? (peek-token-type) '=)
 	     ;; a parameter with a default value
 	     (begin
@@ -980,12 +983,14 @@
 		   (binder 'param)
 		   (val (assig-expr #f))
 		   (loc loc)
-		   (id (token-value token))))
+		   (id (token-value token))
+		   (hint hint)))
 	     ;; no default value
 	     (instantiate::J2SDecl
 		(binder 'param)
 		(loc loc)
-		(id (token-value token))))))
+		(id (token-value token))
+		(hint hint)))))
 
    (define (consume-rest-param!)
       (let* ((token (consume-token! 'ID))
@@ -1195,10 +1200,10 @@
 	 ((* / %) 10)
 	 (else #f)))
 
-   (define (binary-op-type op)
-      (case op
-	 ((< > <= >= instanceof in == ===) 'bool)
-	 (else #f)))
+;*    (define (binary-op-type op)                                      */
+;*       (case op                                                      */
+;* 	 ((< > <= >= instanceof in == ===) 'bool)                      */
+;* 	 (else #f)))                                                   */
 
    ;; left-associative binary expressions
    (define (binary-expr in-for-init?)
@@ -1228,7 +1233,7 @@
 				   (loc (token-loc token))
 				   (lhs expr)
 				   (op (token-tag token))
-				   (type (binary-op-type (token-tag token)))
+;* 				   (type (binary-op-type (token-tag token))) */
 				   (rhs (binary-aux (+fx level 1)))))))
 		      (else
 		       expr))))))

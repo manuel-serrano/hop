@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Jan  6 11:19:24 2016 (serrano)                */
+;*    Last change :  Sun Feb  7 12:39:24 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -38,11 +38,13 @@
 	      (name read-only (default #f))
 	      (main read-only (default #f))
 	      (module read-only (default #f))
+	      (cnsts::pair-nil (default '()))
 	      (decls::pair-nil (default '()))
 	      (headers::pair-nil (default '())))
 
 	   (abstract-class J2SExpr::J2SNode
-	      (type::obj (default #unspecified)))
+	      (type::obj (default #f))
+	      (hint::pair-nil (default '()) (info '("notraverse"))))
 	   
 	   (final-class J2SStmtExpr::J2SStmt
 	      expr::J2SExpr)
@@ -92,11 +94,11 @@
 	      body::J2SStmt)
 	   
 	   (final-class J2SBreak::J2SStmt
-	      (target (default #f))
+	      (target (default #f) (info '("notraverse")))
 	      (id (default #f)))
 	   
 	   (final-class J2SContinue::J2SStmt
-	      (target (default #f))
+	      (target (default #f) (info '("notraverse")))
 	      (id (default #f)))
 	   
 	   (final-class J2SNop::J2SStmt)
@@ -132,7 +134,7 @@
 	   (class J2SFun::J2SExpr
 	      (idthis read-only (default 'this))
 	      (mode (default #f))
-	      (decl read-only (default #f))
+	      (decl (default #f))
 	      (need-bind-exit-return::bool (default #f))
 	      (vararg::obj (default #f))
 	      (name read-only)
@@ -204,7 +206,8 @@
 	      (scope::symbol (default 'local))
 	      (usecnt::int (default 0))
 	      (usage::pair-nil (default '()))
-	      (type::obj (default #unspecified))
+	      (type::obj (default #f))
+	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      (binder::symbol (default 'var)))
 	   
 	   (class J2SDeclInit::J2SDecl
@@ -222,7 +225,7 @@
 	      (bind::bool read-only (default #f)))
 
 	   (abstract-class J2SLiteral::J2SExpr)
-	   
+
 	   (final-class J2SArrayAbsent::J2SLiteral)
 	   
 	   (final-class J2SNull::J2SLiteral)
@@ -240,7 +243,11 @@
 	   (final-class J2SOctalNumber::J2SNumber)
 	   (final-class J2SRegExp::J2SLiteralValue
 	      (flags::bstring read-only))
-	   
+
+	   (final-class J2SLiteralCnst::J2SLiteral
+	      (index::long read-only)
+	      (val::J2SLiteralValue read-only (info '("notraverse"))))
+	       
 	   (final-class J2SArray::J2SLiteral
 	      len::int
 	      exprs::pair-nil)
@@ -289,6 +296,7 @@
 	   
 	   (final-class J2SCall::J2SExpr
 	      fun::J2SExpr
+	      (this (default #unspecified))
 	      (args::pair-nil (default '())))
 	   
 	   (final-class J2STilde::J2SExpr
@@ -302,7 +310,7 @@
 	      args::pair-nil)
 
 	   (abstract-class J2SPropertyInit::J2SNode
-	      name::J2SLiteralValue)
+	      name::J2SExpr)
 	   
 	   (final-class J2SDataPropertyInit::J2SPropertyInit
 	      val::J2SExpr)
@@ -356,7 +364,11 @@
 	   (j2s-const?::bool ::J2SDecl)
 	   (j2s-param?::bool ::J2SDecl)
 	   
-	   (j2s-let-opt?::bool ::J2SDecl))
+	   (j2s-let-opt?::bool ::J2SDecl)
+
+	   (j2s-field-length?::bool ::J2SNode)
+
+	   (j2s-type ::obj))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -421,6 +433,20 @@
 	 ((let-opt) #t)
 	 ((let var param) #f)
 	 (else (error "j2s-let-opt?" "wrong binder" binder)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-field-length? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2s-field-length? field)
+   (cond
+      ((isa? field J2SLiteralCnst)
+       (with-access::J2SLiteralCnst field (val)
+	  (j2s-field-length? val)))
+      ((isa? field J2SString)
+       (with-access::J2SString field (val)
+	  (string=? val "length")))
+      (else
+       #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-param? ...                                                   */
@@ -505,10 +531,10 @@
    (error "walk4!" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk5*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4)
-   (error "walk5!" "Internal Error: forgot Node type"
+   (error "walk5*" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk6*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
-   (error "walk6!" "Internal Error: forgot Node type"
+   (error "walk6*" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0!::J2SNode n::J2SNode p::procedure)
@@ -643,9 +669,9 @@
        (print "   return _ast;\n};\n\n")))
    
    `(begin
-       ,@(map (lambda (nb) (gen-method nb)) (iota 5))
-       ,@(map (lambda (nb) (gen-method* nb)) (iota 5))
-       ,@(map (lambda (nb) (gen-method! nb)) (iota 5))))
+       ,@(map (lambda (nb) (gen-method nb)) (iota 6))
+       ,@(map (lambda (nb) (gen-method* nb)) (iota 6))
+       ,@(map (lambda (nb) (gen-method! nb)) (iota 6))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-traversals ...                                               */
@@ -1047,4 +1073,11 @@
       (set! expr (call-with-input-string expr read))
       node))
 
-
+;*---------------------------------------------------------------------*/
+;*    j2s-type ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-type node)
+   (if (isa? node J2SExpr)
+       (with-access::J2SExpr node (type)
+	  type)
+       'obj))

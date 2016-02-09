@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/utils.scm               */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/utils.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Jul 11 06:54:19 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Thu Feb  4 19:01:21 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -20,7 +20,8 @@
    (export (pass ::bstring)
 	   (error/loc proc obj msg loc)
 	   (illegal-node ::bstring ::J2SNode)
-	   (config-get ::pair-nil ::keyword #!optional def)))
+	   (config-get ::pair-nil ::keyword #!optional def)
+	   (this?::bool ::J2SNode)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -56,3 +57,32 @@
       (if (pair? l)
 	  (cadr l)
 	  def)))
+
+;*---------------------------------------------------------------------*/
+;*    this? ...                                                        */
+;*    -------------------------------------------------------------    */
+;*    true iff the body uses the "this" pseudo variable                */
+;*---------------------------------------------------------------------*/
+(define (this? body)
+   (let ((res (make-cell #f)))
+      (use-this? body res)
+      (cell-ref res)))
+
+;*---------------------------------------------------------------------*/
+;*    use-this? ::J2SNode ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (use-this? this::J2SNode res)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    this? ::J2SThis ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (use-this? this::J2SThis res)
+   (cell-set! res #t))
+   
+;*---------------------------------------------------------------------*/
+;*    this? ::J2SThis ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (use-this? this::J2SFun res)
+   #f)
+ 

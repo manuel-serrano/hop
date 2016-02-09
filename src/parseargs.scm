@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Dec 23 07:51:16 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Fri Feb  5 12:50:46 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -49,6 +49,7 @@
 	 (webdav #unspecified)
 	 (zeroconf #unspecified)
 	 (clear-cache #f)
+	 (clear-libs #f)
 	 (setuser #f)
 	 (clientc-source-map #f)
 	 (clientc-arity-check #f)
@@ -102,6 +103,10 @@
 	    (("--no-clear-cache" (help "Don't clear any cache"))
 	     (hop-hss-clear-cache-set! #f)
 	     (hop-clientc-clear-cache-set! #f))
+	    (("--clear-libs" (help "Clear libs (sofiles) directory"))
+	     (set! clear-libs #t))
+	    (("--no-clear-libs" (help "Don't clear libs"))
+	     (set! clear-libs #f))
 	    (("--no-sofile" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
 	    (("--autoload" (help "Enable autoload (default)"))
@@ -350,6 +355,10 @@
 		(help (format "JavaScript version to generate (default ~s)"
 			 (hop-javascript-version))))
 	     (hop-javascript-version-set! version))
+	    (("--hopc" ?path (help (format "Hopc compiler [~s]" (hop-hopc))))
+	     (hop-hopc-set! path))
+	    (("--hopc-flags" ?flags (help (format "Hopc flags" (hop-hopc-flags))))
+	     (hop-hopc-flags-set! flags))
 	    (("-psn_?dummy")
 	     ;; Macosx sends process serial numbers this way.
 	     ;; just ignore it.
@@ -364,7 +373,7 @@
 	     (set! files (cons else files)))))
 
       ;; http port
-      (hop-port-set! (or p (hop-port)))
+      (when p (hop-port-set! p))
       
       ;; Hop version
       (hop-verb 1 "Hop " (hop-color 1 "v" (hop-version)) "\n")
@@ -404,11 +413,16 @@
 	     (lambda (p)
 		(load-mime-types (make-file-name p ".mime.types"))))))
       
-      ;; clear al caches
+      ;; clear all caches
       (when clear-cache
 	 (let ((cache (make-cache-name)))
 	    (when (directory? cache)
 	       (delete-path cache))))
+      
+      ;; clear sofiles
+      (when clear-libs
+	 (let ((dir (dirname (hop-sofile-path "dummy.so"))))
+	    (delete-path dir)))
       
       ;; weblets path
       (hop-autoload-directory-add!

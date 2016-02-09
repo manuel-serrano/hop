@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/uv.scm                     */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/uv.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Sep 25 13:36:28 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Fri Feb  5 08:22:10 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -388,7 +388,9 @@
 			  (cb (lambda (a)
 				 (js-worker-tick th)
 				 (with-access::JsLoop loop (actions)
-				    (unless (or keep-alive (pair? services) (pair? actions))
+				    (unless (or keep-alive
+						(pair? services)
+						(pair? actions))
 				       (uv-unref async)
 				       (when (js-totest (js-get %process '_exiting %this))
 					  (uv-stop loop)))))))))

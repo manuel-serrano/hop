@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/stage.scm               */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/stage.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Wed Nov  4 11:27:46 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Thu Jan 21 15:16:37 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
 ;*=====================================================================*/
@@ -49,7 +49,7 @@
 (define (driver-debug-post stage tmp count ast args proc)
    (with-access::J2SStage stage (name comment before after)
       (when (>fx (bigloo-debug) 3)
-	 (fprintf (current-error-port) "~3d. ~a\n" count name))
+	 (fprintf (current-error-port) "~3d. ~a" count name))
       (when (procedure? before) (before ast))
       (let ((nast (proc ast args)))
 	 (when (>=fx (bigloo-debug) 1)
@@ -59,6 +59,7 @@
 		  (fprint p ";; " comment)
 		  (pp (j2s->list nast) p))))
 	 (when (procedure? after) (after nast))
+	 (when (>fx (bigloo-debug) 3) (newline (current-error-port)))
 	 nast)))
 
 ;*---------------------------------------------------------------------*/

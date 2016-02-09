@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/3.1.x/src/main.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Dec 26 21:10:42 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Mon Feb  8 16:38:51 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/

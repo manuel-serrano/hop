@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/service.scm             */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/service.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Jan  5 16:40:53 2016 (serrano)                */
+;*    Last change :  Fri Feb  5 08:32:10 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -188,22 +188,6 @@
    (display "hop_url_encoded_to_obj('" op)
    (display (url-path-encode (obj->string o 'hop-client)) op)
    (display "')" op))
-;*       (display "new HopFrame( " op)                                 */
-;*       (hop->javascript srv op compile isexpr)                       */
-;*       (display ",\"" op)                                            */
-;*       (display path op)                                             */
-;*       (display "\"," op)                                            */
-;*       (display "[ " op)                                             */
-;*       (when (pair? args)                                            */
-;* 	 (let loop ((args args))                                       */
-;* 	    (hop->javascript (car args) op compile isexpr)             */
-;* 	    (when (pair? (cdr args))                                   */
-;* 	       (display "," op)                                        */
-;* 	       (loop (cdr args)))))                                    */
-;*       (display "], " op)                                            */
-;*       (display "false, " op)                                        */
-;*       (display "false " op)                                         */
-;*       (display ")" op)))                                            */
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsServer ...                                   */
@@ -402,58 +386,6 @@
 	 (srv (when (isa? srv JsServer) srv))
 	 (path path)
 	 (args args))))
-
-;*    (define (url-frame)                                              */
-;*       (with-access::JsGlobalObject %this (js-hopframe-prototype)    */
-;* 	 (instantiate::JsHopFrame                                      */
-;* 	    (__proto__ js-hopframe-prototype)                          */
-;* 	    (%this %this)                                              */
-;* 	    (srv srv)                                                  */
-;* 	    (url url)                                                  */
-;* 	    (args args))))                                             */
-;*                                                                     */
-;*    (define (multipart-frame)                                        */
-;*       (with-access::JsGlobalObject %this (js-hopframe-prototype)    */
-;* 	 (instantiate::JsHopFrame                                      */
-;* 	    (%this %this)                                              */
-;* 	    (srv srv)                                                  */
-;* 	    (args (unless (eq? args (js-undefined))                    */
-;* 		     (map (lambda (val)                                */
-;* 			     (cond                                     */
-;* 				((isa? val JsStringLiteral)            */
-;* 				 `("string" ,(js-jsstring->string val) */
-;* 				     "hop-encoding: string"))          */
-;* 				((integer? val)                        */
-;* 				 `("integer" ,val                      */
-;* 				     "hop-encoding: integer"))         */
-;* 				((keyword? val)                        */
-;* 				 `("keyword" ,(keyword->string val)    */
-;* 				     "hop-encoding: keyword"))         */
-;* 				((string? val)                         */
-;* 				 (error "js-make-hopframe"             */
-;* 				    "Illegal string" val))             */
-;* 				(else                                  */
-;* 				 `("hop" ,(obj->string val 'hop-to-hop) */
-;* 				     "hop-encoding: hop"))))           */
-;* 			args)))                                        */
-;* 	    (url url)                                                  */
-;* 	    (__proto__ js-hopframe-prototype))))                       */
-;*                                                                     */
-;*    (cond                                                            */
-;*       ((null? args)                                                 */
-;*        (url-frame))                                                 */
-;*       ((and (null? (cdr args))                                      */
-;* 	    (string? (car args))                                       */
-;* 	    (<fx (string-length (car args)) 80))                       */
-;*        (url-frame))                                                 */
-;*       ((every integer? args)                                        */
-;*        (url-frame))                                                 */
-;*       ((keyword? (car args))                                        */
-;*        ;; scheme call                                               */
-;*        (js-string->jsstring (hop-apply-url url args)))              */
-;*       (else                                                         */
-;*        (multipart-frame))))                                         */
-;*                                                                     */
 
 ;*---------------------------------------------------------------------*/
 ;*    hopframe->string ...                                             */
@@ -812,10 +744,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (service-pack-cgi-arguments ctx::JsGlobalObject svc vals)
    (with-access::JsGlobalObject ctx (js-object)
-      (with-access::hop-service svc (args)
+      (with-access::hop-service svc (args id)
 	 (cond
 	    ((null? vals)
-	     '())
+	     (js-new0 ctx js-object))
 	    ((and (pair? args) (eq? (car args) #!key))
 	     ;; old dsssl protocol (<=rc7)
 	     args)

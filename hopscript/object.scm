@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Dec 23 07:47:36 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Thu Feb  4 08:29:18 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
 ;*                                                                     */
@@ -49,6 +49,7 @@
    (with   __hopscript_dom)
 
    (export (js-initial-global-object)
+	   (inline js-object?::bool ::obj)
 	   (js-new-global-object::JsGlobalObject)
 	   
 	   (js-object-prototype-hasownproperty this v ::JsGlobalObject)
@@ -217,6 +218,12 @@
    (unless %this
       (set! %this (js-new-global-object)))
    %this)
+
+;*---------------------------------------------------------------------*/
+;*    js-object? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object? obj)
+   (isa? obj JsObject))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new-global-object ...                                         */
