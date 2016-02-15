@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Feb  4 08:29:18 2016 (serrano)                */
+;*    Last change :  Mon Feb 15 09:13:19 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -534,13 +534,48 @@
 	     (js-new %this js-object (car value)))
 	    (else
 	     (js-toobject %this (car value)))))
+
+      ;; Object.constructor
+      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.2.1
+      (define (js-object-constructor f value)
+	 (with-access::JsGlobalObject %this (js-string js-boolean js-number)
+	    (cond
+	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
+		;; 2
+		(with-access::JsFunction f (constrmap)
+		   (instantiate::JsObject
+		      (cmap constrmap)
+		      (elements ($create-vector 4))
+		      (__proto__ %prototype)
+		      (extensible #t))))
+	       ((isa? value JsObject)
+		;; 1.a
+		value)
+	       ((js-jsstring? value)
+		;; 1.b
+		(js-new %this js-string value))
+	       ((boolean? value)
+		;; 1.c
+		(js-new %this js-boolean value))
+	       ((number? value)
+		;; 1.c
+		(js-new %this js-number value))
+	       (else
+		(js-raise-type-error %this "illegal value ~s" value)))))
+
+      (define (js-object-construct f . arg)
+	 (tprint "DEPRECATED, SHOULD NOT BE HERE...f=" f " arg=" arg)
+	 (with-access::JsGlobalObject %this (js-object)
+	    (js-object-constructor js-object
+	       (if (pair? arg) (car arg) (js-undefined)))))
       
       (with-access::JsObject js-function ((js-function-prototype __proto__))
 	 (set! js-object 
 	    (js-make-function %this %js-object 1 'Object 
 	       :__proto__ js-function-prototype
 	       :prototype %prototype
-	       :construct (js-object-construct %this))))
+	       :construct js-object-construct
+	       :constructor js-object-constructor)))
       
       ;; getprototypeof
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2
@@ -600,7 +635,7 @@
       (define (create this o properties)
 	 (if (not (or (eq? o (js-null)) (isa? o JsObject)))
 	     (js-raise-type-error %this "create: bad object ~s" o)
-	     (let ((obj (js-new %this js-object)))
+	     (let ((obj (js-new0 %this js-object)))
 		(with-access::JsObject obj (__proto__)
 		   (set! __proto__ o)
 		   (unless (eq? properties (js-undefined))
@@ -612,7 +647,7 @@
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f)
-      
+
       ;; defineProperty
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.6
       (define (defineproperty this obj p attributes)
@@ -879,47 +914,13 @@
 		   :prototype (js-undefined))
 	 :enumerable #f)))
 
+
 ;*---------------------------------------------------------------------*/
 ;*    js-object-construct ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.2.1     */
 ;*---------------------------------------------------------------------*/
-(define (js-object-construct %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this ((%prototype __proto__)
-				       js-string
-				       js-boolean
-				       js-number)
-      (lambda (_ . arg)
-	 
-	 (define (object-alloc)
-	    (instantiate::JsObject
-	       (cmap (instantiate::JsConstructMap))
-	       (elements (make-vector 4))
-	       (__proto__ %prototype)
-	       (extensible #t)))
 
-	 (if (null? arg)
-	     ;; 2
-	     (object-alloc)
-	     (let ((value (car arg)))
-		(cond
-		   ((or (eq? value (js-null)) (eq? value (js-undefined)))
-		    ;; 2
-		    (object-alloc))
-		   ((isa? value JsObject)
-		    ;; 1.a
-		    value)
-		   ((js-jsstring? value)
-		    ;; 1.b
-		    (js-new %this js-string value))
-		   ((boolean? value)
-		    ;; 1.c
-		    (js-new %this js-boolean value))
-		   ((number? value)
-		    ;; 1.c
-		    (js-new %this js-number value))
-		   (else
-		    (js-raise-type-error %this "illegal value ~s" value))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-prototype-hasownproperty ...                           */
@@ -975,7 +976,7 @@
 	       (proc (vector-ref-ur vec i) i)
 	       (loop (+fx i 1))))))
 
-   (define (defineproperties/cmap cmap elements o props)
+   (define (defineproperties/cmap cmap o props)
       (with-access::JsConstructMap cmap (names descriptors)
 	 (vfor-each (lambda (name::symbol i)
 		       (let ((prop (vector-ref-ur descriptors i)))
@@ -984,7 +985,7 @@
 				(let* ((descobj (if (isa? prop JsAccessorDescriptor)
 						    ;; CARE 5 JUL 2014, not sure about props below
 						    (js-property-value properties props prop %this)
-						    (vector-ref-ur elements i)))
+						    (js-object-element-ref props i)))
 				       (desc (js-to-property-descriptor %this
 						descobj name)))
 				   (js-define-own-property o name desc #t %this))))))
@@ -1003,9 +1004,9 @@
    (let* ((o (js-cast-object obj %this "defineProperties"))
 	  (props (js-cast-object (js-toobject %this properties) %this
 		    "defineProperties")))
-      (with-access::JsObject props (cmap elements (oprops properties))
+      (with-access::JsObject props (cmap (oprops properties))
 	 (if cmap
-	     (defineproperties/cmap cmap elements o props)
+	     (defineproperties/cmap cmap o props)
 	     (defineproperties/properties oprops o props)))
       obj))
 
@@ -1060,10 +1061,10 @@
 ;*    js-get-global-object-name/cache ...                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-get-global-object-name/cache o::JsObject name::symbol cache::JsPropertyCache throw %this)
-   (with-access::JsObject o ((omap cmap) elements)
+   (with-access::JsObject o ((omap cmap))
       (with-access::JsPropertyCache cache (cmap index)
 	 (if (eq? cmap omap)
-	     (vector-ref-ur elements index)
+	     (js-object-element-ref o index)
 	     (js-get-name/cache-miss o name cache throw %this)))))
 
 ;*---------------------------------------------------------------------*/

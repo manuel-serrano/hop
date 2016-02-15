@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb  8 20:14:39 2016 (serrano)                */
+;*    Last change :  Thu Feb 11 16:39:20 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -182,7 +182,7 @@
 ;*    js-jsstring-length ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-length js::JsStringLiteral)
-   (utf8-codeunit-length (js-jsstring->string js)))
+   (js-string-literal-length js))
 
 ;*---------------------------------------------------------------------*/
 ;*    display-js-string ...                                            */

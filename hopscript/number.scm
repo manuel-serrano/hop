@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/number.scm              */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/number.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Dec 27 10:22:23 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Mon Feb 15 11:04:14 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -29,14 +29,20 @@
    
    (export (js-init-number! ::JsGlobalObject)
 	   (js-number->jsnumber ::obj ::JsGlobalObject)
-	   
+
 	   (js+ left right ::JsGlobalObject)
+	   (inline js+fx::obj ::long ::long)
+	   (inline js-fx::obj ::long ::long)
+	   (inline js/fx::obj ::long ::long)
 	   (js-slow+ left right ::JsGlobalObject)
 	   (js- left right ::JsGlobalObject)
 	   (js-neg expr ::JsGlobalObject)
 	   (js* left right ::JsGlobalObject)
 	   (js/ left right ::JsGlobalObject)
+	   (js/num left right)
 	   (js% left right ::JsGlobalObject)
+	   (js-%$$NN left right)
+	   (js-%$$NZ left right)
 	   (js-bitlsh::obj left right ::JsGlobalObject)
 	   (js-bitrsh::obj left right ::JsGlobalObject)
 	   (js-bitursh::obj left right ::JsGlobalObject)
@@ -103,7 +109,13 @@
 	       (__proto__ __proto__)
 	       (extensible #t)))
 
+	 (define (js-number-constructor f value)
+	    (instantiate::JsNumber
+	       (__proto__ (js-get f 'prototype %this))
+	       (val (if (eq? value (js-null)) 0 (js-tonumber value %this)))))
+		
 	 (define (js-number-construct this::JsNumber . arg)
+	    (tprint "DEPRECATED, SHOULD NOT BE HERE...")
 	    (with-access::JsNumber this (val)
 	       (set! val (if (pair? arg) (js-tonumber (car arg) %this) 0)))
 	    this)
@@ -131,6 +143,7 @@
 	    (js-make-function %this %js-number 1 'Number
 	       :__proto__ js-function-prototype
 	       :prototype js-number-prototype
+	       :constructor js-number-constructor
 	       :alloc js-number-alloc
 	       :construct js-number-construct))
 	 ;; other properties of the Number constructor
@@ -279,7 +292,7 @@
 	 (if (>= val 0)
 	     (js-string->jsstring s)
 	     (js-string->jsstring (string-append "-" s))))
-      
+
       (if (not (isa? this JsNumber))
 	  (js-raise-type-error %this
 	     "Not a number ~s" (js-tostring this %this))
@@ -332,18 +345,22 @@
       :enumerable #f)
 
    ;; toExponential
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.6
    (js-bind! %this obj 'toExponential
       :value (js-make-function %this
-		(lambda l (error "not" "implemented" "yet"))
+		(lambda (this val)
+		   (error "toExponential" "not implemented" "yet"))
 		1 'toExponential)
       :writable #t
       :configurable #t
       :enumerable #f)
 
    ;; toPrecision
+   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.7
    (js-bind! %this obj 'toPrecision
       :value (js-make-function %this
-		(lambda l (error "not" "implemented" "yet"))
+		(lambda (this val)
+		   (error "toPrecision" "not implemented" "yet"))
 		1 'toPrecision)
       :writable #t
       :configurable #t
@@ -374,11 +391,73 @@
        (js-slow+ left right %this))))
 
 ;*---------------------------------------------------------------------*/
+;*    js+fx ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js+fx left::long right::long)
+
+   (define-macro (intsz+)
+      (minfx (-fx (bigloo-config 'int-size) 1) 56))
+   
+   (define-macro (shift+)
+      (bit-lsh 1 (intsz+)))
+   
+   (define-macro (maxint+)
+      (-fx (shift+) 1))
+   
+   (define-macro (minint+)
+      (-fx 0 (shift+)))
+   
+;*    (let ((tmp (+fx left right)))                                    */
+;*       (if (or (>fx tmp (maxint+)) (<fx tmp (minint+)))              */
+;* 	  (fixnum->flonum tmp)                                         */
+;* 	  tmp))                                                        */
+;*                                                                     */
+   (let ((tmp (+fx left right)))
+      (if (=fx (bit-and tmp (shift+)) (shift+))
+	  (fixnum->flonum tmp)
+	  tmp)))
+
+;*---------------------------------------------------------------------*/
+;*    js-fx ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-fx left::long right::long)
+   
+   (define-macro (intsz-)
+      (minfx (-fx (bigloo-config 'int-size) 1) 56))
+   
+   (define-macro (shift-)
+      (bit-lsh 1 (intsz-)))
+   
+   (define-macro (maxint-)
+      (-fx (bit-lsh 1 (intsz-)) 1))
+   
+   (define-macro (minint-)
+      (-fx 0 (bit-lsh 1 (intsz-))))
+   
+;*    (let ((tmp (-fx left right)))                                    */
+;*       (if (or (>fx tmp (maxint-)) (<fx tmp (minint-)))              */
+;* 	  (fixnum->flonum tmp)                                         */
+;* 	  tmp))                                                        */
+;*                                                                     */
+   (let ((tmp (-fx left right)))
+      (if (=fx (bit-and tmp (shift-)) (shift-))
+	  (fixnum->flonum tmp)
+	  tmp)))
+
+;*---------------------------------------------------------------------*/
+;*    js/fx ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js/fx left::long right::long)
+   (if (=fx right 0)
+       (js/num left right)
+       (/fx left right)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-slow+ ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-slow+ left right %this)
-   (let ((left (js-toprimitive left 'any %this))
-	 (right (js-toprimitive right 'any %this)))
+   (let* ((left (js-toprimitive left 'any %this))
+	  (right (js-toprimitive right 'any %this)))
       (cond
 	 ((js-jsstring? left)
 	  (js-jsstring-append left (js-tojsstring right %this)))
@@ -454,27 +533,33 @@
 (define (js/ left right %this)
    (let* ((lnum (js-tonumber left %this))
 	  (rnum (js-tonumber right %this)))
-      (if (= rnum 0)
-	  (if (flonum? rnum)
-	      (cond
-		 ((and (flonum? lnum) (nanfl? lnum))
-		  lnum)
-		 ((=fx (signbitfl rnum) (signbitfl +0.0))
-		  (cond
-		     ((> lnum 0) +inf.0)
-		     ((< lnum 0) -inf.0)
-		     (else +nan.0)))
-		 (else
-		  (cond
-		     ((< lnum 0) +inf.0)
-		     ((> lnum 0) -inf.0)
-		     (else +nan.0))))
-	      (cond
-		 ((and (flonum? lnum) (nanfl? lnum)) lnum)
-		 ((> lnum 0) +inf.0)
-		 ((< lnum 0) -inf.0)
-		 (else +nan.0)))
-	  (/ lnum rnum))))
+      (js/num lnum rnum)))
+
+;*---------------------------------------------------------------------*/
+;*    js/num ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (js/num lnum rnum)
+   (if (= rnum 0)
+       (if (flonum? rnum)
+	   (cond
+	      ((and (flonum? lnum) (nanfl? lnum))
+	       lnum)
+	      ((=fx (signbitfl rnum) (signbitfl +0.0))
+	       (cond
+		  ((> lnum 0) +inf.0)
+		  ((< lnum 0) -inf.0)
+		  (else +nan.0)))
+	      (else
+	       (cond
+		  ((< lnum 0) +inf.0)
+		  ((> lnum 0) -inf.0)
+		  (else +nan.0))))
+	   (cond
+	      ((and (flonum? lnum) (nanfl? lnum)) lnum)
+	      ((> lnum 0) +inf.0)
+	      ((< lnum 0) -inf.0)
+	      (else +nan.0)))
+       (/ lnum rnum)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js% ...                                                          */
@@ -484,35 +569,47 @@
 (define (js% left right %this)
    (let* ((lnum (js-tonumber left %this))
 	  (rnum (js-tonumber right %this)))
-      (cond
-	 ((= rnum 0)
-	  +nan.0)
-	 ((and (flonum? lnum) (or (=fl lnum +inf.0) (=fl lnum -inf.0)))
-	  +nan.0)
-	 ((and (flonum? rnum) (or (=fl rnum +inf.0) (=fl rnum -inf.0)))
-	  lnum)
-	 ((or (and (flonum? rnum) (nanfl? rnum))
-	      (and (flonum? lnum) (nanfl? lnum)))
-	  +nan.0)
-	 (else
-	  (let ((alnum (abs lnum))
-		(arnum (abs rnum)))
-	     (if (or (flonum? alnum) (flonum? arnum))
-		 (begin
-		    (unless (flonum? alnum)
-		       (set! alnum (exact->inexact alnum)))
-		    (unless (flonum? arnum)
-		       (set! arnum (exact->inexact arnum)))
-		    (let ((m (remainderfl alnum arnum)))
-		       (if (or (< lnum 0)
-			       (and (flonum? lnum) (=fl lnum 0.0)
-				    (=fx (signbitfl lnum) (signbitfl -0.0))))
-			   (if (= m 0) -0.0 (- m))
-			   (if (= m 0) +0.0 m))))
-		 (let ((m (remainder alnum arnum)))
-		    (if (< lnum 0)
+      (js-%$$NN lnum rnum)))
+
+;*---------------------------------------------------------------------*/
+;*    js-%$$NN ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (js-%$$NN lnum rnum)
+   (if (= rnum 0)
+       +nan.0
+       (js-%$$NZ lnum rnum)))
+
+;*---------------------------------------------------------------------*/
+;*    js-%$$NZ ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (js-%$$NZ lnum rnum)
+   (cond
+      ((and (flonum? lnum) (or (=fl lnum +inf.0) (=fl lnum -inf.0)))
+       +nan.0)
+      ((and (flonum? rnum) (or (=fl rnum +inf.0) (=fl rnum -inf.0)))
+       lnum)
+      ((or (and (flonum? rnum) (nanfl? rnum))
+	   (and (flonum? lnum) (nanfl? lnum)))
+       +nan.0)
+      (else
+       (let ((alnum (abs lnum))
+	     (arnum (abs rnum)))
+	  (if (or (flonum? alnum) (flonum? arnum))
+	      (begin
+		 (unless (flonum? alnum)
+		    (set! alnum (exact->inexact alnum)))
+		 (unless (flonum? arnum)
+		    (set! arnum (exact->inexact arnum)))
+		 (let ((m (remainderfl alnum arnum)))
+		    (if (or (< lnum 0)
+			    (and (flonum? lnum) (=fl lnum 0.0)
+				 (=fx (signbitfl lnum) (signbitfl -0.0))))
 			(if (= m 0) -0.0 (- m))
-			(if (= m 0) +0.0 m)))))))))
+			(if (= m 0) +0.0 m))))
+	      (let ((m (remainder alnum arnum)))
+		 (if (< lnum 0)
+		     (if (= m 0) -0.0 (- m))
+		     (if (= m 0) +0.0 m))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitlsh ...                                                    */

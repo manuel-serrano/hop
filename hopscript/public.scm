@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Feb  5 08:00:47 2016 (serrano)                */
+;*    Last change :  Mon Feb 15 09:05:41 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -104,9 +104,6 @@
 	   (inline js-strict-equal? ::obj ::obj)
 	   (js-eq? ::obj ::obj)
 	   
-	   (make-pcache ::int)
-	   (inline pcache-ref ::vector ::int)
-	   
 	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj ::obj)
 	   (%js-direct-eval ::obj ::bool ::JsGlobalObject ::obj ::JsObject)
 	   (%js-eval ::input-port ::symbol ::JsGlobalObject ::obj ::JsObject)
@@ -134,9 +131,15 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new/function %this::JsGlobalObject f::JsFunction args::pair-nil)
    (with-access::JsFunction f (construct arity alloc name)
-      (let ((o (alloc f)))
-	 (let ((r (js-apply% %this f construct o args)))
-	    (if (isa? r JsObject) r o)))))
+      (case (length args)
+	 ((0)
+	  (js-new0 %this f))
+	 ((1)
+	  (js-new1 %this f (car args)))
+	 (else
+	  (let* ((o (alloc f))
+		 (r (js-apply% %this f construct o args)))
+	     (if (isa? r JsObject) r o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new ...                                                       */
@@ -178,25 +181,29 @@
 ;*---------------------------------------------------------------------*/
 (define (js-new0 %this f)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc name)
-	  (let ((o (alloc f)))
-	     ;; CARE ARITY
-	     (let ((r (js-call0% %this f construct o)))
-		(js-new-return f r o))))
+       (with-access::JsFunction f (constructor construct name alloc)
+	  (if constructor
+	      (constructor f (js-null))
+	      (let ((o (alloc f)))
+		 ;; CARE ARITY
+		 (let ((r (js-call0% %this f construct o)))
+		    (js-new-return f r o)))))
        (js-raise-type-error %this "new: object is not a function ~s" f)))
 
 (define (js-new1 %this f a0)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc name)
-	  (let ((o (alloc f)))
-	     ;; CARE ARITY
-	     (let ((r (js-call1% %this f construct o a0)))
-		(js-new-return f r o))))
+       (with-access::JsFunction f (constructor construct alloc name)
+	  (if constructor
+	      (constructor f a0)
+	      (let ((o (alloc f)))
+		 ;; CARE ARITY
+		 (let ((r (js-call1% %this f construct o a0)))
+		    (js-new-return f r o)))))
        (js-raise-type-error %this "new: object is not a function ~s" f)))
 
 (define (js-new2 %this f a0 a1)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc)
+       (with-access::JsFunction f (construct alloc name)
 	  (let ((o (alloc f)))
 	     ;; CARE ARITY
 	     (let ((r (js-call2% %this f construct o a0 a1)))
@@ -214,7 +221,7 @@
 
 (define (js-new4 %this f a0 a1 a2 a3)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc)
+       (with-access::JsFunction f (construct alloc name)
 	  (let ((o (alloc f)))
 	     ;; CARE ARITY
 	     (let ((r (js-call4% %this f construct o a0 a1 a2 a3)))
@@ -1160,24 +1167,6 @@
       ((number? x) (and (number? y) (= x y)))
       ((js-jsstring? x) (and (js-jsstring? y) (js-jsstring=? x y)))
       (else #f)))
-
-;*---------------------------------------------------------------------*/
-;*    make-pcache ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (make-pcache len)
-   (let ((pcache ($make-vector-uncollectable len #unspecified)))
-      (let loop ((i 0))
-	 (if (=fx i len)
-	     pcache
-	     (begin
-		(vector-set-ur! pcache i (instantiate::JsPropertyCache))
-		(loop (+fx i 1)))))))
-      
-;*---------------------------------------------------------------------*/
-;*    pcache-ref ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-inline (pcache-ref pcache index)
-   (vector-ref-ur pcache index))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-hss ...                                                      */

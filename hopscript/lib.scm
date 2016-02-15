@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/lib.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/lib.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Dec 16 07:47:40 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sun Feb 14 17:13:28 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -32,8 +32,9 @@
 	   __hopscript_arraybufferview)
 
    (export (generic js-obj->jsobject ::obj ::JsGlobalObject)
-	   (js-alist->jsobject ::pair-nil ::JsGlobalObject)
-	   (js-plist->jsobject ::pair-nil ::JsGlobalObject)
+	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
+	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
+	   (js-plist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
 	   (js-jsobject->plist ::JsObject ::JsGlobalObject)
 	   (js-jsobject->keyword-plist ::JsObject ::JsGlobalObject)
 	   (js-jsobject->alist ::JsObject ::JsGlobalObject)
@@ -97,42 +98,106 @@
        (js-alist->jsobject l %this))
       (else
        (map! (lambda (o) (js-obj->jsobject o %this)) l))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-literal->jsobject ...                                         */
+;*    -------------------------------------------------------------    */
+;*    The cmap structure is defined in property.scm.                   */
+;*---------------------------------------------------------------------*/
+(define (js-literal->jsobject::JsObject elements::vector names::vector %this)
+   (with-access::JsGlobalObject %this (__proto__)
+      (let* ((len (vector-length elements))
+	     (descrs ($create-vector len)))
+	 (let loop ((i 0))
+	    (if (=fx i len)
+		(let ((cmap (instantiate::JsConstructMap
+			       (names names)
+			       (descriptors descrs))))
+		   (instantiate::JsObject
+		      (cmap cmap)
+		      (elements elements)
+		      (__proto__ __proto__)
+		      (extensible #t)))
+		(let ((descr (instantiate::JsIndexDescriptor
+				(name (vector-ref-ur names i))
+				(index i)
+				(writable #t)
+				(enumerable #t)
+				(configurable #t))))
+		   (vector-set-ur! descrs i descr)
+		   (loop (+fx i 1))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-alist->jsobject ...                                           */
+;*    -------------------------------------------------------------    */
+;*    The cmap structure is defined in property.scm.                   */
 ;*---------------------------------------------------------------------*/
 (define (js-alist->jsobject alist %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (let ((obj (js-new %this js-object)))
-	 (for-each (lambda (e)
-		      (js-put! obj (if (keyword? (car e))
-				       (keyword->symbol (car e))
-				       (car e))
-			 (js-obj->jsobject (cdr e) %this)
-			 #f %this))
-	    alist)
-	 obj)))
+   (with-access::JsGlobalObject %this (js-object __proto__)
+      (let* ((len (length alist))
+	     (elements ($create-vector len))
+	     (names ($create-vector len))
+	     (descrs ($create-vector len)))
+	 (let loop ((i 0)
+		    (alist alist))
+	    (if (=fx i len)
+		(let ((cmap (instantiate::JsConstructMap
+			       (names names)
+			       (descriptors descrs))))
+		   (instantiate::JsObject
+		      (cmap cmap)
+		      (elements elements)
+		      (__proto__ __proto__)
+		      (extensible #t)))
+		(let* ((name (if (keyword? (caar alist))
+				 (keyword->symbol (caar alist))
+				 (caar alist)))
+		       (descr (instantiate::JsIndexDescriptor
+				 (name name)
+				 (index i)
+				 (writable #t)
+				 (enumerable #t)
+				 (configurable #t)))
+		       (val (js-obj->jsobject (cdar alist) %this)))
+		   (vector-set-ur! names i name)
+		   (vector-set-ur! descrs i descr)
+		   (vector-set-ur! elements i val)
+		   (loop (+fx i 1) (cdr alist))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-plist->jsobject ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-plist->jsobject plist %this)
-   (with-access::JsGlobalObject %this (js-object)
-      (let ((obj (js-new %this js-object)))
-	 (let loop ((plist plist))
-	    (cond
-	       ((null? plist)
-		obj)
-	       ((null? (cdr plist))
-		obj)
-	       (else
-		(js-put! obj 
-		   (if (keyword? (car plist))
-		       (keyword->symbol (car plist))
-		       (car plist))
-		   (js-obj->jsobject (cadr plist) %this)
-		   #f %this)
-		(loop (cddr plist))))))))
+   (with-access::JsGlobalObject %this (js-object __proto__)
+      (let* ((len (/fx (length plist) 2))
+	     (elements ($create-vector len))
+	     (names ($create-vector len))
+	     (descrs ($create-vector len)))
+	 (let loop ((i 0)
+		    (plist plist))
+	    (if (=fx i len)
+		(let ((cmap (instantiate::JsConstructMap
+			       (names names)
+			       (descriptors descrs))))
+		   (instantiate::JsObject
+		      (cmap cmap)
+		      (elements elements)
+		      (__proto__ __proto__)
+		      (extensible #t)))
+		(let* ((name (if (keyword? (car plist))
+				 (keyword->symbol (car plist))
+				 (car plist)))
+		       (descr (instantiate::JsIndexDescriptor
+				 (name name)
+				 (index i)
+				 (writable #t)
+				 (enumerable #t)
+				 (configurable #t)))
+		       (val (js-obj->jsobject (cadr plist) %this)))
+		   (vector-set-ur! names i name)
+		   (vector-set-ur! descrs i descr)
+		   (vector-set-ur! elements i val)
+		   (loop (+fx i 1) (cddr plist))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsobject->plist ...                                           */

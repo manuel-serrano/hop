@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Feb  6 06:32:06 2016 (serrano)                */
+;*    Last change :  Fri Feb 12 17:02:02 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -21,9 +21,8 @@
 	   __js2scheme_utils)
 
    (export j2s-use-stage
-	   (generic j2s-use! ::obj)
-	   (generic use-count ::J2SNode)
-	   (generic usage ::J2SNode ::symbol)))
+;* 	   (generic j2s-use! ::obj)                                    */
+	   (generic use-count ::J2SNode)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use-stage ...                                                */
@@ -32,37 +31,41 @@
    (instantiate::J2SStageProc
       (name "use")
       (comment "Usage property for all variables")
-      (proc (lambda (n args) (j2s-use! n)))
+      (proc (lambda (n args) (j2s-use! n args)))
       (optional #f)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-use! ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-generic (j2s-use! this)
-   (use-count this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use! ::J2SProgram ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-use! this::J2SProgram)
+(define (j2s-use! this::J2SProgram args)
+   
+   (define direct-eval
+      (make-cell #f))
    
    (define (use-nodes nodes)
       (for-each (lambda (o)
 		   (use-count o)
-		   (usage o 'ref))
+		   (usage o 'ref direct-eval))
 	 nodes))
    
-   (with-access::J2SProgram this (nodes headers decls)
-      (use-nodes headers)
-      (use-nodes decls)
-      (use-nodes nodes)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (nodes headers decls)
+	 (use-nodes headers)
+	 (use-nodes decls)
+	 (use-nodes nodes)
 
-      (set! decls
-	 (filter (lambda (d::J2SDecl)
-		    (with-access::J2SDecl d (usecnt)
-		       (>fx usecnt 0)))
-	    decls))
-      (for-each dead-code! nodes))
+	 (unless (cell-ref direct-eval)
+	    (let ((optim (memq :optim args)))
+	       (when (and (pair? optim) (>=fx (cadr optim) 1))
+		  (set! decls
+		     (filter (lambda (d::J2SDecl)
+				(with-access::J2SDecl d (usecnt)
+				   (or (>fx usecnt 0)
+				       (and (isa? d J2SDeclInit)
+					    (with-access::J2SDeclInit d (val)
+					       (isa? val J2SSvc))))))
+			decls)))))
+	 (for-each dead-code! nodes)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -83,6 +86,14 @@
    this)
    
 ;*---------------------------------------------------------------------*/
+;*    use ::J2SSvc ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (use-count this::J2SSvc)
+   (with-access::J2SSvc this (params body decl)
+      (use-count body))
+   this)
+   
+;*---------------------------------------------------------------------*/
 ;*    use ::J2SRef ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (use-count this::J2SRef)
@@ -94,13 +105,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SNode ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SNode ctx)
+(define-walk-method (usage this::J2SNode ctx deval)
    (call-default-walker))
    
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SRef ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SRef ctx)
+(define-walk-method (usage this::J2SRef ctx deval)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (usage)
 	 (when ctx
@@ -109,56 +120,66 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    usage ::J2SUnresolvedRef ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (usage this::J2SUnresolvedRef ctx deval)
+   (call-default-walker)
+   (with-access::J2SUnresolvedRef this (id)
+      (when (and (eq? id 'eval) (eq? ctx 'call))
+	 (cell-set! deval #t)))
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    usage ::J2SCall ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SCall ctx)
+(define-walk-method (usage this::J2SCall ctx deval)
    (with-access::J2SCall this (fun args)
-      (usage fun 'call)
-      (for-each (lambda (a) (usage a 'ref)) args))
+      (usage fun 'call deval)
+      (for-each (lambda (a) (usage a 'ref deval)) args))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SAssig ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SAssig ctx)
+(define-walk-method (usage this::J2SAssig ctx deval)
    (with-access::J2SAssig this (lhs rhs)
-      (usage lhs 'assig)
-      (usage rhs 'ref))
+      (usage lhs 'assig deval)
+      (usage rhs 'ref deval))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SAccess ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SAccess ctx)
+(define-walk-method (usage this::J2SAccess ctx deval)
    (with-access::J2SAccess this (obj field)
-      (usage obj 'ref)
-      (usage field 'ref))
+      (usage obj 'ref deval)
+      (usage field 'ref deval))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SNew ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SNew ctx)
+(define-walk-method (usage this::J2SNew ctx deval)
    (with-access::J2SNew this (clazz args)
-      (usage clazz 'new)
-      (for-each (lambda (a) (usage a 'ref)) args))
+      (usage clazz 'new deval)
+      (for-each (lambda (a) (usage a 'ref deval)) args))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SLetBlock ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SLetBlock ctx)
+(define-walk-method (usage this::J2SLetBlock ctx deval)
    (with-access::J2SLetBlock this (decls nodes)
-      (for-each (lambda (d) (usage d 'init)) decls)
-      (for-each (lambda (n) (usage n 'ref)) nodes))
+      (for-each (lambda (d) (usage d 'init deval)) decls)
+      (for-each (lambda (n) (usage n 'ref deval)) nodes))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SDeclInit ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (usage this::J2SDeclInit ctx)
+(define-walk-method (usage this::J2SDeclInit ctx deval)
    (with-access::J2SDeclInit this ((u usage) val)
-      (usage val 'ref)
+      (usage val 'ref deval)
       (set! u (cons 'init u)))
    this)
 

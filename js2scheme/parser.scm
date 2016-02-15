@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Feb  7 09:11:09 2016 (serrano)                */
+;*    Last change :  Thu Feb 11 14:35:58 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -972,9 +972,10 @@
    (define (consume-param!)
       (let* ((token (consume-token! 'ID))
 	     (loc (token-loc token))
-	     (hint (if (eq? (peek-token-type) 'HINT)
-		       (list (cons (token-value (consume-any!)) 100))
-		       '())))
+	     (hint '()))
+;* 	     (hint (if (eq? (peek-token-type) 'HINT)                   */
+;* 		       (list (cons (token-value (consume-any!)) 100))  */
+;* 		       '())))                                          */
 	 (if (eq? (peek-token-type) '=)
 	     ;; a parameter with a default value
 	     (begin

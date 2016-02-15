@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Mon Feb  8 09:39:39 2016 (serrano)                */
+;*    Last change :  Mon Feb 15 10:54:28 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -19,19 +19,16 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_syntax
-	   __js2scheme_utils)
+	   __js2scheme_utils
+	   __js2scheme_type-hint)
 
    (static (class TypeCtx
 	      (fix::bool (default #f))
 	      (fun (default #f))
 	      (env::pair-nil (default '()))
-	      (link (default #f)))
+	      (link (default #f))))
 
-	   (class FunTypeInfo
-	      type))
-   
-   (export j2s-type-stage
-	   j2s-type2-stage))
+   (export j2s-type-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-type-stage ...                                               */
@@ -43,14 +40,22 @@
       (proc j2s-type!)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-type2-stage ...                                              */
+;*    j2s-type! ::obj ...                                              */
 ;*---------------------------------------------------------------------*/
-(define j2s-type2-stage
-   ;; same as above but with a different name for debugging
-   (instantiate::J2SStageProc
-      (name "type2")
-      (comment "transform generator in TYPE")
-      (proc j2s-type!)))
+(define (j2s-type! this args)
+   (when (isa? this J2SProgram)
+      (j2s-type-program! this args)
+      (let loop ((i 1))
+	 (if (j2s-hint! this args)
+	     (begin
+		(j2s-type-program! this args)
+		(j2s-call-hint! this args)
+		(when (>=fx (bigloo-debug) 4)
+		   (fprintf (current-error-port) "\n       ~a:" i))
+		(j2s-type-program! this args)
+		(loop (+fx i 1))
+		this)
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctx->list ...                                                    */
@@ -158,26 +163,25 @@
 	 type)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-type! ::obj ...                                              */
+;*    j2s-type-program! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-type! this args)
-   (when (isa? this J2SProgram)
-      (with-access::J2SProgram this (headers decls nodes)
-	 (let ((ctx (instantiate::TypeCtx)))
-	    (when (>=fx (bigloo-debug) 4)
-	       (display " " (current-error-port)))
-	    (with-access::TypeCtx ctx (fix)
-	       (let loop ((i 1))
-		  (unless fix
-		     (when (>=fx (bigloo-debug) 4)
-			(fprintf (current-error-port) "~a." i)
-			(flush-output-port (current-error-port)))
-		     (set! fix #t)
-		     (for-each (lambda (o) (type o ctx)) headers)
-		     (for-each (lambda (o) (type o ctx)) decls)
-		     (for-each (lambda (o) (type o ctx)) nodes)
-		     (loop (+fx i 1)))))))
-      this))
+(define (j2s-type-program! this::J2SProgram args)
+   (with-access::J2SProgram this (headers decls nodes)
+      (let ((ctx (instantiate::TypeCtx)))
+	 (when (>=fx (bigloo-debug) 4)
+	    (display " " (current-error-port)))
+	 (with-access::TypeCtx ctx (fix)
+	    (let loop ((i 1))
+	       (unless fix
+		  (when (>=fx (bigloo-debug) 4)
+		     (fprintf (current-error-port) "~a." i)
+		     (flush-output-port (current-error-port)))
+		  (set! fix #t)
+		  (for-each (lambda (o) (type o ctx)) headers)
+		  (for-each (lambda (o) (type o ctx)) decls)
+		  (for-each (lambda (o) (type o ctx)) nodes)
+		  (loop (+fx i 1)))))))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SNode ...                                               */
@@ -309,28 +313,22 @@
 			 (env (append envparams env))
 			 (link ctx)
 			 (fun this))))
-	    (type body nctx)))))
+	    (type body nctx)
+	    (ctx-expr-type-set! this ctx 'function)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SReturn ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SReturn ctx)
    (with-access::J2SReturn this (expr)
-      (let ((rettype (type expr ctx)))
-	 (when rettype
+      (let ((rtype (type expr ctx)))
+	 (when rtype
 	    (with-access::TypeCtx ctx (fun)
 	       (when fun
 		  ;; not a top-level form
-		  (with-access::J2SFun fun (%info name)
-		     (if (not (isa? %info FunTypeInfo))
-			 (begin
-			    (unfix! ctx)
-			    (set! %info (instantiate::FunTypeInfo
-					   (type rettype)))
-			    rettype)
-			 (with-access::FunTypeInfo %info (type)
-			    (set! type (merge-type! ctx type rettype))
-			    type)))))))))
+		  (with-access::J2SFun fun (%info name rettype)
+		     (set! rettype (merge-type! ctx rettype rtype))
+		     rettype)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SCall ...                                               */
@@ -338,10 +336,8 @@
 (define-walk-method (type this::J2SCall ctx)
    
    (define (type-fun fun)
-      (with-access::J2SFun fun (%info)
-	 (when (isa? %info FunTypeInfo)
-	    (with-access::FunTypeInfo %info ((ftype type))
-	       (ctx-expr-type-set! this ctx ftype)))))
+      (with-access::J2SFun fun (rettype)
+	 (ctx-expr-type-set! this ctx rettype)))
    
    (with-access::J2SCall this (fun args)
       (call-default-walker)
@@ -360,6 +356,9 @@
 		       (type-fun fun))))
 		(else
 		 #f))))
+	 ((isa? fun J2SHopRef)
+	  (with-access::J2SHopRef fun ((htype type))
+	     (ctx-expr-type-set! this ctx htype)))
 	 (else
 	  #f))))
    
@@ -386,14 +385,22 @@
 		 (ctx-expr-type-set! this ctx 'number))
 		((or (eq? lhstype 'string) (eq? rhstype 'string))
 		 (ctx-expr-type-set! this ctx 'string)))))
-	 ((- * /)
+	 ((- * / %)
 	  (let* ((lhstype (type lhs ctx))
 		 (rhstype (type rhs ctx)))
 	     (ctx-expr-type-set! this ctx 'number)))
-	 ((== === != !== < <= > >= && OR instanceof)
+	 ((== === != !== < <= > >= instanceof)
 	  (let* ((lhstype (type lhs ctx))
 		 (rhstype (type rhs ctx)))
 	     (ctx-expr-type-set! this ctx 'bool)))
+	 ((&&)
+	  (let* ((lhstype (type lhs ctx))
+		 (rhstype (type rhs ctx)))
+	     (ctx-expr-type-set! this ctx rhstype)))
+	 ((OR)
+	  (let* ((lhstype (type lhs ctx))
+		 (rhstype (type rhs ctx)))
+	     (ctx-expr-type-set! this ctx lhstype)))
 	 ((<< >> >>> ^ & BIT_OR)
 	  (let* ((lhstype (type lhs ctx))
 		 (rhstype (type rhs ctx)))
@@ -429,7 +436,7 @@
    (with-access::J2SAccess this (obj field)
       (let ((tyobj (type obj ctx))
 	    (tyfield (type field ctx)))
-	 (when (and (eq? tyobj 'array) (j2s-field-length? field))
+	 (when (and (memq tyobj '(array string)) (j2s-field-length? field))
 	    (ctx-expr-type-set! this ctx 'integer)))))
 
 ;*---------------------------------------------------------------------*/
@@ -442,3 +449,4 @@
 	 (type then ctx)
 	 (type else dupctx)
 	 (ctx-env-type-merge! ctx dupctx))))
+   

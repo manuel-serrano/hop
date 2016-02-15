@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Thu Oct 29 22:20:50 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sun Feb 14 17:04:32 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
 ;*=====================================================================*/
@@ -80,6 +80,7 @@
 	   (class JsDataView)
 	   
 	   (class JsPropertyCache)
+	   (class JsConstructMap)
 	   
 	   (class JsValueDescriptor)
 	   (class JsAccessorDescriptor)

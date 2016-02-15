@@ -31,8 +31,11 @@
  ;; Hop binds a global variable called OBJECT (for HTML)
  "S11.8.6_A2.1_T3.js"
  "S11.8.6_A2.4_T3.js"
+ ;; on purpose failures
+ "S7.4_A2_T2.js"
  ;; regexp incompatibilities
  "S7.8.5_A1.1_T2.js"
+ "S7.8.5_A1.2_T1.js"
  "S7.8.5_A1.4_T1.js"
  "S7.8.5_A1.4_T2.js"
  "S7.8.5_A2.1_T2.js"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Feb  9 10:48:19 2016 (serrano)                */
+;*    Last change :  Mon Feb 15 08:09:43 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -12,7 +12,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __js2scheme_hint
+(module __js2scheme_type-hint
 
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -26,16 +26,8 @@
 	      hinted
 	      types::pair-nil))
 
-   (export j2s-hint-stage))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-hint-stage ...                                               */
-;*---------------------------------------------------------------------*/
-(define j2s-hint-stage
-   (instantiate::J2SStageProc
-      (name "hint")
-      (comment "Type HINT addition")
-      (proc j2s-hint!)))
+   (export (j2s-hint! ::J2SProgram ::obj)
+	   (j2s-call-hint! ::J2SProgram ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint! ...                                                    */
@@ -48,18 +40,31 @@
       ;; then, for each function whose parameters are "hinted", we generate
       ;; an ad-hoc typed version
       (let ((dups (append-map j2s-hint-function* decls)))
-	 (for-each call-hint! decls)
-	 (for-each call-hint! nodes)
 	 (set! decls
 	    (append (filter (lambda (dup::J2SDeclFun)
-			       (with-access::J2SDeclFun dup (usecnt val)
-				  (when (>fx usecnt 0)
-				     (with-access::J2SFun val (body)
-					(set! body
-					   (erase-type! (call-hint! body))))
-				     #t)))
+			       (with-access::J2SDeclFun dup (usecnt val id)
+				  (>fx usecnt 0)))
+;* 				  (when (>fx usecnt 0)                 */
+;* 				     (tprint "ID=" id)                 */
+;* 				     (with-access::J2SFun val (body)   */
+;* 					(set! body                     */
+;* 					   (erase-type! (call-hint! body)))) */
+;* 				     #t)))                             */
 		       dups)
-	       decls))))
+	       decls))
+	 (pair? dups))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-call-hint! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-call-hint! prgm args)
+   (with-access::J2SProgram prgm (decls nodes)
+      ;; for each function whose parameters are "hinted", we generate
+      ;; an ad-hoc typed version
+      (for-each call-hint! decls)
+      (for-each call-hint! nodes)
+      (for-each erase-type! decls)
+      (for-each erase-type! nodes))
    prgm)
 
 ;*---------------------------------------------------------------------*/
@@ -137,10 +142,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SDeclInit types)
    (with-access::J2SDeclInit this (val type hint)
-      (unless type
-	 (let ((ty (j2s-type val)))
-	    (when (symbol? ty)
-	       (j2s-add-hint! this (list ty)))))
+      (let ((ty (j2s-type val)))
+	 (when (symbol? ty)
+	    (j2s-add-hint! this (list ty))))
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
@@ -197,7 +201,7 @@
 		  (when (symbol? ty)
 		     (j2s-add-hint! (car params) (list ty))))
 	       (loop (cdr args) (cdr params))))))
-   
+
    (with-access::J2SCall this (fun args)
       (cond
 	 ((isa? fun J2SFun)
@@ -275,7 +279,7 @@
 	 ((array) 'js-array?)
 	 ((object) 'js-object?)
 	 ((function) 'js-function?)
-	 (else (error "hint" "Unknown hint type" type))))
+	 (else (error "hint" "Unknown hint type predicate" type))))
    
    (define (test-hint-param param)
       (with-access::J2SDecl param (type loc)
@@ -284,6 +288,7 @@
 	    (type 'bool)
 	    (fun (instantiate::J2SHopRef
 		    (loc loc)
+		    (type 'bool)
 		    (id (predicate type))))
 	    (args (list (instantiate::J2SRef
 			   (loc loc)
@@ -315,11 +320,13 @@
 				     (loc loc)
 				     (expr callorig)))))))))
    
-   (with-access::J2SDeclFun this (val id)
+   (with-access::J2SDeclFun this (val id %info)
       (with-access::J2SFun val (params body idthis)
-	 (if (and (pair? params)
+	 (if (and (not (eq? %info 'duplicate))
+		  (not (isa? %info FunHintInfo))
+		  (pair? params)
 		  (every (lambda (p::J2SDecl)
-			    (with-access::J2SDecl p (hint usecnt)
+			    (with-access::J2SDecl p (hint usecnt id)
 			       (and (pair? hint)
 				    (or (pair? (cdr hint))
 					(not (eq? (caar hint) 'obj)))
@@ -335,7 +342,7 @@
 		    (pred (test-hint-params dup newparams))
 		    (callhint (call-hint! (call-hint dup idthis newparams)))
 		    (callorig (call-orig orig idthis newparams)))
-		(set! params newparams)
+		(set! params (map j2sdecl-duplicate-sans-type params))
 		(set! body (dispatch-body body pred callhint callorig))
 		(list dup orig))
 	     '()))))
@@ -350,6 +357,8 @@
       (cond
 	 ((null? l)
 	  t)
+	 ((eq? (caar l) 'obj)
+	  (loop (cdr l) t c))
 	 ((>fx (cdr (car l)) c)
 	  (loop (cdr l) (caar l) (cdar l)))
 	 ((and (=fx (cdr (car l)) c)
@@ -363,7 +372,7 @@
 ;*---------------------------------------------------------------------*/
 (define (fun-orig fun::J2SDeclFun)
    (with-access::J2SDeclFun fun (val id _scmid %info)
-      (with-access::J2SFun val (params body)
+      (with-access::J2SFun val (params body name)
 	 (let ((newdecl (duplicate::J2SDeclFun fun
 			   (id (symbol-append id '$$))
 			   (ronly #t)
@@ -375,6 +384,8 @@
 				       (symbol-append _scmid '$$)
 				       (symbol-append id '$$)))
 			   (val (duplicate::J2SFun val
+				   (name (when (symbol? name)
+					    (symbol-append name '$$)))
 				   (params params)
 				   (body body))))))
 	    newdecl))))
@@ -392,6 +403,20 @@
 	  (key (ast-decl-key))
 	  (hint '())
 	  (type type))))
+
+;*---------------------------------------------------------------------*/
+;*    j2sdecl-duplicate ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2sdecl-duplicate-sans-type p::J2SDecl)
+   (if (isa? p J2SDeclInit)
+       (duplicate::J2SDeclInit p
+	  (key (ast-decl-key))
+	  (hint '())
+	  (type #f))
+       (duplicate::J2SDecl p
+	  (key (ast-decl-key))
+	  (hint '())
+	  (type #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-duplicate ...                                                */
@@ -418,10 +443,13 @@
 			    (binder 'const)
 			    (scope 'none)
 			    (usecnt 1)
+			    (%info 'duplicate)
 			    (_scmid (if _scmid
 					(symbol-append _scmid '$$ typeid)
 					(symbol-append id '$$ typeid)))
 			    (val (duplicate::J2SFun val
+				    (%info #unspecified)
+				    (type #f)
 				    (idthis (if (this? body) idthis #f))
 				    (params newparams)
 				    (body newbody))))))
@@ -482,4 +510,18 @@
    (with-access::J2SExpr this (type)
       (set! type #f)
       (call-default-walker)))
+   
+;*---------------------------------------------------------------------*/
+;*    erase-type! ::J2SFun ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (erase-type! this::J2SFun)
+   (with-access::J2SFun this (rettype)
+      (set! rettype #f)
+      (call-default-walker)))
+   
+;*---------------------------------------------------------------------*/
+;*    erase-type! ::J2SHopRef ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (erase-type! this::J2SHopRef)
+   this)
    

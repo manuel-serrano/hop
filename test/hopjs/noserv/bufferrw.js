@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/bufferrw.js     */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/bufferrw.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Tue Jun 23 10:42:46 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Thu Feb 11 11:05:22 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Extra Nodejs buffer Testing                                      */
 /*=====================================================================*/
@@ -68,7 +68,7 @@ assert.strictEqual( s1.length, 1 );
 assert.strictEqual( s1.charCodeAt( 0 ), 65533 );
 
 var b2 = new Buffer( s1 );
-assert.strictEqual( b2.length, 3 );
+assert.strictEqual( b2.length, 3, "b2.length" );
 assert.strictEqual( b2[ 0 ], 0xef );
 assert.strictEqual( b2[ 1 ], 0xbf );
 assert.strictEqual( b2[ 2 ], 0xbd );

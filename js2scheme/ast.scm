@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Feb  7 12:39:24 2016 (serrano)                */
+;*    Last change :  Sun Feb 14 16:57:25 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -132,6 +132,7 @@
 	      expr::J2SExpr)
 	   
 	   (class J2SFun::J2SExpr
+	      (rettype (default #f))
 	      (idthis read-only (default 'this))
 	      (mode (default #f))
 	      (decl (default #f))
@@ -243,6 +244,7 @@
 	   (final-class J2SOctalNumber::J2SNumber)
 	   (final-class J2SRegExp::J2SLiteralValue
 	      (flags::bstring read-only))
+	   (final-class J2SCmap::J2SLiteralValue)
 
 	   (final-class J2SLiteralCnst::J2SLiteral
 	      (index::long read-only)
@@ -287,7 +289,8 @@
 	   (final-class J2SFunBinding::J2SInit)
 	   
 	   (final-class J2SObjInit::J2SExpr
-	      inits::pair-nil)
+	      inits::pair-nil
+	      (cmap (default #f)))
 	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f))
@@ -1077,7 +1080,9 @@
 ;*    j2s-type ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-type node)
-   (if (isa? node J2SExpr)
+   (cond
+      ((isa? node J2SExpr)
        (with-access::J2SExpr node (type)
-	  type)
-       'obj))
+	  type))
+      (else
+       'obj)))

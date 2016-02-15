@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jan 31 00:18:55 2016 (serrano)                */
+;*    Last change :  Sun Feb 14 20:44:38 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -29,7 +29,13 @@
 	   __hopscript_function
 	   __hopscript_lib)
 
-   (export (js-object-unmap! ::JsObject)
+   (export (make-pcache ::int)
+	   (inline pcache-ref ::vector ::int)
+	   (inline js-object-element-ref ::JsObject ::long)
+
+	   (js-names->cmap::JsConstructMap ::vector)
+	   
+	   (js-object-unmap! ::JsObject)
 	   (js-toname::obj ::obj ::JsGlobalObject)
 	   
 	   (inline js-is-accessor-descriptor?::bool obj)
@@ -102,6 +108,70 @@
 ;*    `(vector-set! ,v ,i ,o))                                         */
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-element-ref ...                                        */
+;*---------------------------------------------------------------------*/
+;* (define-inline (js-object-element-ref obj::JsObject index::long)    */
+;*    (with-access::JsObject obj (elements obj0 obj1 obj2 obj3)        */
+;*       (let ((idx (-fx index 4)))                                    */
+;* 	 (case idx                                                     */
+;* 	    ((-4) obj0)                                                */
+;* 	    ((-3) obj1)                                                */
+;* 	    ((-2) obj2)                                                */
+;* 	    ((-1) obj3)                                                */
+;* 	    (else (vector-ref-ur elements idx))))))                    */
+
+(define-inline (js-object-element-ref obj::JsObject index::long)
+   (with-access::JsObject obj (elements)
+      (vector-ref-ur elements index)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-element-set! ...                                       */
+;*---------------------------------------------------------------------*/
+(define-macro (js-object-element-set! obj index value extendp)
+   `(with-access::JsObject ,obj (elements)
+       ,(if extendp
+	    `(if (>=fx ,index (vector-length elements))
+		 (set! elements (vector-extend elements ,value))
+		 (vector-set-ur! elements ,index ,value))
+	    `(vector-set-ur! elements ,index ,value))))
+;*    (let ((idx (gensym 'idx)))                                       */
+;*       `(let ((,idx (-fx ,index 4)))                                 */
+;* 	  (with-access::JsObject ,obj (elements obj0 obj1 obj2 obj3)   */
+;* 	     (case ,idx                                                */
+;* 		((-4)                                                  */
+;* 		 (set! obj0 ,value))                                   */
+;* 		((-3)                                                  */
+;* 		 (set! obj1 ,value))                                   */
+;* 		((-2)                                                  */
+;* 		 (set! obj2 ,value))                                   */
+;* 		((-1)                                                  */
+;* 		 (set! obj3 ,value))                                   */
+;* 		(else                                                  */
+;* 		 ,(if extendp                                          */
+;* 		      `(if (>=fx ,idx (vector-length elements))        */
+;* 			   (set! elements (vector-extend elements ,value)) */
+;* 			   (vector-set-ur! elements ,idx ,value))      */
+;* 		      `(vector-set-ur! elements ,idx ,value))))))))    */
+
+;*---------------------------------------------------------------------*/
+;*    make-pcache ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (make-pcache len)
+   (let ((pcache ($make-vector-uncollectable len #unspecified)))
+      (let loop ((i 0))
+	 (if (=fx i len)
+	     pcache
+	     (begin
+		(vector-set-ur! pcache i (instantiate::JsPropertyCache))
+		(loop (+fx i 1)))))))
+      
+;*---------------------------------------------------------------------*/
+;*    pcache-ref ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (pcache-ref pcache index)
+   (vector-ref-ur pcache index))
+
+;*---------------------------------------------------------------------*/
 ;*    property-flags ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-macro (property-flags writable enumerable configurable get)
@@ -161,6 +231,26 @@
 (define (cmap-same-transition? cmap::JsConstructMap name::obj flags::int)
    (with-access::JsConstructMap cmap ((t1 transition))
       (and (eq? (car t1) name) (=fx (cdr t1) flags))))
+
+;*---------------------------------------------------------------------*/
+;*    js-names->cmap ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-names->cmap names)
+   (let* ((len (vector-length names))
+	  (descrs ($create-vector len)))
+      (let loop ((i 0))
+	 (if (=fx i len)
+	     (instantiate::JsConstructMap
+		(names names)
+		(descriptors descrs))
+	     (let ((descr (instantiate::JsIndexDescriptor
+			     (name (vector-ref-ur names i))
+			     (index i)
+			     (writable #t)
+			     (enumerable #t)
+			     (configurable #t))))
+		(vector-set-ur! descrs i descr)
+		(loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    property-index-vector ...                                        */
@@ -255,13 +345,12 @@
 	  odesc)
 	 ((isa? odesc JsIndexDescriptor)
 	  (with-access::JsIndexDescriptor odesc (name configurable enumerable writable index)
-	     (with-access::JsObject o (elements)
-		(instantiate::JsValueDescriptor
-		   (name name)
-		   (enumerable enumerable)
-		   (configurable configurable)
-		   (writable writable)
-		   (value (vector-ref-ur elements index))))))
+	     (instantiate::JsValueDescriptor
+		(name name)
+		(enumerable enumerable)
+		(configurable configurable)
+		(writable writable)
+		(value (js-object-element-ref o index)))))
 	 ((isa? odesc JsValueDescriptor)
 	  (error "js-object-unmap!" "Unexpected JsValueDescriptor" odesc))
 	 (else
@@ -354,10 +443,9 @@
 	     (cond
 		((isa? desc JsIndexDescriptor)
 		 (with-access::JsIndexDescriptor desc (writable index)
-		    (with-access::JsObject owner (elements)
-		       ;; 3
-		       (js-put! obj 'value (vector-ref-ur elements index) #f %this)
-		       (js-put! obj 'writable writable #f %this))))
+		    ;; 3
+		    (js-put! obj 'value (js-object-element-ref owner index) #f %this)
+		    (js-put! obj 'writable writable #f %this)))
 		((isa? desc JsValueDescriptor)
 		 (with-access::JsValueDescriptor desc (writable value)
 		    ;; 3
@@ -442,8 +530,7 @@
    (cond
       ((isa? desc JsIndexDescriptor)
        (with-access::JsIndexDescriptor desc (index)
-	  (with-access::JsObject owner (elements)
-	     (vector-ref-ur elements index))))
+	  (js-object-element-ref owner index)))
       ((isa? desc JsValueDescriptor)
        (with-access::JsValueDescriptor desc (value name)
 	  value))
@@ -740,7 +827,7 @@
       (jsobject-find owner name
 	 ;; map search
 	 (lambda (owner i)
-	    (with-access::JsObject owner ((omap cmap) elements)
+	    (with-access::JsObject owner ((omap cmap))
 	       (with-access::JsConstructMap omap (descriptors)
 		  (with-access::JsPropertyCache cache (cmap index)
 		     (let ((descr (vector-ref-ur descriptors i)))
@@ -752,7 +839,7 @@
 			    (begin
 			       (set! cmap omap)
 			       (set! index i)
-			       (vector-ref-ur elements i))))))))
+			       (js-object-element-ref owner i))))))))
 	 ;; property search
 	 (lambda (owner v)
 	    (js-property-value obj owner v %this))
@@ -770,7 +857,7 @@
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-get-name/cache obj
-		  name::obj cache::JsPropertyCache %this::JsGlobalObject)
+	   name::obj cache::JsPropertyCache %this::JsGlobalObject)
    (if (not (isa? obj JsObject))
        (js-get obj name %this)
        (js-object-get-name/cache obj name cache %this)))
@@ -779,13 +866,13 @@
 ;*    js-object-get-name/cache ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-get-name/cache obj::JsObject
-	   name::obj cache::JsPropertyCache %this::JsGlobalObject)
-   (with-access::JsObject obj ((omap cmap) elements __proto__)
+		  name::obj cache::JsPropertyCache %this::JsGlobalObject)
+   (with-access::JsObject obj ((omap cmap))
       (with-access::JsPropertyCache cache (cmap index)
 	 (if (eq? cmap omap)
-	     (vector-ref-ur elements index)
+	     (js-object-element-ref obj index)
 	     (js-get-name/cache-miss obj name cache #f %this)))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ...                                       */
 ;*    -------------------------------------------------------------    */
@@ -793,9 +880,12 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
+;* (define n 0)                                                        */
 (define (js-get-name/cache-miss obj::JsObject name::obj cache::JsPropertyCache throw %this)
+;*    (set! n (+fx n 1))                                               */
+;*    (tprint "CACHE MISS..." n " " name)                              */
    (let loop ((owner obj))
-      (with-access::JsObject owner ((omap cmap) elements __proto__)
+      (with-access::JsObject owner ((omap cmap) __proto__)
 	 (with-access::JsPropertyCache cache (cmap index)
 	    (cond
 	       ((not omap)
@@ -809,7 +899,7 @@
 			  (js-get-lookup obj name cache throw %this)))))
 	       ((eq? cmap omap)
 		;; we got the map
-		(vector-ref-ur elements index))
+		(js-object-element-ref owner index))
 	       ((eq? cmap (cmap-descriptors omap))
 		;; check if we are accessing a prop via a cached accessor
 		(js-property-value obj owner (vector-ref-ur cmap index) %this))
@@ -970,7 +1060,7 @@
 	     (reject "No setter defined"))))
 
    (define (update-mapped-object! obj i)
-      (with-access::JsObject obj (cmap elements extensible)
+      (with-access::JsObject obj (cmap extensible)
 	 (with-access::JsConstructMap cmap (descriptors transition nextmap)
 	    (let ((desc (vector-ref-ur descriptors i)))
 	       (cond
@@ -988,7 +1078,7 @@
 			     (reject "Read-only property")
 			     ;; 8.12.5, step 3,b
 			     (begin
-				(vector-set-ur! elements i value)
+				(js-object-element-set! obj i value #f)
 				value)))))
 		  ((not extensible)
 		   ;; 8.12.9, step 3
@@ -1003,7 +1093,7 @@
 
    (define (extend-mapped-object!)
       ;; 8.12.5, step 6
-      (with-access::JsObject o (elements cmap)
+      (with-access::JsObject o (cmap)
 	 (with-access::JsConstructMap cmap (nextmap names)
 	    (let* ((name (js-toname p %this))
 		   (flags (property-flags #t #t #t #f))
@@ -1024,11 +1114,7 @@
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)))
 	       ;; store in the obj
-	       (if (>=fx index (vector-length elements))
-		   (set! elements (vector-extend elements value))
-		   (vector-set-ur! elements index value))
-	       (if (not (>=fx (vector-length elements) (vector-length names)))
-		   (error "js-put!" "assert not maintained" p))
+	       (js-object-element-set! o index value #t)
 	       value))))
    
    (define (update-properties-object! obj desc)
@@ -1151,7 +1237,7 @@
 
    (define (extend-mapped-object!)
       ;; 8.12.5, step 6
-      (with-access::JsObject o (elements cmap)
+      (with-access::JsObject o (cmap)
 	 (with-access::JsConstructMap cmap (nextmap names descriptors)
 	    (let ((flags (property-flags writable enumerable configurable get))
 		  (index (vector-length names)))
@@ -1160,9 +1246,7 @@
 		   ;; follow the next map 
 		   (with-access::JsConstructMap nextmap (names)
 		      (set! cmap nextmap)
-		      (if (>=fx index (vector-length elements))
-			  (set! elements (vector-extend elements value))
-			  (vector-set-ur! elements index value))
+		      (js-object-element-set! o index value #t)
 		      value))
 		  ((or (and get (not (eq? get (js-undefined))))
 		       (and set (not (eq? set (js-undefined)))))
@@ -1191,8 +1275,7 @@
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)
 		      ;; extending the elements vector is mandatory
-		      (when (>=fx index (vector-length elements))
-			 (set! elements (vector-extend elements value)))
+		      (js-object-element-set! o index value #t)
 		      (js-undefined)))
 		  (else
 		   ;; create a new map with a JsIndexDescriptor
@@ -1207,9 +1290,7 @@
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)
 		      ;; store in the obj
-		      (if (>=fx index (vector-length elements))
-			  (set! elements (vector-extend elements value))
-			  (vector-set-ur! elements index value))
+		      (js-object-element-set! o index value #t)
 		      value)))))))
    
    (define (update-properties-object! obj owndesc)
@@ -1727,7 +1808,8 @@
 		(when (<fx i (vector-length fields))
 		   (proc
 		      (js-string->jsstring
-			 (symbol->string (class-field-name (vector-ref-ur fields i)))))
+			 (symbol->string
+			    (class-field-name (vector-ref-ur fields i)))))
 		   (loop (+fx i 1)))))
 	  (js-for-in jsobj proc %this))))
 

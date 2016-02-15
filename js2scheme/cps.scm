@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Jan 20 15:03:24 2016 (serrano)                */
+;*    Last change :  Thu Feb 11 10:32:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -435,7 +435,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SSeq k pack kbreaks kcontinues ktry)
    
-   (define (pack-seq::J2SSeq this::J2SSeq prev res)
+   (define (pack-seq this::J2SSeq prev res)
       (if (pair? prev)
 	  (set-cdr! prev (list res))
 	  (with-access::J2SSeq this (nodes)
@@ -616,9 +616,9 @@
       (let* ((name (gensym '%kif))
 	     (kfun (J2SFun name '()
 		      (J2SBlock (kcall k (J2SNop))))))
-	 (let ((decl (J2SLetOpt '(call) name kfun)))
-	    (with-access::J2SFun kfun ((fdecl decl))
-	       (set! fdecl decl))
+	 (let ((decl (J2SLetOpt '(call ref) name kfun)))
+;* 	    (with-access::J2SFun kfun ((fdecl decl))                   */
+;* 	       (set! fdecl decl))                                      */
 	    decl)))
    
    (define (make-kont-fun-call loc decl)

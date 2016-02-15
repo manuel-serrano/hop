@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Feb  8 19:31:17 2016 (serrano)                */
+;*    Last change :  Sun Feb 14 12:14:11 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -89,16 +89,18 @@
 	   ;; for the sake of concat performance
 	   (final-class JsStringLiteral
 	      ;; the actual characters (string, tree, list)
-;* 	      weight::long                                             */
 	      left::obj
 	      (right::obj (default #f)))
-;* 	      state::uint8)                                            */
 	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))
 	      (extensible::bool (default #t))
 	      (properties::pair-nil (default '()))
 	      (cmap (default #f))
+;* 	      (obj0 (default (js-undefined)))                          */
+;* 	      (obj1 (default (js-undefined)))                          */
+;* 	      (obj2 (default (js-undefined)))                          */
+;* 	      (obj3 (default (js-undefined)))                          */
 	      (elements::vector (default '#())))
 
 	   (class JsWrapper::JsObject
@@ -126,7 +128,6 @@
 	      (js-number::JsFunction (default (class-nil JsFunction)))
 	      (js-function::JsFunction (default (class-nil JsFunction)))
 	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
-	      (js-::JsFunction (default (class-nil JsFunction)))
 	      (js-math::JsMath (default (class-nil JsMath)))
 	      (js-regexp::JsFunction (default (class-nil JsFunction)))
 	      (js-regexp-prototype::JsRegExp (default (class-nil JsRegExp)))
@@ -196,6 +197,7 @@
 	   
 	   (class JsFunction::JsObject
 	      (name::bstring read-only)
+	      (constructor::obj read-only (default #f))
 	      alloc::procedure
 	      (construct::procedure read-only)
 	      (constrsize::int (default 3))
@@ -261,7 +263,7 @@
 
 	   (class JsGenerator::JsObject
 	      %next)
-	   
+
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
 	   

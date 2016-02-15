@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Feb  5 08:32:10 2016 (serrano)                */
+;*    Last change :  Thu Feb 11 14:22:57 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -747,7 +747,7 @@
       (with-access::hop-service svc (args id)
 	 (cond
 	    ((null? vals)
-	     (js-new0 ctx js-object))
+	     '())
 	    ((and (pair? args) (eq? (car args) #!key))
 	     ;; old dsssl protocol (<=rc7)
 	     args)

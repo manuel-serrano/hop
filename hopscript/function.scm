@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Feb  7 10:26:57 2016 (serrano)                */
+;*    Last change :  Wed Feb 10 15:23:58 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -38,7 +38,7 @@
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
 	      #!key
-	      __proto__ prototype construct alloc
+	      __proto__ prototype constructor construct alloc
 	      (strict 'normal) arity (minlen -1) src rest)))
 
 ;*---------------------------------------------------------------------*/
@@ -201,12 +201,14 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.3.1     */
 ;*---------------------------------------------------------------------*/
 (define (js-make-function %this procedure length name
-	   #!key __proto__ prototype alloc construct (strict 'normal)
+	   #!key __proto__ prototype
+	   constructor alloc construct (strict 'normal)
 	   arity (minlen -1) src rest)
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
-	 (js-raise-type-error %this "not a constructor ~a" name)))
+	 (js-raise-type-error %this (format "~s not a constructor ~~a" name)
+	    name)))
 
    (define (get-source this::JsFunction)
       (with-access::JsFunction this (src)
@@ -232,7 +234,9 @@
 				  (construct (lambda (_) #unspecified))
 				  (else js-not-a-constructor)))
 			(construct constr)
-			(constrmap (when construct (instantiate::JsConstructMap))))))
+			(constructor constructor)
+			(constrmap (when (or constructor construct)
+				      (instantiate::JsConstructMap))))))
 	    (cond
 	       (prototype
 		(when (isa? prototype JsObject)

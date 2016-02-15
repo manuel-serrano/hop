@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Feb  7 06:55:47 2016 (serrano)                */
+;*    Last change :  Mon Feb 15 09:46:49 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -637,7 +637,7 @@
 					v)))
 			    (js-put! mod 'exports obj #f %this)
 			    mod)))
-		   (let ((hopscript (loadso-or-compile filename lang))
+		   (let ((hopscript (nodejs-compile filename lang))
 			 (this (js-new0 %this js-object))
 			 (scope (nodejs-new-scope-object %this))
 			 (mod (nodejs-module (if js-main filename ".")
@@ -743,23 +743,12 @@
 	 (js-put! mod 'exports json #f %this)
 	 mod))
    
-;*    (define (load-wiki filename)                                     */
-;*       (with-access::JsGlobalObject %this (js-object)                */
-;* 	 (let ((scope (js-new0 %this js-object)))                      */
-;* 	    (js-put! scope 'module %module #f %this)                   */
-;* 	    (wiki-file->hop filename                                   */
-;* 	       :syntax (instantiate::wiki-syntax                       */
-;* 			  (extension (lambda (in syntax charset)       */
-;* 					(%js-eval in 'eval %this %this scope)))))))) */
-   
    (define (load-module path worker %this %module)
       (cond
 	 ((core-module? path)
 	  (nodejs-core-module path worker %this))
 	 ((string-suffix? ".json" path)
 	  (load-json path))
-;* 		((string-suffix? ".wiki" path)                      */
-;* 		 (load-wiki path))                                  */
 	 (else
 	  (let ((mod (nodejs-load path worker lang)))
 	     (unless (js-get mod 'parent %this)
@@ -964,7 +953,7 @@
 	     (dir (dirname filename)))
 	 (trace-item "name=" name)
 	 (trace-item "dir=" dir)
-	 (trace-item "path=" (let ((paths (js-get mod 'paths %this)))
+	 (trace-item "paths=" (let ((paths (js-get mod 'paths %this)))
 				(if (isa? paths JsArray)
 				    (jsarray->vector paths %this)
 				    paths)))

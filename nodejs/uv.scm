@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Feb  5 08:22:10 2016 (serrano)                */
+;*    Last change :  Sat Feb 13 09:10:58 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -76,6 +76,7 @@
 	   (nodejs-timer-stop ::WorkerHopThread ::obj)
 	   (nodejs-timer-unref ::WorkerHopThread ::obj)
 	   (nodejs-hrtime::uint64)
+	   (nodejs-uptime::uint64 ::WorkerHopThread)
 
 	   (nodejs-make-fs-event ::WorkerHopThread)
 	   (nodejs-fs-event-start ::obj ::procedure ::bstring)
@@ -629,6 +630,14 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-hrtime::uint64)
    (uv-hrtime))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-uptime ...                                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-uptime::uint64 %worker)
+   (let ((loop (worker-loop %worker)))
+      (uv-update-time loop)
+      (uv-now loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-make-fs-event ...                                         */
