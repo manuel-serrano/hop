@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Mon Feb 15 10:54:28 2016 (serrano)                */
+;*    Last change :  Tue Feb 16 10:39:59 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -198,6 +198,12 @@
       (ctx-expr-type-set! this ctx (if (fixnum? val) 'integer 'number))))
 
 ;*---------------------------------------------------------------------*/
+;*    type ::J2SBool ...                                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type this::J2SBool ctx)
+   (ctx-expr-type-set! this ctx 'bool))
+
+;*---------------------------------------------------------------------*/
 ;*    type ::J2SString ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SString ctx)
@@ -315,6 +321,24 @@
 			 (fun this))))
 	    (type body nctx)
 	    (ctx-expr-type-set! this ctx 'function)))))
+
+;*---------------------------------------------------------------------*/
+;*    type ::J2SKont ...                                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type this::J2SKont ctx)
+   (with-access::J2SKont this (body param exn)
+      (with-access::TypeCtx ctx (env)
+	 (let* ((envparams (filter-map (lambda (p)
+					  (with-access::J2SDecl p (type)
+					     (when type
+						(cons p type))))
+			      (list param exn)))
+		(nctx (instantiate::TypeCtx
+			 (env (append envparams env))
+			 (link ctx)
+			 (fun this))))
+	    (type body nctx)
+	    (ctx-expr-type-set! this ctx 'kont)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SReturn ...                                             */

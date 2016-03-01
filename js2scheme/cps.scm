@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu Feb 11 10:32:50 2016 (serrano)                */
+;*    Last change :  Tue Feb 16 12:37:27 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -368,7 +368,7 @@
    
    (define (make-yield-kont k loc)
       (let* ((arg (J2SParam '(call ref) (gensym '%arg)))
-	     (exn (J2SParam '(ref) (gensym '%exn)))
+	     (exn (J2SParam '(ref) (gensym '%exn) :type 'bool))
 	     (body (kcall k (J2SRef arg)))
 	     (cont (J2SIf (J2SBinary '=== (J2SRef exn) (J2SBool #t))
 		      (J2SThrow (J2SRef arg))
@@ -397,13 +397,13 @@
 			  (if ktry
 			      (%J2STail
 				 (J2SCall (J2SRef ktry) (J2SNumber 1) kexpr))
-			      (J2SReturnYield kexpr #t #f)))
+			      (J2SReturnYield kexpr (J2SUndefined) #f)))
 		this k)
 	     pack kbreaks kcontinues ktry)
 	  (if ktry
 	      (%J2STail
 		 (J2SCall (J2SRef ktry) (J2SNumber 1) (cps-fun! expr)))
-	      (J2SReturnYield (cps-fun! expr) #t #f)))))
+	      (J2SReturnYield (cps-fun! expr) (J2SUndefined) #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::%J2STail ...                                               */
@@ -616,7 +616,7 @@
       (let* ((name (gensym '%kif))
 	     (kfun (J2SFun name '()
 		      (J2SBlock (kcall k (J2SNop))))))
-	 (let ((decl (J2SLetOpt '(call ref) name kfun)))
+	 (let ((decl (J2SLetOpt '(call) name kfun)))
 ;* 	    (with-access::J2SFun kfun ((fdecl decl))                   */
 ;* 	       (set! fdecl decl))                                      */
 	    decl)))
@@ -1068,7 +1068,7 @@
 	 (J2SIf (J2SBinary '=== (J2SRef paramt) (J2SNumber 0))
 	    (J2SNop)
 	    (J2SIf (J2SBinary '=== (J2SRef paramt) (J2SNumber 1))
-	       (J2SReturnYield (J2SRef paramf) #t #f)
+	       (J2SReturnYield (J2SRef paramf) (J2SUndefined) #f)
 	       (J2SThrow (J2SRef paramf))))))
 
    (define (SeqTry loc body declf)

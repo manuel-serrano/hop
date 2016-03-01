@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_fs.scm                    */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/_fs.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Mon Jun  8 07:29:15 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Thu Feb 25 20:32:53 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -164,7 +164,7 @@
    (define (lchmod this path mod cb)
       (nodejs-lchmod %worker %this process path mod cb))
    
-   (define (readdir this jspath::JsStringLiteral cb)
+   (define (readdir this jspath cb)
       (let* ((path (js-jsstring->string jspath))
 	     (l (directory->list path)))
 	 (if (and (null? l) (not (directory? path)))

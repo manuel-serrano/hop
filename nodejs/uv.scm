@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Feb 13 09:10:58 2016 (serrano)                */
+;*    Last change :  Mon Feb 29 18:57:53 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -60,7 +60,7 @@
 	   (!js-callback5 ::obj ::WorkerHopThread ::JsGlobalObject ::JsFunction ::obj ::obj ::obj ::obj ::obj ::obj)
 
 	   (nodejs-uv-version::bstring)
-	   (nodejs-err-name::JsStringLiteral ::int)
+	   (nodejs-err-name ::int)
 	   (nodejs-process-title-init!)
 	   (nodejs-get-process-title::bstring)
 	   (nodejs-set-process-title! ::bstring)
@@ -107,36 +107,36 @@
 
 ;* 	   (nodejs-need-tick-callback ::WorkerHopThread ::JsGlobalObject ::JsObject) */
 	   
-	   (nodejs-rename-file ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::JsStringLiteral ::obj)
+	   (nodejs-rename-file ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
 	   (nodejs-ftruncate ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj)
-	   (nodejs-truncate ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::obj)
+	   (nodejs-truncate ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
 	   (nodejs-fchown ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::int ::obj)
-	   (nodejs-chown ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::int ::obj)
-	   (nodejs-lchown ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::int ::obj)
+	   (nodejs-chown ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::int ::obj)
+	   (nodejs-lchown ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::int ::obj)
 	   (nodejs-fchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::int ::obj)
-	   (nodejs-chmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::obj)
-	   (nodejs-lchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::obj)
-	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj ::obj)
+	   (nodejs-chmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
+	   (nodejs-lchmod ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
+	   (nodejs-stat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
 	   (nodejs-fstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj)
-	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj ::obj)
-	   (nodejs-link ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::JsStringLiteral ::obj)
-	   (nodejs-symlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::JsStringLiteral ::obj)
-	   (nodejs-readlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj)
-	   (nodejs-unlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj)
-	   (nodejs-rmdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj)
+	   (nodejs-lstat ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
+	   (nodejs-link ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
+	   (nodejs-symlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj)
+	   (nodejs-readlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
+	   (nodejs-unlink ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
+	   (nodejs-rmdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj)
 	   (nodejs-fdatasync ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
-	   (nodejs-mkdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::obj)
-	   (nodejs-open ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::long ::long ::obj)
-	   (nodejs-utimes ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::obj ::obj ::obj)
+	   (nodejs-mkdir ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::obj)
+	   (nodejs-open ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::long ::long ::obj)
+	   (nodejs-utimes ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::obj ::obj)
 	   (nodejs-futimes ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::obj ::obj)
 	   (nodejs-fsync ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
 	   (nodejs-write ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::obj ::obj)
 	   (nodejs-read ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj ::long ::long ::obj ::obj)
 	   (nodejs-fs-close ::WorkerHopThread ::JsGlobalObject ::JsObject ::int ::obj)
 
-	   (nodejs-getaddrinfo ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int)
-	   (nodejs-query ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsStringLiteral ::int ::JsObject)
-	   (nodejs-isip ::JsStringLiteral)
+	   (nodejs-getaddrinfo ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int)
+	   (nodejs-query ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::int ::JsObject)
+	   (nodejs-isip ::obj)
 
 	   (nodejs-istty ::WorkerHopThread ::JsGlobalObject ::obj)
 	   (nodejs-guess-handle-type ::WorkerHopThread ::JsGlobalObject ::obj)
@@ -144,14 +144,14 @@
 	   (nodejs-tcp-handle ::WorkerHopThread)
 	   (nodejs-stream-write-queue-size::long ::obj)
 	   (nodejs-stream-fd::long ::WorkerHopThread ::obj)
-	   (nodejs-tcp-connect ::WorkerHopThread ::JsGlobalObject ::obj ::JsStringLiteral ::int ::int ::procedure)
+	   (nodejs-tcp-connect ::WorkerHopThread ::JsGlobalObject ::obj ::obj ::int ::int ::procedure)
 	   (nodejs-tcp-nodelay ::obj ::bool)
 	   (nodejs-tcp-keepalive ::obj ::bool ::long)
 	   (nodejs-tcp-simultaneous-accepts ::obj ::bool)
 	   (nodejs-tcp-getsockname ::JsGlobalObject ::obj)
 	   (nodejs-tcp-getpeername ::JsGlobalObject ::obj)
 	   (nodejs-tcp-open ::WorkerHopThread ::JsGlobalObject ::obj ::int)
-	   (nodejs-tcp-bind ::JsGlobalObject ::JsObject ::obj ::JsStringLiteral ::int ::int)
+	   (nodejs-tcp-bind ::JsGlobalObject ::JsObject ::obj ::obj ::int ::int)
 	   (nodejs-tcp-listen ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::int ::procedure)
 
 
@@ -160,7 +160,7 @@
 	   (nodejs-tty-get-window-size ::WorkerHopThread ::JsGlobalObject ::obj)
 	   
 	   (nodejs-udp-handle ::WorkerHopThread)
-	   (nodejs-udp-bind ::JsGlobalObject ::JsObject ::obj ::JsStringLiteral ::int ::int ::int)
+	   (nodejs-udp-bind ::JsGlobalObject ::JsObject ::obj ::obj ::int ::int ::int)
 	   (nodejs-udp-send ::WorkerHopThread ::JsGlobalObject ::obj ::bstring ::long ::long ::long ::bstring ::int ::procedure)
 	   (nodejs-udp-recv-start ::WorkerHopThread ::JsGlobalObject ::obj ::procedure ::obj)
 	   (nodejs-udp-recv-stop ::obj)
@@ -184,8 +184,8 @@
 	   (nodejs-pipe-ipc?::bool ::obj)
 	   (nodejs-pipe-accept::obj ::WorkerHopThread ::JsGlobalObject ::obj ::obj)
 	   (nodejs-pipe-open ::WorkerHopThread ::JsGlobalObject ::obj ::int)
-	   (nodejs-pipe-bind ::JsGlobalObject ::JsObject ::obj ::JsStringLiteral)
-	   (nodejs-pipe-connect ::WorkerHopThread ::JsGlobalObject ::obj ::JsStringLiteral ::procedure)
+	   (nodejs-pipe-bind ::JsGlobalObject ::JsObject ::obj ::obj)
+	   (nodejs-pipe-connect ::WorkerHopThread ::JsGlobalObject ::obj ::obj ::procedure)
 	   (nodejs-pipe-listen ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::int)
 	   ))
 
@@ -303,7 +303,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-err-name ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-err-name::JsStringLiteral errno)
+(define (nodejs-err-name::obj errno)
    (js-string->jsstring (uv-err-name errno)))
 
 ;*---------------------------------------------------------------------*/
@@ -489,11 +489,11 @@
 			 (uv-ref async)
 			 (uv-async-send async))
 		      ;; push the action to be executed (with a debug name)
-		      (set! actions (cons act actions))))
-	       ;; the loop is not started yet (this might happend when
-	       ;; a master send a message (js-worker-post-master-message)
-	       ;; before the slave is fully initialized
-	       (set! tqueue (append (cons act tqueue))))))))
+		      (set! actions (cons act actions)))
+		   ;; the loop is not started yet (this might happend when
+		   ;; a master send a message (js-worker-post-master-message)
+		   ;; before the slave is fully initialized
+		   (set! tqueue (append (cons act tqueue)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */
@@ -1911,7 +1911,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-process-spawn %worker %this %process process options)
    
-   (define (signal->string::JsStringLiteral sig)
+   (define (signal->string sig)
       (cond
 	 ((=fx sig sighup) (js-string->jsstring "SIGHUP"))
 	 ((=fx sig sigfpe) (js-string->jsstring "SIGFPE"))

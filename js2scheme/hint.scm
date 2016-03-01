@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Feb 15 08:09:43 2016 (serrano)                */
+;*    Last change :  Sat Feb 27 07:10:02 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -20,6 +20,7 @@
 	   __js2scheme_stage
 	   __js2scheme_syntax
 	   __js2scheme_utils
+	   __js2scheme_use
 	   __js2scheme_alpha)
 
    (static (class FunHintInfo
@@ -44,12 +45,6 @@
 	    (append (filter (lambda (dup::J2SDeclFun)
 			       (with-access::J2SDeclFun dup (usecnt val id)
 				  (>fx usecnt 0)))
-;* 				  (when (>fx usecnt 0)                 */
-;* 				     (tprint "ID=" id)                 */
-;* 				     (with-access::J2SFun val (body)   */
-;* 					(set! body                     */
-;* 					   (erase-type! (call-hint! body)))) */
-;* 				     #t)))                             */
 		       dups)
 	       decls))
 	 (pair? dups))))
@@ -371,19 +366,19 @@
 ;*    fun-orig ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (fun-orig fun::J2SDeclFun)
-   (with-access::J2SDeclFun fun (val id _scmid %info)
-      (with-access::J2SFun val (params body name)
+   (with-access::J2SDeclFun fun (val id %info)
+      (with-access::J2SFun val (params body name generator)
 	 (let ((newdecl (duplicate::J2SDeclFun fun
+			   (parent fun)
 			   (id (symbol-append id '$$))
 			   (ronly #t)
 			   (writable #f)
 			   (binder 'const)
 			   (scope 'none)
 			   (usecnt 1)
-			   (_scmid (if _scmid
-				       (symbol-append _scmid '$$)
-				       (symbol-append id '$$)))
 			   (val (duplicate::J2SFun val
+				   (generator #f)
+				   (idgen generator)
 				   (name (when (symbol? name)
 					    (symbol-append name '$$)))
 				   (params params)
@@ -405,7 +400,7 @@
 	  (type type))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2sdecl-duplicate ...                                            */
+;*    j2sdecl-duplicate-sans-type ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2sdecl-duplicate-sans-type p::J2SDecl)
    (if (isa? p J2SDeclInit)
@@ -422,8 +417,8 @@
 ;*    fun-duplicate ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (fun-duplicate fun::J2SDeclFun)
-   (with-access::J2SDeclFun fun (val id _scmid %info)
-      (with-access::J2SFun val (params body idthis)
+   (with-access::J2SDeclFun fun (val id %info)
+      (with-access::J2SFun val (params body idthis generator)
 	 (let* ((types (map (lambda (p)
 			       (with-access::J2SDecl p (hint)
 				  (best-hint-type hint)))
@@ -437,6 +432,7 @@
 				    types)))))
 		(newbody (j2s-alpha body params newparams))
 		(newdecl (duplicate::J2SDeclFun fun
+			    (parent fun)
 			    (id (symbol-append id '$$ typeid))
 			    (ronly #t)
 			    (writable #f)
@@ -444,15 +440,15 @@
 			    (scope 'none)
 			    (usecnt 1)
 			    (%info 'duplicate)
-			    (_scmid (if _scmid
-					(symbol-append _scmid '$$ typeid)
-					(symbol-append id '$$ typeid)))
 			    (val (duplicate::J2SFun val
+				    (generator #f)
+				    (idgen generator)
 				    (%info #unspecified)
 				    (type #f)
 				    (idthis (if (this? body) idthis #f))
 				    (params newparams)
 				    (body newbody))))))
+	    (use-count newbody +1)
 	    (set! %info
 	       (instantiate::FunHintInfo
 		  (hinted newdecl)
@@ -474,28 +470,37 @@
       (let ((t (j2s-type e)))
 	 (if (eq? t 'integer) 'number t)))
    
+   (define (fun-hint-info fun)
+      (when (isa? fun J2SRef)
+	 (with-access::J2SRef fun (decl)
+	    (when (isa? decl J2SDeclFun)
+	       (with-access::J2SDeclFun decl (val %info)
+		  (with-access::J2SFun val (generator)
+		     (unless generator
+			(when (isa? %info FunHintInfo)
+			   %info))))))))
+   
    (with-access::J2SCall this (fun args (callthis this))
       (set! args (map! call-hint! args))
-      (if (isa? fun J2SRef)
-	  (with-access::J2SRef fun (decl)
-	     (with-access::J2SDecl decl (%info)
-		(if (isa? %info FunHintInfo)
-		    (with-access::FunHintInfo %info (hinted types)
-		       (if (equal? (map normalize-type args) types)
-			   (with-access::J2SDeclFun hinted (val)
-			      (with-access::J2SFun val (idthis)
-				 ;; adjust the usecnt count
-				 (with-access::J2SDecl hinted (usecnt)
-				    (set! usecnt (+fx usecnt 1)))
-				 (with-access::J2SDecl decl (usecnt)
-				    (set! usecnt (-fx usecnt 1)))
-				 (duplicate::J2SCall this
-				    (this (when idthis callthis))
-				    (fun (duplicate::J2SRef fun
-					    (decl hinted))))))
-			   this))
-		    this)))
-	  this)))
+      (let ((%info (fun-hint-info fun)))
+	 (if %info
+	     (with-access::J2SRef fun (decl)
+		(with-access::FunHintInfo %info (hinted types)
+		   (with-access::J2SDeclFun hinted (val)
+		      (with-access::J2SFun val (generator)
+			 (if (equal? (map normalize-type args) types)
+			     (with-access::J2SFun val (idthis)
+				;; adjust the usecnt count
+				(with-access::J2SDecl hinted (usecnt)
+				   (set! usecnt (+fx usecnt 1)))
+				(with-access::J2SDecl decl (usecnt)
+				   (set! usecnt (-fx usecnt 1)))
+				(duplicate::J2SCall this
+				   (this (when idthis callthis))
+				   (fun (duplicate::J2SRef fun
+					   (decl hinted)))))
+			     this)))))
+	     this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    erase-type! ::J2SNode ...                                        */
@@ -508,7 +513,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (erase-type! this::J2SExpr)
    (with-access::J2SExpr this (type)
-      (set! type #f)
+      (when (eq? type 'obj) (set! type #f))
       (call-default-walker)))
    
 ;*---------------------------------------------------------------------*/
@@ -516,7 +521,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (erase-type! this::J2SFun)
    (with-access::J2SFun this (rettype)
-      (set! rettype #f)
+      (when (eq? rettype 'obj) (set! rettype #f))
       (call-default-walker)))
    
 ;*---------------------------------------------------------------------*/

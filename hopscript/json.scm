@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/json.scm                */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/json.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Sep 30 09:23:55 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Thu Feb 25 20:29:51 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -153,7 +153,7 @@
 			     (else
 			      (loop (+fx i 1) (+fx n 1)))))))))))
       
-      (define (string-quote::JsStringLiteral str::bstring)
+      (define (string-quote::obj str::bstring)
 	 (let* ((len (string-length str))
 		(count (string-count str)))
 	    (if (=fx len count)
@@ -241,8 +241,7 @@
       
       (define gap "")
       
-      (define (lst::JsStringLiteral holder value mind
-		 opar::bstring cpar::bstring proc)
+      (define (lst::obj holder value mind opar::bstring cpar::bstring proc)
 	 (let ((len (js-get value 'length %this)))
 	    (js-string->jsstring 
 	       (if (= len 0)

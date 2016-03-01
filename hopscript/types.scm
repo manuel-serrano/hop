@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Feb 14 12:14:11 2016 (serrano)                */
+;*    Last change :  Thu Feb 25 20:42:10 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -75,8 +75,8 @@
 	   
 	   (class JsPropertyCache
 	      (cmap::obj (default #unspecified))
-	      (name::obj (default '||))
-	      (index::long (default -1)))
+	      (index::long (default -1))
+	      (name::obj (default '||)))
 	   
 	   (class JsConstructMap
 	      (transition::pair (default (cons #f #f)))
@@ -97,10 +97,6 @@
 	      (extensible::bool (default #t))
 	      (properties::pair-nil (default '()))
 	      (cmap (default #f))
-;* 	      (obj0 (default (js-undefined)))                          */
-;* 	      (obj1 (default (js-undefined)))                          */
-;* 	      (obj2 (default (js-undefined)))                          */
-;* 	      (obj3 (default (js-undefined)))                          */
 	      (elements::vector (default '#())))
 
 	   (class JsWrapper::JsObject
@@ -190,7 +186,7 @@
 	      vec::vector)
 
 	   (class JsString::JsObject
-	      val::JsStringLiteral)
+	      val::obj)
 
 	   (class JsSymbol::JsObject
 	      val::bstring)
@@ -237,7 +233,7 @@
 	      (val::bool (default #t)))
 	   
 	   (class JsError::JsObject
-	      (name::JsStringLiteral (default (js-string->jsstring "Error")))
+	      (name (default (js-string->jsstring "Error")))
 	      msg
 	      (stack (default #f))
 	      (fname (default #f))
@@ -271,7 +267,7 @@
 	   (inline js-null)
 	   (js-absent)
 
-	   (generic js-typeof::JsStringLiteral obj)
+	   (generic js-typeof obj)
 
 	   (generic js-arraybuffer-length ::JsArrayBuffer)
 	   (generic js-arraybuffer-ref ::JsArrayBuffer ::int)

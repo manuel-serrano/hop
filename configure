@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Feb  7 06:52:07 2016 (serrano)                */
+#*    Last change :  Wed Feb 17 09:42:42 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1336,6 +1336,16 @@ cat etc/hopscript.init.in \
           -e "s|@BRANCH@|$branch|" \
     >> $init
 echo "" >> $init
+
+echo "(cond-expand" >> $init
+echo "   (bigloo-compile" >> $init
+echo "" >> $init
+cat hopscript/property_expd.sch >> $init
+echo "" >> $init
+cat hopscript/expanders.sch >> $init
+echo "" >> $init
+echo "(hopscript-install-expanders!)" >> $init
+echo "   ))" >> $init
 chmod a-w $init
 
 # lib/nodejs.init

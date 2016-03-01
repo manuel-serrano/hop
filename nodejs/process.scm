@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/process.scm                */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/process.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Tue Feb  9 16:16:06 2016 (serrano)                */
+;*    Last change :  Sat Feb 27 07:18:02 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -230,6 +230,7 @@
 (define (new-process-object %worker::WorkerHopThread %this)
    (with-access::JsGlobalObject %this (js-object)
       (let ((proc (instantiate::JsProcess
+		     (cmap (instantiate::JsConstructMap))
 		     (__proto__ (js-new %this js-object)))))
 
 	 (define (not-implemented name)

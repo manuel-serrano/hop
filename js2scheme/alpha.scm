@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Mon Feb  8 09:03:32 2016 (serrano)                */
+;*    Last change :  Tue Feb 16 10:50:48 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -190,7 +190,62 @@
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
 		(duplicate::J2SRef this
-		   (type #f)
+;* 		   (type #f)                                           */
 		   (decl new)))
 	     (duplicate::J2SRef this
-		(type #f))))))
+;* 		(type #f)                                              */
+		)))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SFun ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SFun)
+   (with-access::J2SFun this (params body)
+      (let ((nparams (map j2sdecl-duplicate params)))
+	 (duplicate::J2SFun this
+	    (params nparams)
+	    (body (j2s-alpha body params nparams))))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SSvc ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SSvc)
+   (with-access::J2SSvc this (params body init)
+      (let ((nparams (map j2sdecl-duplicate params)))
+	 (set! init (alpha init))
+	 (duplicate::J2SSvc this
+	    (params nparams)
+	    (body (j2s-alpha body params nparams))))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SArrow ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SArrow)
+   (with-access::J2SArrow this (params body)
+      (let ((nparams (map j2sdecl-duplicate params)))
+	 (duplicate::J2SArrow this
+	    (params nparams)
+	    (body (j2s-alpha body params nparams))))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SKont ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SKont)
+   (with-access::J2SKont this (param exn body)
+      (let ((nparam (j2sdecl-duplicate param))
+	    (nexn (j2sdecl-duplicate exn)))
+	 (duplicate::J2SKont this
+	    (param nparam)
+	    (exn nexn)
+	    (body (j2s-alpha body (list param exn) (list nparam nexn)))))))
+	    
+;*---------------------------------------------------------------------*/
+;*    j2sdecl-duplicate ...                                            */
+;*---------------------------------------------------------------------*/
+(define (j2sdecl-duplicate p::J2SDecl)
+   (if (isa? p J2SDeclInit)
+       (duplicate::J2SDeclInit p
+	  (key (ast-decl-key)))
+       (duplicate::J2SDecl p
+	  (key (ast-decl-key)))))
+

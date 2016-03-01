@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Feb  9 10:51:52 2016 (serrano)                */
+;*    Last change :  Sat Feb 27 07:56:54 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -213,7 +213,7 @@
 ;*    %js-string ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (%js-string %this)
-   (lambda::JsStringLiteral (this . args)
+   (lambda (this . args)
       (if (null? args)
 	  (js-string->jsstring "")
 	  (js-string->jsstring (js-tostring (car args) %this)))))
@@ -245,7 +245,7 @@
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.2
-   (define (tostring::JsStringLiteral this)
+   (define (tostring this)
       (if (isa? this JsString)
 	  (with-access::JsString this (val) val)
 	  (js-raise-type-error %this "argument not a string ~a" (typeof this))))
@@ -256,7 +256,7 @@
    
    ;; valueOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.3
-   (define (valueof::JsStringLiteral this)
+   (define (valueof this)
       (if (isa? this JsString)
 	  (with-access::JsString this (val) val)
 	  (js-raise-type-error %this "argument not a string ~a" this)))
@@ -267,7 +267,7 @@
    
    ;; charAt
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.4
-   (define (charat::JsStringLiteral this index)
+   (define (charat this index)
       (let* ((val (js-tostring (js-cast-string %this this) %this))
 	     (pos (js-tointeger index %this))
 	     (fxpos (->fixnum pos)))
@@ -294,7 +294,7 @@
    
    ;; concat
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.6
-   (define (concat::JsStringLiteral this . rest)
+   (define (concat this . rest)
       (let ((left (js-tojsstring (js-cast-string %this this) %this)))
 	 (match-case rest
 	    (()
@@ -849,7 +849,7 @@
    
    ;; substring
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.15
-   (define (js-substring::JsStringLiteral this::obj start end)
+   (define (js-substring this::obj start end)
       (let* ((s (js-tostring (js-cast-string %this this) %this))
 	     (len (utf8-string-length s))
 	     (intstart (js-tointeger start %this))
@@ -866,7 +866,7 @@
    
    ;; toLowerCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.16
-   (define (tolowercase::JsStringLiteral this::obj)
+   (define (tolowercase this::obj)
       (let ((s (js-tostring (js-cast-string %this this) %this)))
 	 (js-string->jsstring
 	    (ucs2-string->utf8-string (ucs2-string-downcase (utf8-string->ucs2-string s))))))
@@ -877,7 +877,7 @@
    
    ;; toLocaleLowerCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.17
-   (define (tolocalelowercase::JsStringLiteral this::obj)
+   (define (tolocalelowercase this::obj)
       (let ((s (js-tostring (js-cast-string %this this) %this)))
 	 (js-string->jsstring
 	    (utf8-string-locale-downcase s))))
@@ -887,7 +887,7 @@
    
    ;; toUpperCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.18
-   (define (touppercase::JsStringLiteral this::obj)
+   (define (touppercase this::obj)
       (let ((s (js-tostring (js-cast-string %this this) %this)))
 	 (js-string->jsstring
 	    (ucs2-string->utf8-string (ucs2-string-upcase (utf8-string->ucs2-string s))))))
@@ -898,7 +898,7 @@
    
    ;; toLocaleUpperCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.19
-   (define (tolocaleuppercase::JsStringLiteral this::obj)
+   (define (tolocaleuppercase this::obj)
       (let ((s (js-tostring (js-cast-string %this this) %this)))
 	 (js-string->jsstring
 	    (utf8-string-locale-upcase s))))
@@ -909,7 +909,7 @@
    
    ;; trim
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.20
-   (define (trim::JsStringLiteral this::obj)
+   (define (trim this::obj)
       (js-string->jsstring
 	 (trim-whitespaces+ (js-tostring (js-cast-string %this this) %this)
 	    :left #t :right #t)))
@@ -919,7 +919,7 @@
    
    ;; substr
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.3
-   (define (substr::JsStringLiteral this::obj start length)
+   (define (substr this::obj start length)
       (let* ((r1 (js-tostring this %this))
 	     (r2 (js-tointeger start %this))
 	     (r3 (if (eq? length (js-undefined))

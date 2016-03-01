@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Oct 29 21:13:41 2015 (serrano)                */
+#*    Last change :  Wed Feb 17 09:42:20 2016 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -46,20 +46,23 @@ _OBJECTS = types rts object function string number regexp boolean \
   property websocket pair arraybuffer arraybufferview stringliteral dom \
   symbol promise generator
 
-OBJECTS = $(_OBJECTS:%=o/%.o)
+_C_OBJECTS = _bglhopscript
+
+OBJECTS = $(_OBJECTS:%=o/%.o) $(_C_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o
 
 BGL_CLASSES = $(_OBJECTS:%=$(CLASS_DIR)/%.class)
 BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
-SOURCES = $(_OBJECTS:%=%.scm)
+SOURCES = $(_OBJECTS:%=%.scm) $(_C_OBJECTS:%=%.c)
 
-INCLUDES = stringliteral.sch
+INCLUDES = stringliteral.sch property_expd.sch property.sch expanders.sch
+C_INCLUDES = bglhopscript.h
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-POPULATION = $(SOURCES) $(INCLUDES) make_lib.scm Makefile
+POPULATION = $(SOURCES) $(INCLUDES) $(C_INCLUDES) make_lib.scm Makefile
 
 include ../etc/Makefile.library
 
@@ -95,8 +98,16 @@ getsources:
 	@ echo $(SOURCES)
 
 #*---------------------------------------------------------------------*/
+#*    bglhopscript.h                                                   */
+#*---------------------------------------------------------------------*/
+bglhopscript.h: types.scm
+	$(BIGLOO) $(EFLAGS) $(BCFLAGS) -copt $(CPICFLAGS) -copt "-I$(C_SRC_DIR)" -copt "$(CEFLAGS)" $< -o $@ -hgen
+
+#*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
+o/_bglhopscript.o: _bglhopscript.c bglhopscript.h
+	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c $< -o $@)
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/

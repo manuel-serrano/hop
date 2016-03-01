@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Feb 14 20:44:38 2016 (serrano)                */
+;*    Last change :  Sun Feb 28 09:51:49 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -17,7 +17,8 @@
 
    (library hop)
 
-   (include "stringliteral.sch")
+   (include "stringliteral.sch"
+	    "property.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -29,11 +30,15 @@
 	   __hopscript_function
 	   __hopscript_lib)
 
-   (export (make-pcache ::int)
-	   (inline pcache-ref ::vector ::int)
+   (extern ($js-make-pache::obj (::obj ::int ::JsPropertyCache) "bgl_make_pcache"))
+   
+   (export (%define-pcache ::int)
+	   (js-make-pcache ::int)
+	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-object-element-ref ::JsObject ::long)
 
 	   (js-names->cmap::JsConstructMap ::vector)
+	   (js-descriptors->cmap::JsConstructMap ::vector)
 	   
 	   (js-object-unmap! ::JsObject)
 	   (js-toname::obj ::obj ::JsGlobalObject)
@@ -51,6 +56,7 @@
 	   
 	   (generic js-has-property::bool ::obj ::obj ::JsGlobalObject)
 	   (generic js-get-own-property ::obj ::obj ::JsGlobalObject)
+	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 	   
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
@@ -59,9 +65,13 @@
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
-	   (js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
+	   (inline js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (inline js-object-get-name/cache ::JsObject ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-get-name/cache-miss ::JsObject ::obj ::JsPropertyCache ::obj ::JsGlobalObject)
+	   (inline js-global-object-get-name ::JsObject ::symbol ::obj ::JsGlobalObject)
+	   (inline js-global-object-get-name/cache
+              ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
+
 	   
 	   (js-can-put o::JsObject ::obj ::JsGlobalObject)
 	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
@@ -110,16 +120,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-element-ref ...                                        */
 ;*---------------------------------------------------------------------*/
-;* (define-inline (js-object-element-ref obj::JsObject index::long)    */
-;*    (with-access::JsObject obj (elements obj0 obj1 obj2 obj3)        */
-;*       (let ((idx (-fx index 4)))                                    */
-;* 	 (case idx                                                     */
-;* 	    ((-4) obj0)                                                */
-;* 	    ((-3) obj1)                                                */
-;* 	    ((-2) obj2)                                                */
-;* 	    ((-1) obj3)                                                */
-;* 	    (else (vector-ref-ur elements idx))))))                    */
-
 (define-inline (js-object-element-ref obj::JsObject index::long)
    (with-access::JsObject obj (elements)
       (vector-ref-ur elements index)))
@@ -134,29 +134,21 @@
 		 (set! elements (vector-extend elements ,value))
 		 (vector-set-ur! elements ,index ,value))
 	    `(vector-set-ur! elements ,index ,value))))
-;*    (let ((idx (gensym 'idx)))                                       */
-;*       `(let ((,idx (-fx ,index 4)))                                 */
-;* 	  (with-access::JsObject ,obj (elements obj0 obj1 obj2 obj3)   */
-;* 	     (case ,idx                                                */
-;* 		((-4)                                                  */
-;* 		 (set! obj0 ,value))                                   */
-;* 		((-3)                                                  */
-;* 		 (set! obj1 ,value))                                   */
-;* 		((-2)                                                  */
-;* 		 (set! obj2 ,value))                                   */
-;* 		((-1)                                                  */
-;* 		 (set! obj3 ,value))                                   */
-;* 		(else                                                  */
-;* 		 ,(if extendp                                          */
-;* 		      `(if (>=fx ,idx (vector-length elements))        */
-;* 			   (set! elements (vector-extend elements ,value)) */
-;* 			   (vector-set-ur! elements ,idx ,value))      */
-;* 		      `(vector-set-ur! elements ,idx ,value))))))))    */
+
+;*---------------------------------------------------------------------*/
+;*    %define-pcache ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This function is overriden by the macro of property_expd.sch.    */
+;*    It only makes sense when compiling to C. Otherwise it is a       */
+;*    dummy function.                                                  */
+;*---------------------------------------------------------------------*/
+(define (%define-pcache size)
+   #unspecified)
 
 ;*---------------------------------------------------------------------*/
 ;*    make-pcache ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (make-pcache len)
+(define (js-make-pcache len)
    (let ((pcache ($make-vector-uncollectable len #unspecified)))
       (let loop ((i 0))
 	 (if (=fx i len)
@@ -164,11 +156,11 @@
 	     (begin
 		(vector-set-ur! pcache i (instantiate::JsPropertyCache))
 		(loop (+fx i 1)))))))
-      
+
 ;*---------------------------------------------------------------------*/
-;*    pcache-ref ...                                                   */
+;*    js-pcache-ref ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-inline (pcache-ref pcache index)
+(define-inline (js-pcache-ref pcache index)
    (vector-ref-ur pcache index))
 
 ;*---------------------------------------------------------------------*/
@@ -251,6 +243,25 @@
 			     (configurable #t))))
 		(vector-set-ur! descrs i descr)
 		(loop (+fx i 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-descriptors->cmap ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Not used but will be for builtin object creation.                */
+;*---------------------------------------------------------------------*/
+(define (js-descriptors->cmap::JsConstructMap descrs)
+   (let* ((len (vector-length descrs))
+	  (names ($create-vector len)))
+      (let loop ((i 0))
+	 (if (=fx i len)
+	     (instantiate::JsConstructMap
+		(names names)
+		(descriptors descrs))
+	     (let ((descr (vector-ref-ur descrs i)))
+		(with-access::JsIndexDescriptor descr (name index)
+		   (set! index i)
+		   (vector-set-ur! names i name)
+		   (loop (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    property-index-vector ...                                        */
@@ -724,6 +735,8 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get o prop %this::JsGlobalObject)
    (cond
+      ((string? o)
+       (js-get-string o (js-toname prop %this) %this))
       ((pair? o)
        (js-get-pair o (js-toname prop %this) %this))
       ((null? o)
@@ -802,7 +815,7 @@
 ;*    js-get/cache ...                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    Use a per site cache for the [[GET]] operation. The property     */
-;*    name is not know statically.                                     */
+;*    name is not known statically.                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-get/cache o prop::obj cache::JsPropertyCache %this::JsGlobalObject)
    (if (or (not (symbol? prop)) (not (isa? o JsObject)))
@@ -856,22 +869,43 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-get-name/cache obj
-	   name::obj cache::JsPropertyCache %this::JsGlobalObject)
-   (if (not (isa? obj JsObject))
-       (js-get obj name %this)
-       (js-object-get-name/cache obj name cache %this)))
+(define-inline (js-get-name/cache
+	   obj name::obj cache::JsPropertyCache %this::JsGlobalObject)
+   (if (isa? obj JsObject)
+       (js-object-get-name/cache obj name cache %this)
+       (js-get obj name %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-get-name/cache obj::JsObject
-		  name::obj cache::JsPropertyCache %this::JsGlobalObject)
+	   name::obj cache::JsPropertyCache %this::JsGlobalObject)
    (with-access::JsObject obj ((omap cmap))
       (with-access::JsPropertyCache cache (cmap index)
 	 (if (eq? cmap omap)
 	     (js-object-element-ref obj index)
 	     (js-get-name/cache-miss obj name cache #f %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-global-object-get-name ...                                    */
+;*    -------------------------------------------------------------    */
+;*    This is an inlined version of js-get-own-property.               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-global-object-get-name o::JsObject name throw %this)
+   (let ((pval (js-get-property-value o o name %this)))
+      (if (eq? pval (js-absent))
+	  (js-get-notfound name throw %this)
+	  pval)))
+
+;*---------------------------------------------------------------------*/
+;*    js-global-object-get-name/cache ...                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-global-object-get-name/cache o::JsObject name::symbol cache::JsPropertyCache throw %this)
+   (with-access::JsObject o ((omap cmap))
+      (with-access::JsPropertyCache cache (cmap index)
+         (if (eq? cmap omap)
+             (js-object-element-ref o index)
+             (js-get-name/cache-miss o name cache throw %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ...                                       */
@@ -880,12 +914,13 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-;* (define n 0)                                                        */
+(define n 0)
+
 (define (js-get-name/cache-miss obj::JsObject name::obj cache::JsPropertyCache throw %this)
-;*    (set! n (+fx n 1))                                               */
-;*    (tprint "CACHE MISS..." n " " name)                              */
+   (set! n (+fx 1 n))
    (let loop ((owner obj))
       (with-access::JsObject owner ((omap cmap) __proto__)
+;* 	 (tprint "CACHE MISS..." n " " name " " (typeof obj) " " (typeof omap)) */
 	 (with-access::JsPropertyCache cache (cmap index)
 	    (cond
 	       ((not omap)
@@ -987,19 +1022,16 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.5       */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-put! _o prop v::obj throw::bool %this::JsGlobalObject)
-   (if (pair? _o)
-       (js-put-pair! _o prop v throw %this)
+   (cond
+      ((string? _o)
+       (js-put-string! _o prop v throw %this))
+      ((pair? _o)
+       (js-put-pair! _o prop v throw %this))
+      (else
        (let ((o (js-toobject %this _o)))
 	  (if o
 	      (js-put! o prop v throw %this)
-	      (js-raise-type-error %this "[[PUT]]: not an object ~s" _o)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-put! ::JsStringLiteral ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (js-put! _o::JsStringLiteral prop v throw %this)
-   (let ((o (js-toobject %this _o)))
-      (js-put! o prop v throw %this)))
+	      (js-raise-type-error %this "[[PUT]]: not an object ~s" _o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::object ...                                             */

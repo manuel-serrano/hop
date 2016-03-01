@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Feb 12 08:52:23 2016 (serrano)                */
+;*    Last change :  Fri Feb 26 19:34:05 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -206,7 +206,7 @@
 (define-method (j2s->list this::J2SReturnYield)
    (with-access::J2SReturnYield this (expr kont)
       `(,@(call-next-method) ,(j2s->list expr)
-	  ,(if (boolean? kont) kont (j2s->list kont)))))
+	  ,(j2s->list kont))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWith ...                                          */
@@ -395,12 +395,13 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid type hint usecnt ronly)
+   (with-access::J2SDecl this (id key binder _scmid type hint usecnt usage ronly)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(if (> (bigloo-debug) 1) `(:key ,key) '())
 	,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
 	,@(if (> (bigloo-debug) 2) `(:usecnt ,usecnt) '())
+	,@(if (> (bigloo-debug) 2) `(:usage ,usage) '())
 	,@(if (> (bigloo-debug) 1) `(:type ,type) '())
 	,@(if (and (> (bigloo-debug) 3) (pair? hint)) `(:hint ,hint) '())
 	,@(if _scmid `(:_scmid ,_scmid) '()))))
@@ -448,8 +449,8 @@
 ;*    j2s->list ::J2SKont ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SKont)
-   (with-access::J2SKont this (param body)
-      `(,@(call-next-method) ,(j2s->list param) ,(j2s->list body))))
+   (with-access::J2SKont this (param exn body)
+      `(,@(call-next-method) ,(j2s->list param) ,(j2s->list exn) ,(j2s->list body))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SHopRef ...                                        */

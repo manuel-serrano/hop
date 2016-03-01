@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Feb 15 11:28:45 2016 (serrano)                */
+;*    Last change :  Thu Feb 25 20:35:36 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -116,10 +116,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SString ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (constant! this::J2SString env nesting)
-   (if (=fx nesting 0)
-       (add-expr! this env #t)
-       this))
+;* (define-walk-method (constant! this::J2SString env nesting)         */
+;*    (if (=fx nesting 0)                                              */
+;*        (add-expr! this env #t)                                      */
+;*        this))                                                       */
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SRegExp ...                                        */

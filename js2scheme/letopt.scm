@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Mon Feb  8 13:46:44 2016 (serrano)                */
+;*    Last change :  Fri Feb 26 20:23:02 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -168,7 +168,7 @@
 		(trace-item "---.2 " (j2s->list (car n)))
 		;; not an init statement, count the number
 		;; of used variables
-		(use-count (car n))
+		(use-count (car n) +1)
 		;; optimize recursively
 		(set-car! n (j2s-letopt! (car n)))
 		;; keep optimizing the current let block
@@ -458,7 +458,7 @@
 		   (set! usecnt 0)))
       decls)
    ;; count all variables
-   (use-count node)
+   (use-count node +1)
    ;; amongst the decls, returns those that are used
    (filter (lambda (d)
 	      (with-access::J2SDecl d (usecnt)

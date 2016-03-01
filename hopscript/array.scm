@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Feb  8 08:10:54 2016 (serrano)                */
+;*    Last change :  Sat Feb 27 07:49:15 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -217,6 +217,22 @@
 				 (value 0)
 				 (configurable #f)
 				 (writable #t))))))
+
+	 ;; DO NOT REMOVE !
+	 ;; when array are ready for caching this should replace
+	 ;; the old definition of js-array-prototype
+	 ;; (set! js-array-prototype
+	    ;; (instantiate::JsArray
+	       ;; (vec '#())
+	       ;; (__proto__ __proto__)
+	       ;; (extensible #t)
+	       ;; (elements '#(0))
+	       ;; (cmap (js-descriptors->cmap
+			;; (vector
+			   ;; (instantiate::JsIndexDescriptor
+			      ;; (name 'length)
+			      ;; (configurable #f)
+			      ;; (writable #t)))))))
 	 
 	 ;; create the array object constructor
 	 (set! js-array

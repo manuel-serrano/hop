@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Feb 15 09:00:00 2016 (serrano)                */
+;*    Last change :  Sun Feb 28 09:55:24 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -234,51 +234,24 @@
 		(vector 2 val)))
 	    (else
 	     (error "j2s-constant" "wrong literal" this))))
-      
-      `(let ((val (string->obj
-		     ,(obj->string (list->vector (map j2s-constant cnsts))))))
-	  (let loop ((i (-fx (vector-length val) 1)))
-	     (when (>=fx i 0)
-		(let ((el (vector-ref-ur val i)))
-		   (cond
-;* 		      ((isa? el JsRegExp)                              */
-;* 		       ;; patch the regexp prototype                   */
-;* 		       (with-access::JsGlobalObject %this (js-regexp-prototype) */
-;* 			  (with-access::JsRegExp el (__proto__)        */
-;* 			     (set! __proto__ js-regexp-prototype))))   */
-		      ((vector? el)
-		       (vector-set-ur! val i
-			  (case (vector-ref el 0)
-			     ((0)
-			      (let ((str (vector-ref-ur el 1))
-				    (sentinel (vector-ref-ur el 2)))
-				 (js-string->jsstring
-				    (string-ascii-sentinel-set! str sentinel))))
-			     ((1)
-			      (with-access::JsGlobalObject %this (js-regexp)
-				 (let* ((val (vector-ref-ur el 1))
-					(flags (vector-ref-ur el 2))
-					(rx (js-string->jsstring val)))
-				    (if flags
-					(js-new2 %this js-regexp rx
-					   (js-string->jsstring flags))
-					(js-new1 %this js-regexp rx)))))
-			     ((2)
-			      (let ((names (vector-ref-ur el 1)))
-				 (js-names->cmap names)))))))
-		   (loop (-fx i 1)))))
-	  val))
+
+      `(js-constant-init
+	  ,(obj->string (list->vector (map j2s-constant cnsts))) %this))
 
    (define (%cnsts cnsts)
       (if (>fx (bigloo-debug) 0)
 	  (%cnsts-debug cnsts)
 	  (%cnsts-intext cnsts)))
-      
+
+   (define (define-pcache pcache-size)
+      `(%define-pcache ,pcache-size))
+   
    (define (j2s-module module body)
       (with-access::J2SProgram this (mode pcache-size cnsts)
 	 (list
 	    module
-	    `(define %pcache (make-pcache ,pcache-size))
+	    (define-pcache pcache-size)
+	    `(define %pcache (js-make-pcache ,pcache-size))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    `(define (hopscript %this this %scope %module)
@@ -303,7 +276,8 @@
 	 (with-access::J2SProgram this (mode pcache-size %this path cnsts)
 	    (list
 	       module
-	       `(define %pcache (make-pcache ,pcache-size))
+	       (pcache pcache-size)	       
+	       `(define %pcache (js-make-pcache ,pcache-size))
 	       `(define %this (nodejs-new-global-object))
 	       `(define %source ,path)
 	       '(define %resource (dirname %source))
@@ -337,7 +311,7 @@
 	    ((not name)
 	     ;; a mere expression
 	     `(lambda (%this this %scope %module)
-		 (define %pcache (make-pcache ,pcache-size))
+		 (define %pcache (js-make-pcache ,pcache-size))
 		 (define %worker (js-current-worker))
 		 (define %source (or (the-loading-file) "/"))
 		 (define %resource (dirname %source))
@@ -444,26 +418,6 @@
       ((j2s-let? this) (call-next-method))
       (else (j2s-scheme-var this))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    j2s-scheme ::J2SLet ...                                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (j2s-scheme this::J2SLet mode return conf)           */
-;*    (with-access::J2SLet this (loc scope id)                         */
-;*       (epairify loc                                                 */
-;* 	 (if (memq scope '(global fun))                                */
-;* 	     `(define ,(j2s-decl-scheme-id this) (js-make-let))        */
-;* 	     `(,(j2s-decl-scheme-id this) (js-make-let))))))           */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    j2s-scheme ::J2SLetOpt ...                                       *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (j2s-scheme this::J2SLetOpt mode return conf)        */
-;*    (with-access::J2SLetOpt this (scope id)                          */
-;*       (if (memq scope '(global fun))                                */
-;* 	  (j2s-let-decl-toplevel this mode return conf)                */
-;* 	  (error "js-scheme" "Should not reached (not global)"         */
-;* 	     (j2s->list this)))))                                      */
-
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-set! ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -531,6 +485,15 @@
 	     len))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-declfun-prototype ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-declfun-prototype this::J2SDeclFun)
+   (with-access::J2SDeclFun this (parent)
+      (let* ((decl (if parent parent this))
+	     (scmid (j2s-decl-scheme-id decl)))
+	 `(js-get ,scmid 'prototype %this))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf hint)
@@ -547,12 +510,12 @@
 		  ((eq? scope 'none)
 		   `(define ,fastid
 		       ,(jsfun->lambda val mode return conf
-			   `(js-get ,scmid 'prototype %this))))
+			   (j2s-declfun-prototype this))))
 		  ((memq scope '(global %scope))
 		   `(begin
 		       (define ,fastid
 			  ,(jsfun->lambda val mode return conf
-			      `(js-get ,scmid 'prototype %this)))
+			      (j2s-declfun-prototype this)))
 		       (define ,scmid
 			  (js-bind! %this ,scope ',id
 			     :configurable #f
@@ -572,7 +535,7 @@
 		   `(begin
 		       (define ,fastid
 			  ,(jsfun->lambda val mode return conf
-			      `(js-get ,scmid 'prototype %this)))
+			      (j2s-declfun-prototype this)))
 		       (define ,scmid
 			  (js-make-function %this
 			     ,fastid ,len ',id
@@ -630,7 +593,7 @@
 	    ((j2s-let? decl)
 	     `(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this))
 	    ((and (memq scope '(global %scope)) (in-eval? return))
-	     `(js-get-global-object-name %scope ',id #f %this))
+	     `(js-global-object-get-name %scope ',id #f %this))
 	    (else
 	     (j2s-decl-scheme-id decl))))))
 
@@ -696,14 +659,14 @@
 	      `(with-access::JsGlobalObject %this (js-syntax-error)
 		  (js-raise
 		     (js-new %this js-syntax-error
-			(js-string->jsstring
+			,(j2s-jsstring
 			   "comprehension only supported in strict mode")
 			,fname ,loc))))
 	     (else
 	      `(with-access::JsGlobalObject %this (js-syntax-error)
 		  (js-raise
 		     (js-new %this js-syntax-error
-			(js-string->jsstring
+			,(j2s-jsstring
 			   "comprehension only supported in strict mode"))))))
 	  (let* ((names (map j2s-decl-scheme-id decls))
 		 (iters (map (lambda (iter)
@@ -737,18 +700,18 @@
 ;*    pcache ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (pcache cache)
-   `(pcache-ref %pcache ,cache))
+   `(js-pcache-ref %pcache ,cache))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (j2s-unresolved name cache throw)
    (if cache
-       `(js-get-global-object-name/cache ,j2s-unresolved-get-workspace ',name
+       `(js-global-object-get-name/cache ,j2s-unresolved-get-workspace ',name
 	   ,(pcache cache)
 	   ,(if (pair? throw) `',throw throw)
 	   %this)
-       `(js-get-global-object-name ,j2s-unresolved-get-workspace ',name
+       `(js-global-object-get-name ,j2s-unresolved-get-workspace ',name
 	   ,(if (pair? throw) `',throw throw)
 	   %this)))
 
@@ -846,19 +809,26 @@
 		(loop (+fx i 1)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-jsstring ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring val)
+   val)
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-string ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-string val loc)
-   (let ((ui (utf8-index val)))
-      (if (not ui)
-	  ;; this is an ascii string
-	  (epairify loc
-	     `(js-string->jsstring
-		 (string-ascii-sentinel-set! ,val ,(string-length val))))
-	  ;; this is an utf8 string
-	  (epairify loc
-	     `(js-string->jsstring
-		 (string-ascii-sentinel-set! ,val ,ui))))))
+   (j2s-jsstring val))
+;*    (let ((ui (utf8-index val)))                                     */
+;*       (if (not ui)                                                  */
+;* 	  ;; this is an ascii string                                   */
+;* 	  (epairify loc                                                */
+;* 	     `(js-string->jsstring                                     */
+;* 		 (string-ascii-sentinel-set! ,val ,(string-length val)))) */
+;* 	  ;; this is an utf8 string                                    */
+;* 	  (epairify loc                                                */
+;* 	     `(js-string->jsstring                                     */
+;* 		 (string-ascii-sentinel-set! ,val ,ui))))))            */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2STemplate ...                                     */
@@ -1053,36 +1023,43 @@
 ;*---------------------------------------------------------------------*/
 (define (jsfun->lambda this::J2SFun mode return conf proto)
 
-   (define (lambda-or-labels this id args body)
-      (if id
-	  (let ((%id (j2s-fast-id id)))
-	     `(labels ((,%id ,(if this (cons this args) args) ,body)) ,%id))
-	  `(lambda ,(if this (cons this args) args)
-	      ,body)))
+   (define (lambda-or-labels %gen this id args body)
+      ;; in addition to the user explicit arguments, this and %gen
+      ;; are treated as:
+      ;;   - some typed functions are optimized and they don't expect a this
+      ;;     argument
+      ;;   - some typed functions implement a generator body and they take
+      ;;     as extra argument the generator
+      (let* ((targs (if this (cons this args) args))
+	     (gtargs (if %gen (cons '%gen targs) targs)))
+	 (if id
+	     (let ((%id (j2s-fast-id id)))
+		`(labels ((,%id ,gtargs ,body)) ,%id))
+	     `(lambda ,gtargs ,body))))
    
    (define (fixarg-lambda fun id body)
-      (with-access::J2SFun fun (idthis params)
+      (with-access::J2SFun fun (idgen idthis params)
 	 (let ((args (j2s-scheme params mode return conf '())))
-	    (lambda-or-labels idthis id args body))))
+	    (lambda-or-labels idgen idthis id args body))))
    
    (define (rest-lambda fun id body)
-      (with-access::J2SFun fun (idthis params)
+      (with-access::J2SFun fun (idgen idthis params)
 	 (let ((args (j2s-scheme params mode return conf '())))
-	    (lambda-or-labels idthis id args body))))
+	    (lambda-or-labels idgen idthis id args body))))
    
    (define (normal-vararg-lambda fun id body)
       ;; normal mode: arguments is an alias
       (let ((id (or id (gensym 'fun)))
 	    (rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idthis)
-	    (lambda-or-labels idthis id rest
+	 (with-access::J2SFun fun (idgen idthis)
+	    (lambda-or-labels idgen idthis id rest
 	       (jsfun-normal-vararg-body fun body id rest)))))
    
    (define (strict-vararg-lambda fun id body)
       ;; strict mode: arguments is initialized on entrance
       (let ((rest (gensym 'arguments)))
-	 (with-access::J2SFun fun (idthis)
-	    (lambda-or-labels idthis id rest
+	 (with-access::J2SFun fun (idgen idthis)
+	    (lambda-or-labels idgen idthis id rest
 	       (jsfun-strict-vararg-body fun body id rest)))))
 
    (define (generator-body body)
@@ -1246,13 +1223,13 @@
 		   ,(match-case loc
 		       ((at ?fname ?loc)
 			`(js-new %this js-type-error
-			    (js-string->jsstring
-			       ,(format "wrong service call \"~s\"" name))
+			    ,(j2s-jsstring
+			       (format "wrong service call \"~s\"" name))
 			    ,fname ,loc))
 		       (else
 			`(js-new %this js-type-error
-			    (js-string->jsstring
-			       ,(format "wrong service call \"~s\"" name)))))))))
+			    ,(j2s-jsstring
+			       (format "wrong service call \"~s\"" name)))))))))
       
       (define (service-dsssl-proc->scheme this)
 	 (with-access::J2SSvc this (loc init name)
@@ -1387,7 +1364,7 @@
    (with-access::J2SThrow this (loc expr)
       (epairify loc
 	 `(js-throw ,(j2s-scheme expr mode return conf hint)
-	     (js-string->jsstring ,(cadr loc)) ,(caddr loc)))))
+	     ,(j2s-jsstring (cadr loc)) ,(caddr loc)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2STry ...                                          */
@@ -1639,7 +1616,7 @@
 	 (or (not ty) (memq ty '(number integer obj)))))
    
    (define (atom? expr)
-      (or (number? expr) (string? expr)))
+      (or (number? expr) (string? expr) (boolean? expr)))
    
    (define (simple? expr)
       (cond
@@ -1773,6 +1750,10 @@
 	   (binop lhs rhs '(string)
 	      (lambda (left right)
 		 (js-binop loc op left right))))
+	  ((and (eq? (j2s-type lhs) 'bool) (eq? (j2s-type rhs) 'bool))
+	   (binop lhs rhs '(bool)
+	      (lambda (left right)
+		 `(eq? ,left ,right))))
 	  (else
 	   (binop lhs rhs hint
 	      (lambda (left right)
@@ -1835,15 +1816,15 @@
 	     `(with-access::JsGlobalObject %this (js-syntax-error)
 		 (js-raise
 		    (js-new %this js-syntax-error
-		       (js-string->jsstring
-			  ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id))
+		       ,(j2s-jsstring
+			  (format "Delete of an unqualified identifier in strict mode: \"~a\"" id))
 		       ,fname ,loc))))
 	    (else
 	     `(with-access::JsGlobalObject %this (js-syntax-error)
 		 (js-raise
 		    (js-new %this js-syntax-error
-		       (js-string->jsstring
-			  ,(format "Delete of an unqualified identifier in strict mode: \"~a\"" id)))))))))
+		       ,(j2s-jsstring
+			  (format "Delete of an unqualified identifier in strict mode: \"~a\"" id)))))))))
 
    (define (delete->scheme expr)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.7
@@ -2519,7 +2500,7 @@
 	 (this (list (j2s-scheme this mode return conf hint)))
 	 (else '())))
 
-   (define (call-rest-function fun::J2SFun this f args)
+   (define (call-rest-function fun::J2SFun this f %gen args)
       ;; call a function that accepts a rest argument
       (with-access::J2SFun fun (params vararg)
 	 (let loop ((params params)
@@ -2528,7 +2509,7 @@
 	    (cond
 	       ((null? (cdr params))
 		;; the rest argument
-		`(,f ,@(j2s-this this) ,@(reverse! actuals)
+		`(,f ,@%gen ,@(j2s-this this) ,@(reverse! actuals)
 		    (js-vector->jsarray
 		       (vector ,@(j2s-scheme args mode return conf hint))
 		       %this)))
@@ -2541,7 +2522,7 @@
 		   (cons (j2s-scheme (car args) mode return conf hint)
 		      actuals)))))))
 
-   (define (call-fix-function fun::J2SFun this f args)
+   (define (call-fix-function fun::J2SFun this f %gen args)
       ;; call a function that accepts a fix number of arguments
       (with-access::J2SFun fun (params vararg)
 	 (let ((lenf (length params))
@@ -2549,7 +2530,7 @@
 	    (cond
 	       ((=fx lenf lena)
 		;; matching arity
-		`(,f ,@(j2s-this this)
+		`(,f ,@%gen ,@(j2s-this this)
 		    ,@(j2s-scheme args mode return conf hint)))
 	       ((>fx lena lenf)
 		;; too many arguments ignore the extra values,
@@ -2561,7 +2542,7 @@
 				(iota lena))))
 		   `(let* ,(map (lambda (t a)
 				   `(,t ,(j2s-scheme a mode return conf hint))) temps args)
-		       (,f ,@(j2s-this this) ,@(take temps lenf)))))
+		       (,f ,@%gen ,@(j2s-this this) ,@(take temps lenf)))))
 	       (else
 		;; argument missing
 		`(,f ,@(j2s-this this)
@@ -2586,15 +2567,16 @@
 			 (j2s-error id "wrong number of arguments"
 			    this (cons la (j2s-minlen val)))))))))))
 
-   (define (call-fun-function fun::J2SFun this f args)
+   (define (call-fun-function fun::J2SFun this f %gen::pair-nil args::pair-nil)
       (with-access::J2SFun fun (params vararg)
 	 (case vararg
 	    ((arguments)
-	     `(,f ,@(j2s-this this) ,@(j2s-scheme args mode return conf hint)))
+	     `(,f ,@%gen ,@(j2s-this this)
+		 ,@(j2s-scheme args mode return conf hint)))
 	    ((rest)
-	     (call-rest-function fun this f args))
+	     (call-rest-function fun this f %gen args))
 	    (else
-	     (call-fix-function fun this f args)))))
+	     (call-fix-function fun this f %gen args)))))
 
    (define (call-with-function fun::J2SWithRef args)
       (with-access::J2SWithRef fun (id withs loc)
@@ -2611,19 +2593,27 @@
       (with-access::J2SPragma fun (expr)
 	 `(,expr %this ,@(j2s-scheme args mode return conf hint))))
 
+   (define (typed-generator? decl::J2SDeclFun)
+      (with-access::J2SDeclFun decl (parent)
+	 (when (isa? parent J2SDeclFun)
+	    (with-access::J2SDeclFun parent (val)
+	       (with-access::J2SFun val (generator)
+		  generator)))))
+
    (define (call-known-function fun::J2SDecl this args)
       (cond
 	 ((isa? fun J2SDeclFun)
 	  (with-access::J2SDeclFun fun (id val)
 	     (check-hopscript-fun-arity val id args)
-	     (call-fun-function val this (j2s-fast-id id) args)))
+	     (let ((%gen (if (typed-generator? fun) '(%gen) '())))
+		(call-fun-function val this (j2s-fast-id id) %gen args))))
 	 ((isa? fun J2SDeclFunCnst)
 	  (with-access::J2SDeclFunCnst fun (id val)
 	     (check-hopscript-fun-arity val id args)
-	     (call-fun-function val this (j2s-fast-id id) args)))
+	     (call-fun-function val this (j2s-fast-id id) '() args)))
 	 ((j2s-let-opt? fun)
 	  (with-access::J2SDeclInit fun (id val)
-	     (call-fun-function val this (j2s-fast-id id) args)))
+	     (call-fun-function val this (j2s-fast-id id) '() args)))
 	 (else
 	  (error "js-scheme" "Should not be here" (j2s->list fun)))))
 
@@ -2670,6 +2660,7 @@
 	       ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
 		(call-fun-function fun this
 		   (jsfun->lambda fun mode return conf (j2s-fun-prototype fun))
+		   '()
 		   args))
 	       ((isa? fun J2SUnresolvedRef)
 		(if (is-eval? fun)
@@ -3046,7 +3037,7 @@
       (epairify loc
 	 `(,(if generator 'js-generator-yield* 'js-generator-yield)
 	   %gen ,(j2s-scheme expr mode return conf hint)
-	     ,(eq? kont #t)
+	     ,(isa? kont J2SUndefined)
 	     ,(if (identity-kont? kont)
 		  #f
 		  (j2s-scheme kont mode return conf hint))

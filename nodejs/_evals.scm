@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_evals.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/_evals.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Fri May  1 15:09:52 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Thu Feb 25 20:32:36 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
 ;*=====================================================================*/
@@ -19,7 +19,7 @@
    (import __nodejs_require)
    
    (static (class JsScript::JsObject
-	      code::JsStringLiteral
+	      code::obj
 	      ctx::obj
 	      filename::obj))
 	   

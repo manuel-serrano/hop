@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_hop.scm                   */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/_hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Dec 19 10:30:15 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Mon Feb 29 19:31:51 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -233,7 +233,7 @@
 	       ;; webService
 	       (define-js webService 1
 		  (lambda (this base)
-		     (let ((name (string->symbol (js-jsstring->string base))))
+		     (let ((name (string->symbol (js-tostring base %this))))
 			(js-make-function %this
 			   (lambda (this args)
 			      (js-new %this js-webservice base args))
@@ -433,7 +433,7 @@
       (define (post callback)
 	 (with-access::JsUrlFrame frame (url args)
 	    (with-url (hop-apply-nice-url
-			 (url-base (js-jsstring->string url)) args)
+			 (url-base (js-tostring url %this)) args)
 	       callback
 	       :fail fail
 	       :method method

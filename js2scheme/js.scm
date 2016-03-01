@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Jan 31 02:26:30 2016 (serrano)                */
+;*    Last change :  Wed Feb 24 06:48:42 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -242,7 +242,7 @@
 		 "return $GEN.YieldS(" 
 		 (append (j2s-js expr tildec dollarc mode evalp conf)
 		    '(",$GEN.kid);"))))
-	     ((eq? kont #t)
+	     ((isa? kont J2SUndefined)
 	      (cons* this
 		 "return $GEN.Return("
 		 (append (j2s-js expr tildec dollarc mode evalp conf)
@@ -257,13 +257,13 @@
 	     "return $GEN.YieldS("
 	     (append (j2s-js expr tildec dollarc mode evalp conf)
 		'(",")
-		(if (eq? kont #t) '("true") '("false"))
+		(if (isa? kont J2SUndefined) '("true") '("false"))
 		'(",")
-		(if (eq? kont #t)
+		(if (isa? kont J2SUndefined)
 		    '("$GEN.done")
 		    (j2s-js kont tildec dollarc mode evalp conf))
 		'(");"))))
-	 ((eq? kont #t)
+	 ((isa? kont J2SUndefined)
 	  (cons* this "return $GEN.Return("
 	     (append (j2s-js expr tildec dollarc mode evalp conf)
 		'(");"))))
@@ -805,7 +805,7 @@
       (if (id-string? field)
 	  (cons this
 	     (append (j2s-js obj tildec dollarc mode evalp conf)
-		(list "./*ici*/" (with-access::J2SString field (val) val))))
+		(list (with-access::J2SString field (val) val))))
 	  (cons this
 	     (append (j2s-js obj tildec dollarc mode evalp conf)
 		'("[")

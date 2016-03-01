@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/src/pipeline.scm                  */
+;*    serrano/prgm/project/hop/3.1.x/src/pipeline.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Dec 16 19:47:51 2015 (serrano)                */
-;*    Copyright   :  2008-15 Manuel Serrano                            */
+;*    Last change :  Mon Feb 29 19:17:41 2016 (serrano)                */
+;*    Copyright   :  2008-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -314,9 +314,7 @@
 				(lambda (e)
 				   (exec-error-handler e scd req))
 				(stage-exec scd thread id req resp))))
-		     (if (integer? tmt)
-			 (spawn scd stage-request id socket tmt 'keep-alive)
-			 (socket-shutdown socket))))))
+		     (socket-shutdown socket)))))
 	 #f)))
 	   
 ;*---------------------------------------------------------------------*/

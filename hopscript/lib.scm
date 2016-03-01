@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sun Feb 14 17:13:28 2016 (serrano)                */
+;*    Last change :  Sat Feb 27 07:40:51 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -31,7 +31,8 @@
 	   __hopscript_arraybuffer
 	   __hopscript_arraybufferview)
 
-   (export (generic js-obj->jsobject ::obj ::JsGlobalObject)
+   (export (js-constant-init ::bstring ::JsGlobalObject)
+	   (generic js-obj->jsobject ::obj ::JsGlobalObject)
 	   (js-literal->jsobject::JsObject ::vector ::vector ::JsGlobalObject)
 	   (js-alist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
 	   (js-plist->jsobject::JsObject ::pair-nil ::JsGlobalObject)
@@ -40,6 +41,43 @@
 	   (js-jsobject->alist ::JsObject ::JsGlobalObject)
 	   (js-dsssl-args->jsargs ::pair ::JsGlobalObject)
 	   (js-object->keyword-arguments*::pair-nil ::JsObject ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    js-constant-init ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-constant-init str %this)
+   (let ((cnsts (string->obj str)))
+       (let loop ((i (-fx (vector-length cnsts) 1)))
+	  (when (>=fx i 0)
+	     (let ((el (vector-ref-ur cnsts i)))
+		(cond
+		   ((isa? el JsRegExp)
+		    ;; patch the regexp prototype
+		    (with-access::JsGlobalObject %this (js-regexp-prototype)
+		       (with-access::JsRegExp el (__proto__)
+			  (set! __proto__ js-regexp-prototype))))
+		   ((vector? el)
+		    (vector-set-ur! cnsts i
+		       (case (vector-ref el 0)
+			  ((0)
+			   (let ((str (vector-ref-ur el 1))
+				 (sentinel (vector-ref-ur el 2)))
+			      (js-string->jsstring
+				 (string-ascii-sentinel-set! str sentinel))))
+			  ((1)
+			   (with-access::JsGlobalObject %this (js-regexp)
+			      (let* ((cnsts (vector-ref-ur el 1))
+				     (flags (vector-ref-ur el 2))
+				     (rx (js-string->jsstring cnsts)))
+				 (if flags
+				     (js-new2 %this js-regexp rx
+					(js-string->jsstring flags))
+				     (js-new1 %this js-regexp rx)))))
+			  ((2)
+			   (let ((names (vector-ref-ur el 1)))
+			      (js-names->cmap names)))))))
+		(loop (-fx i 1)))))
+       cnsts))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-obj->jsobject ...                                             */
@@ -149,9 +187,13 @@
 		      (elements elements)
 		      (__proto__ __proto__)
 		      (extensible #t)))
-		(let* ((name (if (keyword? (caar alist))
-				 (keyword->symbol (caar alist))
-				 (caar alist)))
+		(let* ((name (cond
+				((keyword? (caar alist))
+				 (keyword->symbol (caar alist)))
+				((string? (caar alist))
+				 (string->symbol (caar alist)))
+				(else
+				 (caar alist))))
 		       (descr (instantiate::JsIndexDescriptor
 				 (name name)
 				 (index i)
@@ -184,9 +226,13 @@
 		      (elements elements)
 		      (__proto__ __proto__)
 		      (extensible #t)))
-		(let* ((name (if (keyword? (car plist))
-				 (keyword->symbol (car plist))
-				 (car plist)))
+		(let* ((name (cond
+				((keyword? (car plist))
+				 (keyword->symbol (car plist)))
+				((string? (car plist))
+				 (string->symbol (car plist)))
+				(else
+				 (car plist))))
 		       (descr (instantiate::JsIndexDescriptor
 				 (name name)
 				 (index i)

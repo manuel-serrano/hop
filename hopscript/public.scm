@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Feb 15 09:05:41 2016 (serrano)                */
+;*    Last change :  Sat Feb 27 07:54:37 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -92,7 +92,7 @@
 	   (js-isindex?::bool ::uint32)
 	   
 	   (generic js-tostring::bstring ::obj ::JsGlobalObject)
-	   (js-tojsstring::JsStringLiteral ::obj ::JsGlobalObject)
+	   (js-tojsstring::obj ::obj ::JsGlobalObject)
 	   
 	   (js-toobject::obj ::JsGlobalObject ::obj)
 	   (js-toobject/debug::obj ::JsGlobalObject loc ::obj)
@@ -109,7 +109,7 @@
 	   (%js-eval ::input-port ::symbol ::JsGlobalObject ::obj ::JsObject)
 	   
 	   (js-raise ::JsError)
-	   (js-throw ::obj ::JsStringLiteral ::long)
+	   (js-throw ::obj ::obj ::long)
 
 	   (js-raise-type-error ::JsGlobalObject ::bstring ::obj)
 	   (js-raise-type-error/loc ::JsGlobalObject ::obj ::bstring ::obj)
@@ -121,7 +121,7 @@
 	   (js-raise-error ::JsGlobalObject ::bstring ::obj . ::obj)
 
 	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
-	   (generic js-inspect::JsStringLiteral ::obj ::int)
+	   (generic js-inspect ::obj ::int)
 
 	   (js-html-head ::JsGlobalObject)
 	   ))
@@ -998,6 +998,8 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-tostring obj %this::JsGlobalObject)
    (cond
+      ((string? obj)
+       obj)
       ((eq? obj (js-undefined))
        "undefined")
       ((eq? obj #t)
@@ -1010,8 +1012,8 @@
        (js-number->string obj))
       ((symbol? obj)
        (symbol->string! obj))
-      ((string? obj)
-       (bigloo-type-error "js-tostring" "JsStringLiteral" obj))
+;*       ((string? obj)                                                */
+;*        (bigloo-type-error "js-tostring" "JsStringLiteral" obj))     */
       (else
        (typeof obj))))
 
@@ -1042,6 +1044,9 @@
 ;*---------------------------------------------------------------------*/
 (define (js-toobject-failsafe %this::JsGlobalObject o)
    (cond
+      ((string? o)
+       (with-access::JsGlobalObject %this (js-string)
+	  (js-new1 %this js-string o)))
       ((js-jsstring? o)
        (with-access::JsGlobalObject %this (js-string)
 	  (js-new1 %this js-string o)))

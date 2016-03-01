@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Feb 15 09:13:19 2016 (serrano)                */
+;*    Last change :  Wed Feb 17 09:55:07 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -19,7 +19,8 @@
 
    (library hop hopwidget)
    
-   (include "stringliteral.sch")
+   (include "stringliteral.sch"
+	    "property.sch")
    
    (import __hopscript_types
 	   __hopscript_string
@@ -52,12 +53,9 @@
 	   (inline js-object?::bool ::obj)
 	   (js-new-global-object::JsGlobalObject)
 	   
-	   (js-object-prototype-hasownproperty this v ::JsGlobalObject)
+	   
 
-	   (js-get-global-object-name
-	      ::JsObject ::symbol ::obj ::JsGlobalObject)
-	   (inline js-get-global-object-name/cache
-	      ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)))
+	   ))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -914,14 +912,6 @@
 		   :prototype (js-undefined))
 	 :enumerable #f)))
 
-
-;*---------------------------------------------------------------------*/
-;*    js-object-construct ...                                          */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.2.1     */
-;*---------------------------------------------------------------------*/
-
-
 ;*---------------------------------------------------------------------*/
 ;*    js-object-prototype-hasownproperty ...                           */
 ;*    -------------------------------------------------------------    */
@@ -1045,27 +1035,6 @@
       (with-access::JsObject o (extensible)
 	 (set! extensible #f))
       obj))
-
-;*---------------------------------------------------------------------*/
-;*    js-get-global-object-name ...                                    */
-;*    -------------------------------------------------------------    */
-;*    This is an inlined version of js-get-own-property.               */
-;*---------------------------------------------------------------------*/
-(define (js-get-global-object-name o::JsObject name throw %this)
-   (let ((pval (js-get-property-value o o name %this)))
-      (if (eq? pval (js-absent))
-	  (js-get-notfound name throw %this)
-	  pval)))
-
-;*---------------------------------------------------------------------*/
-;*    js-get-global-object-name/cache ...                              */
-;*---------------------------------------------------------------------*/
-(define-inline (js-get-global-object-name/cache o::JsObject name::symbol cache::JsPropertyCache throw %this)
-   (with-access::JsObject o ((omap cmap))
-      (with-access::JsPropertyCache cache (cmap index)
-	 (if (eq? cmap omap)
-	     (js-object-element-ref o index)
-	     (js-get-name/cache-miss o name cache throw %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ...                                               */

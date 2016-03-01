@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Feb  4 19:01:21 2016 (serrano)                */
+;*    Last change :  Sun Feb 28 07:36:23 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -21,6 +21,7 @@
 	   (error/loc proc obj msg loc)
 	   (illegal-node ::bstring ::J2SNode)
 	   (config-get ::pair-nil ::keyword #!optional def)
+	   (config-put! ::pair-nil ::keyword ::obj)
 	   (this?::bool ::J2SNode)))
 
 ;*---------------------------------------------------------------------*/
@@ -57,6 +58,15 @@
       (if (pair? l)
 	  (cadr l)
 	  def)))
+
+;*---------------------------------------------------------------------*/
+;*    config-put! ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (config-put! conf k val)
+   (let ((l (memq k conf)))
+      (if (pair? l)
+	  (set-car! (cdr l) val)
+	  (error "config-put!" (format "entry `~a' not in conf" k) conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    this? ...                                                        */

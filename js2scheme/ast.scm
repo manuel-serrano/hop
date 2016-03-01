@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Feb 14 16:57:25 2016 (serrano)                */
+;*    Last change :  Sat Feb 27 07:03:43 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -40,7 +40,8 @@
 	      (module read-only (default #f))
 	      (cnsts::pair-nil (default '()))
 	      (decls::pair-nil (default '()))
-	      (headers::pair-nil (default '())))
+	      (headers::pair-nil (default '()))
+	      (direct-eval::bool (default #t)))
 
 	   (abstract-class J2SExpr::J2SNode
 	      (type::obj (default #f))
@@ -117,7 +118,7 @@
 	   (class J2SReturnYield::J2SStmt
 	      expr::J2SExpr
 	      (generator::bool read-only (default #f))
-	      (kont read-only (default #f)))
+	      kont::J2SExpr)
 	   
 	   (final-class J2SYield::J2SExpr
 	      expr::J2SExpr
@@ -134,6 +135,7 @@
 	   (class J2SFun::J2SExpr
 	      (rettype (default #f))
 	      (idthis read-only (default 'this))
+	      (idgen read-only (default #f))
 	      (mode (default #f))
 	      (decl (default #f))
 	      (need-bind-exit-return::bool (default #f))
@@ -215,7 +217,11 @@
 	      val::J2SExpr)
 
 	   (class J2SDeclFun::J2SDeclInit
+	      (parent read-only (default #f))
 	      (expression::bool (default #f)))
+
+	   (class J2SDeclFunType::J2SDeclFun
+	      )
 
 	   (class J2SDeclFunCnst::J2SDecl
 	      (val::J2SExpr read-only (info '("notraverse"))))
@@ -769,7 +775,7 @@
 (gen-walks J2SSeq (nodes))
 (gen-walks J2SProgram (decls) (headers) (nodes))
 (gen-walks J2SReturn expr)
-(gen-walks J2SReturnYield expr)
+(gen-walks J2SReturnYield expr kont)
 (gen-walks J2SWith obj block)
 (gen-walks J2SThrow expr)
 (gen-walks J2STry body catch finally)

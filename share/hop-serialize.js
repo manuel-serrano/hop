@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/share/hop-serialize.js            */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-serialize.js            */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Jan 13 17:17:55 2016 (serrano)                */
+/*    Last change :  Thu Feb 25 18:45:05 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1230,6 +1230,7 @@ function hop_bytearray_to_obj( s, extension ) {
 	 case 0x3b /* ; */: return undefined;
 	 case 0x2e /* . */: return null;
 	 case 0x3c /* < */: return read_cnst();
+         case 0x60 /* ` */: 
          case 0x22 /* " */: return read_string( s );
          case 0x25 /* % */: return decodeURIComponent( read_string( s ) );
          case 0x55 /* U */: return read_string( s );
