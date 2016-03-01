@@ -85,7 +85,7 @@ widget/spage.scm
 widget/spinbutton.scm
 
 # weblets
-weblets/**/config.hop
+weblets/*/config.hop
 weblets/**/weblet.info
 weblets/**/etc/*.wiki
 weblets/home/release.info
