@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Mar  1 07:35:49 2016 (serrano)                */
+/*    Last change :  Tue Mar  1 08:55:42 2016 (serrano)                */
 /*    Copyright   :  2004-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -628,7 +628,6 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
       if( this.readyState == 4 ) {
 	 return hop_request_onready( this, svc, succ, fail );
       } else {
-	 console.log( "readState=", this.readState );
 	 return false;
       }
    }
