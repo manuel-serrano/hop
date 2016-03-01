@@ -106,6 +106,7 @@ repository/
 contribs/
 examples.old/
 tools/heaptojs.scm
+git.*.tgz
 
 # private files
 arch/android/makeapk.sh
