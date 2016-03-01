@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Jan  9 10:46:10 2016 (serrano)                */
+;*    Last change :  Mon Jan 18 14:06:54 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -64,11 +64,27 @@
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (module->javascript filename::bstring id op compile isexpr srcmap)
+   
+   (define (js-paths vec)
+      (let ((len (-fx (vector-length vec) 1)))
+	 (call-with-output-string
+	    (lambda (p)
+	       (let loop ((i 0))
+		  (when (<=fx i len)
+		     (display "'" p)
+		     (display (vector-ref vec i) p)
+		     (display "'" p)
+		     (if (<fx i len) (display ", " p))
+		     (loop (+fx i 1))))))))
+		  
    (let ((this (nodejs-new-global-object)))
       (fprintf op (hop-boot))
       (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
       (flush-output-port op)
-      (let ((header (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n" id filename filename)))
+      (let ((header (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
+		       id filename
+		       (js-paths (nodejs-filename->paths filename))
+		       filename)))
 	 (let ((offset (output-port-position op)))
 	    (call-with-input-file filename
 	       (lambda (in)
@@ -785,7 +801,7 @@
 	 ((string-suffix? ".hz" x)
 	  (resolve-autoload-hz x))
 	 (else
-	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hz")))
+	  (let loop ((suffixes '(".js" ".hop" ".so" ".json" ".hss" ".css")))
 	     (when (pair? suffixes)
 		(let* ((suffix (car suffixes))
 		       (src (string-append x suffix)))

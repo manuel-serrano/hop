@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan  1 08:23:52 2016 (serrano)                */
+;*    Last change :  Fri Jan 15 19:34:39 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -199,7 +199,7 @@
 	  body))
    
    (define (j2s-module module body)
-      (with-access::J2SProgram this (mode pcache-size)
+      (with-access::J2SProgram this (mode pcache-size cnsts)
 	 (list
 	    module
 	    `(define %pcache (make-pcache ,pcache-size))
@@ -207,6 +207,10 @@
 	    '(define %resource (dirname %source))
 	    `(define (hopscript %this this %scope %module)
 		(define %worker (js-current-worker))
+		(define %cnsts (vector
+				  ,@(map (lambda (n)
+					    (j2s-scheme n mode return conf))
+				       cnsts)))
 		,@(exit-body body))
 	    ;; for dynamic loading
 	    'hopscript)))
@@ -223,7 +227,7 @@
 			   (enable-libuv
 			    (library libuv)))
 			(main main))))
-	 (with-access::J2SProgram this (mode pcache-size %this path)
+	 (with-access::J2SProgram this (mode pcache-size %this path cnsts)
 	    (list
 	       module
 	       `(define %pcache (make-pcache ,pcache-size))
@@ -239,6 +243,10 @@
 		     (with-access::JsGlobalObject %this (js-object)
 			(js-new0 %this js-object)))
 		   (define %module (nodejs-module ,(basename path) ,path %worker %this))
+		   (define %cnsts (vector
+				     ,@(map (lambda (n)
+					       (j2s-scheme n mode return conf))
+					  cnsts)))
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
 		      (lambda () ,@(exit-body body)))
 		   ;; (js-worker-terminate! %worker #f)
@@ -246,7 +254,7 @@
 	 
 
    (with-access::J2SProgram this (module main nodes headers decls
-					 mode name pcache-size)
+					 mode name pcache-size cnsts)
       (let ((body (flatten-nodes
 		     (append
 			(j2s-scheme headers mode return conf)
@@ -263,6 +271,10 @@
 		 (define %worker (js-current-worker))
 		 (define %source (or (the-loading-file) "/"))
 		 (define %resource (dirname %source))
+		 (define %cnsts (vector
+				   ,@(map (lambda (n)
+					     (j2s-scheme n mode return conf))
+					cnsts)))
 		 ,@(exit-body body)))
 	    (main
 	     ;; generate a main hopscript module
@@ -1166,13 +1178,22 @@
 
    (define (svc->scheme this)
       (with-access::J2SSvc this (name params loc path mode register import)
-	 (let ((args (j2s-scheme params mode return conf)))
-	    `(js-create-service %this
-		,(j2sfun->scheme this (jsfun->lambda this mode return conf)
-		    mode return conf)
-		,(when (symbol? path) (symbol->string path))
-		',loc
-		,register ,import (js-current-worker)))))
+	 (let ((args (j2s-scheme params mode return conf))
+	       (lam (jsfun->lambda this mode return conf)))
+	    (match-case lam
+	       ((labels (and ?bindings ((?id . ?-))) ?id)
+		`(labels ,bindings
+		    (js-create-service %this
+		       ,(j2sfun->scheme this id mode return conf)
+		       ,(when (symbol? path) (symbol->string path))
+		       ',loc
+		       ,register ,import (js-current-worker))))
+	       (else
+		`(js-create-service %this
+		   ,(j2sfun->scheme this lam mode return conf)
+		   ,(when (symbol? path) (symbol->string path))
+		   ',loc
+		   ,register ,import (js-current-worker)))))))
 
    (with-access::J2SSvc this (loc)
       (if (config-get conf dsssl: #f) 
@@ -2428,6 +2449,8 @@
 	     (if (fixnum? val)
 		 `(quote ,(string->symbol (number->string val)))
 		 `(js-toname ,(j2s-scheme val mode return conf) %this))))
+	 ((isa? name J2SPragma)
+	  `(js-toname ,(j2s-scheme name mode return conf) %this))
 	 (else
 	  (with-access::J2SLiteralValue name (val)
 	     `(js-toname ,(j2s-scheme val mode return conf) %this)))))
@@ -2523,7 +2546,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2STilde mode return conf)
    (with-access::J2STilde this (loc stmt)
-      (let* ((js-stmt (concat-tilde (j2s-js stmt #f #f mode return conf)))
+      (let* ((js-stmt (concat-tilde (j2s-js stmt #t #f mode return conf)))
 	     (js (cond
 		    ((null? js-stmt)
 		     "")
@@ -2538,7 +2561,9 @@
 	    `(instantiate::xml-tilde
 		(lang 'javascript)
 		(%js-expression ,expr)
-		(body (vector ',(if (bigloo-debug) (j2s->list stmt) '()) '() '() '() ,js #f))
+		(body (vector
+			 ',(if (>fx (bigloo-debug) 1) (j2s->list stmt) '())
+			 '() '() '() ,js #f))
 		(loc ',loc))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2548,7 +2573,7 @@
    (with-access::J2STilde this (loc stmt)
       (let* ((temp (gensym))
 	     (assign (j2s-stmt-assign stmt temp))
-	     (js-stmt (concat-tilde (j2s-js assign #f #f mode return conf)))
+	     (js-stmt (concat-tilde (j2s-js assign #t #f mode return conf)))
 	     (str (cond
 		     ((null? js-stmt)
 		      "")

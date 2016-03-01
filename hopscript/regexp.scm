@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Aug 21 17:19:59 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Feb  9 14:52:48 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -155,8 +155,14 @@
 		  (+fx (*fx n1 256) n2))))))
    
    (define (integer->utf8 n)
-      (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
-	 (ucs2-string->utf8-string u)))
+      (cond
+	 ((and (>=fx n #x8800) (<=fx n #xdbff))
+	  ;; MS 9feb2016: don't know what to do as PCRE cannot handle
+	  ;; "red" cells https://en.wikipedia.org/wiki/UTF-8
+	  "")
+	 (else
+	  (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
+	     (ucs2-string->utf8-string u)))))
 
    (let* ((len (string-length str))
 	  (res (make-string len)))

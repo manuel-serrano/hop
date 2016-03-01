@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue Jan  5 09:22:16 2016 (serrano)                */
+;*    Last change :  Tue Feb  9 11:00:24 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -155,33 +155,43 @@
       ;; reseting the occurrence counters which are used and set below
       (reset-use! decls)
       ;; start iterating over all the LetBlock statements to find
-      ;; the first decl 
-      (let loop ((n nodes))
-	 (cond
-	    ((null? n)
-	     ;; should never be reached
-	     this)
-	    ((null? (get-let-inits (car n)))
-	     ;; not an init statement, count the number
-	     ;; of used variables
-	     (use-count (car n))
-	     ;; optimize recursively
-	     (j2s-letopt! (car n))
-	     ;; keep optimizing the current let block
-	     (loop (cdr n)))
-	    ((all-unused? decls)
-	     ;; got an initialization block, which can be
-	     ;; optimized
-	     (if (eq? n nodes)
-		 ;; the let init started the let-block
-		 (tail-let! this this)
-		 ;; re-organize the let-block to place this inits
-		 ;; at the head of a fresh let
-		 (tail-let! this (head-let! this n))))
-	    (else
-	     ;; give up optimizing
-	     (for-each j2s-letopt! n)
-	     this)))))
+      ;; the first decl
+      (with-trace 'j2s-letopt "j2s-letopt!"
+	 (trace-item "" (j2s->list this))
+	 (let loop ((n nodes))
+	    (cond
+	       ((null? n)
+		;; should never be reached
+		(trace-item "<<<.1 " (j2s->list this))
+		this)
+	       ((null? (get-let-inits (car n)))
+		(trace-item "---.2 " (j2s->list (car n)))
+		;; not an init statement, count the number
+		;; of used variables
+		(use-count (car n))
+		;; optimize recursively
+		(set-car! n (j2s-letopt! (car n)))
+		;; keep optimizing the current let block
+		(loop (cdr n)))
+	       ((all-unused? decls)
+		;; got an initialization block, which can be
+		;; optimized
+		(if (eq? n nodes)
+		    ;; the let init started the let-block
+		    (let ((res (tail-let! this this)))
+		       (trace-item "<<<.3a " (j2s->list res))
+		       res)
+		    ;; re-organize the let-block to place this inits
+		    ;; at the head of a fresh let
+		    (let ((res (tail-let! this (head-let! this n))))
+		       (trace-item "<<<.3b " (j2s->list res))
+		       res)))
+	       (else
+		(trace-item "---.4 " (j2s->list this))
+		;; give up optimizing
+		(for-each j2s-letopt! n)
+		(trace-item "<<<.4 " (j2s->list this))
+		this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-let! ...                                                    */
@@ -189,17 +199,19 @@
 ;*    Modify the letblock so its first statement is a declaration.     */
 ;*---------------------------------------------------------------------*/
 (define (head-let! this::J2SLetBlock head::pair-nil)
-   (with-access::J2SLetBlock this (loc endloc decls nodes)
-      (let loop ((n nodes)
-		 (prev '()))
-	 (if (eq? n head)
-	     (begin
-		(set! nodes n)
-		(instantiate::J2SBlock
-		   (loc loc)
-		   (endloc endloc)
-		   (nodes (reverse! (cons this prev)))))
-	     (loop (cdr n) (cons (car n) prev))))))
+   (with-trace 'j2s-letopt "head-let!"
+      (trace-item "" (j2s->list this))
+      (with-access::J2SLetBlock this (loc endloc decls nodes)
+	 (let loop ((n nodes)
+		    (prev '()))
+	    (if (eq? n head)
+		(begin
+		   (set! nodes n)
+		   (instantiate::J2SBlock
+		      (loc loc)
+		      (endloc endloc)
+		      (nodes (reverse! (cons this prev)))))
+		(loop (cdr n) (cons (car n) prev)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tail-let! ...                                                    */
@@ -241,110 +253,114 @@
 		    (loop (cdr udecls) (cons (car udecls) res))))))))
 
    ;; the main optimization loop
-   (with-access::J2SLetBlock this (nodes decls loc)
-      (let loop ((n nodes)
-		 (ndecls decls)
-		 (ninits '())
-		 (nbody '())
-		 (disabled '())
-		 (deps '()))
-	 (cond
-	    ((or (null? n) (null? ndecls))
-	     ;; all nodes or declarations checked
-	     (set! decls
-		(reverse! ninits))
-	     (set! nodes
-		(append! (map! j2s-letopt! (reverse! nbody))
-		   (map! j2s-letopt! n)))
-	     resnode)
-	    ((get-inits (car n))
-	     =>
-	     (lambda (inits)
-		;; a letinit node
-		(let liip ((inits inits)
-			   (ndecls ndecls)
-			   (ninits ninits)
-			   (nbody nbody)
-			   (disabled disabled)
-			   (deps deps))
-		   (cond
-		      ((null? inits)
-		       (loop (cdr n) ndecls ninits nbody disabled deps))
-		      ((memq (init-decl (car inits)) disabled)
-		       ;; cannot optimize...
-		       (with-access::J2SInit (car inits) (rhs)
-			  (let* ((init (car inits))
-				 (decl (init-decl init))
-				 (used (get-used-decls rhs ndecls))
-				 (ninit (duplicate::J2SDecl decl)))
-			     (liip (cdr inits)
-				(remq decl ndecls)
-				(append ninits (list ninit))
-				(cons init nbody)
-				disabled
-				(cons (cons decl used) deps)))))
-		      (else
-		       (with-access::J2SInit (car inits) (rhs)
-			  (let ((used (get-used-decls rhs ndecls))
-				(init (car inits)))
-			     (cond
-				((null? used)
-				 ;; optimize this binding
-				 (let ((decl (init-decl init))
-				       (idecl (init->decl-init init)))
-				    (liip (cdr inits)
-				       (remq decl ndecls)
-				       (cons idecl ninits)
-				       nbody
-				       disabled deps)))
-				((isa? rhs J2SFun)
-				 ;; optimize this binding but keep tracks
-				 ;; of its dependencies
-				 (let ((decl (init-decl init))
-				       (idecl (init->decl-init init)))
-				    (liip (cdr inits)
-				       (remq decl ndecls)
-				       (cons idecl ninits)
-				       nbody
-				       disabled
-				       (cons (cons decl used) deps))))
-				(else
-				 ;; keep a regular binding and mark
-				 ;; its dependencies
-				 (let* ((decl (init-decl init))
-					(ninit (duplicate::J2SDecl decl))
-					(used (get-used-decls rhs ndecls))
-					(body (instantiate::J2SStmtExpr
-						 (loc loc)
-						 (expr init))))
-				    (liip (cdr inits)
-				       (remq decl ndecls)
-				       (append ninits (list ninit))
-				       (cons body nbody)
-				       (append used disabled)
-				       deps)))))))))))
-	    ((null? (cdr n))
-	     ;; this is the last stmt which happens not to be a binding
-	     (loop (cdr n) ndecls ninits
-		(cons (car n) nbody) disabled deps))
-	    (else
-	     ;; a regular statement
-	     (with-access::J2SNode (car n) (loc)
-		(let* ((used (get-used-decls (car n) decls))
-		       (ndecl (new-let-opt (j2s-letopt! (car n))))
-		       (ninit ndecl)
-		       (ref (instantiate::J2SRef
-			       (loc loc)
-			       (decl ndecl))))
-		   (if (null? used)
-		       ;; harmless statement, create a new temp for it
-		       (loop (cdr n) ndecls (cons ninit ninits)
-			  (cons ref nbody) disabled deps)
-		       ;; disable optimization for recursively used decls
-		       (loop (cdr n) ndecls (cons ninit ninits)
-			  (cons ref nbody)
-			  (append (get-used-deps used deps) disabled)
-			  deps)))))))))
+   (with-trace 'j2s-letopt "tail-let!"
+      (trace-item "this=" (j2s->list this))
+      (unless (eq? this resnode)
+	 (trace-item "resnode=" (j2s->list resnode)))
+      (with-access::J2SLetBlock this (nodes decls loc)
+	 (let loop ((n nodes)
+		    (ndecls decls)
+		    (ninits '())
+		    (nbody '())
+		    (disabled '())
+		    (deps '()))
+	    (cond
+	       ((or (null? n) (null? ndecls))
+		;; all nodes or declarations checked
+		(set! decls
+		   (reverse! ninits))
+		(set! nodes
+		   (append! (map! j2s-letopt! (reverse! nbody))
+		      (map! j2s-letopt! n)))
+		resnode)
+	       ((get-inits (car n))
+		=>
+		(lambda (inits)
+		   ;; a letinit node
+		   (let liip ((inits inits)
+			      (ndecls ndecls)
+			      (ninits ninits)
+			      (nbody nbody)
+			      (disabled disabled)
+			      (deps deps))
+		      (cond
+			 ((null? inits)
+			  (loop (cdr n) ndecls ninits nbody disabled deps))
+			 ((memq (init-decl (car inits)) disabled)
+			  ;; cannot optimize...
+			  (with-access::J2SInit (car inits) (rhs)
+			     (let* ((init (car inits))
+				    (decl (init-decl init))
+				    (used (get-used-decls rhs ndecls))
+				    (ninit (duplicate::J2SDecl decl)))
+				(liip (cdr inits)
+				   (remq decl ndecls)
+				   (append ninits (list ninit))
+				   (cons init nbody)
+				   disabled
+				   (cons (cons decl used) deps)))))
+			 (else
+			  (with-access::J2SInit (car inits) (rhs)
+			     (let ((used (get-used-decls rhs ndecls))
+				   (init (car inits)))
+				(cond
+				   ((null? used)
+				    ;; optimize this binding
+				    (let ((decl (init-decl init))
+					  (idecl (init->decl-init init)))
+				       (liip (cdr inits)
+					  (remq decl ndecls)
+					  (cons idecl ninits)
+					  nbody
+					  disabled deps)))
+				   ((isa? rhs J2SFun)
+				    ;; optimize this binding but keep tracks
+				    ;; of its dependencies
+				    (let ((decl (init-decl init))
+					  (idecl (init->decl-init init)))
+				       (liip (cdr inits)
+					  (remq decl ndecls)
+					  (cons idecl ninits)
+					  nbody
+					  disabled
+					  (cons (cons decl used) deps))))
+				   (else
+				    ;; keep a regular binding and mark
+				    ;; its dependencies
+				    (let* ((decl (init-decl init))
+					   (ninit (duplicate::J2SDecl decl))
+					   (used (get-used-decls rhs ndecls))
+					   (body (instantiate::J2SStmtExpr
+						    (loc loc)
+						    (expr init))))
+				       (liip (cdr inits)
+					  (remq decl ndecls)
+					  (append ninits (list ninit))
+					  (cons body nbody)
+					  (append used disabled)
+					  deps)))))))))))
+	       ((null? (cdr n))
+		;; this is the last stmt which happens not to be a binding
+		(loop (cdr n) ndecls ninits
+		   (cons (car n) nbody) disabled deps))
+	       (else
+		;; a regular statement
+		(with-access::J2SNode (car n) (loc)
+		   (let* ((used (get-used-decls (car n) decls))
+			  (ndecl (new-let-opt (j2s-letopt! (car n))))
+			  (ninit ndecl)
+			  (ref (instantiate::J2SRef
+				  (loc loc)
+				  (decl ndecl))))
+		      (if (null? used)
+			  ;; harmless statement, create a new temp for it
+			  (loop (cdr n) ndecls (cons ninit ninits)
+			     (cons ref nbody) disabled deps)
+			  ;; disable optimization for recursively used decls
+			  (loop (cdr n) ndecls (cons ninit ninits)
+			     (cons ref nbody)
+			     (append (get-used-deps used deps) disabled)
+			     deps))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-toplevel-letopt! ...                                         */

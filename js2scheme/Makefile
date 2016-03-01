@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Jul 29 15:47:19 2015 (serrano)                */
+#*    Last change :  Fri Jan 15 08:04:54 2016 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -38,7 +38,8 @@ BLIBFLAGS = $(BCFLAGSRTS)
 _OBJECTS = lexer header parser html ast dump utils \
   stage compile js \
   syntax return loopexit symbol scheme ronly resolve this \
-  use property bestpractice sourcemap debug stmtassign letopt
+  use property bestpractice sourcemap debug stmtassign letopt \
+  constant
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

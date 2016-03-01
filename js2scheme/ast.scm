@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Dec 31 10:50:40 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Fri Jan 15 18:59:51 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -38,6 +38,7 @@
 	      (name read-only (default #f))
 	      (main read-only (default #f))
 	      (module read-only (default #f))
+	      (cnsts::pair-nil (default '()))
 	      (decls::pair-nil (default '()))
 	      (headers::pair-nil (default '())))
 
@@ -292,7 +293,7 @@
 	      args::pair-nil)
 	   
 	   (abstract-class J2SPropertyInit::J2SNode
-	      name::J2SLiteralValue)
+	      name::J2SExpr)
 	   
 	   (final-class J2SDataPropertyInit::J2SPropertyInit
 	      val::J2SExpr)
@@ -490,10 +491,10 @@
    (error "walk4!" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk5*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4)
-   (error "walk5!" "Internal Error: forgot Node type"
+   (error "walk5*" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 (define-generic (walk6*::pair-nil n::J2SNode p::procedure arg0 arg1 arg2 arg3 arg4 arg5)
-   (error "walk6!" "Internal Error: forgot Node type"
+   (error "walk6*" "Internal Error: forgot Node type"
       (with-output-to-string (lambda () (write-circle n)))))
 
 (define-generic (walk0!::J2SNode n::J2SNode p::procedure)
@@ -628,9 +629,9 @@
        (print "   return _ast;\n};\n\n")))
    
    `(begin
-       ,@(map (lambda (nb) (gen-method nb)) (iota 5))
-       ,@(map (lambda (nb) (gen-method* nb)) (iota 5))
-       ,@(map (lambda (nb) (gen-method! nb)) (iota 5))))
+       ,@(map (lambda (nb) (gen-method nb)) (iota 6))
+       ,@(map (lambda (nb) (gen-method* nb)) (iota 6))
+       ,@(map (lambda (nb) (gen-method! nb)) (iota 6))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-traversals ...                                               */
@@ -1030,5 +1031,3 @@
    (with-access::J2SPragma node (expr)
       (set! expr (call-with-input-string expr read))
       node))
-
-

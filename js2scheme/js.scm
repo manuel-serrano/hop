@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Jan  8 15:03:34 2016 (serrano)                */
+;*    Last change :  Thu Jan 21 11:50:53 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -626,7 +626,9 @@
    (with-access::J2SCall this (fun args)
       (let ((f (j2s-js fun tildec dollarc mode evalp conf)))
 	 (cons this
-	    (append (if (or (isa? fun J2SRef) (isa? fun J2SAccess))
+	    (append (if (or (isa? fun J2SRef)
+			    (isa? fun J2SAccess)
+			    (isa? fun J2SUnresolvedRef))
 			f
 			(cons "(" (append f '(")"))))
 	       (j2s-js* this "(" ")" "," args tildec dollarc mode evalp conf))))))
@@ -637,9 +639,9 @@
 (define-method (j2s-js this::J2SAccess tildec dollarc mode evalp conf)
 
    (define (id-string? field)
-      (if (isa? field J2SString)
-	  (with-access::J2SString field (val)
-	     (pregexp-match "[a-zA-Z0-9_$]+" val))))
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val)
+	    (pregexp-match "^[a-zA-Z0-9_$]+$" val))))
       
    (with-access::J2SAccess this (obj field)
       (if (id-string? field)
@@ -665,8 +667,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SUnary tildec dollarc mode evalp conf)
    (with-access::J2SUnary this (op expr)
-      (cons* this (symbol->string op)
-	 (j2s-js expr tildec dollarc mode evalp conf))))
+      (if (memq op '(void typeof delete))
+	  (cons* this (symbol->string op) " "
+	     (j2s-js expr tildec dollarc mode evalp conf))
+	  (cons* this (symbol->string op) 
+	     (j2s-js expr tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-op ...                                                       */
@@ -691,19 +696,37 @@
 ;*    j2s-js ::J2STilde ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2STilde tildec dollarc mode evalp conf)
+   ;;(tprint "tildec=" tildec " " (j2s->list this))
    (cons this
-      (if (procedure? tildec)
-	  (tildec this tildec dollarc mode evalp conf)
-	  (j2s-js-script-tilde this tildec dollarc mode evalp conf))))
+      (cond
+	 ((procedure? tildec)
+	  (tildec this tildec dollarc mode evalp conf))
+	 ((eq? tildec #t)
+	  (j2s-js-script-tilde this tildec dollarc mode evalp conf))
+	 (else
+	  (with-access::J2STilde this (loc stmt)
+	     (cons* this "<script>"
+		(append (j2s-js stmt
+			   j2s-js-script-tilde
+			   dollarc
+			   mode evalp conf)
+		   '("</script>"))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-script-tilde ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (j2s-js-script-tilde this::J2STilde tildec dollarc mode evalp conf)
    (with-access::J2STilde this (loc stmt)
-      (cons* this "<script>"
-	 (append (j2s-js stmt tildec j2s-js-client-dollar mode evalp conf)
-	    '("</script>")))))
+      (let ((ndollarc (j2s-js-client-dollar dollarc)))
+	 (cons* this "SCRIPT( undefined, '"
+	    (string-for-read
+	       (call-with-output-string
+		  (lambda (port)
+		     (for-each (lambda (n)
+				  (unless (isa? n J2SNode)
+				     (display n port)))
+			(j2s-js stmt tildec ndollarc mode evalp conf)))))
+	    '("')")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-attribute-tilde ...                                       */
@@ -743,6 +766,7 @@
 (define (j2s-js-client-dollar odollarc)
    (lambda (this::J2SDollar tildec dollarc mode evalp conf)
       (with-access::J2SDollar this (node)
+	 ;;(tprint "DOLLAR=" (j2s->list node))
 	 (j2s-js node tildec odollarc mode evalp conf))))
 
 ;*---------------------------------------------------------------------*/

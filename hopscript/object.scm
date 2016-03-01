@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Dec 23 07:47:36 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Mar  1 07:57:50 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
 ;*                                                                     */
@@ -431,7 +431,7 @@
 
 	    ;; html5
 	    (js-bind-tags! %this %this
-	       AUDIO VIDEO)
+	       AUDIO VIDEO TRACK)
 
 	    ;; html
 	    (define (js-html-html %this)

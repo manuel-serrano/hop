@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri Sep 25 13:36:28 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Tue Feb  9 16:17:06 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -76,6 +76,7 @@
 	   (nodejs-timer-stop ::WorkerHopThread ::obj)
 	   (nodejs-timer-unref ::WorkerHopThread ::obj)
 	   (nodejs-hrtime::uint64)
+	   (nodejs-uptime::uint64 ::WorkerHopThread)
 
 	   (nodejs-make-fs-event ::WorkerHopThread)
 	   (nodejs-fs-event-start ::obj ::procedure ::bstring)
@@ -388,7 +389,9 @@
 			  (cb (lambda (a)
 				 (js-worker-tick th)
 				 (with-access::JsLoop loop (actions)
-				    (unless (or keep-alive (pair? services) (pair? actions))
+				    (unless (or keep-alive
+						(pair? services)
+						(pair? actions))
 				       (uv-unref async)
 				       (when (js-totest (js-get %process '_exiting %this))
 					  (uv-stop loop)))))))))
@@ -627,6 +630,14 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-hrtime::uint64)
    (uv-hrtime))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-uptime ...                                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-uptime::uint64 %worker)
+   (let ((loop (worker-loop %worker)))
+      (uv-update-time loop)
+      (uv-now loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-make-fs-event ...                                         */

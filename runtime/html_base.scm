@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Mon Oct 26 16:18:48 2015 (serrano)                */
-;*    Copyright   :  2010-15 Manuel Serrano                            */
+;*    Last change :  Tue Mar  1 07:58:31 2016 (serrano)                */
+;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
 ;*=====================================================================*/
@@ -116,6 +116,7 @@
 	    (<THEAD> . ::obj)
 	    (<TITLE> . ::obj)
 	    (<TR> . ::obj)
+	    (<TRACK> . ::obj)
 	    (<TT> . ::obj)
 	    (<U> . ::obj)
 	    (<UL> . ::obj)
@@ -215,6 +216,7 @@
 (define-xml-element <THEAD>)
 (define-xml-markup <TITLE>)
 (define-xml-element <TR>)
+(define-xml-element <TRACK>)
 (define-xml-element <TT>)
 (define-xml-element <U>)
 (define-xml-element <UL>)

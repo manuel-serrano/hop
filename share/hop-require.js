@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue May 27 06:09:16 2014                          */
-/*    Last change :  Thu Dec 17 07:54:09 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Mon Jan 18 14:47:03 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Client side implementation of the "require" form                 */
 /*=====================================================================*/
@@ -104,7 +104,7 @@ hop[ '%require' ] = function( name, mod ) {
    
    function resolveDirectory( x ) {
       var json = x + "/package.json";
-      
+
       if( fileExists( json ) ) {
 	 var m = resolvePackage( json, x );
 
@@ -144,7 +144,7 @@ hop[ '%require' ] = function( name, mod ) {
       if( isCoreModule( name ) ) {
 	 return name;
       }
-      if( name.match( /..?[/]/ ) ) {
+      if( name.match( /^[.][.]?[/]/ ) ) {
 	 return resolveFileOrDirectory( name, dirname( mod.filename ) )
 	    || resolveModules( mod, name )
 	    || resolveError( name );
@@ -155,7 +155,7 @@ hop[ '%require' ] = function( name, mod ) {
 	    || resolveError( name );
       }
       return resolveModules( mod, name )
-	 || resolveError( name );
+            || name;
    }
 
    return require( resolve( name ) );

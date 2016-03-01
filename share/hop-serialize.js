@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Dec 16 21:36:56 2015 (serrano)                */
-/*    Copyright   :  2007-15 Manuel Serrano                            */
+/*    Last change :  Fri Feb 26 18:37:46 2016 (serrano)                */
+/*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
 /*=====================================================================*/
@@ -535,6 +535,8 @@ function hop_serialize_number( item ) {
 	    return hop_serialize_number_string( 'L', sitem );
 	 }
       }
+   } if( sitem.indexOf( "+" ) != -1 ) {
+      return hop_serialize_number_string( 'f', sitem.replace( /e[+]/, "e" ) );
    } else {
       return hop_serialize_number_string( 'f', sitem );
    }
@@ -1228,6 +1230,7 @@ function hop_bytearray_to_obj( s, extension ) {
 	 case 0x3b /* ; */: return undefined;
 	 case 0x2e /* . */: return null;
 	 case 0x3c /* < */: return read_cnst();
+         case 0x60 /* ` */: 
          case 0x22 /* " */: return read_string( s );
          case 0x25 /* % */: return decodeURIComponent( read_string( s ) );
          case 0x55 /* U */: return read_string( s );

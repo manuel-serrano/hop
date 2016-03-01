@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Jan  6 07:49:41 2016 (serrano)                */
+;*    Last change :  Fri Jan 15 19:01:07 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -244,23 +244,15 @@
 			 (set! vararg 'arguments))))))))
    this)
 
-;; MS CARE: 25 Juil 2014, not sure it would be a good idea to traverse ~ nodes
-;* {*---------------------------------------------------------------------*} */
-;* {*    resolve! ::J2STilde ...                                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (resolve! this::J2STilde env mode withs wenv)   */
-;*    (with-access::J2STilde this (stmt loc)                           */
-;*       (let* ((decls (collect* stmt))                                */
-;* 	     (nwenv (append decls wenv)))                              */
-;* 	 (if (pair? decls)                                             */
-;* 	     (set! stmt                                                */
-;* 		(instantiate::J2SBlock                                 */
-;* 		   (loc loc)                                           */
-;* 		   (nodes (append                                      */
-;* 			     (bind-decls! decls decls mode #f withs wenv) */
-;* 			     (list (walk! stmt decls mode withs nwenv)))))) */
-;* 	     (set! stmt (walk! stmt decls mode withs nwenv))))         */
-;*       this))                                                        */
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2STilde ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2STilde env mode withs wenv)
+   (with-access::J2STilde this (stmt)
+      (resolve-tilde! stmt
+	 (list (lambda (this resolvers)
+		  (resolve! this env mode withs wenv))))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve-let! ...                                                 */
@@ -726,6 +718,37 @@
 	 (set! test (resolve! test nenv mode withs wenvs))
 	 (set! expr (resolve! expr nenv mode withs wenvs))
 	 this)))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-tilde! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-tilde! this::J2SNode resolvers)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-tilde! ::J2STilde ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-tilde! this::J2STilde resolvers)
+   (with-access::J2STilde this (stmt)
+      (resolve-tilde! stmt (cons resolve-tilde! resolvers))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    resolve-tilde! ::J2SDollar ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve-tilde! this::J2SDollar resolvers)
+   (if (null? resolvers)
+       (with-access::J2SDollar this (loc)
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "js-symbol")
+		(msg "Illegal ${...} expression")
+		(obj this)
+		(fname (cadr loc))
+		(location (caddr loc)))))
+       (with-access::J2SDollar this (node)
+	  (set! node ((car resolvers) node (cdr resolvers)))
+	  this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-let ...                                                  */
