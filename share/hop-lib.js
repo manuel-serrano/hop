@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Dec 17 16:41:32 2015 (serrano)                */
-/*    Copyright   :  2007-15 Manuel Serrano                            */
+/*    Last change :  Fri Feb 26 18:50:26 2016 (serrano)                */
+/*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
 /*=====================================================================*/
@@ -918,11 +918,12 @@ function hop_plist2jsobject( plist ) {
    var o = {};
 
    while( sc_isPair( plist ) ) {
-      if( !sc_isKeyword( plist.__hop_car ) )
-	 sc_error( "plist->object", "Illegal key", plist.__hop_car.__hop_car );
-      if( !sc_isPair( plist.__hop_cdr ) ) 
+      if( !sc_isKeyword( plist.__hop_car ) ) {
+	 sc_error( "plist->object", "Illegal key", plist );
+      }
+      if( !sc_isPair( plist.__hop_cdr ) ) {
 	 sc_error( "plist->object", "Illegal entry", plist );
-      
+      }
       o[ sc_keyword2jsstring( plist.__hop_car ) ] = plist.__hop_cdr.__hop_car;
       plist = plist.__hop_cdr.__hop_cdr;
    }

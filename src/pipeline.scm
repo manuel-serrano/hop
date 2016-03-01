@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Wed Dec 16 19:47:51 2015 (serrano)                */
-;*    Copyright   :  2008-15 Manuel Serrano                            */
+;*    Last change :  Tue Mar  1 07:11:53 2016 (serrano)                */
+;*    Copyright   :  2008-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
@@ -300,25 +300,33 @@
 ;*---------------------------------------------------------------------*/
 ;*    stage-async-answer ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (stage-async-answer scd thread id req resp)
+(define (stage-async-answer scd thread id req respa)
    (with-stage-handler exec-error-handler (scd req)
       (with-access::http-request req (socket method scheme port host path connection)
 	 (socket-timeout-set! socket 0 0)
 	 (socket-buffers-detach! socket)
-	 (with-access::http-response-async resp (async)
-	    (async
-	       (lambda (resp)
-		  (socket-timeout-set! socket
-		     (hop-keep-alive-timeout) (hop-keep-alive-timeout))
-		  (let ((tmt (with-handler
-				(lambda (e)
-				   (exec-error-handler e scd req))
-				(stage-exec scd thread id req resp))))
-		     (if (integer? tmt)
-			 (spawn scd stage-request id socket tmt 'keep-alive)
-			 (socket-shutdown socket))))))
+	 (with-access::http-response-async respa (async)
+	    (let ((mutex (make-mutex))
+		  (condv (make-condition-variable)))
+	       (let ((resps #f))
+		  (synchronize mutex
+		     (async
+			(lambda (r)
+			   (synchronize mutex
+			      (set! resps r)
+			      (condition-variable-broadcast! condv))))
+		     (condition-variable-wait! condv mutex)
+		     (socket-timeout-set! socket
+			(hop-keep-alive-timeout) (hop-keep-alive-timeout))
+		     (let ((tmt (with-handler
+				   (lambda (e)
+				      (exec-error-handler e scd req))
+				   (stage-exec scd thread id req resps))))
+			(if (integer? tmt)
+			    (spawn scd stage-request id socket tmt 'keep-alive)
+			    (socket-shutdown socket)))))))
 	 #f)))
-	   
+
 ;*---------------------------------------------------------------------*/
 ;*    stage-exec-verb ...                                              */
 ;*---------------------------------------------------------------------*/

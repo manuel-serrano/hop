@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Jan  4 09:22:27 2016 (serrano)                */
+;*    Last change :  Tue Mar  1 07:56:24 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -197,27 +197,30 @@
 			 :year y :month (+ m 1)
 			 :day 1 :hour 0 :min 0 :sec 0))))
 	       ((?value)
-		(let ((v (js-toprimitive value 'any %this)))
-		   (cond
-		      ((js-jsstring? v)
-		       (parse-date (js-jsstring->string v)))
-		      ((number? v)
-		       (if (flonum? v)
-			   (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
-			       +nan.0
-			       (nanoseconds->date
-				  (*llong
-				     #l1000000
-				     (flonum->llong (round v)))))
-			   (let ((n (cond
-				       ((fixnum? v) (fixnum->llong v))
-				       ((llong? v) v)
-				       ((elong? v) (elong->llong v))
-				       (else #l0))))
-			      (nanoseconds->date
-				 (*llong #l1000000 n)))))
-		      (else
-		       v))))
+		(if (isa? value JsDate)
+		    (with-access::JsDate value (val)
+		       val)
+		    (let ((v (js-toprimitive value 'any %this)))
+		       (cond
+			  ((js-jsstring? v)
+			   (parse-date (js-jsstring->string v)))
+			  ((number? v)
+			   (if (flonum? v)
+			       (if (or (nanfl? v) (=fl v +inf.0) (=fl v -inf.0))
+				   +nan.0
+				   (nanoseconds->date
+				      (*llong
+					 #l1000000
+					 (flonum->llong (round v)))))
+			       (let ((n (cond
+					   ((fixnum? v) (fixnum->llong v))
+					   ((llong? v) v)
+					   ((elong? v) (elong->llong v))
+					   (else #l0))))
+				  (nanoseconds->date
+				     (*llong #l1000000 n)))))
+			  (else
+			   v)))))
 	       (else
 		(current-date))))
 	 

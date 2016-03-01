@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Dec 19 10:30:15 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Tue Mar  1 07:43:19 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -233,7 +233,7 @@
 	       ;; webService
 	       (define-js webService 1
 		  (lambda (this base)
-		     (let ((name (string->symbol (js-jsstring->string base))))
+		     (let ((name (string->symbol (js-tostring base %this))))
 			(js-make-function %this
 			   (lambda (this args)
 			      (js-new %this js-webservice base args))
@@ -413,7 +413,8 @@
 	     (unless (eq? t (js-undefined))
 		(set! timeout (js-tointeger t %this)))
 	     (unless (eq? m (js-undefined))
-		(set! method (string->symbol (js-tostring m %this))))
+		(set! method (string->symbol
+				(string-upcase (js-tostring m %this)))))
 	     (when (isa? f JsFunction)
 		(set! fail
 		   (lambda (xhr)
@@ -433,7 +434,7 @@
       (define (post callback)
 	 (with-access::JsUrlFrame frame (url args)
 	    (with-url (hop-apply-nice-url
-			 (url-base (js-jsstring->string url)) args)
+			 (url-base (js-tostring url %this)) args)
 	       callback
 	       :fail fail
 	       :method method

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Tue Feb  9 14:27:22 2016 (serrano)                */
+;*    Last change :  Tue Mar  1 07:58:31 2016 (serrano)                */
 ;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -116,6 +116,7 @@
 	    (<THEAD> . ::obj)
 	    (<TITLE> . ::obj)
 	    (<TR> . ::obj)
+	    (<TRACK> . ::obj)
 	    (<TT> . ::obj)
 	    (<U> . ::obj)
 	    (<UL> . ::obj)

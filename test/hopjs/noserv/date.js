@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/date.js         */
+/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/date.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Jan  1 08:27:39 2016 (serrano)                */
+/*    Last change :  Tue Mar  1 08:06:58 2016 (serrano)                */
 /*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing Date                                                     */
@@ -320,6 +320,8 @@ assert.ok( d.getTime() === 2015, "year" );
 /*    creation                                                         */
 /*---------------------------------------------------------------------*/
 var date = new Date();
+var date2 = new Date( date );
+var date3 = new Date( d.getTime() );
 date.setDate( 2.9 );
 
 assert.ok( date.getDate() == 2 );
@@ -327,6 +329,12 @@ assert.ok( date.getDate() == 2 );
 var invalid = new Date( undefined );
 assert.ok( isNaN( invalid ) );
 assert.ok( invalid != invalid.valueOf() );
+
+var date1 = new Date();
+var date2 = new Date( date1 );
+var date3 = new Date( date1.getTime() );
+
+assert.ok( date2.getTime() === date3.getTime() );
 
 /*---------------------------------------------------------------------*/
 /*    utc                                                              */

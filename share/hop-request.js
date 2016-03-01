@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Dec 17 05:43:50 2015 (serrano)                */
-/*    Copyright   :  2004-15 Manuel Serrano                            */
+/*    Last change :  Tue Mar  1 07:35:49 2016 (serrano)                */
+/*    Copyright   :  2004-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
 /*=====================================================================*/
@@ -451,28 +451,23 @@ function hop_request_onready( xhr, svc, succ, fail ) {
    }
 
    function onError( xhr, svc, fail ) {
-      if( hop_debug() > 0 ) {
-	 var err = xhr.getResponseHeader( "Hop-Error" );
-	 
-	 if( err ) {
-	    var o;
+      var err = xhr.getResponseHeader( "Hop-Error" );
+      
+      if( err ) {
+	 var o;
 
-	    fail = xhr_hop_failure_callback( fail );
+	 fail = xhr_hop_failure_callback( fail );
 
-	    try {
-	       o = hop_url_encoded_to_obj( err );
-	    } catch( e ) {
-	       hop_callback_handler( e, xhr.precontext );
-	    }
-	 } else {
-	    o = hop_request_unserialize( xhr, svc );
+	 try {
+	    o = hop_url_encoded_to_obj( err );
+	 } catch( e ) {
+	    hop_callback_handler( e, xhr.precontext );
 	 }
-
-	 return fail( o, xhr );
       } else {
-	 fail( xhr.status, xhr );
-	 return false;
+	 o = hop_request_unserialize( xhr, svc );
       }
+
+      return fail( o, xhr );
    }
 
    try {
@@ -633,6 +628,7 @@ function hop_send_request( svc, sync, success, failure, anim, henv, auth, t, x, 
       if( this.readyState == 4 ) {
 	 return hop_request_onready( this, svc, succ, fail );
       } else {
+	 console.log( "readState=", this.readState );
 	 return false;
       }
    }
