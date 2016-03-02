@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Mar  1 07:43:19 2016 (serrano)                */
+;*    Last change :  Wed Mar  2 12:03:38 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -378,6 +378,7 @@
 	 (header #f)
 	 (timeout 0)
 	 (method 'GET)
+	 (body #f)
 	 (scheme "http"))
       (cond
 	 ((isa? opt JsFunction)
@@ -387,7 +388,7 @@
 		   (js-call1 %this opt %this
 		      (js-alist->jsobject header %this))))))
 	 ((not (eq? opt (js-undefined)))
-	  (let ((h (js-get opt 'host %this))
+	  (let ((h (js-get opt 'hostname %this))
 		(p (js-get opt 'port %this))
 		(a (js-get opt 'authorization %this))
 		(f (js-get opt 'fail %this))
@@ -396,7 +397,8 @@
 		(c (js-get opt 'ssl %this))
 		(t (js-get opt 'timeout %this))
 		(m (js-get opt 'method %this))
-		(r (js-get opt 'header %this)))
+		(r (js-get opt 'header %this))
+		(b (js-get opt 'body %this)))
 	     (unless (eq? h (js-undefined))
 		(set! host (js-tostring h %this)))
 	     (unless (eq? p (js-undefined))
@@ -422,15 +424,21 @@
 			 (js-call1 %this f %this
 			    (js-alist->jsobject header %this))))))
 	     (when (isa? r JsObject)
-		(set! header (js-jsobject->alist r %this))))))
-
+		(set! header
+		   (map! (lambda (o)
+			    (set-cdr! o (js-tostring (cdr o) %this))
+			    o)
+		      (js-jsobject->alist r %this))))
+	     (unless (eq? b (js-undefined))
+		(set! body (js-tostring b %this))))))
+      
       (define (url-base url)
 	 (if (string-index url #\:)
 	     url
 	     (string-append scheme "://" host
 		(if port (format ":~a" port) "")
 		url)))
-		      
+      
       (define (post callback)
 	 (with-access::JsUrlFrame frame (url args)
 	    (with-url (hop-apply-nice-url
@@ -442,7 +450,8 @@
 	       :authorization authorization
 	       :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
 	       :ctx %this
-	       :header header)))
+	       :header header
+	       :body body)))
       
       (define (scheme->js val)
 	 (js-obj->jsobject val %this))
