@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jan  5 05:21:05 2016 (serrano)                */
+;*    Last change :  Wed Mar  2 16:50:05 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -275,7 +275,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-primitive-value o::JsWrapper)
    (with-access::JsWrapper o (obj)
-      (obj)))
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::JsWrapper ...                                        */

@@ -8,7 +8,7 @@ Hop server.  The module defines functions to craft service responses,
 and a broadcast function that lets a server send events to registered
 remote clients.
 
-The module also defines an API to invoke third party WebServices.
+The module also defines an API to invoke third party Web Services.
 
 For ease of use, `hop` is defined as a global object and can be used
 directly without require.
@@ -68,6 +68,13 @@ ${ <span class="label label-warning">Note:</span> }
 one when the response of a service is a compound JavaScript object.
 [:@warning]
 
+The options list is:
+
+  * `startLine`: a string denoting the HTTP start line.
+  * `contentType`: the `content-type` of the response.
+  * `charset`: the charset.
+  * `header`: the full response header, an object.
+
 
 ### hop.HTTPResponseXml( obj, [option] ) ###
 [:@glyphicon glyphicon-tag function]
@@ -85,6 +92,14 @@ ${ <span class="label label-warning">Note:</span> }
 one when the response of a service is an XML fragment.
 [:@warning]
 
+The options list is:
+
+  * `backend`: the HTML backend (defaults to "HTML5")
+  * `startLine`: a string denoting the HTTP start line.
+  * `contentType`: the `content-type` of the response.
+  * `charset`: the charset.
+  * `header`: the full response header, an object.
+
 
 ### hop.HTTPResponseString( string, [option] ) ###
 [:@glyphicon glyphicon-tag function]
@@ -98,7 +113,15 @@ service getXml() {
     { startLine: "HTTP/1.0 404 File not found" } ) 
 ```
 
-### hop.HTTPREsponseJson( object ) ###
+The options list is:
+
+  * `startLine`: a string denoting the HTTP start line.
+  * `contentType`: the `content-type` of the response.
+  * `charset`: the charset.
+  * `header`: the full response header, an object.
+
+
+### hop.HTTPResponseJson( object ) ###
 [:@glyphicon glyphicon-tag function]
 
 This convenience function returns an `\[application/json\]` value from a
@@ -108,11 +131,22 @@ JavaScript object. It is the same as:
 hop.HTTPResponseString( JSON.stringify( obj ), { contentType: 'application/json' } )
 ```
 
+  * `startLine`: a string denoting the HTTP start line.
+  * `contentType`: the `content-type` of the response.
+  * `charset`: the charset.
+  * `header`: the full response header, an object.
+
+
 ### hop.HTTPResponseFile( path, [option] ) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to respond files to clients. The argument `path` is
 the full path of a existing file.
+
+  * `contentType`: the `content-type` of the response.
+  * `charset`: the charset.
+  * `header`: the full response header, an object.
+
 
 #### Example ####
 
@@ -130,7 +164,7 @@ the same behaviour can also be implemented combining standard `fs` operations
 and `HTTPResponseString` values.
 [:@warning]
 
-### hop.HTTPResponseAuthentication( msg, [option] ) ###
+### hop.HTTPResponseAuthentication( msg, [request] ) ###
 [:@glyphicon glyphicon-tag function]
 
 This class is used to respond HTTP `401 Unauthorized` response to Web
@@ -139,8 +173,10 @@ client.
 ${ <span class="label label-warning">Note:</span> }
  the class `hop.HTTPResponseAuthentication` is a convenience class.
 The same behavior can be implemented using `hop.HTTPResponseString`
-and passing a `tagstLine` value in the optional argument.
+and passing a `startLine` value in the optional argument.
 [:@warning]
+
+
 
 #### Example ####
 
@@ -152,7 +188,7 @@ ${ <span class="label label-info">authentication/authentication.js</span> }
 ${ doc.include( doc.BUILDDIR + "/examples/authentication/authentication.js", 14 ) }
 ```
 
-### hop.HTTPResponseError( obj, [option] ) ###
+### hop.HTTPResponseError( obj ) ###
 
 Respond an error value to the client, which either invokes the `fail`
 callback of the `post` service call, or raises an exception.
@@ -169,8 +205,13 @@ is interpreted by the builtin server as a delayed reply.
 automatically invoked by the runtime system with a value that is a
 function of one parameter. Invoking that function provokes the delivery
 of the reply to the client.
- * The argument `req` is a request object. It is the `this` value of
-the service invokation.
+ * The argument `req` is either a request object (the `this` value of
+ the service invokation) or an object containing the optional fields.
+  * `currentRequest`: the request object.
+  * `contentType`: the `content-type` of the response.
+  * `charset`: the charset.
+  * `header`: the full response header, an object.
+
 
 #### Example ####
 
@@ -203,7 +244,7 @@ Invoking the `reject` as the same effect of responding a `HHTPResponseError`
 value.
 
 
-### hop.HTTPResponseProxy( obj, [option] ) ###
+### hop.HTTPResponseProxy( obj ) ###
 [:@glyphicon glyphicon-tag function]
  
 The `hop.HTTPResponseProxy` objects are to be used when a remote resource
@@ -308,8 +349,8 @@ getScore.call( srv, "jean dupont" ).post( v => ... );
 ```
 
 
-WebService
-----------
+Web Service
+-----------
 
 WebService is a set of API that let you invoke third party WebServices
 the same way you invoke Hop services.
@@ -346,13 +387,40 @@ invoked if an error occurs during the WebService invocation. If
 `fail-or-options` is an object, it contains optional parameters to the
 WebService invocation.
 
+The list of valid options are:
+
+  * `hostname`: the remote host.
+  * `port`: the remote host port.
+  * `authorization`: a identification of the form `name:password`.
+  * `fail`: a failure callback.
+  * `scheme`: the scheme used for the request (defaults to `http`).
+  * `ssl`: a boolean to enable secure connections.
+  * `timeout`: a number of milliseconds.
+  * `method`: the method of the call (e.g., `GET` or `POST`).
+  * `header`: the complete header of the request. The header is an
+  regular object.
+  * `body`: a string, denoting the body of the request.
+
+Example:
+
+```hopscript
+var ws = hop.webService( "http://localhost:1337/api/oauth/token" );
+
+ws()
+  .postSync(
+   { method: "POST",
+    header: { "content-type": "application/x-www-form-urlencoded" },
+    body: "grant_type=password&client_id=android&client_secret=SomeRandomCharsAndNumbers&username=myapi&password=abc1234" } );
+```
+
 ###WebServiceFrame.postSync([ success [, fail-or-option]] ) ###
 [:@glyphicon glyphicon-tag function]
 
 The synchronous version of `post`. Returns the value returned by the
 service. Since `postSync` blocks the execution of the client process
 until the service returns a value, it is strongly advised to use
-the asynchronous `post` when applicable.
+the asynchronous `post` when applicable. The options are shared with the
+`post` method.
 
 
 Miscellaneous
