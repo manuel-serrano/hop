@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Mon Dec 28 10:27:06 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Wed Mar  9 08:25:51 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -68,7 +68,6 @@
      "true"
      "try"
      "typeof"
-     "service"
      "var"
      "void"
      "while"
@@ -306,10 +305,10 @@
       ((: id_start (* id_part))
        (let ((symbol (the-symbol)))
 	  (cond
+	     ((and (eq? symbol 'service) (not (eq? lang 'javascript)))
+	      (token symbol symbol (the-length)))
 	     ((getprop symbol 'reserved)
-	      (if (and (eq? symbol 'service) (eq? lang 'javascript))
-		  (token 'ID symbol (the-length))
-		  (token symbol symbol (the-length))))
+	      (token symbol symbol (the-length)))
 	     ((and *JS-care-future-reserved* (getprop symbol 'future-reserved))
 	      (token 'RESERVED symbol (the-length)))
 	     (else
@@ -336,6 +335,9 @@
 		     (let ((symbol (string->symbol (cdr estr))))
 			(cond
 			   ((getprop symbol 'reserved)
+			    (token symbol symbol (the-length)))
+			   ((and (eq? symbol 'service)
+				 (not (eq? lang 'javascript)))
 			    (token symbol symbol (the-length)))
 			   ((and *JS-care-future-reserved*
 				 (getprop symbol 'future-reserved))
