@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/3.1.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Dec 18 08:28:14 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Thu Mar  3 08:24:01 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -52,7 +52,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-system-packed ...                                   */
 ;*---------------------------------------------------------------------*/
-(define head-runtime-system-packed #f)
+(define head-runtime-system-packed-scheme #f)
+(define head-runtime-system-packed-javascript #f)
+
+(define (head-runtime-system-packed idiom)
+   (if (string=? idiom "scheme")
+       head-runtime-system-packed-scheme
+       head-runtime-system-packed-javascript))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-system-unpacked ...                                 */
@@ -60,10 +66,16 @@
 (define head-runtime-system-unpacked #f)
 
 ;*---------------------------------------------------------------------*/
-;*    head-runtime-system-inline ...                                   */
+;*    head-runtime-system-inline-scheme ...                            */
 ;*---------------------------------------------------------------------*/
-(define head-runtime-system-inline #f)
+(define head-runtime-system-inline-scheme #f)
+(define head-runtime-system-inline-javascript #f)
 
+(define (head-runtime-system-inline idiom)
+   (if (string=? idiom "scheme")
+       head-runtime-system-inline-scheme
+       head-runtime-system-inline-javascript))
+   
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-favicon ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -112,9 +124,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    <HOP-SETUP> ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (<HOP-SETUP>)
-   (<SCRIPT> :type (hop-mime-type)
-      (string-append "
+(define (<HOP-SETUP> idiom)
+   (when (string=? idiom "scheme")
+      (<SCRIPT> :type (hop-mime-type)
+	 (string-append "
 function hop_etc_directory() {return \"" (hop-etc-directory) "\";}
 function hop_bin_directory() {return \"" (hop-bin-directory) "\";}
 function hop_lib_directory() {return \"" (hop-lib-directory) "\";}
@@ -122,9 +135,7 @@ function hop_share_directory() {return \"" (hop-share-directory) "\";}
 function hop_var_directory() {return \"" (hop-var-directory) "\";}
 function hop_contribs_directory() {return \"" (hop-contribs-directory) "\";}
 function hop_weblets_directory() {return \"" (hop-weblets-directory) "\";}
-function hop_debug() {return " (integer->string (bigloo-debug)) ";}
-function hop_session() {return " (integer->string (hop-session)) ";}
-function hop_realm() {return \"" (hop-realm) "\";}")))
+function hop_session() {return " (integer->string (hop-session)) ";}"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    server-initial-context ...                                       */
@@ -180,20 +191,21 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 ;*---------------------------------------------------------------------*/
 (define (init-head!)
    ;; this is used for non-inlined header on common regular browsers
-   (unless head-runtime-system-packed
+   (unless head-runtime-system-packed-scheme
       (let* ((hopcss (make-file-path (hop-share-directory) "hop.hss"))
 	     (suffix (if (=fx (bigloo-debug) 0) "_u.js" "_s.js"))
 	     (rts (map (lambda (s) (string-append s suffix))
 		     (hop-runtime-system)))
+	     (rtsjs (map (lambda (s) (string-append s "js" suffix))
+		       (hop-runtime-system)))
 	     (favicon (make-file-path (hop-share-directory)
 			 "icons" "hop" "hop-16x16.png")))
 	 ;; favicon to avoid /favicon.ico authentication
 	 (set! head-runtime-favicon (<LINK> :rel "shortcut icon" :href favicon))
 	 ;; force loading to evaluate hop hss types
 	 (preload-css hopcss #f)
-	 (set! head-runtime-system-packed 
-	    (cons* (<HOP-SETUP>)
-	       
+	 (set! head-runtime-system-packed-scheme
+	    (cons* (<HOP-SETUP> "scheme")
 	       (<LINK> :inline #f
 		  :rel "stylesheet"
 		  :type (hop-configure-css-mime-type) 
@@ -206,10 +218,24 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 				:src p)))
 		     (append rts (hop-runtime-extra)))
 		  (list (<HOP-SERVER>)))))
+	 (set! head-runtime-system-packed-javascript 
+	    (cons* (<HOP-SETUP> "javascript")
+	       (<LINK> :inline #f
+		  :rel "stylesheet"
+		  :type (hop-configure-css-mime-type) 
+		  :href hopcss)
+	       (append
+		  (map (lambda (f)
+			  (let ((p (make-file-name (hop-share-directory) f)))
+			     (<SCRIPT> :inline #f
+				:type (hop-mime-type)
+				:src p)))
+		     rtsjs)
+		  (list (<HOP-SERVER>)))))
 	 ;; this is used for non-inlined header for browsers that restrict
 	 ;; size of javascript files (e.g., IE6 on WinCE)
 	 (set! head-runtime-system-unpacked
-	    (cons* (<HOP-SETUP>)
+	    (cons* (<HOP-SETUP> "scheme")
 	       (<LINK> :inline #f
 		  :rel "stylesheet"
 		  :type (hop-configure-css-mime-type) 
@@ -224,8 +250,8 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 			(hop-runtime-extra)))
 		  (list (<HOP-SERVER>)))))
 	 ;; this is used for inlined headers
-	 (set! head-runtime-system-inline
-	    (cons* (<HOP-SETUP>)
+	 (set! head-runtime-system-inline-scheme
+	    (cons* (<HOP-SETUP> "scheme")
 	       (<LINK> :inline #t
 		  :rel "stylesheet"
 		  :type (hop-configure-css-mime-type) 
@@ -237,6 +263,20 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 				:type (hop-mime-type)
 				:src p)))
 		     (append rts (hop-runtime-extra)))
+		  (list (<HOP-SERVER>)))))
+	 (set! head-runtime-system-inline-javascript
+	    (cons* (<HOP-SETUP> "javascript")
+	       (<LINK> :inline #t
+		  :rel "stylesheet"
+		  :type (hop-configure-css-mime-type) 
+		  :href hopcss)
+	       (append
+		  (map (lambda (f)
+			  (let ((p (make-file-name (hop-share-directory) f)))
+			     (<SCRIPT> :inline #t
+				:type (hop-mime-type)
+				:src p)))
+		     rtsjs)
 		  (list (<HOP-SERVER>))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -430,18 +470,20 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
 	     (if rts
 		 (begin
 		    (init-head!)
-		    (append (cond
-			       (inl head-runtime-system-inline)
-			       (packed head-runtime-system-packed)
-			       (else head-runtime-system-unpacked))
-		       (cons
-			  (<SCRIPT> :type (hop-mime-type)
-			     (string-append "function hop_idiom() { return '"
-				idiom "'}\n")
-			     (when (>fx (bigloo-debug) 0)
-				(server-initial-context location
-				   (get-trace-stack))))
-			  body)))
+		    (cons
+		       (<SCRIPT> :type (hop-mime-type)
+			  (string-append "function hop_idiom() {return '"
+			     idiom "'};")
+			  (string-append "function hop_debug() {return "
+			     (integer->string (bigloo-debug)) "};")
+			  (when (>fx (bigloo-debug) 0)
+			     (server-initial-context location
+				(get-trace-stack))))
+		       (append (cond
+				  (inl (head-runtime-system-inline idiom))
+				  (packed (head-runtime-system-packed idiom))
+				  (else head-runtime-system-unpacked))
+			  (list body))))
 		 body)))
 	 ((pair? (car a))
 	  (loop (append (car a) (cdr a))

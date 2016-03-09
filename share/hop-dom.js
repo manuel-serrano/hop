@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Nov 20 14:43:27 2015 (serrano)                */
-/*    Copyright   :  2006-15 Manuel Serrano                            */
+/*    Last change :  Thu Mar  3 07:56:07 2016 (serrano)                */
+/*    Copyright   :  2006-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -1167,6 +1167,7 @@ function dom_create_sptabhead() {
 /*---------------------------------------------------------------------*/
 /*    DOM functional interface ...                                     */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-add-class!)
            (arity #t)) */
 function dom_add_class( obj, string ) {
@@ -1366,10 +1367,12 @@ function dom_get_elements_by_name( doc, name ) {
       return sc_vector2list( doc.getElementsByName( name ) );
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_css_add_style_sheet ...                                      */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export css-add-style-sheet!) (arity #t)) */
 function hop_css_add_style_sheet( document, rules ) {
    try {
@@ -1384,10 +1387,12 @@ function hop_css_add_style_sheet( document, rules ) {
       ;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_load_css ...                                                 */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export #t) (arity #t)) */
 function hop_load_css( url ) {
    try {
@@ -1410,10 +1415,12 @@ function hop_load_css( url ) {
       ;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_load_jscript ...                                             */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export #t) (arity #t)) */
 function hop_load_jscript( url ) {
    try {
@@ -1429,10 +1436,12 @@ function hop_load_jscript( url ) {
       ;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_get_elements_by_class ...                                    */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export #t) (arity -2)) */
 function dom_get_elements_by_class( doc, name ) {
    if( ("getElementsByClassName" in document) &&
@@ -1460,10 +1469,12 @@ function dom_get_elements_by_class( doc, name ) {
       return sc_vector2list( res );
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_get_elements_by_attribute ...                                */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export #t) (arity -2)) */
 function dom_get_elements_by_attribute( doc, name, value ) {
    var res = new Array();
@@ -1504,6 +1515,7 @@ document.getElementsByAttribute = function( name, value ) {
    
    return res;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_node_eval ...                                                */
@@ -1554,6 +1566,7 @@ function hop_node_eval( node, text ) {
 /*---------------------------------------------------------------------*/
 /*    node_style_get ...                                               */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-style-get node-style) (arity #t)) */
 function node_style_get( obj, prop ) {
    if( (obj instanceof String) || (typeof obj === "string") )
@@ -1567,10 +1580,12 @@ function node_style_get( obj, prop ) {
    else
       return false;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    node_computed_style_get ...                                      */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-computed-style-get node-computed-style)
            (arity #t))
 */
@@ -1590,6 +1605,7 @@ function node_computed_style_get( obj, prop ) {
    else
       return false;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_start_tag ...                                                */
@@ -1681,6 +1697,7 @@ function hop_create_encoded_element( html ) {
 /*---------------------------------------------------------------------*/
 /*    hop_innerHTML_set ...                                            */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export innerHTML-set!) (arity #t)) */
 function hop_innerHTML_set( nid, html ) {
    var el;
@@ -1708,10 +1725,12 @@ function hop_innerHTML_set( nid, html ) {
       el.innerHTML = html;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_style_attribute_set ...                                      */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 function hop_style_attribute_set( obj, val ) {
    if( (typeof val == "string") || (val instanceof String) ) {
       while( val.length > 1 ) {
@@ -1730,10 +1749,12 @@ function hop_style_attribute_set( obj, val ) {
       }
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_element_x ...                                                */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-bounding-box-x) (arity 1)) */
 function hop_element_x( obj ) {
    if( "getBoundingClientRect" in obj ) {
@@ -1753,10 +1774,12 @@ function hop_element_x( obj ) {
       return res;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_element_y ...                                                */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-bounding-box-y) (arity 1)) */
 function hop_element_y( obj ) {
    if( "getBoundingClientRect" in obj ) {
@@ -1776,10 +1799,12 @@ function hop_element_y( obj ) {
       return res;
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box ...                                             */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export node-bounding-box) (arity -2)) */
 function hop_bounding_box( e, m ) {
    var  n = (e instanceof String) || (typeof e == "string") ?
@@ -1802,18 +1827,22 @@ function hop_bounding_box( e, m ) {
 	       'height': n.offsetHeight + (2*m) };
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box_to_list ...                                     */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export bounding-box->list) (arity #t)) */
 function hop_bounding_box_to_list( bbox ) {
    return sc_list( bbox.left, bbox.top, bbox.width, bbox.height );
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box_x ...                                           */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export bounding-box-x) (arity -2)) */
 function hop_bounding_box_x( bbox, loc ) {
    if( arguments.length == 1 )
@@ -1826,10 +1855,12 @@ function hop_bounding_box_x( bbox, loc ) {
       return bbox.left + bbox.width;
    return 0;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_bounding_box_y ...                                           */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export bounding-box-y) (arity -2)) */
 function hop_bounding_box_y( bbox, loc ) {
    if( arguments.length == 1 )
@@ -1842,3 +1873,4 @@ function hop_bounding_box_y( bbox, loc ) {
       return bbox.top + bbox.height;
    return 0;
 }
+#endif

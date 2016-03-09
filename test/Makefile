@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Nov 26 09:49:29 2015 (serrano)                */
-#*    Copyright   :  2006-15 Manuel Serrano                            */
+#*    Last change :  Tue Mar  1 07:17:22 2016 (serrano)                */
+#*    Copyright   :  2006-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -56,6 +56,7 @@ POPULATION = Makefile \
   hopjs/noserv/aux/worker1.js \
   hopjs/noserv/aux/worker2.js \
   hopjs/serv/asyncSrvRsp.js \
+  hopjs/serv/asyncSrvRsp2.js \
   hopjs/serv/asyncSrvWS.js \
   hopjs/serv/authentication.js \
   hopjs/serv/authentication.js.rc.js \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Feb 26 20:23:02 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 09:15:52 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -268,7 +268,7 @@
 	       ((or (null? n) (null? ndecls))
 		;; all nodes or declarations checked
 		(set! decls
-		   (reverse! ninits))
+		   (map! j2s-letopt! (reverse! ninits)))
 		(set! nodes
 		   (append! (map! j2s-letopt! (reverse! nbody))
 		      (map! j2s-letopt! n)))

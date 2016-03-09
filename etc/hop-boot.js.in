@@ -17,10 +17,19 @@
 if( !('hop' in window) ) {
    window.hop = {
       'version': "@VERSION@",
+      'build': "@BUILD@",
+      'etcDir': "@ETCDIR@",
+      'binDir': "@BINDIR@",
+      'libDir': "@LIBDIR@",
+      'shareDir': "@SHAREDIR@",
+      'contribsDir': "@CONTRIBSDIR@",
+      'webletsDir': "@WEBLETSDIR@",
+      'serviceBase': "@HOPSERVICEBASE@",
+      'backend': "@BACKEND@",
       '%modules': {},
       '%requires': {},
-      List: sc_list,
-      Cons: sc_cons
+      'List': sc_list,
+      'Cons': sc_cons
    };
    window.hop[ '%modules' ].hop = window.hop;
 }

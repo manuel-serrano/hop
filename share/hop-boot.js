@@ -18,10 +18,19 @@
 if( !('hop' in window) ) {
    window.hop = {
       'version': "3.1.0",
+      'build': "",
+      'etcDir': "/usr/local/etc",
+      'binDir': "/usr/local/bin",
+      'libDir': "/usr/local/lib",
+      'shareDir': "/usr/local/share/hop/3.1.0",
+      'contribsDir': "/usr/local/share/hop/contribs",
+      'webletsDir': "/usr/local/lib/hop/3.1.0/weblets",
+      'serviceBase': "/hop",
+      'backend': "native",
       '%modules': {},
       '%requires': {},
-      List: sc_list,
-      Cons: sc_cons
+      'List': sc_list,
+      'Cons': sc_cons
    };
    window.hop[ '%modules' ].hop = window.hop;
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Tue Feb 16 10:39:59 2016 (serrano)                */
+;*    Last change :  Tue Mar  1 09:28:55 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -463,6 +463,18 @@
 	 (when (and (memq tyobj '(array string)) (j2s-field-length? field))
 	    (ctx-expr-type-set! this ctx 'integer)))))
 
+;*---------------------------------------------------------------------*/
+;*    type ::J2SCond ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (type this::J2SCond ctx)
+   (with-access::J2SCond this (test then else)
+      (type test ctx)
+      (let ((dupctx (ctx-duplicate ctx)))
+	 (let ((tt (type then ctx))
+	       (te (type else dupctx)))
+	    (ctx-env-type-merge! ctx dupctx)
+	    (ctx-expr-type-set! this ctx (if (eq? tt te) tt 'obj))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SIf ...                                                 */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Feb 29 19:31:51 2016 (serrano)                */
+;*    Last change :  Tue Mar  1 07:43:19 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -413,7 +413,8 @@
 	     (unless (eq? t (js-undefined))
 		(set! timeout (js-tointeger t %this)))
 	     (unless (eq? m (js-undefined))
-		(set! method (string->symbol (js-tostring m %this))))
+		(set! method (string->symbol
+				(string-upcase (js-tostring m %this)))))
 	     (when (isa? f JsFunction)
 		(set! fail
 		   (lambda (xhr)

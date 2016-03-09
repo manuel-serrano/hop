@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Feb 17 09:42:42 2016 (serrano)                */
+#*    Last change :  Thu Mar  3 08:09:21 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -62,6 +62,8 @@ cssmimetype="text/css"
 libraries="hop hopwidget web hopscheme scheme2js multimedia sqlite js2scheme hopscript nodejs"
 bglcloselibs="web multimedia"
 bglextracloselibs=
+
+closure=
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
@@ -124,7 +126,7 @@ uv=""
 
 hopsrfis=""
 
-rts="hop-dom.js hop-event.js hop-serialize.js base64.js hop-request.js hop-lib.js hop-history.js hopscheme.js hop-require.js hop-boot.js"
+rts="hop-dom.js hop-event.js hop-serialize.js hop-request.js hop-lib.js hopscheme.js hop-require.js hop-boot.js"
 
 bglfail=false;
 
@@ -351,6 +353,10 @@ while : ; do
       hopsrfis="$hopsrfis boot-from-java"
       ;;
 
+    --closure=*)
+      closure="`echo $1 | sed 's/^[^=]*=//'`";
+      ;;
+
     -*)
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
@@ -409,6 +415,7 @@ while : ; do
       echo "   --android.................. Prepares the production of an Android apk" >&2;
       echo "   --macosx................... Prepares the production of a MacOSX bundle" >&2;
       echo "   --apache-felix=path........ Path to felix.jar" >&2;
+      echo "   --closure=comp............. Path to closure compiler" >&2;
       exit 255;
   esac
   shift
@@ -788,7 +795,6 @@ if [ "$bglfail " = "true " ]; then
   exit 1
 fi    
 
-
 #*---------------------------------------------------------------------*/
 #*    Then check if bglafile exists this is a good indicator of a      */
 #*    correct Bigloo installation.                                     */
@@ -866,6 +872,23 @@ if [ "$felix " != " " ]; then
    fi
 fi
 
+#*---------------------------------------------------------------------*/
+#*    closure (optional)                                               */
+#*---------------------------------------------------------------------*/
+if [ "$closure " = " " ]; then
+  js="function _(){return 1};"
+  for p in closure-compiler closure; do
+    if [ "`echo \"$js\" | $p`" = "$js" ]; then
+      closure=$p
+      break;
+    fi
+  done
+fi
+      
+if [ "$closure " = " " ]; then
+  closure=cat
+fi
+    
 #*---------------------------------------------------------------------*/
 #*    buildid ...                                                      */
 #*---------------------------------------------------------------------*/
@@ -1014,6 +1037,7 @@ cat $mkmf.in \
 	  -e "s|@BGLMACH@|$mach|" \
 	  -e "s|@BGLARCH@|$arch|" \
           -e "s|@BUILDID@|$buildid|" \
+          -e "s|@CLOSURE@|$closure|" \
     >> $mkmf
 
 # runtime/configure.scm
@@ -1384,6 +1408,7 @@ for init in hop-autoconf.js hop-boot.js; do
             -e "s|@WEBLETSDIR@|$webletsdir|" \
             -e "s|@LOCEVENT@|$locevent|" \
             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
+            -e "s|@BUILD@|$builid|" \
             -e "s|//[^\"]*$$||g" \
             -e "/^[ \t]*$$/D" \
       >> share/$init
@@ -1493,4 +1518,5 @@ echo "  runtime compilation flags............. $bcflagsrts"
 echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"
 echo "  default CSS mime type................. $cssmimetype"
+echo "  closure compiler (optional)........... $closure"
 

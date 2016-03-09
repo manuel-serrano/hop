@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Feb 11 14:22:57 2016 (serrano)                */
+;*    Last change :  Mon Feb 29 18:53:57 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -753,7 +753,9 @@
 	     args)
 	    (else
 	     ;; new varargs protocol
-	     (let ((obj (js-new0 ctx js-object)))
+	     (let ((obj (js-new0 ctx js-object))
+		   (vecks '()))
+		;; first step
 		(for-each (lambda (arg)
 			     (let ((k (car arg))
 				   (val (js-string->jsstring (cdr arg))))
@@ -761,10 +763,25 @@
 				   ((not (js-in? ctx k obj))
 				    (js-put! obj k val #f ctx))
 				   (else
-				    (error "service-pack-cgi-arguments"
-				       "not implemented"
-				       arg)))))
+;* 				    (error "service-pack-cgi-arguments" */
+;* 				       "not implemented"               */
+;* 				       arg)                            */
+				    (let ((old (js-get obj k ctx)))
+				       (if (pair? old)
+					   (set-cdr! (last-pair old)  val)
+					   (begin
+					      (set! vecks (cons k vecks))
+					      (js-put! obj k (list val) #f ctx))))))))
 		   vals)
+		;; second step, patch the multi-files arguments
+		(for-each (lambda (k)
+			     (let ((old (js-get obj k ctx)))
+				(js-put! obj k
+				   (js-vector->jsarray
+				      (list->vector (reverse! old))
+				      ctx)
+				   #f ctx)))
+		   vecks)
 		obj))))))
    
 ;*---------------------------------------------------------------------*/

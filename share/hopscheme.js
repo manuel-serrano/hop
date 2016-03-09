@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/share/hopscheme.js                */
+/*    serrano/prgm/project/hop/3.1.x/share/hopscheme.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Thu Dec 10 12:03:52 2015 (serrano)                */
-/*    Copyright   :  2007-15 Manuel Serrano                            */
+/*    Last change :  Thu Mar  3 08:32:50 2016 (serrano)                */
+/*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/
@@ -40,6 +40,7 @@ sc_Char.prototype.hop_bigloo_serialize = function() {
 /*---------------------------------------------------------------------*/
 /*    typeof                                                           */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 sc_Pair.prototype.hop_typeof = function() {
    return "pair";
 };
@@ -92,4 +93,88 @@ sc_InputPort.prototype.hop_typeof = function() {
 sc_Char.prototype.hop_typeof = function() {
    return "bchar";
 };
+#endif
 
+/*---------------------------------------------------------------------*/
+/*    lists ...                                                        */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+function sc_Pair( car, cdr ) {
+   this.car = car;
+   this.cdr = cdr;
+}
+
+function sc_isPair( p ) {
+   return p instanceof sc_Pair;
+}
+
+function sc_car( p ) {
+   return p.car;
+}
+
+function sc_cdr( p ) {
+   return p.cdr;
+}
+
+function sc_cons( car, cdr ) {
+   return new sc_Pair( car, cdr );
+}
+
+function sc_list() {
+   var res = null;
+   var a = arguments;
+   for( var i = a.length-1; i >= 0; i-- ) {
+      res = new sc_Pair(a[i], res);
+   }
+   return res;
+}
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    keywords & symbols                                               */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+var sc_SYMBOL_PREFIX = "\uEBAC";
+var sc_KEYWORD_PREFIX = "\uEBAD";
+
+function sc_isSymbol( s ) {
+   return (typeof s === "string") && (s.charAt(0) === sc_SYMBOL_PREFIX);
+}
+
+function sc_symbol2string( s ) {
+   return s.slice( 1 );
+}
+
+function sc_string2symbol( s ) {
+   return sc_SYMBOL_PREFIX + s;
+}
+
+function sc_isKeyword( s ) {
+   return (typeof s === "string") && (s.charAt(0) === sc_KEYWORD_PREFIX);
+}
+
+function sc_keyword2string( s ) {
+   return s.slice( 1 );
+}
+
+function sc_string2keyword( s ) {
+   return sc_KEYWORD_PREFIX + s;
+}
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    chars                                                            */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+function sc_Char( c ) {
+   this.val = c;
+}
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    Objects                                                          */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+function sc_Object() {
+}
+#endif

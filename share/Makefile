@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/3.1.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue Dec 15 07:52:01 2015 (serrano)                */
-#*    Copyright   :  2004-15 Manuel Serrano                            */
+#*    Last change :  Thu Mar  3 08:09:59 2016 (serrano)                */
+#*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -62,7 +62,7 @@ EXTRA		= hop.hss \
                   hop-font.scm \
                   hop-password.scm \
                   hop-foot.hss \
-                  hop-nodejs.js
+                  hop-nodejs.js base64.js hop-history.js
 
 #*---------------------------------------------------------------------*/
 #*    AUDIO and ICONS                                                  */
@@ -140,7 +140,7 @@ POPULATION	= $(RTSCONFIG) $(EXTRA) \
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
 #*---------------------------------------------------------------------*/
-build: .afile hop_u.js hop_s.js \
+build: .afile hop_u.js hop_s.js hopjs_u.js hopjs_s.js \
    $(FLASHSRC:%.as=flash/%.swf) $(BACKEND) hop-password.scm
 
 #*---------------------------------------------------------------------*/
@@ -162,7 +162,7 @@ install:
 	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/.afile && \
 	$(INSTALL) $(BUILDSHAREDIR)/hop-runtime.sch $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop-runtime.sch && \
 	chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/hop-runtime.sch && \
-        for p in hop_u.js hop_s.js hop-autoconf.js $(EXPORTED_RT_JS); do \
+        for p in hop_u.js hop_s.js hopjs_u.js hopjs_s.js hop-autoconf.js $(EXPORTED_RT_JS); do \
 	  $(INSTALL) $(BUILDSHAREDIR)/$$p $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
 	  chmod $(MODFILE) $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p && \
 	  $(GZIP) $(BUILDSHAREDIR)/$$p -c > $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p.gz 2> /dev/null && \
@@ -237,7 +237,7 @@ uninstall:
         for p in $(EXTRA); do \
 	  $(RM) -rf $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$(EXTRA); \
         done
-	for p in $(RTSCONFIG) hop-autoconf runtime hop; do \
+	for p in $(RTSCONFIG) base64.js hop-history.js hop-autoconf runtime hop; do \
 	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p; \
 	  $(RM) -f $(DESTDIR)$(HOPSHAREDIR)/$(HOPRELEASE)/$$p.gz; \
         done
@@ -247,6 +247,47 @@ uninstall:
 #*---------------------------------------------------------------------*/
 hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
   hop-exception.js hop-nodejs.js \
+  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
+	echo "/* Automatically generated file (don't edit) */" > $@
+	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
+	date +'/* %D %I:%H */' >> $@
+	echo >> $@
+	echo "\"use strict\";" >> $@
+	echo >> $@
+	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+               | sed -e "s|//[^\"]*$$||g" \
+               | sed -e "/^[ \t]*$$/D" \
+               | $(BGLCPP) -DHOP_SCHEME\
+               >> $@
+
+hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
+  hop-exception.js hop-debug.js hop-nodejs.js \
+  $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
+	echo "/* Automatically generated file (don't edit) */" > $@
+	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
+	date +'/* %D %I:%H */' >> $@
+	echo >> $@
+	echo "\"use strict\";" >> $@
+	echo >> $@
+	if [ "$(DEBUG) " != "yes " ]; then \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) -DHOP_SCHEME -DHOP_RTS_DEBUG \
+                 >> $@; \
+        else \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) -DHOP_SCHEME \
+                 >> $@; \
+        fi
+
+#*---------------------------------------------------------------------*/
+#*    hop.js ...                                                       */
+#*---------------------------------------------------------------------*/
+hopjs_u.js: hop-boot.js hop-autoconf.js \
+  hop-nodejs.js \
   $(RTSCONFIG) hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
@@ -257,10 +298,10 @@ hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
 	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                | sed -e "s|//[^\"]*$$||g" \
                | sed -e "/^[ \t]*$$/D" \
-               | $(BGLCPP) \
+               | $(BGLCPP) -DHOP_JAVASCRIPT | $(CLOSURE) \
                >> $@
 
-hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
+hopjs_s.js: hop-boot.js hop-autoconf.js \
   hop-exception.js hop-debug.js hop-nodejs.js \
   $(RTSCONFIG) hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
@@ -273,13 +314,13 @@ hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
 	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
-                 | $(BGLCPP) -DHOP_RTS_DEBUG \
+                 | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_RTS_DEBUG \
                  >> $@; \
         else \
 	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
-                 | $(BGLCPP) \
+                 | $(BGLCPP) -DHOP_JAVASCRIPT \
                  >> $@; \
         fi
 
@@ -353,6 +394,7 @@ predistrib-clean:
 clean:
 	$(RM) hop-builtin-serializers.js
 	$(RM) hop_u.js hop_s.js 
+	$(RM) hopjs_u.js hopjs_s.js 
 	$(RM) hop-runtime.sch 
 
 devclean:

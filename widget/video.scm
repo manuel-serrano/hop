@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/widget/video.scm                  */
+;*    serrano/prgm/project/hop/3.0.x/widget/video.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 29 08:37:12 2007                          */
-;*    Last change :  Wed Nov 10 10:27:24 2010 (serrano)                */
-;*    Copyright   :  2007-10 Manuel Serrano                            */
+;*    Last change :  Tue Feb  9 14:26:07 2016 (serrano)                */
+;*    Copyright   :  2007-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Video support.                                               */
 ;*=====================================================================*/
@@ -24,15 +24,15 @@
 ;*    The current version of the Hop player uses JW FLV player         */
 ;*        http://www.longtailvideo.com/players/jw-flv-player/          */
 ;*---------------------------------------------------------------------*/
-(define-xml-compound <VIDEO> ((id #unspecified string)
-			      (src #f)
-			      (img #f)
-			      (width "auto")
-			      (height "auto")
-			      (bg #f)
-			      (backend 'html5)
-			      (attr)
-			      body)
+(define-tag <VIDEO> ((id #unspecified)
+		     (src #f)
+		     (img #f)
+		     (width "auto")
+		     (height "auto")
+		     (bg #f)
+		     (backend 'html5)
+		     (attr)
+		     body)
    
    (define (<flash> src vid bool)
       (let ((tmp (gensym 'flv)))
@@ -65,16 +65,18 @@
 			       src)))))
 		  body))
    
-   (let ((vid (symbol->string (gensym 'video-container))))
+   (let ((vid (symbol->string (gensym 'video-container)))
+	 (src (xml-primitive-value src)))
       (cond
 	 ((eq? backend 'flash)
 	  (<DIV> :id vid
 	     (<flash> src vid #t)))
 	 ((eq? backend 'html5)
 	  (instantiate::xml-element
-	     (id (xml-make-id id 'video))
+	     (id (xml-make-id (xml-primitive-value id) 'video))
 	     (tag 'VIDEO)
-	     (attributes `(:src ,src :width ,width :height ,height ,@attr))
+	     (attributes `(:src ,src :width ,width :height ,height
+			     ,@(map xml-primitive-value attr)))
 	     (body body)))
 	 ((string? src)
 	  (if (is-suffix? src "flv")
@@ -83,7 +85,8 @@
 	      (instantiate::xml-element
 		 (id (xml-make-id id 'video))
 		 (tag 'VIDEO)
-		 (attributes `(:src ,src :width ,width :height ,height ,@attr))
+		 (attributes `(:src ,src :width ,width :height ,height
+				 ,@(map xml-primitive-value attr)))
 		 (body body))))
 	 ((flv body)
 	  =>

@@ -270,8 +270,21 @@ nav.sidebar li > a {
   padding: 4px 8px;
 }
 
+nav.navbar-inverse {
+  border-bottom: 0;
+}
+
 nav.navbar-inverse .navbar-nav li.active > a {
   background-color: #444;
+}
+
+nav.navbar-inverse .navbar-nav li {
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+}
+
+nav.navbar-inverse .navbar-nav li.active {
+  border-bottom-color: #faab02;
 }
 
 /*---------------------------------------------------------------------*/

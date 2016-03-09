@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Feb 24 06:48:42 2016 (serrano)                */
+;*    Last change :  Tue Mar  1 17:59:53 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -805,7 +805,7 @@
       (if (id-string? field)
 	  (cons this
 	     (append (j2s-js obj tildec dollarc mode evalp conf)
-		(list (with-access::J2SString field (val) val))))
+		(list "." (with-access::J2SString field (val) val))))
 	  (cons this
 	     (append (j2s-js obj tildec dollarc mode evalp conf)
 		'("[")

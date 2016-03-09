@@ -43,6 +43,7 @@ test/nodejs/log.*
 test/nodejs/LOG
 
 hopscript/hopscript.sch
+hopscript/bglhopscript.h
 
 node_modules/hopc/lib/ast.js
 node_modules/hopc/lib/walk.js
@@ -65,6 +66,7 @@ share/hop-builtin-serializers.js
 share/hop-debug.js
 share/hop-exception.js
 share/hop_[su].js
+share/hopjs_[su].js
 share/flash/player.swf
 share/flash/swfobject.js
 share/**/*.map
