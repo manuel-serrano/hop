@@ -128,6 +128,23 @@ function optim( x ) {
    return aaaa - y;
 }
 
+function letFun() { 
+   let gee = function () { return my_var };
+   let my_var = 'foo';
+   
+   return gee();
+}
+
+function letFun2() {
+   let my_var = 'foo';
+
+   return bar();
+
+   function bar() {
+      return my_var;
+   }
+}   
+
 console.log( "basic" );
 assert.strictEqual( acc, "111 222 333" );
 
@@ -163,6 +180,12 @@ assert.ok( optim( 10 ) == 1 );
 
 console.log( "   arity()" );
 assert.ok( arity() == 2 );
+
+console.log( "   letFun()" );
+assert.ok( letFun() == "foo" );
+
+console.log( "   letFun2()" );
+assert.ok( letFun2() == "foo" );
 
 /*---------------------------------------------------------------------*/
 /*    Kangax                                                           */

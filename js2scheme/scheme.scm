@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Mar  1 09:09:04 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 15:43:59 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -276,7 +276,7 @@
 	 (with-access::J2SProgram this (mode pcache-size %this path cnsts)
 	    (list
 	       module
-	       (pcache pcache-size)	       
+	       (define-pcache pcache-size)	       
 	       `(define %pcache (js-make-pcache ,pcache-size))
 	       `(define %this (nodejs-new-global-object))
 	       `(define %source ,path)
@@ -311,6 +311,7 @@
 	    ((not name)
 	     ;; a mere expression
 	     `(lambda (%this this %scope %module)
+		 ,(define-pcache pcache-size)	       
 		 (define %pcache (js-make-pcache ,pcache-size))
 		 (define %worker (js-current-worker))
 		 (define %source (or (the-loading-file) "/"))
@@ -497,7 +498,7 @@
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf hint)
-   (with-access::J2SDeclFun this (loc id scope val)
+   (with-access::J2SDeclFun this (loc id scope val usage ronly)
       (with-access::J2SFun val (params mode vararg body name generator)
 	 (let* ((scmid (j2s-decl-scheme-id this))
 		(fastid (j2s-fast-id id))
@@ -531,6 +532,21 @@
 				       :prototype ,(j2s-fun-prototype val)
 				       :__proto__ ,(j2s-fun-__proto__ val)
 				       :construct ,fastid)))))
+		  ((eq? scope 'letblock)
+		   (let ((def `(,fastid ,(jsfun->lambda val mode return conf
+					    (j2s-declfun-prototype this)))))
+		      (if (and ronly (not (memq 'ref usage)))
+			  (list def)
+			  (list def
+			     `(,scmid (js-make-function %this
+					 ,fastid ,len ',id
+					 :src ,(j2s-function-src loc val conf)
+					 :rest ,(eq? vararg 'rest)
+					 :arity ,arity
+					 :minlen ,minlen
+					 :strict ',mode
+					 :alloc (lambda (o) (js-object-alloc o %this))
+					 :construct ,fastid))))))
 		  (else
 		   `(begin
 		       (define ,fastid
@@ -794,8 +810,15 @@
 ;*    j2s-scheme ::J2SLiteralCnst ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLiteralCnst mode return conf hint)
-   (with-access::J2SLiteralCnst this (index)
-      `(vector-ref-ur %cnsts ,index)))
+   (with-access::J2SLiteralCnst this (index val)
+      (if (isa? val J2SRegExp)
+	  ;; regexp are hybrid, the rx part is precompiled but the
+	  ;; JS object is dynamically allocation
+ 	  `(let ((rx (vector-ref-ur %cnsts ,index)))
+	      (with-access::JsRegExp rx (properties)
+		 (duplicate::JsRegExp rx
+		     (properties (list-copy properties)))))
+	  `(vector-ref-ur %cnsts ,index))))
 
 ;*---------------------------------------------------------------------*/
 ;*    utf8-index ...                                                   */
@@ -1480,9 +1503,14 @@
 		(body (j2s-scheme nodes mode return conf hint)))
 	     (epairify loc
 		`(,opt ,(append-map (lambda (d)
-				       (if (j2s-let-opt? d)
-					   (j2s-let-decl-inner d mode return conf)
-					   (list (j2s-scheme d mode return conf hint))))
+				       (cond
+					  ((j2s-let-opt? d)
+					   (j2s-let-decl-inner d
+					      mode return conf))
+					  ((isa? d J2SDeclFun)
+					   (j2s-scheme d mode return conf hint))
+					  (else
+					   (list (j2s-scheme d mode return conf hint)))))
 			   decls)
 		    ,@(if (pair? body) body '(#unspecified))))))))
 
@@ -2463,10 +2491,11 @@
    (define (read-only-function ref::J2SRef)
       (with-access::J2SRef ref (decl)
 	 (cond
+	    ((isa? decl J2SDeclSvc)
+	     #f)
 	    ((isa? decl J2SDeclFun)
-	     (with-access::J2SDecl decl (writable)
-		(unless writable
-		   decl)))
+	     (with-access::J2SDecl decl (ronly)
+		(when ronly decl)))
 	    ((isa? decl J2SDeclFunCnst)
 	     decl)
 	    ((j2s-let-opt? decl)
@@ -2558,14 +2587,17 @@
 		  (case vararg
 		     ((rest)
 		      (unless (>=fx la (-fx (j2s-minlen val)  1))
-			 (j2s-error id "wrong number of arguments"
-			    this (cons la (j2s-minlen val)))))
+			 (j2s-error id
+			    (format "wrong number of arguments, minimum expected: ~a" (j2s-minlen val) la)
+			    this (format "~a provided" la))))
 		     ((arguments)
 		      #t)
 		     (else
 		      (unless (and (>=fx la (j2s-minlen val)) (<=fx la lp))
-			 (j2s-error id "wrong number of arguments"
-			    this (cons la (j2s-minlen val)))))))))))
+			 (j2s-error id
+			    (format "wrong number of arguments, minimum expected: ~a" (j2s-minlen val))
+			    this
+			    (format "~a provided" la))))))))))
 
    (define (call-fun-function fun::J2SFun this f %gen::pair-nil args::pair-nil)
       (with-access::J2SFun fun (params vararg)

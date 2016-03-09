@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Feb 14 14:14:42 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 13:37:11 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -56,7 +56,6 @@
 	   
 	   (generic js-valueof ::obj ::JsGlobalObject)
 	   
-	   (js-string->number ::bstring)
 	   (js-number->string obj)
 	   (js-parseint ::bstring ::obj ::bool ::JsGlobalObject)
 	   (js-parsefloat ::bstring ::bool ::JsGlobalObject)
@@ -164,15 +163,6 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-valueof obj::obj %this::JsGlobalObject)
    (js-toobject %this obj))
-
-;*---------------------------------------------------------------------*/
-;*    js-string->number ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-string->number s)
-   (let ((n (string->number s)))
-      (if (bignum? n)
-	  (bignum->flonum n)
-	  n)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number->string ...                                            */

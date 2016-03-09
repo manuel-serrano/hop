@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Feb 27 07:54:37 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 13:32:13 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -742,8 +742,8 @@
 	  1)
 	 ((eq? obj #f)
 	  0)
-	 ((js-jsstring? obj)
-	  (js-tonumber obj %this))
+	 ((string? obj)
+	  (js-string->number obj %this))
 	 ((symbol? obj)
 	  (loop (symbol->string! obj)))
 	 (else

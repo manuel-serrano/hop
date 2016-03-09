@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_buffer.scm                */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/_buffer.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu Oct  1 23:13:04 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Wed Mar  9 14:10:02 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
 ;*=====================================================================*/
@@ -723,7 +723,7 @@
    (js-put! slowbuffer-proto 'binaryWrite
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::obj offset length)
-	    (if (isa? string JsStringLiteral)
+	    (if (js-jsstring? string)
 		(with-access::JsSlowBuffer this (data)
 		   (let ((n (maxfx 0
 			       (minfx (js-jsstring-length string)
@@ -742,7 +742,7 @@
    (js-put! slowbuffer-proto 'utf8Write
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::obj offset length)
-	    (if (isa? string JsStringLiteral)
+	    (if (js-jsstring? string)
 		(with-access::JsSlowBuffer this (data)
 		   (let ((n (maxfx 0
 			       (minfx (js-jsstring-length string)
@@ -764,7 +764,7 @@
    (js-put! slowbuffer-proto 'asciiWrite
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::obj offset length)
-	    (if (isa? string JsStringLiteral)
+	    (if (js-jsstring? string)
 		(with-access::JsSlowBuffer this (data)
 		   (let ((n (maxfx 0
 			       (minfx (js-jsstring-length string)
@@ -783,7 +783,7 @@
    (js-put! slowbuffer-proto 'base64Write
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::obj offset length)
-	    (if (isa? string JsStringLiteral)
+	    (if (js-jsstring? string)
 		(with-access::JsSlowBuffer this (data)
 		   (let ((ip (open-input-string! (js-jsstring->string string)))
 			 (op (open-output-string)))
@@ -805,7 +805,7 @@
    (js-put! slowbuffer-proto 'ucs2Write
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::obj offset length)
-	    (if (isa? string JsStringLiteral)
+	    (if (js-jsstring? string)
 		(with-access::JsSlowBuffer this (data)
 		   (let* ((s (utf8-string->ucs2-string (js-jsstring->string string)))
 			  (n (maxfx 0
@@ -825,7 +825,7 @@
    (js-put! slowbuffer-proto 'hexWrite
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer string::obj offset length)
-	    (if (isa? string JsStringLiteral)
+	    (if (js-jsstring? string)
 		(with-access::JsSlowBuffer this (data)
 		   (let* ((s (string-hex-intern (js-jsstring->string string)))
 			  (n (maxfx 0

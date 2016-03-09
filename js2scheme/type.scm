@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Tue Mar  1 09:28:55 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 15:32:54 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -45,7 +45,7 @@
 (define (j2s-type! this args)
    (when (isa? this J2SProgram)
       (j2s-type-program! this args)
-      (let loop ((i 1))
+      '(let loop ((i 1))
 	 (if (j2s-hint! this args)
 	     (begin
 		(j2s-type-program! this args)
@@ -55,7 +55,8 @@
 		(j2s-type-program! this args)
 		(loop (+fx i 1))
 		this)
-	     this))))
+	     this))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctx->list ...                                                    */
@@ -140,7 +141,9 @@
 	 (for-each (lambda (tydecl)
 		      (let ((decl (car tydecl))
 			    (ty2 (cdr tydecl)))
-			 (ctx-env-type-set! decl ctx1 ty2)))
+			 (if (assq decl env1)
+			     (ctx-env-type-set! decl ctx1 ty2)
+			     (ctx-env-type-set! decl ctx1 'obj))))
 	    env2))))
       
 ;*---------------------------------------------------------------------*/
@@ -208,6 +211,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SString ctx)
    (ctx-expr-type-set! this ctx 'string))
+
+;*---------------------------------------------------------------------*/
+;*    type ::J2SRegExp ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type this::J2SRegExp ctx)
+   (ctx-expr-type-set! this ctx 'regexp))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SLiteralCnst ...                                        */
@@ -469,11 +478,13 @@
 (define-method (type this::J2SCond ctx)
    (with-access::J2SCond this (test then else)
       (type test ctx)
-      (let ((dupctx (ctx-duplicate ctx)))
-	 (let ((tt (type then ctx))
-	       (te (type else dupctx)))
-	    (ctx-env-type-merge! ctx dupctx)
-	    (ctx-expr-type-set! this ctx (if (eq? tt te) tt 'obj))))))
+      (let* ((tctx (instantiate::TypeCtx))
+	     (ectx (instantiate::TypeCtx))
+	     (tt (type then tctx))
+	     (te (type else ectx)))
+	 (ctx-env-type-merge! tctx ectx)
+	 (ctx-env-type-merge! tctx ctx)
+	 (ctx-expr-type-set! this ctx (if (eq? tt te) tt 'obj)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SIf ...                                                 */
@@ -481,8 +492,10 @@
 (define-walk-method (type this::J2SIf ctx)
    (with-access::J2SIf this (test then else)
       (type test ctx)
-      (let ((dupctx (ctx-duplicate ctx)))
-	 (type then ctx)
-	 (type else dupctx)
-	 (ctx-env-type-merge! ctx dupctx))))
+      (let ((tctx (instantiate::TypeCtx))
+	    (ectx (instantiate::TypeCtx)))
+	 (type then tctx)
+	 (type else ectx)
+	 (ctx-env-type-merge! tctx ectx)
+	 (ctx-env-type-merge! tctx ctx))))
    

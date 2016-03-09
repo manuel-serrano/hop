@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Feb 26 19:34:05 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 11:59:55 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -182,14 +182,21 @@
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
-   (with-access::J2SFun this (name params body decl mode rettype)
+   (with-access::J2SFun this (name params body decl mode rettype
+				need-bind-exit-return)
       (if (isa? decl J2SDecl)
 	  `(,@(call-next-method) :decl ,(j2s->list decl)
-	      ,@(if (> (bigloo-debug) 1) `(:rettype ,rettype) '())
+	      ,@(if (>= (bigloo-debug) 2)
+		    `(:rettype ,rettype) '())
+	      ,@(if (>= (bigloo-debug) 3)
+		    `(:need-bind-exit-return ,need-bind-exit-return) '())
 	      :mode ,mode
 	      ,(map j2s->list params) ,(j2s->list body))
 	  `(,@(call-next-method) :name ,name
-	      ,@(if (> (bigloo-debug) 1) `(:rettype ,rettype) '())
+	      ,@(if (>= (bigloo-debug) 2)
+		    `(:rettype ,rettype) '())
+	      ,@(if (>= (bigloo-debug) 3)
+		    `(:need-bind-exit-return ,need-bind-exit-return) '())
 	      ,(map j2s->list params) ,(j2s->list body)))))
 
 ;*---------------------------------------------------------------------*/

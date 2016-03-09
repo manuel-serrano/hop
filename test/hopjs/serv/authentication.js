@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.0.x/test/hopjs/serv/authentication.js     */
+/*    .../prgm/project/hop/3.1.x/test/hopjs/serv/authentication.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  7 15:00:00 2015                          */
-/*    Last change :  Tue Sep  8 17:39:16 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Wed Mar  9 14:32:01 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing the user module                                          */
 /*=====================================================================*/
@@ -31,7 +31,7 @@ function launchTest() {
       console.log( 'PASS: Bob is authenticated' );
       proceedWithBadPassword();
    }, { fail: function( error ) {
-      console.log( 'FAIL: Bob should have got access to the foo service' );
+      console.log( 'FAIL: Bob should have got access to the foo service', error );
       process.exit( 1 );
    }, user: 'Bob', password: 'secret' } );
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sat Feb 27 07:40:51 2016 (serrano)                */
+;*    Last change :  Wed Mar  2 16:53:58 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -96,6 +96,7 @@
       ((pair? obj) (js-pair->jsobject obj %this))
       ((u8vector? obj) (js-u8vector->jsarraybuffer obj %this))
       ((null? obj) (js-undefined))
+      ((socket? obj) (js-socket->jsobject obj %this))
       (else obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -329,3 +330,26 @@
 		      (cons* val key acc)))))
 	 %this)
       (reverse! acc)))
+
+;*---------------------------------------------------------------------*/
+;*    js-socket->jsobject ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-socket->jsobject obj %this)
+   (with-access::JsGlobalObject %this (__proto__)
+      (let ((sock (instantiate::JsWrapper
+		     (__proto__ __proto__)
+		     (data #unspecified)
+		     (obj obj))))
+	 (js-bind! %this sock 'hostname
+	    :value (js-string->jsstring (socket-hostname obj))
+	    :writable #f :configurable #f)
+	 (js-bind! %this sock 'hostAddress
+	    :value (js-string->jsstring (socket-host-address obj))
+	    :writable #f :configurable #f)
+	 (js-bind! %this sock 'localAddress
+	    :value (js-string->jsstring (socket-local-address obj))
+	    :writable #f :configurable #f)
+	 (js-bind! %this sock 'port
+	    :value (socket-port-number obj)
+	    :writable #f :configurable #f)
+	 sock)))

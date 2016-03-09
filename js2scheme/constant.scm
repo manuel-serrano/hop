@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Feb 25 20:35:36 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 13:57:49 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -174,6 +174,6 @@
 		      (type 'obj)
 		      (loc loc)
 		      (index n)
-		      (val (list-ref (env-list env) n))))
+		      (val (car (env-list env)))))
 		this)
 	     (call-next-method)))))

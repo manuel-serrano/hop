@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/ecma51.js       */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/ecma51.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon Dec 21 12:38:02 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Wed Mar  9 15:35:00 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
 /*=====================================================================*/
@@ -261,3 +261,21 @@ assert.ok( (o).f() === "toto" );
 assert.ok( (1,o).f() === "toto" );
 assert.ok( (2>1?o:undefined).f() === "toto" );
 assert.ok( ((function () { return o })()).f() === "toto" );
+
+/*---------------------------------------------------------------------*/
+/*    typing                                                           */
+/*---------------------------------------------------------------------*/
+function typing( z, data )  {
+   if( z > 3 ) {
+      data = true;
+   }
+
+   if( data ) {
+      return 1;
+   } else {
+      return 2;
+   }
+}
+
+assert.ok( typing( 2 ) === 2, "typing" );
+assert.ok( typing( 20 ) === 1, "typing" );

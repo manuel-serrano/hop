@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Feb 25 20:42:10 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 14:47:39 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -283,7 +283,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-primitive-value o::JsWrapper)
    (with-access::JsWrapper o (obj)
-      (obj)))
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::JsWrapper ...                                        */
@@ -505,7 +505,7 @@
        js-string-boolean)
       ((eq? obj (js-undefined))
        js-string-undefined)
-      ((or (string? obj) (js-jsstring? obj))
+      ((js-jsstring? obj)
        js-string-string)
       ((eq? obj (js-null))
        js-string-object)

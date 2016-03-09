@@ -15,6 +15,7 @@ refData[ largeFile ] = fs.readFileSync( largeFile );
 
 
 service getPayload( filename ) {
+   console.log( "getPayload ", filename ); 
    return hop.HTTPResponseJson( { filename: filename, payloadType: 'Buffer', payload: refData[ filename ] } );
 }
 
@@ -83,8 +84,8 @@ function pass() {
    };
 }
 
-function fail() {
-   console.log( 'Test failed' );
+function fail( err = undefined ) {
+   console.log( 'Test failed', err );
    process.exit( 1 );
 }
 

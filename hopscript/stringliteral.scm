@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Feb 27 07:52:34 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 13:35:15 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -32,6 +32,7 @@
 	   (inline js-jsstring<=?::bool ::obj ::obj)
 	   (inline js-jsstring>?::bool ::obj ::obj)
 	   (inline js-jsstring>=?::bool ::obj ::obj)
+	   (js-string->number::obj ::bstring ::JsGlobalObject)
 	   (js-integer->jsstring ::long)
 	   (js-jsstring->bool::bool ::obj)
 	   (js-jsstring-normalize!::bstring ::JsStringLiteral)
@@ -259,11 +260,10 @@
 	    (iota num))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-tonumber ...                                         */
+;*    js-string->number ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-tonumber this %this)
-   (let ((str (trim-whitespaces+ (js-jsstring->string this)
-		 :left #t :right #t :plus #t)))
+(define (js-string->number::obj str::bstring %this::JsGlobalObject)
+   (let ((str (trim-whitespaces+ str :left #t :right #t :plus #t)))
       (cond
 	 ((string=? str "Infinity")
 	  +inf.0)
@@ -281,6 +281,12 @@
 	  (js-parsefloat str #t %this))
 	 (else
 	  (js-parseint str 10 #t %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-tonumber ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-tonumber this %this)
+   (js-string->number (js-jsstring->string this) %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsStringLiteral ...                                */

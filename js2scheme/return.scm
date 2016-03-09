@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Dec 29 07:17:17 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Wed Mar  9 12:06:24 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
@@ -73,13 +73,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SSeq target tail? args)
    (with-access::J2SSeq this (nodes loc)
+      ;; remove all useful nop (for readability)
+      (set! nodes (trim-nop nodes))
       (let loop ((n nodes))
 	 (when (pair? n)
 	    (let ((t? (and tail? (null? (cdr n)))))
 	       (set-car! n (walk! (car n) target t? args))
 	       (loop (cdr n)))))
-      ;; remove all useful nop (for readability)
-      (set! nodes (trim-nop nodes))
       ;; force a return when needed
       (when (and target tail? (not (return? this)))
 	 ;; this is a function tail statement that misses a return
@@ -259,14 +259,6 @@
       (set! val (walk! val target #f args)))
    this)
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    unreturn! ::J2SLetOpt ...                                        *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (unreturn! this::J2SLetOpt target tail? args)   */
-;*    (with-access::J2SLetOpt this (val)                               */
-;*       (set! val (walk! val target #f args)))                        */
-;*    this)                                                            */
-;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SYield ...                                         */
 ;*---------------------------------------------------------------------*/

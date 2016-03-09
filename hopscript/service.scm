@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Feb 29 18:53:57 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 14:44:12 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -413,21 +413,19 @@
 
    (define (multipart-form-arg val)
       (cond
+	 ((string? val)
+	  `("string" ,val "hop-encoding: string"))
 	 ((isa? val JsStringLiteral)
 	  `("string" ,(js-jsstring->string val) "hop-encoding: string"))
 	 ((integer? val)
 	  `("integer" ,val "hop-encoding: integer"))
 	 ((keyword? val)
 	  `("keyword" ,(keyword->string val) "hop-encoding: keyword"))
-	 ((string? val)
-	  (error "js-make-hopframe" "Illegal string" val))
 	 (else
 	  `("hop" ,(obj->string val 'hop-to-hop) "hop-encoding: hop"))))
 
    (define (scheme->js val)
-      (if (string? val)
-	  (js-string->jsstring val)
-	  val))
+      val)
 
    (define (js-get-string opt key)
       (let ((v (js-get opt key %this)))
@@ -478,6 +476,7 @@
 					(scheme->js x)))))))
 	       (fail (when (isa? failure JsFunction)
 			(lambda (obj)
+			   (tprint "in fail obj=" obj)
 			   (js-worker-push-thunk! (js-current-worker) path
 			      (lambda ()
 				 (js-call1 %this failure %this obj)))))))
@@ -533,7 +532,6 @@
 ;*    post-options-deprecated ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (post-options-deprecated svc::bstring args success opt %this async)
-   
    (let ((host "localhost")
 	 (port (hop-port))
 	 (user #f)
@@ -598,10 +596,7 @@
 		(set! header (js-jsobject->alist r %this))))))
 
       (define (scheme->js val)
-	 ;; a string might be received on internal server error
-	 (if (string? val)
-	     (js-string->jsstring val)
-	     val))
+	 val)
       
       (define (post-request callback)
 	 (with-hop-remote svc callback fail

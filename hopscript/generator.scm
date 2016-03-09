@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Wed Feb 17 09:41:43 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 14:15:28 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -106,7 +106,7 @@
 		(let ((done (instantiate::JsObject
 			       (__proto__ __proto__)
 			       (cmap js-yield-cmap)
-			       (elements (vector #f #t)))))
+			       (elements (vector val #t)))))
 		   (set! %next #f)
 		   done))
 	     (js-raise-type-error %this "argument not a generator ~a"

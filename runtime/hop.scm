@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Thu Dec 17 05:46:52 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Wed Mar  2 11:20:08 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -354,7 +354,9 @@
 	     ": " url "\n")
    (with-trace 'with-hop "with-url"
       (trace-item "url=" url)
+      (trace-item "method=" method)
       (trace-item "header=" header)
+      (trace-item "body=" body)
       (cond
 	 ((and (procedure? fail) (not (correct-arity? fail 1)))
 	  (error "with-url" "Illegal fail handler" fail))
@@ -363,6 +365,9 @@
 	 (else
 	  (multiple-value-bind (scheme userinfo host port path)
 	     (url-parse url)
+	     (trace-item "host=" host)
+	     (trace-item "port=" port)
+	     (trace-item "path=" path)
 	     (cond
 		((or (string=? scheme "file")
 		     (string=? scheme "string")
@@ -401,7 +406,6 @@
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
 			(hdl (make-http-callback url r suc fail #f ctx 'plain json-parser)))
-		    (trace-item "remote path=" path)
 		    (http-send-request r hdl :body body)))))))))
 
 ;*---------------------------------------------------------------------*/

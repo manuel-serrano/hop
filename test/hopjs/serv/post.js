@@ -91,7 +91,6 @@ function test() {
 	 assert.equal( chunk.toString(), "3" );
       } );
    } );
-
    req.write( postData );
    req.end();
 

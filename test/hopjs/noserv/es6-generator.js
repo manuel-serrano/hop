@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Tue Jan 12 08:18:55 2016 (serrano)                */
+/*    Last change :  Wed Mar  9 14:12:39 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
@@ -1902,9 +1902,9 @@ function kangaxi() {
    var item = iterator.next();
    var passed = item.value === 5 && item.done === false;
    item = iterator.return("quxquux");
-   passed    &= item.value === "quxquux" && item.done === true;
+   passed &= item.value === "quxquux" && item.done === true;
    item = iterator.next();
-   passed    &= item.value === undefined && item.done === true;
+   passed &= item.value === undefined && item.done === true;
    return passed;
 }
 

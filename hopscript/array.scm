@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Feb 27 07:49:15 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 13:36:51 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1860,7 +1860,7 @@
 		      (loop (-fx i 1)))))
 	     (for-each (lambda (name)
 			  (unless rejected
-			     (let ((num (js-string->number (sym->string name))))
+			     (let ((num (string->number (sym->string name))))
 				(when (and num (<=uint32 newlen num))
 				   (let ((r (js-delete! a name #f %this)))
 				      (unless r
