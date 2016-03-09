@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan 15 19:34:39 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 10:11:22 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -476,7 +476,8 @@
 		(minlen (if (eq? mode 'hopscript) (j2s-minlen val) -1))
 		(len (if (eq? vararg 'rest) (-fx lparams 1) lparams)))
 	    (epairify-deep loc
-	       (if (memq scope '(global %scope))
+	       (cond
+		  ((memq scope '(global %scope))
 		   `(begin
 		       (define ,fastid
 			  ,(jsfun->lambda val mode return conf))
@@ -492,7 +493,19 @@
 				       :strict ',mode
 				       :alloc (lambda (o)
 						 (js-object-alloc o %this))
-				       :construct ,fastid))))
+				       :construct ,fastid)))))
+		  ((eq? scope 'letblock)
+		   `((,fastid ,(jsfun->lambda val mode return conf))
+		     (,scmid (js-make-function %this
+				,fastid ,len ',id
+				:src ,(j2s-function-src loc val conf)
+				:rest ,(eq? vararg 'rest)
+				:arity ,arity
+				:minlen ,minlen
+				:strict ',mode
+				:alloc (lambda (o) (js-object-alloc o %this))
+				:construct ,fastid))))
+		  (else
 		   `(begin
 		       (define ,fastid
 			  ,(jsfun->lambda val mode return conf))
@@ -505,7 +518,7 @@
 			     :minlen ,minlen
 			     :strict ',mode
 			     :alloc (lambda (o) (js-object-alloc o %this))
-			     :construct ,fastid)))))))))
+			     :construct ,fastid))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclSvc ...                                      */
@@ -1339,9 +1352,14 @@
 		(body (j2s-scheme nodes mode return conf)))
 	     (epairify loc
 		`(,opt ,(append-map (lambda (d)
-				       (if (j2s-let-opt? d)
-					   (j2s-let-decl-inner d mode return conf)
-					   (list (j2s-scheme d mode return conf))))
+				       (cond
+					  ((j2s-let-opt? d)
+					   (j2s-let-decl-inner d
+					      mode return conf))
+					  ((isa? d J2SDeclFun)
+					   (j2s-scheme d mode return conf))
+					  (else
+					   (list (j2s-scheme d mode return conf)))))
 			   decls)
 		    ,@(if (pair? body) body '(#unspecified))))))))
 

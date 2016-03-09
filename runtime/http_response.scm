@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Nov 26 15:32:48 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Wed Mar  2 12:00:53 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -805,11 +805,14 @@
 				     (with-access::http-server-request req (authorization)
 					authorization)
 				     (let ((auth (assq :authorization header)))
-					(when (pair? auth) (cdr auth))))))
+					(when (pair? auth) (cdr auth)))))
+			   (ctype (let ((ct (assq :content-type header)))
+				     (when (pair? ct)
+					(string->symbol (cdr ct))))))
 			(http :in in :out out
 			   :protocol scheme :method method :http-version httpv
 			   :host host :port port :path path :header header
-			   :content-type (when args 'multipart/form-data)
+			   :content-type (or ctype (when args 'multipart/form-data))
 			   :authorization auth
 			   :timeout timeout
 			   :login user

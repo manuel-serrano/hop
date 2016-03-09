@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue Feb  9 11:00:24 2016 (serrano)                */
+;*    Last change :  Wed Mar  9 10:12:18 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -55,9 +55,9 @@
 (define-method (j2s-letopt this::J2SProgram args)
    (with-access::J2SProgram this (nodes headers decls)
       ;; statement optimization
-      (for-each (lambda (o) (j2s-letopt! o)) headers)
-      (for-each (lambda (o) (j2s-letopt! o)) decls)
-      (for-each (lambda (o) (j2s-letopt! o)) nodes)
+      (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) headers)
+      (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) decls)
+      (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) nodes)
       ;; toplevel lets optimization
       (let ((lets '())
 	    (vars '()))
@@ -72,19 +72,21 @@
 	    decls)
 	 (when (pair? lets)
 	    ;; this modify nodes in place
-	    (set! nodes (j2s-toplevel-letopt! nodes (reverse! lets) vars)))))
+	    (set! nodes
+	       (map! j2s-update-ref!
+		  (j2s-toplevel-letopt! nodes (reverse! lets) vars))))))
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-letopt! ::J2SNode ...                                        */
+;*    j2s-update-ref! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-letopt! this::J2SNode)
+(define-walk-method (j2s-update-ref! this::J2SNode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-letopt! ::J2SRef ...                                         */
+;*    j2s-update-ref! ::J2SRef ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-letopt! this::J2SRef)
+(define-walk-method (j2s-update-ref! this::J2SRef)
    ;; patch the optimized ref nodes
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (%info)
@@ -92,6 +94,12 @@
 	    (with-access::J2SLetOptInit %info (declinit)
 	       (set! decl declinit)))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-letopt! ::J2SNode ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-letopt! this::J2SNode)
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-use! ...                                                   */
@@ -146,6 +154,35 @@
    (with-access::J2SInit this (lhs)
       (with-access::J2SRef lhs (decl)
 	 decl)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-letopt! ::J2SBlock ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-letopt! this::J2SBlock)
+   (call-default-walker)
+   (with-access::J2SBlock this (nodes)
+      ;; check the pattern (j2sblock decl decl ... decl j2sletblock)
+      (let loop ((lnodes nodes)
+		 (vdecls '()))
+	 (cond
+	    ((null? lnodes)
+	     this)
+	    ((isa? (car lnodes) J2SDecl)
+	     (loop (cdr lnodes) (cons (car lnodes) vdecls)))
+	    ((isa? (car lnodes) J2SLetBlock)
+	     (when (pair? vdecls)
+		;; merge the decls into the j2sletblock
+		(with-access::J2SLetBlock (car lnodes) (decls)
+		   (for-each (lambda (decl)
+				(when (isa? decl J2SDeclFun)
+				   (with-access::J2SDeclFun decl (scope)
+				      (set! scope 'letblock))))
+		      vdecls)
+		   (set! decls (append vdecls decls))
+		   (set! nodes lnodes)))
+	     (car lnodes))
+	    (else
+	     this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letopt! ::J2SLetBlock ...                                    */
@@ -268,7 +305,7 @@
 	       ((or (null? n) (null? ndecls))
 		;; all nodes or declarations checked
 		(set! decls
-		   (reverse! ninits))
+		   (map! j2s-letopt! (reverse! ninits)))
 		(set! nodes
 		   (append! (map! j2s-letopt! (reverse! nbody))
 		      (map! j2s-letopt! n)))

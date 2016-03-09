@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sat Dec 26 21:10:42 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Mon Mar  7 19:01:36 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
 ;*=====================================================================*/
@@ -345,8 +345,9 @@
 
    (define (load-js-directory path)
       (let ((src (string-append (basename path) ".js")))
-	 (when (file-exists? src)
-	    (hop-load-weblet (make-file-name path src)))))
+	 (if (file-exists? src)
+	     (hop-load-weblet (make-file-name path src))
+	     (error "hop" "Cannot find source file" path))))
 
    (define (load-package pkg)
       (call-with-input-file pkg
