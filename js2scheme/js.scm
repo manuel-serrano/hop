@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Jan 21 11:50:53 2016 (serrano)                */
+;*    Last change :  Thu Mar 17 09:04:47 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -219,8 +219,35 @@
 ;*    j2s-js ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SFun tildec dollarc mode evalp conf)
+   
+   (define (merge-blocks this::J2SBlock)
+      (with-access::J2SBlock this (nodes)
+	 ;; check the pattern (j2sblock decl decl ... decl j2sletblock)
+	 (let loop ((lnodes nodes)
+		    (vdecls '()))
+	    (cond
+	       ((null? lnodes)
+		this)
+	       ((isa? (car lnodes) J2SDecl)
+		(loop (cdr lnodes) (cons (car lnodes) vdecls)))
+	       ((isa? (car lnodes) J2SLetBlock)
+		(when (pair? vdecls)
+		   ;; merge the decls into the j2sletblock
+		   (with-access::J2SLetBlock (car lnodes) (decls)
+		      (for-each (lambda (decl)
+				   (when (isa? decl J2SDeclFun)
+				      (with-access::J2SDeclFun decl (scope)
+					 (set! scope 'letblock))))
+			 vdecls)
+		      (set! decls (append vdecls decls))
+		      (set! nodes lnodes)))
+		(car lnodes))
+	       (else
+		this)))))
+
    (with-access::J2SFun this (params body idthis vararg)
-      (let ((ellipsis (if (eq? vararg 'rest) "... " "")))
+      (let ((body (merge-blocks body))
+	    (ellipsis (if (eq? vararg 'rest) "... " "")))
 	 (if (eq? idthis '%)
 	     ;; an arrow function
 	     (cons* this "("
@@ -234,7 +261,8 @@
 		(append
 		   (j2s-js-ellipsis this "(" ")" "," ellipsis
 		      params tildec dollarc mode evalp conf)
-		   (j2s-js body tildec dollarc mode evalp conf)))))))
+		   (j2s-js body tildec dollarc mode evalp conf)
+		   '("\n")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SObjInit ...                                          */
@@ -287,7 +315,10 @@
    (with-access::J2SWhile this (test body)
       (cons* this "while ("
 	 (append (j2s-js test tildec dollarc mode evalp conf)
-	    '(") ") (j2s-js body tildec dollarc mode evalp conf)))))
+	    '(") ")
+	    (if (isa? body J2SNop)
+		'(";")
+		(j2s-js body tildec dollarc mode evalp conf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDo ...                                               */

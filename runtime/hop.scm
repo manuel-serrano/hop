@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Mar  2 11:20:08 2016 (serrano)                */
+;*    Last change :  Sat Mar 12 08:31:22 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -312,11 +312,7 @@
 			(let ((val (string->obj (url-decode (cdr c)) ctx)))
 			   (if (procedure? fail)
 			       (fail val)
-			       (raise
-				  (instantiate::&error
-				     (proc url)
-				     (msg (format "Illegal status `~a'" status))
-				     (obj (when (input-port? p) (read-string p)))))))
+			       (raise val)))
 			(default-error-handling status header p))))
 		(else
 		 (default-error-handling status header p))))

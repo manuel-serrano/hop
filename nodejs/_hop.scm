@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Mar  2 12:03:38 2016 (serrano)                */
+;*    Last change :  Sat Mar 12 08:29:54 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -369,6 +369,14 @@
 ;*    post-url ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (post-url frame::JsUrlFrame success opt %this force-sync)
+
+   (define (fail->handler fail)
+      (lambda (obj)
+	 (if (isa? obj xml-http-request)
+	     (with-access::xml-http-request obj (header)
+		(js-call1 %this fail %this
+		   (js-alist->jsobject header %this)))
+	     (js-call1 %this fail %this obj))))
    
    (let ((host "localhost")
 	 (port #f)
@@ -382,11 +390,7 @@
 	 (scheme "http"))
       (cond
 	 ((isa? opt JsFunction)
-	  (set! fail
-	     (lambda (xhr)
-		(with-access::xml-http-request xhr (header)
-		   (js-call1 %this opt %this
-		      (js-alist->jsobject header %this))))))
+	  (set! fail (fail->handler opt)))
 	 ((not (eq? opt (js-undefined)))
 	  (let ((h (js-get opt 'hostname %this))
 		(p (js-get opt 'port %this))
@@ -418,11 +422,7 @@
 		(set! method (string->symbol
 				(string-upcase (js-tostring m %this)))))
 	     (when (isa? f JsFunction)
-		(set! fail
-		   (lambda (xhr)
-		      (with-access::xml-http-request xhr (header)
-			 (js-call1 %this f %this
-			    (js-alist->jsobject header %this))))))
+		(set! fail (fail->handler f)))
 	     (when (isa? r JsObject)
 		(set! header
 		   (map! (lambda (o)
