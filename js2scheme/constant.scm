@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Jan 21 11:54:19 2016 (serrano)                */
+;*    Last change :  Fri Mar 18 09:28:22 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -72,9 +72,13 @@
 (define (add-expr! this env::pair)
    (let ((index (add-env! this env)))
       (with-access::J2SExpr this (loc)
-	 (instantiate::J2SPragma
+	 (instantiate::J2SLiteralCnst
 	    (loc loc)
-	    (expr `(vector-ref %cnsts ,index))))))
+	    (index index)
+	    (val this)))))
+;* 	 (instantiate::J2SPragma                                       */
+;* 	    (loc loc)                                                  */
+;* 	    (expr `(vector-ref %cnsts ,index))))))                     */
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SNode ...                                          */

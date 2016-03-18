@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Thu Mar 17 09:04:47 2016 (serrano)                */
+;*    Last change :  Fri Mar 18 08:29:28 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -239,8 +239,9 @@
 				      (with-access::J2SDeclFun decl (scope)
 					 (set! scope 'letblock))))
 			 vdecls)
-		      (set! decls (append vdecls decls))
-		      (set! nodes lnodes)))
+		      (set! decls (append vdecls decls))))
+		(with-access::J2SLetBlock (car lnodes) (nodes)
+		   (set! nodes (append nodes (cdr lnodes))))
 		(car lnodes))
 	       (else
 		this)))))

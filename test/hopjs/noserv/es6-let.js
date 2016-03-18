@@ -145,6 +145,11 @@ function letFun2() {
    }
 }   
 
+function letFor() {
+   for( let i = 0; i < 5; i++ );
+   return 5;
+}
+
 console.log( "basic" );
 assert.strictEqual( acc, "111 222 333" );
 
@@ -186,6 +191,9 @@ assert.ok( letFun() == "foo" );
 
 console.log( "   letFun2()" );
 assert.ok( letFun2() == "foo" );
+
+console.log( "   letFor()" );
+assert.ok( letFor() == 5 );
 
 /*---------------------------------------------------------------------*/
 /*    Kangax                                                           */

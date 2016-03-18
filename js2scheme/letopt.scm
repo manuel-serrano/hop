@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Mar  9 10:12:18 2016 (serrano)                */
+;*    Last change :  Fri Mar 18 08:28:18 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -178,8 +178,9 @@
 				   (with-access::J2SDeclFun decl (scope)
 				      (set! scope 'letblock))))
 		      vdecls)
-		   (set! decls (append vdecls decls))
-		   (set! nodes lnodes)))
+		   (set! decls (append vdecls decls))))
+	     (with-access::J2SLetBlock (car lnodes) (nodes)
+		(set! nodes (append nodes (cdr lnodes))))
 	     (car lnodes))
 	    (else
 	     this)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jan 15 18:59:51 2016 (serrano)                */
+;*    Last change :  Fri Mar 18 09:24:38 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -231,6 +231,10 @@
 	   (final-class J2SOctalNumber::J2SNumber)
 	   (final-class J2SRegExp::J2SLiteralValue
 	      (flags::bstring read-only))
+
+	   (final-class J2SLiteralCnst::J2SLiteral
+	      (index::long read-only)
+	      (val::J2SLiteralValue read-only (info '("notraverse"))))
 	   
 	   (final-class J2SArray::J2SLiteral
 	      len::int

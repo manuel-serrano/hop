@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sat Dec 12 13:23:22 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Fri Mar 18 11:40:50 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
 ;*=====================================================================*/
@@ -268,21 +268,21 @@
 				(js-jsstring->string opt))
 			       (else
  				(js->hop (js-get opt 'path %this)))))
-		      (proto (if (isa? opt JsObject)
-				 (let ((proto (js-get opt 'protocol %this)))
-				    (cond
-				       ((string? proto)
-					(list proto))
-				       ((js-jsstring? proto)
-					(list (js-jsstring->string proto)))
-				       ((isa? proto JsArray)
-					(map (lambda (el)
-						(js-jsstring->string (car el)))
-					   (jsarray->list proto %this)))))))
+		      (protocol (if (isa? opt JsObject)
+				    (let ((proto (js-get opt 'protocol %this)))
+				       (cond
+					  ((string? proto)
+					   (list proto))
+					  ((js-jsstring? proto)
+					   (list (js-jsstring->string proto)))
+					  ((isa? proto JsArray)
+					   (map (lambda (el)
+						   (js-jsstring->string (car el)))
+					      (jsarray->list proto %this)))))))
 		      (svc (service :name path ()
 			      (let ((req (current-request)))
 				 (websocket-server-response req 0
-				    (wss-onconnect wss) proto))))
+				    (wss-onconnect wss) protocol))))
 		      (wss (instantiate::JsWebSocketServer
 			      (state 'up)
 			      (worker (js-current-worker))

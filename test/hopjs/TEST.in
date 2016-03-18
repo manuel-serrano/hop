@@ -16,7 +16,7 @@ export PATH;
 rest=
 verb=
 basedir=$pwd
-hop=hop
+hop=$BUILDBINDIR/hop.sh
 test=
 
 while : ; do
@@ -70,9 +70,9 @@ run() {
     echo -n "$i. $path ... "
     if [ "$verb " != " " ]; then
       echo ""
-      echo -n "$hop -g --no-zeroconf $* ..."
+      echo -n "$hop --no-zeroconf $* ..."
     fi
-    $hop -g --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1
+    $hop --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1
 
     if [ $? = 0 ]; then
       echo "ok.";
@@ -92,8 +92,10 @@ for path in noserv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
       run $path -g --no-server --rc-file $path.rc.js
+      run $path --no-server --rc-file $path.rc.js
     else
       run $path -g -q --no-server
+      run $path -q --no-server
     fi
   fi
 done
@@ -103,14 +105,18 @@ for path in serv/*.js; do
     if [ -f $path.rc.js ]; then
 	if [ -f $path.args ]; then
 	    run $path -g -p 0 `cat $path.args` --rc-file $path.rc.js
+	    run $path -p 0 `cat $path.args` --rc-file $path.rc.js
 	else
 	    run $path -g -p 0 --rc-file $path.rc.js
+	    run $path -p 0 --rc-file $path.rc.js
 	fi
     else       
 	if [ -f $path.args ]; then
 	    run $path -g -p 0 `cat $path.args` --rc-file passwd.hop
+	    run $path -p 0 `cat $path.args` --rc-file passwd.hop
 	else
 	    run $path -g -p 0 --rc-file passwd.hop
+	    run $path -p 0 --rc-file passwd.hop
 	fi
     fi
   fi   

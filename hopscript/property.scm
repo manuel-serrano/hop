@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jan  5 16:32:19 2016 (serrano)                */
+;*    Last change :  Fri Mar 18 11:41:53 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -680,20 +680,6 @@
 	  (js-get _o prop %this)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get/cache ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    Use a per site cache for the [[GET]] operation. The property     */
-;*    name is not know statically.                                     */
-;*---------------------------------------------------------------------*/
-(define (js-get/cache o prop::obj cache::JsPropertyCache %this::JsGlobalObject)
-   (if (or (not (symbol? prop)) (not (isa? o JsObject)))
-       (js-get o prop %this)
-       (with-access::JsPropertyCache cache (name)
-	  (if (eq? name prop)
-	      (js-get-name/cache o name cache %this)
-	      (js-get-lookup o name cache #f %this)))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-get-lookup ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    Look for the property, if found update the cache and return      */
@@ -729,6 +715,21 @@
 	    (js-get-notfound name throw %this))
 	 ;; loop
 	 loop)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get/cache ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Use a per site cache for the [[GET]] operation. The property     */
+;*    name is not know statically.                                     */
+;*---------------------------------------------------------------------*/
+(define (js-get/cache o prop::obj cache::JsPropertyCache %this::JsGlobalObject)
+   (if (or (not (isa? prop JsStringLiteral)) (not (isa? o JsObject)))
+       (js-get o prop %this)
+       (let ((propname (string->symbol (js-jsstring->string prop))))
+	  (with-access::JsPropertyCache cache (name)
+	     (if (eq? name propname)
+		 (js-get-name/cache o name cache %this)
+		 (js-get-lookup o propname cache #f %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache ...                                            */

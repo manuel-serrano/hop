@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Mar  9 10:11:22 2016 (serrano)                */
+;*    Last change :  Fri Mar 18 09:34:22 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -467,7 +467,7 @@
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDeclFun mode return conf)
-   (with-access::J2SDeclFun this (loc id scope val)
+   (with-access::J2SDeclFun this (loc id scope val usage)
       (with-access::J2SFun val (params mode vararg body name)
 	 (let* ((scmid (j2s-decl-scheme-id this))
 		(fastid (j2s-fast-id id))
@@ -721,6 +721,13 @@
       (if (and (flonum? val) (nanfl? val))
 	  "NaN"
 	  val)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SLiteralCnst ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SLiteralCnst mode return conf)
+   (with-access::J2SLiteralCnst this (index val)
+      `(vector-ref-ur %cnsts ,index)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNumber ...                                       */
@@ -1341,9 +1348,15 @@
 	  (epairify loc
 	     `(begin
 		 ,@(map (lambda (d)
-			   (if (j2s-let-opt? d)
-			       (j2s-let-decl-toplevel d mode return conf)
-			       (j2s-scheme d mode return conf)))
+			   (cond
+			      ((j2s-let-opt? d)
+			       (j2s-let-decl-toplevel d mode return conf))
+			      ((isa? d J2SDeclFun)
+			       (with-access::J2SDeclFun d (scope)
+				  (set! scope 'block))
+			       (j2s-scheme d mode return conf))
+			      (else
+			       (j2s-scheme d mode return conf))))
 		      decls)
 		 ,@(j2s-scheme nodes mode return conf)))
 	  ;; inner letblock, create a let block
@@ -2469,14 +2482,22 @@
 		 `(js-toname ,(j2s-scheme val mode return conf) %this))))
 	 ((isa? name J2SPragma)
 	  `(js-toname ,(j2s-scheme name mode return conf) %this))
+	 ((isa? name J2SLiteralCnst)
+	  `(js-toname ,(j2s-scheme name mode return conf) %this))
 	 (else
 	  (with-access::J2SLiteralValue name (val)
 	     `(js-toname ,(j2s-scheme val mode return conf) %this)))))
 
    (define (is-proto? name)
-      (when (isa? name J2SString)
-	 (with-access::J2SString name (val)
-	    (string=? val "__proto__"))))
+      (cond
+	 ((isa? name J2SString)
+	  (with-access::J2SString name (val)
+	     (string=? val "__proto__")))
+	 ((isa? name J2SLiteralCnst)
+	  (with-access::J2SLiteralCnst name (val)
+	     (is-proto? val)))
+	 (else
+	  #f)))
    
    (with-access::J2SObjInit this (loc inits)
       (let ((tmp (gensym)))
