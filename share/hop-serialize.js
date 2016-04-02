@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Fri Feb 26 18:37:46 2016 (serrano)                */
+/*    Last change :  Fri Apr  1 07:45:58 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -20,17 +20,11 @@ var hop_serialize_context = {
  }
 
 /*---------------------------------------------------------------------*/
-/*    object serialization                                             */
+/*    HopArguments ...                                                 */
 /*---------------------------------------------------------------------*/
-sc_Object.prototype.hop_bigloo_serialize = hop_bigloo_serialize_sc_object;
-Int8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s8vector;
-Uint8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u8vector;
-Int16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s16vector;
-Uint16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u16vector;
-Int32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s32vector;
-Uint32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u32vector;
-Float32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f32vector;
-Float64Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f64vector;
+function HopArguments( args ) {
+   this.args = args;
+}
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize ...                                         */
@@ -90,7 +84,7 @@ function hop_bigloo_serialize_context( item ) {
       return "%23" + hop_serialize_word( item.hop_serialize_context_def );
    }
 
-   if( item && ("hop_bigloo_serialize" in item) ) {
+   if( "hop_bigloo_serialize" in item ) {
       return hop_bigloo_serialize_custom( item );
    }
 
@@ -100,6 +94,7 @@ function hop_bigloo_serialize_context( item ) {
    if( item instanceof Date )
       return hop_serialize_date( item );
 
+#if !HOP_NOBROWSER
    if( (HTMLCollection != undefined) && (item instanceof HTMLCollection) )
       return hop_serialize_array( item );
       
@@ -111,29 +106,48 @@ function hop_bigloo_serialize_context( item ) {
 
    if( (HTMLSelectElement != undefined) && (item instanceof HTMLSelectElement) )
       return hop_bigloo_serialize_context( item.value );
-
+#endif
+   
    if( (item.callee != undefined) && (item.length > -1) )
       return hop_serialize_array( item );
 
+#if !HOP_NOBROWSER
    if( hop_is_html_element( item ) )
       return hop_serialize_html( item );
-
+#endif
+   
    if( item instanceof Error ) {
       return hop_bigloo_serialize_error( item );
    }
    
+#if HOP_SCHEME
    if( sc_isClass( item ) )
       return hop_bigloo_serialize_sc_class( item );
-      
-   return "X" + hop_bigloo_serialize_plist( item );
+#endif
+   
+   if( item.hop_bigloo_serialize instanceof Function ) {
+      // non compliant JS implementation... (e.g., espruino)
+      return hop_bigloo_serialize_custom( item );
+   }
+
+   
+   return "X" + hop_bigloo_serialize_as_plist( item );
 }
 
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_custom ...                                  */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize_custom( item ) {
-   item.hop_serialize_context_key = hop_serialize_context.key;
-   item.hop_serialize_context_def = hop_serialize_context.def++;
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: true
+   } );
 
    return "=" + hop_serialize_word( item.hop_serialize_context_def ) +
       item.hop_bigloo_serialize();
@@ -150,15 +164,21 @@ function hop_bigloo_serialize_object() {
    var args = "";
    var len = 1;
 
-   item.hop_serialize_context_key = hop_serialize_context.key;
-   item.hop_serialize_context_def = hop_serialize_context.def++;
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: true
+   } );
 
    for( var p in item ) {
       if( p !== "hop_bigloo_serialize" &&
 	  p !== "hop_classname" &&
 	  p !== "hop_circle_forced" &&
-	  p !== "hop_serialize_context_key" &&
-	  p !== "hop_serialize_context_def" &&
 	  p !== "hop_classhash" ) {
 	 len++;
 	 args += hop_bigloo_serialize_context( item[ p ] );
@@ -169,6 +189,38 @@ function hop_bigloo_serialize_object() {
    str += hop_serialize_boolean( false );
    str += args;
    str += hop_bigloo_serialize_context( item.hop_classhash );
+
+   str = "=" + hop_serialize_word( item.hop_serialize_context_def ) + str;
+
+   return str;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_custom_object ...                           */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_custom_object() {
+   var item = this;
+   var hash = item.hop_classhash;
+   
+   var classfields = item.hop_classfields;
+   var str = "O("
+       + hop_serialize_word( 2 )
+       + hop_serialize_word( 0 );
+
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
+	 value: hop_serialize_context.def++,
+	 enumerable: false,
+	 configurable: true
+   } );
+
+
+   str += hop_bigloo_serialize_as_plist( item, item.__class__ );
+   str += hop_serialize_word( hash );
 
    str = "=" + hop_serialize_word( item.hop_serialize_context_def ) + str;
 
@@ -187,21 +239,16 @@ function hop_bigloo_serialize_sc_object() {
    var fields = sc_class_all_fields( clazz );
    var len = 1 + fields.length;
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: true
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
 	 value: hop_serialize_context.def++,
 	 enumerable: false,
 	 configurable: true
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   }
+   } );
 
    for( var i = 0; i < fields.length; i++ ) {
       args += hop_bigloo_serialize_context( fields[ i ].sc_getter( item ) );
@@ -226,21 +273,16 @@ function hop_bigloo_serialize_hopframe() {
    var hash = HopFrame.prototype.hash;
    var str = "O";
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: true
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: true
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   }
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
+      value: hop_serialize_context.def++,
+      enumerable: false,
+      configurable: true
+   } );
 
    var obj = [ this.srv, this.path, this.args, this.options, this.header ];
    str += hop_bigloo_serialize_context( sc_cons( hash, obj ) );
@@ -260,21 +302,16 @@ function hop_bigloo_serialize_service() {
    var hash = HopService.prototype.hash;
    var str = "O";
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: true
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: true
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   }
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
+      value: hop_serialize_context.def++,
+      enumerable: false,
+      configurable: true
+   } );
 
    str += hop_bigloo_serialize_context( sc_cons( hash, [ this.base, dir.dir ] ) );
    str += hop_bigloo_serialize_context( 0 );
@@ -297,21 +334,16 @@ function hop_bigloo_serialize_error( item ) {
    var hash = hop_error_hash;
    var str = "O";
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: true
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: true
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   }
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
+      value: hop_serialize_context.def++,
+      enumerable: false,
+      configurable: true
+   } );
 
    var obj = [ item.constructor.name.toString(),
 	       item.message.toString(),
@@ -329,10 +361,12 @@ function hop_bigloo_serialize_error( item ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_sc_class ...                                */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 function hop_bigloo_serialize_sc_class( clazz ) {
    var classname = sc_symbol2jsstring( sc_class_name( clazz ) );
    return "k" + hop_serialize_string( classname );
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_size_of_word ...                                             */
@@ -557,21 +591,16 @@ function hop_serialize_array( item ) {
    var ra = '[' + hop_serialize_word( l );
    var i = 0;
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: true
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: true
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   } 
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
+      value: hop_serialize_context.def++,
+      enumerable: false,
+      configurable: true
+   } );
 
    for( i = 0; i < l; i++ ) {
       ra += hop_bigloo_serialize_context( item[ i ] );
@@ -588,31 +617,24 @@ function hop_bigloo_serialize_hvector( item, tag, size ) {
    var ra = 'h' + hop_serialize_word( l ) + hop_serialize_word( size ) + hop_serialize_string( tag );
    var i;
 
-   console.log( "serialize item=", item);
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: true
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: true
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   }
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
+      value: hop_serialize_context.def++,
+      enumerable: false,
+      configurable: true
+   } );
 
    for( i = 0; i < l; i++ ) {
       ra += hop_serialize_bytes( item[ i ], size );
    }
 
-   console.log( "ra=", ra );
    return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
 }
-   
+
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_fvector ...                                 */
 /*---------------------------------------------------------------------*/
@@ -621,21 +643,16 @@ function hop_bigloo_serialize_fvector( item, tag, size ) {
    var ra = 'h' + hop_serialize_word( l ) + hop_serialize_word( size ) + hop_serialize_string( tag );
    var i;
 
-   if( "defineProperty" in Object ) {
-      Object.defineProperty( item, "hop_serialize_context_key", {
-	 value: hop_serialize_context.key,
-	 enumerable: false,
-	 configurable: true
-      } );
-      Object.defineProperty( item, "hop_serialize_context_def", {
-	 value: hop_serialize_context.def++,
-	 enumerable: false,
-	 configurable: true
-      } );
-   } else {
-      item.hop_serialize_context_key = hop_serialize_context.key;
-      item.hop_serialize_context_def = hop_serialize_context.def++;
-   }
+   Object.defineProperty( item, "hop_serialize_context_key", {
+      value: hop_serialize_context.key,
+      enumerable: false,
+      configurable: true
+   } );
+   Object.defineProperty( item, "hop_serialize_context_def", {
+      value: hop_serialize_context.def++,
+      enumerable: false,
+      configurable: true
+   } );
 
    for( i = 0; i < l; i++ ) {
       var s = item[ i ].toString();
@@ -644,7 +661,7 @@ function hop_bigloo_serialize_fvector( item, tag, size ) {
 
    return "=" + hop_serialize_word( item.hop_serialize_context_def ) + ra;
 }
-   
+
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize_s8vector ...                                */
 /*---------------------------------------------------------------------*/
@@ -733,6 +750,7 @@ function hop_serialize_date( item ) {
 /*---------------------------------------------------------------------*/
 /*    hop_serialize_html ...                                           */
 /*---------------------------------------------------------------------*/
+#if !HOP_NOBROWSER
 function hop_serialize_html( item ) {
    if( "outerHTML" in item ) {
       return hop_serialize_string( item.outerHTML );
@@ -751,19 +769,70 @@ function hop_serialize_html( item ) {
       }
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
-/*    hop_bigloo_serialize_plist ...                                   */
+/*    hop_bigloo_serialize_as_plist ...                                */
 /*---------------------------------------------------------------------*/
-function hop_bigloo_serialize_plist( item ) {
-   var plist = null;
-   
+function hop_bigloo_serialize_as_plist( item, clazz ) {
+   var res = "";
+   var len = 0;
+
+
+   if( clazz ) {
+      res += "%3a" + hop_serialize_string( "__class__" )
+	 + hop_bigloo_serialize_context( clazz );
+      len = 2;
+   }
+      
    for( var p in item ) {
-      plist = sc_cons( sc_jsstring2keyword( p ), sc_cons( item[ p ], plist ) );
+      res += "%3a" + hop_serialize_string( p )
+	 + hop_bigloo_serialize_context( item[ p ] );
+      len += 2;
    }
 
-   return hop_bigloo_serialize_context( plist );
+   if( len == 0 ) {
+      return ".";
+   } else {
+      return "(" + hop_serialize_word( len + 1 ) + res + ".";
+   }
 }
+
+/*---------------------------------------------------------------------*/
+/*    hop_bigloo_serialize_arguments ...                               */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_arguments() {
+   var res = "";
+   var i;
+   var args = this.args;
+
+   for( i = 0; i < args.length; i++ ) {
+      res += hop_bigloo_serialize_context( args[ i ] );
+   }
+
+   if( res == "" ) {
+      return ".";
+   } else {
+      return "(" + hop_serialize_word( i + 1 ) + res + ".";
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    object serialization                                             */
+/*---------------------------------------------------------------------*/
+#if HOP_SCHEME
+sc_Object.prototype.hop_bigloo_serialize = hop_bigloo_serialize_sc_object;
+#endif
+
+Int8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s8vector;
+Uint8Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u8vector;
+Int16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s16vector;
+Uint16Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u16vector;
+Int32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_s32vector;
+Uint32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_u32vector;
+Float32Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f32vector;
+Float64Array.prototype.hop_bigloo_serialize = hop_bigloo_serialize_f64vector;
+HopArguments.prototype.hop_bigloo_serialize = hop_bigloo_serialize_arguments;
 
 /*---------------------------------------------------------------------*/
 /*    safe_decode_uri ...                                              */
@@ -1134,7 +1203,7 @@ function hop_bytearray_to_obj( s, extension ) {
       obj = hashobj.__hop_cdr;
 
       res = hop_find_class_unserializer( hash )( obj );
-      
+
       if( old_defining >= 0 ) {
 	 definitions[ old_defining ] = res;
       }
@@ -1277,31 +1346,69 @@ function hop_bytearray_to_obj( s, extension ) {
 /*    -------------------------------------------------------------    */
 /*    See HOP_CREATE_ENCODED_ELEMENT (hop-dom.js).                     */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 var hop_custom_object_regexp =
    new RegExp( "hop_create_encoded_element[(][ ]*\"([^\"]*)\"[ ]*[)]" );
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_class_register_serializer ...                                */
 /*---------------------------------------------------------------------*/
-/*** META ((export register-class-serialization!) (arity #t)) */
+/*** META ((export register-class-serialization!) (arity #f)) */
+#if HOP_SCHEME
 function hop_class_register_serializer( clazz, serializer, unserializer ) {
-   hop_class_serializers[ clazz.sc_hash ] = {
-      serializer: serializer,
-      unserializer: unserializer
+   
+   function makeUnserializer( fun ) {
+      return function( o ) {
+	 var jso = unserializer( o );
+
+	 if( jso instanceof Object ) {
+	    jso.__proto__ = clazz.prototype;
+	 }
+	 return jso;
+      }
    }
+   var hop_bigloo_unserialize_custom_object =
+       makeUnserializer( hop_plist2jsobject );
+   
+   if( serializer === undefined && unserializer === undefined ) {
+      hop_class_serializers[ clazz.sc_hash ] = {
+	 serializer: hop_bigloo_serialize_custom_object,
+	 unserializer: hop_bigloo_unserialize_custom_object
+      }
+   } else {
+      hop_class_serializers[ clazz.sc_hash ] = {
+	 serializer: serializer === true ?
+	    hop_bigloo_serialize_custom_object
+	    : serializer,
+	 unserializer: unserializer === true ?
+	    hop_bigloo_serialize_custom_object 
+	    : (unserializer && makeUnserializer( unserializer ))
+      }
+   }
+
+   Object.defineProperty( clazz.prototype , "hop_bigloo_serialize", {
+      value: hop_class_serializers[ clazz.sc_hash ].serializer,
+      enumerable: false,
+      configurable: false
+   } );
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    sc__class__ ...                                                  */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 var sc__class__ = sc_string2keyword( "__class__" );
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_find_class_unserializer ...                                  */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 function hop_find_class_unserializer( hash ) {
    var custom = hop_class_serializers[ hash ];
-   
+
    if( custom ) {
       return custom.unserializer;
    } else {
@@ -1313,6 +1420,7 @@ function hop_find_class_unserializer( hash ) {
 	       /* kind of specialized eval */
 	       return hop_create_encoded_element( m [ 1 ] );
 	    } else {
+	       console.log( "PAS KLASS.1=", o );
 	       return sc_error( "string->obj",
 				"Cannot find custom class ("
 				+ hash
@@ -1320,43 +1428,70 @@ function hop_find_class_unserializer( hash ) {
 	    }
 	 } else {
 	    if( sc_isPair( o ) && sc_car( o ) == sc__class__ ) {
-	       var clazz = { sc_hash: hash };
-	       hop_class_register_serializer( clazz, hop_js_to_object, hop_plist2jsobject );
-	       return hop_plist2jsobject( o );
+	       var clazz = { sc_hash: hash, prototype: {} };
+	       hop_class_register_serializer( clazz, true, hop_plist2jsobject );
+	       return hop_find_class_unserializer( hash )( o );
 	    } else {
+	       console.log( "PAS KLASS=", o );
 	       return sc_error( "string->obj",
 				"Cannot find custom class ("
 				+ hash
-				+ ") unserializer", hash );
+				+ ") unserializer", o );
 	    }
 	 }
       }
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_js_to_object ...                                             */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 function hop_js_to_object( cname, hash, o ) {
-   var klass = sc_class_exists( sc_string2symbol( sc_jsstring2string( cname ) ) );
+   var clazz = sc_string2symbol( sc_jsstring2string( cname ) );
+   var klass = sc_class_exists( clazz );
 
    if( !klass ) {
-      o.hop_bigloo_serialize = hop_bigloo_serialize_object;
-      o.hop_classname = cname;
-      o.hop_classhash = hash;
+      var custom = hop_class_serializers[ hash ];
 
+      Object.defineProperty( o, "hop_bigloo_serialize" , {
+	 value: (custom && custom.serializer)
+	    || hop_bigloo_serialize_custom_object,
+	 enumerable: false,
+	 configurable: true
+      } );
+
+      Object.defineProperty( o, "hop_classname", {
+	 value: cname,
+	 enumerable: false,
+	 configurable: true
+      } );
+      
+      Object.defineProperty( o, "hop_classhash", {
+	 value: hash,
+	 enumerable: false,
+	 configurable: true
+      } );
+
+      Object.defineProperty( o, "__class__", {
+	 value: clazz,
+	 enumerable: false,
+	 configurable: true
+      } );
+      
       return o;
    } else {
       if( sc_class_hash( klass ) !== hash ) {
 	 sc_error( "hop_js_to_object", "incomptabile class versions", cname );
       } else {
 	 o.__proto__ = klass.prototype;
-	 o.__proto__.constructor = klass;
-
+	 //o.__proto__.constructor = klass;
 	 return o;
       }
    }
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_hextobuf ...                                                 */
@@ -1409,3 +1544,11 @@ function hop_buffer( name, _ ) {
       return hop_hextobuf( arguments[ 2 ] ).buffer;
    }
 }
+
+/*---------------------------------------------------------------------*/
+/*    module exports                                                   */
+/*---------------------------------------------------------------------*/
+#if HOP_MODULES
+exports.hop_bigloo_serialize = hop_bigloo_serialize;
+exports.hop_arguments = HopArguments;
+#endif

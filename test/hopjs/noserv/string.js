@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/string.js       */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/string.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Tue Dec 22 08:25:06 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Fri Mar 25 15:58:02 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
 /*=====================================================================*/
@@ -28,7 +28,7 @@ assert.equal( "hux" + s4, "huxfoobargee" );
 /*---------------------------------------------------------------------*/
 var s5 = 'A\uD835\uDC68C';
 
-assert.equal( s5.length, 4 );
+assert.equal( s5.length, 4, "utf16 string length" );
 
 assert.equal( s5[ 0 ], 'A' );
 assert.equal( s5[ 1 ].length, 1 );
@@ -45,3 +45,17 @@ assert.equal( s5.charCodeAt( 1 ), 55349 );
 assert.equal( s5.charCodeAt( 2 ), 56424 );
 assert.equal( s5.charCodeAt( 3 ), 67 );
 
+/*---------------------------------------------------------------------*/
+/*    concat                                                           */
+/*---------------------------------------------------------------------*/
+function bigStr() {
+   var n = 500000;
+
+   var s = '';
+   for( var i = 0; i < n; i++ ) {
+      s += 'c';
+   }
+   assert.ok( s.length == n, "length" );
+}
+
+bigStr();

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Mar  9 08:25:51 2016 (serrano)                */
+;*    Last change :  Fri Mar 25 18:53:06 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -529,6 +529,7 @@
 	       ((not j)
 		(blit-string! str i res w (-fx len i))
 		(string-shrink! res (+fx w (-fx len i)))
+		(string-ascii-sentinel-mark! res)
 		(make-token (if octal 'OSTRING 'ESTRING) res
 		   (the-coord input-port (+fx len 1))))
 	       ((=fx j (-fx len 1))

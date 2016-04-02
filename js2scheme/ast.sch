@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Feb 16 10:36:53 2016 (serrano)                */
+;*    Last change :  Sat Mar 26 13:46:01 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -204,6 +204,7 @@
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable #f)
+       (usecnt 1)
        (binder 'let-opt)
        (usage ,usage)
        (val ,val)

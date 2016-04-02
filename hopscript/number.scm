@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Feb 15 11:04:14 2016 (serrano)                */
+;*    Last change :  Thu Mar 24 19:21:18 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -30,6 +30,8 @@
    (export (js-init-number! ::JsGlobalObject)
 	   (js-number->jsnumber ::obj ::JsGlobalObject)
 
+	   (inline js-uint32->jsnum::obj ::uint32)
+	   
 	   (js+ left right ::JsGlobalObject)
 	   (inline js+fx::obj ::long ::long)
 	   (inline js-fx::obj ::long ::long)
@@ -374,6 +376,24 @@
       (js-new1 %this js-number val)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-uint32->jsnum ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-uint32->jsnum n::uint32)
+   
+   (define-macro (intszu32)
+      (minfx (-fx (bigloo-config 'int-size) 1) 56))
+   
+   (define-macro (shiftu32)
+      (bit-lsh 1 (intszu32)))
+   
+   (define-macro (maxintu32)
+      (fixnum->uint32 (-fx (shiftu32) 1)))
+
+   (if (>u32 n (maxintu32))
+       (uint32->flonum n)
+       (uint32->fixnum n)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js+ ...                                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
@@ -407,14 +427,11 @@
    (define-macro (minint+)
       (-fx 0 (shift+)))
    
-;*    (let ((tmp (+fx left right)))                                    */
-;*       (if (or (>fx tmp (maxint+)) (<fx tmp (minint+)))              */
-;* 	  (fixnum->flonum tmp)                                         */
-;* 	  tmp))                                                        */
-;*                                                                     */
    (let ((tmp (+fx left right)))
-      (if (=fx (bit-and tmp (shift+)) (shift+))
-	  (fixnum->flonum tmp)
+      (if (or (>fx tmp (maxint+)) (<fx tmp (minint+)))
+	  (begin
+	     (tprint "js+fx fixnum->flonum " left " " right)
+	     (fixnum->flonum tmp))
 	  tmp)))
 
 ;*---------------------------------------------------------------------*/
@@ -434,14 +451,11 @@
    (define-macro (minint-)
       (-fx 0 (bit-lsh 1 (intsz-))))
    
-;*    (let ((tmp (-fx left right)))                                    */
-;*       (if (or (>fx tmp (maxint-)) (<fx tmp (minint-)))              */
-;* 	  (fixnum->flonum tmp)                                         */
-;* 	  tmp))                                                        */
-;*                                                                     */
    (let ((tmp (-fx left right)))
-      (if (=fx (bit-and tmp (shift-)) (shift-))
-	  (fixnum->flonum tmp)
+      (if (or (>fx tmp (maxint-)) (<fx tmp (minint-)))
+	  (begin
+	     (tprint "js-fx fixnum->flonum " left " " right)
+	     (fixnum->flonum tmp))
 	  tmp)))
 
 ;*---------------------------------------------------------------------*/

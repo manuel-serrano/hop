@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Feb 12 16:59:51 2016 (serrano)                */
+;*    Last change :  Mon Mar 28 10:11:20 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -89,9 +89,10 @@
       ((string? (hopc-js-driver))
        (j2s-make-driver (string-split (hopc-js-driver) ",")))
       ((eq? (hopc-pass) 'client-js)
-       (if (eq? (hopc-js-target) 'es5)
-	   (j2s-ecmascript5-driver)
-	   (j2s-javascript-driver)))
+       (cond
+	  ((eq? (hopc-js-target) 'es5) (j2s-ecmascript5-driver))
+	  ((>=fx (hopc-optim-level) 1) (j2s-javascript-optim-driver))
+	  (else (j2s-javascript-driver))))
       ((>=fx (hopc-optim-level) 1)
        (j2s-optim-driver))
       (else
@@ -226,10 +227,10 @@
 			 opts))
 		(cmd (format "~a - ~l" (hopc-bigloo) opts))
 		(out (process-input-port proc)))
-	    (hop-verb 1 cmd "\n")
 	    (unwind-protect
 	       (comp out)
 	       (close-output-port out))
+	    (hop-verb 1 cmd "\n")
 	    (process-wait proc)
 	    (process-exit-status proc)))
       

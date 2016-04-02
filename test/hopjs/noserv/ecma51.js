@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Mar  9 15:35:00 2016 (serrano)                */
+/*    Last change :  Tue Mar 22 17:30:42 2016 (serrano)                */
 /*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -124,12 +124,12 @@ function swfoo2( yyy ) {
    }
 }
 
-assert.strictEqual( swfoo1( 2 ), 1 );
-assert.strictEqual( swfoo1( 4 ), 2 );
-assert.strictEqual( swfoo2( 1 ), 3 );
-assert.strictEqual( swfoo2( 2 ), 3 );
-assert.strictEqual( swfoo2( 3 ), 1 );
-assert.strictEqual( swfoo2( false ), 2 );
+assert.strictEqual( swfoo1( 2 ), 1, "swfoo1" );
+assert.strictEqual( swfoo1( 4 ), 2, "swfoo1" );
+assert.strictEqual( swfoo2( 1 ), 3, "swfoo2" );
+assert.strictEqual( swfoo2( 2 ), 3, "swfoo2" );
+assert.strictEqual( swfoo2( 3 ), 1, "swfoo2" );
+assert.strictEqual( swfoo2( false ), 2, "swfoo2" );
 
 /*---------------------------------------------------------------------*/
 /*    variables and parameters                                         */
@@ -279,3 +279,13 @@ function typing( z, data )  {
 
 assert.ok( typing( 2 ) === 2, "typing" );
 assert.ok( typing( 20 ) === 1, "typing" );
+
+/*---------------------------------------------------------------------*/
+/*    access                                                           */
+/*---------------------------------------------------------------------*/
+var t = [ 'a' ];
+var i = '0';
+
+assert.ok( t[ 0 ] === 'a', "int access" );
+assert.ok( t[ '0' ] === 'a', "string access" );
+assert.ok( t[ i ] === 'a', "string access" );

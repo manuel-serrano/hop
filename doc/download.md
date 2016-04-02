@@ -1,6 +1,5 @@
 ${ var doc = require( "hopdoc" ) }
 ${ var config = require( hop.config ) }
-${ console.error( "DOC.build=", doc.BUILDDIR ) }
 ${ var xml = require( doc.BUILDDIR + "/doc/xml.js" ) }
 ${ var cfg = require( doc.BUILDDIR + "/doc/doc.json" ) }
 

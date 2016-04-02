@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Wed Mar  2 17:37:36 2016 (serrano)                */
+/*    Last change :  Wed Mar 16 18:19:44 2016 (serrano)                */
 /*    Copyright   :  2004-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -102,7 +102,7 @@ function hop_apply_url( service, args ) {
             } else {
 	       return service
 		  + "?hop-encoding=hop"
-   		  + "&vals=" + hop_bigloo_serialize( sc_vector2list( args ) );
+   		  + "&vals=" + hop_bigloo_serialize( new HopArguments( args ) );
             }
 	 }
       }

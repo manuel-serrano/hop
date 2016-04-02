@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/js_comp.scm               */
+;*    serrano/prgm/project/hop/3.1.x/runtime/js_comp.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jul 19 15:55:02 2005                          */
-;*    Last change :  Fri Nov  6 11:52:43 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Thu Mar 31 18:01:09 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS compilation tools                                             */
 ;*=====================================================================*/
@@ -139,11 +139,8 @@
 ;*---------------------------------------------------------------------*/
 (define (class->javascript clazz)
    ;; this is just an approximation, this should be implement 
-   (format "(sc_class_exists( '~a' ) ? sc_class_exists( '~a' ) : sc_register_class( new sc_Class(), '~a', sc_class_exists( '~a' ) ? sc_class_exists( '~a' ): sc_Object, ~a, undefined, sc_Object, [] ))"
+   (format "sc_get_class( '~a', '~a', ~a )"
       (class-name clazz)
-      (class-name clazz)
-      (class-name clazz)
-      (class-name (class-super clazz))
       (class-name (class-super clazz))
       (class-hash clazz)))
 

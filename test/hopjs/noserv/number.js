@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/number.js       */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/number.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Fri Oct  2 15:00:45 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Tue Mar 22 18:51:09 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
 /*=====================================================================*/
@@ -47,3 +47,10 @@ assert.equal( x, Math.ceil( x ) );
 
 assert.ok( Math.floor( 2147483647.0 ) > 0 );
 
+var b = [ 0xff, 0xff, 0xff, 0xff ];
+
+function foo( b ) {
+  return ((b[0]) | (b[1] << 8) | (b[2] << 16)) + (b[3] * 0x1000000);
+}
+
+assert.ok( foo( b, 0 ) === 0xFFFFFFFF, "maxint" );

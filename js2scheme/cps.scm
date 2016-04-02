@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Feb 16 12:37:27 2016 (serrano)                */
+;*    Last change :  Sat Mar 26 13:46:09 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -474,7 +474,7 @@
 		   pack kbreaks kcontinues ktry)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    cps ::J2SSequence ...                                            */
+;*    cps ::J2SExpr ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SExpr k pack kbreaks kcontinues ktry)
    
@@ -567,7 +567,13 @@
 		 (sdecls '()))
 	 (cond
 	    ((null? wdecls)
-	     (call-next-method))
+	     (let ((block (instantiate::J2SBlock
+			     (loc loc)
+			     (endloc loc)
+			     (nodes nodes))))
+		(J2SLetBlock
+		   decls
+		   (cps block k pack kbreaks kcontinues ktry))))
 	    ((not (yield-expr? (car wdecls) kbreaks kcontinues))
 	     (cps-fun! (car wdecls))
 	     (loop (cdr wdecls) wdecls (if (pair? sdecls) sdecls wdecls)))
@@ -1185,8 +1191,8 @@
 	  (cps key
 	     (KontExpr (lambda (kkey::J2SExpr)
 			  (with-access::J2SSwitch this (key)
-			     ;; if a duplication is preferred here to
-			     ;; the mutation, don't forget to update the
+			     ;; if here a duplication is preferred to
+			     ;; a mutation, don't forget to update the
 			     ;; kbreaks set otherwise J2SBreak will be
 			     ;; badly compiled
 			     (set! key kkey)

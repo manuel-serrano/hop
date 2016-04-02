@@ -3,39 +3,20 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Thu Mar  3 08:32:50 2016 (serrano)                */
+/*    Last change :  Tue Mar 29 17:48:43 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    Serialization                                                    */
+/*    Global parameters                                                */
 /*---------------------------------------------------------------------*/
-function hop_bigloo_serialize_pair( l ) {
-   var res = "";
-   var len = 0;
-
-   while( sc_isPair( l ) ) {
-      res += hop_bigloo_serialize_context( l.__hop_car );
-      l = l.__hop_cdr;
-      len++;
-   }
-
-   if( l == null ) {
-      return hop_serialize_word( len + 1 ) + res + ".";
-   } else {
-      return hop_serialize_word( len + 1 ) + res + hop_bigloo_serialize_context( l );
-   }
-}
-
-sc_Pair.prototype.hop_bigloo_serialize = function() {
-   return '(' + hop_bigloo_serialize_pair( this );
-};
-
-sc_Char.prototype.hop_bigloo_serialize = function() {
-   return 'a' + hop_serialize_word( this.val.charCodeAt( 0 ) );
-};
+#if HOP_JAVASCRIPT
+#if HOP_RTS_DEBUG
+var sc_context = null;
+#endif
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    typeof                                                           */
@@ -100,8 +81,8 @@ sc_Char.prototype.hop_typeof = function() {
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
 function sc_Pair( car, cdr ) {
-   this.car = car;
-   this.cdr = cdr;
+   this.__hop_car = car;
+   this.__hop_cdr = cdr;
 }
 
 function sc_isPair( p ) {
@@ -109,26 +90,144 @@ function sc_isPair( p ) {
 }
 
 function sc_car( p ) {
-   return p.car;
+   return p.__hop_car;
 }
 
 function sc_cdr( p ) {
-   return p.cdr;
+   return p.__hop_cdr;
 }
 
 function sc_cons( car, cdr ) {
    return new sc_Pair( car, cdr );
 }
 
+#if HOP_RTS_DEBUG
+function sc_consStar() {
+    var res = arguments[arguments.length - 1];
+    for (var i = arguments.length-2; i >= 0; i--)
+	res = new sc_Pair(arguments[i], res);
+    return res;
+}
+#endif
+
+#if HOP_RTS_DEBUG
+function sc_reverse( l1 ) {
+   var res = null;
+   while( l1 !== null ) {
+      res = sc_cons( l1.__hop_car, res );
+      l1 = l1.__hop_cdr;
+   }
+   return res;
+}
+
+function sc_append() {
+   if( arguments.length === 0 ) {
+      return null;
+   }
+   var res = arguments[ arguments.length - 1 ];
+   for( var i = arguments.length - 2; i >= 0; i-- ) {
+      res = sc_dualAppend( arguments[ i ], res );
+   }
+   return res;
+}
+
+function sc_reverseAppendBang( l1, l2 ) {
+   var res = l2;
+   while( l1 !== null ) {
+      var tmp = res;
+      res = l1;
+      l1 = l1.__hop_cdr;
+      res.__hop_cdr = tmp;
+   }
+   return res;
+}
+
+function sc_dualAppend( l1, l2 ) {
+   if( l1 === null ) return l2;
+   if( l2 === null ) return l1;
+   var rev = sc_reverse( l1 );
+   return sc_reverseAppendBang( rev, l2 );
+}
+
+function sc_dualAppendBang( l1, l2 ) {
+   if( l1 === null ) return l2;
+   if( l2 === null ) return l1;
+   var tmp = l1;
+   while( tmp.__hop_cdr !== null ) tmp = tmp.__hop_cdr;
+   tmp.__hop_cdr = l2;
+   return l1;
+}
+#endif
+
 function sc_list() {
    var res = null;
    var a = arguments;
    for( var i = a.length-1; i >= 0; i-- ) {
-      res = new sc_Pair(a[i], res);
+      res = new sc_Pair( a[i], res  );
    }
    return res;
 }
 #endif
+
+/*---------------------------------------------------------------------*/
+/*    regexp                                                           */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+#if HOP_RTS_DEBUG
+function sc_pregexp( re ) {
+   return new RegExp( re );
+}
+#endif
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    hashtables                                                       */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+#if HOP_RTS_DEBUG
+function sc_Hashtable() {
+}
+
+function sc_HashtableElement( key, val ) {
+   this.key = key;
+   this.val = val;
+}
+
+function sc_hashtableGet( ht, key ) {
+   var hash = key.toString();
+   return (hash in ht) ? ht[ hash ].val : false;
+}
+
+function sc_hashtablePutBang(ht, key, val) {
+   var hash = key.toString();
+   ht[ hash ] = new sc_HashtableElement( key, val );
+}
+#endif
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    Serialization                                                    */
+/*---------------------------------------------------------------------*/
+function hop_bigloo_serialize_pair( l ) {
+   var res = "";
+   var len = 0;
+
+   while( sc_isPair( l ) ) {
+      res += hop_bigloo_serialize_context( l.__hop_car );
+      l = l.__hop_cdr;
+      len++;
+   }
+
+   if( l == null ) {
+      return hop_serialize_word( len + 1 ) + res + ".";
+   } else {
+      return hop_serialize_word( len + 1 ) + res + hop_bigloo_serialize_context( l );
+   }
+}
+
+sc_Pair.prototype.hop_bigloo_serialize = function() {
+   return '(' + hop_bigloo_serialize_pair( this );
+};
 
 /*---------------------------------------------------------------------*/
 /*    keywords & symbols                                               */
@@ -148,6 +247,13 @@ function sc_symbol2string( s ) {
 function sc_string2symbol( s ) {
    return sc_SYMBOL_PREFIX + s;
 }
+
+
+#if HOP_RTS_DEBUG
+function sc_jsstring2symbol( s ) {
+   return sc_SYMBOL_PREFIX + s;
+}
+#endif
 
 function sc_isKeyword( s ) {
    return (typeof s === "string") && (s.charAt(0) === sc_KEYWORD_PREFIX);
@@ -171,10 +277,49 @@ function sc_Char( c ) {
 }
 #endif
 
+#if HOP_SCHEME
+sc_Char.prototype.hop_bigloo_serialize = function() {
+   return 'a' + hop_serialize_word( this.val.charCodeAt( 0 ) );
+};
+#endif
+
 /*---------------------------------------------------------------------*/
 /*    Objects                                                          */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
 function sc_Object() {
 }
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    misc                                                             */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+#if HOP_RTS_DEBUG
+function sc_isNumber( x ) {
+   return typeof( x ) === "number";
+}
+
+function sc_isString( s ) {
+   return (typeof s === "string") &&
+      (s.charAt(0) !== sc_SYMBOL_PREFIX) &&
+      (s.charAt(0) !== sc_KEYWORD_PREFIX);
+}
+
+function sc_alert() {
+   var len = arguments.length;
+   var s = "";
+   var i;
+
+   for( i = 0; i < len; i++ ) {
+      s += arguments[ i ].toString();
+   }
+
+   return alert( s );
+}
+
+function sc_arity_check( fun, arity ) {
+   return fun;
+}
+#endif
 #endif

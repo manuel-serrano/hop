@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Mar  9 10:12:18 2016 (serrano)                */
+;*    Last change :  Tue Mar 29 08:45:01 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -27,11 +27,12 @@
 	   __js2scheme_lexer
 	   __js2scheme_use)
 
-   (static (class J2SLetOptInit
-	      (declinit::J2SDeclInit read-only)))
+   (static (class DeclInfo
+	      (optdecl (default #unspecified))
+	      (used (default #unspecified))
+	      (init (default #unspecified))))
    
-   (export j2s-letopt-stage
-	   (generic j2s-letopt ::obj ::obj)))
+   (export j2s-letopt-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letopt-stage ...                                             */
@@ -46,35 +47,30 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letopt ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-letopt this args)
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-letopt ::J2SProgram ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-letopt this::J2SProgram args)
-   (with-access::J2SProgram this (nodes headers decls)
-      ;; statement optimization
-      (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) headers)
-      (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) decls)
-      (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) nodes)
-      ;; toplevel lets optimization
-      (let ((lets '())
-	    (vars '()))
-	 (for-each (lambda (x)
-		      (cond
-			 ((not (isa? x J2SDecl))
-			  (error "j2s-letopt" "internal error" (j2s->list x)))
-			 ((j2s-let? x)
-			  (set! lets (cons x lets)))
-			 (else
-			  (set! vars (cons x vars)))))
-	    decls)
-	 (when (pair? lets)
-	    ;; this modify nodes in place
-	    (set! nodes
-	       (map! j2s-update-ref!
-		  (j2s-toplevel-letopt! nodes (reverse! lets) vars))))))
+(define (j2s-letopt this args)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (nodes headers decls)
+	 ;; statement optimization
+	 (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) headers)
+	 (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) decls)
+	 (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) nodes)
+	 ;; toplevel lets optimization
+	 (let ((lets '())
+	       (vars '()))
+	    (for-each (lambda (x)
+			 (cond
+			    ((not (isa? x J2SDecl))
+			     (error "j2s-letopt" "internal error" (j2s->list x)))
+			    ((j2s-let? x)
+			     (set! lets (cons x lets)))
+			    (else
+			     (set! vars (cons x vars)))))
+	       decls)
+	    (when (pair? lets)
+	       ;; this modify nodes in place
+	       (set! nodes
+		  (map! j2s-update-ref!
+		     (j2s-toplevel-letopt! nodes (reverse! lets) vars)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -90,9 +86,10 @@
    ;; patch the optimized ref nodes
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (%info)
-	 (when (isa? %info J2SLetOptInit)
-	    (with-access::J2SLetOptInit %info (declinit)
-	       (set! decl declinit)))))
+	 (when (isa? %info DeclInfo)
+	    (with-access::DeclInfo %info (optdecl)
+	       (when (isa? optdecl J2SDecl)
+		  (set! decl optdecl))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -111,39 +108,13 @@
       decls))
 
 ;*---------------------------------------------------------------------*/
-;*    all-unused? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (all-unused?::bool decls::pair-nil)
-   (every (lambda (d::J2SDecl)
-	     (with-access::J2SDecl d (usecnt)
-		(=fx usecnt 0)))
-      decls))
-
-;*---------------------------------------------------------------------*/
-;*    get-let-inits ...                                                */
-;*    -------------------------------------------------------------    */
-;*    Extract the list of let-declarations of a statement.             */
-;*---------------------------------------------------------------------*/
-(define (get-let-inits::pair-nil node::J2SStmt)
-   (if (not (isa? node J2SSeq))
-       '()
-       (with-access::J2SSeq node (nodes)
-	  (filter-map (lambda (n::J2SStmt)
-			 (when (isa? n J2SStmtExpr)
-			    (with-access::J2SStmtExpr n (expr)
-			       (when (isa? expr J2SInit)
-				  (when (j2s-let? (init-decl expr))
-				     expr)))))
-	     nodes))))
-
-;*---------------------------------------------------------------------*/
 ;*    get-inits ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    As GET-LET-INITS but returns #f if no init found (easier with    */
 ;*    COND forms).						       */
 ;*---------------------------------------------------------------------*/
 (define (get-inits::obj node::J2SNode)
-   (let ((inits (get-let-inits node)))
+   (let ((inits (get-let-inits node '())))
       (when (pair? inits)
 	 inits)))
 
@@ -156,79 +127,68 @@
 	 decl)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-letopt! ::J2SBlock ...                                       */
+;*    decl-init ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-letopt! this::J2SBlock)
-   (call-default-walker)
-   (with-access::J2SBlock this (nodes)
-      ;; check the pattern (j2sblock decl decl ... decl j2sletblock)
-      (let loop ((lnodes nodes)
-		 (vdecls '()))
-	 (cond
-	    ((null? lnodes)
-	     this)
-	    ((isa? (car lnodes) J2SDecl)
-	     (loop (cdr lnodes) (cons (car lnodes) vdecls)))
-	    ((isa? (car lnodes) J2SLetBlock)
-	     (when (pair? vdecls)
-		;; merge the decls into the j2sletblock
-		(with-access::J2SLetBlock (car lnodes) (decls)
-		   (for-each (lambda (decl)
-				(when (isa? decl J2SDeclFun)
-				   (with-access::J2SDeclFun decl (scope)
-				      (set! scope 'letblock))))
-		      vdecls)
-		   (set! decls (append vdecls decls))
-		   (set! nodes lnodes)))
-	     (car lnodes))
-	    (else
-	     this)))))
+(define (decl-init this::J2SDecl)
+   (with-access::J2SDecl this (%info)
+      (with-access::DeclInfo %info (init)
+	 init)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letopt! ::J2SLetBlock ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-letopt! this::J2SLetBlock)
    (with-access::J2SLetBlock this (decls nodes)
-      ;; reseting the occurrence counters which are used and set below
-      (reset-use! decls)
       ;; start iterating over all the LetBlock statements to find
       ;; the first decl
       (with-trace 'j2s-letopt "j2s-letopt!"
 	 (trace-item "" (j2s->list this))
-	 (let loop ((n nodes))
+	 (let loop ((n nodes)
+		    (decls decls))
+
 	    (cond
 	       ((null? n)
 		;; should never be reached
 		(trace-item "<<<.1 " (j2s->list this))
 		this)
-	       ((null? (get-let-inits (car n)))
+	       ((not (get-let-inits (car n) decls))
 		(trace-item "---.2 " (j2s->list (car n)))
-		;; not an init statement, count the number
-		;; of used variables
-		(use-count (car n) +1)
-		;; optimize recursively
+ 		;; optimize recursively
 		(set-car! n (j2s-letopt! (car n)))
 		;; keep optimizing the current let block
-		(loop (cdr n)))
-	       ((all-unused? decls)
+		(let ((used (node-used* (car n) decls)))
+		   ;; mark all the used decls as non optimizable
+		   (for-each (lambda (d::J2SDecl)
+				(with-access::J2SDecl d (%info)
+				   (set! %info
+				      (instantiate::DeclInfo
+					 (optdecl #f)))))
+		      used)
+		   (loop (cdr n)
+		      (filter (lambda (d)
+				 (with-access::J2SDecl d (%info)
+				    (not (isa? %info DeclInfo))))
+			 decls))))
+	       ((null? decls)
+		(trace-item "---.3 " (j2s->list (car n)))
+		;; nothing more to be potentially optimzed
+		(map! j2s-letopt! n)
+		(trace-item "<<<.3 " (j2s->list (car n)))
+		this)
+	       (else
+		(trace-item "---.4 " (j2s->list (car n)))
 		;; got an initialization block, which can be
 		;; optimized
 		(if (eq? n nodes)
 		    ;; the let init started the let-block
 		    (let ((res (tail-let! this this)))
-		       (trace-item "<<<.3a " (j2s->list res))
+		       (trace-item "<<<.4a " (j2s->list res))
 		       res)
 		    ;; re-organize the let-block to place this inits
 		    ;; at the head of a fresh let
 		    (let ((res (tail-let! this (head-let! this n))))
-		       (trace-item "<<<.3b " (j2s->list res))
-		       res)))
-	       (else
-		(trace-item "---.4 " (j2s->list this))
-		;; give up optimizing
-		(for-each j2s-letopt! n)
-		(trace-item "<<<.4 " (j2s->list this))
-		this))))))
+		       (trace-item "<<<.4b " (j2s->list res))
+		       res))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-let! ...                                                    */
@@ -242,162 +202,314 @@
 	 (let loop ((n nodes)
 		    (prev '()))
 	    (if (eq? n head)
-		(begin
+		;; collect the non-optimized decls
+		(let ((nodecls (filter (lambda (d)
+					  (with-access::J2SDecl d (%info)
+					     (when (isa? %info DeclInfo)
+						(with-access::DeclInfo %info (optdecl)
+						   (not optdecl)))))
+				  decls)))
 		   (set! nodes n)
-		   (instantiate::J2SBlock
-		      (loc loc)
-		      (endloc endloc)
-		      (nodes (reverse! (cons this prev)))))
+		   (if (null? nodecls)
+		       (instantiate::J2SBlock
+			  (loc loc)
+			  (endloc endloc)
+			  (nodes (reverse! (cons this prev))))
+		       (instantiate::J2SLetBlock
+			  (loc loc)
+			  (endloc endloc)
+			  (decls nodecls)
+			  (nodes (reverse! (cons this prev))))))
 		(loop (cdr n) (cons (car n) prev)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tail-let! ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (tail-let! this::J2SLetBlock resnode::J2SStmt)
-   
-   (define (statement->expression node)
-      ;; transform a statement into a expression
-      (with-access::J2SNode node (loc)
-	 (instantiate::J2SExprStmt
-	    (loc loc)
-	    (stmt node))))
-   
-   (define (new-let-opt node::J2SStmt)
-      ;; create a new declaration for the statement
-      (with-access::J2SNode node (loc)
-	 (instantiate::J2SDeclInit
-	    (loc loc)
-	    (id (gensym))
-	    (ronly #t)
-	    (writable #f)
-	    (binder 'let-opt)
-	    (val (statement->expression node)))))
-   
-   (define (dependencies usedecls deps)
-      ;; transitive closure of the depends-on property
-      (let loop ((udecls usedecls)
-		 (res '()))
-	 (cond
-	    ((null? udecls)
-	     res)
-	    ((memq (car udecls) res)
-	     (loop (cdr udecls) res))
-	    (else
-	     (let ((udeps (assq (car udecls) deps)))
-		(if (pair? udeps)
-		    (loop (append (cdr udeps) (cdr udecls))
-		       (cons (car udecls) res))
-		    (loop (cdr udecls) (cons (car udecls) res))))))))
-
    ;; the main optimization loop
    (with-trace 'j2s-letopt "tail-let!"
       (trace-item "this=" (j2s->list this))
-      (unless (eq? this resnode)
-	 (trace-item "resnode=" (j2s->list resnode)))
       (with-access::J2SLetBlock this (nodes decls loc)
-	 (let loop ((n nodes)
-		    (ndecls decls)
-		    (ninits '())
-		    (nbody '())
-		    (disabled '())
-		    (deps '()))
-	    (cond
-	       ((or (null? n) (null? ndecls))
-		;; all nodes or declarations checked
-		(set! decls
-		   (map! j2s-letopt! (reverse! ninits)))
-		(set! nodes
-		   (append! (map! j2s-letopt! (reverse! nbody))
-		      (map! j2s-letopt! n)))
-		resnode)
-	       ((get-inits (car n))
-		=>
-		(lambda (inits)
-		   ;; a letinit node
-		   (let liip ((inits inits)
-			      (ndecls ndecls)
-			      (ninits ninits)
-			      (nbody nbody)
-			      (disabled disabled)
-			      (deps deps))
-		      (cond
-			 ((null? inits)
-			  (loop (cdr n) ndecls ninits nbody disabled deps))
-			 ((memq (init-decl (car inits)) disabled)
-			  ;; cannot optimize...
-			  (with-access::J2SInit (car inits) (rhs)
-			     (let* ((init (car inits))
-				    (decl (init-decl init))
-				    (used (get-used-decls rhs ndecls))
-				    (ninit (duplicate::J2SDecl decl)))
-				(liip (cdr inits)
-				   (remq decl ndecls)
-				   (append ninits (list ninit))
-				   (cons init nbody)
-				   disabled
-				   (cons (cons decl used) deps)))))
-			 (else
-			  (with-access::J2SInit (car inits) (rhs)
-			     (let ((used (get-used-decls rhs ndecls))
-				   (init (car inits)))
-				(cond
-				   ((null? used)
-				    ;; optimize this binding
-				    (let ((decl (init-decl init))
-					  (idecl (init->decl-init init)))
-				       (liip (cdr inits)
-					  (remq decl ndecls)
-					  (cons idecl ninits)
-					  nbody
-					  disabled deps)))
-				   ((isa? rhs J2SFun)
-				    ;; optimize this binding but keep tracks
-				    ;; of its dependencies
-				    (let ((decl (init-decl init))
-					  (idecl (init->decl-init init)))
-				       (liip (cdr inits)
-					  (remq decl ndecls)
-					  (cons idecl ninits)
-					  nbody
-					  disabled
-					  (cons (cons decl used) deps))))
-				   (else
-				    ;; keep a regular binding and mark
-				    ;; its dependencies
-				    (let* ((decl (init-decl init))
-					   (ninit (duplicate::J2SDecl decl))
-					   (used (get-used-decls rhs ndecls))
-					   (body (instantiate::J2SStmtExpr
-						    (loc loc)
-						    (expr init))))
-				       (liip (cdr inits)
-					  (remq decl ndecls)
-					  (append ninits (list ninit))
-					  (cons body nbody)
-					  (append used disabled)
-					  deps)))))))))))
-	       ((null? (cdr n))
-		;; this is the last stmt which happens not to be a binding
-		(loop (cdr n) ndecls ninits
-		   (cons (car n) nbody) disabled deps))
-	       (else
-		;; a regular statement
-		(with-access::J2SNode (car n) (loc)
-		   (let* ((used (get-used-decls (car n) decls))
-			  (ndecl (new-let-opt (j2s-letopt! (car n))))
-			  (ninit ndecl)
-			  (ref (instantiate::J2SRef
-				  (loc loc)
-				  (decl ndecl))))
-		      (if (null? used)
-			  ;; harmless statement, create a new temp for it
-			  (loop (cdr n) ndecls (cons ninit ninits)
-			     (cons ref nbody) disabled deps)
-			  ;; disable optimization for recursively used decls
-			  (loop (cdr n) ndecls (cons ninit ninits)
-			     (cons ref nbody)
-			     (append (get-used-deps used deps) disabled)
-			     deps))))))))))
+	 (multiple-value-bind (rests inits)
+	    (letblock-nodes-split nodes decls)
+	    ;; order the declarations according to the init
+	    (let ((odecls (map (lambda (init)
+				  (init-decl init))
+			     inits)))
+	       (for-each (lambda (d)
+			    (unless (memq d odecls)
+			       (set! odecls (cons d odecls))))
+		  decls)
+	       (set! decls odecls))
+	    ;; iterate over all the inits
+	    (let loop ((inits inits)
+		       (noopts '()))
+	       (cond
+		  ((null? inits)
+		   ;; we are done
+		   (let ((pdecls '()))
+		      (set! decls
+			 (filter-map (lambda (d)
+					(with-access::J2SDecl d (%info scope)
+					   (set! scope 'letblock)
+					   (if (isa? %info DeclInfo)
+					       (with-access::DeclInfo %info (optdecl)
+						  (if optdecl
+						      optdecl
+						      (begin
+							 (set! pdecls
+							    (cons d pdecls))
+							 d)))
+					       d)))
+			    decls))
+		      ;; move all the non-optimized, processed binding upfront
+		      (set! decls (append pdecls decls)))
+		   ;; check is all decls have been processed
+		   (let ((rdecls (rest-decls decls)))
+		      (if (and (pair? rests) (pair? rdecls))
+			  (begin
+			     ;; remove the rdecls from the initial let
+			     (set! decls
+				(filter (lambda (d)
+					   (not (unprocessed-decl? d)))
+				   decls))
+			     ;; patch the nodes
+			     (set! nodes
+				(append (map! j2s-letopt! noopts)
+				   (list (j2s-letopt!
+					    (duplicate::J2SLetBlock this
+					       (decls rdecls)
+					       (nodes rests)))))))
+			  (set! nodes
+			     (append! (map! j2s-letopt! noopts)
+				(map! j2s-letopt! rests)))))
+		   resnode)
+		  ((already-bound? (car inits))
+		   (loop '() inits))
+		  ((fun-init? (car inits))
+		   ;; a function, we optimize the binding
+		   (let ((decl (init-decl (car inits))))
+		      (decl-update-info! decl
+			 (lambda ()
+			    (new-let-opt (car inits)
+			       (j2s-letopt! (car inits)))))
+		      (loop (cdr inits) noopts)))
+		  (else
+		   (let ((decl (init-decl (car inits))))
+		      (with-access::J2SDecl decl (%info)
+			 (with-access::DeclInfo %info (optdecl)
+			    (if (eq? optdecl #f)
+				;; not optmized, we stop optimizing everything
+				(loop '() inits)
+				;; optimize that binding
+				(let ((used (used* (car inits) decls))
+				      (optdecl (new-let-opt (car inits)
+						  (j2s-letopt! (car inits)))))
+				   (for-each (lambda (d::J2SDecl)
+						;; invalidates all the next
+						;; decls
+						(decl-update-info! d #f))
+				      used)
+				   (decl-update-info! decl
+				      (lambda ()
+					 (new-let-opt (car inits)
+					    (j2s-letopt! (car inits)))))
+				   (loop (cdr inits) noopts)))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    rest-decls ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    Compute the unprocess declarations that will be placed in        */
+;*    a new nest letblock.                                             */
+;*---------------------------------------------------------------------*/
+(define (rest-decls decls::pair)
+   ;; invalidates all the bindings used by optimized functions
+   (for-each (lambda (d::J2SDecl)
+		(unless (unprocessed-decl? d)
+		   (let ((init (decl-init d)))
+		      (when (fun-init? init)
+			 (for-each (lambda (d::J2SDecl)
+				      (decl-update-info! d #f))
+			    (used* init decls))))))
+      decls)
+   ;; and return the list of unprocessed (never seen) declarations
+   (filter unprocessed-decl? decls))
+   
+;*---------------------------------------------------------------------*/
+;*    unprocessed-decl? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (unprocessed-decl? d)
+   (with-access::J2SDecl d (%info)
+      (if (isa? %info DeclInfo)
+	  (with-access::DeclInfo %info (optdecl)
+	     (eq? optdecl #unspecified))
+	  #t)))
+
+;*---------------------------------------------------------------------*/
+;*    already-bound? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (already-bound? expr::J2SInit)
+   (let ((decl (init-decl expr)))
+      (with-access::J2SDecl decl (%info)
+	 (when (isa? %info DeclInfo)
+	    (with-access::DeclInfo %info (optdecl)
+	       (not (eq? optdecl #unspecified)))))))
+
+;*---------------------------------------------------------------------*/
+;*    decl-update-info! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (decl-update-info! decl::J2SDecl proc::obj)
+   (with-access::J2SDecl decl (%info)
+      (if (isa? %info DeclInfo)
+	  (with-access::DeclInfo %info (optdecl)
+	     (when (eq? optdecl #unspecified)
+		(if proc
+		    (set! optdecl (proc))
+		    (set! optdecl #f))))
+	  (set! %info
+	     (instantiate::DeclInfo
+		(optdecl (when proc (proc))))))))
+
+;*---------------------------------------------------------------------*/
+;*    decl-update-init! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (decl-update-init! decl::J2SDecl i)
+   (with-access::J2SDecl decl (%info)
+      (if (isa? %info DeclInfo)
+	  (with-access::DeclInfo %info (init)
+	     (set! init i))
+	  (set! %info
+	     (instantiate::DeclInfo
+		(init i))))))
+
+;*---------------------------------------------------------------------*/
+;*    used* ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (used* init::J2SInit decls)
+   (let ((used (node-used* init decls)))
+      (let loop ((decls used)
+		 (allused used))
+	 (if (null? decls)
+	     allused
+	     (let ((decl (car decls)))
+		(with-access::J2SDecl decl (%info)
+		   (if (not (isa? %info DeclInfo))
+		       (list decl)
+		       (with-access::DeclInfo %info (init used)
+			  (cond
+			     ((or (pair? used) (null? used))
+			      (loop (cdr decls) (append used allused)))
+			     ((fun-init? init)
+			      (set! used (fun-used* decl decls))
+			      (loop (cdr decls) (append used allused)))
+			     (else
+			      (loop (cdr decls) allused)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    fun-used* ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (fun-used* decl::J2SDecl decls)
+   (let loop ((decl decl)
+	      (store #t))
+      (with-access::J2SDecl decl (%info)
+	 (with-access::DeclInfo %info (used init)
+	    (if (or (pair? used) (null? used))
+		used
+		(with-access::J2SInit init (rhs)
+		   (with-access::J2SFun rhs (body)
+		      (let* ((fused (node-used* body decls))
+			     (res fused))
+			 (when store (set! used '()))
+			 (for-each (lambda (d)
+				      (when (memq d decls)
+					 (when (fun-init? (decl-init d))
+					    (set! res
+					       (append (loop d #f) res)))))
+			    fused)
+			 (when store (set! used res))
+			 res))))))))
+
+;*---------------------------------------------------------------------*/
+;*    new-let-opt ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (new-let-opt node::J2SNode expr::J2SInit)
+   ;; create a new declaration for the statement
+   (with-access::J2SInit expr (rhs)
+      (let ((decl (init-decl expr)))
+	 (if (isa? decl J2SDeclInit)
+	     (with-access::J2SDeclInit decl (binder val)
+		(set! binder 'let-opt)
+		(set! val rhs)
+		decl)
+	     (with-access::J2SDecl decl (loc id %info)
+		(let ((new (instantiate::J2SDeclInit
+			      (id id)
+			      (loc loc)
+			      (key -1)
+			      (val rhs)))
+		      (fields (class-all-fields J2SDecl)))
+		   (let loop ((i (-fx (vector-length fields) 1)))
+		      (when (>=fx i 0)
+			 (let* ((f (vector-ref fields i))
+				(get (class-field-accessor f))
+				(set (class-field-mutator f)))
+			    (when set
+			       (set new (get decl))
+			       (loop (-fx i 1))))))
+		   (with-access::J2SDecl new (binder scope key)
+		      (set! key (ast-decl-key))
+		      (set! scope 'local)
+		      (set! binder 'let-opt))
+		   new))))))
+
+;*---------------------------------------------------------------------*/
+;*    fun-init? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (fun-init? init)
+   (when (isa? init J2SInit)
+      (with-access::J2SInit init (rhs)
+	 (isa? rhs J2SFun))))
+
+;*---------------------------------------------------------------------*/
+;*    letblock-nodes-split ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Split the NODES of a LET-BLOCK in two parts: INITS x RESTS       */
+;*      INITS = the consecutive inits of NODES                         */
+;*      RETS = the following NODES                                     */
+;*---------------------------------------------------------------------*/
+(define (letblock-nodes-split nodes::pair-nil decls)
+   (let loop ((nodes nodes)
+	      (inits '()))
+      (cond
+	 ((null? nodes)
+	  (values '() inits))
+	 ((get-let-inits (car nodes) decls)
+	  =>
+	  (lambda (is) (loop (cdr nodes) (append! inits is))))
+	 (else
+	  (values nodes inits)))))
+
+;*---------------------------------------------------------------------*/
+;*    get-let-inits ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Extract the list of let-declarations of a statement.             */
+;*---------------------------------------------------------------------*/
+(define (get-let-inits node::J2SStmt decls)
+   (when (isa? node J2SSeq)
+      (with-access::J2SSeq node (nodes)
+	 (let loop ((nodes nodes)
+		    (inits '()))
+	    (if (null? nodes)
+		(when (pair? inits)
+		   (reverse! inits))
+		(let ((n::J2SStmt (car nodes)))
+		   (when (isa? n J2SStmtExpr)
+		      (with-access::J2SStmtExpr n (expr)
+			 (when (isa? expr J2SInit)
+			    (let ((decl (init-decl expr)))
+			       (when (memq decl decls)
+				  (decl-update-init! decl expr)
+				  (loop (cdr nodes) (cons expr inits)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-toplevel-letopt! ...                                         */
@@ -411,7 +523,7 @@
 		   (set! decls (remq! d decls)))
 	 disabled)
       decls)
-   
+
    (let loop ((n nodes)
 	      (decls decls)
 	      (deps '())
@@ -431,7 +543,7 @@
 			(res res))
 		(if (null? inits)
 		    (loop (cdr n) decls deps res)
-		    (with-access::J2SInit (car inits) (rhs)
+		    (with-access::J2SInit (car inits) (rhs loc)
 		       (let ((used (get-used-decls rhs (append decls vars)))
 			     (init (car inits)))
 			  (cond
@@ -442,8 +554,13 @@
 				    (with-access::J2SDeclInit decl (binder val)
 				       (set! val rhs)
 				       (set! binder 'let-opt)))
-				 (let ((ndecls (remq decl decls)))
-				    (liip (cdr inits) ndecls deps res))))
+				 (let ((ndecls (remq decl decls))
+				       (stmtinit (instantiate::J2SStmtExpr
+						    (loc loc)
+						    (expr init))))
+				    (liip (cdr inits) ndecls
+				       deps
+				       (cons stmtinit res)))))
 			     ((isa? rhs J2SFun)
 			      ;; optimize this binding but keep tracks
 			      ;; of its dependencies
@@ -489,18 +606,35 @@
 ;*    Amongst DECLS, returns those that appear in NODE.                */
 ;*---------------------------------------------------------------------*/
 (define (get-used-decls node::J2SNode decls)
-   ;; reset all decls
-   (for-each (lambda (d::J2SDecl)
-		(with-access::J2SDecl d (usecnt)
-		   (set! usecnt 0)))
-      decls)
-   ;; count all variables
-   (use-count node +1)
-   ;; amongst the decls, returns those that are used
-   (filter (lambda (d)
-	      (with-access::J2SDecl d (usecnt)
-		 (>fx usecnt 0)))
-      decls))
+   (delete-duplicates! (node-used* node decls)))
+
+;*---------------------------------------------------------------------*/
+;*    node-used* ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-used* node::J2SNode decls)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    node-used* ::J2SDecl ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-used* node::J2SDecl decls)
+   (if (member node decls) (list node) '()))
+
+;*---------------------------------------------------------------------*/
+;*    node-used* ::J2Ref ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-used* node::J2SRef decls)
+   (with-access::J2SRef node (decl)
+      (if (member decl decls) (list decl) '())))
+
+;*---------------------------------------------------------------------*/
+;*    node-used* ::J2SInit ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-used* node::J2SInit decls)
+   (with-access::J2SInit node (lhs rhs)
+      (if (isa? lhs J2SRef)
+	  (node-used* rhs decls)
+	  (append (node-used* lhs decls) (node-used* rhs decls)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-used-deps ...                                                */
@@ -521,37 +655,3 @@
 		 (loop (append (cdr udeps) (cdr udecls))
 		    (cons (car udecls) res))
 		 (loop (cdr udecls) (cons (car udecls) res))))))))
-
-;*---------------------------------------------------------------------*/
-;*    init->decl-init ...                                              */
-;*---------------------------------------------------------------------*/
-(define (init->decl-init::J2SDeclInit this::J2SInit)
-   
-   (define (decl->declinit::J2SDecl decl::J2SDecl val)
-      (with-access::J2SDecl decl (loc id %info)
-	 (let ((new (instantiate::J2SDeclInit
-		       (id id)
-		       (loc loc)
-		       (key -1)
-		       (val val)))
-	       (fields (class-all-fields J2SDecl)))
-	    (let loop ((i (-fx (vector-length fields) 1)))
-	       (when (>=fx i 0)
-		  (let* ((f (vector-ref fields i))
-			 (get (class-field-accessor f))
-			 (set (class-field-mutator f)))
-		     (when set
-			(set new (get decl))
-			(loop (-fx i 1))))))
-	    (with-access::J2SDecl new (binder scope key)
-	       (set! key (ast-decl-key))
-	       (set! scope 'local)
-	       (set! binder 'let-opt))
-	    (set! %info (instantiate::J2SLetOptInit (declinit new)))
-	    new)))
-   
-   (with-access::J2SInit this (rhs loc lhs)
-      (with-access::J2SRef lhs (decl)
-	 (with-access::J2SDecl decl (id)
-	    (decl->declinit decl (j2s-letopt! rhs))))))
-

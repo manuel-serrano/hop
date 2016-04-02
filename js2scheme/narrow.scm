@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Fri Jan  1 08:13:52 2016 (serrano)                */
+;*    Last change :  Mon Mar 28 18:49:46 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -96,17 +96,20 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-find-init-blocks this::J2SInit block fun)
    (when block
-      (with-access::J2SInit this (lhs)
+      (with-access::J2SInit this (lhs rhs)
+	 (j2s-find-init-blocks rhs block fun)
 	 (when (isa? lhs J2SRef)
 	    (with-access::J2SRef lhs (decl)
 	       (unless (or (j2s-let? decl) (j2s-param? decl))
 		  ;; skip let/const declarations
 		  (with-access::J2SDecl decl (%info)
-		     (unless (isa? %info J2SNarrowInfo)
-			(set! %info
-			   (instantiate::J2SNarrowInfo
-			      (deffun fun)
-			      (defblock block)))))))))))
+		     (if (isa? %info J2SNarrowInfo)
+			 (with-access::J2SNarrowInfo %info (narrowable)
+			    (set! narrowable #f))
+			 (set! %info
+			    (instantiate::J2SNarrowInfo
+			       (deffun fun)
+			       (defblock block)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-find-init-blocks ::J2SRef ...                                */
@@ -153,10 +156,6 @@
 	       (unless (and (memq defblock blocks)
 			    (or (not inloop)
 				(and (eq? fun deffun) (not (cell-ref yield)))))
-;* 		  (tprint "PAS NARROWABLE " id " defblock="            */
-;* 		     (pair? (memq defblock blocks))                    */
-;* 		     " inloop=" inloop " fun=" (eq? fun deffun)        */
-;* 		     " yield=" (cell-ref yield))                       */
 		  (set! narrowable #f)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -231,7 +230,9 @@
       (let loop ((block block))
 	 (if (isa? block J2SLetBlock)
 	     (with-access::J2SLetBlock block (decls nodes)
-		(set! decls (append! decls (list decl))))
+		(unless (memq decl decls)
+		   ;; explicit test for variable re-definition
+		   (set! decls (append! decls (list decl)))))
 	     (with-access::J2SBlock block (endloc loc nodes %info)
 		(if (isa? %info J2SLetBlock)
 		    (loop %info)
@@ -259,134 +260,10 @@
 				     this)))))))))
 	  (call-default-walker))))
 
-;* (define-walk-method (j2s-narrow! this::J2SStmtExpr)                 */
-;*                                                                     */
-;*    (define (decl->init-let::J2SDecl decl::J2SDecl val)              */
-;*       (with-access::J2SDecl decl (loc id)                           */
-;* 	 (let ((new (instantiate::J2SDeclInit                          */
-;* 		       (id id)                                         */
-;* 		       (loc loc)                                       */
-;* 		       (val val)))                                     */
-;* 	       (fields (class-all-fields (object-class decl))))        */
-;* 	    (let loop ((i (-fx (vector-length fields) 1)))             */
-;* 	       (when (>=fx i 0)                                        */
-;* 		  (let* ((f (vector-ref fields i))                     */
-;* 			 (get (class-field-accessor f))                */
-;* 			 (set (class-field-mutator f)))                */
-;* 		     (when set                                         */
-;* 			(set new (get decl))                           */
-;* 			(loop (-fx i 1))))))                           */
-;* 	    (with-access::J2SDecl new (binder scope)                   */
-;* 	       (set! scope 'local)                                     */
-;* 	       (set! binder 'let))                                     */
-;* 	    new)))                                                     */
-;*                                                                     */
-;*    (define (decl->let!::J2SDecl decl::J2SDecl)                      */
-;*       (with-access::J2SDecl decl (binder scope)                     */
-;* 	 (set! scope 'local)                                           */
-;* 	 (set! binder 'let)                                            */
-;* 	 decl))                                                        */
-;*                                                                     */
-;*    (define (init-decl->let::J2SInit init::J2SInit)                  */
-;*       (with-access::J2SInit init (loc lhs rhs)                      */
-;* 	 (instantiate::J2SInit                                         */
-;* 	    (lhs lhs)                                                  */
-;* 	    (rhs rhs)                                                  */
-;* 	    (loc loc))))                                               */
-;*                                                                     */
-;*    (define (patch-defblock! block::J2SBlock decl::J2SDecl)          */
-;*       (let loop ((block block))                                     */
-;* 	 (if (isa? block J2SLetBlock)                                  */
-;* 	     (with-access::J2SLetBlock block (decls nodes)             */
-;* 		(set! decls (append! decls (list decl))))              */
-;* 	     (with-access::J2SBlock block (endloc loc nodes %info)     */
-;* 		(if (isa? %info J2SLetBlock)                           */
-;* 		    (loop %info)                                       */
-;* 		    (let ((lblock (instantiate::J2SLetBlock            */
-;* 				     (endloc endloc)                   */
-;* 				     (loc loc)                         */
-;* 				     (decls (list decl))               */
-;* 				     (nodes nodes))))                  */
-;* 		       (set! nodes (list lblock))                      */
-;* 		       (set! %info lblock)))))))                       */
-;*                                                                     */
-;*    (with-access::J2SStmtExpr this (expr)                            */
-;*       (or (when (isa? expr J2SInit)                                 */
-;* 	     (with-access::J2SInit expr (lhs rhs loc)                  */
-;* 		(with-access::J2SRef lhs (decl)                        */
-;* 		   (when (isa? decl J2SDecl)                           */
-;* 		      (with-access::J2SDecl decl (id %info)            */
-;* 			 (when (isa? %info J2SNarrowInfo)              */
-;* 			    (with-access::J2SNarrowInfo %info (narrowable defblock ldecl) */
-;* 			       (when narrowable                        */
-;* 				  (tprint "  +-- NARROWING: " id " "   */
-;* 				     (side-effect? rhs))               */
-;* 				  (if (or #t (side-effect? rhs))       */
-;* 				      (set! ldecl (decl->let! decl))   */
-;* 				      (begin                           */
-;* 					 (set! ldecl (decl->init-let decl rhs)) */
-;* 					 (set! decl ldecl)))           */
-;* 				  (patch-defblock! defblock ldecl)     */
-;* 				  this))))))))                         */
-;* 	  (call-default-walker))))                                     */
-
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow! this::J2SFun)
    (j2s-narrow-fun! this)
    this)
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    side-effect? ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-generic (side-effect? this::J2SNode)                        */
-;*    #t)                                                              */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    side-effect? ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (side-effect? this::J2SStmt)                         */
-;*    #t)                                                              */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    side-effect? ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (side-effect? this::J2SParen)                        */
-;*    (with-access::J2SParen this (expr)                               */
-;*       (side-effect? expr)))                                         */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    side-effect? ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (side-effect? this::J2SLiteral)                      */
-;*    #f)                                                              */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    side-effect? ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (side-effect? this::J2SUnary)                        */
-;*    (with-access::J2SUnary this (expr)                               */
-;*       (side-effect? expr)))                                         */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    side-effect? ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (side-effect? this::J2SBinary)                       */
-;*    (with-access::J2SBinary this (lhs rhs)                           */
-;*       (or (side-effect? lhs) (side-effect? rhs))))                  */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    side-effect? ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (side-effect? this::J2SArray)                        */
-;*    (with-access::J2SArray this (lhs exprs)                          */
-;*       (any side-effect? exprs)))                                    */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    side-effect? ...                                                 *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (side-effect? this::J2SRef)                          */
-;*    #f)                                                              */
-
 

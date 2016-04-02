@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/share/hop-event.js                */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-event.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Wed Dec  2 10:46:04 2015 (serrano)                */
-/*    Copyright   :  2007-15 Manuel Serrano                            */
+/*    Last change :  Fri Apr  1 07:57:24 2016 (serrano)                */
+/*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/

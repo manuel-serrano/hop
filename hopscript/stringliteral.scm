@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Mar  9 13:35:15 2016 (serrano)                */
+;*    Last change :  Fri Mar 25 18:58:21 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -25,6 +25,7 @@
 	   (js-stringlist->jsstring ::pair-nil)
 	   (inline js-jsstring->string::bstring ::obj)
 	   (inline js-jsstring?::bool ::obj)
+	   (js-jsstring-ref ::obj ::uint32)
 	   (js-jsstring-length::long ::obj)
 	   (inline js-jsstring-null? ::obj)
 	   (inline js-jsstring=?::bool ::obj ::obj)
@@ -41,8 +42,9 @@
 	   (utf8-codeunit-ref::long ::bstring ::long)
 	   (utf8-codeunit-length::long ::bstring)
 	   (js-string-ref ::bstring ::long)
-	   (js-get-string ::bstring ::obj ::obj)
-	   (js-put-string! ::bstring ::obj ::obj ::bool ::obj)))
+	   (js-get-string ::obj ::obj ::obj)
+	   (js-put-string! ::bstring ::obj ::obj ::bool ::obj)
+	   (js-jsstring-indexof ::obj ::obj ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -135,7 +137,7 @@
 	      (js-string->jsstring (car val))
 	      (instantiate::JsStringLiteral
 		 (left (car val))
-;* 		 (weight (string-length (car val)))                    */
+		 (weight (string-length (car val)))
 		 (right (loop (cdr val))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -148,27 +150,30 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Tailrec normalization (with explicit stack management).          */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-normalize!::bstring js::JsStringLiteral)
-   (with-access::JsStringLiteral js (left right)
+   (with-access::JsStringLiteral js (left right weight)
       (if (and (string? left) (not right))
 	  left
-	  (let* ((buffer (make-string (js-string-literal-length js)))
-		 (nlen (let loop ((i 0)
-				  (js js))
-			  (if (string? js)
-			      (utf8-string-append-fill! buffer i js)
-			      (with-access::JsStringLiteral js (left right)
-				 (let ((ni (if (string? left)
-					       (utf8-string-append-fill!
-						  buffer i left)
-					       (loop i left))))
-				    (if (not right)
-					ni
-					(loop ni right))))))))
-	     (set! left (string-shrink! buffer nlen))
-	     (set! right #f)
-	     left))))
+	  (let ((buffer (make-string (js-string-literal-length js))))
+	     (let loop ((i 0)
+			(stack (list js)))
+		(cond
+		   ((null? stack)
+		    (set! weight i)
+		    (set! left (string-shrink! buffer i))
+		    (set! right #f)
+		    left)
+		   ((string? (car stack))
+		    (let ((ni (utf8-string-append-fill! buffer i (car stack))))
+		       (loop ni (cdr stack))))
+		   (else
+		    (with-access::JsStringLiteral (car stack) (left right)
+		       (if right
+			   (loop i (cons* left right (cdr stack)))
+			   (loop i (cons left (cdr stack))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string-literal-length ...                                     */
@@ -182,8 +187,8 @@
 	 ((not js)
 	  len)
 	 (else
-	  (with-access::JsStringLiteral js (left right)
-	     (loop (loop len left) right))))))
+	  (with-access::JsStringLiteral js (right weight)
+	     (loop (+fx len weight) right))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-length ...                                           */
@@ -256,7 +261,7 @@
 		 (let ((s (integer->string i)))
 		    `(instantiate::JsStringLiteral
 			(left ,s)
-			#;(weight ,(string-length s)))))
+			(weight ,(string-length s)))))
 	    (iota num))))
 
 ;*---------------------------------------------------------------------*/
@@ -334,6 +339,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring-append::JsStringLiteral left::obj right::obj)
    (instantiate::JsStringLiteral
+      (weight (js-jsstring-length left))
       (left left)
       (right right)))
 
@@ -459,32 +465,30 @@
 	  (js-string-ref val fxpos))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-string ...                                                */
-;*---------------------------------------------------------------------*/
-(define (js-get-string o::bstring prop %this)
-   (let ((i (js-toindex prop)))
-      (if (not (js-isindex? i))
-	  ;; see js-get-jsobject@property.scm
-	  (let* ((obj (js-toobject %this o))
-		 (pval (js-get-property-value obj o prop %this)))
-	     (if (eq? pval (js-absent))
-		 (js-undefined)
-		 pval))
-	  (js-jsstring-ref o i))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-get ::JsStringLiteral ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsStringLiteral prop %this)
+   (js-get-string o prop %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-string ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-get-string o prop %this)
    (let ((i (js-toindex prop)))
-      (if (not (js-isindex? i))
+      (cond
+	 ((js-isindex? i)
+	  (js-jsstring-ref o i))
+	 ((eq? prop 'indexOf)
+	  (with-access::JsGlobalObject %this (js-string)
+	     (let ((proto (js-get js-string 'prototype %this)))
+		(js-get proto prop %this))))
+	 (else
 	  ;; see js-get-jsobject@property.scm
 	  (let* ((obj (js-toobject %this o))
 		 (pval (js-get-property-value obj o prop %this)))
 	     (if (eq? pval (js-absent))
 		 (js-undefined)
-		 pval))
-	  (js-jsstring-ref o i))))
+		 pval))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-string! ...                                               */
@@ -500,3 +504,24 @@
    (let ((o (js-toobject %this _o)))
       (js-put! o prop v throw %this)))
 
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-indexof ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-indexof this search position %this)
+   (let* ((s (js-jsstring->string this))
+	  (ulen (utf8-string-length s))
+	  (pos (if (eq? position (js-undefined))
+		   0
+		   (js-tointeger position %this)))
+	  (search (js-jsstring->string search))
+	  (start (inexact->exact (min (max pos 0) ulen))))
+      (if (=fx (string-length search) 0)
+	  -1
+	  (let ((i (utf8-string-index->string-index s start)))
+	     (if (<fx i 0)
+		 i
+		 (let ((kt (bm-table search))
+		       (j (string-char-index s (string-ref search 0) i)))
+		    (if j
+			(string-index->utf8-string-index s (bm-string kt s j))
+			-1)))))))

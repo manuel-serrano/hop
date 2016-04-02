@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/types.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/runtime/types.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Nov  7 10:11:02 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Sat Apr  2 07:23:52 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -18,11 +18,13 @@
 	   __hop_xml-types)
    
    (export (class user
+	      (mutex::mutex read-only (default (make-mutex)))
 	      (name::bstring read-only)
 	      (uuid::obj read-only (default #unspecified))
 	      (groups::pair-nil read-only (default '()))
 	      (password::bstring read-only)
 	      (services read-only)
+	      (files read-only)
 	      (directories read-only)
 	      (preferences-filename::obj read-only)
 	      (preferences::pair-nil (default '()))
@@ -44,6 +46,7 @@
 	      (timeout::int (default 0)))
 	   
 	   (class http-request::%http-message
+	      (%user (default #f))
 	      (id::int read-only (default -1))
 	      (transfer-encoding (default #f))
 	      (http::symbol (default 'HTTP/1.1))

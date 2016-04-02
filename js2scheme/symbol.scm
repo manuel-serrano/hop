@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Mar  9 08:31:19 2016 (serrano)                */
+;*    Last change :  Mon Mar 28 10:45:16 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -194,7 +194,7 @@
    (define (not-in? d::J2SDecl params::pair-nil)
       (with-access::J2SDecl d (id)
 	 (not (find-decl id params))))
-   
+
    (with-access::J2SFun this (body params loc (fmode mode) params decl)
       (let ((id (j2sfun-id this)))
 	 ;; check parameter correctness

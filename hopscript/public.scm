@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Mar  9 13:32:13 2016 (serrano)                */
+;*    Last change :  Tue Mar 29 08:46:03 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -77,7 +77,7 @@
 	   (js-in?/debug::bool ::JsGlobalObject loc f obj)
 
 	   (inline js-make-let::cell)
-	   (js-let-ref ::cell ::obj ::obj ::JsGlobalObject)
+	   (js-let-ref ::obj ::obj ::obj ::JsGlobalObject)
 	   (inline js-let-set! ::cell ::obj)
 	   
 	   (inline js-totest::bool ::obj)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Mar  9 13:37:11 2016 (serrano)                */
+;*    Last change :  Thu Mar 24 14:32:03 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -586,13 +586,13 @@
 (define (<=uint32 u::uint32 obj::obj)
    (cond
       ((uint32? obj)
-       (<u32 u obj))
+       (<=u32 u obj))
       ((negative? obj)
        #f)
       ((flonum? obj)
        (cond
 	  ((=fl obj +inf.0) #t)
-	  (else (<fl (uint32->flonum u) obj))))
+	  (else (<=fl (uint32->flonum u) obj))))
       (else
        (<=u32 u (->uint32 obj)))))
 

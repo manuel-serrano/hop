@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Feb 28 09:51:49 2016 (serrano)                */
+;*    Last change :  Thu Mar 24 18:17:38 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -67,7 +67,8 @@
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (inline js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (inline js-object-get-name/cache ::JsObject ::obj ::JsPropertyCache ::JsGlobalObject)
-	   (js-get-name/cache-miss ::JsObject ::obj ::JsPropertyCache ::obj ::JsGlobalObject)
+	   (generic js-get-lookup ::JsObject ::obj ::JsPropertyCache throw ::JsGlobalObject)
+	   (generic js-get-name/cache-miss ::JsObject ::obj ::JsPropertyCache ::obj ::JsGlobalObject)
 	   (inline js-global-object-get-name ::JsObject ::symbol ::obj ::JsGlobalObject)
 	   (inline js-global-object-get-name/cache
               ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
@@ -809,21 +810,7 @@
        (js-get-null _o (js-toname prop %this) %this))
       (else
        (let ((o (js-toobject/debug %this loc _o)))
-	  (js-get _o prop %this)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-get/cache ...                                                 */
-;*    -------------------------------------------------------------    */
-;*    Use a per site cache for the [[GET]] operation. The property     */
-;*    name is not known statically.                                    */
-;*---------------------------------------------------------------------*/
-(define (js-get/cache o prop::obj cache::JsPropertyCache %this::JsGlobalObject)
-   (if (or (not (symbol? prop)) (not (isa? o JsObject)))
-       (js-get o prop %this)
-       (with-access::JsPropertyCache cache (name)
-	  (if (eq? name prop)
-	      (js-get-name/cache o name cache %this)
-	      (js-get-lookup o name cache #f %this)))))
+	  (js-get o prop %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lookup ...                                                */
@@ -835,7 +822,7 @@
 ;*    symbol), it is never used to access indexed object. Hence,       */
 ;*    it does not need to be generic function.                         */
 ;*---------------------------------------------------------------------*/
-(define (js-get-lookup obj::JsObject name::obj cache::JsPropertyCache throw %this)
+(define-generic (js-get-lookup obj::JsObject name::obj cache::JsPropertyCache throw %this)
    (let loop ((owner obj))
       (jsobject-find owner name
 	 ;; map search
@@ -861,6 +848,21 @@
 	    (js-get-notfound name throw %this))
 	 ;; loop
 	 loop)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get/cache ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Use a per site cache for the [[GET]] operation. The property     */
+;*    name is not known statically.                                    */
+;*---------------------------------------------------------------------*/
+(define (js-get/cache o prop::obj cache::JsPropertyCache %this::JsGlobalObject)
+   (if (or (not (js-jsstring? prop)) (not (isa? o JsObject)))
+       (js-get o prop %this)
+       (let ((propname (string->symbol (js-jsstring->string prop))))
+	  (with-access::JsPropertyCache cache (name)
+	     (if (eq? name propname)
+		 (js-get-name/cache o name cache %this)
+		 (js-get-lookup o propname cache #f %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache ...                                            */
@@ -914,13 +916,9 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define n 0)
-
-(define (js-get-name/cache-miss obj::JsObject name::obj cache::JsPropertyCache throw %this)
-   (set! n (+fx 1 n))
+(define-generic (js-get-name/cache-miss obj::JsObject name::obj cache::JsPropertyCache throw %this)
    (let loop ((owner obj))
       (with-access::JsObject owner ((omap cmap) __proto__)
-;* 	 (tprint "CACHE MISS..." n " " name " " (typeof obj) " " (typeof omap)) */
 	 (with-access::JsPropertyCache cache (cmap index)
 	    (cond
 	       ((not omap)

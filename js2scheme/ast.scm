@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Feb 27 07:03:43 2016 (serrano)                */
+;*    Last change :  Mon Mar 28 10:16:51 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -106,7 +106,8 @@
 	   
 	   (class J2SCase::J2SStmt
 	      expr::J2SExpr
-	      body::J2SSeq)
+	      body::J2SSeq
+	      (cascade::bool (default #f)))
 	   
 	   (final-class J2SDefault::J2SCase)
 	   
@@ -220,8 +221,7 @@
 	      (parent read-only (default #f))
 	      (expression::bool (default #f)))
 
-	   (class J2SDeclFunType::J2SDeclFun
-	      )
+	   (class J2SDeclFunType::J2SDeclFun)
 
 	   (class J2SDeclFunCnst::J2SDecl
 	      (val::J2SExpr read-only (info '("notraverse"))))
@@ -305,6 +305,7 @@
 	   
 	   (final-class J2SCall::J2SExpr
 	      fun::J2SExpr
+	      (protocol (default 'direct))
 	      (this (default #unspecified))
 	      (args::pair-nil (default '())))
 	   
@@ -332,7 +333,7 @@
 	      (param::J2SDecl read-only)
 	      (exn::J2SDecl read-only)
 	      body::J2SNode)
-	   
+
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
 	   (generic walk2 n::J2SNode p::procedure a0 a1)
@@ -377,7 +378,9 @@
 
 	   (j2s-field-length?::bool ::J2SNode)
 
-	   (j2s-type ::obj))
+	   (j2s-type ::obj)
+
+	   (j2s-expr-type-test ::J2SExpr))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -1092,3 +1095,69 @@
 	  type))
       (else
        'obj)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-expr-type-test ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Is an expression a type test. If it is returns <op, decl, type>. */
+;*    Otherwise, returns #f                                            */
+;*                                                                     */
+;*    Tested patterns are:                                             */
+;*                                                                     */
+;*      pat ::= (typeof X == STRING)                                   */
+;*          | !pat                                                     */
+;*          | (pat)                                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-expr-type-test expr::J2SExpr)
+
+   (define (normalize-op op)
+      (case op
+	 ((===) '==)
+	 ((!==) '!=)
+	 (else op)))
+   
+   (define (not-op op)
+      (if (eq? op '==) '!= '==))
+   
+   (define (typeof op expr str)
+      (when (isa? expr J2SUnary)
+	 (with-access::J2SUnary expr ((bop op) expr)
+	    (when (and (eq? bop 'typeof) (isa? expr J2SRef))
+	       (with-access::J2SRef expr (decl)
+		  (with-access::J2SString str (val)
+		     (values op decl (string->symbol val) expr)))))))
+
+   (define (binary-type-test expr)
+      (with-access::J2SBinary expr (op lhs rhs)
+	 (when (memq op '(== === != !==))
+	    (cond
+	       ((isa? lhs J2SString)
+		(typeof op rhs lhs))
+	       ((isa? rhs J2SString)
+		(typeof op lhs rhs))
+	       (else
+		#f)))))
+
+   (define (unary-type-test expr)
+      (with-access::J2SUnary expr (op expr)
+	 (when (eq? op '!)
+	    (multiple-value-bind (op decl type expr)
+	       (j2s-expr-type-test expr)
+	       (when op
+		  (values (not-op op) decl type expr))))))
+
+   (define (paren-type-test expr)
+      (with-access::J2SParen expr (expr)
+	 (j2s-expr-type-test expr)))
+   
+   (cond
+      ((isa? expr J2SBinary)
+       (binary-type-test expr))
+      ((isa? expr J2SUnary)
+       (unary-type-test expr))
+      ((isa? expr J2SParen)
+       (paren-type-test expr))
+      (else
+       #f)))
+
+

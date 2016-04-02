@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Mar  3 08:17:43 2016 (serrano)                */
+/*    Last change :  Thu Mar 31 13:28:23 2016 (serrano)                */
 /*    Copyright   :  2006-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -45,6 +45,15 @@ function hop_service_base() {
    return "@HOPSERVICEBASE@";
 }
 #endif
+
+/*---------------------------------------------------------------------*/
+/*    Initial autoconfiguration                                        */
+/*---------------------------------------------------------------------*/
+if( !("defineProperty" in Object) ) {
+   Object.defineProperty = function( obj, key, props ) {
+      obj[ key ] = props.value;
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    HopServer                                                        */

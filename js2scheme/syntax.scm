@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/syntax.scm              */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/syntax.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Mar  6 08:21:00 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Mon Mar 28 10:42:37 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
@@ -54,7 +54,7 @@
 ;*    syntax ::J2SNode ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (syntax this::J2SNode inloop? inswitch?)
-   (default-walk this inloop? inswitch?))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    syntax ::J2SWhile ...                                            */

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/xml.scm                   */
+;*    serrano/prgm/project/hop/3.1.x/runtime/xml.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Dec 18 08:37:55 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Sat Apr  2 09:16:20 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -63,6 +63,8 @@
 
 	    (generic xml-primitive-value ::obj)
 	    (generic xml-to-errstring::bstring ::obj)
+
+	    (generic xml-url-for-each ::obj ::procedure)
 
 	    (xml->string ::obj ::xml-backend)
 
@@ -1193,4 +1195,66 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 			       (cons src (or loc (source-location src))))))
 	       (precompiled-free-variables body))))))
 
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each-attributes ...                                  */
+;*---------------------------------------------------------------------*/
+(define (xml-url-for-each-attributes obj key proc)
+   (with-access::xml-cdata obj (tag body attributes)
+      (with-access::xml-markup obj (attributes)
+	 (let ((a (plist-assq key attributes)))
+	    (when (and a (string? (cadr a)))
+	       (unless (string-prefix? "data:" (cadr a))
+		  (let ((i (string-index (cadr a) #\?)))
+		     (if i
+			 (proc obj (substring (cadr a) 0 i))
+			 (proc obj (cadr a))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each ...                                             */
+;*---------------------------------------------------------------------*/
+(define-generic (xml-url-for-each obj::obj proc)
+   (when (pair? obj)
+      (for-each (lambda (o) (xml-url-for-each o proc)) obj)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each ::xml-markup ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each obj::xml-markup proc)
+   (with-access::xml-markup obj (tag body)
+      (case tag
+	 ((head)
+	  (xml-url-for-each-attributes obj :href proc)))
+      (for-each (lambda (o) (xml-url-for-each o proc)) body)))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each ::xml-element ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each obj::xml-element proc)
+   (with-access::xml-element obj (tag body)
+      (case tag
+	 ((link)
+	  (xml-url-for-each-attributes obj :href proc)))
+      (for-each (lambda (o) (xml-url-for-each o proc)) body)))
+   
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each ::xml-cdata ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each obj::xml-cdata proc)
+   (xml-url-for-each-attributes obj :src proc)
+   (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each ::xml-svg ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each obj::xml-svg proc)
+   (xml-url-for-each-attributes obj :src proc) 
+   (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    xml-url-for-each ::xml-empty-element ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (xml-url-for-each obj::xml-empty-element proc)
+   (with-access::xml-empty-element obj (tag)
+      (when (eq? tag 'img)
+	 (xml-url-for-each-attributes obj :src proc))))
 

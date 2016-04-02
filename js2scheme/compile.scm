@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Mar  9 11:51:13 2016 (serrano)                */
+;*    Last change :  Mon Mar 28 10:10:35 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -31,6 +31,7 @@
 	   __js2scheme_property
 	   __js2scheme_constant
 	   __js2scheme_type
+	   __js2scheme_letfusion
 	   __js2scheme_letopt
 	   __js2scheme_narrow
 	   __js2scheme_scheme
@@ -55,6 +56,7 @@
 	   (j2s-debug-driver)
 	   (j2s-eval-driver)
 	   (j2s-javascript-driver)
+	   (j2s-javascript-optim-driver)
 	   (j2s-ecmascript5-driver)
 	   (j2s-javascript-debug-driver)))
 
@@ -90,14 +92,25 @@
 	 ((find (lambda (s::J2SStage)
 		   (with-access::J2SStage s ((sname name))
 		      (string=? sname name-or-proc)))
-	     (cons* j2s-javascript-stage j2s-debug-stage
+	     (cons* j2s-javascript-stage j2s-debug-stage 
 		(j2s-optim-driver)))
 	  =>
 	  (lambda (x) x))
 	 (else
 	  (error "j2s-make-driver" "Cannot find builtin stage" name-or-proc))))
-   
-   (map make-driver-stage names))
+
+   (if (and (pair? names) (null? (cdr names)))
+       (case (string->symbol (car names))
+	  ((j2s-optim-driver) (j2s-optim-driver))
+	  ((j2s-plain-driver) (j2s-plain-driver))
+	  ((j2s-debug-driver) (j2s-debug-driver))
+	  ((j2s-eval-driver) (j2s-eval-driver))
+	  ((j2s-javascript-driver) (j2s-javascript-driver))
+	  ((j2s-javascript-optim-driver) (j2s-javascript-optim-driver))
+	  ((j2s-ecmascript5-driver) (j2s-ecmascript5-driver))
+	  ((j2s-javascript-debug-driver) (j2s-javascript-debug-driver))
+	  (else (error "j2s-make-driver" "Cannot find builtin driver" (car names))))
+       (map make-driver-stage names)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-driver-add-after ...                                         */
@@ -123,6 +136,7 @@
       j2s-bestpractice-stage
       j2s-symbol-stage
       j2s-narrow-stage
+      j2s-letfusion-stage
       j2s-letopt-stage
       j2s-this-stage
       j2s-use-stage
@@ -145,7 +159,7 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
-      j2s-letopt-stage
+      j2s-letfusion-stage
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
@@ -164,6 +178,7 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
+      j2s-letfusion-stage
       j2s-debug-stage
       j2s-this-stage
       j2s-use-stage
@@ -182,6 +197,7 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
+      j2s-letfusion-stage
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
@@ -189,6 +205,23 @@
       j2s-cps-stage
       j2s-constant-stage
       j2s-scheme-eval-stage))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-javascript-optim-driver ...                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-javascript-optim-driver)
+   (list
+      j2s-syntax-stage
+      j2s-loopexit-stage
+      j2s-bestpractice-stage
+      j2s-symbol-stage
+      j2s-narrow-stage
+      j2s-letfusion-stage
+      j2s-letopt-stage
+      j2s-use-stage
+      j2s-type-stage
+      j2s-dead-stage
+      j2s-javascript-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-javascript-driver ...                                        */
@@ -210,6 +243,7 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
+      j2s-letfusion-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-ecmascript5-stage
@@ -224,6 +258,7 @@
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
+      j2s-letfusion-stage
       j2s-debug-stage
       j2s-javascript-stage))
 

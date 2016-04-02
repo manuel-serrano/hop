@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Feb 27 07:56:54 2016 (serrano)                */
+;*    Last change :  Fri Mar 25 18:58:00 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -325,10 +325,21 @@
    (js-bind! %this obj 'concat
       :value (js-make-function %this concat 1 'concat)
       :enumerable #f)
-   
+
    ;; indexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.7
    (define (indexof this::obj search position)
+      (let* ((s (js-tostring (js-cast-string %this this) %this))
+	     (searchstr (js-tostring search %this))
+	     (pos (if (eq? position (js-undefined))
+		      0
+		      (js-tointeger position %this)))
+	     (len (string-length s))
+	     (ulen (utf8-string-length s))
+	     (start (inexact->exact (min (max pos 0) ulen))))
+	 (js-jsstring-indexof s searchstr start %this)))
+
+   (define (indexof-old this::obj search position)
       (let* ((s (js-tostring (js-cast-string %this this) %this))
 	     (searchstr (js-tostring search %this))
 	     (pos (if (eq? position (js-undefined))
@@ -350,6 +361,11 @@
 		      (else
 		       (let ((c (string-ref s i)))
 			  (loop (+fx i (utf8-char-size c)) (+fx u 1))))))))))
+   
+;*    (define (indexof this::obj search position)                      */
+;*       (let ((old (indexof-old this search position))                */
+;* 	    (new (indexof-new this search position)))                  */
+;* 	 old))                                                         */
    
    (js-bind! %this obj 'indexOf
       :value (js-make-function %this indexof 1 'indexOf)
@@ -1063,12 +1079,7 @@
       (if (not (js-isindex? index))
 	  (call-next-method)
 	  (with-access::JsString o (val)
-	     (let* ((val (js-jsstring->string val))
-		    (len (utf8-string-length val))
-		    (index (uint32->fixnum index)))
-		(if (<=fx len index)
-		    (call-next-method)
-		    (js-string-ref val index)))))))
+	     (js-jsstring-ref val index)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsString ...                                         */

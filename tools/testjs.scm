@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/tools/testjs.scm                  */
+;*    serrano/prgm/project/hop/3.1.x/tools/testjs.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 27 17:13:14 2013                          */
-;*    Last change :  Tue Jul 15 11:54:57 2014 (serrano)                */
-;*    Copyright   :  2013-14 Manuel Serrano                            */
+;*    Last change :  Wed Mar 23 18:58:14 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing JavaScript programs                                      */
 ;*=====================================================================*/
@@ -32,6 +32,8 @@
 ;*    directories ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define directories '())
+
+(define /tmp "/tmp/TESTJS")
 
 ;*---------------------------------------------------------------------*/
 ;*    flags ...                                                        */
@@ -75,6 +77,8 @@
 (define (main args)
    
    (bigloo-debug-set! 1)
+
+   (make-directories /tmp)
    
    (args-parse (cdr args)
       (("--hopc=?path" (help "Hopc path"))
@@ -221,17 +225,18 @@
 				(skip #t))))
 		      (raise e))))
 	    (with-trace 2 (format "~a (~a)" (basename path) global-count)
-	       (let ((tmp (make-file-path "/tmp" (basename path))))
+	       (let ((tmp (make-file-path /tmp (basename path))))
 		  ;; generate the actual source file)
 		  (let ((isnegative (generate-test-file! path tmp include-path)))
 		     ;; compile it
 		     (for-each (lambda (f)
-				  (when (file-exists? f)
-				     (delete-file f)))
-			'("/tmp/testjs-err.comp"
-			  "/tmp/testjs.comp"
-			  "/tmp/testjs-err.exec"
-			  "/tmp/testjs.exec"))
+				  (let ((p (make-file-name /tmp f)))
+				     (when (file-exists? p)
+					(delete-file p))))
+			'("testjs-err.comp"
+			  "testjs.comp"
+			  "testjs-err.exec"
+			  "testjs.exec"))
 		     (let ((ccmd (compile-test tmp isnegative)))
 			;; execute it
 			(when (string? ccmd)
@@ -375,7 +380,7 @@ return true; };\n" p)
    (let ((cmd (format "~a ~a -o ~a ~a" hopc tmp (prefix tmp)
 		 (apply string-append flags))))
       (with-trace 3 cmd
-	 (let ((res (system (string-append cmd " 2> /tmp/testjs-err.comp > /tmp/testjs.comp"))))
+	 (let ((res (system (format "~a 2> ~a/testjs-err.comp > ~a/testjs.comp" cmd /tmp /tmp))))
 	    (cond
 	       ((=fx res 0)
 		cmd)
@@ -394,7 +399,7 @@ return true; };\n" p)
 ;*---------------------------------------------------------------------*/
 (define (execute-test tmp ccmd)
    (let ((cmd (prefix tmp)))
-      (unless (=fx (system (string-append cmd " 2> /tmp/testjs-err.exec > /tmp/testjs.exec")) 0)
+      (unless (=fx (system (format "~a 2> ~a/testjs-err.exec > ~a/testjs.exec" cmd /tmp /tmp)) 0)
 	 (raise
 	    (instantiate::&test-error
 	       (proc "exec")

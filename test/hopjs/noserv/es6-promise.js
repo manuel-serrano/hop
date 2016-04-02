@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Thu Jan  7 08:27:29 2016 (serrano)                */
+/*    Last change :  Tue Mar 22 16:06:41 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -382,5 +382,5 @@ kangaxg();
 
 setTimeout( function() {
    process.exit( ok === expected ? 0 : 1 )
-}, 100 );
+}, 1000 );
 

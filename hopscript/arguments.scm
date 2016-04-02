@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/arguments.scm           */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/arguments.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Aug 21 16:39:29 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Thu Mar 24 18:20:42 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
 ;*=====================================================================*/
@@ -309,7 +309,19 @@
 		    (js-property-value o o desc %this))))
 	    (else
 	     (call-next-method))))))
-       
+
+;*---------------------------------------------------------------------*/
+;*    js-get-lookup ...                                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-lookup o::JsArguments p::obj cache::JsPropertyCache throw %this)
+   (js-get o p %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-name/cache-miss ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-name/cache-miss o::JsArguments p::obj cache::JsPropertyCache throw %this)
+   (js-get o p %this))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments ...                                                 */
 ;*    -------------------------------------------------------------    */
@@ -414,4 +426,6 @@
 		       (loop (+fx i 1)))
 		    (call-next-method))))
 	  (call-next-method))))
+
+
   

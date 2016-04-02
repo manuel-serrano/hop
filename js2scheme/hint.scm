@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Feb 27 07:10:02 2016 (serrano)                */
+;*    Last change :  Fri Mar 25 15:41:47 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -57,9 +57,7 @@
       ;; for each function whose parameters are "hinted", we generate
       ;; an ad-hoc typed version
       (for-each call-hint! decls)
-      (for-each call-hint! nodes)
-      (for-each erase-type! decls)
-      (for-each erase-type! nodes))
+      (for-each call-hint! nodes))
    prgm)
 
 ;*---------------------------------------------------------------------*/
@@ -85,9 +83,15 @@
 ;*    j2s-hint ::J2SExpr ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SExpr types)
-   (if (pair? types)
-       (j2s-hint this '())
-       (call-default-walker)))
+   (cond
+      ((pair? types)
+       (j2s-hint this '()))
+      ((j2s-expr-type-test this)
+       =>
+       (lambda (tytest)
+	  (j2s-add-hint! (vector-ref tytest 1) (list (vector-ref tytest 2)))))
+      (else
+       (call-default-walker))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SRef ...                                            */
@@ -150,9 +154,15 @@
       (cond
 	 ((not (isa? obj J2SRef))
 	  (j2s-hint obj '(object)))
-	 ((eq? (j2s-type field) 'number)
+	 ((memq (j2s-type field) '(integer number))
 	  (with-access::J2SRef obj (decl)
 	     (j2s-add-hint! decl hints)))
+	 ((isa? field J2SString)
+	  (with-access::J2SString field (val)
+	     (if (string=? val "length")
+		 (with-access::J2SRef obj (decl)
+		    (j2s-add-hint! decl hints))
+		 (j2s-hint obj '(object)))))
 	 ((isa? field J2SLiteralCnst)
 	  (with-access::J2SLiteralCnst field (val)
 	     (if (isa? val J2SString)
@@ -177,9 +187,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAssig types)
    (with-access::J2SAssig this (lhs rhs)
-      (if (isa? lhs J2SAccess)
-	  (j2s-hint-access lhs types '(array))
-	  (j2s-hint lhs '(object)))
+      (when (isa? lhs J2SAccess)
+	 (j2s-hint-access lhs types '(array)))
       (j2s-hint rhs '())))
    
 ;*---------------------------------------------------------------------*/
@@ -232,6 +241,7 @@
       (with-access::J2SDeclFun this (loc)
 	 (instantiate::J2SCall
 	    (loc loc)
+	    (protocol 'bounce)
 	    (fun (instantiate::J2SRef
 		    (decl orig)
 		    (loc loc)))
@@ -251,6 +261,7 @@
 	    (with-access::J2SFun fun ((fthis idthis))
 	       (instantiate::J2SCall
 		  (loc loc)
+		  (protocol 'bounce)
 		  (fun (instantiate::J2SRef
 			  (decl dup)
 			  (loc loc)))
@@ -292,13 +303,23 @@
    (define (test-hint-params dup params)
       (with-access::J2SDeclFun this (loc)
 	 (let loop ((params params))
-	    (if (null? (cdr params))
-		(test-hint-param (car params))
-		(instantiate::J2SBinary
-		   (loc loc)
-		   (op '&&)
-		   (lhs (test-hint-param (car params)))
-		   (rhs (loop (cdr params))))))))
+	    (let ((param (car params)))
+	       (with-access::J2SDecl param (type)
+		  (cond
+		     ((null? (cdr params))
+		      (if (eq? type 'obj)
+			  (instantiate::J2SBool
+			     (loc loc)
+			     (val #t))
+			  (test-hint-param (car params))))
+		     ((eq? type 'obj)
+		      (loop (cdr params)))
+		     (else
+		      (instantiate::J2SBinary
+			 (loc loc)
+			 (op '&&)
+			 (lhs (test-hint-param (car params)))
+			 (rhs (loop (cdr params)))))))))))
 
    (define (dispatch-body body pred callhint callorig)
       (with-access::J2SBlock body (loc endloc)
@@ -320,12 +341,12 @@
 	 (if (and (not (eq? %info 'duplicate))
 		  (not (isa? %info FunHintInfo))
 		  (pair? params)
-		  (every (lambda (p::J2SDecl)
-			    (with-access::J2SDecl p (hint usecnt id)
-			       (and (pair? hint)
-				    (or (pair? (cdr hint))
-					(not (eq? (caar hint) 'obj)))
-				    (>fx usecnt 0))))
+		  (any (lambda (p::J2SDecl)
+			  (with-access::J2SDecl p (hint usecnt id)
+			     (and (pair? hint)
+				  (or (pair? (cdr hint))
+				      (not (eq? (caar hint) 'obj)))
+				  (>fx usecnt 0))))
 		     params))
 	     (let* ((dup (fun-duplicate this))
 		    (orig (fun-orig this))
@@ -339,6 +360,7 @@
 		    (callorig (call-orig orig idthis newparams)))
 		(set! params (map j2sdecl-duplicate-sans-type params))
 		(set! body (dispatch-body body pred callhint callorig))
+		(erase-type! body)
 		(list dup orig))
 	     '()))))
 

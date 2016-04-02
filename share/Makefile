@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Mar  3 08:09:59 2016 (serrano)                */
+#*    Last change :  Tue Mar 29 17:21:10 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -321,6 +321,28 @@ hopjs_s.js: hop-boot.js hop-autoconf.js \
                  | sed -e "s|//[^\"]*$$||g" \
                  | sed -e "/^[ \t]*$$/D" \
                  | $(BGLCPP) -DHOP_JAVASCRIPT \
+                 >> $@; \
+        fi
+
+#* hopjs-serialize.js: hop-builtin-serializers.js  hopscheme.js hop-serialize.js */
+hopjs-serialize.js: hopscheme.js hop-serialize.js
+	echo "/* Automatically generated file (don't edit) */" > $@
+	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
+	date +'/* %D %I:%H */' >> $@
+	echo >> $@
+	echo "\"use strict\";" >> $@
+	echo >> $@
+	if [ "$(DEBUG) " != "yes " ]; then \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_MODULES -DHOP_NOBROWSER \
+                 >> $@; \
+        else \
+	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
+                 | sed -e "s|//[^\"]*$$||g" \
+                 | sed -e "/^[ \t]*$$/D" \
+                 | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_MODULES -DHOP_NOBROWSER \
                  >> $@; \
         fi
 

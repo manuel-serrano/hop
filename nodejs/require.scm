@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Feb 15 09:46:49 2016 (serrano)                */
+;*    Last change :  Fri Mar 25 20:37:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -531,6 +531,10 @@
 (define sofile-cache (make-hashtable))
 (define soload-mutex (make-mutex))
 
+(define socompile-mutex (make-mutex))
+(define socompile-condv (make-condition-variable))
+(define socompile-files '())
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-dynamic-load ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -555,26 +559,45 @@
 	    (values (process-exit-status proc) s))))
       
    (define (compileso filename)
-      (let* ((sopath (hop-sofile-path filename))
-	     (cmd (format "~a ~a -y --no-js-module-main -o ~a ~a"
-		     (hop-hopc)
-		     filename sopath
-		     (hop-hopc-flags))))
-	 (make-directories (dirname sopath))
-	 (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
-	 (multiple-value-bind (ret msg)
-	    (exec cmd)
-	    (if (and (=fx ret 0) (file-exists? sopath))
-		(begin
-		   (delete-file (string-append (prefix sopath) ".o"))
-		   sopath)
-		(call-with-output-file (string-append sopath ".err")
-		   (lambda (op)
-		      (display msg (current-error-port))
-		      (display cmd op)
-		      (newline op)
-		      (display msg op)
-		      'error))))))
+      (let ((tmp (synchronize socompile-mutex
+		    (cond
+		       ((hop-find-sofile filename)
+			=>
+			(lambda (x) x))
+		       ((member filename socompile-files)
+			(condition-variable-wait! socompile-condv socompile-mutex)
+			'loop)
+		       (else
+			(set! socompile-files (cons filename socompile-files))
+			'compile)))))
+	 (cond
+	    ((string? tmp) tmp)
+	    ((eq? tmp 'loop) (compileso filename))
+	    (else
+	     (let* ((sopath (hop-sofile-path filename))
+		    (cmd (format "~a ~a -y --no-js-module-main -o ~a ~a"
+			    (hop-hopc)
+			    filename sopath
+			    (hop-hopc-flags))))
+		(make-directories (dirname sopath))
+		(hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
+		(multiple-value-bind (ret msg)
+		   (exec cmd)
+		   (unwind-protect
+		      (if (and (=fx ret 0) (file-exists? sopath))
+			  (begin
+			     (delete-file (string-append (prefix sopath) ".o"))
+			     sopath)
+			  (call-with-output-file (string-append sopath ".err")
+			     (lambda (op)
+				(display msg (current-error-port))
+				(display cmd op)
+				(newline op)
+				(display msg op)
+				'error)))
+		      (synchronize socompile-mutex
+			 (set! socompile-files (delete! filename socompile-files))
+			 (condition-variable-broadcast! socompile-condv)))))))))
 		       
    (define (loadso-or-compile filename lang)
       (let loop ((sopath (hop-find-sofile filename)))

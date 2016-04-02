@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Thu Mar  3 08:24:01 2016 (serrano)                */
+;*    Last change :  Tue Mar 29 16:46:06 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -161,9 +161,9 @@ function hop_session() {return " (integer->string (hop-session)) ";}"))))
 		  (else
 		   #f)))
 	  (ctx (if loc (cons loc (cdr stk)) stk)))
-      (string-append "hop_initial_stack_context = hop_url_encoded_to_obj('"
+      (string-append "window.addEventListener( 'load', function() { hop_initial_stack_context = hop_url_encoded_to_obj('"
 	 (url-path-encode (obj->string ctx))
-	 "');")))
+	 "'); })")))
       
 ;*---------------------------------------------------------------------*/
 ;*    <HOP-SERVER> ...                                                 */

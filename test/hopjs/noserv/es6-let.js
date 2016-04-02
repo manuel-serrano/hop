@@ -128,6 +128,22 @@ function optim( x ) {
    return aaaa - y;
 }
 
+function optim2() {
+   var x = 3;
+   let y = 5;
+   var x = 8;
+
+   return x;
+}
+   
+function optim3() {
+   var x = 3;
+   var y = z;
+   var z = 8;
+
+   return y;
+}
+   
 function letFun() { 
    let gee = function () { return my_var };
    let my_var = 'foo';
@@ -144,6 +160,11 @@ function letFun2() {
       return my_var;
    }
 }   
+
+function letFor() {
+   for( let i = 0; i < 5; i++ );
+   return 5;
+}
 
 console.log( "basic" );
 assert.strictEqual( acc, "111 222 333" );
@@ -178,6 +199,12 @@ assert.ok( forLabel() );
 console.log( "   optim()" );
 assert.ok( optim( 10 ) == 1 );
 
+console.log( "   optim2()" );
+assert.ok( optim2() == 8 );
+
+console.log( "   optim3()" );
+assert.ok( optim3() == undefined );
+
 console.log( "   arity()" );
 assert.ok( arity() == 2 );
 
@@ -186,6 +213,9 @@ assert.ok( letFun() == "foo" );
 
 console.log( "   letFun2()" );
 assert.ok( letFun2() == "foo" );
+
+console.log( "   letFor()" );
+assert.ok( letFor() == 5 );
 
 /*---------------------------------------------------------------------*/
 /*    Kangax                                                           */
@@ -448,3 +478,17 @@ assert.equal( letTest(), 71 + 31 );
 console.log( "   rebind()");
 assert.ok( rebind( true ) );
 assert.ok( deadzone() );
+
+/*---------------------------------------------------------------------*/
+/*    optimization                                                     */
+/*---------------------------------------------------------------------*/
+function narrow() {
+   var x = {a: 1, b:2 };
+   Math.abs( x.a );
+   var x = {a: 3, b:4 };
+   var t = x;
+   return t.a;
+}
+
+console.log( "   narrow()" );
+assert.ok( narrow() == 3, "narrow" );

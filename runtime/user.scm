@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/user.scm                  */
+;*    serrano/prgm/project/hop/3.1.x/runtime/user.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Nov  7 10:23:42 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Sat Apr  2 09:14:22 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -13,7 +13,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_user
-
+   
    (include "verbose.sch")
    
    (import  __hop_param
@@ -24,7 +24,7 @@
 	    __hop_service
 	    __hop_cache
 	    __hop_password)
-
+   
    (export  (users-close!)
 	    (add-user! ::bstring . opt)
 	    (user-exists? ::bstring)
@@ -42,7 +42,8 @@
 	    (access-denied ::http-request #!optional message)
 	    (user-service-denied ::user ::http-request ::symbol)
 	    (service-denied ::http-request ::symbol)
-	    (proxy-denied ::http-request ::user ::bstring)))
+	    (proxy-denied ::http-request ::user ::bstring)
+	    (user-add-file! ::user obj ::bstring)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *user-mutex* ...                                                 */
@@ -131,6 +132,7 @@
 			     (password pass)
 			     (authentication auth)
 			     (services svcs)
+			     (files (create-hashtable :size 64 :eqtest string=?))
 			     (preferences (append c prefs))
 			     (preferences-filename cname)
 			     (directories d)
@@ -452,15 +454,23 @@
 ;*    http-request-user ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (http-request-user req::http-request)
-   (with-access::http-request req (authorization userinfo method abspath socket)
-      (if (not socket)
-	  (anonymous-user)
-	  (let ((ip (input-port-name (socket-input socket))))
-	     (or (and (string? authorization)
-		      (find-authenticated-user authorization abspath method ip))
-		 (and (string? userinfo)
-		      (find-authenticated-user userinfo abspath method ip))
-		 (anonymous-user))))))
+   
+   (define (get-user req)
+      (with-access::http-request req (authorization userinfo method abspath socket)
+	 (if (not socket)
+	     (anonymous-user)
+	     (let ((ip (input-port-name (socket-input socket))))
+		(or (and (string? authorization)
+			 (find-authenticated-user authorization abspath method ip))
+		    (and (string? userinfo)
+			 (find-authenticated-user userinfo abspath method ip))
+		    (anonymous-user))))))
+
+   (with-access::http-request req (%user)
+      (or %user
+	  (let ((u (get-user req)))
+	     (set! %user u)
+	     u))))
       
 ;*---------------------------------------------------------------------*/
 ;*    hopaccess-cache ...                                              */
@@ -508,14 +518,15 @@
    (define (path-member path dirs)
       (any (lambda (d) (authorized? d path)) dirs))
 
-   (and (with-access::user user (directories name)
+   (and (with-access::user user (directories name files)
 	   (or (eq? directories '*)
-	       (or (path-member path directories)
-		   (let ((cpath (file-name-unix-canonicalize path)))
-		      (or (path-member cpath directories)
-			  (let ((service-path (etc-path->service cpath)))
-			     (and (symbol? service-path)
-				  (user-authorized-service? user service-path))))))))
+	       (hashtable-get files path)
+	       (path-member path directories)
+	       (let ((cpath (file-name-unix-canonicalize path)))
+		  (or (path-member cpath directories)
+		      (let ((service-path (etc-path->service cpath)))
+			 (and (symbol? service-path)
+			      (user-authorized-service? user service-path)))))))
 	(let ((hopaccess (find-hopaccess path)))
 	   (with-access::user user (name)
 	      (or (not hopaccess)
@@ -662,3 +673,13 @@
 			  host))))
       (body (format "Protected Area! Authentication required for user \"~a\"."
 		    (with-access::user user (name) name)))))
+
+;*---------------------------------------------------------------------*/
+;*    user-add-file! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (user-add-file! user obj path)
+   (with-access::user user (files mutex)
+      (synchronize mutex
+	 (with-access::user user (files mutex name)
+	    (tprint "adding path=" path " " name))
+	 (hashtable-put! files path #t))))

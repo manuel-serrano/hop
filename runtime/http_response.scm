@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/http_response.scm         */
+;*    serrano/prgm/project/hop/3.1.x/runtime/http_response.scm         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Mar  2 12:00:53 2016 (serrano)                */
+;*    Last change :  Sat Apr  2 09:18:36 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -268,7 +268,12 @@
 			 (with-access::security-manager security (xml-sanitize)
 			    (let ((xmls (xml-sanitize xml backend request)))
 			       (xml-write xmls p backend)))
-			 (xml-write xml p backend)))))
+			 (xml-write xml p backend)))
+		  '(let ((user (http-request-user request)))
+		     (unless (eq? user (anonymous-user))
+			(xml-url-for-each xml
+			   (lambda (obj path)
+			      (user-add-file! user obj path)))))))
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
 	    (when chunked

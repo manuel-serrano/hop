@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/3.1.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Dec  9 06:57:15 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Sun Mar 27 11:28:37 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -219,7 +219,7 @@
 ;*    hopc-optim-level ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-optim-level
-   1)
+   0)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-worker ...                                               */

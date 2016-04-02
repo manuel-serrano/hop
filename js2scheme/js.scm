@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Mar  1 17:59:53 2016 (serrano)                */
+;*    Last change :  Mon Mar 28 10:23:46 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -280,6 +280,32 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SFun tildec dollarc mode evalp conf)
    
+   (define (merge-blocks this::J2SBlock)
+      (with-access::J2SBlock this (nodes)
+	 ;; check the pattern (j2sblock decl decl ... decl j2sletblock)
+	 (let loop ((lnodes nodes)
+		    (vdecls '()))
+	    (cond
+	       ((null? lnodes)
+		this)
+	       ((isa? (car lnodes) J2SDecl)
+		(loop (cdr lnodes) (cons (car lnodes) vdecls)))
+	       ((isa? (car lnodes) J2SLetBlock)
+		(when (pair? vdecls)
+		   ;; merge the decls into the j2sletblock
+		   (with-access::J2SLetBlock (car lnodes) (decls)
+		      (for-each (lambda (decl)
+				   (when (isa? decl J2SDeclFun)
+				      (with-access::J2SDeclFun decl (scope)
+					 (set! scope 'letblock))))
+			 vdecls)
+		      (set! decls (append vdecls decls))))
+		(with-access::J2SLetBlock (car lnodes) (nodes)
+		   (set! nodes (append nodes (cdr lnodes))))
+		(car lnodes))
+	       (else
+		this)))))
+   
    (define (fun-id this)
       (with-access::J2SFun this (decl)
 	 (if (isa? decl J2SDecl)
@@ -287,7 +313,8 @@
 	     "")))
    
    (with-access::J2SFun this (params body idthis vararg generator)
-      (let ((ellipsis (if (eq? vararg 'rest) "... " "")))
+      (let ((body (merge-blocks body))
+	    (ellipsis (if (eq? vararg 'rest) "... " "")))
 	 (cond
 	    ((eq? idthis '%)
 	     ;; an arrow function
@@ -322,7 +349,7 @@
 			 params tildec dollarc mode evalp conf)
 		      '("{")
 		      (append-map! (lambda (decl)
-				     (j2s-js decl tildec dollarc mode evalp conf))
+				      (j2s-js decl tildec dollarc mode evalp conf))
 			 predecls)
 		      '("var $GEN=new hop.Generator(function(_$v,_$e)")
 		      (j2s-js body tildec dollarc mode evalp conf)

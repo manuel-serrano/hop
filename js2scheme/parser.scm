@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Feb 16 08:52:38 2016 (serrano)                */
+;*    Last change :  Mon Mar 28 10:42:32 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -580,7 +580,7 @@
 		  (loc (token-loc token))
 		  (key key)
 		  (cases cases))))))
-   
+
    (define (case-block)
       (push-open-token (consume! 'LBRACE))
       (let loop ((rev-cases '())
@@ -794,27 +794,44 @@
 	     (body (fun-body params))
 	     (mode (or (javascript-mode body) 'normal)))
 	 (cond
+;* 	    (declaration?                                              */
+;* 	     (let ((val (instantiate::J2SFun                           */
+;* 			   (loc (token-loc token))                     */
+;* 			   (params params)                             */
+;* 			   (name (cdr id))                             */
+;* 			   (mode mode)                                 */
+;* 			   (generator gen)                             */
+;* 			   (body body)                                 */
+;* 			   (vararg (rest-params params))               */
+;* 			   (decl (instantiate::J2SDecl                 */
+;* 				    (loc (token-loc token))            */
+;* 				    (id (cdr id))                      */
+;* 				    (writable #f)                      */
+;* 				    (ronly #t)                         */
+;* 				    (scope 'global))))))               */
+;* 		(instantiate::J2SDeclFun                               */
+;* 		   (loc (token-loc token))                             */
+;* 		   (writable (not (eq? mode 'hopscript)))              */
+;* 		   (ronly (eq? mode 'hopscript))                       */
+;* 		   (id (cdr id))                                       */
+;* 		   (val val))))                                        */
 	    (declaration?
-	     (let ((val (instantiate::J2SFun
-			   (loc (token-loc token))
-			   (params params)
-			   (name (cdr id))
-			   (mode mode)
-			   (generator gen)
-			   (body body)
-			   (vararg (rest-params params))
-			   (decl (instantiate::J2SDecl
-				    (loc (token-loc token))
-				    (id (cdr id))
-				    (writable #f)
-				    (ronly #t)
-				    (scope 'global))))))
-		(instantiate::J2SDeclFun
-		   (loc (token-loc token))
-		   (writable (not (eq? mode 'hopscript)))
-		   (ronly (eq? mode 'hopscript))
-		   (id (cdr id))
-		   (val val))))
+	     (co-instantiate ((val (instantiate::J2SFun
+				      (loc (token-loc token))
+				      (params params)
+				      (name (cdr id))
+				      (mode mode)
+				      (generator gen)
+				      (body body)
+				      (vararg (rest-params params))
+				      (decl decl)))
+			      (decl (instantiate::J2SDeclFun
+				       (loc (token-loc token))
+				       (writable (not (eq? mode 'hopscript)))
+				       (ronly (eq? mode 'hopscript))
+				       (id (cdr id))
+				       (val val))))
+		decl))
 	    (id
 	     (co-instantiate ((fun (instantiate::J2SFun
 				      (loc (token-loc token))

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/aux/stdClient.js  */
+/*    .../prgm/project/hop/3.1.x/test/hopjs/serv/aux/stdClient.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Tue Sep  15 12:42:26 2015 (serrano)               */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Fri Mar 25 19:05:51 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    simple worker to stress test services                            */
 /*=====================================================================*/
@@ -12,7 +12,7 @@
 /* This worker iterates <num> service invocations, then
  * post a message to inform the main thread of completion */
 
-import service toTest();
+service toTest();
 
 
 function test( id, num ) {

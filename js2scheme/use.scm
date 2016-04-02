@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Feb 27 07:11:52 2016 (serrano)                */
+;*    Last change :  Mon Mar 28 10:29:39 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -80,6 +80,7 @@
 	       (when (and (pair? optim) (>=fx (cadr optim) 1))
 		  ;; remove dead declaration
 		  (set! decls (filter-dead-declarations decls)))))
+	 (for-each dead-code! decls)
 	 (for-each dead-code! nodes)))
    this)
 
@@ -119,10 +120,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (use-count this::J2SFun inc)
    (with-access::J2SFun this (params body decl)
-      (use-count body inc)
-      (when (isa? decl J2SDecl)
-	 (with-access::J2SDecl decl (usecnt)
-	    (when (=fx usecnt 0) (set! decl #f)))))
+      (use-count body inc))
    this)
    
 ;*---------------------------------------------------------------------*/
@@ -230,12 +228,50 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    dead-code! ::J2SFun ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (dead-code! this::J2SFun)
+   (with-access::J2SFun this (params body decl)
+      (when (isa? decl J2SDecl)
+	 (with-access::J2SDecl decl (usecnt)
+	    (when (=fx usecnt 0) (set! decl #f)))))
+   this)
+   
+;*---------------------------------------------------------------------*/
 ;*    dead-code! ::J2SDecl ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (dead-code! this::J2SDecl)
    (call-default-walker)
    (with-access::J2SDecl this (usecnt loc binder)
       (if (and (=fx usecnt 0) (not (eq? binder 'param)))
-	  (instantiate::J2SUndefined (loc loc))
+	  (instantiate::J2SNop (loc loc))
 	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    dead-code! ::J2SDeclInit ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (dead-code! this::J2SDeclInit)
+   (call-default-walker)
+   (with-access::J2SDeclInit this (usecnt loc binder val)
+      (if (and (=fx usecnt 0) (isa? val J2SFun))
+	  (instantiate::J2SNop (loc loc))
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    dead-code! ::J2SLetBlock ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (dead-code! this::J2SLetBlock)
+   (call-default-walker)
+   (with-access::J2SLetBlock this (decls)
+      (set! decls (filter (lambda (n) (isa? n J2SDecl)) decls))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    dead-code! ::J2SVarDecls ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (dead-code! this::J2SVarDecls)
+   (call-default-walker)
+   (with-access::J2SVarDecls this (decls)
+      (set! decls (filter (lambda (n) (isa? n J2SDecl)) decls))
+      this))
 
