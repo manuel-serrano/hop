@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Sat Apr  2 09:16:20 2016 (serrano)                */
+;*    Last change :  Sun Apr  3 08:59:58 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -64,7 +64,7 @@
 	    (generic xml-primitive-value ::obj)
 	    (generic xml-to-errstring::bstring ::obj)
 
-	    (generic xml-url-for-each ::obj ::procedure)
+;* 	    (xml-url-for-each ::obj ::procedure)                       */
 
 	    (xml->string ::obj ::xml-backend)
 
@@ -707,7 +707,8 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (xml-write-attribute attr::obj id p backend)
    ;; boolean false attribute has no value, xml-tilde are initialized
-   (unless (or (eq? attr #f) (eq? attr #unspecified) (eq? id :%location))
+   (unless (or (eq? attr #f) (eq? attr #unspecified)
+	       (char=? (string-ref (keyword->string! id) 0) #\%))
       (display (keyword->string! id) p)
       ;; boolean true attribute has no value
       (display "='" p)
@@ -1195,66 +1196,100 @@ try { ~a } catch( e ) { hop_callback_handler(e, ~a); }"
 			       (cons src (or loc (source-location src))))))
 	       (precompiled-free-variables body))))))
 
-;*---------------------------------------------------------------------*/
-;*    xml-url-for-each-attributes ...                                  */
-;*---------------------------------------------------------------------*/
-(define (xml-url-for-each-attributes obj key proc)
-   (with-access::xml-cdata obj (tag body attributes)
-      (with-access::xml-markup obj (attributes)
-	 (let ((a (plist-assq key attributes)))
-	    (when (and a (string? (cadr a)))
-	       (unless (string-prefix? "data:" (cadr a))
-		  (let ((i (string-index (cadr a) #\?)))
-		     (if i
-			 (proc obj (substring (cadr a) 0 i))
-			 (proc obj (cadr a))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    xml-url-for-each ...                                             */
-;*---------------------------------------------------------------------*/
-(define-generic (xml-url-for-each obj::obj proc)
-   (when (pair? obj)
-      (for-each (lambda (o) (xml-url-for-each o proc)) obj)))
-
-;*---------------------------------------------------------------------*/
-;*    xml-url-for-each ::xml-markup ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (xml-url-for-each obj::xml-markup proc)
-   (with-access::xml-markup obj (tag body)
-      (case tag
-	 ((head)
-	  (xml-url-for-each-attributes obj :href proc)))
-      (for-each (lambda (o) (xml-url-for-each o proc)) body)))
-
-;*---------------------------------------------------------------------*/
-;*    xml-url-for-each ::xml-element ...                               */
-;*---------------------------------------------------------------------*/
-(define-method (xml-url-for-each obj::xml-element proc)
-   (with-access::xml-element obj (tag body)
-      (case tag
-	 ((link)
-	  (xml-url-for-each-attributes obj :href proc)))
-      (for-each (lambda (o) (xml-url-for-each o proc)) body)))
-   
-;*---------------------------------------------------------------------*/
-;*    xml-url-for-each ::xml-cdata ...                                 */
-;*---------------------------------------------------------------------*/
-(define-method (xml-url-for-each obj::xml-cdata proc)
-   (xml-url-for-each-attributes obj :src proc)
-   (call-next-method))
-
-;*---------------------------------------------------------------------*/
-;*    xml-url-for-each ::xml-svg ...                                   */
-;*---------------------------------------------------------------------*/
-(define-method (xml-url-for-each obj::xml-svg proc)
-   (xml-url-for-each-attributes obj :src proc) 
-   (call-next-method))
-
-;*---------------------------------------------------------------------*/
-;*    xml-url-for-each ::xml-empty-element ...                         */
-;*---------------------------------------------------------------------*/
-(define-method (xml-url-for-each obj::xml-empty-element proc)
-   (with-access::xml-empty-element obj (tag)
-      (when (eq? tag 'img)
-	 (xml-url-for-each-attributes obj :src proc))))
-
+;* {*---------------------------------------------------------------------*} */
+;* {*    xml-url-for-each ...                                             *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (xml-url-for-each obj::obj proc)                            */
+;*    (xml-url-for-each-inner obj (make-cell #f) proc))                */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    xml-url-base ...                                                 *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (xml-url-base s base)                                       */
+;*    (if (char=? (string-ref s 0) #\/)                                */
+;*        s                                                            */
+;*        (let ((b (cell-ref base)))                                   */
+;* 	  (if (or (not (string? b)) (string-null? b))                  */
+;* 	      s                                                        */
+;* 	      (string-append b s)))))                                  */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    xml-url-for-each-attributes ...                                  *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (xml-url-for-each-attributes obj base::cell key proc)       */
+;*    (with-access::xml-cdata obj (tag body attributes)                */
+;*       (with-access::xml-markup obj (attributes)                     */
+;* 	 (let ((a (plist-assq key attributes)))                        */
+;* 	    (when (and a (string? (cadr a)))                           */
+;* 	       (unless (or (string-prefix? "data:" (cadr a))           */
+;* 			   (string-prefix? "http:" (cadr a))           */
+;* 			   (string-prefix? "https:" (cadr a)))         */
+;* 		  (let* ((i (string-index (cadr a) #\?))               */
+;* 			 (s (if i (substring (cadr a) 0 i) (cadr a)))) */
+;* 		     (unless (string-null? s)                          */
+;* 			(proc obj (xml-url-base s base))))))))))       */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    xml-url-for-each-inner ...                                       *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-generic (xml-url-for-each-inner obj::obj base::cell proc::procedure) */
+;*    (when (pair? obj)                                                */
+;*       (for-each (lambda (o) (xml-url-for-each-inner o base proc)) obj))) */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    xml-url-for-each-inner ::xml-markup ...                          *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (xml-url-for-each-inner obj::xml-markup base proc)   */
+;*    (with-access::xml-markup obj (tag body attributes)               */
+;*       (for-each (lambda (o) (xml-url-for-each-inner o base proc)) body) */
+;*       (when (eq? tag 'head)                                         */
+;* 	 (let ((a (plist-assq :%authorizations attributes)))           */
+;* 	    (tprint "A=" a)                                            */
+;* 	    (when (pair? a)                                            */
+;* 	       (cond                                                   */
+;* 		  ((string? (cadr a))                                  */
+;* 		   (proc obj (xml-url-base a base)))                   */
+;* 		  ((list? (cadr a))                                    */
+;* 		   (for-each (lambda (a) (proc obj (xml-url-base a base))) */
+;* 		      (cadr a)))))))))                                 */
+;*                                                                     */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    xml-url-for-each-inner ::xml-element ...                         *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (xml-url-for-each-inner obj::xml-element base proc)  */
+;*    (with-access::xml-element obj (tag body)                         */
+;*       (case tag                                                     */
+;* 	 ((link)                                                       */
+;* 	  (xml-url-for-each-attributes obj base :href proc)))          */
+;*       (for-each (lambda (o) (xml-url-for-each-inner o base proc)) body))) */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    xml-url-for-each-inner ::xml-cdata ...                           *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (xml-url-for-each-inner obj::xml-cdata base proc)    */
+;*    (xml-url-for-each-attributes obj base :src proc)                 */
+;*    (call-next-method))                                              */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    xml-url-for-each-inner ::xml-svg ...                             *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (xml-url-for-each-inner obj::xml-svg base proc)      */
+;*    (xml-url-for-each-attributes obj base :src proc)                 */
+;*    (call-next-method))                                              */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    xml-url-for-each-inner ::xml-empty-element ...                   *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (xml-url-for-each-inner obj::xml-empty-element base proc) */
+;*    (with-access::xml-empty-element obj (tag attributes)             */
+;*       (case tag                                                     */
+;* 	 ((img)                                                        */
+;* 	  (xml-url-for-each-attributes obj base :src proc))            */
+;* 	 ((base)                                                       */
+;* 	  (let ((h (plist-assq :href attributes)))                     */
+;* 	     (when (and (pair? h) (string? (cadr h)))                  */
+;* 		;; add all the file in base...                         */
+;* 		(tprint "TODO")                                        */
+;* 		(cell-set! base (cadr h))))))))                        */
+;*                                                                     */

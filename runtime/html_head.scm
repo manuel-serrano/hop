@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Mar 29 16:46:06 2016 (serrano)                */
+;*    Last change :  Sun Apr  3 08:59:24 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -42,7 +42,6 @@
 
    (export  (<HTML> . ::obj)
 	    (<HEAD> . ::obj)
-	    (head-parse args)
 
 	    (<LINK> . ::obj)
 	    (<SCRIPT> . ::obj)
@@ -560,6 +559,10 @@ function hop_session() {return " (integer->string (hop-session)) ";}"))))
 		 ((:%location)
 		  (set! location (xml-primitive-value (cadr a)))
 		  (loop (cddr a) mode rts dir path base inl packed els))
+;* 		 ((:authorizations)                                    */
+;* 		  (cell-set! attrs                                     */
+;* 		     `(:%authorizations ,(xml-primitive-value (cadr a)))) */
+;* 		  (loop (cddr a) mode rts dir path base inl packed els)) */
 		 (else
 		  (error "<HEAD>"
 		     (format "Unknown ~a argument" (car a))
