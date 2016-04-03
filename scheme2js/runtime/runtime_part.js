@@ -1,6 +1,6 @@
 /*=====================================================================*/
 /*    Author      :  Florian Loitsch                                   */
-/*    Copyright   :  2007-15 Florian Loitsch, see LICENSE file         */
+/*    Copyright   :  2007-16 Florian Loitsch, see LICENSE file         */
 /*    -------------------------------------------------------------    */
 /*    This file is part of Scheme2Js.                                  */
 /*                                                                     */
@@ -3891,7 +3891,16 @@ function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fi
 	  : function( c ) { return c; };
       
       clazz.prototype = sc_class_creator( zuper );
-      clazz.prototype.constructor = constr;
+      Object.defineProperty( clazz.prototype, "constructor", {
+	 value: constr,
+	 enumerable: false,
+	 configurable: false
+      } );
+      Object.defineProperty( clazz.prototype, "__class__", {
+	 value: name,
+	 enumerable: false,
+	 configurable: false
+      } );
 
       for( f in zuper.sc_fields_table ) {
 	 ftable[ zuper.sc_fields_table[ f ].sc_name ] = zuper.sc_fields_table[ f ];
@@ -3905,6 +3914,21 @@ function sc_register_class( clazz, name, zuper, hash, allocator, constructor, fi
    sc_allClasses[ name ] = clazz;
 
    return clazz;
+}
+
+function sc_get_class( cname, sname, hash ) {
+   var cn = sc_string2symbol( sc_jsstring2string( cname ) );
+   var clazz = sc_class_exists( cn );
+
+   if( clazz ) {
+      return clazz;
+   } else {
+      var sn = sc_string2symbol( sc_jsstring2string( sname ) );
+
+      return sc_register_class( new sc_Class(), cn,
+				sc_class_exists( sn ) || sc_Object,
+				hash, undefined, sc_Object, [] )
+   }
 }
 
 /*** META ((export #t) (arity #t) (type bool)) */

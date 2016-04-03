@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Tue Mar 29 17:48:43 2016 (serrano)                */
+/*    Last change :  Mon Apr  4 08:23:26 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -292,7 +292,20 @@ function sc_Object() {
 #endif
 
 /*---------------------------------------------------------------------*/
-/*    misc                                                             */
+/*    Arrays                                                           */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+function sc_makeVector( sz, fill ) {
+   return new Array( sz ).fill( fill );
+}
+
+function sc_vector2array( a ) {
+   return a;
+}
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    Misc                                                             */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
 #if HOP_RTS_DEBUG

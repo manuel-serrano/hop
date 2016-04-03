@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sat Apr  2 09:14:22 2016 (serrano)                */
+;*    Last change :  Sun Apr  3 09:34:17 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
@@ -43,7 +43,7 @@
 	    (user-service-denied ::user ::http-request ::symbol)
 	    (service-denied ::http-request ::symbol)
 	    (proxy-denied ::http-request ::user ::bstring)
-	    (user-add-file! ::user obj ::bstring)))
+	    (user-add-authorized-files! ::user ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *user-mutex* ...                                                 */
@@ -520,7 +520,7 @@
 
    (and (with-access::user user (directories name files)
 	   (or (eq? directories '*)
-	       (hashtable-get files path)
+	       (and (hop-file-authorization) (hashtable-get files path))
 	       (path-member path directories)
 	       (let ((cpath (file-name-unix-canonicalize path)))
 		  (or (path-member cpath directories)
@@ -675,11 +675,9 @@
 		    (with-access::user user (name) name)))))
 
 ;*---------------------------------------------------------------------*/
-;*    user-add-file! ...                                               */
+;*    user-add-authorized-files! ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (user-add-file! user obj path)
+(define (user-add-authorized-files! user fs)
    (with-access::user user (files mutex)
       (synchronize mutex
-	 (with-access::user user (files mutex name)
-	    (tprint "adding path=" path " " name))
-	 (hashtable-put! files path #t))))
+	 (for-each (lambda (f) (hashtable-put! files f #t)) fs))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Mar  1 07:57:50 2016 (serrano)                */
+;*    Last change :  Mon Apr  4 08:47:36 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -16,7 +16,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_object
-
+   
    (library hop hopwidget)
    
    (include "stringliteral.sch"
@@ -46,16 +46,12 @@
 	   __hopscript_worker
 	   __hopscript_websocket
 	   __hopscript_lib)
-
+   
    (with   __hopscript_dom)
-
+   
    (export (js-initial-global-object)
 	   (inline js-object?::bool ::obj)
-	   (js-new-global-object::JsGlobalObject)
-	   
-	   
-
-	   ))
+	   (js-new-global-object::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -102,6 +98,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-primitive-value obj::JsObject)
    (js-jsobject->plist obj (js-initial-global-object)))
+
+;*---------------------------------------------------------------------*/
+;*    obj->json ::JsObject ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (obj->json obj::JsObject op::output-port)
+   (let ((stringify (js-json-stringify (js-initial-global-object))))
+      (display (stringify (js-undefined) obj (js-undefined) 1) op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsGlobalObject ...                                   */

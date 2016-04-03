@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Apr  2 09:18:36 2016 (serrano)                */
+;*    Last change :  Mon Apr  4 08:43:05 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -269,11 +269,13 @@
 			    (let ((xmls (xml-sanitize xml backend request)))
 			       (xml-write xmls p backend)))
 			 (xml-write xml p backend)))
-		  '(let ((user (http-request-user request)))
-		     (unless (eq? user (anonymous-user))
-			(xml-url-for-each xml
-			   (lambda (obj path)
-			      (user-add-file! user obj path)))))))
+;* 		  (when (hop-file-authorization)                       */
+;* 		     (let ((user (http-request-user request)))         */
+;* 			(unless (eq? user (anonymous-user))            */
+;* 			   (xml-url-for-each xml                       */
+;* 			      (lambda (obj file)                       */
+;* 				 (user-add-file! user file))))))       */
+		  ))
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
 	    (when chunked

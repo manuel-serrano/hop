@@ -36,11 +36,14 @@
  ;; regexp incompatibilities
  "S7.8.5_A1.1_T2.js"
  "S7.8.5_A1.2_T1.js"
+ "S7.8.5_A1.3_T1.js"
  "S7.8.5_A1.4_T1.js"
  "S7.8.5_A1.4_T2.js"
  "S7.8.5_A2.1_T2.js"
  "S7.8.5_A2.4_T1.js"
  "S7.8.5_A2.4_T2.js"
+ ;; wrong syntax (correctly detected)
+ "S7.4_A2_T2.js"
  ;; wrong test
  "S8.5_A2.2.js"
  "S8.5_A2.1.js"

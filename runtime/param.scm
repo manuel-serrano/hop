@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Mar  3 07:39:28 2016 (serrano)                */
+;*    Last change :  Sun Apr  3 09:03:25 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -64,6 +64,9 @@
 	    (hop-security::int)
 	    (hop-security-set! ::int)
 
+	    (hop-file-authorization::bool)
+	    (hop-file-authorization-set! ::bool)
+	    
 	    (hop-http-authentication::symbol)
 	    (hop-http-authentication-set! ::symbol)
 
@@ -465,6 +468,19 @@
 ;*    hop-security ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-security 1)
+
+;*---------------------------------------------------------------------*/
+;*    hop-file-authorization-locked ...                                */
+;*---------------------------------------------------------------------*/
+(define hop-file-authorization-locked #f)
+
+;*---------------------------------------------------------------------*/
+;*    hop-file-authorization ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-file-authorization #t
+   (lambda (v)
+      (unless v (set! hop-file-authorization-locked #t))
+      (if hop-file-authorization-locked #f v)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-http-authentication ...                                      */

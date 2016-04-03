@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Mar 28 10:11:20 2016 (serrano)                */
+;*    Last change :  Wed Apr  6 10:19:17 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -229,8 +229,9 @@
 		(out (process-input-port proc)))
 	    (unwind-protect
 	       (comp out)
-	       (close-output-port out))
-	    (hop-verb 1 cmd "\n")
+	       (begin
+		  (hop-verb 1 cmd "\n")
+		  (close-output-port out)))
 	    (process-wait proc)
 	    (process-exit-status proc)))
       
