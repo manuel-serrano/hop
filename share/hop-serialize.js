@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Fri Apr  1 07:45:58 2016 (serrano)                */
+/*    Last change :  Mon Apr  4 08:16:35 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -1207,7 +1207,8 @@ function hop_bytearray_to_obj( s, extension ) {
       if( old_defining >= 0 ) {
 	 definitions[ old_defining ] = res;
       }
-      
+
+#if HOP_SCHEME
       clazz = sc_object_class( res );
 
       if( !(res instanceof sc_Object) || (hash === clazz.sc_hash) ) {
@@ -1215,6 +1216,9 @@ function hop_bytearray_to_obj( s, extension ) {
       } else {
 	 sc_error( "string->obj", "corrupted custom class", hash );
       }
+#else
+      return res;
+#endif      
    }
    
    function read_elong( sz ) {
@@ -1405,13 +1409,13 @@ var sc__class__ = sc_string2keyword( "__class__" );
 /*---------------------------------------------------------------------*/
 /*    hop_find_class_unserializer ...                                  */
 /*---------------------------------------------------------------------*/
-#if HOP_SCHEME
 function hop_find_class_unserializer( hash ) {
    var custom = hop_class_serializers[ hash ];
 
    if( custom ) {
       return custom.unserializer;
    } else {
+#if HOP_SCHEME
       return function( o ) {
 	 if( typeof( o ) === "string" ) {
 	    var m = o.match( hop_custom_object_regexp );
@@ -1420,7 +1424,6 @@ function hop_find_class_unserializer( hash ) {
 	       /* kind of specialized eval */
 	       return hop_create_encoded_element( m [ 1 ] );
 	    } else {
-	       console.log( "PAS KLASS.1=", o );
 	       return sc_error( "string->obj",
 				"Cannot find custom class ("
 				+ hash
@@ -1432,7 +1435,6 @@ function hop_find_class_unserializer( hash ) {
 	       hop_class_register_serializer( clazz, true, hop_plist2jsobject );
 	       return hop_find_class_unserializer( hash )( o );
 	    } else {
-	       console.log( "PAS KLASS=", o );
 	       return sc_error( "string->obj",
 				"Cannot find custom class ("
 				+ hash
@@ -1440,9 +1442,11 @@ function hop_find_class_unserializer( hash ) {
 	    }
 	 }
       }
+#else
+      throw "Cannot find unserializer " + hash;
+#endif
    }
 }
-#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_js_to_object ...                                             */
@@ -1549,6 +1553,7 @@ function hop_buffer( name, _ ) {
 /*    module exports                                                   */
 /*---------------------------------------------------------------------*/
 #if HOP_MODULES
+exports.eval = function( expr ) { return eval( expr ); };
 exports.hop_bigloo_serialize = hop_bigloo_serialize;
 exports.hop_arguments = HopArguments;
 #endif

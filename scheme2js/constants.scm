@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/constants.scm           */
+;*    serrano/prgm/project/hop/3.1.x/scheme2js/constants.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-11                                           */
-;*    Last change :  Fri Aug  9 12:01:53 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Wed Apr  6 07:05:05 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file is part of Scheme2Js.                                  */
 ;*=====================================================================*/
@@ -129,7 +129,7 @@
 		 #t)
 		(else (loop (+ i 1)))))))
    (define (long-enough-string? v)
-      (>fx (string-length v) 15))
+      (>fx (string-length v) 80))
    
    (with-access::Const this (value)
       (if (or (and (pair? value)
