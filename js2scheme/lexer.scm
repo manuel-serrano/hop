@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Mar 25 18:53:06 2016 (serrano)                */
+;*    Last change :  Wed Apr  6 11:35:06 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -639,7 +639,8 @@
 		     (nonsep (or (out lt) e2))
 		     (escape (: #\\ nonsep))
 		     (range (: #\[ (* (or (out lt #\]) e2)) #\]))
-		     (regexp (* (or (out #\/ #\\ #\[ lt) e2 escape range))))
+		     (start (+ (or (out #\/ #\* #\\ #\[ lt) escape range)))
+		     (regexp (: start (* (or (out #\/ #\\ #\[ lt) e2 escape range)))))
       ((: regexp "/" (+ (in "igm")))
        (let* ((s (the-string))
 	      (l (the-length))
