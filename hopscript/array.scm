@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jan  1 10:22:06 2016 (serrano)                */
+;*    Last change :  Wed Apr  6 08:37:55 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1573,6 +1573,44 @@
 ;*    js-get ::JsArray ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsArray p %this)
+   (with-access::JsArray o (vec properties)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((not (js-isindex? i))
+	     (call-next-method))
+	    ((and (vector? vec)
+		  (<uint32 i (vector-length vec))
+		  (<uint32 i (js-get o 'length %this)))
+	     (let ((v (u32vref vec i)))
+		(if (eq? v (js-absent))
+		    (call-next-method)
+		    v)))
+	    (else
+	     (call-next-method))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-name/cache-miss ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-name/cache-miss o::JsArray p::obj cache::JsPropertyCache throw %this)
+   (with-access::JsArray o (vec properties)
+      (let ((i::uint32 (js-toindex p)))
+	 (cond
+	    ((not (js-isindex? i))
+	     (call-next-method))
+	    ((and (vector? vec)
+		  (<uint32 i (vector-length vec))
+		  (<uint32 i (js-get o 'length %this)))
+	     (let ((v (u32vref vec i)))
+		(if (eq? v (js-absent))
+		    (call-next-method)
+		    v)))
+	    (else
+	     (call-next-method))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-lookup ...                                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-lookup o::JsArray p::obj cache::JsPropertyCache throw %this)
    (with-access::JsArray o (vec properties)
       (let ((i::uint32 (js-toindex p)))
 	 (cond

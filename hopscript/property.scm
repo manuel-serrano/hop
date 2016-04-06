@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 18 11:41:53 2016 (serrano)                */
+;*    Last change :  Wed Apr  6 08:42:43 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -52,7 +52,8 @@
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-get-name/cache ::obj ::symbol ::JsPropertyCache ::JsGlobalObject)
-	   (js-get-name/cache-miss ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
+	   (generic js-get-lookup ::JsObject ::obj ::JsPropertyCache throw ::JsGlobalObject)
+	   (generic js-get-name/cache-miss ::JsObject ::obj ::JsPropertyCache ::obj ::JsGlobalObject)
 	   
 	   (js-can-put o::JsObject ::symbol ::JsGlobalObject)
 	   (js-unresolved-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
@@ -689,7 +690,7 @@
 ;*    symbol), it is never used to access indexed object. Hence,       */
 ;*    it does not need to be generic function.                         */
 ;*---------------------------------------------------------------------*/
-(define (js-get-lookup obj::JsObject name::symbol cache::JsPropertyCache throw %this)
+(define-generic (js-get-lookup obj::JsObject name cache::JsPropertyCache throw %this)
    (let loop ((owner obj))
       (jsobject-find owner name
 	 ;; map search
@@ -755,7 +756,7 @@
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-get-name/cache-miss obj::JsObject name::symbol cache::JsPropertyCache throw %this)
+(define-generic (js-get-name/cache-miss obj::JsObject name cache::JsPropertyCache throw %this)
    (let loop ((owner obj))
       (with-access::JsObject owner ((omap cmap) elements __proto__)
 	 (with-access::JsPropertyCache cache (cmap index)

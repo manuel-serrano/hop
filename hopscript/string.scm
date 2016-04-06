@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec 28 10:26:20 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Fri Mar 25 17:59:50 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -1030,6 +1030,7 @@
 	     (let* ((val (js-jsstring->string val))
 		    (len (utf8-string-length val))
 		    (index (uint32->fixnum index)))
+		(tprint "val=" (string-for-read val) " len=" len " idx=" index)
 		(if (<=fx len index)
 		    (call-next-method)
 		    (js-string-ref val index)))))))

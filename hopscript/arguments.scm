@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Aug 21 16:39:29 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Wed Apr  6 08:41:23 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
 ;*=====================================================================*/
@@ -310,6 +310,18 @@
 	    (else
 	     (call-next-method))))))
        
+;*---------------------------------------------------------------------*/
+;*    js-get-lookup ...                                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-lookup o::JsArguments p::obj cache::JsPropertyCache throw %this)
+   (js-get o p %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-name/cache-miss ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-name/cache-miss o::JsArguments p::obj cache::JsPropertyCache throw %this)
+   (js-get o p %this))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-arguments ...                                                 */
 ;*    -------------------------------------------------------------    */
