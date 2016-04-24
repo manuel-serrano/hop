@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Dec 30 19:59:17 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Tue Apr 19 07:44:11 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -1365,6 +1365,7 @@
 		    (field-str (format "~a" (cdr field))))
 		(if (or (eq? key 'ID)
 			(eq? key 'RESERVED)
+			(eq? key 'service)
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
 			     (loc (token-loc ignore))
@@ -1825,7 +1826,7 @@
       (define (property-name)
 	 (case (peek-token-type)
 	    ;; IDs are automatically transformed to strings.
-	    ((ID RESERVED)
+	    ((ID RESERVED service)
 	     (let ((token (consume-any!)))
 		(case (token-value token)
 		   ((get set)
@@ -1927,7 +1928,7 @@
 	    (case name
 	       ((get set)
 		(case (peek-token-type)
-		   ((ID RESERVED)
+		   ((ID RESERVED service)
 		    (property-accessor tokname name props))
 		   ((:)
 		    (let* ((ignore (consume-any!))
