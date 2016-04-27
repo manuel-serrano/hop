@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sun Apr  3 08:03:01 2016 (serrano)                */
+;*    Last change :  Tue Apr 26 19:05:20 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -61,7 +61,7 @@
 	      (connection::symbol (default 'keep-alive))
 	      (authorization (default #f))
 	      (connection-timeout::int (default 0)))
-	   
+
 	   (final-class http-server-request::http-request
 	      (service::obj (default #unspecified)))
 	   

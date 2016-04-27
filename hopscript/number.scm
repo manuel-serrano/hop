@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Mar 24 19:21:18 2016 (serrano)                */
+;*    Last change :  Mon Apr 25 07:31:10 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -55,7 +55,10 @@
 	   (js-bitand left right ::JsGlobalObject)
 	   (js-bitor left right ::JsGlobalObject)
 	   (js-bitxor left right ::JsGlobalObject)
-	   (js-bitnot expr ::JsGlobalObject)))
+	   (js-bitnot expr ::JsGlobalObject)
+
+	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
+	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -232,41 +235,29 @@
       :configurable #t
       :enumerable #f)
 
+   (define (js-cast-number this)
+      (cond
+	 ((number? this) this)
+	 ((isa? this JsNumber) (with-access::JsNumber this (val) val))
+	 (else (js-raise-type-error %this "Not a number ~a" this))))
+   
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.2
-   (define (js-number-to-string this #!optional (radix (js-undefined)))
-      (if (not (isa? this JsNumber))
-	  (js-raise-type-error %this "Not a number ~s" (typeof this))
-	  (with-access::JsNumber this (val)
-	     (let ((r (if (eq? radix (js-undefined))
-			  10
-			  (js-tointeger radix %this))))
-		(cond
-		   ((or (< r 2) (> r 36))
-		    (js-raise-range-error %this "Radix out of range: ~a" r))
-		   ((and (flonum? val) (nanfl? val))
-		    (js-string->jsstring "NaN"))
-		   ((= val +inf.0)
-		    (js-string->jsstring "Infinity"))
-		   ((= val -inf.0)
-		    (js-string->jsstring "-Infinity"))
-		   ((or (= r 10) (= r 0))
-		    (js-tojsstring val %this))
-		   (else
-		    (js-string->jsstring (number->string val r))))))))
+   (define (js-number-tostring this #!optional (radix (js-undefined)))
+      (js-jsnumber-tostring (js-cast-number this) radix %this))
 
    (js-bind! %this obj 'toString
-      :value (js-make-function %this js-number-to-string 2 'toString)
+      :value (js-make-function %this js-number-tostring 2 'toString)
       :writable #t
       :configurable #t
       :enumerable #f)
 
    ;; toLocaleString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.3
-   (define (js-number-to-localestring this #!optional (radix (js-undefined)))
-      (js-number-to-string this radix))
+   (define (js-number-tolocalestring this #!optional (radix (js-undefined)))
+      (js-number-tostring this radix))
 
    (js-bind! %this obj 'toLocaleString
-      :value (js-make-function %this js-number-to-localestring 2 'toLocaleString)
+      :value (js-make-function %this js-number-tolocalestring 2 'toLocaleString)
       :writable #t
       :configurable #t
       :enumerable #f)
@@ -274,11 +265,7 @@
    ;; valueOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.4
    (define (js-number-valueof this)
-      (if (not (isa? this JsNumber))
-	  (js-raise-type-error %this
-	     "Not a number ~s" (js-tostring this %this))
-	  (with-access::JsNumber this (val)
-	     val)))
+      (js-cast-number this))
 
    (js-bind! %this obj 'valueOf
       :value (js-make-function %this js-number-valueof 0 'valueOf)
@@ -294,51 +281,48 @@
 	 (if (>= val 0)
 	     (js-string->jsstring s)
 	     (js-string->jsstring (string-append "-" s))))
-
-      (if (not (isa? this JsNumber))
-	  (js-raise-type-error %this
-	     "Not a number ~s" (js-tostring this %this))
-	  (let ((f (if (eq? fractiondigits (js-undefined))
-		       0
-		       (js-tointeger fractiondigits %this))))
-	     (if (or (< f 0) (> f 20))
-		 (js-raise-range-error %this
-		    "Fraction digits out of range: ~a" f)
-		 (with-access::JsNumber this (val)
-		    (if (and (flonum? val) (nanfl? val))
-			(js-string->jsstring "NaN")
-			(let ((x (abs val))
-			      (f (->fixnum f)))
-			   (if (>= x (exptfl 10. 21.))
-			       (signed val (js-tostring x %this))
-			       (let ((n (round x)))
-				  (cond
-				     ((= n 0)
-				      (signed val
-					 (if (= f 0)
-					     "0"
-					     (let* ((d (- x n))
-						    (m (inexact->exact (round (* d (expt 10 f)))))
-						    (s (integer->string m))
-						    (l (string-length s)))
-						(cond
-						   ((>fx l f)
-						    (string-append "0." (substring s 0 f)))
-						   ((=fx l f)
-						    (string-append "0." s))
-						   (else
-						    (string-append "0." s (make-string f #\0))))))))
-				     ((= f 0)
-				      (signed val (number->string n)))
-				     (else
-				      (let* ((m (inexact->exact
-						   (round (* x (expt 10 f)))))
-					     (s (integer->string m))
-					     (l (string-length s)))
-					 (signed val
-					    (string-append (substring s 0 (-fx l f))
-					       "."
-					       (substring s (-fx l f))))))))))))))))
+      
+      (let ((val (js-cast-number this)))
+	 (let ((f (if (eq? fractiondigits (js-undefined))
+		      0
+		      (js-tointeger fractiondigits %this))))
+	    (if (or (< f 0) (> f 20))
+		(js-raise-range-error %this
+		   "Fraction digits out of range: ~a" f)
+		(if (and (flonum? val) (nanfl? val))
+		    (js-string->jsstring "NaN")
+		    (let ((x (abs val))
+			  (f (->fixnum f)))
+		       (if (>= x (exptfl 10. 21.))
+			   (signed val (js-tostring x %this))
+			   (let ((n (round x)))
+			      (cond
+				 ((= n 0)
+				  (signed val
+				     (if (= f 0)
+					 "0"
+					 (let* ((d (- x n))
+						(m (inexact->exact (round (* d (expt 10 f)))))
+						(s (integer->string m))
+						(l (string-length s)))
+					    (cond
+					       ((>fx l f)
+						(string-append "0." (substring s 0 f)))
+					       ((=fx l f)
+						(string-append "0." s))
+					       (else
+						(string-append "0." s (make-string f #\0))))))))
+				 ((= f 0)
+				  (signed val (number->string n)))
+				 (else
+				  (let* ((m (inexact->exact
+					       (round (* x (expt 10 f)))))
+					 (s (integer->string m))
+					 (l (string-length s)))
+				     (signed val
+					(string-append (substring s 0 (-fx l f))
+					   "."
+					   (substring s (-fx l f)))))))))))))))
 
    (js-bind! %this obj 'toFixed
       :value (js-make-function %this js-number-tofixed 1 'toFixed)
@@ -760,6 +744,40 @@
 (define (js-bitnot expr %this)
    (let ((num (int32->elong (js-toint32 expr %this))))
       (int32->integer (elong->int32 (bit-notelong num)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsnumber-tostring ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-jsnumber-tostring val radix %this)
+   (let ((r (if (eq? radix (js-undefined))
+		10
+		(js-tointeger radix %this))))
+      (cond
+	 ((or (< r 2) (> r 36))
+	  (js-raise-range-error %this "Radix out of range: ~a" r))
+	 ((and (flonum? val) (nanfl? val))
+	  (js-string->jsstring "NaN"))
+	 ((= val +inf.0)
+	  (js-string->jsstring "Infinity"))
+	 ((= val -inf.0)
+	  (js-string->jsstring "-Infinity"))
+	 ((or (= r 10) (= r 0))
+	  (js-tojsstring val %this))
+	 (else
+	  (js-string->jsstring (number->string val r))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsnumber-maybe-tostring ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-jsnumber-maybe-tostring this radix %this)
+   (let loop ((this this))
+      (cond
+	 ((number? this)
+	  (js-jsnumber-tostring this radix %this))
+	 ((isa? this JsObject)
+	  (js-call1 %this (js-get this 'toString %this) this radix))
+	 (else
+	  (loop (js-toobject %this this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */

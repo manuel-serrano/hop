@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Mar  9 13:57:49 2016 (serrano)                */
+;*    Last change :  Tue Apr 19 08:44:22 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -56,6 +56,12 @@
 ;*    env ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define-struct env cnt list table inits-table)
+
+;*---------------------------------------------------------------------*/
+;*    env-list-ref ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (env-list-ref env n)
+   (list-ref (env-list env) (-fx (env-cnt env) (+fx n 1))))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-env! ...                                                     */
@@ -166,7 +172,7 @@
 				   (else
 				    #f)))))
 		     inits)))
-	 (if (every (lambda (x) x) keys)
+	 (if (and (pair? keys) (every (lambda (x) x) keys))
 	     ;; constant cmap
 	     (let ((n (add-cmap! loc (list->vector keys) env)))
 		(set! cmap
@@ -174,6 +180,6 @@
 		      (type 'obj)
 		      (loc loc)
 		      (index n)
-		      (val (car (env-list env)))))
+		      (val (env-list-ref env n))))
 		this)
 	     (call-next-method)))))

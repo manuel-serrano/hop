@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/websocket.scm             */
+;*    serrano/prgm/project/hop/3.1.x/runtime/websocket.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Dec 24 07:44:02 2015 (serrano)                */
-;*    Copyright   :  2012-15 Manuel Serrano                            */
+;*    Last change :  Wed Apr  6 16:47:30 2016 (serrano)                */
+;*    Copyright   :  2012-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
 ;*=====================================================================*/
@@ -293,7 +293,7 @@
 	     (subprotocol (websocket-subprotocol protocol clientprotocol)))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (with-trace 'websocket "ws-register"
+	 (with-trace 'websocket "websocket-server-response"
 	    (trace-item "version="
 	       version)
 	    (trace-item "origin="

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 27 13:16:54 2016                          */
-;*    Last change :  Sun Mar 27 19:04:27 2016 (serrano)                */
+;*    Last change :  Sun Apr 24 07:20:56 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Let fusion merges J2SBlock with variable decarations and         */
@@ -59,7 +59,7 @@
 	     (when (pair? vdecls)
 		;; merge the decls into the j2sletblock
 		(with-access::J2SLetBlock (car lnodes) (decls)
-		   (set! decls (append vdecls decls))
+		   (set! decls (append (reverse! vdecls) decls))
 		   (for-each (lambda (decl)
 				(with-access::J2SDecl decl (scope)
 				   (set! scope 'letblock)))

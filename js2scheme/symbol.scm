@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon Mar 28 10:45:16 2016 (serrano)                */
+;*    Last change :  Mon Apr 25 09:58:54 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -195,8 +195,8 @@
       (with-access::J2SDecl d (id)
 	 (not (find-decl id params))))
 
-   (with-access::J2SFun this (body params loc (fmode mode) params decl)
-      (let ((id (j2sfun-id this)))
+   (with-access::J2SFun this (body params loc (fmode mode) params decl name)
+      (let ((id (or name (j2sfun-id this))))
 	 ;; check parameter correctness
 	 (if (eq? fmode 'normal)
 	     (nonstrict-params! params)
@@ -281,8 +281,30 @@
 ;*    resolve! ::J2SBlock ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SBlock env mode withs wenv lang)
+
+;*    (define (blockify-vardecls::pair-nil nodes::pair-nil endloc)     */
+;*       ;; should be re-written without allocating new lists          */
+;*       (let loop ((nodes nodes)                                      */
+;* 		 (in-block #t))                                        */
+;* 	 (cond                                                         */
+;* 	    ((null? nodes)                                             */
+;* 	     nodes)                                                    */
+;* 	    ((isa? (car nodes) J2SVarDecls)                            */
+;* 	     (if in-block                                              */
+;* 		 (cons (car nodes) (loop (cdr nodes) #t))              */
+;* 		 (let* ((rest (loop (cdr nodes) #t))                   */
+;* 			(block (with-access::J2SVarDecls (car nodes) (loc) */
+;* 				  (instantiate::J2SBlock               */
+;* 				     (loc loc)                         */
+;* 				     (endloc loc)                      */
+;* 				     (nodes (cons (car nodes) rest)))))) */
+;* 		    (list block))))                                    */
+;* 	    (else                                                      */
+;* 	     (cons (car nodes) (loop (cdr nodes) #f))))))              */
+
    ;; a block is a letrec if it contains let or const declaration
-   (with-access::J2SBlock this (nodes)
+   (with-access::J2SBlock this (nodes endloc)
+;*       (set! nodes (blockify-vardecls nodes endloc))                 */
       (let ((ldecls (collect-let nodes)))
 	 (if (pair? ldecls)
 	     (resolve-let! this env mode withs wenv ldecls lang)

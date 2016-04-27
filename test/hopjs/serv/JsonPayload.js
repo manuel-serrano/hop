@@ -30,7 +30,9 @@ service getPayloadWSBase64( o ) {
 }
 
 var url = util.format( 'http://%s:%s/hop/getPayloadWebService', hop.hostname, hop.port );
+console.log( "URLxxx=", "[" + url + "]" );
 var webService = hop.webService( url );
+
 
 var webServiceBase64 = hop.webService(
    util.format( 'http://%s:%s/hop/getPayloadWSBase64',

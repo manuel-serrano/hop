@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Mar 28 10:44:51 2016 (serrano)                */
+;*    Last change :  Tue Apr 26 09:06:06 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -18,6 +18,7 @@
 	   __js2scheme_stage)
 
    (export j2s-dump-stage
+	   (j2s-dump-decls::obj ::obj)
 	   (generic j2s->list ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -29,6 +30,29 @@
       (comment "Dump the AST for debug")
       (proc j2s-dump)
       (optional #t)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-dump-decls ...                                               */
+;*---------------------------------------------------------------------*/
+(define (j2s-dump-decls decls)
+   
+   (define (dump-decl d)
+      (cond
+	 ((isa? d J2SDecl)
+	  (with-access::J2SDecl d (id key)
+	     (cons (format "~a[~a]" id key) (typeof d))))
+	 ((isa? d J2SInit)
+	  (with-access::J2SInit d (lhs)
+	     (with-access::J2SRef lhs (decl)
+		(with-access::J2SDecl decl (id key)
+		   (cons (format "~a[~a]" id key) (typeof d))))))
+	 (else
+	  (typeof d))))
+   
+   (cond
+      ((pair? decls) (map dump-decl decls))
+      ((null? decls) '())
+      (else (dump-decl decls))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-dump ::obj ...                                               */
@@ -183,19 +207,25 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
    (with-access::J2SFun this (name params body decl mode rettype
-				need-bind-exit-return)
+				need-bind-exit-return idthis)
       (cond
 	 ((or (isa? decl J2SDeclFun) (isa? decl J2SDeclFunCnst))
-	  (with-access::J2SDecl decl (key)
-	     `(,@(call-next-method) :key ,key
+	  (with-access::J2SDecl decl (key usage)
+	     `(,@(call-next-method) :name ,name :decl ,key
+		 ,@(if (>= (bigloo-debug) 3)
+		       `(:idthis ,idthis) '())
 		 ,@(if (>= (bigloo-debug) 2)
 		       `(:rettype ,rettype) '())
+		 ,@(if (>= (bigloo-debug) 3)
+		       `(:usage ,usage) '())
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
 		 :mode ,mode
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
-	  `(,@(call-next-method) :decl ,(j2s->list decl)
+	  `(,@(call-next-method) :name ,name :decl ,(j2s->list decl)
+	      ,@(if (>= (bigloo-debug) 3)
+		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 2)
 		    `(:rettype ,rettype) '())
 	      ,@(if (>= (bigloo-debug) 3)
@@ -204,6 +234,8 @@
 	      ,(map j2s->list params) ,(j2s->list body)))
 	 (else
 	  `(,@(call-next-method) :name ,name
+	      ,@(if (>= (bigloo-debug) 3)
+		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 2)
 		    `(:rettype ,rettype) '())
 	      ,@(if (>= (bigloo-debug) 3)
@@ -361,8 +393,10 @@
 ;*    j2s->list ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCall)
-   (with-access::J2SCall this (fun args type)
-      `(,@(call-next-method) ,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+   (with-access::J2SCall this (fun args type this)
+      `(,@(call-next-method)
+	  ,@(if (>= (bigloo-debug) 2) `(:type ,type) '())
+	  ,@(if (>=fx (bigloo-debug) 3) `(:this ,this) '())
 	  ,(j2s->list fun) ,@(map j2s->list args))))
 		  
 ;*---------------------------------------------------------------------*/

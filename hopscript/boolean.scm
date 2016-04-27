@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/boolean.scm             */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/boolean.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Nov 12 10:50:21 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Mon Apr 25 07:32:56 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
 ;*    -------------------------------------------------------------    */
@@ -132,6 +132,13 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.6.3.1     */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-boolean-prototype! %this::JsGlobalObject js-boolean obj)
+
+   (define (js-cast-boolean this)
+      (cond
+	 ((boolean? this) this)
+	 ((isa? this JsBoolean) (with-access::JsBoolean this (val) val))
+	 (else (js-raise-type-error %this "Not a boolean ~a" this))))
+   
    ;; prototype fields
    (js-bind! %this obj 'constructor
       :value js-boolean
@@ -140,13 +147,10 @@
    (js-bind! %this obj 'toString
       :value (js-make-function %this
 		(lambda (this)
-		   (if (isa? this JsBoolean)
-		       (with-access::JsBoolean this (val)
-			  (if val
-			      (js-string->jsstring "true")
-			      (js-string->jsstring "false")))
-		       (js-raise-type-error %this "not a boolean"
-			  (typeof this))))
+		   (let ((val (js-cast-boolean this)))
+		      (if val
+			  (js-string->jsstring "true")
+			  (js-string->jsstring "false"))))
 		0
 		'toString)
       :enumerable #f)
@@ -154,10 +158,7 @@
    (js-bind! %this obj 'valueOf
       :value (js-make-function %this
 		(lambda (this)
-		   (if (isa? this JsBoolean)
-		       (with-access::JsBoolean this (val) val)
-		       (js-raise-type-error %this "not a boolean"
-			  (typeof this))))
+		   (js-cast-boolean this))
 		0 'valueOf)
       :enumerable #f))
       

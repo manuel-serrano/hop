@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Mon Apr  4 08:23:26 2016 (serrano)                */
+/*    Last change :  Wed Apr  6 19:24:38 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -13,6 +13,9 @@
 /*    Global parameters                                                */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
+var hop_config = {
+   uint8array: false
+}
 #if HOP_RTS_DEBUG
 var sc_context = null;
 #endif
@@ -74,6 +77,22 @@ sc_InputPort.prototype.hop_typeof = function() {
 sc_Char.prototype.hop_typeof = function() {
    return "bchar";
 };
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    hop_plist2jsobject ...                                           */
+/*---------------------------------------------------------------------*/
+#if HOP_NOBROWSER
+function hop_plist2jsobject( plist ) {
+   var o = {};
+
+   while( sc_isPair( plist ) ) {
+      o[ sc_keyword2string( plist.__hop_car ) ] = plist.__hop_cdr.__hop_car;
+      plist = plist.__hop_cdr.__hop_cdr;
+   }
+
+   return o;
+}
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -248,12 +267,9 @@ function sc_string2symbol( s ) {
    return sc_SYMBOL_PREFIX + s;
 }
 
-
-#if HOP_RTS_DEBUG
 function sc_jsstring2symbol( s ) {
    return sc_SYMBOL_PREFIX + s;
 }
-#endif
 
 function sc_isKeyword( s ) {
    return (typeof s === "string") && (s.charAt(0) === sc_KEYWORD_PREFIX);
@@ -264,6 +280,9 @@ function sc_keyword2string( s ) {
 }
 
 function sc_string2keyword( s ) {
+   return sc_KEYWORD_PREFIX + s;
+}
+function sc_jsstring2keyword( s ) {
    return sc_KEYWORD_PREFIX + s;
 }
 #endif

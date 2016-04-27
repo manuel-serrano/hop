@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Mar 29 08:46:03 2016 (serrano)                */
+;*    Last change :  Mon Apr 25 07:11:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -136,6 +136,8 @@
 	  (js-new0 %this f))
 	 ((1)
 	  (js-new1 %this f (car args)))
+	 ((2)
+	  (js-new2 %this f (car args) (cadr args)))
 	 (else
 	  (let* ((o (alloc f))
 		 (r (js-apply% %this f construct o args)))
@@ -203,16 +205,18 @@
 
 (define (js-new2 %this f a0 a1)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc name)
-	  (let ((o (alloc f)))
-	     ;; CARE ARITY
-	     (let ((r (js-call2% %this f construct o a0 a1)))
-		(js-new-return f r o))))
+       (with-access::JsFunction f (constructor construct alloc name)
+	  (if constructor
+	      (constructor f a0 a1)
+	      (let ((o (alloc f)))
+		 ;; CARE ARITY
+		 (let ((r (js-call2% %this f construct o a0 a1)))
+		    (js-new-return f r o)))))
        (js-raise-type-error %this "new: object is not a function ~s" f)))
 
 (define (js-new3 %this f a0 a1 a2)
    (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc name)
+       (with-access::JsFunction f (constructor construct alloc name)
 	  (let ((o (alloc f)))
 	     ;; CARE ARITY
 	     (let ((r (js-call3% %this f construct o a0 a1 a2)))
@@ -945,8 +949,6 @@
 	     (js-toindex num))))
 
    (cond
-      ((uint32? p)
-       p)
       ((fixnum? p)
        (cond-expand
 	  (bint30
@@ -972,6 +974,8 @@
 	      (else
 	       (flonum->uint32 p)))
 	   false))
+      ((uint32? p)
+       p)
       ((isa? p JsNumber)
        (with-access::JsNumber p (val) (js-toindex val)))
       ((js-jsstring? p)
@@ -1312,8 +1316,10 @@
        (js-jsstring->string obj))
       ((symbol? obj)
        (symbol->string! obj))
+      ((number? obj)
+       (number->string obj))
       (else
-       (typeof obj))))
+       (js-jsstring->string (js-tostring obj %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-raise-type-error ...                                          */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Thu Mar  3 07:56:07 2016 (serrano)                */
+/*    Last change :  Tue Apr 12 08:03:44 2016 (serrano)                */
 /*    Copyright   :  2006-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -107,6 +107,7 @@ function dom_set_child_node( parent, node ) {
 /*---------------------------------------------------------------------*/
 /*    dom_node_elementp ...                                            */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-element?)
            (peephole (postfix ".nodeType == 1"))
            (arity #t))
@@ -114,10 +115,12 @@ function dom_set_child_node( parent, node ) {
 function dom_node_elementp( node ) {
    return node.nodeType == 1;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_textp ...                                               */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-text?)
            (peephole (postfix ".nodeType == 3"))
            (arity #t))
@@ -125,10 +128,12 @@ function dom_node_elementp( node ) {
 function dom_node_textp( node ) {
    return node.nodeType == 3;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_documentp ...                                           */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-document?)
            (peephole (postfix ".nodeType == 9"))
            (arity #t))
@@ -136,10 +141,12 @@ function dom_node_textp( node ) {
 function dom_node_documentp( node ) {
    return node.nodeType == 9;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_commentp ...                                            */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-comment?)
            (peephole (postfix ".nodeType == 8"))
            (arity #t))
@@ -147,10 +154,12 @@ function dom_node_documentp( node ) {
 function dom_node_commentp( node ) {
    return node.nodeType == 8;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_document_fragmentp ...                                  */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-document-fragment?)
            (peephole (postfix ".nodeType == 11"))
            (arity #t))
@@ -158,10 +167,12 @@ function dom_node_commentp( node ) {
 function dom_node_document_fragmentp( node ) {
    return node.nodeType == 11;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_node_document_attrp ...                                      */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 /*** META ((export dom-node-attr?)
            (peephole (postfix ".nodeType == 2"))
            (arity #t))
@@ -169,6 +180,7 @@ function dom_node_document_fragmentp( node ) {
 function dom_node_document_attrp( node ) {
    return node.nodeType == 2;
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    dom_create ...                                                   */
@@ -362,6 +374,7 @@ function hop_dom_create( tag, args ) {
 /*---------------------------------------------------------------------*/
 /*    dom_add_head_script ...                                          */
 /*---------------------------------------------------------------------*/
+#if HOP_SCHEME
 function dom_add_head_script( pathname, id ) {
    var head = document.getElementsByTagName( "head" )[ 0 ];
    var script = document.createElement( 'script' );
@@ -373,6 +386,7 @@ function dom_add_head_script( pathname, id ) {
    
    head.appendChild( script );
 }
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_create_lframe ...                                            */
@@ -1518,6 +1532,14 @@ document.getElementsByAttribute = function( name, value ) {
 #endif
 
 /*---------------------------------------------------------------------*/
+/*    hop_add_reactive_attribute ...                                   */
+/*---------------------------------------------------------------------*/
+function hop_add_reactive_attribute( id, value ) {
+   hop_add_event_listener( id, "ready", function( e ) {
+   } );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hop_node_eval ...                                                */
 /*---------------------------------------------------------------------*/
 /*** META ((export dom-node-eval) (arity #t)) */
@@ -1730,7 +1752,6 @@ function hop_innerHTML_set( nid, html ) {
 /*---------------------------------------------------------------------*/
 /*    hop_style_attribute_set ...                                      */
 /*---------------------------------------------------------------------*/
-#if HOP_SCHEME
 function hop_style_attribute_set( obj, val ) {
    if( (typeof val == "string") || (val instanceof String) ) {
       while( val.length > 1 ) {
@@ -1749,7 +1770,6 @@ function hop_style_attribute_set( obj, val ) {
       }
    }
 }
-#endif
 
 /*---------------------------------------------------------------------*/
 /*    hop_element_x ...                                                */

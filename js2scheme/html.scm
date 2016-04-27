@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/html.scm                */
+;*    serrano/prgm/project/hop/3.0.x/js2scheme/html.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Thu Feb 11 08:55:15 2016 (serrano)                */
+;*    Last change :  Mon Apr 18 20:58:49 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -547,7 +547,7 @@
 			 (val key)))
 		(val (instantiate::J2SString
 			(loc loc)
-			(val key))))
+			(val ""))))
 	     (instantiate::J2SDataPropertyInit
 		(loc loc)
 		(name name)

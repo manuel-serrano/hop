@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Mar 25 20:37:50 2016 (serrano)                */
+;*    Last change :  Sun Apr 24 17:50:05 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -35,6 +35,8 @@
 	   (nodejs-eval ::JsGlobalObject ::JsObject)
 	   (nodejs-function ::JsGlobalObject ::JsObject)
 	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)))
+
+;;(define-macro (bigloo-debug) 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */

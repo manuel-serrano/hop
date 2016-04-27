@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Mar 18 08:19:04 2016 (serrano)                */
+;*    Last change :  Sun Apr 24 13:14:37 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -691,7 +691,8 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (js-string->jsstring (string-utf8-normalize-utf16 data start end))))
+	       (js-string->jsstring
+		  (string-utf8-normalize-utf16 data start end))))
 	 2 "utf8Slice")
       #f %this)
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Mar 28 10:23:46 2016 (serrano)                */
+;*    Last change :  Mon Apr 18 18:23:25 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -92,7 +92,7 @@
 		    (cons sep (loop (cdr nodes)))))))))
 				
 ;*---------------------------------------------------------------------*/
-;*    j2s-js*/beforeeend ...                                           */
+;*    j2s-js-ellipsis ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-js-ellipsis this::J2SNode start end sep ellipsis nodes tildec dollarc mode evalp conf)
    (cond
@@ -276,41 +276,36 @@
 		'(");")))))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-js ::J2SFun ...                                              */
+;*    j2s-js-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-js this::J2SFun tildec dollarc mode evalp conf)
+(define (j2s-js-fun this::J2SFun tildec dollarc mode evalp conf funid)
    
    (define (merge-blocks this::J2SBlock)
-      (with-access::J2SBlock this (nodes)
-	 ;; check the pattern (j2sblock decl decl ... decl j2sletblock)
-	 (let loop ((lnodes nodes)
-		    (vdecls '()))
-	    (cond
-	       ((null? lnodes)
-		this)
-	       ((isa? (car lnodes) J2SDecl)
-		(loop (cdr lnodes) (cons (car lnodes) vdecls)))
-	       ((isa? (car lnodes) J2SLetBlock)
-		(when (pair? vdecls)
-		   ;; merge the decls into the j2sletblock
-		   (with-access::J2SLetBlock (car lnodes) (decls)
-		      (for-each (lambda (decl)
-				   (when (isa? decl J2SDeclFun)
-				      (with-access::J2SDeclFun decl (scope)
-					 (set! scope 'letblock))))
-			 vdecls)
-		      (set! decls (append vdecls decls))))
-		(with-access::J2SLetBlock (car lnodes) (nodes)
-		   (set! nodes (append nodes (cdr lnodes))))
-		(car lnodes))
-	       (else
-		this)))))
-   
-   (define (fun-id this)
-      (with-access::J2SFun this (decl)
-	 (if (isa? decl J2SDecl)
-	     (j2s-js-id decl)
-	     "")))
+      this)
+;*       (with-access::J2SBlock this (nodes)                           */
+;* 	 ;; check the pattern (j2sblock decl decl ... decl j2sletblock) */
+;* 	 (let loop ((lnodes nodes)                                     */
+;* 		    (vdecls '()))                                      */
+;* 	    (cond                                                      */
+;* 	       ((null? lnodes)                                         */
+;* 		this)                                                  */
+;* 	       ((isa? (car lnodes) J2SDecl)                            */
+;* 		(loop (cdr lnodes) (cons (car lnodes) vdecls)))        */
+;* 	       ((isa? (car lnodes) J2SLetBlock)                        */
+;* 		(when (pair? vdecls)                                   */
+;* 		   ;; merge the decls into the j2sletblock             */
+;* 		   (with-access::J2SLetBlock (car lnodes) (decls)      */
+;* 		      (for-each (lambda (decl)                         */
+;* 				   (when (isa? decl J2SDeclFun)        */
+;* 				      (with-access::J2SDeclFun decl (scope) */
+;* 					 (set! scope 'letblock))))     */
+;* 			 vdecls)                                       */
+;* 		      (set! decls (append vdecls decls))))             */
+;* 		(with-access::J2SLetBlock (car lnodes) (nodes)         */
+;* 		   (set! nodes (append nodes (cdr lnodes))))           */
+;* 		(car lnodes))                                          */
+;* 	       (else                                                   */
+;* 		this)))))                                              */
    
    (with-access::J2SFun this (params body idthis vararg generator)
       (let ((body (merge-blocks body))
@@ -326,7 +321,7 @@
 		   '(")"))))
 	    ((not generator)
 	     ;; a regular function
-	     (cons* this (format "function ~a" (fun-id this))
+	     (cons* this (format "function ~a" funid)
 		(append
 		   (j2s-js-ellipsis this "(" ")" "," ellipsis
 		      params tildec dollarc mode evalp conf)
@@ -334,7 +329,7 @@
 		   '("\n"))))
 	    ((not (eq? (config-get conf :target) 'es5))
 	     ;; a generator, for es6
-	     (cons* this (format "function *~a" (fun-id this))
+	     (cons* this (format "function *~a" funid)
 		(append
 		   (j2s-js-ellipsis this "(" ")" "," ellipsis
 		      params tildec dollarc mode evalp conf)
@@ -343,7 +338,7 @@
 	    (else
 	     ;; a generator, for es5
 	     (let ((predecls (collect-generator-predecls! body)))
-		(cons* this (format "function ~a" (fun-id this))
+		(cons* this (format "function ~a" funid)
 		   (append
 		      (j2s-js-ellipsis this "(" ")" "," ellipsis
 			 params tildec dollarc mode evalp conf)
@@ -354,6 +349,19 @@
 		      '("var $GEN=new hop.Generator(function(_$v,_$e)")
 		      (j2s-js body tildec dollarc mode evalp conf)
 		      '(");return $GEN;}\n")))))))))
+   
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SFun ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SFun tildec dollarc mode evalp conf)
+
+   (define (fun-id this)
+      (with-access::J2SFun this (decl)
+	 (if (isa? decl J2SDecl)
+	     (j2s-js-id decl)
+	     "")))
+
+   (j2s-js-fun this tildec dollarc mode evalp conf (fun-id this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-generator-predecls! ...                                  */
@@ -556,7 +564,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclFun tildec dollarc mode evalp conf)
    (with-access::J2SDeclInit this (id val)
-      (j2s-js val tildec dollarc mode evalp conf)))
+      (j2s-js-fun val tildec dollarc mode evalp conf id)))
                                              
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SStmtExpr ...                                         */
