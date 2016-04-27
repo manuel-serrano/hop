@@ -183,6 +183,14 @@ function letFor() {
    return 5;
 }
 
+function letFor2( files ) {
+   for( let i = 0; i < files.length; i++ ) {
+      var file = files[ i ];
+
+      return file;
+   }
+}
+
 console.log( "basic" );
 assert.strictEqual( acc, "111 222 333" );
 
@@ -239,6 +247,9 @@ assert.ok( letFun2() == "foo" );
 
 console.log( "   letFor()" );
 assert.ok( letFor() == 5 );
+
+console.log( "   letFor2()" );
+assert.ok( letFor2( ["foo"] ) == "foo" );
 
 /*---------------------------------------------------------------------*/
 /*    Kangax                                                           */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 27 13:16:54 2016                          */
-;*    Last change :  Sun Apr 24 07:20:56 2016 (serrano)                */
+;*    Last change :  Wed Apr 27 10:08:21 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Let fusion merges J2SBlock with variable decarations and         */
@@ -69,3 +69,12 @@
 	     (car lnodes))
 	    (else
 	     this)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-letfusion! ::J2SLetBlock ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-letfusion! this::J2SLetBlock args)
+   (with-access::J2SLetBlock this (nodes decls)
+      (map! (lambda (d) (walk! d args)) decls)
+      (set! nodes (map! (lambda (n) (walk! n args)) nodes))
+      this))

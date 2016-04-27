@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr 27 07:05:27 2016 (serrano)                */
+;*    Last change :  Wed Apr 27 10:24:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -384,9 +384,7 @@
    ;; localeCompare
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.9
    (define (locale-compare this::obj that)
-      (let ((s (js-cast-string %this this))
-	    (t (js-tostring that %this)))
-	 (utf8-string-locale-compare3 s t)))
+      (js-jsstring-localecompare (js-cast-string %this this) that %this))
    
    (js-bind! %this obj 'localeCompare
       :value (js-make-function %this locale-compare 1 'localeCompare)
@@ -395,9 +393,7 @@
    ;; naturalCompare
    ;; hopscript extension
    (define (natural-compare this::obj that)
-      (let ((s (js-cast-string %this this))
-	    (t (js-tostring that %this)))
-	 (string-natural-compare3 s t)))
+      (js-jsstring-naturalcompare (js-cast-string %this this) that %this))
    
    (js-bind! %this obj 'naturalCompare
       :value (js-make-function %this natural-compare 1 'naturalCompare)
@@ -406,45 +402,7 @@
    ;; match
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.10
    (define (match this::obj regexp)
-      (with-access::JsGlobalObject %this (js-regexp js-array)
-	 (let* ((s (if (js-jsstring? this)
-		       this
-		       (js-cast-jsstring %this this)))
-		(rx (if (isa? regexp JsRegExp)
-			regexp
-			(js-new %this js-regexp regexp)))
-		(exec (js-get (js-get js-regexp 'prototype %this) 'exec %this))
-		(global (js-get rx 'global %this)))
-	    ;; 7
-	    (if (not global)
-		(js-call1 %this exec rx s)
-		;; 8
-		(let ((previousLastIndex 0)
-		      (a (js-null)))
-		   (js-put! rx 'lastIndex 0  #f %this)
-		   (let loop ((n 0))
-		      (let ((result (js-call1 %this exec rx s)))
-			 (if (eq? result (js-null))
-			     a
-			     (let ((thisIndex (js-get rx 'lastIndex %this)))
-				(if (= thisIndex previousLastIndex)
-				    (begin
-				       (js-put! rx 'lastIndex
-					  (+ thisIndex 1) #f %this)
-				       (set! previousLastIndex (+ 1 thisIndex)))
-				    (set! previousLastIndex thisIndex))
-				(when (eq? a (js-null))
-				   (set! a (js-new %this js-array 1)))
-				(let ((matchStr (js-get result 0 %this)))
-				   (js-define-own-property a n
-				      (instantiate::JsValueDescriptor
-					 (name (js-toname n %this))
-					 (value matchStr)
-					 (writable #t)
-					 (enumerable #t)
-					 (configurable #t))
-				      #f %this))
-				(loop (+fx 1 n)))))))))))
+      (js-jsstring-match (js-cast-jsstring %this this) regexp %this))
    
    (js-bind! %this obj 'match
       :value (js-make-function %this match 1 'match)
@@ -564,9 +522,8 @@
    ;; trim
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.20
    (define (trim this::obj)
-      (js-string->jsstring
-	 (trim-whitespaces+ (js-cast-string %this this)
-	    :left #t :right #t)))
+      (js-jsstring-trim (js-cast-string %this this)))
+   
    (js-bind! %this obj 'trim
       :value (js-make-function %this trim 0 'trim)
       :enumerable #f)

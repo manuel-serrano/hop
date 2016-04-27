@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Apr 27 07:08:22 2016 (serrano)                */
+;*    Last change :  Wed Apr 27 10:26:04 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -64,6 +64,14 @@
 	   (js-jsstring-maybe-split ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-match ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-match ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-naturalcompare ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-naturalcompare ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-localecompare ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-trim ::obj)
+	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject)
 	   ))
 
 ;*---------------------------------------------------------------------*/
@@ -1182,3 +1190,131 @@
 	     searchvalue replacevalue))
 	 (else
 	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-match ...                                            */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.10    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-match this regexp %this)
+   (with-access::JsGlobalObject %this (js-regexp js-array)
+      (let* ((s (js-jsstring->string this))
+	     (rx (if (isa? regexp JsRegExp)
+		     regexp
+		     (js-new %this js-regexp regexp)))
+	     (exec (js-get (js-get js-regexp 'prototype %this) 'exec %this))
+	     (global (js-get rx 'global %this)))
+	 ;; 7
+	 (if (not global)
+	     (js-call1 %this exec rx s)
+	     ;; 8
+	     (let ((previousLastIndex 0)
+		   (a (js-null)))
+		(js-put! rx 'lastIndex 0  #f %this)
+		(let loop ((n 0))
+		   (let ((result (js-call1 %this exec rx s)))
+		      (if (eq? result (js-null))
+			  a
+			  (let ((thisIndex (js-get rx 'lastIndex %this)))
+			     (if (= thisIndex previousLastIndex)
+				 (begin
+				    (js-put! rx 'lastIndex
+				       (+ thisIndex 1) #f %this)
+				    (set! previousLastIndex (+ 1 thisIndex)))
+				 (set! previousLastIndex thisIndex))
+			     (when (eq? a (js-null))
+				(set! a (js-new %this js-array 1)))
+			     (let ((matchStr (js-get result 0 %this)))
+				(js-define-own-property a n
+				   (instantiate::JsValueDescriptor
+				      (name (js-toname n %this))
+				      (value matchStr)
+				      (writable #t)
+				      (enumerable #t)
+				      (configurable #t))
+				   #f %this))
+			     (loop (+fx 1 n)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-match ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-match this regexp %this)
+   (let loop ((this this))
+      (cond
+	 ((js-jsstring? this)
+	  (js-jsstring-match this regexp %this))
+	 ((isa? this JsObject)
+	  (js-call1 %this (js-get this 'match %this) this regexp))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-naturalcompare ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-naturalcompare this that %this)
+   (let ((s (js-jsstring->string this))
+	 (t (js-tostring that %this)))
+      (string-natural-compare3 s t)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-naturalcompare ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-naturalcompare this that %this)
+   (let loop ((this this))
+      (cond
+	 ((js-jsstring? this)
+	  (js-jsstring-naturalcompare this that %this))
+	 ((isa? this JsObject)
+	  (js-call1 %this (js-get this 'naturalcompare %this) this that))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-localecompare ...                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.9     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-localecompare this that %this)
+   (let ((s (js-jsstring->string this))
+	 (t (js-tostring that %this)))
+      (utf8-string-locale-compare3 s t)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-localecompare ...                              */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-localecompare this that %this)
+   (let loop ((this this))
+      (cond
+	 ((js-jsstring? this)
+	  (js-jsstring-localecompare this that %this))
+	 ((isa? this JsObject)
+	  (js-call1 %this (js-get this 'localecompare %this) this that))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-trim ...                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.20    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-trim this)
+   (js-string->jsstring
+      (trim-whitespaces+ (js-jsstring->string this) :left #t :right #t)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-trim ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-trim this %this)
+   (let loop ((this this))
+      (cond
+	 ((js-jsstring? this)
+	  (js-jsstring-trim this))
+	 ((isa? this JsObject)
+	  (js-call0 %this (js-get this 'trim %this) this))
+	 (else
+	  (loop (js-toobject %this this))))))
+
+
+
+	 
+   
