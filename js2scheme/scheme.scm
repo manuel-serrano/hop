@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 27 07:03:40 2016 (serrano)                */
+;*    Last change :  Wed Apr 27 10:23:48 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -42,13 +42,17 @@
      ("charAt" js-jsstring-maybe-charat 1)
      ("charCodeAt" js-jsstring-maybe-charcodeat 1)
      ("indexOf" js-jsstring-maybe-indexof 2)
-     ("LastindexOf" js-jsstring-maybe-lastindexof 2)
+     ("lastIndexOf" js-jsstring-maybe-lastindexof 2)
      ("substring" js-jsstring-maybe-substring 2)
      ("substr" js-jsstring-maybe-substr 2)
      ("toUpperCase" js-jsstring-maybe-touppercase 0)
      ("toLowerCase" js-jsstring-maybe-tolowercase 0)
      ("split" js-jsstring-maybe-split 2)
      ("replace" js-jsstring-maybe-replace 2)
+     ("match" js-jsstring-maybe-match 1)
+     ("naturalCompare" js-jsstring-maybe-naturalcompare 1)
+     ("localeCompare" js-jsstring-maybe-localecompare 1)
+     ("trim" js-jsstring-maybe-trim 0)
      ;; array methods
      ("push" js-array-maybe-push 1)
      ("pop" js-array-maybe-pop 0)))
