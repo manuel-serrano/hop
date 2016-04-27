@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/doc/xml.js                        */
+/*    serrano/prgm/project/hop/3.1.x/doc/xml.js                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Thu Nov 19 10:40:44 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Thu Apr  7 19:28:51 2016 (serrano)                */
+/*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
 /*=====================================================================*/

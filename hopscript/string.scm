@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Mar 25 18:58:00 2016 (serrano)                */
+;*    Last change :  Wed Apr 27 07:05:27 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -113,11 +113,19 @@
 			     (configurable #f)
 			     (enumerable #f)
 			     (value (utf8-codeunit-length v))))
-		     (str (string-ascii-sentinel-mark! v)))
+		     (str (if (=fx (string-ascii-sentinel v) 0)
+			      (string-ascii-sentinel-mark! v)
+			      v)))
+		  (if (and (pair? arg)
+			   (string? (car arg))
+			   (=fx (string-length (car arg)) 730725))
+		      (tprint "js-string-construct arg="
+			 (let ((a (car arg)))
+			    (if (string? a) (string-length a) (typeof a)))))
 		  (with-access::JsString o (val properties)
 		     (set! val (js-string->jsstring str))
 		     (set! properties (list len)))))
-	    
+
 	    (if (null? arg)
 		;; 2
 		(set-string! "")
@@ -204,10 +212,32 @@
 	 js-string)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-cast-jsstring ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-cast-jsstring %this obj)
+   (cond
+      ((js-jsstring? obj)
+       obj)
+      ((isa? obj JsString)
+       (with-access::JsString obj (val)
+	  val))
+      (else
+       (js-tojsstring (js-toobject %this obj) %this))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-cast-string ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-cast-string %this obj)
-   (if (js-jsstring? obj) obj (js-toobject %this obj)))
+(define-inline (js-cast-string::bstring %this obj)
+   (cond
+      ((string? obj)
+       obj)
+      ((isa? obj JsStringLiteral)
+       (js-jsstring-normalize! obj))
+      ((isa? obj JsString)
+       (with-access::JsString obj (val)
+	  (js-cast-string %this val)))
+      (else
+       (js-tostring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-string ...                                                   */
@@ -246,9 +276,13 @@
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.2
    (define (tostring this)
-      (if (isa? this JsString)
-	  (with-access::JsString this (val) val)
-	  (js-raise-type-error %this "argument not a string ~a" (typeof this))))
+      (cond
+	 ((isa? this JsString)
+	  (with-access::JsString this (val) val))
+	 ((js-jsstring? this)
+	  this)
+	 (else
+	  (js-raise-type-error %this "argument not a string ~a" this))))
    
    (js-bind! %this obj 'toString
       :value (js-make-function %this tostring 0 'toString)
@@ -257,9 +291,13 @@
    ;; valueOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.3
    (define (valueof this)
-      (if (isa? this JsString)
-	  (with-access::JsString this (val) val)
-	  (js-raise-type-error %this "argument not a string ~a" this)))
+      (cond
+	 ((isa? this JsString)
+	  (with-access::JsString this (val) val))
+	 ((js-jsstring? this)
+	  this)
+	 (else
+	  (js-raise-type-error %this "argument not a string ~a" this))))
    
    (js-bind! %this obj 'valueOf
       :value (js-make-function %this valueof 0 'valueOf)
@@ -268,12 +306,7 @@
    ;; charAt
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.4
    (define (charat this index)
-      (let* ((val (js-tostring (js-cast-string %this this) %this))
-	     (pos (js-tointeger index %this))
-	     (fxpos (->fixnum pos)))
-	 (if (or (< pos 0) (>= pos (utf8-codeunit-length val)))
-	     (js-string->jsstring "")
-	     (js-string-ref val fxpos))))
+      (js-jsstring-charat (js-cast-string %this this) index %this))
    
    (js-bind! %this obj 'charAt
       :value (js-make-function %this charat 1 'charAt)
@@ -282,11 +315,7 @@
    ;; charCodeAt
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.5
    (define (charcodeat this index)
-      (let* ((val (js-tostring (js-cast-string %this this) %this))
-	     (pos (js-tointeger index %this)))
-	 (if (or (< pos 0) (>= pos (utf8-codeunit-length val)))
-	     +nan.0
-	     (utf8-codeunit-ref val (->fixnum pos)))))
+      (js-jsstring-charcodeat (js-cast-string %this this) index %this))
    
    (js-bind! %this obj 'charCodeAt
       :value (js-make-function %this charcodeat 1 'charCodeAt)
@@ -295,7 +324,7 @@
    ;; concat
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.6
    (define (concat this . rest)
-      (let ((left (js-tojsstring (js-cast-string %this this) %this)))
+      (let ((left (js-cast-jsstring %this this)))
 	 (match-case rest
 	    (()
 	     left)
@@ -329,7 +358,7 @@
    ;; indexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.7
    (define (indexof this::obj search position)
-      (let* ((s (js-tostring (js-cast-string %this this) %this))
+      (let* ((s (js-cast-string %this this))
 	     (searchstr (js-tostring search %this))
 	     (pos (if (eq? position (js-undefined))
 		      0
@@ -339,34 +368,6 @@
 	     (start (inexact->exact (min (max pos 0) ulen))))
 	 (js-jsstring-indexof s searchstr start %this)))
 
-   (define (indexof-old this::obj search position)
-      (let* ((s (js-tostring (js-cast-string %this this) %this))
-	     (searchstr (js-tostring search %this))
-	     (pos (if (eq? position (js-undefined))
-		      0
-		      (js-tointeger position %this)))
-	     (len (string-length s))
-	     (ulen (utf8-string-length s))
-	     (start (inexact->exact (min (max pos 0) ulen))))
-	 (let ((i (utf8-string-index->string-index s start)))
-	    (if (<fx i 0)
-		i
-		(let loop ((i i)
-			   (u start))
-		   (cond
-		      ((=fx i len)
-		       -1)
-		      ((substring-at? s searchstr i)
-		       u)
-		      (else
-		       (let ((c (string-ref s i)))
-			  (loop (+fx i (utf8-char-size c)) (+fx u 1))))))))))
-   
-;*    (define (indexof this::obj search position)                      */
-;*       (let ((old (indexof-old this search position))                */
-;* 	    (new (indexof-new this search position)))                  */
-;* 	 old))                                                         */
-   
    (js-bind! %this obj 'indexOf
       :value (js-make-function %this indexof 1 'indexOf)
       :enumerable #f)
@@ -374,29 +375,7 @@
    ;; lastIndexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.8
    (define (last-indexof this search position)
-      (let* ((s (js-tostring (js-cast-string %this this) %this))
-	     (searchstr (js-tostring search %this))
-	     (searchlen (string-length searchstr))
-	     (usearchlen (utf8-string-length searchstr))
-	     (len (string-length s))
-	     (ulen (utf8-string-length s))
-	     (numpos (js-tonumber position %this))
-	     (pos (if (and (flonum? numpos) (nanfl? numpos))
-		      (+ ulen 1)
-		      (js-tointeger numpos %this)))
-	     (start (inexact->exact (min (max pos 0) ulen))))
-	 ;; utf-8 imposes a left-to-right parsing
-	 (let loop ((i 0)
-		    (u 0)
-		    (r -1))
-	    (cond
-	       ((or (=fx i len) (>fx u start))
-		r)
-	       ((substring-at? s searchstr i)
-		(loop (+fx searchlen i) (+fx u usearchlen) u))
-	       (else
-		(let ((c (string-ref s i)))
-		   (loop (+fx i (utf8-char-size c)) (+fx u 1) r)))))))
+      (js-jsstring-lastindexof (js-cast-string %this this) search position %this))
    
    (js-bind! %this obj 'lastIndexOf
       :value (js-make-function %this last-indexof 1 'lastIndexOf)
@@ -405,7 +384,7 @@
    ;; localeCompare
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.9
    (define (locale-compare this::obj that)
-      (let ((s (js-tostring (js-cast-string %this this) %this))
+      (let ((s (js-cast-string %this this))
 	    (t (js-tostring that %this)))
 	 (utf8-string-locale-compare3 s t)))
    
@@ -416,7 +395,7 @@
    ;; naturalCompare
    ;; hopscript extension
    (define (natural-compare this::obj that)
-      (let ((s (js-tostring (js-cast-string %this this) %this))
+      (let ((s (js-cast-string %this this))
 	    (t (js-tostring that %this)))
 	 (string-natural-compare3 s t)))
    
@@ -430,7 +409,7 @@
       (with-access::JsGlobalObject %this (js-regexp js-array)
 	 (let* ((s (if (js-jsstring? this)
 		       this
-		       (js-tojsstring (js-cast-string %this this) %this)))
+		       (js-cast-jsstring %this this)))
 		(rx (if (isa? regexp JsRegExp)
 			regexp
 			(js-new %this js-regexp regexp)))
@@ -474,215 +453,10 @@
    ;; replace
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11
    (define (replace this::obj searchvalue replacevalue)
+      (js-jsstring-replace (js-cast-jsstring %this this)
+	 searchvalue replacevalue %this))
+
       
-      (define (digit->number c)
-	 (-fx (char->integer c) (char->integer #\0)))
-      
-      (define (digit10->number c1 c2)
-	 (+fx (*fx (digit->number c1) 10) (digit->number c2)))
-      
-      (define (table22::pair-nil fmt::bstring match string::bstring init::bstring)
-	 (let ((stop (-fx (string-length fmt) 1)))
-	    (let loop ((i 0)
-		       (j 0)
-		       (segments '()))
-	       (cond
-		  ((>=fx i stop)
-		   (reverse (cons* init (substring fmt j (+fx stop 1)) segments)))
-		  ((not (char=? (string-ref fmt i) #\$))
-		   (loop (+fx i 1) j segments))
-		  (else
-		   (let ((segments (cons (substring fmt j i) segments)))
-		      (case (string-ref fmt (+fx i 1))
-			 ((#\$)
-			  (loop (+fx i 2) (+fx i 2)
-			     (cons "$" segments)))
-			 ((#\&)
-			  (let ((seg (js-get match (js-toname 0 %this) %this)))
-			     (loop (+fx i 2) (+fx i 2)
-				(cons (js-jsstring->string seg) segments))))
-			 ((#\`)
-			  (let* ((k (js-get match 'index %this))
-				 (portion (substring string 0 k)))
-			     (loop (+fx i 2) (+fx i 2)
-				(cons portion segments))))
-			 ((#\')
-			  (let* ((k (js-get match 'index %this))
-				 (s (js-get match (js-toname 0 %this) %this))
-				 (l (js-jsstring-length s))
-				 (portion (substring string (+fx k l))))
-			     (loop (+fx i 2) (+fx i 2)
-				(cons portion segments))))
-			 ((#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8\ #\9)
-			  (let ((len (-fx (js-get match 'length %this) 1)))
-			     (if (or (=fx i (-fx stop 1))
-				     (not (char-numeric? (string-ref fmt (+fx i 2)))))
-				 (let ((n (digit->number (string-ref fmt (+fx i 1)))))
-				    (if (>fx n len)
-					(loop (+fx i 2) j segments)
-					(let ((s (js-get match n %this)))
-					   (loop (+fx i 2) (+fx i 2)
-					      (if (js-jsstring? s)
-						  (cons (js-jsstring->string s)
-						     segments)
-						  segments)))))
-				 (let ((n (digit10->number
-					     (string-ref fmt (+fx i 1))
-					     (string-ref fmt (+fx i 2)))))
-				    (if (>fx n len)
-					(let ((n (digit->number (string-ref fmt (+fx i 1)))))
-					   (if (>=fx n len)
-					       (loop (+fx i 3) j segments)
-					       (let ((s (js-get match n %this)))
-						  (loop (+fx i 2) (+fx i 2)
-						     (if (js-jsstring? s)
-							 (cons (js-jsstring->string s)
-							    segments)
-							 segments)))))
-					(let ((s (js-get match n %this)))
-					   (loop (+fx i 3) (+fx i 3)
-					      (if (js-jsstring? s)
-						  (cons (js-jsstring->string s)
-						     segments)
-						  segments))))))))
-			 (else
-			  (loop (+fx i 2) j segments)))))))))
-      
-      (define (matches->string-list::pair-nil a)
-	 (let ((len (js-get a 'length %this)))
-	    (let loop ((i 1)
-		       (l '()))
-	       (if (=fx i len)
-		   (reverse! l)
-		   (let ((v (js-get a (js-toname i %this) %this)))
-		      (loop (+fx i 1)
-			 (cons (if (eq? v (js-undefined)) (js-string->jsstring "") v)
-			    l)))))))
-      
-      (with-access::JsGlobalObject %this (js-regexp js-array)
-	 (let ((string (js-tojsstring (js-cast-string %this this) %this)))
-	    (cond
-	       ((not (isa? searchvalue JsRegExp))
-		(let* ((searchstr (js-tojsstring searchvalue %this))
-		       (i (string-contains (js-jsstring->string string)
-			     (js-jsstring->string searchstr) 0)))
-		   (cond
-		      ((not i)
-		       string)
-		      ((isa? replacevalue JsFunction)
-		       (let ((str (js-jsstring->string string)))
-			  (js-stringlist->jsstring
-			     (list
-				(substring str 0 i)
-				(js-tostring
-				   (js-call3 %this replacevalue (js-undefined)
-				      searchstr i string) %this)
-				(substring str
-				   (+fx i (js-jsstring-length searchstr)))))))
-		      (else
-		       (let ((newstring (js-tostring replacevalue %this))
-			     (a (js-new %this js-array 1))
-			     (str (js-jsstring->string string)))
-			  (js-put! a 'input string #f %this)
-			  (js-put! a (js-toname 0 %this) searchstr #f %this)
-			  (js-stringlist->jsstring
-			     (cons (substring str 0 i)
-				(table22 newstring a str
-				   (substring str (+fx i (js-jsstring-length searchstr)))))))))))
-	       ((not (js-get searchvalue 'global %this))
-		(let* ((exec (js-get (js-get js-regexp 'prototype %this)
-				'exec %this))
-		       (res (js-call1 %this exec searchvalue string)))
-		   (cond
-		      ((eq? res (js-null))
-		       string)
-		      ((isa? replacevalue JsFunction)
-		       (let ((i (js-get res 'index %this))
-			     (str (js-jsstring->string string)))
-			  (js-stringlist->jsstring
-			     (list
-				(substring str 0 i)
-				(js-tostring
-				   (js-apply %this replacevalue (js-undefined)
-				      (cons (js-get res (js-toname 0 %this) %this)
-					 (append (matches->string-list res)
-					    (list i str))))
-				   %this)
-				(substring str
-				   (+fx i (js-jsstring-length (js-get res (js-toname 0 %this) %this))))))))
-		      (else
-		       (let ((newstring (js-tostring replacevalue %this))
-			     (i (js-get res 'index %this))
-			     (str (js-jsstring->string string)))
-			  (js-stringlist->jsstring 
-			     (cons (substring str 0 i)
-				(table22 newstring res str
-				   (substring str
-				      (+fx i (js-jsstring-length (js-get res (js-toname 0 %this) %this))))))))))))
-	       (else
-		(let* ((previousLastIndex 0)
-		       (exec (js-get (js-get js-regexp 'prototype %this)
-				'exec %this)))
-		   (js-put! searchvalue 'lastIndex 0 #f %this)
-		   (let loop ((n 0)
-			      (ms '()))
-		      (let ((result (js-call1 %this exec searchvalue string)))
-			 (if (eq? result (js-null))
-			     (cond
-				((null? ms)
-				 string)
-				((isa? replacevalue JsFunction)
-				 (let loop ((matches (reverse! ms))
-					    (res string)
-					    (offset 0))
-				    (if (null? matches)
-					res
-					(let* ((m (car matches))
-					       (i (js-get m 'index %this))
-					       (l (js-jsstring-length (js-get m (js-toname 0 %this) %this)))
-					       (v (js-tostring
-						     (js-apply %this replacevalue
-							(js-undefined)
-							(cons
-							   (js-get m (js-toname 0 %this) %this)
-							   (append (matches->string-list m)
-							      (list i string))))
-						     %this)))
-					   (let ((str (js-jsstring->string res)))
-					      (loop (cdr matches)
-						 (js-stringlist->jsstring
-						    (list (substring str 0 (+fx offset i))
-						       v
-						       (substring str (+fx offset (+fx i l)))))
-						 (+fx offset (-fx (string-length v) l))))))))
-				(else
-				 (let ((newstring (js-tostring replacevalue %this))
-				       (str (js-jsstring->string string)))
-				    (let loop ((matches (reverse! ms))
-					       (res string)
-					       (offset 0))
-				       (if (null? matches)
-					   res
-					   (let* ((m (car matches))
-						  (i (js-get m 'index %this))
-						  (l (js-jsstring-length (js-get m (js-toname 0 %this) %this)))
-						  (sres (js-jsstring->string res))
-						  (v (apply utf8-string-append* (table22 newstring m str ""))))
-					      (loop (cdr matches)
-						 (js-stringlist->jsstring
-						    (list (substring sres 0 (+fx offset i))
-						       v
-						       (substring sres (+fx offset (+fx i l)))))
-						 (+fx offset (-fx (string-length v) l)))))))))
-			     (let ((thisIndex (js-get searchvalue 'lastIndex %this)))
-				(if (= thisIndex previousLastIndex)
-				    (begin
-				       (js-put! searchvalue 'lastIndex (+ thisIndex 1) #f %this)
-				       (set! previousLastIndex (+ 1 thisIndex)))
-				    (set! previousLastIndex thisIndex))
-				(let ((matchStr (js-get result 0 %this)))
-				   (loop (+fx 1 n) (cons result ms)))))))))))))
-   
    (js-bind! %this obj 'replace
       :value (js-make-function %this replace 2 'replace)
       :enumerable #f)
@@ -691,7 +465,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.12
    (define (search this::obj regexp)
       (with-access::JsGlobalObject %this (js-regexp)
-	 (let ((string (js-tostring (js-cast-string %this this) %this))
+	 (let ((string (js-cast-string %this this))
 	       (rx (if (isa? regexp JsRegExp)
 		       regexp
 		       (js-new %this js-regexp regexp))))
@@ -707,7 +481,7 @@
    ;; slice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.13
    (define (slice this::obj start end)
-      (let* ((jss (js-tojsstring (js-cast-string %this this) %this))
+      (let* ((jss (js-cast-jsstring %this this))
 	     (s (js-jsstring->string jss))
 	     (len (utf8-string-length s))
 	     (intstart (js-tointeger start %this))
@@ -733,132 +507,8 @@
    ;; split
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.14
    (define (split this::obj separator limit)
-      
-      (define (minelong2::elong n1::elong n2::elong)
-	 (if (<elong n1 n2) n1 n2))
-      
-      (define (split-match S::bstring q R)
-	 (if (isa? R JsRegExp)
-	     (with-access::JsRegExp R (rx)
-		(or (pregexp-match-positions rx S q) 'failure))
-	     (let ((r (string-length R))
-		   (s (string-length S)))
-		(cond
-		   ((>fx (+fx q r) s)
-		    'failure)
-		   ((substring-at? S R q)
-		    (list (cons q (+fx q r))))
-		   (else
-		    'failure)))))
-      
-      (with-access::JsGlobalObject %this (js-array)
-	 (let* ((jsS (js-tojsstring (js-cast-string %this this) %this))
-		(S (js-jsstring->string jsS))
-		(A (js-new %this js-array 0))
-		(lim (if (eq? limit (js-undefined))
-			 (+fx (string-length S) 1)
-			 (elong->fixnum
-			    (minelong2
-			       (uint32->elong (js-touint32 limit %this))
-			       (fixnum->elong (+fx 1 (string-length S)))))))
-		(s (string-length S))
-		(p 0)
-		(R (if (isa? separator JsRegExp)
-		       separator
-		       (js-tostring separator %this))))
-	    (cond
-	       ((=fx lim 0)
-		;; 9
-		A)
-	       ((eq? separator (js-undefined))
-		;; 10
-		(js-define-own-property A 0
-		   (instantiate::JsValueDescriptor
-		      (name (js-toname 0 %this))
-		      (value jsS)
-		      (writable #t)
-		      (enumerable #t)
-		      (configurable #t))
-		   #f %this)
-		A)
-	       ((=fx s 0)
-		;; 11
-		(let ((z (split-match S 0 R)))
-		   (when (eq? z 'failure)
-		      (js-define-own-property A 0
-			 (instantiate::JsValueDescriptor
-			    (name (js-toname 0 %this))
-			    (value jsS)
-			    (writable #t)
-			    (enumerable #t)
-			    (configurable #t))
-			 #f %this))
-		   A))
-	       (else
-		;; 13
-		(let loop ((q p)
-			   (p p))
-		   (if (not (=fx q s))
-		       (let ((z (split-match S q R)))
-			  (if (eq? z 'failure)
-			      (loop (+fx q (utf8-char-size (string-ref S q))) p)
-			      ;; 13.c.i
-			      (let ((e (cdar z))
-				    (q (caar z))
-				    (cap (cdr z)))
-				 (if (=fx e p)
-				     ;; 13.c.ii
-				     (loop (+fx q (utf8-char-size (string-ref S q))) p)
-				     ;; 13.c.iii.1
-				     (let ((T (substring S p q))
-					   (l (->fixnum (js-get A 'length %this))))
-					;; 13.c.iii.2
-					(js-define-own-property A l
-					   (instantiate::JsValueDescriptor
-					      (name (js-toname l %this))
-					      (value (js-string->jsstring T))
-					      (writable #t)
-					      (enumerable #t)
-					      (configurable #t))
-					   #f %this)
-					(if (=fx (+fx l 1) lim)
-					    ;; 13.c.iii.4
-					    A
-					    ;; 13.c.iii.5
-					    (let ((p e))
-					       (let repeat ((cap cap)
-							    (l (+fx l 1)))
-						  (if (pair? cap)
-						      (begin
-							 ;; 13.c.iii.7.b
-							 (js-define-own-property A l
-							    (instantiate::JsValueDescriptor
-							       (name (js-toname l %this))
-							       (value (car cap))
-							       (writable #t)
-							       (enumerable #t)
-							       (configurable #t))
-							    #f %this)
-							 (if (=fx (+fx l 1) lim)
-							     ;; 13.c.iii.7.d
-							     A
-							     ;; 13.c.iii.8
-							     (repeat (cdr cap) (+fx l 1))))
-						      (loop p e))))))))))
-		       ;; 14
-		       (let ((T (substring S p s))
-			     (l (js-get A 'length %this)))
-			  ;; 15
-			  (js-define-own-property A l
-			     (instantiate::JsValueDescriptor
-				(name (js-toname l %this))
-				(value (js-string->jsstring T))
-				(writable #t)
-				(enumerable #t)
-				(configurable #t))
-			     #f %this)
-			  ;;16
-			  A))))))))
+      (js-jsstring-split (js-cast-jsstring %this this) separator limit %this))
+   
    (js-bind! %this obj 'split
       :value (js-make-function %this split 2 'split)
       :enumerable #f)
@@ -866,15 +516,7 @@
    ;; substring
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.15
    (define (js-substring this::obj start end)
-      (let* ((s (js-tostring (js-cast-string %this this) %this))
-	     (len (utf8-string-length s))
-	     (intstart (js-tointeger start %this))
-	     (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
-	     (finalstart (->fixnum (min (max intstart 0) len)))
-	     (finalend (->fixnum (min (max intend 0) len)))
-	     (from (minfx finalstart finalend))
-	     (to (maxfx finalstart finalend)))
-	 (js-string->jsstring (utf8-substring s from to))))
+      (js-jsstring-substring (js-cast-string %this this) start end %this))
    
    (js-bind! %this obj 'substring
       :value (js-make-function %this js-substring 2 'substring)
@@ -883,9 +525,7 @@
    ;; toLowerCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.16
    (define (tolowercase this::obj)
-      (let ((s (js-tostring (js-cast-string %this this) %this)))
-	 (js-string->jsstring
-	    (ucs2-string->utf8-string (ucs2-string-downcase (utf8-string->ucs2-string s))))))
+      (js-jsstring-tolowercase (js-cast-string %this this)))
    
    (js-bind! %this obj 'toLowerCase
       :value (js-make-function %this tolowercase 0 'toLowerCase)
@@ -894,7 +534,7 @@
    ;; toLocaleLowerCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.17
    (define (tolocalelowercase this::obj)
-      (let ((s (js-tostring (js-cast-string %this this) %this)))
+      (let ((s (js-cast-string %this this)))
 	 (js-string->jsstring
 	    (utf8-string-locale-downcase s))))
    (js-bind! %this obj 'toLocaleLowerCase
@@ -904,9 +544,7 @@
    ;; toUpperCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.18
    (define (touppercase this::obj)
-      (let ((s (js-tostring (js-cast-string %this this) %this)))
-	 (js-string->jsstring
-	    (ucs2-string->utf8-string (ucs2-string-upcase (utf8-string->ucs2-string s))))))
+      (js-jsstring-touppercase (js-cast-string %this this)))
    
    (js-bind! %this obj 'toUpperCase
       :value (js-make-function %this touppercase 0 'toUpperCase)
@@ -915,7 +553,7 @@
    ;; toLocaleUpperCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.19
    (define (tolocaleuppercase this::obj)
-      (let ((s (js-tostring (js-cast-string %this this) %this)))
+      (let ((s (js-cast-string %this this)))
 	 (js-string->jsstring
 	    (utf8-string-locale-upcase s))))
    
@@ -927,7 +565,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.20
    (define (trim this::obj)
       (js-string->jsstring
-	 (trim-whitespaces+ (js-tostring (js-cast-string %this this) %this)
+	 (trim-whitespaces+ (js-cast-string %this this)
 	    :left #t :right #t)))
    (js-bind! %this obj 'trim
       :value (js-make-function %this trim 0 'trim)
@@ -936,17 +574,7 @@
    ;; substr
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.3
    (define (substr this::obj start length)
-      (let* ((r1 (js-tostring this %this))
-	     (r2 (js-tointeger start %this))
-	     (r3 (if (eq? length (js-undefined))
-		     (maxvalfx)
-		     (js-tointeger length %this)))
-	     (r4 (utf8-string-length r1))
-	     (r5 (if (>=fx r2 0) r2 (maxfx (+fx r4 r2) 0)))
-	     (r6 (minfx (maxfx r3 0) (-fx r4 r5))))
-	 (if (<=fx r6 0)
-	     (js-string->jsstring "")
-	     (js-string->jsstring (utf8-substring r1 r5 (+fx r5 r6))))))
+      (js-jsstring-substr (js-tostring this %this) start length %this))
    
    (js-bind! %this obj 'substr
       :value (js-make-function %this substr 2 'substr)

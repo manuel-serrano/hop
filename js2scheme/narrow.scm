@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Mar 28 18:49:46 2016 (serrano)                */
+;*    Last change :  Sat Apr 23 06:05:08 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -54,14 +54,26 @@
 ;*    Warning, headers are not scanned for variable resolution!        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-narrow this::J2SProgram conf)
-   (with-access::J2SProgram this (decls)
+   (with-access::J2SProgram this (decls nodes headers)
+      ;; mark that header declarations are not narrowalbe
+      (for-each j2s-mark-unnarrowable headers)
       ;; statement optimization
       (for-each (lambda (o)
-		   (when (isa? o J2SDeclFun)
-		      (with-access::J2SDeclFun o (id val)
-			 ;; (tprint "Narrow " id)
-			 (j2s-narrow-fun! val))))
-	 decls))
+		   (cond
+		      ((isa? o J2SDeclFun)
+		       (with-access::J2SDeclFun o (id val)
+			  ;; (tprint "Narrow " id)
+			  (j2s-narrow-fun! val)))
+		      ((isa? o J2SDecl)
+		       (j2s-mark-unnarrowable o))))
+	 decls)
+      ;; nodes
+      (set! nodes
+	 (map! (lambda (o)
+		  (j2s-find-init-blocks o #f #f)
+		  (j2s-mark-narrowable o '() #f (and (isa? o J2SFun) o) (make-cell #f))
+		  (j2s-narrow! o))
+	    nodes)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -83,6 +95,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-find-init-blocks this::J2SNode block fun)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-find-init-blocks ::J2SFun ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-find-init-blocks this::J2SFun blocks fun)
+   (with-access::J2SFun this (body)
+      (j2s-find-init-blocks body #f this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-find-init-blocks ::J2SBlock ...                              */
@@ -125,12 +144,27 @@
 		     (narrowable #f))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-mark-unnarrowable ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-mark-unnarrowable this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-mark-unnarrowable ::J2SDecl ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-mark-unnarrowable this::J2SDecl)
+   (with-access::J2SDecl this (%info)
+      (set! %info
+	 (instantiate::J2SNarrowInfo
+	    (narrowable #f)))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-mark-narrowable ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    A var declaration is narrowable if all the following conditions  */
 ;*    are meet:                                                        */
 ;*      1- it is never used outside its bounding block                 */
-;*      2- it is never capture inside a loop                           */
+;*      2- it is never captured inside a loop                          */
 ;*      3- it is never used after a yield inside a loop                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-mark-narrowable this::J2SNode blocks inloop fun yield)
@@ -180,7 +214,7 @@
 (define-walk-method (j2s-mark-narrowable this::J2SYield blocks inloop fun yield)
    (with-access::J2SYield this (expr)
       (cell-set! yield #t)
-      (j2s-mark-narrowable expr blocks inloop this yield)))
+      (j2s-mark-narrowable expr blocks inloop fun yield)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow! ...                                                  */
@@ -225,7 +259,7 @@
 	 (set! scope 'local)
 	 (set! binder 'let)
 	 decl))
-   
+
    (define (patch-defblock! block::J2SBlock decl::J2SDecl)
       (let loop ((block block))
 	 (if (isa? block J2SLetBlock)
@@ -261,9 +295,19 @@
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-narrow! ::J2SBlock ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-narrow! this::J2SBlock)
+   (call-default-walker)
+   (with-access::J2SBlock this (nodes)
+      (set! nodes (filter! (lambda (n) (not (isa? n J2SNop))) nodes))
+      this))
+   
+;*---------------------------------------------------------------------*/
 ;*    j2s-narrow! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-narrow! this::J2SFun)
-   (j2s-narrow-fun! this)
-   this)
+;* (define-walk-method (j2s-narrow! this::J2SFun)                      */
+;*    (call-default-walker))                                           */
+;*    (j2s-narrow-fun! this)                                           */
+;*    this)                                                            */
 

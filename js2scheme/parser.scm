@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Mar 28 10:42:32 2016 (serrano)                */
+;*    Last change :  Wed Apr 20 13:23:45 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -824,7 +824,8 @@
 				      (generator gen)
 				      (body body)
 				      (vararg (rest-params params))
-				      (decl decl)))
+				      ;;(decl decl)
+				      ))
 			      (decl (instantiate::J2SDeclFun
 				       (loc (token-loc token))
 				       (writable (not (eq? mode 'hopscript)))
@@ -938,9 +939,11 @@
 			(loc loc)
 			(endloc loc)
 			(nodes (list
-				  (instantiate::J2SPragma
+				  (instantiate::J2SStmtExpr
 				     (loc loc)
-				     (expr "(current-request)"))))))
+				     (expr (instantiate::J2SPragma
+					      (loc loc)
+					      (expr "(current-request)"))))))))
 	       (init (instantiate::J2SNop
 			(loc loc))))
 	    (service-create token id params init body 'strict
@@ -1419,6 +1422,7 @@
 		    (field-str (format "~a" (cdr field))))
 		(if (or (eq? key 'ID)
 			(eq? key 'RESERVED)
+			(eq? key 'service)
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
 			     (loc (token-loc ignore))
@@ -1879,7 +1883,7 @@
       (define (property-name)
 	 (case (peek-token-type)
 	    ;; IDs are automatically transformed to strings.
-	    ((ID RESERVED)
+	    ((ID RESERVED service)
 	     (let ((token (consume-any!)))
 		(case (token-value token)
 		   ((get set)
@@ -1981,7 +1985,7 @@
 	    (case name
 	       ((get set)
 		(case (peek-token-type)
-		   ((ID RESERVED)
+		   ((ID RESERVED service)
 		    (property-accessor tokname name props))
 		   ((:)
 		    (let* ((ignore (consume-any!))
@@ -2297,7 +2301,7 @@
 ;*    hopscript-cnst-fun! ::J2SDeclFun ...                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hopscript-cnst-fun! this::J2SDeclFun)
-   (with-access::J2SDeclFun this (val loc id ronly writable)
+   (with-access::J2SDeclFun this (val loc id ronly writable binder)
       (with-access::J2SFun val (mode)
 	 (when (eq? mode 'hopscript)
 	    (set! writable #f)

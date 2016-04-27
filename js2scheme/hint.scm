@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Mar 25 15:41:47 2016 (serrano)                */
+;*    Last change :  Sun Apr 24 13:22:04 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -74,24 +74,23 @@
 	 types)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-hint! ::J2SNode ...                                          */
+;*    j2s-hint ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SNode types)
+   [assert (types) (every symbol? types)]
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SExpr ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SExpr types)
-   (cond
-      ((pair? types)
-       (j2s-hint this '()))
-      ((j2s-expr-type-test this)
-       =>
-       (lambda (tytest)
-	  (j2s-add-hint! (vector-ref tytest 1) (list (vector-ref tytest 2)))))
-      (else
-       (call-default-walker))))
+   (if (pair? types)
+       (j2s-hint this '())
+       (multiple-value-bind (op decl type expr)
+	  (j2s-expr-type-test this)
+	  (if type
+	      (j2s-add-hint! decl (list type))
+	      (call-default-walker)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SRef ...                                            */
@@ -123,6 +122,36 @@
 	  (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SSwitch ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SSwitch types)
+   
+   (define (cases-type cases)
+      (let ((ty 'unknown))
+	 (for-each (lambda (c)
+		      (when ty
+			 (unless (isa? c J2SDefault)
+			    (with-access::J2SCase c (expr)
+			       (case (j2s-type expr)
+				  ((integer)
+				   (case ty
+				      ((unknown) (set! ty 'integer))
+				      ((integer) #unspecified)
+				      (else (set! ty #f))))
+				  ((string)
+				   (case ty
+				      ((unknown) (set! ty 'string))
+				      ((integer) #unspecified)
+				      (else (set! ty #f)))))))))
+	    cases)
+	 (when (and ty (not (eq? ty 'unknown))) (list ty))))
+      
+   (with-access::J2SSwitch this (key cases)
+      (let ((ctype (cases-type cases)))
+	 (when ctype (j2s-hint key ctype))
+	 (call-default-walker))))
+	 
+;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SPostfix ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SPostfix types)
@@ -147,9 +176,30 @@
       (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-string-methods ...                                           */
+;*---------------------------------------------------------------------*/
+(define j2s-string-methods
+   '("charAt" "charCodeAt" "localeCompare" "naturalCompare"
+     "match" "replace" "search" "split" "substring" "toLowerCase"
+     "toLocaleLowerCase" "toUpperCase" "toLocaleUpperCase"
+     "trim" "substr"))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-string-array-methods ...                                     */
+;*---------------------------------------------------------------------*/
+(define j2s-string-array-methods
+   '("indexOf" "lastIndexOf" "concat"))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-array-methods ...                                            */
+;*---------------------------------------------------------------------*/
+(define j2s-array-methods
+   '("push" "pop"))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-hint-access ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-hint-access this types hints)
+(define (j2s-hint-access this types hints::pair-nil)
    (with-access::J2SAccess this (obj field)
       (cond
 	 ((not (isa? obj J2SRef))
@@ -159,10 +209,21 @@
 	     (j2s-add-hint! decl hints)))
 	 ((isa? field J2SString)
 	  (with-access::J2SString field (val)
-	     (if (string=? val "length")
+	     (cond
+		((string=? val "length")
 		 (with-access::J2SRef obj (decl)
-		    (j2s-add-hint! decl hints))
-		 (j2s-hint obj '(object)))))
+		    (j2s-add-hint! decl hints)))
+		((member val j2s-string-methods)
+		 (with-access::J2SRef obj (decl)
+		    (j2s-add-hint! decl '(string))))
+		((member val j2s-string-array-methods)
+		 (with-access::J2SRef obj (decl)
+		    (j2s-add-hint! decl '(string array))))
+		((member val j2s-array-methods)
+		 (with-access::J2SRef obj (decl)
+		    (j2s-add-hint! decl '(array))))
+		(else
+		 (j2s-hint obj '(object))))))
 	 ((isa? field J2SLiteralCnst)
 	  (with-access::J2SLiteralCnst field (val)
 	     (if (isa? val J2SString)
@@ -285,6 +346,7 @@
 	 ((array) 'js-array?)
 	 ((object) 'js-object?)
 	 ((function) 'js-function?)
+	 ((bool) 'boolean?)
 	 (else (error "hint" "Unknown hint type predicate" type))))
    
    (define (test-hint-param param)
@@ -337,7 +399,7 @@
 				     (expr callorig)))))))))
    
    (with-access::J2SDeclFun this (val id %info)
-      (with-access::J2SFun val (params body idthis)
+      (with-access::J2SFun val (params body idthis vararg)
 	 (if (and (not (eq? %info 'duplicate))
 		  (not (isa? %info FunHintInfo))
 		  (pair? params)
@@ -347,7 +409,8 @@
 				  (or (pair? (cdr hint))
 				      (not (eq? (caar hint) 'obj)))
 				  (>fx usecnt 0))))
-		     params))
+		     params)
+		  (not vararg))
 	     (let* ((dup (fun-duplicate this))
 		    (orig (fun-orig this))
 		    (types (map (lambda (p)
@@ -368,21 +431,24 @@
 ;*    best-hint-type ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (best-hint-type::symbol hint)
-   (let loop ((l hint)
-	      (t 'obj)
-	      (c 0))
-      (cond
-	 ((null? l)
-	  t)
-	 ((eq? (caar l) 'obj)
-	  (loop (cdr l) t c))
-	 ((>fx (cdr (car l)) c)
-	  (loop (cdr l) (caar l) (cdar l)))
-	 ((and (=fx (cdr (car l)) c)
-	       (or (eq? t 'obj) (memq (caar l) '(integer number))))
-	  (loop (cdr l) (caar l) (cdar l)))
-	 (else
-	  (loop (cdr l) t c)))))
+   (let ((r (let loop ((l hint)
+		       (t 'obj)
+		       (c 0))
+	       (cond
+		  ((null? l)
+		   t)
+		  ((eq? (caar l) 'obj)
+		   (loop (cdr l) t c))
+		  ((>fx (cdr (car l)) c)
+		   (loop (cdr l) (caar l) (cdar l)))
+		  ((and (=fx (cdr (car l)) c)
+			(or (eq? t 'obj) (memq (caar l) '(integer number))))
+		   (loop (cdr l) (caar l) (cdar l)))
+		  (else
+		   (loop (cdr l) t c))))))
+      (if (not (symbol? r))
+	  (tprint "PAS R: " hint))
+      r))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-orig ...                                                     */
@@ -453,8 +519,17 @@
 					 (string-ref (symbol->string t) 0))
 				    types)))))
 		(newbody (j2s-alpha body params newparams))
+		(newfun (duplicate::J2SFun val
+			   (generator #f)
+			   (idgen generator)
+			   (%info #unspecified)
+			   (type #f)
+			   (idthis (if (this? body) idthis #f))
+			   (params newparams)
+			   (body newbody)))
 		(newdecl (duplicate::J2SDeclFun fun
 			    (parent fun)
+			    (key (ast-decl-key))
 			    (id (symbol-append id '$$ typeid))
 			    (ronly #t)
 			    (writable #f)
@@ -462,15 +537,10 @@
 			    (scope 'none)
 			    (usecnt 1)
 			    (%info 'duplicate)
-			    (val (duplicate::J2SFun val
-				    (generator #f)
-				    (idgen generator)
-				    (%info #unspecified)
-				    (type #f)
-				    (idthis (if (this? body) idthis #f))
-				    (params newparams)
-				    (body newbody))))))
+			    (val newfun))))
 	    (use-count newbody +1)
+	    (with-access::J2SFun newfun (decl)
+	       (set! decl newdecl))
 	    (set! %info
 	       (instantiate::FunHintInfo
 		  (hinted newdecl)

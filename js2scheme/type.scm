@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Sat Apr  2 07:21:24 2016 (serrano)                */
+;*    Last change :  Sun Apr 24 17:49:41 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -467,6 +467,8 @@
       (case op
 	 ((~ -)
 	  (expr-type-set! this 'number env fix))
+	 ((!)
+	  (expr-type-set! this 'bool env fix))
 	 (else
 	  (multiple-value-bind (_ env break)
 	     (type expr env fun fix)
@@ -493,11 +495,15 @@
 	       ((- * / %)
 		(expr-type-set! this 'number rhsenv fix))
 	       ((== === != !== < <= > >= instanceof)
-		(expr-type-set! this 'bool rhsenv fix))
+		(expr-type-set! this 'bool env fix))
 	       ((&&)
-		(expr-type-set! this rhstype rhsenv fix))
+		(if (and lhstype rhstype)
+		    (expr-type-set! this (merge-type lhstype rhstype) rhsenv fix)
+		    (values #f rhsenv #f)))
 	       ((OR)
-		(expr-type-set! this lhstype rhsenv fix))
+		(if (and lhstype rhsenv)
+		    (expr-type-set! this (merge-type lhstype rhstype) rhsenv fix)
+		    (values #f rhsenv #f)))
 	       ((<< >> >>> ^ & BIT_OR)
 		(expr-type-set! this 'number rhsenv fix))
 	       (else
@@ -734,9 +740,27 @@
 		      (values 'void lenv lbreak))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    type ::J2SWhile ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type this::J2SWhile env::pair-nil fun fix::cell)
+   (with-access::J2SWhile this (test body)
+      (let loop ((env env))
+	 (let ((ofix (cell-ref fix)))
+	    (cell-set! fix #f)
+	    (multiple-value-bind (_ env break)
+	       (type test env fun fix)
+	       (multiple-value-bind (ltype lenv lbreak)
+		  (type body env fun fix)
+		  (if (cell-ref fix)
+		      (loop lenv)
+		      (begin
+			 (cell-set! fix ofix)
+			 (values 'void lenv lbreak)))))))))
+	 
+;*---------------------------------------------------------------------*/
 ;*    type ::J2SFor ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-method (type this::J2SFor env::pair-nil fun fix::cell)
+(define-walk-method (type this::J2SFor env::pair-nil fun fix::cell)
    (with-access::J2SFor this (init test incr body)
       (multiple-value-bind (_ env break)
 	 (type init env fun fix)

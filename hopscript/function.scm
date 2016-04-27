@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Feb 10 15:23:58 2016 (serrano)                */
+;*    Last change :  Wed Apr 20 17:03:25 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -15,9 +15,9 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_function
-
+   
    (library hop)
-
+   
    (include "stringliteral.sch")
    
    (import __hopscript_types
@@ -27,19 +27,21 @@
 	   __hopscript_private
 	   __hopscript_public
 	   __hopscript_worker)
-
+   
    (export (js-init-function! ::JsGlobalObject)
 	   (inline js-function?::bool ::obj)
 	   
 	   thrower-get
 	   thrower-set
-
+	   
 	   (js-function-debug-name::bstring ::JsFunction)
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
 	      #!key
 	      __proto__ prototype constructor construct alloc
-	      (strict 'normal) arity (minlen -1) src rest)))
+	      (strict 'normal) arity (minlen -1) src rest)
+	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
+	      ::int ::obj ::int ::int ::symbol ::bool)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -276,6 +278,18 @@
 	       :writable #f
 	       :enumerable #f :configurable #f)
 	    fun))))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-function-simple ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-make-function-simple %this::JsGlobalObject proc::procedure
+	   len::int name arity::int minlen::int strict::symbol rest::bool)
+   (js-make-function %this proc len name
+      :prototype #f :__proto__ #f
+      :arity arity :strict strict :rest rest :minlen minlen
+      :src #f
+      :alloc (lambda (o) (js-object-alloc o %this))
+      :construct proc))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-function-prototype! ...                             */

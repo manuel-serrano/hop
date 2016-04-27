@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  9 10:55:09 2015                          */
-;*    Last change :  Thu Jan 14 08:34:10 2016 (serrano)                */
+;*    Last change :  Tue Apr 19 08:55:09 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES5 transformations                                              */
@@ -55,10 +55,13 @@
 ;*    ecmascript5-header ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (ecmascript5-header::pair id path loc conf)
-   (list (instantiate::J2SPragma
-	    (loc loc)
-	    (lang 'javascript)
-	    (expr (js-header)))))
+   (list
+      (instantiate::J2SStmtExpr
+	 (loc loc)
+	 (expr (instantiate::J2SPragma
+		  (loc loc)
+		  (lang 'javascript)
+		  (expr (js-header)))))))
 
 
 

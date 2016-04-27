@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Mar 28 10:29:39 2016 (serrano)                */
+;*    Last change :  Wed Apr 20 17:03:12 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -144,7 +144,7 @@
 ;*    usage ::J2SNode ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SNode ctx deval)
-   (call-default-walker))
+   (default-walk this 'ref deval))
    
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SRef ...                                               */
@@ -220,6 +220,14 @@
       (usage val 'ref deval)
       (set! u (cons 'init u)))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    usage ::J2SReturn ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (usage this::J2SReturn ctx deval)
+   (with-access::J2SReturn this (expr)
+      (usage expr 'ref deval)
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    dead-code! ::J2SNode ...                                         */

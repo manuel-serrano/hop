@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/share/hop-slider.js               */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-slider.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 10 11:01:53 2005                          */
-/*    Last change :  Wed Oct  1 19:22:06 2014 (serrano)                */
-/*    Copyright   :  2005-14 Manuel Serrano                            */
+/*    Last change :  Sun Apr 10 07:36:55 2016 (serrano)                */
+/*    Copyright   :  2005-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP slider implementation                                        */
 /*=====================================================================*/
@@ -90,9 +90,6 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    var div;
    var caption;
 
-/*    hop_tprint( "hop-slider.js", 0,                                  */
-/* 	       sc_cons( ">>> hop_make_slider",                         */
-/* 			sc_cons( id, null ) ) );                       */
    if( !parent ) { sc_error( '<SLIDER>', "Illegal parent node", parent ); }
    
    parent = parent.parentNode;
@@ -104,6 +101,7 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
    slider.setAttribute( "data-hss-tag", "hop-slider" );
    
    slider.onchange = undefined;
+   slider.onclick = undefined;
    
    slider.parent = parent;
    slider.rules = "none";
@@ -222,6 +220,9 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 	 if( slider.onchange != undefined ) {
 	    slider.onchange( { value: slider.value, target: slider } );
 	 }
+	 if( slider.onclick != undefined ) {
+	    slider.onclick( { value: slider.value, target: slider } );
+	 }
       }
    }
       
@@ -260,6 +261,8 @@ function hop_make_slider( parent, klass, id, min, max, step, value, cap ) {
 
    if( slider.onchange != undefined )
       slider.onchange( {value : value, target: slider } );
+   if( slider.onclick != undefined )
+      slider.onclick( {value : value, target: slider } );
 
    // touchmove of mobile platforms
    if( !slidertouch ) {
@@ -346,4 +349,28 @@ function hop_slider_onchange_get( slider ) {
 */
 function hop_slider_onchange_set( slider, onchange ) {
    slider.onchange = onchange;
+   return slider;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_slider_onclick_get ...                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export slider-onclick)
+           (arity #t)
+           (peephole: (hole 1 "(" slider ").onclick")))
+*/
+function hop_slider_onclick_get( slider ) {
+   return slider.onclick;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_slider_onclick_set ...                                       */
+/*---------------------------------------------------------------------*/
+/*** META ((export slider-onclick-set!)
+           (arity #t)
+           (peephole (hole 2 "(" slider ").onclick = " onclick)))
+*/
+function hop_slider_onclick_set( slider, onclick ) {
+   slider.onclick = onclick;
+   return slider;
 }

@@ -143,7 +143,24 @@ function optim3() {
 
    return y;
 }
-   
+
+function optim4() {
+   var _a = { x: 1, y: 2 }, b = _a.x, c = _a.y;
+
+   return b + c;
+}
+
+function optim5( f ) {
+   if (typeof f !== 'string') {
+      return i;
+   }
+
+   var i = 1;
+   var len = 23;
+
+   return i;
+}
+
 function letFun() { 
    let gee = function () { return my_var };
    let my_var = 'foo';
@@ -204,6 +221,12 @@ assert.ok( optim2() == 8 );
 
 console.log( "   optim3()" );
 assert.ok( optim3() == undefined );
+
+console.log( "   optim4()" );
+assert.ok( optim4() == 3 );
+
+console.log( "   optim5()" );
+assert.ok( optim5( "foo" ) == 1 );
 
 console.log( "   arity()" );
 assert.ok( arity() == 2 );

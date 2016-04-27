@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/share/hop-spage.scm               */
+;*    serrano/prgm/project/hop/3.1.x/share/hop-spage.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Wed Nov 11 17:38:12 2015 (serrano)                */
-;*    Copyright   :  2010-15 Manuel Serrano                            */
+;*    Last change :  Tue Apr 26 19:33:08 2016 (serrano)                */
+;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
 ;*=====================================================================*/
@@ -32,6 +32,7 @@
 	   (spage-tab-push tab)
 	   (spage-pop-update el)
 	   (spage-push-service tab svc)
+	   (spage-push-url tab svc proc)
 	   (spage-push-node tab node)
 	   (spage-head spage)
 	   (spage-tab spage)
@@ -249,7 +250,7 @@
 ;*    spage-push ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (spage-push spage tab tbody)
-   
+
    (define (spage-push-none spage spviewport tbody otab)
       ;; mark the transition style (needed on resize)
       (set! spage.transitionstyle 'none)
@@ -530,7 +531,7 @@
 		(tab (if tparent tparent.tab)))
 	    (when tbody.tab.pushed
 	       (if (and (not (eq? tab #unspecified))
-			(procedure? tab.svc)
+			(or (procedure? tab.svc) (string? tab.svc))
 			(equal? (tab.getAttribute "data-hop-svc-direction") "both"))
 		   (pop-body-node spage (car head)
 		      (lambda (spage)
@@ -572,6 +573,21 @@
 	    (set! tab.pushed #f)))))
 	    
 ;*---------------------------------------------------------------------*/
+;*    spage-push-url ...                                               */
+;*---------------------------------------------------------------------*/
+(define (spage-push-url tab svcurl build)
+   (unless (and (js-in? "pushed" tab) (eq? tab.pushed #t))
+      (set! tab.pushed #t)
+      (with-hop svcurl
+	 (lambda (body)
+	    (set! tab.svc svcurl)
+	    (set! tab.static-node #unspecified)
+	    (set! tab.build build)
+	    (spage-push-body tab (build body)))
+	 (lambda (xhr)
+	    (set! tab.pushed #f)))))
+	    
+;*---------------------------------------------------------------------*/
 ;*    spage-push-node ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (spage-push-node tab node)
@@ -597,19 +613,24 @@
 ;*    spage-tab-update ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (spage-tab-update tab)
+
+   (define (update body)
+      (let* ((spage (find-spage tab))
+	     (spviewport spage.spviewport))
+	 (spage-resize spage)
+	 (node-style-set! body
+	    :width (format "~apx" spage.spbodywidth))
+	 (dom-remove-child! spviewport (car spage.tabs))
+	 (set! spage.tabs (cons body (cdr spage.tabs)))
+	 (set! body.tab tab)
+	 (dom-append-child! spviewport body)))
+   
    (let ((tab (if (string? tab) (dom-get-element-by-id tab) tab)))
-      (when tab.svc
-	 (with-hop (tab.svc)
-            (lambda (body)
-               (let* ((spage (find-spage tab))
-                      (spviewport spage.spviewport))
-		  (spage-resize spage)
-		  (node-style-set! body
-		     :width (format "~apx" spage.spbodywidth))
-                  (dom-remove-child! spviewport (car spage.tabs))
-		  (set! spage.tabs (cons body (cdr spage.tabs)))
-		  (set! body.tab tab)
-                  (dom-append-child! spviewport body)))))))
+      (cond
+	 ((string? tab.svc)
+	  (with-hop tab.svc (lambda (body) (update (tab.build body)))))
+	 ((procedure? tab.svc)
+	  (with-hop (tab.svc) update)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    spage-tab-pop ...                                                */

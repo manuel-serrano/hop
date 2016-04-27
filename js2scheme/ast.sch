@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sat Mar 26 13:46:01 2016 (serrano)                */
+;*    Last change :  Sun Apr 24 08:42:27 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -237,6 +237,12 @@
 
 (define-macro (J2SAssig lhs rhs)
    `(instantiate::J2SAssig
+       (loc loc)
+       (lhs ,lhs)
+       (rhs ,rhs)))
+
+(define-macro (J2SInit lhs rhs)
+   `(instantiate::J2SInit
        (loc loc)
        (lhs ,lhs)
        (rhs ,rhs)))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Mar 25 15:58:02 2016 (serrano)                */
+/*    Last change :  Mon Apr 25 07:44:19 2016 (serrano)                */
 /*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
@@ -44,6 +44,32 @@ assert.equal( s5.charCodeAt( 0 ), 65 );
 assert.equal( s5.charCodeAt( 1 ), 55349 );
 assert.equal( s5.charCodeAt( 2 ), 56424 );
 assert.equal( s5.charCodeAt( 3 ), 67 );
+
+/*---------------------------------------------------------------------*/
+/*    generic                                                          */
+/*---------------------------------------------------------------------*/
+function generic( method, raise ) {
+   var cnt = 0;
+   
+   method.call( new String( "toto" ) ); cnt++;
+   method.call( "toto" ); cnt++;
+
+   if( raise ) {
+      try {
+	 method.call( 20 );
+      } catch( e ) {
+	 cnt++;
+      }
+   } else {
+      method.call( 20 ); cnt++;
+   }
+
+   return cnt == 3;
+}
+
+assert.ok( generic( String.prototype.toString, true ), "toString" );
+assert.ok( generic( String.prototype.valueOf, true ), "valueOf" );
+assert.ok( generic( String.prototype.charAt, false ), "charAt" );
 
 /*---------------------------------------------------------------------*/
 /*    concat                                                           */

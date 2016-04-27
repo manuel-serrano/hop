@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/etc/mkserializer.hop              */
+;*    serrano/prgm/project/hop/3.1.x/etc/mkserializer.hop              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 16 07:56:29 2015                          */
-;*    Last change :  Sun Nov 29 08:21:42 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Wed Apr  6 19:35:40 2016 (serrano)                */
+;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    A tool to produce the client-side HopScript class serializers    */
 ;*    -------------------------------------------------------------    */
@@ -96,13 +96,17 @@
    (printf "  ~a: { unserializer: function( e ) { var err = new Error( e[ 1 ], e[ 3 ], e[ 4 ] ); err.name = e[ 0 ]; return err; } },\n"
       (class-hash JsError))
    ;; JsServer
+   (printf "#if !HOP_NOBROWSER\n")
    (printf "  ~a: { unserializer: HopServer.prototype.unserializer }\n"
       (class-hash JsServer))
+   (printf "#endif\n")
    (display "};\n\n")
+   (printf "#if !HOP_NOBROWSER\n")
    (printf "HopFrame.prototype.hash = ~a;\n" (class-hash JsHopFrame))
    (printf "HopService.prototype.hash = ~a;\n" (class-hash JsService))
    (printf "Object.defineProperty( HopServer.prototype, 'hash', { value: ~a } );\n" (class-hash JsServer))
    (printf "hop_error_hash = ~a;\n" (class-hash JsError))
+   (printf "#endif\n")
    )
 
 ;*---------------------------------------------------------------------*/

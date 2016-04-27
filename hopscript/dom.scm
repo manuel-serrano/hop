@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/dom.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/dom.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Thu Nov  5 22:11:28 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Fri Apr 22 13:36:30 2016 (serrano)                */
+;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
 ;*=====================================================================*/
@@ -216,7 +216,7 @@
       ((previousSibling)
        (dom-previous-sibling o))
       ((childNodes)
-       (js-vector->jsarray '#() %this))
+       (js-empty-vector->jsarray %this))
       (else
        (js-undefined))))
 

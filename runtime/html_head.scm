@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sun Apr  3 08:59:24 2016 (serrano)                */
+;*    Last change :  Fri Apr 22 15:06:06 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -482,7 +482,7 @@ function hop_session() {return " (integer->string (hop-session)) ";}"))))
 				  (inl (head-runtime-system-inline idiom))
 				  (packed (head-runtime-system-packed idiom))
 				  (else head-runtime-system-unpacked))
-			  (list body))))
+			  body)))
 		 body)))
 	 ((pair? (car a))
 	  (loop (append (car a) (cdr a))

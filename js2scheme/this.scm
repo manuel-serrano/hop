@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Feb  4 19:00:31 2016 (serrano)                */
+;*    Last change :  Tue Apr 19 08:55:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -61,17 +61,20 @@
 (define-walk-method (this! this::J2SFun)
 
    (define (init-this loc)
-      (instantiate::J2SPragma
+      (let ((prag (instantiate::J2SPragma
+		     (loc loc)
+		     (expr `(cond
+			       ((or (eq? this (js-undefined))
+				    (eq? this (js-null)))
+				;; use to be
+				;; (set! this %scope)
+				;; but it breaks nodejs/test/simple/test-fs-fstat.js
+				(set! this %this))
+			       ((not (isa? this JsObject))
+				(set! this (js-toobject %this this))))))))
+      (instantiate::J2SStmtExpr
 	 (loc loc)
-	 (expr `(cond
-		   ((or (eq? this (js-undefined))
-			(eq? this (js-null)))
-		    ;; use to be
-		    ;; (set! this %scope)
-		    ;; but it breaks nodejs/test/simple/test-fs-fstat.js
-		    (set! this %this))
-		   ((not (isa? this JsObject))
-		    (set! this (js-toobject %this this)))))))
+	 (expr prag))))
    
    (with-access::J2SFun this (mode body params id loc)
       (when (eq? mode 'normal)

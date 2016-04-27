@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Dec 24 07:34:16 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Wed Apr  6 16:47:45 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -551,6 +551,7 @@
 	 (with-trace 'event "ws-register-new-connection"
 	    (trace-item "protocol-version=" version)
 	    (let ((resp (websocket-server-response req key)))
+	       (trace-item "resp=" (typeof resp))
 	       ;; register the websocket
 	       (synchronize *event-mutex*
 		  (set! *websocket-response-list*
@@ -859,7 +860,9 @@
 		      (lambda (l) (cons resp l))
 		      (list resp))
 		   (instantiate::http-response-string))
-		(error "server-event-register" "Illegal websocket entry" key)))))
+		(begin
+		   (trace-item "keylist=" *websocket-response-list*)
+		   (error "server-event-register" "Illegal websocket entry" key))))))
 
    (with-trace 'event "ws-register-event!"
       (synchronize *event-mutex*

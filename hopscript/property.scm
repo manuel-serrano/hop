@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 24 18:17:38 2016 (serrano)                */
+;*    Last change :  Mon Apr 25 07:18:09 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -36,6 +36,7 @@
 	   (js-make-pcache ::int)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-object-element-ref ::JsObject ::long)
+	   (inline js-object-element-set! ::JsObject ::long ::obj)
 
 	   (js-names->cmap::JsConstructMap ::vector)
 	   (js-descriptors->cmap::JsConstructMap ::vector)
@@ -83,6 +84,8 @@
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 	   (inline js-put-name/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
+	   ;; (inline js-object-put-name/cache! ::JsObject ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
+	   (js-object-put-name/cache! ::JsObject ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 	   (js-put-name/cache-miss! ::JsObject ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 
 	   (generic js-delete! ::obj ::obj ::bool ::JsGlobalObject)
@@ -112,12 +115,6 @@
 	      (enumerable #t)
 	      (configurable #t))))
 
-;* (define-macro (vector-ref-ur v i)                                   */
-;*    `(vector-ref ,v ,i))                                             */
-;*                                                                     */
-;* (define-macro (vector-set-ur! v i o)                                */
-;*    `(vector-set! ,v ,i ,o))                                         */
-
 ;*---------------------------------------------------------------------*/
 ;*    js-object-element-ref ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -128,12 +125,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-element-set! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-macro (js-object-element-set! obj index value extendp)
+(define-inline (js-object-element-set! obj index value)
+   (with-access::JsObject obj (elements)
+      (let ((len (vector-length elements)))
+	 (if (>=fx index len)
+	     (let ((nvec (copy-vector elements (+fx 1 len))))
+		(vector-set-ur! nvec len value)
+		(set! elements nvec))
+	     (vector-set-ur! elements index value)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-element-set! ...                                       */
+;*---------------------------------------------------------------------*/
+(define-macro (%js-object-element-set! obj index value extendp)
    `(with-access::JsObject ,obj (elements)
        ,(if extendp
-	    `(if (>=fx ,index (vector-length elements))
-		 (set! elements (vector-extend elements ,value))
-		 (vector-set-ur! elements ,index ,value))
+	    `(js-object-element-set!  ,obj ,index ,value)
 	    `(vector-set-ur! elements ,index ,value))))
 
 ;*---------------------------------------------------------------------*/
@@ -221,7 +228,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    cmap-same-transition? ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (cmap-same-transition? cmap::JsConstructMap name::obj flags::int)
+(define (cmap-same-transition?::bool cmap::JsConstructMap name::obj flags::int)
    (with-access::JsConstructMap cmap ((t1 transition))
       (and (eq? (car t1) name) (=fx (cdr t1) flags))))
 
@@ -737,7 +744,7 @@
 (define-generic (js-get o prop %this::JsGlobalObject)
    (cond
       ((string? o)
-       (js-get-string o (js-toname prop %this) %this))
+       (js-get-string o prop %this))
       ((pair? o)
        (js-get-pair o (js-toname prop %this) %this))
       ((null? o)
@@ -995,7 +1002,7 @@
 ;*    js-unresolved-put! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-unresolved-put! o::JsObject p value throw::bool %this::JsGlobalObject)
-   (js-put-jsobject! o p value throw #f %this))
+   (js-put-jsobject! o p value throw #f #f %this))
 
 
 ;*---------------------------------------------------------------------*/
@@ -1003,7 +1010,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-unresolved-eval-put! scope::JsObject p value throw::bool %this::JsGlobalObject)
    (if (eq? (js-get-own-property scope p %this) (js-undefined))
-       (js-put-jsobject! %this p value throw (not throw) %this)
+       (js-put-jsobject! %this p value throw (not throw) #f %this)
        (js-put! scope p value throw %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -1011,7 +1018,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-decl-eval-put! scope::JsObject p value throw::bool %this::JsGlobalObject)
    (if (eq? (js-get-own-property scope p %this) (js-undefined))
-       (js-put-jsobject! %this p value throw #t %this)
+       (js-put-jsobject! %this p value throw #t #f %this)
        (js-put! scope p value throw %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -1059,7 +1066,7 @@
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-put! o::JsObject p value throw %this)
-   (js-put-jsobject! o p value throw #t %this))
+   (js-put-jsobject! o p value throw #t #f %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-jsobject! ...                                             */
@@ -1072,13 +1079,19 @@
 ;*    At the first level, special put! form for Array, String, etc.    */
 ;*    are overriden by method of the js-put! function.                 */
 ;*---------------------------------------------------------------------*/
-(define (js-put-jsobject! o p value throw extend::bool %this)
+(define (js-put-jsobject! o p value throw extend::bool cache %this)
    
    (define (reject msg)
       (if throw
 	  (js-raise-type-error %this
 	     (format "[[PUT]], ~a ~~s" msg) (js-toname p %this))
 	  value))
+
+   (define (update-cache! cmp idx)
+      (when cache
+	 (with-access::JsPropertyCache cache (cmap index)
+	    (set! cmap cmp)
+	    (set! index idx))))
 
    (define (update-accessor-descriptor! obj value desc)
       ;; 8.12.5
@@ -1096,7 +1109,6 @@
 	       (cond
 		  ((isa? desc JsAccessorDescriptor)
 		   ;; 8.12.5, step 5
-		   ;;(update-accessor-descriptor! obj value desc)
 		   (update-accessor-descriptor! o value desc))
 		  ((eq? o obj)
 		   ;; 8.12.5, step 3
@@ -1108,7 +1120,8 @@
 			     (reject "Read-only property")
 			     ;; 8.12.5, step 3,b
 			     (begin
-				(js-object-element-set! obj i value #f)
+				(%js-object-element-set! obj i value #f)
+				(update-cache! cmap i)
 				value)))))
 		  ((not extensible)
 		   ;; 8.12.9, step 3
@@ -1129,7 +1142,7 @@
 		   (flags (property-flags #t #t #t #f))
 		   (index (vector-length names)))
 	       (if (cmap-same-transition? cmap name flags)
-		   ;; follow the next map 
+		   ;; follow the next map
 		   (with-access::JsConstructMap nextmap (names)
 		      (set! cmap nextmap))
 		   ;; create a new map
@@ -1144,7 +1157,8 @@
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)))
 	       ;; store in the obj
-	       (js-object-element-set! o index value #t)
+	       (%js-object-element-set! o index value #t)
+	       (update-cache! cmap index)
 	       value))))
    
    (define (update-properties-object! obj desc)
@@ -1276,7 +1290,7 @@
 		   ;; follow the next map 
 		   (with-access::JsConstructMap nextmap (names)
 		      (set! cmap nextmap)
-		      (js-object-element-set! o index value #t)
+		      (%js-object-element-set! o index value #t)
 		      value))
 		  ((or (and get (not (eq? get (js-undefined))))
 		       (and set (not (eq? set (js-undefined)))))
@@ -1305,7 +1319,7 @@
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)
 		      ;; extending the elements vector is mandatory
-		      (js-object-element-set! o index value #t)
+		      (%js-object-element-set! o index value #t)
 		      (js-undefined)))
 		  (else
 		   ;; create a new map with a JsIndexDescriptor
@@ -1320,7 +1334,7 @@
 		      (link-cmap! cmap nextmap trans)
 		      (set! cmap nextmap)
 		      ;; store in the obj
-		      (js-object-element-set! o index value #t)
+		      (%js-object-element-set! o index value #t)
 		      value)))))))
    
    (define (update-properties-object! obj owndesc)
@@ -1370,8 +1384,7 @@
 (define (vector-extend::vector vec::vector val)
    ;; extend a vector with one additional slot
    (let* ((len (vector-length vec))
-	  (nvec ($create-vector (+fx 1 len))))
-      (vector-copy! nvec 0 vec 0)
+	  (nvec (copy-vector vec (+fx 1 len))))
       (vector-set-ur! nvec len val)
       nvec))
 
@@ -1388,15 +1401,35 @@
 ;*    js-put-name/cache ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-put-name/cache! o prop::obj v::obj throw::bool cache::JsPropertyCache %this)
-   (if (not (isa? o JsObject))
-       (js-put! o prop v throw %this)
-       (js-put-name/cache-miss! o prop v throw cache %this)))
+   (if (isa? o JsObject)
+       (js-object-put-name/cache! o prop v throw cache %this)
+       (js-put! o prop v throw %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-put-name/cache ...                                     */
+;*---------------------------------------------------------------------*/
+;;(define-inline (js-object-put-name/cache! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
+(define (js-object-put-name/cache! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
+   (with-access::JsObject o ((%omap cmap) elements)
+      (with-access::JsPropertyCache cache ((%cmap cmap) index)
+	 (let ((cmap %cmap)
+	       (omap %omap))
+	    (cond
+	       ((eq? cmap omap)
+		(vector-set-ur! elements index v))
+	       ((and omap
+		     (with-access::JsConstructMap omap (nextmap)
+			(eq? nextmap cmap)))
+		(set! %omap cmap)
+		(js-object-element-set! o index v))
+	       (else
+		(js-put-name/cache-miss! o prop v throw cache %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-name/cache-miss! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-put-name/cache-miss! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
-   (js-put! o prop v throw %this))
+   (js-put-jsobject! o prop v throw #t cache %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-delete! ...                                                   */

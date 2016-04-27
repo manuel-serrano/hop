@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Mar  9 14:06:49 2016 (serrano)                */
+/*    Last change :  Mon Apr 25 08:19:13 2016 (serrano)                */
 /*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Extra Nodejs buffer Testing                                      */
@@ -16,7 +16,7 @@ var assert = require( "assert" );
 var buf = new Buffer( 8, 0 );
 
 buf.writeUInt8( 4, 3 );
-assert.equal( buf.readUInt8( 3 ), 4 );
+assert.equal( buf.readUInt8( 3 ), 4, "writeUint8" );
 
 var buf = new Buffer( 6 );
 buf.fill( 0 );
@@ -57,15 +57,15 @@ buf[ 1 ] = 169;
 
 var s1 = buf.toString( "utf8" );
 
-assert.strictEqual( s1.charCodeAt( 0 ), 233 );
+assert.strictEqual( s1.charCodeAt( 0 ), 233, "utf8" );
 
 buf = new Buffer( 1 );
 buf[ 0 ] = 255;
 
 var s1 = buf.toString( "utf8" );
 
-assert.strictEqual( s1.length, 1 );
-assert.strictEqual( s1.charCodeAt( 0 ), 65533 );
+assert.strictEqual( s1.length, 1, "utf8.length" );
+assert.strictEqual( s1.charCodeAt( 0 ), 65533, "utf8" );
 
 var b2 = new Buffer( s1 );
 assert.strictEqual( b2.length, 3, "b2.length" );
