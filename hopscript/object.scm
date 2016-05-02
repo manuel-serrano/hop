@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Apr  4 08:47:36 2016 (serrano)                */
+;*    Last change :  Thu Apr 28 18:43:29 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -437,7 +437,7 @@
 	       OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
 	       Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
 	       STRONG SUB SUP TABLE TBODY TD TEXTAREA TFOOT TH
-	       THEAD TITLE TR TT U UL VAR)
+	       THEAD TITLE TR TT U UL VAR REACT)
 
 	    ;; html5
 	    (js-bind-tags! %this %this

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/2.4.x/share/hop-prefs.js                */
+/*    serrano/prgm/project/hop/3.1.x/share/hop-prefs.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Apr 21 11:52:04 2008                          */
-/*    Last change :  Mon Feb 11 08:21:58 2013 (serrano)                */
-/*    Copyright   :  2008-13 Manuel Serrano                            */
+/*    Last change :  Fri Apr 29 08:58:00 2016 (serrano)                */
+/*    Copyright   :  2008-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    PREFS client-side runtime.                                       */
 /*=====================================================================*/
@@ -14,8 +14,8 @@
 /*    -------------------------------------------------------------    */
 /*    The name of the services are defined in runtime/prefs.scm        */
 /*---------------------------------------------------------------------*/
-var hop_prefs_edit_svc = hop_service_base() + "/admin/preferences/edit";
-var hop_prefs_save_svc = hop_service_base() + "/admin/preferences/save";
+var hop_prefs_edit_svc = window.hop.serviceBase + "/admin/preferences/edit";
+var hop_prefs_save_svc = window.hop.serviceBase + "/admin/preferences/save";
 
 /*---------------------------------------------------------------------*/
 /*    hop_prefs_callback ...                                           */

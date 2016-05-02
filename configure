@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Apr  2 09:25:31 2016 (serrano)                */
+#*    Last change :  Thu Apr 28 11:23:52 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -126,13 +126,13 @@ uv=""
 
 hopsrfis=""
 
-rts="hop-dom.js hop-event.js hop-serialize.js hop-request.js hop-lib.js hopscheme.js hop-require.js hop-boot.js"
+rts="hop-dom.js hop-event.js hop-serialize.js hop-request.js hop-lib.js hopscheme.js hop-require.js hop-boot.js hop-react.js"
 
 bglfail=false;
 
 hopservicebase="/hop"
 hopjssanssuffix='"hop"'
-hopjsfiles='"hop-autoconf.js" "runtime.js" "hop-boot.js"'
+hopjsfiles='"hop-autoconf.js" "runtime.js" "hop-boot.js" "hop-react.js"'
  
 for p in $rts; do
   hopjsfiles="$hopjsfiles \"$p\""; 

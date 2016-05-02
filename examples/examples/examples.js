@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/examples/examples.js     */
+/*    serrano/prgm/project/hop/3.1.x/examples/examples/examples.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Sat Nov 28 10:39:31 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Fri Apr 29 19:21:04 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
 /*    -------------------------------------------------------------    */
@@ -49,15 +49,15 @@ service examples() {
    var description = <span class="description"/>;
    var tags = <span/>;
    var docn = <div/>;
-   var sources = <div/>;
+   var sources = <div>foo bar</div>;
    var consoles = <div class="consoles"/>;
    var stitle = <span/>;
    var iframe = <iframe/>;
    var url = <a  class="panel-heading-url"/>;
    var root = path.dirname( __dirname );
    
-   var css = [ examples.resource( "libs/bootstrap/css/bootstrap.min.css" ),
-	       examples.resource( "examples.hss" ),
+   var css = [ require.resolve( "./libs/bootstrap/css/bootstrap.min.css" ),
+	       require.resolve( "./examples.hss" ),
 	       fontifier.css,
 	       doc.css ]
 
@@ -104,9 +104,9 @@ service examples() {
 		  } );
 
 	       var el = document.getElementById( "example" );
-	       dom_remove_class( el, "no-display" );
+	       el.className = el.className.replace( /[ \t]*no-display\b/, "" );
 	       var el = document.getElementById( "init" );
-	       dom_add_class( el, "no-display" );
+	       el.className = el.className + " no-display";
 
 	       ${sources}.innerHTML = "";
 	       // walk over all the sources, one after the other
@@ -232,8 +232,8 @@ service examples() {
 	    </div>
 	  </div>
 	</div>
-	<script src=${examples.resource( "libs/jquery/js/jquery.min.js")}/>
-	<script src=${examples.resource( "libs/bootstrap/js/bootstrap.min.js")}/>
+	<script src=${require.resolve( "./libs/jquery/js/jquery.min.js")}/>
+	<script src=${require.resolve( "./libs/bootstrap/js/bootstrap.min.js")}/>
       </body>
    </html>
 }

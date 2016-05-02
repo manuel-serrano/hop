@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr 25 07:02:54 2016 (serrano)                */
+;*    Last change :  Thu Apr 28 17:56:43 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -42,9 +42,9 @@
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
 	   (js-array-push ::JsArray ::obj ::JsGlobalObject)
-	   (js-array-maybe-push ::JsArray ::obj ::JsGlobalObject)
+	   (js-array-maybe-push ::obj ::obj ::JsGlobalObject)
 	   (js-array-pop ::JsArray ::JsGlobalObject)
-	   (js-array-maybe-pop ::JsArray ::JsGlobalObject)
+	   (js-array-maybe-pop ::obj ::JsGlobalObject)
 	   (js-array-comprehension ::JsGlobalObject ::obj ::procedure
 	      ::obj ::pair ::bstring ::bstring ::pair)))
 

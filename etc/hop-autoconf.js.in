@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 18 05:26:40 2006                          */
-/*    Last change :  Thu Mar 31 13:28:23 2016 (serrano)                */
+/*    Last change :  Fri Apr 29 11:00:56 2016 (serrano)                */
 /*    Copyright   :  2006-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    All non portable components of the HOP runtime system. All other */
@@ -130,11 +130,21 @@ Object.defineProperty( HopServer.prototype, "unserializer", {
    }
 } );
 
+Object.defineProperty( HopServer.prototype, "reactProxy", {
+   value: function( event, defval ) {
+      var proxy = window.hop.reactProxy( { value: defval } );
+      hop_add_event_listener( this,
+	 event,
+	 function( evt ) { proxy.value = evt.value },
+	 false );
+      return proxy;
+   }
+} );
+
 /*---------------------------------------------------------------------*/
 /*    Hop configuration                                                */
 /*---------------------------------------------------------------------*/
 var hop_enable_location_event = @LOCEVENT@;
-
 
 /*---------------------------------------------------------------------*/
 /*    hop_Config ...                                                   */

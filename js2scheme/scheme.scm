@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 27 10:23:48 2016 (serrano)                */
+;*    Last change :  Fri Apr 29 07:02:07 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -39,23 +39,23 @@
 ;*---------------------------------------------------------------------*/
 (define j2s-maybe-methods
    '(;; string methods
-     ("charAt" js-jsstring-maybe-charat 1)
-     ("charCodeAt" js-jsstring-maybe-charcodeat 1)
-     ("indexOf" js-jsstring-maybe-indexof 2)
-     ("lastIndexOf" js-jsstring-maybe-lastindexof 2)
-     ("substring" js-jsstring-maybe-substring 2)
-     ("substr" js-jsstring-maybe-substr 2)
-     ("toUpperCase" js-jsstring-maybe-touppercase 0)
-     ("toLowerCase" js-jsstring-maybe-tolowercase 0)
-     ("split" js-jsstring-maybe-split 2)
-     ("replace" js-jsstring-maybe-replace 2)
-     ("match" js-jsstring-maybe-match 1)
-     ("naturalCompare" js-jsstring-maybe-naturalcompare 1)
-     ("localeCompare" js-jsstring-maybe-localecompare 1)
-     ("trim" js-jsstring-maybe-trim 0)
+     ("charAt" js-jsstring-maybe-charat 1 1)
+     ("charCodeAt" js-jsstring-maybe-charcodeat 1 1)
+     ("indexOf" js-jsstring-maybe-indexof 2 2)
+     ("lastIndexOf" js-jsstring-maybe-lastindexof 2 2)
+     ("substring" js-jsstring-maybe-substring 2 2)
+     ("substr" js-jsstring-maybe-substr 2 2)
+     ("toUpperCase" js-jsstring-maybe-touppercase 0 0)
+     ("toLowerCase" js-jsstring-maybe-tolowercase 0 0)
+     ("split" js-jsstring-maybe-split 2 2)
+     ("replace" js-jsstring-maybe-replace 2 2)
+     ("match" js-jsstring-maybe-match 1 1 1)
+     ("naturalCompare" js-jsstring-maybe-naturalcompare 1 1)
+     ("localeCompare" js-jsstring-maybe-localecompare 1 1)
+     ("trim" js-jsstring-maybe-trim 0 0)
      ;; array methods
-     ("push" js-array-maybe-push 1)
-     ("pop" js-array-maybe-pop 0)))
+     ("push" js-array-maybe-push 1 1)
+     ("pop" js-array-maybe-pop 0 0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
@@ -2837,8 +2837,11 @@
 (define (j2s-maybe-method field args)
    (when (isa? field J2SString)
       (with-access::J2SString field (val)
-	 (let ((method (assoc val j2s-maybe-methods)))
-	    (when (and (pair? method) (<=fx (length args) (caddr method)))
+	 (let ((method (assoc val j2s-maybe-methods))
+	       (len (length args)))
+	    (when (and (pair? method)
+		       (<=fx len (caddr method))
+		       (>=fx len (cadddr method)))
 	       method)))))
    
 ;*---------------------------------------------------------------------*/
@@ -2863,8 +2866,8 @@
 	    (else
 	     #f))))
 
-   (define (call-ref-method obj fun args)
-      (with-access::J2SAccess fun (loc obj field)
+   (define (call-ref-method fun::J2SAccess obj::J2SExpr args)
+      (with-access::J2SAccess fun (loc field)
 	 (cond
 	    ((and (eq? (j2s-type obj) 'string)
 		  (j2s-is-string? field "indexOf")
@@ -2906,14 +2909,13 @@
 		       %this))))
 	    (else
 	     (call-unknown-function fun
-;* 		(j2s-toobject loc (j2s-scheme obj mode return conf hint)) */
 		(j2s-scheme obj mode return conf hint)
 		args)))))
    
    (define (call-method fun::J2SAccess args)
       (with-access::J2SAccess fun (loc obj field)
 	 (if (isa? obj J2SRef)
-	     (call-ref-method obj fun args)
+	     (call-ref-method fun obj args)
 	     (let ((tmp (gensym)))
 		`(let ((,tmp ,(j2s-scheme obj mode return conf hint)))
 		    ,(call-ref-method
@@ -2921,9 +2923,10 @@
 			   (obj (instantiate::J2SPragma
 				   (loc loc)
 				   (expr tmp))))
-			fun
-;* 			tmp                                            */
-;* 			(j2s-toobject loc tmp)                         */
+			(instantiate::J2SHopRef
+			   (type (j2s-type obj))
+			   (loc loc)
+			   (id tmp))
 			args))))))
    
    (define (call-hop-function fun::J2SHopRef args)
@@ -3068,10 +3071,12 @@
 		`(,(symbol-append call '/debug)
 		  ,j2s-unresolved-call-workspace
 		  ',loc
-		  ,(j2s-scheme fun mode return conf hint) ,thisarg
+		  ,(j2s-scheme fun mode return conf hint)
+		  ,thisarg
 		  ,@(j2s-scheme args mode return conf hint)))
 	     `(,call ,j2s-unresolved-call-workspace
-		 ,(j2s-scheme fun mode return conf hint) ,thisarg
+		 ,(j2s-scheme fun mode return conf hint)
+		 ,thisarg
 		 ,@(j2s-scheme args mode return conf hint)))))
 
    (define (call-eval-function fun args)

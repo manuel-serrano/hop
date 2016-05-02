@@ -84,7 +84,7 @@ message from the `Worker` thread. The message is stored in the
 
 
 Variables
------------
+---------
  
 The following variable can be set in a worker thread, it is
 implicitely attached to the parent thread.

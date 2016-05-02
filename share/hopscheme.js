@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Wed Apr  6 19:24:38 2016 (serrano)                */
+/*    Last change :  Fri Apr 29 10:07:56 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -13,9 +13,8 @@
 /*    Global parameters                                                */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
-var hop_config = {
-   uint8array: false
-}
+hop_config.uint8array = false;
+
 #if HOP_RTS_DEBUG
 var sc_context = null;
 #endif
@@ -120,6 +119,23 @@ function sc_cons( car, cdr ) {
    return new sc_Pair( car, cdr );
 }
 
+function sc_forEach( proc, l1 ) {
+   if (l1 === undefined) {
+      return undefined;
+   } else {
+      var nbApplyArgs = arguments.length - 1;
+      var applyArgs = new Array( nbApplyArgs );
+      while( arguments[1] !== null ) {
+	 for( var i = 0; i < nbApplyArgs; i++ ) {
+	    applyArgs[ i ] = arguments[ i + 1 ].__hop_car;
+	    arguments[ i + 1 ] = arguments[ i + 1 ].__hop_cdr;
+	 }
+	 proc.apply( null, applyArgs );
+      }
+      return undefined;
+   }
+}
+
 #if HOP_RTS_DEBUG
 function sc_consStar() {
     var res = arguments[arguments.length - 1];
@@ -130,6 +146,10 @@ function sc_consStar() {
 #endif
 
 #if HOP_RTS_DEBUG
+function sc_isPairEqual(p1, p2, comp) {
+    return (comp(p1.__hop_car, p2.__hop_car) && comp(p1.__hop_cdr, p2.__hop_cdr));
+}
+
 function sc_reverse( l1 ) {
    var res = null;
    while( l1 !== null ) {
@@ -148,6 +168,10 @@ function sc_append() {
       res = sc_dualAppend( arguments[ i ], res );
    }
    return res;
+}
+
+function sc_reverseBang( l ) {
+   return sc_reverseAppendBang( l, null );
 }
 
 function sc_reverseAppendBang( l1, l2 ) {
@@ -176,6 +200,89 @@ function sc_dualAppendBang( l1, l2 ) {
    tmp.__hop_cdr = l2;
    return l1;
 }
+
+function sc_dualAppendBang( l1, l2 ) {
+   if( l1 === null ) return l2;
+   if( l2 === null ) return l1;
+   var tmp = l1;
+   while( tmp.__hop_cdr !== null ) tmp=tmp.__hop_cdr;
+   tmp.__hop_cdr = l2;
+   return l1;
+}
+    
+function sc_appendBang() {
+   var res = null;
+   for( var i = 0; i < arguments.length; i++ )
+      res = sc_dualAppendBang( res, arguments[ i ] );
+   return res;
+}
+
+function sc_assq( o, al ) {
+   while( al !== null ) {
+      if( al.__hop_car.__hop_car === o )
+	 return al.__hop_car;
+      al = al.__hop_cdr;
+   }
+   return false;
+}
+
+function sc_assoc( o, al ) {
+   while( al !== null ) {
+      if( sc_isEqual( al.__hop_car.__hop_car, o ) )
+	 return al.__hop_car;
+      al = al.__hop_cdr;
+   }
+   return false;
+}
+
+function sc_filterMap1( proc, l1 ) {
+   var revres = null;
+   while( l1 !== null ) {
+      var tmp = proc( l1.__hop_car )
+      if( tmp !== false ) revres = sc_cons( tmp, revres );
+      l1 = l1.__hop_cdr;
+   }
+   return sc_reverseAppendBang( revres, null );
+}
+
+function sc_filterMap2( proc, l1, l2 ) {
+    var revres = null;
+    while( l1 !== null ) {
+        var tmp = proc( l1.__hop_car, l2.__hop_car );
+        if( tmp !== false ) revres = sc_cons( tmp, revres );
+	l1 = l1.__hop_cdr;
+	l2 = l2.__hop_cdr
+    }
+    return sc_reverseAppendBang( revres, null );
+}
+
+function sc_filterMap( proc, l1, l2, l3 ) {
+   if( l2 === undefined )
+      return sc_filterMap1( proc, l1 );
+   else if( l3 === undefined )
+      return sc_filterMap2( proc, l1, l2 );
+   // else
+   var nbApplyArgs = arguments.length - 1;
+   var applyArgs = new Array( nbApplyArgs );
+   var revres = null;
+   while( l1 !== null ) {
+      for( var i = 0; i < nbApplyArgs; i++ ) {
+	 applyArgs[ i ] = arguments[ i + 1 ].__hop_car;
+	 arguments[ i + 1 ] = arguments[ i + 1 ].__hop_cdr;
+      }
+      var tmp = proc.apply( null, applyArgs );
+      if( tmp !== false ) revres = sc_cons( tmp, revres );
+   }
+   return sc_reverseAppendBang( revres, null );
+}
+
+function sc_listTail( l, k ) {
+   var res = l;
+   for( var i = 0; i < k; i++ ) {
+      res = res.__hop_cdr;
+   }
+   return res;
+}
 #endif
 
 function sc_list() {
@@ -189,18 +296,52 @@ function sc_list() {
 #endif
 
 /*---------------------------------------------------------------------*/
-/*    regexp                                                           */
+/*    Regexp                                                           */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
 #if HOP_RTS_DEBUG
 function sc_pregexp( re ) {
    return new RegExp( re );
 }
+
+function sc_pregexpMatch( re, s ) {
+   var reg = (re instanceof RegExp) ? re : new RegExp( re );
+   var tmp = reg.exec( s );
+   
+   if( tmp == null ) return false;
+   
+   var res = null;
+   for( var i = tmp.length-1; i >= 0; i-- ) {
+      if( tmp[ i ] !== null ) {
+	 res = sc_cons( tmp[ i ], res );
+      } else {
+	 res = sc_cons( false, res );
+      }
+   }
+   return res;
+}
+
+function sc_pregexpReplace( re, s1, s2 ) {
+   var reg;
+   var jss1 = s1;
+   var jss2 = s2;
+
+   if( re instanceof RegExp ) {
+      if( re.global )
+	 reg = re;
+      else
+	 reg = new RegExp( re.source );
+   } else {
+      reg = new RegExp( re );
+   }
+
+   return jss1.replace( reg, jss2 );
+}
 #endif
 #endif
 
 /*---------------------------------------------------------------------*/
-/*    hashtables                                                       */
+/*    Hashtables                                                       */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
 #if HOP_RTS_DEBUG
@@ -249,7 +390,7 @@ sc_Pair.prototype.hop_bigloo_serialize = function() {
 };
 
 /*---------------------------------------------------------------------*/
-/*    keywords & symbols                                               */
+/*    Keywords & Symbols                                               */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
 var sc_SYMBOL_PREFIX = "\uEBAC";
@@ -260,6 +401,10 @@ function sc_isSymbol( s ) {
 }
 
 function sc_symbol2string( s ) {
+   return s.slice( 1 );
+}
+
+function sc_symbol2jsstring( s ) {
    return s.slice( 1 );
 }
 
@@ -279,16 +424,119 @@ function sc_keyword2string( s ) {
    return s.slice( 1 );
 }
 
+function sc_keyword2jsstring( s ) {
+   return s.slice( 1 );
+}
+
 function sc_string2keyword( s ) {
    return sc_KEYWORD_PREFIX + s;
 }
 function sc_jsstring2keyword( s ) {
    return sc_KEYWORD_PREFIX + s;
 }
+
 #endif
 
 /*---------------------------------------------------------------------*/
-/*    chars                                                            */
+/*    Strings                                                          */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+#if HOP_RTS_DEBUG
+function sc_jsstring2string( s ) {
+   return s;
+}
+
+function sc_isString( s ) {
+   return (typeof s === "string") &&
+      (s.charAt(0) !== sc_SYMBOL_PREFIX) &&
+      (s.charAt(0) !== sc_KEYWORD_PREFIX);
+}
+
+function sc_stringSplit( s, sep ) {
+   if( arguments.length === 1 )
+      return sc_vector2list( s.split( " " ) );
+   if( sep.length === 1 )
+      return sc_vector2list( s.split( sep ) );
+   return sc_vector2list( s.split( sep ) );
+}
+
+function sc_isSubstring( s1, s2, len ) {
+    if( s1.length < len ) return false;
+    if( s2.length < len ) return false;
+    return s2.substring( 0, len ) == s1.substring( 0, len );
+}
+
+function sc_substring( s, start, end ) {
+   return s.substring (start, (end == undefined || end < 0) ? s.length : end );
+}
+
+function sc_string2integer( s, radix ) {
+   return parseInt( s, radix );
+}
+
+function sc_stringIndex( s, cset, start ) {
+   var res;
+   if( !start ) start = 0;
+
+   if( cset instanceof sc_Char ) {
+      res = s.indexOf( sc_char2string( cset ), start );
+      return res >= 0 ? res : false;
+   }
+   if( cset.length == 1 ) {
+      res = s.indexOf( cset, start );
+      return res >= 0 ? res : false;
+   } else {
+      for( var i = start; i < s.length; i++ ) {
+	 if( cset.indexOf( s.charAt( i ) ) >= 0 ) {
+	    return i;
+	 }
+      }
+
+      return false;
+   }
+}
+
+function sc_string2list( s ) {
+   var res = null;
+   for( var i = s.length - 1; i >= 0; i-- )
+      res = sc_cons( new sc_Char( s.charAt( i ) ), res );
+   return res;
+}
+
+function sc_list2string( l ) {
+   var a = new Array();
+   while( l !== null ) {
+      a.push( l.__hop_car.val );
+      l = l.__hop_cdr;
+   }
+   return String.prototype.concat.apply( "", a );
+}
+
+function sc_isStringPrefix( cs1, cs2 ) {
+   return cs2.indexOf( cs1 ) === 0;
+}
+
+function sc_isStringSuffix( cs1, cs2 ) {
+   var tmp = cs2.lastIndexOf( cs1 );
+   return tmp !== false && tmp >= 0 && tmp === cs2.length - cs1.length;
+}
+
+function sc_stringSkip( s, cset, start ) {
+   var set = (cset instanceof sc_Char) ? sc_char2string( cset ) : cset;
+
+   for( var i = start; i < s.length; i++ ) {
+      if( set.indexOf( s.charAt( i ) ) < 0 ) {
+	 return i;
+      }
+   }
+
+   return false;
+}
+#endif
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    Chars                                                            */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
 function sc_Char( c ) {
@@ -296,10 +544,22 @@ function sc_Char( c ) {
 }
 #endif
 
+#if HOP_RTS_DEBUG
+var SC_NUMBER_CLASS = "0123456789";
+var SC_WHITESPACE_CLASS = ' \r\n\t\f';
+var SC_LOWER_CLASS = 'abcdefghijklmnopqrstuvwxyz';
+var SC_UPPER_CLASS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function sc_char2string(c) {
+   return c.val;
+}
+#endif
+
 #if HOP_SCHEME
 sc_Char.prototype.hop_bigloo_serialize = function() {
    return 'a' + hop_serialize_word( this.val.charCodeAt( 0 ) );
 };
+
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -321,6 +581,32 @@ function sc_makeVector( sz, fill ) {
 function sc_vector2array( a ) {
    return a;
 }
+
+#if HOP_RTS_DEBUG
+function sc_vector2list( a ) {
+   var res = null;
+   for( var i = a.length-1; i >= 0; i-- )
+      res = sc_cons( a[ i ], res );
+   return res;
+}
+
+function sc_isVectorEqual(v1, v2, comp) {
+    if( v1.length !== v2.length ) return false;
+    for( var i = 0; i < v1.length; i++ )
+	if( !comp( v1[ i ], v2[ i ] ) ) return false;
+    return true;
+}
+
+function sc_isVector(v) {
+   if( v instanceof Array ) {
+      return true;
+   } else if( "Float32Array" in window ) {
+	 return !(v instanceof Float32Array);
+   } else {
+      return false;
+   }
+}
+#endif
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -330,12 +616,6 @@ function sc_vector2array( a ) {
 #if HOP_RTS_DEBUG
 function sc_isNumber( x ) {
    return typeof( x ) === "number";
-}
-
-function sc_isString( s ) {
-   return (typeof s === "string") &&
-      (s.charAt(0) !== sc_SYMBOL_PREFIX) &&
-      (s.charAt(0) !== sc_KEYWORD_PREFIX);
 }
 
 function sc_alert() {
@@ -353,5 +633,50 @@ function sc_alert() {
 function sc_arity_check( fun, arity ) {
    return fun;
 }
+
+function sc_isEqual( o1, o2 ) {
+   return ((o1 === o2) ||
+	   (sc_isPair( o1 ) && sc_isPair( o2 )
+	    && sc_isPairEqual( o1, o2, sc_isEqual ) ) ||
+	   (sc_isVector( o1 ) && sc_isVector( o2 )
+	    && sc_isVectorEqual( o1, o2, sc_isEqual ) ) ||
+	   false );
+}
+
+function sc_Values( values ) {
+   this.values = values;
+}
+
+function sc_values() {
+   if( arguments.length === 1 )
+      return arguments[ 0 ];
+   else
+      return new sc_Values( arguments );
+}
+
+function sc_callWithValues( producer, consumer ) {
+   var produced = producer();
+   if( produced instanceof sc_Values )
+      return consumer.apply( null, produced.values );
+   else
+      return consumer( produced );
+}
+
+function sc_raise( val ) {
+   throw val;
+}
+
+function sc_withHandlerLambda( handler, body ) {
+   try {
+      return body();
+   } catch( e ) {
+      if( !e._internalException )
+	 return handler( e );
+      else
+	 throw e;
+   }
+}
+
+var sc_lambda = undefined;
 #endif
 #endif
