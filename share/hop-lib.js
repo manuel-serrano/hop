@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 08:04:30 2007                          */
-/*    Last change :  Thu Mar  3 08:05:34 2016 (serrano)                */
+/*    Last change :  Fri Apr 29 09:00:06 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Various HOP library functions.                                   */
@@ -510,7 +510,6 @@ function BgL_setIntervalz00( proc, timeout ) {
 /*---------------------------------------------------------------------*/
 /*    sc_after ...                                                     */
 /*---------------------------------------------------------------------*/
-#if HOP_SCHEME
 /*** META ((export after) (arity #t)) */
 function sc_after( timeout, proc ) {
 #if HOP_RTS_DEBUG
@@ -551,7 +550,6 @@ function sc_after( timeout, proc ) {
    
    return true;
 }
-#endif
 
 /*---------------------------------------------------------------------*/
 /*    timeout ...                                                      */

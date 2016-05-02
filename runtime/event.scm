@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Apr  6 16:47:45 2016 (serrano)                */
+;*    Last change :  Fri Apr 29 10:53:03 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -559,7 +559,8 @@
 			*websocket-response-list*))
 		  (trace-item "key=" key)
 		  (trace-item "socket=" socket )
-		  (trace-item "connected clients=" *websocket-response-list*))
+		  ;;(trace-item "connected clients=" *websocket-response-list*)
+		  )
 	       resp)))))
 
 ;*---------------------------------------------------------------------*/
@@ -848,11 +849,11 @@
 				    content))))))))
    
    (define (websocket-register-event! req key name)
-      (with-trace 'event "ws-register-event!"
+      (with-trace 'event "websocket-register-event!"
 	 (let ((c (assq key *websocket-response-list*)))
 	    (trace-item "key=" key)
 	    (trace-item "name=" name)
-	    (trace-item "c=" c)
+	    ;;(trace-item "c=" c)
 	    (if (pair? c)
 		(let ((resp (cdr c)))
 		   (hashtable-update! *websocket-socket-table*
@@ -866,29 +867,32 @@
 
    (with-trace 'event "ws-register-event!"
       (synchronize *event-mutex*
-	 (trace-item "event=" event)
+	 (trace-item "event=" (url-decode event))
 	 (trace-item "key=" key)
 	 (trace-item "mode=" mode)
 	 (trace-item "padding=" padding)
 	 (if (<fx *clients-number* (hop-event-max-clients))
-	     (let ((key (string->symbol key)))
-		;; set an output timeout on the socket
-		(with-access::http-request req (socket) 
-		   (output-timeout-set!
-		      (socket-output socket) (hop-connection-timeout)))
-		;; register the client
-		(let ((r (cond
-			    ((string=? mode "xhr-multipart")
-			     (multipart-register-event! req key event))
-			    ((string=? mode "websocket")
-			     (websocket-register-event! req key event))
-			    ((string=? mode "flash")
-			     (flash-register-event! req key event))
-			    (else
-			     (ajax-register-event! req key event padding)))))
-		   ;; cleanup the current connections
-		   (server-event-gc)
-		   r))
+	     (if (string? key)
+		 (let ((key (string->symbol key))
+		       (event (url-decode! event)))
+		    ;; set an output timeout on the socket
+		    (with-access::http-request req (socket) 
+		       (output-timeout-set!
+			  (socket-output socket) (hop-connection-timeout)))
+		    ;; register the client
+		    (let ((r (cond
+				((string=? mode "xhr-multipart")
+				 (multipart-register-event! req key event))
+				((string=? mode "websocket")
+				 (websocket-register-event! req key event))
+				((string=? mode "flash")
+				 (flash-register-event! req key event))
+				(else
+				 (ajax-register-event! req key event padding)))))
+		       ;; cleanup the current connections
+		       (server-event-gc)
+		       r))
+		 (http-service-unavailable event))
 	     (http-service-unavailable event)))))
 
 ;*---------------------------------------------------------------------*/
@@ -906,28 +910,28 @@
 	 (when (pair? c)
 	    (let ((req (cadr c)))
 	       (hashtable-update! *flash-socket-table*
-				  event
-				  (lambda (l) (delete! req l))
-				  '())
+		  event
+		  (lambda (l) (delete! req l))
+		  '())
 	       ;; Ping the client to check it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (flash-signal-value req *ping* #unspecified)))))
-
+   
    (define (unregister-multipart-event! event key)
       (let ((c (assq (string->symbol key) *multipart-request-list*)))
 	 (when (pair? c)
 	    (let ((req (cadr c)))
 	       (hashtable-update! *multipart-socket-table*
-				  event
-				  (lambda (l) (delete! req l))
-				  '())
+		  event
+		  (lambda (l) (delete! req l))
+		  '())
 	       ;; Ping the client to check it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (multipart-signal req
 		  (multipart-value *ping* #unspecified))))))
-
+   
    (define (unregister-websocket-event! event key)
       (let ((c (assq (string->symbol key) *websocket-response-list*)))
 	 (when (pair? c)
@@ -943,11 +947,12 @@
 		  (websocket-value *ping* #unspecified))))))
    
    (synchronize *event-mutex*
-      (unregister-websocket-event! event key)
-      (unregister-multipart-event! event key)
-      (unregister-ajax-event! event key)
-      (unregister-flash-event! event key)
-      #f))
+      (let ((event (url-decode! event)))
+	 (unregister-websocket-event! event key)
+	 (unregister-multipart-event! event key)
+	 (unregister-ajax-event! event key)
+	 (unregister-flash-event! event key)
+	 #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    flash-close-request! ...                                         */
@@ -1221,21 +1226,22 @@
 ;*    envelope-value ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (envelope-value::bstring name value)
-   (cond
-      ((isa? value xml)
-       (format "<x name='~a'>~a</x>" name (xml->string value (hop-xml-backend))))
-      ((string? value)
-       (format "<s name='~a'>~a</s>" name (url-path-encode value)))
-      ((integer? value)
-       (format "<i name='~a'>~a</i>" name value))
-      ((real? value)
-       (format "<f name='~a'>~a</f>" name value))
-      (else
-       (let ((op (open-output-string)))
-	  (fprintf op "<j name='~a'><![CDATA[" name)
-	  (display (url-path-encode (obj->string value 'hop-client)) op)
-	  (display "]]></j>" op)
-	  (close-output-port op)))))
+   (let ((n (url-path-encode name)))
+      (cond
+	 ((isa? value xml)
+	  (format "<x name='~a'>~a</x>" n (xml->string value (hop-xml-backend))))
+	 ((string? value)
+	  (format "<s name='~a'>~a</s>" n (url-path-encode value)))
+	 ((integer? value)
+	  (format "<i name='~a'>~a</i>" n value))
+	 ((real? value)
+	  (format "<f name='~a'>~a</f>" n value))
+	 (else
+	  (let ((op (open-output-string)))
+	     (fprintf op "<j name='~a'><![CDATA[" n)
+	     (display (url-path-encode (obj->string value 'hop-client)) op)
+	     (display "]]></j>" op)
+	     (close-output-port op))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    multipart-value ...                                              */

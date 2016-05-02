@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/3.1.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Jan 11 20:38:15 2015 (serrano)                */
+#*    Last change :  Thu Apr 28 18:43:17 2016 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -35,7 +35,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*---------------------------------------------------------------------*/
 _OBJECTS = param thread misc priv types read module \
            xml xml_types charset dom \
-           html_base html_head html_img \
+           html_base html_head html_img html_react \
            svg mathml \
            read_js clientc js_comp json \
            css cssmatch hop_rss \

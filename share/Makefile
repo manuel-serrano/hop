@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed Apr  6 19:22:03 2016 (serrano)                */
+#*    Last change :  Thu Apr 28 11:24:57 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -246,7 +246,7 @@ uninstall:
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
 hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
-  hop-exception.js hop-nodejs.js \
+  hop-exception.js hop-nodejs.js hop-react.js \
   $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
@@ -261,7 +261,7 @@ hop_u.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_u.js \
                >> $@
 
 hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
-  hop-exception.js hop-debug.js hop-nodejs.js \
+  hop-exception.js hop-debug.js hop-nodejs.js hop-react.js \
   $(RTSCONFIG) base64.js hop-history.js hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
@@ -287,7 +287,7 @@ hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
 hopjs_u.js: hop-boot.js hop-autoconf.js \
-  hop-nodejs.js \
+  hop-nodejs.js hop-react.js \
   $(RTSCONFIG) hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
@@ -302,7 +302,7 @@ hopjs_u.js: hop-boot.js hop-autoconf.js \
                >> $@
 
 hopjs_s.js: hop-boot.js hop-autoconf.js \
-  hop-exception.js hop-debug.js hop-nodejs.js \
+  hop-exception.js hop-debug.js hop-nodejs.js hop-react.js \
   $(RTSCONFIG) hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@

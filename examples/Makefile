@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/examples/Makefile                 */
+#*    serrano/prgm/project/hop/3.1.x/examples/Makefile                 */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Nov 24 11:13:48 2015 (serrano)                */
-#*    Copyright   :  2006-15 Manuel Serrano                            */
+#*    Last change :  Fri Apr 29 18:58:08 2016 (serrano)                */
+#*    Copyright   :  2006-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -65,6 +65,7 @@ POPULATION = Makefile \
   worker4/slave.js worker4/worker4.js worker4/example.json worker4/README.md \
   worker5/slave.js worker5/worker5.js worker5/example.json worker5/README.md \
   sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js sqlite/example.json \
+  react/react.js react/README.md reactsrv/reactsrv.js reactsrv/README.md \
   widget/node_modules widget/example.json \
   widget/node_modules/flipcounter \
   widget/node_modules/flipcounter/lib \

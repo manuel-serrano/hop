@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/xml_types.scm             */
+;*    serrano/prgm/project/hop/3.1.x/runtime/xml_types.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Sat Nov  7 10:13:43 2015 (serrano)                */
-;*    Copyright   :  2010-15 Manuel Serrano                            */
+;*    Last change :  Fri Apr 29 17:14:19 2016 (serrano)                */
+;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
 ;*=====================================================================*/
@@ -80,6 +80,8 @@
 	    (class xml-empty-element::xml-element)
 
 	    (class xml-cdata::xml-element)
+	    
+	    (class xml-react::xml-element)
 	    
 	    (class xml-style::xml-cdata)
 	    
