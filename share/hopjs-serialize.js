@@ -1,14 +1,27 @@
 /* Automatically generated file (don't edit) */
 /* Copyright Manuel Serrano, see Hop's LICENSE file */
-/* 04/04/16 08:08 */
+/* 04/06/16 07:19 */
 
 "use strict";
 
 
+var hop_config = {
+   uint8array: false
+}
 
 
 
 
+
+
+function hop_plist2jsobject( plist ) {
+   var o = {};
+   while( sc_isPair( plist ) ) {
+      o[ sc_keyword2string( plist.__hop_car ) ] = plist.__hop_cdr.__hop_car;
+      plist = plist.__hop_cdr.__hop_cdr;
+   }
+   return o;
+}
 
 
 function sc_Pair( car, cdr ) {
@@ -77,8 +90,9 @@ function sc_symbol2string( s ) {
 function sc_string2symbol( s ) {
    return sc_SYMBOL_PREFIX + s;
 }
-
-
+function sc_jsstring2symbol( s ) {
+   return sc_SYMBOL_PREFIX + s;
+}
 function sc_isKeyword( s ) {
    return (typeof s === "string") && (s.charAt(0) === sc_KEYWORD_PREFIX);
 }
@@ -86,6 +100,9 @@ function sc_keyword2string( s ) {
    return s.slice( 1 );
 }
 function sc_string2keyword( s ) {
+   return sc_KEYWORD_PREFIX + s;
+}
+function sc_jsstring2keyword( s ) {
    return sc_KEYWORD_PREFIX + s;
 }
 
@@ -110,6 +127,37 @@ function sc_vector2array( a ) {
 
 
 
+
+
+var hop_class_serializers = {
+  593: { unserializer: function( a ) { return a } },
+  35245: { unserializer: function( a ) { return a } },
+  11230: { unserializer: function( b ) { return b } },
+  10450: { unserializer: function( a ) { return a.buffer } },
+  34760: { unserializer: function( a ) { return new DataView( a.buffer ) } },
+  12205: { unserializer: function( d ) { return d } },
+  23348: { unserializer: function( b ) { return b } },
+  27225: { unserializer: function( a ) { return a.buffer } },
+  7238: { unserializer: function( a ) { return new Float32Array( a.buffer ) } },
+  51213: { unserializer: function( a ) { return new Float64Array( a.buffer ) } },
+  14682: { unserializer: function( a ) { return undefined } },
+  47086: { unserializer: function( a ) { return new Int8Array( a ) } },
+  55493: { unserializer: function( a ) { return new Uint8Array( a ) } },
+  33631: { unserializer: function( a ) { return new Int16Array( a.buffer ) } },
+  54954: { unserializer: function( a ) { return new Uint16Array( a.buffer ) } },
+  20189: { unserializer: function( a ) { return new Int32Array( a.buffer ) } },
+  37416: { unserializer: function( a ) { return new Uint32Array( a.buffer ) } },
+  58588: { unserializer: function( n ) { return n } },
+  29823: { unserializer: hop_plist2jsobject },
+  42642: { unserializer: function( r ) { return r } },
+  57665: { unserializer: function( s ) { return s } },
+  10756: { unserializer: function( s ) { return s } },
+  55447: { unserializer: function( u ) { return new HopFrame( u[ 0 ], u[ 1 ], u[ 2 ], u[ 3 ], u[ 4 ] ) } },
+  55792: { unserializer: function( s ) { return HopService( s[ 0 ], s[ 1 ] ) } },
+  28158: { unserializer: function( e ) { var err = new Error( e[ 1 ], e[ 3 ], e[ 4 ] ); err.name = e[ 0 ]; return err; } },
+
+
+};
 
 
 var hop_serialize_context = {
@@ -680,7 +728,7 @@ function hop_url_encoded_to_obj( s ) {
       }
    }
    var len = s.length;
-   for( var i = 0; i < len; ++i ) {
+   for( var i = 0; i < s.length; ++i ) {
       if( s.charCodeAt( i ) == 0x25 ) {
 	 i += 2;
 	 len -= 2;
@@ -1077,4 +1125,5 @@ function hop_buffer( name, _ ) {
 exports.eval = function( expr ) { return eval( expr ); };
 exports.hop_bigloo_serialize = hop_bigloo_serialize;
 exports.hop_arguments = HopArguments;
+exports.hop_url_encoded_to_obj = hop_url_encoded_to_obj;
 
