@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 28 17:56:43 2016 (serrano)                */
+;*    Last change :  Tue May  3 15:23:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -36,7 +36,7 @@
 	   (inline js-array?::bool ::obj)
 	   (inline js-array-length::uint32 ::JsArray)
 	   (inline js-array-ref ::JsArray idx ::JsGlobalObject)
-	   (inline js-array-set! ::JsArray idx ::obj ::JsGlobalObject)
+	   (js-array-set! ::JsArray idx ::obj ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
 	   (js-empty-vector->jsarray::JsArray ::JsGlobalObject)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
@@ -369,11 +369,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-set! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-array-set! arr::JsArray idx val %this)
+(define (js-array-set! arr::JsArray idx val %this)
    (if (and (fixnum? idx) (>=fx idx 0))
-       (with-access::JsArray arr (vec)
+       (with-access::JsArray arr (vec length)
 	  (if (<fx idx (vector-length vec))
-	      (vector-set-ur! vec idx val)
+	      (begin
+		 (vector-set-ur! vec idx val)
+		 (when (>=u32 (fixnum->uint32 idx) length)
+		    (js-array-update-length! arr (+fx idx 1)))
+		 val)
 	      (js-put! arr idx val #f %this)))
        (js-put! arr idx val #f %this)))
    
@@ -2232,9 +2236,8 @@
 ;*    js-array-vector-length ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-array-vector-length o::JsArray %this::JsGlobalObject)
-   (with-access::JsArray o (vec)
-      (minfx (vector-length vec)
-	 (uint32->fixnum (js-touint32 (js-get o 'length %this) %this)))))
+   (with-access::JsArray o (vec length)
+      (minfx (vector-length vec) (uint32->fixnum length))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-push ...                                                */

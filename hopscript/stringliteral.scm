@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Apr 27 10:26:04 2016 (serrano)                */
+;*    Last change :  Tue May  3 15:02:49 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -526,13 +526,13 @@
 		((memq prop '(indexOf lastIndexOf charCodeAt charAt
 			      substring substr
 			      toLowerCase ))
-		 (tprint "JS_GET_PROTO: " prop " " (typeof prop))
+		 ;; (tprint "JS_GET_PROTO: " prop " " (typeof prop))
 		 (with-access::JsGlobalObject %this (js-string)
 		    (let ((proto (js-get js-string 'prototype %this)))
 		       (js-get proto prop %this))))
 		(else
 		 ;; see js-get-jsobject@property.scm
-		 (tprint "JS_GET_STRING: " prop " " (typeof prop))
+		 ;; (tprint "JS_GET_STRING: " prop " " (typeof prop))
 		 (let* ((obj (js-toobject %this o))
 			(pval (js-get-property-value obj o prop %this)))
 		    (if (eq? pval (js-absent))

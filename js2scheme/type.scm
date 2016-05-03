@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Sun Apr 24 17:49:41 2016 (serrano)                */
+;*    Last change :  Tue May  3 14:28:14 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -338,7 +338,7 @@
 	    (type rhs lenv fun fix)
 	    (let ((nenv (if (isa? lhs J2SRef)
 			    (with-access::J2SRef lhs (decl)
-			       (env-extend decl rtype renv))
+			       (env-extend decl (or rtype 'obj) renv))
 			    renv)))
 	       (values rtype nenv #f))))))
 
@@ -501,7 +501,7 @@
 		    (expr-type-set! this (merge-type lhstype rhstype) rhsenv fix)
 		    (values #f rhsenv #f)))
 	       ((OR)
-		(if (and lhstype rhsenv)
+		(if (and lhstype rhstype)
 		    (expr-type-set! this (merge-type lhstype rhstype) rhsenv fix)
 		    (values #f rhsenv #f)))
 	       ((<< >> >>> ^ & BIT_OR)
