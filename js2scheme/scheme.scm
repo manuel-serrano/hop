@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Apr 29 07:02:07 2016 (serrano)                */
+;*    Last change :  Tue May  3 20:16:55 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -47,7 +47,7 @@
      ("substr" js-jsstring-maybe-substr 2 2)
      ("toUpperCase" js-jsstring-maybe-touppercase 0 0)
      ("toLowerCase" js-jsstring-maybe-tolowercase 0 0)
-     ("split" js-jsstring-maybe-split 2 2)
+     ("split" js-jsstring-maybe-split 2 1)
      ("replace" js-jsstring-maybe-replace 2 2)
      ("match" js-jsstring-maybe-match 1 1 1)
      ("naturalCompare" js-jsstring-maybe-naturalcompare 1 1)
