@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun May 22 08:54:28 2016 (serrano)                */
+#*    Last change :  Sun May 22 10:06:38 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -71,8 +71,8 @@ closure=
 version="3.1.0"
 devel=pre
 
-hopc=$PWD/bin/hopc.sh
-hop=$PWD/bin/hop.sh
+hopc=$PWD/bin/hopc
+hop=$PWD/bin/hop
 bglcpp=$PWD/scheme2js/runtime/bglcpp
 
 branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
@@ -410,7 +410,7 @@ while : ; do
       echo "Cross compilation and OS dependencies:" >&2;
       echo "   --build-bindir=dir......... Crosss compilers path ($buildbindir)" >&2;
       echo "   --hop=comp................. The Hop binary ($hop)" >&2;
-      echo "   --hopc=comp................ The Hopc binary ($hop)" >&2;
+      echo "   --hopc=comp................ The Hopc binary ($hopc)" >&2;
       echo "   --bigloo=comp.............. The Bigloo compiler ($bigloo)" >&2;
       echo "   --bigloobindir=path........ The Bigloo bin-dir path" >&2;
       echo "   --bigloolibdir=path........ The Bigloo lib-dir path" >&2;
@@ -995,7 +995,19 @@ for p in hopc.sh hop.sh; do
   > bin/$p
   chmod a+rx bin/$p
 done
-    
+
+if [ "$hopc" = "$PWD/bin/hopc" ]; then
+  mkmfhopc=$hopc.sh
+else  
+  mkmfhopc=$hopc
+fi
+
+if [ "$hop" = "$PWD/bin/hop" ]; then
+  mkmfhop=$hop.sh
+else  
+  mkmfhop=$hop
+fi
+
 cat $mkmf.in \
     | sed -e "s|@RELEASE@|$version|" \
           -e "s|@BRANCH@|$branch|" \
@@ -1004,8 +1016,8 @@ cat $mkmf.in \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
           -e "s|@BIGLOOVERSION@|$bglversion|" \
-          -e "s|@HOP@|$hop|" \
-          -e "s|@HOPC@|$hopc|" \
+          -e "s|@HOP@|$mkmfhop|" \
+          -e "s|@HOPC@|$mkmfhopc|" \
           -e "s|@BGLCPP@|$bglcpp|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@LINK@|$link|" \
