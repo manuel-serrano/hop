@@ -3,11 +3,57 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Fri Apr 29 17:58:32 2016 (serrano)                */
+/*    Last change :  Wed May 18 05:56:48 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
 /*=====================================================================*/
+
+/*---------------------------------------------------------------------*/
+/*    reactDynKey ...                                                  */
+/*---------------------------------------------------------------------*/
+var reactDynKey = 0;
+
+/*---------------------------------------------------------------------*/
+/*    REACT ...                                                        */
+/*---------------------------------------------------------------------*/
+/*** META ((export <REACT>)) */
+function REACT( _ ) {
+   var cnt = 0;
+   var id = "react" + reactDynKey++;;
+   var script = false;
+
+   for( var i = 0; i < arguments.length; i++ ) {
+      var el = arguments[ i ];
+
+      if( el instanceof Node ) {
+	 script = el;
+	 break;
+      }
+   }
+
+   if( script ) {
+      var el = document.createElement( "div" );
+      var sc = document.createElement( "script" );
+      var loader = "var el = document.getElementById( '" + id + "');"
+	  + "var sibling = el.nextSibling;"
+	  + "var sid = sibling ? sibing.id : false;"
+	  + "var parent = el.parentNode;"
+	  + "var pid = parent ? parent.id : false;"
+	  + "var proc = function() { return " + script.text + " };"
+	  + "parent.removeChild( el );"
+	  + "window.hop.reactInit( parent.id, sid, '" + id + "', proc );"
+
+      sc.type = "text/javascript";
+      sc.text = loader;
+
+      el.id = id;
+      el.appendChild( sc );
+      return el;
+   } else {
+      return null;
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    reactProxy ...                                                   */
@@ -66,6 +112,10 @@ window.hop.reactInit = function( parent, sibling, key, proc ) {
       var parentNode = document.getElementById( parent );
       var nodes = invoke( proc );
 
+      console.log( "insertReactNodes parent=", parentNode );
+      console.log( "insertReactNodes sibling=", sibling );
+      console.log( "nodes=", nodes );
+      console.log( "proc=", proc.toString() );
       if( !parentNode ) {
 	 throw "Cannot find react parent " + parent;
       }
@@ -118,7 +168,7 @@ window.hop.reactInit = function( parent, sibling, key, proc ) {
       }
    }
    
-   return insertReactNodes();
+   return setTimeout( insertReactNodes, 0 );
 }
       
   

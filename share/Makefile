@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Apr 28 11:24:57 2016 (serrano)                */
+#*    Last change :  Tue May 17 18:36:38 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -350,7 +350,8 @@ hopjs-serialize.js: hopscheme.js hop-builtin-serializers.js hop-serialize.js
 #*---------------------------------------------------------------------*/
 #*    hop-runtime.sch ...                                              */
 #*---------------------------------------------------------------------*/
-EXPORTED_RT_JS = $(RTSCONFIG) $(filter %.js,$(EXTRA)) hop-autoconf.js
+EXPORTED_RT_JS = $(RTSCONFIG) $(filter %.js,$(EXTRA)) \
+  hop-autoconf.js hop-react.js
 
 SCHEME2JS_RUNTIME = ../scheme2js/runtime
 EXPORTER = $(SCHEME2JS_RUNTIME)/exporter

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Fri Apr 29 17:24:36 2016 (serrano)                */
+;*    Last change :  Thu May  5 06:12:30 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -21,7 +21,6 @@
 
    (import  __hop_types
 	    __hop_xml-types
-	    __hop_dom
 	    __hop_mime
 	    __hop_misc
 	    __hop_param
@@ -443,28 +442,6 @@
 	 (display tag p)
 	 (display ">" p))))
 
-;*---------------------------------------------------------------------*/
-;*    xml-write ::xml-react ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (xml-write obj::xml-react p backend)
-   
-   (define (react-init key parent thunk)
-      (if (not parent)
-	  (error "react" "illegal orphan react node" obj)
-	  (with-access::xml-element parent ((pid id))
-	     (cond
-		((dom-next-sibling obj)
-		 =>
-		 (lambda (sibling)
-		    (with-access::xml-element sibling ((sid id))
-		       `((pragma "window.hop.reactInit") ,pid ,sid ,key ,thunk))))
-		(else
-		 `((pragma "window.hop.reactInit") ,pid ,#f ,key ,thunk))))))
-
-   (with-access::xml-react obj (id body parent)
-      (let ((expr (react-init id parent body)))
-	 (xml-write (sexp->xml-tilde expr) p backend))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    xml-write ::xml-style ...                                        */
 ;*---------------------------------------------------------------------*/

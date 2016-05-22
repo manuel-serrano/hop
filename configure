@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Apr 28 11:23:52 2016 (serrano)                */
+#*    Last change :  Sun May 22 08:54:28 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -71,8 +71,8 @@ closure=
 version="3.1.0"
 devel=pre
 
-hopc=$PWD/bin/hopc
-hop=$PWD/bin/hop
+hopc=$PWD/bin/hopc.sh
+hop=$PWD/bin/hop.sh
 bglcpp=$PWD/scheme2js/runtime/bglcpp
 
 branch="`echo $version | sed 's/[0-9][0-9]*$/x/'`"
@@ -185,6 +185,14 @@ while : ; do
     --distribdir=*)
       distribdir="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --build-bindir=*)
+      buildbindir="`echo $1 | sed 's/^[^=]*=//'`";
+      bigloo=$buildbindir/bigloo;
+      afile=$buildbindir/bglafile;
+      jfile=$buildbindir/bgljfile;
+      hop=$buildbindir/hop;
+      hopc=$buildbindir/hopc;;
+      
     --mimetypes=*)
       mimetypes="`echo $1 | sed 's/^[^=]*=//'`";;
 
@@ -194,6 +202,12 @@ while : ; do
     --cssmimetype=*)
       cssmimetype="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --hop=*)
+      hop="`echo $1 | sed 's/^[^=]*=//'`";;
+      
+    --hopc=*)
+      hopc="`echo $1 | sed 's/^[^=]*=//'`";;
+      
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
 
@@ -361,6 +375,8 @@ while : ; do
       echo "*** Configure error, unknown option $1" >&2;
       echo >&2;
       echo "Usage: configure [options]" >&2;
+      echo "" >&2;
+      echo "Path:" >&2;
       echo "   --prefix=dir............... prefix to HOP install" >&2;
       echo "   --etcdir=dir............... Hop etc directory" >&2;
       echo "   --bindir=dir............... alternative Hop bin directory" >&2;
@@ -370,9 +386,31 @@ while : ; do
       echo "   --webletsdir=dir........... alternative Hop weblets directory" >&2;
       echo "   --contribsdir=dir.......... alternative Hop contribs directory" >&2;
       echo "   --docdir=dir............... alternative Hop doc directory" >&2;
+      echo "" >&2;
+      echo "Misc:" >&2;
       echo "   --mimetypes=file........... default mime.types file" >&2;
       echo "   --jsmimetype=type.......... default 'text/javascript'" >&2;
       echo "   --cssmimetype=type......... default 'text/css'" >&2;
+      echo "" >&2;
+      echo "Features:" >&2;
+      echo "   --enable-ssl............... Enables SSL support (default)" >&2;
+      echo "   --disable-ssl.............. Disables SSL support" >&2;
+      echo "   --enable-locevent.......... Enables location event support (default)" >&2;
+      echo "   --disable-locevent......... Disables location event support" >&2;
+      echo "   --enable-threads........... Enables multi-threading support (default)" >&2;
+      echo "   --disable-threads.......... Disables multi-threading support" >&2;
+      echo "   --enable-avahi............. Enables AVAHI support (default)" >&2;
+      echo "   --disable-avahi............ Disables AVAHI support" >&2;
+      echo "   --enable-upnp.............. Enables UPNP support (default)" >&2;
+      echo "   --disable-upnp............. Disables UPNP support" >&2;
+      echo "   --disable-libuv............ Disables LIBUV support" >&2;
+      echo "   --library=lib.............. Add extra lib to Hop" >&2;
+      echo "   --srfi=sym................. Activates this srfi (during compilation and runtime)" >&2;
+      echo "" >&2;
+      echo "Cross compilation and OS dependencies:" >&2;
+      echo "   --build-bindir=dir......... Crosss compilers path ($buildbindir)" >&2;
+      echo "   --hop=comp................. The Hop binary ($hop)" >&2;
+      echo "   --hopc=comp................ The Hopc binary ($hop)" >&2;
       echo "   --bigloo=comp.............. The Bigloo compiler ($bigloo)" >&2;
       echo "   --bigloobindir=path........ The Bigloo bin-dir path" >&2;
       echo "   --bigloolibdir=path........ The Bigloo lib-dir path" >&2;
@@ -393,28 +431,17 @@ while : ; do
       echo "   --blflags=args............. The link options" >&2;
       echo "   --bhflags=args............. The heap options" >&2;
       echo "   --ccflags=args............. The C compilation options" >&2;
+      echo "   --macosx................... Prepares the production of a MacOSX bundle" >&2;
+      echo "   --android.................. Prepares the production of an Android apk" >&2;
+      echo "   --macosx................... Prepares the production of a MacOSX bundle" >&2;
+      echo "   --apache-felix=path........ Path to felix.jar" >&2;
+      echo "" >&2;
+      echo "Configuration settings:" >&2;
       echo "   --devel.................... Enables devel mode (safe but not debug)" >&2;
       echo "   --debug[2]................. Enables Bigloo debug mode" >&2;
       echo "   --pmem[2].................. Enables memory profiling mode" >&2;
       echo "   --profile.................. Enables Bigloo profiling mode" >&2;
       echo "   --optimize................. Enables Bigloo optimization mode (default)" >&2;
-      echo "   --enable-ssl............... Enables SSL support (default)" >&2;
-      echo "   --disable-ssl.............. Disables SSL support" >&2;
-      echo "   --enable-locevent.......... Enables location event support (default)" >&2;
-      echo "   --disable-locevent......... Disables location event support" >&2;
-      echo "   --enable-threads........... Enables multi-threading support (default)" >&2;
-      echo "   --disable-threads.......... Disables multi-threading support" >&2;
-      echo "   --enable-avahi............. Enables AVAHI support (default)" >&2;
-      echo "   --disable-avahi............ Disables AVAHI support" >&2;
-      echo "   --enable-upnp.............. Enables UPNP support (default)" >&2;
-      echo "   --disable-upnp............. Disables UPNP support" >&2;
-      echo "   --disable-libuv............ Disables LIBUV support" >&2;
-      echo "   --srfi=sym................. Activates this srfi (during compilation and runtime)" >&2;
-      echo "   --library=lib.............. Add extra lib to Hop" >&2;
-      echo "   --macosx................... Prepares the production of a MacOSX bundle" >&2;
-      echo "   --android.................. Prepares the production of an Android apk" >&2;
-      echo "   --macosx................... Prepares the production of a MacOSX bundle" >&2;
-      echo "   --apache-felix=path........ Path to felix.jar" >&2;
       echo "   --closure=comp............. Path to closure compiler" >&2;
       exit 255;
   esac
@@ -526,20 +553,16 @@ esac
 #*    We are now able to set the correct value for cc since we know    */
 #*    what Bigloo is.                                                  */
 #*---------------------------------------------------------------------*/
-if [ "$cc " = " " ]; then
-  cc=`$bigloo -eval '(begin (print *cc*) (exit 0))'`
-fi
-
 if [ "$bigloolibdir " = " " ]; then
   bigloolibdir=`$bigloo -q -eval "(begin (print (bigloo-config 'library-directory)) (exit 0))"`
 else
   bcflags="$bcflags -lib-dir $bigloolibdir"
 fi
 
-if [ ! -f $bigloolibdir/Makefile.config ]; then
-  echo "Bigloo not properly installed, file missing:" >&2;
-  echo "  $bigloolibdir/Makefile.config" >&2;
-  exit -1;
+if [ "$cc " = " " ]; then
+  cc=`$bigloo $bcflags -eval '(begin (print *cc*) (exit 0))'`
+else  
+  bcflags="$bcflags -cc $cc"
 fi
 
 if [ "$ccflags " = " " ]; then
@@ -548,6 +571,12 @@ if [ "$ccflags " = " " ]; then
     ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
   fi
   ccflags="$ccflags -I$bigloolibdir \$(CPICFLAGS)"
+fi
+
+if [ ! -f $bigloolibdir/Makefile.config ]; then
+  echo "Bigloo not properly installed, file missing:" >&2;
+  echo "  $bigloolibdir/Makefile.config" >&2;
+  exit -1;
 fi
 
 #*---------------------------------------------------------------------*/
@@ -975,8 +1004,8 @@ cat $mkmf.in \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
           -e "s|@BIGLOOVERSION@|$bglversion|" \
-          -e "s|@HOP@|$hop.sh|" \
-          -e "s|@HOPC@|$hopc.sh|" \
+          -e "s|@HOP@|$hop|" \
+          -e "s|@HOPC@|$hopc|" \
           -e "s|@BGLCPP@|$bglcpp|" \
           -e "s|@BACKEND@|$backend|" \
           -e "s|@LINK@|$link|" \
@@ -1519,4 +1548,8 @@ echo "  mime types............................ $mimetypes"
 echo "  default JavaScript mime type.......... $jsmimetype"
 echo "  default CSS mime type................. $cssmimetype"
 echo "  closure compiler (optional)........... $closure"
+echo
+echo "Cross compilation:"
+echo "  hop................................... $hop"
+echo "  hopc.................................. $hopc"
 
