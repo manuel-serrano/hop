@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Apr 28 18:43:29 2016 (serrano)                */
+;*    Last change :  Wed May 25 18:52:52 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -433,7 +433,7 @@
 	       DATALIST DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET FIGURE
 	       FIGCAPTION FONT FOOTER FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
 	       HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
-	       LI MAP MARQUEE MENU META NAV NOFRAMES NOSCRIPT
+	       LI MAP MARQUEE MENU META METER NAV NOFRAMES NOSCRIPT
 	       OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
 	       Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
 	       STRONG SUB SUP TABLE TBODY TD TEXTAREA TFOOT TH

@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/arch/android/Makefile             */
+#*    serrano/prgm/project/hop/3.1.x/arch/android/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Fri Feb 21 17:03:24 2014 (serrano)                */
-#*    Copyright   :  2010-14 Manuel Serrano                            */
+#*    Last change :  Tue May 24 15:41:30 2016 (serrano)                */
+#*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
 #*=====================================================================*/

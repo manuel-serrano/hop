@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Sun Feb 14 14:16:29 2016 (serrano)                */
+;*    Last change :  Wed May 25 08:52:13 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -379,6 +379,7 @@
 ;*---------------------------------------------------------------------*/
 (define (default-worker-load filename worker %this::JsGlobalObject)
    (loading-file-set! filename)
+   (tprint "DEFAULT-WORKER-LOAD " filename)
    (let ((exprs (call-with-input-file filename
 		   (lambda (in) (j2s-compile in :main #f :%this %this)))))
       (let ((m (eval-module))

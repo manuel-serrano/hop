@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Tue May  3 14:28:14 2016 (serrano)                */
+;*    Last change :  Wed May 25 11:33:09 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -294,6 +294,12 @@
 ;*    type ::J2SString ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SString env::pair-nil fun fix::cell)
+   (expr-type-set! this 'string env fix))
+
+;*---------------------------------------------------------------------*/
+;*    type ::J2SNativeString ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type this::J2SNativeString env::pair-nil fun fix::cell)
    (expr-type-set! this 'string env fix))
 
 ;*---------------------------------------------------------------------*/

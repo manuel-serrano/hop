@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Fri Mar 25 07:16:07 2016 (serrano)                */
+;*    Last change :  Wed May 25 09:00:48 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -47,8 +47,15 @@
 ;*    driver-debug-post ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (driver-debug-post stage tmp count ast args proc)
+
+   (define (j2s-verbose)
+      (let ((l (memq :verbose args)))
+	 (if (pair? l)
+	     (cadr l)
+	     (hop-verbose))))
+   
    (with-access::J2SStage stage (name comment before after)
-      (when (>=fx (hop-verbose) 2)
+      (when (>=fx (j2s-verbose) 2)
 	 (fprintf (current-error-port) "~3d. ~a" count name))
       (when (procedure? before) (before ast))
       (let ((nast (proc ast args)))
@@ -59,7 +66,7 @@
 		  (fprint p ";; " comment)
 		  (pp (j2s->list nast) p))))
 	 (when (procedure? after) (after nast))
-	 (when (>=fx (hop-verbose) 2) (newline (current-error-port)))
+	 (when (>=fx (j2s-verbose) 2) (newline (current-error-port)))
 	 nast)))
 
 ;*---------------------------------------------------------------------*/

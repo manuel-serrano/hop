@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Mon Mar  7 19:01:36 2016 (serrano)                */
+;*    Last change :  Wed May 25 08:59:28 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -288,6 +288,7 @@
 		 (lambda (in)
 		    (j2s-compile in :driver (j2s-plain-driver)
 		       :parser 'repl
+		       :verbose 0
 		       :filename "repl.js")))))
       ;; force the module initialization
       (js-worker-push-thunk! %worker "hss"

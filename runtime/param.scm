@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Apr  3 09:03:25 2016 (serrano)                */
+;*    Last change :  Wed May 25 08:38:49 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -48,6 +48,9 @@
 
 	    (hop-sofile-compile-policy::symbol)
 	    (hop-sofile-compile-policy-set! ::symbol)
+
+	    (hop-sofile-max-workers::int)
+	    (hop-sofile-max-workers-set! ::int)
 
 	    (hop-sofile-directory::bstring)
 	    (hop-sofile-directory-set! ::bstring)
@@ -430,8 +433,14 @@
 ;*    hop-sofile-compile-policy ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-parameter hop-sofile-compile-policy
-   'aot)
+   'nte)
 
+;*---------------------------------------------------------------------*/
+;*    hop-sofile-max-workers ...                                       */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-sofile-max-workers
+   4)
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-sofile-directory ...                                         */
 ;*---------------------------------------------------------------------*/
