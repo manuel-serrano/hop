@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sat Jan 30 17:59:57 2016 (serrano)                */
+;*    Last change :  Wed May 25 14:21:52 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -952,7 +952,7 @@
    
    (define (more-recent? sopath)
       (when (file-exists? sopath)
-	 (>=elong (file-modification-time sopath)
+	 (>elong (file-modification-time sopath)
 	    (file-modification-time path))))
    
    (define (errfile file)

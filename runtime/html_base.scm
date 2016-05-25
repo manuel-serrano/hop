@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/html_base.scm             */
+;*    serrano/prgm/project/hop/3.1.x/runtime/html_base.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Tue Mar  1 07:58:31 2016 (serrano)                */
+;*    Last change :  Wed May 25 18:53:11 2016 (serrano)                */
 ;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -84,6 +84,7 @@
 	    (<MARQUEE> . ::obj)
 	    (<MENU> . ::obj)
 	    (<META> . ::obj)
+	    (<METER> . ::obj)
 	    (<NAV> . ::obj)
 	    (<NOFRAMES> . ::obj)
 	    (<NOSCRIPT> . ::obj)
@@ -184,6 +185,7 @@
 (define-xml-element <MAP>)
 (define-xml-element <MARQUEE>)
 (define-xml-element <MENU>)
+(define-xml-element <METER>)
 (define-xml-element <NAV>)
 (define-xml-element <NOFRAMES>)
 (define-xml-element <NOSCRIPT>)

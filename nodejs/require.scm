@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Apr 24 17:50:05 2016 (serrano)                */
+;*    Last change :  Wed May 25 14:16:29 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -98,6 +98,9 @@
 				 :filename filename
 				 :worker (js-current-worker)
 				 :header header
+				 :verbose (if (>fx (bigloo-debug) 0)
+					      (hop-verbose)
+					      0)
 				 :parser 'client-program
 				 :driver (if (>fx (bigloo-debug) 0)
 					     (j2s-javascript-debug-driver)
@@ -282,6 +285,8 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-global-object)
    (unless *resolve-service*
+      (when (eq? (hop-sofile-compile-policy) 'nte)
+	 (nodejs-compile-workers-inits!))
       (let ((this (js-new-global-object)))
 	 (set! *resolve-this* this)
 	 (set! *resolve-service*
@@ -486,6 +491,7 @@
 			:mmap-src m
 			:module-main #f
 			:module-name (symbol->string mod)
+			:verbose (if (>fx (bigloo-debug) 0) (hop-verbose) 0)
 			:debug (bigloo-debug))
 		     (close-mmap m)))))))
    
@@ -503,6 +509,7 @@
 		  :filename filename
 		  :module-main #f
 		  :module-name (symbol->string mod)
+		  :verbose (if (>fx (bigloo-debug) 0) (hop-verbose) 0)
 		  :debug (bigloo-debug))))))
    
    (define (compile filename::bstring mod)
@@ -537,6 +544,10 @@
 (define socompile-condv (make-condition-variable))
 (define socompile-files '())
 
+(define socompile-worker-count 0)
+(define socompile-queue '())
+(define socompile-compiled '())
+
 ;*---------------------------------------------------------------------*/
 ;*    hop-dynamic-load ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -550,57 +561,155 @@
 		v)))))
 
 ;*---------------------------------------------------------------------*/
-;*    nodejs-load ...                                                  */
+;*    nodejs-compile-workers-inits! ...                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-load filename worker::WorkerHopThread #!optional lang)
+(define (nodejs-compile-workers-inits!)
 
+   (define (compile-worker e::pair)
+      (let loop ()
+	 (if (<fx socompile-worker-count (hop-sofile-max-workers))
+	     (begin
+		(set! socompile-worker-count (+fx 1 socompile-worker-count))
+		(thread-start! (make-compile-worker e)))
+	     (begin
+		(condition-variable-wait! socompile-condv socompile-mutex)
+		(loop)))))
+      
+   (thread-start!
+      (instantiate::hopthread
+	 (body (lambda ()
+		  (synchronize socompile-mutex
+		     (let loop ()
+			(let liip ()
+			   (when (pair? socompile-queue)
+			      (let ((e (nodejs-select-socompile socompile-queue)))
+				 (or (hop-find-sofile (car e))
+				     (compile-worker e))
+				 (liip))))
+			(condition-variable-wait!
+			   socompile-condv socompile-mutex)
+			(loop))))))))
+
+;*---------------------------------------------------------------------*/
+;*    make-compile-worker ...                                          */
+;*---------------------------------------------------------------------*/
+(define (make-compile-worker e::pair)
+   (instantiate::hopthread
+      (body (lambda ()
+	       (nodejs-socompile (car e) (cdr e))
+	       (synchronize socompile-mutex
+		  (set! socompile-worker-count (-fx socompile-worker-count 1))
+		  (set! socompile-queue (remq! e socompile-queue))
+		  (set! socompile-compiled (cons (car e) socompile-compiled))
+		  (condition-variable-broadcast! socompile-condv))))))
+		     
+;*---------------------------------------------------------------------*/
+;*    nodejs-select-socompile ...                                      */
+;*    -------------------------------------------------------------    */
+;*    Select one entry amongst the compile queue. The current          */
+;*    strategy is to select the last modified file.                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-select-socompile queue::pair)
+   ;; socompile-mutex is already acquired
+   (let loop ((entries (cdr queue))
+	      (entry (car queue)))
+      (cond
+	 ((null? entries)
+	  entry)
+	 ((<elong (cer (car entries)) (cer entry))
+	  ;; select the oldest entry
+	  (loop (cdr entries) (car entries)))
+	 (else
+	  (loop (cdr entries) entry)))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-socompile-queue-push ...                                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-socompile-queue-push filename lang)
+   (synchronize socompile-mutex
+      (when (and (file-exists? filename)
+		 (not (member filename socompile-compiled))
+		 (not (assoc filename socompile-queue)))
+	 (set! socompile-queue
+	    (cons (econs filename lang (file-modification-time filename))
+	       socompile-queue)))
+      (condition-variable-broadcast! socompile-condv)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-socompile ...                                             */
+;*---------------------------------------------------------------------*/
+(define (nodejs-socompile filename lang)
+   
    (define (exec cmd)
       (let* ((proc (run-process "sh" "-c" cmd :wait #f error: pipe:))
 	     (err (process-error-port proc)))
 	 (let ((s (read-string err)))
 	    (values (process-exit-status proc) s))))
-      
-   (define (compileso filename)
-      (let ((tmp (synchronize socompile-mutex
-		    (cond
-		       ((hop-find-sofile filename)
-			=>
-			(lambda (x) x))
-		       ((member filename socompile-files)
-			(condition-variable-wait! socompile-condv socompile-mutex)
-			'loop)
-		       (else
-			(set! socompile-files (cons filename socompile-files))
-			'compile)))))
-	 (cond
-	    ((string? tmp) tmp)
-	    ((eq? tmp 'loop) (compileso filename))
-	    (else
-	     (let* ((sopath (hop-sofile-path filename))
-		    (cmd (format "~a ~a -y --no-js-module-main -o ~a ~a"
-			    (hop-hopc)
-			    filename sopath
-			    (hop-hopc-flags))))
-		(make-directories (dirname sopath))
-		(hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
-		(multiple-value-bind (ret msg)
-		   (exec cmd)
-		   (unwind-protect
-		      (if (and (=fx ret 0) (file-exists? sopath))
-			  (begin
-			     (delete-file (string-append (prefix sopath) ".o"))
-			     sopath)
+   
+   (define (cleanup sopath sopathtmp res)
+      (let ((o (string-append (prefix sopathtmp) ".o")))
+	 (when (file-exists? o) (delete-file o)))
+      (if (=fx res 0)
+	  (rename-file sopathtmp sopath)
+	  (begin
+	     (when (file-exists? sopath) (delete-file sopath))
+	     (when (file-exists? sopathtmp) (delete-file sopathtmp)))))
+   
+   (let ((tmp (synchronize socompile-mutex
+		 (cond
+		    ((hop-find-sofile filename)
+		     =>
+		     (lambda (x) x))
+		    ((member filename socompile-files)
+		     (condition-variable-wait! socompile-condv socompile-mutex)
+		     'loop)
+		    (else
+		     (set! socompile-files (cons filename socompile-files))
+		     'compile)))))
+      (cond
+	 ((string? tmp) tmp)
+	 ((eq? tmp 'loop) (nodejs-socompile filename lang))
+	 (else
+	  (let* ((sopath (hop-sofile-path filename))
+		 (sopathtmp (hop-sofile-path (string-append "__" (prefix filename))))
+		 (cmd (format "~a ~a -y --no-js-module-main -o ~a ~a"
+			 (hop-hopc)
+			 filename sopathtmp
+			 (hop-hopc-flags))))
+	     (make-directories (dirname sopath))
+	     (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
+	     (let ((res -1)
+		   (msg "abort")
+		   (atexit (lambda (res) (cleanup sopath sopathtmp -1))))
+		(register-exit-function! atexit)
+		(unwind-protect
+		   (multiple-value-bind (r m)
+		      (exec cmd)
+		      (set! res r)
+		      (set! msg m))
+		   (begin
+		      (cleanup sopath sopathtmp res)
+		      (unregister-exit-function! atexit)
+		      (if (=fx res 0)
+			  sopath
 			  (call-with-output-file (string-append sopath ".err")
 			     (lambda (op)
 				(display msg (current-error-port))
 				(display cmd op)
 				(newline op)
 				(display msg op)
+				(hop-verb 3 (hop-color -1 -1 " COMPILE-ERROR") " " cmd "\n")
 				'error)))
 		      (synchronize socompile-mutex
-			 (set! socompile-files (delete! filename socompile-files))
-			 (condition-variable-broadcast! socompile-condv)))))))))
-		       
+			 (set! socompile-files
+			    (delete! filename socompile-files))
+			 (condition-variable-broadcast! socompile-condv))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-load ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (nodejs-load filename worker::WorkerHopThread #!optional lang)
+
    (define (loadso-or-compile filename lang)
       (let loop ((sopath (hop-find-sofile filename)))
 	 (cond
@@ -614,9 +723,14 @@
 	    ((and (not (eq? sopath 'error))
 		  (hop-sofile-enable)
 		  (=fx (bigloo-debug) 0))
-	     (if (eq? (hop-sofile-compile-policy) 'aot)
-		 (loop (compileso filename))
-		 (nodejs-compile filename lang)))
+	     (case (hop-sofile-compile-policy)
+		((aot)
+		 (loop (nodejs-socompile filename lang)))
+		((nte)
+		 (nodejs-socompile-queue-push filename lang)
+		 (nodejs-compile filename lang))
+		(else
+		 (nodejs-compile filename lang))))
 	    (else
 	     (nodejs-compile filename lang)))))
    
@@ -726,7 +840,7 @@
       (js-raise-error (js-new-global-object)
 	 (format "Don't know how to load module ~s" filename)
 	 filename))
-   
+
    (define (load-module)
       (cond
 	 ((string-suffix? ".js" filename)

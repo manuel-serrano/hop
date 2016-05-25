@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Wed May 18 05:56:48 2016 (serrano)                */
+/*    Last change :  Wed May 25 13:41:39 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
@@ -112,50 +112,48 @@ window.hop.reactInit = function( parent, sibling, key, proc ) {
       var parentNode = document.getElementById( parent );
       var nodes = invoke( proc );
 
-      console.log( "insertReactNodes parent=", parentNode );
-      console.log( "insertReactNodes sibling=", sibling );
-      console.log( "nodes=", nodes );
-      console.log( "proc=", proc.toString() );
-      if( !parentNode ) {
-	 throw "Cannot find react parent " + parent;
-      }
-      
-      if( !(nodes instanceof Array) ) {
-	 nodes = [ nodes ];
-      }
-
-      nodes.forEach( function( n, idx, arr ) {
-	 if( !n ) {
-	    n = document.createTextNode( "" );
-	    arr[ idx ] = n;
-	 } else if( !(n instanceof Node) ) {
-	    n = document.createTextNode( n.toString() );
-	    arr[ idx ] = n;
+      if( nodes ) {
+	 if( !parentNode ) {
+	    throw "Cannot find react parent " + parent;
 	 }
-      } );
-
-      if( parentNode[ key ] ) {
-	 nodes.forEach( function( n, idx, arr ) {
-	    parentNode.insertBefore( n, parentNode[ key ][ 0 ] );
-	 } );
-      } else if( sibling ) {
-	 var s = document.getElementById( sibling );
-	 nodes.forEach( function( n, idx, arr ) {
-	    parentNode.insertBefore( n, s );
-	 } );
-      } else {
-	 for( var i = nodes.length - 1; i >= 0; i-- ) {
-	    parentNode.appendChild( nodes[ i ] );
+	 
+	 if( !(nodes instanceof Array) ) {
+	    nodes = [ nodes ];
 	 }
-      }
 
-      if( parentNode[ key ] ) {
-	 parentNode[ key ].forEach( function( n, idx, arr ) {
-	    parentNode.removeChild( n );
+	 nodes.forEach( function( n, idx, arr ) {
+	    if( !n ) {
+	       n = document.createTextNode( "" );
+	       arr[ idx ] = n;
+	    } else if( !(n instanceof Node) ) {
+	       n = document.createTextNode( n.toString() );
+	       arr[ idx ] = n;
+	    }
 	 } );
-      }
 
-      parentNode[ key ] = nodes;
+	 if( parentNode[ key ] ) {
+	    nodes.forEach( function( n, idx, arr ) {
+	       parentNode.insertBefore( n, parentNode[ key ][ 0 ] );
+	    } );
+	 } else if( sibling ) {
+	    var s = document.getElementById( sibling );
+	    nodes.forEach( function( n, idx, arr ) {
+	       parentNode.insertBefore( n, s );
+	    } );
+	 } else {
+	    for( var i = nodes.length - 1; i >= 0; i-- ) {
+	       parentNode.appendChild( nodes[ i ] );
+	    }
+	 }
+
+	 if( parentNode[ key ] ) {
+	    parentNode[ key ].forEach( function( n, idx, arr ) {
+	       parentNode.removeChild( n );
+	    } );
+	 }
+
+	 parentNode[ key ] = nodes;
+      }
    }
 
    function invoke( proc ) {

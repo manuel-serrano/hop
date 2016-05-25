@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Thu May  5 06:12:30 2016 (serrano)                */
+;*    Last change :  Wed May 25 18:59:57 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -856,7 +856,7 @@
 ;*    xml-write-initialization ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-initialization id tilde var p)
-   (display "hop.reactCollectProxy(" p)
+   (display "setTimeout( function() { hop.reactCollectProxy(" p)
    (display "function() { return " p)
    (if (eq? id :style)
        (xml-write-style-initialization tilde var p)
@@ -867,7 +867,7 @@
 	  (display "\"]=" p)
 	  (xml-write-expression tilde p)
 	  (display ";" p)))
-   (display "}.bind( this ) )" p))
+   (display "}.bind( this ) ) }, 0 );" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-style-initialization ...                               */

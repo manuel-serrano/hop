@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue May  3 14:10:33 2016 (serrano)                */
+;*    Last change :  Wed May 25 09:01:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1250,6 +1250,7 @@
 	       (else
 		(raise e))))
 	 (let ((e (j2s-compile in
+		     :verbose 0
 		     :driver (j2s-eval-driver)
 		     :parser parser))
 	       (m (js-get scope 'module scope)))

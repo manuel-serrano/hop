@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun May 22 10:06:38 2016 (serrano)                */
+#*    Last change :  Wed May 25 09:07:13 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -907,7 +907,7 @@ fi
 if [ "$closure " = " " ]; then
   js="function _(){return 1};"
   for p in closure-compiler closure; do
-    if [ "`echo \"$js\" | $p`" = "$js" ]; then
+    if [ "`echo \"$js\" | $p > /dev/null 2> /dev/null`" = "$js" ]; then
       closure=$p
       break;
     fi
