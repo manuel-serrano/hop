@@ -25,12 +25,6 @@ make install
 make test
 ```
 
-### To build the documentation:
-
-```sh
-make doc
-```
-
 Resources
 ---------
 
