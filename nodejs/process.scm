@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Jun  1 13:27:03 2016 (serrano)                */
+;*    Last change :  Thu Jun  2 10:17:03 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -669,10 +669,10 @@
 	 ;; ioctl (hop extension)
 	 (js-put! proc 'ioctl
 	    (js-make-function %this
-	       (lambda (this fd request buffer)
+	       (lambda (this fd request . l)
 		  (ioctl (inexact->exact (js-tointeger fd %this))
 		     (if (number? request) request (js-tostring request %this))
-		     (js-tostring buffer %this)))
+		     (map (lambda (n) (js-tonumber n %this)) l)))
 	       3 "ioctl")
 	    #t %this)
 
