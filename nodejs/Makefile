@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Dec 27 19:23:30 2015 (serrano)                */
+#*    Last change :  Fri Jun  3 17:24:01 2016 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -71,7 +71,8 @@ include ../etc/Makefile.library
 #*---------------------------------------------------------------------*/
 .PHONY: build native jvm
 
-build: $(BACKEND)
+build: .afile
+	$(MAKE) $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
