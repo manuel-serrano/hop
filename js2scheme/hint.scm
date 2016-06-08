@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Apr 24 13:22:04 2016 (serrano)                */
+;*    Last change :  Wed Jun  1 18:56:02 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -347,6 +347,7 @@
 	 ((object) 'js-object?)
 	 ((function) 'js-function?)
 	 ((bool) 'boolean?)
+	 ((undefined) 'js-undefined?)
 	 (else (error "hint" "Unknown hint type predicate" type))))
    
    (define (test-hint-param param)

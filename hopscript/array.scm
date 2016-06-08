@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue May  3 15:23:50 2016 (serrano)                */
+;*    Last change :  Fri Jun  3 09:31:24 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -949,6 +949,15 @@
 		   (nvec (make-vector (+fx vlen litems)))
 		   (nlen (+fx litems (uint32->fixnum len))))
 	       (vector-copy! nvec litems vec)
+	       ;; copy the inheritated properties
+	       (let loop ((i litems))
+		  (when (<fx i nlen)
+		     (when (eq? (vector-ref-ur nvec i) (js-absent))
+			(let ((name (js-toname i %this)))
+			   (when (js-has-property arr name %this)
+			      (vector-set! nvec i (js-get this name %this)))))
+		     (loop (+fx i 1))))
+	       ;; insert the new elements
 	       (let ((i 0))
 		  (for-each (lambda (el)
 			       (vector-set! nvec i el)
@@ -984,9 +993,10 @@
 		nlen)
 	     (if (not (isa? this JsArray))
 		 (array-unshift this (uint32->integer len))
-		 (with-access::JsArray this (vec)
+		 (with-access::JsArray this (vec length)
 		    (cond
-		       ((>fx (vector-length vec) 0)
+		       ((and (>fx (vector-length vec) 0)
+			     (=u32 length (fixnum->uint32 (vector-length vec))))
 			(vector-unshift this len))
 		       (else
 			(array-unshift this (uint32->integer len)))))))))
@@ -2249,9 +2259,13 @@
 	     (let ((nlen (+fx n 1)))
 		(vector-set-ur! vec n item)
 		(js-array-update-length! o nlen))
-	     (begin
+	     (let ((len length))
 		(js-put! o n item #f %this)
-		(uint32->integer length))))))
+		(if (=u32 (+u32 len #u32:1)#u32:0)
+		    (js-raise-range-error %this
+		       "Illegal length: ~s"
+		       (js-tostring #l4294967296 %this))
+		    (uint32->integer length)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-push ...                                          */

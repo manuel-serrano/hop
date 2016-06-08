@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Tue May 24 15:41:30 2016 (serrano)                */
+#*    Last change :  Sun Jun  5 21:56:42 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -16,6 +16,36 @@ do: build
 #*---------------------------------------------------------------------*/
 -include ../../etc/Makefile.hopconfig
 -include ../../etc/Makefile.version
+
+#*---------------------------------------------------------------------*/
+#*    Configuration                                                    */
+#*---------------------------------------------------------------------*/
+ANDROIDBUILDDIR = /tmp/build.hop.android
+ANDROIDROOT = /opt/android
+ANDROIDSDK = $(ANDROIDROOT)/android-sdk-linux
+ANDROIDNDK = $(ANDROIDROOT)/android-ndk-r9d
+ANDROIDTOOLCHAIN = $(ANDROIDROOT)/toolchain
+ANDROIDSDKVERSION = 21
+ANDROIDACTIONMODE = debug
+
+ANDROIDANT = ant
+
+# hop androin configuration
+ANDROIDHOPPORT = 8080
+ANDROIDHOPTHREAD = 6
+ANDROIDHOPZEROCONF = true
+ANDROIDHOPDEBUG = false
+ANDROIDHOPURL = http://hop.inria.fr
+ANDROIDHOPCONSOLELOG=false
+ANDROIDHOPDEBUGLEVEL = 0
+ANDROIDHOPVERBOSELEVEL = -v
+ANDROIDHOPPREFIX = /data/data/fr.inria.hop
+
+# global configuration
+REPOSITORY = $$HOME/prgm/distrib
+
+HOPMINOR = -$(HOPDEVEL)1
+HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)1
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -167,3 +197,156 @@ install-weblet:
             && chmod $(MODFILE) $(DESTDIR)$(HOPWEBLETSDIR)/$(DIR)/.afile \
             || exit 1; \
         fi; \
+
+#*---------------------------------------------------------------------*/
+#*    Common files                                                     */
+#*---------------------------------------------------------------------*/
+$(ANDROIDBUILDDIR):
+	mkdir -p $(ANDROIDBUILDDIR)
+
+$(ANDROIDBUILDDIR)/local.properties $(ANDROIDBUILDDIR)/ant.properties:
+	cat $< \
+           | sed -e "s|@ANDROIDSDK@|$(ANDROIDSDK)|" \
+                 -e "s|@BASEDIR@|$(BUILDDIR)/arch/android|" \
+           > $@ || exit 1
+
+$(ANDROIDBUILDDIR)/local.properties: local.properties.in $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/ant.properties: ant.properties.in $(ANDROIDBUILDDIR)
+
+$(ANDROIDBUILDDIR)/build.xml $(ANDROIDBUILDDIR)/Android.mk:
+	cp $< $@
+
+$(ANDROIDBUILDDIR)/build.xml: build.xml $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/Android.mk: Android.mk $(ANDROIDBUILDDIR)
+
+$(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties:
+	cat $< \
+          | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
+                -e "s|@HOPDEBUG@|$(ANDROIDHOPDEBUG)|" \
+                -e "s|@ANDROIDSDKVERSION@|$(ANDROIDSDKVERSION)|" \
+                -e "s|@HOPPORT@|$(ANDROIDHOPPORT)|" \
+                -e "s|@HOPTHREADS@|$(ANDROIDHOPTHREADS)|" \
+                -e "s|@HOPZEROCONF@|$(ANDROIDHOPZEROCONF)|" \
+                -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@
+
+$(ANDROIDBUILDDIR)/AndroidManifest.xml: AndroidManifest.xml.in $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/project.properties: project.properties.in $(ANDROIDBUILDDIR)
+
+#*---------------------------------------------------------------------*/
+#*    res                                                              */
+#*---------------------------------------------------------------------*/
+$(ANDROIDBUILDDIR)/res: res $(ANDROIDBUILDDIR)
+	cp -r $< $@
+
+$(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml:
+	rm -f $@.in
+	cat $< \
+          | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
+                -e "s|@HOPPORT@|$(ANDROIDHOPPORT)|" \
+                -e "s|@HOPTHREADS@|$(ANDROIDHOPTHREADS)|" \
+                -e "s|@HOPCONSOLELOG@|$(ANDROIDHOPCONSOLELOG)|" \
+                -e "s|@HOPDEBUGLEVEL@|$(ANDROIDHOPDEBUGLEVEL)|" \
+                -e "s|@HOPVERBOSELEVEL@|$(ANDROIDHOPVERBOSELEVEL)|" \
+                -e "s|@HOPZEROCONF@|$(ANDROIDHOPZEROCONF)|" \
+                -e "s|@HOPPREFIX@|$(ANDROIDHOPPREFIX)|" \
+                -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@
+
+$(ANDROIDBUILDDIR)/res/values/strings.xml: res/values/strings.xml.in \
+   $(ANDROIDBUILDDIR)/res
+$(ANDROIDBUILDDIR)/res/xml/preferences.xml: res/xml/preferences.xml.in \
+   $(ANDROIDBUILDDIR)/res
+
+#*---------------------------------------------------------------------*/
+#*    jni                                                              */
+#*---------------------------------------------------------------------*/
+$(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
+	cp -r $< $@
+
+#*---------------------------------------------------------------------*/
+#*    src                                                              */
+#*---------------------------------------------------------------------*/
+$(ANDROIDBUILDDIR)/src: src $(ANDROIDBUILDDIR)
+	cp -r $< $@
+
+#*---------------------------------------------------------------------*/
+#*    HOPTMPDIR/antandroid.sh ...                                      */
+#*---------------------------------------------------------------------*/
+$(HOPTMPDIR)/antandroid.sh:
+	echo "#!/bin/sh" > $@
+	echo "$(ANDROIDANT) -Dbuild.compiler.fulldepend=true -Dbuild.compiler.compilerarg="-Xlint:unchecked" $(ANDROIDACTIONMODE) <<EOF" >> $@
+	echo "hophop" >> $@
+	echo "hophop" >> $@
+	echo "" >> $@
+	echo "EOF" >> $@
+	echo "" >> $@
+	echo "if [ \"$$""? \" != \"0 \" ]; then" >> $@
+	echo "  exit 1" >> $@
+	echo "fi" >> $@
+	chmod a+rx $@
+
+#*---------------------------------------------------------------------*/
+#*    apk                                                              */
+#*---------------------------------------------------------------------*/
+apk: apk.common apk.res apk.jni apk.src $(HOPTMPDIR)/antandroid.sh \
+  apk.bigloo apk.hop
+	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1 || exit 1
+	(cd $(ANDROIDBUILDDIR) && $(HOPTMPDIR)/antandroid.sh) || exit 1
+
+apk.common: $(ANDROIDBUILDDIR)/local.properties \
+  $(ANDROIDBUILDDIR)/ant.properties \
+  $(ANDROIDBUILDDIR)/build.xml \
+  $(ANDROIDBUILDDIR)/Android.mk \
+  $(ANDROIDBUILDDIR)/AndroidManifest.xml \
+  $(ANDROIDBUILDDIR)/project.properties
+
+apk.res: $(ANDROIDBUILDDIR)/res \
+  $(ANDROIDBUILDDIR)/res/values/strings.xml \
+  $(ANDROIDBUILDDIR)/res/xml/preferences.xml
+
+apk.jni: $(ANDROIDBUILDDIR)/jni
+
+apk.src: $(ANDROIDBUILDDIR)/src
+
+apk.bigloo: $(ANDROIDBUILDDIR)/bigloo$(RELEASE)
+	$(MAKE) apk.bigloo.configure
+	$(MAKE) -C $(ANDROIDBUILDIR)/bigloo$(RELEASE)
+	$(MAKE) -C $(ANDROIDBUILDIR)/bigloo$(RELEASE) install
+
+apk.bigloo.configure:
+	(cd $(ANDROIDBUILDIR)/bigloo$(RELEASE); \
+         ./configure --os-android \
+            --android-adb=adb \
+            --cc=$(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc \
+            --cflags=-pie \
+            --libuvconfigureopt="--host=arm-linux-androideabi" \
+            --stack-check=no \
+            --prefix=$(ANDROIDHOPPREFIX) \
+            --build-bindir=$(HOPBINDIR))
+
+$(ANDROIDBUILDDIR)/bigloo$(RELEASE): $(REPOSITORY)/bigloo-$(RELEASE).tar.gz
+	(cd $(ANDROIDBUILDIR); rm -rf $(ANDROIDBUILDDIR)/bigloo$(RELEASE))
+	(cd $(ANDROIDBUILDIR); tar xvf $(BIGLOOREPO)/bigloo-$(RELEASE).tar.gz)
+
+apk.hop: apk.bigloo $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
+	$(MAKE) apk.hop.configure
+	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
+	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME) install
+
+apk.hop.configure:
+	(cd $(ANDROIDBUILDDIR)/$(HOPFULLNAME); \
+         ./configure \
+            --bigloo=$(HOPBINDIR)/bigloo \
+            --bigloolibdir=$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE) \
+            --android \
+            --hopc=$(HOPBINDIR)/hopc \
+            --hop=$(HOPBINDIR)/hop \
+            --prefix=$(ANDROIDHOPPREFIX) \
+            --libdir=$(ANDROIDHOPPREFIX)/hoplib)
+
+$(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
+	(cd $(ANDROIDBUILDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
+	(cd $(ANDROIDBUILDIR); tar xvf $(BIGLOOREPO)/$(HOPFULLNAME).tar.gz)
+
+apk-clean:
+	rm -rf $(ANDROIDBUILDDIR)
+	rm -f $(HOPTMPDIR)/antandroid.sh

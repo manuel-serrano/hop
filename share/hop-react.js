@@ -3,16 +3,40 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Wed May 25 13:41:39 2016 (serrano)                */
+/*    Last change :  Mon Jun  6 16:46:38 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    reactDynKey ...                                                  */
+/*    window.hop.reactDynKey ...                                       */
 /*---------------------------------------------------------------------*/
-var reactDynKey = 0;
+window.hop.reactDynKey = 0;
+window.hop.reactInitThunks = [];
+window.hop.reactIntialized = false;
+
+/*---------------------------------------------------------------------*/
+/*    window.hop.pushReact ...                                         */
+/*---------------------------------------------------------------------*/
+window.hop.pushReact = function( thunk ) {
+   if( window.hop.reactIntialized ) {
+      setTimeout( thunk, 0 );
+   } else {
+      if( window.hop.reactInitThunks.length == 0 ) {
+	 window.addEventListener( "load", function() {
+	    // push back after every other things
+	    setTimeout( function() {
+	       window.hop.reactInitThunks.forEach( function( f ) {
+		  f(); } );
+	       window.hop.reactInitThunks = [];	    
+	    }, 1 );
+	 } );
+      }
+
+      window.hop.reactInitThunks.push( thunk );
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    REACT ...                                                        */
@@ -20,7 +44,7 @@ var reactDynKey = 0;
 /*** META ((export <REACT>)) */
 function REACT( _ ) {
    var cnt = 0;
-   var id = "react" + reactDynKey++;;
+   var id = "react" + window.hop.reactDynKey++;;
    var script = false;
 
    for( var i = 0; i < arguments.length; i++ ) {
@@ -107,7 +131,20 @@ window.hop.reactCollectProxy = function( proc ) {
 /*---------------------------------------------------------------------*/
 /*    window.hop.reactInit ...                                         */
 /*---------------------------------------------------------------------*/
-window.hop.reactInit = function( parent, sibling, key, proc ) {
+window.hop.reactInit = function( parent, sibling, anchor, key, proc ) {
+   
+   function getElementByAnchor( nodes, anchor ) {
+      for( var i = nodes.length - 1; i >=0; i-- ) {
+	 var n = nodes[ i ];
+	 
+	 if( n.nodeType == 3 ) {
+	    if( n.textContent == anchor ) return n;
+	 }
+      }
+
+      return false;
+   }
+
    function insertReactNodes() {
       var parentNode = document.getElementById( parent );
       var nodes = invoke( proc );
@@ -137,9 +174,22 @@ window.hop.reactInit = function( parent, sibling, key, proc ) {
 	    } );
 	 } else if( sibling ) {
 	    var s = document.getElementById( sibling );
-	    nodes.forEach( function( n, idx, arr ) {
-	       parentNode.insertBefore( n, s );
-	    } );
+	    if( s ) {
+	       nodes.forEach( function( n, idx, arr ) {
+		  parentNode.insertBefore( n, s );
+	       } );
+	    } else {
+	       return;
+	    }
+	 } else if( anchor ) {
+	    var s = getElementByAnchor( parentNode.childNodes, anchor );
+	    if( s ) {
+	       nodes.forEach( function( n, idx, arr ) {
+		  parentNode.insertBefore( n, s );
+	       } );
+	    } else {
+	       return;
+	    }
 	 } else {
 	    for( var i = nodes.length - 1; i >= 0; i-- ) {
 	       parentNode.appendChild( nodes[ i ] );
@@ -165,8 +215,8 @@ window.hop.reactInit = function( parent, sibling, key, proc ) {
 	 window.hop.reactInCollect = old;
       }
    }
+
+   if( anchor ) anchor = decodeURIComponent( anchor );
    
-   return setTimeout( insertReactNodes, 0 );
+   window.hop.pushReact( insertReactNodes );
 }
-      
-  

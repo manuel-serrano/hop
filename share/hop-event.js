@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Fri Apr 29 17:22:02 2016 (serrano)                */
+/*    Last change :  Mon May 30 08:53:56 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
@@ -143,9 +143,9 @@ function hop_add_ready_listener( obj, proc, ttl ) {
    
    if( !el ) {
       if( ttl > 0 ) {
-	 sc_after( hop_ready_timeout, function() {
+	 setTimeout( function() {
 	    return hop_add_ready_listener( obj, proc, ttl - 1 );
-	 } );
+	 }, hop_ready_timeout );
       } else {
 	 hop_elements_ready_counter--;
 	 return sc_error( "add-event-listener!",
@@ -1460,7 +1460,7 @@ hop_add_native_event_listener(
 	 if( hop_elements_ready_counter == 0 ) {
 	    clearInterval( i );
 	    hop_is_ready = true;
-	    
+
 	    while( sc_isPair( hop_window_ready_list ) ) {
 	       if( hop_window_ready_list.__hop_car.enable ) {
 		  window.ready = hop_window_ready_list.__hop_car;

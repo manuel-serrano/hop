@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May 25 14:16:29 2016 (serrano)                */
+;*    Last change :  Wed Jun  1 18:47:59 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -649,7 +649,7 @@
    (define (cleanup sopath sopathtmp res)
       (let ((o (string-append (prefix sopathtmp) ".o")))
 	 (when (file-exists? o) (delete-file o)))
-      (if (=fx res 0)
+      (if (and (integer? res) (=fx res 0))
 	  (rename-file sopathtmp sopath)
 	  (begin
 	     (when (file-exists? sopath) (delete-file sopath))
@@ -680,7 +680,12 @@
 	     (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
 	     (let ((res -1)
 		   (msg "abort")
-		   (atexit (lambda (res) (cleanup sopath sopathtmp -1))))
+		   (atexit (lambda (res)
+			      (for-each (lambda (p)
+					   (process-kill p)
+					   (process-wait p))
+				 (process-list))
+			      (cleanup sopath sopathtmp -1))))
 		(register-exit-function! atexit)
 		(unwind-protect
 		   (multiple-value-bind (r m)
@@ -690,7 +695,7 @@
 		   (begin
 		      (cleanup sopath sopathtmp res)
 		      (unregister-exit-function! atexit)
-		      (if (=fx res 0)
+		      (if (and (integer? res) (=fx res 0))
 			  sopath
 			  (call-with-output-file (string-append sopath ".err")
 			     (lambda (op)

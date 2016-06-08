@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Mon Dec 21 08:04:26 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Mon May 30 14:16:22 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
 ;*=====================================================================*/
@@ -466,13 +466,21 @@
       (lambda (e)
 	 (if (not (isa? e &io-parse-error))
 	     (raise e)
-	     (with-access::&io-parse-error e (obj)
+	     (with-access::&io-parse-error e (obj proc)
+		(set! proc "hop-read-hss")
 		(match-case obj
 		   ((?token ?val ?file ?pos)
-		    (raise (duplicate::&io-parse-error e
-			      (obj (format "~a (~a)" token val))
-			      (fname file)
-			      (location pos))))
+		    (let ((v (cond
+				(val
+				 val)
+				((input-string-port? iport)
+				 (input-port-buffer iport))
+				(else
+				 token))))
+		       (raise (duplicate::&io-parse-error e
+				 (obj v)
+				 (fname file)
+				 (location pos)))))
 		   (else
 		    (raise e))))))
       (css->ast iport :extension hss-extension)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Jan  8 15:09:31 2016 (serrano)                */
+;*    Last change :  Tue May 31 08:34:16 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -79,7 +79,8 @@
 			      (content-type "application/x-hop")
 			      (header `((Hop-Error: . ,errobj)))
 			      (value rej)))))
-		  1 "reject")))))
+		  1 "reject")
+	       obj))))
    
    (instantiate::http-response-async
       (async async-proc)))
@@ -130,93 +131,12 @@
 	       (else
 		'#())))))
    
-   (define (promise-watch-all promise::JsPromise)
-      (with-access::JsPromise promise (watches)
-	 (let loop ((i (-fx (vector-length watches) 1))
-		    (fullfilledp #t))
-	    (if (=fx i -1)
-		(when fullfilledp
-		   (promise-resolve promise
-		      (js-vector->jsarray
-			 (vector-map! (lambda (o::JsPromise)
-					 (with-access::JsPromise o (val)
-					    val))
-			    watches)
-			 %this)))
-		(let ((o (vector-ref watches i)))
-		   (with-access::JsPromise o ((ostate state) (oval val))
-		      (case ostate
-			 ((rejected)
-			  (promise-reject promise oval))
-			 ((pending)
-			  (loop (-fx i 1) #f))
-			 (else
-			  (loop (-fx i 1) fullfilledp)))))))))
-      
-   (define (promise-watch-race promise::JsPromise)
-      (with-access::JsPromise promise (watches)
-	 (let loop ((i (-fx (vector-length watches) 1)))
-	    (when (>fx i -1)
-	       (let ((o (vector-ref watches i)))
-		  (with-access::JsPromise o ((ostate state) (oval val))
-		     (case ostate
-			((rejected)
-			 (promise-reject promise oval))
-			((fullfilled)
-			 (promise-resolve promise oval))
-			(else
-			 (loop (-fx i 1))))))))))
-      
-   (define (promise-resolvers promise::JsPromise)
-      (with-access::JsPromise promise (state)
-	 (when (eq? state 'pending)
-	    (promise-watch-all promise))))
-
-   (define (promise-rejecters promise::JsPromise)
-      (with-access::JsPromise promise (state)
-	 (when (eq? state 'pending)
-	    (promise-watch-race promise))))
-
-   ;; promise-resolve
-   (define (promise-resolve o::JsPromise v)
-      (with-access::JsPromise o (thens state val resolvers rejecters worker)
-	 (when (eq? state 'pending)
-	    (set! state 'fullfilled)
-	    (set! val v)
-	    (js-worker-push-thunk! worker "promise"
-	       (lambda ()
-		  (with-handler
-		     exception-notify
-		     (for-each (lambda (then)
-				  (when (isa? then JsFunction)
-				     (js-call1 %this then o v)))
-			(reverse thens)))))
-	    (for-each (lambda (w) (promise-rejecters w)) rejecters)
-	    (for-each (lambda (w) (promise-resolvers w)) resolvers)
-	    o)))
-   
-   ;; promise-reject
-   (define (promise-reject o::JsPromise v)
-      (with-access::JsPromise o (catches state val resolvers rejecters worker)
-	 (when (eq? state 'pending)
-	    (set! state 'rejected)
-	    (set! val v)
-	    (js-worker-push-thunk! worker "promise"
-	       (lambda ()
-		  (with-handler
-		     exception-notify
-		     (for-each (lambda (hdl)
-				  (js-call1 %this hdl o v))
-			(reverse catches)))))
-	    (for-each (lambda (w) (promise-rejecters w)) rejecters)
-	    (for-each (lambda (w) (promise-resolvers w)) resolvers)
-	    o)))
-   
    ;; builtin prototype
    (define js-promise-prototype
       (with-access::JsGlobalObject %this (__proto__)
 	 (instantiate::JsPromise
 	    (worker (js-undefined))
+	    (%this %this)
 	    (__proto__ __proto__)
 	    (extensible #t))))
    
@@ -243,6 +163,7 @@
    (define (js-promise-alloc::JsPromise constructor::JsFunction)
       (instantiate::JsPromise
 	 (worker (js-current-worker))
+	 (%this %this)
 	 (__proto__ (js-get constructor 'prototype %this))))
    
    ;; then, create a HopScript object
@@ -340,7 +261,7 @@
 ;*    http://www.ecma-international.org/ecma-262/6.0/#24.4.4.2         */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-promise-prototype! %this::JsGlobalObject js-promise obj)
-
+   
    ;; catch
    (js-bind! %this obj 'catch
       :value (js-make-function %this
@@ -348,8 +269,10 @@
 		   (if (not (isa? this JsPromise))
 		       (js-raise-type-error %this "argument not a promise ~a"
 			  (typeof this))
-		       (js-promise-then-catch %this this #f fail))
-		   this)
+		       (let ((promise (duplicate::JsPromise this
+					 (state 'pending))))
+			  (js-promise-then-catch %this this #f fail promise)
+			  promise)))
 		1 'catch)
       :enumerable #f)
    
@@ -360,15 +283,115 @@
 		   (if (not (isa? this JsPromise))
 		       (js-raise-type-error %this "argument not a promise ~a"
 			  (typeof this))
-		       (js-promise-then-catch %this this proc fail))
-		   this)
+		       (let ((promise (duplicate::JsPromise this
+					 (state 'pending))))
+			  (js-promise-then-catch %this this proc fail promise)
+			  promise)))
 		2 'then)
       :enumerable #f))
 
 ;*---------------------------------------------------------------------*/
+;*    promise-resolvers ...                                            */
+;*---------------------------------------------------------------------*/
+(define (promise-resolvers promise::JsPromise)
+   (with-access::JsPromise promise (state)
+      (when (eq? state 'pending)
+	 (promise-watch-all promise))))
+
+;*---------------------------------------------------------------------*/
+;*    promise-rejecters ...                                            */
+;*---------------------------------------------------------------------*/
+(define (promise-rejecters promise::JsPromise)
+   (with-access::JsPromise promise (state)
+      (when (eq? state 'pending)
+	 (promise-watch-race promise))))
+
+;*---------------------------------------------------------------------*/
+;*    promise-watch-all ...                                            */
+;*---------------------------------------------------------------------*/
+(define (promise-watch-all promise::JsPromise)
+   (with-access::JsPromise promise (watches %this)
+      (let loop ((i (-fx (vector-length watches) 1))
+		 (fullfilledp #t))
+	 (if (=fx i -1)
+	     (when fullfilledp
+		(promise-resolve promise
+		   (js-vector->jsarray
+		      (vector-map! (lambda (o::JsPromise)
+				      (with-access::JsPromise o (val)
+					 val))
+			 watches)
+		      %this)))
+	     (let ((o (vector-ref watches i)))
+		(with-access::JsPromise o ((ostate state) (oval val))
+		   (case ostate
+		      ((rejected)
+		       (promise-reject promise oval))
+		      ((pending)
+		       (loop (-fx i 1) #f))
+		      (else
+		       (loop (-fx i 1) fullfilledp)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    promise-watch-race ...                                           */
+;*---------------------------------------------------------------------*/
+(define (promise-watch-race promise::JsPromise)
+   (with-access::JsPromise promise (watches)
+      (let loop ((i (-fx (vector-length watches) 1)))
+	 (when (>fx i -1)
+	    (let ((o (vector-ref watches i)))
+	       (with-access::JsPromise o ((ostate state) (oval val))
+		  (case ostate
+		     ((rejected)
+		      (promise-reject promise oval))
+		     ((fullfilled)
+		      (promise-resolve promise oval))
+		     (else
+		      (loop (-fx i 1))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    promise-resolve ...                                              */
+;*---------------------------------------------------------------------*/
+(define (promise-resolve o::JsPromise v)
+   (with-access::JsPromise o (thens state val resolvers rejecters worker %this)
+      (when (eq? state 'pending)
+	 (set! state 'fullfilled)
+	 (set! val v)
+	 (js-worker-push-thunk! worker "promise"
+	    (lambda ()
+	       (with-handler
+		  exception-notify
+		  (for-each (lambda (then)
+			       (when (isa? then JsFunction)
+				  (js-call1 %this then o val)))
+		     (reverse thens)))))
+	 (for-each (lambda (w) (promise-rejecters w)) rejecters)
+	 (for-each (lambda (w) (promise-resolvers w)) resolvers)
+	 o)))
+
+;*---------------------------------------------------------------------*/
+;*    promise-reject ...                                               */
+;*---------------------------------------------------------------------*/
+(define (promise-reject o::JsPromise v)
+   (with-access::JsPromise o (catches state val resolvers rejecters worker %this)
+      (when (eq? state 'pending)
+	 (set! state 'rejected)
+	 (set! val v)
+	 (js-worker-push-thunk! worker "promise"
+	    (lambda ()
+	       (with-handler
+		  exception-notify
+		  (for-each (lambda (hdl)
+			       (js-call1 %this hdl o v))
+		     (reverse catches)))))
+	 (for-each (lambda (w) (promise-rejecters w)) rejecters)
+	 (for-each (lambda (w) (promise-resolvers w)) resolvers)
+	 o)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-promise-then-catch ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-promise-then-catch %this::JsGlobalObject this::JsPromise proc fail)
+(define (js-promise-then-catch %this::JsGlobalObject this::JsPromise proc fail np)
    (with-access::JsPromise this (state thens rejecters catches val worker)
       (case state
 	 ((fullfilled)
@@ -377,7 +400,7 @@
 		 (lambda ()
 		    (with-handler
 		       exception-notify
-		       (js-call1 %this proc this val))))
+		       (promise-resolve np (js-call1 %this proc this val)))))
 	      (js-undefined)))
 	 ((rejected)
 	  (js-worker-push-thunk! worker "promise"
@@ -385,7 +408,7 @@
 		(with-handler
 		   exception-notify
 		   (if (isa? fail JsFunction)
-		       (js-call1 %this fail this val)
+		       (promise-reject np (js-call1 %this fail this val))
 		       (js-raise-error %this "Uncaught (in promise)" val))))))
 	 (else
 	  (when (isa? proc JsFunction)

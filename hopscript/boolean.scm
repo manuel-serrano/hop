@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Apr 25 07:32:56 2016 (serrano)                */
+;*    Last change :  Mon Jun  6 07:44:55 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -133,11 +133,12 @@
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-boolean-prototype! %this::JsGlobalObject js-boolean obj)
 
-   (define (js-cast-boolean this)
+   (define (js-cast-boolean this shape)
       (cond
 	 ((boolean? this) this)
 	 ((isa? this JsBoolean) (with-access::JsBoolean this (val) val))
-	 (else (js-raise-type-error %this "Not a boolean ~a" this))))
+	 (else (js-raise-type-error %this "Not a boolean ~a"
+		  (if shape (shape this) this)))))
    
    ;; prototype fields
    (js-bind! %this obj 'constructor
@@ -147,7 +148,7 @@
    (js-bind! %this obj 'toString
       :value (js-make-function %this
 		(lambda (this)
-		   (let ((val (js-cast-boolean this)))
+		   (let ((val (js-cast-boolean this typeof)))
 		      (if val
 			  (js-string->jsstring "true")
 			  (js-string->jsstring "false"))))
@@ -158,7 +159,7 @@
    (js-bind! %this obj 'valueOf
       :value (js-make-function %this
 		(lambda (this)
-		   (js-cast-boolean this))
+		   (js-cast-boolean this #f))
 		0 'valueOf)
       :enumerable #f))
       

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Apr 27 10:24:50 2016 (serrano)                */
+;*    Last change :  Fri Jun  3 17:04:36 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -282,7 +282,7 @@
 	 ((js-jsstring? this)
 	  this)
 	 (else
-	  (js-raise-type-error %this "argument not a string ~a" this))))
+	  (js-raise-type-error %this "argument not a string ~a" (typeof this)))))
    
    (js-bind! %this obj 'toString
       :value (js-make-function %this tostring 0 'toString)

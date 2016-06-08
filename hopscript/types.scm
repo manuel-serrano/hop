@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Mar 24 06:26:35 2016 (serrano)                */
+;*    Last change :  Wed Jun  1 18:55:57 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -253,7 +253,8 @@
 	      (val::obj (default #unspecified))
 	      (thens::pair-nil (default '()))
 	      (catches::pair-nil (default '()))
-	      worker 
+	      worker
+	      %this
 	      (resolvers::pair-nil (default '()))
 	      (rejecters::pair-nil (default '()))
 	      (watches::vector (default '#())))
@@ -263,7 +264,8 @@
 
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
-	   
+
+	   (inline js-undefined? ::obj)
 	   (inline js-undefined)
 	   (inline js-null)
 	   (js-absent)
@@ -447,6 +449,12 @@
 	  (js-donate (cdr obj) worker %this)))
       (else
        obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-undefined? ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-undefined? obj)
+   (eq? obj (js-undefined)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-undefined ...                                                 */

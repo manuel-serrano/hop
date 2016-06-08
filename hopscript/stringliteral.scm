@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue May  3 15:02:49 2016 (serrano)                */
+;*    Last change :  Fri Jun  3 16:22:34 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -584,7 +584,7 @@
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
-	  (js-jsstring-indexof this search position %this))
+	  (js-jsstring-indexof this (js-tostring search %this) position %this))
 	 ((isa? this JsObject)
 	  (js-call2 %this (js-get this 'indexOf %this) this search position))
 	 (else
@@ -629,7 +629,7 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-lastindexof this search position %this))
 	 ((isa? this JsObject)
-	  (js-call2 %this (js-get this 'lastIndexof %this) this search position))
+	  (js-call2 %this (js-get this 'lastIndexOf %this) this search position))
 	 (else
 	  (loop (js-toobject %this this))))))
    
@@ -1265,7 +1265,7 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-naturalcompare this that %this))
 	 ((isa? this JsObject)
-	  (js-call1 %this (js-get this 'naturalcompare %this) this that))
+	  (js-call1 %this (js-get this 'naturalCompare %this) this that))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -1288,7 +1288,7 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-localecompare this that %this))
 	 ((isa? this JsObject)
-	  (js-call1 %this (js-get this 'localecompare %this) this that))
+	  (js-call1 %this (js-get this 'localeCompare %this) this that))
 	 (else
 	  (loop (js-toobject %this this))))))
 

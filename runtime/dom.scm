@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/dom.scm                   */
+;*    serrano/prgm/project/hop/3.1.x/runtime/dom.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Fri Oct 16 10:14:23 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Mon Jun  6 15:50:45 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
 ;*=====================================================================*/
@@ -285,7 +285,7 @@
 (define (memq-verbatim n lst)
    (cond
       ((null? lst) #f)
-      ((eq-verbatim? n (car lst)) #t)
+      ((eq-verbatim? n (car lst)) lst)
       (else (memq-verbatim n (cdr lst)))))
 
 ;*---------------------------------------------------------------------*/
@@ -310,29 +310,29 @@
 ;*    dom-previous-sibling ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (dom-previous-sibling node)
-   (and (isa? node xml-element)
-	(with-access::xml-element node (parent)
-	   (and (isa? parent xml-markup)
-		(with-access::xml-markup parent (body)
-		   (let loop ((body body)
-			      (prev #f))
-		      (cond
-			 ((null? body) prev)
-			 ((eq-verbatim? (car body) node) prev)
-			 (else (loop (cdr body) (car body))))))))))
+   (when (isa? node xml-element)
+      (with-access::xml-element node (parent)
+	 (when (isa? parent xml-markup)
+	    (with-access::xml-markup parent (body)
+	       (let loop ((body body)
+			  (prev #f))
+		  (cond
+		     ((null? body) prev)
+		     ((eq-verbatim? (car body) node) prev)
+		     (else (loop (cdr body) (car body))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-next-sibling ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (dom-next-sibling node)
-   (and (isa? node xml-element)
-	(with-access::xml-element node (parent)
-	   (and (isa? parent xml-markup)
-		(with-access::xml-markup parent (body)
-		   (let ((child (memq-verbatim node body)))
-		      (and (pair? child)
-			   (pair? (cdr child))
-			   (cadr child))))))))
+   (when (isa? node xml-element)
+      (with-access::xml-element node (parent)
+	 (when (isa? parent xml-markup)
+	    (with-access::xml-markup parent (body)
+	       (let ((child (memq-verbatim node body)))
+		  (and (pair? child)
+		       (pair? (cdr child))
+		       (cadr child))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-child! ...                                            */

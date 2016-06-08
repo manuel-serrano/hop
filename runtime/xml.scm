@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Wed May 25 18:59:57 2016 (serrano)                */
+;*    Last change :  Mon May 30 14:29:31 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -463,11 +463,13 @@
 	 (display ">" p)
 	 (unless (or (not body) (null? body))
 	    (when cdata-start (display cdata-start p))
-	    (for-each (lambda (el)
-			 (if (string? el)
-			     (xml-write-style el p)
-			     (xml-write el p backend)))
-	       body)
+	    (let ((op (open-output-string)))
+	       (for-each (lambda (el)
+			    (if (string? el)
+				(display el op)
+				(xml-write el op backend)))
+		  body)
+	       (xml-write-style (close-output-port op) p))
 	    (when cdata-stop (display cdata-stop p)))
 	 (display "</" p)
 	 (display tag p)
@@ -856,7 +858,7 @@
 ;*    xml-write-initialization ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (xml-write-initialization id tilde var p)
-   (display "setTimeout( function() { hop.reactCollectProxy(" p)
+   (display "window.hop.pushReact( function() { hop.reactCollectProxy(" p)
    (display "function() { return " p)
    (if (eq? id :style)
        (xml-write-style-initialization tilde var p)
@@ -867,7 +869,7 @@
 	  (display "\"]=" p)
 	  (xml-write-expression tilde p)
 	  (display ";" p)))
-   (display "}.bind( this ) ) }, 0 );" p))
+   (display "}.bind( this ) ) } );" p))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-write-style-initialization ...                               */
