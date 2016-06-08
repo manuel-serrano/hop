@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue May  3 20:16:55 2016 (serrano)                */
+;*    Last change :  Fri Jun  3 07:54:37 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -374,7 +374,8 @@
 	 (with-access::J2SProgram this (mode pcache-size %this path cnsts)
 	    (list
 	       module
-	       (define-pcache pcache-size)	       
+	       (define-pcache pcache-size)
+	       '(hop-sofile-compile-policy-set! 'static)
 	       `(define %pcache (js-make-pcache ,pcache-size))
 	       `(define %this (nodejs-new-global-object))
 	       `(define %source ,path)
@@ -560,7 +561,8 @@
 ;*    j2s-function-src ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-src loc val::J2SFun conf)
-   (unless (>=fx (config-get conf :optim 0) 2)
+   (when (or (<fx (config-get conf :optim 0) 2)
+	     (config-get conf :force-location))
       (match-case loc
 	 ((at ?path ?start)
 	  (let ((m (config-get conf :mmap-src)))
@@ -1469,7 +1471,8 @@
       (with-access::J2SSvc this (name params loc path mode register import)
 	 (let ((args (j2s-scheme params mode return conf '()))
 	       (lam (jsfun->lambda this mode return conf
-		       (j2s-fun-prototype this))))
+		       (j2s-fun-prototype this)))
+	       (conf (cons* :force-location #t conf)))
 	    (match-case lam
 	       ((labels (and ?bindings ((?id . ?-))) ?id)
 		`(labels ,bindings

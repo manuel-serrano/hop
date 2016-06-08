@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.4.x/arch/android/src/fr/inria/hop/HopLauncher.java     */
+/*    .../hop/3.1.x/arch/android/src/fr/inria/hop/HopLauncher.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Apr 23 09:35:30 2013 (serrano)                */
-/*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Sun Jun  5 21:29:22 2016 (serrano)                */
+/*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
 /*=====================================================================*/
@@ -556,6 +556,7 @@ public class HopLauncher extends Activity {
 	 final String defaultport = res.getString( R.string.hopport );
 	 final String defaultthreads = res.getString( R.string.hopthreads );
 	 final String defaultdebug = res.getString( R.string.hopdebug );
+	 final String defaultroot = res.getString( R.string.hoproot );
 	 final boolean defaultlog = res.getString( R.string.hoplog ).equals( "true" );
 	 final boolean defaultzeroconf = res.getString( R.string.hopzeroconf ).equals( "true" );
       
@@ -566,6 +567,7 @@ public class HopLauncher extends Activity {
 	 Hop.jobs = sp.getBoolean( "hop_jobs", false );
 	 Hop.debug = sp.getString( "hop_debug", defaultdebug );
 	 Hop.verbose = sp.getString( "hop_verbose", defaultverbose );
+	 Hop.root = sp.getString( "hop_root", defaultroot );
 	 hop_log = sp.getBoolean( "hop_log", defaultlog );
 
 	 // keep wifi alive

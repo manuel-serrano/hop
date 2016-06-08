@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/hz.scm                    */
+;*    serrano/prgm/project/hop/3.1.x/runtime/hz.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Nov 19 05:30:17 2007                          */
-;*    Last change :  Mon Jun 23 13:26:00 2014 (serrano)                */
-;*    Copyright   :  2007-14 Manuel Serrano                            */
+;*    Last change :  Mon May 30 18:18:44 2016 (serrano)                */
+;*    Copyright   :  2007-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Functions for dealing with HZ packages.                          */
 ;*=====================================================================*/
@@ -160,7 +160,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    hz-local-weblet-path ...                                         */
 ;*    -------------------------------------------------------------    */
-;*    This function search the URL hz package names in the list of     */
+;*    This function searches the URL hz package names in the list of   */
 ;*    locally available weblets.                                       */
 ;*---------------------------------------------------------------------*/
 (define (hz-local-weblet-path url path)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr 25 07:31:10 2016 (serrano)                */
+;*    Last change :  Mon Jun  6 08:36:44 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -119,11 +119,11 @@
 	       (__proto__ (js-get f 'prototype %this))
 	       (val (if (eq? value (js-null)) 0 (js-tonumber value %this)))))
 		
-	 (define (js-number-construct this::JsNumber . arg)
-	    (tprint "DEPRECATED, SHOULD NOT BE HERE...")
-	    (with-access::JsNumber this (val)
-	       (set! val (if (pair? arg) (js-tonumber (car arg) %this) 0)))
-	    this)
+;* 	 (define (js-number-construct this::JsNumber . arg)            */
+;* 	    (tprint "DEPRECATED, SHOULD NOT BE HERE...")               */
+;* 	    (with-access::JsNumber this (val)                          */
+;* 	       (set! val (if (pair? arg) (js-tonumber (car arg) %this) 0))) */
+;* 	    this)                                                      */
 
 	 (define (js-number-alloc constructor::JsFunction)
 	    (instantiate::JsNumber
@@ -149,8 +149,9 @@
 	       :__proto__ js-function-prototype
 	       :prototype js-number-prototype
 	       :constructor js-number-constructor
-	       :alloc js-number-alloc
-	       :construct js-number-construct))
+;* 	       :construct js-number-construct                         */
+	       :alloc js-number-alloc))
+	 
 	 ;; other properties of the Number constructor
 	 (js-bind! %this js-number 'POSITIVE_INFINITY
 	    :value +inf.0
@@ -235,15 +236,16 @@
       :configurable #t
       :enumerable #f)
 
-   (define (js-cast-number this)
+   (define (js-cast-number this shape)
       (cond
 	 ((number? this) this)
 	 ((isa? this JsNumber) (with-access::JsNumber this (val) val))
-	 (else (js-raise-type-error %this "Not a number ~a" this))))
+	 (else (js-raise-type-error %this "Not a number ~a"
+		  (if shape (shape this) this)))))
    
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.2
    (define (js-number-tostring this #!optional (radix (js-undefined)))
-      (js-jsnumber-tostring (js-cast-number this) radix %this))
+      (js-jsnumber-tostring (js-cast-number this typeof) radix %this))
 
    (js-bind! %this obj 'toString
       :value (js-make-function %this js-number-tostring 2 'toString)
@@ -265,7 +267,7 @@
    ;; valueOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.4
    (define (js-number-valueof this)
-      (js-cast-number this))
+      (js-cast-number this #f))
 
    (js-bind! %this obj 'valueOf
       :value (js-make-function %this js-number-valueof 0 'valueOf)
@@ -282,7 +284,7 @@
 	     (js-string->jsstring s)
 	     (js-string->jsstring (string-append "-" s))))
       
-      (let ((val (js-cast-number this)))
+      (let ((val (js-cast-number this #f)))
 	 (let ((f (if (eq? fractiondigits (js-undefined))
 		      0
 		      (js-tointeger fractiondigits %this))))

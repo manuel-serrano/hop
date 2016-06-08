@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Fri Feb  5 08:42:03 2016 (serrano)                */
+;*    Last change :  Wed Jun  1 06:56:55 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -281,7 +281,7 @@
    (hop-port))
 
 (define-parameter hop-enable-fast-server-event
-   #t)
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-enable-repl ...                                              */

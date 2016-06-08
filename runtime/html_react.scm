@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 28 18:01:20 2016                          */
-;*    Last change :  Thu May  5 06:12:28 2016 (serrano)                */
+;*    Last change :  Mon Jun  6 17:01:54 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dynamic nodes                                                    */
@@ -48,6 +48,7 @@
    (let ((id (xml-make-id)))
       (instantiate::xml-react
 	 (tag 'react)
+	 (id id)
 	 (body `(lambda ()
 		   ,@(filter-map (lambda (node)
 				    (when (isa? node xml-tilde)
@@ -62,15 +63,21 @@
    (define (react-init key parent thunk)
       (if (not parent)
 	  (error "react" "illegal orphan react node" obj)
-	  (with-access::xml-element parent ((pid id))
+	  (with-access::xml-element parent ((pid id) body)
 	     (cond
 		((dom-next-sibling obj)
 		 =>
 		 (lambda (sibling)
-		    (with-access::xml-element sibling ((sid id))
-		       `((pragma "window.hop.reactInit") ,pid ,sid ,key ,thunk))))
+		    (cond
+		       ((isa? sibling xml-element)
+			(with-access::xml-element sibling ((sid id))
+			   `((pragma "window.hop.reactInit") ,pid ,sid #f ,key ,thunk)))
+		       ((and (string? sibling) (string-skip sibling "\n \t"))
+			`((pragma "window.hop.reactInit") ,pid ,#f ,(url-path-encode sibling) ,key ,thunk))
+		       (else
+			`((pragma "window.hop.reactInit") ,pid ,#f , #f ,key ,thunk)))))
 		(else
-		 `((pragma "window.hop.reactInit") ,pid ,#f ,key ,thunk))))))
+		 `((pragma "window.hop.reactInit") ,pid ,#f , #f ,key ,thunk))))))
 
    (with-access::xml-react obj (id body parent)
       (let ((expr (react-init id parent body)))

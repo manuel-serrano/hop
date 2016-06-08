@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 20 09:22:36 2010                          */
-;*    Last change :  Fri Apr 29 17:14:19 2016 (serrano)                */
+;*    Last change :  Mon May 30 14:26:15 2016 (serrano)                */
 ;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The definition of XML classes                                    */
@@ -116,7 +116,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (object-print o::xml-element p print-slot)
    (with-access::xml-element o (tag attributes body id)
-      (display "#|xml-element tag=" p)
+      (display "#|" p)
+      (display (class-name (object-class o)) p)
+      (display " tag=" p)
       (print-slot tag p)
       (display " id=" p)
       (print-slot id p)

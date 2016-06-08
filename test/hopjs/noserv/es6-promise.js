@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Mar 22 16:06:41 2016 (serrano)                */
+/*    Last change :  Mon May 30 15:43:23 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -43,6 +43,16 @@ var p = new Promise( function( resolve, reject ) { reject( -3 ) } )
 var p = new Promise( function( resolve, reject ) { reject( -3 ) } )
     .catch( function( val ) { assert.equal( val, -3 ) } )
     .catch( function( val ) { assert.equal( val, -3 ) } );
+
+var p = new Promise( function( resolve, reject ) {
+   resolve( "Success!" );
+} );
+
+p.then( function( value) {
+   return value + 1;
+} ).then( function( value ) {
+   assert.equal( value, "Success!1" );
+} );
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */

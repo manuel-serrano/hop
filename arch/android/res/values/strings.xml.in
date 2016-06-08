@@ -11,6 +11,7 @@
    <string name="hopverbose">@HOPVERBOSELEVEL@</string>
    <string name="hopdebug">@HOPDEBUGLEVEL@</string>
    <string name="hopzeroconf">@HOPZEROCONF@</string>
+   <string name="hoproot">@HOPPREFIX@</string>
 
    <!-- Activities -->
    <string name="activity_hop">Hop</string>
@@ -90,6 +91,6 @@
    <string name="default_value_fontsize_preference">10</string>
    <string name="default_value_color_preference">2</string>
    <string name="default_value_controlkey_preference">0</string>
-   <string name="default_value_shell_preference">/data/data/fr.inria.hop/bin/hop -v3 -g3 -w3</string>
+   <string name="default_value_shell_preference">@HOPPREFIX@/bin/hop -v3 -g3 -w3</string>
    <string name="default_value_initialcommand_preference">export PATH=/data/local/bin:$PATH</string>
 </resources>

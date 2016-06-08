@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed May 25 09:07:13 2016 (serrano)                */
+#*    Last change :  Fri Jun  3 17:13:36 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1449,7 +1449,7 @@ for init in hop-autoconf.js hop-boot.js; do
             -e "s|@WEBLETSDIR@|$webletsdir|" \
             -e "s|@LOCEVENT@|$locevent|" \
             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \
-            -e "s|@BUILD@|$builid|" \
+            -e "s|@BUILDID@|$buildid|" \
             -e "s|//[^\"]*$$||g" \
             -e "/^[ \t]*$$/D" \
       >> share/$init
@@ -1561,7 +1561,7 @@ echo "  default JavaScript mime type.......... $jsmimetype"
 echo "  default CSS mime type................. $cssmimetype"
 echo "  closure compiler (optional)........... $closure"
 echo
-echo "Cross compilation:"
+echo "Bootstrap compilers:"
 echo "  hop................................... $hop"
 echo "  hopc.................................. $hopc"
 

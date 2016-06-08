@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Sat Feb 27 07:18:02 2016 (serrano)                */
+;*    Last change :  Fri Jun  3 07:08:20 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -665,6 +665,16 @@
 	       (lambda (this)
 		  (js-vector->jsarray (getgroups) %this))
 	       0 "getgroups")
+	    #t %this)
+
+	 ;; ioctl (hop extension)
+	 (js-put! proc 'ioctl
+	    (js-make-function %this
+	       (lambda (this fd request val)
+		  (apply ioctl (inexact->exact (js-tointeger fd %this))
+		     (if (number? request) request (js-tostring request %this))
+		     (js-tonumber val %this)))
+	       3 "ioctl")
 	    #t %this)
 
 	 ;; mainModule
