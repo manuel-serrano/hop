@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 23 16:55:15 2005                          */
-;*    Last change :  Mon Jun  6 15:50:45 2016 (serrano)                */
+;*    Last change :  Fri Jun 10 08:35:33 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Restricted DOM implementation                                    */
@@ -307,6 +307,17 @@
 		(else (loop (cdr prev))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    skip-non-nodes ...                                               */
+;*---------------------------------------------------------------------*/
+(define (skip-non-nodes child)
+   (when (pair? child)
+      (let ((c (car child)))
+	 (cond
+	    ((not (string? c)) c)
+	    ((string-skip c "\n \t") c)
+	    (else (skip-non-nodes (cdr child)))))))
+      
+;*---------------------------------------------------------------------*/
 ;*    dom-previous-sibling ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (dom-previous-sibling node)
@@ -330,9 +341,8 @@
 	 (when (isa? parent xml-markup)
 	    (with-access::xml-markup parent (body)
 	       (let ((child (memq-verbatim node body)))
-		  (and (pair? child)
-		       (pair? (cdr child))
-		       (cadr child))))))))
+		  (when (pair? child)
+		     (skip-non-nodes (cdr child)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dom-remove-child! ...                                            */

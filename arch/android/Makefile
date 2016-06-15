@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Jun  5 21:56:42 2016 (serrano)                */
+#*    Last change :  Wed Jun 15 08:10:13 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -42,10 +42,10 @@ ANDROIDHOPVERBOSELEVEL = -v
 ANDROIDHOPPREFIX = /data/data/fr.inria.hop
 
 # global configuration
-REPOSITORY = $$HOME/prgm/distrib
+REPOSITORY = $(DISTRIBDIR)
 
 HOPMINOR = -$(HOPDEVEL)1
-HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)1
+HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -289,6 +289,9 @@ $(HOPTMPDIR)/antandroid.sh:
 #*---------------------------------------------------------------------*/
 apk: apk.common apk.res apk.jni apk.src $(HOPTMPDIR)/antandroid.sh \
   apk.bigloo apk.hop
+	$(MAKE) ndk-build
+
+ndk-build:
 	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1 || exit 1
 	(cd $(ANDROIDBUILDDIR) && $(HOPTMPDIR)/antandroid.sh) || exit 1
 
@@ -309,11 +312,11 @@ apk.src: $(ANDROIDBUILDDIR)/src
 
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo$(RELEASE)
 	$(MAKE) apk.bigloo.configure
-	$(MAKE) -C $(ANDROIDBUILDIR)/bigloo$(RELEASE)
-	$(MAKE) -C $(ANDROIDBUILDIR)/bigloo$(RELEASE) install
+	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo$(RELEASE)
+	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo$(RELEASE) install DESTDIR=$(ANDROIDBUILDDIR)
 
 apk.bigloo.configure:
-	(cd $(ANDROIDBUILDIR)/bigloo$(RELEASE); \
+	(cd $(ANDROIDBUILDDIR)/bigloo$(RELEASE); \
          ./configure --os-android \
             --android-adb=adb \
             --cc=$(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc \
@@ -323,29 +326,29 @@ apk.bigloo.configure:
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR))
 
-$(ANDROIDBUILDDIR)/bigloo$(RELEASE): $(REPOSITORY)/bigloo-$(RELEASE).tar.gz
-	(cd $(ANDROIDBUILDIR); rm -rf $(ANDROIDBUILDDIR)/bigloo$(RELEASE))
-	(cd $(ANDROIDBUILDIR); tar xvf $(BIGLOOREPO)/bigloo-$(RELEASE).tar.gz)
+$(ANDROIDBUILDDIR)/bigloo$(RELEASE): $(REPOSITORY)/bigloo$(RELEASE).tar.gz
+	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/bigloo$(RELEASE))
+	(cd $(ANDROIDBUILDDIR); tar xvf $<)
 
-apk.hop: apk.bigloo $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
+apk.hop: $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
 	$(MAKE) apk.hop.configure
 	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
-	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME) install
+	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME) install DESTDIR=$(ANDROIDBUILDDIR)
 
 apk.hop.configure:
 	(cd $(ANDROIDBUILDDIR)/$(HOPFULLNAME); \
          ./configure \
             --bigloo=$(HOPBINDIR)/bigloo \
-            --bigloolibdir=$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE) \
+            --bigloolibdir=$(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo/$(RELEASE) \
             --android \
             --hopc=$(HOPBINDIR)/hopc \
             --hop=$(HOPBINDIR)/hop \
             --prefix=$(ANDROIDHOPPREFIX) \
-            --libdir=$(ANDROIDHOPPREFIX)/hoplib)
+            --libdir=$(ANDROIDHOPPREFIX)/lib)
 
 $(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
-	(cd $(ANDROIDBUILDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
-	(cd $(ANDROIDBUILDIR); tar xvf $(BIGLOOREPO)/$(HOPFULLNAME).tar.gz)
+	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
+	(cd $(ANDROIDBUILDDIR); tar xvf $<)
 
 apk-clean:
 	rm -rf $(ANDROIDBUILDDIR)

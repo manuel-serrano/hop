@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue May 24 16:03:36 2016 (serrano)                */
+#*    Last change :  Tue Jun 14 17:38:13 2016 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -212,7 +212,8 @@ install-android:
            HOPSHAREDIR=$(HOPTMPDIR)/android/assets/share/hop \
            HOPMANDIR=$(HOPTMPDIR)/android/assets/man \
            HOPWEBLETSDIR=$(HOPTMPDIR)/android/assets/hoplib/hop/$branch/weblets \
-           HOPCONTTRIBSDIR=$(HOPTMPDIR)/android/assets/conttribs
+           HOPCONTTRIBSDIR=$(HOPTMPDIR)/android/assets/conttribs \
+	   INSTALLSPECIFIC=
 	$(INSTALL) $(BUILDLIBDIR)/hopdroid.init $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopdroid.init && \
         chmod $(MODFILE) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/hopdroid.init;
 	$(MAKE) -C arch/android install

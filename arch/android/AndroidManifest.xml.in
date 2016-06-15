@@ -3,7 +3,7 @@
       package="fr.inria.hop"
       android:versionCode="2"
       android:versionName="@HOPVERSION@">
-    <uses-sdk android:minSdkVersion="5"
+    <uses-sdk android:minSdkVersion="19"
               android:targetSdkVersion="@ANDROIDSDKVERSION@"/>
     <application android:label="@string/hop"
                  android:persistent="true"
