@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 28 18:01:20 2016                          */
-;*    Last change :  Mon Jun  6 17:01:54 2016 (serrano)                */
+;*    Last change :  Fri Jun 10 08:36:08 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dynamic nodes                                                    */
@@ -72,7 +72,7 @@
 		       ((isa? sibling xml-element)
 			(with-access::xml-element sibling ((sid id))
 			   `((pragma "window.hop.reactInit") ,pid ,sid #f ,key ,thunk)))
-		       ((and (string? sibling) (string-skip sibling "\n \t"))
+		       ((string? sibling)
 			`((pragma "window.hop.reactInit") ,pid ,#f ,(url-path-encode sibling) ,key ,thunk))
 		       (else
 			`((pragma "window.hop.reactInit") ,pid ,#f , #f ,key ,thunk)))))

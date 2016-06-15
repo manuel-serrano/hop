@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Mon Jun  6 16:46:38 2016 (serrano)                */
+/*    Last change :  Fri Jun 10 08:20:44 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
@@ -87,7 +87,7 @@ window.hop.reactProxy = function( val ) {
 
    function getHandler( target, name ) {
       if( window.hop.reactInCollect &&
-	  attrs.indexOf( window.hop.reactInCollect ) == - 1) {
+	  attrs.indexOf( window.hop.reactInCollect ) == -1) {
 	 attrs.push( window.hop.reactInCollect );
       }
 

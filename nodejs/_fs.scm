@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu Feb 25 20:32:53 2016 (serrano)                */
+;*    Last change :  Thu Jun  9 17:33:47 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -231,6 +231,9 @@
       (nodejs-fs-close %worker %this process fd callback))
    
    (define (open this path flags mode callback)
+      (unless (integer? flags)
+	 (js-raise-type-error %this
+	    "Illegal flags (~a)" (typeof flags)))
       (nodejs-open %worker %this process path flags mode callback))
    
    (define (utimes this path atime mtime callback)

@@ -747,11 +747,11 @@ var spawn = exports.spawn = function(file /*, args, options*/) {
   return child;
 };
 
-
+var C = 0;
 function maybeClose(subprocess) {
   subprocess._closesGot++;
 
-  if (subprocess._closesGot == subprocess._closesNeeded) {
+   if (subprocess._closesGot == subprocess._closesNeeded) {
     subprocess.emit('close', subprocess.exitCode, subprocess.signalCode);
   }
 }

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun May 22 09:29:33 2016 (serrano)                */
+#*    Last change :  Tue Jun 14 18:26:23 2016 (serrano)                */
 #*    Copyright   :  2006-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -65,8 +65,9 @@ POPULATION = Makefile \
   worker4/slave.js worker4/worker4.js worker4/example.json worker4/README.md \
   worker5/slave.js worker5/worker5.js worker5/example.json worker5/README.md \
   sqlite/db.sqlite sqlite/sqlite.js sqlite/sqlite_core.js sqlite/example.json \
-  react/react.js react/README.md reactsrv/reactsrv.js reactsrv/README.md \
-  reactc/reactc.js reactc/README.md \
+  react/react.js react/README.md react/example.json \
+  reactsrv/reactsrv.js reactsrv/README.md reactsrv/example.json \
+  reactc/reactc.js reactc/README.md reactc/example.json \
   widget/node_modules widget/example.json \
   widget/node_modules/flipcounter \
   widget/node_modules/flipcounter/lib \

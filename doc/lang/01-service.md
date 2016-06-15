@@ -267,6 +267,8 @@ Returns the frame object. Set options to the frame, the attributes of
 
  * `user`, a user identity on behalf of who the service is invoked.
  * `password`, the user password.
+ * `anim`, a boolean that controls that enables/disables a GUI animation
+ during service execution.
 
 ```
 service svc();
