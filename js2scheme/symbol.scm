@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Mon Apr 25 09:58:54 2016 (serrano)                */
+;*    Last change :  Wed Jun 15 17:59:21 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -585,11 +585,12 @@
 	 (when (eq? mode 'strict)
 	    (check-strict-mode-eval id "Declaration name" loc))
 	 (when (j2s-let? this)
-	    (unless (eq? (find-decl id env) this)
+	    (unless (eq? ndecl this)
+	       (tprint "ndecl=" (j2s->list ndecl) " this=" (j2s->list this))
 	       (raise
 		  (instantiate::&io-parse-error
 		     (proc "js-symbol")
-		     (msg (format "~a illegal redefinition" id))
+		     (msg (format "Illegal redefinition `~a'" id))
 		     (obj id)
 		     (fname (cadr loc))
 		     (location (caddr loc))))))
@@ -670,7 +671,9 @@
       (let loop ((inits inits)
 		 (ninits '()))
 	 (if (null? inits)
-	     (set! inits (reverse! ninits))
+	     (begin
+		(set! inits (reverse! ninits))
+		this)
 	     (with-access::J2SPropertyInit (car inits) (name loc)
 		(walk! (car inits) env mode withs wenv lang)
 		(with-access::J2SLiteralValue name (val)
@@ -702,9 +705,9 @@
 			     "duplicate data property in object literal not allowed in strict mode"
 			     loc))
 			 (else
-			  (loop (cdr inits) (cons (car inits) ninits))))))))))
-
-   (call-default-walker))
+			  (loop (cdr inits) (cons (car inits) ninits)))))))))))
+;*                                                                     */
+;*    (call-default-walker))                                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SOctalNumber ...                                    */
