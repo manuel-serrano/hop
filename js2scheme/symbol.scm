@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Jun 15 17:59:21 2016 (serrano)                */
+;*    Last change :  Fri Jun 17 07:43:47 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -586,7 +586,6 @@
 	    (check-strict-mode-eval id "Declaration name" loc))
 	 (when (j2s-let? this)
 	    (unless (eq? ndecl this)
-	       (tprint "ndecl=" (j2s->list ndecl) " this=" (j2s->list this))
 	       (raise
 		  (instantiate::&io-parse-error
 		     (proc "js-symbol")
@@ -596,7 +595,9 @@
 		     (location (caddr loc))))))
 	 (let ((rhs (resolve! val env mode withs wenv lang)))
 	    (if (j2s-let-opt? this)
-		(instantiate::J2SNop (loc loc))
+		(begin
+		   (set! val rhs)
+		   (instantiate::J2SNop (loc loc)))
 		(begin
 		   (set! val (instantiate::J2SUndefined (loc loc)))
 		   (instantiate::J2SStmtExpr
@@ -706,8 +707,6 @@
 			     loc))
 			 (else
 			  (loop (cdr inits) (cons (car inits) ninits)))))))))))
-;*                                                                     */
-;*    (call-default-walker))                                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SOctalNumber ...                                    */
