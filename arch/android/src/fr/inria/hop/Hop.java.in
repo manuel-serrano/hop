@@ -1,10 +1,11 @@
+// -*- java -*-
 /*=====================================================================*/
-/*    .../project/hop/2.6.x/arch/android/src/fr/inria/hop/Hop.java     */
+/*    .../hop/3.1.x/arch/android/src/fr/inria/hop/Hop.java.in          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Fri Feb 21 13:27:40 2014 (serrano)                */
-/*    Copyright   :  2010-14 Manuel Serrano                            */
+/*    Last change :  Wed Jun 29 20:10:26 2016 (serrano)                */
+/*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
 /*=====================================================================*/
@@ -40,15 +41,15 @@ public class Hop extends Thread {
    final static int HOP_RESTART = 5;
 
    // global variables
-   static String root = "/data/data/fr.inria.hop";
+   static String root = "/data/data/fr.inria.hop/assets";
    static String verbose = "";
    static String debug = "";
    static boolean zeroconf = false;
    static boolean webdav = false;
    static boolean jobs = false;
 
-   static String port = "8080";
-   static String maxthreads = "6";
+   static String port = "@HOPPORT@";
+   static String maxthreads = "@HOPTHREADS@";
 
    // instance variables
    private boolean killed = false;
@@ -104,8 +105,11 @@ public class Hop extends Thread {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
 
-      String cmd = "export HOME=" + HOME().getAbsolutePath() +
-	 "; exec " + root + HOP + " " + HOPARGS
+      String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
+	 + "export LD_LIBRARY_PATH="
+	 + root + "/lib/bigloo/@BIGLOOVERSION@:"
+	 + root + "/lib/hop/@HOPVERSION@:$LD_LIBRARY_PATH;"
+	 + "exec " + root + HOP + " " + HOPARGS
 	 + " -p " + port
 	 + " " + verbose
 	 + " " + debug

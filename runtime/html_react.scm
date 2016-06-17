@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 28 18:01:20 2016                          */
-;*    Last change :  Fri Jun 10 08:36:08 2016 (serrano)                */
+;*    Last change :  Sat Jun 25 08:26:52 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dynamic nodes                                                    */
@@ -60,25 +60,33 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-write obj::xml-react p backend)
    
+   (define (parent-id parent)
+      (when (isa? parent xml-element)
+	 (with-access::xml-element parent (id)
+	    id)))
+   
    (define (react-init key parent thunk)
       (if (not parent)
 	  (error "react" "illegal orphan react node" obj)
-	  (with-access::xml-element parent ((pid id) body)
-	     (cond
-		((dom-next-sibling obj)
-		 =>
-		 (lambda (sibling)
-		    (cond
-		       ((isa? sibling xml-element)
-			(with-access::xml-element sibling ((sid id))
-			   `((pragma "window.hop.reactInit") ,pid ,sid #f ,key ,thunk)))
-		       ((string? sibling)
-			`((pragma "window.hop.reactInit") ,pid ,#f ,(url-path-encode sibling) ,key ,thunk))
-		       (else
-			`((pragma "window.hop.reactInit") ,pid ,#f , #f ,key ,thunk)))))
-		(else
-		 `((pragma "window.hop.reactInit") ,pid ,#f , #f ,key ,thunk))))))
-
+	  (cond
+	     ((dom-next-sibling obj)
+	      =>
+	      (lambda (sibling)
+		 (cond
+		    ((isa? sibling xml-element)
+		     (with-access::xml-element sibling ((sid id))
+			`((pragma "window.hop.reactNode")
+			  ,thunk ,(parent-id parent) ,sid #f ,key)))
+		    ((string? sibling)
+		     `((pragma "window.hop.reactNode")
+		       ,thunk ,(parent-id parent) ,#f ,(url-path-encode sibling) ,key))
+		    (else
+		     `((pragma "window.hop.reactNode")
+		       ,thunk ,(parent-id parent) ,#f , #f ,key)))))
+	     (else
+	      `((pragma "window.hop.reactNode")
+		,thunk ,(parent-id parent) ,#f , #f ,key)))))
+   
    (with-access::xml-react obj (id body parent)
       (let ((expr (react-init id parent body)))
 	 (xml-write (sexp->xml-tilde expr) p backend))))

@@ -13,6 +13,10 @@
    <string name="hopzeroconf">@HOPZEROCONF@</string>
    <string name="hoproot">@HOPPREFIX@</string>
 
+   <!-- Configuration constants -->
+   <string name="hoprelease">@HOPVERSION@</string>
+   <string name="bigloorelease">@BIGLOOVERSION@</string>
+
    <!-- Activities -->
    <string name="activity_hop">Hop</string>
    <string name="activity_hopversion">Hop @HOPVERSION@</string>

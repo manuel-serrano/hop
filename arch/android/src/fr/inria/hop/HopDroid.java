@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../hop/2.6.x/arch/android/src/fr/inria/hop/HopDroid.java        */
+/*    .../hop/3.1.x/arch/android/src/fr/inria/hop/HopDroid.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Fri Feb 21 13:28:28 2014 (serrano)                */
-/*    Copyright   :  2010-14 Manuel Serrano                            */
+/*    Last change :  Sun Jun 19 08:35:12 2016 (serrano)                */
+/*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
 /*=====================================================================*/
@@ -146,7 +146,7 @@ public class HopDroid extends Thread {
 		     HopLauncher.MSG_HOP_OUTPUT_AVAILABLE );
 	       }
 	       Thread.sleep( 1000 );
-	    } catch( Throwable _ ) {
+	    } catch( Throwable t ) {
 	       ;
 	    }
 	 } else {
@@ -196,7 +196,7 @@ public class HopDroid extends Thread {
 		  android.os.Message.obtain(
 		     service.handler, HopLauncher.MSG_HOPDROID_FAILED, e ) );
 	    }
-	 } catch( Throwable _ ) {
+	 } catch( Throwable t ) {
 	    ;
 	 }
       }
@@ -244,7 +244,7 @@ public class HopDroid extends Thread {
    private static boolean serverPing( LocalSocketAddress addr ) {
       try {
 	 return execCmd( addr, SERVER_PING_CMD );
-      } catch( Exception _ ) {
+      } catch( Exception e ) {
          return false;
       }
    }
@@ -370,7 +370,7 @@ public class HopDroid extends Thread {
 			 + p.name + " mark: " + m );
 	       }
 	       op.flush();
-	    } catch( ArrayIndexOutOfBoundsException _ ) {
+	    } catch( ArrayIndexOutOfBoundsException a ) {
 	       Log.e( "HopDroid", "plugin not found: " + id );
 	       // we got an eof, escape from here
 	       return;

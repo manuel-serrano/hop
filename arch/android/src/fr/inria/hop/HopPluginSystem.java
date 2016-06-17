@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.6.x/arch/android/src/fr/inria/hop/HopPluginSystem.java     */
+/*    .../3.1.x/arch/android/src/fr/inria/hop/HopPluginSystem.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov 21 08:34:30 2012                          */
-/*    Last change :  Fri Feb 21 13:30:40 2014 (serrano)                */
-/*    Copyright   :  2012-14 Manuel Serrano                            */
+/*    Last change :  Sun Jun 19 08:35:58 2016 (serrano)                */
+/*    Copyright   :  2012-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android system settings                                          */
 /*=====================================================================*/
@@ -79,7 +79,7 @@ public class HopPluginSystem extends HopPlugin {
 	       op.write( "unknown ".getBytes() );
 	       return;
 	 }
-      } catch( android.provider.Settings.SettingNotFoundException _ ) {
+      } catch( android.provider.Settings.SettingNotFoundException a ) {
 	 op.write( "unknown ".getBytes() );
 	 return;
       }
@@ -128,7 +128,7 @@ public class HopPluginSystem extends HopPlugin {
 	 } else {
 	    op.write( "#f ".getBytes() );
 	 }
-      } catch( android.provider.Settings.SettingNotFoundException _ ) {
+      } catch( android.provider.Settings.SettingNotFoundException a ) {
 	 op.write( "#t ".getBytes() );
 	 return;
       }
@@ -139,7 +139,7 @@ public class HopPluginSystem extends HopPlugin {
 
       try {
 	 Settings.System.putInt( cr, Settings.System.ACCELEROMETER_ROTATION, enabled );
-      } catch( Throwable _ ) {
+      } catch( Throwable t ) {
 	 ;
       }
    }

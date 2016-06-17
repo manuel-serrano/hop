@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopConfigurer.java       */
+/*    .../3.1.x/arch/android/src/fr/inria/hop/HopConfigurer.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct  8 15:35:26 2010                          */
-/*    Last change :  Mon Mar 25 11:36:46 2013 (serrano)                */
-/*    Copyright   :  2010-13 Manuel Serrano                            */
+/*    Last change :  Tue Jun 21 16:02:12 2016 (serrano)                */
+/*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Configuring Hop                                                  */
 /*=====================================================================*/
@@ -77,7 +77,7 @@ public class HopConfigurer extends Thread {
 	 String msg = e.getMessage();
 	 if( msg == null ) msg = e.getClass().getName();
 	 
-	 Log.e( "HopInstaller", msg );
+	 Log.e( "HopConfigurer", msg );
 	 handler.sendMessage( android.os.Message.obtain( handler, HopLauncher.MSG_CONFIGURE_FAIL, e ) );
       }
    }

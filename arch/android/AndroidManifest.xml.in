@@ -5,7 +5,7 @@
       android:versionName="@HOPVERSION@">
     <uses-sdk android:minSdkVersion="19"
               android:targetSdkVersion="@ANDROIDSDKVERSION@"/>
-    <application android:label="@string/hop"
+    <application android:label="@string/@HOPAPKNAME@"
                  android:persistent="true"
                  android:theme="@style/hopstyle"
                  android:debuggable="@HOPDEBUG@"
@@ -53,7 +53,6 @@
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.RESTART_PACKAGES"/>
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.4.x/arch/android/src/fr/inria/hop/HopInstaller.java        */
+/*    .../3.1.x/arch/android/src/fr/inria/hop/HopInstaller.java        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Mon Mar 25 07:56:26 2013 (serrano)                */
-/*    Copyright   :  2010-13 Marcos Dione & Manuel Serrano             */
+/*    Last change :  Wed Jun 22 17:16:04 2016 (serrano)                */
+/*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
 /*=====================================================================*/
@@ -50,6 +50,7 @@ public class HopInstaller extends Thread {
    public HopInstaller( Handler h, ProgressDialog p, String a, String r ) {
       super();
 
+      Log.v( "HopInstaller", "creating installer root=" + r );
       handler = h;
       progress = p;
       apk = a;
@@ -93,7 +94,7 @@ public class HopInstaller extends Thread {
    // create a directory with the correct mod
    private void mkdir( File dir ) throws IOException {
       String pdir = dir.getAbsolutePath();
-      
+
       dir.mkdirs();
 
       do {
@@ -139,6 +140,8 @@ public class HopInstaller extends Thread {
    public void unpack() throws IOException {
       File zipFile = new File( apk );
 
+      Log.v( "HopInstaller", "unpack: " + apk + " root=" + root );
+      
       if( !zipFile.exists() ) {
 	 Log.e( "HopInstaller", "file not found: " + apk );
 	 throw new FileNotFoundException( apk );
@@ -169,8 +172,6 @@ public class HopInstaller extends Thread {
 	 if( !dirtable.containsKey( dir ) ) {
 	    dirtable.put( dir, new Boolean( true ) );
 	    
-/* 	    Log.v( "HopInstaller", dir.getAbsolutePath() );            */
-		  
 	    if( !dir.isDirectory() ) {
 	       mkdir( dir );
 	    }
@@ -226,7 +227,7 @@ public class HopInstaller extends Thread {
 	    try{
 	       Thread.currentThread().sleep( 10000000 );
 	    }
-	    catch( Exception _) {
+	    catch( Exception _e ) {
 	       ;
 	    }
 	 }

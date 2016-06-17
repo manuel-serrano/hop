@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Jun  5 21:29:22 2016 (serrano)                */
+/*    Last change :  Tue Jun 28 08:15:25 2016 (serrano)                */
 /*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -93,7 +93,7 @@ public class HopLauncher extends Activity {
 	       return clazzes[ i ];
 	    }
 	 }
-      } catch( ClassNotFoundException _ ) {
+      } catch( ClassNotFoundException c ) {
 	 ;
       }
 
@@ -226,7 +226,7 @@ public class HopLauncher extends Activity {
 		     case MSG_HOP_OUTPUT_AVAILABLE:
 			try {
 			   write_console( queue.take() );
-			} catch( InterruptedException _ ) {
+			} catch( InterruptedException i ) {
 			   ;
 			}
 			break;
@@ -263,7 +263,7 @@ public class HopLauncher extends Activity {
 			// give time to Hop to be ready
 			try {
 			   Thread.sleep( 2000 );
-			} catch( Exception _ ) {
+			} catch( Exception e ) {
 			   ;
 			}
 			startActivity( intent );
@@ -313,7 +313,7 @@ public class HopLauncher extends Activity {
 
       // install our view
       if( android.os.Build.VERSION.SDK_INT < 11 ) {
-	 // adding an incon to SDK >= 11 prevent the action bar to
+	 // adding an inco to SDK >= 11 prevent the action bar to
 	 // be displayed
 	 requestWindowFeature( Window.FEATURE_LEFT_ICON );
       }
@@ -326,7 +326,7 @@ public class HopLauncher extends Activity {
 	    R.drawable.logo );
       }
 
-      // Control the volume key when the console has the focus
+      // control the volume key when the console has the focus
       setVolumeControlStream( AudioManager.STREAM_MUSIC );
       
       // setup the scroll button
@@ -336,7 +336,7 @@ public class HopLauncher extends Activity {
       // grab the text for the output log
       textview = (TextView)activity.findViewById( R.id.textview );
       scrollview = (ScrollView)activity.findViewById( R.id.scrollview );
-      
+
       //maxlines = textview.getResources().getInteger( R.styleable.TextView_maxLines );
       maxlines = 500;
 
@@ -347,7 +347,7 @@ public class HopLauncher extends Activity {
 	 // now that the activity is fully initialized, it's possible
 	 // to get the disk location of the package
 	 String apk = activity.getApplicationInfo().sourceDir;
-	 Hop.root = activity.getApplicationInfo().dataDir;
+	 Hop.root = activity.getApplicationInfo().dataDir + "/assets";
 
 	 if( !HopInstaller.installed( Hop.root ) ) {
 
@@ -494,11 +494,11 @@ public class HopLauncher extends Activity {
 
 	 // never switch off wifi when the hop console is on top
 	 setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
-      } catch( Throwable _ ) {
+      } catch( Throwable t ) {
 	 onresume_wifi_policy = 0;
       }
 
-      // Notify the client
+      // notify the client
       if( hopservice != null && hopservice.hopdroid != null ) {
 	 hopservice.hopdroid.pushEvent( "resume" , "" );
       }
@@ -650,7 +650,7 @@ public class HopLauncher extends Activity {
 	 if( waitms > 0 ) {
 	    try {
 	       Thread.sleep( waitms );
-	    } catch( Exception _ ) {
+	    } catch( Exception e ) {
 	       ;
 	    }
 	 }
