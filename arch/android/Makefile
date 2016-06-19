@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Jun 15 08:10:13 2016 (serrano)                */
+#*    Last change :  Sun Jun 19 08:33:43 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -39,7 +39,8 @@ ANDROIDHOPURL = http://hop.inria.fr
 ANDROIDHOPCONSOLELOG=false
 ANDROIDHOPDEBUGLEVEL = 0
 ANDROIDHOPVERBOSELEVEL = -v
-ANDROIDHOPPREFIX = /data/data/fr.inria.hop
+#ANDROIDHOPPREFIX = /data/data/fr.inria.hop
+ANDROIDHOPPREFIX = assets
 
 # global configuration
 REPOSITORY = $(DISTRIBDIR)

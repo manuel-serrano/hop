@@ -18,7 +18,7 @@
 if( !('hop' in window) ) {
    window.hop = {
       'version': "3.1.0",
-      'build': "@BUILD@",
+      'build': "",
       'etcDir': "/usr/local/etc",
       'binDir': "/usr/local/bin",
       'libDir': "/usr/local/lib",

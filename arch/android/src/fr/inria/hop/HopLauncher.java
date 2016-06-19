@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Jun  5 21:29:22 2016 (serrano)                */
+/*    Last change :  Sun Jun 19 08:35:39 2016 (serrano)                */
 /*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -93,7 +93,7 @@ public class HopLauncher extends Activity {
 	       return clazzes[ i ];
 	    }
 	 }
-      } catch( ClassNotFoundException _ ) {
+      } catch( ClassNotFoundException c ) {
 	 ;
       }
 
@@ -226,7 +226,7 @@ public class HopLauncher extends Activity {
 		     case MSG_HOP_OUTPUT_AVAILABLE:
 			try {
 			   write_console( queue.take() );
-			} catch( InterruptedException _ ) {
+			} catch( InterruptedException i ) {
 			   ;
 			}
 			break;
@@ -263,7 +263,7 @@ public class HopLauncher extends Activity {
 			// give time to Hop to be ready
 			try {
 			   Thread.sleep( 2000 );
-			} catch( Exception _ ) {
+			} catch( Exception e ) {
 			   ;
 			}
 			startActivity( intent );
@@ -494,7 +494,7 @@ public class HopLauncher extends Activity {
 
 	 // never switch off wifi when the hop console is on top
 	 setWifiPolicy( WIFI_SLEEP_POLICY_NEVER );
-      } catch( Throwable _ ) {
+      } catch( Throwable t ) {
 	 onresume_wifi_policy = 0;
       }
 
@@ -650,7 +650,7 @@ public class HopLauncher extends Activity {
 	 if( waitms > 0 ) {
 	    try {
 	       Thread.sleep( waitms );
-	    } catch( Exception _ ) {
+	    } catch( Exception e ) {
 	       ;
 	    }
 	 }
