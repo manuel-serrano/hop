@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Jun 19 08:33:43 2016 (serrano)                */
+#*    Last change :  Mon Jun 20 07:19:37 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -26,7 +26,9 @@ ANDROIDSDK = $(ANDROIDROOT)/android-sdk-linux
 ANDROIDNDK = $(ANDROIDROOT)/android-ndk-r9d
 ANDROIDTOOLCHAIN = $(ANDROIDROOT)/toolchain
 ANDROIDSDKVERSION = 21
+ANDROIDABI = armeabi
 ANDROIDACTIONMODE = debug
+ANDROIDHOST = -d
 
 ANDROIDANT = ant
 
@@ -39,8 +41,7 @@ ANDROIDHOPURL = http://hop.inria.fr
 ANDROIDHOPCONSOLELOG=false
 ANDROIDHOPDEBUGLEVEL = 0
 ANDROIDHOPVERBOSELEVEL = -v
-#ANDROIDHOPPREFIX = /data/data/fr.inria.hop
-ANDROIDHOPPREFIX = assets
+ANDROIDHOPPREFIX = /data/data/fr.inria.hop
 
 # global configuration
 REPOSITORY = $(DISTRIBDIR)
@@ -237,6 +238,7 @@ $(ANDROIDBUILDDIR)/project.properties: project.properties.in $(ANDROIDBUILDDIR)
 #*    res                                                              */
 #*---------------------------------------------------------------------*/
 $(ANDROIDBUILDDIR)/res: res $(ANDROIDBUILDDIR)
+	$(RM) -rf $@
 	cp -r $< $@
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml:
@@ -267,7 +269,45 @@ $(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
 #*    src                                                              */
 #*---------------------------------------------------------------------*/
 $(ANDROIDBUILDDIR)/src: src $(ANDROIDBUILDDIR)
+	$(RM) -rf $@
 	cp -r $< $@
+
+#*---------------------------------------------------------------------*/
+#*    assets                                                           */
+#*---------------------------------------------------------------------*/
+$(ANDROIDBUILDDIR)/assets: \
+  $(ANDROIDBUILDDIR)/assets/etc \
+  $(ANDROIDBUILDDIR)/assets/bin \
+  $(ANDROIDBUILDDIR)/assets/lib
+
+$(ANDROIDBUILDDIR)/assets/etc:
+	mkdir -p $(ANDROIDBUILDDIR)/assets
+	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $@
+
+$(ANDROIDBUILDDIR)/assets/bin:
+	mkdir -p $@
+	cp $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
+
+$(ANDROIDBUILDDIR)/assets/lib: \
+  $(ANDROIDBUILDDIR)/assets/lib/bigloo \
+  $(ANDROIDBUILDDIR)/assets/lib/hop
+
+$(ANDROIDBUILDDIR)/assets/lib/bigloo:
+	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
+	$(RM) -rf $@
+	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo $@
+
+$(ANDROIDBUILDDIR)/assets/lib/hop:
+	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
+	$(RM) -rf $@
+	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/hop $@
+	find $@ -name .afile -exec $(RM) {} \;
+
+ndk-build: $(ANDROIDBUILDDIR)/assets
+	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1 || exit 1
+
+ndk-ant: $(HOPTMPDIR)/antandroid.sh
+	(cd $(ANDROIDBUILDDIR) && $(HOPTMPDIR)/antandroid.sh) || exit 1
 
 #*---------------------------------------------------------------------*/
 #*    HOPTMPDIR/antandroid.sh ...                                      */
@@ -288,13 +328,17 @@ $(HOPTMPDIR)/antandroid.sh:
 #*---------------------------------------------------------------------*/
 #*    apk                                                              */
 #*---------------------------------------------------------------------*/
-apk: apk.common apk.res apk.jni apk.src $(HOPTMPDIR)/antandroid.sh \
-  apk.bigloo apk.hop
-	$(MAKE) ndk-build
+.PHONY: apk install.apk check.apk apk.bigloo apk.hop apk.lib
 
-ndk-build:
-	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1 || exit 1
-	(cd $(ANDROIDBUILDDIR) && $(HOPTMPDIR)/antandroid.sh) || exit 1
+apk: apk.common apk.res apk.jni apk.src 
+	$(MAKE) ndk-build
+	$(MAKE) ndk-ant
+
+install.apk:
+	adb $(ANDROIDHOST) install -r $(ANDROIDBUILDDIR)/bin/hop-debug.apk
+
+check.apk:
+	adb $(ANDROIDHOST) shell monkey -p fr.inria.hop 1
 
 apk.common: $(ANDROIDBUILDDIR)/local.properties \
   $(ANDROIDBUILDDIR)/ant.properties \
@@ -322,6 +366,7 @@ apk.bigloo.configure:
             --android-adb=adb \
             --cc=$(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc \
             --cflags=-pie \
+            --lflags=-pie \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
@@ -331,7 +376,7 @@ $(ANDROIDBUILDDIR)/bigloo$(RELEASE): $(REPOSITORY)/bigloo$(RELEASE).tar.gz
 	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/bigloo$(RELEASE))
 	(cd $(ANDROIDBUILDDIR); tar xvf $<)
 
-apk.hop: $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
+apk.hop: $(ANDROIDBUILDDIR)/$(HOPFULLNAME) apk.bigloo
 	$(MAKE) apk.hop.configure
 	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
 	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME) install DESTDIR=$(ANDROIDBUILDDIR)
