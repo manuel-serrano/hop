@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/2.6.x/arch/android/src/fr/inria/hop/Hop.java     */
+/*    .../project/hop/3.1.x/arch/android/src/fr/inria/hop/Hop.java     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Fri Feb 21 13:27:40 2014 (serrano)                */
-/*    Copyright   :  2010-14 Manuel Serrano                            */
+/*    Last change :  Wed Jun 22 09:51:16 2016 (serrano)                */
+/*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
 /*=====================================================================*/
@@ -40,7 +40,7 @@ public class Hop extends Thread {
    final static int HOP_RESTART = 5;
 
    // global variables
-   static String root = "/data/data/fr.inria.hop";
+   static String root = "/data/data/fr.inria.hop/hop";
    static String verbose = "";
    static String debug = "";
    static boolean zeroconf = false;

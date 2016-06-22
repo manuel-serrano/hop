@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Sun Jun 19 17:39:08 2016 (serrano)                */
+/*    Last change :  Wed Jun 22 09:45:38 2016 (serrano)                */
 /*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -93,6 +93,8 @@ public class HopInstaller extends Thread {
    // create a directory with the correct mod
    private void mkdir( File dir ) throws IOException {
       String pdir = dir.getAbsolutePath();
+
+      Log.v( "HopInstaller", "mkdir dir=" + dir );
       
       dir.mkdirs();
 
@@ -139,6 +141,8 @@ public class HopInstaller extends Thread {
    public void unpack() throws IOException {
       File zipFile = new File( apk );
 
+      Log.v( "HopInstaller", "unpack: " + apk );
+      
       if( !zipFile.exists() ) {
 	 Log.e( "HopInstaller", "file not found: " + apk );
 	 throw new FileNotFoundException( apk );
@@ -169,7 +173,7 @@ public class HopInstaller extends Thread {
 	 if( !dirtable.containsKey( dir ) ) {
 	    dirtable.put( dir, new Boolean( true ) );
 	    
-/* 	    Log.v( "HopInstaller", dir.getAbsolutePath() );            */
+	    Log.v( "HopInstaller", "create file " + dir.getAbsolutePath() );
 		  
 	    if( !dir.isDirectory() ) {
 	       mkdir( dir );

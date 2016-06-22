@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Mon Jun 20 07:19:37 2016 (serrano)                */
+#*    Last change :  Wed Jun 22 09:49:24 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -41,7 +41,7 @@ ANDROIDHOPURL = http://hop.inria.fr
 ANDROIDHOPCONSOLELOG=false
 ANDROIDHOPDEBUGLEVEL = 0
 ANDROIDHOPVERBOSELEVEL = -v
-ANDROIDHOPPREFIX = /data/data/fr.inria.hop
+ANDROIDHOPPREFIX = /data/data/fr.inria.hop/hop
 
 # global configuration
 REPOSITORY = $(DISTRIBDIR)
@@ -330,7 +330,7 @@ $(HOPTMPDIR)/antandroid.sh:
 #*---------------------------------------------------------------------*/
 .PHONY: apk install.apk check.apk apk.bigloo apk.hop apk.lib
 
-apk: apk.common apk.res apk.jni apk.src 
+apk: apk.common apk.res apk.jni apk.src apk.bigloo apk.hop
 	$(MAKE) ndk-build
 	$(MAKE) ndk-ant
 
