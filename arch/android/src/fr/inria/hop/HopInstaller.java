@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Wed Jun 22 10:29:01 2016 (serrano)                */
+/*    Last change :  Wed Jun 22 17:16:04 2016 (serrano)                */
 /*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -95,8 +95,6 @@ public class HopInstaller extends Thread {
    private void mkdir( File dir ) throws IOException {
       String pdir = dir.getAbsolutePath();
 
-      Log.v( "HopInstaller", "mkdir dir=" + dir );
-      
       dir.mkdirs();
 
       do {
@@ -174,8 +172,6 @@ public class HopInstaller extends Thread {
 	 if( !dirtable.containsKey( dir ) ) {
 	    dirtable.put( dir, new Boolean( true ) );
 	    
-	    Log.v( "HopInstaller", "create file " + dir.getAbsolutePath() );
-		  
 	    if( !dir.isDirectory() ) {
 	       mkdir( dir );
 	    }

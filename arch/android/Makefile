@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Jun 22 16:24:43 2016 (serrano)                */
+#*    Last change :  Wed Jun 22 17:12:48 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -245,6 +245,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/xml/preferences
 	rm -f $@.in
 	cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
+		-e "s|@BIGLOOVERSION@|$(RELEASE)|" \
                 -e "s|@HOPPORT@|$(ANDROIDHOPPORT)|" \
                 -e "s|@HOPTHREADS@|$(ANDROIDHOPTHREADS)|" \
                 -e "s|@HOPCONSOLELOG@|$(ANDROIDHOPCONSOLELOG)|" \
@@ -365,7 +366,7 @@ apk.bigloo.configure:
          ./configure --os-android \
             --android-adb=adb \
             --cc=$(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc \
-            --cflags=-pie \
+            --cflags="-pie -DBGL_GC_ROOTS" \
             --lflags=-pie \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --stack-check=no \
