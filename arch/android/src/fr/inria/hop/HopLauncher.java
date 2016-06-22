@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Sun Jun 19 08:35:39 2016 (serrano)                */
+/*    Last change :  Wed Jun 22 14:29:42 2016 (serrano)                */
 /*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -347,7 +347,7 @@ public class HopLauncher extends Activity {
 	 // now that the activity is fully initialized, it's possible
 	 // to get the disk location of the package
 	 String apk = activity.getApplicationInfo().sourceDir;
-	 Hop.root = activity.getApplicationInfo().dataDir;
+	 Hop.root = activity.getApplicationInfo().dataDir + "/assets";
 
 	 if( !HopInstaller.installed( Hop.root ) ) {
 

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 08:46:18 2010                          */
-/*    Last change :  Wed Jun 22 09:45:38 2016 (serrano)                */
+/*    Last change :  Wed Jun 22 10:29:01 2016 (serrano)                */
 /*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Install Hop (from the zip file).                                 */
@@ -50,6 +50,7 @@ public class HopInstaller extends Thread {
    public HopInstaller( Handler h, ProgressDialog p, String a, String r ) {
       super();
 
+      Log.v( "HopInstaller", "creating installer root=" + r );
       handler = h;
       progress = p;
       apk = a;
@@ -141,7 +142,7 @@ public class HopInstaller extends Thread {
    public void unpack() throws IOException {
       File zipFile = new File( apk );
 
-      Log.v( "HopInstaller", "unpack: " + apk );
+      Log.v( "HopInstaller", "unpack: " + apk + " root=" + root );
       
       if( !zipFile.exists() ) {
 	 Log.e( "HopInstaller", "file not found: " + apk );
