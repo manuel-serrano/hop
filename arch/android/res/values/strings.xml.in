@@ -15,7 +15,7 @@
 
    <!-- Configuration constants -->
    <string name="hoprelease">@HOPVERSION@</string>
-   <string name="bigloorelase">@BIGLOOVERSION@</string>
+   <string name="bigloorelease">@BIGLOOVERSION@</string>
 
    <!-- Activities -->
    <string name="activity_hop">Hop</string>
