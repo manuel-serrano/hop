@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Jun 22 17:12:48 2016 (serrano)                */
+#*    Last change :  Wed Jun 22 19:21:01 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -107,16 +107,16 @@ ANDROID_RES = res/drawable/logo.png \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in \
   res/menu/hop_menu.xml
 
-ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java HopUiUtils.java \
-  HopExec.java HopLauncher.java HopService.java HopBootReceiver.java \
-  HopDroid.java HopPlugin.java HopPluginInit.java HopPluginLocale.java \
-  HopPluginMusicPlayer.java HopPluginVibrate.java HopPluginSensor.java \
-  HopPluginSms.java HopPluginContact.java HopPluginWifi.java \
-  HopPluginBattery.java HopPluginTts.java HopPluginMediaAudio.java \
-  HopPluginCall.java HopSms.java HopAndroidAudioRecorder.java \
-  HopPluginBuild.java HopPluginConnectivity.java HopSettings.java \
-  HopPluginZeroconf.java HopZeroconf.java HopJmDns.java HopNsdManager.java \
-  HopPluginSystem.java
+ANDROID_JAVA = Hop.java.in HopConfigurer.java HopInstaller.java \
+  HopUiUtils.java HopExec.java HopLauncher.java HopService.java \
+  HopBootReceiver.java HopDroid.java HopPlugin.java HopPluginInit.java \
+  HopPluginLocale.java HopPluginMusicPlayer.java HopPluginVibrate.java \
+  HopPluginSensor.java HopPluginSms.java HopPluginContact.java \
+  HopPluginWifi.java HopPluginBattery.java HopPluginTts.java \
+  HopPluginMediaAudio.java HopPluginCall.java HopSms.java \
+  HopAndroidAudioRecorder.java HopPluginBuild.java HopPluginConnectivity.java \
+  HopSettings.java HopPluginZeroconf.java HopZeroconf.java HopJmDns.java \
+  HopNsdManager.java HopPluginSystem.java
 
 JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
   NetworkTopologyDiscovery.java ServiceTypeListener.java \
@@ -241,7 +241,7 @@ $(ANDROIDBUILDDIR)/res: res $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
 	cp -r $< $@
 
-$(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml:
+$(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
 	rm -f $@.in
 	cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
