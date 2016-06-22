@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Jun 22 10:17:26 2016 (serrano)                */
+#*    Last change :  Wed Jun 22 16:24:43 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -328,7 +328,7 @@ $(HOPTMPDIR)/antandroid.sh:
 #*---------------------------------------------------------------------*/
 #*    apk                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: apk install.apk check.apk apk.bigloo apk.hop apk.lib
+.PHONY: apk install.apk click.apk apk.bigloo apk.hop apk.lib
 
 apk: apk.common apk.res apk.jni apk.src apk.bigloo apk.hop
 	$(MAKE) ndk-build
@@ -337,7 +337,7 @@ apk: apk.common apk.res apk.jni apk.src apk.bigloo apk.hop
 install.apk:
 	adb $(ANDROIDHOST) install -r $(ANDROIDBUILDDIR)/bin/hop-debug.apk
 
-check.apk:
+click.apk:
 	adb $(ANDROIDHOST) shell monkey -p fr.inria.hop 1
 
 apk.common: $(ANDROIDBUILDDIR)/local.properties \
