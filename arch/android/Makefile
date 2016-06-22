@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Jun 22 19:21:01 2016 (serrano)                */
+#*    Last change :  Wed Jun 22 19:30:09 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -259,6 +259,8 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml: res/values/strings.xml.in \
    $(ANDROIDBUILDDIR)/res
 $(ANDROIDBUILDDIR)/res/xml/preferences.xml: res/xml/preferences.xml.in \
    $(ANDROIDBUILDDIR)/res
+$(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java: src/fr/inria/hop/Hop.java.in \
+    $(ANDROIDBUILDDIR)/src
 
 #*---------------------------------------------------------------------*/
 #*    jni                                                              */
@@ -307,7 +309,7 @@ $(ANDROIDBUILDDIR)/assets/lib/hop:
 ndk-build: $(ANDROIDBUILDDIR)/assets
 	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1 || exit 1
 
-ndk-ant: $(HOPTMPDIR)/antandroid.sh
+ndk-ant: $(HOPTMPDIR)/antandroid.sh $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java
 	(cd $(ANDROIDBUILDDIR) && $(HOPTMPDIR)/antandroid.sh) || exit 1
 
 #*---------------------------------------------------------------------*/

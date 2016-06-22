@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Wed Jun 22 19:19:30 2016 (serrano)                */
+/*    Last change :  Wed Jun 22 19:41:52 2016 (serrano)                */
 /*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -103,12 +103,11 @@ public class Hop extends Thread {
    public void run() {
       final int[] pid = new int[ 1 ];
       String sh = SHELL;
-      final Resources res = getResources();
 
       String cmd = "export HOME=" + HOME().getAbsolutePath() + "; "
-	 + "export LD_LIBRARY_PATH=/data/data/fr.inria.hop/assets/lib/bigloo/@BIGLOOVERSION@:"
-	 + "/data/data/fr.inria.hop/assets/lib/hop/@HOPVERSION@"
-	 + ":$LD_LIBRARY_PATH;"
+	 + "export LD_LIBRARY_PATH="
+	 + root + "/lib/bigloo/@BIGLOOVERSION@:"
+	 + root + "/lib/hop/@HOPVERSION@:$LD_LIBRARY_PATH;"
 	 + "exec " + root + HOP + " " + HOPARGS
 	 + " -p " + port
 	 + " " + verbose
