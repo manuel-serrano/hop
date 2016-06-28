@@ -1,9 +1,10 @@
+// -*- java -*-
 /*=====================================================================*/
 /*    .../hop/3.1.x/arch/android/src/fr/inria/hop/Hop.java.in          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Wed Jun 22 19:41:52 2016 (serrano)                */
+/*    Last change :  Sun Jun 26 06:49:56 2016 (serrano)                */
 /*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */

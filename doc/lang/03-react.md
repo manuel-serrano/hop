@@ -15,25 +15,34 @@ DOM updates. The _sinks_ are the DOM components that are updated
 when sinks changes. They might be DOM nodes attributes and DOM nodes
 themselves.
 
-Here is a first example, inspired by a REACT.js example that creates
+Here is a first example, inspired by a React.js example that creates
 a web page showing the chronometers. The _source_ is the `state` variable.
 The _sink_ is the `react` node. The modification of the `state` variables
 that occur each seconds automatically yield to updating the web
 page.
 
-${ <span class="label label-info">reactsrv/stateful.js</span> }
+${ <span class="label label-info">stateful.js</span> }
 
 ```hopscript
 ${ doc.include( doc.BUILDDIR + "/doc/lang/stateful.js" ) }
 ```
 
-A second example, also inspired by the READ.js web site:
+A second example, also inspired by the React.js web site:
 
 
-${ <span class="label label-info">reactsrv/app.js</span> }
+${ <span class="label label-info">app.js</span> }
 
 ```hopscript
 ${ doc.include( doc.BUILDDIR + "/doc/lang/app.js" ) }
+```
+
+The third example, inspired by the Stratisfied Js web site:
+
+
+${ <span class="label label-info">ui.js</span> }
+
+```hopscript
+${ doc.include( doc.BUILDDIR + "/doc/lang/ui.js" ) }
 ```
 
 Methods

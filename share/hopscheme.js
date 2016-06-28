@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Fri Apr 29 10:07:56 2016 (serrano)                */
+/*    Last change :  Sat Jun 25 08:12:22 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -590,23 +590,26 @@ function sc_vector2list( a ) {
    return res;
 }
 
-function sc_isVectorEqual(v1, v2, comp) {
+function sc_isVectorEqual( v1, v2, comp ) {
     if( v1.length !== v2.length ) return false;
     for( var i = 0; i < v1.length; i++ )
 	if( !comp( v1[ i ], v2[ i ] ) ) return false;
     return true;
 }
 
-function sc_isVector(v) {
+#endif
+
+function sc_isVector( v )  {
    if( v instanceof Array ) {
-      return true;
-   } else if( "Float32Array" in window ) {
+      if( "Float32Array" in window ) {
 	 return !(v instanceof Float32Array);
+      } else {
+	 return true;
+      }
    } else {
       return false;
    }
 }
-#endif
 #endif
 
 /*---------------------------------------------------------------------*/

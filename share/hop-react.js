@@ -3,23 +3,27 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Fri Jun 10 08:20:44 2016 (serrano)                */
+/*    Last change :  Sat Jun 25 08:29:10 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
 /*=====================================================================*/
 
 /*---------------------------------------------------------------------*/
-/*    window.hop.reactDynKey ...                                       */
+/*    React global parameters                                          */
 /*---------------------------------------------------------------------*/
-window.hop.reactDynKey = 0;
 window.hop.reactInitThunks = [];
 window.hop.reactIntialized = false;
+window.hop.reactReactorQueueStamp = 1;
+window.hop.reactReactorQueue = [];
 
 /*---------------------------------------------------------------------*/
-/*    window.hop.pushReact ...                                         */
+/*    window.hop.reactDelay ...                                        */
+/*    -------------------------------------------------------------    */
+/*    Ensure that all REACT expressions are executed after page        */
+/*    load and initialization.                                         */
 /*---------------------------------------------------------------------*/
-window.hop.pushReact = function( thunk ) {
+window.hop.reactDelay = function( thunk ) {
    if( window.hop.reactIntialized ) {
       setTimeout( thunk, 0 );
    } else {
@@ -29,6 +33,7 @@ window.hop.pushReact = function( thunk ) {
 	    setTimeout( function() {
 	       window.hop.reactInitThunks.forEach( function( f ) {
 		  f(); } );
+	       window.hop.reactIntialized = true;
 	       window.hop.reactInitThunks = [];	    
 	    }, 1 );
 	 } );
@@ -39,56 +44,47 @@ window.hop.pushReact = function( thunk ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    REACT ...                                                        */
+/*    window.hop.reactReactorQueueFlush ...                            */
 /*---------------------------------------------------------------------*/
-/*** META ((export <REACT>)) */
-function REACT( _ ) {
-   var cnt = 0;
-   var id = "react" + window.hop.reactDynKey++;;
-   var script = false;
+window.hop.reactReactorQueueFlush = function() {
+   var queue = window.hop.reactReactorQueue;
+   var stamp = window.hop.reactReactorQueueStamp;
+   
+   window.hop.reactReactorQueue = [];
+   window.hop.reactReactorQueueStamp++;
 
-   for( var i = 0; i < arguments.length; i++ ) {
-      var el = arguments[ i ];
-
-      if( el instanceof Node ) {
-	 script = el;
-	 break;
+   queue.forEach( function( reactor, idx, arr ) {
+      if( reactor.stamp == stamp ) {
+	 reactor.stamp = 0;
+	 reactor();
       }
-   }
-
-   if( script ) {
-      var el = document.createElement( "div" );
-      var sc = document.createElement( "script" );
-      var loader = "var el = document.getElementById( '" + id + "');"
-	  + "var sibling = el.nextSibling;"
-	  + "var sid = sibling ? sibing.id : false;"
-	  + "var parent = el.parentNode;"
-	  + "var pid = parent ? parent.id : false;"
-	  + "var proc = function() { return " + script.text + " };"
-	  + "parent.removeChild( el );"
-	  + "window.hop.reactInit( parent.id, sid, '" + id + "', proc );"
-
-      sc.type = "text/javascript";
-      sc.text = loader;
-
-      el.id = id;
-      el.appendChild( sc );
-      return el;
-   } else {
-      return null;
+   } );
+}
+   
+/*---------------------------------------------------------------------*/
+/*    window.hop.reactReactorQueuePush ...                             */
+/*---------------------------------------------------------------------*/
+window.hop.reactReactorQueuePush = function( reactor, _idx, _arr ) {
+   if( !reactor.stamp ) {
+      reactor.stamp = window.hop.reactReactorQueueStamp;
+      if( window.hop.reactReactorQueue.length == 0 ) {
+	 setTimeout( window.hop.reactReactorQueueFlush, 0 );
+      }
+      window.hop.reactReactorQueue.push( reactor );
    }
 }
-
+    
 /*---------------------------------------------------------------------*/
-/*    reactProxy ...                                                   */
+/*    window.hop.reactProxy ...                                        */
 /*---------------------------------------------------------------------*/
 window.hop.reactProxy = function( val ) {
-   var attrs = [];
+   var reactors = [];
 
    function getHandler( target, name ) {
       if( window.hop.reactInCollect &&
-	  attrs.indexOf( window.hop.reactInCollect ) == -1) {
-	 attrs.push( window.hop.reactInCollect );
+	  reactors.indexOf( window.hop.reactInCollect ) == -1) {
+	 reactors.push( window.hop.reactInCollect );
+	 window.hop.reactInCollect.stamp = 0;
       }
 
       return target[ name ];
@@ -97,9 +93,7 @@ window.hop.reactProxy = function( val ) {
    function setHandler( obj, prop, value ) {
       obj[ prop ] = value;
       
-      attrs.forEach( function( obj, idx, arr ) {
-	 obj();
-      } );
+      reactors.forEach( window.hop.reactReactorQueuePush );
 
       return value;
    }
@@ -108,30 +102,35 @@ window.hop.reactProxy = function( val ) {
 }
 
 /*---------------------------------------------------------------------*/
-/*    reactCollectProxy ...                                            */
+/*    window.hop.reactInvoke ...                                       */
 /*---------------------------------------------------------------------*/
-window.hop.reactCollectProxy = function( proc ) {
+window.hop.reactInvoke = function( proc, react ) {
+   var old = window.hop.reactInCollect;
+   
+   try {
+      window.hop.reactInCollect = react;
+      return proc();
+   } finally {
+      window.hop.reactInCollect = old;
+   }
+}
+   
+/*---------------------------------------------------------------------*/
+/*    window.hop.reactAttribute ...                                    */
+/*---------------------------------------------------------------------*/
+window.hop.reactAttribute = function( proc ) {
+   
    function react() {
-      return invoke( proc );
+      return window.hop.reactInvoke( proc, react );
    }
-      
-   function invoke( proc ) {
-      var old = window.hop.reactInCollect;
-      try {
-	 window.hop.reactInCollect = react;
-	 return proc();
-      } finally {
-	 window.hop.reactInCollect = old;
-      }
-   }
-
-   react();
+   
+   window.hop.reactDelay( react );
 }
 
 /*---------------------------------------------------------------------*/
-/*    window.hop.reactInit ...                                         */
+/*    window.hop.reactNode ...                                         */
 /*---------------------------------------------------------------------*/
-window.hop.reactInit = function( parent, sibling, anchor, key, proc ) {
+window.hop.reactNode = function( proc, parent, sibling, anchor, key ) {
    
    function getElementByAnchor( nodes, anchor ) {
       for( var i = nodes.length - 1; i >=0; i-- ) {
@@ -145,9 +144,9 @@ window.hop.reactInit = function( parent, sibling, anchor, key, proc ) {
       return false;
    }
 
-   function insertReactNodes() {
-      var parentNode = document.getElementById( parent );
-      var nodes = invoke( proc );
+   function react() {
+      var parentNode = parent ? document.getElementById( parent ) : document.body;
+      var nodes = window.hop.reactInvoke( proc, react );
 
       if( nodes ) {
 	 if( !parentNode ) {
@@ -206,17 +205,53 @@ window.hop.reactInit = function( parent, sibling, anchor, key, proc ) {
       }
    }
 
-   function invoke( proc ) {
-      var old = window.hop.reactInCollect;
-      try {
-	 window.hop.reactInCollect = insertReactNodes;
-	 return proc();
-      } finally {
-	 window.hop.reactInCollect = old;
+   if( anchor ) anchor = decodeURIComponent( anchor );
+   
+   window.hop.reactDelay( react );
+}
+
+/*---------------------------------------------------------------------*/
+/*    window.hop.reactDynKey ...                                       */
+/*---------------------------------------------------------------------*/
+window.hop.reactDynKey = 0;
+
+/*---------------------------------------------------------------------*/
+/*    REACT ...                                                        */
+/*---------------------------------------------------------------------*/
+/*** META ((export <REACT>)) */
+function REACT( _ ) {
+   var cnt = 0;
+   var id = "react" + window.hop.reactDynKey++;;
+   var script = false;
+
+   for( var i = 0; i < arguments.length; i++ ) {
+      var el = arguments[ i ];
+
+      if( el instanceof Node ) {
+	 script = el;
+	 break;
       }
    }
 
-   if( anchor ) anchor = decodeURIComponent( anchor );
-   
-   window.hop.pushReact( insertReactNodes );
+   if( script ) {
+      var el = document.createElement( "div" );
+      var sc = document.createElement( "script" );
+      var loader = "var el = document.getElementById( '" + id + "');"
+	  + "var sibling = el.nextSibling;"
+	  + "var sid = sibling ? sibing.id : false;"
+	  + "var parent = el.parentNode;"
+	  + "var pid = parent ? parent.id : false;"
+	  + "var proc = function() { return " + script.text + " };"
+	  + "parent.removeChild( el );"
+	  + "window.hop.reactNode( proc, parent.id, sid, '" + id + "' );"
+
+      sc.type = "text/javascript";
+      sc.text = loader;
+
+      el.id = id;
+      el.appendChild( sc );
+      return el;
+   } else {
+      return null;
+   }
 }

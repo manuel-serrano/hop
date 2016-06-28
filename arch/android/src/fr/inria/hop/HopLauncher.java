@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Wed Jun 22 14:29:42 2016 (serrano)                */
+/*    Last change :  Tue Jun 28 08:15:25 2016 (serrano)                */
 /*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -313,7 +313,7 @@ public class HopLauncher extends Activity {
 
       // install our view
       if( android.os.Build.VERSION.SDK_INT < 11 ) {
-	 // adding an incon to SDK >= 11 prevent the action bar to
+	 // adding an inco to SDK >= 11 prevent the action bar to
 	 // be displayed
 	 requestWindowFeature( Window.FEATURE_LEFT_ICON );
       }
@@ -326,7 +326,7 @@ public class HopLauncher extends Activity {
 	    R.drawable.logo );
       }
 
-      // Control the volume key when the console has the focus
+      // control the volume key when the console has the focus
       setVolumeControlStream( AudioManager.STREAM_MUSIC );
       
       // setup the scroll button
@@ -336,7 +336,7 @@ public class HopLauncher extends Activity {
       // grab the text for the output log
       textview = (TextView)activity.findViewById( R.id.textview );
       scrollview = (ScrollView)activity.findViewById( R.id.scrollview );
-      
+
       //maxlines = textview.getResources().getInteger( R.styleable.TextView_maxLines );
       maxlines = 500;
 
@@ -498,7 +498,7 @@ public class HopLauncher extends Activity {
 	 onresume_wifi_policy = 0;
       }
 
-      // Notify the client
+      // notify the client
       if( hopservice != null && hopservice.hopdroid != null ) {
 	 hopservice.hopdroid.pushEvent( "resume" , "" );
       }

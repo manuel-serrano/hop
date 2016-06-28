@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Jun 14 18:24:07 2016 (serrano)                */
+#*    Last change :  Sat Jun 25 09:09:14 2016 (serrano)                */
 #*    Copyright   :  2006-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -47,7 +47,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   lang/tilde.bnf lang/syntax.bnf \
   lang/00-syntax.md \
   lang/01-es6.md lang/01-service.md lang/02-worker.md \
-  lang/01-module.md lang/03-react.md lang/app.js lang/stateful.js\
+  lang/01-module.md lang/03-react.md lang/app.js lang/stateful.js lang/ui.js \
   dev/dev.json dev/00-command.md dev/10-edit.md \
   license.md _index.md \
   nodejs.md download.md \

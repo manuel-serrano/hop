@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Jun 22 19:30:09 2016 (serrano)                */
+#*    Last change :  Tue Jun 28 11:16:50 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -20,7 +20,7 @@ do: build
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
-ANDROIDBUILDDIR = /tmp/build.hop.android
+ANDROIDBUILDDIR = $(HOPTMPDIR)/build.hop.android
 ANDROIDROOT = /opt/android
 ANDROIDSDK = $(ANDROIDROOT)/android-sdk-linux
 ANDROIDNDK = $(ANDROIDROOT)/android-ndk-r9d
@@ -29,19 +29,22 @@ ANDROIDSDKVERSION = 21
 ANDROIDABI = armeabi
 ANDROIDACTIONMODE = debug
 ANDROIDHOST = -d
+ANDROIDDIR= $(BUILDDIR)/arch/android
 
 ANDROIDANT = ant
 
 # hop androin configuration
 ANDROIDHOPPORT = 8080
-ANDROIDHOPTHREAD = 6
+ANDROIDHOPTHREADS = 6
 ANDROIDHOPZEROCONF = true
 ANDROIDHOPDEBUG = false
 ANDROIDHOPURL = http://hop.inria.fr
 ANDROIDHOPCONSOLELOG=false
-ANDROIDHOPDEBUGLEVEL = 0
+ANDROIDHOPDEBUGLEVEL = -g0
 ANDROIDHOPVERBOSELEVEL = -v
 ANDROIDHOPPREFIX = /data/data/fr.inria.hop/assets
+
+ANDROIDWEBLET = 
 
 # global configuration
 REPOSITORY = $(DISTRIBDIR)
@@ -281,15 +284,38 @@ $(ANDROIDBUILDDIR)/src: src $(ANDROIDBUILDDIR)
 $(ANDROIDBUILDDIR)/assets: \
   $(ANDROIDBUILDDIR)/assets/etc \
   $(ANDROIDBUILDDIR)/assets/bin \
-  $(ANDROIDBUILDDIR)/assets/lib
+  $(ANDROIDBUILDDIR)/assets/lib \
+  $(ANDROIDBUILDDIR)/assets/share
+	$(MAKE) rename-afiles
+	$(MAKE) assets.extra
+
+assets.extra:
+	if [ "$(ANDROIDWEBLET) " != " " ]; then \
+          cp -r $(ANDROIDWEBLET) $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets; \
+        fi
 
 $(ANDROIDBUILDDIR)/assets/etc:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
-	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $@
+	rm -rf $@
+	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
+
+$(ANDROIDBUILDDIR)/assets/share:
+	mkdir -p $(ANDROIDBUILDDIR)/assets
+	rm -rf $@
+	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/share $(ANDROIDBUILDDIR)/assets
+	$(MAKE) rename-jsgz
+
+rename-jsgz:
+	for jsgz in `find $(ANDROIDBUILDDIR)/assets/share/hop -name '*.js.gz' -print`; do \
+          base=`basename $$jsgz .js.gz`; \
+          if [ "$$base " !=  "* " ]; then \
+            mv $$jsgz `dirname $$jsgz`/$$base.jsgz; \
+          fi \
+        done
 
 $(ANDROIDBUILDDIR)/assets/bin:
 	mkdir -p $@
-	cp $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
+	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
 
 $(ANDROIDBUILDDIR)/assets/lib: \
   $(ANDROIDBUILDDIR)/assets/lib/bigloo \
@@ -297,14 +323,19 @@ $(ANDROIDBUILDDIR)/assets/lib: \
 
 $(ANDROIDBUILDDIR)/assets/lib/bigloo:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
-	$(RM) -rf $@
-	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo $@
+	rm -rf $@
+	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo $(ANDROIDBUILDDIR)/assets/lib
 
 $(ANDROIDBUILDDIR)/assets/lib/hop:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
-	$(RM) -rf $@
-	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/hop $@
-	find $@ -name .afile -exec $(RM) {} \;
+	rm -rf $@
+	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/hop $(ANDROIDBUILDDIR)/assets/lib
+
+rename-afiles:
+	for afile in `find $(ANDROIDBUILDDIR)/assets -name .afile -print`; do \
+          dot_afile=`dirname $$afile`/dot`basename $$afile`; \
+          mv $$afile $$dot_afile; \
+        done
 
 ndk-build: $(ANDROIDBUILDDIR)/assets
 	$(ANDROIDNDK)/ndk-build -C $(ANDROIDBUILDDIR) V=1 || exit 1
@@ -331,9 +362,12 @@ $(HOPTMPDIR)/antandroid.sh:
 #*---------------------------------------------------------------------*/
 #*    apk                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: apk install.apk click.apk apk.bigloo apk.hop apk.lib
+.PHONY: apk install.apk click.apk apk.bigloo apk.hop apk.hop.android apk.lib
 
-apk: apk.common apk.res apk.jni apk.src apk.bigloo apk.hop
+apk: apk.bigloo
+	$(MAKE) apk-sans-bigloo
+
+apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop
 	$(MAKE) ndk-build
 	$(MAKE) ndk-ant
 
@@ -376,10 +410,11 @@ apk.bigloo.configure:
             --build-bindir=$(HOPBINDIR))
 
 $(ANDROIDBUILDDIR)/bigloo$(RELEASE): $(REPOSITORY)/bigloo$(RELEASE).tar.gz
+	mkdir -p $(ANDROIDBUILDDIR)
 	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/bigloo$(RELEASE))
-	(cd $(ANDROIDBUILDDIR); tar xvf $<)
+	(cd $(ANDROIDBUILDDIR); tar xvf $< 2> /dev/null > /dev/null)
 
-apk.hop: $(ANDROIDBUILDDIR)/$(HOPFULLNAME) apk.bigloo
+apk.hop: $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
 	$(MAKE) apk.hop.configure
 	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME)
 	$(MAKE) -C $(ANDROIDBUILDDIR)/$(HOPFULLNAME) install DESTDIR=$(ANDROIDBUILDDIR)
@@ -398,6 +433,13 @@ apk.hop.configure:
 $(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
 	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
 	(cd $(ANDROIDBUILDDIR); tar xvf $<)
+	$(MAKE) apk.hop.android
+
+apk.hop.android:
+	if [ $(ANDROIDDIR) != $(BUILDDIR)/arch/android ]; then \
+	  rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/arch/android; \
+	  cp -r $(ANDROIDDIR) $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/arch; \
+        fi
 
 apk-clean:
 	rm -rf $(ANDROIDBUILDDIR)
