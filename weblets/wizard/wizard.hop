@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/weblets/wizard/wizard.hop         */
+;*    serrano/prgm/project/hop/3.1.x/weblets/wizard/wizard.hop         */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Jan 16 13:20:41 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Wed Jun 29 20:25:18 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
 ;*=====================================================================*/
@@ -30,10 +30,10 @@
    (<HTML>
       (<HEAD>
 	 (<META> :name "viewport"
-	    :content "width=device-width, initial-scale=1.2")
+	    :content "width=device-width, height=device-height, initial-scale")
 	 :title "Hop Wizard"
 	 :base (service-base-url wizard (current-request))
-	 :include "md5" "hop-fileselect" "hop-window" "hop-tree" "hop-notepad"
+	 :include "md5" 
 	 :include "hop-password" "hop-foot"
 	 :css "wizard.hss"
 	 :favicon "etc/favicon.png")

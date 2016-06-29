@@ -4,7 +4,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Fri Oct  1 09:08:17 2010                          */
-/*    Last change :  Sun Jun 26 06:49:56 2016 (serrano)                */
+/*    Last change :  Wed Jun 29 20:10:26 2016 (serrano)                */
 /*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Android manager for Hop                                          */
@@ -48,8 +48,8 @@ public class Hop extends Thread {
    static boolean webdav = false;
    static boolean jobs = false;
 
-   static String port = "8080";
-   static String maxthreads = "6";
+   static String port = "@HOPPORT@";
+   static String maxthreads = "@HOPTHREADS@";
 
    // instance variables
    private boolean killed = false;
