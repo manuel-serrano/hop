@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Jun 30 08:14:54 2016 (serrano)                */
+#*    Last change :  Thu Jun 30 08:39:56 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -213,6 +213,7 @@ $(ANDROIDBUILDDIR)/local.properties $(ANDROIDBUILDDIR)/ant.properties:
 	cat $< \
            | sed -e "s|@ANDROIDSDK@|$(ANDROIDSDK)|" \
                  -e "s|@BASEDIR@|$(BUILDDIR)/arch/android|" \
+                 -e "s|@HOPAPKNAME@|$(HOPAPKNAME)|" \
            > $@ || exit 1
 
 $(ANDROIDBUILDDIR)/local.properties: local.properties.in $(ANDROIDBUILDDIR)
@@ -232,6 +233,7 @@ $(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties:
                 -e "s|@HOPPORT@|$(ANDROIDHOPPORT)|" \
                 -e "s|@HOPTHREADS@|$(ANDROIDHOPTHREADS)|" \
                 -e "s|@HOPZEROCONF@|$(ANDROIDHOPZEROCONF)|" \
+                -e "s|@HOPAPKNAME@|$(HOPAPKNAME)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@
 
 $(ANDROIDBUILDDIR)/AndroidManifest.xml: AndroidManifest.xml.in $(ANDROIDBUILDDIR)
@@ -373,7 +375,7 @@ apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop
 	$(MAKE) ndk-ant
 
 install.apk:
-	adb $(ANDROIDHOST) install -r $(ANDROIDBUILDDIR)/bin/hop-debug.apk
+	adb $(ANDROIDHOST) install -r $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME)-debug.apk
 
 click.apk:
 	adb $(ANDROIDHOST) shell monkey -p fr.inria.hop 1
