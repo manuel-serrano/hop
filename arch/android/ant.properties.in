@@ -17,6 +17,6 @@
 
 # The name of your application package as defined in the manifest.
 # Used by the 'uninstall' rule.
-key.alias=hop
+key.alias=@HOPAPKNAME@
 application.package=fr.inria.hop
 key.store=@BASEDIR@/hop.keystore

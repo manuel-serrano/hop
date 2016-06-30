@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Tue Jun 28 11:16:50 2016 (serrano)                */
+#*    Last change :  Thu Jun 30 08:14:54 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -26,7 +26,6 @@ ANDROIDSDK = $(ANDROIDROOT)/android-sdk-linux
 ANDROIDNDK = $(ANDROIDROOT)/android-ndk-r9d
 ANDROIDTOOLCHAIN = $(ANDROIDROOT)/toolchain
 ANDROIDSDKVERSION = 21
-ANDROIDABI = armeabi
 ANDROIDACTIONMODE = debug
 ANDROIDHOST = -d
 ANDROIDDIR= $(BUILDDIR)/arch/android
@@ -49,6 +48,7 @@ ANDROIDWEBLET =
 # global configuration
 REPOSITORY = $(DISTRIBDIR)
 
+HOPAPKNAME = hop
 HOPMINOR = -$(HOPDEVEL)1
 HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
 
@@ -292,6 +292,7 @@ $(ANDROIDBUILDDIR)/assets: \
 assets.extra:
 	if [ "$(ANDROIDWEBLET) " != " " ]; then \
           cp -r $(ANDROIDWEBLET) $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets; \
+	  rm -rf $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)`/arch/android; \
         fi
 
 $(ANDROIDBUILDDIR)/assets/etc:
