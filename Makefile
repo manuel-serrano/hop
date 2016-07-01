@@ -35,7 +35,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin \
   share-afile scheme2js hopscript js2scheme nodejs \
-  android node_modules doc
+  android node_modules doc test
 
 build: bindir libdir lib weblets widget nodejs doc \
   $(BUILDSPECIFIC) bin share node_modules

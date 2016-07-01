@@ -9,6 +9,9 @@
 #*    Example Makefile                                                 */
 #*=====================================================================*/
 
+all:
+	(cd hopjs; ./TEST)
+
 #*---------------------------------------------------------------------*/
 #*    Configuration                                                    */
 #*---------------------------------------------------------------------*/
@@ -90,7 +93,3 @@ POPULATION = Makefile \
   hopjs/serv/aux/wsOpenClient.js \
   hopjs/serv/https/cert.pem \
   hopjs/serv/https/key.pem
-  
-
-all:
-	(cd hopjs; ./TEST)
