@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Sat Jun 25 08:29:10 2016 (serrano)                */
+/*    Last change :  Tue Jul  5 10:37:40 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
@@ -78,22 +78,25 @@ window.hop.reactReactorQueuePush = function( reactor, _idx, _arr ) {
 /*    window.hop.reactProxy ...                                        */
 /*---------------------------------------------------------------------*/
 window.hop.reactProxy = function( val ) {
-   var reactors = [];
+   var reactors = {};
 
-   function getHandler( target, name ) {
+   function getHandler( target, prop ) {
+      if( !(prop in reactors) ) { reactors[ prop ] = [] }
       if( window.hop.reactInCollect &&
-	  reactors.indexOf( window.hop.reactInCollect ) == -1) {
-	 reactors.push( window.hop.reactInCollect );
+	  reactors[ prop ].indexOf( window.hop.reactInCollect ) == -1) {
+	 reactors[ prop ].push( window.hop.reactInCollect );
 	 window.hop.reactInCollect.stamp = 0;
       }
 
-      return target[ name ];
+      return target[ prop ];
    };
    
    function setHandler( obj, prop, value ) {
       obj[ prop ] = value;
-      
-      reactors.forEach( window.hop.reactReactorQueuePush );
+
+      if( prop in reactors ) {
+	 reactors[ prop ].forEach( window.hop.reactReactorQueuePush );
+      }
 
       return value;
    }
