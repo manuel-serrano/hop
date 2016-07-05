@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Marcos Dione & Manuel Serrano                     */
 /*    Creation    :  Tue Sep 28 08:26:30 2010                          */
-/*    Last change :  Tue Jun 28 08:15:25 2016 (serrano)                */
+/*    Last change :  Fri Jul  1 14:01:29 2016 (serrano)                */
 /*    Copyright   :  2010-16 Marcos Dione & Manuel Serrano             */
 /*    -------------------------------------------------------------    */
 /*    Hop Launcher (and installer)                                     */
@@ -464,10 +464,6 @@ public class HopLauncher extends Activity {
    
    private void configure() {
       Log.v( "HopLauncher", "configure..." );
-      // start a background Hop
-      if( !HopService.isBackground() ) {
-	 start( "--accept-kill" );
-      }
 
       // configure an installed Hop
       HopConfigurer hopconfigurer = new HopConfigurer( handler, hop_wizard_url );

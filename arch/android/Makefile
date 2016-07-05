@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Thu Jun 30 08:39:56 2016 (serrano)                */
+#*    Last change :  Sat Jul  2 08:15:06 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -244,7 +244,7 @@ $(ANDROIDBUILDDIR)/project.properties: project.properties.in $(ANDROIDBUILDDIR)
 #*---------------------------------------------------------------------*/
 $(ANDROIDBUILDDIR)/res: res $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
-	cp -r $< $@
+	cp -r $(ANDROIDDIR)/res $@
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
 	rm -f $@.in
@@ -260,25 +260,32 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/xml/preferences
                 -e "s|@HOPPREFIX@|$(ANDROIDHOPPREFIX)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@
 
-$(ANDROIDBUILDDIR)/res/values/strings.xml: res/values/strings.xml.in \
+$(ANDROIDBUILDDIR)/res/values/strings.xml: \
+   $(ANDROIDDIR)/res/values/strings.xml.in \
    $(ANDROIDBUILDDIR)/res
-$(ANDROIDBUILDDIR)/res/xml/preferences.xml: res/xml/preferences.xml.in \
+$(ANDROIDBUILDDIR)/res/xml/preferences.xml: \
+   $(ANDROIDDIR)/res/xml/preferences.xml.in \
    $(ANDROIDBUILDDIR)/res
-$(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java: src/fr/inria/hop/Hop.java.in \
-    $(ANDROIDBUILDDIR)/src
+$(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java: \
+   $(ANDROIDDIR)/src/fr/inria/hop/Hop.java.in \
+   $(ANDROIDBUILDDIR)/src
 
 #*---------------------------------------------------------------------*/
 #*    jni                                                              */
 #*---------------------------------------------------------------------*/
+apk.jni: $(ANDROIDBUILDDIR)/jni
+
 $(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
 	cp -r $< $@
 
 #*---------------------------------------------------------------------*/
 #*    src                                                              */
 #*---------------------------------------------------------------------*/
-$(ANDROIDBUILDDIR)/src: src $(ANDROIDBUILDDIR)
+apk.src: $(ANDROIDBUILDDIR)/src
+
+$(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
-	cp -r $< $@
+	cp -r $(ANDROIDDIR)/src $@
 
 #*---------------------------------------------------------------------*/
 #*    assets                                                           */
@@ -300,12 +307,12 @@ assets.extra:
 $(ANDROIDBUILDDIR)/assets/etc:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
-	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
+	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
 
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
-	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/share $(ANDROIDBUILDDIR)/assets
+	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/share $(ANDROIDBUILDDIR)/assets
 	$(MAKE) rename-jsgz
 
 rename-jsgz:
@@ -318,7 +325,7 @@ rename-jsgz:
 
 $(ANDROIDBUILDDIR)/assets/bin:
 	mkdir -p $@
-	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
+	cp $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
 
 $(ANDROIDBUILDDIR)/assets/lib: \
   $(ANDROIDBUILDDIR)/assets/lib/bigloo \
@@ -327,12 +334,12 @@ $(ANDROIDBUILDDIR)/assets/lib: \
 $(ANDROIDBUILDDIR)/assets/lib/bigloo:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
 	rm -rf $@
-	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo $(ANDROIDBUILDDIR)/assets/lib
+	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/bigloo $(ANDROIDBUILDDIR)/assets/lib
 
 $(ANDROIDBUILDDIR)/assets/lib/hop:
 	mkdir -p $(ANDROIDBUILDDIR)/assets/lib
 	rm -rf $@
-	mv $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/hop $(ANDROIDBUILDDIR)/assets/lib
+	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/lib/hop $(ANDROIDBUILDDIR)/assets/lib
 
 rename-afiles:
 	for afile in `find $(ANDROIDBUILDDIR)/assets -name .afile -print`; do \
@@ -375,7 +382,7 @@ apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop
 	$(MAKE) ndk-ant
 
 install.apk:
-	adb $(ANDROIDHOST) install -r $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME)-debug.apk
+	adb $(ANDROIDHOST) install -r $(ANDROIDBUILDDIR)/bin/hop-debug.apk
 
 click.apk:
 	adb $(ANDROIDHOST) shell monkey -p fr.inria.hop 1
@@ -390,10 +397,6 @@ apk.common: $(ANDROIDBUILDDIR)/local.properties \
 apk.res: $(ANDROIDBUILDDIR)/res \
   $(ANDROIDBUILDDIR)/res/values/strings.xml \
   $(ANDROIDBUILDDIR)/res/xml/preferences.xml
-
-apk.jni: $(ANDROIDBUILDDIR)/jni
-
-apk.src: $(ANDROIDBUILDDIR)/src
 
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo$(RELEASE)
 	$(MAKE) apk.bigloo.configure
