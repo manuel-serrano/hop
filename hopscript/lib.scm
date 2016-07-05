@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Mar  2 16:53:58 2016 (serrano)                */
+;*    Last change :  Thu Jun 30 09:32:52 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -326,8 +326,7 @@
 			 (if (pair? l)
 			     (set! acc (append (reverse! l) (cons key acc)))
 			     (set! acc (cons* '() (cons key acc))))))
-		   (set! acc
-		      (cons* val key acc)))))
+		   (set! acc (cons* val key acc)))))
 	 %this)
       (reverse! acc)))
 
