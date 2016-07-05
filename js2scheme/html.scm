@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Mon Apr 18 20:58:49 2016 (serrano)                */
+;*    Last change :  Thu Jun 30 12:35:53 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -241,7 +241,7 @@
 		       strict decoder encoding
 		       lang conf))
 		   ((eq? obj '/>)
-		    (make-dom-create tag attr '() lang conf)))))))
+		    (make-dom-create tag (reverse! attr) '() lang conf)))))))
       ((: "</" id ">")
        (string->symbol (the-substring 2 (-fx (the-length) 1))))
       ("~{"

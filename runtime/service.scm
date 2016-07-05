@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Mon Feb 29 18:17:36 2016 (serrano)                */
+;*    Last change :  Sat Jun 11 06:56:12 2016 (serrano)                */
 ;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -761,7 +761,9 @@
        (let ((req (instantiate::http-server-request
 		     (abspath abspath)
 		     (method 'GET))))
-	  (autoload-filter req))))
+	  (let ((svc (autoload-filter req)))
+	     (or svc
+		 (error "get-service" "service not found" abspath))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    service-exists? ...                                              */
@@ -907,7 +909,7 @@
 		(mark-service-path-expired! path)
 		#f)
 	     #t))))
-			 
+
 ;*---------------------------------------------------------------------*/
 ;*    unregister-service! ...                                          */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Mar  9 08:31:19 2016 (serrano)                */
+;*    Last change :  Fri Jun 17 07:44:08 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -573,7 +573,9 @@
 		     (location (caddr loc))))))
 	 (let ((rhs (resolve! val env mode withs wenv lang)))
 	    (if (j2s-let-opt? this)
-		(instantiate::J2SNop (loc loc))
+		(begin
+		   (set! val rhs)
+		   (instantiate::J2SNop (loc loc)))
 		(begin
 		   (set! val (instantiate::J2SUndefined (loc loc)))
 		   (instantiate::J2SStmtExpr
@@ -648,7 +650,9 @@
       (let loop ((inits inits)
 		 (ninits '()))
 	 (if (null? inits)
-	     (set! inits (reverse! ninits))
+	     (begin
+		(set! inits (reverse! ninits))
+		this)
 	     (with-access::J2SPropertyInit (car inits) (name loc)
 		(walk! (car inits) env mode withs wenv lang)
 		(with-access::J2SLiteralValue name (val)
@@ -680,9 +684,9 @@
 			     "duplicate data property in object literal not allowed in strict mode"
 			     loc))
 			 (else
-			  (loop (cdr inits) (cons (car inits) ninits))))))))))
-
-   (call-default-walker))
+			  (loop (cdr inits) (cons (car inits) ninits)))))))))))
+;*                                                                     */
+;*    (call-default-walker))                                           */
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SOctalNumber ...                                    */
