@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../2.6.x/arch/android/src/fr/inria/hop/HopNsdManager.java       */
+/*    .../3.1.x/arch/android/src/fr/inria/hop/HopNsdManager.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Nov  7 14:10:47 2012                          */
-/*    Last change :  Fri Feb 21 13:28:49 2014 (serrano)                */
-/*    Copyright   :  2012-14 Manuel Serrano                            */
+/*    Last change :  Tue Jul 12 08:07:32 2016 (serrano)                */
+/*    Copyright   :  2012-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The NsdManager (zeroconf) Hop binding                            */
 /*=====================================================================*/
@@ -160,8 +160,12 @@ class DiscoveryListener implements NsdManager.DiscoveryListener {
       Log.d( "HopNsdManager", "service found name=" + svc.getServiceName()
 	     + " type=" + svc.getServiceType()
 	     + " host=" + svc.getHost() );
-      
-      hopnsd.nsd.resolveService( svc, hopnsd.resolver );
+
+      // force sequencing order to prevent ALREAD_ACTIVE in the resolver
+      synchronized( hopnsd ) {
+	 hopnsd.nsd.resolveService( svc, hopnsd.resolver );
+	 hopnsd.wait();
+      }
    }
 
    @Override public void onServiceLost( NsdServiceInfo service ) {
@@ -209,6 +213,9 @@ class ResolveListener implements NsdManager.ResolveListener {
 	     + " " + NsdErrorMessage( errorCode )
 	     + " si.type=" + svc.getServiceType()
 	     + " si.event=" + svc.getServiceName() );
+      synchronized( hopnsd ) {
+	 hopnsd.notify();
+      }
    }
 
    @Override
@@ -243,6 +250,9 @@ class ResolveListener implements NsdManager.ResolveListener {
 				    + " \""
 				    + addr.getHostAddress()
 				    + "\" ())" );
+      }
+      synchronized( hopnsd ) {
+	 hopnsd.notify();
       }
    }
 

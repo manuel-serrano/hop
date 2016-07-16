@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Jun  1 18:47:59 2016 (serrano)                */
+;*    Last change :  Wed Jul 13 15:09:05 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -259,16 +259,20 @@
    (define head
       (js-make-function %this
 	 (lambda (this attrs . nodes)
-	    (apply <HEAD> :idiom "javascript" :context %scope
-	       (<SCRIPT>
-		  (format "hop[ '%root' ] = ~s"
-		     (dirname
-			(js-jsstring->string (js-get %module 'filename %scope)))))
-	       (when (isa? attrs JsObject)
-		  (js-object->keyword-arguments* attrs %this))
-	       (filter (lambda (n)
-			  (or (isa? n xml-tilde) (isa? n xml-markup)))
-		  nodes)))
+	    (let ((rts (if (isa? attrs JsObject)
+			   (js-get attrs 'rts %scope)
+			   #t)))
+	       (apply <HEAD> :idiom "javascript" :context %scope
+		  (unless (eq? rts #f)
+		     (<SCRIPT>
+			(format "hop[ '%root' ] = ~s"
+			   (dirname
+			      (js-jsstring->string (js-get %module 'filename %scope))))))
+		  (when (isa? attrs JsObject)
+		     (js-object->keyword-arguments* attrs %this))
+		  (filter (lambda (n)
+			     (or (isa? n xml-tilde) (isa? n xml-markup)))
+		     nodes))))
 	 -1 "HEAD"))
 
    head)

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/2.4.x/arch/android/hopdroid/phone.scm       */
+;*    .../prgm/project/hop/3.1.x/arch/android/hopdroid/phone.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Mon Apr  1 17:39:34 2013 (serrano)                */
-;*    Copyright   :  2010-13 Manuel Serrano                            */
+;*    Last change :  Sun Jul 17 06:35:32 2016 (serrano)                */
+;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
 ;*=====================================================================*/
@@ -16,14 +16,20 @@
 
    (library phone mail hop)
 
-   (import __hopdroid-tts)
+   (import __hopdroid-tts
+	   __hopdroid-zeroconf)
    
    (export (class androidphone::phone
+	      (app::bstring read-only (default "hopdroid"))
 	      (sdk::bstring read-only (get get-android-sdk))
 	      (model::bstring read-only (get get-android-model))
 	      (product::bstring read-only (get get-android-product))
 	      (protocol::byte read-only (default 2))
 	      (initid::int read-only (default 1))
+	      (%sock-plugin (default #f))
+	      (%sock-event (default #f))
+	      (%event-table (default #f))
+	      (%event-thread (default #f))
 	      (%mutex::mutex read-only (default (make-mutex))))
 
 	   (class androidevent::event)
@@ -45,10 +51,6 @@
 (define locale-plugin #f)
 (define build-plugin #f)
 
-(define sock-plugin #f)
-(define sock-event #f)
-
-(define event-table #f)
 (define event-thread #f)
 (define event-mutex (make-mutex))
 
@@ -61,30 +63,32 @@
 ;*---------------------------------------------------------------------*/
 ;*    android-init! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (android-init!)
+(define (android-init! p::androidphone)
    ;; android-mutex is already acquired
-   (unless sock-plugin
-      ;; hopdroid sockets
-      (set! sock-plugin
-	 (make-client-socket (format "\000hopdroid-plugin:~a" (hop-port))
-	    0 :domain 'unix))
-      (set! sock-event
-	 (make-client-socket (format "\000hopdroid-event:~a" (hop-port))
-	    0 :domain 'unix))
-      ;; hopdroid event table
-      (set! event-table (make-hashtable 8))
-      ;; start the event listener thread
-      (cond-expand
-	 (enable-threads
-	  (set! event-thread
-	     (thread-start!
-		(instantiate::hopthread
-		   (body android-event-listener))))))))
+   (with-access::androidphone p (%sock-plugin %sock-event %event-table %event-thread app)
+      (unless %sock-plugin
+	 ;; hopdroid sockets
+	 (set! %sock-plugin
+	    (make-client-socket (format "\000~a-plugin:~a" app (hop-port))
+	       0 :domain 'unix))
+	 (set! %sock-event
+	    (make-client-socket (format "\000~a-event:~a" app (hop-port))
+	       0 :domain 'unix))
+	 ;; hopdroid event table
+	 (set! %event-table (make-hashtable 8))
+	 ;; start the event listener thread
+	 (cond-expand
+	    (enable-threads
+	     (set! %event-thread
+		(thread-start!
+		   (instantiate::hopthread
+		      (body (lambda () (android-event-listener p)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    phone-init ::androidphone ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-init p::androidphone)
+   (zeroconf-register-backend! (instantiate::androidzeroconf (android p)))
    p)
 
 ;*---------------------------------------------------------------------*/
@@ -143,15 +147,15 @@
 ;*    add-event-listener! ::androidphone ...                           */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! p::androidphone event proc . capture)
-   (with-access::androidphone p (protocol %mutex)
+   (with-access::androidphone p (protocol %mutex %event-table %sock-event)
       (synchronize %mutex
 	 ;; register the listener
 	 (synchronize event-mutex
-	    (hashtable-update! event-table event
-	       (lambda (v) (cons (cons proc p) v))
-	       (list (cons proc p))))
+	    (hashtable-update! %event-table event
+	       (lambda (v) (cons proc v))
+	       (list proc)))
 	 ;; emit the registration to hopdroid
-	 (let ((op (socket-output sock-event)))
+	 (let ((op (socket-output %sock-event)))
 	    ;; protocol version
 	    (write-byte protocol op)
 	    ;; event name
@@ -177,10 +181,10 @@
 ;*    remove-event-listener! ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (remove-event-listener! p::androidphone event proc . capture)
-   (with-access::androidphone p (%mutex protocol)
+   (with-access::androidphone p (%mutex protocol %sock-event %event-table)
       (synchronize %mutex
 	 (synchronize event-mutex
-	    (hashtable-update! event-table event
+	    (hashtable-update! %event-table event
 	       (lambda (l)
 		  (cond
 		     ((string=? event "battery")
@@ -195,7 +199,7 @@
 		      (remove-connectivity-listener! p)))
 		  (delete! (cons proc p) l))
 	       '()))
-	 (let ((op (socket-output sock-event)))
+	 (let ((op (socket-output %sock-event)))
 	    ;; protocol version
 	    (write-byte protocol op)
 	    ;; event name
@@ -223,7 +227,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    android-event-listener ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (android-event-listener)
+(define (android-event-listener p::androidphone)
    
    (define phone-events '())
    
@@ -240,32 +244,31 @@
 	 (if (pair? c)
 	     (cdr c)
 	     (add-phone-event! phone name args))))
-   
-   (let ((ip (socket-input sock-event)))
-      (let loop ()
-	 (let ((name (read ip)))
-	    (unless (eof-object? name)
-	       (let ((args (read ip)))
-		  (set! phone-events '())
-		  (unless (eof-object? args)
-		     (let ((procs (synchronize event-mutex
-				     (hashtable-get event-table name)))
-			   (phones '()))
-			(when (pair? procs)
+
+   (with-access::androidphone p (%sock-event %event-table)
+      (let ((ip (socket-input %sock-event)))
+	 (let loop ()
+	    (let ((name (read ip)))
+	       (unless (eof-object? name)
+		  (let ((args (read ip)))
+		     (set! phone-events '())
+		     (unless (eof-object? args)
+			(let ((procs (synchronize event-mutex
+					(hashtable-get %event-table name)))
+			      (phones '()))
 			   (let liip ((procs procs))
 			      (when (pair? procs)
 				 (with-handler
 				    (lambda (e)
 				       (exception-notify e)
 				       #f)
-				    (let* ((proc (caar procs))
-					   (phone (cdar procs))
-					   (evt (get-phone-event phone name args)))
+				    (let* ((proc (car procs))
+					   (evt (get-phone-event p name args)))
 				       (proc evt)
 				       (with-access::androidevent evt (stopped)
 					  (unless stopped
-					     (liip (cdr procs)))))))))))))
-	    (loop)))))
+					     (liip (cdr procs))))))))))))
+	       (loop))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    android-load-plugin ...                                          */
@@ -603,10 +606,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    android-send ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (android-send p plugin::int args)
-   (android-init!)
-   (with-access::androidphone p (protocol)
-      (let ((op (socket-output sock-plugin)))
+(define (android-send p::androidphone plugin::int args)
+   (android-init! p)
+   (with-access::androidphone p (protocol %sock-plugin)
+      (let ((op (socket-output %sock-plugin)))
 	 ;; protocol version
 	 (write-byte protocol op)
 	 ;; plugin name
@@ -628,8 +631,8 @@
 ;*    android-send-command/result ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (android-send-command/result p::androidphone plugin::int . args)
-   (with-access::androidphone p (%mutex)
+   (with-access::androidphone p (%mutex %sock-plugin)
       (synchronize *android-mutex*
 	 (android-send p plugin args)
-	 (let ((ip (socket-input sock-plugin)))
+	 (let ((ip (socket-input %sock-plugin)))
 	    (read ip)))))

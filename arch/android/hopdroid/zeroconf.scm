@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Sat Jul  2 22:05:04 2016 (serrano)                */
+;*    Last change :  Sun Jul 17 06:31:40 2016 (serrano)                */
 ;*    Copyright   :  2011-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -33,27 +33,30 @@
 ;*---------------------------------------------------------------------*/
 (define-method (zeroconf-backend-start o::androidzeroconf)
    (with-access::androidzeroconf o ((aphone android) plugin onready hostname)
-      (tprint "ZEROCONF-BACKEND-START...")
       (unless plugin
 	 (set! plugin (android-load-plugin aphone "zeroconf"))
 	 (unless plugin
 	    (error "zeroconf-backend-start"
 	       "Cannot start zeroconf plugin"
 	       plugin)))
+      (tprint "androidzerconf-start.1 " hostname)
       (when (string=? hostname "")
-	 (if (pregexp-match "(?:[0-9]{1,3}[.]){3}[0-9]{1,3}"
-		(hop-server-hostname))
+	 (if (or (pregexp-match "(?:[0-9]{1,3}[.]){3}[0-9]{1,3}"
+		    (hop-server-hostname))
+		 (string=? (hop-server-hostname) "localhost"))
 	     ;; we have no correct host name, forge one out of the model
 	     ;; and mac address
 	     (with-access::androidphone aphone (model)
 		(set! hostname (string-replace model #\space #\_)))
 	     ;; just use the network host name
 	     (set! hostname (hop-server-hostname))))
+      (tprint "androidzerconf-start.2 " hostname)
       (when (android-send-command/result aphone plugin #\s hostname)
 	 (onready o)
-	 (hop-verb 1 (format "  zeroconf: ~a\n"
-			(hop-color 2 ""
-			   (android-send-command/result aphone plugin #\v)))))))
+	 (hop-verb 1
+	    (format "  zeroconf: ~a\n"
+	       (hop-color 2 ""
+		  (android-send-command/result aphone plugin #\v)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-stop ::androidzeroconf ...                              */
@@ -144,9 +147,3 @@
 				   (options txt))))
 			 (else
 			  #f))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    Register the avahi backend                                       */
-;*---------------------------------------------------------------------*/
-(zeroconf-register-backend!
-   (instantiate::androidzeroconf))
