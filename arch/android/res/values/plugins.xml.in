@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <bool name="pluginbuild">@PLUGINBUILD@</bool>
+  <bool name="pluginlocale">@PLUGINLOCALE@</bool>
+  <bool name="pluginvibrate">@PLUGINVIBRATE@</bool>
+  <bool name="pluginmusicplayer">@PLUGINMUSICPLAYER@</bool>
+  <bool name="pluginmediaaudio">@PLUGINMEDIAAUDIO@</bool>
+  <bool name="pluginsensor">@PLUGINSENSOR@</bool>
+  <bool name="pluginbattery">@PLUGINBATTERY@</bool>
+  <bool name="pluginsms">@PLUGINSMS@</bool>
+  <bool name="pluginwifi">@PLUGINWIFI@</bool>
+  <bool name="pluginconnectivity">@PLUGINCONNECTIVITY@</bool>
+  <bool name="plugincontact">@PLUGINCONTACT@</bool>
+  <bool name="pluginzeroconf">@PLUGINZEROCONF@</bool>
+  <bool name="pluginsystem">@PLUGINSYSTEM@</bool>
+  <bool name="plugintts">@PLUGINTTS@</bool>
+  <bool name="plugincall">@PLUGINCALL@</bool>
+</resources>

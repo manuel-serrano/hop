@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Sat Jun 25 08:12:37 2016 (serrano)                */
+/*    Last change :  Tue Jul  5 12:36:10 2016 (serrano)                */
 /*    Copyright   :  2006-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -572,6 +572,13 @@ function COLGROUP( attrs ) {
    return hop_dom_create( "colgroup", arguments );
 }
 
+/*** META (define-macro (<DATALIST> . args)
+     `(hop_dom_create "datalist" ,@args)) */
+
+function DATALIST( attrs ) {
+   return hop_dom_create( "datalist", arguments );
+}
+
 /*** META (define-macro (<DD> . args)
      `(hop_dom_create "dd" ,@args)) */
 
@@ -633,6 +640,13 @@ function EM( attrs ) {
 
 function FIELDSET( attrs ) {
    return hop_dom_create( "fieldset", arguments );
+}
+
+/*** META (define-macro (<FIGCAPTION> . args)
+     `(hop_dom_create "figcaption" ,@args)) */
+
+function FIGCAPTION( attrs ) {
+   return hop_dom_create( "figcaption", arguments );
 }
 
 /*** META (define-macro (<FONT> . args)
@@ -854,6 +868,13 @@ function META( attrs ) {
    return hop_dom_create( "meta", arguments );
 }
 
+/*** METER (define-macro (<METER> . args)
+     `(hop_dom_create "meter" ,@args)) */
+
+function METER( attrs ) {
+   return hop_dom_create( "meter", arguments );
+}
+
 /*** META (define-macro (<NOFRAMES> . args)
      `(hop_dom_create "noframes" ,@args)) */
 
@@ -917,6 +938,13 @@ function PRE( attrs ) {
    return hop_dom_create( "pre", arguments );
 }
 
+/*** META (define-macro (<PROGRESS> . args)
+     `(hop_dom_create "progress" ,@args)) */
+
+function PROGRESS( attrs ) {
+   return hop_dom_create( "progress", arguments );
+}
+
 /*** META (define-macro (<Q> . args)
      `(hop_dom_create "q" ,@args)) */
 
@@ -943,6 +971,13 @@ function SAMP( attrs ) {
 
 function SCRIPT( attrs ) {
    return hop_dom_create( "script", arguments );
+}
+
+/*** META (define-macro (<SECTION> . args)
+     `(hop_dom_create "section" ,@args)) */
+
+function SECTION( attrs ) {
+   return hop_dom_create( "section", arguments );
 }
 
 /*** META (define-macro (<SELECT> . args)

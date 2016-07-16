@@ -5,7 +5,7 @@
       android:versionName="@HOPVERSION@">
     <uses-sdk android:minSdkVersion="19"
               android:targetSdkVersion="@ANDROIDSDKVERSION@"/>
-    <application android:label="@string/hop"
+    <application android:label="@string/@HOPAPKNAME@"
                  android:persistent="true"
                  android:theme="@style/hopstyle"
                  android:debuggable="@HOPDEBUG@"

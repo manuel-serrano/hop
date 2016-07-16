@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sun Jun 19 08:35:12 2016 (serrano)                */
+/*    Last change :  Wed Jul  6 13:16:25 2016 (serrano)                */
 /*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -378,6 +378,7 @@ public class HopDroid extends Thread {
 	 }
       } catch( Throwable e ) {
 	 Log.e( "HopDroid", "serverPlugin error (catched)  " + e );
+	 e.printStackTrace();
 	 if( !pluginserv.isClosed() ) {
 	    try {
 	       pluginclient.close();

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/src/init.scm                      */
+;*    serrano/prgm/project/hop/3.1.x/src/init.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Sep 19 20:23:22 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Sat Jul 16 09:22:55 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/

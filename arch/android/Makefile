@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sat Jul  2 08:15:06 2016 (serrano)                */
+#*    Last change :  Fri Jul 15 15:06:01 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -36,26 +36,44 @@ ANDROIDANT = ant
 ANDROIDHOPPORT = 8080
 ANDROIDHOPTHREADS = 6
 ANDROIDHOPZEROCONF = true
-ANDROIDHOPDEBUG = false
+ANDROIDHOPDEBUG = true
 ANDROIDHOPURL = http://hop.inria.fr
-ANDROIDHOPCONSOLELOG=false
+ANDROIDHOPCONSOLELOG = false
 ANDROIDHOPDEBUGLEVEL = -g0
 ANDROIDHOPVERBOSELEVEL = -v
 ANDROIDHOPPREFIX = /data/data/fr.inria.hop/assets
 
 ANDROIDWEBLET = 
 
+# Plugins
+PLUGINBUILD = true
+PLUGINLOCALE = false
+PLUGINVIBRATE = false
+PLUGINMUSICPLAYER = true
+PLUGINMEDIAAUDIO = true
+PLUGINSENSOR = false
+PLUGINBATTERY = false
+PLUGINSMS = false
+PLUGINWIFI = false
+PLUGINCONNECTIVITY = false
+PLUGINCONTACT = false
+PLUGINZEROCONF = true
+PLUGINSYSTEM = false
+PLUGINTTS = false
+PLUGINCALL = false
+
 # global configuration
 REPOSITORY = $(DISTRIBDIR)
 
 HOPAPKNAME = hop
+HOPAPP = hopdac
 HOPMINOR = -$(HOPDEVEL)1
 HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
-ANDROID_BUILD = Android.mk build.xml project.properties.in hop.keystore \
+ANDROID_BUILD = Android.mk.in build.xml.in project.properties.in hop.keystore \
   AndroidManifest.xml.in local.properties.in ant.properties.in proguard.cfg
 
 ANDROID_JNI = jni/Android.mk jni/termExec.cpp
@@ -94,6 +112,9 @@ ANDROID_RES = res/drawable/logo.png \
   res/drawable-v10/logo128.png \
   res/drawable-hdpi/logo.png \
   res/drawable-xhdpi/logo.png \
+  res/drawable-xxhdpi/logo.png \
+  res/drawable-xxxhdpi/logo.png \
+  res/drawable-web/logo.png \
   res/layout/main.xml \
   res/layout/about.xml \
   res/layout/info.xml \
@@ -108,9 +129,9 @@ ANDROID_RES = res/drawable/logo.png \
   res/layout-sw480dp/about.xml \
   res/xml/preferences.xml.in \
   res/values/hopstyle.xml res/values/arrays.xml res/values/strings.xml.in \
-  res/menu/hop_menu.xml
+  res/values/plugins.xml.in res/menu/hop_menu.xml
 
-ANDROID_JAVA = Hop.java.in HopConfigurer.java HopInstaller.java \
+ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java \
   HopUiUtils.java HopExec.java HopLauncher.java HopService.java \
   HopBootReceiver.java HopDroid.java HopPlugin.java HopPluginInit.java \
   HopPluginLocale.java HopPluginMusicPlayer.java HopPluginVibrate.java \
@@ -119,7 +140,8 @@ ANDROID_JAVA = Hop.java.in HopConfigurer.java HopInstaller.java \
   HopPluginMediaAudio.java HopPluginCall.java HopSms.java \
   HopAndroidAudioRecorder.java HopPluginBuild.java HopPluginConnectivity.java \
   HopSettings.java HopPluginZeroconf.java HopZeroconf.java HopJmDns.java \
-  HopNsdManager.java HopPluginSystem.java
+  HopNsdManager.java HopPluginSystem.java HopStage.java HopIntenter.java \
+  HopConfig.java
 
 JMDNS_JAVA = JmDNS.java ServiceInfo.java JmmDNS.java ServiceListener.java \
   NetworkTopologyDiscovery.java ServiceTypeListener.java \
@@ -209,35 +231,25 @@ install-weblet:
 $(ANDROIDBUILDDIR):
 	mkdir -p $(ANDROIDBUILDDIR)
 
-$(ANDROIDBUILDDIR)/local.properties $(ANDROIDBUILDDIR)/ant.properties:
-	cat $< \
-           | sed -e "s|@ANDROIDSDK@|$(ANDROIDSDK)|" \
-                 -e "s|@BASEDIR@|$(BUILDDIR)/arch/android|" \
-                 -e "s|@HOPAPKNAME@|$(HOPAPKNAME)|" \
-           > $@ || exit 1
-
-$(ANDROIDBUILDDIR)/local.properties: local.properties.in $(ANDROIDBUILDDIR)
-$(ANDROIDBUILDDIR)/ant.properties: ant.properties.in $(ANDROIDBUILDDIR)
-
-$(ANDROIDBUILDDIR)/build.xml $(ANDROIDBUILDDIR)/Android.mk:
-	cp $< $@
-
-$(ANDROIDBUILDDIR)/build.xml: build.xml $(ANDROIDBUILDDIR)
-$(ANDROIDBUILDDIR)/Android.mk: Android.mk $(ANDROIDBUILDDIR)
-
-$(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties:
+$(ANDROIDBUILDDIR)/AndroidManifest.xml $(ANDROIDBUILDDIR)/project.properties $(ANDROIDBUILDDIR)/build.xml $(ANDROIDBUILDDIR)/Android.mk $(ANDROIDBUILDDIR)/local.properties $(ANDROIDBUILDDIR)/ant.properties:
 	cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
                 -e "s|@HOPDEBUG@|$(ANDROIDHOPDEBUG)|" \
                 -e "s|@ANDROIDSDKVERSION@|$(ANDROIDSDKVERSION)|" \
+                -e "s|@ANDROIDSDK@|$(ANDROIDSDK)|" \
+                -e "s|@BASEDIR@|$(BUILDDIR)/arch/android|" \
                 -e "s|@HOPPORT@|$(ANDROIDHOPPORT)|" \
                 -e "s|@HOPTHREADS@|$(ANDROIDHOPTHREADS)|" \
                 -e "s|@HOPZEROCONF@|$(ANDROIDHOPZEROCONF)|" \
                 -e "s|@HOPAPKNAME@|$(HOPAPKNAME)|" \
-                -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@
+                -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@ || exit 1
 
-$(ANDROIDBUILDDIR)/AndroidManifest.xml: AndroidManifest.xml.in $(ANDROIDBUILDDIR)
-$(ANDROIDBUILDDIR)/project.properties: project.properties.in $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/AndroidManifest.xml: $(ANDROIDDIR)/AndroidManifest.xml.in $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/project.properties: $(ANDROIDDIR)/project.properties.in $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/build.xml: $(ANDROIDDIR)/build.xml.in $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/Android.mk: $(ANDROIDDIR)/Android.mk.in $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/local.properties: $(ANDROIDDIR)/local.properties.in $(ANDROIDBUILDDIR)
+$(ANDROIDBUILDDIR)/ant.properties: $(ANDROIDDIR)/ant.properties.in $(ANDROIDBUILDDIR)
 
 #*---------------------------------------------------------------------*/
 #*    res                                                              */
@@ -246,7 +258,7 @@ $(ANDROIDBUILDDIR)/res: res $(ANDROIDBUILDDIR)
 	$(RM) -rf $@
 	cp -r $(ANDROIDDIR)/res $@
 
-$(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
+$(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.xml $(ANDROIDBUILDDIR)/res/xml/preferences.xml $(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java:
 	rm -f $@.in
 	cat $< \
           | sed -e "s|@HOPVERSION@|$(HOPRELEASE)|" \
@@ -258,17 +270,33 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/xml/preferences
                 -e "s|@HOPVERBOSELEVEL@|$(ANDROIDHOPVERBOSELEVEL)|" \
                 -e "s|@HOPZEROCONF@|$(ANDROIDHOPZEROCONF)|" \
                 -e "s|@HOPPREFIX@|$(ANDROIDHOPPREFIX)|" \
-                -e "s|@HOPURL@|$(ANDROIDHOPURL)|" > $@
+                -e "s|@HOPAPP@|$(HOPAPP)|" \
+                -e "s|@HOPURL@|$(ANDROIDHOPURL)|" \
+                -e "s|@PLUGINBUILD@|$(PLUGINBUILD)|" \
+                -e "s|@PLUGINLOCALE@|$(PLUGINLOCALE)|" \
+                -e "s|@PLUGINVIBRATE@|$(PLUGINVIBRATE)|" \
+                -e "s|@PLUGINMUSICPLAYER@|$(PLUGINMUSICPLAYER)|" \
+                -e "s|@PLUGINMEDIAAUDIO@|$(PLUGINMEDIAAUDIO)|" \
+                -e "s|@PLUGINSENSOR@|$(PLUGINSENSOR)|" \
+                -e "s|@PLUGINBATTERY@|$(PLUGINBATTERY)|" \
+                -e "s|@PLUGINSMS@|$(PLUGINSMS)|" \
+                -e "s|@PLUGINWIFI@|$(PLUGINWIFI)|" \
+                -e "s|@PLUGINCONNECTIVITY@|$(PLUGINCONNECTIVITY)|" \
+                -e "s|@PLUGINCONTACT@|$(PLUGINCONTACT)|" \
+                -e "s|@PLUGINZEROCONF@|$(PLUGINZEROCONF)|" \
+                -e "s|@PLUGINSYSTEM@|$(PLUGINSYSTEM)|" \
+                -e "s|@PLUGINTTS@|$(PLUGINTTS)|" \
+                -e "s|@PLUGINCALL@|$(PLUGINCALL)|" > $@
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml: \
    $(ANDROIDDIR)/res/values/strings.xml.in \
    $(ANDROIDBUILDDIR)/res
+$(ANDROIDBUILDDIR)/res/values/plugins.xml: \
+   $(ANDROIDDIR)/res/values/plugins.xml.in \
+   $(ANDROIDBUILDDIR)/res
 $(ANDROIDBUILDDIR)/res/xml/preferences.xml: \
    $(ANDROIDDIR)/res/xml/preferences.xml.in \
    $(ANDROIDBUILDDIR)/res
-$(ANDROIDBUILDDIR)/src/fr/inria/hop/Hop.java: \
-   $(ANDROIDDIR)/src/fr/inria/hop/Hop.java.in \
-   $(ANDROIDBUILDDIR)/src
 
 #*---------------------------------------------------------------------*/
 #*    jni                                                              */
@@ -296,18 +324,20 @@ $(ANDROIDBUILDDIR)/assets: \
   $(ANDROIDBUILDDIR)/assets/lib \
   $(ANDROIDBUILDDIR)/assets/share
 	$(MAKE) rename-afiles
-	$(MAKE) assets.extra
+	$(MAKE) assets.weblet
 
-assets.extra:
+assets.weblet:
 	if [ "$(ANDROIDWEBLET) " != " " ]; then \
           cp -r $(ANDROIDWEBLET) $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets; \
-	  rm -rf $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)`/arch/android; \
+	  make -C $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)` -f $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)`/arch/android/Makefile.hopdac prepare-android-weblet; \
         fi
 
 $(ANDROIDBUILDDIR)/assets/etc:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
 	rm -rf $@
 	cp -r $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/etc $(ANDROIDBUILDDIR)/assets
+	mkdir -p $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
+	cp -r $(ANDROIDDIR)/splash $(ANDROIDBUILDDIR)/assets/etc/hop/$(HOPRELEASE)
 
 $(ANDROIDBUILDDIR)/assets/share:
 	mkdir -p $(ANDROIDBUILDDIR)/assets
@@ -323,7 +353,7 @@ rename-jsgz:
           fi \
         done
 
-$(ANDROIDBUILDDIR)/assets/bin:
+$(ANDROIDBUILDDIR)/assets/bin: $(ANDROIDBUILDDIR)/assets/bin
 	mkdir -p $@
 	cp $(ANDROIDBUILDDIR)$(ANDROIDHOPPREFIX)/bin/hop $@
 
@@ -381,8 +411,14 @@ apk-sans-bigloo: apk.common apk.res apk.jni apk.src apk.hop
 	$(MAKE) ndk-build
 	$(MAKE) ndk-ant
 
+apk-sans-hop: apk.common apk.res apk.jni apk.src
+	$(MAKE) ndk-build
+	$(MAKE) ndk-ant
+
 install.apk:
-	adb $(ANDROIDHOST) install -r $(ANDROIDBUILDDIR)/bin/hop-debug.apk
+	adb $(ANDROIDHOST) uninstall fr.inria.hop
+	adb $(ANDROIDHOST) logcat -c
+	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME)-debug.apk
 
 click.apk:
 	adb $(ANDROIDHOST) shell monkey -p fr.inria.hop 1
@@ -396,6 +432,7 @@ apk.common: $(ANDROIDBUILDDIR)/local.properties \
 
 apk.res: $(ANDROIDBUILDDIR)/res \
   $(ANDROIDBUILDDIR)/res/values/strings.xml \
+  $(ANDROIDBUILDDIR)/res/values/plugins.xml \
   $(ANDROIDBUILDDIR)/res/xml/preferences.xml
 
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo$(RELEASE)

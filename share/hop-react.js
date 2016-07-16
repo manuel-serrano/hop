@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Tue Jul  5 10:37:40 2016 (serrano)                */
+/*    Last change :  Wed Jul 13 15:16:58 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
@@ -31,8 +31,7 @@ window.hop.reactDelay = function( thunk ) {
 	 window.addEventListener( "load", function() {
 	    // push back after every other things
 	    setTimeout( function() {
-	       window.hop.reactInitThunks.forEach( function( f ) {
-		  f(); } );
+	       window.hop.reactInitThunks.forEach( function( f ) { f(); } );
 	       window.hop.reactIntialized = true;
 	       window.hop.reactInitThunks = [];	    
 	    }, 1 );
@@ -81,11 +80,13 @@ window.hop.reactProxy = function( val ) {
    var reactors = {};
 
    function getHandler( target, prop ) {
-      if( !(prop in reactors) ) { reactors[ prop ] = [] }
-      if( window.hop.reactInCollect &&
-	  reactors[ prop ].indexOf( window.hop.reactInCollect ) == -1) {
-	 reactors[ prop ].push( window.hop.reactInCollect );
-	 window.hop.reactInCollect.stamp = 0;
+      
+      if( window.hop.reactInCollect ) {
+	 if( !(prop in reactors) ) { reactors[ prop ] = [] }
+	 if( reactors[ prop ].indexOf( window.hop.reactInCollect ) == -1 ) {
+	    reactors[ prop ].push( window.hop.reactInCollect );
+	    window.hop.reactInCollect.stamp = 0;
+	 }
       }
 
       return target[ prop ];
@@ -98,7 +99,7 @@ window.hop.reactProxy = function( val ) {
 	 reactors[ prop ].forEach( window.hop.reactReactorQueuePush );
       }
 
-      return value;
+      return true;
    }
    
    return new Proxy( val, { get: getHandler, set: setHandler } );
@@ -150,6 +151,8 @@ window.hop.reactNode = function( proc, parent, sibling, anchor, key ) {
    function react() {
       var parentNode = parent ? document.getElementById( parent ) : document.body;
       var nodes = window.hop.reactInvoke( proc, react );
+
+      if( nodes == 0 ) nodes = [ "0" ];
 
       if( nodes ) {
 	 if( !parentNode ) {
