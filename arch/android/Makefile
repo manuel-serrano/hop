@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Fri Jul 15 15:06:01 2016 (serrano)                */
+#*    Last change :  Sun Jul 17 06:37:07 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -416,8 +416,6 @@ apk-sans-hop: apk.common apk.res apk.jni apk.src
 	$(MAKE) ndk-ant
 
 install.apk:
-	adb $(ANDROIDHOST) uninstall fr.inria.hop
-	adb $(ANDROIDHOST) logcat -c
 	adb $(ANDROIDHOST) install $(ANDROIDBUILDDIR)/bin/$(HOPAPKNAME)-debug.apk
 
 click.apk:
