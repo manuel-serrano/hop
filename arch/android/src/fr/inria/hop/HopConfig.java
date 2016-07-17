@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../hopdac/arch/android/src/fr/inria/hop/HopConfig.java          */
+/*    .../hop/3.1.x/arch/android/src/fr/inria/hop/HopConfig.java       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Wed Jul 13 08:08:56 2016 (serrano)                */
+/*    Last change :  Sun Jul 17 15:10:36 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -48,6 +48,7 @@ public class HopConfig {
    static boolean PLUGINSYSTEM;
    static boolean PLUGINTTS;
    static boolean PLUGINCALL;
+   static boolean PLUGINPREFS;
 
    static void init( Context context ) {
       final Resources res = context.getResources();
@@ -73,6 +74,7 @@ public class HopConfig {
       PLUGINSYSTEM = res.getBoolean( R.bool.pluginsystem );
       PLUGINTTS = res.getBoolean( R.bool.plugintts );
       PLUGINCALL = res.getBoolean( R.bool.plugincall );
+      PLUGINPREFS = res.getBoolean( R.bool.pluginprefs );
    }
 
    HopConfig() {

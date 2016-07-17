@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../prgm/project/hop/3.1.x/arch/android/hopdroid/prefs.scm       */
+;*    .../hop-3.1.0-pre1/arch/android/hopdroid/prefs.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 17 09:31:15 2016                          */
-;*    Last change :  Sun Jul 17 14:32:40 2016 (serrano)                */
+;*    Last change :  Sun Jul 17 14:57:32 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android preferences plugin                                       */
@@ -13,6 +13,8 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopdroid-prefs
+
+   (library phone hop)
 
    (import __hopdroid-phone)
 
@@ -36,7 +38,7 @@
 ;*---------------------------------------------------------------------*/
 (define (preferences-set! phone::androidphone key val)
    (preferences-init phone)
-   (android-send-command p prefs-plugin #\s (symbol->string! key)
+   (android-send-command phone prefs-plugin #\s (symbol->string! key)
       (preference-encode val)))
 
 ;*---------------------------------------------------------------------*/
@@ -45,7 +47,7 @@
 (define (preferences-get phone::androidphone key)
    (preferences-init phone)
    (preference-decode
-      (android-send-command/result p prefs-plugin #\g (symbol->string! key))))
+      (android-send-command/result phone prefs-plugin #\g (symbol->string! key))))
 
 ;*---------------------------------------------------------------------*/
 ;*    preference-encode ...                                            */
