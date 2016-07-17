@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:30:23 2010                          */
-;*    Last change :  Sun Jul 10 17:44:15 2016 (serrano)                */
+;*    Last change :  Sun Jul 17 06:35:32 2016 (serrano)                */
 ;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android Phone implementation                                     */
@@ -88,8 +88,6 @@
 ;*    phone-init ::androidphone ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (phone-init p::androidphone)
-   (with-access::androidphone p (app)
-      (tprint "PHONE-INIT " app))
    (zeroconf-register-backend! (instantiate::androidzeroconf (android p)))
    p)
 
