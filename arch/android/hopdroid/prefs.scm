@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    .../hop-3.1.0-pre1/arch/android/hopdroid/prefs.scm               */
+;*    .../prgm/project/hop/3.1.x/arch/android/hopdroid/prefs.scm       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 17 09:31:15 2016                          */
-;*    Last change :  Sun Jul 17 14:57:32 2016 (serrano)                */
+;*    Last change :  Sun Jul 17 16:43:16 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Android preferences plugin                                       */
@@ -67,7 +67,7 @@
 ;*    preference-decode ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (preference-decode val)
-   (when (and (string? val) (not (>=fx (string-length val) 2)))
+   (when (and (string? val) (>=fx (string-length val) 2))
       (let ((payload (substring val 2)))
 	 (case (string-ref val 0)
 	    ((#\S) payload)

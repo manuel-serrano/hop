@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Oct 11 16:16:28 2010                          */
-/*    Last change :  Sun Jul 17 14:09:53 2016 (serrano)                */
+/*    Last change :  Sun Jul 17 16:16:00 2016 (serrano)                */
 /*    Copyright   :  2010-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    A small proxy used by Hop to access the resources of the phone.  */
@@ -90,8 +90,8 @@ public class HopDroid extends Thread {
 	    registerPlugin( new HopPluginZeroconf( this, "zeroconf" ) );
 	    registerPlugin( new HopPluginSystem( this, "system" ) );
 	    registerPlugin( new HopPluginTts( this, "tts" ) );
-	    registerPlugin( new HopPluginPrefs( this, "prefs" ) );
 	    registerPlugin( new HopPluginCall( this, "call" ) );
+	    registerPlugin( new HopPluginPrefs( this, "prefs" ) );
 	 }
 
 	 // create the three servers
