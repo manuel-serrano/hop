@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Jul 17 06:37:07 2016 (serrano)                */
+#*    Last change :  Sun Jul 17 13:35:33 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -61,6 +61,7 @@ PLUGINZEROCONF = true
 PLUGINSYSTEM = false
 PLUGINTTS = false
 PLUGINCALL = false
+PLUGINPREFS = false
 
 # global configuration
 REPOSITORY = $(DISTRIBDIR)
@@ -137,7 +138,7 @@ ANDROID_JAVA = Hop.java HopConfigurer.java HopInstaller.java \
   HopPluginLocale.java HopPluginMusicPlayer.java HopPluginVibrate.java \
   HopPluginSensor.java HopPluginSms.java HopPluginContact.java \
   HopPluginWifi.java HopPluginBattery.java HopPluginTts.java \
-  HopPluginMediaAudio.java HopPluginCall.java HopSms.java \
+  HopPluginMediaAudio.java HopPluginCall.java HopSms.java HopPluginPrefs.java \
   HopAndroidAudioRecorder.java HopPluginBuild.java HopPluginConnectivity.java \
   HopSettings.java HopPluginZeroconf.java HopZeroconf.java HopJmDns.java \
   HopNsdManager.java HopPluginSystem.java HopStage.java HopIntenter.java \
@@ -286,6 +287,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.
                 -e "s|@PLUGINZEROCONF@|$(PLUGINZEROCONF)|" \
                 -e "s|@PLUGINSYSTEM@|$(PLUGINSYSTEM)|" \
                 -e "s|@PLUGINTTS@|$(PLUGINTTS)|" \
+                -e "s|@PLUGINPREFS@|$(PLUGINPREFS)|" \
                 -e "s|@PLUGINCALL@|$(PLUGINCALL)|" > $@
 
 $(ANDROIDBUILDDIR)/res/values/strings.xml: \
@@ -297,23 +299,6 @@ $(ANDROIDBUILDDIR)/res/values/plugins.xml: \
 $(ANDROIDBUILDDIR)/res/xml/preferences.xml: \
    $(ANDROIDDIR)/res/xml/preferences.xml.in \
    $(ANDROIDBUILDDIR)/res
-
-#*---------------------------------------------------------------------*/
-#*    jni                                                              */
-#*---------------------------------------------------------------------*/
-apk.jni: $(ANDROIDBUILDDIR)/jni
-
-$(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
-	cp -r $< $@
-
-#*---------------------------------------------------------------------*/
-#*    src                                                              */
-#*---------------------------------------------------------------------*/
-apk.src: $(ANDROIDBUILDDIR)/src
-
-$(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
-	$(RM) -rf $@
-	cp -r $(ANDROIDDIR)/src $@
 
 #*---------------------------------------------------------------------*/
 #*    assets                                                           */
@@ -433,6 +418,15 @@ apk.res: $(ANDROIDBUILDDIR)/res \
   $(ANDROIDBUILDDIR)/res/values/plugins.xml \
   $(ANDROIDBUILDDIR)/res/xml/preferences.xml
 
+apk.jni: $(ANDROIDBUILDDIR)/jni
+$(ANDROIDBUILDDIR)/jni: jni $(ANDROIDBUILDDIR)
+	cp -r $< $@
+
+apk.src: $(ANDROIDBUILDDIR)/src
+$(ANDROIDBUILDDIR)/src: $(ANDROIDDIR)/src $(ANDROIDBUILDDIR)
+	$(RM) -rf $@
+	cp -r $(ANDROIDDIR)/src $@
+
 apk.bigloo: $(ANDROIDBUILDDIR)/bigloo$(RELEASE)
 	$(MAKE) apk.bigloo.configure
 	$(MAKE) -C $(ANDROIDBUILDDIR)/bigloo$(RELEASE)
@@ -474,13 +468,6 @@ apk.hop.configure:
 $(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
 	(cd $(ANDROIDBUILDDIR); rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME))
 	(cd $(ANDROIDBUILDDIR); tar xvf $<)
-	$(MAKE) apk.hop.android
-
-apk.hop.android:
-	if [ $(ANDROIDDIR) != $(BUILDDIR)/arch/android ]; then \
-	  rm -rf $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/arch/android; \
-	  cp -r $(ANDROIDDIR) $(ANDROIDBUILDDIR)/$(HOPFULLNAME)/arch; \
-        fi
 
 apk-clean:
 	rm -rf $(ANDROIDBUILDDIR)

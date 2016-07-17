@@ -15,4 +15,5 @@
   <bool name="pluginsystem">@PLUGINSYSTEM@</bool>
   <bool name="plugintts">@PLUGINTTS@</bool>
   <bool name="plugincall">@PLUGINCALL@</bool>
+  <bool name="pluginprefs">@PLUGINPREFS@</bool>
 </resources>
