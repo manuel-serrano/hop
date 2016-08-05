@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Apr 18 18:23:25 2016 (serrano)                */
+;*    Last change :  Fri Aug  5 13:40:03 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -496,17 +496,20 @@
 	    '(")")))))
 
 ;*---------------------------------------------------------------------*/
+;*    join ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (join sep el)
+   (if (null? el)
+       '()
+       (let loop ((el el))
+	  (if (null? (cdr el))
+	      (car el)
+	      (append (car el) (list sep) (loop (cdr el)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SFor ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SFor tildec dollarc mode evalp conf)
-   
-   (define (join sep el)
-      (if (null? el)
-	  '()
-	  (let loop ((el el))
-	     (if (null? (cdr el))
-		 (car el)
-		 (append (car el) (list sep) (loop (cdr el)))))))
    
    (define (var-decl decl::J2SDecl)
       (cons (j2s-js-id decl)
@@ -928,11 +931,16 @@
    (with-access::J2STilde this (loc stmt)
       (let* ((temp (gensym))
 	     (assign (j2s-stmt-assign stmt temp))
-	     (ndollarc (j2s-js-client-dollar dollarc)))
-	 (cons* this "function( event ) { var "
+	     (id (gensym "$"))
+	     (env (cons 0 '()))
+	     (ndollarc (j2s-js-client-dollar-env dollarc id env))
+	     (body (j2s-js assign tildec ndollarc mode evalp conf)))
+	 (cons* this (format "new hop_xml_tilde( function( event, ~a ) { var " id)
 	    (symbol->string! temp) "; "
-	    (append (j2s-js assign tildec ndollarc mode evalp conf)
-	       `(,(format "\nreturn ~a}" temp)))))))
+	    (append body
+	       (list (format "\nreturn ~a}, [" temp))
+	       (join "," (cdr env))
+	       '("])"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDollar ...                                           */
@@ -961,6 +969,19 @@
       (with-access::J2SDollar this (node)
 	 ;;(tprint "DOLLAR=" (j2s->list node))
 	 (j2s-js node tildec odollarc mode evalp conf))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js-client-dollar-env ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-js-client-dollar-env odollarc id env)
+   (lambda (this::J2SDollar tildec dollarc mode evalp conf)
+      (with-access::J2SDollar this (node)
+	 ;;(tprint "DOLLAR=" (j2s->list node))
+	 (let ((expr (j2s-js node tildec odollarc mode evalp conf)))
+	    (let ((count (car env)))
+	       (set-car! env (+fx count 1))
+	       (set-cdr! env (cons expr (cdr env)))
+	       (list this (format "~a[~a]" id count)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SNew ...                                              */

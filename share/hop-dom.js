@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Jul  5 12:36:10 2016 (serrano)                */
+/*    Last change :  Fri Aug  5 13:36:38 2016 (serrano)                */
 /*    Copyright   :  2006-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -23,6 +23,14 @@
 /*---------------------------------------------------------------------*/
 function hop_tilde( fun ) {
    this.fun = fun;
+}
+
+/*---------------------------------------------------------------------*/
+/*    hop_xml_tilde ...                                                */
+/*---------------------------------------------------------------------*/
+function hop_xml_tilde( proc, args ) {
+   this.proc = proc;
+   this.args = args;
 }
 
 /*---------------------------------------------------------------------*/
@@ -332,12 +340,28 @@ function hop_dom_create( tag, args ) {
       if( (val instanceof String) || (typeof val == "string") ) {
 	 return el[ attr ] = val;
       } if( typeof( val ) === "function" ) {
-	 return window.hop.reactAttribute( function() { k( val() ) } );
+	 return hop.reactAttribute( function() { k( val() ) } );
       } else {
 	 return el[ attr ] = val.toString();
       }
    }
-	 
+
+   function valfun( val ) {
+      if( val instanceof hop_xml_tilde ) {
+	 if( val.args.length == 0 ) {
+	    return function( event ) {
+	       return val.proc.call( this, event );
+	    }
+	 } else {
+	    return function( event ) {
+	       return val.proc.apply( this, [ event, val.args ] );
+	    }
+	 }
+      } else {
+	 return val;
+      }
+   }
+   
    // the attributes
    if( args[ 0 ] instanceof Object ) {
       for( var attr in args[ 0 ] ) {
@@ -352,7 +376,7 @@ function hop_dom_create( tag, args ) {
 	 } else {
 	    m = attr.match( "^on(.*)" );
 	    if( m ) {
-	       hop_add_event_listener( el, m[ 1 ], val, true );
+	       hop_add_event_listener( el, m[ 1 ], valfun( val ), true );
 	    } else {
 	       valstr( val, function( v ) { el.setAttribute( attr, v ) } );
 	       try {

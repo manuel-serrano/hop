@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sun Jul 17 13:35:33 2016 (serrano)                */
+#*    Last change :  Tue Jul 19 19:33:59 2016 (serrano)                */
 #*    Copyright   :  2010-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -68,6 +68,7 @@ REPOSITORY = $(DISTRIBDIR)
 
 HOPAPKNAME = hop
 HOPAPP = hopdac
+HOPARGS = 
 HOPMINOR = -$(HOPDEVEL)1
 HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
 
@@ -272,6 +273,7 @@ $(ANDROIDBUILDDIR)/res/values/strings.xml $(ANDROIDBUILDDIR)/res/values/plugins.
                 -e "s|@HOPZEROCONF@|$(ANDROIDHOPZEROCONF)|" \
                 -e "s|@HOPPREFIX@|$(ANDROIDHOPPREFIX)|" \
                 -e "s|@HOPAPP@|$(HOPAPP)|" \
+                -e "s|@HOPARGS@|$(HOPARGS)|" \
                 -e "s|@HOPURL@|$(ANDROIDHOPURL)|" \
                 -e "s|@PLUGINBUILD@|$(PLUGINBUILD)|" \
                 -e "s|@PLUGINLOCALE@|$(PLUGINLOCALE)|" \
@@ -310,12 +312,22 @@ $(ANDROIDBUILDDIR)/assets: \
   $(ANDROIDBUILDDIR)/assets/share
 	$(MAKE) rename-afiles
 	$(MAKE) assets.weblet
+	$(MAKE) assets.post-install
 
 assets.weblet:
 	if [ "$(ANDROIDWEBLET) " != " " ]; then \
           cp -r $(ANDROIDWEBLET) $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets; \
 	  make -C $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)` -f $(ANDROIDBUILDDIR)/assets/lib/hop/$(HOPRELEASE)/weblets/`basename $(ANDROIDWEBLET)`/arch/android/Makefile.hopdac prepare-android-weblet; \
         fi
+
+assets.post-install:
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.a' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name '*.heap' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libhop*_u-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libjs2scheme*_u-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libnodejs*_u-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libscheme2js*_u-*.so' -exec rm {} \;
+	find $(ANDROIDBUILDDIR)/assets/lib/ -name 'libbigloo*_s-*.so.keep' -exec rm {} \;
 
 $(ANDROIDBUILDDIR)/assets/etc:
 	mkdir -p $(ANDROIDBUILDDIR)/assets

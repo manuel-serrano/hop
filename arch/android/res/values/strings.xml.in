@@ -12,7 +12,11 @@
    <string name="hopdebug">@HOPDEBUGLEVEL@</string>
    <string name="hopzeroconf">@HOPZEROCONF@</string>
    <string name="hoproot">@HOPPREFIX@</string>
-
+   
+   <!-- Application configuration -->
+   <string name="hopapp">@HOPAPP@</string>
+   <string name="hopargs">@HOPARGS@</string>
+   
    <!-- Configuration constants -->
    <string name="hoprelease">@HOPVERSION@</string>
    <string name="bigloorelease">@BIGLOOVERSION@</string>
