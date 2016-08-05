@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Sat Jun 25 08:12:22 2016 (serrano)                */
+/*    Last change :  Fri Aug  5 14:12:45 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -76,6 +76,101 @@ sc_InputPort.prototype.hop_typeof = function() {
 sc_Char.prototype.hop_typeof = function() {
    return "bchar";
 };
+#endif
+
+/*---------------------------------------------------------------------*/
+/*    Misc                                                             */
+/*---------------------------------------------------------------------*/
+#if HOP_JAVASCRIPT
+function dom_get_element_by_id( id ) {
+   return document.getElementById( id );
+}
+
+function dom_child_nodes( node ) {
+   return sc_vector2list( node.childNodes );
+}
+
+function dom_first_child( node ) {
+   return node.firstChild;
+}
+
+function dom_last_child( node ) {
+   return node.lastChild;
+}
+
+function dom_parent_node( node ) {
+   return node.parentNode;
+}
+
+function node_computed_style_get( obj, prop ) {
+   var el = obj;
+   if( (obj instanceof String) || (typeof obj === "string") )
+      el = document.getElementById( obj );
+   if( sc_isKeyword( prop ) )
+      prop = sc_keyword2jsstring( prop );
+   var t = window.getComputedStyle( el, null );
+   if( t != null && (prop in t) )
+      return t[ prop ];
+   else
+      return false;
+}
+
+function sc_jsNew( c ) {
+   var evalStr = "new c(";
+   evalStr += arguments.length > 1? "arguments[1]": "";
+   for( var i = 2; i < arguments.length; i++ ) {
+      evalStr += ", arguments[" + i + "]";
+   }
+   evalStr +=")";
+   return eval( evalStr );
+}
+
+function sc_jsField( o, field ) {
+    return o[ field ];
+}
+
+function sc_setJsFieldBang( o, field, val ) {
+   return o[ field ] = val;
+}
+
+function hop_in( field, obj ) {
+   return field in obj;
+}
+
+function sc_jsMethodCall( o, field ) {
+   return o[ field ].apply( o, Array.prototype.slice.call( arguments, 2 ) );
+}
+
+function hop_typeof( obj ) {
+   if( obj instanceof Object ) {
+      if( obj instanceof Date ) {
+	 return "date";
+      } else {
+	 if( obj instanceof RegExp ) {
+	    return "regexp";
+	 } else {
+	    if( obj instanceof Function ) {
+	       return "function";
+	    } else {
+	       if( typeof obj.hop_typeof == "function" ) 
+		  return obj.hop_typeof();
+	       else
+		  return "object";
+	    }
+	 }
+      }
+   } else {
+      var tname = typeof obj;
+      if( tname == "string" ) {
+	 if( sc_isSymbol( obj ) )
+	    return "symbol";
+	 if( sc_isKeyword( obj ) )
+	    return "keyword";
+	 return tname;
+      }
+      return tname;
+   }
+}
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -283,7 +378,28 @@ function sc_listTail( l, k ) {
    }
    return res;
 }
+
 #endif
+
+function sc_remqBang( o, l ) {
+   var dummy = { __hop_cdr : null };
+   var tail = dummy;
+   var needsAssig = true;
+   while( l !== null ) {
+      if( l.__hop_car === o ) {
+	 needsAssig = true;
+      } else {
+	 if( needsAssig ) {
+	    tail.__hop_cdr = l;
+	    needsAssig = false;
+	 }
+	 tail = l;
+      }
+      l = l.__hop_cdr;
+   }
+   tail.__hop_cdr = null;
+   return dummy.__hop_cdr;
+}
 
 function sc_list() {
    var res = null;
@@ -441,7 +557,28 @@ function sc_jsstring2keyword( s ) {
 /*    Strings                                                          */
 /*---------------------------------------------------------------------*/
 #if HOP_JAVASCRIPT
+
+function sc_stringAppend() {
+   return "".concat.apply( "", arguments );
+}
+
+function sc_stringRef( s, k ) {
+   return new sc_Char( s.charAt( k ) );
+}
+
+function sc_number2string( x, radix ) {
+   if( radix ) {
+      return x.toString( radix );
+   } else {
+      return x.toString();
+   }
+}
+
 #if HOP_RTS_DEBUG
+function sc_isStringEqual( s1, s2 ) {
+    return s1 === s2;
+}
+
 function sc_jsstring2string( s ) {
    return s;
 }
@@ -541,6 +678,20 @@ function sc_stringSkip( s, cset, start ) {
 #if HOP_JAVASCRIPT
 function sc_Char( c ) {
    this.val = c;
+}
+
+var SC_NUMBER_CLASS = "0123456789";
+var SC_WHITESPACE_CLASS = ' \r\n\t\f';
+var SC_LOWER_CLASS = 'abcdefghijklmnopqrstuvwxyz';
+var SC_UPPER_CLASS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+function sc_isCharOfClass( c, cl ) {
+   return (cl.indexOf( c ) != -1);
+}
+
+function sc_isCharAlphabetic(c) {
+   return sc_isCharOfClass( c.val, SC_LOWER_CLASS ) ||
+      sc_isCharOfClass( c.val, SC_UPPER_CLASS );
 }
 #endif
 
@@ -678,6 +829,33 @@ function sc_withHandlerLambda( handler, body ) {
       else
 	 throw e;
    }
+}
+
+function sc_plus2( x, y ) {
+   var res = x + y;
+   return res;
+}
+
+function sc_minus( x ) {
+   if( arguments.length === 1 ) {
+      return -x;
+   } else {
+      var res = x;
+      for( var i = 1; i < arguments.length; i++ ) {
+	 res -= arguments[ i ];
+      }
+      return res;
+   }
+}
+
+function sc_minus2( x, y ) {
+   var res = x - y;
+   return res;
+}
+
+function sc_multi2( x, y ) {
+   var res = x * y;
+   return res;
 }
 
 var sc_lambda = undefined;

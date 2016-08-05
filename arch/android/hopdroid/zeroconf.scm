@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Sun Jul 17 06:31:40 2016 (serrano)                */
+;*    Last change :  Mon Jul 18 07:00:23 2016 (serrano)                */
 ;*    Copyright   :  2011-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -39,7 +39,6 @@
 	    (error "zeroconf-backend-start"
 	       "Cannot start zeroconf plugin"
 	       plugin)))
-      (tprint "androidzerconf-start.1 " hostname)
       (when (string=? hostname "")
 	 (if (or (pregexp-match "(?:[0-9]{1,3}[.]){3}[0-9]{1,3}"
 		    (hop-server-hostname))
@@ -50,7 +49,6 @@
 		(set! hostname (string-replace model #\space #\_)))
 	     ;; just use the network host name
 	     (set! hostname (hop-server-hostname))))
-      (tprint "androidzerconf-start.2 " hostname)
       (when (android-send-command/result aphone plugin #\s hostname)
 	 (onready o)
 	 (hop-verb 1

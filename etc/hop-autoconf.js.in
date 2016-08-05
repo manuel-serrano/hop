@@ -132,7 +132,7 @@ Object.defineProperty( HopServer.prototype, "unserializer", {
 
 Object.defineProperty( HopServer.prototype, "reactProxy", {
    value: function( event, defval ) {
-      var proxy = window.hop.reactProxy( { value: defval } );
+      var proxy = hop.reactProxy( { value: defval } );
       hop_add_event_listener( this,
 	 event,
 	 function( evt ) { proxy.value = evt.value },

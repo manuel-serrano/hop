@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  6 17:58:58 2010                          */
-;*    Last change :  Tue Apr 26 19:33:08 2016 (serrano)                */
+;*    Last change :  Fri Aug  5 14:02:26 2016 (serrano)                */
 ;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side library for spage                                    */
@@ -93,6 +93,12 @@
 				  spage.sphead.offsetHeight))))
 
 ;*---------------------------------------------------------------------*/
+;*    px ...                                                           */
+;*---------------------------------------------------------------------*/
+(define (px val)
+   (string-append (number->string val) "px"))
+
+;*---------------------------------------------------------------------*/
 ;*    spage-reset-size ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (spage-reset-size spage)
@@ -107,11 +113,11 @@
 	 ;; we have to enforce the page size otherwise the browsers
 	 ;; use the viewport width for the containing block width
 	 (node-style-set! spage.spwindow
-	    :width (format "~apx" spage.spwidth))
+	    :width (px spage.spwidth))
 	 (node-style-set! spage.spviewport
-            :width (format "~apx" spage.spscrollwidth))
+            :width (px spage.spscrollwidth))
 	 (node-style-set! (dom-first-child spage.spviewport)
-	    :width (format "~apx" spage.spbodywidth)))))
+	    :width (px spage.spbodywidth)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    spage-add-event-listener! ...                                    */
@@ -261,7 +267,7 @@
       (set! spage.transitionstyle 'slide)
       (if (hop-config 'css_transition)
 	  (node-style-set! spviewport
-	     :left (format "-~apx" spage.spoffset))
+	     :left (px (- spage.spoffset)))
 	  (let ((offset0 (- spage.spoffset spage.spwidth))
 		(offset1 spage.spoffset))
 	     (slide spviewport (css-transition-duration tbody) offset0 offset1 #f))))
@@ -277,7 +283,7 @@
 	 :opacity 0
 	 :z-index spage.num
 	 :top 0
-	 :left (format "-~apx" spage.spoffset))
+	 :left (px (- spage.spoffset)))
       (if (hop-config 'css_transition)
 	  (after 1 (lambda ()
 		      (node-style-set! tbody
@@ -321,11 +327,11 @@
       ;; webkit requires spviewport to larger that the sum of the bodies
       ;; we provision it with an extra body width
       (node-style-set! spviewport
-	 :width (format "~apx" (+ spage.spbodywidth spage.spscrollwidth)))
+	 :width (px (+ spage.spbodywidth spage.spscrollwidth)))
       (node-style-set! otab
-	     :width (format "~apx" spage.spbodywidth))
+	     :width (px spage.spbodywidth))
       (node-style-set! tbody
-	 :width (format "~apx" spage.spbodywidth))
+	 :width (px spage.spbodywidth))
       ;; sptab event listener
       (sptab-invoke-onselect-listener! tab tbody "select")
       ;; add the new tab
@@ -352,7 +358,7 @@
    (define (shrink-viewport spviewport)
       (set! spage.spscrollwidth (- spage.spscrollwidth spage.spoffset))
       (node-style-set! spviewport
-	 :width (format "~apx" spage.spscrollwidth)))
+	 :width (px spage.spscrollwidth)))
 
    (define (invoke-pop-listeners spage tbody)
       (spage-invoke-onchange-listener! spage tbody "pop")
@@ -403,13 +409,13 @@
       (if (hop-config 'css_transition)
 	  (let ((d (css-transition-duration tbody)))
 	     (node-style-set! spviewport
-		:left (format "-~apx" spage.spoffset))
+		:left (px (- spage.spoffset)))
 	     (after d
 		(lambda ()
 		   (dom-remove-child! spviewport tbody)
 		   (restore-static-body tbody.tab)
 		   (node-style-set! spviewport
-		      :width (format "~apx" spage.spscrollwidth))
+		      :width (px spage.spscrollwidth))
 		   (when (procedure? kont) (kont spage))
 		   (set! spage.inpop #f))))
 	  (let ((offset0 (+ spage.spoffset spage.spwidth))
@@ -469,9 +475,7 @@
 ;*    find-spage-tag ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (find-spage-tag el tag)
-   (let ((el (if (string? el)
-		 (dom-get-element-by-id el)
-		 el)))
+   (let ((el (if (string? el) (dom-get-element-by-id el) el)))
       (let loop ((parent (dom-parent-node el)))
 	 (cond
 	    ((or (not parent) (eq? parent #unspecified))
@@ -619,7 +623,7 @@
 	     (spviewport spage.spviewport))
 	 (spage-resize spage)
 	 (node-style-set! body
-	    :width (format "~apx" spage.spbodywidth))
+	    :width (px spage.spbodywidth))
 	 (dom-remove-child! spviewport (car spage.tabs))
 	 (set! spage.tabs (cons body (cdr spage.tabs)))
 	 (set! body.tab tab)

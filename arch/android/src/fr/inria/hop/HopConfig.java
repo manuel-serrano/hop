@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jul 10 08:08:45 2016                          */
-/*    Last change :  Sun Jul 17 15:10:36 2016 (serrano)                */
+/*    Last change :  Mon Jul 18 06:51:02 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Hop configuration                                                */
@@ -27,11 +27,14 @@ import android.content.*;
 /*---------------------------------------------------------------------*/
 public class HopConfig {
    static String PORT;
+   static String ROOT;
    static String MAXTHREADS;
    static String URL;
    static String BIGLOORELEASE;
    static String HOPRELEASE;
    static String APP;
+   static String ARGS;
+   static String DEBUG;
 
    static boolean PLUGINBUILD;
    static boolean PLUGINLOCALE;
@@ -53,11 +56,14 @@ public class HopConfig {
    static void init( Context context ) {
       final Resources res = context.getResources();
       PORT = res.getString( R.string.hopport );
+      ROOT = res.getString( R.string.hoproot );
       MAXTHREADS = res.getString( R.string.hopthreads );
       URL = res.getString( R.string.hopapp );
       BIGLOORELEASE = res.getString( R.string.bigloorelease );
       HOPRELEASE = res.getString( R.string.hoprelease );
+      DEBUG = res.getString( R.string.hopdebug );
       APP = res.getString( R.string.hopapp );
+      ARGS = res.getString( R.string.hopargs );
 
       PLUGINBUILD = res.getBoolean( R.bool.pluginbuild );
       PLUGINLOCALE = res.getBoolean( R.bool.pluginlocale );
