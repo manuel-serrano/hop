@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug 14 08:24:36 2009                          */
-;*    Last change :  Tue Apr 26 19:29:49 2016 (serrano)                */
+;*    Last change :  Sun Aug  7 08:23:19 2016 (serrano)                */
 ;*    Copyright   :  2009-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    SlidePage server-side implementation                             */
@@ -150,16 +150,26 @@
 	 ((and (pair? body) (service? (car body)))
 	  ;; a dynamic tab (new service syntax with arguments)
 	  (<DIV> :data-hss-tag "hop-sptab" :class class  :id id
-	     :onclick (sexp->xml-tilde
-			 `(begin
-			     (stop-event-propagation event #f)
-			     (spage-push-url this
-				,(apply (car body) (cdr body))
-				(lambda (body)
-				   (<DIV> :data-hss-tag "hop-spbody"
-				      :class ,class
-				      ,@attr
-				      body)))))
+	     
+	     :onclick (if (pair? attr)
+			  (sexp->xml-tilde
+			     `(begin
+				 (stop-event-propagation event #f)
+				 (spage-push-url this
+				    ,(apply (car body) (cdr body))
+				    (lambda (body)
+				       (<DIV> :data-hss-tag "hop-spbody"
+					  :class ,class
+					  ,@attr
+					  body)))))
+			  ~(begin
+			      (stop-event-propagation event #f)
+			      (spage-push-url this
+				 $(apply (car body) (cdr body))
+				 (lambda (body)
+				    (<DIV> :data-hss-tag "hop-spbody"
+				       :class $class
+				       body)))))
 	     :data-hop-svc (car body)
 	     :data-hop-svc-direction direction
 	     (if (null? head) "?" (car head))
@@ -185,7 +195,7 @@
 	     (if (null? head) "?" (car head))
 	     (init-sptab id onselect)
 	     (<DIV> :data-hss-tag "hop-sptab-static"
-		(<DIV> :data-hss-tag "hop-spbody":class class attr body)))))))
+		(<DIV> :data-hss-tag "hop-spbody" :class class attr body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    SPTABHEAD ...                                                    */
