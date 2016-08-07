@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/scheme2js/out.scm                 */
+;*    serrano/prgm/project/hop/3.1.x/scheme2js/out.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Florian Loitsch                                   */
 ;*    Creation    :  2007-13                                           */
-;*    Last change :  Wed Dec  9 10:08:43 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sun Aug  7 06:36:30 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript code generation.                                      */
 ;*=====================================================================*/
@@ -652,7 +652,7 @@
 		      "  ~e" ;; declared-vars
 		      "  ~e" ;; body
 		      (each (lambda (var)
-			       "/* v2 */ var ~a;\n"
+			       "var ~a;\n"
 			       (with-access::Named-Var var (js-id) js-id))
 			 declared-vars)
 		      (walk body p #t #f))))))))
