@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Apr 20 13:23:45 2016 (serrano)                */
+;*    Last change :  Mon Aug  8 18:14:51 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -761,13 +761,13 @@
 				      (loc loc)
 				      (expr expr))))))))))
    
-   (define (arrow-function args::pair-nil)
+   (define (arrow-function args::pair-nil loc)
       ;; ES6 arrow functions
       (let* ((=> (consume-any!))
 	     (params (arrow-params args)))
 	 (instantiate::J2SArrow
 	    (idthis '%)
-	    (loc (token-loc =>))
+	    (loc loc)
 	    (name '||)
 	    (mode 'strict)
 	    (params params)
@@ -1618,7 +1618,7 @@
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (if (eq? (peek-token-type) '=>)
-		 (arrow-function (list token))
+		 (arrow-function (list token) (token-loc token))
 		 (instantiate::J2SUnresolvedRef
 		    (loc (token-loc token))
 		    (id (token-value token))))))
@@ -1634,7 +1634,7 @@
 		    (pop-open-token)
 		    (if (eq? (peek-token-type) '=>)
 			;; zero-argument arrow function
-			(arrow-function '())
+			(arrow-function '() (token-loc token))
 			(parse-token-error "unexpected token" tok)))
 		 (let* ((expr (expression #f))
 			(ignore-too (consume! 'RPAREN)))
@@ -1642,10 +1642,12 @@
 		    (if (eq? (peek-token-type) '=>)
 			(cond
 			   ((isa? expr J2SAssig)
-			    (arrow-function (list expr)))
+			    (arrow-function (list expr) (token-loc token)))
+			   ((isa? expr J2SUnresolvedRef)
+			    (arrow-function (list expr) (token-loc token)))
 			   ((isa? expr J2SSequence)
 			    (with-access::J2SSequence expr (exprs)
-			       (arrow-function exprs)))
+			       (arrow-function exprs (token-loc token))))
 			   (else
 			    (parse-node-error "unexpected token" expr)))
 			(instantiate::J2SParen
