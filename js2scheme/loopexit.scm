@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Dec  9 17:00:12 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Wed Aug 10 12:05:04 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Loopexit -> bind-exit                                 */
 ;*    -------------------------------------------------------------    */
@@ -191,7 +191,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark-exit! this::J2SLabel targets label)
    (with-access::J2SLabel this (body id)
-      (walk! body targets id))
+      (walk! body (cons this targets) id))
    this)
 
 ;*---------------------------------------------------------------------*/

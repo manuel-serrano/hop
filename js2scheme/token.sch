@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/token.sch               */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/token.sch               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 18:19:18 2015                          */
-;*    Last change :  Wed Jul 29 19:47:24 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Wed Aug 10 07:24:56 2016 (serrano)                */
+;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Token tools                                                      */
 ;*=====================================================================*/
@@ -15,7 +15,9 @@
 ;*    Builds a Bigloo location object                                  */
 ;*---------------------------------------------------------------------*/
 (define (the-coord input-port offset)
-   `(at ,(input-port-name input-port)
+   `(at ,(if (input-string-port? input-port)
+	     (input-port-buffer input-port)
+	     (input-port-name input-port))
        ,(-fx (input-port-position input-port) offset)))
 
 ;*---------------------------------------------------------------------*/
