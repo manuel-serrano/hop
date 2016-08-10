@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Mar 28 10:42:37 2016 (serrano)                */
+;*    Last change :  Wed Aug 10 11:50:57 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -106,8 +106,9 @@
 ;*    syntax ::J2SBreak ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (syntax this::J2SBreak inloop? inswitch?)
-   (unless (or inloop? inswitch?)
-      (syntax-error this "Illegal break statement")))
+   (with-access::J2SBreak this (id)
+      (unless (or id inloop? inswitch?)
+	 (syntax-error this "Illegal break statement"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    syntax-error ...                                                 */

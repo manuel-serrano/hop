@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/error.scm               */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/error.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Dec 23 07:56:21 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Wed Aug 10 07:22:57 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -85,7 +85,7 @@
 (define-method (object-display o::JsError . port)
    (with-output-to-port (if (null? port) (current-output-port) (car port))
       (lambda ()
-	 (with-access::JsError o (name msg fname)
+	 (with-access::JsError o (name msg)
 	    (display* "#<"
 	       (class-name (object-class o)) ": " name ", " msg ">")))))
 
@@ -449,7 +449,6 @@
 (define (%js-syntax-error %this)
    (lambda (this message fname loc)
       (with-access::JsGlobalObject %this (js-syntax-error)
-	 (tprint "js-syntax-error fname=" fname " loc=" loc)
 	 (js-new %this js-syntax-error message fname loc))))
 
 ;*---------------------------------------------------------------------*/

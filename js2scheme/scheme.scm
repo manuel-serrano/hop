@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Aug  5 13:39:35 2016 (serrano)                */
+;*    Last change :  Wed Aug 10 11:58:12 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2632,8 +2632,11 @@
 ;*    j2s-scheme ::J2SLabel ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLabel mode return conf hint)
-   (with-access::J2SLabel this (body)
-      (j2s-scheme body mode return conf hint)))
+   (with-access::J2SLabel this (body need-bind-exit-break id)
+      (if need-bind-exit-break
+	  `(bind-exit (,(escape-name '%break id)) 
+	      ,(j2s-scheme body mode return conf hint))
+	  (j2s-scheme body mode return conf hint))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SBreak ...                                        */

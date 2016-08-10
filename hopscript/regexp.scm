@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/regexp.scm              */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/regexp.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Feb  9 14:52:48 2016 (serrano)                */
+;*    Last change :  Wed Aug 10 15:29:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -163,75 +163,91 @@
 	 (else
 	  (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
 	     (ucs2-string->utf8-string u)))))
-
+   
    (let* ((len (string-length str))
-	  (res (make-string len)))
+	  (res (make-string (*fx 2 len))))
       (let loop ((i 0)
-		 (w 0))
-	 (let ((j (string-index str #\\ i)))
-	    (cond
-	       ((not j)
-		(blit-string! str i res w (-fx len i))
-		(string-shrink! res (+fx w (-fx len i)))
-		res)
-	       ((=fx j (-fx len 1))
-		(err "wrong pattern \"~a\"" str))
-	       (else
-		(when (>fx j i)
-		   (blit-string! str i res w (-fx j i))
-		   (set! w (+fx w (-fx j i))))
-		(let ((c (string-ref str (+fx j 1))))
-		   (case c
-		      ((#\x)
-		       (if (>=fx j (-fx len 3))
-			   (err "wrong \"\\x\" pattern \"~a\"" str)
-			   (let ((n (hex2 str (+fx j 2))))
-			      (cond
-				 ((not n)
-				  (err "wrong \"\\x\" pattern \"~a\"" str))
-				 ((=fx n 0)
-				  (blit-string! "\\000" 0 res w 4)
-				  (loop (+fx j 4) (+fx w 4)))
-				 ((=fx n #x5d)
-				  ;; "]" character
-				  ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
-				  (string-set! res w #\\)
-				  (string-set! res (+fx 1 w) #\])
-				  (loop (+fx j 4) (+fx w 2)))
-				 (n
-				  (let* ((s (integer->utf8 n))
-					 (l (string-length s)))
-				     (blit-string! s 0 res w l)
-				     (loop (+fx j 4) (+fx w l)))
-				  )))))
-		      ((#\u)
-		       (if (>=fx j (-fx len 5))
-			   (err "wrong \"\\u\" pattern \"~a\"" str)
-			   (let ((n (hex4 str (+fx j 2))))
-			      (cond
-				 ((not n)
-				  (err "wrong \"\\u\" pattern \"~a\"" str))
-				 ((=fx n 0)
-				  (blit-string! "\\000" 0 res w 4)
-				  (loop (+fx j 6) (+fx w 4)))
-				 ((=fx n #x5d)
-				  ;; "]" character
-				  ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
-				  (string-set! res w #\\)
-				  (string-set! res (+fx 1 w) #\])
-				  (loop (+fx j 6) (+fx w 2)))
-				 (else
-				  (let* ((s (integer->utf8 n))
-					 (l (string-length s)))
-				     (blit-string! s 0 res w l)
-				     (loop (+fx j 6) (+fx w l))))))))
-		      ((#\\)
-		       (string-set! res w #\\)
-		       (string-set! res (+fx w 1) #\\)
-		       (loop (+fx j 2) (+fx w 2)))
+		 (w 0)
+		 (inrange #f))
+	 (let ((j (string-index str "\\[]" i)))
+	    (if (not j)
+		(begin
+		   (blit-string! str i res w (-fx len i))
+		   (string-shrink! res (+fx w (-fx len i)))
+		   res)
+		(let ((tag (string-ref str j)))
+		   (when (>fx j i)
+		      (blit-string! str i res w (-fx j i))
+		      (set! w (+fx w (-fx j i))))
+		   (cond
+		      ((char=? tag #\[)
+		       (string-set! res w tag)
+		       (loop (+fx j 1) (+fx w 1) #t))
+		      ((char=? tag #\])
+		       (if inrange
+			   (begin
+			      (string-set! res w tag)
+			      (loop (+fx j 1) (+fx w 1) #f))
+			   (begin
+			      (string-set! res w #\\)
+			      (string-set! res (+fx w 1) tag)
+			      (loop (+fx j 1) (+fx w 2) #f))))
+		      ((=fx j (-fx len 1))
+		       (err "wrong pattern \"~a\"" str))
 		      (else
-		       (string-set! res w #\\)
-		       (loop (+fx j 1) (+fx w 1)))))))))))
+		       (let ((c (string-ref str (+fx j 1))))
+			  (case c
+			     ((#\x)
+			      (if (>=fx j (-fx len 3))
+				  (err "wrong \"\\x\" pattern \"~a\"" str)
+				  (let ((n (hex2 str (+fx j 2))))
+				     (cond
+					((not n)
+					 (err "wrong \"\\x\" pattern \"~a\"" str))
+					((=fx n 0)
+					 (blit-string! "\\000" 0 res w 4)
+					 (loop (+fx j 4) (+fx w 4) inrange))
+					((=fx n #x5d)
+					 ;; "]" character
+					 ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
+					 (string-set! res w #\\)
+					 (string-set! res (+fx 1 w) #\])
+					 (loop (+fx j 4) (+fx w 2) inrange))
+					(n
+					 (let* ((s (integer->utf8 n))
+						(l (string-length s)))
+					    (blit-string! s 0 res w l)
+					    (loop (+fx j 4) (+fx w l) inrange))
+					 )))))
+			     ((#\u)
+			      (if (>=fx j (-fx len 5))
+				  (err "wrong \"\\u\" pattern \"~a\"" str)
+				  (let ((n (hex4 str (+fx j 2))))
+				     (cond
+					((not n)
+					 (err "wrong \"\\u\" pattern \"~a\"" str))
+					((=fx n 0)
+					 (blit-string! "\\000" 0 res w 4)
+					 (loop (+fx j 6) (+fx w 4) inrange))
+					((=fx n #x5d)
+					 ;; "]" character
+					 ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
+					 (string-set! res w #\\)
+					 (string-set! res (+fx 1 w) #\])
+					 (loop (+fx j 6) (+fx w 2) inrange))
+					(else
+					 (let* ((s (integer->utf8 n))
+						(l (string-length s)))
+					    (blit-string! s 0 res w l)
+					    (loop (+fx j 6) (+fx w l) inrange)))))))
+			     ((#\\)
+			      (string-set! res w #\\)
+			      (string-set! res (+fx w 1) #\\)
+			      (loop (+fx j 2) (+fx w 2) inrange))
+			     (else
+			      (string-set! res w #\\)
+			      (string-set! res (+fx w 1) c)
+			      (loop (+fx j 2) (+fx w 2) inrange))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-construct ...                                          */
