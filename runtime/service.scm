@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Jun 11 06:56:12 2016 (serrano)                */
+;*    Last change :  Fri Aug 12 11:42:08 2016 (serrano)                */
 ;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -393,6 +393,10 @@
 		(match-case args
 		   ((("hop-encoding" . "hop") ("vals" . ?vals))
 		    (string->obj vals #f ctx))
+		   ((("hop-encoding" . "json") ("vals" . ?vals))
+		    (call-with-input-string vals
+		       (lambda (pi)
+			  (json->obj #f pi))))
 		   (else
 		    (cond
 		       ((and ctx (not (dsssl-service? svc)))
@@ -420,6 +424,10 @@
 		(match-case args
 		   ((("hop-encoding" . "hop") ("vals" . ?vals))
 		    (string->obj vals #f ctx))
+		   ((("hop-encoding" . "json") ("vals" . ?vals))
+		    (call-with-input-string vals
+		       (lambda (pi)
+			  (map cdr (json->obj #f pi)))))
 		   (else
 		    (service-pack-cgi-arguments ctx svc
 		       (service-parse-request-get-args args)))))
