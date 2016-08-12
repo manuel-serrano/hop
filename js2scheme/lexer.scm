@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Apr  6 11:35:27 2016 (serrano)                */
+;*    Last change :  Wed Aug 10 17:24:58 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -128,6 +128,7 @@
 	  (bom_utf16_le "\xff\xfe")
 	  (bom_utf16_be "\xfe\xff")
 	  (lt (in #a013 #\Newline))
+	  (odigit (in "07"))
 	  (nonzero_digit (in ("19")))
 	  (e2 (or (: "\xe2" (out "\x80")) (: "\xe2\x80" (out "\xa8\xa9"))))
 	  (id_part_sans (or (in #a127 #a225) (in #a227 #a255) e2))
@@ -247,6 +248,9 @@
        
       ((: (uncase "0x") (+ xdigit))
        (token 'NUMBER (string->number (the-substring 2 (the-length)) 16)
+	  (the-length)))
+      ((: (uncase "0o") (+ odigit))
+       (token 'NUMBER (string->number (the-substring 2 (the-length)) 8)
 	  (the-length)))
       
       (#\{ (token 'LBRACE #\{ 1))
@@ -614,7 +618,8 @@
 			  (let* ((s (integer->utf8 n))
 				 (l (string-length s)))
 			     (blit-string! s 0 res w l)
-			     (loop (+fx j (+fx lo 1)) (+fx w l) #t))))
+			     (loop (+fx j (+fx lo 1)) (+fx w l)
+				(or (>fx n 0) (>fx lo 1))))))
 		      (else
 		       (loop (+fx j 1) w octal))))))))))
 
