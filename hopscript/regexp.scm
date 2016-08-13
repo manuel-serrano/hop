@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Aug 11 08:10:20 2016 (serrano)                */
+;*    Last change :  Sat Aug 13 07:20:01 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -159,7 +159,7 @@
 	 ((and (>=fx n #xD800) (<=fx n #xdbff))
 	  ;; MS 9feb2016: don't know what to do as PCRE cannot handle
 	  ;; "red" cells https://en.wikipedia.org/wiki/UTF-8
-	  (ucs2-string->utf8-string #xd7ff))
+	  (ucs2-string->utf8-string (make-ucs2-string 1 (integer->ucs2 #xd7ff))))
 	 (else
 	  (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
 	     (ucs2-string->utf8-string u)))))

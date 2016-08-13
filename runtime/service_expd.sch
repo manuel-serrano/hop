@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Tue Oct 20 08:07:32 2015 (serrano)                */
-;*    Copyright   :  2006-15 Manuel Serrano                            */
+;*    Last change :  Sat Aug 13 07:08:40 2016 (serrano)                */
+;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -271,15 +271,22 @@
 	      (let ((nx (let ((wh (if (and (not host) (not port))
 				      (with-hop-local svc a success fail auth header)
 				      (with-hop-remote svc a success fail args))))
-			   (if sync
-			       wh
+			   (cond
+			      (sync
+			       wh)
+			      (fail
 			       `(let ((fail ,fail))
 				   (with-handler
 				      (lambda (e)
 					 (if (procedure? fail)
 					     (fail e)
 					     (exception-notify e)))
-				      (begin ,wh #unspecified)))))))
+				      (begin ,wh #unspecified))))
+			      (else
+			       `(with-handler
+				   (lambda (e)
+				      (exception-notify e))
+				   (begin ,wh #unspecified)))))))
 		 (e (evepairify nx x) e)))
 	     ((not (keyword? (car opts)))
 	      (cond
