@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Aug 10 13:22:21 2016 (serrano)                */
+;*    Last change :  Wed Aug 10 17:24:53 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -625,7 +625,8 @@
 			  (let* ((s (integer->utf8 n))
 				 (l (string-length s)))
 			     (blit-string! s 0 res w l)
-			     (loop (+fx j (+fx lo 1)) (+fx w l) (>fx n 0)))))
+			     (loop (+fx j (+fx lo 1)) (+fx w l)
+				(or (>fx n 0) (>fx lo 1))))))
 		      (else
 		       (loop (+fx j 1) w octal))))))))))
 

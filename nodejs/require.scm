@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Jul 13 15:09:05 2016 (serrano)                */
+;*    Last change :  Fri Aug 12 16:16:34 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -98,11 +98,11 @@
 				 :filename filename
 				 :worker (js-current-worker)
 				 :header header
-				 :verbose (if (>fx (bigloo-debug) 0)
+				 :verbose (if (>=fx (bigloo-debug) 3)
 					      (hop-verbose)
 					      0)
 				 :parser 'client-program
-				 :driver (if (>fx (bigloo-debug) 0)
+				 :driver (if (>=fx (bigloo-debug) 1)
 					     (j2s-javascript-debug-driver)
 					     (j2s-javascript-driver))
 				 :site 'client
@@ -495,7 +495,7 @@
 			:mmap-src m
 			:module-main #f
 			:module-name (symbol->string mod)
-			:verbose (if (>fx (bigloo-debug) 0) (hop-verbose) 0)
+			:verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 			:debug (bigloo-debug))
 		     (close-mmap m)))))))
    
@@ -513,7 +513,7 @@
 		  :filename filename
 		  :module-main #f
 		  :module-name (symbol->string mod)
-		  :verbose (if (>fx (bigloo-debug) 0) (hop-verbose) 0)
+		  :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 		  :debug (bigloo-debug))))))
    
    (define (compile filename::bstring mod)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Wed Apr  6 16:47:30 2016 (serrano)                */
+;*    Last change :  Sat Aug 13 07:07:50 2016 (serrano)                */
 ;*    Copyright   :  2012-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -502,10 +502,10 @@
 (define-method (add-event-listener! ws::ws-server evt proc . capture)
    (with-access::ws-server ws (%mutex onmessages host port authorization %key %websocket)
       (unless (string=? evt "ready")
-	  (with-hop ((hop-event-register-service) :event evt
-		       :key %key :mode "websocket")
-	     :host host :port port :authorization authorization
-	     #f))
+	 (with-hop ((hop-event-register-service) :event evt
+		      :key %key :mode "websocket")
+	    :host host :port port :authorization authorization
+	    #f))
       (synchronize %mutex
 	 (let ((old (assoc evt onmessages)))
 	    (if (pair? old)

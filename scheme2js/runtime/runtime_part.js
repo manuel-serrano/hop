@@ -2257,15 +2257,15 @@ function sc_VectorToWriteString() {
 }
 
 if( "defineProperty" in Object ) {
-   Object.defineProperty( sc_Vector, "sc_toWriteOrDisplayString", {
+   Object.defineProperty( sc_Vector.prototype, "sc_toWriteOrDisplayString", {
       value: sc_VectorToWriteOrDisplayString,
       enumerable: false
    } );
-   Object.defineProperty( sc_Vector, "sc_toDisplayString", {
+   Object.defineProperty( sc_Vector.prototype, "sc_toDisplayString", {
       value: sc_VectorToDisplayString,
       enumerable: false
    } );
-   Object.defineProperty( sc_Vector, "sc_toWriteString", {
+   Object.defineProperty( sc_Vector.prototype, "sc_toWriteString", {
       value: sc_VectorToWriteString,
       enumerable: false
    } );
@@ -3405,11 +3405,13 @@ function sc_jsCall(o, fun) {
            (peephole (jsMethodCall)))
 */
 function sc_jsMethodCall(o, field) {
-    var args = new Array();
-    for (var i = 2; i < arguments.length; i++)
-	args[i-2] = arguments[i];
-    return o[field].apply(o, args);
+   return o[ field ].apply( o, Array.prototype.slice.call( arguments, 2 ) );
 }
+      
+/*     var args = new Array();                                         */
+/*     for (var i = 2; i < arguments.length; i++)                      */
+/* 	args[i-2] = arguments[i];                                      */
+/*     return o[field].apply(o, args);                                 */
 
 /*** META ((export new js-new)
            (arity -2)
