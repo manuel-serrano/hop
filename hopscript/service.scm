@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Jun  1 19:23:21 2016 (serrano)                */
+;*    Last change :  Fri Aug 12 10:29:02 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -747,7 +747,7 @@
 	     ;; old dsssl protocol (<=rc7)
 	     args)
 	    (else
-	     ;; new varargs protocol
+	     ;; hop-encoding:hop, new varargs protocol
 	     (let ((obj (js-new0 ctx js-object))
 		   (vecks '()))
 		;; first step

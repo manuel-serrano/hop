@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Thu Jul  7 15:10:04 2016 (serrano)                */
+;*    Last change :  Sun Aug 14 07:01:07 2016 (serrano)                */
 ;*    Copyright   :  2011-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -117,9 +117,10 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-restart ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Lock already acquired                                            */
 ;*---------------------------------------------------------------------*/
 (define (zeroconf-restart zc::zeroconf dummy::zeroconf-dummy)
-   (zeroconf-backend-start zc)
    (set! *zeroconf-started* zc)
    (with-access::zeroconf-dummy dummy (publishers subscribers)
       (tprint "ZEROCONF-RESTART zc=" (typeof zc)
@@ -132,7 +133,9 @@
 		   (apply zeroconf-backend-add-service-event-listener! zc s))
 	 subscribers)
       (set! publishers '())
-      (set! subscribers '())))
+      (set! subscribers '()))
+   ;; start the backend
+   (zeroconf-backend-start zc))
 
 ;*---------------------------------------------------------------------*/
 ;*    zeroconf-backend-start ...                                       */

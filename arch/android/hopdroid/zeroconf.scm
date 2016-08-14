@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 22 11:41:40 2011                          */
-;*    Last change :  Mon Jul 18 07:00:23 2016 (serrano)                */
+;*    Last change :  Sun Aug 14 07:04:26 2016 (serrano)                */
 ;*    Copyright   :  2011-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android zerconf support                                          */
@@ -121,10 +121,14 @@
 		       (old o)
 		       (proc o)))))))
       (else
+       (when (zeroconf-debug)
+	  (tprint "ADDING LISTENER "
+	     (string-append "zeroconf-add-service-" event)))
        (with-access::androidzeroconf o (plugin android)
 	  (when plugin
 	     (android-send-command android plugin #\t event)
-	     (add-event-listener! android (string-append "zeroconf-add-service-" event)
+	     (add-event-listener! android
+		   (string-append "zeroconf-add-service-" event)
 		(lambda (e::event)
 		   (with-access::event e (value)
 		      (when (zeroconf-debug)

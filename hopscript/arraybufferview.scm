@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/arraybufferview.scm     */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/arraybufferview.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Oct  9 07:57:21 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Sat Aug 13 07:26:06 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -483,7 +483,7 @@
 		    (let ((len (js-touint32 (car items) %this)))
 		       (js-create-from-arraybuffer this
 			  (js-new %this (js-get %this 'ArrayBuffer %this)
-			     (uint32->fixnum (*u32 bp len)))
+			     (uint32->fixnum (*u32 (fixnum->uint32 bp) len)))
 			  #u32:0 len)))))
 	       ((isa? (car items) JsArrayBuffer)
 		(with-access::JsArrayBuffer (car items) (data)
@@ -568,7 +568,7 @@
 					       extensible elements)
 		  (set! cmap #f)
 		  (set! properties '())
-		  (set! bpe bp)
+		  (set! bpe (fixnum->uint32 bp))
 		  (set! extensible #t)
 		  (set! elements '#())
 		  (set! __proto__ (js-get constructor 'prototype %this)))

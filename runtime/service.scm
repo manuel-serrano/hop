@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sat Jun 11 06:54:35 2016 (serrano)                */
+;*    Last change :  Fri Aug 12 13:29:51 2016 (serrano)                */
 ;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -383,6 +383,20 @@
       (and (pair? args) (eq? (car args) #!key))))
 
 ;*---------------------------------------------------------------------*/
+;*    json-encoded->obj ...                                            */
+;*---------------------------------------------------------------------*/
+(define (json-encoded->obj vals)
+   (call-with-input-string vals
+      (lambda (pi)
+	 (let ((o (json->obj #f pi)))
+	    (if (vector? o)
+		;; some clients serialize arguments as a vector
+		;; (e.g., espruino)
+		(vector->list o)
+		;; others (nodejs) as an object
+		(map cdr o))))))
+
+;*---------------------------------------------------------------------*/
 ;*    service-parse-request-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-generic (service-parse-request-get svc::hop-service req::http-request)
@@ -393,6 +407,8 @@
 		(match-case args
 		   ((("hop-encoding" . "hop") ("vals" . ?vals))
 		    (string->obj vals #f ctx))
+		   ((("hop-encoding" . "json") ("vals" . ?vals))
+		    (json-encoded->obj vals))
 		   (else
 		    (cond
 		       ((and ctx (not (dsssl-service? svc)))
@@ -420,6 +436,8 @@
 		(match-case args
 		   ((("hop-encoding" . "hop") ("vals" . ?vals))
 		    (string->obj vals #f ctx))
+		   ((("hop-encoding" . "json") ("vals" . ?vals))
+		    (json-encoded->obj vals))
 		   (else
 		    (service-pack-cgi-arguments ctx svc
 		       (service-parse-request-get-args args)))))

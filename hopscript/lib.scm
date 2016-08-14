@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Jun 30 09:32:52 2016 (serrano)                */
+;*    Last change :  Fri Aug 12 11:22:47 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
