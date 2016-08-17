@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Mar  1 07:57:50 2016 (serrano)                */
+;*    Last change :  Wed Aug 17 08:31:40 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -102,6 +102,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (xml-primitive-value obj::JsObject)
    (js-jsobject->plist obj (js-initial-global-object)))
+
+;*---------------------------------------------------------------------*/
+;*    obj->json ::JsObject ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (obj->json obj::JsObject op::output-port)
+   (let ((stringify (js-json-stringify (js-initial-global-object))))
+      (display (stringify (js-undefined) obj (js-undefined) 1) op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsGlobalObject ...                                   */

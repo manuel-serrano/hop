@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Thu Dec 24 07:44:02 2015 (serrano)                */
-;*    Copyright   :  2012-15 Manuel Serrano                            */
+;*    Last change :  Wed Aug 17 07:19:47 2016 (serrano)                */
+;*    Copyright   :  2012-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
 ;*=====================================================================*/
@@ -293,7 +293,7 @@
 	     (subprotocol (websocket-subprotocol protocol clientprotocol)))
 	 ;; see http_response.scm for the source code that actually sends
 	 ;; the bytes of the response to the client.
-	 (with-trace 'websocket "ws-register"
+	 (with-trace 'websocket "websocket-server-response"
 	    (trace-item "version="
 	       version)
 	    (trace-item "origin="
@@ -502,10 +502,10 @@
 (define-method (add-event-listener! ws::ws-server evt proc . capture)
    (with-access::ws-server ws (%mutex onmessages host port authorization %key %websocket)
       (unless (string=? evt "ready")
-	  (with-hop ((hop-event-register-service) :event evt
-		       :key %key :mode "websocket")
-	     :host host :port port :authorization authorization
-	     #f))
+	 (with-hop ((hop-event-register-service) :event evt
+		      :key %key :mode "websocket")
+	    :host host :port port :authorization authorization
+	    #f))
       (synchronize %mutex
 	 (let ((old (assoc evt onmessages)))
 	    (if (pair? old)

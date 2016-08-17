@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Sat Sep 19 20:23:22 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Wed Aug 17 07:27:15 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
 ;*=====================================================================*/
@@ -195,9 +195,11 @@
    (with-access::http-request req (abspath query method timeout header)
       (cond
 	 ((string=? query (hop-scm-compile-suffix))
-	  (clientc-response req abspath abspath))
+	  (clientc-response req abspath abspath (hop-scm-compile-suffix)))
 	 ((string-prefix? "js=" query)
-	  (clientc-response req abspath (substring query 3)))
+	  (clientc-response req abspath (substring query 3) "js"))
+	 ((string-prefix? "es=" query)
+	  (clientc-response req abspath (substring query 3) "es"))
 	 ((string=? query (hop-hss-compile-suffix))
 	  (hss-response req abspath))
 	 (else

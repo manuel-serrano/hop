@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Aug 12 11:42:08 2016 (serrano)                */
+;*    Last change :  Wed Aug 17 07:20:45 2016 (serrano)                */
 ;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -383,6 +383,20 @@
       (and (pair? args) (eq? (car args) #!key))))
 
 ;*---------------------------------------------------------------------*/
+;*    json-encoded->obj ...                                            */
+;*---------------------------------------------------------------------*/
+(define (json-encoded->obj vals)
+   (call-with-input-string vals
+      (lambda (pi)
+	 (let ((o (json->obj #f pi)))
+	    (if (vector? o)
+		;; some clients serialize arguments as a vector
+		;; (e.g., espruino)
+		(vector->list o)
+		;; others (nodejs) as an object
+		(map cdr o))))))
+
+;*---------------------------------------------------------------------*/
 ;*    service-parse-request-get ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-generic (service-parse-request-get svc::hop-service req::http-request)
@@ -394,9 +408,7 @@
 		   ((("hop-encoding" . "hop") ("vals" . ?vals))
 		    (string->obj vals #f ctx))
 		   ((("hop-encoding" . "json") ("vals" . ?vals))
-		    (call-with-input-string vals
-		       (lambda (pi)
-			  (json->obj #f pi))))
+		    (json-encoded->obj vals))
 		   (else
 		    (cond
 		       ((and ctx (not (dsssl-service? svc)))
@@ -425,9 +437,7 @@
 		   ((("hop-encoding" . "hop") ("vals" . ?vals))
 		    (string->obj vals #f ctx))
 		   ((("hop-encoding" . "json") ("vals" . ?vals))
-		    (call-with-input-string vals
-		       (lambda (pi)
-			  (map cdr (json->obj #f pi)))))
+		    (json-encoded->obj vals))
 		   (else
 		    (service-pack-cgi-arguments ctx svc
 		       (service-parse-request-get-args args)))))

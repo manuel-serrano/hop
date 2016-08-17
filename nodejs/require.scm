@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Apr 19 11:50:06 2016 (serrano)                */
+;*    Last change :  Wed Aug 17 08:09:11 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -27,7 +27,7 @@
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
-	   (nodejs-compile-file ::bstring ::bstring ::bstring)
+	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj ::symbol)
 	   (nodejs-resolve-extend-path! ::pair-nil)
 	   (nodejs-new-global-object::JsGlobalObject)
@@ -39,16 +39,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file ifile::bstring name::bstring ofile::bstring)
+(define (nodejs-compile-file ifile::bstring name::bstring ofile::bstring query)
    (let* ((srcmap (when (>fx (bigloo-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
 		  (current-output-port)
 		  (open-output-file ofile)))
 	  (tree (unwind-protect
-		    (module->javascript ifile name op #f #f srcmap)
-		    (unless (eq? op (current-output-port))
-		       (close-output-port op)))))
+		   (module->javascript ifile name op #f #f srcmap query)
+		   (unless (eq? op (current-output-port))
+		      (close-output-port op)))))
       (when (>fx (bigloo-debug) 0)
 	 (call-with-output-file srcmap
 	    (lambda (p)
@@ -63,7 +63,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (module->javascript filename::bstring id op compile isexpr srcmap)
+(define (module->javascript filename::bstring id op compile isexpr srcmap query)
    
    (define (js-paths vec)
       (let ((len (-fx (vector-length vec) 1)))
@@ -76,27 +76,56 @@
 		     (display "'" p)
 		     (if (<fx i len) (display ", " p))
 		     (loop (+fx i 1))))))))
+
+   (define (init-dummy-module! this worker)
+      (with-access::JsGlobalObject this (js-object)
+	 (let ((mod (js-new0 this js-object))
+	       (exp (js-new0 this js-object)))
+	    (js-put! mod 'exports this #f this)
+	    (js-put! mod 'filename (js-string->jsstring filename) #f this)
+	    (js-put! this 'global this #f this)
+	    (js-put! this 'GLOBAL this #f this)
+	    (js-put! this 'module mod #f this)
+	    (js-put! this 'exports exp #f this)
+	    (js-put! this '__filename
+	       (js-string->jsstring filename) #f this)
+	    (js-put! this '__dirname
+	       (js-string->jsstring (dirname filename)) #f this)
+	    (js-put! this 'require
+	       (nodejs-require worker this mod 'hopscript) #f this)
+	    (js-put! this 'process
+	       (nodejs-process worker this) #f this)
+	    (js-put! this 'console
+	       (nodejs-require-core "console" worker this) #f this))))
 		  
-   (let ((this (nodejs-new-global-object)))
-      (fprintf op (hop-boot))
-      (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
-      (flush-output-port op)
-      (let ((header (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
-		       id filename
-		       (js-paths (nodejs-filename->paths filename))
-		       filename)))
+   (let ((this (nodejs-new-global-object))
+	 (worker (js-current-worker)))
+      (init-dummy-module! this worker)
+      (let ((header (unless (string=? query "es")
+		       (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
+			  id filename
+			  (js-paths (nodejs-filename->paths filename))
+			  filename))))
+	 (when header
+	    (fprintf op (hop-boot))
+	    (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
+	    (flush-output-port op))
 	 (let ((offset (output-port-position op)))
 	    (call-with-input-file filename
 	       (lambda (in)
+		  (debug-compile-trace filename)
 		  (let ((tree (j2s-compile in
 				 :%this this
 				 :source filename
 				 :resource (dirname filename)
 				 :filename filename
-				 :worker (js-current-worker)
+				 :worker worker
 				 :header header
+				 :verbose (if (>=fx (bigloo-debug) 3)
+					      (hop-verbose)
+					      0)
 				 :parser 'client-program
-				 :driver (if (>fx (bigloo-debug) 0)
+				 :driver (if (>=fx (bigloo-debug) 1)
 					     (j2s-javascript-debug-driver)
 					     (j2s-javascript-driver))
 				 :site 'client
@@ -107,11 +136,12 @@
 				     ;; for sourcemap generation
 				     (display exp op)))
 			tree)
-		     (display "\nreturn module.exports;}\n" op)
-		     (when srcmap
-			(fprintf op "\n\nhop_source_mapping_url( ~s, \"~a\" );\n"
-			   filename srcmap)
-			(fprintf op "\n//# sourceMappingURL=~a\n" srcmap))
+		     (when header
+			(display "\nreturn module.exports;}\n" op)
+			(when srcmap
+			   (fprintf op "\n\nhop_source_mapping_url(~s, \"~a\");\n"
+			      filename srcmap)
+			   (fprintf op "\n//# sourceMappingURL=~a\n" srcmap)))
 		     ;; first element of the tree is a position offset
 		     ;; see sourcemap generation
 		     (cons offset tree))))))))
@@ -253,16 +283,20 @@
    (define head
       (js-make-function %this
 	 (lambda (this attrs . nodes)
-	    (apply <HEAD> :idiom "javascript" :context %scope
-	       (<SCRIPT>
-		  (format "hop[ '%root' ] = ~s"
-		     (dirname
-			(js-jsstring->string (js-get %module 'filename %scope)))))
-	       (when (isa? attrs JsObject)
-		  (js-object->keyword-arguments* attrs %this))
-	       (filter (lambda (n)
-			  (or (isa? n xml-tilde) (isa? n xml-markup)))
-		  nodes)))
+	    (let ((rts (if (isa? attrs JsObject)
+			   (js-get attrs 'rts %scope)
+			   #t)))
+	       (apply <HEAD> :idiom "javascript" :context %scope
+		  (unless (eq? rts #f)
+		     (<SCRIPT>
+			(format "hop[ '%root' ] = ~s"
+			   (dirname
+			      (js-jsstring->string (js-get %module 'filename %scope))))))
+		  (when (isa? attrs JsObject)
+		     (js-object->keyword-arguments* attrs %this))
+		  (filter (lambda (n)
+			     (or (isa? n xml-tilde) (isa? n xml-markup)))
+		     nodes))))
 	 -1 "HEAD"))
 
    head)
@@ -455,6 +489,15 @@
 (define compile-table (make-hashtable))
 
 ;*---------------------------------------------------------------------*/
+;*    debug-compile-trace ...                                          */
+;*---------------------------------------------------------------------*/
+(define (debug-compile-trace filename)
+   (when (>=fx (bigloo-debug) 4)
+      (display "** " (current-error-port))
+      (display filename (current-error-port))
+      (newline (current-error-port))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile filename::bstring #!optional lang)
@@ -464,6 +507,7 @@
 	 (trace-item "filename=" filename)
 	 (call-with-input-file filename
 	    (lambda (in)
+	       (debug-compile-trace filename)
 	       (let ((m (open-mmap filename read: #t :write #f)))
 		  (unwind-protect
 		     (j2s-compile in
@@ -473,6 +517,7 @@
 			:mmap-src m
 			:module-main #f
 			:module-name (symbol->string mod)
+			:verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 			:debug (bigloo-debug))
 		     (close-mmap m)))))))
    
@@ -482,6 +527,7 @@
 	 (trace-item "filename=" filename)
 	 (call-with-input-file url
 	    (lambda (in)
+	       (debug-compile-trace filename)
 	       (input-port-name-set! in url)
 	       (j2s-compile in
 		  :driver (nodejs-driver)
@@ -489,6 +535,7 @@
 		  :filename filename
 		  :module-main #f
 		  :module-name (symbol->string mod)
+		  :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 		  :debug (bigloo-debug))))))
    
    (define (compile filename::bstring mod)

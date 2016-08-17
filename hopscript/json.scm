@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Sep 30 09:23:55 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Wed Aug 17 08:31:39 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -30,6 +30,7 @@
 	   __hopscript_array)
 
    (export (js-init-json! ::JsObject)
+	   (js-json-stringify ::JsGlobalObject)
 	   (js-json-parser ::input-port ::obj ::bool ::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/

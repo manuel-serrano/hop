@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Fri Dec 18 08:28:14 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Wed Aug 17 07:26:51 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -700,7 +700,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
    (define (inl src)
       (let ((body (cond
 		     ((member (suffix src) (hop-client-script-suffixes))
-		      (get-clientc-compiled-file src src))
+		      (get-clientc-compiled-file src src (suffix src)))
 		     (else
 		      (with-input-from-file src read-string)))))
 	 (if body
@@ -746,7 +746,7 @@ function hop_realm() {return \"" (hop-realm) "\";}")))
    (define (inl src)
       (let ((body (cond
 		     ((member (suffix src) (hop-client-script-suffixes))
-		      (get-clientc-compiled-file src mod))
+		      (get-clientc-compiled-file src mod (suffix src)))
 		     (else
 		      (with-input-from-file src read-string)))))
 	 (if body

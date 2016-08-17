@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Sat Nov 28 11:10:46 2015 (serrano)                */
-;*    Copyright   :  2009-15 Manuel Serrano                            */
+;*    Last change :  Tue Aug 16 10:21:16 2016 (serrano)                */
+;*    Copyright   :  2009-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -64,8 +64,8 @@
 	    (current-module-clientc-import)
 	    
 	    (clientc-cached-response ::bstring)
-	    (clientc-response::%http-response ::http-request ::bstring ::bstring)
-	    (get-clientc-compiled-file ::bstring ::bstring)
+	    (clientc-response::%http-response ::http-request ::bstring ::bstring ::obj)
+	    (get-clientc-compiled-file ::bstring ::bstring ::obj)
 	    (clientc-resolve-filename ::bstring ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -137,7 +137,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    clientc-response ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (clientc-response req path name)
+(define (clientc-response req path name query)
    (synchronize clientc-mutex
       (with-access::http-request req (method header)
 	 (let ((ce (cache-get clientc-cache path))
@@ -169,7 +169,7 @@
 			 (if (isa? ce cache-entry)
 			     (with-access::cache-entry ce (value signature)
 				;; override the cache file
-				(compile-client path name value '())
+				(compile-client path name value query)
 				;; sent the file response
 				(instantiate::http-response-file
 				   (charset (hop-locale))
@@ -185,17 +185,17 @@
 				(bodyp (eq? method 'GET))
 				(body (with-output-to-string
 					 (lambda ()
-					    (compile-client path name "-" '())))))))
+					    (compile-client path name "-" query)))))))
 		      (eval-module-set! m))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-client ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (compile-client path name output env)
+(define (compile-client path name output query)
    (with-access::clientc (hop-clientc) (filec jsc)
       (if (string-suffix? ".js" path)
-	  (jsc path name output)
-	  (filec path output env))))
+	  (jsc path name output query)
+	  (filec path output '()))))
    
 ;*---------------------------------------------------------------------*/
 ;*    clientc-cached-response ...                                      */
@@ -216,9 +216,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    get-clientc-compiled-file ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (get-clientc-compiled-file path name)
+(define (get-clientc-compiled-file path name query)
    (let* ((req dummy-request)
-	  (rep (clientc-response req path name)))
+	  (rep (clientc-response req path name query)))
       (cond
 	 ((isa? rep http-response-file)
 	  (with-access::http-response-file rep (file)

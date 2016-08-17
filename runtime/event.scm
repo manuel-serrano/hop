@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu Dec 24 07:34:16 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Wed Aug 17 07:19:20 2016 (serrano)                */
+;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -550,7 +550,8 @@
 	 ;; the bytes of the response to the client.
 	 (with-trace 'event "ws-register-new-connection"
 	    (trace-item "protocol-version=" version)
-	    (let ((resp (websocket-server-response req key)))
+	    (let ((resp (websocket-server-response req key :protocol '("json"))))
+	       (trace-item "resp=" (typeof resp))
 	       ;; register the websocket
 	       (synchronize *event-mutex*
 		  (set! *websocket-response-list*
@@ -847,11 +848,11 @@
 				    content))))))))
    
    (define (websocket-register-event! req key name)
-      (with-trace 'event "ws-register-event!"
+      (with-trace 'event "websocket-register-event!"
 	 (let ((c (assq key *websocket-response-list*)))
 	    (trace-item "key=" key)
 	    (trace-item "name=" name)
-	    (trace-item "c=" c)
+	    ;;(trace-item "c=" c)
 	    (if (pair? c)
 		(let ((resp (cdr c)))
 		   (hashtable-update! *websocket-socket-table*
@@ -859,33 +860,38 @@
 		      (lambda (l) (cons resp l))
 		      (list resp))
 		   (instantiate::http-response-string))
-		(error "server-event-register" "Illegal websocket entry" key)))))
+		(begin
+		   (trace-item "keylist=" *websocket-response-list*)
+		   (error "server-event-register" "Illegal websocket entry" key))))))
 
    (with-trace 'event "ws-register-event!"
       (synchronize *event-mutex*
-	 (trace-item "event=" event)
+	 (trace-item "event=" (url-decode event))
 	 (trace-item "key=" key)
 	 (trace-item "mode=" mode)
 	 (trace-item "padding=" padding)
 	 (if (<fx *clients-number* (hop-event-max-clients))
-	     (let ((key (string->symbol key)))
-		;; set an output timeout on the socket
-		(with-access::http-request req (socket) 
-		   (output-timeout-set!
-		      (socket-output socket) (hop-connection-timeout)))
-		;; register the client
-		(let ((r (cond
-			    ((string=? mode "xhr-multipart")
-			     (multipart-register-event! req key event))
-			    ((string=? mode "websocket")
-			     (websocket-register-event! req key event))
-			    ((string=? mode "flash")
-			     (flash-register-event! req key event))
-			    (else
-			     (ajax-register-event! req key event padding)))))
-		   ;; cleanup the current connections
-		   (server-event-gc)
-		   r))
+	     (if (string? key)
+		 (let ((key (string->symbol key))
+		       (event (url-decode! event)))
+		    ;; set an output timeout on the socket
+		    (with-access::http-request req (socket) 
+		       (output-timeout-set!
+			  (socket-output socket) (hop-connection-timeout)))
+		    ;; register the client
+		    (let ((r (cond
+				((string=? mode "xhr-multipart")
+				 (multipart-register-event! req key event))
+				((string=? mode "websocket")
+				 (websocket-register-event! req key event))
+				((string=? mode "flash")
+				 (flash-register-event! req key event))
+				(else
+				 (ajax-register-event! req key event padding)))))
+		       ;; cleanup the current connections
+		       (server-event-gc)
+		       r))
+		 (http-service-unavailable event))
 	     (http-service-unavailable event)))))
 
 ;*---------------------------------------------------------------------*/
@@ -903,9 +909,9 @@
 	 (when (pair? c)
 	    (let ((req (cadr c)))
 	       (hashtable-update! *flash-socket-table*
-				  event
-				  (lambda (l) (delete! req l))
-				  '())
+		  event
+		  (lambda (l) (delete! req l))
+		  '())
 	       ;; Ping the client to check it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
@@ -916,15 +922,15 @@
 	 (when (pair? c)
 	    (let ((req (cadr c)))
 	       (hashtable-update! *multipart-socket-table*
-				  event
-				  (lambda (l) (delete! req l))
-				  '())
+		  event
+		  (lambda (l) (delete! req l))
+		  '())
 	       ;; Ping the client to check it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (multipart-signal req
-		  (multipart-value *ping* #unspecified))))))
-
+		  (envelope-value *ping* #unspecified))))))
+   
    (define (unregister-websocket-event! event key)
       (let ((c (assq (string->symbol key) *websocket-response-list*)))
 	 (when (pair? c)
@@ -937,14 +943,15 @@
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (websocket-signal resp
-		  (websocket-value *ping* #unspecified))))))
+		  (envelope-value *ping* #unspecified))))))
    
    (synchronize *event-mutex*
-      (unregister-websocket-event! event key)
-      (unregister-multipart-event! event key)
-      (unregister-ajax-event! event key)
-      (unregister-flash-event! event key)
-      #f))
+      (let ((event (url-decode! event)))
+	 (unregister-websocket-event! event key)
+	 (unregister-multipart-event! event key)
+	 (unregister-ajax-event! event key)
+	 (unregister-flash-event! event key)
+	 #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    flash-close-request! ...                                         */
@@ -1218,38 +1225,41 @@
 ;*    envelope-value ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (envelope-value::bstring name value)
-   (cond
-      ((isa? value xml)
-       (format "<x name='~a'>~a</x>" name (xml->string value (hop-xml-backend))))
-      ((string? value)
-       (format "<s name='~a'>~a</s>" name (url-path-encode value)))
-      ((integer? value)
-       (format "<i name='~a'>~a</i>" name value))
-      ((real? value)
-       (format "<f name='~a'>~a</f>" name value))
-      (else
-       (let ((op (open-output-string)))
-	  (fprintf op "<j name='~a'><![CDATA[" name)
-	  (display (url-path-encode (obj->string value 'hop-client)) op)
-	  (display "]]></j>" op)
-	  (close-output-port op)))))
+   (let ((n (url-path-encode name)))
+      (cond
+	 ((isa? value xml)
+	  (format "<x name='~a'>~a</x>" n (xml->string value (hop-xml-backend))))
+	 ((string? value)
+	  (format "<s name='~a'>~a</s>" n (url-path-encode value)))
+	 ((integer? value)
+	  (format "<i name='~a'>~a</i>" n value))
+	 ((real? value)
+	  (format "<f name='~a'>~a</f>" n value))
+	 (else
+	  (let ((op (open-output-string)))
+	     (fprintf op "<j name='~a'><![CDATA[" n)
+	     (display (url-path-encode (obj->string value 'hop-client)) op)
+	     (display "]]></j>" op)
+	     (close-output-port op))))))
 
 ;*---------------------------------------------------------------------*/
-;*    multipart-value ...                                              */
+;*    envelope-json-value ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (multipart-value::bstring name value)
-   (envelope-value name value))
-   
+(define (envelope-json-value name value)
+   (let ((n (url-path-encode name)))
+      (let ((op (open-output-string)))
+	 (fprintf op "<o name='~a'><![CDATA[" n)
+	 (let ((json (call-with-output-string
+			(lambda (op)
+			   (obj->json value op)))))
+	    (display (url-path-encode json) op)
+	    (display "]]></o>" op)
+	    (close-output-port op)))))
+
 ;*---------------------------------------------------------------------*/
-;*    websocket-value ...                                              */
+;*    js-make-flash-signal-value ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (websocket-value::bstring name value)
-   (envelope-value name value))
-   
-;*---------------------------------------------------------------------*/
-;*    js-make-signal-value ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-make-signal-value value)
+(define (js-make-flash-signal-value value)
    (cond
       ((isa? value xml)
        (xml->string value (hop-xml-backend)))
@@ -1315,7 +1325,7 @@
        name
        (lambda (l)
 	  (when (pair? l)
-	     (let ((val (js-make-signal-value value)))
+	     (let ((val (js-make-flash-signal-value value)))
 		(flash-signal-value (car l) name val)
 		#t)))))
 
@@ -1325,7 +1335,7 @@
        name
        (lambda (l)
 	  (when (pair? l)
-	     (let ((val (multipart-value name value)))
+	     (let ((val (envelope-value name value)))
 		(when debug-multipart
 		   (tprint "MULTIPART SIGNAL: " name))
 		(multipart-signal (car l) val)
@@ -1333,13 +1343,17 @@
 
    (define (websocket-event-signal! name value)
       (for-each-socket
-       *websocket-socket-table*
-       name
-       (lambda (l)
-	  (when (pair? l)
-	     (let ((val (websocket-value name value)))
-		(websocket-signal (car l) val)
-		#t)))))
+	 *websocket-socket-table*
+	 name
+	 (lambda (l)
+	    (when (pair? l)
+	       (with-access::http-response-websocket (car l) (protocol)
+		  (let ((val (if (and (string? protocol)
+				      (string=? protocol "json"))
+				 (envelope-json-value name value)
+				 (envelope-value name value))))
+		     (websocket-signal (car l) val)
+		     #t))))))
 
    (set! hop-signal-id (-fx hop-signal-id 1))
    (hop-verb 2 (hop-color hop-signal-id hop-signal-id " SIGNAL")
@@ -1398,7 +1412,7 @@
 		(ajax-find-connections-by-name name)))
    
    (define (flash-event-broadcast! name value)
-      (let ((val (js-make-signal-value value)))
+      (let ((val (js-make-flash-signal-value value)))
 	 (for-each-socket
 	    *flash-socket-table*
 	    name
@@ -1408,6 +1422,17 @@
 			       (flash-signal-value req name val))
 		     l))))))
 
+   (define jsvalue #f)
+   (define jsonvalue #f)
+   
+   (define (hopjs-value name value)
+      (unless jsvalue (set! jsvalue (envelope-value name value)))
+      jsvalue)
+      
+   (define (json-value name value)
+      (unless jsonvalue (set! jsonvalue (envelope-json-value name value)))
+      jsonvalue)
+      
    (define (websocket-event-broadcast! name value)
       (with-trace 'event "ws-event-broadcast!"
 	 (trace-item "name=" name)
@@ -1415,27 +1440,31 @@
 	    (if (or (string? value) (symbol? value) (number? value))
 		value
 		(typeof value)))
-	 (let ((val (websocket-value name value)))
-	    (for-each-socket
-	       *websocket-socket-table*
-	       name
-	       (lambda (l)
-		  (with-trace 'event "ws-event-broadcast"
-		     (trace-item "name=" name)
-		     (trace-item "# clients=" (length l))
-		     (trace-item "cients="
-			(map (lambda (resp)
-				(with-access::http-response-websocket resp (request)
-				   (with-access::http-request request (socket)
-				      socket)))
-			   l))
-		     (when (pair? l)
-			(for-each (lambda (resp)
-				     (websocket-signal resp val))
-			   l))))))))
+	 (for-each-socket
+	    *websocket-socket-table*
+	    name
+	    (lambda (l)
+	       (with-trace 'event "ws-event-broadcast"
+		  (trace-item "name=" name)
+		  (trace-item "# clients=" (length l))
+		  (trace-item "cients="
+		     (map (lambda (resp)
+			     (with-access::http-response-websocket resp (request)
+				(with-access::http-request request (socket)
+				   socket)))
+			l))
+		  (when (pair? l)
+		     (for-each (lambda (resp)
+				  (with-access::http-response-websocket resp (protocol)
+				     (websocket-signal resp
+					(if (and (string? protocol)
+						 (string=? protocol "json"))
+					    (json-value name value)
+					    (hopjs-value name value)))))
+			l)))))))
        
    (define (multipart-event-broadcast! name value)
-      (let ((val (multipart-value name value)))
+      (let ((val (envelope-value name value)))
 	 (for-each-socket
 	    *multipart-socket-table*
 	    name
