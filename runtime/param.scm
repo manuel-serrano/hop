@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed May 25 08:38:49 2016 (serrano)                */
+;*    Last change :  Sun Aug 14 19:08:46 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -275,6 +275,9 @@
 
 	    (hop-remanent-timeout::int) 
 	    (hop-remanent-timeout-set! ::int)
+
+	    (hop-senfile-timeout::int)
+	    (hop-senfile-timeout-set! ::int)
 
 	    (hop-weblets::pair-nil)
 	    (hop-weblets-set! ::pair-nil)
@@ -1195,6 +1198,9 @@
 
 (define-parameter hop-remanent-timeout
    (*fx 1000 30))
+
+(define-parameter hop-senfile-timeout
+   (*fx 1000 120))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-weblets ...                                                  */

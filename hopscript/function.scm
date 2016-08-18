@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Apr 29 08:37:20 2016 (serrano)                */
+;*    Last change :  Wed Aug 17 13:01:35 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -16,7 +16,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_function
    
-   (library hop)
+   (library hop js2scheme)
    
    (include "stringliteral.sch")
    
@@ -97,6 +97,12 @@
    (lambda (x e)
       (when (epair? x) `',(cer x))))
 	 
+;*---------------------------------------------------------------------*/
+;*    j2s-js-literal ::JsFunction ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js-literal o::JsFunction)
+   (error "js" "Cannot compile function" o))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-init-function! ...                                            */
 ;*    -------------------------------------------------------------    */

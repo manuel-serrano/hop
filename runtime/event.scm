@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Fri Apr 29 10:53:03 2016 (serrano)                */
+;*    Last change :  Wed Aug 17 07:19:21 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -550,7 +550,7 @@
 	 ;; the bytes of the response to the client.
 	 (with-trace 'event "ws-register-new-connection"
 	    (trace-item "protocol-version=" version)
-	    (let ((resp (websocket-server-response req key)))
+	    (let ((resp (websocket-server-response req key :protocol '("json"))))
 	       (trace-item "resp=" (typeof resp))
 	       ;; register the websocket
 	       (synchronize *event-mutex*
@@ -559,8 +559,7 @@
 			*websocket-response-list*))
 		  (trace-item "key=" key)
 		  (trace-item "socket=" socket )
-		  ;;(trace-item "connected clients=" *websocket-response-list*)
-		  )
+		  (trace-item "connected clients=" *websocket-response-list*))
 	       resp)))))
 
 ;*---------------------------------------------------------------------*/
@@ -930,7 +929,7 @@
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (multipart-signal req
-		  (multipart-value *ping* #unspecified))))))
+		  (envelope-value *ping* #unspecified))))))
    
    (define (unregister-websocket-event! event key)
       (let ((c (assq (string->symbol key) *websocket-response-list*)))
@@ -944,7 +943,7 @@
 	       ;; no longer exists, an error will be raised and the client
 	       ;; will be removed from the tables.
 	       (websocket-signal resp
-		  (websocket-value *ping* #unspecified))))))
+		  (envelope-value *ping* #unspecified))))))
    
    (synchronize *event-mutex*
       (let ((event (url-decode! event)))
@@ -1244,21 +1243,23 @@
 	     (close-output-port op))))))
 
 ;*---------------------------------------------------------------------*/
-;*    multipart-value ...                                              */
+;*    envelope-json-value ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (multipart-value::bstring name value)
-   (envelope-value name value))
-   
+(define (envelope-json-value name value)
+   (let ((n (url-path-encode name)))
+      (let ((op (open-output-string)))
+	 (fprintf op "<o name='~a'><![CDATA[" n)
+	 (let ((json (call-with-output-string
+			(lambda (op)
+			   (obj->json value op)))))
+	    (display (url-path-encode json) op)
+	    (display "]]></o>" op)
+	    (close-output-port op)))))
+
 ;*---------------------------------------------------------------------*/
-;*    websocket-value ...                                              */
+;*    js-make-flash-signal-value ...                                   */
 ;*---------------------------------------------------------------------*/
-(define (websocket-value::bstring name value)
-   (envelope-value name value))
-   
-;*---------------------------------------------------------------------*/
-;*    js-make-signal-value ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-make-signal-value value)
+(define (js-make-flash-signal-value value)
    (cond
       ((isa? value xml)
        (xml->string value (hop-xml-backend)))
@@ -1324,7 +1325,7 @@
        name
        (lambda (l)
 	  (when (pair? l)
-	     (let ((val (js-make-signal-value value)))
+	     (let ((val (js-make-flash-signal-value value)))
 		(flash-signal-value (car l) name val)
 		#t)))))
 
@@ -1334,7 +1335,7 @@
        name
        (lambda (l)
 	  (when (pair? l)
-	     (let ((val (multipart-value name value)))
+	     (let ((val (envelope-value name value)))
 		(when debug-multipart
 		   (tprint "MULTIPART SIGNAL: " name))
 		(multipart-signal (car l) val)
@@ -1342,13 +1343,17 @@
 
    (define (websocket-event-signal! name value)
       (for-each-socket
-       *websocket-socket-table*
-       name
-       (lambda (l)
-	  (when (pair? l)
-	     (let ((val (websocket-value name value)))
-		(websocket-signal (car l) val)
-		#t)))))
+	 *websocket-socket-table*
+	 name
+	 (lambda (l)
+	    (when (pair? l)
+	       (with-access::http-response-websocket (car l) (protocol)
+		  (let ((val (if (and (string? protocol)
+				      (string=? protocol "json"))
+				 (envelope-json-value name value)
+				 (envelope-value name value))))
+		     (websocket-signal (car l) val)
+		     #t))))))
 
    (set! hop-signal-id (-fx hop-signal-id 1))
    (hop-verb 2 (hop-color hop-signal-id hop-signal-id " SIGNAL")
@@ -1407,7 +1412,7 @@
 		(ajax-find-connections-by-name name)))
    
    (define (flash-event-broadcast! name value)
-      (let ((val (js-make-signal-value value)))
+      (let ((val (js-make-flash-signal-value value)))
 	 (for-each-socket
 	    *flash-socket-table*
 	    name
@@ -1417,6 +1422,17 @@
 			       (flash-signal-value req name val))
 		     l))))))
 
+   (define jsvalue #f)
+   (define jsonvalue #f)
+   
+   (define (hopjs-value name value)
+      (unless jsvalue (set! jsvalue (envelope-value name value)))
+      jsvalue)
+      
+   (define (json-value name value)
+      (unless jsonvalue (set! jsonvalue (envelope-json-value name value)))
+      jsonvalue)
+      
    (define (websocket-event-broadcast! name value)
       (with-trace 'event "ws-event-broadcast!"
 	 (trace-item "name=" name)
@@ -1424,27 +1440,31 @@
 	    (if (or (string? value) (symbol? value) (number? value))
 		value
 		(typeof value)))
-	 (let ((val (websocket-value name value)))
-	    (for-each-socket
-	       *websocket-socket-table*
-	       name
-	       (lambda (l)
-		  (with-trace 'event "ws-event-broadcast"
-		     (trace-item "name=" name)
-		     (trace-item "# clients=" (length l))
-		     (trace-item "cients="
-			(map (lambda (resp)
-				(with-access::http-response-websocket resp (request)
-				   (with-access::http-request request (socket)
-				      socket)))
-			   l))
-		     (when (pair? l)
-			(for-each (lambda (resp)
-				     (websocket-signal resp val))
-			   l))))))))
+	 (for-each-socket
+	    *websocket-socket-table*
+	    name
+	    (lambda (l)
+	       (with-trace 'event "ws-event-broadcast"
+		  (trace-item "name=" name)
+		  (trace-item "# clients=" (length l))
+		  (trace-item "cients="
+		     (map (lambda (resp)
+			     (with-access::http-response-websocket resp (request)
+				(with-access::http-request request (socket)
+				   socket)))
+			l))
+		  (when (pair? l)
+		     (for-each (lambda (resp)
+				  (with-access::http-response-websocket resp (protocol)
+				     (websocket-signal resp
+					(if (and (string? protocol)
+						 (string=? protocol "json"))
+					    (json-value name value)
+					    (hopjs-value name value)))))
+			l)))))))
        
    (define (multipart-event-broadcast! name value)
-      (let ((val (multipart-value name value)))
+      (let ((val (envelope-value name value)))
 	 (for-each-socket
 	    *multipart-socket-table*
 	    name

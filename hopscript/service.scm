@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Aug 12 10:29:02 2016 (serrano)                */
+;*    Last change :  Wed Aug 17 12:56:43 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_service
 
-   (library hop)
+   (library hop js2scheme)
 
    (include "stringliteral.sch")
    
@@ -219,6 +219,14 @@
       ((string=? enc "integer") (string->integer val))
       ((string=? enc "keyword") (string->keyword val))
       (else (string->obj val #f %this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js-literal ::JsService ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js-literal o::JsService)
+   (with-access::JsService o (svc)
+      (with-access::hop-service svc (path)
+	 (format "HopService( '~a', undefined )" path))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-service! ...                                             */

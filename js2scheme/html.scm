@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Thu Jun 30 12:35:40 2016 (serrano)                */
+;*    Last change :  Thu Aug 18 15:37:27 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -243,7 +243,7 @@
 		   ((eq? obj '/>)
 		    (make-dom-create tag (reverse! attr) '() lang conf)))))))
       ((: "</" id ">")
-       (string->symbol (the-substring 2 (-fx (the-length) 1))))
+       (string->symbol (string-append "<" (the-substring 2 (the-length)))))
       ("~{"
        (let ((str (the-string)))
 	  (if (eq? lang 'html)
@@ -380,14 +380,21 @@
 	    (cond
 	       ((symbol? item)
 		(cond
-		   ((eq? item tag)
+		   ((eq? item (cdr tag))
 		    (make-dom-create tag attributes (reverse! acc) lang conf))
 		   (strict
 		    (xml-parse-error "Illegal closing tag"
-				     (format "`~a' expected, `~a' provided"
-					     tag item)
-				     name po))
+		       (format "`~a' expected, `~a' provided"
+			  tag item)
+		       name po))
 		   (else
+		    (with-handler
+		       (lambda (e)
+			  (exception-notify e))
+		       (xml-parse-error "Illegal closing tag"
+			  (format "`~a' expected, `~a' provided"
+			     tag item)
+			  name po))
 		    (make-dom-create tag attributes (reverse! acc) lang conf))))
 	       ((special? item)
 		(let ((nitem (make-dom-create (special-tag item)
@@ -409,7 +416,7 @@
 	       (else
 		(let ((po (input-port-last-token-position port)))
 		   (loop (econs item acc (list 'at name po)) (ignore))))))))
-
+   
    (let ((spec (assq (token-value tag) specials)))
       (cond
 	 ((not spec)
@@ -421,9 +428,9 @@
 	 ((pair? (cdr spec))
 	  (let ((ignore (lambda ()
 			   (read/rp xml-grammar port
-				    (lambda (t a b) (special t a b tag))
-				    specials strict decoder encoding
-				    lang conf)))) 
+			      (lambda (t a b) (special t a b tag))
+			      specials strict decoder encoding
+			      lang conf)))) 
 	     (collect ignore (cdr spec))))
 	 (else
 	  (error "xml-parse" "Illegal special handler" spec)))))

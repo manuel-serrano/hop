@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 15 09:00:54 2011                          */
-;*    Last change :  Sun Aug 14 07:01:07 2016 (serrano)                */
+;*    Last change :  Sun Aug 14 19:30:46 2016 (serrano)                */
 ;*    Copyright   :  2011-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Zeroconf support                                             */
@@ -123,9 +123,6 @@
 (define (zeroconf-restart zc::zeroconf dummy::zeroconf-dummy)
    (set! *zeroconf-started* zc)
    (with-access::zeroconf-dummy dummy (publishers subscribers)
-      (tprint "ZEROCONF-RESTART zc=" (typeof zc)
-	 " pub=" publishers
-	 " sub=" subscribers)
       (for-each (lambda (p)
 		   (apply zeroconf-backend-publish-service! zc p))
 	 publishers)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jun  3 17:04:36 2016 (serrano)                */
+;*    Last change :  Wed Aug 17 12:52:05 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -18,7 +18,7 @@
 
    (include "../nodejs/nodejs_debug.sch")
    
-   (library hop)
+   (library hop js2scheme)
    
    (include "stringliteral.sch")
    
@@ -88,6 +88,19 @@
       (display "new String(\"" op)
       (display (string-for-read (js-jsstring->string val)) op)
       (display "\")" op)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js-literal ::JsString ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js-literal o::JsString)
+   (with-access::JsString o (val)
+      (j2s-js-literal (js-jsstring->string val))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js-literal ::JsStringLiteral ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js-literal o::JsStringLiteral)
+   (j2s-js-literal (js-jsstring->string o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-string! ...                                              */
