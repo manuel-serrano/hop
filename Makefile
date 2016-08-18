@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Jul  5 13:30:13 2016 (serrano)                */
+#*    Last change :  Wed Aug 17 12:40:24 2016 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -63,7 +63,7 @@ hopreplay-bin: lib
 hophz-bin: lib hopc-bin widget
 	$(MAKE) -C hophz build
 
-lib: libdir scheme2js js2scheme hopscript
+lib: libdir scheme2js hopscript
 	$(MAKE) -C hopscheme build
 	$(MAKE) -C runtime build
 	$(MAKE) -C js2scheme build

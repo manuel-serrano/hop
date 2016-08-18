@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Aug 12 16:16:34 2016 (serrano)                */
+;*    Last change :  Thu Aug 18 15:15:05 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -27,7 +27,7 @@
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
-	   (nodejs-compile-file ::bstring ::bstring ::bstring)
+	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj ::symbol)
 	   (nodejs-resolve-extend-path! ::pair-nil)
 	   (nodejs-new-global-object::JsGlobalObject)
@@ -41,16 +41,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file ifile::bstring name::bstring ofile::bstring)
+(define (nodejs-compile-file ifile::bstring name::bstring ofile::bstring query)
    (let* ((srcmap (when (>fx (bigloo-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
 		  (current-output-port)
 		  (open-output-file ofile)))
 	  (tree (unwind-protect
-		    (module->javascript ifile name op #f #f srcmap)
-		    (unless (eq? op (current-output-port))
-		       (close-output-port op)))))
+		   (module->javascript ifile name op #f #f srcmap query)
+		   (unless (eq? op (current-output-port))
+		      (close-output-port op)))))
       (when (>fx (bigloo-debug) 0)
 	 (call-with-output-file srcmap
 	    (lambda (p)
@@ -65,7 +65,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (module->javascript filename::bstring id op compile isexpr srcmap)
+(define (module->javascript filename::bstring id op compile isexpr srcmap query)
    
    (define (js-paths vec)
       (let ((len (-fx (vector-length vec) 1)))
@@ -78,15 +78,40 @@
 		     (display "'" p)
 		     (if (<fx i len) (display ", " p))
 		     (loop (+fx i 1))))))))
-		  
-   (let ((this (nodejs-new-global-object)))
-      (fprintf op (hop-boot))
-      (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
-      (flush-output-port op)
-      (let ((header (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
-		       id filename
-		       (js-paths (nodejs-filename->paths filename))
-		       filename)))
+
+   (define (init-dummy-module! this worker)
+      (with-access::JsGlobalObject this (js-object)
+	 (let ((mod (js-new0 this js-object))
+	       (exp (js-new0 this js-object)))
+	    (js-put! mod 'exports this #f this)
+	    (js-put! mod 'filename (js-string->jsstring filename) #f this)
+	    (js-put! this 'global this #f this)
+	    (js-put! this 'GLOBAL this #f this)
+	    (js-put! this 'module mod #f this)
+	    (js-put! this 'exports exp #f this)
+	    (js-put! this '__filename
+	       (js-string->jsstring filename) #f this)
+	    (js-put! this '__dirname
+	       (js-string->jsstring (dirname filename)) #f this)
+	    (js-put! this 'require
+	       (nodejs-require worker this mod 'hopscript) #f this)
+	    (js-put! this 'process
+	       (nodejs-process worker this) #f this)
+	    (js-put! this 'console
+	       (nodejs-require-core "console" worker this) #f this))))
+
+   (let ((this (nodejs-new-global-object))
+	 (worker (js-current-worker)))
+      (init-dummy-module! this worker)
+      (let ((header (unless (string=? query "es")
+		       (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
+			  id filename
+			  (js-paths (nodejs-filename->paths filename))
+			  filename))))
+	 (when header
+	    (fprintf op (hop-boot))
+	    (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
+	    (flush-output-port op))
 	 (let ((offset (output-port-position op)))
 	    (call-with-input-file filename
 	       (lambda (in)
@@ -96,7 +121,7 @@
 				 :source filename
 				 :resource (dirname filename)
 				 :filename filename
-				 :worker (js-current-worker)
+				 :worker worker
 				 :header header
 				 :verbose (if (>=fx (bigloo-debug) 3)
 					      (hop-verbose)
@@ -113,11 +138,12 @@
 				     ;; for sourcemap generation
 				     (display exp op)))
 			tree)
-		     (display "\nreturn module.exports;}\n" op)
-		     (when srcmap
-			(fprintf op "\n\nhop_source_mapping_url( ~s, \"~a\" );\n"
-			   filename srcmap)
-			(fprintf op "\n//# sourceMappingURL=~a\n" srcmap))
+		     (when header
+			(display "\nreturn module.exports;}\n" op)
+			(when srcmap
+			   (fprintf op "\n\nhop_source_mapping_url(~s, \"~a\");\n"
+			      filename srcmap)
+			   (fprintf op "\n//# sourceMappingURL=~a\n" srcmap)))
 		     ;; first element of the tree is a position offset
 		     ;; see sourcemap generation
 		     (cons offset tree))))))))
@@ -520,7 +546,7 @@
       (if (file-exists? filename)
 	  (compile-file filename mod)
 	  (compile-url filename mod)))
-   
+
    (synchronize compile-mutex
       (with-trace 'require "nodejs-compile"
 	 (trace-item "filename=" filename)
@@ -658,61 +684,62 @@
 	  (begin
 	     (when (file-exists? sopath) (delete-file sopath))
 	     (when (file-exists? sopathtmp) (delete-file sopathtmp)))))
-   
-   (let ((tmp (synchronize socompile-mutex
-		 (cond
-		    ((hop-find-sofile filename)
-		     =>
-		     (lambda (x) x))
-		    ((member filename socompile-files)
-		     (condition-variable-wait! socompile-condv socompile-mutex)
-		     'loop)
-		    (else
-		     (set! socompile-files (cons filename socompile-files))
-		     'compile)))))
-      (cond
-	 ((string? tmp) tmp)
-	 ((eq? tmp 'loop) (nodejs-socompile filename lang))
-	 (else
-	  (let* ((sopath (hop-sofile-path filename))
-		 (sopathtmp (hop-sofile-path (string-append "__" (prefix filename))))
-		 (cmd (format "~a ~a -y --no-js-module-main -o ~a ~a"
-			 (hop-hopc)
-			 filename sopathtmp
-			 (hop-hopc-flags))))
-	     (make-directories (dirname sopath))
-	     (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
-	     (let ((res -1)
-		   (msg "abort")
-		   (atexit (lambda (res)
-			      (for-each (lambda (p)
-					   (process-kill p)
-					   (process-wait p))
-				 (process-list))
-			      (cleanup sopath sopathtmp -1))))
-		(register-exit-function! atexit)
-		(unwind-protect
-		   (multiple-value-bind (r m)
-		      (exec cmd)
-		      (set! res r)
-		      (set! msg m))
-		   (begin
-		      (cleanup sopath sopathtmp res)
-		      (unregister-exit-function! atexit)
-		      (if (and (integer? res) (=fx res 0))
-			  sopath
-			  (call-with-output-file (string-append sopath ".err")
-			     (lambda (op)
-				(display msg (current-error-port))
-				(display cmd op)
-				(newline op)
-				(display msg op)
-				(hop-verb 3 (hop-color -1 -1 " COMPILE-ERROR") " " cmd "\n")
-				'error)))
-		      (synchronize socompile-mutex
-			 (set! socompile-files
-			    (delete! filename socompile-files))
-			 (condition-variable-broadcast! socompile-condv))))))))))
+
+   (let loop ()
+      (let ((tmp (synchronize socompile-mutex
+		    (cond
+		       ((hop-find-sofile filename)
+			=>
+			(lambda (x) x))
+		       ((member filename socompile-files)
+			(condition-variable-wait! socompile-condv socompile-mutex)
+			'loop)
+		       (else
+			(set! socompile-files (cons filename socompile-files))
+			'compile)))))
+	 (cond
+	    ((string? tmp) tmp)
+	    ((eq? tmp 'loop) (loop))
+	    (else
+	     (let* ((sopath (hop-sofile-path filename))
+		    (sopathtmp (hop-sofile-path (string-append "__" (prefix filename))))
+		    (cmd (format "~a ~a -y --no-js-module-main -o ~a ~a"
+			    (hop-hopc)
+			    filename sopathtmp
+			    (hop-hopc-flags))))
+		(make-directories (dirname sopath))
+		(hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
+		(let ((res -1)
+		      (msg "abort")
+		      (atexit (lambda (res)
+				 (for-each (lambda (p)
+					      (process-kill p)
+					      (process-wait p))
+				    (process-list))
+				 (cleanup sopath sopathtmp -1))))
+		   (register-exit-function! atexit)
+		   (unwind-protect
+		      (multiple-value-bind (r m)
+			 (exec cmd)
+			 (set! res r)
+			 (set! msg m))
+		      (begin
+			 (cleanup sopath sopathtmp res)
+			 (unregister-exit-function! atexit)
+			 (if (and (integer? res) (=fx res 0))
+			     sopath
+			     (call-with-output-file (string-append sopath ".err")
+				(lambda (op)
+				   (display msg (current-error-port))
+				   (display cmd op)
+				   (newline op)
+				   (display msg op)
+				   (hop-verb 3 (hop-color -1 -1 " COMPILE-ERROR") " " cmd "\n")
+				   'error)))
+			 (synchronize socompile-mutex
+			    (set! socompile-files
+			       (delete! filename socompile-files))
+			    (condition-variable-broadcast! socompile-condv)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */

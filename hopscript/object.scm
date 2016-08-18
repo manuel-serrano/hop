@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Jun  3 17:03:48 2016 (serrano)                */
+;*    Last change :  Wed Aug 17 14:08:07 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -17,7 +17,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_object
    
-   (library hop hopwidget)
+   (library hop hopwidget js2scheme)
    
    (include "stringliteral.sch"
 	    "property.sch")
@@ -150,7 +150,17 @@
 ;*---------------------------------------------------------------------*/
 (define-method (javascript-class-all-fields obj::JsObject)
    jsobject-fields)
-   
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js-literal ::JsObject ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js-literal o::JsObject)
+   (with-access::JsService o (svc)
+      (with-access::hop-service svc (path)
+	 (call-with-output-string
+	    (lambda (op)
+	       (obj->json o op))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsObject ...                                   */
 ;*    -------------------------------------------------------------    */

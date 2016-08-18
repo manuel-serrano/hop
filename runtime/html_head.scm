@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Jul 13 14:45:48 2016 (serrano)                */
+;*    Last change :  Tue Aug 16 10:25:59 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -745,7 +745,7 @@ function hop_session() {return " (integer->string (hop-session)) ";}"))))
    (define (inl src)
       (let ((body (cond
 		     ((member (suffix src) (hop-client-script-suffixes))
-		      (get-clientc-compiled-file src src))
+		      (get-clientc-compiled-file src src (suffix src)))
 		     (else
 		      (with-input-from-file src read-string)))))
 	 (if body
@@ -791,7 +791,7 @@ function hop_session() {return " (integer->string (hop-session)) ";}"))))
    (define (inl src)
       (let ((body (cond
 		     ((member (suffix src) (hop-client-script-suffixes))
-		      (get-clientc-compiled-file src mod))
+		      (get-clientc-compiled-file src mod (suffix src)))
 		     (else
 		      (with-input-from-file src read-string)))))
 	 (if body
