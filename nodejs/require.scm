@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Aug 17 08:09:11 2016 (serrano)                */
+;*    Last change :  Thu Aug 18 15:46:59 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -99,9 +99,10 @@
 	       (nodejs-require-core "console" worker this) #f this))))
 		  
    (let ((this (nodejs-new-global-object))
-	 (worker (js-current-worker)))
+	 (worker (js-current-worker))
+	 (esplainp (string=? query "es")))
       (init-dummy-module! this worker)
-      (let ((header (unless (string=? query "es")
+      (let ((header (unless esplainp
 		       (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
 			  id filename
 			  (js-paths (nodejs-filename->paths filename))
@@ -129,7 +130,7 @@
 					     (j2s-javascript-debug-driver)
 					     (j2s-javascript-driver))
 				 :site 'client
-				 :debug (bigloo-debug))))
+				 :debug (if esplainp 0 (bigloo-debug)))))
 		     (for-each (lambda (exp)
 				  (unless (isa? exp J2SNode)
 				     ;; skip node information, used
