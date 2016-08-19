@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Fri Aug  5 14:12:45 2016 (serrano)                */
+/*    Last change :  Fri Aug 19 15:49:44 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -171,6 +171,32 @@ function hop_typeof( obj ) {
       return tname;
    }
 }
+
+#if HOP_RTS_DEBUG
+function sc_error() {
+   var e = new Error( "sc_error" );
+   if( arguments.length >= 1 ) {
+      e.name = arguments[ 0 ];
+      if( arguments.length >= 2 ) {
+	 e.message = arguments[ 1 ];
+	 if( arguments.length >= 3 ) {
+	    e.scObject = arguments[ 2 ];
+	    if( arguments.length >= 4 ) {
+	       e.scOffset = arguments[ 3 ];
+	    } else {
+	       e.scOffset = 1;
+	    }
+	 }
+      }
+   }
+   throw e;
+}
+function sc_typeError( proc, type, obj ) {
+   var msg = "Type \"" + type + "\" expected, "
+      + "\"" + hop_typeof( obj ) + "\" provided";
+   return sc_error( proc, msg, obj, arguments.length >= 4 ? arguments[ 3 ] : 2 );
+}
+#endif
 #endif
 
 /*---------------------------------------------------------------------*/
@@ -247,7 +273,7 @@ function sc_isPairEqual(p1, p2, comp) {
 
 function sc_reverse( l1 ) {
    var res = null;
-   while( l1 !== null ) {
+   while( l1 ) {
       res = sc_cons( l1.__hop_car, res );
       l1 = l1.__hop_cdr;
    }
@@ -856,6 +882,10 @@ function sc_minus2( x, y ) {
 function sc_multi2( x, y ) {
    var res = x * y;
    return res;
+}
+
+function sc_isInteger( n ) {
+    return (parseInt( n ) === n);
 }
 
 var sc_lambda = undefined;

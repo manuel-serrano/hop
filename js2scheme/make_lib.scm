@@ -16,6 +16,7 @@
 
    (import __js2scheme_compile
 	   __js2scheme_parser
+	   __js2scheme_html
 	   __js2scheme_ast
 	   __js2scheme_symbol
 	   __js2scheme_header

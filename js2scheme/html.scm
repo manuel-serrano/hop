@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Thu Aug 18 15:37:27 2016 (serrano)                */
+;*    Last change :  Fri Aug 19 09:10:06 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -34,17 +34,16 @@
 	  (let ((str (symbol->string! (token-value tag))))
 	     (rgc-buffer-unget-char port (char->integer #\space))
 	     (rgc-buffer-insert-substring! port str 0 (string-length str))
-	     (read/rp xml-grammar port list *html-special-elements* #f
+	     (read/rp xml-grammar port '()
+		(eq? lang 'hopscript) #f
 		(lambda (x) x)
-		(hop-locale)
-		lang
-		conf))
+		(hop-locale) lang conf))
 	  (let loop ()
-	     (let ((v (read/rp xml-grammar port list *html-special-elements* #f
+	     (let ((v (read/rp xml-grammar port '()
+			 (eq? lang 'hopscript) #f
 			 (lambda (x) x)
 			 (hop-locale)
-			 lang
-			 conf)))
+			 lang conf)))
 		(cond
 		   ((isa? v J2SString)
 		    (with-access::J2SString v (val)
@@ -53,53 +52,107 @@
 		    v)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    special-tags ...                                                 */
+;*    element ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-macro (special-tags lst)
-   ;; transforms
-   ;;   '((meta) ... (p . (a ...)))
-   ;; info
-   ;;   '((<meta>) (<META>) ... (<p> . (<a> <A> ...)) (<p> . (<a> <A> ...)))
-   
-   (define (symbol-upcase val)
-      (string->symbol (string-upcase (symbol->string val))))
-
-   (define (loop entries)
-      (append-map (lambda (e)
-		     (match-case e
-			((? symbol?)
-			 `(,(symbol-append '< e '>)
-			   ,(symbol-append '< (symbol-upcase e) '>)))
-			((?tag)
-			 `((,(symbol-append '< tag '>))
-			   (,(symbol-append '< (symbol-upcase tag) '>))))
-			((?tag . (and ?d (unquote ?exp)))
-			 `((,(symbol-append '< tag '>) . ,d)
-			   (,(symbol-append '< (symbol-upcase tag) '>) . ,d)))
-			((?tag . ?list)
-			 `((,(symbol-append '< tag '>)
-			    . ,(loop list))
-			   (,(symbol-append '< (symbol-upcase tag) '>)
-			    . ,(loop list))))))
-	 entries))
-
-   (match-case lst
-      ((quasiquote ?entries) (list 'quasiquote (loop entries)))
-      (else (error "special-tags" "bad form" lst))))
+(define-struct element tag attributes prop)
 
 ;*---------------------------------------------------------------------*/
-;*    *html-special-elements* ...                                      */
+;*    html-elements-properties ...                                     */
 ;*---------------------------------------------------------------------*/
-(define *html-special-elements*
-   (special-tags
-      `((meta)
-	(link)
-	(br) (hr) (img) (input)
-	(p . (a abbr acronym address big button caption del em
-		i img kbd label legend 
-		q s samp small span strike strong sub sup u var))
-	(colgroup . (col))
-	(script . ,html-parse-script))))
+(define (html-elements-properties)
+   '((<ADDRESS> :block)
+     (<AREA> :empty)
+     (<BASE> :empty)
+     (<BASEFONT> :empty)
+     (<BLOCKQUOTE> :block)
+     (<BR> :empty)
+     (<COL> :empty)
+     (<COLGROUP> :chidren (<COL>))
+     (<DIV> :block)
+     (<DL> :block :children (<DD> <DT>))
+     (<DD> :item :children flow :etag-optional)
+     (<DT> :item :children inline :etag-optional)
+     (<FIELDSET> :block)
+     (<FORM> :block)
+     (<FRAME> :empty)
+     (<HR> :empty :block)
+     (<H1> :block)
+     (<H2> :block)
+     (<H3> :block)
+     (<H4> :block)
+     (<H5> :block)
+     (<H6> :block)
+     (<IMG> :empty)
+     (<INPUT> :empty)
+     (<ISINDEX> :empty)
+     (<LINK> :empty)
+     (<META> :empty)
+     (<NOSCRIPT> :block)
+     (<OL> :block)
+     (<P> :block :children inline :etag-optional)
+     (<PARAM> :empty)
+     (<PRE> :block)
+     (<SCRIPT> :script)
+     (<TABLE> :block)
+     (<UL> :block)))
+
+;*---------------------------------------------------------------------*/
+;*    html-element-properties ...                                      */
+;*---------------------------------------------------------------------*/
+(define (html-element-properties tagname)
+   (let ((c (assq tagname (html-elements-properties))))
+      (when (pair? c) (cdr c))))
+
+;*---------------------------------------------------------------------*/
+;*    html-property-script? ...                                        */
+;*---------------------------------------------------------------------*/
+(define (html-property-script? prop)
+   (and prop (memq :script prop)))
+
+;*---------------------------------------------------------------------*/
+;*    html-property-empty? ...                                         */
+;*---------------------------------------------------------------------*/
+(define (html-property-empty? prop)
+   (and prop (memq :empty prop)))
+
+;*---------------------------------------------------------------------*/
+;*    html-property-block? ...                                         */
+;*---------------------------------------------------------------------*/
+(define (html-property-block? prop)
+   (and prop (memq :block prop)))
+
+;*---------------------------------------------------------------------*/
+;*    html-property-item? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (html-property-item? prop)
+   (and prop (memq :item prop)))
+
+;*---------------------------------------------------------------------*/
+;*    html-property-etag-optional? ...                                 */
+;*---------------------------------------------------------------------*/
+(define (html-property-etag-optional? prop)
+   (and prop (memq :etag-optional prop)))
+
+;*---------------------------------------------------------------------*/
+;*    html-property-children ...                                       */
+;*---------------------------------------------------------------------*/
+(define (html-property-children prop)
+   (when prop
+      (let ((c (memq :children prop)))
+	 (when (pair? c) (cadr c)))))
+
+;*---------------------------------------------------------------------*/
+;*    (html-empty-elements)                                            */
+;*---------------------------------------------------------------------*/
+(define (html-empty-elements)
+   '(<AREA> <BASE> <BASEFONT> <BR> <COL> <FRAME> <HR> <IMG> <INPUT> <ISINDEX>
+     <LINK> <META> <PARAM>))
+
+;*---------------------------------------------------------------------*/
+;*    html-empty-element? ...                                          */
+;*---------------------------------------------------------------------*/
+(define (html-empty-element? tag)
+   (memq tag (html-empty-elements)))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-parse-script ...                                            */
@@ -153,45 +206,219 @@
 (define-struct special tag attributes body owner)
 
 ;*---------------------------------------------------------------------*/
+;*    push-ignore ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-macro (push-ignore val)
+   (let ((v (gensym 'val)))
+      `(let ((,v ,val))
+	  (set! stack (cons ,v stack))
+	  (ignore))))
+
+;*---------------------------------------------------------------------*/
+;*    push-node-ignore ...                                             */
+;*---------------------------------------------------------------------*/
+(define-macro (push-node-ignore val)
+   (let ((v (gensym 'val)))
+      `(let ((,v ,val))
+	  (if (pair? stack)
+	      (begin
+		 (set! stack (cons ,v stack))
+		 (ignore))
+	      ,v))))
+
+;*---------------------------------------------------------------------*/
+;*    reduce-ignore ...                                                */
+;*---------------------------------------------------------------------*/
+(define-macro (reduce-ignore val)
+   `(begin
+       (set! stack (reduce-stack-up-to stack ,val lang conf (the-port) stricttag))
+       (cond
+	  ((null? (cdr stack))
+	   (car stack))
+	  ((every (lambda (o)
+		     (when (isa? o J2SString)
+			(with-access::J2SString o (val)
+			   (pregexp-match "[ \t\n]*" val))))
+	      (cdr stack))
+	   (car stack))
+	  (else
+	   (ignore)))))
+
+;*---------------------------------------------------------------------*/
+;*    dump-stack ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (dump-stack stack)
+   (map (lambda (o)
+	   (cond
+	      ((element? o)
+	       (token-value (element-tag o)))
+	      ((isa? o J2SString)
+	       (with-access::J2SString o (val)
+		  (format "~s" val)))
+	      (else
+	       (typeof o))))
+      stack))
+
+;*---------------------------------------------------------------------*/
+;*    reduce-stack-up-to ...                                           */
+;*---------------------------------------------------------------------*/
+(define (reduce-stack-up-to stack ctag lang conf port stricttag)
+   
+   (define (tagname tag)
+      (let ((s (symbol->string! tag)))
+	 (substring s 1 (-fx (string-length s) 1))))
+
+   (let loop ((stk stack)
+	      (args '()))
+      (cond
+	 ((null? stk)
+	  (xml-parse-error "Wrong closing tag"
+	     (tagname ctag)
+	     (input-port-name port) (input-port-position port)))
+	 ((not (element? (car stk)))
+	  (loop (cdr stk) (cons (car stk) args)))
+	 ((eq? (token-value (element-tag (car stk))) ctag)
+	  (let ((tag (element-tag (car stk)))
+		(attrs (element-attributes (car stk))))
+	     (cons (make-dom-create tag attrs args lang conf)
+		(cdr stk))))
+	 ((html-property-etag-optional?
+	     (html-element-properties
+		(token-value (element-tag (car stk)))))
+	  (let ((tag (element-tag (car stk)))
+		(attrs (element-attributes (car stk))))
+	     (loop (cdr stk)
+		(list (make-dom-create tag attrs args lang conf)))))
+	 (stricttag
+	  (xml-parse-error "Tag mismatch"
+	     (format "</~a> expected, </~a> provided"
+		(tagname (token-value (element-tag (car stk))))
+		(tagname ctag))
+	     (input-port-name port) (input-port-position port)))
+	 (else
+	  stack))))
+
+;*---------------------------------------------------------------------*/
+;*    reduce-stack-special ...                                         */
+;*---------------------------------------------------------------------*/
+(define (reduce-stack-special stack special lang conf)
+   (let loop ((stack stack)
+	      (args '()))
+      (if (eq? (car stack) special)
+	  (let ((tag (element-tag (car stack)))
+		(attrs (element-attributes (car stack))))
+	     (cons (make-dom-create tag attrs args lang conf)
+		(cdr stack)))
+	  (loop (cdr stack) (cons (car stack) args)))))
+
+;*---------------------------------------------------------------------*/
+;*    debug ...                                                        */
+;*---------------------------------------------------------------------*/
+(define debug #f)
+
+;*---------------------------------------------------------------------*/
 ;*    xml-grammar ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define xml-grammar
    (regular-grammar ((id (: (in ("azAZ") "!?") (* (in ("azAZ09") ":_-."))))
 		     (lt (in #a013 #\Newline))
-		     next
-		     specials
-		     strict
+		     stack
+		     stricttag strictattr
 		     decoder
 		     encoding
 		     lang
 		     conf)
       
+      (define (find-special stack)
+         ;;; find the top-most special element of the stack, if any
+	 (find (lambda (o)
+		  (when (element? o)
+		     (element-prop o)))
+	    stack))
+      
+      (define (ident-upcase! s)
+         ;;; upcase identifier
+	 (let ((i (string-index-right s #\.)))
+	    (if i
+		(string-append (substring s 0 i)
+		   "."
+		   (string-upcase! (substring s (+fx i 1))))
+		(string-upcase! s))))
+      
+      (define (open-tag type sym attributes)
+         ;;; handle opening tags
+	 (let ((prop (html-element-properties sym)))
+	    (when debug
+	       (tprint "open " sym " " (dump-stack stack)))
+	    (cond
+	       ((html-property-empty? prop)
+		(let ((tag (token type sym (the-length))))
+		   (push-node-ignore
+		      (make-dom-create tag attributes '() lang conf))))
+	       ((html-property-script? prop)
+		(let ((tag (token type sym (the-length)))
+		      (args (html-parse-script (the-port))))
+		   (push-node-ignore
+		      (make-dom-create tag attributes args lang conf))))
+	       (else
+		(let* ((tag (token type sym (the-length)))
+		       (el (element tag attributes
+			      (and (html-property-children prop) prop)))
+		       (s (find-special stack)))
+		   (when s
+		      (let* ((sp (element-prop s))
+			     (spchd (html-property-children sp)))
+			 (cond
+			    ((eq? spchd 'inline)
+			     (when (html-property-block? prop)
+				(set! stack
+				   (reduce-stack-special stack s lang conf))
+				(when debug
+				   (tprint "REDUCE SPECIAL " s)
+				   (tprint "            -> " (dump-stack stack)))))
+			    ((eq? spchd 'flow)
+			     (when (html-property-item? prop)
+				(set! stack
+				   (reduce-stack-special stack s lang conf))
+				(when debug
+				   (tprint "REDUCE SPECIAL " s)
+				   (tprint "            -> " (dump-stack stack)))))
+			    ((pair? spchd)
+			     (unless (memq sym spchd)
+				(set! stack
+				   (reduce-stack-special stack s lang conf)))))))
+		   (push-ignore el))))))
+      
       ((+ (in " \t\n\r"))
-       (instantiate::J2SString
-	  (escape '(escape))
-	  (val (the-string))
-	  (loc (the-coord (the-port) (+fx (the-length) 1)))))
+       (push-ignore
+	  (instantiate::J2SString
+	     (escape '(escape))
+	     (val (the-string))
+	     (loc (the-coord (the-port) (+fx (the-length) 1))))))
       ((+ (or (out "<$~") (: (in "$~") (out "<{"))))
-       (instantiate::J2SString
-	  (escape '(escape))
-	  (val (decoder (the-string)))
-	  (loc (the-coord (the-port) (+fx (the-length) 1)))))
+       (push-ignore
+	  (instantiate::J2SString
+	     (escape '(escape))
+	     (val (decoder (the-string)))
+	     (loc (the-coord (the-port) (+fx (the-length) 1))))))
       ((in "$~")
-       (instantiate::J2SString
-	  (escape '(escape))
-	  (val (decoder (the-string)))
-	  (loc (the-coord (the-port) (+fx (the-length) 1)))))      
+       (push-ignore
+	  (instantiate::J2SString
+	     (escape '(escape))
+	     (val (decoder (the-string)))
+	     (loc (the-coord (the-port) (+fx (the-length) 1))))))
       ((: "<!--"
 	  (* (or (out "-") (: "-" (out "-")) (: "--" (out ">"))))
 	  (+ "-") "->")
        (let ((tag (token 'HTML '<!--> (the-length)))
 	     (data (the-substring 4 -3)))
-	  (instantiate::J2SCall
-	     (loc (token-loc tag))
-	     (fun (j2s-tag->expr tag #t))
-	     (args (list (instantiate::J2SNativeString
-			    (val (decoder data))
-			    (loc (the-coord (the-port) (+fx (the-length) 6)))))))))
+	  (push-ignore
+	     (instantiate::J2SCall
+		(loc (token-loc tag))
+		(fun (j2s-tag->expr tag #t))
+		(args (list (instantiate::J2SNativeString
+			       (val (decoder data))
+			       (loc (the-coord (the-port) (+fx (the-length) 6))))))))))
       
       ((: "<!" (: (or (out "[-") (: "-" (out "-")))
 		  (* (out ">]"))
@@ -217,65 +444,92 @@
        (cons 'instruction (the-string))
        (ignore))
       ((: "<" id ">")
-       (let* ((t (the-substring 1 (-fx (the-length) 1)))
-	      (ts (string->symbol t))
-	      (tag (token 'OHTML (the-symbol) (the-length)))
-	      (p (the-port)))
-	  (collect-up-to ignore tag '()
-	     p specials strict decoder encoding lang conf)))
-      ((: "<" id "/>")
-       (let ((tag (token 'HTML (symbol-append (the-subsymbol 0 -2) '>) (the-length))))
-	  (make-dom-create tag '() '() lang conf)))
+       (open-tag 'OHTML (string->symbol (ident-upcase! (the-string))) '()))
       ((: "<" id (in " \n\t\r"))
-       (let* ((t (the-substring 1 (-fx (the-length) 1)))
-	      (ts (string->symbol t))
-	      (tag (token 'HTML (symbol-append '< ts '>) (the-length)))
-	      (p (the-port)))
+       (let* ((t (ident-upcase! (the-substring 0 (-fx (the-length) 1))))
+	      (sym (string->symbol (string-append t ">"))))
 	  (let loop ((attr '()))
-	     (let ((obj (read/rp attribute-grammar p t strict decoder conf)))
+	     (let ((obj (read/rp attribute-grammar (the-port) sym
+			   strictattr decoder conf)))
 		(cond
 		   ((isa? obj J2SNode)
 		    (loop (cons obj attr)))
-		   ((eq? obj '>)
-		    (collect-up-to ignore tag (reverse! attr) p specials
-		       strict decoder encoding
-		       lang conf))
 		   ((eq? obj '/>)
-		    (make-dom-create tag (reverse! attr) '() lang conf)))))))
+		    (let ((tag (token 'HTML sym (the-length))))
+		       (push-node-ignore
+			  (make-dom-create tag (reverse! attr) '() lang conf))))
+		   ((not (eq? obj '>))
+		    (xml-parse-error "Illegal character"
+		       obj
+		       (input-port-name (the-port))
+		       (input-port-position (the-port))))
+		   (else
+		    (open-tag 'HTML sym (reverse! attr))))))))
+      ((: "<" id "/>")
+       (let* ((str (string-append (ident-upcase! (the-substring 0 -2)) ">"))
+	      (tag (token 'HTML (string->symbol str) (the-length))))
+	  (push-node-ignore (make-dom-create tag '() '() lang conf))))
       ((: "</" id ">")
-       (string->symbol (string-append "<" (the-substring 2 (the-length)))))
+       (let ((sym (string->symbol
+		     (ident-upcase!
+			(string-append "<" (the-substring 2 (the-length)))))))
+	  (when debug
+	     (tprint "REDUCE " sym  " " (dump-stack stack)))
+	  (if (html-empty-element? sym)
+	      (ignore)
+	      (reduce-ignore sym))))
       ("~{"
-       (let ((str (the-string)))
-	  (if (eq? lang 'html)
-	      (instantiate::J2SString
-		 (escape '(escape))
-		 (val str)
-		 (loc (the-coord (the-port) (+fx (the-length) 1))))
-	      (begin
-		 (rgc-buffer-insert-substring! (the-port) str 0 2)
-		 (j2s-parser (the-port)
-		    (cons* :parser 'tilde-expression conf))))))
+       (push-ignore
+	  (let ((str (the-string)))
+	     (if (eq? lang 'html)
+		 (instantiate::J2SString
+		    (escape '(escape))
+		    (val str)
+		    (loc (the-coord (the-port) (+fx (the-length) 1))))
+		 (begin
+		    (rgc-buffer-insert-substring! (the-port) str 0 2)
+		    (j2s-parser (the-port)
+		       (cons* :parser 'tilde-expression conf)))))))
       ("${"
-       (let ((str (the-string)))
-	  (if (eq? lang 'html)
-	      (instantiate::J2SString
-		 (escape '(escape))
-		 (val str)
-		 (loc (the-coord (the-port) (+fx (the-length) 1))))
-	      (begin
-		 (rgc-buffer-insert-substring! (the-port) str 0 2)
-		 (j2s-parser (the-port)
-		    (cons* :parser 'dollar-expression conf))))))
+       (push-ignore
+	  (let ((str (the-string)))
+	     (if (eq? lang 'html)
+		 (instantiate::J2SString
+		    (escape '(escape))
+		    (val str)
+		    (loc (the-coord (the-port) (+fx (the-length) 1))))
+		 (begin
+		    (rgc-buffer-insert-substring! (the-port) str 0 2)
+		    (j2s-parser (the-port)
+		       (cons* :parser 'dollar-expression conf)))))))
       (else
        (let ((c (the-failure)))
-	  (cond
-	     ((not (eof-object? c))
-	      (xml-parse-error "Illegal character"
-			       (error-line c (the-port))
+	  (when debug
+	     (tprint "ERR: " (dump-stack stack)))
+	  (if (eof-object? c)
+	      (let ((oe (find element? stack)))
+		 (if oe
+		     (let* ((tok (element-tag oe))
+			    (otag (token-value tok)))
+			(match-case (token-loc tok)
+			   ((at ?name ?pos)
+			    (xml-parse-error "Premature EOF"
+			       (format "closing ~a expected" otag)
+			       name
+			       pos))
+			   (else
+			    (xml-parse-error "Premature EOF"
+			       (format "closing <~a> expected" otag)
 			       (input-port-name (the-port))
-			       (input-port-position (the-port))))
-	     (else
-	      c))))))
+			       (input-port-position (the-port))))))
+		     (xml-parse-error "Premature EOF"
+			""
+			(input-port-name (the-port))
+			(input-port-position (the-port)))))
+	      (xml-parse-error "Illegal character"
+		 (error-line c (the-port))
+		 (input-port-name (the-port))
+		 (input-port-position (the-port))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-dom-create ...                                              */
@@ -366,74 +620,6 @@
 	    (loc loc)
 	    (fun (j2s-tag->expr tag #t))
 	    (args (cons a (append (reverse! abody) body)))))))
-
-;*---------------------------------------------------------------------*/
-;*    collect-up-to ...                                                */
-;*---------------------------------------------------------------------*/
-(define (collect-up-to ignore tag::pair attributes port specials strict decoder encoding lang conf)
-   
-   (define (collect ignore tags)
-      (let ((name (input-port-name port))
-	    (po (input-port-position port)))
-	 (let loop ((acc '())
-		    (item (ignore)))
-	    (cond
-	       ((symbol? item)
-		(cond
-		   ((eq? item (cdr tag))
-		    (make-dom-create tag attributes (reverse! acc) lang conf))
-		   (strict
-		    (xml-parse-error "Illegal closing tag"
-		       (format "`~a' expected, `~a' provided"
-			  tag item)
-		       name po))
-		   (else
-		    (with-handler
-		       (lambda (e)
-			  (exception-notify e))
-		       (xml-parse-error "Illegal closing tag"
-			  (format "`~a' expected, `~a' provided"
-			     tag item)
-			  name po))
-		    (make-dom-create tag attributes (reverse! acc) lang conf))))
-	       ((special? item)
-		(let ((nitem (make-dom-create (special-tag item)
-				(special-attributes item)
-				(special-body item)
-				lang conf)))
-		   (if (memq (special-tag item) tags)
-		       (loop acc nitem)
-		       (begin
-			  (list (make-dom-create tag attributes
-				   (reverse! acc) lang conf)
-			     nitem)))))
-	       ((eof-object? item)
-		(xml-parse-error
-		   (format "Premature end of HTML, expecting tag `</~a>'"
-		      (let ((s (symbol->string (cdr tag))))
-			 (substring s 1 (-fx (string-length s) 1))))
-		   item name po))
-	       (else
-		(let ((po (input-port-last-token-position port)))
-		   (loop (econs item acc (list 'at name po)) (ignore))))))))
-   
-   (let ((spec (assq (token-value tag) specials)))
-      (cond
-	 ((not spec)
-	  (collect ignore '()))
-	 ((null? (cdr spec))
-	  (make-dom-create tag attributes '() lang conf))
-	 ((procedure? (cdr spec))
-	  (make-dom-create tag attributes ((cdr spec) port) lang conf))
-	 ((pair? (cdr spec))
-	  (let ((ignore (lambda ()
-			   (read/rp xml-grammar port
-			      (lambda (t a b) (special t a b tag))
-			      specials strict decoder encoding
-			      lang conf)))) 
-	     (collect ignore (cdr spec))))
-	 (else
-	  (error "xml-parse" "Illegal special handler" spec)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    attribute-value-grammar ...                                      */

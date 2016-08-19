@@ -802,39 +802,28 @@
       (with-trace 'require "require@load-module-html"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
-	       (if (eq? lang 'html)
-		   (call-with-input-file filename
-		      (lambda (ip)
-			 (let* ((mod (nodejs-module (if js-main filename ".")
-					filename worker %this))
-				(v (parse-html ip -1))
-				(obj (find (lambda (o)
-					      (isa? o xml))
-					v)))
-			    (js-put! mod 'exports obj #f %this)
-			    mod)))
-		   (let ((hopscript (nodejs-compile filename lang))
-			 (this (js-new0 %this js-object))
-			 (scope (nodejs-new-scope-object %this))
-			 (mod (nodejs-module (if js-main filename ".")
-				 filename worker %this)))
-		      ;; prehooking
-		      (when (procedure? prehook)
-			 (prehook %this this scope mod))
-		      ;; main module
-		      (when (eq? js-main (js-null)) (set! js-main mod))
-		      ;; create the module
-		      (with-handler
-			 (lambda (e)
-			    (with-access::WorkerHopThread worker (module-cache %this)
-			       (js-delete! module-cache filename #f %this))
-			    (raise e))
-			 ;; exports the HTML value
-			 (js-put! mod 'exports (hopscript %this this scope mod)
-			    #f %this))
-		      ;; return the newly created module
-		      (trace-item "mod=" (typeof mod))
-		      mod))))))
+	       (let ((hopscript (nodejs-compile filename lang))
+		     (this (js-new0 %this js-object))
+		     (scope (nodejs-new-scope-object %this))
+		     (mod (nodejs-module (if js-main filename ".")
+			     filename worker %this)))
+		  ;; prehooking
+		  (when (procedure? prehook)
+		     (prehook %this this scope mod))
+		  ;; main module
+		  (when (eq? js-main (js-null)) (set! js-main mod))
+		  ;; create the module
+		  (with-handler
+		     (lambda (e)
+			(with-access::WorkerHopThread worker (module-cache %this)
+			   (js-delete! module-cache filename #f %this))
+			(raise e))
+		     ;; exports the HTML value
+		     (js-put! mod 'exports (hopscript %this this scope mod)
+			#f %this))
+		  ;; return the newly created module
+		  (trace-item "mod=" (typeof mod))
+		  mod)))))
    
    (define (hop-load/cache filename)
       (let ((old (hashtable-get hop-load-cache filename)))
@@ -892,7 +881,9 @@
 	  (load-module-so))
 	 ((or (string-prefix? "http://" filename)
 	      (string-prefix? "https://" filename))
-	  (load-module-js))
+	  (case lang
+	     ((html) (load-module-html))
+	     (else (load-module-js))))
 	 ((not (string-index (basename filename) #\.))
 	  (load-module-js))
 	 (else
