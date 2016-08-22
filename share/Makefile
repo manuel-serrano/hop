@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Tue May 17 18:36:38 2016 (serrano)                */
+#*    Last change :  Fri Aug 19 15:43:57 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -286,9 +286,9 @@ hop_s.js: hop-boot.js hop-autoconf.js ../scheme2js/runtime/runtime_s.js \
 #*---------------------------------------------------------------------*/
 #*    hop.js ...                                                       */
 #*---------------------------------------------------------------------*/
-hopjs_u.js: hop-boot.js hop-autoconf.js \
+hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
   hop-nodejs.js hop-react.js \
-  $(RTSCONFIG) hop-builtin-serializers.js 
+  hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -301,9 +301,9 @@ hopjs_u.js: hop-boot.js hop-autoconf.js \
                | $(BGLCPP) -DHOP_JAVASCRIPT | $(CLOSURE) \
                >> $@
 
-hopjs_s.js: hop-boot.js hop-autoconf.js \
+hopjs_s.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
   hop-exception.js hop-debug.js hop-nodejs.js hop-react.js \
-  $(RTSCONFIG) hop-builtin-serializers.js 
+  hop-builtin-serializers.js 
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
 	date +'/* %D %I:%H */' >> $@
@@ -324,8 +324,6 @@ hopjs_s.js: hop-boot.js hop-autoconf.js \
                  >> $@; \
         fi
 
-#* hopjs-serialize.js: hop-builtin-serializers.js  hopscheme.js hop-serialize.js */
-#* hopjs-serialize.js: hopscheme.js hop-builtin-serializers.js hop-serialize.js */
 hopjs-serialize.js: hopscheme.js hop-builtin-serializers.js hop-serialize.js
 	echo "/* Automatically generated file (don't edit) */" > $@
 	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
