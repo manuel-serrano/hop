@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 17 13:55:11 2005                          */
-;*    Last change :  Tue Aug 16 10:28:50 2016 (serrano)                */
+;*    Last change :  Mon Aug 22 11:38:22 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop initialization (default filtering).                          */
@@ -199,7 +199,10 @@
 	 ((string-prefix? "js=" query)
 	  (clientc-response req abspath (substring query 3) "js"))
 	 ((string-prefix? "es=" query)
-	  (clientc-response req abspath (substring query 3) "es"))
+	  (let ((resp (clientc-response req abspath (substring query 3) "es")))
+	     (with-access::%http-response resp (content-type)
+		(set! content-type "application/javascript")
+		resp)))
 	 ((string=? query (hop-hss-compile-suffix))
 	  (hss-response req abspath))
 	 (else

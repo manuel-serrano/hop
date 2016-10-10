@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar  1 18:13:51 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 16:54:04 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -25,6 +25,16 @@
 	    (hop-load-rc ::bstring)
 	    (hello-world)))
 
+;*---------------------------------------------------------------------*/
+;*    ecmascript-support ...                                           */
+;*---------------------------------------------------------------------*/
+(define ecmascript-es6
+   '(es6-let: es6-const: es6-arrow-function: es6-default-value:
+     es6-rest-argument:))
+
+(define ecmascript-es2017
+   (append ecmascript-es6 '(es2017-async:)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -112,6 +122,8 @@
 	     (set! clear-libs #f))
 	    (("--no-sofile" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
+	    (("--sofile-policy" ?policy (help "So file compile policy"))
+	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
 	    (("--no-autoload" (help "Disable autoload"))
@@ -316,8 +328,11 @@
 	    (("--js-es6" (help "Enable all EcmaScript 6 supports"))
 	     (for-each (lambda (ext)
 			  (nodejs-compiler-options-add! ext #t))
-		'(es6-let: es6-const: es6-arrow-function: es6-default-value:
-		  es6-rest-argument:)))
+		ecmascript-es6))
+	    (("--js-es2017" (help "Enable all EcmaScript 6 supports"))
+	     (for-each (lambda (ext)
+			  (nodejs-compiler-options-add! ext #t))
+		ecmascript-es2017))
 	    (("--js-dsssl" (help "Enable DSSSL like JS services (deprecated)"))
 	     (nodejs-compiler-options-add! :dsssl #t))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
@@ -621,13 +636,21 @@
 ;*---------------------------------------------------------------------*/
 (define (parseargs-loadrc rc-file default)
    (if (string? rc-file)
-       (if (member (suffix rc-file) '("hop" "scm"))
-	   (%hop-load-rc rc-file)
-	   rc-file)
+       (let ((suf (suffix rc-file)))
+	  (cond
+	     ((member suf '("hop" "scm"))
+	      (%hop-load-rc rc-file)
+	      rc-file)
+	     ((member suf '("js"))
+	      rc-file)))
        (let ((path (make-file-name (hop-rc-directory) default)))
 	  (if (file-exists? path)
 	      (%hop-load-rc path)
-	      (%hop-load-rc (make-file-name (hop-etc-directory) default))))))
+	      (let ((jspath (string-append (prefix path) ".js")))
+		 (if (file-exists? jspath)
+		     jspath
+		     (let ((def (make-file-name (hop-etc-directory) default)))
+			(%hop-load-rc def))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-rc ...                                                  */

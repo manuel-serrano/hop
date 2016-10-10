@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Wed May 25 11:33:09 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 15:24:23 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -197,14 +197,20 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SExpr env::pair-nil fun fix::cell)
    ;; conservative guard
-   (if (or (isa? this J2SPragma)
+   (cond
+      ((or (isa? this J2SPragma)
 	   (isa? this J2SUnresolvedRef)
 	   (isa? this J2SThis)
 	   (isa? this J2STilde))
-       (values #f env #f)
+       (values #f env #f))
+      ((isa? this J2SArrayAbsent)
+       (values 'undefined '() #f))
+      ((isa? this J2SComprehension)
+       (values 'array '() #f))
+      (else
        (begin
 	  (tprint "in expr: " (typeof this))
-	  (values 'obj '() #f))))
+	  (values 'obj '() #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SStmt ...                                               */
@@ -275,7 +281,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SRef env::pair-nil fun fix::cell)
    (with-access::J2SRef this (decl type)
-      (expr-type-set! this (env-type decl env) env fix)))
+      (with-access::J2SDecl decl ((typdecl type))
+	 (expr-type-set! this (or typdecl (env-type decl env)) env fix))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SNumber ...                                             */
@@ -396,6 +403,14 @@
 			 (when (assq decl fenv)
 			    (decl-type-set! decl 'obj fix)))
 	       env)
+	    (filter-map (lambda (p)
+				 (with-access::J2SDecl p (type usage)
+				    (cond
+				       ((eq? usage 'rest)
+					(cons p 'array))
+				       ((and type (not (eq? type 'obj)))
+					(cons p type)))))
+		     params)
 	    (expr-type-set! this 'function env fix)))))
 
 ;*---------------------------------------------------------------------*/
@@ -586,8 +601,9 @@
 ;*    type ::J2SDeclInit ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SDeclInit env::pair-nil fun fix::cell)
-   (with-access::J2SDeclInit this (val id (dtype type))
-      (set! dtype (merge-type dtype (type val env fun fix)))
+   (with-access::J2SDeclInit this (val id (dtype type) ronly)
+      (let ((ty (merge-type dtype (type val env fun fix))))
+	 (when ronly (set! dtype ty)))
       (values 'void (env-extend this dtype env) #f)))
 
 ;*---------------------------------------------------------------------*/

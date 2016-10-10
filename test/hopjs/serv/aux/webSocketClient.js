@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.0.x/test/hopjs/serv/aux/webSocketClient.js     */
+/*    .../project/hop/3.1.x/test/hopjs/serv/aux/webSocketClient.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Thu Sep  17 11:43:00 2015                         */
-/*    Last change :  Sun Sep 20 07:23:38 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu Oct 13 09:03:04 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    simple worker to stress test a WebSocket server                  */
 /*=====================================================================*/
@@ -36,7 +36,7 @@ onmessage = function( e ) {
       id = e.data.clientId;
       num = e.data.num;
       try {
-	 ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
+	 ws = new WebSocket( 'ws://' + 'localhost' + ':'+ hop.port + '/hop/serv' );
       }
       catch (e) {
 	 console.log( 'error creating socket' );

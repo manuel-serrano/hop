@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jun  1 18:55:57 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 09:41:05 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -41,6 +41,7 @@
 	      (tqueue::pair-nil (default '()))
 	      (listeners::pair-nil (default '()))
 	      (exitlisteners::pair-nil (default '()))
+	      (errorlisteners::pair-nil (default '()))
 	      (onmessage::obj (default (js-undefined)))
 	      (onexit::obj (default (js-undefined)))
 	      (%this::JsGlobalObject read-only)
@@ -54,7 +55,8 @@
 	      (uvhandles::vector (default (make-vector 32)))
 	      (call::procedure (default (lambda (cb) (cb))))
 	      (handlers::pair-nil (default '()))
-	      (services::pair-nil (default '())))
+	      (services::pair-nil (default '()))
+	      (%exn (default #unspecified)))
 
 	   (class MessageEvent::event
 	      data::obj)
@@ -253,11 +255,11 @@
 	      (val::obj (default #unspecified))
 	      (thens::pair-nil (default '()))
 	      (catches::pair-nil (default '()))
+	      (resolver (default #f))
+	      (rejecter (default #f))
 	      worker
 	      %this
-	      (resolvers::pair-nil (default '()))
-	      (rejecters::pair-nil (default '()))
-	      (watches::vector (default '#())))
+	      (%name (default (gensym 'promise))))
 
 	   (class JsGenerator::JsObject
 	      %next)
@@ -265,8 +267,10 @@
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
 
-	   (inline js-undefined? ::obj)
+	   (inline js-undefined?::bool ::obj)
 	   (inline js-undefined)
+	   
+	   (inline js-null?::bool ::obj)
 	   (inline js-null)
 	   (js-absent)
 
@@ -463,6 +467,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-undefined)
    #unspecified)
+
+;*---------------------------------------------------------------------*/
+;*    js-null? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-null? obj)
+   (null? obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-null ...                                                      */

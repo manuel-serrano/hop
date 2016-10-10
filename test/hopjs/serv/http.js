@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/http.js           */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/serv/http.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Thu Nov 26 07:57:26 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu Oct 13 08:11:10 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing services, webSockets and Broadcast over http and https   */
 /*=====================================================================*/
@@ -107,7 +107,7 @@ function goToWS() {
 	 WSFlag = true;
       };
    };
-   var ws = new WebSocket( wsScheme + '://' + hop.hostname + ':' + hop.port + '/hop/server' );
+   var ws = new WebSocket( wsScheme + '://localhost:' + hop.port + '/hop/server' );
    console.log( 'client: WS created' );
    ws.onopen = function() {
       console.log( 'client: ws url', ws.url );

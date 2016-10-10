@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Aug 10 07:15:51 2016 (serrano)                */
+;*    Last change :  Sat Oct 15 07:42:58 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -110,6 +110,7 @@
 	   
 	   (js-raise ::JsError)
 	   (js-throw ::obj ::obj ::long)
+	   (js-throw/debug ::obj ::obj ::long ::WorkerHopThread)
 
 	   (js-raise-type-error ::JsGlobalObject ::bstring ::obj)
 	   (js-raise-type-error/loc ::JsGlobalObject ::obj ::bstring ::obj)
@@ -1294,6 +1295,28 @@
 	 (set! stack (get-trace-stack))
 	 (set! fname f)
 	 (set! location l)))
+   (raise err))
+
+;*---------------------------------------------------------------------*/
+;*    js-throw/debug ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This function is called by the compiled form of "throw".         */
+;*---------------------------------------------------------------------*/
+(define (js-throw/debug err f l %worker)
+   (when (isa? err JsError)
+      (with-access::JsError err (stack fname location)
+	 (set! stack (get-trace-stack))
+	 (set! fname f)
+	 (set! location l)))
+   (with-access::WorkerHopThread %worker (%exn)
+      (set! %exn
+	 (instantiate::&error
+	    (proc "throw")
+	    (stack (get-trace-stack))
+	    (fname f)
+	    (location l)
+	    (msg "Uncaught exception")
+	    (obj err))))
    (raise err))
 
 ;*---------------------------------------------------------------------*/

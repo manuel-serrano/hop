@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu May 24 14:35:05 2007                          */
-/*    Last change :  Fri Aug 19 15:49:44 2016 (serrano)                */
+/*    Last change :  Mon Aug 29 13:33:19 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop adpatation of the scheme2js runtime.                         */
@@ -881,6 +881,17 @@ function sc_minus2( x, y ) {
 
 function sc_multi2( x, y ) {
    var res = x * y;
+   return res;
+}
+
+function sc_div2(x, y) {
+   if( typeof x !== "number" ) {
+      sc_typeError( "/", "number", x, 3 );
+   }
+   if( typeof y !== "number" ) {
+      sc_typeError( "/", "number", y, 3 );
+   }
+   var res = x / y;
    return res;
 }
 

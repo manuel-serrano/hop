@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Wed Aug 17 12:40:24 2016 (serrano)                */
+#*    Last change :  Sat Oct 15 06:47:07 2016 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -306,6 +306,7 @@ distclean: clean
 	$(MAKE) -C nodejs distclean
 	$(MAKE) -C node_modules distclean
 	$(MAKE) -C doc distclean
+	$(MAKE) -C tools distclean
 	$(RM) -f etc/Makefile.hopconfig
 	$(RM) -f etc/hop.man
 	$(RM) -f etc/hopsh.man

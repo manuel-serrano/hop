@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Mon May 30 15:43:23 2016 (serrano)                */
+/*    Last change :  Tue Oct 11 06:28:32 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -26,9 +26,9 @@ console.log( "basic" );
 var p = new Promise( function( resolve, reject ) { resolve( 3 ) } );
 p.then( function( val ) { assert.equal( val, 3 ) } );
 
-var p = new Promise( function( resolve, reject ) { resolve( 3 ) } )
-    .then( function( val ) { assert.equal( val, 3 ) } )
-    .then( function( val ) { assert.equal( val, 3 ) } );
+var p = new Promise( function( resolve, reject ) { resolve( 4 ) } )
+    .then( function( val ) { assert.equal( val, 4 ); return 5 } )
+    .then( function( val ) { assert.equal( val, 5 ) } );
 
 var p = new Promise( function( resolve, reject ) { reject( -3 ) } )
     .then( undefined, function( val ) { assert.equal( val, -3 ) } );
@@ -53,6 +53,19 @@ p.then( function( value) {
 } ).then( function( value ) {
    assert.equal( value, "Success!1" );
 } );
+
+var p = new Promise( function( resolve, reject ) {
+   setTimeout( resolve, 10, 4 );
+} );
+
+
+p.then( function( o ) {
+   return new Promise( function( resolve, reject ) {
+      setTimeout( resolve, 10, o * 3 );
+   } )
+} ).then( function( o2 ) {
+   assert.check( o2,12 );
+} )
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */
@@ -147,6 +160,28 @@ function mdnAll() {
    Promise.all( [p1, p2, p3]).then( function( values ) {
       assert.deepEqual( values, [3, 1337, "foo" ] );
    }) ;
+
+   var p1 = new Promise((resolve, reject) => {
+      setTimeout(resolve, 1000, "one");
+   });
+   var p2 = new Promise((resolve, reject) => {
+      setTimeout(resolve, 2000, "two");
+   });
+   var p3 = new Promise((resolve, reject) => {
+      setTimeout(resolve, 3000, "three");
+   });
+   var p4 = new Promise((resolve, reject) => {
+      setTimeout(resolve, 4000, "four");
+   });
+   var p5 = new Promise((resolve, reject) => {
+      reject("reject");
+   });
+
+   Promise.all([p1, p2, p3, p4, p5]).then(value => {
+      assert.ok( false, "should reject" );
+   }, reason => {
+      assert.check( reason == "reject" );
+   });
 }
 
 function mdnAllFail() {
@@ -209,10 +244,53 @@ function mdnAllSuccess() {
       setTimeout(resolve, 4000, "four");
    });
 
-   Promise.all([p1, p2, p3, p4]).then(function(value) { 
+   Promise.all([p1, p2, p3, p4]).then(function(value) {
       assert.deepEqual( value, ["one", "two", "three", "four" ] );
    }, function(reason) {
       assert.ok( false, "all: not called" );
+   });
+}
+
+function mdnRace() {
+   var p1 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 500, "one");
+   });
+   var p2 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 100, "two");
+   });
+
+   Promise.race([p1, p2]).then(function(value) {
+      assert.check( value == "two", "reject because p2 is faster" );
+      // Both resolve, but p2 is faster
+   });
+
+   var p3 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 100, "three");
+   });
+   var p4 = new Promise(function(resolve, reject) {
+      setTimeout(reject, 500, "four");
+   });
+
+   Promise.race([p3, p4]).then(function(value) {
+      assert.check( value == "three", "resolve because p3 is faster" );
+      // p3 is faster, so it resolves
+   }, function(reason) {
+      console.log( "GLOP=", reason );
+      assert.ok( false, "all: not called" );
+   });
+
+   var p5 = new Promise(function(resolve, reject) {
+      setTimeout(resolve, 500, "five");
+   });
+   var p6 = new Promise(function(resolve, reject) {
+      setTimeout(reject, 100, "six");
+   });
+
+   Promise.race([p5, p6]).then(function(value) {
+      // Not called
+   }, function(reason) {
+      assert.check( reason = "six", "reject because p6 is faster" );
+      // p6 is faster, so it rejects
    });
 }
 
@@ -227,6 +305,9 @@ mdnReject();
 
 console.log( "   mdnAll()");
 mdnAll();
+
+console.log( "   mdnRace()");
+mdnRace();
 
 console.log( "   mdnAllSuccess()");
 mdnAllSuccess();

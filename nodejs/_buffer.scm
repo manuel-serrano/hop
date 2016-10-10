@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Sun Apr 24 13:14:37 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 17:01:19 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -72,19 +72,15 @@
    js-u8vector->jsfastbuffer)
 
 ;*---------------------------------------------------------------------*/
-;*    string-sentinel-set! ...                                         */
+;*    string-int-set! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (string-sentinel-set! str::bstring i::long n::int)
-   (when (and (>fx n 127) (<fx i (string-ascii-sentinel str)))
-      (string-ascii-sentinel-set! str i))
+(define-inline (string-int-set! str::bstring i::long n::int)
    (string-set! str i (integer->char n)))
 
 ;*---------------------------------------------------------------------*/
-;*    string-sentinel-set-ur! ...                                      */
+;*    string-in-set-ur! ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (string-sentinel-set-ur! str::bstring i::long n::int)
-   (when (and (>fx n 127) (<fx i (string-ascii-sentinel str)))
-      (string-ascii-sentinel-set! str i))
+(define-inline (string-in-set-ur! str::bstring i::long n::int)
    (string-set-ur! str i (integer->char n)))
 
 ;*---------------------------------------------------------------------*/
@@ -101,7 +97,7 @@
    (lambda (buf i v %this)
       (let* ((w (bit-andu32 #u32:255 (js-touint32 v %this)))
 	     (n (uint32->fixnum w)))
-	 (string-sentinel-set! buf i n))))
+	 (string-int-set! buf i n))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsTypeArray ...                                */
@@ -201,7 +197,7 @@
 	 (if (=fx i -1)
 	     (js-string->jsslowbuffer str %this)
 	     (begin
-		(string-sentinel-set! str i
+		(string-int-set! str i
 		   (uint8->fixnum (u8vector-ref buf i)))
 		(loop (-fx i 1)))))))
 
@@ -214,7 +210,7 @@
 	 (if (=fx i -1)
 	     (js-string->jsfastbuffer str %this)
 	     (begin
-		(string-sentinel-set! str i
+		(string-int-set! str i
 		   (uint8->fixnum (u8vector-ref buf i)))
 		(loop (-fx i 1)))))))
 
@@ -237,7 +233,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-arraybuffer-set! o::JsSlowBuffer index val)
    (with-access::JsSlowBuffer o (data)
-      (string-sentinel-set-ur! data index val)))
+      (string-in-set-ur! data index val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-buffer-constr ...                                             */
@@ -363,7 +359,7 @@
 		    ;; an utf8 string
 		    (let ((sz (utf8-char-size n))
 			  (ucs2 (utf8-string-get string1 (+fx o1 i) n)))
-		       (string-sentinel-set-ur! string2 (+fx o2 j)
+		       (string-in-set-ur! string2 (+fx o2 j)
 			  (bit-and ucs2 255))
 		       (loop (+fx i sz) (+fx j 1) (+fx l 1)))
 		    (begin
@@ -399,8 +395,6 @@
 			    ;; be replace with the unicode replacement character
 			    (if (<=fx (+fx j 3) len)
 				(let ((k (+fx o2 j)))
-				   (when (>fx (string-ascii-sentinel string2) k)
-				      (string-ascii-sentinel-set! string2 k))
 				   (blit-string! "\xef\xbf\xbd" 0
 				      string2 k 3)
 				   (loop (+fx i 4) (+fx j 3) (+fx l 3) (+fx c 1)))
@@ -408,8 +402,6 @@
 			    (let ((sz (utf8-char-size n)))
 			       (if (<=fx (+fx j sz) len)
 				   (let ((k (+fx o2 j)))
-				      (when (>fx (string-ascii-sentinel string2) k)
-					 (string-ascii-sentinel-set! string2 k))
 				      (blit-string! string1 (+fx o1 i)
 					 string2 k sz)
 				      (loop (+fx i sz) (+fx j sz) (+fx l sz) (+fx c 1)))
@@ -428,9 +420,9 @@
    (let loop ((i 0))
       (if (<fx i (/fx len 2))
 	  (let ((c (ucs2->integer (ucs2-string-ref string1 i))))
-	     (string-sentinel-set! string2 (+fx o2 (*fx i 2))
+	     (string-int-set! string2 (+fx o2 (*fx i 2))
 		(bit-and c 255))
-	     (string-sentinel-set! string2 (+fx o2 (+fx 1 (*fx i 2)))
+	     (string-int-set! string2 (+fx o2 (+fx 1 (*fx i 2)))
 		(bit-rsh c 8))
 	     (loop (+fx i 1)))
 	  (*fx i 2))))
@@ -576,7 +568,7 @@
       (fixnum->uint8 (char->integer (string-ref-ur str i))))
 
    (define (byte-set! str i v)
-      (string-sentinel-set! str i (uint8->fixnum v)))
+      (string-int-set! str i (uint8->fixnum v)))
 
    (define (get-data obj)
       (cond
@@ -945,7 +937,7 @@
 					 val))))))
 		      (let loop ((i start))
 			 (when (<fx i end)
-			    (string-sentinel-set! sdata i (char->integer v))
+			    (string-int-set! sdata i (char->integer v))
 			    (loop (+fx i 1))))
 		      (js-undefined))))))
 	 3 "fill")

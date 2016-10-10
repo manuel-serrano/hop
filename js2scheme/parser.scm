@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Aug 18 14:17:58 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 11:16:24 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_parser
 
-   (include "token.sch")
+   (include "token.sch"
+	    "ast.sch")
 
    (import __js2scheme_lexer
 	   __js2scheme_html
@@ -112,7 +113,7 @@
    (define (peek-token)
       (if (null? *peeked-tokens*)
 	  (begin
-	     (set! *peeked-tokens* (list (read/rp (j2s-lexer) input-port lang)))
+	     (set! *peeked-tokens* (list (read/rp (j2s-lexer) input-port lang conf)))
 	     (if (eq? (caar *peeked-tokens*) 'NEWLINE)
 		 (begin
 		    (set! *previous-token-type* 'NEWLINE)
@@ -215,13 +216,13 @@
       (case (peek-token-type)
 	 ((function)
 	  (function-declaration))
+	 ((async)
+	  (async-declaration))
 	 ((service)
 	  (service-declaration))
 	 ((RESERVED)
 	  (if (eq? (peek-token-value) 'import)
-	      (begin
-		 (consume-any!)
-		 (import))
+	      (import (consume-any!))
 	      (statement)))
 	 ((EOF)
 	  (parse-token-error "unexpected end of file"
@@ -239,6 +240,7 @@
       (case (peek-token-type)
 	 ((function) (function-declaration))
 	 ((service) (service-declaration))
+	 ((async) (async-declaration))
 	 ((EOF) (cdr (consume-any!)))
 	 ((ERROR) (parse-token-error "error" (consume-any!)))
 	 (else (statement))))
@@ -266,6 +268,7 @@
 	 ;; However, it looks like main implementation do. For compatibility
 	 ;; we mimic this behavior.
 	 ((function) (function-declaration))
+	 ((async) (async-declaration))
 	 ((debugger) (debugger-statement))
 	 (else (expression-statement))))
    
@@ -709,6 +712,15 @@
    
    (define (function-declaration)
       (function #t))
+
+   (define (async-declaration)
+      (let* ((tok (consume-any!))
+	     (fun (function-declaration)))
+	 (if (isa? fun J2SDeclFun)
+	     (with-access::J2SDeclFun fun (val)
+		(set! val (async->generator val))
+		fun)
+	     (parse-token-error "Illegal async function declaration" tok))))
    
    (define (function-expression)
       (function #f))
@@ -719,6 +731,41 @@
    (define (service-expression)
       (service #f))
 
+   (define (async->generator fun::J2SFun)
+      ;; generates the async function body by the following transformation
+      ;; async function NAME( a0, ... ) { BODY }
+      ;;   =>
+      ;; function NAME( a0, ... ) { return spawn( function*() { BODY }, this); }
+      ;; For additional details, see:
+      ;;   https://tc39.github.io/ecmascript-asyncawait
+      (with-access::J2SFun fun (generator body mode)
+	 (cond
+	    ((and (not (config-get conf :es2017-async))
+		  (not (eq? lang 'hopscript)))
+	     (parse-node-error "Async function requires hopscript or ecmascript2017 mode" fun))
+	    (generator
+	     (parse-node-error "Wrong async function declaration" fun))
+	    (else
+	     (with-access::J2SNode body (loc)
+		(let ((gen (instantiate::J2SFun
+			      (loc loc)
+			      (generator #t)
+			      (mode 'strict)
+			      (body body))))
+		   (set! body
+		      (J2SBlock
+			 (J2SReturn #t
+			    (J2SCall (J2SHopRef 'js-spawn)
+			       gen (J2SThis) (J2SHopRef '%this)))))
+		   fun))))))
+      
+   (define (async-expression)
+      (let* ((tok (consume-any!))
+	     (fun (primary)))
+	 (if (isa? fun J2SFun)
+	     (async->generator fun)
+	     (parse-token-error "Illegal async function expression" tok))))
+   
    (define (arrow-params args)
       (map (lambda (p)
 	      (cond
@@ -751,7 +798,7 @@
 	  ;; a statement
 	  (fun-body params)
 	  ;; an expression
-	  (let ((expr (expression #f)))
+	  (let ((expr (assig-expr #f)))
 	     (with-access::J2SNode expr (loc)
 		(instantiate::J2SBlock
 		   (loc loc)
@@ -794,27 +841,6 @@
 	     (body (fun-body params))
 	     (mode (or (javascript-mode body) 'normal)))
 	 (cond
-;* 	    (declaration?                                              */
-;* 	     (let ((val (instantiate::J2SFun                           */
-;* 			   (loc (token-loc token))                     */
-;* 			   (params params)                             */
-;* 			   (name (cdr id))                             */
-;* 			   (mode mode)                                 */
-;* 			   (generator gen)                             */
-;* 			   (body body)                                 */
-;* 			   (vararg (rest-params params))               */
-;* 			   (decl (instantiate::J2SDecl                 */
-;* 				    (loc (token-loc token))            */
-;* 				    (id (cdr id))                      */
-;* 				    (writable #f)                      */
-;* 				    (ronly #t)                         */
-;* 				    (scope 'global))))))               */
-;* 		(instantiate::J2SDeclFun                               */
-;* 		   (loc (token-loc token))                             */
-;* 		   (writable (not (eq? mode 'hopscript)))              */
-;* 		   (ronly (eq? mode 'hopscript))                       */
-;* 		   (id (cdr id))                                       */
-;* 		   (val val))))                                        */
 	    (declaration?
 	     (co-instantiate ((val (instantiate::J2SFun
 				      (loc (token-loc token))
@@ -823,9 +849,7 @@
 				      (mode mode)
 				      (generator gen)
 				      (body body)
-				      (vararg (rest-params params))
-				      ;;(decl decl)
-				      ))
+				      (vararg (rest-params params))))
 			      (decl (instantiate::J2SDeclFun
 				       (loc (token-loc token))
 				       (writable (not (eq? mode 'hopscript)))
@@ -840,7 +864,6 @@
 				      (mode mode)
 				      (generator gen)
 				      (name (cdr id))
-				      (mode mode)
 				      (params params)
 				      (vararg (rest-params params))
 				      (body body)))
@@ -971,12 +994,8 @@
 	 (service-create token id params init body mode
 	    #t declaration? #f)))
 
-   (define (import)
-      (let* ((token (consume-token! 'service))
-	     (id (consume-token! 'ID))
-	     (inits (service-params)))
-	 (parse-token-warning "Deprecated import declaration" (or id token))
-	 (service-import token id inits #t)))
+   (define (import token)
+      (parse-token-error "Illegal import declaration" token))
 
    (define (service declaration?)
       (let* ((token (consume-token! 'service))
@@ -992,10 +1011,9 @@
    (define (consume-param!)
       (let* ((token (consume-token! 'ID))
 	     (loc (token-loc token))
-	     (hint '()))
-;* 	     (hint (if (eq? (peek-token-type) 'HINT)                   */
-;* 		       (list (cons (token-value (consume-any!)) 100))  */
-;* 		       '())))                                          */
+	     (hint '())
+	     (typ (when (eq? (peek-token-type) 'TYPE)
+		     (token-value (consume-any!)))))
 	 (if (eq? (peek-token-type) '=)
 	     ;; a parameter with a default value
 	     (begin
@@ -1005,12 +1023,14 @@
 		   (val (assig-expr #f))
 		   (loc loc)
 		   (id (token-value token))
+		   (type typ)
 		   (hint hint)))
 	     ;; no default value
 	     (instantiate::J2SDecl
 		(binder 'param)
 		(loc loc)
 		(id (token-value token))
+		(type typ)
 		(hint hint)))))
 
    (define (consume-rest-param!)
@@ -1342,13 +1362,13 @@
 		(loc (token-loc ignore))
 		(clazz clazz)
 		(args args))))
-	 ((yield)
+	 ((yield await)
 	  (yield-expr))
 	 (else
 	  (access-or-call (primary) loc #f))))
 
    (define (yield-expr)
-      (let ((loc (token-loc (consume-token! 'yield)))
+      (let ((loc (token-loc (consume-any!)))
 	    (gen (when (eq? (peek-token-type) '*)
 		    (consume-any!)
 		    #t)))
@@ -1612,6 +1632,8 @@
 	  (function-expression))
 	 ((service)
 	  (service-expression))
+	 ((async)
+	  (async-expression))
 	 ((this)
 	  (instantiate::J2SThis
 	     (loc (token-loc (consume-any!)))))
@@ -2253,7 +2275,7 @@
    (hopscript-mode-fun! node mode)
    ;; make hopscript function constant
    (hopscript-cnst-fun! node)
-   (unless (memq mode '(strict hopscript ecmascript6))
+   (unless (memq mode '(strict hopscript ecmascript6 ecmascript2017))
       (unless (config-get conf :es6-let #f)
 	 (disable-es6-let node))
       (unless (config-get conf :es6-default-value #f)
@@ -2330,7 +2352,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-es6-let this::J2SFun)
    (with-access::J2SFun this (mode name)
-      (unless (memq mode '(hopscript ecmascript6))
+      (unless (memq mode '(hopscript ecmascript6 ecmascript2017))
 	 (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
@@ -2357,7 +2379,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-es6-arrow this::J2SFun)
    (with-access::J2SFun this (mode)
-      (unless (memq mode '(hopscript ecmascript6))
+      (unless (memq mode '(hopscript ecmascript6 ecmascript2017))
 	 (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
@@ -2384,7 +2406,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (disable-es6-let this::J2SFun)
    (with-access::J2SFun this (mode)
-      (unless (memq mode '(hopscript ecmascript6))
+      (unless (memq mode '(hopscript ecmascript6 ecmascript2017))
 	 (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/

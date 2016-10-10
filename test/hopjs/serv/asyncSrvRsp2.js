@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.0.x/test/hopjs/serv/asyncSrvRsp2.js       */
+/*    .../prgm/project/hop/3.1.x/test/hopjs/serv/asyncSrvRsp2.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Mar  1 07:13:49 2016                          */
-/*    Last change :  Tue Mar  1 08:09:09 2016 (serrano)                */
+/*    Last change :  Thu Oct 13 15:03:59 2016 (serrano)                */
 /*    Copyright   :  2016 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing asynchronous responses                                   */
@@ -25,10 +25,8 @@ function test() {
    let pending = 9;
 
    function call( i ) {
-      console.log( ">>> i=", i );
       bar( i ).post().then( function( v ) {
 	 pending -= 1;
-	 console.log( "<<< i=", i, " pending=", pending );
 	 if( pending == 0 ) process.exit( 0 );
       } )
    }

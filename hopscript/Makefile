@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Mar  9 10:51:17 2016 (serrano)                */
+#*    Last change :  Fri Oct  7 07:22:03 2016 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -44,7 +44,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 _OBJECTS = types rts object function string number regexp boolean \
   error array arguments date json math worker private public lib service \
   property websocket pair arraybuffer arraybufferview stringliteral dom \
-  symbol promise generator
+  symbol promise generator spawn
 
 _C_OBJECTS = _bglhopscript
 
@@ -96,6 +96,12 @@ ude:
 
 getsources:
 	@ echo $(SOURCES)
+
+#*---------------------------------------------------------------------*/
+#*    The implicit rules                                               */
+#*---------------------------------------------------------------------*/
+%.scm: %.js
+	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS) $(EFLAGS) $(BHOPCFLAGS),-s --js-module-name __hopscript_$* --js-module-path $* --js-no-module-main --js-type-annotations --js-no-header ,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    bglhopscript.h                                                   */

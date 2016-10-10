@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sun Aug 14 19:26:32 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 12:05:43 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -425,8 +425,13 @@
    (with-access::http-response-file r (start-line header
 					 content-type charset
 					 server file bodyp
+					 size offset
 					 timeout)
-      (let ((size (file-size file)))
+      (let ((size (if (=elong size #e-1)
+		      (let ((fs (file-size file)))
+			 (if (<=elong offset 0)
+			     fs
+			     (-elong fs offset))))))
 	 (if (>=elong size #e0)
 	     (with-access::http-request request (connection)
 		(let ((p (socket-output socket)))
@@ -443,7 +448,13 @@
 		   (http-write-line p)
 		   (flush-output-port p)
 		   ;; the body
-		   (when bodyp (send-file file p size #e-1))
+		   ;;(tprint ">>> SEND-FILE.2 " file)
+;* 		   (with-handler                                       */
+;* 		      (lambda (e)                                      */
+;* 			 (tprint "*** SEND-FILE.exn " e))              */
+		   (when bodyp (send-file file p size offset))
+;* 		   )                                                   */
+		   ;;(tprint "<<< SEND-FILE.2 " file)
 		   (flush-output-port p)
 		   connection))
 	     (http-response (http-file-not-found file) request socket)))))

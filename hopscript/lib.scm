@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Aug 12 11:22:47 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 15:57:02 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -60,10 +60,8 @@
 		    (vector-set-ur! cnsts i
 		       (case (vector-ref el 0)
 			  ((0)
-			   (let ((str (vector-ref-ur el 1))
-				 (sentinel (vector-ref-ur el 2)))
-			      (js-string->jsstring
-				 (string-ascii-sentinel-set! str sentinel))))
+			   (let ((str (vector-ref-ur el 1)))
+			      (js-string->jsstring str)))
 			  ((1)
 			   (with-access::JsGlobalObject %this (js-regexp)
 			      (let* ((cnsts (vector-ref-ur el 1))

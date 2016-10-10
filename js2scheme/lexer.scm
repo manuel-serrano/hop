@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Aug 18 14:20:00 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 15:54:45 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -16,6 +16,9 @@
    
    (include "token.sch")
 
+   (import __js2scheme_ast
+	   __js2scheme_utils)
+   
    (export (j2s-lexer)
 	   (j2s-template-lexer)
 	   (j2s-regex-lexer)
@@ -41,7 +44,9 @@
 (define *JS-care-future-reserved* #t)
 
 (define *keyword-list*
-   '("break"
+   '("async"
+     "await"
+     "break"
      "case"
      "catch"
      "const"
@@ -156,7 +161,7 @@
 	  (string_char (or (out #a226 #\" #\' #\\ #\Return #\Newline) e2))
 	  (string_char_quote (or #\' string_char))
 	  (string_char_dquote (or #\" string_char))
-	  lang)
+	  lang conf)
 
       (define (octalllong n::llong)
        (let loop ((power #l1)
@@ -192,12 +197,14 @@
 		     (: "\xe2\x80" (out "\xa8\xa9")))))
        (ignore))
 
-;*       ;; hint comments                                              */
-;*       ((: "/* ::" (+ letter) " *}")                                 */
-;*        (let* ((len (-fx (the-length) 3))                            */
-;* 	      (hint (string->symbol (the-substring 5 len))))           */
-;* 	  (token 'HINT hint len)))                                     */
-;*                                                                     */
+      ;; type comments
+      ((: "/* ::" (+ letter) " */")
+       (let* ((len (-fx (the-length) 3))
+	      (typ (string->symbol (the-substring 5 len))))
+	  (if (config-get conf :type-annotations #f)
+	      (token 'TYPE typ len)
+	      (ignore))))
+
       ;; multi-line comment on one line
       ((: "/*" (* (or (out #\*) (: (+ #\*) (out #\/ #\*)))) (+ #\*) "/")
        (ignore))
@@ -533,7 +540,6 @@
 	       ((not j)
 		(blit-string! str i res w (-fx len i))
 		(string-shrink! res (+fx w (-fx len i)))
-		(string-ascii-sentinel-mark! res)
 		(make-token (if octal 'OSTRING 'ESTRING) res
 		   (the-coord input-port (+fx len 1))))
 	       ((=fx j (-fx len 1))

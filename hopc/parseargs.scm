@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Feb  4 08:16:05 2016 (serrano)                */
+;*    Last change :  Sat Oct  8 07:43:47 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -21,6 +21,17 @@
    
    (export  (parse-args ::pair-nil)))
 
+
+;*---------------------------------------------------------------------*/
+;*    ecmascript-support ...                                           */
+;*---------------------------------------------------------------------*/
+(define ecmascript-es6
+   '(es6-let: es6-const: es6-arrow-function: es6-default-value:
+     es6-rest-argument:))
+
+(define ecmascript-es2017
+   (append ecmascript-es6 '(es2017-async:)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -127,7 +138,7 @@
 	     (hopc-source-language-set! (string->symbol lang)))
 	    (("--js-worker" (help "Enable JavaScript worker"))
 	     (hopc-js-worker-set! #t))
-	    (("--no-js-worker" (help "Disable JavaScript worker"))
+	    (("--js-no-worker" (help "Disable JavaScript worker"))
 	     (hopc-js-worker-set! #f))
 	    (("--js-module-name" ?name (help "Set Bigloo module name"))
 	     (hopc-js-module-name-set! name))
@@ -135,16 +146,20 @@
 	     (hopc-js-module-path-set! path))
 	    (("--js-module-main" (help "Force generating a main clause"))
 	     (hopc-js-module-main-set! #t))
-	    (("--no-js-module-main" (help "Force not generating a main clause"))
+	    (("--js-no-module-main" (help "Force not generating a main clause"))
 	     (hopc-js-module-main-set! #f))
-	    (("--no-js-header" (help "Don't generate hopscript header"))
+	    (("--js-no-header" (help "Don't generate hopscript header"))
 	     (hopc-js-header-set! #f))
 	    (("--js-header" (help "Generate hopscript header"))
 	     (hopc-js-header-set! #t))
 	    (("--js-return-as-exit" (help "Consider top level returns as exit"))
 	     (hopc-js-return-as-exit-set! #t))
-	    (("--no-js-return-as-exit" (help "Consider top level returns as error"))
+	    (("--js-no-return-as-exit" (help "Consider top level returns as error"))
 	     (hopc-js-return-as-exit-set! #f))
+	    (("--js-type-annotations" (help "Enable type annotations"))
+	     (hopc-js-type-annotations-set! #t))
+	    (("--js-no-type-annotations" (help "Disable type annotations"))
+	     (hopc-js-type-annotations-set! #f))
 	    (("--js-driver" ?driver (help "Set j2s compiler driver"))
 	     (hopc-js-driver-set! driver))
 	    (("--js-show-driver" (help "Set j2s compiler driver"))
@@ -161,8 +176,15 @@
 	     (hopc-pass-set! 'client-js))
 	    (("--js-es6" (help "Enable all EcmaScript 6 support"))
 	     (j2s-compile-options-set!
-		(append '(es6-let: #t es6-const: #t es6-arrow-function: #t
-			  es6-default-value: #t es6-rest-argument: #t)
+		(append
+		   (apply append
+		      (map (lambda (f) (list f #t)) ecmascript-es6))
+		   (j2s-compile-options))))
+	    (("--js-es2017" (help "Enable all EcmaScript 2017 support"))
+	     (j2s-compile-options-set!
+		(append
+		   (apply append
+		      (map (lambda (f) (list f #t)) ecmascript-es2017))
 		   (j2s-compile-options))))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
 	     (j2s-compile-options-set!

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/service.js        */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/serv/service.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jan 11 18:14:33 2015                          */
-/*    Last change :  Wed Nov 25 20:34:00 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Thu Oct 13 14:10:29 2016 (serrano)                */
+/*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing server-to-server services                                */
 /*=====================================================================*/
@@ -35,10 +35,10 @@ service serv2( val ) {
 }
 
 
-import service iserv0();
-import service iserv1();
-import service iserv2();
-import service iserv3();
+service iserv0();
+service iserv1();
+service iserv2();
+service iserv3();
 
 function test() {
    serv0( 3 ).post( function( v ) { assert.ok( v == 4 ); res++; } );

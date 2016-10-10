@@ -86,12 +86,6 @@ service getXml() {
   return hop.HTTPResponseXml( <div>a div</div> );
 ```
 
-${ <span class="label label-warning">Note:</span> }
- In normal situation, it is not necessary to explicitly build the
-`HTTPResponseXml` object as the runtime system automatically constructs
-one when the response of a service is an XML fragment.
-[:@warning]
-
 The options list is:
 
   * `backend`: the HTML backend (defaults to "HTML5")
@@ -100,6 +94,23 @@ The options list is:
   * `charset`: the charset.
   * `header`: the full response header, an object.
 
+${ <span class="label label-warning">Note:</span> }
+ In normal situation, it is not necessary to explicitly build the
+`HTTPResponseXml` object as the runtime system automatically constructs
+one when the response of a service is an XML fragment. It might be
+useful to construct an `HTTPResponseXML` explicitly when a header
+is to be associated with the response. Example:
+
+```hopscript
+service foo() {
+   return hop.HTTPResponseXml(
+     <html>
+       <button onclick=~{console.log( document.cookie )}>show</button>
+     </html>,
+     { contentType: "text/html", header: { "set-cookie": "a=b; HttpOnly" } } );
+}
+```
+[:@warning]
 
 ### hop.HTTPResponseString( string, [option] ) ###
 [:@glyphicon glyphicon-tag function]

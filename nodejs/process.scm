@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Fri Jun  3 07:08:20 2016 (serrano)                */
+;*    Last change :  Wed Oct 12 11:59:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -386,7 +386,8 @@
 		    1 'title)
 	    :configurable #f)
 	 
-	 (js-put! proc 'version (js-string->jsstring (hop-version)) #f %this)
+	 (js-put! proc 'version
+	    (js-stringlist->jsstring `("v" ,(nodejs-version))) #f %this)
 	 
 	 (js-put! proc 'versions
 	    (js-alist->jsobject

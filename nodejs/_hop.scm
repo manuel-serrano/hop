@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Mar  2 12:03:38 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 18:08:45 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -130,7 +130,7 @@
 			     (obj (instantiate::server
 				     (ssl (js-toboolean ssl))
 				     (host (if (eq? host (js-undefined))
-					       (hop-server-hostname)
+					       "localhost"
 					       (js-tostring host %this)))
 				     (port (if (eq? port (js-undefined))
 					       (hop-port)
@@ -369,6 +369,14 @@
 ;*    post-url ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (post-url frame::JsUrlFrame success opt %this force-sync)
+
+   (define (fail->handler fail)
+      (lambda (obj)
+	 (if (isa? obj xml-http-request)
+	     (with-access::xml-http-request obj (header)
+		(js-call1 %this fail %this
+		   (js-alist->jsobject header %this)))
+	     (js-call1 %this fail %this obj))))
    
    (let ((host "localhost")
 	 (port #f)
@@ -382,11 +390,7 @@
 	 (scheme "http"))
       (cond
 	 ((isa? opt JsFunction)
-	  (set! fail
-	     (lambda (xhr)
-		(with-access::xml-http-request xhr (header)
-		   (js-call1 %this opt %this
-		      (js-alist->jsobject header %this))))))
+	  (set! fail (fail->handler opt)))
 	 ((not (eq? opt (js-undefined)))
 	  (let ((h (js-get opt 'hostname %this))
 		(p (js-get opt 'port %this))
@@ -418,11 +422,7 @@
 		(set! method (string->symbol
 				(string-upcase (js-tostring m %this)))))
 	     (when (isa? f JsFunction)
-		(set! fail
-		   (lambda (xhr)
-		      (with-access::xml-http-request xhr (header)
-			 (js-call1 %this f %this
-			    (js-alist->jsobject header %this))))))
+		(set! fail (fail->handler f)))
 	     (when (isa? r JsObject)
 		(set! header
 		   (map! (lambda (o)
@@ -439,7 +439,10 @@
 		(if port (format ":~a" port) "")
 		url)))
       
-      (define (post callback)
+      (define (json-parser ip ctx)
+	 (js-json-parser ip #f #f #f %this))
+      
+      (define (post callback fail)
 	 (with-access::JsUrlFrame frame (url args)
 	    (with-url (hop-apply-nice-url
 			 (url-base (js-tostring url %this)) args)
@@ -448,7 +451,7 @@
 	       :method method
 	       :timeout timeout
 	       :authorization authorization
-	       :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
+	       :json-parser json-parser
 	       :ctx %this
 	       :header header
 	       :body body)))
@@ -456,56 +459,48 @@
       (define (scheme->js val)
 	 (js-obj->jsobject val %this))
       
-      (if asynchronous
-	  (begin
-	     (thread-start!
-		(instantiate::hopthread
-		   (body (lambda ()
-			    (post
-			       (if (isa? success JsFunction)
-				   (lambda (x)
-				      (js-worker-exec (js-current-worker) "post"
-					 (lambda ()
-					    (js-call1 %this success %this
-					       (scheme->js x)))))
-				   scheme->js))))))
-	     (js-undefined))
+      (cond
+	 ((not asynchronous)
 	  (post 
 	     (if (isa? success JsFunction)
 		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
-		 scheme->js)))))
-
-;*---------------------------------------------------------------------*/
-;*    hopjs-with-url ...                                               */
-;*---------------------------------------------------------------------*/
-(define (hopjs-with-url url success opt %this)
-   
-   (define (js-javascript->obj obj)
-      (js-obj->jsobject obj %this))
-   
-   (let ((url (js-tostring url %this))
-	 (fail #f)
-	 (timeout 0)
-	 (method "GET"))
-      (unless (eq? opt (js-undefined))
-	 (let ((f (js-get opt 'fail %this))
-	       (t (js-get opt 'timeout %this))
-	       (m (js-get opt 'method %this)))
-	    (when (isa? f JsFunction)
-	       (set! fail (lambda (x) (js-call1 %this f %this x))))
-	    (unless (eq? t (js-undefined))
-	       (set! timeout (js-tointeger t %this)))
-	    (unless (eq? m (js-undefined))
-	       (set! method (js-tostring m %this)))))
-      (with-url url
-	 (if (isa? success JsFunction)
-	     (lambda (x) (js-call1 %this success %this (js-javascript->obj x)))
-	     (lambda (x) x))
-	 :fail fail 
-	 :timeout timeout
-	 :ctx %this
-	 :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
-	 :method (string->symbol method))))
+		 scheme->js)
+	     fail))
+	 ((isa? success JsFunction)
+	  (thread-start!
+	     (instantiate::hopthread
+		(name "post-url")
+		(body (lambda ()
+			 (post
+			    (if (isa? success JsFunction)
+				(lambda (x)
+				   (js-worker-exec (js-current-worker) "post"
+				      (lambda ()
+					 (js-call1 %this success %this
+					    (scheme->js x)))))
+				scheme->js)
+			    fail)))))
+	  (js-undefined))
+	 (else
+	  (with-access::JsGlobalObject %this (js-promise)
+	     (js-new %this js-promise
+		(js-make-function %this
+		   (lambda (this resolve reject)
+		      (thread-start!
+			 (instantiate::hopthread
+			    (name "post-url")
+			    (body (lambda ()
+				     (post
+					(lambda (x)
+					   (js-promise-async this
+					      (lambda ()
+						 (js-promise-resolve this
+						    (scheme->js x)))))
+					(lambda (x)
+					   (js-promise-async this
+					      (lambda ()
+						 (js-promise-reject this x))))))))))
+		   2 "executor")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get/default ...                                                  */

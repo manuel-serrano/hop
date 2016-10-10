@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jun  3 09:31:24 2016 (serrano)                */
+;*    Last change :  Wed Oct  5 07:59:59 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1402,6 +1402,62 @@
    (js-bind! %this js-array-prototype 'filter
       :value (js-make-function %this
 		array-prototype-filter 1 'filter
+		:prototype (js-undefined))
+      :enumerable #f)
+
+   
+   ;; find
+   ;; http://www.ecma-international.org/ecma-262/7.0/#sec-indexed-collections#sec-array.prototype.find
+   (define (array-prototype-find this::obj proc t)
+      
+      (define (vector-find o len::long proc t)
+	 (with-access::JsArray o (vec)
+	    (let loop ((i 0))
+	       (cond
+		  ((>=fx i len)
+		   (js-undefined))
+		  ((=fx (vector-length vec) 0)
+		   ;; the vector has been modified by the callback...
+		   (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
+		      (if (eq? pv (js-absent))
+			  (loop (+fx i 1))
+			  (let ((v pv))
+			     (if (js-totest (js-call3 %this proc t v i o))
+				 v
+				 (loop (+fx i 1)))))))
+		  (else
+		   (let ((v (vector-ref vec i)))
+		      (cond
+			 ((eq? v (js-absent))
+			  (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
+			     (if (eq? pv (js-absent))
+				 (loop (+fx i 1))
+				 (let ((v pv))
+				    (if (js-totest (js-call3 %this proc t v i o))
+					v
+					(loop (+fx i 1)))))))
+			 ((js-totest (js-call3 %this proc t v i o))
+			  v)
+			 (else
+			  (loop (+fx i 1))))))))))
+      
+      (define (array-find o len proc t)
+	 (let loop ((i 0))
+	    (if (< i len)
+		(let ((pv (js-get-property-value o o (js-toname i %this) %this)))
+		   (if (eq? pv (js-absent))
+		       (loop (+ i 1))
+		       (let ((v pv))
+			  (if (js-totest (js-call3 %this proc t v i o))
+			      pv
+			      (loop (+ i 1))))))
+		(js-undefined))))
+      
+      (array-prototype-iterator %this this proc t array-find vector-find))
+
+   (js-bind! %this js-array-prototype 'find
+      :value (js-make-function %this
+		array-prototype-find 1 'find
 		:prototype (js-undefined))
       :enumerable #f)
    

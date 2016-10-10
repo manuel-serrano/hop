@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Aug 10 12:04:39 2016 (serrano)                */
+;*    Last change :  Sat Oct  8 06:15:16 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -136,13 +136,13 @@
 	      (rettype (default #f))
 	      (idthis read-only (default 'this))
 	      (idgen read-only (default #f))
-	      (mode (default #f))
+	      (mode::symbol (default 'normal))
 	      (decl (default #f))
 	      (need-bind-exit-return::bool (default #f))
 	      (vararg::obj (default #f))
-	      (name read-only)
+	      (name read-only (default '||))
 	      (generator::bool (default #f))
-	      params::pair-nil
+	      (params::pair-nil (default '()))
 	      body::J2SBlock)
 	   
 	   (class J2SSvc::J2SFun

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct  6 08:22:43 2013                          */
-;*    Last change :  Wed May 25 08:52:31 2016 (serrano)                */
+;*    Last change :  Fri Sep 16 10:53:24 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS like REPL                                                 */
@@ -39,7 +39,6 @@
       ;; force the module initialization
       (let ((exp (call-with-input-string "false"
 		    (lambda (in)
-		       (tprint "REPLS COMPILE...")
 		       (j2s-compile in :driver (j2s-plain-driver)
 			  :parser 'repl
 			  :filename "repl.js")))))

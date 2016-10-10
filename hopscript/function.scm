@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Aug 17 13:01:35 2016 (serrano)                */
+;*    Last change :  Sat Oct  8 07:08:00 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -405,7 +405,13 @@
    ;; call
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.4
    (define (call this::obj thisarg . args)
-      (js-apply %this this thisarg args))
+      (cond
+	 ((null? args)
+	  (js-call0 %this this thisarg))
+	 ((null? (cdr args))
+	  (js-call1 %this this thisarg (car args)))
+	 (else
+	  (js-apply %this this thisarg args))))
    
    (js-bind! %this obj 'call
       :value (js-make-function %this call 1 "call" :prototype (js-undefined))

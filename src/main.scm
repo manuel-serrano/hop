@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed May 25 08:59:28 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 14:28:09 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -208,7 +208,8 @@
       ;; js loader
       (hop-loader-add! "js" (lambda (path . test) (nodejs-load path %worker)))
       ;; rc.js file
-      (when (hop-rc-loaded?) (javascript-rc %worker %global))
+      (when (string? (hop-rc-loaded))
+	 (javascript-rc %worker %global))
       ;; hss extension
       (when (hop-javascript) (javascript-init-hss %worker %global))
       ;; create the repl JS module
@@ -259,6 +260,8 @@
 (define (javascript-rc %worker %global)
    
    (define (load-rc path)
+      ;; behave as if rc file is not loaded yet
+      (hop-rc-loaded! #f)
       ;; set the preferred language
       (hop-preferred-language-set! "hopscript")
       ;; force the module initialization
@@ -269,7 +272,11 @@
 			    path
 			    (file-name-canonicalize!
 			       (make-file-name (pwd) path)))))
-	       (nodejs-load path %worker)))))
+	       (let ((oldload (hop-rc-loaded)))
+		  (hop-rc-loaded! #f)
+		  (unwind-protect
+		     (nodejs-load path %worker)
+		     (hop-rc-loaded! oldload)))))))
 
    (let ((path (string-append (prefix (hop-rc-loaded)) ".js")))
       (if (file-exists? path)

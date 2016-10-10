@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Apr 26 09:06:06 2016 (serrano)                */
+;*    Last change :  Sat Oct  8 06:52:44 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -207,11 +207,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
    (with-access::J2SFun this (name params body decl mode rettype
-				need-bind-exit-return idthis)
+				need-bind-exit-return idthis generator)
       (cond
 	 ((or (isa? decl J2SDeclFun) (isa? decl J2SDeclFunCnst))
 	  (with-access::J2SDecl decl (key usage)
-	     `(,@(call-next-method) :name ,name :decl ,key
+	     `(,@(call-next-method) ,@(if generator '(*) '())
+		 :name ,name :decl ,key
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:idthis ,idthis) '())
 		 ,@(if (>= (bigloo-debug) 2)
@@ -223,7 +224,8 @@
 		 :mode ,mode
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
-	  `(,@(call-next-method) :name ,name :decl ,(j2s->list decl)
+	  `(,@(call-next-method) ,@(if generator '(*) '())
+	      :name ,name :decl ,(j2s->list decl)
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 2)
@@ -233,7 +235,8 @@
 	      :mode ,mode
 	      ,(map j2s->list params) ,(j2s->list body)))
 	 (else
-	  `(,@(call-next-method) :name ,name
+	  `(,@(call-next-method) ,@(if generator '(*) '())
+	      :name ,name
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 2)

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Jun 25 09:09:14 2016 (serrano)                */
+#*    Last change :  Wed Oct 12 17:25:41 2016 (serrano)                */
 #*    Copyright   :  2006-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -46,19 +46,19 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   lang/html.bnf lang/service.bnf lang/iservice.bnf \
   lang/tilde.bnf lang/syntax.bnf \
   lang/00-syntax.md \
-  lang/01-es6.md lang/01-service.md lang/02-worker.md \
+  lang/01-es.md lang/01-service.md lang/02-worker.md \
   lang/01-module.md lang/03-react.md lang/app.js lang/stateful.js lang/ui.js \
   dev/dev.json dev/00-command.md dev/10-edit.md \
   license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
-  html-idx.json
+  html-idx.json mdn-idx.json mdn.js
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
-  hss.html config.html user.html 01-html.html markdown.html
+  hss.html config.html user.html 01-html.html markdown.html syslog.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
-  01-es6.html 03-react.html 01-module.html
+  01-es.html 03-react.html 01-module.html
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
@@ -79,7 +79,8 @@ VPATH=api lang dev widget \
   ../node_modules/hss/doc \
   ../node_modules/config/doc \
   ../node_modules/user/doc \
-  ../node_modules/markdown/doc
+  ../node_modules/markdown/doc \
+  ../node_modules/syslog/doc
 
 #*---------------------------------------------------------------------*/
 #*    The hop executable                                               */
@@ -90,7 +91,7 @@ build:
 	$(MAKE) builddoc HOPFLAGS="$(HOPFLAGS) $(HOPBOOTFLAGS)"
 
 builddoc: $(ALL_TARGETS) \
-  hss/markdown.css hss/fontifier.css hss/doc.css html-idx.json
+  hss/markdown.css hss/fontifier.css hss/doc.css html-idx.json mdn-idx.json
 
 
 #*---------------------------------------------------------------------*/
@@ -136,6 +137,7 @@ install:
 	chmod $(MODFILE) $(BOOTSTRAP_POP:%=$(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/%)
 	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/lib/bootstrap/css/*
 	$(INSTALL) html-idx.json $(DESTDIR)$(HOPDOCDIR)
+	$(INSTALL) mdn-idx.json $(DESTDIR)$(HOPDOCDIR)
 
 uninstall:
 
@@ -190,6 +192,14 @@ idx.html: idx.json
 html-idx.json: 
 	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/html.js $(HTML) > $@ \
+          || ($(RM) $@; exit 1)
+
+#*---------------------------------------------------------------------*/
+#*    mdn-idx.json ...                                                 */
+#*---------------------------------------------------------------------*/
+mdn-idx.json:
+	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
+          $(BUILDDIR)/doc/mdn.js > $@ \
           || ($(RM) $@; exit 1)
 
 #*---------------------------------------------------------------------*/

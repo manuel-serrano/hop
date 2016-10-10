@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Aug 17 12:52:05 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 16:21:13 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -119,22 +119,13 @@
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5
 	 (define (js-string-construct o::JsString . arg)
 	    
-	    (define (set-string! v)
+	    (define (set-string! str)
 	       (let ((len (instantiate::JsValueDescriptor
 			     (name 'length)
 			     (writable #f)
 			     (configurable #f)
 			     (enumerable #f)
-			     (value (utf8-codeunit-length v))))
-		     (str (if (=fx (string-ascii-sentinel v) 0)
-			      (string-ascii-sentinel-mark! v)
-			      v)))
-		  (if (and (pair? arg)
-			   (string? (car arg))
-			   (=fx (string-length (car arg)) 730725))
-		      (tprint "js-string-construct arg="
-			 (let ((a (car arg)))
-			    (if (string? a) (string-length a) (typeof a)))))
+			     (value (utf8-codeunit-length str)))))
 		  (with-access::JsString o (val properties)
 		     (set! val (js-string->jsstring str))
 		     (set! properties (list len)))))

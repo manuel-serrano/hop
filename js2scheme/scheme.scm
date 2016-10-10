@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Aug 10 11:58:12 2016 (serrano)                */
+;*    Last change :  Sat Oct 15 08:17:33 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -322,8 +322,7 @@
 ;* 			  (js-new1 %this js-regexp rx))))))            */
 	    ((isa? this J2SString)
 	     (with-access::J2SString this (val)
-                (let ((ui (utf8-index val)))
-                   (vector 0 val (or ui (string-length val))))))
+		(vector 0 val)))
 	    ((isa? this J2SRegExp)
 	     (with-access::J2SRegExp this (loc val flags)
 		(vector 1 val flags)))
@@ -442,9 +441,8 @@
 	 (epairify-deep loc
 	    (cond
 	       ((memq scope '(global %scope))
-		(let ((fun-name (string->symbol
-				   (format "function:~a:~a"
-				      (cadr loc) (caddr loc)))))
+		(let ((fun-name (format "function:~a:~a"
+				   (cadr loc) (caddr loc))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
 		       `(js-decl-eval-put! %scope
 			   ',id ,value ,(strict-mode? mode) %this)
@@ -454,12 +452,12 @@
 			      :configurable #f
 			      :get (js-make-function %this
 				      (lambda (%) ,ident)
-				      1 ',fun-name)
+				      1 ,fun-name)
 			      :set ,(when writable
 				       `(js-make-function %this
 					   (lambda (% %v)
 					      (set! ,ident %v))
-					   2 ',fun-name)))))))
+					   2 ,fun-name)))))))
 	       ((memq scope '(letblock letvar))
 		`(,ident ,value))
 	       (else
@@ -617,7 +615,7 @@
 	       (cond
 		  (generator
 		   `(js-make-function %this
-		       ,fastid ,len ',id
+		       ,fastid ,len ,(symbol->string! id)
 		       :src ,(j2s-function-src loc val conf)
 		       :rest ,(eq? vararg 'rest)
 		       :arity ,arity
@@ -630,7 +628,7 @@
 		       :construct ,fastid))
 		  (src
 		   `(js-make-function %this
-		       ,fastid ,len ',id
+		       ,fastid ,len ,(symbol->string! id)
 		       :src ,src
 		       :rest ,(eq? vararg 'rest)
 		       :arity ,arity
@@ -640,7 +638,7 @@
 		       :construct ,fastid))
 		  (else
 		   `(js-make-function-simple %this
-		       ,fastid ,len ',id
+		       ,fastid ,len ,(symbol->string! id)
 		       ,arity ,minlen
 		       ',mode ,(eq? vararg 'rest))))))))
    
@@ -798,14 +796,16 @@
 		  (js-raise
 		     (js-new %this js-syntax-error
 			,(j2s-jsstring
-			   "comprehension only supported in strict mode")
+			    "comprehension only supported in strict mode"
+			    loc)
 			,fname ,loc))))
 	     (else
 	      `(with-access::JsGlobalObject %this (js-syntax-error)
 		  (js-raise
 		     (js-new %this js-syntax-error
 			,(j2s-jsstring
-			   "comprehension only supported in strict mode"))))))
+			    "comprehension only supported in strict mode"
+			    loc))))))
 	  (let* ((names (map j2s-decl-scheme-id decls))
 		 (iters (map (lambda (iter)
 				(j2s-scheme iter mode return conf hint))
@@ -945,37 +945,11 @@
 	  `(vector-ref-ur %cnsts ,index))))
 
 ;*---------------------------------------------------------------------*/
-;*    utf8-index ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (utf8-index str)
-   (let ((len (string-length str)))
-      (let loop ((i 0))
-	 (when (<fx i len)
-	    (if (>fx (char->integer (string-ref str i)) 127)
-		i
-		(loop (+fx i 1)))))))
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring val)
-   val)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme-string ...                                            */
-;*---------------------------------------------------------------------*/
-(define (j2s-scheme-string val loc)
-   (j2s-jsstring val))
-;*    (let ((ui (utf8-index val)))                                     */
-;*       (if (not ui)                                                  */
-;* 	  ;; this is an ascii string                                   */
-;* 	  (epairify loc                                                */
-;* 	     `(js-string->jsstring                                     */
-;* 		 (string-ascii-sentinel-set! ,val ,(string-length val)))) */
-;* 	  ;; this is an utf8 string                                    */
-;* 	  (epairify loc                                                */
-;* 	     `(js-string->jsstring                                     */
-;* 		 (string-ascii-sentinel-set! ,val ,ui))))))            */
+(define (j2s-jsstring val loc)
+   (epairify loc
+      `(js-string->jsstring ,val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2STemplate ...                                     */
@@ -988,14 +962,7 @@
 		,@(map (lambda (expr)
 			  (if (isa? expr J2SString)
 			      (with-access::J2SString expr (val)
-				 (let ((ui (utf8-index val)))
-				    (if (not ui)
-					;; this is an ascii string
-					`(string-ascii-sentinel-set!
-					    ,val ,(string-length val))
-					;; this is an utf8 string
-					`(string-ascii-sentinel-set!
-					    ,val ,ui))))
+				 val)
 			      (with-access::J2SNode expr (loc)
 				 (epairify loc
 				    `(js-tostring
@@ -1015,7 +982,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SString mode return conf hint)
    (with-access::J2SString this (loc val)
-      (j2s-scheme-string val loc)))
+      (j2s-jsstring val loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRegExp ...                                       */
@@ -1026,9 +993,9 @@
 	 `(with-access::JsGlobalObject %this (js-regexp)
 	     ,(j2s-new loc 'js-regexp
 		 (if (string-null? flags)
-		     (list (j2s-scheme-string val loc))
-		     (list (j2s-scheme-string val loc)
-			(j2s-scheme-string flags loc))))))))
+		     (list (j2s-jsstring val loc))
+		     (list (j2s-jsstring val loc)
+			(j2s-jsstring flags loc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCmap ...                                         */
@@ -1096,9 +1063,9 @@
 		(instantiate::JsAccessorDescriptor
 		   (name (string->symbol (integer->string ,indx)))
 		   (get (js-make-function %this
-			   (lambda (%) ,id) 0 'get))
+			   (lambda (%) ,id) 0 "get"))
 		   (set (js-make-function %this
-			   (lambda (% %v) (set! ,id %v)) 1 'set))
+			   (lambda (% %v) (set! ,id %v)) 1 "set"))
 		   (configurable #t)
 		   (enumerable #t))))))
    
@@ -1134,7 +1101,7 @@
 	  (js-define-own-property arguments 'callee
 	     (instantiate::JsValueDescriptor
 		(name 'callee)
-		(value (js-make-function %this ,(j2s-fast-id id) 0 ',id))
+		(value (js-make-function %this ,(j2s-fast-id id) 0 ,(symbol->string! id)))
 		(writable #t)
 		(configurable #t)
 		(enumerable #f))
@@ -1284,7 +1251,7 @@
 	 (epairify-deep loc
 	    (if (or src prototype __proto__)
 		`(js-make-function %this
-		    ,tmp ,len ',(or name (j2s-decl-scheme-id id))
+		    ,tmp ,len ,(symbol->string! (or name (j2s-decl-scheme-id id)))
 		    :src ,src
 		    :rest ,(eq? vararg 'rest)
 		    :arity ,arity
@@ -1295,7 +1262,8 @@
 		    :alloc (lambda (o) (js-object-alloc o %this))
 		    :construct ,tmp)
 		`(js-make-function-simple %this
-		    ,tmp ,len ',(or name (j2s-decl-scheme-id id))
+		    ,tmp ,len
+		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
 		    ,arity ,minlen ',mode ,(eq? vararg 'rest)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1382,12 +1350,14 @@
 		       ((at ?fname ?loc)
 			`(js-new %this js-type-error
 			    ,(j2s-jsstring
-			       (format "wrong service call \"~s\"" name))
+				(format "wrong service call \"~s\"" name)
+				loc)
 			    ,fname ,loc))
 		       (else
 			`(js-new %this js-type-error
 			    ,(j2s-jsstring
-			       (format "wrong service call \"~s\"" name)))))))))
+				(format "wrong service call \"~s\"" name)
+				loc))))))))
       
       (define (service-dsssl-proc->scheme this)
 	 (with-access::J2SSvc this (loc init name)
@@ -1522,8 +1492,11 @@
 (define-method (j2s-scheme this::J2SThrow mode return conf hint)
    (with-access::J2SThrow this (loc expr)
       (epairify loc
-	 `(js-throw ,(j2s-scheme expr mode return conf hint)
-	     ,(j2s-jsstring (cadr loc)) ,(caddr loc)))))
+	 (if (> (bigloo-debug) 0)
+	     `(js-throw/debug ,(j2s-scheme expr mode return conf hint)
+		 ,(j2s-jsstring (cadr loc) loc) ,(caddr loc) %worker)
+	     `(js-throw ,(j2s-scheme expr mode return conf hint)
+		 ,(j2s-jsstring (cadr loc) loc) ,(caddr loc))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2STry ...                                          */
@@ -2025,14 +1998,16 @@
 		 (js-raise
 		    (js-new %this js-syntax-error
 		       ,(j2s-jsstring
-			  (format "Delete of an unqualified identifier in strict mode: \"~a\"" id))
+			   (format "Delete of an unqualified identifier in strict mode: \"~a\"" id)
+			   loc)
 		       ,fname ,loc))))
 	    (else
 	     `(with-access::JsGlobalObject %this (js-syntax-error)
 		 (js-raise
 		    (js-new %this js-syntax-error
 		       ,(j2s-jsstring
-			  (format "Delete of an unqualified identifier in strict mode: \"~a\"" id)))))))))
+			   (format "Delete of an unqualified identifier in strict mode: \"~a\"" id)
+			   loc))))))))
 
    (define (delete->scheme expr)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.7

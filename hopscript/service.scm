@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Aug 17 12:56:43 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 18:04:52 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -29,7 +29,8 @@
 	   __hopscript_worker
 	   __hopscript_json
 	   __hopscript_lib
-	   __hopscript_array)
+	   __hopscript_array
+	   __hopscript_promise)
 
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj ::obj)
@@ -128,8 +129,9 @@
 ;*    js-tostring ::JsHopFrame ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-tostring o::JsHopFrame %this)
-   (with-access::JsHopFrame o (args path)
-      path))
+   (hopframe->string o %this))
+;*    (with-access::JsHopFrame o (args path)                           */
+;*       path)                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsHopFrame ...                             */
@@ -455,24 +457,31 @@
 
    (define (post-server-promise this %this host port auth scheme)
       (with-access::JsGlobalObject %this (js-promise)
-	 (js-new %this js-promise
-	    (js-make-function %this
-	       (lambda (this resolve reject)
-		  (thread-start!
-		     (instantiate::hopthread
-			(body (lambda ()
-				 (with-handler
-				    (lambda (e)
-				       (js-call1 %this reject %this e))
-				    (post-request
-				       (lambda (x)
-					  (js-call1 %this resolve %this
-					     (scheme->js x)))
-				       (lambda (x)
-					  (js-call1 %this reject %this x))
-				       scheme host port
-				       user password auth)))))))
-	       2 "executor"))))
+	 (letrec ((p (js-new %this js-promise
+			(js-make-function %this
+			   (lambda (_ resolve reject)
+			      (thread-start!
+				 (instantiate::hopthread
+				    (name "post-server-promise")
+				    (body (lambda ()
+					     (with-handler
+						(lambda (e)
+						   (js-promise-async p
+						      (lambda ()
+							 (js-call1 %this reject %this e))))
+						(post-request
+						   (lambda (x)
+						      (js-promise-async p
+							 (lambda ()
+							    (js-promise-resolve p
+							       (scheme->js x)))))
+						   (lambda (x)
+						      (js-promise-async p
+							 (js-promise-reject this x)))
+						   scheme host port
+						   user password auth)))))))
+			   2 "executor"))))
+	    p)))
    
    (define (post-server-async this success failure %this host port auth scheme)
       (with-access::JsHopFrame this (path)
@@ -484,15 +493,16 @@
 					(scheme->js x)))))))
 	       (fail (when (isa? failure JsFunction)
 			(lambda (obj)
-			   (tprint "in fail obj=" obj)
 			   (js-worker-push-thunk! (js-current-worker) path
 			      (lambda ()
 				 (js-call1 %this failure %this obj)))))))
 	    (thread-start!
 	       (instantiate::hopthread
+		  (name "post-async")
 		  (body (lambda ()
 			   (with-handler
-			      (or fail exception-notify)
+			      (lambda (e)
+				 (or fail exception-notify))
 			      (post-request
 				 callback fail
 				 scheme host port
@@ -619,6 +629,7 @@
       (define (spawn-thread)
 	 (thread-start!
 	    (instantiate::hopthread
+	       (name "spawn-thread")
 	       (body (lambda ()
 			(with-handler
 			   (lambda (e)
@@ -645,6 +656,7 @@
 			   (js-call1 %this reject %this obj)))
 		     (thread-start!
 			(instantiate::hopthread
+			   (name "spawn-promise")
 			   (body (lambda ()
 				    (with-handler
 				       (lambda (e)

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct 12 12:31:01 2010                          */
-;*    Last change :  Mon Dec 21 08:04:49 2015 (serrano)                */
-;*    Copyright   :  2010-15 Manuel Serrano                            */
+;*    Last change :  Wed Sep 28 02:23:46 2016 (serrano)                */
+;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Android music implementation                                     */
 ;*=====================================================================*/
@@ -355,6 +355,11 @@
       ((member mimetype '("audio/mpeg" "audio/ogg" "audio/aac"))
        ;; all android
        #t)
+      ((member mimetype '("audio/x-flac"))
+       ;; android >= 3.1
+       (with-access::androidmusic m (phone)
+	  (with-access::androidphone phone (sdk)
+	     (>= (string-natural-compare3 sdk "3.1") 0))))
       ((member mimetype '("audio/flac" "application/x-flac" "audio/x-flac"))
        ;; android >= 3.1
        (with-access::androidmusic m (phone)

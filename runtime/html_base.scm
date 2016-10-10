@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 23 08:11:51 2010                          */
-;*    Last change :  Wed May 25 18:53:11 2016 (serrano)                */
+;*    Last change :  Wed Oct  5 06:18:50 2016 (serrano)                */
 ;*    Copyright   :  2010-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTML tags                                                        */
@@ -28,9 +28,11 @@
 	    (<ADDRESS> . ::obj)
 	    (<APPLET> . ::obj)
 	    (<AREA> . ::obj)
+	    (<ARTICLE> . ::obj)
 	    (<B> . ::obj)
 	    (<BASE> . ::obj)
 	    (<BASEFONT> . ::obj)
+	    (<BDI> . ::obj)
 	    (<BDO> . ::obj)
 	    (<BIG> . ::obj)
 	    (<BLOCKQUOTE> . ::obj)
@@ -80,9 +82,11 @@
 	    (<LABEL> . ::obj)
 	    (<LEGEND> . ::obj)
 	    (<LI> . ::obj)
+	    (<MAIN> . ::obj)
 	    (<MAP> . ::obj)
 	    (<MARQUEE> . ::obj)
 	    (<MENU> . ::obj)
+	    (<MENUITEM> . ::obj)
 	    (<META> . ::obj)
 	    (<METER> . ::obj)
 	    (<NAV> . ::obj)
@@ -115,6 +119,7 @@
 	    (<TFOOT> . ::obj)
 	    (<TH> . ::obj)
 	    (<THEAD> . ::obj)
+	    (<TIME> . ::obj)
 	    (<TITLE> . ::obj)
 	    (<TR> . ::obj)
 	    (<TRACK> . ::obj)
@@ -132,9 +137,11 @@
 (define-xml-element <ADDRESS>)
 (define-xml-element <APPLET>)
 (define-xml xml-empty-element #t <AREA>)
+(define-xml-element <ARTICLE>)
 (define-xml-element <B>)
 (define-xml xml-empty-element #t <BASE>)
 (define-xml xml-empty-element #t <BASEFONT>)
+(define-xml-element <BDI>)
 (define-xml-element <BDO>)
 (define-xml-element <BIG>)
 (define-xml-element <BLOCKQUOTE>)
@@ -182,9 +189,11 @@
 (define-xml-element <LABEL>)
 (define-xml-element <LEGEND>)
 (define-xml-element <LI>)
+(define-xml-element <MAIN>)
 (define-xml-element <MAP>)
 (define-xml-element <MARQUEE>)
 (define-xml-element <MENU>)
+(define-xml-element <MENUITEM>)
 (define-xml-element <METER>)
 (define-xml-element <NAV>)
 (define-xml-element <NOFRAMES>)
@@ -216,6 +225,7 @@
 (define-xml-element <TFOOT>)
 (define-xml-element <TH>)
 (define-xml-element <THEAD>)
+(define-xml-markup <TIME>)
 (define-xml-markup <TITLE>)
 (define-xml-element <TR>)
 (define-xml-element <TRACK>)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Aug 16 09:34:14 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 17:33:30 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -173,6 +173,7 @@
 				   (input-file->module-name in))
 		  :module-path (hopc-js-module-path)
 		  :hopscript-header (hopc-js-header)
+		  :type-annotations (hopc-js-type-annotations)
 		  :optim (hopc-optim-level)
 		  :debug (bigloo-debug)))))
 
@@ -195,6 +196,7 @@
 				   (input-file->module-name in))
 		  :module-path (hopc-js-module-path)
 		  :hopscript-header (hopc-js-header)
+		  :type-annotations (hopc-js-type-annotations)
 		  :optim (hopc-optim-level)
 		  :debug (bigloo-debug)))))
 
@@ -227,6 +229,10 @@
 			 opts))
 		(cmd (format "~a - ~l" (hopc-bigloo) opts))
 		(out (process-input-port proc)))
+	    (signal sigterm
+	       (lambda (sig)
+		  (process-kill proc)
+		  (exit 1)))
 	    (unwind-protect
 	       (comp out)
 	       (begin
@@ -278,6 +284,7 @@
 					 (input-file->module-name in))
 			:module-path (hopc-js-module-path)
 			:hopscript-header (hopc-js-header)
+			:type-annotations (hopc-js-type-annotations)
 			:optim (hopc-optim-level)
 			:debug (bigloo-debug))))
 	       file)))

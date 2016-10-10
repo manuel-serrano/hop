@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Aug 17 14:08:07 2016 (serrano)                */
+;*    Last change :  Fri Oct  7 08:26:29 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -170,7 +170,8 @@
 (define-method (hop->javascript o::JsObject op compile isexpr)
    (with-access::WorkerHopThread (js-current-worker) (%this)
       ;; force the literal to be treated as an expression
-      (display "({" op)
+      ;; (display "({" op)
+      (display "{" op)
       (let ((sep ""))
 	 (js-for-in o
 	    (lambda (p)
@@ -183,7 +184,8 @@
 		  op compile isexpr)
 	       (set! sep ","))
 	    %this))
-      (display "})" op)))
+      ;;(display "})" op)
+      (display "}" op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind-tag! ...                                                 */
@@ -226,8 +228,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.1         */
 ;*---------------------------------------------------------------------*/
 (define (js-initial-global-object)
-   (unless %this
-      (set! %this (js-new-global-object)))
+   (unless %this (set! %this (js-new-global-object)))
    %this)
 
 ;*---------------------------------------------------------------------*/
@@ -437,17 +438,17 @@
 
 	    ;; html_base
 	    (js-bind-tags! %this %this
-	       A ABBR ACRONYM ADDRESS APPLET AREA B BASE
-	       BASEFONT BDO BIG BLOCKQUOTE BODY BR BUTTON
+	       A ABBR ACRONYM ADDRESS APPLET AREA ARTICLE B BASE
+	       BASEFONT BDI BDO BIG BLOCKQUOTE BODY BR BUTTON
 	       CANVAS CAPTION CENTER CITE CODE COL COLGROUP
 	       DATALIST DD DEL DFN DIR DIV DL DT EM EMBED FIELDSET FIGURE
 	       FIGCAPTION FONT FOOTER FORM FRAME FRAMESET H1 H2 H3 H4 H5 H6
 	       HR HEADER HGROUP I IFRAME INPUT INS ISINDEX KBD LABEL LEGEND
-	       LI MAP MARQUEE MENU META METER NAV NOFRAMES NOSCRIPT
+	       LI MAIN MAP MARQUEE MENU MENUITEM META METER NAV NOFRAMES NOSCRIPT
 	       OBJECT OL OPTGROUP OPTION P PARAM PRE PROGRESS
 	       Q S SAMP SECTION SELECT SMALL SOURCE SPAN STRIKE
 	       STRONG SUB SUP TABLE TBODY TD TEXTAREA TFOOT TH
-	       THEAD TITLE TR TT U UL VAR REACT)
+	       THEAD TIME TITLE TR TT U UL VAR REACT)
 
 	    ;; html5
 	    (js-bind-tags! %this %this
