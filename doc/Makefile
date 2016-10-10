@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed Oct  5 08:29:28 2016 (serrano)                */
+#*    Last change :  Mon Oct 10 13:43:44 2016 (serrano)                */
 #*    Copyright   :  2006-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -52,7 +52,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
-  html-idx.json mdn-idx.json
+  html-idx.json mdn-idx.json mdn.js
 
 API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
   hss.html config.html user.html 01-html.html markdown.html syslog.html
