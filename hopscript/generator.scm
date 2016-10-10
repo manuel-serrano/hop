@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Wed Mar  9 14:15:28 2016 (serrano)                */
+;*    Last change :  Fri Oct  7 10:47:45 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -33,9 +33,12 @@
 	   __hopscript_regexp
 	   __hopscript_array
 	   __hopscript_error
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_spawn)
    
    (export (js-init-generator! ::JsGlobalObject)
+;* 	   (js-init-spawn! ::JsGlobalObject)                           */
+;* 	   (js-spawn ::JsFunction ::obj ::JsGlobalObject)              */
 	   js-yield-cmap
 	   (js-make-generator::JsGenerator ::procedure ::JsObject ::JsGlobalObject)
 	   (js-make-iterator ::object ::JsGlobalObject)
@@ -46,6 +49,49 @@
 ;*    Jsstringliteral begin                                            */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    %spawn ...                                                       */
+;*---------------------------------------------------------------------*/
+(define %spawn::procedure list)
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-init-spawn! ...                                               *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (js-init-spawn! %this)                                      */
+;*                                                                     */
+;*    (define (make-module %this)                                      */
+;*       (with-access::JsGlobalObject %this (js-object)                */
+;* 	 (let ((mod (instantiate::JsObject (__proto__ js-object)))     */
+;* 	       (exp (instantiate::JsObject (__proto__ js-object))))    */
+;* 	    (js-put! mod 'exports exp #f %this)                        */
+;* 	    mod)))                                                     */
+;*                                                                     */
+;*    (define (make-scope %this mod)                                   */
+;*       (with-access::JsGlobalObject %this (js-object)                */
+;* 	 (let ((scope (instantiate::JsObject (__proto__ %this))))      */
+;* 	    (js-put! scope 'module mod #f %this)                       */
+;* 	    scope)))                                                   */
+;*                                                                     */
+;*    (tprint "js-init-spawn!")                                        */
+;*    (when (eq? %spawn list)                                          */
+;*       (let* ((%module (make-module %this))                          */
+;* 	     (%scope (make-scope %this %module))                       */
+;* 	     (mod ((@ hopscript __hopscript_spawn) %this %this %scope %module)) */
+;* 	     (spawn (js-get mod 'exports %this)))                      */
+;* 	 (tprint "sp=" spawn)                                          */
+;* 	 (with-access::JsFunction spawn (procedure)                    */
+;* 	    (set! %spawn procedure)))))                                */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-spawn ...                                                     *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (js-spawn fun this %this)                                   */
+;*    (tprint "THIS=" (typeof %this))                                  */
+;*    (with-access::JsFunction fun (procedure)                         */
+;*       (when (eq? %spawn list)                                       */
+;* 	 (js-init-spawn! %this))                                       */
+;*       (%spawn this fun this)))                                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-yield-cmap ...                                                */
@@ -78,12 +124,12 @@
 ;*    js-init-generator! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-init-generator! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-generator-prototype)
-      
+   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype)
+
       (define js-gen-proto
 	 (instantiate::JsObject
 	    (cmap (instantiate::JsConstructMap))
-	    (__proto__ __proto__)))
+	    (__proto__ js-function-prototype)))
       
       (define (js-generator-done)
 	 (instantiate::JsObject
@@ -280,4 +326,9 @@
 	     (yield* (js-call0 %this g val))))
 	 (else
 	  (yield* val)))))
+
+;*---------------------------------------------------------------------*/
+;*    Jsstringliteral end                                              */
+;*---------------------------------------------------------------------*/
+(%js-jsstringliteral-end!)
 

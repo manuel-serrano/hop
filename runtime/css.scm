@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Mon May 30 14:16:22 2016 (serrano)                */
+;*    Last change :  Wed Aug 24 11:13:18 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -479,7 +479,9 @@
 				 token))))
 		       (raise (duplicate::&io-parse-error e
 				 (obj v)
-				 (fname file)
+				 (fname (if (input-string-port? iport)
+					    (input-port-buffer iport)
+					    file))
 				 (location pos)))))
 		   (else
 		    (raise e))))))

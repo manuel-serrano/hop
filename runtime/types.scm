@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Tue Apr 26 19:05:20 2016 (serrano)                */
+;*    Last change :  Wed Sep 28 01:56:34 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
@@ -128,7 +128,9 @@
 	      (proc::procedure read-only))
 	   
 	   (class http-response-file::%http-response-server
-	      (file::bstring read-only))
+	      (file::bstring read-only)
+	      (size::elong (default #e-1))
+	      (offset::elong (default #e-1)))
 	   
 	   (class http-response-shoutcast::http-response-file)
 	   

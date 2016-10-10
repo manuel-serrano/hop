@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Fri Aug 19 09:10:06 2016 (serrano)                */
+;*    Last change :  Tue Oct  4 18:12:52 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -85,6 +85,7 @@
      (<IMG> :empty)
      (<INPUT> :empty)
      (<ISINDEX> :empty)
+     (<LI> :etag-optional)
      (<LINK> :empty)
      (<META> :empty)
      (<NOSCRIPT> :block)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Jun  3 16:22:34 2016 (serrano)                */
+;*    Last change :  Tue Sep 27 02:02:18 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -571,10 +571,10 @@
 	  (let ((i (utf8-string-index->string-index s start)))
 	     (if (<fx i 0)
 		 i
-		 (let ((kt (bm-table search))
-		       (j (string-char-index s (string-ref search 0) i)))
+		 (let ((j (string-char-index s (string-ref search 0) i)))
 		    (if j
-			(string-index->utf8-string-index s (bm-string kt s j))
+			(let ((kt (bm-table search)))
+			   (string-index->utf8-string-index s (bm-string kt s j)))
 			-1)))))))
 
 ;*---------------------------------------------------------------------*/

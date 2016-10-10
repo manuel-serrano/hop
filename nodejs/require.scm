@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Aug 18 15:47:06 2016 (serrano)                */
+;*    Last change :  Thu Oct  6 06:54:08 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -128,9 +128,10 @@
 					      (hop-verbose)
 					      0)
 				 :parser 'client-program
-				 :driver (if (>=fx (bigloo-debug) 1)
-					     (j2s-javascript-debug-driver)
-					     (j2s-javascript-driver))
+				 :driver (if (or (<=fx (bigloo-debug) 0)
+						 esplainp)
+					     (j2s-javascript-driver)
+					     (j2s-javascript-debug-driver))
 				 :site 'client
 				 :debug (if esplainp 0 (bigloo-debug)))))
 		     (for-each (lambda (exp)
@@ -704,7 +705,7 @@
 	    (else
 	     (let* ((sopath (hop-sofile-path filename))
 		    (sopathtmp (hop-sofile-path (string-append "__" (prefix filename))))
-		    (cmd (format "~a ~a -y --no-js-module-main -o ~a ~a"
+		    (cmd (format "~a ~a -y -v2 --js-no-module-main -o ~a ~a"
 			    (hop-hopc)
 			    filename sopathtmp
 			    (hop-hopc-flags))))
@@ -888,7 +889,7 @@
 	  (load-module-js))
 	 (else
 	  (not-found filename))))
-   
+
    (with-trace 'require "nodejs-load"
       (trace-item "filename=" filename)
       (with-loading-file filename load-module)))

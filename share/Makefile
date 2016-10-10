@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Aug 19 15:43:57 2016 (serrano)                */
+#*    Last change :  Fri Sep  9 07:57:02 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -301,28 +301,8 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
                | $(BGLCPP) -DHOP_JAVASCRIPT | $(CLOSURE) \
                >> $@
 
-hopjs_s.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
-  hop-exception.js hop-debug.js hop-nodejs.js hop-react.js \
-  hop-builtin-serializers.js 
-	echo "/* Automatically generated file (don't edit) */" > $@
-	echo "/* Copyright Manuel Serrano, see Hop's LICENSE file */" >> $@
-	date +'/* %D %I:%H */' >> $@
-	echo >> $@
-	echo "\"use strict\";" >> $@
-	echo >> $@
-	if [ "$(DEBUG) " != "yes " ]; then \
-	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
-                 | sed -e "s|//[^\"]*$$||g" \
-                 | sed -e "/^[ \t]*$$/D" \
-                 | $(BGLCPP) -DHOP_JAVASCRIPT -DHOP_RTS_DEBUG \
-                 >> $@; \
-        else \
-	  cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
-                 | sed -e "s|//[^\"]*$$||g" \
-                 | sed -e "/^[ \t]*$$/D" \
-                 | $(BGLCPP) -DHOP_JAVASCRIPT \
-                 >> $@; \
-        fi
+hopjs_s.js: hop_s.js
+	cp $^ $@
 
 hopjs-serialize.js: hopscheme.js hop-builtin-serializers.js hop-serialize.js
 	echo "/* Automatically generated file (don't edit) */" > $@

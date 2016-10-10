@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Apr 19 11:02:41 2016 (serrano)                */
+;*    Last change :  Thu Oct  6 08:49:57 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -88,6 +88,9 @@
 	    
 	    (hopc-js-header::obj)
 	    (hopc-js-header-set! ::obj)
+
+	    (hopc-js-type-annotations::bool)
+	    (hopc-js-type-annotations-set! ::bool)
 
 	    (hopc-js-libraries::pair-nil)
 	    (hopc-js-libraries-set! ::pair-nil)
@@ -250,6 +253,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-header
    #t)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-type-annotations ...                                     */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-type-annotations
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-libraries ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Aug 16 10:25:59 2016 (serrano)                */
+;*    Last change :  Tue Oct  4 18:16:14 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -134,7 +134,8 @@ function hop_share_directory() {return \"" (hop-share-directory) "\";}
 function hop_var_directory() {return \"" (hop-var-directory) "\";}
 function hop_contribs_directory() {return \"" (hop-contribs-directory) "\";}
 function hop_weblets_directory() {return \"" (hop-weblets-directory) "\";}
-function hop_session() {return " (integer->string (hop-session)) ";}"))))
+function hop_session() {return " (integer->string (hop-session)) ";}
+function hop_realm() {return \"" (hop-realm) "\";}"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    server-initial-context ...                                       */
@@ -563,6 +564,9 @@ function hop_session() {return " (integer->string (hop-session)) ";}"))))
 ;* 		  (cell-set! attrs                                     */
 ;* 		     `(:%authorizations ,(xml-primitive-value (cadr a)))) */
 ;* 		  (loop (cddr a) mode rts dir path base inl packed els)) */
+		 ((:prefix)
+		  ;; RDF stuff
+		  (loop (cddr a) mode rts dir path base inl packed els))
 		 (else
 		  (error "<HEAD>"
 		     (format "Unknown ~a argument" (car a))

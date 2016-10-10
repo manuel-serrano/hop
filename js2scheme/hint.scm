@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Jun  1 18:56:02 2016 (serrano)                */
+;*    Last change :  Thu Oct  6 08:32:44 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -405,13 +405,15 @@
 		  (not (isa? %info FunHintInfo))
 		  (pair? params)
 		  (any (lambda (p::J2SDecl)
-			  (with-access::J2SDecl p (hint usecnt id)
-			     (and (pair? hint)
-				  (or (pair? (cdr hint))
-				      (not (eq? (caar hint) 'obj)))
-				  (>fx usecnt 0))))
+			  (with-access::J2SDecl p (hint usecnt id type)
+			     (unless type
+				(and (pair? hint)
+				     (or (pair? (cdr hint))
+					 (not (eq? (caar hint) 'obj)))
+				     (>fx usecnt 0)))))
 		     params)
-		  (not vararg))
+		  (not vararg)
+		  (not (isa? val J2SSvc)))
 	     (let* ((dup (fun-duplicate this))
 		    (orig (fun-orig this))
 		    (types (map (lambda (p)
@@ -432,24 +434,21 @@
 ;*    best-hint-type ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (best-hint-type::symbol hint)
-   (let ((r (let loop ((l hint)
-		       (t 'obj)
-		       (c 0))
-	       (cond
-		  ((null? l)
-		   t)
-		  ((eq? (caar l) 'obj)
-		   (loop (cdr l) t c))
-		  ((>fx (cdr (car l)) c)
-		   (loop (cdr l) (caar l) (cdar l)))
-		  ((and (=fx (cdr (car l)) c)
-			(or (eq? t 'obj) (memq (caar l) '(integer number))))
-		   (loop (cdr l) (caar l) (cdar l)))
-		  (else
-		   (loop (cdr l) t c))))))
-      (if (not (symbol? r))
-	  (tprint "PAS R: " hint))
-      r))
+   (let loop ((l hint)
+	      (t 'obj)
+	      (c 0))
+      (cond
+	 ((null? l)
+	  t)
+	 ((eq? (caar l) 'obj)
+	  (loop (cdr l) t c))
+	 ((>fx (cdr (car l)) c)
+	  (loop (cdr l) (caar l) (cdar l)))
+	 ((and (=fx (cdr (car l)) c)
+	       (or (eq? t 'obj) (memq (caar l) '(integer number))))
+	  (loop (cdr l) (caar l) (cdar l)))
+	 (else
+	  (loop (cdr l) t c)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-orig ...                                                     */

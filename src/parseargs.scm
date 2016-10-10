@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar  1 18:13:51 2016 (serrano)                */
+;*    Last change :  Sat Oct  8 07:40:58 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -25,6 +25,16 @@
 	    (hop-load-rc ::bstring)
 	    (hello-world)))
 
+;*---------------------------------------------------------------------*/
+;*    ecmascript-support ...                                           */
+;*---------------------------------------------------------------------*/
+(define ecmascript-es6
+   '(es6-let: es6-const: es6-arrow-function: es6-default-value:
+     es6-rest-argument:))
+
+(define ecmascript-es2017
+   (append ecmascript-es6 '(es2017-async:)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -316,8 +326,11 @@
 	    (("--js-es6" (help "Enable all EcmaScript 6 supports"))
 	     (for-each (lambda (ext)
 			  (nodejs-compiler-options-add! ext #t))
-		'(es6-let: es6-const: es6-arrow-function: es6-default-value:
-		  es6-rest-argument:)))
+		ecmascript-es6))
+	    (("--js-es2017" (help "Enable all EcmaScript 6 supports"))
+	     (for-each (lambda (ext)
+			  (nodejs-compiler-options-add! ext #t))
+		ecmascript-es2017))
 	    (("--js-dsssl" (help "Enable DSSSL like JS services (deprecated)"))
 	     (nodejs-compiler-options-add! :dsssl #t))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))

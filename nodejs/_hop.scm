@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Mar  2 12:03:38 2016 (serrano)                */
+;*    Last change :  Wed Aug 24 15:27:55 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -439,7 +439,7 @@
 		(if port (format ":~a" port) "")
 		url)))
       
-      (define (post callback)
+      (define (post callback fail)
 	 (with-access::JsUrlFrame frame (url args)
 	    (with-url (hop-apply-nice-url
 			 (url-base (js-tostring url %this)) args)
@@ -456,24 +456,42 @@
       (define (scheme->js val)
 	 (js-obj->jsobject val %this))
       
-      (if asynchronous
-	  (begin
-	     (thread-start!
-		(instantiate::hopthread
-		   (body (lambda ()
-			    (post
-			       (if (isa? success JsFunction)
-				   (lambda (x)
-				      (js-worker-exec (js-current-worker) "post"
-					 (lambda ()
-					    (js-call1 %this success %this
-					       (scheme->js x)))))
-				   scheme->js))))))
-	     (js-undefined))
+      (cond
+	 ((not asynchronous)
 	  (post 
 	     (if (isa? success JsFunction)
 		 (lambda (x) (js-call1 %this success %this (scheme->js x)))
-		 scheme->js)))))
+		 scheme->js)
+	     fail))
+	 ((isa? success JsFunction)
+	  (thread-start!
+	     (instantiate::hopthread
+		(body (lambda ()
+			 (post
+			    (if (isa? success JsFunction)
+				(lambda (x)
+				   (js-worker-exec (js-current-worker) "post"
+				      (lambda ()
+					 (js-call1 %this success %this
+					    (scheme->js x)))))
+				scheme->js)
+			    fail)))))
+	  (js-undefined))
+	 (else
+	  (with-access::JsGlobalObject %this (js-promise)
+	     (js-new %this js-promise
+		(js-make-function %this
+		   (lambda (this resolve reject)
+		      (thread-start!
+			 (instantiate::hopthread
+			    (body (lambda ()
+				     (post
+					(lambda (x)
+					   (js-promise-resolve this
+					      (scheme->js x)))
+					(lambda (x)
+					   (js-promise-reject this x))))))))
+		   2 "executor")))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-with-url ...                                               */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Aug 17 13:00:03 2016 (serrano)                */
+;*    Last change :  Tue Sep  6 17:08:58 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -893,7 +893,7 @@
    (define (id-string? field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
-	    (pregexp-match "^[a-zA-Z0-9_$]+$" val))))
+	    (pregexp-match "^[a-zA-Z_$][a-zA-Z0-9_$]+$" val))))
       
    (with-access::J2SAccess this (obj field)
       (if (id-string? field)

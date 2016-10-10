@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jun  1 18:55:57 2016 (serrano)                */
+;*    Last change :  Sun Oct  9 08:01:00 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -253,11 +253,11 @@
 	      (val::obj (default #unspecified))
 	      (thens::pair-nil (default '()))
 	      (catches::pair-nil (default '()))
+	      (resolver (default #f))
+	      (rejecter (default #f))
 	      worker
 	      %this
-	      (resolvers::pair-nil (default '()))
-	      (rejecters::pair-nil (default '()))
-	      (watches::vector (default '#())))
+	      (%name (default (gensym 'promise))))
 
 	   (class JsGenerator::JsObject
 	      %next)
