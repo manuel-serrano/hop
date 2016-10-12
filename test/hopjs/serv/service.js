@@ -35,10 +35,10 @@ service serv2( val ) {
 }
 
 
-import service iserv0();
-import service iserv1();
-import service iserv2();
-import service iserv3();
+service iserv0();
+service iserv1();
+service iserv2();
+service iserv3();
 
 function test() {
    serv0( 3 ).post( function( v ) { assert.ok( v == 4 ); res++; } );
