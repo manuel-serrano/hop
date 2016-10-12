@@ -12,7 +12,7 @@
 /* This worker iterates <num> service invocations, then
  * post a message to inform the main thread of completion */
 
-import service toTest();
+service toTest();
 
 
 function test( id, num ) {

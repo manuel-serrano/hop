@@ -14,7 +14,7 @@
 
 var hop = require( 'hop' );
 
-import service toTest();
+service toTest();
 
 var numCalls = 10;
 //var numCalls = 20000;
