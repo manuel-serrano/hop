@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Apr 19 07:44:11 2016 (serrano)                */
+;*    Last change :  Tue Oct 11 16:17:04 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -219,9 +219,7 @@
 	  (service-declaration))
 	 ((RESERVED)
 	  (if (eq? (peek-token-value) 'import)
-	      (begin
-		 (consume-any!)
-		 (import))
+	      (import (consume-any!))
 	      (statement)))
 	 ((EOF)
 	  (parse-token-error "unexpected end of file"
@@ -945,12 +943,8 @@
 	 (service-create token id params init body mode
 	    #t declaration? #f)))
 
-   (define (import)
-      (let* ((token (consume-token! 'service))
-	     (id (consume-token! 'ID))
-	     (inits (service-params)))
-	 (parse-token-warning "Deprecated import declaration" (or id token))
-	 (service-import token id inits #t)))
+   (define (import token)
+      (parse-token-error "Illegal import declaration" token))
 
    (define (service declaration?)
       (let* ((token (consume-token! 'service))

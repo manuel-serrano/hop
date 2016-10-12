@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Jun 23 12:59:44 2014                          */
-/*    Last change :  Tue Sep  2 14:36:51 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Tue Oct 11 16:12:48 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HopHz binding                                                    */
 /*=====================================================================*/
@@ -25,7 +25,7 @@ function getHostOption( host, port ) {
 /*---------------------------------------------------------------------*/
 /*    listCategories                                                   */
 /*---------------------------------------------------------------------*/
-import service HZListCategories();
+service HZListCategories();
 HZListCategories.path = "/hop/hz/list/categories";
 
 function listCategories( host, port ) {
@@ -38,7 +38,7 @@ function listCategories( host, port ) {
 /*---------------------------------------------------------------------*/
 /*    listWeblets                                                      */
 /*---------------------------------------------------------------------*/
-import service HZListWeblets();
+service HZListWeblets();
 HZListWeblets.path = "/hop/hz/list/weblets";
 
 function listWeblets( category, host, port ) {
@@ -51,7 +51,7 @@ function listWeblets( category, host, port ) {
 /*---------------------------------------------------------------------*/
 /*    install                                                          */
 /*---------------------------------------------------------------------*/
-import service HZInstall();
+service HZInstall();
 HZInstall.path = "/hop/hz/install";
 
 function install( url, host, port ) {
@@ -74,7 +74,7 @@ function install( url, host, port ) {
 /*---------------------------------------------------------------------*/
 /*    download                                                         */
 /*---------------------------------------------------------------------*/
-import service HZDownload();
+service HZDownload();
 HZDownload.path = "/hop/hz/download";
 
 function download( url, host, port ) {
@@ -97,7 +97,7 @@ function download( url, host, port ) {
 /*---------------------------------------------------------------------*/
 /*    uninstall                                                        */
 /*---------------------------------------------------------------------*/
-import service HZUninstall();
+service HZUninstall();
 HZInstall.path = "/hop/hz/uinstall";
 
 function uninstall( weblet, host, port ) {
@@ -110,7 +110,7 @@ function uninstall( weblet, host, port ) {
 /*---------------------------------------------------------------------*/
 /*    search                                                           */
 /*---------------------------------------------------------------------*/
-import service HZSearch();
+service HZSearch();
 HZSearch.path = "/hop/hz/search/weblets";
 
 function search( regexp, host, port ) {
@@ -127,7 +127,7 @@ function search( regexp, host, port ) {
 /*---------------------------------------------------------------------*/
 /*    find                                                             */
 /*---------------------------------------------------------------------*/
-import service HZFind();
+service HZFind();
 HZFind.path = "/hop/hz/find/weblet";
 
 function find( name, host, port ) {
@@ -140,7 +140,7 @@ function find( name, host, port ) {
 /*---------------------------------------------------------------------*/
 /*    update                                                           */
 /*---------------------------------------------------------------------*/
-import service HZUpdate();
+service HZUpdate();
 HZUpdate.path = "/hop/hz/update";
 
 function update( host, port ) {
@@ -153,7 +153,7 @@ function update( host, port ) {
 /*---------------------------------------------------------------------*/
 /*    listUpdate                                                       */
 /*---------------------------------------------------------------------*/
-import service HZListUpdate();
+service HZListUpdate();
 HZListUpdate.path = "/hop/hz/list/update";
 
 function listUpdate( host, port ) {

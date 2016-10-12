@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sat Mar 12 08:29:54 2016 (serrano)                */
+;*    Last change :  Wed Oct 12 08:54:49 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -438,6 +438,9 @@
 	     (string-append scheme "://" host
 		(if port (format ":~a" port) "")
 		url)))
+
+      (define (json-parser ip ctx)
+	 (js-json-parser ip #f #f #f %this))
       
       (define (post callback)
 	 (with-access::JsUrlFrame frame (url args)
@@ -448,7 +451,7 @@
 	       :method method
 	       :timeout timeout
 	       :authorization authorization
-	       :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
+	       :json-parser json-parser
 	       :ctx %this
 	       :header header
 	       :body body)))

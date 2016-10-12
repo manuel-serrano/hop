@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Sat Mar 12 08:31:22 2016 (serrano)                */
+;*    Last change :  Wed Oct 12 08:58:11 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -283,9 +283,16 @@
 	     (trace-item "ctype=" (header-content-type header))
 	     (trace-item "header=" header)
 	     ;; see hop-json-mime-type and hop-bigloo-mime-type
-	     (let ((obj (http-callback-decode (header-content-type header)
-			   clength p ctx)))
-		(success obj)))
+	     (let ((obj (with-handler
+			   (lambda (e)
+			      (fail e)
+			      ;; header acts as an error mark, see below 
+			      header)
+			   (http-callback-decode (header-content-type header)
+			      clength p ctx))))
+		;; eq? obj header only holds on error
+		(unless (eq? obj header)
+		   (success obj))))
 	    ((201 204 304)
 	     ;; no message body
 	     (success (instantiate::xml-http-request
