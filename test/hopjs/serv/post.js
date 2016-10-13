@@ -78,7 +78,7 @@ function test() {
    } );
 
    var req = http.request( {
-      hostname: hop.hostname,
+      hostname: 'localhost',
       port: hop.port,
       path: '/hop/serv1',
       method: 'POST',
@@ -96,7 +96,7 @@ function test() {
    req.end();
 
    var req = http.request( {
-      hostname: hop.hostname,
+      hostname: 'localhost',
       port: hop.port,
       path: '/hop/upload',
       method: 'POST',

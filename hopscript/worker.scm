@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Oct  2 08:20:35 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Thu Oct 13 07:40:27 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
 ;*    -------------------------------------------------------------    */
@@ -169,24 +169,7 @@
 		    1 'onmessage)
 	    :configurable #f
 	    :writable #t
-	    :enumerable #t)
-	 
-;* 	 ;; onexit                                                     */
-;* 	 (js-bind! %this %this 'onexit                                 */
-;* 	    :get (js-make-function %this                               */
-;* 		    (lambda (this)                                     */
-;* 		       (with-access::WorkerHopThread thread (onexit)   */
-;* 			  onexit))                                     */
-;* 		    0 'onexit)                                         */
-;* 	    :set (js-make-function %this                               */
-;* 		    (lambda (this v)                                   */
-;* 		       (with-access::WorkerHopThread thread (onexit)   */
-;* 			  (set! onexit v)))                            */
-;* 		    1 'onexit)                                         */
-;* 	    :writable #t                                               */
-;* 	    :configurable #t                                           */
-;* 	    :enumerable #t)                                            */
-	 ))
+	    :enumerable #t)))
    
    (lambda (_ src)
       (with-access::JsGlobalObject %this (js-worker js-worker-prototype js-object)
@@ -228,6 +211,7 @@
 	       
 	       ;; master onmessage and onexit
 	       (let ((onmessage (js-undefined))
+		     (onerror (js-undefined))
 		     (onexit (js-undefined)))
 		  (js-bind! %this worker 'onmessage
 		     :get (js-make-function %this
@@ -240,6 +224,19 @@
 				   (lambda (this e)
 				      (js-call1 %this v this e))))
 			     2 'onmessage)
+		     :configurable #t
+		     :enumerable #t)
+		  (js-bind! %this worker 'onerror
+		     :get (js-make-function %this
+			     (lambda (this) onerror)
+			     0 'onerror)
+		     :set (js-make-function %this
+			     (lambda (this v)
+				(set! onerror v)
+				(add-event-listener! this "error"
+				   (lambda (this e)
+				      (js-call0 %this v this))))
+			     1 'onerror)
 		     :configurable #t
 		     :enumerable #t)
 		  (js-bind! %this worker 'onexit
@@ -323,6 +320,24 @@
 		     (apply-listeners listeners e))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-worker-thread-post-slave-error ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-worker-thread-post-slave-error thread::WorkerHopThread data)
+   (with-handler
+      exception-notify 
+      (with-access::WorkerHopThread thread (parent errorlisteners %this mutex)
+	 (let ((e (instantiate::MessageEvent
+		     (name "error")
+		     (target parent)
+		     (data (js-donate data parent %this)))))
+	    (js-worker-push-thunk! parent "post-slave-message"
+	       (lambda ()
+		  (synchronize mutex
+		     (if (pair? errorlisteners)
+			 (apply-listeners errorlisteners e)
+			 (exception-notify data)))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-worker-post-master-message ::WorkerHopThread ...              */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-post-master-message this::JsWorker data)
@@ -354,6 +369,12 @@
 	     (synchronize mutex
 		(set! exitlisteners
 		   (cons (lambda (e) (proc obj e)) exitlisteners))))))
+      ((string=? evt "error")
+       (with-access::JsWorker obj (thread)
+	  (with-access::WorkerHopThread thread (mutex errorlisteners)
+	     (synchronize mutex
+		(set! errorlisteners
+		   (cons (lambda (e) (proc obj e)) errorlisteners))))))
       (else
        (call-next-method))))
 
@@ -446,12 +467,14 @@
 ;*    js-worker-exception-handler ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-worker-exception-handler th::object exn errval)
-   (with-access::WorkerHopThread th (handlers %this %process keep-alive)
+   (with-access::WorkerHopThread th (handlers %this %process keep-alive parent)
       (if (pair? handlers)
 	  (let loop ((handlers (reverse handlers)))
 	     (cond
 		((null? handlers)
-		 (exception-notify exn)
+		 (if parent
+		     (js-worker-thread-post-slave-error th exn)
+		     (exception-notify exn))
 		 errval)
 		((js-totest (js-call1 %this (car handlers) %process exn))
 		 0)

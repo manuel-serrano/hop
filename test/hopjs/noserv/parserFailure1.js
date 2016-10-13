@@ -1,7 +1,6 @@
 try {
    require('./aux/faultySubmodule.js' );
-}
-catch (e) {
+} catch ( e ) {
    console.log( 'catched a failure' );
    process.exit( 0 );
 };

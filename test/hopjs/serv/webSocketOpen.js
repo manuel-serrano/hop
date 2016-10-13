@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Thu Oct  1 23:07:00 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu Oct 13 08:38:55 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test repetitive open/close of a WebSocket                        */
 /*=====================================================================*/

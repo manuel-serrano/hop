@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Jul  5 13:30:53 2016 (serrano)                */
+#*    Last change :  Thu Oct 13 09:01:23 2016 (serrano)                */
 #*    Copyright   :  2006-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -58,8 +58,11 @@ POPULATION = Makefile \
   hopjs/noserv/es6-rest.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \
+  hopjs/noserv/parserFailure1.js \
+  hopjs/noserv/parserFailure2.js \
   hopjs/noserv/aux/worker1.js \
   hopjs/noserv/aux/worker2.js \
+  hopjs/noserv/aux/faultySubmodule.js \
   hopjs/serv/asyncSrvRsp.js \
   hopjs/serv/asyncSrvRsp2.js \
   hopjs/serv/asyncSrvWS.js \
@@ -86,6 +89,7 @@ POPULATION = Makefile \
   hopjs/serv/webSocketErrors.js \
   hopjs/serv/webSocketOpen.js \
   hopjs/serv/worker.js \
+  hopjs/serv/legacyImport.js \
   hopjs/serv/aux/discoverServer.js \
   hopjs/serv/aux/launchWorkers.js \
   hopjs/serv/aux/objectEqual.js \
@@ -94,5 +98,6 @@ POPULATION = Makefile \
   hopjs/serv/aux/webSocketClient.js \
   hopjs/serv/aux/workerNOOP.js \
   hopjs/serv/aux/wsOpenClient.js \
+  hopjs/serv/aux/legacyImportSubmodule.js \
   hopjs/serv/https/cert.pem \
   hopjs/serv/https/key.pem

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Dec 23 07:56:21 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Thu Oct 13 07:56:57 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -234,13 +234,13 @@
 	       (js-string->jsstring
 		  (call-with-output-string
 		     (lambda (op)
-			(when (isa? err JsObject)
-			   (let ((head (js-get err 'name %this)))
-			      (unless (eq? head (js-undefined))
-				 (display (js-tostring head %this) op)
-				 (display ": " op)))
-			   (display (js-get err 'message %this) op)
-			   (newline op))
+;* 			(when (isa? err JsObject)                      */
+;* 			   (let ((head (js-get err 'name %this)))      */
+;* 			      (unless (eq? head (js-undefined))        */
+;* 				 (display (js-tostring head %this) op) */
+;* 				 (display ": " op)))                   */
+;* 			   (display (js-get err 'message %this) op)    */
+;* 			   (newline op))                               */
 			(display-trace-stack stack op 1)))))
 	    
 	    ;; initialize the frame proto object

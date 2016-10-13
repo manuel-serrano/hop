@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Thu Sep  17 11:43:00 2015                         */
-/*    Last change :  Sun Sep 20 07:23:38 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu Oct 13 08:40:05 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    simple worker to stress test a WebSocket server                  */
 /*=====================================================================*/
@@ -36,7 +36,7 @@ onmessage = function( e ) {
       id = e.data.clientId;
       num = e.data.num;
       try {
-	 ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
+	 ws = new WebSocket( 'ws://' + 'localhost' + ':'+ hop.port + '/hop/serv' );
       }
       catch (e) {
 	 console.log( 'error creating socket' );

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Dec 23 07:51:16 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Wed Oct 12 19:32:25 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -404,7 +404,7 @@
 	     (lambda (p)
 		(load-mime-types (make-file-name p ".mime.types"))))))
       
-      ;; clear al caches
+      ;; clear all caches
       (when clear-cache
 	 (let ((cache (make-cache-name)))
 	    (when (directory? cache)
@@ -604,13 +604,21 @@
 ;*---------------------------------------------------------------------*/
 (define (parseargs-loadrc rc-file default)
    (if (string? rc-file)
-       (if (member (suffix rc-file) '("hop" "scm"))
-	   (%hop-load-rc rc-file)
-	   rc-file)
+       (let ((suf (suffix rc-file)))
+	  (cond
+	     ((member suf '("hop" "scm"))
+	      (%hop-load-rc rc-file)
+	      rc-file)
+	     ((member suf '("js"))
+	      rc-file)))
        (let ((path (make-file-name (hop-rc-directory) default)))
 	  (if (file-exists? path)
 	      (%hop-load-rc path)
-	      (%hop-load-rc (make-file-name (hop-etc-directory) default))))))
+	      (let ((jspath (string-append (prefix path) ".js")))
+		 (if (file-exists? jspath)
+		     jspath
+		     (let ((def (make-file-name (hop-etc-directory) default)))
+			(%hop-load-rc def))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-rc ...                                                  */

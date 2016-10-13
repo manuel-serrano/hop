@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 26 09:36:15 2015                          */
-/*    Last change :  Fri Nov 27 08:09:30 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Thu Oct 13 08:06:05 2016 (serrano)                */
+/*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing HopFrames                                                */
 /*=====================================================================*/

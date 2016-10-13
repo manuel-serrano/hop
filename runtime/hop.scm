@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Oct 12 08:58:11 2016 (serrano)                */
+;*    Last change :  Wed Oct 12 20:52:59 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -285,7 +285,9 @@
 	     ;; see hop-json-mime-type and hop-bigloo-mime-type
 	     (let ((obj (with-handler
 			   (lambda (e)
-			      (fail e)
+			      (if (procedure? fail)
+				  (fail e)
+				  (raise e))
 			      ;; header acts as an error mark, see below 
 			      header)
 			   (http-callback-decode (header-content-type header)

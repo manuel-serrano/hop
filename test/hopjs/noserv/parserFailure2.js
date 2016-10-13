@@ -1,14 +1,12 @@
 var worker;
+var err = 0;
+var assert = require( "assert" );
+
 try {
    worker = new Worker('./aux/faultySubmodule.js' );
-}
-catch (e) {
-   console.log( 'catched a failure' );
-   process.exit( 0 );
+   worker.onerror = function( e ) { err++ };
 };
 
 setTimeout( function() {
-   console.log( 'exit on timeout' );
-   process.exit( 1 );
-}, 1000 );
-
+   assert.ok( err, 1 );
+}, 100 );

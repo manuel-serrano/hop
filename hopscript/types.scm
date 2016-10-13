@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Mar  2 16:50:05 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 07:22:59 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -41,6 +41,7 @@
 	      (tqueue::pair-nil (default '()))
 	      (listeners::pair-nil (default '()))
 	      (exitlisteners::pair-nil (default '()))
+	      (errorlisteners::pair-nil (default '()))
 	      (onmessage::obj (default (js-undefined)))
 	      (onexit::obj (default (js-undefined)))
 	      (%this::JsGlobalObject read-only)

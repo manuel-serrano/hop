@@ -4,8 +4,7 @@ service foo() {
 
 try {
    require('./aux/legacyImportSubmodule.js' );
-}
-catch (e) {
+} catch ( e ) {
    console.log( 'syntax fail' );
    process.exit( 1 );
 };

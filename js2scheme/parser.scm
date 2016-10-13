@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Oct 11 16:17:04 2016 (serrano)                */
+;*    Last change :  Wed Oct 12 20:57:17 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -943,8 +943,12 @@
 	 (service-create token id params init body mode
 	    #t declaration? #f)))
 
-   (define (import token)
-      (parse-token-error "Illegal import declaration" token))
+   (define (import tok)
+      (let* ((token (consume-token! 'service))
+             (id (consume-token! 'ID))
+             (inits (service-params)))
+         (parse-token-warning "Deprecated import declaration" token)
+         (service-import token id inits #t)))
 
    (define (service declaration?)
       (let* ((token (consume-token! 'service))

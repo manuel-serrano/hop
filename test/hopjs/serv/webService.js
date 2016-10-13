@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  11 14:00:00 2015                         */
-/*    Last change :  Thu Nov 26 07:56:27 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu Oct 13 08:16:04 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing WebService                                               */
 /*=====================================================================*/
@@ -37,7 +37,7 @@ service myNamedArgsService( o ) {
 function testLocalWS() {
 
    var myWebService =
-       hop.webService( 'http://' + hop.hostname + ':' + hop.port + '/hop/myNamedArgsService' );
+       hop.webService( 'http://' + 'localhost' + ':' + hop.port + '/hop/myNamedArgsService' );
 
    function test( count = undefined ) {
       var expected;

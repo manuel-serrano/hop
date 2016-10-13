@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Oct 12 08:54:49 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 08:06:40 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -130,7 +130,7 @@
 			     (obj (instantiate::server
 				     (ssl (js-toboolean ssl))
 				     (host (if (eq? host (js-undefined))
-					       (hop-server-hostname)
+					       "localhost"
 					       (js-tostring host %this)))
 				     (port (if (eq? port (js-undefined))
 					       (hop-port)

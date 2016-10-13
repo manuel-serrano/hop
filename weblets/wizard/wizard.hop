@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Feb 14 06:14:00 2005                          */
-;*    Last change :  Fri Sep 16 15:38:06 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 08:52:32 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP account creation wizard                                      */
@@ -38,7 +38,7 @@
 	 :css "wizard.hss"
 	 :favicon "etc/favicon.png")
       (<BODY>
-	 ~(define lang $lang)
+	 ~(define language $lang)
 	 ~(define (crypt na pd)
 	     (string-append "+" (digest-password-encrypt na pd (hop-realm))))
 	 ~(define exprs '())
@@ -90,7 +90,7 @@
 				 proxya.value proxyr.value proxym
 				 localp.checked 
 				 webdav.checked
-				 lang)
+				 language)
 		       (lambda (h)
 			  (case (car h)
 			     ((query)
@@ -106,7 +106,7 @@
 						  proxyr.value proxym
 						  localp.checked 
 						  webdav.checked
-						  lang)
+						  language)
 					(lambda (h)
 					   (innerHTML-set! status (cadr h))
 					   (innerHTML-set! message
@@ -391,8 +391,9 @@ setting can be overriden when starting Hop.]))))))
 		  :value "Hop" :checked (string=? lang "hop")
 		  :onclick ~(set! language "hop"))
 	       "Hop")))
-      (<TR> (<TD>) (<TD> :class "comment"
-		      (<SPAN> [Preferred configuration language.])))))
+      (<TR> (<TD>)
+	 (<TD> :class "comment"
+	    (<SPAN> [Preferred configuration language.])))))
 
 ;*---------------------------------------------------------------------*/
 ;*    wizard/documentation ...                                         */
@@ -470,7 +471,7 @@ setting can be overriden when starting Hop.]))))))
 	    (nl)
 	    (unless (string=? proxy "")
 	       (print ";; hop proxy")
-	       (write `(hop-proxy-set! ,proxy))
+	       (write `(hop-use-proxy-set! ,proxy))
 	       (nl))
 	    (print ";; proxying")
 	    (write `(hop-enable-proxying-set! ,uproxy))
@@ -562,37 +563,37 @@ setting can be overriden when starting Hop.]))))))
 	    (print "if( fs.exists( etchoprc ) ) #:hop-load( etchoprc );")
 	    (newline)
 	    (print "// wizard file")
-	    (print "#:hop-load-rc( '" (basename passwdfile) "' );")
+	    (print "require( './" (basename passwdfile) "' );")
 	    (newline)
 	    (when (and (string? proxy) (not (string=? proxy "")))
 	       (print "// hop proxy")
-	       (print "#:hop-proxy-set!( '" proxy "' );")
+	       (print "cfg.useProxy = '" proxy "';")
 	       (newline))
 	    (print "// proxying")
-	    (print "#:hop-enable-proxying-set!( " (jsbool uproxy) " );")
+	    (print "cfg.enableProxying = " (jsbool uproxy) ";")
 	    (newline)
 	    (when proxy
 	       (print "// proxy authentication")
-	       (print "#:hop-proxy-authentication-set!( "
-		  (jsbool (not anonymous-proxy)) " );")
+	       (print "cfg.proxyAuthentication = "
+		  (jsbool (not anonymous-proxy)) ";")
 	       (newline)
 	       (print "// proxy remote connections")
-	       (print "#:hop-proxy-allow-remote-client-set!( "
-		  (jsbool remote-proxy) " );")
+	       (print "cfg.proxyAllowRemoteClient = "
+		  (jsbool remote-proxy) ";")
 	       (newline)
 	       (when remote-proxy
 		  (print "// proxy remote authentication")
-		  (print "#:hop-proxy-remote-authentication-set!( "
-		     (jsbool (not anonymous-proxy)) " );")
+		  (print "cfg.proxyRemoteAuthentication = "
+		     (jsbool (not anonymous-proxy)) ";")
 		  (newline))
 	       (when proxy-mask
 		  (print "// proxy IP mask")
-		  (print "#:hop-proxy-ip-mask-set!( '"
+		  (print "cfg.proxyIpMask = '"
 		     (apply format "~a.~a.~a.~a" proxy-mask)
-		     "' );")
+		     "';")
 		  (newline)))
 	    (print "// WebDAV")
-	    (print "#:hop-enable-webdav-set!( " (jsbool webdav) " )")
+	    (print "cfg.enableWebdav = " (jsbool webdav) ";")
 	    (newline)
 	    (when localp
 	       (print "// anonymous local requests")

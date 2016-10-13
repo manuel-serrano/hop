@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Oct 02 00:43:00 2015                          */
-/*    Last change :  Fri Oct  2 18:09:35 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu Oct 13 08:16:17 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Negative test for webSockets                                     */
 /*=====================================================================*/
@@ -13,10 +13,10 @@ var hop = require( 'hop' );
 
 var serv = new WebSocketServer( { path: "serv" } );
 
-var wrongURL = 'ws://' + hop.hostname + ':' + hop.port + '/hop/wrongURL';
-var wrongURL2 = 'ws://' + hop.hostname + ':' + (hop.port + 10) + '/hop/wrongURL';
-var wrongURL3 = 'ws://' + hop.hostname + "_doesnotexist" + ':' + hop.port + '/hop/wrongURL';
-var URL = 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv';
+var wrongURL = 'ws://' + 'localhost' + ':' + hop.port + '/hop/wrongURL';
+var wrongURL2 = 'ws://' + 'localhost' + ':' + (hop.port + 10) + '/hop/wrongURL';
+var wrongURL3 = 'ws://' + 'localhost' + "_doesnotexist" + ':' + hop.port + '/hop/wrongURL';
+var URL = 'ws://' + 'localhost' + ':'+ hop.port + '/hop/serv';
 
 serv.onconnection = function( event ) {
    var ws = event.value;
