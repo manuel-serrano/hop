@@ -3,15 +3,15 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  7 15:00:00 2015                          */
-/*    Last change :  Tue Sep  8 17:39:16 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu Oct 13 14:06:07 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing the user module                                          */
 /*=====================================================================*/
 
 console.log( 'loading test module authentication.js' );
 
-var hop = require( 'hop' );
+var user = require( hop.user );
 var assert = require( 'assert' );
 
 service foo( who ) {

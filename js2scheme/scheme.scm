@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Mar 18 09:34:22 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 17:02:36 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -766,16 +766,8 @@
 ;*    j2s-scheme-string ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-string val loc)
-   (let ((ui (utf8-index val)))
-      (if (not ui)
-	  ;; this is an ascii string
-	  (epairify loc
-	     `(js-string->jsstring
-		 (string-ascii-sentinel-set! ,val ,(string-length val))))
-	  ;; this is an utf8 string
-	  (epairify loc
-	     `(js-string->jsstring
-		 (string-ascii-sentinel-set! ,val ,ui))))))
+   (epairify loc
+      `(js-string->jsstring ,val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2STemplate ...                                     */
@@ -788,14 +780,7 @@
 		,@(map (lambda (expr)
 			  (if (isa? expr J2SString)
 			      (with-access::J2SString expr (val)
-				 (let ((ui (utf8-index val)))
-				    (if (not ui)
-					;; this is an ascii string
-					`(string-ascii-sentinel-set!
-					    ,val ,(string-length val))
-					;; this is an utf8 string
-					`(string-ascii-sentinel-set!
-					    ,val ,ui))))
+				 val)
 			      (with-access::J2SNode expr (loc)
 				 (epairify loc
 				    `(js-tostring
