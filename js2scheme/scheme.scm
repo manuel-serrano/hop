@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Oct 14 17:02:36 2016 (serrano)                */
+;*    Last change :  Sat Oct 15 08:18:22 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -300,9 +300,8 @@
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
 	    (if (memq scope '(global %scope))
-		(let ((fun-name (string->symbol
-				   (format "function:~a:~a"
-				      (cadr loc) (caddr loc)))))
+		(let ((fun-name (format "function:~a:~a"
+				   (cadr loc) (caddr loc))))
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
 		       `(js-decl-eval-put! %scope
 			   ',id ,value ,(strict-mode? mode) %this)
@@ -312,12 +311,12 @@
 			      :configurable #f
 			      :get (js-make-function %this
 				      (lambda (%) ,ident)
-				      1 ',fun-name)
+				      1 ,fun-name)
 			      :set ,(when writable
 				      `(js-make-function %this
 					  (lambda (% %v)
 					     (set! ,ident %v))
-					  2 ',fun-name))))))
+					  2 ,fun-name))))))
 		`(define ,ident ,value))))))
 
 ;*---------------------------------------------------------------------*/
