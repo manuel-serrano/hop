@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Sun Oct  9 10:27:44 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 14:28:09 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -260,6 +260,8 @@
 (define (javascript-rc %worker %global)
    
    (define (load-rc path)
+      ;; behave as if rc file is not loaded yet
+      (hop-rc-loaded! #f)
       ;; set the preferred language
       (hop-preferred-language-set! "hopscript")
       ;; force the module initialization

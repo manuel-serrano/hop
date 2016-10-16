@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Oct  6 08:51:24 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 17:33:30 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -229,6 +229,10 @@
 			 opts))
 		(cmd (format "~a - ~l" (hopc-bigloo) opts))
 		(out (process-input-port proc)))
+	    (signal sigterm
+	       (lambda (sig)
+		  (process-kill proc)
+		  (exit 1)))
 	    (unwind-protect
 	       (comp out)
 	       (begin

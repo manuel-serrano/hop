@@ -29,14 +29,14 @@ service getPayloadWSBase64( o ) {
    return hop.HTTPResponseJson( { filename: filename, payloadType: 'String', payloadEncoding: 'base64', payload: refData[ filename ].toString( 'base64' )});
 }
 
-var url = util.format( 'http://%s:%s/hop/getPayloadWebService', hop.hostname, hop.port );
+var url = util.format( 'http://%s:%s/hop/getPayloadWebService', 'localhost', hop.port );
 console.log( "URLxxx=", "[" + url + "]" );
 var webService = hop.webService( url );
 
 
 var webServiceBase64 = hop.webService(
    util.format( 'http://%s:%s/hop/getPayloadWSBase64',
-		hop.hostname, hop.port ));
+		'localhost', hop.port ));
 
 // currently JSON.stringify serialises Buffer objects like
 // arrays. This is inconsistent with Node.js. We just check that the

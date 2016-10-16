@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Oct  9 10:16:19 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 18:04:52 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -462,16 +462,22 @@
 			   (lambda (_ resolve reject)
 			      (thread-start!
 				 (instantiate::hopthread
+				    (name "post-server-promise")
 				    (body (lambda ()
 					     (with-handler
 						(lambda (e)
-						   (js-call1 %this reject %this e))
+						   (js-promise-async p
+						      (lambda ()
+							 (js-call1 %this reject %this e))))
 						(post-request
 						   (lambda (x)
-						      (js-promise-resolve p
-							 (scheme->js x)))
+						      (js-promise-async p
+							 (lambda ()
+							    (js-promise-resolve p
+							       (scheme->js x)))))
 						   (lambda (x)
-						      (js-promise-reject this x))
+						      (js-promise-async p
+							 (js-promise-reject this x)))
 						   scheme host port
 						   user password auth)))))))
 			   2 "executor"))))
@@ -487,15 +493,16 @@
 					(scheme->js x)))))))
 	       (fail (when (isa? failure JsFunction)
 			(lambda (obj)
-			   (tprint "in fail obj=" obj)
 			   (js-worker-push-thunk! (js-current-worker) path
 			      (lambda ()
 				 (js-call1 %this failure %this obj)))))))
 	    (thread-start!
 	       (instantiate::hopthread
+		  (name "post-async")
 		  (body (lambda ()
 			   (with-handler
-			      (or fail exception-notify)
+			      (lambda (e)
+				 (or fail exception-notify))
 			      (post-request
 				 callback fail
 				 scheme host port
@@ -622,6 +629,7 @@
       (define (spawn-thread)
 	 (thread-start!
 	    (instantiate::hopthread
+	       (name "spawn-thread")
 	       (body (lambda ()
 			(with-handler
 			   (lambda (e)
@@ -648,6 +656,7 @@
 			   (js-call1 %this reject %this obj)))
 		     (thread-start!
 			(instantiate::hopthread
+			   (name "spawn-promise")
 			   (body (lambda ()
 				    (with-handler
 				       (lambda (e)

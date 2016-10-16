@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Oct  8 07:40:58 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 16:54:04 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -122,6 +122,8 @@
 	     (set! clear-libs #f))
 	    (("--no-sofile" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
+	    (("--sofile-policy" ?policy (help "So file compile policy"))
+	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))
 	    (("--no-autoload" (help "Disable autoload"))
@@ -634,13 +636,21 @@
 ;*---------------------------------------------------------------------*/
 (define (parseargs-loadrc rc-file default)
    (if (string? rc-file)
-       (if (member (suffix rc-file) '("hop" "scm"))
-	   (%hop-load-rc rc-file)
-	   rc-file)
+       (let ((suf (suffix rc-file)))
+	  (cond
+	     ((member suf '("hop" "scm"))
+	      (%hop-load-rc rc-file)
+	      rc-file)
+	     ((member suf '("js"))
+	      rc-file)))
        (let ((path (make-file-name (hop-rc-directory) default)))
 	  (if (file-exists? path)
 	      (%hop-load-rc path)
-	      (%hop-load-rc (make-file-name (hop-etc-directory) default))))))
+	      (let ((jspath (string-append (prefix path) ".js")))
+		 (if (file-exists? jspath)
+		     jspath
+		     (let ((def (make-file-name (hop-etc-directory) default)))
+			(%hop-load-rc def))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-rc ...                                                  */

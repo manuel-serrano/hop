@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.0.x/test/hopjs/serv/aux/stressClient.js        */
+/*    .../project/hop/3.1.x/test/hopjs/serv/aux/stressClient.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Mon Sep  14 11:43:00 2015                         */
-/*    Last change :  Tue Sep 15 16:21:11 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu Oct 13 14:11:08 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Stress test for services: client worker                          */
 /*=====================================================================*/
@@ -14,7 +14,7 @@
 
 var hop = require( 'hop' );
 
-import service toTest();
+service toTest();
 
 var numCalls = 10;
 //var numCalls = 20000;

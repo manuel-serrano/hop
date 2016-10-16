@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Mon Oct 10 13:21:52 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 13:59:49 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -35,6 +35,7 @@
 	   __hopscript_worker)
 
    (export (js-init-promise! ::JsGlobalObject)
+	   (js-promise-async ::JsPromise ::procedure)
 	   (js-promise-resolve ::JsPromise ::obj)
 	   (js-promise-reject ::JsPromise ::obj)))
 
@@ -46,7 +47,7 @@
       ((lambda () . ?body)
        `(begin ,@body))
       (else
-       (error "js-worker-push-thunk!" "bad syntax" fun))))
+       `((@ js-worker-push-thunk! __hopscript_worker) ,worker ,name ,fun))))
 
 ;*---------------------------------------------------------------------*/
 ;*    Jsstringliteral begin                                            */
@@ -84,18 +85,22 @@
 	    (js-promise-then-catch %this obj 
 	       (js-make-function %this
 		  (lambda (this resp)
-		     (k (scheme->response resp req)))
+		     (js-promise-async obj
+			(lambda ()
+			   (k (scheme->response resp req)))))
 		  1 "reply")
 	       (js-make-function %this
 		  (lambda (this rej)
 		     (let ((errobj (url-path-encode
 				      (obj->string rej 'hop-client))))
-			(k (instantiate::http-response-hop
-			      (start-line "HTTP/1.1 500 Internal Server Error")
-			      (backend (hop-xml-backend))
-			      (content-type "application/x-hop")
-			      (header `((Hop-Error: . ,errobj)))
-			      (value rej)))))
+			(js-promise-async obj
+			   (lambda ()
+			      (k (instantiate::http-response-hop
+				    (start-line "HTTP/1.1 500 Internal Server Error")
+				    (backend (hop-xml-backend))
+				    (content-type "application/x-hop")
+				    (header `((Hop-Error: . ,errobj)))
+				    (value rej)))))))
 		  1 "reject")
 	       obj))))
    
@@ -120,10 +125,10 @@
 	       (js-worker-push-thunk! worker "promise"
 		  (lambda ()
 		     (with-handler
-			(lambda (e) e))
-		     (js-promise-reject this
-			(js-new %this js-type-error
-			   (js-string->jsstring msg))))))))
+			(lambda (e) e)
+			(js-promise-reject this
+			   (js-new %this js-type-error
+			      (js-string->jsstring msg)))))))))
 			      
       
       (with-access::JsGlobalObject %this (js-symbol-iterator)
@@ -242,7 +247,7 @@
 			   1 "onfullfilled")
 			(js-make-function %this
 			   (lambda (this reason)
-			      (js-promise-reject promise reason))
+			      reason)
 			   1 "onrejected")
 			promise)
 		     (loop (-fx i 1)))
@@ -268,7 +273,7 @@
 			   1 "onfullfilled")
 			(js-make-function %this
 			   (lambda (this reason)
-			      (js-promise-reject promise reason))
+			      reason)
 			   1 "onrejected")
 			promise)
 		     (loop (+fx i 1)))
@@ -385,7 +390,8 @@
 			  (catches '())
 			  (resolver #f)
 			  (rejecter #f)
-			  (state 'pending))))
+			  (state 'pending)
+			  (%name "then-catch"))))
 		(js-promise-then-catch %this this onfullfilled onrejected np)))))
       
    ;; catch
@@ -450,7 +456,7 @@
 	       (set! state 'rejected)
 	       ;; hopscript extension
 	       (if (null? reactions)
-		   (raise reason)
+		   reason
 		   ;; reject .7
 		   (js-promise-trigger-reactions worker reactions reason)))))))
 
@@ -501,7 +507,7 @@
 		 argument))
 	    ((eq? handler 'thrower)
 	     ;; .5
-	     argument)
+	     (js-promise-reject promise argument))
 	    (else
 	     (with-handler
 		(lambda (e)
@@ -564,6 +570,13 @@
 			  (with-handler
 			     exception-notify
 			     (resolve-thenable o resolution then)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-promise-async ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-promise-async o::JsPromise thunk)
+   (with-access::JsPromise o (worker)
+      (js-worker-push-thunk! worker "async" thunk)))
 
 ;*---------------------------------------------------------------------*/
 ;*    Jsstringliteral end                                              */

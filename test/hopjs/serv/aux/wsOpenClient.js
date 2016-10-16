@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.0.x/test/hopjs/serv/aux/wsOpenClient.js        */
+/*    .../project/hop/3.1.x/test/hopjs/serv/aux/wsOpenClient.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Thu Sep  17 11:43:00 2015                         */
-/*    Last change :  Fri Dec 11 20:25:16 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Thu Oct 13 09:03:10 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    simple worker to open/close a WebSocket                          */
 /*=====================================================================*/
@@ -28,7 +28,7 @@ function test( id, num ) {
 	 postMessage( { messageType: 'done' } );
       } else {
 	 // console.log( 'client #%s: call #%s', id, num );
-	 ws = new WebSocket( 'ws://' + hop.hostname + ':'+ hop.port + '/hop/serv' );
+	 ws = new WebSocket( 'ws://' + 'localhost' + ':'+ hop.port + '/hop/serv' );
 	 ws.onopen = function() {
 	    // console.error( "onopen " + id + " num=" + num );
 	    ws.send( JSON.stringify( { id: id, num: num } ));

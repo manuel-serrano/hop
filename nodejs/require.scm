@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct  6 06:54:08 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 18:03:34 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -37,6 +37,11 @@
 	   (nodejs-worker ::JsGlobalObject ::JsObject ::JsObject)))
 
 ;;(define-macro (bigloo-debug) 0)
+
+;*---------------------------------------------------------------------*/
+;*    socompile ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-struct socompile proc cmd ksucc kfail)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
@@ -317,7 +322,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-global-object)
    (unless *resolve-service*
-      (when (eq? (hop-sofile-compile-policy) 'nte)
+      (when (memq (hop-sofile-compile-policy) '(nte nte+))
 	 (nodejs-compile-workers-inits!))
       (let ((this (js-new-global-object)))
 	 (set! *resolve-this* this)
@@ -575,6 +580,8 @@
 (define socompile-mutex (make-mutex))
 (define socompile-condv (make-condition-variable))
 (define socompile-files '())
+(define socompile-processes '())
+(define socompile-ended #f)
 
 (define socompile-worker-count 0)
 (define socompile-queue '())
@@ -596,7 +603,7 @@
 ;*    nodejs-compile-workers-inits! ...                                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile-workers-inits!)
-
+   
    (define (compile-worker e::pair)
       (let loop ()
 	 (if (<fx socompile-worker-count (hop-sofile-max-workers))
@@ -606,34 +613,99 @@
 	     (begin
 		(condition-variable-wait! socompile-condv socompile-mutex)
 		(loop)))))
-      
+   
+   (define (socompile-wait p::struct status::bool)
+      (let ((proc (socompile-proc p)))
+	 (process-wait proc)
+	 (if (and status (=fx (process-exit-status proc) 0))
+	     ((socompile-ksucc p))
+	     ((socompile-kfail p)))))
+   
+   (register-exit-function!
+      (lambda (status)
+	 (synchronize socompile-mutex
+	    (for-each (lambda (p)
+			 (define debug-abort #f)
+			 (if (eq? (hop-sofile-compile-policy) 'nte+)
+			     (socompile-wait p #t)
+			     (begin
+				(when debug-abort
+				   (tprint "aborting " (socompile-proc p)
+				      " " (socompile-cmd p)))
+				(hop-verb 3 (hop-color -1 -1 " ABORTING ") " "
+				   (socompile-cmd p) "\n")
+				(process-kill (socompile-proc p))
+				(when debug-abort
+				   (tprint "waiting/abort " (socompile-proc p)))
+				(socompile-wait p #f)
+				(when debug-abort
+				   (tprint "killed " (socompile-proc p))))))
+	       socompile-processes)
+	    (set! socompile-processes '())
+	    (set! socompile-files '())
+	    (set! socompile-ended #t)
+	    status)))
+   
    (thread-start!
       (instantiate::hopthread
+	 (name "socompile-orchestrator")
 	 (body (lambda ()
-		  (synchronize socompile-mutex
-		     (let loop ()
-			(let liip ()
-			   (when (pair? socompile-queue)
-			      (let ((e (nodejs-select-socompile socompile-queue)))
-				 (or (hop-find-sofile (car e))
-				     (compile-worker e))
-				 (liip))))
-			(condition-variable-wait!
-			   socompile-condv socompile-mutex)
-			(loop))))))))
+		  (with-handler
+		     (lambda (e)
+			(tprint "************ SOCOMPILE ORCHESTRATOR EXN=" e)
+			(exception-notify e))
+		     (synchronize socompile-mutex
+			(let loop ()
+			   (let liip ()
+			      (when (pair? socompile-queue)
+				 (let ((e (nodejs-select-socompile socompile-queue)))
+				    (or (hop-find-sofile (car e))
+					(compile-worker e))
+				    (liip))))
+			   (condition-variable-wait!
+			      socompile-condv socompile-mutex)
+			   (loop)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    register-socompile-process! ...                                  */
+;*---------------------------------------------------------------------*/
+(define (register-socompile-process! proc::process cmd::bstring ksucc kfail)
+   (synchronize socompile-mutex
+      (set! socompile-processes
+	 (cons (socompile proc cmd ksucc kfail) socompile-processes)))
+   proc)
+
+;*---------------------------------------------------------------------*/
+;*    unregister-socomopile-process! ...                               */
+;*---------------------------------------------------------------------*/
+(define (unregister-socompile-process! proc)
+   ;; socompile-mutex already locked
+   (let ((el (find (lambda (s) (eq? (socompile-proc s) proc))
+		socompile-processes)))
+      (set! socompile-processes (delete! el socompile-processes)))
+   proc)
 
 ;*---------------------------------------------------------------------*/
 ;*    make-compile-worker ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (make-compile-worker e::pair)
    (instantiate::hopthread
+      (name "socompile-worker")
       (body (lambda ()
-	       (nodejs-socompile (car e) (cdr e))
-	       (synchronize socompile-mutex
-		  (set! socompile-worker-count (-fx socompile-worker-count 1))
-		  (set! socompile-queue (remq! e socompile-queue))
-		  (set! socompile-compiled (cons (car e) socompile-compiled))
-		  (condition-variable-broadcast! socompile-condv))))))
+	       (with-handler
+		  (lambda (e)
+			(tprint "************ SOCOMPILE EXN=" e)
+			(exception-notify e))
+		  (begin
+		     (nodejs-socompile (car e) (cdr e))
+		     (synchronize socompile-mutex
+			(set! socompile-worker-count
+			   (-fx socompile-worker-count 1))
+			(set! socompile-queue
+			   (remq! e socompile-queue))
+			(set! socompile-compiled
+			   (cons (car e) socompile-compiled))
+			(condition-variable-broadcast! socompile-condv))))))))
 		     
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-select-socompile ...                                      */
@@ -672,21 +744,58 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-socompile filename lang)
    
-   (define (exec cmd)
-      (let* ((proc (run-process "sh" "-c" cmd :wait #f error: pipe:))
-	     (err (process-error-port proc)))
-	 (let ((s (read-string err)))
-	    (values (process-exit-status proc) s))))
-   
-   (define (cleanup sopath sopathtmp res)
-      (let ((o (string-append (prefix sopathtmp) ".o")))
-	 (when (file-exists? o) (delete-file o)))
-      (if (and (integer? res) (=fx res 0))
-	  (rename-file sopathtmp sopath)
-	  (begin
-	     (when (file-exists? sopath) (delete-file sopath))
-	     (when (file-exists? sopathtmp) (delete-file sopathtmp)))))
+   (define (exec cmd::bstring ksucc::procedure kfail::procedure)
+      (let* ((line (string-split cmd " "))
+	     (proc (register-socompile-process!
+		      (apply run-process (car line) :wait #f error: pipe:
+			 (cdr line))
+		      cmd ksucc kfail))
+	     (err (process-error-port proc))
+	     (estr (with-handler
+		      (lambda (e) e)
+		      (unwind-protect
+			 (read-string err)
+			 (close-input-port err))))
+	     (debug-abort #f))
+	 (with-handler
+	    (lambda (e)
+	       (exception-notify e))
+	    (begin
+	       (when debug-abort
+		  (tprint ">>> wait-process " proc " " cmd))
+	       (process-wait proc)
+	       (when debug-abort
+		  (tprint "<<< wait-process " proc " " cmd))
+	       (synchronize socompile-mutex
+		  (when debug-abort
+		     (tprint "spcompile-ended=" socompile-ended " estr=" estr))
+		  (if socompile-ended
+		      'ended
+		      (begin
+			 (unregister-socompile-process! proc)
+			 (unless (=fx (process-exit-status proc) 0)
+			    estr))))))))
 
+   (define (dump-error cmd sopath msg)
+      (call-with-output-file (string-append sopath ".err")
+	 (lambda (op)
+	    (display msg (current-error-port))
+	    (display cmd op)
+	    (newline op)
+	    (display msg op))))
+
+   (define (make-ksucc sopath sopathtmp)
+      (lambda ()
+	 (let ((o (string-append (prefix sopathtmp) ".o")))
+	    (when (file-exists? o) (delete-file o))
+	    (rename-file sopathtmp sopath)
+	    sopath)))
+   
+   (define (make-kfail sopath sopathtmp)
+      (lambda ()
+	 (when (file-exists? sopath) (delete-file sopath))
+	 (when (file-exists? sopathtmp) (delete-file sopathtmp))))
+   
    (let loop ()
       (let ((tmp (synchronize socompile-mutex
 		    (cond
@@ -700,45 +809,37 @@
 			(set! socompile-files (cons filename socompile-files))
 			'compile)))))
 	 (cond
+	    (socompile-ended #f)
 	    ((string? tmp) tmp)
 	    ((eq? tmp 'loop) (loop))
 	    (else
 	     (let* ((sopath (hop-sofile-path filename))
-		    (sopathtmp (hop-sofile-path (string-append "__" (prefix filename))))
-		    (cmd (format "~a ~a -y -v2 --js-no-module-main -o ~a ~a"
+		    (sopathtmp (hop-sofile-path
+				  (string-append "#"
+				     (prefix (basename filename)))))
+		    (cmd (format "~a ~a -y -v3 --js-no-module-main -o ~a ~a"
 			    (hop-hopc)
 			    filename sopathtmp
-			    (hop-hopc-flags))))
+			    (hop-hopc-flags)))
+		    (ksucc (make-ksucc sopath sopathtmp))
+		    (kfail (make-kfail sopath sopathtmp)))
 		(make-directories (dirname sopath))
 		(hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
-		(let ((res -1)
-		      (msg "abort")
-		      (atexit (lambda (res)
-				 (for-each (lambda (p)
-					      (process-kill p)
-					      (process-wait p))
-				    (process-list))
-				 (cleanup sopath sopathtmp -1))))
-		   (register-exit-function! atexit)
+		(let ((msg (exec cmd ksucc kfail)))
 		   (unwind-protect
-		      (multiple-value-bind (r m)
-			 (exec cmd)
-			 (set! res r)
-			 (set! msg m))
-		      (begin
-			 (cleanup sopath sopathtmp res)
-			 (unregister-exit-function! atexit)
-			 (if (and (integer? res) (=fx res 0))
-			     sopath
-			     (call-with-output-file (string-append sopath ".err")
-				(lambda (op)
-				   (display msg (current-error-port))
-				   (display cmd op)
-				   (newline op)
-				   (display msg op)
-				   (hop-verb 3 (hop-color -1 -1 " COMPILE-ERROR") " " cmd "\n")
-				   'error)))
-			 (synchronize socompile-mutex
+		      (cond
+			 ((not msg)
+			  ;; compilation succeeded
+			  (ksucc))
+			 ((string? msg)
+			  ;; compilation failed
+			  (kfail)
+			  (hop-verb 3 (hop-color -1 -1 " COMPILE-ERROR")
+			     " " cmd "\n")
+			  (dump-error cmd sopath msg)
+			  'error))
+		      (synchronize socompile-mutex
+			 (unless socompile-ended
 			    (set! socompile-files
 			       (delete! filename socompile-files))
 			    (condition-variable-broadcast! socompile-condv)))))))))))
@@ -764,7 +865,7 @@
 	     (case (hop-sofile-compile-policy)
 		((aot)
 		 (loop (nodejs-socompile filename lang)))
-		((nte)
+		((nte nte+)
 		 (nodejs-socompile-queue-push filename lang)
 		 (nodejs-compile filename lang))
 		(else

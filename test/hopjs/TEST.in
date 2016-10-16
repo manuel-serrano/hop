@@ -18,6 +18,7 @@ verb=
 basedir=$pwd
 hop=$BUILDBINDIR/hop.sh
 test=
+stoponfailure=no
 
 while : ; do
 
@@ -50,6 +51,9 @@ while : ; do
     shift;
     hop=$1;;    
 
+  --stop-on-failure)
+    stoponfailure="yes";;
+
   *)
     test=$1;;
   esac
@@ -68,11 +72,14 @@ run() {
     i=`expr $i + 1`
 
     echo -n "$i. $path ... "
+    echo "$i. $path ... " >> /tmp/TEST-HOPJS-ALL.out
+    
     if [ "$verb " != " " ]; then
       echo ""
       echo -n "$hop --no-zeroconf $* ..."
     fi
-    $hop --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1
+    $hop --no-zeroconf $* 2>&1 | tee -a /tmp/TEST-HOPJS-ALL.out > /tmp/TEST-HOPJS.out 
+    echo "" >> /tmp/TEST-HOPJS-ALL.out
 
     if [ $? = 0 ]; then
       echo "ok.";
@@ -83,10 +90,16 @@ run() {
         cat /tmp/TEST-HOPJS.out
       fi
       failure=`expr $failure + 1`
+      if [ "$stoponfailure" = "yes" ]; then
+	exit 1
+      fi
     fi
     /bin/rm -f /tmp/TEST-HOPJS.out
   fi
 }
+
+/bin/rm -f /tmp/TEST-HOPJS-ALL.out
+touch /tmp/TEST-HOPJS-ALL.out
 
 for path in noserv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then

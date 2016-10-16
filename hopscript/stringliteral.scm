@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Sep 27 02:02:18 2016 (serrano)                */
+;*    Last change :  Fri Oct 14 16:00:49 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -392,21 +392,18 @@
 ;*    UTF8 string (might be bigger than the UTF8 length).              */
 ;*---------------------------------------------------------------------*/
 (define (utf8-codeunit-length::long str::bstring)
-   (let ((len (string-length str))
-	 (sen (string-ascii-sentinel str)))
-      (if (>=fx sen len)
-	  len
-	  (let loop ((r 0)
-		     (l 0))
-	     (if (>=fx r len)
-		 l
-		 (let* ((c (string-ref str r))
-			(s (utf8-char-size c)))
-		    (if (and (=fx s 4)
-			     (or (=fx (char->integer c) #xf0)
-				 (=fx (char->integer c) #xf4)))
-			(loop (+fx r s) (+fx l 2))
-			(loop (+fx r s) (+fx l 1)))))))))
+   (let ((len (string-length str)))
+      (let loop ((r 0)
+		 (l 0))
+	 (if (>=fx r len)
+	     l
+	     (let* ((c (string-ref str r))
+		    (s (utf8-char-size c)))
+		(if (and (=fx s 4)
+			 (or (=fx (char->integer c) #xf0)
+			     (=fx (char->integer c) #xf4)))
+		    (loop (+fx r s) (+fx l 2))
+		    (loop (+fx r s) (+fx l 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    utf8-left-replacement-codeunit ...                               */
@@ -460,41 +457,33 @@
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
 (define (utf8-codeunit-ref str i::long)
-   (let ((sentinel (string-ascii-sentinel str)))
-      (if (<fx i sentinel)
-	  (char->integer (string-ref-ur str i))
-	  (let ((len (string-length str)))
-	     (let loop ((r sentinel) (i (-fx i sentinel)))
-		(let* ((c (string-ref str r))
-		       (s (utf8-char-size c))
-		       (u (codepoint-length s c)))
-		   (cond
-		      ((>=fx i u)
-		       (loop (+fx r s) (-fx i u)))
-		      ((=fx s 1)
-		       (char->integer (string-ref str r)))
-		      ((char=? c (integer->char #xf8))
-		       (utf8-left-replacement-codeunit str r))
-		      ((char=? c (integer->char #xfc))
-		       (utf8-right-replacement-codeunit str r))
-		      (else
-		       (let* ((utf8 (substring str r (+fx r s)))
-			      (ucs2 (utf8-string->ucs2-string utf8)))
-			  (ucs2->integer (ucs2-string-ref ucs2 i)))))))))))
+   (let ((len (string-length str)))
+      (let loop ((r 0) (i i))
+	 (let* ((c (string-ref str r))
+		(s (utf8-char-size c))
+		(u (codepoint-length s c)))
+	    (cond
+	       ((>=fx i u)
+		(loop (+fx r s) (-fx i u)))
+	       ((=fx s 1)
+		(char->integer (string-ref str r)))
+	       ((char=? c (integer->char #xf8))
+		(utf8-left-replacement-codeunit str r))
+	       ((char=? c (integer->char #xfc))
+		(utf8-right-replacement-codeunit str r))
+	       (else
+		(let* ((utf8 (substring str r (+fx r s)))
+		       (ucs2 (utf8-string->ucs2-string utf8)))
+		   (ucs2->integer (ucs2-string-ref ucs2 i)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string-ref ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-string-ref str::bstring index::long)
-   (if (<fx index (string-ascii-sentinel str))
-       (js-string->jsstring
-	  (string-ascii-sentinel-set!
-	     (string (string-ref str index))
-	     1))
-       (js-string->jsstring
-	  (ucs2-string->utf8-string
-	     (ucs2-string
-		(integer->ucs2 (utf8-codeunit-ref str index)))))))
+   (js-string->jsstring
+      (ucs2-string->utf8-string
+	 (ucs2-string
+	    (integer->ucs2 (utf8-codeunit-ref str index))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-ref ...                                              */
@@ -644,8 +633,6 @@
 	  (cond
 	     ((<fx position 0)
 	      +nan.0)
-	     ((<fx position (string-ascii-sentinel val))
-	      (char->integer (string-ref-ur val position)))
 	     ((>=fx position (utf8-codeunit-length val))
 	      +nan.0)
 	     ((ascii-string? val)
@@ -681,11 +668,6 @@
 	  (cond
 	     ((<fx position 0)
 	      (js-string->jsstring ""))
-	     ((<fx position (string-ascii-sentinel val))
-	      (js-string->jsstring
-		 (string-ascii-sentinel-set!
-		    (string (string-ref val position))
-		    1)))
 	     ((>=fx position (utf8-codeunit-length val))
 	      (js-string->jsstring ""))
 	     (else

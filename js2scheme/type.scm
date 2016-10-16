@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Thu Oct  6 08:44:40 2016 (serrano)                */
+;*    Last change :  Thu Oct 13 15:24:23 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -205,6 +205,8 @@
        (values #f env #f))
       ((isa? this J2SArrayAbsent)
        (values 'undefined '() #f))
+      ((isa? this J2SComprehension)
+       (values 'array '() #f))
       (else
        (begin
 	  (tprint "in expr: " (typeof this))
@@ -599,8 +601,9 @@
 ;*    type ::J2SDeclInit ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SDeclInit env::pair-nil fun fix::cell)
-   (with-access::J2SDeclInit this (val id (dtype type))
-      (set! dtype (merge-type dtype (type val env fun fix)))
+   (with-access::J2SDeclInit this (val id (dtype type) ronly)
+      (let ((ty (merge-type dtype (type val env fun fix))))
+	 (when ronly (set! dtype ty)))
       (values 'void (env-extend this dtype env) #f)))
 
 ;*---------------------------------------------------------------------*/
