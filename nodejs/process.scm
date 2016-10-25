@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Oct 12 11:59:50 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 09:42:20 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -776,11 +776,11 @@
 				    ((=fx (nodejs-fs-event-change)
 					(bit-and events (nodejs-fs-event-change)))
 				     (set! eventstr
-					(js-string->jsstring "change")))
+					(js-ascii->jsstring "change")))
 				    ((=fx (nodejs-fs-event-rename)
 					(bit-and events (nodejs-fs-event-rename)))
 				     (set! eventstr
-					(js-string->jsstring "rename")))
+					(js-ascii->jsstring "rename")))
 				    (else
 				     (error "process-fs-event-wrap"
 					"bad event" eventstr)))
@@ -1018,8 +1018,8 @@
       `((getEndianness . ,(js-make-function %this
 			     (lambda (this)
 				(if (eq? (bigloo-config 'endianess) 'little-endian)
-				    (js-string->jsstring "LE")
-				    (js-string->jsstring "BE")))
+				    (js-ascii->jsstring "LE")
+				    (js-ascii->jsstring "BE")))
 			     0 "endianness"))
 	(getHostname . ,(js-make-function %this
 			   (lambda (this)

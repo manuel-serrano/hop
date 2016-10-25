@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Fri Oct 14 18:46:44 2016 (serrano)                */
+;*    Last change :  Thu Oct 20 15:28:30 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -473,16 +473,17 @@
 	  (let loop ((handlers (reverse handlers)))
 	     (cond
 		((null? handlers)
-		 (if parent
-		     (js-worker-thread-post-slave-error th exn)
-		     (begin
-			(cond
-			   ((isa? exn &exception)
-			    (exception-notify exn))
-			   (%exn
-			    (exception-notify %exn))
-			   (else
-			    (exception-notify exn)))))
+		 (cond
+		    (parent
+		     (js-worker-thread-post-slave-error th exn))
+		    ((isa? exn &exception)
+		     (exception-notify exn))
+		    ((isa? exn object)
+		     (exception-notify exn))
+		    ((eq? %exn #unspecified)
+		     (exception-notify exn))
+		    (else
+		     (exception-notify %exn)))
 		 errval)
 		((js-totest (js-call1 %this (car handlers) %process exn))
 		 0)

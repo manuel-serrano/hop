@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Oct  8 06:15:16 2016 (serrano)                */
+;*    Last change :  Wed Oct 19 19:32:46 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -44,7 +44,7 @@
 	      (direct-eval::bool (default #t)))
 
 	   (abstract-class J2SExpr::J2SNode
-	      (type::obj (default #f))
+	      (type::symbol (default 'unknown))
 	      (hint::pair-nil (default '()) (info '("notraverse"))))
 	   
 	   (final-class J2SStmtExpr::J2SStmt
@@ -93,13 +93,11 @@
 	   (final-class J2SLabel::J2SIdStmt
 	      body::J2SStmt)
 	   
-	   (final-class J2SBreak::J2SStmt
+	   (class J2SBreak::J2SStmt
 	      (target (default #f) (info '("notraverse")))
 	      (id (default #f)))
 	   
-	   (final-class J2SContinue::J2SStmt
-	      (target (default #f) (info '("notraverse")))
-	      (id (default #f)))
+	   (final-class J2SContinue::J2SBreak)
 	   
 	   (final-class J2SNop::J2SStmt)
 	   
@@ -133,7 +131,7 @@
 	      expr::J2SExpr)
 	   
 	   (class J2SFun::J2SExpr
-	      (rettype (default #f))
+	      (rtype::symbol (default 'unknown))
 	      (idthis read-only (default 'this))
 	      (idgen read-only (default #f))
 	      (mode::symbol (default 'normal))
@@ -183,6 +181,8 @@
 	   
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
+	      (itype::symbol read-only (default 'any))
+	      (rtype::symbol read-only (default 'any))
 	      (module read-only (default #f)))
 
 	   (class J2SLetRef::J2SRef)
@@ -209,7 +209,8 @@
 	      (scope::symbol (default 'local))
 	      (usecnt::int (default 0))
 	      (usage::pair-nil (default '()))
-	      (type::obj (default #f))
+	      (utype::symbol read-only (default 'unknown))
+	      (itype::symbol (default 'unknown))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      (binder::symbol (default 'var)))
 	   
@@ -375,7 +376,8 @@
 	   
 	   (j2s-let-opt?::bool ::J2SDecl)
 
-	   (j2s-field-length?::bool ::J2SNode)
+	   (j2s-field-name::obj ::J2SNode)
+	   (inline j2s-field-length?::bool ::J2SNode)
 
 	   (j2s-type ::obj)
 
@@ -446,18 +448,24 @@
 	 (else (error "j2s-let-opt?" "wrong binder" binder)))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-field-length? ...                                            */
+;*    j2s-access-field ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (j2s-field-length? field)
+(define (j2s-field-name field)
    (cond
       ((isa? field J2SLiteralCnst)
        (with-access::J2SLiteralCnst field (val)
-	  (j2s-field-length? val)))
+	  (j2s-field-name val)))
       ((isa? field J2SString)
        (with-access::J2SString field (val)
-	  (string=? val "length")))
+	  val))
       (else
        #f)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-field-length? ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (j2s-field-length? field)
+   (equal? (j2s-field-name field) "length"))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-param? ...                                                   */
@@ -1093,19 +1101,18 @@
        (with-access::J2SExpr node (type)
 	  type))
       (else
-       'obj)))
+       'void)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-expr-type-test ...                                           */
 ;*    -------------------------------------------------------------    */
-;*    Is an expression a type test. If it is returns <op, decl, type>. */
+;*    Is an expression a type test. If it is returns                   */
+;*       <op, decl, type, ref>                                         */
 ;*    Otherwise, returns #f                                            */
-;*                                                                     */
 ;*    Tested patterns are:                                             */
-;*                                                                     */
-;*      pat ::= (typeof X == STRING)                                   */
-;*          | !pat                                                     */
-;*          | (pat)                                                    */
+;*       pat ::= (typeof X == STRING)                                  */
+;*           | !pat                                                    */
+;*           | (pat)                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-expr-type-test expr::J2SExpr)
 

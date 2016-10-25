@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Oct 14 18:03:34 2016 (serrano)                */
+;*    Last change :  Thu Oct 20 17:16:49 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1027,7 +1027,7 @@
 		   (js-call1 %this push children mod)
 		   (js-put! mod 'parent %module #f %this)))
 	     mod))))
-   
+
    (with-trace 'require "nodejs-require-module"
       (trace-item "name=" name)
       (with-access::WorkerHopThread worker (module-cache)

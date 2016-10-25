@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Fri Oct  7 08:29:45 2016 (serrano)                */
+;*    Last change :  Sun Oct 16 06:50:53 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -84,7 +84,7 @@
 (define-macro (J2SRef decl . opts)
    `(instantiate::J2SRef
        (loc loc)
-       (type ,(let ((c (memq :type opts))) (when (pair? c) (cadr c))))
+       (type ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
        (decl ,decl)))
 
 (define-macro (J2SUnresolvedRef id)
@@ -194,7 +194,7 @@
        (loc loc)
        (binder 'param)
        (usage ,usage)
-       (type ,(let ((c (memq :type opts))) (when (pair? c) (cadr c))))
+       (utype ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
        (id ,id)))
 
 (define-macro (J2SDeclInit usage id val)

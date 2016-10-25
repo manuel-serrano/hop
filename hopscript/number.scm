@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jun  6 08:36:44 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 11:55:30 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -490,7 +490,7 @@
       (cond
 	 ((and (number? expr) (= expr 0))
 	  (if (flonum? expr)
-	      (if (=fx (signbitfl expr) (signbitfl +0.0)) -0.0 +0.0)
+	      (if (=fx (signbitfl expr) 0) -0.0 +0.0)
 	      -0.0))
 	 ((number? expr)
 	  (- expr))
@@ -506,7 +506,7 @@
    
    (define (neg? o)
       (if (flonum? o)
-	  (=fx (signbitfl o) (signbitfl -0.0))
+	  (not (=fx (signbitfl o) 0))
 	  (<fx o 0)))
    
    (let* ((lnum (if (number? left) left (js-tonumber left %this)))
@@ -544,7 +544,7 @@
 	   (cond
 	      ((and (flonum? lnum) (nanfl? lnum))
 	       lnum)
-	      ((=fx (signbitfl rnum) (signbitfl +0.0))
+	      ((=fx (signbitfl rnum) 0)
 	       (cond
 		  ((> lnum 0) +inf.0)
 		  ((< lnum 0) -inf.0)
@@ -589,27 +589,27 @@
       ((and (flonum? rnum) (or (=fl rnum +inf.0) (=fl rnum -inf.0)))
        lnum)
       ((or (and (flonum? rnum) (nanfl? rnum))
-	   (and (flonum? lnum) (nanfl? lnum)))
+           (and (flonum? lnum) (nanfl? lnum)))
        +nan.0)
       (else
        (let ((alnum (abs lnum))
-	     (arnum (abs rnum)))
-	  (if (or (flonum? alnum) (flonum? arnum))
-	      (begin
-		 (unless (flonum? alnum)
-		    (set! alnum (exact->inexact alnum)))
-		 (unless (flonum? arnum)
-		    (set! arnum (exact->inexact arnum)))
-		 (let ((m (remainderfl alnum arnum)))
-		    (if (or (< lnum 0)
-			    (and (flonum? lnum) (=fl lnum 0.0)
-				 (=fx (signbitfl lnum) (signbitfl -0.0))))
-			(if (= m 0) -0.0 (- m))
-			(if (= m 0) +0.0 m))))
-	      (let ((m (remainder alnum arnum)))
-		 (if (< lnum 0)
-		     (if (= m 0) -0.0 (- m))
-		     (if (= m 0) +0.0 m))))))))
+             (arnum (abs rnum)))
+          (if (or (flonum? alnum) (flonum? arnum))
+              (begin
+                 (unless (flonum? alnum)
+                    (set! alnum (exact->inexact alnum)))
+                 (unless (flonum? arnum)
+                    (set! arnum (exact->inexact arnum)))
+                 (let ((m (remainderfl alnum arnum)))
+                    (if (or (< lnum 0)
+                            (and (flonum? lnum) (=fl lnum 0.0)
+                                 (not (=fx (signbitfl lnum) 0))))
+                        (if (= m 0) -0.0 (- m))
+                        (if (= m 0) +0.0 m))))
+              (let ((m (remainder alnum arnum)))
+                 (if (< lnum 0)
+                     (if (= m 0) -0.0 (- m))
+                     (if (= m 0) +0.0 m))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitlsh ...                                                    */

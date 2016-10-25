@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Oct 14 18:04:52 2016 (serrano)                */
+;*    Last change :  Thu Oct 20 11:52:28 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -837,7 +837,7 @@
       (unless import
 	 (with-access::WorkerHopThread worker (services)
 	    (set! services (cons svc services)))))
-   
+
    (with-access::JsGlobalObject %this (js-service-prototype)
       (instantiate::JsService
 	 (procedure proc)

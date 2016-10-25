@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Oct 15 07:24:42 2016 (serrano)                */
+;*    Last change :  Sun Oct 16 08:31:03 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all functions in non-strict mode       */
@@ -90,7 +90,6 @@
    (let ((index (add-env! this env sharep)))
       (with-access::J2SExpr this (loc)
 	 (instantiate::J2SLiteralCnst
-	    (type (j2s-type this))
 	    (loc loc)
 	    (index index)
 	    (val this)))))
@@ -177,7 +176,6 @@
 	     (let ((n (add-cmap! loc (list->vector keys) env)))
 		(set! cmap
 		   (instantiate::J2SLiteralCnst
-		      (type 'obj)
 		      (loc loc)
 		      (index n)
 		      (val (env-list-ref env n))))

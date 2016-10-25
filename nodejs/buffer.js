@@ -78,6 +78,9 @@ SlowBuffer.prototype.toString = function(encoding, start, end) {
     case 'utf-16le':
       return this.ucs2Slice(start, end);
 
+    case 'latin1': // MS
+      return this.latin1Slice(start, end);
+
     default:
       throw new TypeError('Unknown encoding: ' + encoding);
   }
@@ -133,6 +136,8 @@ SlowBuffer.prototype.write = function(string, offset, length, encoding) {
     case 'utf-16le':
       return this.ucs2Write(string, offset, length);
 
+     case 'latin1': // MS
+	return this.latin1Write(string, offset, length);
     default:
       throw new TypeError('Unknown encoding: ' + encoding);
   }
@@ -252,6 +257,7 @@ Buffer.isEncoding = function(encoding) {
     case 'utf16le':
     case 'utf-16le':
     case 'raw':
+    case 'latin1': // MS
       return true;
 
     default:
@@ -370,6 +376,10 @@ Buffer.prototype.write = function(string, offset, length, encoding) {
       ret = this.parent.ucs2Write(string, this.offset + offset, length);
       break;
 
+     case 'latin1': //MS
+      ret = this.parent.latin1Write(string, this.offset + offset, length);
+      break;
+
     default:
       throw new TypeError('Unknown encoding: ' + encoding);
   }
@@ -426,6 +436,9 @@ Buffer.prototype.toString = function(encoding, start, end) {
     case 'utf16le':
     case 'utf-16le':
       return this.parent.ucs2Slice(start, end);
+
+    case 'latin1': // MS
+      return this.parent.latin1Slice(start, end);
 
     default:
       throw new TypeError('Unknown encoding: ' + encoding);

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Oct 13 07:57:27 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 09:40:33 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -151,14 +151,14 @@
 	 (define js-error-prototype
 	    (instantiate::JsError
 	       (__proto__ __proto__)
-	       (msg (js-string->jsstring ""))
+	       (msg (js-ascii->jsstring ""))
 	       (extensible #t)))
 	 
 	 (define (js-error-alloc constructor::JsFunction)
 	    (with-access::JsFunction constructor (name)
 	       (instantiate::JsError
 		  (name (js-string->jsstring name))
-		  (msg (js-string->jsstring ""))
+		  (msg (js-ascii->jsstring ""))
 		  (__proto__ (js-get constructor 'prototype %this))
 		  (stack '()))))
 	 
@@ -354,7 +354,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-string->jsstring ""))
+			     (msg (js-ascii->jsstring ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -364,7 +364,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-string->jsstring ""))
+			     (msg (js-ascii->jsstring ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -374,7 +374,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-string->jsstring ""))
+			     (msg (js-ascii->jsstring ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -384,7 +384,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-string->jsstring ""))
+			     (msg (js-ascii->jsstring ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -394,7 +394,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-string->jsstring ""))
+			     (msg (js-ascii->jsstring ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct))
@@ -404,7 +404,7 @@
 	       :__proto__ js-function-prototype
 	       :prototype (instantiate::JsError 
 			     (__proto__ js-error-prototype)
-			     (msg (js-string->jsstring ""))
+			     (msg (js-ascii->jsstring ""))
 			     (extensible #t))
 	       :alloc js-error-alloc
 	       :construct js-error-construct/stack))
@@ -520,7 +520,7 @@
 	  (bigloo-type-error "toString" "JsObject" this)
 	  (let* ((name3 (js-get this 'name %this))
 		 (name4 (if (eq? name3 (js-undefined))
-			    (js-string->jsstring "Error")
+			    (js-ascii->jsstring "Error")
 			    (js-tojsstring name3 %this)))
 		 (msg5 (if (isa? this JsObject)
 			   (js-get this 'message %this)

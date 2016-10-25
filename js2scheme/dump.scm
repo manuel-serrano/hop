@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Oct  8 06:52:44 2016 (serrano)                */
+;*    Last change :  Wed Oct 19 18:05:42 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -138,8 +138,9 @@
 ;*    j2s->list ::J2SUnresolvedRef ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SUnresolvedRef)
-   (with-access::J2SUnresolvedRef this (id)
-      `(,@(call-next-method) ,id)))
+   (with-access::J2SUnresolvedRef this (id type)
+      `(,@(call-next-method) ,id
+	  ,@(if (>= (bigloo-debug) 2) `(:type ,type) '()))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SRef ...                                           */
@@ -163,7 +164,10 @@
 ;*    j2s->list ::J2SLiteral ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLiteral)
-   (call-next-method))
+   (if (>=fx (bigloo-debug) 2)
+       (with-access::J2SLiteral this (type)
+	  `(,@(call-next-method) :type ,type))
+       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteralValue ...                                  */
@@ -206,7 +210,7 @@
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
-   (with-access::J2SFun this (name params body decl mode rettype
+   (with-access::J2SFun this (name params body decl mode rtype
 				need-bind-exit-return idthis generator)
       (cond
 	 ((or (isa? decl J2SDeclFun) (isa? decl J2SDeclFunCnst))
@@ -216,7 +220,7 @@
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:idthis ,idthis) '())
 		 ,@(if (>= (bigloo-debug) 2)
-		       `(:rettype ,rettype) '())
+		       `(:rtype ,rtype) '())
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:usage ,usage) '())
 		 ,@(if (>= (bigloo-debug) 3)
@@ -229,7 +233,7 @@
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 2)
-		    `(:rettype ,rettype) '())
+		    `(:rtype ,rtype) '())
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:need-bind-exit-return ,need-bind-exit-return) '())
 	      :mode ,mode
@@ -240,7 +244,7 @@
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 2)
-		    `(:rettype ,rettype) '())
+		    `(:rtype ,rtype) '())
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:need-bind-exit-return ,need-bind-exit-return) '())
 	      ,(map j2s->list params) ,(j2s->list body))))))
@@ -399,7 +403,7 @@
    (with-access::J2SCall this (fun args type this)
       `(,@(call-next-method)
 	  ,@(if (>= (bigloo-debug) 2) `(:type ,type) '())
-	  ,@(if (>=fx (bigloo-debug) 3) `(:this ,this) '())
+	  ,@(if (>=fx (bigloo-debug) 3) `(:this ,(j2s->list this)) '())
 	  ,(j2s->list fun) ,@(map j2s->list args))))
 		  
 ;*---------------------------------------------------------------------*/
@@ -450,14 +454,14 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid type hint usecnt usage ronly %info scope)
+   (with-access::J2SDecl this (id key binder _scmid itype hint usecnt usage ronly %info scope)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(if (>= (bigloo-debug) 2) `(:key ,key) '())
 	,@(if (>= (bigloo-debug) 3) `(:ronly ,ronly) '())
 	,@(if (>= (bigloo-debug) 3) `(:usecnt ,usecnt) '())
 	,@(if (>= (bigloo-debug) 3) `(:usage ,usage) '())
-	,@(if (>= (bigloo-debug) 1) `(:type ,type) '())
+	,@(if (>= (bigloo-debug) 1) `(:itype ,itype) '())
 	,@(if (and (>= (bigloo-debug) 2) (pair? hint)) `(:hint ,hint) '())
 	,@(if _scmid `(:_scmid ,_scmid) '())
 	,@(if (>= (bigloo-debug) 3) `(:info ,(typeof %info)) '())

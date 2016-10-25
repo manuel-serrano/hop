@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sat Oct  1 07:27:50 2016 (serrano)                */
+;*    Last change :  Thu Oct 20 17:20:35 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -30,7 +30,7 @@
 	   __js2scheme_use
 	   __js2scheme_property
 	   __js2scheme_constant
-	   __js2scheme_type
+	   __js2scheme_typing
 	   __js2scheme_letfusion
 	   __js2scheme_letopt
 	   __js2scheme_narrow
@@ -145,7 +145,7 @@
       j2s-property-stage
       j2s-cps-stage
       j2s-constant-stage
-      j2s-type-stage
+      j2s-typing-stage
       j2s-dead-stage
       j2s-scheme-stage))
 
@@ -219,7 +219,7 @@
       j2s-letfusion-stage
       j2s-letopt-stage
       j2s-use-stage
-      j2s-type-stage
+      j2s-typing-stage
       j2s-dead-stage
       j2s-javascript-stage))
 

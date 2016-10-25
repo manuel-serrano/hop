@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Oct  5 07:59:59 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 09:39:11 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -424,7 +424,7 @@
       (let* ((o (js-toobject %this this))
 	     (lenval::uint32 (js-touint32 (js-get o 'length %this) %this)))
 	 (if (=u32 lenval #u32:0)
-	     (js-string->jsstring "")
+	     (js-ascii->jsstring "")
 	     (let* ((sep ",")
 		    (el0 (el->string (js-get o 0 %this))))
 		(let loop ((r (list el0))
@@ -516,7 +516,7 @@
 		      ","
 		      (js-tostring separator %this))))
 	 (if (=u32 lenval #u32:0)
-	     (js-string->jsstring "")
+	     (js-ascii->jsstring "")
 	     (let* ((el0 (el->string (js-get o 0 %this))))
 		(let loop ((r (list el0))
 			   (i #u32:1))
@@ -684,10 +684,9 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.10
    (define (array-prototype-slice this::obj start end)
       
-      (define (vector-slice! o val k::long final::long)
-	 (let* ((vec (vector-copy val k final))
-		(arr (js-vector->jsarray vec %this))
-		(len (vector-length vec)))
+      (define (vector-slice/vec! o val k::long final::long vec::vector)
+	 (let ((arr (js-vector->jsarray vec %this))
+	       (len (vector-length vec)))
 	    (let loop ((i (-fx len 1)))
 	       (cond
 		  ((=fx i -1)
@@ -698,6 +697,32 @@
 		   arr)
 		  (else
 		   (loop (-fx i 1)))))))
+	 
+      (define (vector-slice! o val::vector k::long final::long)
+	 (let ((vec (vector-copy val k final)))
+	    (vector-slice/vec! o val k final vec)))
+
+      (define (u8vector-slice! o val::u8vector k::long final::long)
+	 (let ((vec (make-vector (-fx final k))))
+	    (let loop ((i k)
+		       (j 0))
+	       (if (=fx i final)
+		   (vector-slice/vec! o val k final vec)
+		   (begin
+		      (vector-set-ur! vec j
+			 (uint8->fixnum (u8vector-ref val i)))
+		      (loop (+fx i 1) (+fx j 1)))))))
+
+      (define (string-slice! o val::bstring k::long final::long)
+	 (let ((vec (make-vector (-fx final k))))
+	    (let loop ((i k)
+		       (j 0))
+	       (if (=fx i final)
+		   (vector-slice/vec! o val k final vec)
+		   (begin
+		      (vector-set-ur! vec j
+			 (char->integer (string-ref-ur val i)))
+		      (loop (+fx i 1) (+fx j 1)))))))
       
       (define (array-copy! o len::long arr k::obj final::obj)
 	 (let loop ((i len))
@@ -717,7 +742,7 @@
 	 (let ((arr (js-array-construct %this (js-array-alloc js-array %this)
 		       (- final k))))
 	    (array-copy! o 0 arr k final)))
-      
+
       (let* ((o (js-toobject %this this))
 	     (len (uint32->integer (js-touint32 (js-get o 'length %this) %this)))
 	     (relstart (js-tointeger start %this))
@@ -727,6 +752,37 @@
 	 (cond
 	    ((<= final k)
 	     (js-vector->jsarray '#() %this))
+	    ((isa? o JsTypedArray)
+	     (with-access::JsTypedArray o (%data)
+		(cond
+		   ((string? %data)
+		    (let ((vlen (string-length %data)))
+		       (cond
+			  ((<= final vlen)
+			   (string-slice! o %data
+			      (->fixnum k) (->fixnum final)))
+			  ((>fx vlen 0)
+			   (let* ((arr (string-slice! o
+					  %data (->fixnum k) vlen))
+				  (vlen (->fixnum (js-get arr 'length %this))))
+			      (array-copy! o vlen arr (- len vlen) final)))
+			  (else
+			   (array-slice! o k final)))))
+		   ((u8vector? %data)
+		    (let ((vlen (u8vector-length %data)))
+		       (cond
+			  ((<= final vlen)
+			   (u8vector-slice! o %data
+			      (->fixnum k) (->fixnum final)))
+			  ((>fx vlen 0)
+			   (let* ((arr (u8vector-slice! o
+					  %data (->fixnum k) vlen))
+				  (vlen (->fixnum (js-get arr 'length %this))))
+			      (array-copy! o vlen arr (- len vlen) final)))
+			  (else
+			   (array-slice! o k final)))))
+		   (else
+		    (array-slice! o k final)))))
 	    ((not (isa? o JsArray))
 	     (array-slice! o k final))
 	    (else

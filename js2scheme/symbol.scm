@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Oct  6 08:42:40 2016 (serrano)                */
+;*    Last change :  Wed Oct 19 15:03:26 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -345,19 +345,17 @@
 ;*    j2sref ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (j2sref decl::J2SDecl loc withs wenv)
-   (with-access::J2SDecl decl (type)
-      (let ((ref (instantiate::J2SRef
-		    (loc loc)
-		    (type type)
-		    (decl decl))))
-	 (with-access::J2SDecl decl (id)
-	    (if (and (pair? withs) (not (find-decl id wenv)))
-		(instantiate::J2SWithRef
-		   (loc loc)
-		   (withs withs)
-		   (id id)
-		   (expr ref))
-		ref)))))
+   (let ((ref (instantiate::J2SRef
+		 (loc loc)
+		 (decl decl))))
+      (with-access::J2SDecl decl (id)
+	 (if (and (pair? withs) (not (find-decl id wenv)))
+	     (instantiate::J2SWithRef
+		(loc loc)
+		(withs withs)
+		(id id)
+		(expr ref))
+	     ref))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SFor ...                                            */

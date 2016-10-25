@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct 12 08:00:59 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 18:32:58 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -92,11 +92,45 @@
       :string-alloc js-string->jsstring
       :array-alloc (lambda ()
 		      (with-access::JsGlobalObject %this (js-array)
-			 (js-new %this js-array 10)))
+			 (make-cell '())))
       :array-set (lambda (a i val)
-		    (js-put! a i val #f %this))
+		    (cell-set! a (cons val (cell-ref a))))
       :array-return (lambda (a i)
-		       (js-put! a 'length i #f %this) a)
+		       (js-vector->jsarray
+			  (list->vector (reverse! (cell-ref a))) %this))
+      :object-alloc (lambda ()
+		       (with-access::JsGlobalObject %this (js-object)
+			  (js-new %this js-object)))
+      :object-set (lambda (o p val)
+		     (js-put! o (js-toname p %this) val #f %this))
+      :object-return (lambda (o)
+			o)
+      :parse-error (lambda (msg fname loc)
+		      (js-raise-syntax-error %this msg #f ip loc))
+      :reviver (when (isa? reviver JsFunction)
+		  (lambda (this key val)
+		     (let ((res (js-call2 %this reviver this key val)))
+			(unless (eq? res (js-undefined))
+			   res))))))
+
+(define (js-json-parser-vec ip::input-port reviver expr undefined %this::JsGlobalObject)
+   (json-parse ip
+      :expr expr
+      :undefined undefined
+      :string-alloc js-string->jsstring
+      :array-alloc (lambda ()
+		      (with-access::JsGlobalObject %this (js-array)
+			 (make-cell (make-vector 256))))
+      :array-set (lambda (a i val)
+		    (let* ((v (cell-ref a))
+			   (len (vector-length v)))
+		       (when (<=fx len i)
+			  (let ((nlen (maxfx (+fx i 1) (*fx len 2))))
+			     (set! v (copy-vector v nlen))
+			     (cell-set! a v)))
+		       (vector-set-ur! v i val)))
+      :array-return (lambda (a i)
+		       (js-vector->jsarray (copy-vector (cell-ref a) i) %this))
       :object-alloc (lambda ()
 		       (with-access::JsGlobalObject %this (js-object)
 			  (js-new %this js-object)))
@@ -307,17 +341,17 @@
 	       ((js-jsstring? value)
 		(string-quote (js-jsstring->string value)))
 	       ((number? value)
-		(js-string->jsstring (number->string value)))
+		(js-ascii->jsstring (number->string value)))
 	       ((eq? (js-null) value)
-		(js-string->jsstring "null"))
+		(js-ascii->jsstring "null"))
 	       ((eq? value #t)
-		(js-string->jsstring "true"))
+		(js-ascii->jsstring "true"))
 	       ((eq? value #f)
-		(js-string->jsstring "false"))
+		(js-ascii->jsstring "false"))
 	       ((eq? value (js-undefined))
 		value)
 	       ((isa? value JsSymbol)
-		(js-string->jsstring "undefined"))
+		(js-ascii->jsstring "undefined"))
 	       (else
 		(set! gap (string-append gap indent))
 		(cond
@@ -342,9 +376,9 @@
 						       (js-jsstring->string k))
 						    (js-jsstring-append
 						       (if gap
-							   (js-string->jsstring
+							   (js-ascii->jsstring
 							      ": ")
-							   (js-string->jsstring
+							   (js-ascii->jsstring
 							      ":"))
 						       v))))))))))
 		       (set! gap mind)

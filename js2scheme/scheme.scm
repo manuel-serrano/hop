@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Oct 15 08:17:33 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 10:38:48 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -533,7 +533,7 @@
    (with-access::J2SRef lhs (decl)
       (cond
 	 ((isa? lhs J2SRef)
-	  (with-access::J2SDecl decl (writable scope id loc type hint)
+	  (with-access::J2SDecl decl (writable scope id loc hint)
 	     (if (or writable (isa? decl J2SDeclInit))
 		 (cond
 		    ((and (memq scope '(global %scope)) (in-eval? return))
@@ -543,10 +543,10 @@
 			 ,result))
 		    (result
 		     `(begin
-			 ,(set decl (if type (list type) hint))
+			 ,(set decl hint)
 			 ,result))
 		    (else
-		     (set decl (if type (list type) hint))))
+		     (set decl hint)))
 		 val)))
 	 ((not result)
 	  (set decl '()))
@@ -890,7 +890,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLiteralValue mode return conf hint)
    (with-access::J2SLiteralValue this (val type)
-      (set! type 'obj)
       (cond
 	 ((and (flonum? val) (nanfl? val)) "NaN")
 	 ((eq? type 'number) (j2s-num val))
@@ -945,11 +944,21 @@
 	  `(vector-ref-ur %cnsts ,index))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-string->jsstring ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-string->jsstring val::bstring)
+   (case (string-minimal-charset val)
+      ((ascii) `(js-ascii->jsstring ,val))
+      ((latin1 utf8) `(js-utf8->jsstring ,val))
+      (else (error "string->jsstring" "unsupported encoding"
+	       (string-minimal-charset val)))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring val loc)
    (epairify loc
-      `(js-string->jsstring ,val)))
+      (js-string->jsstring val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2STemplate ...                                     */
@@ -1555,11 +1564,10 @@
 ;*    j2s-let-decl-toplevel ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-decl-toplevel::pair-nil d::J2SDeclInit mode return conf)
-   (with-access::J2SDeclInit d (val usage id type hint)
-      (let ((ident (j2s-decl-scheme-id d))
-	    (hint (if type (list type) hint)))
+   (with-access::J2SDeclInit d (val usage id hint)
+      (let ((ident (j2s-decl-scheme-id d)))
 	 (cond
-	    ((or (not (isa? val J2SFun)) (memq 'assig usage))
+	    ((or (not (isa? val J2SFun)) (isa? val J2SSvc) (memq 'assig usage))
 	     `(define ,ident ,(j2s-scheme val mode return conf hint)))
 	    ((or (memq 'ref usage) (memq 'new usage))
 	     (let ((fun (jsfun->lambda val mode return conf
@@ -1584,7 +1592,7 @@
       (with-access::J2SDeclInit d (val usage id)
 	 (let ((ident (j2s-decl-scheme-id d)))
 	    (cond
-	       ((or (not (isa? val J2SFun)) (memq 'assig usage))
+	       ((or (not (isa? val J2SFun)) (isa? val J2SSvc) (memq 'assig usage))
 		(list `(,ident ,(j2s-scheme val mode return conf hint))))
 	       ((or (memq 'ref usage) (memq 'new usage))
 		(let ((fun (jsfun->lambda val mode return conf
@@ -2136,7 +2144,7 @@
 			 `(let* ((,obj ,(j2s-scheme o mode return conf hint))
 				 ,@(if (string? prov) '() (list `(,pro ,prov)))
 				 (,tmp (js-tonumber
-					  ,(j2s-get loca obj (j2s-type obj)
+					  ,(j2s-get loca obj (j2s-type o)
 					      (if (string? prov) prov pro)
 					      (j2s-type field)
 					      cache)
@@ -3134,15 +3142,14 @@
 			  cache))))))
 	    ((isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (type hint)
-		   (let ((hint (if type (list type) hint)))
-		      (let ((assig (j2s-scheme-set! lhs
-				      (j2s-scheme rhs mode return conf hint)
-				      (j2s-scheme lhs mode return conf hint)
-				      mode return conf)))
-			 (if (pair? assig)
-			     (epairify loc assig)
-			     assig))))))
+		(with-access::J2SDecl decl (hint)
+		   (let ((assig (j2s-scheme-set! lhs
+				   (j2s-scheme rhs mode return conf hint)
+				   (j2s-scheme lhs mode return conf hint)
+				   mode return conf)))
+		      (if (pair? assig)
+			  (epairify loc assig)
+			  assig)))))
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(epairify loc
@@ -3201,14 +3208,13 @@
    (with-access::J2SAssig this (loc lhs rhs)
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (type hint)
-		(let ((hint (if type (list type) hint)))
-		   (epairify-deep loc
-		      `(begin
-			  ,(j2s-scheme-set! lhs
-			      (j2s-scheme rhs mode return conf hint)
-			      #f mode return conf)
-			  (js-undefined))))))
+	     (with-access::J2SDecl decl (hint)
+		(epairify-deep loc
+		   `(begin
+		       ,(j2s-scheme-set! lhs
+			   (j2s-scheme rhs mode return conf hint)
+			   #f mode return conf)
+		       (js-undefined)))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -3238,12 +3244,11 @@
 			   #f)))))
 	    ((isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (type hint)
-		   (let ((hint (if type (list type) hint)))
-		      (j2s-scheme-set! lhs
-			 (js-binop2 loc op lhs rhs mode return conf hint)
-			 (j2s-scheme lhs mode return conf '())
-			 mode return conf)))))
+		(with-access::J2SDecl decl (hint)
+		   (j2s-scheme-set! lhs
+		      (js-binop2 loc op lhs rhs mode return conf hint)
+		      (j2s-scheme lhs mode return conf '())
+		      mode return conf))))
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(j2s-unresolved-put! `',id
@@ -3264,16 +3269,25 @@
 	  (if (string? prop)
 	      `(js-get/debug ,obj ',(string->symbol prop) %this ',loc)
 	      `(js-get/debug ,obj ,prop %this ',loc)))
-	 ((and (eq? tyobj 'vector) (eq? typrop 'number))
-	  `(js-get ,obj ,prop %this))
+	 ((eq? tyobj 'array)
+	  (if (eq? typrop 'number)
+	      `(js-array-ref ,obj ,prop %this)
+	      `(js-array-ref ,obj ,prop %this)))
+	 ((eq? tyobj 'string)
+	  `(js-get-string ,obj ,prop %this))
 	 (cache
 	  (cond
 	     ((string? prop)
-	      (if (eq? tyobj 'object)
+	      (case tyobj
+		 ((object)
 		  `(js-object-get-name/cache ,obj
-		      ',(string->symbol prop) ,(pcache cache) %this)
+		      ',(string->symbol prop) ,(pcache cache) %this))
+		 ((global)
+		  `(js-global-object-get-name/cache ,obj
+		      ',(string->symbol prop) ,(pcache cache) %this))
+		 (else
 		  `(js-get-name/cache ,obj
-		      ',(string->symbol prop) ,(pcache cache) %this)))
+		      ',(string->symbol prop) ,(pcache cache) %this))))
 	     ((number? prop)
 	      `(js-get ,obj ,prop %this))
 	     (else
@@ -3292,14 +3306,18 @@
        (if (string? prop)
 	   `(js-put/debug! ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
 	   `(js-put/debug! ,obj ,prop ,val ,mode %this ',loc)))
+      ((eq? tyobj 'array)
+       `(js-array-set! ,obj ,prop ,val %this))
       (cache
        (cond
 	  ((string? prop)
-	   (if (eq? tyobj 'object)
+	   (case tyobj
+	      ((object global)
 	       `(js-object-put-name/cache! ,obj
-		   ',(string->symbol prop) ,val ,mode ,(pcache cache) %this)
+		   ',(string->symbol prop) ,val ,mode ,(pcache cache) %this))
+	      (else
 	       `(js-put-name/cache! ,obj
-		   ',(string->symbol prop) ,val ,mode ,(pcache cache) %this)))
+		   ',(string->symbol prop) ,val ,mode ,(pcache cache) %this))))
 	  ((number? prop)
 	   `(js-put! ,obj ,prop ,val ,mode %this))
 	  (else
