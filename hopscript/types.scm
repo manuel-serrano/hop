@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct 13 09:41:05 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 09:30:39 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -89,11 +89,14 @@
 	   ;; Not a jsobject. This class is used to implement
 	   ;; JS string literal which are not plain Scheme string
 	   ;; for the sake of concat performance
-	   (final-class JsStringLiteral
+	   (abstract-class JsStringLiteral
 	      ;; the actual characters (string, tree, list)
-	      weight::long
+	      weight::ulong
 	      left::obj
 	      (right::obj (default #f)))
+
+	   (final-class JsStringLiteralASCII::JsStringLiteral)
+	   (final-class JsStringLiteralUTF8::JsStringLiteral)
 	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))

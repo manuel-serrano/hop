@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 18 18:44:55 2016                          */
-;*    Last change :  Thu Oct 13 15:24:23 2016 (serrano)                */
+;*    Last change :  Sun Oct 16 17:55:23 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type inference                                                   */
@@ -141,12 +141,13 @@
 ;*    decl-type-set! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (decl-type-set! this::J2SDecl etype fix::cell)
-   (with-access::J2SDecl this (type)
+   (with-access::J2SDecl this (utype)
       (when etype
-	 (let ((ntype (merge-type type etype)))
-	    (unless (eq? ntype type)
+	 (let ((ntype (merge-type utype etype)))
+	    (unless (eq? ntype utype)
 	       (cell-set! fix #f)
-	       (set! type ntype))
+	       ;;(set! type ntype)
+	       )
 	    ntype))))
 
 ;*---------------------------------------------------------------------*/
@@ -280,8 +281,8 @@
 ;*    type ::J2SRef ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SRef env::pair-nil fun fix::cell)
-   (with-access::J2SRef this (decl type)
-      (with-access::J2SDecl decl ((typdecl type))
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl ((typdecl utype))
 	 (expr-type-set! this (or typdecl (env-type decl env)) env fix))))
 
 ;*---------------------------------------------------------------------*/
@@ -387,12 +388,12 @@
 (define-walk-method (type this::J2SFun env::pair-nil fun fix::cell)
    (with-access::J2SFun this (body params)
       (let ((envp (filter-map (lambda (p)
-				 (with-access::J2SDecl p (type usage)
+				 (with-access::J2SDecl p (utype usage)
 				    (cond
 				       ((eq? usage 'rest)
 					(cons p 'array))
-				       ((and type (not (eq? type 'obj)))
-					(cons p type)))))
+				       ((and utype (not (eq? utype 'obj)))
+					(cons p utype)))))
 		     params)))
 	 (multiple-value-bind (ftype fenv break)
 	    (type body envp this fix)
@@ -404,12 +405,12 @@
 			    (decl-type-set! decl 'obj fix)))
 	       env)
 	    (filter-map (lambda (p)
-				 (with-access::J2SDecl p (type usage)
+				 (with-access::J2SDecl p (utype usage)
 				    (cond
 				       ((eq? usage 'rest)
 					(cons p 'array))
 				       ((and type (not (eq? type 'obj)))
-					(cons p type)))))
+					(cons p utype)))))
 		     params)
 	    (expr-type-set! this 'function env fix)))))
 
@@ -419,9 +420,9 @@
 (define-walk-method (type this::J2SKont env::pair-nil fun fix::cell)
    (with-access::J2SKont this (body param exn)
       (let ((envp (filter-map (lambda (p)
-				 (with-access::J2SDecl p (type)
-				    (when (and type (not (eq? type 'obj)))
-				       (cons p type))))
+				 (with-access::J2SDecl p (utype)
+				    (when (not (memq utype '(obj any unknown)))
+				       (cons p utype))))
 		     (list param exn))))
 	 (multiple-value-bind (ftype fenv break)
 	    (type body envp #f fix)
@@ -448,8 +449,8 @@
 		(loop (cdr args) env)))))
 
    (define (type-fun f env)
-      (with-access::J2SFun f (rettype)
-	 (expr-type-set! this rettype env fix)))
+      (with-access::J2SFun f (rtype)
+	 (expr-type-set! this rtype env fix)))
 
    (define (type-default f env)
       (multiple-value-bind (_ fenv)
@@ -594,24 +595,26 @@
 ;*    type ::J2SDecl ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SDecl env::pair-nil fun fix::cell)
-   (with-access::J2SDecl this (type id)
-      (values 'void (env-extend this type env) #f)))
+   (with-access::J2SDecl this (utype id)
+      (values 'void (env-extend this utype env) #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SDeclInit ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SDeclInit env::pair-nil fun fix::cell)
-   (with-access::J2SDeclInit this (val id (dtype type) ronly)
+   (with-access::J2SDeclInit this (val id (dtype utype) ronly)
       (let ((ty (merge-type dtype (type val env fun fix))))
-	 (when ronly (set! dtype ty)))
+	 ;;(when ronly (set! dtype ty))
+	 #unspecified)
       (values 'void (env-extend this dtype env) #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SDeclFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SDeclFun env::pair-nil fun fix::cell)
-   (with-access::J2SDeclFun this (val (ftype type) id)
-      (set! ftype (merge-type ftype 'function))
+   (with-access::J2SDeclFun this (val (ftype utype) id)
+      ;;(set! ftype (merge-type ftype 'function))
+      (merge-type ftype 'function)
       (type val env fun fix)
       (values 'void (env-extend this 'function env) #f)))
 
@@ -619,8 +622,9 @@
 ;*    type ::J2SDecFunCnst ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type this::J2SDeclFunCnst env::pair-nil fun fix::cell)
-   (with-access::J2SDeclFunCnst this (val (ftype type))
-      (set! ftype (merge-type ftype 'function))
+   (with-access::J2SDeclFunCnst this (val (ftype utype))
+      ;;(set! ftype (merge-type ftype 'function))
+      (merge-type ftype 'function)
       (type val env fun fix)
       (values (env-extend this 'function env) #f)))
 
@@ -664,8 +668,8 @@
 	 (type expr env fun fix)
 	 (when fun
 	    ;; not a top-level form
-	    (with-access::J2SFun fun (%info name rettype)
-	       (set! rettype (merge-type rettype etype))
+	    (with-access::J2SFun fun (%info name rtype)
+	       (set! rtype (merge-type rtype etype))
 	       (values 'void eenv #t))))))
    
 ;*---------------------------------------------------------------------*/

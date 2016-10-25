@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Oct 14 16:21:13 2016 (serrano)                */
+;*    Last change :  Mon Oct 24 08:16:00 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -112,7 +112,7 @@
 	 ;; builtin prototype
 	 (define js-string-prototype
 	    (instantiate::JsString
-	       (val (js-string->jsstring ""))
+	       (val (js-ascii->jsstring ""))
 	       (__proto__ __proto__)
 	       (extensible #t)))
 
@@ -141,7 +141,7 @@
 	 ;; string allocation
 	 (define (js-string-alloc::JsString constructor::JsFunction)
 	    (instantiate::JsString
-	       (val (js-string->jsstring ""))
+	       (val (js-ascii->jsstring ""))
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 ;; then, create a HopScript object
@@ -163,6 +163,7 @@
 			     (integer->ucs2
 				(uint16->fixnum (js-touint16 c %this))))
 			l)))))
+	 
 	 (js-bind! %this js-string 'fromCharCode
 	    :value (js-make-function %this
 		      js-string-fromcharcode 1 'fromCharCode)
@@ -249,7 +250,7 @@
 (define (%js-string %this)
    (lambda (this . args)
       (if (null? args)
-	  (js-string->jsstring "")
+	  (js-ascii->jsstring "")
 	  (js-string->jsstring (js-tostring (car args) %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -379,7 +380,9 @@
    ;; lastIndexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.8
    (define (last-indexof this search position)
-      (js-jsstring-lastindexof (js-cast-string %this this) search position %this))
+      (let ((searchstr (js-tostring search %this)))
+	 (js-jsstring-lastindexof
+	    (js-cast-string %this this) searchstr position %this)))
    
    (js-bind! %this obj 'lastIndexOf
       :value (js-make-function %this last-indexof 1 'lastIndexOf)
@@ -626,20 +629,41 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.5.2     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property o::JsString p %this)
+   
+   (define (ascii-get-own-property val::bstring index)
+      (let ((len (string-length val)))
+	 (if (<=fx len index)
+	     (call-next-method)
+	     (instantiate::JsValueDescriptor
+		(name (js-toname p %this))
+		(value (js-ascii->jsstring
+			  (make-string 1 (string-ref-ur val index))))
+		(enumerable #t)
+		(writable #f)
+		(configurable #f)))))
+   
+   (define (utf8-get-own-property val::bstring index)
+      (let ((len (utf8-string-length val)))
+	 (if (<=fx len index)
+	     (call-next-method)
+	     (instantiate::JsValueDescriptor
+		(name (js-toname p %this))
+		(value (js-utf8-ref val index))
+		(enumerable #t)
+		(writable #f)
+		(configurable #f)))))
+   
    (let ((index (js-toindex p)))
       (if (js-isindex? index)
 	  (with-access::JsString o (val)
-	     (let* ((val (js-jsstring->string val))
-		    (len (utf8-string-length val))
-		    (index (uint32->fixnum index)))
-		(if (<=fx len index)
-		    (call-next-method)
-		    (instantiate::JsValueDescriptor
-		       (name (js-toname p %this))
-		       (value (js-string-ref val index))
-		       (enumerable #t)
-		       (writable #f)
-		       (configurable #f)))))
+	     (let ((index (uint32->fixnum index)))
+		(cond
+		   ((string? val)
+		    (ascii-get-own-property val index))
+		   ((isa? val JsStringLiteralASCII)
+		    (ascii-get-own-property (js-jsstring->string val) index))
+		   (else
+		    (utf8-get-own-property (js-jsstring->string val) index)))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -649,16 +673,32 @@
 ;*    the programs behaviors. It merely optimizes access to strings.   */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsString base p::obj %this::JsGlobalObject)
+   
+   (define (ascii-get-property-value val index)
+      (let ((len (string-length val)))
+	 (if (<=fx len index)
+	     (call-next-method)
+	     (js-ascii->jsstring
+		(make-string 1 (string-ref-ur val index))))))
+   
+   (define (utf8-get-property-value val index)
+      (let ((len (utf8-string-length val)))
+	 (if (<=fx len index)
+	     (call-next-method)
+	     (js-utf8-ref val index))))
+   
    (let ((index (js-toindex p)))
       (if (not (js-isindex? index))
 	  (call-next-method)
 	  (with-access::JsString o (val)
-	     (let* ((val (js-jsstring->string val))
-		    (len (utf8-string-length val))
-		    (index (uint32->fixnum index)))
-		(if (<=fx len index)
-		    (call-next-method)
-		    (js-string-ref val index)))))))
+	     (let ((index (uint32->fixnum index)))
+		(cond
+		   ((string? val)
+		    (ascii-get-property-value val index))
+		   ((isa? val JsStringLiteralASCII)
+		    (ascii-get-property-value val index))
+		   (else
+		    (utf8-get-property-value val index))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsString ...                                            */
@@ -675,7 +715,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in o::JsString proc %this)
    (with-access::JsString o (val)
-      (let ((len (utf8-string-length (js-jsstring->string val))))
+      (let ((len (js-jsstring-length val)))
 	 (if (>fx len 0)
 	     (let loop ((i 0))
 		(if (<fx i len)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri Oct 14 17:01:19 2016 (serrano)                */
+;*    Last change :  Mon Oct 24 08:08:04 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -683,7 +683,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (js-string->jsstring
+	       (js-utf8->jsstring
 		  (string-utf8-normalize-utf16 data start end))))
 	 2 "utf8Slice")
       #f %this)
@@ -697,7 +697,7 @@
 		      (string (make-string len)))
 		  (when (>fx len 0)
 		     (blit-string-ascii-clamp! data start string 0 len))
-		  (js-string->jsstring string))))
+		  (js-ascii->jsstring string))))
 	 2 "asciiSlice")
       #f %this)
 
@@ -709,7 +709,7 @@
 	       (let ((ip (open-input-string! data start end))
 		     (op (open-output-string)))
 		  (base64-encode-port ip op 0)
-		  (js-string->jsstring (close-output-port op)))))
+		  (js-ascii->jsstring (close-output-port op)))))
 	 2 "base64Slice")
       #f %this)
    
@@ -718,7 +718,7 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (js-string->jsstring
+	       (js-utf8->jsstring
 		  (ucs2-string->utf8-string (string->ucs2-string data start end)))))
 	 2 "ucs2Slice")
       #f %this)
@@ -728,8 +728,20 @@
       (js-make-function %this
 	 (lambda (this::JsSlowBuffer start end)
 	    (with-access::JsSlowBuffer this (data)
-	       (js-string->jsstring (string-hex-extern data start end))))
+	       (js-ascii->jsstring (string-hex-extern data start end))))
 	 2 "hexSlice")
+      #f %this)
+
+   ;; latin1Slice
+   (js-put! slowbuffer-proto 'latin1Slice
+      (js-make-function %this
+	 (lambda (this::JsSlowBuffer start end)
+	    (with-access::JsSlowBuffer this (data)
+	       (js-utf8->jsstring
+		  (if (and (=fx start 0) (=fx end (string-length data)))
+		      (iso-latin->utf8 data)
+		      (iso-latin->utf8! (substring data start end))))))
+	 2 "latin1Slice")
       #f %this)
 
    ;; _charsWritten is described at
@@ -854,6 +866,26 @@
 			  0)))
 		(js-raise-type-error %this "not a string" string)))
 	 3 "hexWrite")
+      #f %this)
+
+   (js-put! slowbuffer-proto 'latin1Write
+      (js-make-function %this
+	 (lambda (this::JsSlowBuffer string::obj offset length)
+	    (if (js-jsstring? string)
+		(with-access::JsSlowBuffer this (data)
+		   (let* ((s (utf8->iso-latin (js-jsstring->string string)))
+			  (n (maxfx 0
+				(minfx (string-length s)
+				   (minfx length
+				      (-fx (string-length data) offset))))))
+		      (if (>fx n 0)
+			  (begin
+			     (blit-string! s 0 data offset n)
+			     (js-put! js-slowbuffer '_charsWritten n #t %this)
+			     n)
+			  0)))
+		(js-raise-type-error %this "not a string" string)))
+	 3 "latin1Write")
       #f %this)
 
    (js-put! slowbuffer-proto 'copy
@@ -1018,7 +1050,10 @@
 		       (/fx (utf8-codeunit-length (js-jsstring->string string)) 2))
 		      ((string-ci=? enc "base64")
 		       (string-length (base64-decode (js-jsstring->string string) #t)))
-		      ((or (string-ci=? enc "ascii") (string=? enc "binary") (string=? enc "buffer"))
+		      ((or (string-ci=? enc "ascii")
+			   (string=? enc "binary")
+			   (string=? enc "buffer")
+			   (string=? enc "latin1"))
 		       (utf8-string-length (js-jsstring->string string)))
 		      (else
 		       (utf8-string-length (js-jsstring->string string)))))))

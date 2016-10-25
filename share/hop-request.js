@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Aug 16 13:23:47 2016 (serrano)                */
+/*    Last change :  Thu Oct 20 12:07:52 2016 (serrano)                */
 /*    Copyright   :  2004-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -382,7 +382,7 @@ function ab2string( abuf ) {
 function hop_request_unserialize( xhr, svc ) {
    var ctype = ("content_type" in xhr) ?
        xhr[ "content_type" ] : hop_header_content_type( xhr );
-
+   
    if( ctype === "application/x-hop" ) {
       if( xhr.responseType === "arraybuffer" ) {
 	 return hop_bytearray_to_obj( new Uint8Array( xhr.response ) );
@@ -448,6 +448,7 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 	 try {
 	    o = hop_request_unserialize( xhr, svc );
 	 } catch( e ) {
+	    console.log( "cannot unserialize response", svc );
 	    hop_callback_handler( e, xhr.precontext );
 	 }
       } else {
@@ -468,6 +469,7 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 	 try {
 	    o = hop_url_encoded_to_obj( err );
 	 } catch( e ) {
+	    console.log( "cannot unserialize response", svc );
 	    hop_callback_handler( e, xhr.precontext );
 	 }
       } else {

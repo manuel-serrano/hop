@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Aug 17 12:42:28 2016 (serrano)                */
+#*    Last change :  Wed Oct 19 08:08:22 2016 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -39,7 +39,7 @@ _OBJECTS = lexer header parser html ast dump utils \
   stage compile js \
   syntax return loopexit symbol scheme ronly resolve this \
   use property bestpractice sourcemap debug stmtassign letopt \
-  cps ecmascript5 narrow constant type hint alpha letfusion
+  cps ecmascript5 narrow constant typing hint alpha letfusion
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

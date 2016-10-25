@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Tue Aug 16 16:33:17 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 09:41:33 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -175,7 +175,7 @@
 				    (let ((join (js-get options 'join %this)))
 				       (js-jsstring->string 
 					  (js-call1 %this join options
-					     (js-string->jsstring ", ")))))
+					     (js-ascii->jsstring ", ")))))
 				   ((isa? options JsObject)
 				    (js-jsstring->string
 				       (js-get options 'protocol %this)))))

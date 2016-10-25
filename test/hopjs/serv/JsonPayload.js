@@ -30,7 +30,7 @@ service getPayloadWSBase64( o ) {
 }
 
 var url = util.format( 'http://%s:%s/hop/getPayloadWebService', 'localhost', hop.port );
-console.log( "URLxxx=", "[" + url + "]" );
+
 var webService = hop.webService( url );
 
 
@@ -100,24 +100,24 @@ var testSuite = [
    function() {
       getPayload( largeFile ).post( processJsonResult( largeFile ), fail );
    },
-   function() {
-      getPayloadWebService( { filename: smallFile } ).post( processJsonResult( smallFile), fail );
-   },
-   function() {
-      getPayloadWebService( { filename: largeFile } ).post( processJsonResult( largeFile), fail );
-   },
-   function() {
-      webService( { filename: smallFile } ).post( processJsonResult( smallFile), fail );
-   },
-   function() {
-      webService( { filename: largeFile } ).post( processJsonResult( largeFile), fail );
-   },
-   function() {
-      webServiceBase64( { filename: smallFile } ).post( processJsonResult( smallFile), fail );
-   },
-   function() {
-      webServiceBase64( { filename: largeFile } ).post( processJsonResult( largeFile), fail );
-   },
+/*    function() {                                                     */
+/*       getPayloadWebService( { filename: smallFile } ).post( processJsonResult( smallFile), fail ); */
+/*    },                                                               */
+/*    function() {                                                     */
+/*       getPayloadWebService( { filename: largeFile } ).post( processJsonResult( largeFile), fail ); */
+/*    },                                                               */
+/*    function() {                                                     */
+/*       webService( { filename: smallFile } ).post( processJsonResult( smallFile), fail ); */
+/*    },                                                               */
+/*    function() {                                                     */
+/*       webService( { filename: largeFile } ).post( processJsonResult( largeFile), fail ); */
+/*    },                                                               */
+/*    function() {                                                     */
+/*       webServiceBase64( { filename: smallFile } ).post( processJsonResult( smallFile), fail ); */
+/*    },                                                               */
+/*    function() {                                                     */
+/*       webServiceBase64( { filename: largeFile } ).post( processJsonResult( largeFile), fail ); */
+/*    },                                                               */
 ];
 
 next();

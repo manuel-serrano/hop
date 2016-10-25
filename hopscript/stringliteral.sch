@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Tue Mar 22 19:41:08 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 10:46:21 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JsStringLiteral Helper macros.                                   */
@@ -23,13 +23,12 @@
 (define-expander js-string->jsstring
    (lambda (x e)
       (match-case x
+	 ((js-string->jsstring (and ?val (? string?)))
+	  (if (eq? (string-minimal-charset val) 'ascii)
+	      (evepairify `(js-ascii->jsstring ,val) x)
+	      (evepairify `(js-utf8->jsstring ,val) x)))
 	 ((js-string->jsstring ?val)
-	  (e val e))
-;* 	 ((js-string->jsstring (and ?val (? string?)))                 */
-;* 	  (let ((index (eval `(js-string-register! ,val))))            */
-;* 	     (evepairify `(vector-ref-ur ,js-strings-vector ,index) x))) */
-;* 	 ((js-string->jsstring ?val)                                   */
-;* 	  `(js-string->jsstring ,(e (evepairify val x) e)))            */
+	  `(js-string->jsstring ,(e (evepairify val x) e)))
 	 (else
 	  (error "js-string->jsstring" "wrong syntax" x)))))
 

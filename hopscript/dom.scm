@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Fri Apr 22 13:36:30 2016 (serrano)                */
+;*    Last change :  Sun Oct 23 09:39:42 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -55,7 +55,7 @@
 ;*    js-inspect ::xml ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-inspect o::xml cnt)
-   (js-string->jsstring (typeof xml)))
+   (js-ascii->jsstring (typeof xml)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-inspect ::xml-verbatim ...                                    */

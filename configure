@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Oct 12 18:37:31 2016 (serrano)                */
+#*    Last change :  Thu Oct 20 08:16:09 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -504,7 +504,7 @@ fi
 if [ ! -f $bigloo ]; then
    which $bigloo > /dev/null 2> /dev/null
    if [ "$?" != "0" ]; then
-      echo "*** ERROR:configure:bigloo. Aborting" >&2
+      echo "*** ERROR:configure:bigloo. Aborting!" >&2
       echo "Can't find bigloo. You need at least version $(bigloorequired)." >&2
       echo "It may be downloaded at:" >&2
       echo "   $bigloourl" >&2
@@ -517,7 +517,7 @@ bglversion=`$bigloo -q -eval "(exit (display (bigloo-config 'release-number)))"`
 $bigloo -q -eval "(exit (if (string>=? (bigloo-config 'release-number) \"$bigloorequired\") 0 1))"
 
 if [ $? != "0" ]; then
-  echo "*** ERROR:configure:bigloo. Aborting" >&2
+  echo "*** ERROR:configure:bigloo. Aborting!" >&2
   echo "Your version of Bigloo ($bglversion) is too old. Release" >&2
   echo "   $bigloorequired" >&2
   echo "or more recent is required. It may be downloaded at:" >&2
@@ -525,6 +525,17 @@ if [ $? != "0" ]; then
   exit 1;
 fi
 
+#*---------------------------------------------------------------------*/
+#*    checking awk                                                     */
+#*---------------------------------------------------------------------*/
+echo "toto:tutu" | awk -F: '{ print $$1 }' 2> /dev/null > /dev/null
+
+if [ $? != "0" ]; then
+  echo "*** ERROR:configure:awk. Aborting!" >&2
+  echo "Awk command  missing or not running correctly." >&2
+  exit 1;
+fi
+   
 #*---------------------------------------------------------------------*/
 #*    Check the backend                                                */
 #*---------------------------------------------------------------------*/
