@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Thu Oct 20 12:18:03 2016 (serrano)                */
+;*    Last change :  Tue Oct 25 18:59:51 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -152,8 +152,7 @@
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
-		      (when padding
-			 (display padding p))
+		      (when padding (display padding p))
 		      (display "(" p)
 		      (obj->javascript-expr value p)
 		      (display ")" p))

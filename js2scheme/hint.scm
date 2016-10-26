@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Oct 19 18:51:06 2016 (serrano)                */
+;*    Last change :  Tue Oct 25 17:57:43 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -115,11 +115,50 @@
    (with-access::J2SBinary this (op lhs rhs)
       (case op
 	 ((< <= >= > - * / << >> >>> ^ & BIT_OR)
-	  (j2s-hint lhs '(number))
-	  (j2s-hint rhs '(number)))
+	  (cond
+	     ((eq? (j2s-type lhs) 'integer)
+	      (j2s-hint rhs '(integer)))
+	     ((eq? (j2s-type lhs) 'index)
+	      (j2s-hint rhs '(index)))
+	     (else
+	      (j2s-hint rhs '(number))))
+	  (cond
+	     ((eq? (j2s-type rhs) 'integer)
+	      (j2s-hint lhs '(integer)))
+	     ((eq? (j2s-type rhs) 'index)
+	      (j2s-hint lhs '(index)))
+	     (else
+	      (j2s-hint lhs '(number)))))
+	 ((%)
+	  (if (and (memq (j2s-type lhs) '(integer index))
+		   (memq (j2s-type rhs) '(integer index)))
+	      (begin
+		 (j2s-hint lhs '(integer))
+		 (j2s-hint rhs '(integer)))
+	      (begin
+		 (j2s-hint lhs '(number))
+		 (j2s-hint rhs '(number)))))
 	 ((+)
-	  (j2s-hint lhs '(number string))
-	  (j2s-hint rhs '(number string)))
+	  (cond
+	     ((eq? (j2s-type lhs) 'integer)
+	      (j2s-hint rhs '(integer)))
+	     ((eq? (j2s-type lhs) 'index)
+	      (j2s-hint rhs '(index)))
+	     ((eq? (j2s-type lhs) 'number)
+	      (j2s-hint rhs '(number)))
+	     ((eq? (j2s-type rhs) 'integer)
+	      (j2s-hint lhs '(integer)))
+	     ((eq? (j2s-type rhs) 'index)
+	      (j2s-hint lhs '(index)))
+	     ((eq? (j2s-type rhs) 'number)
+	      (j2s-hint lhs '(number)))
+	     ((eq? (j2s-type lhs) 'string)
+	      (j2s-hint rhs '(string)))
+	     ((eq? (j2s-type rhs) 'string)
+	      (j2s-hint lhs '(string)))
+	     (else
+	      (j2s-hint lhs '(number string))
+	      (j2s-hint rhs '(number string)))))
 	 ((== === != !==)
 	  (cond
 	     ((eq? (j2s-type lhs) 'number) (j2s-hint rhs '(number)))
@@ -153,7 +192,9 @@
 				      ((integer) #unspecified)
 				      (else (set! ty #f)))))))))
 	    cases)
-	 (when (and ty (not (eq? ty 'unknown))) (list ty))))
+	 (if (and ty (not (eq? ty 'unknown)))
+	     (list ty)
+	     '(integer string))))
       
    (with-access::J2SSwitch this (key cases)
       (let ((ctype (cases-type cases)))
@@ -189,7 +230,9 @@
 ;*    j2s-array-methods ...                                            */
 ;*---------------------------------------------------------------------*/
 (define j2s-array-methods
-   '("push" "pop"))
+   '("push" "pop" "join" "reverse" "shift" "slice" "sort" "splice" "unshift"
+     "every" "some" "forEach" "map" "filter" "find" "reduce" "reduceRight"
+     "iterator"))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint-access ...                                              */
@@ -277,7 +320,9 @@
 ;*    j2s-hint ::J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SFun types)
-   '())
+   (with-access::J2SFun this (body)
+      (j2s-hint body '())
+      '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SCall ...                                           */
@@ -353,6 +398,7 @@
       (case type
 	 ((number) 'number?)
 	 ((integer) 'fixnum?)
+	 ((index) 'fixnum?)
 	 ((string) 'js-jsstring?)
 	 ((array) 'js-array?)
 	 ((object) 'js-object?)
@@ -592,8 +638,8 @@
 		(with-access::FunHintInfo %info (hinted types)
 		   (with-access::J2SDeclFun hinted (val)
 		      (with-access::J2SFun val (generator)
-			 (if (equal? (map normalize-expr-type args)
-				(map normalize-type types))
+			 (if (or (equal? (map j2s-type args) types)
+				 (equal? (map normalize-expr-type args) types))
 			     (with-access::J2SFun val (idthis)
 				;; adjust the usecnt count
 				(with-access::J2SDecl hinted (usecnt)
