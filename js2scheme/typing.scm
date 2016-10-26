@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Oct 20 17:20:19 2016 (serrano)                */
+;*    Last change :  Tue Oct 25 17:31:40 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -41,8 +41,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-typing! this args)
    (when (isa? this J2SProgram)
-      (when (>=fx (config-get args :optim 0) 4)
-	 (j2s-type-program! this args))
+      (j2s-type-program! this args)
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -103,8 +102,8 @@
 ;*---------------------------------------------------------------------*/
 (define (string-method-type name)
    (builtin-method-type name
-      '(("indexOf" . index)
-	("lastIndexOf" . index)
+      '(("indexOf" . integer)
+	("lastIndexOf" . integer)
 	("charCodeAt" . number)
 	("charAt" . string)
 	("substring" . string)
@@ -137,8 +136,8 @@
 ;*---------------------------------------------------------------------*/
 (define (array-method-type name)
    (builtin-method-type name
-      '(("indexOf" . index)
-	("lastIndexOf" . index))))
+      '(("indexOf" . integer)
+	("lastIndexOf" . integer))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expr-type-set! ...                                               */
@@ -321,7 +320,7 @@
       (expr-type-set! this env fix
 	 (cond
 	    ((not (fixnum? val)) 'number)
-	    ((<fx val (bit-lsh 1 28)) 'index)
+	    ((<fx val (bit-lsh 1 28)) 'integer)
 	    (else 'integer)))))
 
 ;*---------------------------------------------------------------------*/
@@ -607,8 +606,17 @@
 			       'string)
 			      (else
 			       'any)))
-			  ((- * / %)
+			  ((- * /)
 			   'number)
+			  ((%)
+			   (cond
+			      ((and (memq typl '(index integer))
+				    (memq typr '(index integer)))
+			       'integer)
+			      ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			       'unknown)
+			      (else
+			       'number)))
 			  ((== === != !== < <= > >= instanceof)
 			   'bool)
 			  ((&& OR)
@@ -634,7 +642,7 @@
 	       (typing field envo fun fix)
 	       (cond
 		  ((and (memq tyo '(array string)) (j2s-field-length? field))
-		   (expr-type-set! this envf fix 'index (append bko bkf)))
+		   (expr-type-set! this envf fix 'integer (append bko bkf)))
 		  ((eq? tyo 'string)
 		   (let* ((fn (j2s-field-name field))
 			  (ty (if (eq? (string-method-type fn) 'any)

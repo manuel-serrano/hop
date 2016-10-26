@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Oct 24 08:16:16 2016 (serrano)                */
+;*    Last change :  Tue Oct 25 17:49:20 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -29,6 +29,7 @@
 	   (inline js-jsstring?::bool ::obj)
 	   (js-jsstring-ref ::obj ::uint32)
 	   (js-jsstring-length::long ::obj)
+	   (js-jsstring-character-length::long ::obj)
 	   (inline js-jsstring-null? ::obj)
 	   (inline js-jsstring=?::bool ::obj ::obj)
 	   (inline js-jsstring<?::bool ::obj ::obj)
@@ -352,9 +353,15 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-character-length js)
    (cond
-      ((string? js) (string-length js))
-      ((isa? js JsStringLiteralASCII) (js-string-literal-length js))
-      (else (utf8-codeunit-length (js-jsstring-normalize! js)))))
+      ((string? js)
+       (string-length js))
+      ((isa? js JsStringLiteralASCII)
+       (with-access::JsStringLiteralASCII js (right left weight)
+	  (if (not right)
+	      weight
+	      (js-string-literal-length js))))
+      (else
+       (utf8-codeunit-length (js-jsstring-normalize! js)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    display-js-string ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Oct 15 07:42:58 2016 (serrano)                */
+;*    Last change :  Wed Oct 26 10:14:29 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -323,17 +323,17 @@
 ;*    js-raise-arity-error ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-raise-arity-error %this fun n)
-   (with-access::JsFunction fun (name minlen arity rest len)
-      ;; (tprint "name=" name " minlen=" minlen " arity=" arity " len=" len " rest=" rest " n=" n)
-      (js-raise-type-error %this
-	 (format "~a: wrong number of arguments ~a provided, ~a expected"
-	    (if (string? name) name "")
-	    n
-	    (cond
-	       ((or (<fx minlen 0) (and (=fx minlen len) (not rest))) len)
-	       (rest (format ">= ~a" minlen))
-	       (else (format "[~a..~a]" minlen len))))
-	 fun)))
+   (with-access::JsFunction fun (name minlen arity rest len src)
+      (let ((m (format "~a: wrong number of arguments ~a provided, ~a expected"
+		  (if (string? name) name "")
+		  n
+		  (cond
+		     ((or (<fx minlen 0) (and (=fx minlen len) (not rest))) len)
+		     (rest (format ">= ~a" minlen))
+		     (else (format "[~a..~a]" minlen len))))))
+	 (if (pair? src)
+	     (js-raise-type-error/loc %this (car src) m fun)
+	     (js-raise-type-error %this m fun)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-calln ...                                                    */

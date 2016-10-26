@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Oct 23 10:38:48 2016 (serrano)                */
+;*    Last change :  Tue Oct 25 17:52:15 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1900,6 +1900,9 @@
 				  `(js+ ,left ,right %this))))))))))))
       ((%)
        (cond
+	  ((and (eq? (j2s-type lhs) 'integer) (eq? (j2s-type rhs) 'integer))
+	   `(remainder ,(j2s-scheme lhs mode return conf hint)
+	       ,(j2s-scheme rhs mode return conf hint)))
 	  ((and (is-number? lhs) (is-number? rhs))
 	   (binop lhs rhs hint
 	      (lambda (left right)
@@ -2756,17 +2759,18 @@
 				 (comp-switch-case-clause c body tleft))
 			 cases bodies))))))
       
-      (define (scheme-case? cases)
-	 (every (lambda (c)
-		   (or (isa? c J2SDefault)
-		       (with-access::J2SCase c (expr)
-			  (when (isa? expr J2SNumber)
-			     (with-access::J2SNumber expr (val)
-				(fixnum? val))))))
-	    cases))
+      (define (scheme-case? key cases)
+	 (when (memq (j2s-type key) '(integer index))
+	    (every (lambda (c)
+		      (or (isa? c J2SDefault)
+			  (with-access::J2SCase c (expr)
+			     (when (isa? expr J2SNumber)
+				(with-access::J2SNumber expr (val)
+				   (fixnum? val))))))
+	       cases)))
       
       (define (comp-switch)
-	 (if (scheme-case? cases)
+	 (if (scheme-case? key cases)
 	     (comp-switch-case key cases)
 	     (comp-switch-cond key cases)))
       
@@ -3192,9 +3196,8 @@
 		 %this)))
 	 ((and (eq? (j2s-type obj) 'string) (j2s-field-length? field))
 	  (epairify-deep loc
-	     `(utf8-codeunit-length
-		 (js-jsstring->string
-		    ,(j2s-scheme obj mode return conf hint)))))
+	     `(js-jsstring-character-length
+		 ,(j2s-scheme obj mode return conf hint))))
 	 (else
 	  (epairify-deep loc
 	     (j2s-get loc (j2s-scheme obj mode return conf hint) (j2s-type obj)
@@ -3262,6 +3265,8 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-get loc obj tyobj prop typrop cache)
    (let ((prop (match-case prop
+		  ((js-utf8->jsstring ?str) str)
+		  ((js-ascii->jsstring ?str) str)
 		  ((js-string->jsstring ?str) str)
 		  (else prop))))
       (cond
@@ -3301,33 +3306,38 @@
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-put! loc obj tyobj prop val mode cache)
-   (cond
-      ((> (bigloo-debug) 0)
-       (if (string? prop)
-	   `(js-put/debug! ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
-	   `(js-put/debug! ,obj ,prop ,val ,mode %this ',loc)))
-      ((eq? tyobj 'array)
-       `(js-array-set! ,obj ,prop ,val %this))
-      (cache
-       (cond
-	  ((string? prop)
-	   (case tyobj
-	      ((object global)
-	       `(js-object-put-name/cache! ,obj
-		   ',(string->symbol prop) ,val ,mode ,(pcache cache) %this))
-	      (else
-	       `(js-put-name/cache! ,obj
-		   ',(string->symbol prop) ,val ,mode ,(pcache cache) %this))))
-	  ((number? prop)
-	   `(js-put! ,obj ,prop ,val ,mode %this))
-	  (else
-	   `(js-put/cache! ,obj ,prop ,val ,mode ,(pcache cache) %this))))
-      (else
-       (cond
-	  ((string? prop)
-	   `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
-	  (else
-	   `(js-put! ,obj ,prop ,val ,mode %this))))))
+   (let ((prop (match-case prop
+		  ((js-utf8->jsstring ?str) str)
+		  ((js-ascii->jsstring ?str) str)
+		  ((js-string->jsstring ?str) str)
+		  (else prop))))
+      (cond
+	 ((> (bigloo-debug) 0)
+	  (if (string? prop)
+	      `(js-put/debug! ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
+	      `(js-put/debug! ,obj ,prop ,val ,mode %this ',loc)))
+	 ((eq? tyobj 'array)
+	  `(js-array-set! ,obj ,prop ,val %this))
+	 (cache
+	  (cond
+	     ((string? prop)
+	      (case tyobj
+		 ((object global)
+		  `(js-object-put-name/cache! ,obj
+		      ',(string->symbol prop) ,val ,mode ,(pcache cache) %this))
+		 (else
+		  `(js-put-name/cache! ,obj
+		      ',(string->symbol prop) ,val ,mode ,(pcache cache) %this))))
+	     ((number? prop)
+	      `(js-put! ,obj ,prop ,val ,mode %this))
+	     (else
+	      `(js-put/cache! ,obj ,prop ,val ,mode ,(pcache cache) %this))))
+	 (else
+	  (cond
+	     ((string? prop)
+	      `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
+	     (else
+	      `(js-put! ,obj ,prop ,val ,mode %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SObjInit ...                                      */

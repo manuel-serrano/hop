@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Wed Oct 19 09:13:23 2016 (serrano)                */
+;*    Last change :  Wed Oct 26 10:11:35 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -19,8 +19,7 @@
 	   __js2scheme_compile
 	   __js2scheme_stage)
 
-   (export j2s-ronly-stage
-	   (generic j2s-ronly ::obj ::obj)))
+   (export j2s-ronly-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ronly-stage ...                                              */
@@ -34,18 +33,48 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ronly ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-ronly this args)
-   this)
+(define (j2s-ronly this args)
+   (if (isa? this J2SProgram)
+       (j2s-ronly-program this args)
+       this))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-ronly ::J2SProgram ...                                       */
+;*    j2s-ronly-program ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-ronly this::J2SProgram args)
+(define (j2s-ronly-program this::J2SProgram args)
    (with-access::J2SProgram this (nodes headers decls mode)
-      (for-each (lambda (o) (ronly! o mode)) headers)
-      (for-each (lambda (o) (ronly! o mode)) decls)
-      (for-each (lambda (o) (ronly! o mode)) nodes))
-   this)
+      (let ((mode (cond
+		     ((eq? mode 'hopscript) mode)
+		     ((or (not (eq? mode 'strict)) (direct-eval? this)) mode)
+		     (else 'hopscript))))
+	 (for-each (lambda (o) (ronly! o mode)) headers)
+	 (for-each (lambda (o) (ronly! o mode)) decls)
+	 (for-each (lambda (o) (ronly! o mode)) nodes))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    direct-eval? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (direct-eval? this::J2SProgram)
+   (pair? (direct-eval* this)))
+
+;*---------------------------------------------------------------------*/
+;*    direct-eval* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (direct-eval* this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    direct-eval* ::J2SCall ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (direct-eval* this::J2SCall)
+   (with-access::J2SCall this (fun)
+      (if (isa? fun J2SUnresolvedRef)
+	  (with-access::J2SUnresolvedRef fun (id)
+	     (if (eq? id 'eval)
+		 (list this)
+		 '()))
+	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SNode ...                                             */
