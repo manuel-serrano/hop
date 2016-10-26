@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Wed Mar  2 12:00:53 2016 (serrano)                */
+;*    Last change :  Tue Oct 25 18:58:19 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -152,13 +152,10 @@
 		      (set! conn 'close)
 		      (http-write-line p "Connection: " conn)
 		      (http-write-line p)
-		      (if padding
-			  (begin
-			     (display padding p)
-			     (display "(" p)
-			     (obj->javascript-expr value p)
-			     (display ")" p))
-			  (obj->javascript-expr value p)))
+		      (when padding (display padding p))
+		      (display "(" p)
+		      (obj->javascript-expr value p)
+		      (display ")" p))
 		     ((string-prefix? "application/x-url-hop" content-type)
 		      ;; fast path, bigloo serialization
 		      (let ((s (url-path-encode (serialize value))))

@@ -36,9 +36,6 @@ Hop.js supports the following Node.js modules:
 Notable differences
 ==============
 
-`process.version`returns the Hop.js version.  The Node.js version is
-stored in the `node`property of `process.versions`.
-
 The default behaviour of Hop.js is to launch an HTTP server. To mimic
 Node.js, use the `--no-server` option to disable the launch of the
 Hop.js built-in server, and automatically terminate the process when

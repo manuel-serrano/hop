@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Feb 29 18:53:57 2016 (serrano)                */
+;*    Last change :  Tue Oct 25 18:48:47 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -475,6 +475,23 @@
 	     sans-srv))))
 
 ;*---------------------------------------------------------------------*/
+;*    json-parser ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (json-parser %this)
+   (lambda (ip ctx)
+      (js-json-parser ip #f #f #f %this)))
+
+;*---------------------------------------------------------------------*/
+;*    x-javascript-parser ...                                          */
+;*---------------------------------------------------------------------*/
+(define (x-javascript-parser %this)
+   (lambda (ip ctx)
+      (read-char ip)
+      (let ((o (js-json-parser ip #f #t #t %this)))
+	 (read-char ip)
+	 o)))
+   
+;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (post this::JsHopFrame success fail-or-opt %this async)
@@ -501,7 +518,7 @@
       (let ((v (js-get opt key %this)))
 	 (unless (eq? v (js-undefined))
 	    (js-tostring v %this))))
-   
+
    (define (post-request callback fail scheme host port user password auth)
       (with-access::JsHopFrame this (path args header options)
 	 (with-hop-remote path callback fail
@@ -512,7 +529,8 @@
 	    :authorization auth
 	    :header (when header (js-jsobject->alist header %this))
 	    :ctx %this
-	    :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
+	    :json-parser (json-parser %this)
+	    :x-javascript-parser (x-javascript-parser %this)
 	    :args (map multipart-form-arg args))))
 
    (define (post-server-promise this %this host port auth scheme)
@@ -570,7 +588,8 @@
 	    :authorization auth
 	    :header (when header (js-jsobject->alist header %this))
 	    :ctx %this
-	    :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
+	    :json-parser (json-parser %this)
+	    :x-javascript-parser (x-javascript-parser %this)
 	    :args (map multipart-form-arg args))))
 
    (define (post-server this success failure %this async host port auth scheme)
@@ -601,7 +620,6 @@
 ;*    post-options-deprecated ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (post-options-deprecated svc::bstring args success opt %this async)
-   
    (let ((host "localhost")
 	 (port (hop-port))
 	 (user #f)
@@ -678,7 +696,8 @@
 	    :user user :password password :authorization authorization
 	    :header header
 	    :ctx %this
-	    :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
+	    :json-parser (json-parser %this)
+	    :x-javascript-parser (x-javascript-parser %this)
 	    :args args))
 
       (define (spawn-thread)

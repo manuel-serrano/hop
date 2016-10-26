@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Thu Oct 13 08:06:40 2016 (serrano)                */
+;*    Last change :  Tue Oct 25 18:54:21 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -442,6 +442,12 @@
       (define (json-parser ip ctx)
 	 (js-json-parser ip #f #f #f %this))
       
+      (define (x-javascript-parser ip ctx)
+	 (read-char ip)
+	 (let ((o (js-json-parser ip #f #t #t %this)))
+	    (read-char ip)
+	    o))
+      
       (define (post callback)
 	 (with-access::JsUrlFrame frame (url args)
 	    (with-url (hop-apply-nice-url
@@ -452,6 +458,7 @@
 	       :timeout timeout
 	       :authorization authorization
 	       :json-parser json-parser
+	       :x-javascript-parser x-javascript-parser
 	       :ctx %this
 	       :header header
 	       :body body)))
@@ -485,6 +492,12 @@
    
    (define (js-javascript->obj obj)
       (js-obj->jsobject obj %this))
+
+   (define (x-javascript-parser ip ctx)
+      (read-char ip)
+      (let ((o (js-json-parser ip #f #t #t %this)))
+	 (read-char ip)
+	 o))
    
    (let ((url (js-tostring url %this))
 	 (fail #f)
@@ -508,6 +521,7 @@
 	 :timeout timeout
 	 :ctx %this
 	 :json-parser (lambda (ip ctx) (js-json-parser ip #f #f #f %this))
+	 :x-javascript-parser x-javascript-parser
 	 :method (string->symbol method))))
 
 ;*---------------------------------------------------------------------*/

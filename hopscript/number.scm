@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Dec 27 10:22:23 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sun Oct 23 11:56:28 2016 (serrano)                */
+;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -411,7 +411,7 @@
       (cond
 	 ((and (number? expr) (= expr 0))
 	  (if (flonum? expr)
-	      (if (=fx (signbitfl expr) (signbitfl +0.0)) -0.0 +0.0)
+	      (if (=fx (signbitfl expr) 0) -0.0 +0.0)
 	      -0.0))
 	 ((number? expr)
 	  (- expr))
@@ -427,7 +427,7 @@
    
    (define (neg? o)
       (if (flonum? o)
-	  (=fx (signbitfl o) (signbitfl -0.0))
+	  (not (=fx (signbitfl o) 0))
 	  (<fx o 0)))
    
    (let* ((lnum (if (number? left) left (js-tonumber left %this)))
@@ -459,7 +459,7 @@
 	      (cond
 		 ((and (flonum? lnum) (nanfl? lnum))
 		  lnum)
-		 ((=fx (signbitfl rnum) (signbitfl +0.0))
+		 ((=fx (signbitfl rnum) 0)
 		  (cond
 		     ((> lnum 0) +inf.0)
 		     ((< lnum 0) -inf.0)
@@ -506,7 +506,7 @@
 		    (let ((m (remainderfl alnum arnum)))
 		       (if (or (< lnum 0)
 			       (and (flonum? lnum) (=fl lnum 0.0)
-				    (=fx (signbitfl lnum) (signbitfl -0.0))))
+				    (not (=fx (signbitfl lnum) 0))))
 			   (if (= m 0) -0.0 (- m))
 			   (if (= m 0) +0.0 m))))
 		 (let ((m (remainder alnum arnum)))
