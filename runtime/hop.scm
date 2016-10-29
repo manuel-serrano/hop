@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Oct 25 18:45:59 2016 (serrano)                */
+;*    Last change :  Sun Oct 30 16:57:48 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -13,9 +13,9 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hop_hop
-
+   
    (library web)
-
+   
    (cond-expand
       (enable-ssl (library ssl)))
    
@@ -55,23 +55,27 @@
 		      (ctx #f)
 		      body)
 	    (with-hop-remote path success failure
-			     #!key
-			     (host "localhost")
-			     (port (hop-port))
-			     (abspath #f)
-			     (user #f)
-			     (password #f)
-			     (authorization #f)
-			     (header '())
-			     (anim #f)
-			     (scheme 'http)
-			     (ctx #f)
-			     (json-parser (lambda (ip ctx) (javascript->obj ip)))
-			     (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
-			     args)
+	       #!key
+	       (host "localhost")
+	       (port (hop-port))
+	       (abspath #f)
+	       (user #f)
+	       (password #f)
+	       (authorization #f)
+	       (header '())
+	       (anim #f)
+	       (scheme 'http)
+	       (ctx #f)
+	       (json-parser (lambda (ip ctx) (javascript->obj ip)))
+	       (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
+	       args)
 	    (generic with-hop-local obj success fail authorization header)
 	    (hop-get-file::obj ::bstring ::obj)
-	    (open-input-https-socket ::bstring bufinfo timeout)))
+	    (open-input-https-socket ::bstring bufinfo timeout)
+	    (hop-http-decode-value ::obj ::symbol ::obj
+	       #!key
+	       (response-type 'arraybuffer)
+	       json-parser x-javascript-parser content-length)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *anonymous-request* ...                                          */
@@ -227,41 +231,71 @@
       s))
 
 ;*---------------------------------------------------------------------*/
+;*    hop-http-decode-value ...                                        */
+;*---------------------------------------------------------------------*/
+(define (hop-http-decode-value obj content-type ctx
+	   #!key
+	   (response-type 'arraybuffer)
+	   json-parser
+	   x-javascript-parser
+	   content-length)
+   
+   (define (get-chars)
+      (cond
+	 ((string? obj) obj)
+	 ((>elong content-length #e0) (read-chars content-length obj))
+	 (else (read-string obj))))
+   
+   (case content-type
+      ((application/x-hop)
+       (let* ((chars (get-chars))
+	      (s (if (eq? response-type 'arraybuffer)
+		     chars
+		     (string-hex-intern chars))))
+	  (string->obj s #f ctx)))
+      ((application/x-url-hop)
+       (let ((chars (get-chars)))
+	  (string->obj (url-decode chars) #f ctx)))
+      ((application/x-json-hop)
+       (let ((chars (get-chars)))
+	  (string->obj (byte-array->string (javascript->obj chars)) #f ctx)))
+      ((application/json)
+       (if (string? obj)
+	   (call-with-input-string obj
+	      (lambda (p) (json-parser p ctx)))
+	   (json-parser obj ctx)))
+      ((application/x-javascript)
+       (if (string? obj)
+	   (call-with-input-string obj
+	      (lambda (p) (x-javascript-parser p ctx)))
+	   (x-javascript-parser obj ctx)))
+      ((application/x-frame-hop)
+       (let* ((path (get-chars))
+	      (qi (string-index path #\?))
+	      (query (if qi (substring path (+fx qi 1)) path))
+	      (svc (if qi (substring path 0 qi) #f)))
+	  (let ((args (cgi-args->list query)))
+	     (match-case args
+		((("hop-encoding" . "hop") ("vals" . ?vals))
+		 (cons svc (string->obj vals #f ctx)))
+		((("hop-encoding" . "json") ("vals" . ?vals))
+		 (cons svc (json-parser vals ctx)))
+		(else
+		 (error "hop-http-decode-value" "bad query" args))))))
+      ((text/html application/xhtml+xml)
+       (if (string? obj)
+	   (call-with-input-string obj
+	      (lambda (p)
+		 (car (last-pair (parse-html p (string-length obj))))))
+	   (car (last-pair (parse-html obj (elong->fixnum content-length))))))
+      (else
+       (get-chars))))
+   
+;*---------------------------------------------------------------------*/
 ;*    make-http-callback ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (make-http-callback url req success fail user-or-auth ctx responsetype json-parser x-javascript-parser)
-   
-   (define (http-callback-decode ctype clength p ctx)
-      (case ctype
-	 ((application/x-hop)
-	  (let* ((chars (read-chars clength p))
-		 (s (if (eq? responsetype 'arraybuffer)
-			chars
-			(string-hex-intern chars))))
-	     (string->obj s #f ctx)))
-	 ((application/x-url-hop)
-	  (string->obj
-	     (url-decode
-		(if (>elong clength #e0)
-		    (read-chars clength p)
-		    (read-string p)))
-	     #f ctx))
-	 ((application/x-json-hop)
-	  (string->obj
-	     (byte-array->string 
-		(javascript->obj
-		   (if (>elong clength #e0)
-		       (read-chars clength p)
-		       (read-string p))))
-	     #f ctx))
-	 ((application/json)
-	  (json-parser p ctx))
-	 ((application/x-javascript)
-	  (x-javascript-parser p ctx))
-	 ((text/html application/xhtml+xml)
-	  (car (last-pair (parse-html p (elong->fixnum clength)))))
-	 (else
-	  (read-string p))))
+(define (make-http-callback url req success fail user-or-auth ctx responsetype
+	   json-parser x-javascript-parser)
    
    (define (default-error-handling status header p)
       (if (procedure? fail)
@@ -292,8 +326,13 @@
 				  (raise e))
 			      ;; header acts as an error mark, see below 
 			      header)
-			   (http-callback-decode (header-content-type header)
-			      clength p ctx))))
+			   (hop-http-decode-value p
+			      (header-content-type header) 
+			      ctx
+			      :response-type responsetype
+			      :json-parser json-parser
+			      :x-javascript-parser x-javascript-parser
+			      :content-length clength))))
 		;; eq? obj header only holds on error
 		(unless (eq? obj header)
 		   (success obj))))
@@ -417,7 +456,7 @@
 			      (authorization authorization)
 			      (path (if host path "/"))))
 			(suc (if (procedure? success) success (lambda (x) x)))
-			(hdl (make-http-callback url r suc fail #f ctx 'plain
+			(hdl (make-http-callback url r suc fail #f ctx 'text
 				json-parser x-javascript-parser)))
 		    (http-send-request r hdl :body body)))))))))
 

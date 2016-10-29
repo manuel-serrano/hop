@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Oct 25 17:49:20 2016 (serrano)                */
+;*    Last change :  Wed Oct 26 17:51:27 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -610,7 +610,7 @@
 		   (ucs2-string->utf8-string
 		      (ucs2-string
 			 (integer->ucs2 (utf8-codeunit-ref str index))))
-		   (js-utf8->jssstring
+		   (js-utf8->jsstring
 		      (substring str index (+fx index ns))))]
 	     (js-utf8->jsstring
 		(substring str index (+fx index ns)))))))

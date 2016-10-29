@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/weblets/hz/api.hop                */
+;*    serrano/prgm/project/hop/3.1.x/weblets/hz/api.hop                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri May 25 16:53:13 2012                          */
-;*    Last change :  Wed Nov 19 08:16:09 2014 (serrano)                */
-;*    Copyright   :  2012-14 Manuel Serrano                            */
+;*    Last change :  Sun Oct 30 16:25:23 2016 (serrano)                */
+;*    Copyright   :  2012-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    public HZ api                                                    */
 ;*=====================================================================*/

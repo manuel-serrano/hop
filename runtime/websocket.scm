@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue Aug 16 16:35:48 2016 (serrano)                */
+;*    Last change :  Fri Oct 28 10:04:57 2016 (serrano)                */
 ;*    Copyright   :  2012-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -57,7 +57,8 @@
 	      (authorization (default #f))
 	      (state::symbol (default 'connecting))
 	      (version read-only (default 'hybi))
-	      (protocol::obj read-only (default #f)))
+	      (protocol::obj read-only (default #f))
+	      (onbinary::obj read-only (default #f)))
 	   
 	   (class ws-server
 	      (ws-server-init!)
@@ -77,6 +78,7 @@
 	   (websocket-connect! ::websocket)
 	   (websocket-close ::websocket)
 	   (websocket-send-text ::socket ::bstring #!key (mask #t) (final #t))
+	   (websocket-send-binary ::socket ::bstring #!key (mask #t) (final #t))
 	   (websocket-send ::socket ::obj #!key (mask #t) (final #t))
 
 	   (websocket-read ::socket)))
@@ -87,7 +89,7 @@
 (define (websocket-debug)
    ;; don't forget to compile this module with -g to
    ;; enable websockets debugging
-   #t)
+   #t) 
 
 (define (websocket-debug-level)
    (if (websocket-debug) 1 1000000))
@@ -618,9 +620,9 @@
 	 (else
 	  (or (isa? e &io-closed-error)
 	      (isa? e &io-read-error)))))
-   
+
    (with-access::websocket ws (%mutex %condvar %socket url authorization state onopens protocol
-				 onmessages onerrors oncloses)
+				 onmessages onerrors oncloses onbinary)
       (synchronize %mutex
 	 (unless (websocket-connected? ws)
 	    (multiple-value-bind (scheme userinfo host port path)
@@ -686,15 +688,28 @@
 						       (let ((in (socket-input sock)))
 							  (input-timeout-set! in 0)
 							  (let loop ()
-							     (let ((msg (websocket-read sock)))
-								(cond
-								   ((string? msg)
-								    (message msg)
-								    (if %socket (loop) (close)))
-								   ((eof-object? msg)
-								    (close))
+							     (multiple-value-bind (opcode payload)
+								(websocket-read sock)
+								(case (bit-and opcode #xf)
+								   ((1)
+								    ;; text message
+								    (cond
+								       ((string? payload)
+									(message payload)
+									(if %socket (loop) (close)))
+								       ((eof-object? payload)
+									(close))
+								       (else
+									(abort payload))))
+								   ((2)
+								    ;; binary message
+								    (if onbinary
+									(with-handler
+									   (lambda (e) #f)
+									   (onbinary payload)))
+								    (loop))
 								   (else
-								    (abort msg))))))))))))))
+								    (abort payload))))))))))))))
 			    (close))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -837,6 +852,15 @@
       :opcode 1 :final #t :mask mask))
 
 ;*---------------------------------------------------------------------*/
+;*    websocket-send-binary ...                                        */
+;*    -------------------------------------------------------------    */
+;*    Send TEXT over WS.                                               */
+;*---------------------------------------------------------------------*/
+(define (websocket-send-binary sock::socket text::bstring #!key (mask #t) (final #t))
+   (websocket-send-frame text (socket-output sock)
+      :opcode 2 :final #t :mask mask))
+
+;*---------------------------------------------------------------------*/
 ;*    websocket-send ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (websocket-send sock::socket obj #!key (mask #t) (final #t))
@@ -864,7 +888,7 @@
    (define (check-byte b val)
       (and (integer? b) (=fx b val)))
    
-   (define (read-playload-len l::int in::input-port)
+   (define (read-payload-len l::int in::input-port)
       (cond
 	 ((<=fx l 125)
 	  l)
@@ -886,7 +910,7 @@
 		 b0)))
 	 (else
 	  #f)))
-
+   
    (define (unmask payload key)
       (let ((len (string-length payload)))
 	 (let loop ((i 0))
@@ -899,44 +923,52 @@
 				     (string-ref-ur payload (+fx i j))))
 			       (k (vector-ref-ur key j)))
 			    (string-set-ur! payload (+fx i j)
-			       (integer->char (bit-xor c k) ))
+			       (integer->char (bit-xor c k)))
 			    (liip (+fx j 1)))
 			 (loop (+fx i 4))))))))
       payload)
 
+
+   (define (payload in)
+      (let ((s (read-byte in)))
+	 (if (integer? s)
+	     (let ((len (read-payload-len (bit-and s #x7f) in)))
+		(cond
+		   ((not len)
+		    (if (eof-object? len)
+			len
+			(error "websocket-read" "badly formed frame" s)))
+		   ((=fx (bit-and s #x80) 0)
+		    ;; unmasked payload
+		    (read-chars len in))
+		   (else
+		    ;; masked payload
+		    (let* ((key0 (read-byte in))
+			   (key1 (read-byte in))
+			   (key2 (read-byte in))
+			   (key3 (read-byte in)))
+		       (if (integer? key0)
+			   (if (integer? key1)
+			       (if (integer? key2)
+				   (if (integer? key3)
+				       (let ((key (vector key0 key1 key2 key3))
+					     (payload (read-chars len in)))
+					  (if (string? payload)
+					      (unmask payload key)
+					      payload))
+				       key3)
+				   key2)
+			       key1)
+			   key0)))))
+	     s)))
+   
    (let ((in (socket-input sock)))
-      ;; MS: to be complete, binary, ping, etc. must be supported
+      ;; MS: to be completed with ping, pong, and close.
       (let ((b (read-byte in)))
-	 (if (check-byte b #x81)
-	     (let ((s (read-byte in)))
-		(if (integer? s)
-		    (let ((len (read-playload-len (bit-and s #x7f) in)))
-		       (cond
-			  ((not len)
-			   (if (eof-object? len)
-			       len
-			       (error "websocket-read" "badly formed frame" s)))
-			  ((=fx (bit-and s #x80) 0)
-			   ;; unmasked payload
-			   (read-chars len in))
-			  (else
-			   ;; masked payload
-			   (let* ((key0 (read-byte in))
-				  (key1 (read-byte in))
-				  (key2 (read-byte in))
-				  (key3 (read-byte in)))
-			      (if (integer? key0)
-				  (if (integer? key1)
-				      (if (integer? key2)
-					  (if (integer? key3)
-					      (let ((key (vector key0 key1 key2 key3))
-						    (payload (read-chars len in)))
-						 (if (string? payload)
-						     (unmask payload key)
-						     payload))
-					      key3)
-					  key2)
-				      key1)
-				  key0)))))
-		    s))
-	     b))))
+	 (cond
+	    ((or (check-byte b #x81) (check-byte b #x82))
+	     (values b (payload in)))
+	    ((integer? b)
+	     (values b #f))
+	    (else
+	     (values -1 #f))))))

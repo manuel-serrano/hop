@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Mar 24 14:32:03 2016 (serrano)                */
+;*    Last change :  Thu Oct 27 09:20:38 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -22,9 +22,13 @@
 	   __hopscript_error
 	   __hopscript_public
 	   __hopscript_property
-	   __hopscript_worker)
+	   __hopscript_worker
+	   __hopscript_json)
 
-   (export (->fixnum::long ::obj)
+   (export (json-parser ::input-port ::JsGlobalObject)
+	   (x-javascript-parser ::input-port ::JsGlobalObject)
+	   
+	   (->fixnum::long ::obj)
 	   (->uint32::uint32 ::obj)
 	   (->int32::int32 ::obj)
 	   (->flonum::double ::obj)
@@ -65,6 +69,21 @@
 	   
 	   ))
 
+;*---------------------------------------------------------------------*/
+;*    json-parser ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (json-parser ip ctx)
+   (js-json-parser ip #f #f #f ctx))
+
+;*---------------------------------------------------------------------*/
+;*    x-javascript-parser ...                                          */
+;*---------------------------------------------------------------------*/
+(define (x-javascript-parser ip ctx)
+   (read-char ip)
+   (let ((o (js-json-parser ip #f #t #t ctx)))
+      (read-char ip)
+      o))
+   
 ;*---------------------------------------------------------------------*/
 ;*    ->fixnum ...                                                     */
 ;*---------------------------------------------------------------------*/

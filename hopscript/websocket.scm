@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sun Oct 23 09:41:33 2016 (serrano)                */
+;*    Last change :  Sat Oct 29 07:54:37 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -27,11 +27,15 @@
 	   __hopscript_error
 	   __hopscript_array
 	   __hopscript_worker
-	   __hopscript_stringliteral)
+	   __hopscript_stringliteral
+	   __hopscript_promise
+	   __hopscript_lib)
    
    (export (class JsWebSocket::JsObject
 	      (worker read-only)
-	      (ws::websocket read-only))
+	      (ws::websocket read-only)
+	      (sendqueue::pair-nil (default '()))
+	      recvqueue::cell)
 	   
 	   (class JsWebSocketClient::JsObject
 	      (%mutex::mutex read-only (default (make-mutex)))
@@ -51,7 +55,8 @@
 	   
 	   (class JsWebSocketEvent::websocket-event))
 	   
-   (export (js-init-websocket! ::JsGlobalObject)))
+   (export (js-init-websocket! ::JsGlobalObject)
+	   (js-websocket-post ::JsObject ::JsHopFrame ::int)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -180,18 +185,27 @@
 				    (js-jsstring->string
 				       (js-get options 'protocol %this)))))
 		      (url (js-tostring url %this))
+		      (queue (make-cell '()))
 		      (ws (instantiate::websocket
 			     (url (cond
 				     ((string-prefix? "ws://" url)
-				      (string-append "http://" (substring url 5)))
+				      (string-append "http://"
+					 (substring url 5)))
 				     ((string-prefix? "wss://" url)
-				      (string-append "https://" (substring url 6)))
+				      (string-append "https://"
+					 (substring url 6)))
 				     (else
 				      url)))
-			     (protocol protocol)))
+			     (protocol protocol)
+			     (onbinary (lambda (data)
+					  (with-handler
+					     (lambda (e)
+						(exception-notify e))
+					     (wss-onbinary data queue worker))))))
 		      (obj (instantiate::JsWebSocket
 			      (__proto__ js-websocket-prototype)
 			      (worker worker)
+			      (recvqueue queue)
 			      (ws ws))))
 		  ;; listeners
 		  (for-each (lambda (act)
@@ -254,7 +268,57 @@
 						%this request wss ws id))))))))
 			;; returns the new client socket
 			ws)))))
-	 
+
+	 (define (wss-onbinary payload recvqueue worker)
+	    (match-case (message-split payload 5)
+	       ((?protocol ?id ?status ?content-type ?obj)
+		(let* ((pcell (assq (string->integer id) (cell-ref recvqueue)))
+		       (val (hop-http-decode-value obj
+			       (string->symbol content-type) %this
+			       :response-type 'arraybuffer
+			       :x-javascript-parser x-javascript-parser
+			       :json-parser json-parser))
+		       (status (string->integer status)))
+		   (when (pair? pcell)
+		      (cell-set! recvqueue (remq! pcell (cell-ref recvqueue)))
+		      (let ((handler (cdr pcell)))
+			 ;; see hopscript/service.scm
+			 (if (and (>=fx status 100) (<=fx status 299))
+			     (cond
+				((isa? handler JsPromise)
+				 (js-worker-push-thunk! worker "ws-listener"
+				    (lambda ()
+				       (js-promise-async handler
+					  (lambda ()
+					     (js-promise-resolve handler val))))))
+				((and (pair? handler) (procedure? (car handler)))
+				 (js-worker-push-thunk! worker "ws-listener"
+				    (lambda ()
+				       ((car handler) val))))
+				((and (pair? handler) (condition-variable? (car handler)))
+				 (synchronize (cdr handler)
+				    (let ((cv (car handler)))
+				       (set-car! handler val)
+				       (set-cdr! handler #f)
+				       (condition-variable-signal! cv)))))
+			     (cond
+				((isa? handler JsPromise)
+				 (js-worker-push-thunk! worker "ws-listener"
+				    (lambda ()
+				       (js-promise-async handler
+					  (lambda ()
+					     (js-promise-reject handler val))))))
+				((and (pair? handler) (procedure? (cdr handler)))
+				 (js-worker-push-thunk! worker "ws-listener"
+				    (lambda ()
+				       ((cdr handler) val))))
+				((and (pair? handler) (condition-variable? (car handler)))
+				 (synchronize (cdr handler)
+				    (let ((cv (car handler)))
+				       (set-car! handler #f)
+				       (set-cdr! handler val)
+				       (condition-variable-signal! cv))))))))))))
+
 	 (define (js->hop x)
 	    (if (js-jsstring? x)
 		(js-jsstring->string x)
@@ -486,12 +550,6 @@
 		2 'addEventListener))
    obj)
 
-(define _frame 0)
-(define (frame++)
-   (set! _frame (+fx 1 _frame))
-   _frame)
-
-
 ;*---------------------------------------------------------------------*/
 ;*    websocket-server-read-loop ...                                   */
 ;*---------------------------------------------------------------------*/
@@ -528,7 +586,7 @@
 			"wesbsocket-client"
 			(lambda ()
 			   (apply-listeners oncloses evt)))))))))
-
+   
    (define (onerror)
       (with-access::JsWebSocketClient ws (onerrors socket state %mutex)
 	 (synchronize %mutex
@@ -546,19 +604,72 @@
 			"wesbsocket-client"
 			(lambda ()
 			   (apply-listeners onerrors evt)))))))))
-
+   
    (define (eof-error? e)
-      (cond-expand
-	 (bigloo4.2a
-	  (or (isa? e &io-closed-error)
-	      (isa? e &io-read-error)
-	      (and (isa? e &error)
-		   (with-access::&error e (msg)
-		      (string=? msg
-			 "Can't read on a closed input port")))))
+      (or (isa? e &io-closed-error) (isa? e &io-read-error)))
+
+   (define (invoke-websocket-service frame::JsHopFrame)
+      (with-access::JsHopFrame frame (path args)
+	 (let ((svc (get-service path)))
+	    (service-invoke svc req args))))
+
+   (define (decode-ws-message content-type data)
+      (let ((val (hop-http-decode-value data
+		    (string->symbol content-type)
+		    %this
+		    :response-type 'arraybuffer
+		    :json-parser json-parser
+		    :x-javascript-parser x-javascript-parser)))
+	 (cond
+	    ((isa? val JsHopFrame)
+	     val)
+	    ((isa? val JsObject)
+	     (instantiate::JsHopFrame
+		(%this %this)
+		(args (map! cdr
+			 (js-jsobject->alist (js-get val 'args %this) %this)))
+		(srv (js-get val 'srv %this))
+		(options (js-get val 'options %this))
+		(header (js-get val 'header %this))
+		(path (string-append
+			 (hop-service-base) "/" (js-get val 'path %this)))))
+	    ((pair? val)
+	     (instantiate::JsHopFrame
+		(%this %this)
+		(args (cdr val))
+		(header '())
+		(path (string-append (hop-service-base) "/" (car val)))))
+	    (else
+	     (bigloo-type-error "websocket" "JsHopFrame or JsObject" val)))))
+
+   (define (jsheader->header hd header)
+      (if (isa? hd JsObject)
+	  (append (js-jsobject->alist hd %this) header)
+	  header))
+
+   (define (PoST-message msg::bstring socket req::http-request %this)
+      (match-case (message-split msg 4)
+	 ((?protocol ?id ?content-type ?data)
+	  (with-handler
+	     (lambda (e) (exception-notify e) #f)
+	     (let* ((frame (decode-ws-message content-type data))
+		    (id (string->integer id))
+		    (nreq (with-access::http-request req (header)
+			     (with-access::JsHopFrame frame ((hd header) path)
+				(duplicate::http-request req
+				   (id id)
+				   (scheme 'ws)
+				   (abspath path)
+				   (header (jsheader->header hd header))
+				   (query path)))))
+		    (resp (invoke-websocket-service frame)))
+		(http-ws-response resp nreq socket content-type 200 '()))))
 	 (else
-	  (or (isa? e &io-closed-error)
-	      (isa? e &io-read-error)))))
+	  (tprint "*** ERROR: bad msg " (format "~s" msg))
+	  #f)))
+
+   (define (is-proto? proto::bstring data::bstring)
+      (string-prefix? proto data))
    
    (with-access::http-request req (socket)
       (thread-start!
@@ -577,13 +688,26 @@
 			       (onclose)
 			       (onerror)))
 			(let loop ()
-			   (let ((frame (websocket-read socket)))
-			      (cond
-				 ((string? frame)
-				  (onmessage frame)
-				  (loop))
-				 ((eof-object? frame)
-				  (onclose))
+			   (multiple-value-bind (opcode payload)
+			      (websocket-read socket)
+			      (case (bit-and opcode #xf)
+				 ((1)
+				  ;; text message
+				  (cond
+				     ((string? payload)
+				      (onmessage payload)
+				      (loop))
+				     ((eof-object? payload)
+				      (onclose))
+				     (else
+				      (onerror))))
+				 ((2)
+				  (cond
+				     ((is-proto? "PoST:" payload)
+				      (PoST-message payload socket req %this)
+				      (loop))
+				     (else
+				      (onerror))))
 				 (else
 				  (onerror))))))))))
       ws))
@@ -648,6 +772,191 @@
 			       (proc->listener worker %this proc this))))))
 		2 'addEventListener))
    obj)
+
+;*---------------------------------------------------------------------*/
+;*    http-encode-value ...                                            */
+;*---------------------------------------------------------------------*/
+(define (http-encode-value obj content-type::bstring request)
+   
+   (define (request-type request)
+      (with-access::http-request request (header)
+	 (let ((c (assq 'hop-client: header)))
+	    (if (and (pair? c) (string=? (cdr c) "hop"))
+		'hop-to-hop
+		'hop-client))))
+   
+   ;; see runtime/http-response.scm
+   (cond
+      ((or (string-prefix? "application/x-hop" content-type)
+	   (string-prefix? "application/x-frame-hop" content-type))
+       ;; fast path, bigloo serialization
+       (obj->string obj (request-type request)))
+      ((string-prefix? "application/json" content-type)
+       ;; json encoding
+       (call-with-output-string
+	  (lambda (p) (obj->json obj p))))
+      ((string-prefix? "text/plain" content-type)
+       obj)
+      (else
+       ;; no other encoding supported
+       (error "http-encode-value" "unsupported content-type" content-type))))
+
+;*---------------------------------------------------------------------*/
+;*    ws-response-socket ...                                           */
+;*---------------------------------------------------------------------*/
+(define (ws-response-socket obj req::http-request socket::socket
+ 	   content-type status header)
+   (with-access::http-request req (id)
+      (let ((data (http-encode-value obj content-type req)))
+	 (websocket-send-binary socket
+	    (string-append "PoST:"
+	       (integer->string id)
+	       ":" (integer->string status)
+	       ":" content-type
+	       ":" data)
+	    :mask #f))))
+
+;*---------------------------------------------------------------------*/
+;*    http-ws-response ...                                             */
+;*---------------------------------------------------------------------*/
+(define-generic (http-ws-response resp req::http-request socket::socket
+		   content-type status header)
+   (ws-response-socket resp req socket content-type status header))
+
+;*---------------------------------------------------------------------*/
+;*    http-ws-response ::JsPromise ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (http-ws-response resp::JsPromise req socket
+		  content-type status header)
+   (with-access::JsPromise resp (worker)
+      (with-access::WorkerHopThread worker (%this)
+	 (js-promise-then-catch %this resp 
+	    (js-make-function %this
+	       (lambda (this result)
+		  (js-promise-async resp
+		     (lambda ()
+			(http-ws-response result req socket
+			   content-type 200 header))))
+	       1 "reply")
+	    (js-make-function %this
+	       (lambda (this rej)
+		  (js-promise-async resp
+		     (lambda ()
+			(http-ws-response rej req socket
+			   content-type 500 header))))
+	       1 "reject")
+	    resp))))
+
+;*---------------------------------------------------------------------*/
+;*    http-ws-response ::%http-response ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (http-ws-response resp::%http-response req socket
+		   content-type status header)
+   (ws-response-socket (format "Method not implemented ~a" (typeof resp))
+      req socket content-type 500 '()))
+
+;*---------------------------------------------------------------------*/
+;*    start-line->status ...                                           */
+;*---------------------------------------------------------------------*/
+(define (start-line->status::int obj::%http-response-server)
+   (with-access::%http-response-server obj (start-line)
+      (let ((m (pregexp-match "^[^ ]+[ \t]*([0-9]+)" start-line)))
+	 (if m (string->integer (cadr m)) 200))))
+
+;*---------------------------------------------------------------------*/
+;*    http-ws-response ::http-response-string ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (http-ws-response resp::http-response-string req socket
+		   content-type status header)
+   (with-access::http-response-string resp (body header content-type)
+      (ws-response-socket body req socket
+	 (or content-type "text/plain")
+	 (start-line->status resp)
+	 header)))
+
+;*---------------------------------------------------------------------*/
+;*    http-ws-response ::http-response-async ...                       */
+;*---------------------------------------------------------------------*/
+(define-method (http-ws-response resp::http-response-async req socket
+		  content-type status header)
+   (with-access::http-response-async resp (async content-type header)
+      (async (lambda (obj)
+		(http-ws-response resp req socket
+		   (or content-type "text/plain")
+		   (start-line->status obj)
+		   header)))))
+
+;*---------------------------------------------------------------------*/
+;*    http-ws-response ::http-response-hop ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (http-ws-response obj::http-response-hop req socket
+		  content-type status header)
+   (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    message-split ...                                                */
+;*---------------------------------------------------------------------*/
+(define (message-split str num)
+   (let loop ((n num)
+	      (i 0)
+	      (res '()))
+      (if (=fx n 1)
+	  (reverse! (cons (substring str i) res))
+	  (let ((j (string-index str #\: i)))
+	     (if (not j)
+		 '()
+		 (loop (-fx n 1)
+		    (+fx j 1)
+		    (cons (substring str i j) res)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-websocket-post ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-websocket-post srv::JsObject this::JsHopFrame id::int)
+	 
+   (with-access::JsWebSocket srv (ws sendqueue recvqueue worker)
+
+      (define (abort-post entry)
+	 (let ((handler (cdr entry))
+	       (reason (js-ascii->jsstring "connection closed")))
+	    (cond
+	       ((isa? handler JsPromise)
+		(js-worker-push-thunk! worker "ws-listener"
+		   (lambda ()
+		      (js-promise-async handler
+			 (lambda ()
+			    (js-promise-reject handler reason))))))
+	       ((procedure? (cdr handler))
+		(js-worker-push-thunk! worker "ws-listener"
+		   (lambda ()
+		      ((cdr handler) reason)))))))
+      
+      (with-access::websocket ws (%socket onopens oncloses)
+	 (let* ((data (obj->string this))
+		(msg (string-append "PoST:"
+			(integer->string id)
+			":application/x-hop:" data)))
+	    (cond
+	       ((socket? %socket)
+		(websocket-send-binary %socket msg :mask #f))
+	       ((pair? sendqueue)
+		(set! sendqueue (cons msg sendqueue)))
+	       (else
+		(set! sendqueue (list msg))
+		;; use onopens and oncloses directly to hide
+		;; the handlers from JS
+		(set! onopens
+		   (cons
+		      (lambda (evt)
+			 (for-each (lambda (msg)
+				      (websocket-send-binary %socket msg
+					 :mask #f))
+			    (reverse! sendqueue)))
+		      onopens))
+		(set! oncloses
+		   (cons
+		      (lambda (evt) (for-each abort-post recvqueue))
+		      oncloses))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */

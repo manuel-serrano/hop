@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Tue Mar 22 18:51:09 2016 (serrano)                */
+/*    Last change :  Wed Oct 26 16:18:30 2016 (serrano)                */
 /*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -20,22 +20,46 @@ assert.equal( 2*3+4, (2*3)+4 );
 /*    toFixed                                                          */
 /*---------------------------------------------------------------------*/
 var a = -0.14445826138806367; 
-assert.equal( a.toFixed( 2 ), -0.14 );
+assert.equal( a.toFixed( 2 ), "-0.14" );
 
 var b = 0.14445826138806367; 
-assert.equal( b.toFixed( 2 ), 0.14 );
+assert.equal( b.toFixed( 2 ), "0.14" );
 
 var c = -1.14445826138806367; 
-assert.equal( c.toFixed( 2 ), -1.14 );
+assert.equal( c.toFixed( 2 ), "-1.14" );
 
 var d = 1.14445826138806367; 
-assert.equal( d.toFixed( 2 ), 1.14 );
+assert.equal( d.toFixed( 2 ), "1.14" );
 
 var e = -145564.14445826138806367; 
-assert.equal( e.toFixed( 2 ), -145564.14 );
+assert.equal( e.toFixed( 2 ), "-145564.14" );
 
 var f = 6541.14445826138806367; 
-assert.equal( f.toFixed( 2 ), 6541.14 );
+assert.equal( f.toFixed( 2 ), "6541.14" );
+
+var g = 0.07;
+assert.equal( g.toFixed( 3 ), "0.070" );
+
+var h = -0.07;
+assert.equal( h.toFixed( 3 ), "-0.070" );
+
+var i = 0.07;
+assert.equal( i.toFixed( 1 ), "0.1" );
+
+var j = -0.07;
+assert.equal( h.toFixed( 1 ), "-0.1" );
+
+var k = 0.07;
+assert.equal( k.toFixed( 2 ), "0.07" );
+
+var l = -0.07;
+assert.equal( l.toFixed( 2 ), "-0.0.7" );
+
+var m = 0.07;
+assert.equal( m.toFixed( 4 ), "0.0700" );
+
+var n = -0.07;
+assert.equal( n.toFixed( 4 ), "-0.0700" );
 
 /*---------------------------------------------------------------------*/
 /*    integer limits                                                   */

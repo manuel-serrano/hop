@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/svc/svc.js               */
+/*    serrano/prgm/project/hop/3.1.x/examples/svc/svc.js               */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 21 07:50:20 2014                          */
-/*    Last change :  Thu Nov 26 17:07:14 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Sat Oct 29 09:22:14 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Basic example that illustrates services API.                     */
 /*    -------------------------------------------------------------    */
@@ -70,4 +70,3 @@ service svc2( a, b, c ) {
 }
 
 console.log( "Go to \"http://%s:%d/hop/svc\"", hop.hostname, hop.port );
-

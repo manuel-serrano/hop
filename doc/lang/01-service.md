@@ -169,6 +169,35 @@ Service.exists( "private" );
 // false
 ```
 
+Importing Services
+------------------
+
+The implementation of a Hop service is not required to be known for
+being invoked by a remote client. This client can _import_ the
+service and use it as if it was locally defined. The syntax for
+importing a service is as follows:
+
+```ebnf
+${ doc.include( ROOT + "/iservice.bnf" ) }
+```
+
+Imported services are used as locally defined service.
+
+
+${ doc.include( doc.EXAMPLES_DIR + "/svc2/README.md" ) }
+
+${ <span class="label label-info">svc2/svc2.js</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/svc2/svc2.js", 14 ) }
+```
+
+${ <span class="label label-info">svc2/extern.js</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/svc2/extern.js", 14 ) }
+```
+
 Service Frames
 --------------
 
@@ -194,6 +223,21 @@ var frame = srv.svc2( "music" );
 typeof( frame );           // "object"
 frame instanceof HopFrame; // true
 frame.toString();          // http://cloud.net:8888/hop/catalog?hop-encoding=hop&vals=...
+```
+
+When a service is used as a method of a [websocket](20-websocket.html) object,
+the returned frame is bound to that websocket. In that case, the invokation
+(argument passing and result return) use the websocket instead of creating
+a new HTTP connection.
+
+```hopscript
+var ws = new WebSocket( "ws://cloud.net:" + port + "/hop/serv" );
+var frame = svc2.call( ws, "music" );
+typeof( frame );           // "object"
+frame instanceof HopFrame; // true
+frame.post()
+   .then( result => doit( result ) )
+   .catch( reason => handle( reason ) )
 ```
 
 A `HopFrame` implements the methods described in the section.
@@ -224,6 +268,10 @@ if an error occurs while invoking the service.
  * `fail`, a failure procedure.
    service. Defaults to `false`.
  * `header`, a JavaScript object to add properties to the HTTP header of the request.
+
+
+When no argument are passed, `post` returns a promise that resolves on
+successful completion and that otherwise rejects.
 
 Example:
 
@@ -303,15 +351,6 @@ service page() {
    </html>
 }
 ```
-
-
-Service Invocation
-------------------
-
-Invoking the `post` or `postSync` methods of a service frame triggers
-the remote invocation of the service. That is, the arguments serialized
-in the service frame are transmitted to the remote host and the service
-body is executed.
 
 
 Service methods & attributes
@@ -397,35 +436,6 @@ svc2.ttl = 5;
 Unregister a service from the Hop.js server. Once unregistered services
 can no longer be invoked in response to client requests.
 
-Importing Services
-------------------
-
-The implementation of a Hop service is not required to be known for
-being invoked by a remote client. This client can _import_ the
-service and use it as if it was locally defined. The syntax for
-importing a service is as follows:
-
-```ebnf
-${ doc.include( ROOT + "/iservice.bnf" ) }
-```
-
-Imported services are used as locally defined service.
-
-
-${ doc.include( doc.EXAMPLES_DIR + "/svc2/README.md" ) }
-
-${ <span class="label label-info">svc2/svc2.js</span> }
-
-```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/svc2/svc2.js", 14 ) }
-```
-
-${ <span class="label label-info">svc2/extern.js</span> }
-
-```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/svc2/extern.js", 14 ) }
-```
-
 Interoperable WebServices
 -----------------------
 
@@ -485,3 +495,31 @@ frame.post( function( result ) {
    console.log( 'http://%s:%s', record.host, record.port );
 });
 ```
+
+Examples
+--------
+
+### Simple invocations ###
+
+${ doc.include( doc.EXAMPLES_DIR + "/svc/README.md" ) }
+
+${ <span class="label label-info">svc/svc.js</span> }
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/svc/svc.js", 14 ) }
+```
+
+### WebSocket invocations ###
+
+${ doc.include( doc.EXAMPLES_DIR + "/wspost/README.md" ) }
+
+${ <span class="label label-info">wspost/wsserver.js</span> }
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/wspost/wsserver.js", 14 ) }
+```
+
+${ <span class="label label-info">wspost/wsclient.js</span> }
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/wspost/wsclient.js", 14 ) }
+```
+
+

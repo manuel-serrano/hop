@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu Oct 20 12:07:52 2016 (serrano)                */
+/*    Last change :  Sat Oct 29 19:44:28 2016 (serrano)                */
 /*    Copyright   :  2004-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -302,6 +302,45 @@ function hop_default_success( h, xhr ) {
 }
 
 /*---------------------------------------------------------------------*/
+/*    hexStringToUint8 ...                                             */
+/*    -------------------------------------------------------------    */
+/*    Convert a string with mixed % and plain chars into Uint8.        */
+/*---------------------------------------------------------------------*/
+function hexStringToUint8( str ) {
+   var l = str.length;
+   var res = new Uint8Array( l );
+   
+   var z = '0'.charCodeAt( 0 );
+   var n = '9'.charCodeAt( 0 );
+   var a = 'a'.charCodeAt( 0 );
+   var f = 'f'.charCodeAt( 0 );
+   var A = 'A'.charCodeAt( 0 );
+   
+   function hex_to_num( c ) {
+      if( (c >= z) && ( c<= n) ) {
+	 return c - z;
+      }
+      if( (c >= a) && ( c<= f) ) {
+	 return (c - a) + 10;;
+      }
+      return (c - A) + 10;
+   }
+
+   for( var r = 0, w = 0; r < l; w++ ) {
+      if( str.charAt( r ) == '%' ) {
+	 var d1 = hex_to_num( str.charCodeAt( r + 1 ) );
+	 var d2 = hex_to_num( str.charCodeAt( r + 2 ) );
+	 r += 3;
+	 res[ w ] = (d1 << 4) + d2;
+      } else {
+	 res[ w ] = str.charCodeAt( r++ );
+      }
+   }
+
+   return res.slice( 0, w );
+}
+
+/*---------------------------------------------------------------------*/
 /*    hexToUint8 ...                                                   */
 /*---------------------------------------------------------------------*/
 function hexToUint8( str ) {
@@ -524,7 +563,7 @@ function Hop( svc, success, failure ) {
 /*    HopFrame ...                                                     */
 /*---------------------------------------------------------------------*/
 function HopFrame( srv, path, args, options, header ) {
-   this.srv = srv instanceof HopServer ? srv : undefined;
+   this.srv = srv;
    this.path = path;
    this.args = args;
    this.options = options;
@@ -534,7 +573,7 @@ function HopFrame( srv, path, args, options, header ) {
 HopFrame.prototype.toString = function() {
    var url = hop_apply_url( this.path, this.args );
    
-   if( this.srv ) {
+   if( this.srv instanceof HopServer ) {
       var srv = this.srv;
       url = (srv.ssl ? "https://" : "http://")
 	 + (srv.authentication ? srv.authentication + "@" : "")
@@ -545,12 +584,17 @@ HopFrame.prototype.toString = function() {
    return url;
 }
 
+/*---------------------------------------------------------------------*/
+/*    HopFrame.prototype.post ...                                      */
+/*---------------------------------------------------------------------*/
 HopFrame.prototype.post = function post( success, opt_or_fail ) {
    var svc = this.toString();
    var arg = hop_is_dom_formdata_element( this.args[ 0 ] ) ?
        this.args[ 0 ] : null;
 
-   if( success ) {
+   if( this.srv instanceof WebSocket ) {
+      return WebSocketPost( this, success, opt_or_fail );
+   } else if( success ) {
       if( opt_or_fail instanceof Function || opt_or_fail == undefined ) {
 	 return withHOP( svc, success, opt_or_fail, this.options, false, arg );
       } else {
@@ -581,8 +625,15 @@ HopFrame.prototype.post = function post( success, opt_or_fail ) {
    }
 }
 
+/*---------------------------------------------------------------------*/
+/*    HopFrame.prototype.postSync ...                                  */
+/*---------------------------------------------------------------------*/
 HopFrame.prototype.postSync = function call( opt ) {
-   return withHOP( this.url, function( v ) { return v }, false, opt, true );
+   if( this.srv instanceof WebSocket ) {
+      throw new Error( "postSync not supported on websocket" );
+   } else {
+      return withHOP( this.url, function( v ) { return v }, false, opt, true );
+   }
 }
 
 HopFrame.prototype.setOptions = function( opts ) {
@@ -593,6 +644,110 @@ HopFrame.prototype.setHeader = function( header ) {
 }
 
 HopFrame.prototype.hop_bigloo_serialize = hop_bigloo_serialize_hopframe;
+
+/*---------------------------------------------------------------------*/
+/*    onPostMessage ...                                                */
+/*---------------------------------------------------------------------*/
+function onPostMessage( e ) {
+   if( e.data instanceof ArrayBuffer ) {
+      var buf = new Uint8Array( e.data );
+
+      // 58 is ':' ascii code
+      var i0 = buf.indexOf( 58 );
+      var i1 = buf.indexOf( 58, i0 + 1 );
+      var i2 = buf.indexOf( 58, i1 + 1 );
+      var i3 = buf.indexOf( 58, i2 + 1 );
+
+      if( String.fromCharCode.apply( null, buf.slice( 0, i0 ) ) == "PoST" ) {
+	 e.stopPropagation = true;
+	 e.preventDefault = true;
+	 var id = parseInt( String.fromCharCode.apply( null, buf.slice( i0 + 1, i1 ) ) );
+	 var status = parseInt( String.fromCharCode.apply( null, buf.slice( i1 + 1, i2 ) ) );
+	 var ctype = String.fromCharCode.apply( null, buf.slice( i2 + 1, i3 ) ) 
+	 var msg = buf.slice( i3 + 1 );
+	 var val = ( ctype == "application/x-frame-hop" )
+	     ? hop_bytearray_to_obj( msg )
+	     : String.fromCharCode.apply( null, msg );
+
+	 if( ws.postHandlers[ id ] ) {
+	    if( status >= 100 && status <= 299 ) {
+	       if( ws.postHandlers[ id ].succ ) {
+		  ws.postHandlers[ id ].succ( val );
+	       }
+	    } else {
+	       if( ws.postHandlers[ id ].fail ) {
+		  ws.postHandlers[ id ].fail( val );
+	       }
+	    }
+	    delete ws.postHandlers[ id ];
+	 }
+      }
+   }
+}
+   
+/*---------------------------------------------------------------------*/
+/*    WebSocketPostFrame ...                                           */
+/*---------------------------------------------------------------------*/
+function WebSocketPostFrame( frame, succ, fail ) {
+   
+   function closeFrame( f ) {
+      if( f.fail ) f.fail( "connection closed" );
+   }
+   
+   var ws = frame.srv;
+
+   if( !("postHandlers" in ws) ) {
+      ws.postHandlers = {};
+      ws.postCount = 0;
+      ws.binaryType = "arraybuffer";
+
+      ws.addEventListener( "message", onPostMessage );
+      ws.addEventListener( "close", function( e ) {
+	 if( ws.preOpenQueue ) { ws.preOpenQueue.forEach( closeFrame ) }
+	 for( var k in ws.postHandlers ) { closeFrame( ws.postHandlers[ k ] ) }
+      } );
+   }
+
+   var msg = "PoST:" + ws.postCount + ":application/x-frame-hop:" + frame.toString();
+   
+   ws.postHandlers[ ws.postCount++ ] = { succ: succ, fail: fail };
+   ws.send( hexStringToUint8( msg ) );
+   return;
+}
+
+/*---------------------------------------------------------------------*/
+/*    WebSocketPost ...                                                */
+/*---------------------------------------------------------------------*/
+function WebSocketPost( frame, succ, fail ) {
+   var ws = frame.srv;
+   
+   if( ws.readyState != ws.OPEN ) {
+      if( !("preOpenQueue" in ws) ) {
+	 ws.preOpenQueue = [];
+	 ws.addEventListener( "open", function() {
+	    ws.preOpenQueue.forEach( function( el ) {
+	       WebSocketPostFrame.apply( undefined, el );
+	    } );
+	 } )
+      }
+
+      if( succ || fail ) {
+	 ws.preOpenQueue.push( [ frame, succ, fail ] );
+      } else {
+	 return new Promise( function( resolve, reject ) {
+	    ws.preOpenQueue.push( [ frame, resolve, reject ] );
+	 } )
+      }
+   } else {
+      if( succ || fail ) {
+	 return WebSocketPostFrame( frame, succ, fail );
+      } else {
+	 return new Promise( function( resolve, reject ) {
+	    WebSocketPostFrame( frame, resolve, reject );
+	 } );
+      }
+   }
+}
 
 /*---------------------------------------------------------------------*/
 /*    withHOP ...                                                      */

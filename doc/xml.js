@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Thu Apr  7 19:28:51 2016 (serrano)                */
+/*    Last change :  Sat Oct 29 09:43:08 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
@@ -90,6 +90,11 @@ function navbar( attrs, chapters ) {
 
    return <nav class="navbar navbar-inverse navbar-fixed-top">
      <div class="container">
+       <a class="navbar-brand" href="#">
+	 <svg:img
+             src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
+             height="3ex" width="3em"/>
+       </a>
        <ul class="nav navbar-nav">
          ${chapters.map( function( p, idx = undefined, arr = undefined ) {
 	    if( p.entries.length == 0 ) {
