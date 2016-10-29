@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Oct  3 07:14:40 2016 (serrano)                */
+#*    Last change :  Sat Oct 29 08:41:00 2016 (serrano)                */
 #*    Copyright   :  2006-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -37,6 +37,8 @@ POPULATION = Makefile \
   file/file.js file/example.json file/README.md \
   websocket/wsserver.js websocket/wsclient.js websocket/example.json \
   websocket/README.md \
+  wspost/wsserver.js wspost/wsclient.js wspost/example.json \
+  wspost/README.md \
   wsclient/wsclient.js wsclient/example.json \
   svc/svc.js svc/example.json svc/README.md \
   svc1/svc1.js svc1/example.json svc1/README.md \

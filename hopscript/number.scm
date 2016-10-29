@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Oct 23 11:55:30 2016 (serrano)                */
+;*    Last change :  Wed Oct 26 16:19:14 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -313,7 +313,7 @@
 					       ((=fx l f)
 						(string-append "0." s))
 					       (else
-						(string-append "0." s (make-string f #\0))))))))
+						(string-append "0." (make-string (-fx f l) #\0) s)))))))
 				 ((= f 0)
 				  (signed val (number->string n)))
 				 (else

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Oct 25 18:59:51 2016 (serrano)                */
+;*    Last change :  Sat Oct 29 07:26:26 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -97,12 +97,12 @@
    
    (define (arraybuffer-request? request)
       (with-access::http-request request (header)
-	 (let ((c (assq 'hop-responsetype: header)))
+	 (let ((c (assq hop-responsetype: header)))
 	    (and (pair? c) (string=? (cdr c) "arraybuffer")))))
    
    (define (request-type request)
       (with-access::http-request request (header)
-	 (let ((c (assq 'hop-client: header)))
+	 (let ((c (assq hop-client: header)))
 	    (if (and (pair? c) (string=? (cdr c) "hop"))
 		'hop-to-hop
 		'hop-client))))
@@ -118,72 +118,83 @@
 	    (http-write-line p)
 	    (display-string rep p))))
 
+   (define (response-x-javascript value conn p padding)
+      (set! conn 'close)
+      (http-write-line p "Connection: " conn)
+      (http-write-line p)
+      (when padding (display padding p))
+      (display "(" p)
+      (obj->javascript-expr value p)
+      (display ")" p))
+
+   (define (response-x-url-hop value conn p)
+      (let ((s (url-path-encode (serialize value))))
+	 (http-write-line p "Content-Length: " (string-length s))
+	 (http-write-line p "Connection: " conn)
+	 (http-write-line p)
+	 (display s p)))
+
+   (define (response-x-json-hop value conn p)
+      (set! conn 'close)
+      (http-write-line p "Connection: " conn)
+      (http-write-line p)
+      (byte-array->json (serialize value) p))
+   
+   (define (response-json value conn p padding)
+      (set! conn 'close)
+      (http-write-line p "Connection: " conn)
+      (http-write-line p)
+      (if padding
+	  (begin
+	     (display padding p)
+	     (display "(" p)
+	     (obj->json value p)
+	     (display ")" p))
+	  (obj->json value p)))
+
    (with-trace 'hop-response "http-response::http-response-hop"
       (with-access::http-response-hop r (start-line
 					   header
-					   content-type charset
+					   (ctype content-type)
+					   charset
 					   server content-length
 					   value padding
 					   bodyp 
 					   timeout)
-	 (with-access::http-request request (connection
-					       (headerreq header))
+	 (with-access::http-request request (connection (headerreq header))
 	    (let ((p (socket-output socket))
 		  (conn connection))
 	       (when (>=fx timeout 0) (output-timeout-set! p timeout))
 	       (http-write-line-string p start-line)
 	       (http-write-header p header)
 	       (http-write-line p "Cache-Control: no-cache")
-	       (http-write-content-type p content-type charset)
+	       (http-write-content-type p ctype charset)
 	       (http-write-line-string p "Server: " server)
-	       ;; the body
 	       (when bodyp
-		  ;; the content-type tells Hop how to serialize the value
+		  ;; select the transfer method according to the content-type
 		  (cond
-		     ((not (string? content-type))
+		     ((not (string? ctype))
 		      (error "http-response"
 			 "No serialization method specified"
-			 content-type))
-		     ((string-prefix? "application/x-hop" content-type)
+			 ctype))
+		     ((string-prefix? "application/x-hop" ctype)
 		      ;; fast path, bigloo serialization
 		      (response-x-hop value conn p))
-		     ((string-prefix? "application/x-javascript" content-type)
+		     ((string-prefix? "application/x-javascript" ctype)
 		      ;; standard javascript serialization
-		      (set! conn 'close)
-		      (http-write-line p "Connection: " conn)
-		      (http-write-line p)
-		      (when padding (display padding p))
-		      (display "(" p)
-		      (obj->javascript-expr value p)
-		      (display ")" p))
-		     ((string-prefix? "application/x-url-hop" content-type)
+		      (response-x-javascript value conn p padding))
+		     ((string-prefix? "application/x-url-hop" ctype)
 		      ;; fast path, bigloo serialization
-		      (let ((s (url-path-encode (serialize value))))
-			 (http-write-line p "Content-Length: " (string-length s))
-			 (http-write-line p "Connection: " conn)
-			 (http-write-line p)
-			 (display s p)))
-		     ((string-prefix? "application/x-json-hop" content-type)
-		      (set! conn 'close)
-		      (http-write-line p "Connection: " conn)
-		      (http-write-line p)
-		      (byte-array->json (serialize value) p))
-		     ((string-prefix? "application/json" content-type)
+		      (response-x-url-hop value conn p))
+		     ((string-prefix? "application/x-json-hop" ctype)
+		      (response-x-json-hop value conn p))
+		     ((string-prefix? "application/json" ctype)
 		      ;; json encoding
-		      (set! conn 'close)
-		      (http-write-line p "Connection: " conn)
-		      (http-write-line p)
-		      (if padding
-			  (begin
-			     (display padding p)
-			     (display "(" p)
-			     (obj->json value p)
-			     (display ")" p))
-			  (obj->json value p)))
+		      (response-json value conn p padding))
 		     (else
 		      (error "http-response"
 			 (format "Unsupported serialization method \"~a\""
-			    content-type)
+			    ctype)
 			 request))))
 	       (flush-output-port p)
 	       conn)))))
@@ -265,14 +276,7 @@
 			 (with-access::security-manager security (xml-sanitize)
 			    (let ((xmls (xml-sanitize xml backend request)))
 			       (xml-write xmls p backend)))
-			 (xml-write xml p backend)))
-;* 		  (when (hop-file-authorization)                       */
-;* 		     (let ((user (http-request-user request)))         */
-;* 			(unless (eq? user (anonymous-user))            */
-;* 			   (xml-url-for-each xml                       */
-;* 			      (lambda (obj file)                       */
-;* 				 (user-add-file! user file))))))       */
-		  ))
+			 (xml-write xml p backend)))))
 	    (flush-output-port p)
 	    ;; for chunked, write the last 0 chunk
 	    (when chunked
@@ -445,13 +449,7 @@
 		   (http-write-line p)
 		   (flush-output-port p)
 		   ;; the body
-		   ;;(tprint ">>> SEND-FILE.2 " file)
-;* 		   (with-handler                                       */
-;* 		      (lambda (e)                                      */
-;* 			 (tprint "*** SEND-FILE.exn " e))              */
 		   (when bodyp (send-file file p size offset))
-;* 		   )                                                   */
-		   ;;(tprint "<<< SEND-FILE.2 " file)
 		   (flush-output-port p)
 		   connection))
 	     (http-response (http-file-not-found file) request socket)))))

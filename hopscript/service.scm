@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Oct 26 09:44:48 2016 (serrano)                */
+;*    Last change :  Fri Oct 28 08:54:59 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -30,7 +30,8 @@
 	   __hopscript_json
 	   __hopscript_lib
 	   __hopscript_array
-	   __hopscript_promise)
+	   __hopscript_promise
+	   __hopscript_websocket)
 
    (export (js-init-service! ::JsGlobalObject)
 	   (js-make-hopframe ::JsGlobalObject ::obj ::obj ::obj)
@@ -81,9 +82,9 @@
 (register-class-serialization! JsHopFrame
    (lambda (o)
       (with-access::JsHopFrame o (srv path args options header path)
-	 (vector srv path args options header)))
+	 (vector (unless (isa? srv JsWebSocket) srv) path args options header)))
    (lambda (o ctx)
-      (if (and (vector? o) (=fx (vector-length o) 4))
+      (if (and (vector? o) (=fx (vector-length o) 5))
 	  (with-access::JsGlobalObject ctx (js-hopframe-prototype)
 	     (instantiate::JsHopFrame
 		(__proto__ js-hopframe-prototype)
@@ -130,8 +131,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-tostring o::JsHopFrame %this)
    (hopframe->string o %this))
-;*    (with-access::JsHopFrame o (args path)                           */
-;*       path)                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsHopFrame ...                             */
@@ -393,7 +392,7 @@
       (instantiate::JsHopFrame
 	 (__proto__ js-hopframe-prototype)
 	 (%this %this)
-	 (srv (when (isa? srv JsServer) srv))
+	 (srv srv)
 	 (path path)
 	 (args args))))
 
@@ -417,27 +416,10 @@
 	     sans-srv))))
 
 ;*---------------------------------------------------------------------*/
-;*    json-parser ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (json-parser %this)
-   (lambda (ip ctx)
-      (js-json-parser ip #f #f #f %this)))
-
-;*---------------------------------------------------------------------*/
-;*    x-javascript-parser ...                                          */
-;*---------------------------------------------------------------------*/
-(define (x-javascript-parser %this)
-   (lambda (ip ctx)
-      (read-char ip)
-      (let ((o (js-json-parser ip #f #t #t %this)))
-	 (read-char ip)
-	 o)))
-   
-;*---------------------------------------------------------------------*/
 ;*    post ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (post this::JsHopFrame success fail-or-opt %this async)
-
+   
    (define (multipart-form-arg val)
       (cond
 	 ((string? val)
@@ -450,10 +432,10 @@
 	  `("keyword" ,(keyword->string val) "hop-encoding: keyword"))
 	 (else
 	  `("hop" ,(obj->string val 'hop-to-hop) "hop-encoding: hop"))))
-
+   
    (define (scheme->js val)
       val)
-
+   
    (define (js-get-string opt key)
       (let ((v (js-get opt key %this)))
 	 (unless (eq? v (js-undefined))
@@ -469,10 +451,10 @@
 	    :authorization auth
 	    :header (when header (js-jsobject->alist header %this))
 	    :ctx %this
-	    :json-parser (json-parser %this)
-	    :x-javascript-parser (x-javascript-parser %this)
+	    :json-parser json-parser
+	    :x-javascript-parser x-javascript-parser
 	    :args (map multipart-form-arg args))))
-
+   
    (define (post-server-promise this %this host port auth scheme)
       (with-access::JsGlobalObject %this (js-promise)
 	 (letrec ((p (js-new %this js-promise
@@ -495,7 +477,9 @@
 							       (scheme->js x)))))
 						   (lambda (x)
 						      (js-promise-async p
-							 (js-promise-reject this x)))
+							 (lambda ()
+							    (js-promise-reject p
+							       (scheme->js x)))))
 						   scheme host port
 						   user password auth)))))))
 			   2 "executor"))))
@@ -537,10 +521,10 @@
 	    :authorization auth
 	    :header (when header (js-jsobject->alist header %this))
 	    :ctx %this
-	    :json-parser (json-parser %this)
-	    :x-javascript-parser (x-javascript-parser %this)
+	    :json-parser json-parser
+	    :x-javascript-parser x-javascript-parser
 	    :args (map multipart-form-arg args))))
-
+   
    (define (post-server this success failure %this async host port auth scheme)
       (cond
 	 ((not async)
@@ -550,6 +534,68 @@
 	 (else
 	  (post-server-promise this %this host port auth scheme))))
    
+   (define (post-websocket-promise this::JsHopFrame srv::JsWebSocket)
+      (with-access::JsWebSocket srv (recvqueue)
+	 (with-access::JsGlobalObject %this (js-promise)
+	    (let ((frameid (get-frame-id)))
+	       (letrec ((p (js-new %this js-promise
+			      (js-make-function %this
+				 (lambda (_ resolve reject)
+				    (js-websocket-post srv this frameid))
+				 2 "executor"))))
+		  (cell-set! recvqueue
+		     (cons (cons frameid p) (cell-ref recvqueue)))
+		  p)))))
+   
+   (define (post-websocket-async this::JsHopFrame srv::JsWebSocket
+	      success failure)
+      (with-access::JsHopFrame this (path)
+	 (let ((callback (when (isa? success JsFunction)
+			    (lambda (x)
+			       (js-worker-push-thunk! (js-current-worker) path
+				  (lambda ()
+				     (js-call1 %this success %this
+					(scheme->js x)))))))
+	       (fail (when (isa? failure JsFunction)
+			(lambda (obj)
+			   (js-worker-push-thunk! (js-current-worker) path
+			      (lambda ()
+				 (js-call1 %this failure %this obj)))))))
+	    (with-access::JsWebSocket srv (ws recvqueue)
+	       (with-access::websocket ws (%mutex)
+		  (let ((frameid (get-frame-id)))
+		     (js-websocket-post srv this frameid)
+		     (cell-set! recvqueue
+			(cons (cons frameid (cons callback fail))
+			   (cell-ref recvqueue)))))))))
+
+   (define (post-websocket-sync this::JsHopFrame srv::JsWebSocket)
+      (with-access::JsHopFrame this (path)
+	 (with-access::JsWebSocket srv (ws recvqueue)
+	    (with-access::websocket ws (%mutex %socket)
+	       (if (socket? %socket)
+		   (let* ((frameid (get-frame-id))
+			  (cv (make-condition-variable))
+			  (cell (cons cv %mutex)))
+		      (js-websocket-post srv this frameid)
+		      (cell-set! recvqueue
+			 (cons (cons frameid cell) (cell-ref recvqueue)))
+		      (condition-variable-wait! cv %mutex)
+		      (or (car cell) (raise (cdr cell))))
+		   (js-raise-type-error %this "not connected ~s" srv))))))
+   
+   (define (post-websocket this::JsHopFrame success failure %this async srv::JsWebSocket)
+      (with-access::JsWebSocket srv (ws)
+	 (with-access::websocket ws (%mutex)
+	    (synchronize %mutex
+	       (cond
+		  ((not async)
+		   (post-websocket-sync this srv))
+		  ((or (isa? success JsFunction) (isa? failure JsFunction))
+		   (post-websocket-async this srv success failure))
+		  (else
+		   (post-websocket-promise this srv)))))))
+   
    (with-access::JsHopFrame this (srv)
       (cond
 	 ((isa? srv JsServer)
@@ -557,6 +603,8 @@
 	     (with-access::server obj (host port authorization ssl)
 		(post-server this success fail-or-opt %this async
 		   host port authorization (if ssl 'https 'http)))))
+	 ((isa? srv JsWebSocket)
+	  (post-websocket this success fail-or-opt %this async srv))
 	 ((or (isa? fail-or-opt JsFunction) (not (isa? fail-or-opt JsObject)))
 	  (post-server this success fail-or-opt %this async
 	     "localhost" (hop-port) #f 'http))
@@ -564,6 +612,16 @@
 	  (with-access::JsHopFrame this (path args)
 	     (post-options-deprecated path (map multipart-form-arg args)
 		success fail-or-opt %this async))))))
+
+;*---------------------------------------------------------------------*/
+;*    get-frame-id ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (get-frame-id)
+   (let ((v frame-id))
+      (set! frame-id (+fx 1 frame-id))
+      v))
+
+(define frame-id 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    post-options-deprecated ...                                      */
@@ -642,8 +700,8 @@
 	    :user user :password password :authorization authorization
 	    :header header
 	    :ctx %this
-	    :json-parser (json-parser %this)
-	    :x-javascript-parser (x-javascript-parser %this)
+	    :json-parser json-parser
+	    :x-javascript-parser x-javascript-parser
 	    :args args))
 
       (define (spawn-thread)
@@ -699,10 +757,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-create-service ...                                            */
 ;*    -------------------------------------------------------------    */
-;*    This function is called when the HopScript constructor           */
+;*    This function is called when the HopScript constructor.          */
 ;*    Service is directly invoked from user programs. The role         */
 ;*    of this function is to build an internal hop-service that        */
-;*    simply calls the HopScript function passed as argument.          */
+;*    merely calls the HopScript function passed as argument.          */
 ;*    The complexity of this function comes when the optional          */
 ;*    "args" arguments is an object, in which case, the function       */
 ;*    builds a service with optional named arguments.                  */
@@ -798,9 +856,6 @@
 				   ((not (js-in? ctx k obj))
 				    (js-put! obj k val #f ctx))
 				   (else
-;* 				    (error "service-pack-cgi-arguments" */
-;* 				       "not implemented"               */
-;* 				       arg)                            */
 				    (let ((old (js-get obj k ctx)))
 				       (if (pair? old)
 					   (set-cdr! (last-pair old)  val)

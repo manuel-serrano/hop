@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Fri Aug 12 13:29:51 2016 (serrano)                */
+;*    Last change :  Fri Oct 28 08:52:01 2016 (serrano)                */
 ;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -59,6 +59,7 @@
 	    (hop-apply-url::bstring ::bstring ::pair-nil)
 	    (hop-apply-service-url::bstring ::hop-service ::pair-nil)
 	    (hop-request-service-name::bstring ::http-request)
+	    (service-invoke ::hop-service ::http-request ::obj)
 	    (procedure->service::procedure ::procedure)
 	    (service-filter ::http-request)
 	    (register-service!::hop-service ::hop-service)
@@ -626,52 +627,52 @@
 		   (error "service-parse-request"
 		      (format "Illegal HTTP method (~a)" id)
 		      method))))))))
+
+;*---------------------------------------------------------------------*/
+;*    service-invoke ...                                               */
+;*---------------------------------------------------------------------*/
+(define (service-invoke svc::hop-service req::http-request vals)
    
+   (define (invoke-trace req id vals)
+      (hop-verb 2 (hop-color req req " INVOKE.svc") " "
+	 (with-output-to-string (lambda () (write-circle (cons id vals))))
+	 "\n"))
+   
+   (with-access::hop-service svc (id proc args ctx)
+      (invoke-trace req id vals)
+      (cond
+	 ((not vals)
+	  (error id "Illegal service arguments encoding" `(,id)))
+	 ((or (pair? vals) (null? vals))
+	  (if (correct-arity? proc (+fx 1 (length vals)))
+	      (let ((env (current-dynamic-env))
+		    (name id))
+		 ($env-push-trace env name #f)
+		 (let ((aux (apply proc req vals)))
+		    ($env-pop-trace env)
+		    aux))
+	      (error id
+		 (format "Wrong number of arguments (~a/~a)" (length vals)
+		    (-fx (procedure-arity proc) 1))
+		 `(,id ,@vals))))
+	 ((correct-arity? proc 2)
+	  (let ((env (current-dynamic-env))
+		(name id))
+	     ($env-push-trace env name #f)
+	     (let ((aux (proc req vals)))
+		($env-pop-trace env)
+		aux)))
+	 (else
+	  (error id
+	     (format "Wrong number of arguments (1/~a)"
+		(-fx (procedure-arity proc) 1))
+	     `(,id ,vals))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    service-handler ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (service-handler svc req)
-   
-   (define (invoke-trace req id vals)
-      (hop-verb 2 (hop-color req req " INVOKE.svc")
-	 " "
-	 (with-output-to-string
-	    (lambda ()
-	       (write-circle (cons id vals))))
-	 "\n"))
-   
-   (define (invoke vals)
-      (with-access::hop-service svc (id proc args ctx)
-	 (invoke-trace req id vals)
-	 (cond
-	    ((not vals)
-	     (error id "Illegal service arguments encoding" `(,id)))
-	    ((or (pair? vals) (null? vals))
-	     (if (correct-arity? proc (+fx 1 (length vals)))
-		 (let ((env (current-dynamic-env))
-		       (name id))
-		    ($env-push-trace env name #f)
-		    (let ((aux (apply proc req vals)))
-		       ($env-pop-trace env)
-		       aux))
-		 (error id
-		    (format "Wrong number of arguments (~a/~a)" (length vals)
-		       (-fx (procedure-arity proc) 1))
-		    `(,id ,@vals))))
-	    ((correct-arity? proc 2)
-	     (let ((env (current-dynamic-env))
-		   (name id))
-		($env-push-trace env name #f)
-		(let ((aux (proc req vals)))
-		   ($env-pop-trace env)
-		   aux)))
-	    (else
-	     (error id
-		(format "Wrong number of arguments (1/~a)"
-		   (-fx (procedure-arity proc) 1))
-		`(,id ,vals))))))
-
-   (invoke (service-parse-request svc req)))
+   (service-invoke svc req (service-parse-request svc req)))
 
 ;*---------------------------------------------------------------------*/
 ;*    procedure->service ...                                           */

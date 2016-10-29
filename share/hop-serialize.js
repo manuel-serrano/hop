@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Wed Apr  6 19:24:40 2016 (serrano)                */
+/*    Last change :  Fri Oct 28 19:47:43 2016 (serrano)                */
 /*    Copyright   :  2007-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -29,7 +29,7 @@ function HopArguments( args ) {
 /*---------------------------------------------------------------------*/
 /*    hop_bigloo_serialize ...                                         */
 /*    -------------------------------------------------------------    */
-/*    Returns a URL encode Bigloo serialization.                       */
+/*    Returns a URL encoded Bigloo serialization.                      */
 /*---------------------------------------------------------------------*/
 function hop_bigloo_serialize( item ) {
    if( hop_serialize_context.active ) {
@@ -1017,7 +1017,6 @@ function hop_bytearray_to_obj( s, extension ) {
       return read_word( szlw );
    }
 
-
    function read_size( s ) {
       var szs = s[ pointer++ ];
       return read_word( s, szs );
@@ -1513,39 +1512,39 @@ function hop_hextobuf( str ) {
 /*---------------------------------------------------------------------*/
 function hop_buffer( name, _ ) {
    switch( name ) {
-   case "JsSlowBuffer":
-      return hop_hextobuf( arguments[ 1 ] );
-      
-   case "JsFastBuffer":
-      return new Uint8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-      
-   case "JsInt8Array":
-      return new Int8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-   case "JsUint8Array":
-      return new Uint8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-   case "JsUint8ClampedArray":
-      return new Uint8ClampedArray( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-      
-   case "JsInt16Array":
-      return new Int16Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-   case "JsUint16Array":
-      return new Uint16Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-      
-   case "JsInt32Array":
-      return new Int32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-   case "JsUint32Array":
-      return new Uint32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-      
-   case "JsFloat32Array":
-      return new Float32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-   case "JsFloat64Array":
-      return new Float64Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
-      
-   case "JsDataView":
-      return new DataView( arguments[ 3 ], arguments[ 2 ], arguments[ 3 ].length );
+      case "JsSlowBuffer":
+	 return hop_hextobuf( arguments[ 1 ] );
+	 
+      case "JsFastBuffer":
+	 return new Uint8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsInt8Array":
+	 return new Int8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsUint8Array":
+	 return new Uint8Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsUint8ClampedArray":
+	 return new Uint8ClampedArray( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsInt16Array":
+	 return new Int16Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsUint16Array":
+	 return new Uint16Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsInt32Array":
+	 return new Int32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsUint32Array":
+	 return new Uint32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsFloat32Array":
+	 return new Float32Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+      case "JsFloat64Array":
+	 return new Float64Array( arguments[ 5 ], arguments[ 2 ], arguments[ 3 ] );
+	 
+      case "JsDataView":
+	 return new DataView( arguments[ 3 ], arguments[ 2 ], arguments[ 3 ].length );
 
-   case "JsArrayBuffer":
-      return hop_hextobuf( arguments[ 2 ] ).buffer;
+      case "JsArrayBuffer":
+	 return hop_hextobuf( arguments[ 2 ] ).buffer;
    }
 }
 

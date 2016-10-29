@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Oct 25 17:31:40 2016 (serrano)                */
+;*    Last change :  Thu Oct 27 07:13:21 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -276,6 +276,7 @@
 (define (filter-breaks bks::pair-nil node)
    (filter (lambda (b::J2SStmt)
 	      (or (isa? b J2SReturn)
+		  (isa? b J2SThrow)
 		  (with-access::J2SBreak b (target)
 		     (not (eq? target node)))))
       bks))
@@ -852,7 +853,7 @@
 	       (typing-seq (list test body) env fun fix)
 	       (if (=fx ofix (cell-ref fix))
 		   (return 'void envb (filter-breaks bk this))
-		   (loop (env-merge/debug env envb) (+fx i 1))))))))
+		   (loop (env-merge env envb) (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDo ...                                               */
