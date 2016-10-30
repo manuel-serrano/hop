@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Fri Oct 28 19:27:51 2016 (serrano)                */
+;*    Last change :  Sun Oct 30 16:57:48 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -241,7 +241,10 @@
 	   content-length)
    
    (define (get-chars)
-      (if (string? obj) obj (read-chars content-length obj)))
+      (cond
+	 ((string? obj) obj)
+	 ((>elong content-length #e0) (read-chars content-length obj))
+	 (else (read-string obj))))
    
    (case content-type
       ((application/x-hop)

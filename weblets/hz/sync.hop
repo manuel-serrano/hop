@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/weblets/hz/sync.hop               */
+;*    serrano/prgm/project/hop/3.1.x/weblets/hz/sync.hop               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Mar 17 09:28:32 2006                          */
-;*    Last change :  Mon May 18 20:23:43 2015 (serrano)                */
-;*    Copyright   :  2006-15 Manuel Serrano                            */
+;*    Last change :  Sun Oct 30 16:31:20 2016 (serrano)                */
+;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP hz sync                                                      */
 ;*=====================================================================*/

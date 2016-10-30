@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Sat Oct 29 08:46:34 2016 (serrano)                */
+/*    Last change :  Sat Oct 29 19:44:28 2016 (serrano)                */
 /*    Copyright   :  2004-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -689,6 +689,11 @@ function onPostMessage( e ) {
 /*    WebSocketPostFrame ...                                           */
 /*---------------------------------------------------------------------*/
 function WebSocketPostFrame( frame, succ, fail ) {
+   
+   function closeFrame( f ) {
+      if( f.fail ) f.fail( "connection closed" );
+   }
+   
    var ws = frame.srv;
 
    if( !("postHandlers" in ws) ) {
@@ -696,10 +701,6 @@ function WebSocketPostFrame( frame, succ, fail ) {
       ws.postCount = 0;
       ws.binaryType = "arraybuffer";
 
-      function closeFrame( f ) {
-	 if( f.fail ) f.fail( "connection closed" );
-      }
-      
       ws.addEventListener( "message", onPostMessage );
       ws.addEventListener( "close", function( e ) {
 	 if( ws.preOpenQueue ) { ws.preOpenQueue.forEach( closeFrame ) }

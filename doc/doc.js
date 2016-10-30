@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/doc/doc.js                        */
+/*    serrano/prgm/project/hop/3.1.x/doc/doc.js                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Fri Dec 18 08:07:54 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Sat Oct 29 10:08:02 2016 (serrano)                */
+/*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
 /*=====================================================================*/
@@ -168,7 +168,16 @@ function compileSection( page ) {
            jscript=${jscript}
            rts=${false}/>
 
-     <body data-spy="scroll" data-target="#navbar" class=${title}>
+     <body data-spy="scroll" data-target="#navbar" class=${title}
+           onscroll=~{
+	      var top = (window.pageYOffset || document.scrollTop)-(document.clientTop||0);
+	      if( top > 180 ) {
+		 document.body.setAttribute( "scrolled", "yes" );
+		 console.log( "top=", top );
+	      } else {
+		 document.body.setAttribute( "scrolled", "no" );
+	      }
+	   } >
        ~{ $('body').scrollspy( { target: '#navbar' }) }
        <docxml.navbar title=${title} key=${key}>
          ${chapters}
