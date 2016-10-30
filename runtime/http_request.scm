@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/http_request.scm          */
+;*    serrano/prgm/project/hop/3.1.x/runtime/http_request.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Sat Sep 19 07:06:31 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Sun Oct 30 19:31:36 2016 (serrano)                */
+;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP request management                                      */
 ;*    -------------------------------------------------------------    */
@@ -144,7 +144,14 @@
                                ((not i)
 				;; file name canonicalization is needed
 				;; for authentication
-				(file-name-canonicalize! (url-decode! path)))
+				(let* ((dpath (uri-decode-component! path))
+				       (i (string-index dpath #\?)))
+				   (if i
+				       (begin
+					  (set! query (substring dpath (+fx i 1)))
+					  (file-name-canonicalize!
+					     (substring dpath 0 i)))
+				       (file-name-canonicalize! dpath))))
                                ((>fx i 0)
                                 (let ((l (string-length path)))
                                    (set! query (substring path (+fx i 1) l)))
