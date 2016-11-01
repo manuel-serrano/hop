@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/asyncSrvWS.js    */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/serv/asyncSrvWS.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Tue Sep  15 12:42:26 2015 (serrano)               */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Mon Oct 31 21:19:37 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test asynchronous responses in services proxying WebSockets      */
 /*=====================================================================*/
@@ -16,7 +16,7 @@ var clientModule = require.resolve( './aux/stdClient.js' );
 
 var NUMCLIENTS = 1; // number of concurrent clients
 var NUMCALLS = 100; // number of service invocations per client
-var TIMEOUT = 10000; //global timeout (test will fail if not completed by then)
+var TIMEOUT = 3000; //global timeout (test will fail if not completed by then)
 // change TIMEOUT value to match your hardware
 
 // The WebSocket server

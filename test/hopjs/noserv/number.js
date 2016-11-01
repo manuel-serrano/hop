@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Wed Oct 26 16:18:30 2016 (serrano)                */
+/*    Last change :  Mon Oct 31 19:22:37 2016 (serrano)                */
 /*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -53,7 +53,7 @@ var k = 0.07;
 assert.equal( k.toFixed( 2 ), "0.07" );
 
 var l = -0.07;
-assert.equal( l.toFixed( 2 ), "-0.0.7" );
+assert.equal( l.toFixed( 2 ), "-0.07" );
 
 var m = 0.07;
 assert.equal( m.toFixed( 4 ), "0.0700" );

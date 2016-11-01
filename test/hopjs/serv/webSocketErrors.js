@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Oct 02 00:43:00 2015                          */
-/*    Last change :  Thu Oct 13 09:03:42 2016 (serrano)                */
+/*    Last change :  Mon Oct 31 21:07:32 2016 (serrano)                */
 /*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Negative test for webSockets                                     */
@@ -119,7 +119,6 @@ var testSuite = [
       console.log( 'TEST.1: server initiated close, test that close event is received on the server side' );
       var ws;
       ws = new WebSocket( URL );
-      console.error( "URL=", URL );
       console.log( 'client state:', ws.readyState );
       ws.onopen = function() {
 	 console.log( 'client state:', ws.readyState );

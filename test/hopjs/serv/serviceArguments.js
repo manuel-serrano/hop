@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../project/hop/3.0.x/test/hopjs/serv/serviceArguments.js        */
+/*    .../project/hop/3.1.x/test/hopjs/serv/serviceArguments.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Mon Jan 18 09:29:02 2016 (serrano)                */
+/*    Last change :  Mon Oct 31 21:11:39 2016 (serrano)                */
 /*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
@@ -97,7 +97,7 @@ var svc11 = new Service( fn11 );
 var testSuite = [
    function() {
       svc().post( function( result ) {
-	 console.error( "result=", result );
+	 console.log( "result=", result );
 	 assert.equal( result, 0, "svc" );
 	 pass();
       }, fail );

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Oct 24 08:16:00 2016 (serrano)                */
+;*    Last change :  Tue Nov  1 08:58:07 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -119,24 +119,39 @@
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5
 	 (define (js-string-construct o::JsString . arg)
 	    
-	    (define (set-string! str)
+	    (define (set-ascii-string! str)
 	       (let ((len (instantiate::JsValueDescriptor
 			     (name 'length)
 			     (writable #f)
 			     (configurable #f)
 			     (enumerable #f)
-			     (value (utf8-codeunit-length str)))))
+			     (value (string-length str)))))
 		  (with-access::JsString o (val properties)
-		     (set! val (js-string->jsstring str))
+		     (set! val (js-ascii->jsstring str))
 		     (set! properties (list len)))))
+	    
+	    (define (set-string! str)
+	       (cond
+		  ((string? str)
+		   (set-ascii-string! str))
+		  (else
+		   (let ((len (instantiate::JsValueDescriptor
+				 (name 'length)
+				 (writable #f)
+				 (configurable #f)
+				 (enumerable #f)
+				 (value (js-jsstring-codeunit-length str)))))
+		      (with-access::JsString o (val properties)
+			 (set! val str)
+			 (set! properties (list len)))))))
 
 	    (if (null? arg)
 		;; 2
-		(set-string! "")
+		(set-ascii-string! "")
 		(let ((value (car arg)))
 		   (if (string? value)
-		       (set-string! value)
-		       (set-string! (js-tostring value %this))))))
+		       (set-ascii-string! value)
+		       (set-string! (js-cast-string %this value))))))
 
 	 ;; string allocation
 	 (define (js-string-alloc::JsString constructor::JsFunction)
@@ -217,9 +232,9 @@
 	 js-string)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-cast-jsstring ...                                             */
+;*    js-cast-string ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-cast-jsstring %this obj)
+(define-inline (js-cast-string %this::JsGlobalObject obj)
    (cond
       ((js-jsstring? obj)
        obj)
@@ -230,9 +245,9 @@
        (js-tojsstring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-cast-string ...                                               */
+;*    js-cast-string-normalize! ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-cast-string::bstring %this obj)
+(define-inline (js-cast-string-normalize!::obj %this::JsGlobalObject obj)
    (cond
       ((string? obj)
        obj)
@@ -240,7 +255,7 @@
        (js-jsstring-normalize! obj))
       ((isa? obj JsString)
        (with-access::JsString obj (val)
-	  (js-cast-string %this val)))
+	  (js-cast-string-normalize! %this val)))
       (else
        (js-tostring (js-toobject %this obj) %this))))
 
@@ -311,7 +326,7 @@
    ;; charAt
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.4
    (define (charat this index)
-      (js-jsstring-charat (js-cast-string %this this) index %this))
+      (js-jsstring-charat (js-cast-string-normalize! %this this) index %this))
    
    (js-bind! %this obj 'charAt
       :value (js-make-function %this charat 1 'charAt)
@@ -320,7 +335,7 @@
    ;; charCodeAt
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.5
    (define (charcodeat this index)
-      (js-jsstring-charcodeat (js-cast-string %this this) index %this))
+      (js-jsstring-charcodeat (js-cast-string-normalize! %this this) index %this))
    
    (js-bind! %this obj 'charCodeAt
       :value (js-make-function %this charcodeat 1 'charCodeAt)
@@ -329,7 +344,7 @@
    ;; concat
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.6
    (define (concat this . rest)
-      (let ((left (js-cast-jsstring %this this)))
+      (let ((left (js-cast-string %this this)))
 	 (match-case rest
 	    (()
 	     left)
@@ -363,15 +378,9 @@
    ;; indexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.7
    (define (indexof this::obj search position)
-      (let* ((s (js-cast-string %this this))
-	     (searchstr (js-tostring search %this))
-	     (pos (if (eq? position (js-undefined))
-		      0
-		      (js-tointeger position %this)))
-	     (len (string-length s))
-	     (ulen (utf8-string-length s))
-	     (start (inexact->exact (min (max pos 0) ulen))))
-	 (js-jsstring-indexof s searchstr start %this)))
+      (let ((searchstr (js-tostring search %this)))
+	 (js-jsstring-indexof
+	    (js-cast-string-normalize! %this this) searchstr position %this)))
 
    (js-bind! %this obj 'indexOf
       :value (js-make-function %this indexof 1 'indexOf)
@@ -382,7 +391,7 @@
    (define (last-indexof this search position)
       (let ((searchstr (js-tostring search %this)))
 	 (js-jsstring-lastindexof
-	    (js-cast-string %this this) searchstr position %this)))
+	    (js-cast-string-normalize! %this this) searchstr position %this)))
    
    (js-bind! %this obj 'lastIndexOf
       :value (js-make-function %this last-indexof 1 'lastIndexOf)
@@ -391,7 +400,7 @@
    ;; localeCompare
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.9
    (define (locale-compare this::obj that)
-      (js-jsstring-localecompare (js-cast-string %this this) that %this))
+      (js-jsstring-localecompare (js-cast-string-normalize! %this this) that %this))
    
    (js-bind! %this obj 'localeCompare
       :value (js-make-function %this locale-compare 1 'localeCompare)
@@ -400,7 +409,7 @@
    ;; naturalCompare
    ;; hopscript extension
    (define (natural-compare this::obj that)
-      (js-jsstring-naturalcompare (js-cast-string %this this) that %this))
+      (js-jsstring-naturalcompare (js-cast-string-normalize! %this this) that %this))
    
    (js-bind! %this obj 'naturalCompare
       :value (js-make-function %this natural-compare 1 'naturalCompare)
@@ -409,7 +418,7 @@
    ;; match
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.10
    (define (match this::obj regexp)
-      (js-jsstring-match (js-cast-jsstring %this this) regexp %this))
+      (js-jsstring-match (js-cast-string %this this) regexp %this))
    
    (js-bind! %this obj 'match
       :value (js-make-function %this match 1 'match)
@@ -418,7 +427,7 @@
    ;; replace
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11
    (define (replace this::obj searchvalue replacevalue)
-      (js-jsstring-replace (js-cast-jsstring %this this)
+      (js-jsstring-replace (js-cast-string %this this)
 	 searchvalue replacevalue %this))
 
       
@@ -430,7 +439,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.12
    (define (search this::obj regexp)
       (with-access::JsGlobalObject %this (js-regexp)
-	 (let ((string (js-cast-string %this this))
+	 (let ((string (js-jsstring->string (js-cast-string %this this)))
 	       (rx (if (isa? regexp JsRegExp)
 		       regexp
 		       (js-new %this js-regexp regexp))))
@@ -446,9 +455,8 @@
    ;; slice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.13
    (define (slice this::obj start end)
-      (let* ((jss (js-cast-jsstring %this this))
-	     (s (js-jsstring->string jss))
-	     (len (utf8-string-length s))
+      (let* ((jss (js-cast-string %this this))
+	     (len (js-jsstring-length jss))
 	     (intstart (js-tointeger start %this))
 	     (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
 	     (from (->fixnum
@@ -462,7 +470,7 @@
 	     (span (maxfx (-fx to from) 0))
 	     (end (+ from span)))
 	 (if (or (>fx from 0) (<fx end len))
-	     (js-string->jsstring (utf8-substring s from end))
+	     (js-jsstring-substring jss from end %this)
 	     jss)))
    
    (js-bind! %this obj 'slice
@@ -472,7 +480,7 @@
    ;; split
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.14
    (define (split this::obj separator limit)
-      (js-jsstring-split (js-cast-jsstring %this this) separator limit %this))
+      (js-jsstring-split (js-cast-string %this this) separator limit %this))
    
    (js-bind! %this obj 'split
       :value (js-make-function %this split 2 'split)
@@ -481,7 +489,7 @@
    ;; substring
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.15
    (define (js-substring this::obj start end)
-      (js-jsstring-substring (js-cast-string %this this) start end %this))
+      (js-jsstring-substring (js-cast-string-normalize! %this this) start end %this))
    
    (js-bind! %this obj 'substring
       :value (js-make-function %this js-substring 2 'substring)
@@ -490,7 +498,7 @@
    ;; toLowerCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.16
    (define (tolowercase this::obj)
-      (js-jsstring-tolowercase (js-cast-string %this this)))
+      (js-jsstring-tolowercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj 'toLowerCase
       :value (js-make-function %this tolowercase 0 'toLowerCase)
@@ -499,9 +507,8 @@
    ;; toLocaleLowerCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.17
    (define (tolocalelowercase this::obj)
-      (let ((s (js-cast-string %this this)))
-	 (js-string->jsstring
-	    (utf8-string-locale-downcase s))))
+      (js-jsstring-tolocalelowercase (js-cast-string-normalize! %this this)))
+   
    (js-bind! %this obj 'toLocaleLowerCase
       :value (js-make-function %this tolocalelowercase 0 'toLocaleLowerCase)
       :enumerable #f)
@@ -509,7 +516,7 @@
    ;; toUpperCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.18
    (define (touppercase this::obj)
-      (js-jsstring-touppercase (js-cast-string %this this)))
+      (js-jsstring-touppercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj 'toUpperCase
       :value (js-make-function %this touppercase 0 'toUpperCase)
@@ -518,9 +525,7 @@
    ;; toLocaleUpperCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.19
    (define (tolocaleuppercase this::obj)
-      (let ((s (js-cast-string %this this)))
-	 (js-string->jsstring
-	    (utf8-string-locale-upcase s))))
+      (js-jsstring-tolocaleuppercase (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj 'toLocaleUpperCase
       :value (js-make-function %this tolocaleuppercase 0 'toLocaleUpperCase)
@@ -529,7 +534,7 @@
    ;; trim
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.20
    (define (trim this::obj)
-      (js-jsstring-trim (js-cast-string %this this)))
+      (js-jsstring-trim (js-cast-string-normalize! %this this)))
    
    (js-bind! %this obj 'trim
       :value (js-make-function %this trim 0 'trim)
@@ -551,19 +556,19 @@
       ;; js-make-iterator (see generator.scm) function
       (letrec ((%gen (js-make-generator
 			(lambda (%v %e)
-			   (let* ((val (js-tostring this %this))
-				  (len (utf8-string-length val)))
-			      (let ((i 0))
+			   (let* ((val (js-cast-string %this this))
+				  (len (fixnum->uint32
+					  (js-jsstring-character-length val))))
+			      (let ((i #u32:0))
 				 (let loop ((%v %v) (%e %e))
-				    (if (>=fx i len)
+				    (if (>=u32 i len)
 					(js-generator-yield %gen
 					   (js-undefined) #t
 					   loop %this)
-					(let ((val (js-string->jsstring
-						      (utf8-string-ref val i))))
-					   (set! i (+fx i 1))
+					(let ((char (js-jsstring-character-ref val i)))
+					   (set! i (+u32 i #u32:1))
 					   (js-generator-yield %gen
-					      val #f
+					      char #f
 					      loop %this)))))))
 			(with-access::JsGlobalObject %this (js-generator-prototype)
 			   js-generator-prototype)
@@ -603,7 +608,8 @@
       (vector-append
 	 (apply vector
 	    (map! js-integer->jsstring
-	       (iota (utf8-string-length (js-jsstring->string val)))))
+	       (iota
+		  (js-jsstring-character-length (js-cast-string %this val)))))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -614,13 +620,11 @@
 (define-method (js-has-property o::JsString p %this)
    (let ((index (js-toindex p)))
       (if (js-isindex? index)
-	  (with-access::JsString o (val)
-	     (let* ((val (js-jsstring->string val))
-		    (len (utf8-string-length val))
-		    (index (uint32->fixnum index)))
-		(if (<=fx len index)
-		    (call-next-method)
-		    #t)))
+	  (let* ((len (js-jsstring-character-length (js-cast-string %this o)))
+		 (index (uint32->fixnum index)))
+	     (if (<=fx len index)
+		 (call-next-method)
+		 #t))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/

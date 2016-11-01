@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Oct 25 18:58:42 2016 (serrano)                */
+;*    Last change :  Mon Oct 31 21:22:13 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -835,9 +835,9 @@
       (define (js-object-prototype-tostring this)
 	 (cond
 	    ((eq? this (js-undefined))
-	     (js-string->jsstring "[object Undefined]"))
+	     (js-ascii->jsstring "[object Undefined]"))
 	    ((eq? this (js-null))
-	     (js-string->jsstring "[object Null]"))
+	     (js-ascii->jsstring "[object Null]"))
 	    ((isa? this JsWrapper)
 	     (with-access::JsWrapper this (obj)
 		(js-string->jsstring (js-tostring obj %this))))

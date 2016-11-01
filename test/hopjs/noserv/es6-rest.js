@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/es6-rest.js     */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/es6-rest.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sat Oct 10 20:31:38 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Mon Oct 31 20:36:06 2016 (serrano)                */
+/*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 rest arguments                            */
 /*=====================================================================*/
@@ -750,7 +750,7 @@ console.log( "ok.4" );
 _foo6.apply( undefined, [ 1, 2, 3, 4, 5, 6, 7, 8 ] );
 console.log( "ok.5" );
 foo6.apply( undefined, [ 1, 2, 3, 4, 5, 6, 7, 8 ] );
-console.error( "ok.6" );
+console.log( "ok.6" );
 o.f.apply( undefined, [ 1, 2, 3, 4, 5, 6, 7, 8 ] );
 _foo6.call( o, 1, 2, 3, 4, 5, 6, 7, 8 );
 
