@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Fri Oct 28 10:04:57 2016 (serrano)                */
+;*    Last change :  Mon Oct 31 20:50:50 2016 (serrano)                */
 ;*    Copyright   :  2012-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -691,6 +691,8 @@
 							     (multiple-value-bind (opcode payload)
 								(websocket-read sock)
 								(case (bit-and opcode #xf)
+								   ((0)
+								    (close))
 								   ((1)
 								    ;; text message
 								    (cond
@@ -970,5 +972,7 @@
 	     (values b (payload in)))
 	    ((integer? b)
 	     (values b #f))
+	    ((eof-object? b)
+	     (values 0 #f))
 	    (else
 	     (values -1 #f))))))

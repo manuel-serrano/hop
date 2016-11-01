@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sat Oct 29 07:54:37 2016 (serrano)                */
+;*    Last change :  Mon Oct 31 20:51:15 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -708,6 +708,8 @@
 				      (loop))
 				     (else
 				      (onerror))))
+				 ((0)
+				  (onclose))
 				 (else
 				  (onerror))))))))))
       ws))

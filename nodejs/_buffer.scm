@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Mon Oct 24 08:08:04 2016 (serrano)                */
+;*    Last change :  Mon Oct 31 21:05:47 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -1050,6 +1050,9 @@
 		       (/fx (utf8-codeunit-length (js-jsstring->string string)) 2))
 		      ((string-ci=? enc "base64")
 		       (string-length (base64-decode (js-jsstring->string string) #t)))
+		      ((or (string-ci=? enc "ascii")
+			   (string=? enc "latin1"))
+		       (string-length (js-jsstring->string string)))
 		      ((or (string-ci=? enc "ascii")
 			   (string=? enc "binary")
 			   (string=? enc "buffer")

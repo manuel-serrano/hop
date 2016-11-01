@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Oct 25 17:52:15 2016 (serrano)                */
+;*    Last change :  Tue Nov  1 07:53:34 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -46,7 +46,9 @@
      ("substring" js-jsstring-maybe-substring 2 2)
      ("substr" js-jsstring-maybe-substr 2 2)
      ("toUpperCase" js-jsstring-maybe-touppercase 0 0)
+     ("toLocaleUpperCase" js-jsstring-maybe-tolocaleuppercase 0 0)
      ("toLowerCase" js-jsstring-maybe-tolowercase 0 0)
+     ("toLocaleLowerCase" js-jsstring-maybe-tolocalelowercase 0 0)
      ("split" js-jsstring-maybe-split 2 1)
      ("replace" js-jsstring-maybe-replace 2 2)
      ("match" js-jsstring-maybe-match 1 1 1)
@@ -3196,7 +3198,7 @@
 		 %this)))
 	 ((and (eq? (j2s-type obj) 'string) (j2s-field-length? field))
 	  (epairify-deep loc
-	     `(js-jsstring-character-length
+	     `(js-jsstring-codeunit-length
 		 ,(j2s-scheme obj mode return conf hint))))
 	 (else
 	  (epairify-deep loc

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Sat Aug 13 07:08:00 2016 (serrano)                */
+;*    Last change :  Mon Oct 31 07:58:56 2016 (serrano)                */
 ;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
@@ -253,7 +253,12 @@
    
    (define (with-hop-remote svc args success failure opts)
       `(with-hop-remote (,svc ,@args) ,success ,failure ,@(reverse! opts)))
-   
+
+   (define (with-hop-remote-local host port svc a success fail auth header args)
+      (if (and (not host) (not port))
+	  (with-hop-local svc a success fail auth header)
+	  (with-hop-remote svc a success fail args)))
+
    (match-case x
       ((?- (?svc . ?a) . ?opts)
        ;; a remote call
@@ -268,25 +273,28 @@
 		  (auth #f))
 	  (cond
 	     ((null? opts)
-	      (let ((nx (let ((wh (if (and (not host) (not port))
-				      (with-hop-local svc a success fail auth header)
-				      (with-hop-remote svc a success fail args))))
-			   (cond
-			      (sync
-			       wh)
-			      (fail
-			       `(let ((fail ,fail))
+	      (let ((nx (cond
+			   (sync
+			    (with-hop-remote-local host port svc
+			       a success #f auth header args))
+			   (fail
+			    (let ((failid (gensym 'fail)))
+			       `(let ((,failid ,fail))
 				   (with-handler
 				      (lambda (e)
-					 (if (procedure? fail)
-					     (fail e)
+					 (if (procedure? ,failid)
+					     (,failid e)
 					     (exception-notify e)))
-				      (begin ,wh #unspecified))))
-			      (else
-			       `(with-handler
-				  (lambda (e)
-				     (exception-notify e))
-				  (begin ,wh #unspecified)))))))
+				      (begin ,(with-hop-remote-local host port svc
+						 a success failid auth header args)
+					     #unspecified)))))
+			   (else
+			    `(with-handler
+			       exception-notify
+			       (begin
+				  ,(with-hop-remote-local host port svc
+				      a success #f auth header args)
+				  #unspecified))))))
 		 (e (evepairify nx x) e)))
 	     ((not (keyword? (car opts)))
 	      (cond

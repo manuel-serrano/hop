@@ -78,10 +78,13 @@ run() {
       echo ""
       echo -n "$hop --no-zeroconf $* ..."
     fi
-    $hop --no-zeroconf $* 2>&1 | tee -a /tmp/TEST-HOPJS-ALL.out > /tmp/TEST-HOPJS.out 
+    $hop --no-zeroconf $* 2>&1 > /tmp/TEST-HOPJS.out
+    lastres=$?
+    
+    cat /tmp/TEST-HOPJS.out >> TEST-HOPJS-ALL.out
     echo "" >> /tmp/TEST-HOPJS-ALL.out
 
-    if [ $? = 0 ]; then
+    if [ "$lastres" = "0" ]; then
       echo "ok.";
       success=`expr $success + 1`
     else

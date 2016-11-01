@@ -88,7 +88,7 @@ function test() {
       }
    }, function(result) {
       result.on( 'data', function( chunk ) {
-	 assert.equal( chunk.toString(), "3" );
+	 assert.equal( eval( chunk.toString() ), 3 );
       } );
    } );
    req.write( postData );

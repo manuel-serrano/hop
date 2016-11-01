@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Oct 27 07:13:21 2016 (serrano)                */
+;*    Last change :  Mon Oct 31 18:53:15 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -686,7 +686,23 @@
 (define-walk-method (typing this::J2SParen env::pair-nil fun fix::cell)
    (with-access::J2SParen this (expr)
       (typing expr env fun fix)))
-  
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SComprehension ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (typing this::J2SComprehension env::pair-nil fun fix::cell)
+   (with-access::J2SComprehension this (decls iterables test expr)
+      (multiple-value-bind (_ envi bki)
+	 (typing-seq iterables env fun fix)
+	 (let loop ((env envi)
+		    (i 0))
+	    (let ((ofix (cell-ref fix)))
+	       (multiple-value-bind (_ envb bk)
+		  (typing-seq (list test expr) env fun fix)
+		  (if (=fx ofix (cell-ref fix))
+		      (return 'array envb (filter-breaks (append bk bki) this))
+		      (loop (env-merge env envb) (+fx i 1)))))))))
+		  
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SNop ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -747,6 +763,12 @@
 (define-walk-method (typing this::J2SSeq env::pair-nil fun fix::cell)
    (with-access::J2SSeq this (nodes)
       (typing-seq nodes env fun fix)))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SLabel ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SLabel env::pair-nil fun fix::cell)
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SLetBlock ...                                           */
@@ -842,12 +864,9 @@
 ;*    typing ::J2SWhile ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SWhile env::pair-nil fun fix::cell)
-;*    (tprint "WHILE =================================" fix            */
-;*       " " (dump-env env))                                           */
    (with-access::J2SWhile this (test body)
       (let loop ((env env)
 		 (i 0))
-;* 	 (tprint "WHILE." i)                                           */
 	 (let ((ofix (cell-ref fix)))
 	    (multiple-value-bind (_ envb bk)
 	       (typing-seq (list test body) env fun fix)

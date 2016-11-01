@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Oct 25 17:57:43 2016 (serrano)                */
+;*    Last change :  Tue Nov  1 11:59:16 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -355,9 +355,8 @@
 		    (j2s-hint-fun fun args)))
 		((isa? decl J2SDeclFun)
 		 (with-access::J2SDeclFun decl (ronly (fun val))
-		    (if ronly
-			(j2s-hint-fun fun args)
-			(j2s-hint-unknown-function fun args))))
+		    (when ronly
+		       (j2s-hint-fun fun args))))
 		(else
 		 (j2s-hint-unknown-function fun args)))))
 	 (else

@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_http.scm                  */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/_http.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Wed May 20 19:06:36 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Tue Nov  1 12:35:55 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
 ;*=====================================================================*/
@@ -54,6 +54,17 @@
 	 ((not (string? env)) 0)
 	 ((string-contains env "_http") 2)
 	 (else 0))))
+
+(define-expander set-input-port-position!
+   (lambda (x e)
+      (match-case x
+	 ((?- ?port ?pos)
+	  (e `(with-handler
+		 (lambda (e)
+		    (tprint "GLOP")
+		    (exception-notify e))
+		 ((car (cons set-input-port-position! '())) ,port ,pos))
+	     e)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ->fixnum ...                                                     */

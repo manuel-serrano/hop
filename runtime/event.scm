@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Aug 17 07:19:21 2016 (serrano)                */
+;*    Last change :  Mon Oct 31 09:43:44 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -65,16 +65,8 @@
 	       (mutex::mutex read-only (default (make-mutex)))
 	       (cells::pair-nil (default '()))
 	       (head::pair-nil (default '()))
-	       (tail::pair-nil (default '())))
+	       (tail::pair-nil (default '()))))
 
-	    ;; hopsocket for server-to-server listeners
-	    (class hopsocket
-	       (mutex::mutex read-only (default (make-mutex)))
-	       (key::bstring read-only)
-	       (socket::socket read-only)
-	       (thread::thread read-only)
-	       (listeners::pair-nil (default '()))))
-	    
    (export  (class event
 	       (name::bstring read-only)
 	       (target::obj read-only)
@@ -87,6 +79,7 @@
 	    (class server-event::websocket-event)
 
 	    (class server
+	       (mutex::mutex read-only (default (make-mutex)))
 	       (host::bstring read-only)
 	       (port::int read-only)
 	       (ssl::bool (default #f))
@@ -97,6 +90,7 @@
 	       (%key (default #f)))
 	    
 	    (generic server-init! ::server)
+	    (generic server-reset! ::server)
 	    
 	    (generic add-event-listener! ::obj ::obj ::procedure . l)
 	    (generic remove-event-listener! ::obj ::obj ::procedure . l)
@@ -124,10 +118,6 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::obj ...                                    */
-;*    -------------------------------------------------------------    */
-;*    This generic function is for the time being not used in the Hop  */
-;*    server but it acts as a placeholder for future implementations   */
-;*    that might need to signal asynchronously event to the server.    */
 ;*---------------------------------------------------------------------*/
 (define-generic (add-event-listener! obj::obj event proc . capture)
    (if (and (string? event) (string? obj))
@@ -217,51 +207,82 @@
 			   (let ((event (message->event k id text)))
 			      (apply-listeners ltns event))))))))))
    
-   (with-access::server srv (host port ssl authorization %websocket %key)
-      (unless %websocket
-	 (with-hop (string-append (hop-service-base) "/public/server-event/info")
-	    :host host :port port
-	    :authorization authorization
-	    :ssl ssl
-	    :sync #t
-	    (lambda (v)
-	       (let* ((key (vector-ref v 2))
-		      (url (format "~a://~a:~a~a/public/server-event/websocket?key=~a"
-			      (if ssl "wss" "ws") host port (hop-service-base)
-			      key)))
-		  (set! %key key)
-		  (set! %websocket
-		     (instantiate::websocket
-			(url url)
-			(authorization authorization)
-			(onmessages (list parse-message))))
-		  (websocket-connect! %websocket)))))))
+   (with-access::server srv (host port ssl authorization %websocket %key mutex)
+      (synchronize mutex
+	 (unless %websocket
+	    (with-hop ((hop-event-info-service))
+	       :host host :port port
+	       :authorization authorization
+	       :ssl ssl
+	       :sync #t
+	       (lambda (v)
+		  (let* ((key (vector-ref v 2))
+			 (url (format "~a://~a:~a~a/public/server-event/websocket?key=~a"
+				 (if ssl "wss" "ws") host port (hop-service-base)
+				 key)))
+		     (set! %key key)
+		     (set! %websocket
+			(instantiate::websocket
+			   (url url)
+			   (authorization authorization)
+			   (onmessages (list parse-message))))
+		     (websocket-connect! %websocket))))))))
+
+;*---------------------------------------------------------------------*/
+;*    server-reset! ...                                                */
+;*---------------------------------------------------------------------*/
+(define-generic (server-reset! obj::server)
+   (with-access::server obj (mutex)
+      (synchronize mutex
+	 (server-reset-sans-lock! obj))))
+
+;*---------------------------------------------------------------------*/
+;*    server-reset-sans-lock! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (server-reset-sans-lock! obj::server)
+   (with-access::server obj (%websocket %key)
+      (websocket-close %websocket)
+      (set! %websocket #f)
+      (set! %key #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-event-listener! ::server ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! obj::server event proc . capture)
-   (server-init! obj)
-   (with-access::server obj (host port ssl authorization %key listeners)
-      (with-hop (format "~a/public/server-event/register?event=~a&key=~a&mode=websocket"
-		   (hop-service-base) event %key)
-	 :host host :port port
-	 :authorization authorization
-	 :ssl ssl
-	 (lambda (v)
-	    (synchronize *event-mutex*
-	       (set! listeners (cons (cons event proc) listeners)))))))
+   (let loop ((armed #f))
+      (server-init! obj)
+      (with-access::server obj (mutex host port ssl authorization %key listeners)
+	 (with-hop ((hop-event-register-service) :event event
+		      :key %key :mode "websocket")
+	    :host host :port port
+	    :authorization authorization
+	    :ssl ssl
+	    (lambda (v)
+	       (synchronize mutex
+		  (set! listeners (cons (cons event proc) listeners))))
+	    (lambda (exn)
+	       (if (isa? exn xml-http-request)
+		   (with-access::xml-http-request exn (status input-port header)
+		      (if (and (not armed) (=fx status 500))
+			  (let ((badkey (read-string input-port)))
+			     (when (string=? (md5sum %key) badkey)
+				(server-reset! obj)
+				(loop #t)))
+			  (tprint (read-string input-port))))
+		   (exception-notify exn)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ::server ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (remove-event-listener! obj::server event proc . capture)
-   (with-access::server obj (listeners)
-      (synchronize *event-mutex*
+   (with-access::server obj (listeners mutex)
+      (synchronize mutex
 	 (set! listeners
 	    (filter (lambda (l)
 		       (not (and (eq? (cdr l) proc) (string=? (car l) event))))
-	       listeners)))))
+	       listeners))
+	 (when (null? listeners)
+	    (server-reset-sans-lock! obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
@@ -277,7 +298,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    event services ...                                               */
 ;*---------------------------------------------------------------------*/
-(define *port-service* #f)
+(define *info-service* #f)
 (define *websocket-service* #t)
 (define *register-service* #f)
 (define *unregister-service* #f)
@@ -588,7 +609,7 @@
 			    (websocket-proxy-response req)
 			    (websocket-register-new-connection! req key)))))))
 	 
-	 (set! *port-service*
+	 (set! *info-service*
 	    (service :name "public/server-event/info"
 	       :id server-event
 	       :timeout 0
@@ -862,7 +883,9 @@
 		   (instantiate::http-response-string))
 		(begin
 		   (trace-item "keylist=" *websocket-response-list*)
-		   (error "server-event-register" "Illegal websocket entry" key))))))
+		   (instantiate::http-response-string
+		      (start-line "HTTP/1.0 500 Illegal key")
+		      (body (md5sum (symbol->string! key)))))))))
 
    (with-trace 'event "ws-register-event!"
       (synchronize *event-mutex*
@@ -1511,7 +1534,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-server-listener! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (add-server-listener! obj::bstring event::bstring proc::procedure capture)
+(define (add-server-listener! event::bstring srv::bstring proc::procedure capture)
 
    (define (parse-host host auth)
       (let ((l (string-split host ":")))
@@ -1525,183 +1548,29 @@
 	     (parse-host str #f)
 	     (parse-host (cadr s) (car s)))))
 
-   (define (register-event! host port auth hs)
-      (with-access::hopsocket hs (mutex key listeners key)
-	 (with-hop (*register-service* :event obj :key key :mode "websocket")
-	    :authorization auth
-	    :host host :port port
-	    (lambda (_)
-	       (synchronize mutex
-		  (set! listeners
-		     (cons (cons obj proc) listeners)))))))
-
-   (define (get-hopsocket! host port auth key)
-      (let* ((sock (make-client-socket host port))
-	     (path (format "~a/public/server-event/websocket?key=~a"
-		      (hop-service-base)
-		      key)))
-	 (letrec* ((th (cond-expand
-			  (enable-threads
-			     (instantiate::hopthread
-				(body (lambda () (hopsocket-loop hs)))))
-			  (else
-			   (error "add-server-listener!"
-			      "server listener requires thread support"
-			      #f))))
-		   (hs (instantiate::hopsocket
-			  (key key)
-			  (socket sock)
-			  (thread th))))
-	    (hashtable-put! *server-listeners* event hs)
-	    (http :socket sock
-	       :host host
-	       :port port
-	       :path path
-	       :authorization auth
-	       :header `((origin ,(format "~a:~a" (hostname) (hop-port)))
-			 (WebSocket-Protocol "ws")))
-	    (let* ((in (socket-input sock))
-		   (line (read-line in))
-		   (upgrade (read-line in))
-		   (conn (read-line in))
-		   (origin (read-line in))
-		   (location (read-line in))
-		   (proto (read-line in)))
-	       (unless (string=? proto "")
-		  (read-line in)))
-	    (thread-start! th)
-	    hs)))
-
-   (define (parse-websocket-envelope buf len)
-      (cond
-	 ((pregexp-match "<x name='([^']*)'>"buf)
-	  => (lambda (m)
-		(let* ((name (cadr m))
-		       (xml (substring buf
-			       (+fx (string-length name) 11)
-			       (-fx len 4))))
-		   (values name xml))))
-	 ((pregexp-match "<s name='([^']*)'>" buf)
-	  => (lambda (m)
-		(let* ((name (cadr m))
-		       (url (substring buf
-			       (+fx (string-length name) 11)
-			       (-fx len 4))))
-		   (values name (url-decode url)))))
-	 ((pregexp-match "<i name='([^']*)'>"buf)
-	  => (lambda (m)
-		(let* ((name (cadr m))
-		       (int (substring buf
-			       (+fx (string-length name) 11)
-			       (-fx len 4))))
-		   (values name (string->integer int)))))
-	 ((pregexp-match "<f name='([^']*)'>" buf)
-	  => (lambda (m)
-		(let* ((name (cadr m))
-		       (real (substring buf
-				(+fx (string-length name) 11)
-				(-fx len 4))))
-		   (values name (string->real real)))))
-	 ((pregexp-match "<j name='([^']*)'><![[]CDATA[[]" buf)
-	  => (lambda (m)
-		(let* ((name (cadr m))
-		       (js (url-decode
-			      (substring buf
-				 (+fx (string-length name) 20)
-				 (-fx  len 7)))))
-		   (values name (string->obj js)))))
-	 (else
-	  (error "hopsocket" "Illegal websocket envelope" buf))))
-
-   (define (read-websocket-event in)
-      (let ((buf (make-string 128))
-	    (len 128))
-	 (let loop ((i 0))
-	    (let ((c (read-byte in)))
-	       (cond
-		  ((=fx c 255)
-		   (parse-websocket-envelope buf i))
-		  ((=fx i len)
-		   (let ((nbuf (make-string (*fx 2 len))))
-		      (blit-string! buf 0 nbuf 0 len)
-		      (set! buf nbuf)
-		      (set! len (*fx 2 len))
-		      (string-set! buf i (integer->char c))
-		      (loop (+fx i 1))))
-		  (else
-		   (string-set! buf i (integer->char c))
-		   (loop (+fx i 1))))))))
-
-   (define (hopsocket-raise-event hs name value)
-      (with-access::hopsocket hs (mutex listeners)
-	 (let ((l (synchronize mutex
-		     (filter (lambda (c) (string=? (car c) name))
-			listeners))))
-	    (when (pair? l)
-	       (let ((e (instantiate::server-event
-			   (name name)
-			   (value value)
-			   (target event))))
-		  (let loop ((l l))
-		     (when (pair? l)
-			((cdar l) e)
-			(with-access::event e (stopped)
-			   (unless stopped
-			      (loop (cdr l)))))))))))
-
-   (define (hopsocket-loop hs)
-      (with-access::hopsocket hs (socket)
-	 (let ((in (socket-input socket)))
-	    (let loop ()
-	       (let ((o (read-byte in)))
-		  (cond
-		     ((eof-object? o)
-		      ;; close silently
-		      #f)
-		     ((=fx o 0)
-		      (multiple-value-bind (name value)
-			 (read-websocket-event in)
-			 (hopsocket-raise-event hs name value)
-			 (loop)))
-		     (else
-		      (error "hopsocket"
-			 "Illegal server response"
-			 (format "{~a}~a" o (read-string in))))))))))
-      
-   (multiple-value-bind (host port auth)
-      (parse-authenticated-host event)
-      (let ((hs (synchronize *listener-mutex*
-		   (hashtable-get *server-listeners* event))))
-	 (if (isa? hs hopsocket)
-	     (register-event! host port auth hs)
-	     (with-hop (*port-service*)
-		:host host :port port
-		:authorization auth
-		(lambda (v)
-		   (let ((key (vector-ref v 2)))
-		      (synchronize *listener-mutex*
-			 (let ((hs (hashtable-get *server-listeners* event)))
-			    (if (isa? hs hopsocket)
-				(register-event! host port auth hs)
-				(let ((hs (get-hopsocket! host port auth key)))
-				   (register-event! host port auth hs))))))))))))
+      (let ((olds (synchronize *listener-mutex*
+		     (hashtable-get *server-listeners* srv))))
+	 (if (isa? olds server)
+	     (add-event-listener! olds event proc capture)
+	     (multiple-value-bind (host port auth)
+		(parse-authenticated-host srv)
+		(let ((news (instantiate::server
+			       (host host)
+			       (port port)
+			       (ssl #f)
+			       (authorization auth))))
+		   (synchronize *listener-mutex*
+		      (hashtable-put! *server-listeners* srv news))
+		   (add-event-listener! news event proc capture))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-server-listener! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (remove-server-listener! obj event proc capture)
-   (let ((hs (synchronize *listener-mutex*
-		(hashtable-get *server-listeners* event))))
-      (when (isa? hs hopsocket)
-	 (with-access::hopsocket hs (mutex socket listeners)
-	    (synchronize mutex
-	       (set! listeners (filter! (lambda (l)
-					   (not (eq? (car l) obj)))
-				  listeners))
-	       (when (null? listeners)
-		  (socket-shutdown socket)
-		  (synchronize *listener-mutex*
-		     (hashtable-remove! *server-listeners* event))))))))
+(define (remove-server-listener! event srv proc capture)
+   (let ((olds (synchronize *listener-mutex*
+		  (hashtable-get *server-listeners* srv))))
+      (when (isa? olds server)
+	 (apply remove-event-listener! olds event proc capture))))
 
 ;*---------------------------------------------------------------------*/
 ;*    padding-response ...                                             */
@@ -1718,7 +1587,7 @@
 ;*---------------------------------------------------------------------*/
 (define (hop-event-info-service)
    (hop-event-init!)
-   *port-service*)
+   *info-service*)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-event-register-service ...                                   */
