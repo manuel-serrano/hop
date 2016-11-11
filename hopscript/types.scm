@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Oct 26 13:41:31 2016 (serrano)                */
+;*    Last change :  Tue Nov  8 12:16:12 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -96,7 +96,10 @@
 	      (right::obj (default #f)))
 
 	   (final-class JsStringLiteralASCII::JsStringLiteral)
-	   (final-class JsStringLiteralUTF8::JsStringLiteral)
+	   (final-class JsStringLiteralUTF8::JsStringLiteral
+	      (%idxutf8::long (default 0))
+	      (%idxstr::long (default 0))
+	      (%culen::uint32 (default #u32:0)))
 	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))

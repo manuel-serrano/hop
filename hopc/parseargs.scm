@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Oct  8 07:43:47 2016 (serrano)                */
+;*    Last change :  Wed Nov  9 16:09:26 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -110,6 +110,10 @@
 	     (hopc-pass-set! 'client-js))
 	    ((("-a" "--afile") ?file (help "Set access file"))
 	     (hopc-access-file-set! file))
+	    (("-m32" (help "Generate 32-bit code"))
+	     (hopc-long-size-set! 32))
+	    (("-m64" (help "Generate 64-bit code"))
+	     (hopc-long-size-set! 64))
 	    (("--mkheap" (help "Build a js heap file"))
 	     (hopc-jsheap-set! #t))
 	    (("--source-map" (help "Enable source-map table generation"))

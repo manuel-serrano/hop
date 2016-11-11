@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Oct 14 17:33:30 2016 (serrano)                */
+;*    Last change :  Wed Nov  9 16:02:40 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -111,7 +111,7 @@
 ;*    compile-sources ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (compile-sources::int)
-
+   
    (define (input-file->module-name in)
       (let* ((path (input-port-name in))
 	     (dir (dirname path))
@@ -127,7 +127,7 @@
 	  (hopscheme-compile-file p
 	     (if (string? (hopc-destination)) (hopc-destination) "-")
 	     '())))
-
+   
    (define (compile-module exp)
       (match-case exp
 	 ((module ?id . ?clauses)
@@ -175,8 +175,9 @@
 		  :hopscript-header (hopc-js-header)
 		  :type-annotations (hopc-js-type-annotations)
 		  :optim (hopc-optim-level)
+		  :long-size (hopc-long-size)
 		  :debug (bigloo-debug)))))
-
+      
       (define (generate-js out::output-port)
 	 (let* ((fname (input-port-name in))
 		(mmap (when (and (string? fname) (file-exists? fname))
@@ -198,8 +199,9 @@
 		  :hopscript-header (hopc-js-header)
 		  :type-annotations (hopc-js-type-annotations)
 		  :optim (hopc-optim-level)
+		  :long-size (hopc-long-size)
 		  :debug (bigloo-debug)))))
-
+      
       (define (generate out::output-port lang::symbol)
 	 (case lang
 	    ((js) (generate-js out))
@@ -211,9 +213,9 @@
 	     (lambda (out) (generate out lang)))
 	  (generate (current-output-port) lang))
       0)
-
+   
    (define (compile-bigloo::int in lang)
-
+      
       (define (srfi-opts)
 	 (cond-expand
 	    (enable-libuv '("-srfi" "enable-libuv" "-srfi" "hopc"))
@@ -236,7 +238,7 @@
 	    (unwind-protect
 	       (comp out)
 	       (begin
-		  (hop-verb 1 cmd "\n")
+		  (hop-verb 4 cmd "\n")
 		  (close-output-port out)))
 	    (process-wait proc)
 	    (process-exit-status proc)))
@@ -244,9 +246,9 @@
       (define (compile-hop in opts file)
 	 (compile in
 	    (append `("-library" "hop"
-		      "-library" "hopscheme"
-		      "-library" "hopwidget"
-		      "-rpath" ,(make-file-path (hop-lib-directory) "hop" (hop-version)))
+			"-library" "hopscheme"
+			"-library" "hopwidget"
+			"-rpath" ,(make-file-path (hop-lib-directory) "hop" (hop-version)))
 	       opts)
 	    (lambda (out)
 	       (let loop ()
@@ -286,6 +288,7 @@
 			:hopscript-header (hopc-js-header)
 			:type-annotations (hopc-js-type-annotations)
 			:optim (hopc-optim-level)
+			:long-size (hopc-long-size)
 			:debug (bigloo-debug))))
 	       file)))
       
@@ -304,15 +307,14 @@
 			   (cons* "-dload-sym" "-y" "-o" (hopc-destination) opts))
 			  (else
 			   (cons* "-o" (hopc-destination) opts))))
-		      ((and (pair? (hopc-sources))
-			    (string? (car (hopc-sources))))
+		      ((string? file)
 		       (case (hopc-pass)
 			  ((object)
-			   (let* ((base (prefix (car (hopc-sources))))
+			   (let* ((base (prefix file))
 				  (dest (string-append base ".o")))
 			      (cons* "-c" "-o" dest opts)))
 			  ((so)
-			   (let* ((base (prefix (car (hopc-sources))))
+			   (let* ((base (prefix file))
 				  (dest (string-append base "."
 					   (bigloo-config 'shared-lib-suffix))))
 			      (cons* "-y" "-o" dest opts)))
@@ -321,9 +323,16 @@
 		      (else
 		       (cons "--to-stdout" opts))))
 	     (exec (not (eq? (hopc-pass) 'object))))
-	 (case lang
-	    ((hop) (compile-hop in opts file))
-	    ((hopscript) (compile-hopscript in opts file exec)))))
+	 (unwind-protect
+	    (case lang
+	       ((hop)
+		(compile-hop in opts file))
+	       ((hopscript)
+		(compile-hopscript in opts file exec)))
+	    (when (and (string? file) (eq? (hopc-pass) 'so))
+	       (let ((obj (string-append (prefix file) ".o")))
+		  (when (file-exists? obj)
+		     (delete-file obj)))))))
    
    (define (compile::int in lang::symbol)
       (cond

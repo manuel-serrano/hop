@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Mar 25 07:44:17 2016 (serrano)                */
+;*    Last change :  Tue Nov  8 07:25:55 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -281,9 +281,9 @@
    (with-access::J2SYield this (expr)
       (cond
 	 ((not target)
-	  (syntax-error this "Illegal \"yield\" statement"))
+	  (syntax-error this "Illegal \"yield/await\" statement"))
 	 ((with-access::J2SFun target (generator) (not generator))
-	  (syntax-error this "Illegal \"yield\" statement outside generator" )))
+	  (syntax-error this "Illegal \"yield/await\" statement outside generator" )))
       (set! expr (walk! expr target #f in-handler args)))
    this)
 

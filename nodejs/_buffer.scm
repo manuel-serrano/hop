@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Mon Oct 31 21:05:47 2016 (serrano)                */
+;*    Last change :  Tue Nov  8 11:37:19 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -1140,7 +1140,7 @@
       (if (=fx r 0)
 	  a
 	  (-fx (+fx a b) r))))
-(define bufs '())
+
 ;*---------------------------------------------------------------------*/
 ;*    slab-allocate ...                                                */
 ;*    -------------------------------------------------------------    */
@@ -1154,7 +1154,6 @@
 	 (if (not slowbuffer)
 	     (let* ((rsize (roundup (max size (SLAB-SIZE)) 8192))
 		    (buf (js-new1 %this js-slowbuffer rsize)))
-		(set! bufs (cons buf bufs))
 		(set! slowbuffer buf)
 		(set! slice (js-get buf 'slice %this))
 		(set! offset size)
@@ -1170,7 +1169,6 @@
 		       ;; not enough space, new buffer required
 		       (let* ((rsize (roundup (max size sz) 16))
 			      (buf::JsSlowBuffer (js-new1 %this js-slowbuffer rsize)))
-			  (set! bufs (cons buf bufs))
 			  (set! slowbuffer buf)
 			  (set! offset size)
 			  (trace-item

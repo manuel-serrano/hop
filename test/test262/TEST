@@ -44,7 +44,7 @@ fi
 
 for c in $chapters; do
   echo "$testjs $verb --hopc=$hopc $basedir/test/suite/$c $*"
-  $testjs $verb --hopc=$hopc $basedir/test/suite/$c $rest || exit 1
+  $testjs $verb --hopc=$hopc --flags="-O3" $basedir/test/suite/$c $rest || exit 1
   echo
   echo "all test succeeded..."
 done

@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Feb  8 08:39:20 2016 (serrano)                */
+;*    Last change :  Wed Nov  9 08:11:55 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -57,6 +57,12 @@
 
 (defcustom hopjs-html-doc-url "http://www.w3.org/TR/html4"
   "The base URL of the HTML4.01 documentation"
+  :type 'string
+  :safe 'stringp
+  :group 'hopjs)
+
+(defcustom hopjs-mdn-doc-url "https://developer.mozilla.org"
+  "Mozilla Developper Network base URL"
   :type 'string
   :safe 'stringp
   :group 'hopjs)
@@ -189,6 +195,8 @@
    (concat hopjs-doc-dir "/idx.json") nil hopjs-doc-index-table)
   (hopjs-load-index
    (concat hopjs-doc-dir "/html-idx.json") hopjs-html-doc-url hopjs-doc-index-table)
+  (hopjs-load-index
+   (concat hopjs-doc-dir "/mdn-idx.json") hopjs-mdn-doc-url hopjs-doc-index-table)
   (mapc 'hopjs-load-repo-indexes hopjs-doc-extra-dir))
 
 ;*---------------------------------------------------------------------*/
@@ -212,6 +220,7 @@
 (defun hopjs-load-index (file base table)
   (unless (member file hopjs-indexes)
     (when (file-exists-p file)
+      (message "hopjs.el: loading index %s" file)
       (let* ((i 0)
 	     (v (json-read-file file))
 	     (len (length v)))
@@ -248,7 +257,7 @@
 ;*---------------------------------------------------------------------*/
 (defconst hopjs-font-lock-keywords
   (list (list "\\s-*\\(service\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-keyword-face)
-	(list ".\\(post\\(?:Sync\\|Message\\)?\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-face-hopjs2)
+	(list ".\\(\\(?:post\\|then\\|catch\\)\\(?:Sync\\|Message\\)?\\)\\(?:\\s-+\\|(\\)" 1 'font-lock-face-hopjs2)
 	(cons "</?[a-zA-Z0-9_.-]+[ ]*>\\|[ ]*/>\\|<[^ /]*/>" 'font-lock-face-hopjs9)
 	(list "\\(</?[a-zA-Z0-9_.:-]+\\)[ ]+[a-zA-Z0-9_]" 1 'font-lock-face-hopjs9)
 	(cons "<!--\\([^-]\\|-[^-]\\|--[^>]\\)+-[-]+>" 'font-lock-comment-face)
@@ -257,6 +266,7 @@
 	(list "\\([$]\\){" 1 'font-lock-face-hopjs2)
 	(list "\\([~]\\){" 1 'font-lock-face-hopjs3)
 	(cons "[0-9a-zA-Z_-]*:" 'font-lock-face-hopjs10)
+	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
 	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
 
 ;*---------------------------------------------------------------------*/

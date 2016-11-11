@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Oct 20 17:16:49 2016 (serrano)                */
+;*    Last change :  Fri Nov  4 09:46:35 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -777,9 +777,9 @@
 			    estr))))))))
 
    (define (dump-error cmd sopath msg)
+      (display msg (current-error-port))
       (call-with-output-file (string-append sopath ".err")
 	 (lambda (op)
-	    (display msg (current-error-port))
 	    (display cmd op)
 	    (newline op)
 	    (display msg op))))
@@ -871,6 +871,8 @@
 		(else
 		 (nodejs-compile filename lang))))
 	    (else
+	     (when (eq? (hop-sofile-compile-policy) 'nte+)
+		(nodejs-socompile-queue-push filename lang))
 	     (nodejs-compile filename lang)))))
    
    (define (load-module-js)

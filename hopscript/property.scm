@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct 25 16:05:13 2016 (serrano)                */
+;*    Last change :  Wed Nov  9 12:55:36 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -64,6 +64,7 @@
 
 	   (js-get-notfound ::obj ::obj ::JsGlobalObject)
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
+	   (generic js-get-length ::obj ::obj ::JsGlobalObject)
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (inline js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
@@ -855,6 +856,14 @@
 	    (js-get-notfound name throw %this))
 	 ;; loop
 	 loop)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length ::obj ...                                          */
+;*---------------------------------------------------------------------*/
+(define-generic (js-get-length o::obj cache %this::JsGlobalObject)
+   (if cache
+       (js-get/cache o 'length cache %this)
+       (js-get o 'length %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get/cache ...                                                 */

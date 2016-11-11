@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Nov  1 08:58:07 2016 (serrano)                */
+;*    Last change :  Tue Nov  8 09:29:10 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -131,27 +131,30 @@
 		     (set! properties (list len)))))
 	    
 	    (define (set-string! str)
-	       (cond
-		  ((string? str)
-		   (set-ascii-string! str))
-		  (else
-		   (let ((len (instantiate::JsValueDescriptor
-				 (name 'length)
-				 (writable #f)
-				 (configurable #f)
-				 (enumerable #f)
-				 (value (js-jsstring-codeunit-length str)))))
-		      (with-access::JsString o (val properties)
-			 (set! val str)
-			 (set! properties (list len)))))))
-
+	       (let ((len (instantiate::JsValueDescriptor
+			     (name 'length)
+			     (writable #f)
+			     (configurable #f)
+			     (enumerable #f)
+			     (value (js-jsstring-codeunit-length str)))))
+		  (with-access::JsString o (val properties)
+		     (set! val str)
+		     (set! properties (list len)))))
+	    
 	    (if (null? arg)
 		;; 2
 		(set-ascii-string! "")
 		(let ((value (car arg)))
-		   (if (string? value)
-		       (set-ascii-string! value)
-		       (set-string! (js-cast-string %this value))))))
+		   (cond
+		      ((string? value)
+		       (set-ascii-string! value))
+		      ((isa? value JsStringLiteral)
+		       (set-string! value))
+		      ((isa? value JsObject)
+		       (set-string! (js-cast-string %this value)))
+		      (else
+		       (let ((str (js-tostring value %this)))
+			  (set-string! (js-string->jsstring str))))))))
 
 	 ;; string allocation
 	 (define (js-string-alloc::JsString constructor::JsFunction)
@@ -646,13 +649,14 @@
 		(writable #f)
 		(configurable #f)))))
    
-   (define (utf8-get-own-property val::bstring index)
-      (let ((len (utf8-string-length val)))
+   (define (utf8-get-own-property str::JsStringLiteralUTF8 index)
+      (let* ((val (js-jsstring->string str))
+	     (len (utf8-string-length val)))
 	 (if (<=fx len index)
 	     (call-next-method)
 	     (instantiate::JsValueDescriptor
 		(name (js-toname p %this))
-		(value (js-utf8-ref val index))
+		(value (js-utf8-ref str val index))
 		(enumerable #t)
 		(writable #f)
 		(configurable #f)))))
@@ -667,7 +671,7 @@
 		   ((isa? val JsStringLiteralASCII)
 		    (ascii-get-own-property (js-jsstring->string val) index))
 		   (else
-		    (utf8-get-own-property (js-jsstring->string val) index)))))
+		    (utf8-get-own-property val index)))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -685,11 +689,12 @@
 	     (js-ascii->jsstring
 		(make-string 1 (string-ref-ur val index))))))
    
-   (define (utf8-get-property-value val index)
-      (let ((len (utf8-string-length val)))
+   (define (utf8-get-property-value str::JsStringLiteralUTF8 index)
+      (let* ((val (js-jsstring->string str))
+	     (len (utf8-string-length val)))
 	 (if (<=fx len index)
 	     (call-next-method)
-	     (js-utf8-ref val index))))
+	     (js-utf8-ref str val index))))
    
    (let ((index (js-toindex p)))
       (if (not (js-isindex? index))
@@ -700,7 +705,7 @@
 		   ((string? val)
 		    (ascii-get-property-value val index))
 		   ((isa? val JsStringLiteralASCII)
-		    (ascii-get-property-value val index))
+		    (ascii-get-property-value (js-jsstring->string val) index))
 		   (else
 		    (utf8-get-property-value val index))))))))
 

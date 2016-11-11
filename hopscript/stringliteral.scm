@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Nov  1 08:58:30 2016 (serrano)                */
+;*    Last change :  Thu Nov 10 10:30:21 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -44,9 +44,8 @@
 	   (generic js-jsstring-normalize!::JsStringLiteral ::JsStringLiteral)
 	   
 	   (inline js-jsstring-append::JsStringLiteral ::obj ::obj)
-	   (utf8-codeunit-ref::long ::bstring ::long)
 	   (utf8-codeunit-length::long ::bstring)
-	   (js-utf8-ref ::bstring ::long)
+	   (js-utf8-ref ::JsStringLiteralUTF8 ::bstring ::long)
 	   (js-get-string ::obj ::obj ::obj)
 	   (js-put-string! ::bstring ::obj ::obj ::bool ::obj)
 	   (js-jsstring-indexof ::obj ::obj ::obj ::JsGlobalObject)
@@ -149,6 +148,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (scheme->response obj::JsStringLiteral req)
    (scheme->response (js-jsstring->string obj) req))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    string-dipatch ...                                               */
@@ -370,7 +370,10 @@
 	      weight
 	      (js-string-literal-length js))))
       (else
-       (utf8-codeunit-length (js-jsstring->string js)))))
+       (with-access::JsStringLiteralUTF8 js (%culen)
+	  (when (=u32 %culen #u32:0)
+	     (set! %culen (utf8-codeunit-length (js-jsstring->string js))))
+	  (uint32->fixnum %culen)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    display-js-string ...                                            */
@@ -573,7 +576,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Returns the number of code units of this code point.             */
 ;*---------------------------------------------------------------------*/
-(define (codepoint-length s c)
+(define (codepoint-length c)
    (case (char->integer c)
       ((#xf0 #xf4 #xf8 #xfc) 2)
       (else 1)))
@@ -584,31 +587,42 @@
 ;*    Returns the ith code unit (UTF16 code unit) of the UTF8 source   */
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
-(define (utf8-codeunit-ref str i::long)
+(define (utf8-codeunit-ref this::JsStringLiteralUTF8 str i::long)
    (let ((len (string-length str)))
-      (let loop ((r 0) (i i))
-	 (let* ((c (string-ref str r))
-		(s (utf8-char-size c))
-		(u (codepoint-length s c)))
-	    (cond
-	       ((>=fx i u)
-		(loop (+fx r s) (-fx i u)))
-	       ((=fx s 1)
-		(char->integer (string-ref str r)))
-	       ((char=? c (integer->char #xf8))
-		(utf8-left-replacement-codeunit str r))
-	       ((char=? c (integer->char #xfc))
-		(utf8-right-replacement-codeunit str r))
-	       (else
-		(let* ((utf8 (substring str r (+fx r s)))
-		       (ucs2 (utf8-string->ucs2-string utf8)))
-		   (ucs2->integer (ucs2-string-ref ucs2 i)))))))))
+      (if (>fx i len)
+	  +nan.0
+	  (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
+	     ;; adjust with respect to the last position
+	     (let loop ((r (if (>=fx i %idxutf8) %idxstr 0))
+			(j (if (>=fx i %idxutf8) (-fx i %idxutf8) i)))
+		(let* ((c (string-ref-ur str r))
+		       (s (utf8-char-size c))
+		       (u (codepoint-length c)))
+		   (cond
+		      ((>=fx j u)
+		       (loop (+fx r s) (-fx j u)))
+		      ((<fx j 0)
+		       +nan.0)
+		      (else
+		       (set! %idxutf8 (-fx i j))
+		       (set! %idxstr r)
+		       (cond
+			  ((=fx s 1)
+			   (char->integer c))
+			  ((char=? c (integer->char #xf8))
+			   (utf8-left-replacement-codeunit str r))
+			  ((char=? c (integer->char #xfc))
+			   (utf8-right-replacement-codeunit str r))
+			  (else
+			   (let* ((utf8 (substring str r (+fx r s)))
+				  (ucs2 (utf8-string->ucs2-string utf8)))
+			      (ucs2->integer (ucs2-string-ref ucs2 j)))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-ref ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-utf8-ref str::bstring index::long)
-   (let ((n (utf8-codeunit-ref str index)))
+(define (js-utf8-ref this::JsStringLiteralUTF8 str::bstring index::long)
+   (let ((n (utf8-codeunit-ref this str index)))
       (if (<= n 127)
 	  (js-ascii->jsstring
 	     (make-string 1 (integer->char n)))
@@ -630,7 +644,7 @@
    (define (utf8-string-ref val fxpos)
       (if (or (<fx fxpos 0) (>=fx fxpos (utf8-codeunit-length val)))
 	  (js-undefined)
-	  (js-utf8-ref val fxpos)))
+	  (js-utf8-ref o val fxpos)))
 
    (string-dipatch string-ref o (uint32->fixnum index)))
 
@@ -664,31 +678,39 @@
 ;*    js-get-string ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-get-string o prop %this)
-   (let ((i (js-toindex prop)))
-      (if (js-isindex? i)
-	  (js-jsstring-ref o i)
-	  (let ((p (js-toname prop %this)))
-	     (cond
-		((eq? prop 'length)
-		 (js-jsstring-character-length o))
-		((memq prop '(indexOf lastIndexOf charCodeAt charAt
-			      substring substr
-			      toLowerCase toLocaleLowerCase
-			      toUpperCase toLocaleUpperCase
-			      split replace match
-			      compare naturalCompare localeCompare trim))
-		 ;; (tprint "JS_GET_PROTO: " prop " " (typeof prop))
-		 (with-access::JsGlobalObject %this (js-string)
-		    (let ((proto (js-get js-string 'prototype %this)))
-		       (js-get proto prop %this))))
-		(else
-		 ;; see js-get-jsobject@property.scm
-		 ;; (tprint "JS_GET_STRING: " prop " " (typeof prop))
-		 (let* ((obj (js-toobject %this o))
-			(pval (js-get-property-value obj o prop %this)))
-		    (if (eq? pval (js-absent))
-			(js-undefined)
-			pval))))))))
+   (if (eq? prop 'length)
+       (js-jsstring-codeunit-length o)
+       (let ((i (js-toindex prop)))
+	  (if (js-isindex? i)
+	      (js-jsstring-ref o i)
+	      (let ((p (js-toname prop %this)))
+		 (cond
+		    ((eq? prop 'length)
+		     (js-jsstring-codeunit-length o))
+		    ((memq prop '(indexOf lastIndexOf charCodeAt charAt
+				  substring substr
+				  toLowerCase toLocaleLowerCase
+				  toUpperCase toLocaleUpperCase
+				  split replace match
+				  compare naturalCompare localeCompare trim))
+		     ;; (tprint "JS_GET_PROTO: " prop " " (typeof prop))
+		     (with-access::JsGlobalObject %this (js-string)
+			(let ((proto (js-get js-string 'prototype %this)))
+			   (js-get proto prop %this))))
+		    (else
+		     ;; see js-get-jsobject@property.scm
+		     ;; (tprint "JS_GET_STRING: " prop " " (typeof prop))
+		     (let* ((obj (js-toobject %this o))
+			    (pval (js-get-property-value obj o prop %this)))
+			(if (eq? pval (js-absent))
+			    (js-undefined)
+			    pval)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsStringLiteral ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length o::JsStringLiteral cache %this)
+   (js-jsstring-codeunit-length o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-string! ...                                               */
@@ -854,20 +876,11 @@
 		 (char->integer (string-ref val (->fixnum pos)))))))
    
    (define (utf8-charcodeat val::bstring)
-      (if (fixnum? position)
-	  (cond
-	     ((<fx position 0)
-	      +nan.0)
-	     ((>=fx position (utf8-codeunit-length val))
-	      +nan.0)
-	     ((ascii-string? val)
-	      (char->integer (string-ref-ur val position)))
-	     (else
-	      (utf8-codeunit-ref val position)))
-	  (let ((pos (js-tointeger position %this)))
-	     (if (or (< pos 0) (>= pos (utf8-codeunit-length val)))
-		 +nan.0
-		 (utf8-codeunit-ref val (->fixnum pos))))))
+      (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
+	 (if (fixnum? position)
+	     (utf8-codeunit-ref this val position)
+	     (let ((pos (js-tointeger position %this)))
+		(utf8-codeunit-ref this val (->fixnum pos))))))
 
    (string-dipatch charcodeat this))
 
@@ -914,11 +927,11 @@
 	     ((>=fx position (utf8-codeunit-length val))
 	      (js-ascii->jsstring ""))
 	     (else
-	      (js-utf8-ref val position)))
+	      (js-utf8-ref this val position)))
 	  (let ((pos (js-tointeger position %this)))
 	     (if (or (< pos 0) (>= pos (utf8-codeunit-length val)))
 		 (js-ascii->jsstring "")
-		 (js-utf8-ref val (->fixnum pos))))))
+		 (js-utf8-ref this val (->fixnum pos))))))
 
    (string-dipatch charat this))
 
@@ -1119,7 +1132,7 @@
 (define (js-jsstring-tolocaleuppercase this)
 
    (define (ascii-touppercase s)
-      (js-ascii->jsstring (string-downcase s)))
+      (js-ascii->jsstring (string-upcase s)))
 
    (define (utf8-touppercase s)
       (js-utf8->jsstring (utf8-string-locale-upcase s)))
@@ -1633,8 +1646,3 @@
 	  (js-call0 %this (js-get this 'trim %this) this))
 	 (else
 	  (loop (js-toobject %this this))))))
-
-
-
-	 
-   

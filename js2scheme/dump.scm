@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Oct 19 18:05:42 2016 (serrano)                */
+;*    Last change :  Thu Nov 10 10:21:02 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -31,6 +31,52 @@
       (proc j2s-dump)
       (optional #t)))
 
+;*---------------------------------------------------------------------*/
+;*    dump-info ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (dump-info this::J2SNode)
+   (with-access::J2SNode this (%info)
+      (if (or (>= (bigloo-debug) 3)
+	      (string-contains  (or (getenv "HOPTRACE") "") "j2s:info"))
+	  `(:%info ,(j2s->list %info))
+	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    dump-type ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (dump-type this::J2SExpr)
+   (with-access::J2SExpr this (type)
+      (if (or (>= (bigloo-debug) 2)
+	      (string-contains  (or (getenv "HOPTRACE") "") "j2s:type"))
+	  `(:type ,type)
+	  '())))
+      
+;*---------------------------------------------------------------------*/
+;*    dump-itype ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (dump-itype this::J2SDecl)
+   (with-access::J2SDecl this (itype)
+      (if (or (>= (bigloo-debug) 2)
+	      (string-contains  (or (getenv "HOPTRACE") "") "j2s:type"))
+	  `(:itype ,itype)
+	  '())))
+      
+;*---------------------------------------------------------------------*/
+;*    dump-hint ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (dump-hint this::J2SNode)
+   (if (or (>= (bigloo-debug) 2)
+	   (string-contains  (or (getenv "HOPTRACE") "") "j2s:hint"))
+       (let ((hint (cond
+		      ((isa? this J2SExpr)
+		       (with-access::J2SExpr this (hint) hint))
+		      ((isa? this J2SDecl)
+		       (with-access::J2SDecl this (hint) hint))
+		      (else
+		       '()))))
+	  (if (pair? hint) `(:hint ,hint) '()))
+       '()))
+      
 ;*---------------------------------------------------------------------*/
 ;*    j2s-dump-decls ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -66,7 +112,11 @@
 ;*    j2s->list ::obj ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s->list this)
-   `(,(string->symbol (typeof this))))
+   `(,(string->symbol (typeof this))
+     ,@(if (or (string? this) (symbol? this) (struct? this) (boolean? this)
+	       (number? this) (char? this))
+	   (list (format "~a" this))
+	   '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SStmt ...                                          */
@@ -111,7 +161,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SAssig)
    (with-access::J2SAssig this (lhs rhs loc)
-      `(,@(call-next-method) ,(j2s->list lhs) ,(j2s->list rhs))))
+      `(,@(call-next-method) ,(j2s->list lhs)
+	  ,@(dump-type this)
+	  ,@(dump-info this)
+	  ,(j2s->list rhs))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SAssigOp ...                                       */
@@ -125,33 +178,33 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPrefix)
    (with-access::J2SPrefix this (lhs rhs loc op)
-      `(,@(call-next-method) ,op)))
+      `(,@(call-next-method) ,@(dump-type this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPostfix)
    (with-access::J2SPostfix this (lhs rhs loc op)
-      `(,@(call-next-method) ,op)))
+      `(,@(call-next-method) ,@(dump-type this) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnresolvedRef ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SUnresolvedRef)
-   (with-access::J2SUnresolvedRef this (id type)
+   (with-access::J2SUnresolvedRef this (id)
       `(,@(call-next-method) ,id
-	  ,@(if (>= (bigloo-debug) 2) `(:type ,type) '()))))
+	  ,@(dump-type this))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SRef)
-   (with-access::J2SRef this (decl type hint %info)
+   (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (id key)
-	 `(,@(call-next-method) ,id
-	     ,@(if (>= (bigloo-debug) 2) `(:key ,key) '())
-	     ,@(if (>= (bigloo-debug) 2) `(:type ,type) '())
-	     ,@(if (and (>= (bigloo-debug) 2) (pair? hint)) `(:hint ,hint) '())))))
+	 `(,@(call-next-method) ,id :key ,key
+	     ,@(dump-type this)
+	     ,@(dump-hint this)
+	     ,@(dump-info this)))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWithRef ...                                       */
@@ -164,10 +217,7 @@
 ;*    j2s->list ::J2SLiteral ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLiteral)
-   (if (>=fx (bigloo-debug) 2)
-       (with-access::J2SLiteral this (type)
-	  `(,@(call-next-method) :type ,type))
-       (call-next-method)))
+   `(,@(call-next-method) ,@(dump-type this) ,@(dump-info this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLiteralValue ...                                  */
@@ -180,9 +230,9 @@
 ;*    j2s->list ::J2SLiteralCnst ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLiteralCnst)
-   (with-access::J2SLiteralCnst this (val type)
+   (with-access::J2SLiteralCnst this (val)
       `(,@(call-next-method)
-	  ,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+	  ,@(dump-type this)
 	  ,(j2s->list val))))
 
 ;*---------------------------------------------------------------------*/
@@ -299,18 +349,19 @@
 ;*    j2s->list ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SBinary)
-   (with-access::J2SBinary this (op rhs lhs type)
+   (with-access::J2SBinary this (op rhs lhs)
       `(,@(call-next-method) ,op
-	  ,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+	  ,@(dump-type this)
+	  ,@(dump-info this)
 	  ,(j2s->list lhs) ,(j2s->list rhs))))
       
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SParen ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SParen)
-   (with-access::J2SParen this (expr type)
+   (with-access::J2SParen this (expr)
       `(,@(call-next-method)
-	  ,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+	  ,@(dump-type this)
 	  ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
@@ -400,18 +451,20 @@
 ;*    j2s->list ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCall)
-   (with-access::J2SCall this (fun args type this)
+   (with-access::J2SCall this (fun args (cthis this))
       `(,@(call-next-method)
-	  ,@(if (>= (bigloo-debug) 2) `(:type ,type) '())
-	  ,@(if (>=fx (bigloo-debug) 3) `(:this ,(j2s->list this)) '())
+	  ,@(dump-type this)
+	  ,@(if (>=fx (bigloo-debug) 3) `(:this ,(j2s->list cthis)) '())
 	  ,(j2s->list fun) ,@(map j2s->list args))))
 		  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SAccess ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SAccess)
-   (with-access::J2SAccess this (obj field type)
-      `(,@(call-next-method) ,@(if (> (bigloo-debug) 1) `(:type ,type) '())
+   (with-access::J2SAccess this (obj field)
+      `(,@(call-next-method)
+	  ,@(dump-type this)
+	  ,@(dump-info this)
 	  ,(j2s->list obj) ,(j2s->list field))))
    
 ;*---------------------------------------------------------------------*/
@@ -454,17 +507,17 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid itype hint usecnt usage ronly %info scope)
+   (with-access::J2SDecl this (id key binder _scmid usecnt usage ronly %info scope)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(if (>= (bigloo-debug) 2) `(:key ,key) '())
 	,@(if (>= (bigloo-debug) 3) `(:ronly ,ronly) '())
 	,@(if (>= (bigloo-debug) 3) `(:usecnt ,usecnt) '())
 	,@(if (>= (bigloo-debug) 3) `(:usage ,usage) '())
-	,@(if (>= (bigloo-debug) 1) `(:itype ,itype) '())
-	,@(if (and (>= (bigloo-debug) 2) (pair? hint)) `(:hint ,hint) '())
+	,@(dump-itype this)
+	,@(dump-hint this)
 	,@(if _scmid `(:_scmid ,_scmid) '())
-	,@(if (>= (bigloo-debug) 3) `(:info ,(typeof %info)) '())
+	,@(dump-info this)
 	,@(if (>= (bigloo-debug) 3) `(:scope ,scope) '()))))
 
 ;*---------------------------------------------------------------------*/

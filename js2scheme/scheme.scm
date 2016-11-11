@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Nov  1 07:53:34 2016 (serrano)                */
+;*    Last change :  Thu Nov 10 10:11:48 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1754,7 +1754,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-binop2 ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-binop2 loc op lhs rhs mode return conf hint)
+(define (js-binop2 loc op type lhs rhs mode return conf hint)
    
    (define (best-hint hints)
       (when (pair? hints)
@@ -1766,11 +1766,14 @@
 	       (else (loop hint (cdr hints)))))))
    
    (define (is-number? expr)
-      (memq (j2s-type expr) '(number integer)))
+      (memq (j2s-type expr) '(number integer fixnum index)))
+   
+   (define (is-fixnum? expr)
+      (memq (j2s-type expr) '(fixnum index)))
    
    (define (maybe-number? expr)
       (let ((ty (j2s-type expr)))
-	 (or (not ty) (memq ty '(obj number integer)))))
+	 (or (not ty) (memq ty '(obj number integer fixnum index)))))
    
    (define (atom? expr)
       (or (number? expr) (string? expr) (boolean? expr)))
@@ -1792,6 +1795,9 @@
 	     (simple? expr)))
 	 (else
 	  #f)))
+
+   (define (fxop op)
+      (symbol-append op 'fx))
    
    (define (binop lhs rhs hint::pair-nil gen::procedure)
       (let* ((scmlhs (j2s-scheme lhs mode return conf hint))
@@ -1836,6 +1842,10 @@
    (case op
       ((+)
        (cond
+	  ((and (is-fixnum? lhs) (is-fixnum? rhs) (memq type '(fixnum index)))
+	   (let ((scmlhs (j2s-scheme lhs mode return conf hint))
+		 (scmrhs (j2s-scheme rhs mode return conf hint)))
+	      `(+fx ,scmlhs ,scmrhs)))
 	  ((and (is-number? lhs) (is-number? rhs))
 	   (binop lhs rhs hint
 	      (lambda (left right)
@@ -1950,6 +1960,10 @@
 		 (js-binop loc op left right))))))
       ((< <= > >=)
        (cond
+	  ((and (is-fixnum? lhs) (is-fixnum? rhs))
+	   `(,(fxop op)
+	     ,(j2s-scheme lhs mode return conf '(fixnum))
+	     ,(j2s-scheme rhs mode return conf '(fixnum))))
 	  ((and (is-number? lhs) (is-number? rhs))
 	   (binop lhs rhs hint
 	      (lambda (left right)
@@ -1987,9 +2001,9 @@
 ;*    j2s-scheme ::J2SBinary ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SBinary mode return conf hint)
-   (with-access::J2SBinary this (loc op lhs rhs)
+   (with-access::J2SBinary this (loc op lhs rhs type)
       (epairify-deep loc
-	 (js-binop2 loc op lhs rhs mode return conf hint))))
+	 (js-binop2 loc op type lhs rhs mode return conf hint))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SParen ...                                        */
@@ -2114,13 +2128,20 @@
 ;*    to number.                                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SPostfix mode return conf hint)
-   (with-access::J2SPostfix this (loc lhs op)
+   (with-access::J2SPostfix this (loc lhs op type)
       (let ((inc (j2s-num (if (eq? op '++) 1 -1))))
 	 (let loop ((lhs lhs))
 	    (cond
 	       ((isa? lhs J2SRef)
 		(epairify-deep loc
-		   (if (memq (j2s-type lhs) '(integer number))
+		   (cond
+		      ((and (memq type '(fixnum index))
+			    (memq (j2s-type lhs) '(fixnum index)))
+		       (j2s-scheme-set! lhs
+			  (epairify loc `(+fx ,inc ,(j2s-scheme lhs mode return conf '(int))))
+			  #f
+			  mode return conf))
+		      ((memq (j2s-type lhs) '(integer number fixnum index))
 		       (if (eq? hint 'void)
 			   (j2s-scheme-set! lhs
 			      (epairify loc (j2s-num-op '+ inc (j2s-scheme lhs mode return conf '(int))))
@@ -2132,13 +2153,14 @@
 				      (epairify loc (j2s-num-op '+ inc tmp))
 				      tmp
 				      mode return conf)
-				  ,tmp)))
+				  ,tmp))))
+		      (else
 		       (let ((tmp (gensym 'tmp)))
 			  `(let ((,tmp (js-tonumber ,(j2s-scheme lhs mode return conf hint) %this)))
 			      ,(j2s-scheme-set! lhs
 				  (epairify loc `(js+ ,inc ,tmp %this))
 				  tmp
-				  mode return conf))))))
+				  mode return conf)))))))
 	       ((isa? lhs J2SAccess)
 		(with-access::J2SAccess lhs ((o obj) field cache (loca loc))
 		   (let ((tmp (gensym 'tmp))
@@ -3138,6 +3160,13 @@
 			   ,(j2s-scheme field mode return conf hint)
 			   ,(j2s-scheme rhs mode return conf hint)
 			   %this)))
+		   ((and (eq? (j2s-type obj) 'array)
+			 (eq? (j2s-type field) 'index))
+		    (epairify-deep loc
+		       `(js-array-set-ur! ,(j2s-scheme obj mode return conf hint)
+			   ,(j2s-scheme field mode return conf hint)
+			   ,(j2s-scheme rhs mode return conf hint)
+			   %this)))
 		   (else
 		    (epairify loc
 		       (j2s-put! loca (j2s-scheme obj mode return conf hint)
@@ -3185,15 +3214,24 @@
 ;*    j2s-scheme ::J2SAccess ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAccess mode return conf hint)
-   (with-access::J2SAccess this (loc obj field cache)
+   (with-access::J2SAccess this (loc obj field cache type)
       (cond
 	 ((and (eq? (j2s-type obj) 'array) (j2s-field-length? field))
 	  (epairify-deep loc
-	     `(js-uint32->jsnum
+	     `(,(if (memq type '(fixnum index))
+		    'uint32->fixnum
+		    'js-uint32->jsnum)
 		 (js-array-length ,(j2s-scheme obj mode return conf hint)))))
-	 ((and (eq? (j2s-type obj) 'array) (memq (j2s-type field) '(integer number)))
+	 ((and (eq? (j2s-type obj) 'array)
+	       (memq (j2s-type field) '(integer number fixnum)))
 	  (epairify-deep loc
 	     `(js-array-ref ,(j2s-scheme obj mode return conf hint)
+		 ,(j2s-scheme field mode return conf hint)
+		 %this)))
+	 ((and (eq? (j2s-type obj) 'array)
+	       (eq? (j2s-type field) 'index))
+	  (epairify-deep loc
+	     `(js-array-ref-ur ,(j2s-scheme obj mode return conf hint)
 		 ,(j2s-scheme field mode return conf hint)
 		 %this)))
 	 ((and (eq? (j2s-type obj) 'string) (j2s-field-length? field))
@@ -3226,7 +3264,7 @@
 ;*    j2s-scheme ::J2SAssigOp ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAssigOp mode return conf hint)
-   (with-access::J2SAssigOp this (loc lhs rhs op)
+   (with-access::J2SAssigOp this (loc lhs rhs op type)
       (epairify-deep loc
 	 (cond
 	    ((isa? lhs J2SAccess)
@@ -3251,13 +3289,13 @@
 	     (with-access::J2SRef lhs (decl)
 		(with-access::J2SDecl decl (hint)
 		   (j2s-scheme-set! lhs
-		      (js-binop2 loc op lhs rhs mode return conf hint)
+		      (js-binop2 loc op type lhs rhs mode return conf hint)
 		      (j2s-scheme lhs mode return conf '())
 		      mode return conf))))
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(j2s-unresolved-put! `',id
-		   (js-binop2 loc op lhs rhs mode return conf '())
+		   (js-binop2 loc op type lhs rhs mode return conf '())
 		   #t mode return)))
 	    (else
 	     (j2s-error "j2sscheme" "Illegal assignment" this))))))
@@ -3285,22 +3323,26 @@
 	 (cache
 	  (cond
 	     ((string? prop)
-	      (case tyobj
-		 ((object)
-		  `(js-object-get-name/cache ,obj
-		      ',(string->symbol prop) ,(pcache cache) %this))
-		 ((global)
-		  `(js-global-object-get-name/cache ,obj
-		      ',(string->symbol prop) ,(pcache cache) %this))
-		 (else
-		  `(js-get-name/cache ,obj
-		      ',(string->symbol prop) ,(pcache cache) %this))))
+	      (if (string=? prop "length")
+		  `(js-get-length ,obj ,(pcache cache) %this)
+		  (case tyobj
+		     ((object)
+		      `(js-object-get-name/cache ,obj
+			  ',(string->symbol prop) ,(pcache cache) %this))
+		     ((global)
+		      `(js-global-object-get-name/cache ,obj
+			  ',(string->symbol prop) ,(pcache cache) %this))
+		     (else
+		      `(js-get-name/cache ,obj
+			  ',(string->symbol prop) ,(pcache cache) %this)))))
 	     ((number? prop)
 	      `(js-get ,obj ,prop %this))
 	     (else
 	      `(js-get/cache ,obj ,prop ,(pcache cache) %this))))
 	 ((string? prop)
-	  `(js-get ,obj ',(string->symbol prop) %this))
+	  (if (string=? prop "length")
+	      `(js-get-length ,obj #f %this)
+	      `(js-get ,obj ',(string->symbol prop) %this)))
 	 (else
 	  `(js-get ,obj ,prop %this)))))
 

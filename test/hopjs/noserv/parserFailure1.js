@@ -1,5 +1,5 @@
 try {
-   require('./aux/faultySubmodule.js' );
+   require( './aux/faultySubmodule.js' );
 } catch ( e ) {
    console.log( 'catched a failure' );
    process.exit( 0 );

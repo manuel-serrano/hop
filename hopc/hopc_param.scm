@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Oct  6 08:49:57 2016 (serrano)                */
+;*    Last change :  Wed Nov  9 16:09:10 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -40,6 +40,9 @@
    
 	    (hopc-access-file::obj)
 	    (hopc-access-file-set! ::obj)
+
+	    (hopc-long-size::int)
+	    (hopc-long-size-set! ::int)
 
 	    (hopc-jsheap::obj)
 	    (hopc-jsheap-set! ::obj)
@@ -157,6 +160,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-access-file
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-long-size ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-long-size
+   (bigloo-config 'elong-size))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-jsheap ...                                                  */

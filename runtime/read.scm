@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Aug 18 14:09:00 2016 (serrano)                */
+;*    Last change :  Thu Nov 10 14:18:26 2016 (serrano)                */
 ;*    Copyright   :  2005-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -1003,6 +1003,7 @@
 (define (hop-sofile-path path)
    (let* ((base (prefix (basename path)))
 	  (soname (string-append base "-" (md5sum-string path) (so-suffix))))
+   (tprint "path=" path " soname=" soname)
       (make-file-path
 	 (hop-sofile-directory)
 	 (hop-version) (hop-build-id) (so-arch-directory)
