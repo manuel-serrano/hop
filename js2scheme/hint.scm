@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Nov  1 11:59:16 2016 (serrano)                */
+;*    Last change :  Thu Nov 10 10:25:52 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -279,7 +279,13 @@
 ;*    j2s-hint ::J2SAccess ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SAccess types)
-   (j2s-hint-access this types '(array string)))
+   (cond
+      ((and (pair? types) (member (car types) '(integer number)))
+       (j2s-hint-access this types '(array)))
+      ((and (pair? types) (member (car types) '(string)))
+       (j2s-hint-access this types '(string)))
+      (else
+       (j2s-hint-access this types '(array string)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAssig ...                                          */
@@ -516,6 +522,9 @@
 	 ((eq? (caar l) 'any)
 	  (loop (cdr l) t c))
 	 ((>fx (cdr (car l)) c)
+	  (loop (cdr l) (caar l) (cdar l)))
+	 ((and (=fx (cdr (car l)) c) (eq? t 'string))
+	  ;; in doubt, prefers arrays over strings
 	  (loop (cdr l) (caar l) (cdar l)))
 	 ((and (=fx (cdr (car l)) c)
 	       (or (eq? t 'any) (memq (caar l) '(integer number))))

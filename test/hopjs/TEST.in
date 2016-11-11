@@ -19,6 +19,7 @@ basedir=$pwd
 hop=$BUILDBINDIR/hop.sh
 test=
 stoponfailure=no
+gflags="--sofile-policy nte+ -g --clear-libs"
 
 while : ; do
 
@@ -78,7 +79,7 @@ run() {
       echo ""
       echo -n "$hop --no-zeroconf $* ..."
     fi
-    $hop --no-zeroconf $* 2>&1 > /tmp/TEST-HOPJS.out
+    $hop --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1 
     lastres=$?
     
     cat /tmp/TEST-HOPJS.out >> TEST-HOPJS-ALL.out
@@ -107,10 +108,10 @@ touch /tmp/TEST-HOPJS-ALL.out
 for path in noserv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
-      run $path -g --no-server --rc-file $path.rc.js
+      run $path $gflags --no-server --rc-file $path.rc.js
       run $path --no-server --rc-file $path.rc.js
     else
-      run $path -g -q --no-server
+      run $path $gflags -q --no-server
       run $path -q --no-server
     fi
   fi
@@ -120,18 +121,18 @@ for path in serv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
 	if [ -f $path.args ]; then
-	    run $path -g -p 0 `cat $path.args` --rc-file $path.rc.js
+	    run $path $gflags -p 0 `cat $path.args` --rc-file $path.rc.js
 	    run $path -p 0 `cat $path.args` --rc-file $path.rc.js
 	else
-	    run $path -g -p 0 --rc-file $path.rc.js
+	    run $path $gflags -p 0 --rc-file $path.rc.js
 	    run $path -p 0 --rc-file $path.rc.js
 	fi
     else       
 	if [ -f $path.args ]; then
-	    run $path -g -p 0 `cat $path.args` --rc-file passwd.hop
+	    run $path $gflags -p 0 `cat $path.args` --rc-file passwd.hop
 	    run $path -p 0 `cat $path.args` --rc-file passwd.hop
 	else
-	    run $path -g -p 0 --rc-file passwd.hop
+	    run $path $gflags -p 0 --rc-file passwd.hop
 	    run $path -p 0 --rc-file passwd.hop
 	fi
     fi

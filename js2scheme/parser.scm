@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Oct 16 18:02:51 2016 (serrano)                */
+;*    Last change :  Sat Nov  5 09:30:39 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1242,11 +1242,6 @@
 	 ((* / %) 10)
 	 (else #f)))
 
-;*    (define (binary-op-type op)                                      */
-;*       (case op                                                      */
-;* 	 ((< > <= >= instanceof in == ===) 'bool)                      */
-;* 	 (else #f)))                                                   */
-
    ;; left-associative binary expressions
    (define (binary-expr in-for-init?)
       (define (binary-aux level)
@@ -1275,7 +1270,6 @@
 				   (loc (token-loc token))
 				   (lhs expr)
 				   (op (token-tag token))
-;* 				   (type (binary-op-type (token-tag token))) */
 				   (rhs (binary-aux (+fx level 1)))))))
 		      (else
 		       expr))))))
@@ -1290,11 +1284,20 @@
 	     (if (or (isa? expr J2SUnresolvedRef)
 		     (isa? expr J2SAccess)
 		     (isa? expr J2SParen))
-		 (instantiate::J2SPrefix
+		 (let* ((op (if (eq? (token-tag token) '++) '+ '-))
+			(rhs (instantiate::J2SBinary
+				(loc loc)
+				(op op)
+				(lhs expr)
+				(rhs (instantiate::J2SNumber
+					(loc loc)
+					(val 1))))))
+		    ;; see POSTFIX nodes for RHS 
+		    (instantiate::J2SPrefix
 		       (loc loc)
-		       (rhs (instantiate::J2SUndefined (loc loc)))
 		       (lhs expr)
-		       (op (token-tag token)))
+		       (rhs rhs)
+		       (op (token-tag token))))
 		 (parse-token-error
 		    "Invalid left-hand side expression in prefix operation"
 		    token))))
@@ -1330,11 +1333,22 @@
 		    (if (or (isa? expr J2SUnresolvedRef)
 			    (isa? expr J2SAccess)
 			    (isa? expr J2SParen))
-			(instantiate::J2SPostfix
-			   (loc (token-loc token))
-			   (rhs (instantiate::J2SUndefined (loc loc)))
-			   (lhs expr)
-			   (op (token-tag token)))
+			(let* ((op (if (eq? (token-tag token) '++) '+ '-))
+			       (rhs (instantiate::J2SBinary
+				       (loc loc)
+				       (op op)
+				       (lhs expr)
+				       (rhs (instantiate::J2SNumber
+					       (loc loc)
+					       (val 1))))))
+			   ;; the compiler uses the rhs part only when
+			   ;; it computes static analysis (e.g., type inference)
+			   ;; of the AST
+			   (instantiate::J2SPostfix
+			      (loc (token-loc token))
+			      (lhs expr)
+			      (rhs rhs)
+			      (op (token-tag token))))
 			(parse-token-error
 			   "Invalid left-hand side expression in postfix operation"
 			   token))))

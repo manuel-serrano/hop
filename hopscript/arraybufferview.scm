@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sat Aug 13 07:26:06 2016 (serrano)                */
+;*    Last change :  Tue Nov  8 16:21:42 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -174,35 +174,6 @@
       (display ", " op)
       (hop->javascript buffer op compile isexpr)
       (display ")" op)))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    javascript-buffer->typedarray ...                                *} */
-;* {*    -------------------------------------------------------------    *} */
-;* {*    See __hopscript_arraybuffer                                      *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (javascript-buffer->typedarray name args %this)             */
-;*    (let ((buf (allocate-instance (string->symbol name))))           */
-;*       (with-access::JsGlobalObject %this ((proto __proto__))        */
-;*          (with-access::JsTypedArray buf (__proto__                  */
-;* 					   extensible properties       */
-;* 					   cmap elements               */
-;* 					   frozen buffer %data byteoffset */
-;* 					   length bpe)                 */
-;*             (set! __proto__ proto)                                  */
-;*             (set! cmap #f)                                          */
-;*             (set! elements '#())                                    */
-;*             (set! properties '())                                   */
-;*             (set! elements '#())                                    */
-;* 	    (set! extensible #t)                                       */
-;*             (set! frozen (car args))                                */
-;* 	    (set! byteoffset (fixnum->uint32 (cadr args)))             */
-;* 	    (set! length (fixnum->uint32 (caddr args)))                */
-;* 	    (set! bpe (fixnum->uint32 (cadddr args)))                  */
-;* 	    (set! buffer (car (cddddr args)))                          */
-;* 	    (with-access::JsArrayBuffer buffer (data)                  */
-;* 	       (set! %data data))                                      */
-;* 	    (js-put! buf 'length (u8vector-length %data) #f %this)))   */
-;*       buf))                                                         */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typedarray-ref ::JsInt8Array ...                              */
@@ -410,7 +381,7 @@
 			:configurable #f
 			:writable #f
 			:enumerable #t)
-		     
+
 		     ;; length
 		     (js-bind! %this this 'length
 			:value (uint32->fixnum len)
@@ -724,16 +695,42 @@
 ;*    js-get-property-value ::JsTypedArray ...                         */
 ;*    -------------------------------------------------------------    */
 ;*    This method is optional. It could be removed without changing    */
-;*    the programs behaviors. It merely optimizes access to strings.   */
+;*    the programs behaviors. It merely optimizes access to arrays.    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsTypedArray base p %this)
-   (or (js-get-typedarray o p %this) (call-next-method)))
+   (if (symbol? p)
+       (if (eq? p 'length)
+	   (with-access::JsTypedArray o (length data)
+	      (uint32->fixnum length))
+	   (call-next-method))
+       (or (js-get-typedarray o p %this) (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get ::JsTypedArray ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsTypedArray p %this)
-   (or (js-get-typedarray o p %this) (call-next-method)))
+   (if (symbol? p)
+       (if (eq? p 'length)
+	   (with-access::JsTypedArray o (length)
+	      (uint32->fixnum length))
+	   (call-next-method))
+       (or (js-get-typedarray o p %this) (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsTypedArray ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length o::JsTypedArray cache %this)
+   (with-access::JsTypedArray o (length)
+      (uint32->fixnum length)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-name/cache-miss ::JsTypedArray ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-name/cache-miss o::JsTypedArray p cache::JsPropertyCache throw %this)
+   (if (eq? p 'length)
+       (with-access::JsTypedArray o (length)
+	  (uint32->fixnum length))
+       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsTypedArray ...                                       */
@@ -741,9 +738,18 @@
 (define-method (js-put! o::JsTypedArray p v throw %this)
    
    (define (js-put-array! o::JsTypedArray p::obj v)
-      (if (not (js-can-put o p %this))
+      (cond
+	 ((not (js-can-put o p %this))
 	  ;; 1
-	  (js-undefined)
+	  (js-undefined))
+	 ((eq? p 'length)
+	  ;; 1b, specific to TypedArray where length is not a true property
+	  (with-access::JsTypedArray o (length buffer)
+	     (when (eq? buffer (class-nil JsArrayBuffer))
+		(set! length
+		   (fixnum->uint32 (->fixnum v))))
+	     v))
+	 (else
 	  (let ((owndesc (js-get-own-property o p %this)))
 	     ;; 2
 	     (if (js-is-data-descriptor? owndesc)
@@ -767,7 +773,7 @@
 					  (configurable #t))))
 			   ;; 6
 			   (js-define-own-property o p newdesc throw %this)))))
-	     v)))
+	     v))))
    
    (with-access::JsTypedArray o (buffer length byteoffset bpe conv)
       (let ((i::uint32 (js-toindex p)))

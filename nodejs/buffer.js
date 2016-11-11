@@ -398,7 +398,6 @@ Buffer.prototype.toJSON = function() {
 // toString(encoding, start=0, end=buffer.length)
 Buffer.prototype.toString = function(encoding, start, end) {
   encoding = String(encoding || 'utf8').toLowerCase();
-
   if (typeof start !== 'number' || start < 0) {
     start = 0;
   } else if (start > this.length) {

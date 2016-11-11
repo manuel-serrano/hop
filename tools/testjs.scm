@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 27 17:13:14 2013                          */
-;*    Last change :  Wed Mar 23 18:58:14 2016 (serrano)                */
+;*    Last change :  Fri Nov  4 15:55:26 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing JavaScript programs                                      */
@@ -27,6 +27,7 @@
 ;*    hopc ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define hopc "hopc")
+(define hopcflags "")
 
 ;*---------------------------------------------------------------------*/
 ;*    directories ...                                                  */
@@ -83,6 +84,8 @@
    (args-parse (cdr args)
       (("--hopc=?path" (help "Hopc path"))
        (set! hopc path))
+      (("--flags=?flags" (help "Hopc flags"))
+       (set! hopcflags flags))
       (("-v?num" (help "Debug and verbosity"))
        (if (string=? num "")
 	   (bigloo-debug-set! (+fx (bigloo-debug) 1))
@@ -377,7 +380,7 @@ return true; };\n" p)
 ;*    compile-test ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (compile-test tmp isnegative)
-   (let ((cmd (format "~a ~a -o ~a ~a" hopc tmp (prefix tmp)
+   (let ((cmd (format "~a ~a ~a -o ~a ~a" hopc hopcflags tmp (prefix tmp)
 		 (apply string-append flags))))
       (with-trace 3 cmd
 	 (let ((res (system (format "~a 2> ~a/testjs-err.comp > ~a/testjs.comp" cmd /tmp /tmp))))

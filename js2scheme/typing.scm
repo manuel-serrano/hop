@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Oct 31 18:53:15 2016 (serrano)                */
+;*    Last change :  Sun Nov  6 07:31:30 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -149,13 +149,15 @@
    [assert (ty) (memq ty '(unknown any scm cmap void object global function
 			   number integer index u8 string scmstring regexp
 			   undefined null bool date array u8array tilde))]
-   (unless (eq? ty 'unknown)
-      (with-access::J2SExpr this (type)
-	 (unless (or (eq? type ty) (eq? type 'any))
-	    (unfix! fix
-	       (format "expr-type-set! ~a ~a/~a" (typeof this) ty type))
-	    (set! type ty))))
-   (return ty env bk))
+   (with-access::J2SExpr this (type)
+      (unless (or (eq? ty 'unknown) (eq? type ty) (eq? type 'any))
+	 (let ((ntype (merge-types type ty)))
+	    (unless (eq? ntype type)
+	       (unfix! fix
+		  (format "expr-type-set! ~a ~a/~a -> ~a" (j2s->list this) ty type
+		     (merge-types type ty)))
+	       (set! type ntype))))
+      (return type env bk)))
 
 ;*---------------------------------------------------------------------*/
 ;*    merge-types ...                                                  */
@@ -171,6 +173,12 @@
       ((and (eq? left 'number) (eq? right 'index)) 'number)
       ((and (eq? left 'integer) (eq? right 'index)) 'integer)
       (else 'any)))
+
+;*---------------------------------------------------------------------*/
+;*    typnum? ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (typnum? typ)
+   (memq typ '(integer number)))
 
 ;*---------------------------------------------------------------------*/
 ;*    extend-env ...                                                   */
@@ -448,19 +456,18 @@
 ;*    typing ::J2SPostfix ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SPostfix env::pair-nil fun fix::cell)
-   (with-access::J2SPostfix this (lhs)
-      (multiple-value-bind (ty env bk)
+   (with-access::J2SPostfix this (lhs rhs)
+      (multiple-value-bind (tyl envl bkl)
 	 (typing lhs env fun fix)
-	 (expr-type-set! this env fix ty bk))))
+	 (call-next-method)
+	 (expr-type-set! this envl fix tyl bkl))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SPrefix ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SPrefix env::pair-nil fun fix::cell)
-   (with-access::J2SPrefix this (lhs)
-      (multiple-value-bind (ty env bk)
-	 (typing lhs env fun fix)
-	 (expr-type-set! this env fix ty bk))))
+   ;; equivalent to a RHS assignment
+   (call-next-method))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SCond ...                                             */
@@ -601,18 +608,23 @@
 	    (let ((typ (case op
 			  ((+)
 			   (cond
-			      ((and (eq? typl 'number) (eq? typr 'number))
+			      ((and (eq? typl 'integer) (eq? typr 'integer))
+			       'integer)
+			      ((and (typnum? typl) (typnum? typr))
 			       'number)
 			      ((or (eq? typl 'string) (eq? typr 'string))
 			       'string)
 			      (else
 			       'any)))
 			  ((- * /)
-			   'number)
+			   (cond
+			      ((and (eq? typl 'integer) (eq? typr 'integer))
+			       'integer)
+			      (else
+			       'number)))
 			  ((%)
 			   (cond
-			      ((and (memq typl '(index integer))
-				    (memq typr '(index integer)))
+			      ((and (eq? typl 'integer) (eq? typr 'integer))
 			       'integer)
 			      ((or (eq? typl 'unknown) (eq? typr 'unknown))
 			       'unknown)
@@ -623,7 +635,11 @@
 			  ((&& OR)
 			   (merge-types typr typl))
 			  ((<< >> >>> ^ & BIT_OR)
-			   'number)
+			   (cond
+			      ((and (eq? typl 'integer) (eq? typr 'integer))
+			       'integer)
+			      (else
+			       'number)))
 			  (else
 			   'any))))
 	       (expr-type-set! this env fix typ (append bkl bkr)))))))
@@ -771,7 +787,7 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    type ::J2SLetBlock ...                                           */
+;*    typing ::J2SLetBlock ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SLetBlock env::pair-nil fun fix::cell)
    (with-access::J2SLetBlock this (decls nodes)
@@ -892,17 +908,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SFor env::pair-nil fun fix::cell)
    (with-access::J2SFor this (init test incr body)
-;*       (tprint "FOR =================================" fix           */
-;* 	 " " (dump-env env))                                           */
-      (let loop ((env env)
-		 (i 0))
-;* 	 (tprint "FOR." i)                                             */
+      (let loop ((env env))
 	 (let ((ofix (cell-ref fix)))
 	    (multiple-value-bind (_ envb bk)
 	       (typing-seq (list init test body incr) env fun fix)
 	       (if (=fx ofix (cell-ref fix))
 		   (return 'void envb (filter-breaks bk this))
-		   (loop (env-merge env envb) (+fx i 1))))))))
+		   (loop (env-merge env envb))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SForIn ...                                            */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Tue Feb 16 10:50:48 2016 (serrano)                */
+;*    Last change :  Sat Nov  5 10:09:23 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -47,6 +47,16 @@
 			 (set! %info %oinfo))))
 	 olds)
       newbody))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::AlphaInfo ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list o::AlphaInfo)
+   (with-access::AlphaInfo o (new)
+      (if (isa? new J2SDecl)
+	  (with-access::J2SDecl new (id)
+	     (format "<AlphaInfo ~a>" id))
+	  (format "<AlphaInfo ~a>" (typeof new)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::obj ...                                                  */

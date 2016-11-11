@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Oct 23 09:39:11 2016 (serrano)                */
+;*    Last change :  Thu Nov 10 19:46:14 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -35,8 +35,10 @@
    (export (js-init-array! ::JsGlobalObject)
 	   (inline js-array?::bool ::obj)
 	   (inline js-array-length::uint32 ::JsArray)
-	   (inline js-array-ref ::JsArray idx ::JsGlobalObject)
+	   (js-array-ref ::JsArray idx ::JsGlobalObject)
+	   (js-array-ref-ur ::JsArray ::uint32 ::JsGlobalObject)
 	   (js-array-set! ::JsArray idx ::obj ::JsGlobalObject)
+	   (js-array-set-ur! ::JsArray ::uint32 ::obj ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
 	   (js-empty-vector->jsarray::JsArray ::JsGlobalObject)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
@@ -355,31 +357,55 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-ref ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-array-ref arr::JsArray idx %this)
+(define (js-array-ref arr::JsArray idx %this)
    (if (and (fixnum? idx) (>=fx idx 0))
-       (with-access::JsArray arr (vec)
-	  (if (<fx idx (vector-length vec))
-	      (let ((c (vector-ref-ur vec idx)))
-		 (if (eq? c (js-absent))
-		     (js-undefined)
-		     c))
-	      (js-get arr idx %this)))
+       (js-array-ref-ur arr (fixnum->uint32 idx) %this)
        (js-get arr idx %this)))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-ref-ur ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-array-ref-ur arr::JsArray idx::uint32 %this)
+   (let ((idx::long (uint32->fixnum idx)))
+      (with-access::JsArray arr (vec)
+	 (cond
+	    ((<fx idx (vector-length vec))
+	     (let ((c (vector-ref-ur vec idx)))
+		(if (eq? c (js-absent))
+		    (js-undefined)
+		    c)))
+	    ((expandable-array arr idx (fixnum->uint32 (vector-length vec)))
+	     =>
+	     (lambda (len)
+		(let ((olen (vector-length vec))
+		      (nlen (uint32->fixnum len)))
+		   (set! vec (copy-vector vec nlen))
+		   (vector-fill! vec (js-absent) olen ))
+		(js-undefined)))
+	    (else
+	     (js-get arr idx %this))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-set! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-array-set! arr::JsArray idx val %this)
    (if (and (fixnum? idx) (>=fx idx 0))
-       (with-access::JsArray arr (vec length)
-	  (if (<fx idx (vector-length vec))
-	      (begin
-		 (vector-set-ur! vec idx val)
-		 (when (>=u32 (fixnum->uint32 idx) length)
-		    (js-array-update-length! arr (+fx idx 1)))
-		 val)
-	      (js-put! arr idx val #f %this)))
+       (js-array-set-ur! arr (fixnum->uint32 idx) val %this)
        (js-put! arr idx val #f %this)))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-set-ur! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-array-set-ur! arr::JsArray idx::uint32 val %this)
+   (let ((idx::long (uint32->fixnum idx)))
+      (with-access::JsArray arr (vec length)
+	 (if (<fx idx (vector-length vec))
+	     (begin
+		(vector-set-ur! vec idx val)
+		(when (>=u32 (fixnum->uint32 idx) length)
+		   (js-array-update-length! arr (+fx idx 1)))
+		val)
+	     (js-put! arr idx val #f %this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-array-prototype! ...                                */
@@ -1893,6 +1919,12 @@
 	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsArray ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length o::JsArray cache %this)
+   (uint32->integer (js-array-length o)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-name/cache-miss o::JsArray p::obj cache::JsPropertyCache throw %this)
@@ -2004,6 +2036,28 @@
 (define (string->uint32 n)
    (let ((n (string->number n)))
       (when n (fixnum->uint32 n))))
+
+;*---------------------------------------------------------------------*/
+;*    expandable-array ...                                             */
+;*---------------------------------------------------------------------*/
+(define (expandable-array vec::JsArray index::uint32 len::uint32)
+   ;; Check is an inline array can be expanded based
+   ;; on a simple heuristic.
+   (with-access::JsArray vec (inline)
+      (when inline
+	 ;; the vector is inlined, make the real check
+	 (when (<u32 index (MAX-EXPANDABLE-ARRAY-SIZE))
+	    (cond
+	       ((=u32 index #u32:0)
+		#u32:2)
+	       ((<u32 (*u32 #u32:2 index)
+		   (/u32  (MAX-EXPANDABLE-ARRAY-SIZE) #u32:2))
+		(*u32 index #u32:2))
+	       ((<u32 (+u32 (MAX-EXPANDABLE-ARRAY-SIZE/8) index)
+		   (MAX-EXPANDABLE-ARRAY-SIZE))
+		(+u32 index (MAX-EXPANDABLE-ARRAY-SIZE/8)))
+	       (else
+		(MAX-EXPANDABLE-ARRAY-SIZE)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-define-own-property ...                                       */
@@ -2226,26 +2280,6 @@
 	    (else
 	     (uninline-array! a)
 	     (js-define-own-property% a (js-toname p %this) desc #f %this)))))
-
-  (define (expandable-array vec::JsArray index::uint32 len::uint32)
-     ;; Check is an inline array can be expanded. To take the descision,
-     ;; a basic heuristic (to be improved) to decide when an array
-     ;; should be expanded
-     (with-access::JsArray vec (inline)
-	(when inline
-	   ;; the vector is inlined, make the real check
-	   (when (<u32 index (MAX-EXPANDABLE-ARRAY-SIZE))
-	      (cond
-		 ((=u32 index #u32:0)
-		  #u32:2)
-		 ((<u32 (*u32 #u32:2 index)
-		     (/u32  (MAX-EXPANDABLE-ARRAY-SIZE) #u32:2))
-		  (*u32 index #u32:2))
-		 ((<u32 (+u32 (MAX-EXPANDABLE-ARRAY-SIZE/8) index)
-		     (MAX-EXPANDABLE-ARRAY-SIZE))
-		  (+u32 index (MAX-EXPANDABLE-ARRAY-SIZE/8)))
-		 (else
-		  (MAX-EXPANDABLE-ARRAY-SIZE)))))))
 
   (let ((oldlendesc (js-get-own-property a 'length %this)))
      (if (eq? p 'length)
