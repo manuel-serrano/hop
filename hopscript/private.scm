@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Nov 14 07:59:30 2016 (serrano)                */
+;*    Last change :  Tue Nov 15 16:32:38 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -42,10 +42,6 @@
 	   (<=uint32 ::uint32 ::obj)
 	   (>=uint32 ::uint32 ::obj)
 	   (>uint32 ::uint32 ::obj)
-	   
-	   (=int32 ::int32 ::obj)
-	   (<int32 ::int32 ::obj)
-	   (>=int32 ::int32 ::obj)
 	   
 	   (inline uint32->integer::obj ::uint32)
 	   (inline int32->integer::obj ::int32)
@@ -588,16 +584,28 @@
 	  ((nanfl? obj) #f)
 	  ((or (=fl obj +inf.0) (=fl obj -inf.0)) #f)
 	  (else (=fl (uint32->flonum u) obj))))
-      (else (=u32 u (->uint32 obj)))))
+      (else
+       (cond-expand
+	  ((or bint30 bint32)
+	   (=u32 u (->uint32 obj)))
+	  (else
+	   (=fx (uint32->fixnum u) obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <uint32 ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (<uint32 u::uint32 obj::obj)
    (cond
-      ((uint32? obj) (<u32 u obj))
-      ((negative? obj) #f)
-      (else (<u32 u (->uint32 obj)))))
+      ((uint32? obj)
+       (<u32 u obj))
+      ((negative? obj)
+       #f)
+      (else
+       (cond-expand
+	  ((or bint30 bint32)
+	   (<u32 u (->uint32 obj)))
+	  (else
+	   (<fx (uint32->fixnum u) obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    <=uint32 ...                                                     */
@@ -613,7 +621,11 @@
 	  ((=fl obj +inf.0) #t)
 	  (else (<=fl (uint32->flonum u) obj))))
       (else
-       (<=u32 u (->uint32 obj)))))
+       (cond-expand
+	  ((or bint30 bint32)
+	   (<=u32 u (->uint32 obj)))
+	  (else
+	   (<=fx (uint32->fixnum u) obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    >=uint32 ...                                                     */
@@ -629,7 +641,11 @@
 	  ((=fl obj +inf.0) #f)
 	  (else (>=fl (uint32->flonum u) obj))))
       (else
-       (>=u32 u (->uint32 obj)))))
+       (cond-expand
+	  ((or bint30 bint32)
+	   (>=u32 u (->uint32 obj)))
+	  (else
+	   (>=fx (uint32->fixnum u) obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    >uint32 ...                                                      */
@@ -637,50 +653,19 @@
 (define (>uint32 u::uint32 obj::obj)
    (cond
       ((uint32? obj)
-       (>=u32 u obj))
+       (>u32 u obj))
       ((negative? obj)
        #t)
       ((flonum? obj)
        (cond
 	  ((=fl obj +inf.0) #f)
-	  (else (>=fl (uint32->flonum u) obj))))
+	  (else (>fl (uint32->flonum u) obj))))
       (else
-       (>=u32 u (->uint32 obj)))))
-
-;*---------------------------------------------------------------------*/
-;*    =int32 ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (=int32 s::int32 obj::obj)
-   (cond
-      ((int32? obj)
-       (=s32 s obj))
-      ((negative? obj)
-       #f)
-      ((flonum? obj)
-       (cond
-	  ((nanfl? obj) #f)
-	  ((or (=fl obj +inf.0) (=fl obj -inf.0)) #f)
-	  (else (=s32 s (fixnum->int32 (flonum->fixnum obj))))))
-      (else
-       (=s32 s (->int32 obj)))))
-
-;*---------------------------------------------------------------------*/
-;*    <int32 ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (<int32 s::int32 obj::obj)
-   (cond
-      ((int32? obj) (<s32 s obj))
-      ((negative? obj) #f)
-      (else (<s32 s (->int32 obj)))))
-
-;*---------------------------------------------------------------------*/
-;*    >=int32 ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (>=int32 s::int32 obj::obj)
-   (cond
-      ((int32? obj) (>=s32 s obj))
-      ((negative? obj) #f)
-      (else (>=s32 s (->int32 obj)))))
+       (cond-expand
+	  ((or bint30 bint32)
+	   (>u32 u (->uint32 obj)))
+	  (else
+	   (>fx (uint32->fixnum u) obj))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    uint32->integer ...                                              */
