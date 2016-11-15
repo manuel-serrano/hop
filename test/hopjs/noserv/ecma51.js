@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Tue Mar 22 17:30:42 2016 (serrano)                */
+/*    Last change :  Mon Nov 14 15:13:45 2016 (serrano)                */
 /*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -226,7 +226,7 @@ function bar11(a,b,c,d,e,f,g,h,i,j,k) { if( arguments.length >= 0 ) return a; };
 function bar8(a,b,c,d,e,f,g,h) { if( arguments.length >= 0 ) return a; };
 function bar6(a,b,c,d,e,f) { if( arguments.length >= 0 ) return a; };
 
-assert.equal( bar11( 1 ), 1 );
+assert.equal( bar11( 1 ), 1, "arguments.length" );
 assert.equal( bar11( 1, 2, 3, 4, 5, 6 ), 1 );
 assert.equal( bar11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 ), 1 );
 assert.equal( bar11( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ), 1 );

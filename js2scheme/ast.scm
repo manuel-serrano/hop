@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Oct 19 19:32:46 2016 (serrano)                */
+;*    Last change :  Tue Nov 15 09:14:01 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -187,6 +187,10 @@
 
 	   (class J2SLetRef::J2SRef)
 	   
+	   (final-class J2SAref::J2SRef
+	      (array::J2SDecl read-only)
+	      (alen::J2SDecl read-only))
+	   
 	   (final-class J2SThis::J2SExpr)
 	   
 	   (final-class J2SCond::J2SExpr
@@ -291,7 +295,7 @@
 	   
 	   (final-class J2SVAssig::J2SAssig)
 	   (final-class J2SCAssig::J2SAssig)
-	   
+
 	   (final-class J2SFunBinding::J2SInit)
 	   
 	   (final-class J2SObjInit::J2SExpr

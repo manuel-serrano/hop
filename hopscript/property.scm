@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Nov  9 12:55:36 2016 (serrano)                */
+;*    Last change :  Tue Nov 15 08:17:50 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -105,6 +105,7 @@
 	   
 	   (generic js-seal ::JsObject ::obj)
 	   (generic js-freeze ::JsObject ::obj)
+	   (generic js-prevent-extensions ::JsObject)
 
 	   (generic js-for-in ::obj proc::procedure ::JsGlobalObject)
 
@@ -1827,6 +1828,13 @@
 ;*    js-freeze ::JsObject ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-freeze o::JsObject obj::obj))
+
+;*---------------------------------------------------------------------*/
+;*    js-prevent-extensions ::JsObject ...                             */
+;*---------------------------------------------------------------------*/
+(define-generic (js-prevent-extensions o::JsObject)
+   (with-access::JsObject o (extensible)
+      (set! extensible #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ...                                                    */

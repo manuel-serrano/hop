@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Nov 10 10:30:21 2016 (serrano)                */
+;*    Last change :  Tue Nov 15 13:15:05 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -493,7 +493,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-integer->jsstring num::long)
    (if (or (<fx num 0) (>=fx num (vector-length integers)))
-       (js-string->jsstring (integer->string num))
+       (js-ascii->jsstring (integer->string num))
        (vector-ref-ur integers num)))
 
 ;*---------------------------------------------------------------------*/
@@ -1233,7 +1233,7 @@
 				  (loop (+fx q (utf8-char-size (string-ref S q))) p)
 				  ;; 13.c.iii.1
 				  (let ((T (substring S p q))
-					(l (->fixnum (js-get A 'length %this))))
+					(l (->fixnum (js-get-length A #f %this))))
 				     ;; 13.c.iii.2
 				     (js-define-own-property A l
 					(instantiate::JsValueDescriptor
@@ -1269,7 +1269,7 @@
 						   (loop p e))))))))))
 		    ;; 14
 		    (let ((T (substring S p s))
-			  (l (js-get A 'length %this)))
+			  (l (js-get-length A #f %this)))
 		       ;; 15
 		       (js-define-own-property A l
 			  (instantiate::JsValueDescriptor
@@ -1341,7 +1341,7 @@
 			  (loop (+fx i 2) (+fx i 2)
 			     (cons portion segments))))
 		      ((#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8\ #\9)
-		       (let ((len (-fx (js-get match 'length %this) 1)))
+		       (let ((len (-fx (js-get-length match #f %this) 1)))
 			  (if (or (=fx i (-fx stop 1))
 				  (not (char-numeric? (string-ref fmt (+fx i 2)))))
 			      (let ((n (digit->number (string-ref fmt (+fx i 1)))))
@@ -1376,7 +1376,7 @@
 		       (loop (+fx i 2) j segments)))))))))
    
    (define (matches->string-list::pair-nil a)
-      (let ((len (js-get a 'length %this)))
+      (let ((len (js-get-length a #f %this)))
 	 (let loop ((i 1)
 		    (l '()))
 	    (if (=fx i len)

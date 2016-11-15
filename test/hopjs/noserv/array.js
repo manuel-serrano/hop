@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Thu Dec 10 21:26:45 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Tue Nov 15 08:28:44 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
 /*=====================================================================*/
@@ -26,3 +26,59 @@ var v = [];
 v.push( 1 );
 
 assert.ok( fun.apply( undefined, v ) === 1 );
+
+/*---------------------------------------------------------------------*/
+/*    preventExtensions                                                */
+/*---------------------------------------------------------------------*/
+var o = [ 1, 2 ];
+Object.preventExtensions( o );
+
+try {
+   o.push( 3 );
+   assert.fail( "object not extensible" );
+} catch( _ ) {
+   ;
+}
+
+var o2 = [ 1, 2 ];
+Object.preventExtensions( o2 );
+
+try {
+   o2[ 2 ] = 3;
+   assert.fail( "object not extensible" );
+} catch( _ ) {
+   ;
+}
+
+/*---------------------------------------------------------------------*/
+/*    expand                                                           */
+/*---------------------------------------------------------------------*/
+function expander( v, nlen ) {
+   for( let i = 0; i < nlen; i++ ) {
+      v[ i ] = i;
+   }
+
+   return v;
+}
+
+function expanderLength( v, len ) {
+   expander( v, len );
+   let p = Object.getOwnPropertyDescriptor( v, "length" );
+   
+   return v.length == len;
+}
+   
+function expanderProp( v, len ) {
+   expander( v, len );
+   let p = Object.getOwnPropertyDescriptor( v, "length" );
+   
+   return p.value == len;
+}
+   
+assert.ok( expanderLength( new Array( 7 ), 8 ), "expand length" );
+assert.ok( expanderLength( new Array( 7 ), 9 ), "expand length" );
+assert.ok( expanderLength( new Array( 7 ), 10 ), "expand length" );
+
+assert.ok( expanderProp( new Array( 7 ), 8 ), "expand prop" );
+assert.ok( expanderProp( new Array( 7 ), 9 ), "expand prop" );
+assert.ok( expanderProp( new Array( 7 ), 10 ), "expand prop" );
