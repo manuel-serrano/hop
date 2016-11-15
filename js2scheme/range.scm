@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Nov 13 15:19:11 2016 (serrano)                */
+;*    Last change :  Tue Nov 15 16:03:00 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -466,7 +466,10 @@
 ;*    range ::J2SStmt ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SStmt env::pair-nil fix::cell)
-   (unless (or (isa? this J2SDecl))
+   (unless (or (isa? this J2SDecl)
+	       (isa? this J2SReturn)
+	       (isa? this J2SBreak)
+	       (isa? this J2SLabel))
       (tprint "not implemented " (typeof this)))
    (call-default-walker)
    (return #f env))
@@ -721,12 +724,6 @@
       (range-seq nodes env fix)))
 
 ;*---------------------------------------------------------------------*/
-;*    range ::J2SReturn ...                                            */
-;*---------------------------------------------------------------------*/
-(define-walk-method (range this::J2SReturn env::pair-nil fix::cell)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
 ;*    range ::J2SLetBlock ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SLetBlock env::pair-nil fix::cell)
@@ -760,26 +757,36 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SFor env::pair-nil fix::cell)
    (with-access::J2SFor this (init test incr body)
-;*       (tprint "--------------------- j2sfor env=" (dump-env env))   */
       (multiple-value-bind (initi inite)
 	 (range init env fix)
-;* 	 (tprint "inite=" (dump-env inite))                            */
 	 (let loop ((env inite))
 	    (let ((ofix (cell-ref fix)))
 	       (multiple-value-bind (testi teste)
 		  (range test env fix)
-;* 		  (tprint "teste=" (dump-env teste))                   */
-		  (multiple-value-bind (testet testeo)
+		  (multiple-value-bind (testet testef)
 		     (test-envs test inite fix)
-;* 		     (tprint "testet=" (dump-env testet))              */
 		     (multiple-value-bind (bodyi bodye)
 			(range-seq (list body incr) (append-env testet teste) fix)
-;* 			(tprint "bodye=" (dump-env bodye))             */
 			(if (=fx ofix (cell-ref fix))
-			    (return #f (append-env testet bodye))
-			    (begin
-;* 			       (tprint "merge=" (dump-env (env-merge bodye env))) */
-			       (loop (env-merge bodye env))))))))))))
+			    (return #f (append-env testef bodye))
+			    (loop (env-merge bodye env)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    range ::J2SDo ...                                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (range this::J2SDo env::pair-nil fix::cell)
+   (with-access::J2SDo this (body test)
+      (let loop ((env env))
+	 (let ((ofix (cell-ref fix)))
+	    (multiple-value-bind (bodyi bodye)
+	       (range body env fix)
+	       (multiple-value-bind (testi teste)
+		  (range test bodye fix)
+		  (multiple-value-bind (testet testef)
+		     (test-envs test bodye fix)
+		     (if (=fx ofix (cell-ref fix))
+			 (return #f (append-env testef bodye))
+			 (loop (env-merge bodye env))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SNode ...                                        */
