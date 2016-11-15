@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Nov  6 07:31:30 2016 (serrano)                */
+;*    Last change :  Tue Nov 15 13:08:24 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -614,12 +614,16 @@
 			       'number)
 			      ((or (eq? typl 'string) (eq? typr 'string))
 			       'string)
+			      ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			       'unknown)
 			      (else
 			       'any)))
 			  ((- * /)
 			   (cond
 			      ((and (eq? typl 'integer) (eq? typr 'integer))
 			       'integer)
+			      ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			       'unknown)
 			      (else
 			       'number)))
 			  ((%)
@@ -638,6 +642,8 @@
 			   (cond
 			      ((and (eq? typl 'integer) (eq? typr 'integer))
 			       'integer)
+			      ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			       'unknown)
 			      (else
 			       'number)))
 			  (else

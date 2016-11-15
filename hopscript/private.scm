@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Oct 27 09:20:38 2016 (serrano)                */
+;*    Last change :  Mon Nov 14 07:59:30 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -47,8 +47,8 @@
 	   (<int32 ::int32 ::obj)
 	   (>=int32 ::int32 ::obj)
 	   
-	   (uint32->integer::obj ::uint32)
-	   (int32->integer::obj ::int32)
+	   (inline uint32->integer::obj ::uint32)
+	   (inline int32->integer::obj ::int32)
 	   
 	   (inline u32vref ::vector ::uint32)
 	   (inline u32vset! ::vector ::uint32 ::obj)
@@ -685,7 +685,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    uint32->integer ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (uint32->integer u::uint32)
+(define-inline (uint32->integer u::uint32)
    (cond-expand
       (bint30
        (if (<u32 u (fixnum->uint32 (bit-lsh 1 29)))
@@ -697,7 +697,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    int32->integer ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (int32->integer i::int32)
+(define-inline (int32->integer i::int32)
    (cond-expand
       (bint30
        (if (and (<s32 i (fixnum->int32 (bit-lsh 1 28)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Nov 10 13:37:58 2016 (serrano)                */
+;*    Last change :  Sun Nov 13 15:19:11 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -70,8 +70,9 @@
    (let* ((lsize (config-get args :long-size (bigloo-config 'elong-size)))
 	  (fixnum (interval (- (expt 2. (fixnum->flonum (-fx lsize 1))))
 		     (-fl (expt 2. (fixnum->flonum (-fx lsize 1))) 1.0)))
+	  (fxsize (-fx lsize 2))
 	  (index (interval 0
-		    (-fl (expt 2. (fixnum->flonum (min 32 lsize))) 2.0))))
+		    (-fl (expt 2. (fixnum->flonum (min 32 fxsize))) 2.0))))
       (with-access::J2SProgram this (headers decls nodes)
 	 (for-each (lambda (n) (type-range! n fixnum index)) decls)
 	 (for-each (lambda (n) (type-range! n fixnum index)) nodes)
@@ -92,7 +93,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    extend-env ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (extend-env::pair-nil env::pair-nil decl::J2SDecl intv::struct)
+(define (extend-env::pair-nil env::pair-nil decl::J2SDecl intv)
    (cond
       ((not intv)
        env)
@@ -320,37 +321,62 @@
 ;*    interval-add ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (interval-add left right)
-   (widening left right (interval-binary + left right)))
+   (when (and (interval? left) (interval? right))
+      (let ((intr (interval
+		     (+ (interval-min left) (interval-min right))
+		     (+ (interval-max left) (interval-max right)))))
+	 (widening left right intr))))
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-sub ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (interval-sub left right)
-   (widening left right (interval-binary - left right)))
+   (when (and (interval? left) (interval? right))
+      (let ((intr (interval
+		     (- (interval-min left) (interval-max right))
+		     (- (interval-max left) (interval-min right)))))
+	 (widening left right intr))))
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-mul ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (interval-mul left right)
-   (widening left right (interval-binary * left right)))
+   (when (and (interval? left) (interval? right))
+      (let ((intr (interval
+		     (* (interval-min left) (interval-max right))
+		     (* (interval-max left) (interval-min right)))))
+	 (widening left right intr))))
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-div ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (interval-div left right)
-   (widening left right (interval-binary / left right)))
+   (when (and (interval? left) (interval? right))
+      (let ((min (/ (interval-min left) (interval-max right)))
+	    (max (/ (interval-max left) (interval-min right))))
+	 (when (and (integer? min) (integer? max))
+	    (let ((intr (interval min max)))
+	       (widening left right intr))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-shiftl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (interval-shiftl left right)
-   (interval-binary bit-lsh left right))
+   
+   (define (lsh n s)
+      (llong->flonum (bit-lshllong (flonum->llong n) (fixnum->llong s))))
+   
+   (interval-binary lsh left right))
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-shiftr ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (interval-shiftr left right)
-   (interval-binary bit-rsh left right))
+   
+   (define (rsh n s)
+      (llong->flonum (bit-rshllong (flonum->llong n) (fixnum->llong s))))
+   
+   (interval-binary rsh left right))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-interval-set! ...                                           */
@@ -405,7 +431,10 @@
 	  (return intv env)
 	  (multiple-value-bind (int env)
 	     (range (car nodes) env fix)
-	     (loop (cdr nodes) int env)))))
+	     (begin
+		(if (not (list? env))
+		    (tprint "PAS BON: " (j2s->list (car nodes))))
+		(loop (cdr nodes) int env))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    range-seq ...                                                    */
@@ -430,14 +459,17 @@
 ;*    range ::J2SExpr ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SExpr env::pair-nil fix::cell)
-   (call-default-walker))
+   (call-default-walker)
+   (return #f env))
 
 ;*---------------------------------------------------------------------*/
 ;*    range ::J2SStmt ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SStmt env::pair-nil fix::cell)
-   (tprint "not implemented " (typeof this))
-   (call-default-walker))
+   (unless (or (isa? this J2SDecl))
+      (tprint "not implemented " (typeof this)))
+   (call-default-walker)
+   (return #f env))
 
 ;*---------------------------------------------------------------------*/
 ;*    range ::J2SNumber ...                                            */
@@ -476,7 +508,7 @@
 	 (multiple-value-bind (intr envr)
 	    (range right envl fix)
 	    (with-access::J2SRef left (decl)
-	       (if (not intr)
+	       (if (or (not (interval? intl)) (not (interval? intr)))
 		   (values (empty-env) (empty-env))
 		   (case op
 		      ((<)
@@ -500,9 +532,11 @@
 			  (values (make-env decl intrt)
 			     (make-env decl intro))))
 		      ((== ===)
-		       (values (make-env decl intr) (interval-neq intl intr)))
+		       (values (make-env decl intr)
+			  (make-env decl (interval-neq intl intr))))
 		      ((!= !==)
-		       (values (interval-neq intl intr) (make-env decl intr)))
+		       (values (interval-neq intl intr)
+			  (make-env decl intr)))
 		      (else
 		       (values (empty-env) (empty-env)))))))))
    
@@ -666,7 +700,9 @@
 	     (range val env fix)
 	     (node-interval-set! this env fix intv)
 	     (return #f (extend-env env this intv)))
-	  (call-default-walker))))
+	  (begin
+	     (call-default-walker)
+	     (return #f env)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    range ::J2SStmtExpr ...                                          */
@@ -711,6 +747,8 @@
 	 (range test env fix)
 	 (multiple-value-bind (envt envo)
 	    (test-envs test env fix)
+	    (if (not (list? envt)) (tprint "PAS GLOP envt=" envt))
+	    (if (not (list? envo)) (tprint "PAS GLOP envo=" envo))
 	    (multiple-value-bind (_ envt)
 	       (range then (append-env envt env) fix)
 	       (multiple-value-bind (_ envo)

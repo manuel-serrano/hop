@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Oct 31 21:22:13 2016 (serrano)                */
+;*    Last change :  Tue Nov 15 08:18:04 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -709,8 +709,7 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.10
       (define (preventextensions this obj)
 	 (let ((o (js-cast-object obj %this "preventExtensions")))
-	    (with-access::JsObject o (extensible)
-	       (set! extensible #f))
+	    (js-prevent-extensions o)
 	    obj))
       
       (js-bind! %this js-object 'preventExtensions

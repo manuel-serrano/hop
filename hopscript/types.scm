@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Nov  8 12:16:12 2016 (serrano)                */
+;*    Last change :  Mon Nov 14 20:13:22 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -86,8 +86,7 @@
 	      (names::vector read-only (default '#()))
 	      (descriptors::vector read-only (default '#())))
 
-	   ;; Not a jsobject. This class is used to implement
-	   ;; JS string literal which are not plain Scheme string
+	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
 	   (abstract-class JsStringLiteral
 	      ;; the actual characters (string, tree, list)
@@ -289,7 +288,9 @@
 	   (generic js-buffer->jsbuffer ::JsObject ::pair-nil ::JsGlobalObject)
 
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
-	   (generic js-typedarray-set!::procedure ::JsTypedArray)))
+	   (generic js-typedarray-set!::procedure ::JsTypedArray)
+
+	   (inline js-array-vec::vector ::JsArray)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */
@@ -573,4 +574,8 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-typedarray-set!::procedure a::JsTypedArray))
 
-   
+;*---------------------------------------------------------------------*/
+;*    js-array-vec ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-vec::vector a::JsArray)
+   (with-access::JsArray a (vec) vec))
