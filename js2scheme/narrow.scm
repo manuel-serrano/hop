@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Sat Apr 23 06:05:08 2016 (serrano)                */
+;*    Last change :  Wed Nov 16 11:33:47 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -62,7 +62,6 @@
 		   (cond
 		      ((isa? o J2SDeclFun)
 		       (with-access::J2SDeclFun o (id val)
-			  ;; (tprint "Narrow " id)
 			  (j2s-narrow-fun! val)))
 		      ((isa? o J2SDecl)
 		       (j2s-mark-unnarrowable o))))
@@ -72,7 +71,7 @@
 	 (map! (lambda (o)
 		  (j2s-find-init-blocks o #f #f)
 		  (j2s-mark-narrowable o '() #f (and (isa? o J2SFun) o) (make-cell #f))
-		  (j2s-narrow! o))
+		  (j2s-lift-inits! (j2s-narrow! o)))
 	    nodes)))
    this)
 
@@ -86,7 +85,7 @@
       ;; get the set of narrowable declrations
       (j2s-mark-narrowable body '() #f o (make-cell #f))
       ;; narrow the function body
-      (j2s-narrow! body)))
+      (set! body (j2s-lift-inits! (j2s-narrow! body)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-init-blocks! ...                                             */
@@ -311,3 +310,42 @@
 ;*    (j2s-narrow-fun! this)                                           */
 ;*    this)                                                            */
 
+;*---------------------------------------------------------------------*/
+;*    j2s-lift-inits! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-lift-inits! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-lift-inits! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-lift-inits! this::J2SLetBlock)
+
+   (define (lift? node::J2SNode decls)
+      ;; lift everything that is not an initilazation of one decls
+      (or (not (isa? node J2SStmtExpr))
+	  (with-access::J2SStmtExpr node (expr)
+	     (or (not (isa? expr J2SInit))
+		 (with-access::J2SInit expr (lhs)
+		    (or (not (isa? lhs J2SRef))
+			(with-access::J2SRef lhs (decl)
+			   (not (memq decl decls)))))))))
+
+   (call-default-walker)
+   (with-access::J2SLetBlock this (nodes decls)
+      (if (and (pair? nodes) (isa? (car nodes) J2SSeq))
+	  (with-access::J2SSeq (car nodes) ((snodes nodes))
+	     (let loop ((inodes snodes)
+			(lifts '()))
+		(cond
+		   ((null? inodes)
+		    this)
+		   ((lift? (car inodes) decls)
+		    (loop (cdr inodes) (cons (car inodes) lifts)))
+		   ((null? lifts)
+		    this)
+		   (else
+		    (set! snodes inodes)
+		    (duplicate::J2SBlock this
+				(nodes (reverse! (cons this lifts))))))))
+	  this)))

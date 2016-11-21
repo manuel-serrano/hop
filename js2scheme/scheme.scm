@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Nov 15 15:38:04 2016 (serrano)                */
+;*    Last change :  Sat Nov 19 19:30:33 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -35,29 +35,55 @@
 (define j2s-unresolved-call-workspace '%this)
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-maybe-methods ...                                            */
+;*    inline-method ...                                                */
 ;*---------------------------------------------------------------------*/
-(define j2s-maybe-methods
-   '(;; string methods
-     ("charAt" js-jsstring-maybe-charat 1 1)
-     ("charCodeAt" js-jsstring-maybe-charcodeat 1 1)
-     ("indexOf" js-jsstring-maybe-indexof 2 2)
-     ("lastIndexOf" js-jsstring-maybe-lastindexof 2 2)
-     ("substring" js-jsstring-maybe-substring 2 2)
-     ("substr" js-jsstring-maybe-substr 2 2)
-     ("toUpperCase" js-jsstring-maybe-touppercase 0 0)
-     ("toLocaleUpperCase" js-jsstring-maybe-tolocaleuppercase 0 0)
-     ("toLowerCase" js-jsstring-maybe-tolowercase 0 0)
-     ("toLocaleLowerCase" js-jsstring-maybe-tolocalelowercase 0 0)
-     ("split" js-jsstring-maybe-split 2 1)
-     ("replace" js-jsstring-maybe-replace 2 2)
-     ("match" js-jsstring-maybe-match 1 1 1)
-     ("naturalCompare" js-jsstring-maybe-naturalcompare 1 1)
-     ("localeCompare" js-jsstring-maybe-localecompare 1 1)
-     ("trim" js-jsstring-maybe-trim 0 0)
-     ;; array methods
-     ("push" js-array-maybe-push 1 1)
-     ("pop" js-array-maybe-pop 0 0)))
+(define-struct inline-method jsname scmid ttype args %this)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-inline-methods ...                                           */
+;*---------------------------------------------------------------------*/
+(define j2s-inline-methods
+   ;; jsname, scmname, (this.types), [optional-args] %this
+   (map (lambda (e)
+	   (apply inline-method e))
+      '(;; string methods
+	("charAt" js-jsstring-charat string (any) %this)
+	("charAt" js-jsstring-maybe-charat any (any) %this)
+	("charCodeAt" js-jsstring-charcodeat string (any) %this)
+	("charCodeAt" js-jsstring-maybe-charcodeat any (any) %this)
+	("indexOf" js-jsstring-indexof string (string (any 0)) %this)
+	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this)
+	("lastIndexOf" js-jsstring-lastindexof string (string (any +nan.0)) %this)
+	("lastIndexOf" js-jsstring-maybe-lastindexof string (any (any +nan.o)) %this)
+	("substring" js-jsstring-substring string (any any) %this)
+	("substring" js-jsstring-maybe-substring any (any any) %this)
+	("substr" js-jsstring-substr string (any any) %this)
+	("substr" js-jsstring-maybe-substr any (any any) %this)
+	("toUpperCase" js-jsstring-touppercase string () #f)
+	("toUpperCase" js-jsstring-maybe-touppercase any () %this)
+	("toLocaleUpperCase" js-jsstring-tolocaleuppercase string () #f)
+	("toLocaleUpperCase" js-jsstring-maybe-tolocaleuppercase any () %this)
+	("toLowerCase" js-jsstring-tolowercase string () #f)
+	("toLowerCase" js-jsstring-maybe-tolowercase any () %this)
+	("toLocaleLowerCase" js-jsstring-tolocalelowercase string () #f)
+	("toLocaleLowerCase" js-jsstring-maybe-tolocalelowercase any () %this)
+	("split" js-jsstring-split string (string (any (js-undefined))) %this)
+	("split" js-jsstring-maybe-split any (any (any (js-undefined))) %this)
+	("replace" js-jsstring-replace string (any string) %this)
+	("replace" js-jsstring-maybe-replace any (any any) %this)
+	("match" js-jsstring-match string (any) %this)
+	("match" js-jsstring-maybe-match any (any) %this)
+	("naturalCompare" js-jsstring-naturalcompare string (string) %this)
+	("naturalCompare" js-jsstring-maybe-naturalcompare any (any) %this)
+	("localeCompare" js-jsstring-localecompare string (string) %this)
+	("localeCompare" js-jsstring-maybe-localecompare any (any) %this)
+	("trim" js-jsstring-trim string () #f)
+	("trim" js-jsstring-maybe-trim any () %this)
+	;; array methods
+	("push" js-array-push array (any) %this)
+	("push" js-array-maybe-push any (any) %this)
+	("pop" js-array-pop array () %this)
+	("pop" js-array-maybe-pop any () %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
@@ -1730,6 +1756,10 @@
        `(js-strict-equal? ,lhs ,rhs))
       ((!==)
        `(not (js-strict-equal? ,lhs ,rhs)))
+      ((eq?)
+       `(eq? ,lhs ,rhs))
+      ((!eq?)
+       `(not (eq? ,lhs ,rhs)))
       ((<-)
        `(js<- ,lhs ,rhs %this))
       ((instanceof)
@@ -1762,10 +1792,16 @@
    (memq (j2s-type expr) '(number integer fixnum index)))
 
 ;*---------------------------------------------------------------------*/
+;*    is-integer ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (is-integer? expr::J2SExpr)
+   (memq (j2s-type expr) '(integer fixnum index)))
+
+;*---------------------------------------------------------------------*/
 ;*    is-fixnum? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-fixnum? expr::J2SExpr)
-   (memq (j2s-type expr) '(integer fixnum index)))
+   (memq (j2s-type expr) '(fixnum index)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-binop2 ...                                                    */
@@ -1949,11 +1985,9 @@
 	  ((and (eq? (j2s-type lhs) 'integer) (eq? (j2s-type rhs) 'integer))
 	   (binop lhs rhs hint
 	      (lambda (left right)
-		 (if (and (number? right) (not (= right 0)))
-		     `(remainder ,left ,right)
-		     `(if (= ,right 0)
-			  +nan.0
-			  (remainder ,left ,right))))))
+		 (if (and (number? right) (= right 0))
+		     +nan.0
+		     `(js-%$$NN ,left ,right)))))
 	  ((and (is-number? lhs) (is-number? rhs))
 	   (binop lhs rhs hint
 	      (lambda (left right)
@@ -1971,7 +2005,7 @@
 	      ((j2s-aref-length? rhs)
 	       (with-access::J2SAref (aref rhs) (field alen)
 		  (let ((test `(or (=fx %lhs ,(j2s-decl-scheme-id alen))
-				(=fx %lhs ,(j2s-scheme rhs mode return conf '(fixnum))))))
+				   (=fx %lhs ,(j2s-scheme rhs mode return conf '(fixnum))))))
 		     `(let ((%lhs ,(j2s-scheme lhs mode return conf '(fixnum))))
 			 ,(if (memq op '(!= !==))
 			      `(not ,test)
@@ -2030,7 +2064,10 @@
 	  (else
 	   (binop lhs rhs hint
 	      (lambda (left right)
-		 (js-binop loc op left right))))))
+		 (let ((op (if (and (or (is-fixnum? lhs) (is-fixnum? rhs)))
+			       (if (memq op '(== ===)) 'eq? '!eq?)
+			       op)))
+		    (js-binop loc op left right)))))))
       ((< <= > >=)
        (cond
 	  ((and (is-fixnum? lhs) (is-fixnum? rhs))
@@ -2948,17 +2985,30 @@
 	 (string=? val str))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-maybe-method ...                                             */
+;*    j2s-inline-method ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-maybe-method field args)
+(define (j2s-inline-method field args type)
    (when (isa? field J2SString)
       (with-access::J2SString field (val)
-	 (let ((method (assoc val j2s-maybe-methods))
-	       (len (length args)))
-	    (when (and (pair? method)
-		       (<=fx len (caddr method))
-		       (>=fx len (cadddr method)))
-	       method)))))
+	 (find (lambda (method)
+		  (when (string=? (inline-method-jsname method) val)
+		     (let ((ty (inline-method-ttype method)))
+			(when (or (eq? ty 'any) (eq? ty type))
+			   (let loop ((args args)
+				      (formals (inline-method-args method)))
+			      (cond
+				 ((null? args)
+				  (or (null? formals) (every pair? formals)))
+				 ((null? formals)
+				  #f)
+				 (else
+				  (let ((tya (j2s-type (car args)))
+					(tyf (if (pair? (car formals))
+						 (caar formals)
+						 (car formals))))
+				     (when (or (eq? tyf 'any) (eq? tyf tya))
+					(loop (cdr args) (cdr formals)))))))))))
+	    j2s-inline-methods))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCall ...                                         */
@@ -3002,42 +3052,25 @@
    (define (call-ref-method fun::J2SAccess obj::J2SExpr args)
       (with-access::J2SAccess fun (loc field)
 	 (cond
-	    ((and (eq? (j2s-type obj) 'string)
-		  (j2s-is-string? field "indexOf")
-		  (pair? args)
-		  (or (null? (cdr args)) (null? (cddr args))))
-	     `(js-jsstring-indexof ,(j2s-scheme obj mode return conf hint)
-		 ,(j2s-scheme (car args) mode return conf hint)
-		 ,(if (pair? (cdr args))
-		      (j2s-scheme (cadr args) mode return conf hint)
-		      0)
-		 %this))
-	    ((and (eq? (j2s-type obj) 'string)
-		  (j2s-is-string? field "charCodeAt")
-		  (pair? args)
-		  (null? (cdr args)))
-	     `(js-jsstring-charcodeat ,(j2s-scheme obj mode return conf hint)
-		 ,(j2s-scheme (car args) mode return conf hint)
-		 %this))
-	    ((and (eq? (j2s-type obj) 'array)
-		  (j2s-is-string? field "push")
-		  (pair? args)
-		  (null? (cdr args)))
-	     (array-push obj (car args)))
-	    ((j2s-maybe-method field args)
+	    ((j2s-inline-method field args (j2s-type obj))
 	     =>
-	     (lambda (method)
-		(let ((id (cadr method))
-		      (arity (caddr method))
-		      (len (length args)))
+	     (lambda (m)
+		(let* ((id (inline-method-scmid m))
+		       (opt (inline-method-args m))
+		       (arity (length opt))
+		       (len (length args)))
 		   `(,id ,(j2s-scheme obj mode return conf hint)
 		       ,@(map (lambda (arg)
 				 (j2s-scheme arg mode return conf hint))
 			    args)
-		       ,@(if (<fx len arity)
-			     (make-list (-fx arity len) '(js-undefined))
-			     '())
-		       %this))))
+		       ,@(if (=fx len arity)
+			     '()
+			     (let* ((lopt (length opt))
+				    (nopt (-fx arity len)))
+				(map cadr (list-tail opt (-fx lopt nopt)))))
+		       ,@(if (inline-method-%this m)
+			     '(%this)
+			     '())))))
 	    (else
 	     (call-unknown-function fun
 		(j2s-scheme obj mode return conf hint)
@@ -3224,7 +3257,7 @@
 	 (eq? id 'eval)))
 
    (define expr this)
-   
+
    (with-access::J2SCall this (loc fun this args protocol)
       (let loop ((fun fun))
 	 (epairify loc
@@ -3273,7 +3306,10 @@
 		   (if ,(if (eq? (j2s-type field) 'index)
 			    `(<fx %idx ,scmalen)
 			    `(and (>= %idx 0) (< %idx ,scmalen)))
-		       (vector-set-ur! ,scmarr %idx %val)
+		       (let ((%arr ,(j2s-scheme obj mode return conf hint)))
+			  (vector-set-ur! ,scmarr %idx %val)
+			  (when (>=u32 (fixnum->uint32 %idx) (js-array-length %arr))
+			     (js-array-update-length! %arr (+fx %idx 1))))
 		       (let ((%arr ,(j2s-scheme obj mode return conf hint)))
 			  (js-array-set! %arr %idx %val %this)
 			  (set! ,scmarr (js-array-vec %arr))
@@ -3346,7 +3382,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAccess mode return conf hint)
 
-   (define (aref this::J2SAccess)
+   (define (aref-old this::J2SAccess)
       ;; an optimized array set in a loop (see the array stage in array.scm)
       (with-access::J2SAccess this (obj field)
 	 (with-access::J2SAref obj (array alen)
@@ -3360,6 +3396,23 @@
 			  (if (eq? %val (js-absent))
 			      (js-get ,(j2s-scheme obj mode return conf hint) %idx %this)
 			      %val))
+		       (let* ((%arr ,(j2s-scheme obj mode return conf hint))
+			      (%val (js-array-ref %arr %idx %this)))
+			  (set! ,scmarr (js-array-vec %arr))
+			  (set! ,scmalen (vector-length ,scmarr))
+			  %val)))))))
+
+   (define (aref this::J2SAccess)
+      ;; an optimized array set in a loop (see the array stage in array.scm)
+      (with-access::J2SAccess this (obj field)
+	 (with-access::J2SAref obj (array alen)
+	    (let ((scmarr (j2s-decl-scheme-id array))
+		  (scmalen (j2s-decl-scheme-id alen)))
+	       `(let ((%idx ,(j2s-scheme field mode return conf hint)))
+		   (if ,(if (eq? (j2s-type field) 'index)
+			    `(<fx %idx ,scmalen)
+			    `(and (>= %idx 0) (< %idx ,scmalen)))
+		       (vector-ref-ur ,scmarr %idx)
 		       (let* ((%arr ,(j2s-scheme obj mode return conf hint))
 			      (%val (js-array-ref %arr %idx %this)))
 			  (set! ,scmarr (js-array-vec %arr))
@@ -3515,13 +3568,15 @@
 	 (cache
 	  (cond
 	     ((string? prop)
-	      (case tyobj
-		 ((object global)
-		  `(js-object-put-name/cache! ,obj
-		      ',(string->symbol prop) ,val ,mode ,(pcache cache) %this))
-		 (else
-		  `(js-put-name/cache! ,obj
-		      ',(string->symbol prop) ,val ,mode ,(pcache cache) %this))))
+	      (if (string=? prop "length")
+		  `(js-put-length! ,obj ,val ,mode ,(pcache cache) %this)
+		  (case tyobj
+		     ((object global)
+		      `(js-object-put-name/cache! ,obj
+			  ',(string->symbol prop) ,val ,mode ,(pcache cache) %this))
+		     (else
+		      `(js-put-name/cache! ,obj
+			  ',(string->symbol prop) ,val ,mode ,(pcache cache) %this)))))
 	     ((number? prop)
 	      `(js-put! ,obj ,prop ,val ,mode %this))
 	     (else

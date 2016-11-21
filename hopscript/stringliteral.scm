@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Nov 15 13:15:05 2016 (serrano)                */
+;*    Last change :  Thu Nov 17 16:30:32 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -796,28 +796,28 @@
    (define (ascii-lastindexof s)
       (if (not (isascii? search))
 	  -1
-	  (let* ((searchlen (string-length search))
-		 (len (string-length s))
+	  (let* ((ulen (string-length s))
 		 (numpos (js-tonumber position %this))
 		 (pos (if (and (flonum? numpos) (nanfl? numpos))
-			  (+ len 1)
-			  (js-tointeger numpos %this)))
-		 (start (inexact->exact (min (max pos 0) len))))
-	     ;; utf-8 imposes a left-to-right parsing
-	     (let loop ((i 0)
-			(u 0)
-			(r -1))
-		(cond
-		   ((or (=fx i len) (>fx u start))
-		    r)
-		   ((substring-at? s search i)
-		    (loop (+fx searchlen i) (+fx u searchlen) u))
-		   (else
-		    (let ((c (string-ref s i)))
-		       (loop (+fx i 1) (+fx u 1) r))))))))
+		      ulen
+		      (+ 1 (js-tointeger numpos %this))))
+		 (search (js-jsstring->string search))
+		 (start (inexact->exact (min (max pos 0) ulen))))
+	     (if (=fx (string-length search) 0)
+		 -1
+		 (let loop ((i start))
+		    (if (<fx i 0)
+			-1
+			(let ((j (string-index-right s (string-ref search 0) i)))
+			   (if j
+			       (if (substring-at? s search j)
+				   j
+				   (loop j))
+			       -1))))))))
    
    (define (utf8-lastindexof s)
-      (let* ((searchlen (string-length search))
+      (let* ((search (js-jsstring->string search))
+	     (searchlen (string-length search))
 	     (usearchlen (utf8-string-length search))
 	     (len (string-length s))
 	     (ulen (utf8-string-length s))
@@ -914,7 +914,7 @@
 	     (else
 	      (js-ascii->jsstring (make-string 1 (string-ref val position)))))
 	  (let ((pos (js-tointeger position %this)))
-	     (if (or (< pos 0) (>= pos (utf8-codeunit-length val)))
+	     (if (or (< pos 0) (>= pos (string-length val)))
 		 (js-ascii->jsstring "")
 		 (js-ascii->jsstring
 		    (make-string 1 (string-ref val (->fixnum pos))))))))

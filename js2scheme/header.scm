@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue Oct 18 08:52:06 2016 (serrano)                */
+;*    Last change :  Mon Nov 21 14:00:19 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -76,7 +76,7 @@
       (js-def-extern '%__GLOBAL #f #f
 	 ;; this will not be compiled as a global (see scheme.scm)
 	 `(js-put! GLOBAL 'global GLOBAL #f %this))
-      (js-def-extern 'process #t #t '(nodejs-process %worker %this) 'jsobject)
+      (js-def-extern 'process #t #t '(nodejs-process %worker %this) 'object)
       (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
 	  (instantiate::J2SUndefined
 	     (type 'undefined)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Nov 10 10:21:02 2016 (serrano)                */
+;*    Last change :  Mon Nov 21 09:00:01 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -75,6 +75,15 @@
 		      (else
 		       '()))))
 	  (if (pair? hint) `(:hint ,hint) '()))
+       '()))
+
+;*---------------------------------------------------------------------*/
+;*    dump-key ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (dump-key key)
+   (if (or (>= (bigloo-debug) 2)
+	   (string-contains  (or (getenv "HOPTRACE") "") "j2s:key"))
+       `(:key ,key)
        '()))
       
 ;*---------------------------------------------------------------------*/
@@ -161,9 +170,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SAssig)
    (with-access::J2SAssig this (lhs rhs loc)
-      `(,@(call-next-method) ,(j2s->list lhs)
+      `(,@(call-next-method) 
 	  ,@(dump-type this)
 	  ,@(dump-info this)
+	  ,(j2s->list lhs)
 	  ,(j2s->list rhs))))
 
 ;*---------------------------------------------------------------------*/
@@ -510,7 +520,7 @@
    (with-access::J2SDecl this (id key binder _scmid usecnt usage ronly %info scope)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
-	,@(if (>= (bigloo-debug) 2) `(:key ,key) '())
+	,@(dump-key key)
 	,@(if (>= (bigloo-debug) 3) `(:ronly ,ronly) '())
 	,@(if (>= (bigloo-debug) 3) `(:usecnt ,usecnt) '())
 	,@(if (>= (bigloo-debug) 3) `(:usage ,usage) '())

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Nov 15 08:17:50 2016 (serrano)                */
+;*    Last change :  Wed Nov 16 05:33:48 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -82,6 +82,7 @@
 	   (js-decl-eval-put! ::JsObject ::obj ::obj ::bool ::JsGlobalObject)
 
 	   (generic js-put! ::obj ::obj ::obj ::bool ::JsGlobalObject)
+	   (generic js-put-length! ::obj ::obj ::bool ::obj ::JsGlobalObject)
 	   (js-put/debug! ::obj ::obj ::obj ::bool ::JsGlobalObject loc)
 	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 	   (inline js-put-name/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
@@ -863,7 +864,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get-length o::obj cache %this::JsGlobalObject)
    (if cache
-       (js-get/cache o 'length cache %this)
+       (js-get-name/cache o 'length cache %this)
        (js-get o 'length %this)))
 
 ;*---------------------------------------------------------------------*/
@@ -1064,6 +1065,14 @@
 	  (js-raise-type-error %this (format "field \"~a\" read-only ~~a" name) o))
 	 (else
 	  ((class-field-mutator field) o v)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-put-length! ::obj ...                                         */
+;*---------------------------------------------------------------------*/
+(define-generic (js-put-length! o::obj v::obj throw::bool cache %this::JsGlobalObject)
+   (if cache
+       (js-put-name/cache! o 'length v throw cache %this)
+       (js-put! o 'length v throw %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsObject ...                                           */
@@ -1418,7 +1427,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache ...                                     */
 ;*---------------------------------------------------------------------*/
-;;(define-inline (js-object-put-name/cache! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
 (define (js-object-put-name/cache! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
    (with-access::JsObject o ((%omap cmap) elements)
       (with-access::JsPropertyCache cache ((%cmap cmap) index)

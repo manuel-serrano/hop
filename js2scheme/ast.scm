@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Nov 15 09:14:01 2016 (serrano)                */
+;*    Last change :  Mon Nov 21 12:27:17 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -20,7 +20,8 @@
 
    (export (abstract-class J2SNode
 	      (loc::pair read-only (info '("notraverse")))
-	      (%info (default #unspecified) (info '("notraverse"))))
+	      (%info (default #unspecified) (info '("notraverse")))
+	      (%%wstamp (default -1)))
 	   
 	   (abstract-class J2SStmt::J2SNode)
 	   
@@ -1159,6 +1160,18 @@
    (define (paren-type-test expr)
       (with-access::J2SParen expr (expr)
 	 (j2s-expr-type-test expr)))
+
+   (define (is-js-index test)
+      ;; if test === (js-index? (ref decl) ) return decl
+      ;; see __js2scheme_range
+      (when (isa? test J2SCall)
+	 (with-access::J2SCall test (fun args)
+	    (when (isa? fun J2SHopRef)
+	       (with-access::J2SHopRef fun (id)
+		  (when (eq? id 'js-index?)
+		     (when (and (pair? args) (null? (cdr args)))
+			(when (isa? (car args) J2SRef)
+			   (car args)))))))))
    
    (cond
       ((isa? expr J2SBinary)
@@ -1167,7 +1180,13 @@
        (unary-type-test expr))
       ((isa? expr J2SParen)
        (paren-type-test expr))
+      ((is-js-index expr)
+       =>
+       (lambda (ref)
+	  (with-access::J2SRef ref (decl)
+	     (values '== decl 'index ref))))
       (else
        #f)))
+
 
 

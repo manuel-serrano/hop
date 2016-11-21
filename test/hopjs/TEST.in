@@ -82,7 +82,7 @@ run() {
     $hop --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1 
     lastres=$?
     
-    cat /tmp/TEST-HOPJS.out >> TEST-HOPJS-ALL.out
+    cat /tmp/TEST-HOPJS.out >> /tmp/TEST-HOPJS-ALL.out
     echo "" >> /tmp/TEST-HOPJS-ALL.out
 
     if [ "$lastres" = "0" ]; then

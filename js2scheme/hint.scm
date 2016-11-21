@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Thu Nov 10 10:25:52 2016 (serrano)                */
+;*    Last change :  Sun Nov 20 09:17:31 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -38,8 +38,8 @@
       (for-each j2s-reset-hint decls)
       (for-each j2s-reset-hint nodes)
       ;; first we collect all possible hints...
-      (for-each (lambda (n) (j2s-hint n '())) decls)
-      (for-each (lambda (n) (j2s-hint n '())) nodes)
+      (for-each (lambda (n) (j2s-hint n '() 'number)) decls)
+      (for-each (lambda (n) (j2s-hint n '() 'number)) nodes)
       ;; then, for each function whose parameters are "hinted", we generate
       ;; an ad-hoc typed version
       (when (>=fx (config-get args :optim 0) 3)
@@ -74,7 +74,9 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-add-hint! decl::J2SDecl types::pair-nil)
    (with-access::J2SDecl decl (hint itype)
-      (when (eq? itype 'unknown)
+      (when (or (eq? itype 'unknown)
+		(and (eq? itype 'number)
+		     (or (memq 'integer types) (memq 'index types))))
 	 (for-each (lambda (type)
 		      [assert (type) (symbol? type)]
 		      (unless (memq type '(unknown any))
@@ -87,21 +89,21 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SNode types)
+(define-walk-method (j2s-hint this::J2SNode types numctx::symbol)
    [assert (types) (every symbol? types)]
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SRef ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SRef types)
+(define-walk-method (j2s-hint this::J2SRef types numctx)
    (with-access::J2SRef this (decl loc)
       (j2s-add-hint! decl types)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SExpr ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SExpr types)
+(define-walk-method (j2s-hint this::J2SExpr types numctx)
    (multiple-value-bind (op decl type ref)
       (j2s-expr-type-test this)
       (if op
@@ -111,68 +113,81 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SBinary ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SBinary types)
+(define-walk-method (j2s-hint this::J2SBinary types numctx)
    (with-access::J2SBinary this (op lhs rhs)
       (case op
-	 ((< <= >= > - * / << >> >>> ^ & BIT_OR)
+	 ((<< >> >>> ^ & BIT_OR)
 	  (cond
 	     ((eq? (j2s-type lhs) 'integer)
-	      (j2s-hint rhs '(integer)))
+	      (j2s-hint rhs '(integer) numctx))
 	     ((eq? (j2s-type lhs) 'index)
-	      (j2s-hint rhs '(index)))
+	      (j2s-hint rhs '(index) 'index))
 	     (else
-	      (j2s-hint rhs '(number))))
+	      (j2s-hint rhs (list numctx) numctx)))
 	  (cond
 	     ((eq? (j2s-type rhs) 'integer)
-	      (j2s-hint lhs '(integer)))
+	      (j2s-hint lhs '(integer) numctx))
 	     ((eq? (j2s-type rhs) 'index)
-	      (j2s-hint lhs '(index)))
+	      (j2s-hint lhs '(index) 'index))
 	     (else
-	      (j2s-hint lhs '(number)))))
+	      (j2s-hint lhs (list numctx) numctx))))
+	 ((< <= >= > - * /)
+	  (cond
+	     ((eq? (j2s-type lhs) 'index)
+	      (j2s-hint rhs '(index) 'index))
+	     (else
+	      (j2s-hint rhs (list numctx) numctx)))
+	  (cond
+	     ((eq? (j2s-type rhs) 'index)
+	      (j2s-hint lhs '(index) 'index))
+	     (else
+	      (j2s-hint lhs (list numctx) numctx))))
 	 ((%)
 	  (if (and (memq (j2s-type lhs) '(integer index))
 		   (memq (j2s-type rhs) '(integer index)))
 	      (begin
-		 (j2s-hint lhs '(integer))
-		 (j2s-hint rhs '(integer)))
+		 (j2s-hint lhs '(integer) 'integer)
+		 (j2s-hint rhs '(integer) 'integer))
 	      (begin
-		 (j2s-hint lhs '(number))
-		 (j2s-hint rhs '(number)))))
+		 (j2s-hint lhs (list numctx) numctx)
+		 (j2s-hint rhs (list numctx) numctx))))
 	 ((+)
 	  (cond
 	     ((eq? (j2s-type lhs) 'integer)
-	      (j2s-hint rhs '(integer)))
+	      (j2s-hint rhs '(integer) numctx))
 	     ((eq? (j2s-type lhs) 'index)
-	      (j2s-hint rhs '(index)))
+	      (j2s-hint rhs '(index) 'index))
 	     ((eq? (j2s-type lhs) 'number)
-	      (j2s-hint rhs '(number)))
+	      (j2s-hint rhs (list numctx) numctx))
 	     ((eq? (j2s-type rhs) 'integer)
-	      (j2s-hint lhs '(integer)))
+	      (j2s-hint lhs '(integer) numctx))
 	     ((eq? (j2s-type rhs) 'index)
-	      (j2s-hint lhs '(index)))
+	      (j2s-hint lhs '(index) 'index))
 	     ((eq? (j2s-type rhs) 'number)
-	      (j2s-hint lhs '(number)))
+	      (j2s-hint lhs (list numctx) numctx))
 	     ((eq? (j2s-type lhs) 'string)
-	      (j2s-hint rhs '(string)))
+	      (j2s-hint rhs '(string) 'number))
 	     ((eq? (j2s-type rhs) 'string)
-	      (j2s-hint lhs '(string)))
+	      (j2s-hint lhs '(string) 'number))
 	     (else
-	      (j2s-hint lhs '(number string))
-	      (j2s-hint rhs '(number string)))))
+	      (j2s-hint lhs (list numctx string) 'number)
+	      (j2s-hint rhs (list numctx string) 'number))))
 	 ((== === != !==)
 	  (cond
-	     ((eq? (j2s-type lhs) 'number) (j2s-hint rhs '(number)))
-	     ((eq? (j2s-type rhs) 'number) (j2s-hint lhs '(number)))))
+	     ((eq? (j2s-type lhs) 'number)
+	      (j2s-hint rhs (list numctx) numctx))
+	     ((eq? (j2s-type rhs) 'number)
+	      (j2s-hint lhs (list numctx) numctx))))
 	 ((instanceof)
-	  (j2s-hint lhs '(object))
-	  (j2s-hint rhs '(function)))
+	  (j2s-hint lhs '(object) 'number)
+	  (j2s-hint rhs '(function) 'number))
 	 (else
 	  (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SSwitch ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SSwitch types)
+(define-walk-method (j2s-hint this::J2SSwitch types numctx)
    
    (define (cases-type cases)
       (let ((ty 'unknown))
@@ -184,12 +199,17 @@
 				  ((integer)
 				   (case ty
 				      ((unknown) (set! ty 'integer))
-				      ((integer) #unspecified)
+				      ((integer index) #unspecified)
+				      (else (set! ty #f))))
+				  ((index)
+				   (case ty
+				      ((unknown) (set! ty 'index))
+				      ((integer index) #unspecified)
 				      (else (set! ty #f))))
 				  ((string)
 				   (case ty
 				      ((unknown) (set! ty 'string))
-				      ((integer) #unspecified)
+				      ((integer index) #unspecified)
 				      (else (set! ty #f)))))))))
 	    cases)
 	 (if (and ty (not (eq? ty 'unknown)))
@@ -198,13 +218,13 @@
       
    (with-access::J2SSwitch this (key cases)
       (let ((ctype (cases-type cases)))
-	 (when ctype (j2s-hint key ctype))
+	 (when ctype (j2s-hint key ctype 'integer))
 	 (call-default-walker))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SDeclInit ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SDeclInit types)
+(define-walk-method (j2s-hint this::J2SDeclInit types numctx)
    (with-access::J2SDeclInit this (val type hint)
       (let ((ty (j2s-type val)))
 	 (when (symbol? ty)
@@ -237,12 +257,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint-access ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-hint-access this types hints::pair-nil)
+(define (j2s-hint-access this types hints::pair-nil numctx)
    (with-access::J2SAccess this (obj field)
       (cond
 	 ((not (isa? obj J2SRef))
-	  (j2s-hint obj '(object array string)))
-	 ((memq (j2s-type field) '(integer number))
+	  (j2s-hint obj '(object array string) numctx))
+	 ((memq (j2s-type field) '(index integer number))
 	  (with-access::J2SRef obj (decl)
 	     (j2s-add-hint! decl hints)))
 	 ((isa? field J2SString)
@@ -261,7 +281,7 @@
 		 (with-access::J2SRef obj (decl)
 		    (j2s-add-hint! decl '(array))))
 		(else
-		 (j2s-hint obj hints)))))
+		 (j2s-hint obj hints numctx)))))
 	 ((isa? field J2SLiteralCnst)
 	  (with-access::J2SLiteralCnst field (val)
 	     (if (isa? val J2SString)
@@ -269,71 +289,70 @@
 		    (if (string=? val "length")
 			(with-access::J2SRef obj (decl)
 			   (j2s-add-hint! decl hints))
-			(j2s-hint obj hints)))
-		 (j2s-hint obj hints))))
+			(j2s-hint obj hints numctx)))
+		 (j2s-hint obj hints numctx))))
 	 (else
-	  (j2s-hint obj hints)))
-      (j2s-hint field '())))
+	  (j2s-hint obj hints numctx)))
+      (j2s-hint field '() numctx)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAccess ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SAccess types)
+(define-walk-method (j2s-hint this::J2SAccess types numctx)
    (cond
-      ((and (pair? types) (member (car types) '(integer number)))
-       (j2s-hint-access this types '(array)))
+      ((and (pair? types) (member (car types) '(index integer number)))
+       (j2s-hint-access this types '(array) 'number))
       ((and (pair? types) (member (car types) '(string)))
-       (j2s-hint-access this types '(string)))
+       (j2s-hint-access this types '(string) 'number))
       (else
-       (j2s-hint-access this types '(array string)))))
+       (j2s-hint-access this types '(array string) 'number))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAssig ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SAssig types)
+(define-walk-method (j2s-hint this::J2SAssig types numctx)
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? lhs J2SAccess)
-	 (j2s-hint-access lhs types '(array)))
-      (j2s-hint rhs types)))
+	 (j2s-hint-access lhs types '(array) 'number))
+      (j2s-hint rhs types 'number)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SPostfix ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SPostfix types)
+(define-walk-method (j2s-hint this::J2SPostfix types numctx)
    (with-access::J2SPostfix this (lhs)
       (if (isa? lhs J2SAccess)
-	  (j2s-hint-access lhs types '(array))
-	  (j2s-hint lhs '(number)))))
+	  (j2s-hint-access lhs types '(array) 'number)
+	  (j2s-hint lhs '(number) 'number))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SPrefix ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SPrefix types)
+(define-walk-method (j2s-hint this::J2SPrefix types numctx)
    (with-access::J2SPrefix this (lhs)
       (if (isa? lhs J2SAccess)
-	  (j2s-hint-access lhs types '(array))
-	  (j2s-hint lhs '(number)))))
+	  (j2s-hint-access lhs types '(array) 'number)
+	  (j2s-hint lhs '(number) 'number))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SNew ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SNew types)
+(define-walk-method (j2s-hint this::J2SNew types numctx)
    (with-access::J2SNew this (clazz args)
-      (j2s-hint clazz '(function))
-      (for-each (lambda (a) (j2s-hint a '())) args)))
+      (j2s-hint clazz '(function) 'number)
+      (for-each (lambda (a) (j2s-hint a '() 'number)) args)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SFun ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SFun types)
+(define-walk-method (j2s-hint this::J2SFun types numctx)
    (with-access::J2SFun this (body)
-      (j2s-hint body '())
-      '()))
+      (j2s-hint body '() 'number)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SCall ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint this::J2SCall types)
+(define-walk-method (j2s-hint this::J2SCall types numctx)
    
    (define (j2s-hint-fun fun args)
       (with-access::J2SFun fun (params)
@@ -346,8 +365,8 @@
 	       (loop (cdr args) (cdr params))))))
    
    (define (j2s-hint-unknown-function fun args)
-      (j2s-hint fun '(function))
-      (for-each (lambda (a) (j2s-hint a '())) args))
+      (j2s-hint fun '(function) 'number)
+      (for-each (lambda (a) (j2s-hint a '() 'number)) args))
    
    (with-access::J2SCall this (fun args)
       (cond
@@ -368,6 +387,16 @@
 	 (else
 	  (j2s-hint-unknown-function fun args)))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-hint ::J2SFor ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint this::J2SFor types numctx)
+   (with-access::J2SFor this (init test incr body)
+      (j2s-hint init types 'number)
+      (j2s-hint test types 'index)
+      (j2s-hint incr types 'index)
+      (j2s-hint body types 'number)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint-function ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -403,7 +432,7 @@
       (case type
 	 ((number) 'number?)
 	 ((integer) 'fixnum?)
-	 ((index) 'fixnum?)
+	 ((index) 'js-index?)
 	 ((string) 'js-jsstring?)
 	 ((array) 'js-array?)
 	 ((object) 'js-object?)
@@ -475,7 +504,10 @@
 		 (pair? params)
 		 (any (lambda (p::J2SDecl)
 			 (with-access::J2SDecl p (hint usecnt itype)
-			    (when (eq? itype 'unknown)
+			    (when (or (eq? itype 'unknown)
+				      (and (eq? itype 'number)
+					   (or (assq 'integer hint)
+					       (assq 'index hint))))
 			       (and (pair? hint)
 				    (or (pair? (cdr hint))
 					(not (eq? (caar hint) 'any)))
@@ -527,7 +559,7 @@
 	  ;; in doubt, prefers arrays over strings
 	  (loop (cdr l) (caar l) (cdar l)))
 	 ((and (=fx (cdr (car l)) c)
-	       (or (eq? t 'any) (memq (caar l) '(integer number))))
+	       (or (eq? t 'any) (memq (caar l) '(index integer number))))
 	  (loop (cdr l) (caar l) (cdar l)))
 	 (else
 	  (loop (cdr l) t c)))))
@@ -558,15 +590,23 @@
 ;*    fun-duplicate-typed ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (fun-duplicate-typed::J2SDeclFun fun::J2SDeclFun types)
+   
+   (define (type-initial t)
+      (case t
+	 ((index) #\U)
+	 ((integer) #\I)
+	 ((number) #\N)
+	 ((array) #\A)
+	 ((string) #\S)
+	 (else (string-ref (symbol->string t) 0))))
+   
    (with-access::J2SDeclFun fun (val id %info)
       (with-access::J2SFun val (params body idthis generator)
 	 (let* ((newparams (map j2sdecl-duplicate params types))
 		(typeid (string->symbol
 			   (string-upcase!
 			      (apply string
-				 (map (lambda (t)
-					 (string-ref (symbol->string t) 0))
-				    types)))))
+				 (map type-initial types)))))
 		(newbody (j2s-alpha body params newparams))
 		(newfun (duplicate::J2SFun val
 			   (generator #f)
@@ -622,7 +662,9 @@
 (define-walk-method (call-hint! this::J2SCall)
 
    (define (normalize-type t)
-      (if (eq? t 'integer) 'number t))
+      (case t
+	 ((integer index) 'number)
+	 (else t)))
    
    (define (normalize-expr-type e)
       (normalize-type (j2s-type e)))
