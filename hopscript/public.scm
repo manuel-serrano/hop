@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Nov  3 12:27:57 2016 (serrano)                */
+;*    Last change :  Sun Nov 20 08:45:16 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -89,7 +89,8 @@
 	   (js-toint32::int32 ::obj ::JsGlobalObject)
 
 	   (js-toindex::uint32 ::obj)
-	   (js-isindex?::bool ::uint32)
+	   (inline js-isindex?::bool ::uint32)
+	   (inline js-index?::bool ::obj)
 	   
 	   (generic js-tostring::bstring ::obj ::JsGlobalObject)
 	   (js-tojsstring::obj ::obj ::JsGlobalObject)
@@ -993,8 +994,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-isindex? ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-isindex? u32::uint32)
+(define-inline (js-isindex? u32::uint32)
    (<u32 u32 (-u32 (fixnum->uint32 0) (fixnum->uint32 1))))
+
+;*---------------------------------------------------------------------*/
+;*    js-index? ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    Is a number an index?                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-index? num)
+   (and (fixnum? num)
+	(>=fx num 0)
+	(cond-expand
+	   ((or bint30 bint32) #t)
+	   (else (<fx num (-fx (bit-lsh 1 31) 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Oct 26 16:19:14 2016 (serrano)                */
+;*    Last change :  Fri Nov 18 14:32:21 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -367,7 +367,7 @@
 (define-inline (js-uint32->jsnum n::uint32)
    
    (define-macro (intszu32)
-      (minfx (-fx (bigloo-config 'int-size) 1) 56))
+      (minfx (-fx (bigloo-config 'int-size) 1) 53))
    
    (define-macro (shiftu32)
       (bit-lsh 1 (intszu32)))
@@ -402,7 +402,7 @@
 (define-inline (js+fx left::long right::long)
 
    (define-macro (intsz+)
-      (minfx (-fx (bigloo-config 'int-size) 1) 56))
+      (minfx (-fx (bigloo-config 'int-size) 1) 53))
    
    (define-macro (shift+)
       (bit-lsh 1 (intsz+)))
@@ -415,9 +415,7 @@
    
    (let ((tmp (+fx left right)))
       (if (or (>fx tmp (maxint+)) (<fx tmp (minint+)))
-	  (begin
-	     (tprint "js+fx fixnum->flonum " left " " right)
-	     (fixnum->flonum tmp))
+	  (fixnum->flonum tmp)
 	  tmp)))
 
 ;*---------------------------------------------------------------------*/
@@ -426,7 +424,7 @@
 (define-inline (js-fx left::long right::long)
    
    (define-macro (intsz-)
-      (minfx (-fx (bigloo-config 'int-size) 1) 56))
+      (minfx (-fx (bigloo-config 'int-size) 1) 53))
    
    (define-macro (shift-)
       (bit-lsh 1 (intsz-)))
@@ -439,9 +437,7 @@
    
    (let ((tmp (-fx left right)))
       (if (or (>fx tmp (maxint-)) (<fx tmp (minint-)))
-	  (begin
-	     (tprint "js-fx fixnum->flonum " left " " right)
-	     (fixnum->flonum tmp))
+	  (fixnum->flonum tmp)
 	  tmp)))
 
 ;*---------------------------------------------------------------------*/
