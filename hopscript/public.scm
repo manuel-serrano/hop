@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Nov 20 08:45:16 2016 (serrano)                */
+;*    Last change :  Wed Nov 23 19:09:23 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -87,6 +87,8 @@
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
 	   (js-touint32::uint32 ::obj ::JsGlobalObject)
 	   (js-toint32::int32 ::obj ::JsGlobalObject)
+
+	   (inline uint32->integer::obj ::uint32)
 
 	   (js-toindex::uint32 ::obj)
 	   (inline js-isindex?::bool ::uint32)
@@ -706,7 +708,8 @@
 ;*    js-let-set! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-let-set! cell val)
-   (cell-set! cell val))
+   (cell-set! cell val)
+   val)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-totest ...                                                    */
@@ -929,6 +932,18 @@
        (error "js-toint32" "unexpected elong" obj))
       (else
        (js-toint32 (js-tonumber obj %this) %this))))
+
+;*---------------------------------------------------------------------*/
+;*    uint32->integer ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (uint32->integer u::uint32)
+   (cond-expand
+      (bint30
+       (if (<u32 u (fixnum->uint32 (bit-lsh 1 29)))
+	   (uint32->fixnum u)
+	   (uint32->flonum u)))
+      (else
+       (uint32->fixnum u))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toindex ...                                                   */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Nov 20 09:17:31 2016 (serrano)                */
+;*    Last change :  Mon Nov 21 14:35:03 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -114,6 +114,7 @@
 ;*    j2s-hint ::J2SBinary ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint this::J2SBinary types numctx)
+   [assert (types) (every symbol? types)]
    (with-access::J2SBinary this (op lhs rhs)
       (case op
 	 ((<< >> >>> ^ & BIT_OR)
@@ -170,8 +171,8 @@
 	     ((eq? (j2s-type rhs) 'string)
 	      (j2s-hint lhs '(string) 'number))
 	     (else
-	      (j2s-hint lhs (list numctx string) 'number)
-	      (j2s-hint rhs (list numctx string) 'number))))
+	      (j2s-hint lhs (list numctx 'string) 'number)
+	      (j2s-hint rhs (list numctx 'string) 'number))))
 	 ((== === != !==)
 	  (cond
 	     ((eq? (j2s-type lhs) 'number)

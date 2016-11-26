@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Nov 15 11:24:29 2016 (serrano)                */
+;*    Last change :  Thu Nov 24 10:29:56 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -80,19 +80,19 @@
 ;*    array! ::J2SFor ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (array! this::J2SFor env::pair-nil)
-   
+
    (define (decl->adecl::J2SDeclInit decl::J2SDecl)
       (with-access::J2SDecl decl (id loc)
 	 (J2SLetOpt '(read write)
 	    (symbol-append '|%a:| id)
 	    (J2SCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
-   
+
    (define (decl->ldecl::J2SDeclInit adecl::J2SDecl decl::J2SDecl)
       (with-access::J2SDecl decl (id loc)
 	 (J2SLetOpt '(read write)
 	    (symbol-append '|%l:| id)
-	    (J2SCall (J2SHopRef 'vector-length) (J2SRef adecl)))))
-   
+	    (J2SCall (J2SHopRef 'js-array-vlen) (J2SRef decl)))))
+
    (with-access::J2SFor this (init test incr body loc)
       (let ((arrs (delete-duplicates! (array-collect* body env))))
 	 (if (null? arrs)
@@ -104,12 +104,17 @@
 		    (incr (array-ref! incr nenv))
 		    (test (array-ref! test nenv))
 		    (body (array-ref! body nenv)))
-		(J2SLetBlock (append adecls ldecls)
-		   (duplicate::J2SFor this
+;* 		(J2SLetBlock (append adecls ldecls)                    */
+;* 		   (duplicate::J2SFor this                             */
+;* 		      (init init)                                      */
+;* 		      (incr incr)                                      */
+;* 		      (test test)                                      */
+;* 		      (body body)))                                    */
+		(duplicate::J2SFor this
 		      (init init)
 		      (incr incr)
 		      (test test)
-		      (body body))))))))
+		      (body body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array-collect* ::J2SNode ...                                     */

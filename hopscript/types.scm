@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Nov 14 20:13:22 2016 (serrano)                */
+;*    Last change :  Thu Nov 24 08:46:36 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -158,11 +158,11 @@
 	      (js-main (default (js-null))))
 	   
 	   (class JsArray::JsObject
-	      (inline::bool (default #t))
 	      (sealed::bool (default #f))
 	      (frozen::bool (default #f))
 	      (length::uint32 (default #u32:0))
-	      (vec::vector (default '#())))
+	      (vec::vector (default '#()))
+	      (ilen::uint32 (default #u32:0)))
 
 	   (class JsArrayBuffer::JsObject
 	      (frozen::bool (default #f))
@@ -277,7 +277,10 @@
 	   
 	   (inline js-null?::bool ::obj)
 	   (inline js-null)
-	   (js-absent)
+
+	   %absent-value
+	   (inline js-absent)
+	   (inline js-absent?::bool ::obj)
 
 	   (generic js-typeof obj)
 
@@ -288,9 +291,7 @@
 	   (generic js-buffer->jsbuffer ::JsObject ::pair-nil ::JsGlobalObject)
 
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
-	   (generic js-typedarray-set!::procedure ::JsTypedArray)
-
-	   (inline js-array-vec::vector ::JsArray)))
+	   (generic js-typedarray-set!::procedure ::JsTypedArray)))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */
@@ -492,14 +493,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    absent-value ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define absent-value
+(define %absent-value
    (cons #f #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-absent ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-absent)
-   absent-value)
+(define-inline (js-absent)
+   %absent-value)
+
+(define-inline (js-absent? x)
+   (eq? x %absent-value))
 
 ;*---------------------------------------------------------------------*/
 ;*    Constant strings ...                                             */
@@ -573,9 +577,3 @@
 ;*    js-typedarray-set! ::JsTypedArray ...                            */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-typedarray-set!::procedure a::JsTypedArray))
-
-;*---------------------------------------------------------------------*/
-;*    js-array-vec ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-inline (js-array-vec::vector a::JsArray)
-   (with-access::JsArray a (vec) vec))

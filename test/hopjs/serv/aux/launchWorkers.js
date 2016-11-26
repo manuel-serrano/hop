@@ -1,16 +1,16 @@
 /*=====================================================================*/
-/*    .../project/hop/3.0.x/test/hopjs/serv/aux/launchWorkers.js       */
+/*    .../project/hop/3.1.x/test/hopjs/serv/aux/launchWorkers.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Thu Oct  1 23:04:03 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Wed Nov 23 16:27:32 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    A generic launcher for stress test workers                       */
 /*=====================================================================*/
 
 
-function runTest( args ){
+function runTest( args ) {
    var clientModule = args.clientModule;
    var numClients = args.numClients;
    var numCalls = args.numCalls;
@@ -33,26 +33,27 @@ function runTest( args ){
     		clientModule,
     		numCalls );
 
-   /* Set a timeout in case something goes wrong during test
-   configuration. Will be reset afterwards */
+   // Set a timeout in case something goes wrong during test
+   // configuration. Will be reset afterwards
    var configurationTimeout = setTimeout( function() {
       console.log( 'cannot configure test: timeout', timeout );
       onFailure();
    }, timeout );
    
    function checkReadiness() {
-//      console.log( 'checkReadiness', readyClients );
+      // console.log( 'checkReadiness', readyClients );
       if (readyClients == numClients ) {
 	 console.log( 'All clients ready. Run test' );
 	 // run clients
 	 clients.forEach( function( client, id ) {
-//	    console.log( 'run client', id );
+	    // console.log( 'run client', id );
 	    client.postMessage( { messageType: 'run' } );
 	 });
 	 checkCompletion();
 
 	 clearTimeout( configurationTimeout );
-	 setTimeout( onTimeout, timeout ); // timeout is set while running tests
+	 // timeout is set while running tests
+	 setTimeout( onTimeout, timeout ); 
       }
    }
    
@@ -63,23 +64,25 @@ function runTest( args ){
 	 onSuccess();
       };
    }
+   
    // Create workers
-   for ( var i = 0; i  < numClients; i++ ) {
-//      console.log( 'start client', i );
+   for ( var i = 0; i < numClients; i++ ) {
+      console.log( "I=", i, " clients=", clients );
+      // console.log( 'start client', i );
       var client = new Worker( clientModule );
       clients.push( client );
       client.onmessage = function( e ) {
 	 switch (e.data.messageType) {
-	 case 'ready':
-	    readyClients++;
-	    checkReadiness();
-	    break;
-	 case 'done': 
-	    doneWithClients++;
-	    checkCompletion();
-	    break;
-	 case 'failure':
-	    onFailure();
+	    case 'ready':
+	       readyClients++;
+	       checkReadiness();
+	       break;
+	    case 'done': 
+	       doneWithClients++;
+	       checkCompletion();
+	       break;
+	    case 'failure':
+	       onFailure();
 	 };
       };
    };
@@ -90,8 +93,6 @@ function runTest( args ){
    });
    
    checkReadiness();
-   
-   
 }
 
 

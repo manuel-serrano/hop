@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/asyncSrvRsp.js    */
+/*    .../prgm/project/hop/3.1.x/test/hopjs/serv/asyncSrvRsp.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Tue Sep  15 12:42:26 2015 (serrano)               */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Wed Nov 23 16:25:28 2016 (serrano)                */
+/*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test asynchronous responses in services                          */
 /*=====================================================================*/
@@ -13,12 +13,16 @@ var hop = require( 'hop' );
 var runTest = require( './aux/launchWorkers.js' ).runTest;
 var clientModule = require.resolve( './aux/stdClient.js' );
 
-var NUMCLIENTS = 5; // number of concurrent clients
-var NUMCALLS = 200; // number of service invocations per client
-var DELAY = 5; // set delay for asynchronous response
-var TIMEOUT = 10000; //global timeout (test will fail if not completed by then)
+// number of concurrent clients
+var NUMCLIENTS = 5;
+// number of service invocations per client
+var NUMCALLS = 200;
+// set delay for asynchronous response
+var DELAY = 5;
+//global timeout (test will fail if not completed by then)
+var TIMEOUT = 10000; 
 // change TIMEOUT value to match your hardware
-// ( ~ 500 requests/s on a laptop for synchronous responses )
+// (~ 500 requests/s on a laptop for synchronous responses)
 
 var requests = 0;
 
@@ -33,7 +37,8 @@ service toTest( clientId, num ) {
 }
 
 function onTimeout() {
-   console.log( 'timeout (%s ms): server has processed %s requests', TIMEOUT, requests );
+   console.log( 'timeout (%s ms): server has processed %s requests',
+		TIMEOUT, requests );
    process.exit( 1 );
 }
 

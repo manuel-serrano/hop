@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Nov 15 16:32:38 2016 (serrano)                */
+;*    Last change :  Fri Nov 25 07:40:41 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -43,7 +43,6 @@
 	   (>=uint32 ::uint32 ::obj)
 	   (>uint32 ::uint32 ::obj)
 	   
-	   (inline uint32->integer::obj ::uint32)
 	   (inline int32->integer::obj ::int32)
 	   
 	   (inline u32vref ::vector ::uint32)
@@ -146,7 +145,9 @@
 	     `(let ((,tmp ,(e val e)))
 		 (if ,(e `(number? ,tmp) e)
 		     ,tmp
-		     (js-toprimitive ,tmp 'any ,this))))
+		     (if ,(e `(js-jsstring? ,tmp) e)
+			 ,tmp
+			 (js-toprimitive ,tmp 'any ,this)))))
 	    (else
 	     (error "js-toprimitive" "illegal call" x))))))
 
@@ -666,18 +667,6 @@
 	   (>u32 u (->uint32 obj)))
 	  (else
 	   (>fx (uint32->fixnum u) obj))))))
-
-;*---------------------------------------------------------------------*/
-;*    uint32->integer ...                                              */
-;*---------------------------------------------------------------------*/
-(define-inline (uint32->integer u::uint32)
-   (cond-expand
-      (bint30
-       (if (<u32 u (fixnum->uint32 (bit-lsh 1 29)))
-	   (uint32->fixnum u)
-	   (uint32->flonum u)))
-      (else
-       (uint32->fixnum u))))
 
 ;*---------------------------------------------------------------------*/
 ;*    int32->integer ...                                               */

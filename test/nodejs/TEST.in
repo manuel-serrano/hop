@@ -109,6 +109,7 @@ for chapter in $chapters; do
       echo -n "$i. $fname ... " >> /tmp/TEST-NODEJS.out
       
       rm -rf $basedir/tmp/a
+      echo "(cd $basedir; $hopexec $path)" >> /tmp/TEST-NODEJS.out
       (cd $basedir; $hopexec $path > /tmp/TEST-NODEJS.out.tmp 2>&1)
   
       if [ $? = 0 ]; then
