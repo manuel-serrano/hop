@@ -3,11 +3,12 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Nov 19 09:44:08 2016 (serrano)                */
+/*    Last change :  Thu Nov 24 10:10:40 2016 (serrano)                */
 /*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
 /*=====================================================================*/
+"use strict";
 "use hopscript";
 
 var assert = require( "assert" );
@@ -107,3 +108,128 @@ function props() {
 }
 
 assert.ok( props(), "length.configurable" );
+
+/*---------------------------------------------------------------------*/
+/*    iterations                                                       */
+/*---------------------------------------------------------------------*/
+function checkA( a, len ) {
+   if( a.length != len ) { return false };
+   for( let i = 0; i < len; i++ ) {
+      if( !(i in a) ) { return false }
+   }
+   return true;
+}
+
+function forShrink( a ) {
+   let l = a.length;
+   if( !checkA( a, 5 ) ) return -1;
+   
+   for( let i = 0; i < l; i++ ) {
+      if( i == 2 ) { a.length = 3; }
+      if( i == 3 ) {
+	 if( i in a ) { console.log( "a=", a ); return -2; }
+	 if( Object.getOwnPropertyDescriptor( a, "" + i ) ) return -3;
+	 if( Object.hasOwnProperty( a, "" + i ) ) return -4;
+	 if( a[ i ] !== undefined ) { console.log( a[ i ] ); return -5; }
+	 return 0;
+      };
+   }
+}
+
+function forDelete( a ) {
+   let l = a.length;
+   if( !checkA( a, 5 ) ) return -1;
+   
+   for( let i = 0; i < l; i++ ) {
+      if( i == 2 ) { delete a[ 3 ]; }
+      if( i == 3 ) {
+	 if( i in a ) { console.log( "a=", a ); return -2; }
+	 if( Object.getOwnPropertyDescriptor( a, "" + i ) ) return -3;
+	 if( Object.hasOwnProperty( a, "" + i ) ) return -4;
+	 if( a[ i ] !== undefined ) { console.log( "a=", a ); return -5; }
+	 return 0;
+      };
+   }
+}
+
+function forExpand( a ) {
+   let l = a.length;
+   if( !checkA( a, 5 ) ) return -1;
+
+   for( let i = 0; i < l; i++ ) {
+      if( i == 2 ) { a.length = l + 3; a[ l + 2 ] = 4 };
+      if( i == 3 ) {
+	 if( (l+1) in a ) return -2;
+	 if( Object.getOwnPropertyDescriptor( a, "" + (l+1) ) ) return -3;
+	 if( Object.hasOwnProperty( a, "" + (l+1) ) ) return -4;
+	 if( a[ l+1 ] !== undefined ) return -5;
+	 if( a[ l+2 ] !== 4 ) { console.log( "a=", a, " v=", a[ l + 2 ] ); return -6; }
+	 return 0;
+      };
+   }
+}
+
+function vecExpand( a ) {
+   let l = a.length;
+   if( !checkA( a, 5 ) ) return -1;
+   
+   if( !a[ l + 2 ] == undefined ) return -2;
+   if( !a.length == l + 3 ) return -3;
+   if( l in a ) return -4;
+   if( Object.getOwnPropertyDescriptor( a, "" + l ) ) return -5;
+   if( Object.hasOwnProperty( a, "" + l ) ) return -6;
+   return 0;
+}
+
+function findDelete( a ) {
+   var x = -2;
+   a.find( function( val, idx, arr ) {
+      if( idx == 2 ) { delete arr[ 4 ]; x++; };
+      if( idx == 4 ) { x++ };
+   } );
+
+   return x;
+}
+
+function foreachDelete( a ) {
+   var x = 0;
+   a.forEach( function( val, idx, arr ) {
+      if( idx == 2 ) { delete arr[ 4 ]; x = 0 };
+      if( val == 5 ) { x = -2 };
+   } );
+
+   return x;
+}
+
+
+function deleteLarge( a ) {
+   if( ((a.length -1) in a) ) return -1;
+   if( ((a.length -2) in a) ) return -2;
+
+   a[ a.length -1 ] = 1;
+   a[ a.length -2 ] = 2;
+   
+   if( !((a.length -1) in a) ) return -3;
+   if( !((a.length -2) in a) ) return -4;
+
+   a[ 0 ] = 0;
+   a[ 1 ] = 1;
+   
+   if( !("0" in a) ) return -5;
+   if( !("1" in a) ) return -6;
+
+   return 0;
+}
+
+function run( proc, msg ) {
+   let r = proc();
+   assert.strictEqual( r, 0, msg + " [" + r + "]" );
+}
+
+run( () => forShrink( [ 1, 2, 3, 4, 5] ), "forShrink" );
+run( () => forDelete( [ 1, 2, 3, 4, 5] ), "forDelete" );
+run( () => forExpand( [ 1, 2, 3, 4, 5] ), "forExpand" );
+run( () => vecExpand( [ 1, 2, 3, 4, 5] ), "vecExpand" );
+run( () => findDelete( [ 1, 2, 3, 4, 5] ), "findDelete" );
+run( () => foreachDelete( [ 1, 2, 3, 4, 5] ), "foreachDelete" );
+run( () => deleteLarge( new Array( Math.pow( 2, 32 ) -1 ) ), "deleteLarge" );

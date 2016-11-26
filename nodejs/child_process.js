@@ -747,7 +747,7 @@ var spawn = exports.spawn = function(file /*, args, options*/) {
   return child;
 };
 
-var C = 0;
+
 function maybeClose(subprocess) {
   subprocess._closesGot++;
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Nov 21 09:00:01 2016 (serrano)                */
+;*    Last change :  Wed Nov 23 09:14:13 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -181,21 +181,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SAssigOp)
    (with-access::J2SAssigOp this (lhs rhs loc op)
-      `(,(call-next-method) ,op)))
+      `(,(call-next-method) ,op ,@(dump-type this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPrefix ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPrefix)
    (with-access::J2SPrefix this (lhs rhs loc op)
-      `(,@(call-next-method) ,@(dump-type this) ,op)))
+      `(,@(call-next-method) ,op ,@(dump-type this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPostfix)
    (with-access::J2SPostfix this (lhs rhs loc op)
-      `(,@(call-next-method) ,@(dump-type this) ,op)))
+      `(,@(call-next-method) ,op ,@(dump-type this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnresolvedRef ...                                 */
@@ -270,6 +270,15 @@
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
+
+   (define (dump-rtype this)
+      (with-access::J2SFun this (rtype)
+	 (if (or (>= (bigloo-debug) 2)
+		 (string-contains  (or (getenv "HOPTRACE") "")
+		    "j2s:type"))
+	     `(:rtype ,rtype)
+	     '())))
+      
    (with-access::J2SFun this (name params body decl mode rtype
 				need-bind-exit-return idthis generator)
       (cond
@@ -277,10 +286,9 @@
 	  (with-access::J2SDecl decl (key usage)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name :decl ,key
+		 ,@(dump-rtype this)
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:idthis ,idthis) '())
-		 ,@(if (>= (bigloo-debug) 2)
-		       `(:rtype ,rtype) '())
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:usage ,usage) '())
 		 ,@(if (>= (bigloo-debug) 3)
@@ -290,10 +298,9 @@
 	 ((isa? decl J2SDecl)
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name :decl ,(j2s->list decl)
+	      ,@(dump-rtype this)
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:idthis ,idthis) '())
-	      ,@(if (>= (bigloo-debug) 2)
-		    `(:rtype ,rtype) '())
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:need-bind-exit-return ,need-bind-exit-return) '())
 	      :mode ,mode
@@ -301,10 +308,9 @@
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name
+	      ,@(dump-rtype this)
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:idthis ,idthis) '())
-	      ,@(if (>= (bigloo-debug) 2)
-		    `(:rtype ,rtype) '())
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:need-bind-exit-return ,need-bind-exit-return) '())
 	      ,(map j2s->list params) ,(j2s->list body))))))
@@ -379,7 +385,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SUnary)
    (with-access::J2SUnary this (op expr)
-      `(,@(call-next-method) ,op ,(j2s->list expr))))
+      `(,@(call-next-method) ,op
+	  ,@(dump-type this)
+	  ,@(dump-info this)
+	  ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SIf ...                                            */

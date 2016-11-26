@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Nov  8 11:37:19 2016 (serrano)                */
+;*    Last change :  Thu Nov 24 15:48:32 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -561,7 +561,7 @@
 	     (js-string->jsstring action)))
 	 ((>fx (->fixnum offset) (-fx (string-length data) sizeof))
 	  (js-raise-range-error %this
-	     "Trying to ~s beyond buffer length"
+	     "Trying to ~a beyond buffer length"
 	     (js-string->jsstring action)))))
 
    (define (byte-ref str i)
@@ -1050,13 +1050,11 @@
 		       (/fx (utf8-codeunit-length (js-jsstring->string string)) 2))
 		      ((string-ci=? enc "base64")
 		       (string-length (base64-decode (js-jsstring->string string) #t)))
-		      ((or (string-ci=? enc "ascii")
-			   (string=? enc "latin1"))
+		      ((string=? enc "latin1")
 		       (string-length (js-jsstring->string string)))
 		      ((or (string-ci=? enc "ascii")
 			   (string=? enc "binary")
-			   (string=? enc "buffer")
-			   (string=? enc "latin1"))
+			   (string=? enc "buffer"))
 		       (utf8-string-length (js-jsstring->string string)))
 		      (else
 		       (utf8-string-length (js-jsstring->string string)))))))

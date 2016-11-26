@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Nov 21 09:53:09 2016 (serrano)                */
+;*    Last change :  Wed Nov 23 09:36:22 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -524,9 +524,7 @@
 				       ((not (eq? utype 'unknown))
 					(cons p utype)))))
 		     params)))
-	 (multiple-value-bind (tyr env)
-	    (typing body envp this fix)
-	    (set! rtype (merge-types rtype tyr)))
+	 (typing body envp this fix)
 	 (expr-type-set! this env fix 'function))))
 
 ;*---------------------------------------------------------------------*/
@@ -691,7 +689,7 @@
 			       'unknown)
 			      (else
 			       'number)))
-			  ((== === != !== < <= > >= instanceof)
+			  ((== === != !== < <= > >= instanceof in)
 			   'bool)
 			  ((&& OR)
 			   (merge-types typr typl))
@@ -728,7 +726,7 @@
 	       (typing field envo fun fix)
 	       (cond
 		  ((and (memq tyo '(array string)) (j2s-field-length? field))
-		   (expr-type-set! this envf fix 'integer (append bko bkf)))
+		   (expr-type-set! this envf fix 'index (append bko bkf)))
 		  ((eq? tyo 'string)
 		   (let* ((fn (j2s-field-name field))
 			  (ty (if (eq? (string-method-type fn) 'any)
@@ -776,7 +774,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SParen env::pair-nil fun fix::cell)
    (with-access::J2SParen this (expr)
-      (typing expr env fun fix)))
+      (multiple-value-bind (tye enve bke)
+	 (typing expr env fun fix)
+	 (expr-type-set! this enve fix tye bke))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SComprehension ...                                    */
@@ -1095,3 +1095,4 @@
 		   (else
 		    (call-default-walker))))))))
    
+

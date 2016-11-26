@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_crypto.scm                */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/_crypto.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Wed Nov  4 20:13:53 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Sat Nov 26 18:10:26 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/
@@ -117,7 +117,7 @@
    
    (define (add-ca-cert this cert)
       (with-access::JsSecureContext this (ctx)
-	 (if (isa? cert JsStringLiteral)
+	 (if (js-jsstring? cert)
 	     (let ((cert (js-jsstring->string cert)))
 		(secure-context-add-ca-cert! ctx cert 0 (string-length cert)))
 	     (with-access::JsTypedArray cert (%data byteoffset length)
@@ -127,7 +127,7 @@
 
    (define (add-crl this cert)
       (with-access::JsSecureContext this (ctx)
-	 (if (isa? cert JsStringLiteral)
+	 (if (js-jsstring? cert)
 	     (let ((cert (js-jsstring->string cert)))
 		(secure-context-add-crl! ctx cert 0 (string-length cert)))
 	     (with-access::JsTypedArray cert (%data byteoffset length)
@@ -137,9 +137,9 @@
 
    (define (set-key this cert passphrase)
       (with-access::JsSecureContext this (ctx)
-	 (let ((pass (when (isa? passphrase JsStringLiteral)
+	 (let ((pass (when (js-jsstring? passphrase)
 			(js-jsstring->string passphrase))))
-	    (if (isa? cert JsStringLiteral)
+	    (if (js-jsstring? cert)
 		(let ((cert (js-jsstring->string cert)))
 		   (secure-context-set-key! ctx cert 0 (string-length cert) pass))
 		(with-access::JsTypedArray cert (%data byteoffset length)
@@ -150,7 +150,7 @@
    
    (define (set-cert this cert)
       (with-access::JsSecureContext this (ctx)
-	 (if (isa? cert JsStringLiteral)
+	 (if (js-jsstring? cert)
 	     (let ((cert (js-jsstring->string cert)))
 		(secure-context-set-cert! ctx cert 0 (string-length cert)))
 	     (with-access::JsTypedArray cert (%data byteoffset length)
@@ -160,7 +160,7 @@
 
    (define (set-session-id-context this sic)
       (with-access::JsSecureContext this (ctx)
-	 (if (isa? sic JsStringLiteral)
+	 (if (js-jsstring? sic)
 	     (let ((sic (js-jsstring->string sic)))
 		(secure-context-set-session-id-context! ctx sic 0 (string-length sic)))
 	     (with-access::JsTypedArray sic (%data byteoffset length)
@@ -170,7 +170,7 @@
 
    (define (load-pkcs12 this pfx pass)
       (let ((pass (cond
-		     ((isa? pass JsStringLiteral)
+		     ((js-jsstring? pass)
 		      (js-jsstring->string pass))
 		     ((isa? pass JsTypedArray)
 		      (with-access::JsTypedArray pass (%data byteoffset length)
@@ -182,7 +182,7 @@
 		      #f))))
 	 (with-access::JsSecureContext this (ctx)
 	    (cond
-	       ((isa? pfx JsStringLiteral) 
+	       ((js-jsstring? pfx)
 		(secure-context-load-pkcs12 ctx
 		   (js-jsstring->string pfx) pass))
 	       ((isa? pfx JsTypedArray)
@@ -201,7 +201,7 @@
    (define (set-ciphers this ciphers)
       (with-access::JsSecureContext this (ctx)
 	 (cond
-	    ((isa? ciphers JsStringLiteral)
+	    ((js-jsstring? ciphers)
 	     (secure-context-set-ciphers! ctx (js-jsstring->string ciphers)))
 	    (else
 	     (js-raise-type-error %this
@@ -607,7 +607,7 @@
 					   (request-cert (when serverp
 							    request-cert-or-server-name))
 					   (server-name (unless serverp
-							   (when (isa? request-cert-or-server-name JsStringLiteral)
+							   (when (js-jsstring? request-cert-or-server-name)
 							      (js-jsstring->string request-cert-or-server-name))))
 					   (reject-unauthorized reject))))))
 	    (js-bind! %this conn 'receivedShutdown
@@ -639,7 +639,7 @@
 		       (lambda (this v)
 			  (with-access::JsSSLConnection this (ssl)
 			     (with-access::ssl-connection ssl (err)
-				(if (isa? v JsStringLiteral)
+				(if (js-jsstring? v)
 				    (set! err (js-jsstring->string v))
 				    (set! err #f)))))
 		       1 "error"))
@@ -860,7 +860,7 @@
 	 obj))
 
    (define (diffie-hellman-group this group-name)
-      (unless (isa? group-name JsStringLiteral)
+      (unless (js-jsstring? group-name)
 	 (js-raise-type-error %this
 	    (format "Bad parameter ~a" (typeof group-name))
 	    group-name))
@@ -872,7 +872,7 @@
 
    ;; hmac
    (define (hmac-init this type key)
-      (if (not (isa? type JsStringLiteral))
+      (if (not (js-jsstring? type))
 	  (js-raise-type-error %this
 	     "Must be given hashtype string as argument" type)
 	  (let ((key (buf->string key "hmac-init" %this)))
@@ -944,7 +944,7 @@
 
    ;; sign
    (define (sign-init this type)
-      (if (not (isa? type JsStringLiteral))
+      (if (not (js-jsstring? type))
 	  (js-raise-type-error %this
 	     "Must be given signtype string as argument" type)
 	  (with-access::JsSign this (sign)
@@ -988,7 +988,7 @@
 
    ;; verify
    (define (verify-init this type)
-      (if (not (isa? type JsStringLiteral))
+      (if (not (js-jsstring? type))
 	  (js-raise-type-error %this
 	     "Must be given verifytype string as argument" type)
 	  (with-access::JsVerify this (verify)
@@ -1037,7 +1037,7 @@
    ;; cipher
    (define (cipher-init this type key)
       (with-access::JsCipher this (cipher)
-	 (if (not (isa? type JsStringLiteral))
+	 (if (not (js-jsstring? type))
 	     (js-raise-type-error %this
 		"Must be given cipher type string as argument" type)
 	     (multiple-value-bind (s offset len)
@@ -1048,7 +1048,7 @@
 
    (define (cipher-initiv this type key iv)
       (with-access::JsCipher this (cipher)
-	 (if (not (isa? type JsStringLiteral))
+	 (if (not (js-jsstring? type))
 	     (js-raise-type-error %this
 		"Cipher must be given cipher type string as argument" type)
 	     (multiple-value-bind (ks koffset klen)
@@ -1071,8 +1071,10 @@
 
    (define (cipher-final this enc)
       (with-access::JsCipher this (cipher)
+	 (tprint "CIPHER=" cipher)
 	 (with-handler
 	    (lambda (e)
+	       (exception-notify e)
 	       (with-access::&error e (msg)
 		  (js-raise-type-error %this msg e)))
 	    (string-encode %this (ssl-cipher-final cipher) enc))))
@@ -1209,7 +1211,7 @@
    (cond
       ((eq? encoding (js-undefined))
        (js-string->jsfastbuffer data %this))
-      ((isa? encoding JsStringLiteral)
+      ((js-jsstring? encoding)
        (case (string->symbol (js-jsstring->string encoding))
 	  ((buffer)
 	   (js-string->jsfastbuffer data %this))
@@ -1249,7 +1251,7 @@
    (cond
       ((eq? encoding (js-undefined))
        data)
-      ((isa? encoding JsStringLiteral)
+      ((js-jsstring? encoding)
        (case (string->symbol (js-jsstring->string encoding))
 	  ((buffer)
 	   data)
@@ -1488,7 +1490,7 @@
 ;*---------------------------------------------------------------------*/
 (define (data->string buf proc %this::JsGlobalObject)
    (cond
-      ((isa? buf JsStringLiteral)
+      ((js-jsstring? buf)
        (let ((s (js-jsstring->string buf)))
 	  (values s 0 (string-length s))))
       ((isa? buf JsFastBuffer)
@@ -1508,7 +1510,7 @@
 ;*---------------------------------------------------------------------*/
 (define (buf->string buf proc %this::JsGlobalObject)
    (cond
-      ((isa? buf JsStringLiteral)
+      ((js-jsstring? buf)
        (js-jsstring->string buf))
       ((isa? buf JsFastBuffer)
        (js-jsfastbuffer->string buf))

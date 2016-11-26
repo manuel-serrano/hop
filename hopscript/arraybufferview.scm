@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Tue Nov  8 16:21:42 2016 (serrano)                */
+;*    Last change :  Thu Nov 24 15:51:55 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -690,6 +690,15 @@
 	    (let ((vref (js-typedarray-ref o)))
 	       (with-access::JsArrayBuffer buffer (data)
 		  (vref data (uint32->fixnum (+u32 (/u32 byteoffset bpe) i)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    *optimize-length* ...                                            */
+;*    -------------------------------------------------------------    */
+;*    It is difficult to optimize arraybufferview as they are used     */
+;*    as the base class for JsFastBuffer that used non uint32          */
+;*    length (only for detecting errors).                              */
+;*---------------------------------------------------------------------*/
+(define *optimize-length* #f)
    
 ;*---------------------------------------------------------------------*/
 ;*    js-get-property-value ::JsTypedArray ...                         */
@@ -699,9 +708,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-property-value o::JsTypedArray base p %this)
    (if (symbol? p)
-       (if (eq? p 'length)
-	   (with-access::JsTypedArray o (length data)
-	      (uint32->fixnum length))
+       (if (and *optimize-length* (eq? p 'length))
+	   (with-access::JsTypedArray o (length)
+	      (if (=u32 length #u32:0)
+		  (call-next-method)
+		  (uint32->fixnum length)))
 	   (call-next-method))
        (or (js-get-typedarray o p %this) (call-next-method))))
 
@@ -710,9 +721,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsTypedArray p %this)
    (if (symbol? p)
-       (if (eq? p 'length)
+       (if (and *optimize-length* (eq? p 'length))
 	   (with-access::JsTypedArray o (length)
-	      (uint32->fixnum length))
+	      (if (=u32 length #u32:0)
+		  (call-next-method)
+		  (uint32->fixnum length)))
 	   (call-next-method))
        (or (js-get-typedarray o p %this) (call-next-method))))
 
@@ -721,15 +734,19 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-length o::JsTypedArray cache %this)
    (with-access::JsTypedArray o (length)
-      (uint32->fixnum length)))
+      (if (or (not *optimize-length*) (=u32 length #u32:0))
+	  (call-next-method)
+	  (uint32->fixnum length))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ::JsTypedArray ...                        */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-name/cache-miss o::JsTypedArray p cache::JsPropertyCache throw %this)
-   (if (eq? p 'length)
+   (if (and *optimize-length* (eq? p 'length))
        (with-access::JsTypedArray o (length)
-	  (uint32->fixnum length))
+	  (if (=u32 length #u32:0)
+	      (uint32->fixnum length)
+	      (call-next-method)))
        (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
@@ -742,12 +759,17 @@
 	 ((not (js-can-put o p %this))
 	  ;; 1
 	  (js-undefined))
-	 ((eq? p 'length)
+	 ((and *optimize-length* (eq? p 'length))
 	  ;; 1b, specific to TypedArray where length is not a true property
 	  (with-access::JsTypedArray o (length buffer)
 	     (when (eq? buffer (class-nil JsArrayBuffer))
-		(set! length
-		   (fixnum->uint32 (->fixnum v))))
+		;; only correct length are optimized (for preserving
+		;; bad argument errors)
+		(if (and (> v 0) (< v (-fx (bit-lsh 1 31) 1)))
+		    (set! length (fixnum->uint32 (->fixnum v)))
+		    (begin
+		       (set! length #u32:0)
+		       (call-next-method))))
 	     v))
 	 (else
 	  (let ((owndesc (js-get-own-property o p %this)))

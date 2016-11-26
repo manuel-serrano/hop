@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Nov  4 09:46:35 2016 (serrano)                */
+;*    Last change :  Wed Nov 23 17:28:08 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -670,9 +670,9 @@
 ;*    register-socompile-process! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (register-socompile-process! proc::process cmd::bstring ksucc kfail)
-   (synchronize socompile-mutex
-      (set! socompile-processes
-	 (cons (socompile proc cmd ksucc kfail) socompile-processes)))
+   ;; socompile-mutex already locked
+   (set! socompile-processes
+      (cons (socompile proc cmd ksucc kfail) socompile-processes))
    proc)
 
 ;*---------------------------------------------------------------------*/
@@ -746,16 +746,20 @@
    
    (define (exec cmd::bstring ksucc::procedure kfail::procedure)
       (let* ((line (string-split cmd " "))
-	     (proc (register-socompile-process!
-		      (apply run-process (car line) :wait #f error: pipe:
-			 (cdr line))
-		      cmd ksucc kfail))
-	     (err (process-error-port proc))
-	     (estr (with-handler
-		      (lambda (e) e)
-		      (unwind-protect
-			 (read-string err)
-			 (close-input-port err))))
+	     (proc (synchronize socompile-mutex
+		      (unless socompile-ended
+			 (register-socompile-process!
+			    (apply run-process (car line) :wait #f error: pipe:
+			       (cdr line))
+			    cmd ksucc kfail))))
+	     
+	     (estr (when (process? proc)
+		      (let ((err (process-error-port proc)))
+			 (with-handler
+			    (lambda (e) e)
+			    (unwind-protect
+			       (read-string err)
+			       (close-input-port err))))))
 	     (debug-abort #f))
 	 (with-handler
 	    (lambda (e)

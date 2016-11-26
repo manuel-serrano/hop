@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Nov 17 16:30:32 2016 (serrano)                */
+;*    Last change :  Fri Nov 25 08:47:55 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -208,23 +208,32 @@
 ;*    -------------------------------------------------------------    */
 ;*    Create a JsStringLiteral from a list of Scheme string literals.  */
 ;*---------------------------------------------------------------------*/
-(define (js-stringlist->jsstring val::pair-nil)
-   (if (null? val)
-       (js-ascii->jsstring "")
-       (let loop ((val val))
-	  (cond
-	     ((null? (cdr val))
-	      (js-string->jsstring (car val)))
-	     ((eq? (string-minimal-charset (car val)) 'ascii)
-	      (instantiate::JsStringLiteralASCII
-		 (left (car val))
-		 (weight (string-length (car val)))
-		 (right (loop (cdr val)))))
-	     (else
-	      (instantiate::JsStringLiteralUTF8
-		 (left (car val))
-		 (weight (string-length (car val)))
-		 (right (loop (cdr val)))))))))
+(define (js-stringlist->jsstring  val::pair-nil)
+   (cond
+      ((null? val)
+       (js-ascii->jsstring ""))
+      ((null? (cdr val))
+       (js-string->jsstring (car val)))
+      ((null? (cddr val))
+       (js-jsstring-append
+	  (js-string->jsstring (car val))
+	  (js-string->jsstring (cadr val))))
+      (else
+       (let* ((str (car val))
+	      (res (instantiate::JsStringLiteralUTF8
+		      (left str)
+		      (weight (string-length str)))))
+	  (let loop ((val (cdr val))
+		     (parent res))
+	     (if (null? val)
+		 res
+		 (with-access::JsStringLiteral parent (right)
+		    (let* ((str (car val))
+			   (child (instantiate::JsStringLiteralUTF8
+				     (left (car val))
+				     (weight (string-length str)))))
+		       (set! right child)
+		       (loop (cdr val) child)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->string ...                                          */
@@ -276,7 +285,7 @@
 ;*    Tailrec normalization (with explicit stack management).          */
 ;*---------------------------------------------------------------------*/
 (define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralUTF8)
-   (with-access::JsStringLiteral js (left right weight)
+   (with-access::JsStringLiteralUTF8 js (left right weight %idxutf8 %idxstr)
       (if (and (string? left) (not right))
 	  js
 	  (let ((buffer (make-string (js-string-literal-length js))))
@@ -287,6 +296,8 @@
 		    (set! weight i)
 		    (set! left (string-shrink! buffer i))
 		    (set! right #f)
+		    (set! %idxutf8 0)
+		    (set! %idxstr 0)
 		    js)
 		   ((string? (car stack))
 		    (let ((len (string-length (car stack))))
@@ -587,22 +598,20 @@
 ;*    Returns the ith code unit (UTF16 code unit) of the UTF8 source   */
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
-(define (utf8-codeunit-ref this::JsStringLiteralUTF8 str i::long)
+(define (utf8-codeunit-ref-fast this::JsStringLiteralUTF8 str i::long)
    (let ((len (string-length str)))
-      (if (>fx i len)
-	  +nan.0
-	  (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
-	     ;; adjust with respect to the last position
-	     (let loop ((r (if (>=fx i %idxutf8) %idxstr 0))
-			(j (if (>=fx i %idxutf8) (-fx i %idxutf8) i)))
+      (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
+	 ;; adjust with respect to the last position
+	 (let loop ((r (if (>=fx i %idxutf8) %idxstr 0))
+		    (j (if (>=fx i %idxutf8) (-fx i %idxutf8) i)))
+	    (if (>=fx r len)
+		+nan.0
 		(let* ((c (string-ref-ur str r))
 		       (s (utf8-char-size c))
 		       (u (codepoint-length c)))
 		   (cond
 		      ((>=fx j u)
 		       (loop (+fx r s) (-fx j u)))
-		      ((<fx j 0)
-		       +nan.0)
 		      (else
 		       (set! %idxutf8 (-fx i j))
 		       (set! %idxstr r)
@@ -617,6 +626,37 @@
 			   (let* ((utf8 (substring str r (+fx r s)))
 				  (ucs2 (utf8-string->ucs2-string utf8)))
 			      (ucs2->integer (ucs2-string-ref ucs2 j)))))))))))))
+
+(define (utf8-codeunit-ref-debug str i::long)
+   (let ((len (string-length str)))
+      (let loop ((r 0) (i i))
+	 (if (>=fx r len)
+	     +nan.0
+	     (let* ((c (string-ref str r))
+		    (s (utf8-char-size c))
+		    (u (codepoint-length c)))
+		(cond
+		   ((>=fx i u)
+		    (loop (+fx r s) (-fx i u)))
+		   ((=fx s 1)
+		    (char->integer (string-ref str r)))
+		   ((char=? c (integer->char #xf8))
+		    (utf8-left-replacement-codeunit str r))
+		   ((char=? c (integer->char #xfc))
+		    (utf8-right-replacement-codeunit str r))
+		   (else
+		    (let* ((utf8 (substring str r (+fx r s)))
+			   (ucs2 (utf8-string->ucs2-string utf8)))
+		       (ucs2->integer (ucs2-string-ref ucs2 i))))))))))
+
+(define (utf8-codeunit-ref this::JsStringLiteralUTF8 str i::long)
+   (let ((c1 (utf8-codeunit-ref-fast this str i)))
+      (assert (c1)
+	 (let ((c2 (utf8-codeunit-ref-debug str i)))
+	 (or (= c1 c2)
+	     (and (not (integer? c1))
+		  (not (integer? c2))))))
+      c1))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-ref ...                                                  */
@@ -876,11 +916,10 @@
 		 (char->integer (string-ref val (->fixnum pos)))))))
    
    (define (utf8-charcodeat val::bstring)
-      (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
-	 (if (fixnum? position)
-	     (utf8-codeunit-ref this val position)
-	     (let ((pos (js-tointeger position %this)))
-		(utf8-codeunit-ref this val (->fixnum pos))))))
+      (if (fixnum? position)
+	  (utf8-codeunit-ref this val position)
+	  (let ((pos (js-tointeger position %this)))
+	     (utf8-codeunit-ref this val (->fixnum pos)))))
 
    (string-dipatch charcodeat this))
 

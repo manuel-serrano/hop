@@ -32,6 +32,9 @@ simple/test-process-config.js
 simple/test-cluster-disconnect-with-no-workers.js
 simple/test-domain-implicit-fs.js
 simple/test-crypto-stream.js
+simple/test-url.js
+simple/test-tls-honorcipherorder.js
+simple/test-tls-session-cache.js
 
 message/error_exit.js
 message/nexttick_throw.js
@@ -71,6 +74,7 @@ simple/test-init.js
 simple/test-domain.js # the hop error messages differ from nodejs
 simple/test-setproctitle.js
 simple/test-module-loading.js # uses deprecated require.extensions
+simple/test-fs-null-bytes.js # uses keyword async
 
 # imccompatible command line options
 simple/test-cli-eval.js
@@ -116,6 +120,9 @@ simple/test-debugger-repl-break-in-module.js
 simple/test-debugger-repl-restart.js
 simple/test-debugger-repl-utf8.js
 simple/test-debugger-repl.js
+
+# script
+simple/test-script-context.js
 
 # signals
 simple/test-signal-handler.js # Boehm's GC uses SIGUSR1 and SIGUSR2

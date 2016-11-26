@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/noserv/property.js     */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/property.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Wed Apr  1 18:28:53 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Wed Nov 23 14:44:23 2016 (serrano)                */
+/*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
 /*=====================================================================*/
@@ -103,7 +103,7 @@ Cons.prototype[ 0 ] = 10;
 var o = new Cons( 1, 2 );
 
 assert.strictEqual( o.type, "acons" );
-assert.strictEqual( o[ 0 ], 10 );
+assert.strictEqual( o[ 0 ], 10, "Cons prototype" );
 
 Object.defineProperty( o, "sum",
    { get: function() { return this.car + this.cdr; },

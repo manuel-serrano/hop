@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Oct 23 09:40:33 2016 (serrano)                */
+;*    Last change :  Fri Nov 25 18:56:12 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -112,7 +112,7 @@
 		 (display-trace-stack-source
 		    (list `(,name (at ,fname ,location)))
 		    port)))
-	     (if (isa? stk JsStringLiteral)
+	     (if (js-jsstring? stk)
 		 (display (js-jsstring->string stk) port)
 		 (let ((stack (cond
 				 ((string=? name "ReferenceError")
@@ -234,13 +234,14 @@
 	       (js-string->jsstring
 		  (call-with-output-string
 		     (lambda (op)
-;* 			(when (isa? err JsObject)                      */
-;* 			   (let ((head (js-get err 'name %this)))      */
-;* 			      (unless (eq? head (js-undefined))        */
-;* 				 (display (js-tostring head %this) op) */
-;* 				 (display ": " op)))                   */
-;* 			   (display (js-get err 'message %this) op)    */
-;* 			   (newline op))                               */
+			(when (isa? err JsObject)
+			   ;; needed for nodejs compatibility
+			   (let ((head (js-get err 'name %this)))
+			      (unless (eq? head (js-undefined))
+				 (display (js-tostring head %this) op)
+				 (display ": " op)))
+			   (display (js-get err 'message %this) op)
+			   (newline op))
 			(display-trace-stack stack op 1)))))
 	    
 	    ;; initialize the frame proto object

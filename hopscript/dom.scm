@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Sun Oct 23 09:39:42 2016 (serrano)                */
+;*    Last change :  Thu Nov 24 21:00:50 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -350,7 +350,7 @@
    
    (define (->obj v)
       (cond
-	 ((isa? v JsStringLiteral) (js-jsstring->string v))
+	 ((js-jsstring? v) (js-jsstring->string v))
 	 (else v)))
    
    (let loop ((pname (js-toname prop %this)))

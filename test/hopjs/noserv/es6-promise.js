@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.1.x/test/hopjs/noserv/es6-promise.js      */
+/*    serrano/trashcan/es6-promise.js                                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Tue Oct 11 06:28:32 2016 (serrano)                */
+/*    Last change :  Thu Nov 24 11:32:46 2016 (serrano)                */
 /*    Copyright   :  2015-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
@@ -16,7 +16,9 @@ var expected = 0;
 
 assert.check = function( val, name ) {
    expected++;
+   console.log( ">>> ", name );
    assert.ok( val, name );
+   console.log( "<<< ", name );
    ok++;
 }
 
@@ -336,7 +338,7 @@ function kangaxa() {
    });
 
    function check() {
-      assert.check( score, 4 );
+      assert.check( score, "kangaxa" );
    }
 }
 
@@ -365,7 +367,7 @@ function kangaxc() {
    rejects.catch( function( result ) { score += (result === "qux"); check(); });
 
    function check() {
-      assert.check( score === ++n );
+      assert.check( score === ++n, "kangaxc" );
    }
 }
 
@@ -384,7 +386,7 @@ function kangaxd() {
    rejects.catch( function( result ) { score += (result === "qux"); check(); });
 
    function check() {
-      assert.check( score === ++n );
+      assert.check( score === ++n, "kangaxd" );
    }
 }
 
@@ -403,7 +405,7 @@ function kangaxe() {
    rejects.catch( function( result ) { score += (result === "baz"); check(); });
 
    function check() {
-      assert.check( score === ++n );
+      assert.check( score === ++n, "kangaxe" );
    }
 }
 
@@ -422,13 +424,13 @@ function kangaxf() {
    rejects.catch( function( result ) { score += (result === "baz"); check(); });
 
    function check() {
-      assert.check( score === ++n );
+      assert.check( score === ++n, "kangaxf" );
    }
 }
 
 function kangaxg() {
    var prop = Object.getOwnPropertyDescriptor( Promise, Symbol.species );
-   assert.check( 'get' in prop && Promise[ Symbol.species ] === Promise );
+   assert.check( 'get' in prop && Promise[ Symbol.species ] === Promise, "kangaxg" );
 }
 
 function __createIterableObject(arr, methods) {
@@ -472,6 +474,7 @@ console.log( "   kangaxg()");
 kangaxg();
 
 setTimeout( function() {
+   console.log( "ok=", ok, " expected=", expected );
    process.exit( ok === expected ? 0 : 1 )
-}, 1000 );
+}, 500 );
 

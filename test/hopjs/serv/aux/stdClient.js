@@ -3,17 +3,16 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Fri Mar 25 19:05:51 2016 (serrano)                */
+/*    Last change :  Wed Nov 23 16:26:52 2016 (serrano)                */
 /*    Copyright   :  2015-16 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    simple worker to stress test services                            */
 /*=====================================================================*/
 
-/* This worker iterates <num> service invocations, then
- * post a message to inform the main thread of completion */
+// This worker iterates <num> service invocations, then
+// post a message to inform the main thread of completion
 
 service toTest();
-
 
 function test( id, num ) {
    if ( num == 0 ) {
