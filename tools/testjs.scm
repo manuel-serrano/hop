@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 27 17:13:14 2013                          */
-;*    Last change :  Fri Nov  4 15:55:26 2016 (serrano)                */
+;*    Last change :  Sun Nov 27 07:18:48 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Testing JavaScript programs                                      */
@@ -166,7 +166,7 @@
 	 (old-skip local-skip))
       (unwind-protect
 	 (let ((b (basename dir)))
-	    (unless (blacklist? b blacklist)
+	    (unless (and #f (blacklist? b blacklist))
 	       (with-trace 1 (substring dir (+fx baselen 1))
 		  (set! local-ok 0)
 		  (set! local-fail 0)
@@ -175,7 +175,7 @@
 			       (cond
 				  ((directory? path)
 				   (when recursive (test-directory path include-path)))
-				  ((not (blacklist? (basename path) blacklist))
+				  ((or #t (not (blacklist? (basename path) blacklist)))
 				   (test-path path include-path))
 				  (else
 				   (set! local-skip (+fx 1 local-skip)))))
@@ -206,46 +206,50 @@
 ;*    test-path ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (test-path path include-path)
-   (unless (blacklist? (basename path) blacklist)
-      (set! global-count (+fx 1 global-count))
-      (bind-exit (skip)
-	 (with-handler
-	    (lambda (e)
-	       ;; mark the failure
-	       (set! local-fail (+fx 1 local-fail))
-	       (with-trace 1 (format "TEST ~a FAILED"
-				(+ global-ok global-fail local-ok local-fail))
-		  (if (isa? e &test-error)
-		      (with-access::&test-error e (proc msg obj path)
-			 (trace-item proc)
-			 (trace-item path)
-			 (trace-item msg)
-			 (fprint (current-error-port) obj)
-			 (if (=fx skip-errors 0)
-			     (exit 1)
-			     (begin
-				(set! skip-errors (-fx skip-errors 1))
-				(skip #t))))
-		      (raise e))))
-	    (with-trace 2 (format "~a (~a)" (basename path) global-count)
-	       (let ((tmp (make-file-path /tmp (basename path))))
-		  ;; generate the actual source file)
-		  (let ((isnegative (generate-test-file! path tmp include-path)))
-		     ;; compile it
-		     (for-each (lambda (f)
-				  (let ((p (make-file-name /tmp f)))
-				     (when (file-exists? p)
-					(delete-file p))))
-			'("testjs-err.comp"
-			  "testjs.comp"
-			  "testjs-err.exec"
-			  "testjs.exec"))
-		     (let ((ccmd (compile-test tmp isnegative)))
-			;; execute it
-			(when (string? ccmd)
-			   (execute-test tmp ccmd))))
-		  ;; mark success
-		  (set! local-ok (+fx 1 local-ok))))))))
+   (set! global-count (+fx 1 global-count))
+   (if (blacklist? (basename path) blacklist)
+       (begin
+	  (with-trace 2 (format "~a (~a) ### BLACKLISTED"
+			   (basename path) global-count))
+	  (set! local-skip (+fx 1 local-skip)))
+       (bind-exit (skip)
+	  (with-handler
+	     (lambda (e)
+		;; mark the failure
+		(set! local-fail (+fx 1 local-fail))
+		(with-trace 1 (format "TEST ~a FAILED"
+				 (+ global-ok global-fail local-ok local-fail))
+		   (if (isa? e &test-error)
+		       (with-access::&test-error e (proc msg obj path)
+			  (trace-item proc)
+			  (trace-item path)
+			  (trace-item msg)
+			  (fprint (current-error-port) obj)
+			  (if (=fx skip-errors 0)
+			      (exit 1)
+			      (begin
+				 (set! skip-errors (-fx skip-errors 1))
+				 (skip #t))))
+		       (raise e))))
+	     (with-trace 2 (format "~a (~a)" (basename path) global-count)
+		(let ((tmp (make-file-path /tmp (basename path))))
+		   ;; generate the actual source file)
+		   (let ((isnegative (generate-test-file! path tmp include-path)))
+		      ;; compile it
+		      (for-each (lambda (f)
+				   (let ((p (make-file-name /tmp f)))
+				      (when (file-exists? p)
+					 (delete-file p))))
+			 '("testjs-err.comp"
+			   "testjs.comp"
+			   "testjs-err.exec"
+			   "testjs.exec"))
+		      (let ((ccmd (compile-test tmp isnegative)))
+			 ;; execute it
+			 (when (string? ccmd)
+			    (execute-test tmp ccmd))))
+		   ;; mark success
+		   (set! local-ok (+fx 1 local-ok))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    negative-table ...                                               */

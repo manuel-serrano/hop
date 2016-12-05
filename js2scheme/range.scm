@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Nov 23 16:19:17 2016 (serrano)                */
+;*    Last change :  Sun Dec  4 18:49:34 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -139,9 +139,10 @@
 ;*    j2s-range-type-program! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-range-type-program! this::J2SProgram args)
-   (let* ((lsize (config-get args :long-size (bigloo-config 'elong-size)))
-	  (fixnum (interval (+fl *minfix* 1.0) (-fl *maxfix* 1.0)))
-	  (fxsize (-fx lsize 2)))
+   (let* ((lsize (config-get args :long-size (bigloo-config 'int-size)))
+	  (minfix (- (expt 2. (fixnum->flonum (-fx lsize 1)))))
+	  (maxfix (-fl (expt 2. (fixnum->flonum (-fx lsize 1))) 1.0))
+	  (fixnum (interval (+fl minfix 1.0) (-fl maxfix 1.0))))
       (with-access::J2SProgram this (headers decls nodes)
 	 (for-each (lambda (n) (type-range! n fixnum *index-intv*)) decls)
 	 (for-each (lambda (n) (type-range! n fixnum *index-intv*)) nodes)
@@ -160,6 +161,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (type-integer? type::symbol)
    (or (eq? type 'integer) (eq? type 'index)))
+   
+;*---------------------------------------------------------------------*/
+;*    type-number? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (type-number? type::symbol)
+   (or (type-integer? type) (eq? type 'number)))
    
 ;*---------------------------------------------------------------------*/
 ;*    integer bounds                                                   */
@@ -624,7 +631,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SNumber env::pair-nil fix::struct)
    (with-access::J2SNumber this (val type)
-      (if (type-integer? type)
+      (if (type-number? type)
 	  (let ((intv (interval val val)))
 	     (node-interval-set! this env fix intv))
 	  (return #f env))))
@@ -634,7 +641,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SRef env::pair-nil fix::struct)
    (with-access::J2SRef this (decl type)
-      (if (type-integer? type)
+      (if (type-number? type)
 	  (with-access::J2SDecl decl (%info)
 	     (let ((intv (env-lookup env decl)))
 		(let ((denv (dump-env env)))
@@ -685,13 +692,18 @@
 			  (values (make-env decl intrt)
 			     (make-env decl intro))))
 		      ((== ===)
-		       (values (make-env decl (interval-eq intl intr))
-			  ;;(make-env decl (interval-neq intl intr))
-			  (empty-env)))
+		       (let ((ieq (interval-eq intl intr)))
+			  (values (if (interval? ieq)
+				      (make-env decl ieq)
+				      (empty-env))
+			     (empty-env))))
 		      ((!= !==)
-		       (values ;;(make-env decl (interval-neq intl intr))
-			  (empty-env)
-			  (make-env decl (interval-eq intl intr))))
+		       (let ((ieq (interval-eq intl intr)))
+			  (values ;;(make-env decl (interval-neq intl intr))
+			     (empty-env)
+			     (if (interval? ieq)
+				 (make-env decl ieq)
+				 (empty-env)))))
 		      (else
 		       (values (empty-env) (empty-env)))))))))
    
@@ -731,9 +743,9 @@
 		       (test-envs rhs envl fix)
 		       (values (append-env lenvt renvt)
 			  (append-env lenvo renvo))))))
-	     ((not (type-integer? (j2s-type lhs)))
+	     ((not (type-number? (j2s-type lhs)))
 	      (values (empty-env) (empty-env)))
-	     ((not (type-integer? (j2s-type rhs)))
+	     ((not (type-number? (j2s-type rhs)))
 	      (values (empty-env) (empty-env)))
 	     ((not (eq? (j2s-type test) 'bool))
 	      (values (empty-env) (empty-env)))
@@ -762,7 +774,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SUnary env::pair-nil fix::struct)
    (with-access::J2SUnary this (op expr type)
-      (if (type-integer? type)
+      (if (type-number? type)
 	  (case op
 	     ((+)
 	      (range expr env fix))
@@ -797,7 +809,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SBinary env::pair-nil fix::struct)
    (with-access::J2SBinary this (op lhs rhs type %info %%wstamp)
-      (if (type-integer? type)
+      (if (type-number? type)
 	  (multiple-value-bind (intl envl)
 	     (range lhs env fix)
 	     (multiple-value-bind (intr envr)
@@ -834,7 +846,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SAssig env::pair-nil fix::struct)
    (with-access::J2SAssig this (lhs rhs type)
-      (if (type-integer? type)
+      (if (type-number? type)
 	  (multiple-value-bind (intv env)
 	     (range lhs env fix)
 	     (cond
@@ -892,7 +904,7 @@
    (with-access::J2SFun this (body params rtype)
       (let ((envp (filter-map (lambda (p)
 				 (with-access::J2SDecl p (itype %info)
-				    (when (and (type-integer? itype)
+				    (when (and (type-number? itype)
 					       (interval? %info))
 				       (cons p %info))))
 		     params)))
@@ -910,7 +922,7 @@
 		    (args args))
 	    (when (and (pair? params) (pair? args))
 	       (with-access::J2SDecl (car params) (itype %info)
-		  (when (type-integer? itype)
+		  (when (type-number? itype)
 		     (with-access::J2SExpr (car args) ((ainfo %info))
 			(let ((ni (interval-merge %info ainfo)))
 			   (unless (equal? ni %info)
@@ -942,7 +954,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SAccess env::pair-nil fix::struct)
    (with-access::J2SAccess this (obj field type)
-      (if (type-integer? type)
+      (if (type-number? type)
 	  (with-access::J2SExpr obj (type)
 	     (if (and (memq type '(string array)) (j2s-field-length? field))
 		 (node-interval-set! this env fix (interval 0.0 *max-length*))
@@ -960,7 +972,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SDeclInit env::pair-nil fix::struct)
    (with-access::J2SDeclInit this (val itype %info)
-      (if (type-integer? itype)
+      (if (type-number? itype)
 	  (multiple-value-bind (intv env)
 	     (range val env fix)
 	     (node-interval-set! this env fix intv)
@@ -1058,9 +1070,6 @@
    (with-access::J2SDo this (body test)
       (let ((denv (dump-env env))
 	    (ffix (fix-stamp fix)))
-	 (when (pair? denv)
-	    (tprint ">>> do [" ffix "] test=" (j2s->list test))
-	    (tprint ">>> env=" denv))
 	 (multiple-value-bind (bodyi bodye)
 	    (range body env fix)
 	    (let loop ((env env))
@@ -1072,11 +1081,7 @@
 			(multiple-value-bind (bodyi bodye)
 			   (range body teste fix)
 			   (if (=fx ostamp (fix-stamp fix))
-			       (begin
-				  (when (pair? denv)
-				     (tprint "<<< do [" ffix "] "
-					(dump-env (append-env testef bodye)))
-				     (return #f (append-env testef bodye))))
+			       (return #f (append-env testef bodye))
 			       (loop (env-merge bodye env))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1084,6 +1089,18 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SNode fixnum::struct index::struct)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    type-range! ::J2SDecl ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-range! this::J2SDecl fixnum::struct index::struct)
+   (call-default-walker)
+   (with-access::J2SDecl this (%info itype)
+      (when (interval? %info)
+	 (cond
+	    ((interval-in? %info index) (set! itype 'index))
+	    ((interval-in? %info fixnum) (set! itype 'fixnum)))))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SExpr ...                                        */
@@ -1096,4 +1113,5 @@
 	    ((interval-in? %info index) (set! type 'index))
 	    ((interval-in? %info fixnum) (set! type 'fixnum)))))
    this)
+
 

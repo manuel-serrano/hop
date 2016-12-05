@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Nov  9 16:09:26 2016 (serrano)                */
+;*    Last change :  Sun Dec  4 19:16:39 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -148,9 +148,9 @@
 	     (hopc-js-module-name-set! name))
 	    (("--js-module-path" ?path (help "Set Bigloo module path"))
 	     (hopc-js-module-path-set! path))
-	    (("--js-module-main" (help "Force generating a main clause"))
+	    (("--js-module-main" (help "Force generate a main clause"))
 	     (hopc-js-module-main-set! #t))
-	    (("--js-no-module-main" (help "Force not generating a main clause"))
+	    (("--js-no-module-main" (help "Force not generate a main clause"))
 	     (hopc-js-module-main-set! #f))
 	    (("--js-no-header" (help "Don't generate hopscript header"))
 	     (hopc-js-header-set! #f))

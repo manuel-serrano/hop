@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Sat Nov 26 18:10:26 2016 (serrano)                */
+;*    Last change :  Wed Nov 30 06:35:13 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -1054,7 +1054,7 @@
 	     (multiple-value-bind (ks koffset klen)
 		(data->string key "cipher-initiv" %this)
 		(multiple-value-bind (is ioffset ilen)
-		   (data->string iv "cipher-init" %this)
+		   (data->string iv "cipher-initiv" %this)
 		   (ssl-cipher-initiv cipher (js-jsstring->string type)
 		      ks koffset klen
 		      is ioffset ilen
@@ -1062,16 +1062,15 @@
 
    (define (cipher-update this data ienc oenc)
       (with-access::JsCipher this (cipher)
-	 ;; this functio should be rewritten to avoid allocating
-	 ;; so many auxiliary strings 
+	 ;; this function should be rewritten to avoid allocating
+	 ;; so many auxiliary strings
 	 (let* ((s (buf->string data "cipher-update" %this))
 		(str (string-decode s ienc %this))
 		(so (ssl-cipher-update! cipher str 0 (string-length str))))
-	    (string-encode %this so oenc))))
+	    (string-encode %this so "buffer"))))
 
    (define (cipher-final this enc)
       (with-access::JsCipher this (cipher)
-	 (tprint "CIPHER=" cipher)
 	 (with-handler
 	    (lambda (e)
 	       (exception-notify e)
@@ -1107,9 +1106,24 @@
       (let ((proto (with-access::JsGlobalObject %this (js-object)
 		      (js-new %this js-object))))
 	 (with-access::JsObject proto (__proto__)
-	    (set! __proto__ cipher-proto))
+	    (set! __proto__ decipher-proto))
+	 (js-put! proto 'init
+	    (js-make-function %this cipher-init 1 "init")
+	    #f %this)
+	 (js-put! proto 'initiv
+	    (js-make-function %this cipher-initiv 1 "init")
+	    #f %this)
+	 (js-put! proto 'update
+	    (js-make-function %this cipher-update 1 "init")
+	    #f %this)
+	 (js-put! proto 'final
+	    (js-make-function %this cipher-final 1 "init")
+	    #f %this)
 	 (js-put! proto 'finaltol
 	    (js-make-function %this cipher-final 1 "finaltol")
+	    #f %this)
+	 (js-put! proto 'setAutoPadding
+	    (js-make-function %this cipher-set-auto-padding 1 "setAutoPadding")
 	    #f %this)
 	 proto))
 	    
@@ -1175,7 +1189,7 @@
 		:prototype cipher-proto))
 	 (dc (js-make-function %this sign 1 "decipher"
 		:construct decipher
-		:prototype cipher-proto)))
+		:prototype decipher-proto)))
       
       (with-access::JsGlobalObject %this (js-object)
 	 (js-alist->jsobject
@@ -1510,6 +1524,8 @@
 ;*---------------------------------------------------------------------*/
 (define (buf->string buf proc %this::JsGlobalObject)
    (cond
+      ((isa? buf JsStringLiteralUTF8)
+       (utf8->iso-latin (js-jsstring->string buf)))
       ((js-jsstring? buf)
        (js-jsstring->string buf))
       ((isa? buf JsFastBuffer)

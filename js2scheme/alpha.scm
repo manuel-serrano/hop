@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sat Nov  5 10:09:23 2016 (serrano)                */
+;*    Last change :  Sun Dec  4 18:23:26 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -130,6 +130,7 @@
 ;*    alpha ::J2SDecl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SDecl)
+   (tprint "ALPHA DECL this=" (j2s->list this))
    (let* ((clazz (object-class this))
 	  (ctor (class-constructor clazz))
 	  (inst ((class-allocator clazz)))
@@ -200,11 +201,8 @@
 	 (if (isa? %info AlphaInfo)
 	     (with-access::AlphaInfo %info (new)
 		(duplicate::J2SRef this
-;* 		   (type #f)                                           */
 		   (decl new)))
-	     (duplicate::J2SRef this
-;* 		(type #f)                                              */
-		)))))
+	     (duplicate::J2SRef this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SFun ...                                               */
@@ -215,6 +213,16 @@
 	 (duplicate::J2SFun this
 	    (params nparams)
 	    (body (j2s-alpha body params nparams))))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SLetBlock ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SLetBlock)
+   (with-access::J2SLetBlock this (decls nodes)
+      (let ((ndecls (map j2sdecl-duplicate decls)))
+	 (duplicate::J2SLetBlock this
+	    (decls ndecls)
+	    (nodes (map (lambda (n) (j2s-alpha n decls ndecls)) nodes))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SSvc ...                                               */
@@ -254,8 +262,10 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sdecl-duplicate p::J2SDecl)
    (if (isa? p J2SDeclInit)
-       (duplicate::J2SDeclInit p
-	  (key (ast-decl-key)))
+       (with-access::J2SDeclInit p (val)
+	  (duplicate::J2SDeclInit p
+	     (val (alpha val))
+	     (key (ast-decl-key))))
        (duplicate::J2SDecl p
 	  (key (ast-decl-key)))))
 

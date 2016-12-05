@@ -63,6 +63,12 @@ simple/test-tls-connect-pipe.js
 # Bad crypto key
 simple/test-crypto.js
 
+# openssl-1.1 incompatibilies
+simple/test-tls-set-ciphers.js
+simple/test-tls-getcipher.js
+simple/test-tls-set-cipher.js
+simple/test-crypto-binary-default.js
+
 #*---------------------------------------------------------------------*/
 #*    incompatible tests                                               */
 #*---------------------------------------------------------------------*/
@@ -156,6 +162,11 @@ simple/test-regress-GH-4015.js
 
 # different timing
 pummel/test-process-uptime.js
+
+#*---------------------------------------------------------------------*/
+#*    undeterministics error (observed also with node)                 */
+#*---------------------------------------------------------------------*/
+pummel/test-https-ci-reneg-attack.js
 
 #*---------------------------------------------------------------------*/
 #*    ok but temporarily disabled                                      */

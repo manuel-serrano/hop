@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Nov 24 10:29:56 2016 (serrano)                */
+;*    Last change :  Mon Dec  5 08:53:02 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -24,7 +24,11 @@
 	   __js2scheme_utils
 	   __js2scheme_type-hint)
 
+   (export *j2s-array-cache*)
+   
    (export j2s-array-stage))
+
+(define *j2s-array-cache* #t)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-stage ...                                              */
@@ -91,30 +95,36 @@
       (with-access::J2SDecl decl (id loc)
 	 (J2SLetOpt '(read write)
 	    (symbol-append '|%l:| id)
-	    (J2SCall (J2SHopRef 'js-array-vlen) (J2SRef decl)))))
+	    (J2SCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
 
+   (define (mdecl::J2SDeclInit loc)
+      (J2SLetOpt '(read write)
+	 (symbol-append '%m:js-array-mark)
+	 (J2SCall (J2SHopRef 'js-array-mark))))
+   
    (with-access::J2SFor this (init test incr body loc)
       (let ((arrs (delete-duplicates! (array-collect* body env))))
 	 (if (null? arrs)
 	     (call-default-walker)
 	     (let* ((adecls (map decl->adecl arrs))
 		    (ldecls (map decl->ldecl adecls arrs))
-		    (nenv (append (map list arrs adecls ldecls) env))
-		    (init (array-ref! init nenv))
-		    (incr (array-ref! incr nenv))
-		    (test (array-ref! test nenv))
-		    (body (array-ref! body nenv)))
-;* 		(J2SLetBlock (append adecls ldecls)                    */
-;* 		   (duplicate::J2SFor this                             */
-;* 		      (init init)                                      */
-;* 		      (incr incr)                                      */
-;* 		      (test test)                                      */
-;* 		      (body body)))                                    */
-		(duplicate::J2SFor this
-		      (init init)
-		      (incr incr)
-		      (test test)
-		      (body body)))))))
+		    (aenv (map list arrs adecls ldecls))
+		    (init (array-ref! init aenv))
+		    (incr (array-ref! incr aenv))
+		    (test (array-ref! test aenv))
+		    (body (array-ref! body aenv)))
+		(if *j2s-array-cache*
+		    (J2SLetBlock (cons (mdecl loc) (append adecls ldecls))
+		       (duplicate::J2SFor this
+			  (init init)
+			  (incr incr)
+			  (test test)
+			  (body body)))
+		    (duplicate::J2SFor this
+		       (init init)
+		       (incr incr)
+		       (test test)
+		       (body body))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array-collect* ::J2SNode ...                                     */

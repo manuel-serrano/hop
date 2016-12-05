@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Nov 25 08:47:55 2016 (serrano)                */
+;*    Last change :  Sat Dec  3 11:20:42 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -198,7 +198,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsstring::obj val::bstring)
    (case (string-minimal-charset val)
-      ((ascii) (js-ascii->jsstring val))
+      ((ascii) val)
       ((latin1 utf8) (js-utf8->jsstring val))
       (else (error "string->jsstring" "unsupported encoding"
 	       (string-minimal-charset val)))))
@@ -651,11 +651,11 @@
 
 (define (utf8-codeunit-ref this::JsStringLiteralUTF8 str i::long)
    (let ((c1 (utf8-codeunit-ref-fast this str i)))
-      (assert (c1)
-	 (let ((c2 (utf8-codeunit-ref-debug str i)))
-	 (or (= c1 c2)
-	     (and (not (integer? c1))
-		  (not (integer? c2))))))
+;*       (assert (c1)                                                  */
+;* 	 (let ((c2 (utf8-codeunit-ref-debug str i)))                   */
+;* 	 (or (= c1 c2)                                                 */
+;* 	     (and (not (integer? c1))                                  */
+;* 		  (not (integer? c2))))))                              */
       c1))
 
 ;*---------------------------------------------------------------------*/
