@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Nov 23 09:14:13 2016 (serrano)                */
+;*    Last change :  Sun Dec  4 09:04:26 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -37,7 +37,7 @@
 (define (dump-info this::J2SNode)
    (with-access::J2SNode this (%info)
       (if (or (>= (bigloo-debug) 3)
-	      (string-contains  (or (getenv "HOPTRACE") "") "j2s:info"))
+	      (string-contains (or (getenv "HOPTRACE") "") "j2s:info"))
 	  `(:%info ,(j2s->list %info))
 	  '())))
 
@@ -47,7 +47,7 @@
 (define (dump-type this::J2SExpr)
    (with-access::J2SExpr this (type)
       (if (or (>= (bigloo-debug) 2)
-	      (string-contains  (or (getenv "HOPTRACE") "") "j2s:type"))
+	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 	  `(:type ,type)
 	  '())))
       
@@ -57,7 +57,7 @@
 (define (dump-itype this::J2SDecl)
    (with-access::J2SDecl this (itype)
       (if (or (>= (bigloo-debug) 2)
-	      (string-contains  (or (getenv "HOPTRACE") "") "j2s:type"))
+	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 	  `(:itype ,itype)
 	  '())))
       
@@ -66,7 +66,7 @@
 ;*---------------------------------------------------------------------*/
 (define (dump-hint this::J2SNode)
    (if (or (>= (bigloo-debug) 2)
-	   (string-contains  (or (getenv "HOPTRACE") "") "j2s:hint"))
+	   (string-contains (or (getenv "HOPTRACE") "") "j2s:hint"))
        (let ((hint (cond
 		      ((isa? this J2SExpr)
 		       (with-access::J2SExpr this (hint) hint))
@@ -75,6 +75,18 @@
 		      (else
 		       '()))))
 	  (if (pair? hint) `(:hint ,hint) '()))
+       '()))
+
+;*---------------------------------------------------------------------*/
+;*    dump-access ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (dump-access this::J2SDecl)
+   (if (or (>= (bigloo-debug) 2)
+	   (string-contains (or (getenv "HOPTRACE") "") "j2s:access"))
+       (with-access::J2SDecl this (usecnt usage ronly)
+	  `((:ronly ,ronly)
+	    (:usecnt ,usecnt)
+	    (:usage ,usage)))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -211,9 +223,9 @@
 (define-method (j2s->list this::J2SRef)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (id key)
-	 `(,@(call-next-method) ,id :key ,key
+	 `(,@(call-next-method) ,id
+	     ,@(dump-key key)
 	     ,@(dump-type this)
-	     ,@(dump-hint this)
 	     ,@(dump-info this)))))
  
 ;*---------------------------------------------------------------------*/
@@ -285,7 +297,8 @@
 	 ((or (isa? decl J2SDeclFun) (isa? decl J2SDeclFunCnst))
 	  (with-access::J2SDecl decl (key usage)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
-		 :name ,name :decl ,key
+		 :name ,name
+		 ,@(dump-key key)
 		 ,@(dump-rtype this)
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:idthis ,idthis) '())
@@ -296,15 +309,17 @@
 		 :mode ,mode
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
-	  `(,@(call-next-method) ,@(if generator '(*) '())
-	      :name ,name :decl ,(j2s->list decl)
-	      ,@(dump-rtype this)
-	      ,@(if (>= (bigloo-debug) 3)
-		    `(:idthis ,idthis) '())
-	      ,@(if (>= (bigloo-debug) 3)
-		    `(:need-bind-exit-return ,need-bind-exit-return) '())
-	      :mode ,mode
-	      ,(map j2s->list params) ,(j2s->list body)))
+	  (with-access::J2SDecl decl (key)
+	     `(,@(call-next-method) ,@(if generator '(*) '())
+		 :name ,name
+		 ,@(dump-key key)
+		 ,@(dump-rtype this)
+		 ,@(if (>= (bigloo-debug) 3)
+		       `(:idthis ,idthis) '())
+		 ,@(if (>= (bigloo-debug) 3)
+		       `(:need-bind-exit-return ,need-bind-exit-return) '())
+		 :mode ,mode
+		 ,(map j2s->list params) ,(j2s->list body))))
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name
@@ -530,9 +545,7 @@
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(dump-key key)
-	,@(if (>= (bigloo-debug) 3) `(:ronly ,ronly) '())
-	,@(if (>= (bigloo-debug) 3) `(:usecnt ,usecnt) '())
-	,@(if (>= (bigloo-debug) 3) `(:usage ,usage) '())
+	,@(dump-access this)
 	,@(dump-itype this)
 	,@(dump-hint this)
 	,@(if _scmid `(:_scmid ,_scmid) '())

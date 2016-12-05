@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Nov 21 12:27:17 2016 (serrano)                */
+;*    Last change :  Sun Dec  4 08:38:07 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1120,7 +1120,7 @@
 ;*           | (pat)                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-expr-type-test expr::J2SExpr)
-
+   
    (define (normalize-op op)
       (case op
 	 ((===) '==)
@@ -1137,7 +1137,7 @@
 	       (with-access::J2SRef expr (decl)
 		  (with-access::J2SString str (val)
 		     (values op decl (string->symbol val) expr)))))))
-
+   
    (define (binary-type-test expr)
       (with-access::J2SBinary expr (op lhs rhs)
 	 (when (memq op '(== === != !==))
@@ -1148,7 +1148,7 @@
 		(typeof op lhs rhs))
 	       (else
 		#f)))))
-
+   
    (define (unary-type-test expr)
       (with-access::J2SUnary expr (op expr)
 	 (when (eq? op '!)
@@ -1156,22 +1156,25 @@
 	       (j2s-expr-type-test expr)
 	       (when op
 		  (values (not-op op) decl type expr))))))
-
+   
    (define (paren-type-test expr)
       (with-access::J2SParen expr (expr)
 	 (j2s-expr-type-test expr)))
-
-   (define (is-js-index test)
+   
+   (define (is-native-test test)
       ;; if test === (js-index? (ref decl) ) return decl
       ;; see __js2scheme_range
       (when (isa? test J2SCall)
-	 (with-access::J2SCall test (fun args)
-	    (when (isa? fun J2SHopRef)
-	       (with-access::J2SHopRef fun (id)
-		  (when (eq? id 'js-index?)
-		     (when (and (pair? args) (null? (cdr args)))
-			(when (isa? (car args) J2SRef)
-			   (car args)))))))))
+         (with-access::J2SCall test (fun args)
+            (when (isa? fun J2SHopRef)
+	       (when (and (pair? args) (null? (cdr args)))
+		  (when (isa? (car args) J2SRef)
+		     (car args)))))))
+   
+   (define (native-type-test test)
+      (with-access::J2SCall test (fun)
+	 (with-access::J2SHopRef fun (id)
+	    id)))
    
    (cond
       ((isa? expr J2SBinary)
@@ -1180,11 +1183,25 @@
        (unary-type-test expr))
       ((isa? expr J2SParen)
        (paren-type-test expr))
-      ((is-js-index expr)
+      ((is-native-test expr)
        =>
        (lambda (ref)
-	  (with-access::J2SRef ref (decl)
-	     (values '== decl 'index ref))))
+	  (let ((typ (case (native-type-test expr)
+			((js-index?) 'index)
+			((fixnum?) 'fixnum)
+			((number?) 'number)
+			((js-jsstring?) 'string)
+			((js-array?) 'array)
+			((js-object?) 'object)
+			((js-function?) 'function)
+			((boolean?) 'bool)
+			((js-undefined?) 'undefined)
+			((js-null?) 'null)
+			(else #f))))
+	     (if typ
+		 (with-access::J2SRef ref (decl)
+		    (values '== decl typ ref))
+		 #f))))
       (else
        #f)))
 

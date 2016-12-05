@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Nov 26 09:16:43 2016 (serrano)                */
+;*    Last change :  Mon Dec  5 08:35:21 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -33,11 +33,14 @@
 	   __hopscript_generator)
    
    (export (js-init-array! ::JsGlobalObject)
+	   (inline js-array-mark::long)
+	   *JS-ARRAY-MARK*
 	   (inline js-array?::bool ::obj)
 	   (inline js-array-length::uint32 ::JsArray)
 	   (inline js-array-update-length!::long ::JsArray ::long)
 
 	   (inline js-array-vec::vector ::JsArray)
+	   (inline js-array-ilen::uint32 ::JsArray)
 	   
 	   (js-array-ref ::JsArray ::obj ::JsGlobalObject)
 	   (inline js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
@@ -350,6 +353,17 @@
 	 js-array)))
 
 ;*---------------------------------------------------------------------*/
+;*    *JS-ARRAY-MARK* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *JS-ARRAY-MARK* 0)
+
+;*---------------------------------------------------------------------*/
+;*    js-array-mark ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-mark)
+   *JS-ARRAY-MARK*)
+
+;*---------------------------------------------------------------------*/
 ;*    js-array? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array? obj)
@@ -422,6 +436,12 @@
    (with-access::JsArray a (vec) vec))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-ilen ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-ilen::uint32 a::JsArray)
+   (with-access::JsArray a (ilen) ilen))
+
+;*---------------------------------------------------------------------*/
 ;*    copy-vector-fill! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (copy-vector-fill! vec::vector nlen::long fill)
@@ -441,7 +461,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-ref arr::JsArray idx %this)
    (if (and (fixnum? idx) (>=fx idx 0))
-       (js-array-ref-ur arr idx %this)
+       (js-array-index-ref arr (fixnum->uint32 idx) %this)
        (js-get arr idx %this)))
 
 ;*---------------------------------------------------------------------*/

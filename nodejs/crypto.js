@@ -275,7 +275,9 @@ Cipher.prototype.update = function(data, inputEncoding, outputEncoding) {
   inputEncoding = inputEncoding || exports.DEFAULT_ENCODING;
   outputEncoding = outputEncoding || exports.DEFAULT_ENCODING;
 
+   //console.log( ">>> update data=", data, inputEncoding, outputEncoding );
   var ret = this._binding.update(data, inputEncoding);
+   //console.log( "<<< update ret=", ret );
 
   if (outputEncoding && outputEncoding !== 'buffer') {
     this._decoder = getDecoder(this._decoder, outputEncoding);

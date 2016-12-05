@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_stream_wrap.scm           */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/_stream_wrap.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Mon May  4 07:35:47 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Sun Nov 27 11:53:45 2016 (serrano)                */
+;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
 ;*=====================================================================*/

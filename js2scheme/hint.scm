@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Nov 21 14:35:03 2016 (serrano)                */
+;*    Last change :  Sun Dec  4 18:34:39 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -75,6 +75,7 @@
 (define (j2s-add-hint! decl::J2SDecl types::pair-nil)
    (with-access::J2SDecl decl (hint itype)
       (when (or (eq? itype 'unknown)
+		(eq? itype 'any)
 		(and (eq? itype 'number)
 		     (or (memq 'integer types) (memq 'index types))))
 	 (for-each (lambda (type)
@@ -109,7 +110,7 @@
       (if op
 	  (j2s-add-hint! decl (list type))
 	  (call-default-walker))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SBinary ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -175,10 +176,10 @@
 	      (j2s-hint rhs (list numctx 'string) 'number))))
 	 ((== === != !==)
 	  (cond
-	     ((eq? (j2s-type lhs) 'number)
-	      (j2s-hint rhs (list numctx) numctx))
-	     ((eq? (j2s-type rhs) 'number)
-	      (j2s-hint lhs (list numctx) numctx))))
+	     ((not (eq? (j2s-type lhs) 'any))
+	      (j2s-hint rhs (list (j2s-type lhs)) numctx))
+	     ((not (eq? (j2s-type rhs) 'any))
+	      (j2s-hint lhs (list (j2s-type rhs)) numctx))))
 	 ((instanceof)
 	  (j2s-hint lhs '(object) 'number)
 	  (j2s-hint rhs '(function) 'number))
@@ -294,7 +295,7 @@
 		 (j2s-hint obj hints numctx))))
 	 (else
 	  (j2s-hint obj hints numctx)))
-      (j2s-hint field '() numctx)))
+      (j2s-hint field '(index) 'number)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAccess ...                                         */
@@ -429,56 +430,6 @@
 				(decl p))))
 		     params types)))))
    
-   (define (predicate type)
-      (case type
-	 ((number) 'number?)
-	 ((integer) 'fixnum?)
-	 ((index) 'js-index?)
-	 ((string) 'js-jsstring?)
-	 ((array) 'js-array?)
-	 ((object) 'js-object?)
-	 ((function) 'js-function?)
-	 ((bool) 'boolean?)
-	 ((undefined) 'js-undefined?)
-	 ((null) 'js-null?)
-	 (else (error "hint" "Unknown hint type predicate" type))))
-   
-   (define (test-hint-param param htype)
-      (with-access::J2SDecl param (loc)
-	 (instantiate::J2SCall
-	    (loc loc)
-	    (fun (instantiate::J2SHopRef
-		    (loc loc)
-		    (itype 'function)
-		    (rtype 'bool)
-		    (id (predicate htype))))
-	    (args (list (instantiate::J2SRef
-			   (loc loc)
-			   (decl param)))))))
-   
-   (define (test-hint-params dup params htypes::pair-nil)
-      (with-access::J2SDeclFun this (loc)
-	 (let loop ((params params)
-		    (htypes htypes))
-	    (let ((param (car params))
-		  (htype (car htypes)))
-	       (with-access::J2SDecl param (itype)
-		  (cond
-		     ((null? (cdr params))
-		      (if (eq? htype 'any)
-			  (instantiate::J2SBool
-			     (loc loc)
-			     (val #t))
-			  (test-hint-param (car params) htype)))
-		     ((eq? htype 'any)
-		      (loop (cdr params) (cdr htypes)))
-		     (else
-		      (instantiate::J2SBinary
-			 (loc loc)
-			 (op '&&)
-			 (lhs (test-hint-param (car params) htype))
-			 (rhs (loop (cdr params) (cdr htypes)))))))))))
-   
    (define (dispatch-body body pred callt callu)
       (with-access::J2SBlock body (loc endloc)
 	 (instantiate::J2SBlock
@@ -505,21 +456,19 @@
 		 (pair? params)
 		 (any (lambda (p::J2SDecl)
 			 (with-access::J2SDecl p (hint usecnt itype)
-			    (when (or (eq? itype 'unknown)
-				      (and (eq? itype 'number)
-					   (or (assq 'integer hint)
-					       (assq 'index hint))))
-			       (and (pair? hint)
-				    (or (pair? (cdr hint))
-					(not (eq? (caar hint) 'any)))
-				    (>fx usecnt 0)))))
+			    (when (and (>fx usecnt 0) (pair? hint))
+			       (or (eq? itype 'unknown)
+				   (eq? itype 'any)
+				   (and (eq? itype 'number)
+					(or (assq 'integer hint)
+					    (assq 'index hint)))))))
 		    params)))))
    
    (define (fun-dispatch! fun::J2SDecl htypes::pair-nil ft itypes::pair-nil fu)
       (with-access::J2SDeclFun this (val %info)
-	 (with-access::J2SFun val (params body idthis)
+	 (with-access::J2SFun val (params body idthis loc)
 	    (let* ((newparams (map j2sdecl-duplicate params itypes))
-		   (pred (test-hint-params ft newparams htypes))
+		   (pred (test-hint-decls newparams htypes loc))
 		   (callt (call-hinted ft idthis newparams htypes))
 		   (callu (call-hinted fu idthis newparams itypes)))
 	       (set! params newparams)
@@ -546,24 +495,98 @@
 ;*    best-hint-type ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (best-hint-type::symbol hint)
-   (let loop ((l hint)
+
+   (define (normalize-hint hint)
+      (let loop ((l hint)
+		 (r '()))
+	 (cond
+	    ((null? l)
+	     r)
+	    ((memq (caar l) '(number integer index))
+	     (let ((c (assq 'num r)))
+		(if (pair? c)
+		    (begin
+		       (set-cdr! c (+fx (cdr c) (cdar l)))
+		       (loop (cdr l) r))
+		    (loop (cons (cons 'num (cdar l)) (cdr l)) r))))
+	    (else
+	     (loop (cdr l) (cons (car l) r))))))
+	     
+   (let loop ((l (normalize-hint hint))
 	      (t 'any)
 	      (c 0))
       (cond
 	 ((null? l)
-	  t)
-	 ((eq? (caar l) 'any)
-	  (loop (cdr l) t c))
+	  (cond
+	     ((not (eq? t 'num)) t)
+	     ((assq 'index hint) 'index)
+	     ((assq 'integer hint) 'integer)
+	     (else 'number)))
 	 ((>fx (cdr (car l)) c)
 	  (loop (cdr l) (caar l) (cdar l)))
 	 ((and (=fx (cdr (car l)) c) (eq? t 'string))
-	  ;; in doubt, prefers arrays over strings
+	  ;; in doubt, prefer arrays over strings
 	  (loop (cdr l) (caar l) (cdar l)))
-	 ((and (=fx (cdr (car l)) c)
-	       (or (eq? t 'any) (memq (caar l) '(index integer number))))
+	 ((and (=fx (cdr (car l)) c) (eq? t 'any))
 	  (loop (cdr l) (caar l) (cdar l)))
 	 (else
 	  (loop (cdr l) t c)))))
+
+;*---------------------------------------------------------------------*/
+;*    hint-type-predicate ...                                          */
+;*---------------------------------------------------------------------*/
+(define (hint-type-predicate::symbol type::symbol)
+   (case type
+      ((number) 'number?)
+      ((integer) 'fixnum?)
+      ((index) 'js-index?)
+      ((string) 'js-jsstring?)
+      ((array) 'js-array?)
+      ((object) 'js-object?)
+      ((function) 'js-function?)
+      ((bool) 'boolean?)
+      ((undefined) 'js-undefined?)
+      ((null) 'js-null?)
+      (else (error "hint-type-predicate" "Unknown hint type predicate" type))))
+
+;*---------------------------------------------------------------------*/
+;*    test-hint-decls ...                                              */
+;*---------------------------------------------------------------------*/
+(define (test-hint-decls decls::pair htypes::pair loc)
+   
+   (define (test-hint-decl param htype)
+      (with-access::J2SDecl param (loc)
+	 (instantiate::J2SCall
+	    (loc loc)
+	    (fun (instantiate::J2SHopRef
+		    (loc loc)
+		    (itype 'function)
+		    (rtype 'bool)
+		    (id (hint-type-predicate htype))))
+	    (args (list (instantiate::J2SRef
+			   (loc loc)
+			   (decl param)))))))
+
+   (let loop ((decls decls)
+	      (htypes htypes))
+      (let ((decl (car decls))
+	    (htype (car htypes)))
+	 (with-access::J2SDecl decl (itype)
+	    (cond
+	       ((null? (cdr decls))
+		(if (eq? htype 'any)
+		    (instantiate::J2SBool
+		       (loc loc)
+		       (val #t))
+		    (test-hint-decl (car decls) htype)))
+	       ((eq? htype 'any)
+		(loop (cdr decls) (cdr htypes)))
+	       (else
+		(instantiate::J2SBinary
+		   (loc loc)
+		   (op '&&)
+		   (lhs (test-hint-decl (car decls) htype))
+		   (rhs (loop (cdr decls) (cdr htypes))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-duplicate-untyped ...                                        */
@@ -628,13 +651,16 @@
 			    (usecnt 1)
 			    (%info 'duplicate)
 			    (val newfun))))
-	    (use-count newbody +1)
+	    ;;(use-count newbody +1)
 	    (with-access::J2SFun newfun (decl)
 	       (set! decl newdecl))
 	    (set! %info
 	       (instantiate::FunHintInfo
 		  (hinted newdecl)
 		  (types types)))
+	    ;; compute the new hints for the duplicated function
+	    (j2s-hint newbody '() 'number)
+	    (j2s-hint-loop! newbody #f)
 	    newdecl))))
 
 ;*---------------------------------------------------------------------*/
@@ -703,3 +729,85 @@
 					   (decl hinted)))))
 			     this)))))
 	     this))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint-loop! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint-loop! this::J2SNode inloop)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint-loop! ::J2SLoop ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint-loop! this::J2SLoop inloop)
+   (with-access::J2SLoop this (body)
+      (set! body (j2s-hint-loop! body #t))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-hint-loop! ::J2SLetBlock ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-hint-loop! this::J2SLetBlock inloop)
+   
+   (define hint-threshold 0.5)
+   
+   (define (duplicable? this)
+      (with-access::J2SLetBlock this (decls)
+	 ;; returns #t iff it is worth duplicating this loop
+	 (any (lambda (p::J2SDecl)
+		 (with-access::J2SDecl p (hint usecnt itype)
+		    (when (and (>fx usecnt 0) (pair? hint))
+		       (when (or (eq? itype 'unknown)
+				 (eq? itype 'any)
+				 (and (eq? itype 'number)
+				      (or (assq 'integer hint)
+					  (assq 'index hint))))
+			  (let ((hintcnt (apply + (map cdr hint))))
+			     (> (/ hintcnt usecnt) hint-threshold))))))
+	    decls)))
+   
+   (define (dispatch-body this pred then otherwise)
+      (with-access::J2SBlock this (loc)
+	 (instantiate::J2SIf
+	    (loc loc)
+	    (test pred)
+	    (then then)
+	    (else otherwise))))
+   
+   (define (loop-dispatch this::J2SLetBlock htypes::pair-nil)
+      (with-access::J2SLetBlock this (decls nodes loc)
+	 (let* ((pred (test-hint-decls decls htypes loc))
+		(then (duplicate::J2SBlock this
+			 (nodes (map (lambda (n)
+					(reset-type!
+					   (j2s-alpha n '() '())))
+				   nodes))))
+		(otherwise (duplicate::J2SBlock this)))
+	    (dispatch-body this pred then otherwise))))
+   
+   (with-access::J2SLetBlock this (decls nodes loc)
+      (if (and inloop (duplicable? this))
+	  (let ((htypes (map (lambda (p)
+				(with-access::J2SDecl p (hint)
+				   (best-hint-type hint)))
+			   decls)))
+	     (set! nodes (list (loop-dispatch this htypes)))
+	     this)
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    reset-type! ::J2SNode ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-type! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    reset-type! ::J2SExpr ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-type! this::J2SExpr)
+   (with-access::J2SExpr this (type)
+      (when (eq? type 'any)
+	 (set! type 'unknown)))
+   (call-default-walker))
+
+

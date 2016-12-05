@@ -3,15 +3,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Nov 16 10:50:28 2016 (serrano)                */
+;*    Last change :  Fri Dec  2 15:42:05 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
 ;*    This implements the Let optimisation. When possible, it replaces */
-;*    LetInit with LetOpt nodes, which are much more efficient because */
-;*    they are potentially implemented as registers while LetInit are  */
-;*    always implemented as boxed variables.                           */
+;*    LetInit with LetOpt nodes, which are more efficient as they are  */
+;*    potentially implemented as registers while LetInit are always    */
+;*    implemented as boxed variables.                                  */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -65,7 +65,8 @@
 	    (for-each (lambda (x)
 			 (cond
 			    ((not (isa? x J2SDecl))
-			     (error "j2s-letopt" "internal error" (j2s->list x)))
+			     (error "j2s-letopt" "internal error"
+				(j2s->list x)))
 			    ((j2s-let? x)
 			     (set! lets (cons x lets)))
 			    (else
@@ -603,15 +604,6 @@
       (if (member decl decls) (list decl) '())))
 
 ;*---------------------------------------------------------------------*/
-;*    node-used* ::J2SInit ...                                         */
-;*---------------------------------------------------------------------*/
-(define-walk-method (node-used* node::J2SInit decls store)
-   (with-access::J2SInit node (lhs rhs)
-      (if (isa? lhs J2SRef)
-	  (node-used* rhs decls store)
-	  (append (node-used* lhs decls store) (node-used* rhs decls store)))))
-
-;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (node-used* node::J2SFun decls store)
@@ -706,8 +698,11 @@
 ;*    mark-used-noopt*! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (mark-used-noopt*! node decls)
-   (for-each (lambda (d)
-		(when (eq? (decl-maybe-opt? d) #unspecified)
-		   (mark-decl-noopt! d)))
-      (node-used* node decls #t)))
+   (with-trace 'j2s-letopt "make-used-noopt*"
+      (trace-item "node=" (j2s->list node))
+      (trace-item "noused*=" (map j2s->list (node-used* node decls #t)))
+      (for-each (lambda (d)
+		   (when (eq? (decl-maybe-opt? d) #unspecified)
+		      (mark-decl-noopt! d)))
+	 (node-used* node decls #t))))
    
