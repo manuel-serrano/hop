@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Dec  4 18:24:19 2016 (serrano)                */
+;*    Last change :  Wed Dec  7 16:30:47 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -906,22 +906,39 @@
 ;*    typing ::J2SIf ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SIf env::pair-nil fun fix::cell)
+   
+   (define (isa-and? test)
+      (when (isa? test J2SBinary)
+	 (with-access::J2SBinary test (op)
+	    (eq? op '&&))))
+   
+   (define (typing-one-test test envt enve)
+      (multiple-value-bind (op decl typ)
+	 (j2s-expr-type-test test)
+	 (case op
+	    ((==) (values (extend-env envt decl typ) enve))
+	    ((!=) (values envt (extend-env enve decl typ)))
+	    (else (values envt enve)))))
+   
+   (define (typing-test test envt enve)
+      (if (isa-and? test)
+	  (with-access::J2SBinary test (lhs rhs)
+	     (multiple-value-bind (nenvt nenve)
+		(typing-test lhs envt enve)
+		(typing-test rhs nenvt nenve)))
+	  (typing-one-test test envt enve)))
+   
    (with-access::J2SIf this (test then else)
       (multiple-value-bind (tyi env bki)
 	 (typing test env fun fix)
-	 (multiple-value-bind (op decl typ)
-	    (j2s-expr-type-test test)
-	    (let ((envt env)
-		  (enve env))
-	       (case op
-		  ((==) (set! envt (extend-env env decl typ)))
-		  ((!=) (set! enve (extend-env env decl typ))))
-	       (multiple-value-bind (tyt envt bkt)
-		  (typing then envt fun fix)
-		  (multiple-value-bind (tye enve bke)
-		     (typing else enve fun fix)
-		     (let ((bk (append bki bke bkt)))
-			(return 'void (env-merge envt enve) bk)))))))))
+	 (multiple-value-bind (envt enve)
+	    (typing-test test env env)
+	    (multiple-value-bind (tyt envt bkt)
+	       (typing then envt fun fix)
+	       (multiple-value-bind (tye enve bke)
+		  (typing else enve fun fix)
+		  (let ((bk (append bki bke bkt)))
+		     (return 'void (env-merge envt enve) bk))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SSwitch ...                                           */

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Apr 29 19:33:57 2016 (serrano)                */
+/*    Last change :  Thu Dec  8 09:32:31 2016 (serrano)                */
 /*    Copyright   :  2014-16 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Reactive programming with Hop.js                                 */
@@ -15,7 +15,7 @@ service react() {
    return <html>
      ~{
 	var width = hop.reactProxy( { val: 2 } );
-	var els = hop.reactProxy( ["foo", "bar", "gee" ] );
+	var els = hop.reactProxy( [ "foo", "bar", "gee" ] );
      }
      
      <button onclick=~{width.val++ }>
