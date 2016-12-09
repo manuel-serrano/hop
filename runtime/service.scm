@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 19 09:29:08 2006                          */
-;*    Last change :  Sun Oct 30 19:08:18 2016 (serrano)                */
+;*    Last change :  Wed Dec  7 17:41:33 2016 (serrano)                */
 ;*    Copyright   :  2006-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP services                                                     */
@@ -185,7 +185,9 @@
 (define (service-resource svc #!optional file)
    (with-access::hop-service (service->hop-service svc) (resource)
       (if (string? file)
-	  (string-append resource "/" file)
+	  (if (string=? resource "/")
+	      (string-append resource file)
+	      (string-append resource "/" file))
 	  resource)))
 
 ;*---------------------------------------------------------------------*/
