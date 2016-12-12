@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Dec  7 16:00:06 2016 (serrano)                */
+;*    Last change :  Sat Dec 10 13:52:18 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -409,7 +409,7 @@
 ;*    j2s-hint-function ::J2SDeclFun ...                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-hint-function* this::J2SDeclFun)
-
+   
    (define (call-hinted orig idthis params types)
       (with-access::J2SDeclFun this (loc)
 	 (instantiate::J2SCall
@@ -448,7 +448,7 @@
    (define (duplicable? decl::J2SDecl)
       ;; returns #t iff the function is duplicable, returns #f otherwise
       (with-access::J2SDeclFun this (val id %info)
-	 (with-access::J2SFun val (params body idthis vararg)
+	 (with-access::J2SFun val (params vararg)
 	    (and (not (eq? %info 'duplicate))
 		 (not (isa? %info FunHintInfo))
 		 (not vararg)
@@ -473,14 +473,14 @@
 		   (callu (call-hinted fu idthis newparams itypes)))
 	       (set! params newparams)
 	       (set! body (dispatch-body body pred callt callu))))))
-
+   
    (if (duplicable? this)
        (with-access::J2SDeclFun this (val %info)
 	  (with-access::J2SFun val (params body idthis)
 	     (let* ((htypes (map (lambda (p)
-				   (with-access::J2SDecl p (hint)
-				      (best-hint-type hint)))
-			      params))
+				    (with-access::J2SDecl p (hint)
+				       (best-hint-type hint)))
+			       params))
 		    (itypes (map (lambda (p::J2SDecl)
 				    (with-access::J2SDecl p (itype)
 				       itype))
@@ -631,7 +631,8 @@
 			   (string-upcase!
 			      (apply string
 				 (map type-initial types)))))
-		(newbody (j2s-alpha body params newparams))
+		(nbody (j2s-alpha body params newparams))
+		(unbody (reset-type! nbody newparams))
 		(newfun (duplicate::J2SFun val
 			   (generator #f)
 			   (idgen generator)
@@ -639,7 +640,7 @@
 			   (rtype 'unknown)
 			   (idthis (if (this? body) idthis #f))
 			   (params newparams)
-			   (body newbody)))
+			   (body unbody)))
 		(newdecl (duplicate::J2SDeclFun fun
 			    (parent fun)
 			    (key (ast-decl-key))
@@ -659,8 +660,11 @@
 		  (hinted newdecl)
 		  (types types)))
 	    ;; compute the new hints for the duplicated function
-	    (j2s-hint newbody '() 'number)
-	    (j2s-hint-loop! newbody #f)
+	    ;;(tprint ">>> --- HINT loop ---------------------")
+	    ;;(j2s-hint newbody '() 'number)
+	    ;;(tprint "~~~ --- HINT loop ---------------------")
+	    ;(j2s-hint-loop! newbody #f)
+	    ;;(tprint "<<< --- HINT loop ---------------------")
 	    newdecl))))
 
 ;*---------------------------------------------------------------------*/
@@ -751,20 +755,19 @@
    
    (define hint-threshold 0.5)
    
-   (define (duplicable? this)
-      (with-access::J2SLetBlock this (decls)
-	 ;; returns #t iff it is worth duplicating this loop
-	 (any (lambda (p::J2SDecl)
-		 (with-access::J2SDecl p (hint usecnt itype)
-		    (when (and (>fx usecnt 0) (pair? hint))
-		       (when (or (eq? itype 'unknown)
-				 (eq? itype 'any)
-				 (and (eq? itype 'number)
-				      (or (assq 'integer hint)
-					  (assq 'index hint))))
-			  (let ((hintcnt (apply + (map cdr hint))))
-			     (> (/ hintcnt usecnt) hint-threshold))))))
-	    decls)))
+   (define (duplicable? this decls)
+      ;; returns #t iff it is worth duplicating this loop
+      (any (lambda (p::J2SDecl)
+	      (with-access::J2SDecl p (hint usecnt itype id)
+		 (when (pair? hint)
+		    (when (or (eq? itype 'unknown)
+			      (eq? itype 'any)
+			      (and (eq? itype 'number)
+				   (or (assq 'integer hint)
+				       (assq 'index hint))))
+		       (let ((hintcnt (apply + (map cdr hint))))
+			  (> (/ hintcnt usecnt) hint-threshold))))))
+	 decls))
    
    (define (dispatch-body this pred then otherwise)
       (with-access::J2SBlock this (loc)
@@ -774,37 +777,50 @@
 	    (then then)
 	    (else otherwise))))
    
-   (define (loop-dispatch this::J2SLetBlock htypes::pair-nil)
-      (with-access::J2SLetBlock this (decls nodes loc)
+   (define (loop-dispatch this::J2SLetBlock decls::pair-nil htypes::pair-nil)
+      (with-access::J2SLetBlock this (nodes loc)
 	 (let* ((pred (test-hint-decls decls htypes loc))
 		(then (duplicate::J2SBlock this
 			 (nodes (map (lambda (n)
-					(reset-type!
-					   (j2s-alpha n '() '())))
+					(let ((an (j2s-alpha n '() '())))
+					   (reset-type! an decls)))
 				   nodes))))
 		(otherwise (duplicate::J2SBlock this)))
 	    (dispatch-body this pred then otherwise))))
    
    (with-access::J2SLetBlock this (decls nodes loc)
-      (if (and inloop (duplicable? this))
-	  (let ((htypes (map (lambda (p)
-				(with-access::J2SDecl p (hint)
-				   (best-hint-type hint)))
-			   decls)))
-	     (set! nodes (list (loop-dispatch this htypes)))
-	     this)
-	  (call-default-walker))))
+      (let ((decls (filter (lambda (d::J2SDecl)
+			      (with-access::J2SDecl d (usecnt)
+				 (>=fx usecnt 2)))
+		      decls)))
+	 (if (and inloop (duplicable? this decls))
+	     (let ((htypes (map (lambda (p)
+				   (with-access::J2SDecl p (hint)
+				      (best-hint-type hint)))
+			      decls)))
+		(set! nodes (list (loop-dispatch this decls htypes)))
+		this)
+	     (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-type! ::J2SNode ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (reset-type! this::J2SNode)
+(define-walk-method (reset-type! this::J2SNode decls)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    reset-type! ::J2SRef ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-type! this::J2SRef decls)
+   (with-access::J2SRef this (decl type)
+      (when (or (eq? type 'any) (memq decl decls))
+	 (set! type 'unknown)))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    reset-type! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (reset-type! this::J2SExpr)
+(define-walk-method (reset-type! this::J2SExpr decls)
    (with-access::J2SExpr this (type)
       (when (eq? type 'any)
 	 (set! type 'unknown)))

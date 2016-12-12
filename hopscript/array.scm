@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Dec  5 08:35:21 2016 (serrano)                */
+;*    Last change :  Sun Dec 11 08:20:42 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -43,12 +43,26 @@
 	   (inline js-array-ilen::uint32 ::JsArray)
 	   
 	   (js-array-ref ::JsArray ::obj ::JsGlobalObject)
-	   (inline js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
-	   (inline js-array-fixnum-ref ::JsArray ::long ::JsGlobalObject)
 	   (js-array-ref-ur ::JsArray ::long ::JsGlobalObject)
+	   (inline js-array-inl-ref ::JsArray ::obj
+	      ::vector ::uint32 ::obj ::JsGlobalObject)
+	   (inline js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
+	   (inline js-array-index-inl-ref ::JsArray ::uint32
+	      ::vector ::uint32 ::obj ::JsGlobalObject)
+	   (inline js-array-fixnum-ref ::JsArray ::long ::JsGlobalObject)
+	   (inline js-array-fixnum-inl-ref ::JsArray ::long
+	      ::vector ::uint32 ::obj ::JsGlobalObject)
+	   
 	   (js-array-set! ::JsArray idx ::obj ::JsGlobalObject)
+	   (inline js-array-inl-set! ::JsArray ::obj ::obj
+	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   (inline js-array-index-set! ::JsArray ::uint32 ::obj ::JsGlobalObject)
+	   (inline js-array-index-inl-set! ::JsArray ::uint32 ::obj
+	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   (inline js-array-fixnum-set! ::JsArray ::long ::obj ::JsGlobalObject)
+	   (inline js-array-fixnum-inl-set! ::JsArray ::long ::obj
+	      ::vector ::uint32 ::obj ::JsGlobalObject)
+	   
 	   (js-array-set-ur! ::JsArray ::long ::obj ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
 	   (js-vector->sparse-jsarray::JsArray ::vector ::JsGlobalObject)
@@ -436,7 +450,7 @@
    (with-access::JsArray a (vec) vec))
 
 ;*---------------------------------------------------------------------*/
-;*    js-array-ilen ...                                                 */
+;*    js-array-ilen ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-ilen::uint32 a::JsArray)
    (with-access::JsArray a (ilen) ilen))
@@ -465,6 +479,18 @@
        (js-get arr idx %this)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-inl-ref ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-inl-ref arr::JsArray idx::obj
+		  avec::vector alen::uint32 mark::obj %this::JsGlobalObject)
+   (if (and (fixnum? idx)
+	    (>=fx idx 0)
+	    (<u32 (fixnum->uint32 idx) alen)
+	    (eq? mark (js-array-mark)))
+       (vector-ref-ur avec idx)
+       (js-array-ref arr (fixnum->uint32 idx) %this)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-array-index-ref ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-index-ref arr::JsArray idx::uint32 %this)
@@ -474,6 +500,15 @@
 	  (vector-ref-ur vec (uint32->fixnum idx)))
 	 (else
 	  (js-get arr (uint32->integer idx) %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-index-inl-ref ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-index-inl-ref arr::JsArray idx::uint32
+		  avec::vector alen::uint32 mark::obj %this::JsGlobalObject)
+   (if (and (<u32 idx alen) (eq? mark (js-array-mark)))
+       (vector-ref-ur avec (uint32->fixnum idx))
+       (js-array-index-ref arr idx %this)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-fixnum-ref ...                                          */
@@ -485,6 +520,17 @@
 	  (vector-ref-ur vec idx))
 	 (else
 	  (js-get arr (uint32->integer idx) %this)))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-fixnum-inl-ref ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-fixnum-inl-ref arr::JsArray idx::long
+		  avec::vector alen::uint32 mark::obj %this::JsGlobalObject)
+   (if (and (>=fx idx 0)
+	    (<u32 (fixnum->uint32 idx) alen)
+	    (eq? mark (js-array-mark)))
+       (vector-ref-ur avec idx)
+       (js-array-ref arr (fixnum->uint32 idx) %this)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-ref-ur ...                                              */
@@ -522,6 +568,18 @@
        (js-array-put! arr idx val #f %this)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-inl-set! ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-inl-set! arr::JsArray idx::obj val
+		  avec::vector alen::uint32 mark::obj %this::JsGlobalObject)
+   (if (and (fixnum? idx)
+	    (>=fx idx 0)
+	    (<u32 (fixnum->uint32 idx) alen)
+	    (eq? mark (js-array-mark)))
+       (vector-set-ur! avec idx val)
+       (js-array-index-set! arr (fixnum->uint32 idx) val %this)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-array-index-set! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-index-set! arr::JsArray idx::uint32 val %this)
@@ -534,6 +592,15 @@
 	  (js-array-set-ur! arr (uint32->fixnum idx) val %this)))))
    
 ;*---------------------------------------------------------------------*/
+;*    js-array-index-inl-set! ...                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-index-inl-set! arr::JsArray idx::uint32 val
+		  avec::vector alen::uint32 mark::obj %this::JsGlobalObject)
+   (if (and (<u32 idx alen) (eq? mark (js-array-mark)))
+       (vector-set-ur! avec (uint32->fixnum idx) val)
+       (js-array-index-set! arr idx val %this)))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-array-fixnum-set! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-fixnum-set! arr::JsArray idx::long val %this)
@@ -544,6 +611,17 @@
 	  val)
 	 (else
 	  (js-array-set-ur! arr idx val %this)))))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-fixnum-inl-set! ...                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-fixnum-inl-set! arr::JsArray idx::long val
+		  avec::vector alen::uint32 mark::obj %this::JsGlobalObject)
+   (if (and (>=fx idx 0)
+	    (<u32 (fixnum->uint32 idx) alen)
+	    (eq? mark (js-array-mark)))
+       (vector-set-ur! avec idx val)
+       (js-array-index-set! arr (fixnum->uint32 idx) val %this)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-set-ur! ...                                             */
@@ -2545,7 +2623,8 @@
 	    ((not extensible)
 	     (js-raise-type-error %this
 		"Can't add property ~a: object is not extensible" length))
-	    ((and (=u32 length ilen) (<u32 ilen (fixnum->uint32 (vector-length vec))))
+	    ((and (=u32 length ilen)
+		  (<u32 ilen (fixnum->uint32 (vector-length vec))))
 	     (vector-set-ur! vec (uint32->fixnum n) item)
 	     (set! ilen (+u32 ilen 1))
 	     (js-array-update-length! o (+fx (uint32->fixnum n) 1))

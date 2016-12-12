@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Dec  4 19:16:39 2016 (serrano)                */
+;*    Last change :  Sat Dec 10 05:59:15 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -73,7 +73,7 @@
 		 (hopc-optim-level-set! 1)
 		 (hopc-optim-level-set! (string->integer level)))
 	     (hopc-bigloo-options-set!
-		(cons* "-unsafe" (format "-O~a" level) (hopc-bigloo-options))))
+		(cons (format "-O~a" level) (hopc-bigloo-options))))
 	    (("-g?level" (help "Increase or set debug level"))
 	     (hopc-clientc-source-map-set! #t)
 	     (hopc-clientc-arity-check-set! #t)
@@ -93,6 +93,8 @@
 	     (set! exprs (cons string exprs)))
 	    (("-o" ?string (help "Name the output FILE"))
 	     (hopc-destination-set! string))
+	    (("-t" ?string (help "Name the temporary FILE"))
+	     (hopc-temp-set! string))
 	    (("-s" (help "Stop after Bigloo code generation"))
 	     (hopc-pass-set! 'bigloo))
 	    (("-c" (help "Stop after code object generation"))
@@ -102,6 +104,7 @@
 	    (("-y" (help "Generate a shared library"))
 	     (hopc-js-module-main-set! #f)
 	     (hopc-pass-set! 'so))
+	    (section "Configuration and devkit")
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
 	     (hopc-bigloo-set! bigloo))
 	    (("--reset-bigloo-options" (help "Reset all Bigloo options"))
@@ -110,12 +113,14 @@
 	     (hopc-pass-set! 'client-js))
 	    ((("-a" "--afile") ?file (help "Set access file"))
 	     (hopc-access-file-set! file))
+	    (("--mkheap" (help "Build a js heap file"))
+	     (hopc-jsheap-set! #t))
+
+	    (section "Code generation")
 	    (("-m32" (help "Generate 32-bit code"))
 	     (hopc-long-size-set! 32))
 	    (("-m64" (help "Generate 64-bit code"))
 	     (hopc-long-size-set! 64))
-	    (("--mkheap" (help "Build a js heap file"))
-	     (hopc-jsheap-set! #t))
 	    (("--source-map" (help "Enable source-map table generation"))
 	     (hopc-clientc-source-map-set! #t))
 	    (("--no-source-map" (help "Disable source-map table generation"))
@@ -140,6 +145,8 @@
 	     (unless (member lang '("hop" "hopscript"))
 		(error "hopc" "Unknown language, see -help" lang))
 	     (hopc-source-language-set! (string->symbol lang)))
+	    
+	    (section "JavaScript dialect and features")
 	    (("--js-worker" (help "Enable JavaScript worker"))
 	     (hopc-js-worker-set! #t))
 	    (("--js-no-worker" (help "Disable JavaScript worker"))
@@ -169,10 +176,6 @@
 	    (("--js-show-driver" (help "Set j2s compiler driver"))
 	     (print (js-driver->string))
 	     (exit 0))
-	    (("--no-server" (help "Hop compatibility, ignored"))
-	     #unspecified)
-	    (("-p" ?port (help "Hop compatibility, ignored"))
-	     #unspecified)
 	    (("--js-target-es5" (help "Generate a client-side JavaScript 1.5 file"))
 	     (hopc-js-target-set! 'es5)
 	     (j2s-compile-options-set!
@@ -199,6 +202,10 @@
 		      ((string->number val) => (lambda (val) val))
 		      (else val))
 		   (j2s-compile-options))))
+	    (("--no-server" (help "Hop compatibility, ignored"))
+	     #unspecified)
+	    (("-p" ?port (help "Hop compatibility, ignored"))
+	     #unspecified)
 	    (else
 	     (if (string=? else "--")
 		 (begin

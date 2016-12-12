@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Nov 25 08:47:53 2016 (serrano)                */
+;*    Last change :  Mon Dec 12 08:53:45 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -34,7 +34,9 @@
 	   
 	   (js+ left right ::JsGlobalObject)
 	   (inline js+fx::obj ::long ::long)
+	   (inline js+fx32::obj ::obj ::obj)
 	   (inline js-fx::obj ::long ::long)
+	   (inline js-fx32::obj ::obj ::obj)
 	   (inline js/fx::obj ::long ::long)
 	   (js-slow+ left right ::JsGlobalObject)
 	   (js- left right ::JsGlobalObject)
@@ -399,7 +401,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js+fx ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define-inline (js+fx left::long right::long)
+(define-inline (js+fx::obj left::long right::long)
 
    (define-macro (intsz+)
       (minfx (-fx (bigloo-config 'int-size) 1) 53))
@@ -418,6 +420,34 @@
 	  (fixnum->flonum tmp)
 	  tmp)))
 
+;*---------------------------------------------------------------------*/
+;*    js+fx32 ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    Fixnum addition on 32 bits machines (two tagging bits).          */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight, second edition, page 29.                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js+fx32::obj x::obj y::obj)
+   ;; requires x and y to be tagged
+   (let ((z::long (pragma::long "(~((long)$1 ^ (long)$2)) & 0x80000000" x y)))
+      (if (pragma::bool "$1 & (~((((long)$2 ^ (long)$1) + ((long)$3)) ^ ((long) $3)))" z x y)
+	  (fixnum->flonum (+fx x y))
+	  (+fx x y))))
+	  
+;*---------------------------------------------------------------------*/
+;*    js-fx32 ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    Fixnum substraction on 32 bits machines (two tagging bits).      */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight, second edition, page 29.                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-fx32::obj x::obj y::obj)
+   ;; requires x and y to be tagged
+   (let ((z::long (pragma::long "((long)$1 ^ (long)$2) & 0x80000000" x y)))
+      (if (pragma::bool "$1 & ((((long)$2 ^ (long)$1) - ((long)$3)) ^ ((long) $3))" z x y)
+	  (fixnum->flonum (-fx x y))
+	  (-fx x y))))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    js-fx ...                                                        */
 ;*---------------------------------------------------------------------*/
