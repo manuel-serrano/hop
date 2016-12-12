@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Nov  9 16:02:40 2016 (serrano)                */
+;*    Last change :  Sat Dec 10 06:31:04 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -125,7 +125,10 @@
 	  (call-with-input-file p
 	     (lambda (in) (compile in (language p))))
 	  (hopscheme-compile-file p
-	     (if (string? (hopc-destination)) (hopc-destination) "-")
+	     (cond
+		((string? (hopc-destination)) (hopc-destination))
+		((string? (hopc-temp)) (hopc-temp))
+		(else "-"))
 	     '())))
    
    (define (compile-module exp)
@@ -221,29 +224,47 @@
 	    (enable-libuv '("-srfi" "enable-libuv" "-srfi" "hopc"))
 	    (else '("-srfi" "hopc"))))
       
-      (define (compile in opts comp file)
-	 (let* ((baseopts (cons "-fread-internal-src" (append (srfi-opts) opts)))
-		(opts (if (string? file)
-			  (cons* "-fread-internal-src-file-name" file baseopts)
-			  baseopts))
-		(proc (apply run-process (hopc-bigloo)
-			 input: pipe: "-"
-			 opts))
-		(cmd (format "~a - ~l" (hopc-bigloo) opts))
-		(out (process-input-port proc)))
-	    (signal sigterm
-	       (lambda (sig)
-		  (process-kill proc)
-		  (exit 1)))
-	    (unwind-protect
-	       (comp out)
-	       (begin
-		  (hop-verb 4 cmd "\n")
-		  (close-output-port out)))
+      (define (compile-temp in opts comp file temp)
+	 (call-with-output-file temp comp)
+         (let* ((opts (cons temp (append (srfi-opts) opts)))
+                (proc (apply run-process (hopc-bigloo) opts))
+                (cmd (format "~a ~l" (hopc-bigloo) opts)))
+            (signal sigterm
+               (lambda (sig)
+                  (process-kill proc)
+                  (exit 1)))
+	    (hop-verb 4 cmd "\n")
 	    (process-wait proc)
-	    (process-exit-status proc)))
+            (process-exit-status proc)))
+
+      (define (compile-pipe in opts comp file)
+         (let* ((baseopts (cons "-fread-internal-src" (append (srfi-opts) opts)))
+                (opts (if (string? file)
+                          (cons* "-fread-internal-src-file-name" file baseopts)
+                          baseopts))
+                (proc (apply run-process (hopc-bigloo)
+                         input: pipe: "-"
+                         opts))
+                (cmd (format "~a - ~l" (hopc-bigloo) opts))
+                (out (process-input-port proc)))
+            (signal sigterm
+               (lambda (sig)
+                  (process-kill proc)
+                  (exit 1)))
+            (unwind-protect
+               (comp out)
+               (begin
+                  (hop-verb 4 cmd "\n")
+                  (close-output-port out)))
+            (process-wait proc)
+            (process-exit-status proc)))
+
+      (define (compile in opts comp file temp)
+	 (if (string? temp)
+	     (compile-temp in opts comp file temp)
+	     (compile-pipe in opts comp file)))
       
-      (define (compile-hop in opts file)
+      (define (compile-hop in opts file temp)
 	 (compile in
 	    (append `("-library" "hop"
 			"-library" "hopscheme"
@@ -260,9 +281,10 @@
 			   (else
 			    (write (obj->string exp) out)))
 			(loop)))))
-	    file))
+	    file
+	    temp))
       
-      (define (compile-hopscript in opts file exec)
+      (define (compile-hopscript in opts file exec temp)
 	 (let* ((fname (input-port-name in))
 		(mmap (when (and (string? fname) (file-exists? fname))
 			 (open-mmap fname :read #t :write #f))))
@@ -273,7 +295,10 @@
 		  opts)
 	       (lambda (out)
 		  ;; compile
-		  (map (lambda (e) (write (obj->string e) out))
+		  (map (lambda (e)
+			  (if (string? temp)
+			      (pp e out)
+			      (write (obj->string e) out)))
 		     (j2s-compile in
 			:return-as-exit (hopc-js-return-as-exit)
 			:mmap-src mmap
@@ -290,9 +315,22 @@
 			:optim (hopc-optim-level)
 			:long-size (hopc-long-size)
 			:debug (bigloo-debug))))
-	       file)))
+	       file
+	       temp)))
+
+      (define (bigloo-options)
+	 (let ((l (hopc-optim-level)))
+	    (let loop ((opts (hopc-bigloo-O-options))
+		       (o '()))
+	       (cond
+		  ((null? opts)
+		   (append (hopc-bigloo-options) (reverse! o)))
+		  ((>=fx l (caar opts))
+		   (loop (cdr opts) (append (cdar opts) o)))
+		  (else
+		   (loop (cdr opts) o))))))
       
-      (let* ((opts (hopc-bigloo-options))
+      (let* ((opts (bigloo-options))
 	     (file (when (and (pair? (hopc-sources))
 			      (string? (car (hopc-sources))))
 		      (car (hopc-sources))))
@@ -326,9 +364,9 @@
 	 (unwind-protect
 	    (case lang
 	       ((hop)
-		(compile-hop in opts file))
+		(compile-hop in opts file (hopc-temp)))
 	       ((hopscript)
-		(compile-hopscript in opts file exec)))
+		(compile-hopscript in opts file exec (hopc-temp))))
 	    (when (and (string? file) (eq? (hopc-pass) 'so))
 	       (let ((obj (string-append (prefix file) ".o")))
 		  (when (file-exists? obj)

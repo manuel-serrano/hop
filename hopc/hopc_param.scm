@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Thu Nov 24 16:45:06 2016 (serrano)                */
+;*    Last change :  Sat Dec 10 05:53:55 2016 (serrano)                */
 ;*    Copyright   :  2004-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -23,6 +23,7 @@
 	    (hopc-bigloo-set! ::bstring)
 	    (hopc-bigloo-options::pair-nil)
 	    (hopc-bigloo-options-set! ::pair-nil)
+	    (hopc-bigloo-O-options::pair-nil)
 
 	    (hopc-pass::symbol)
 	    (hopc-pass-set! ::symbol)
@@ -34,6 +35,8 @@
 	    (hopc-sources-set! ::pair-nil)
 	    (hopc-destination::obj)
 	    (hopc-destination-set! ::obj)
+	    (hopc-temp::obj)
+	    (hopc-temp-set! ::obj)
 
 	    (hopc-share-directory::bstring)
 	    (hopc-share-directory-set! ::bstring)
@@ -122,9 +125,14 @@
 ;*    hopc-bigloo-options ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-options
-   `("-lib-dir" ,(make-file-path (hop-lib-directory) "hop" (hop-version))
-       "-freturn"))
+   `("-lib-dir" ,(make-file-path (hop-lib-directory) "hop" (hop-version))))
 
+;*---------------------------------------------------------------------*/
+;*    hopc-bigloo-O-options ...                                        */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-bigloo-O-options
+   '((1 . ("-unsafe")) (2 . ("-freturn")) (6 . ("-freturn-goto"))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hopc-pass ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -147,6 +155,12 @@
 ;*    hopc-destination ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-destination
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-temp ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-temp
    #f)
 
 ;*---------------------------------------------------------------------*/

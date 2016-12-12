@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec  9 18:57:28 2016 (serrano)                */
+;*    Last change :  Sat Dec 10 14:01:45 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -86,7 +86,7 @@
 (define (decl->adecl::J2SDeclInit decl::J2SDecl)
       (with-access::J2SDecl decl (id loc)
 	 (J2SLetOpt '(read write)
-	    (symbol-append '|%a_| id)
+	    (symbol-append '%A id)
 	    (J2SCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
 
 ;*---------------------------------------------------------------------*/
@@ -95,7 +95,7 @@
 (define (decl->ldecl::J2SDeclInit adecl::J2SDecl decl::J2SDecl)
       (with-access::J2SDecl decl (id loc)
 	 (J2SLetOpt '(read write)
-	    (symbol-append '|%l_| id)
+	    (symbol-append '%L id)
 	    (J2SCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
 
 ;*---------------------------------------------------------------------*/
@@ -103,8 +103,7 @@
 ;*---------------------------------------------------------------------*/
 (define (mdecl::J2SDeclInit loc)
    (J2SLetOpt '(read write)
-      (symbol-append '%m:js-array-mark)
-      (J2SCall (J2SHopRef 'js-array-mark))))
+      '%Mjs-array-mark (J2SCall (J2SHopRef 'js-array-mark))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array! ::J2SFor ...                                              */
@@ -190,19 +189,35 @@
 ;*    array-collect* ::J2SRef ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (array-collect* this::J2SRef env::pair-nil)
-   (with-access::J2SRef this (type decl)
-      (if (and (eq? type 'array)
-	       (with-access::J2SDecl decl (ronly) #t)
-	       (memq decl env))
-	  (list decl)
-	  '())))
+   '())
+;*    (with-access::J2SRef this (type decl)                            */
+;*       (if (and (eq? type 'array)                                    */
+;* 	       (with-access::J2SDecl decl (ronly) #t)                  */
+;* 	       (memq decl env))                                        */
+;* 	  (list decl)                                                  */
+;* 	  '())))                                                       */
 
 ;*---------------------------------------------------------------------*/
 ;*    array-collect* ::J2SFun ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (array-collect* this::J2SFun env::pair-nil)
    '())
-   
+
+;*---------------------------------------------------------------------*/
+;*    array-collect* ::J2SAccess ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (array-collect* this::J2SAccess env::pair-nil)
+   (with-access::J2SAccess this (obj field)
+      (let ((fdaref (array-collect* field env)))
+	 (if (not (isa? obj J2SRef))
+	     (append (array-collect* obj env) fdaref)
+	     (with-access::J2SRef obj (type decl)
+		(if (and (eq? type 'array)
+			 (with-access::J2SDecl decl (ronly) #t)
+			 (memq decl env))
+		    (cons decl fdaref)
+		    fdaref))))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    array-ref! ::J2SNode ...                                         */
 ;*    -------------------------------------------------------------    */

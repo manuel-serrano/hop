@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Dec  9 18:57:16 2016 (serrano)                */
+;*    Last change :  Sat Dec 10 05:42:23 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -365,7 +365,7 @@
    (define (mark-decls-loop! decls)
       (for-each (lambda (decl::J2SDecl)
 		   (with-access::J2SDecl decl (scope _scmid id binder)
-		      (set! _scmid (symbol-append '|%i_| id))
+		      (set! _scmid (symbol-append '%I id))
 		      (set! binder 'let-opt)
 		      (set! scope 'loop)))
 	 decls))
@@ -447,7 +447,7 @@
 	       (let ((decl (instantiate::J2SDeclInit
 			      (loc loc)
 			      (id id)
-			      (_scmid (symbol-append '|%i_| id))
+			      (_scmid (symbol-append '%I id))
 			      (binder 'let-opt)
 			      (val (instantiate::J2SUndefined
 				      (loc loc)))))
