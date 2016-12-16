@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Nov 26 07:55:02 2016 (serrano)                */
+;*    Last change :  Fri Dec 16 11:06:10 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -329,8 +329,6 @@
 ;*---------------------------------------------------------------------*/
 (define (worker-loop th::WorkerHopThread)
    (with-access::WorkerHopThread th (%loop)
-      (unless %loop
-	 (tprint "LACKING LOOP th=" th " " (getpid)))
       %loop))
 
 ;*---------------------------------------------------------------------*/
@@ -534,18 +532,15 @@
 ;*    nodejs-close ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-close %worker %this process this callback)
-   (tprint "NODEJS-CLOSE...")
    (with-access::JsHandle this (handle flags)
       (cond
 	 ((or (not (isa? handle JsPipe))
 	      (with-access::JsPipe handle (econnreset)
 		 (not econnreset)))
-	  (tprint "NODEJS-CLOSE.a")
 	  (set! close-stack (cons this close-stack))
 	  (with-access::UvHandle handle (onclose)
 	     (uv-close handle
 		(lambda ()
-	  (tprint "NODEJS-CLOSE.a2")
 		   (set! close-stack (remq! this close-stack))
 		   (when (and (=fx (bit-and flags 1) 1)
 			      (isa? callback JsFunction))
@@ -557,7 +552,6 @@
 ;* 			 (when (isa? callback JsFunction)              */
 ;* 			    (js-call0 %this callback (js-undefined))))))))) */
 	 (else
-	  (tprint "NODEJS-CLOSE.b")
 	  (when (isa? callback JsFunction)
 	     (!js-callback0 'close %worker %this
 		callback (js-undefined)))))))
