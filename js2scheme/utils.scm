@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Feb 28 07:36:23 2016 (serrano)                */
+;*    Last change :  Wed Dec 21 05:58:01 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -22,7 +22,15 @@
 	   (illegal-node ::bstring ::J2SNode)
 	   (config-get ::pair-nil ::keyword #!optional def)
 	   (config-put! ::pair-nil ::keyword ::obj)
-	   (this?::bool ::J2SNode)))
+	   (this?::bool ::J2SNode)
+	   
+	   (type-uint32?::bool ::symbol)
+	   (type-int30?::bool ::symbol)
+	   (type-integer?::bool ::symbol)
+	   (type-number?::bool ::symbol)
+	   (type-name type conf)
+	   (minimal-type::symbol ::obj ::obj)
+	   (max-type::symbol ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -96,3 +104,106 @@
 (define-walk-method (use-this? this::J2SFun res)
    #f)
  
+;*---------------------------------------------------------------------*/
+;*    type-uint32? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (type-uint32? type)
+   (memq type '(uint29 index uint32 length)))
+
+;*---------------------------------------------------------------------*/
+;*    type-int30? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (type-int30? type)
+   (memq type '(uint29 int30)))
+
+;*---------------------------------------------------------------------*/
+;*    type-int53? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (type-int53? type)
+   (memq type '(uint29 int30 int53)))
+
+;*---------------------------------------------------------------------*/
+;*    type-integer? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (type-integer? type::symbol)
+   (or (type-int53? type)  (type-uint32? type) (memq type '(integer fixnum))))
+   
+;*---------------------------------------------------------------------*/
+;*    type-number? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (type-number? type::symbol)
+   (or (type-integer? type) (eq? type 'number)))
+
+;*---------------------------------------------------------------------*/
+;*    type-name ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (type-name type conf)
+   (case type
+      ((unknown any number integer) 'obj)
+      ((uint29 index uint32 length) 'uint32)
+      ((int30 fixnum) 'long)
+      ((integer int53) (if (=fx (config-get conf :long-size 0) 64) 'long 'obj))
+      ((object) 'JsObject)
+      ((undefined) 'unspecified)
+      ((regexp) 'JsRegExp)
+      ((array) 'JsArray)
+      (else type)))
+   
+;*---------------------------------------------------------------------*/
+;*    minimal-type ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (minimal-type utype type)
+   (case utype
+      ((uint29)
+       type)
+      ((index)
+       (if (memq type '(uint29)) utype type))
+      ((length)
+       (if (memq type '(uint29 index)) utype type))
+      ((uint32)
+       (if (memq type '(uint29 index length)) utype type))
+      ((int30 fixnum)
+       (if (memq type '(uint29))
+	   utype
+	   (if (type-integer? type) 'integer 'number)))
+      ((integer)
+       (if (type-integer? type) 'integer 'number))
+      ((number)
+       (if (type-number? type) 'number 'any))
+      (else 'any)))
+
+;*---------------------------------------------------------------------*/
+;*    max-type ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    Return the biggest type that can represent both types.           */
+;*---------------------------------------------------------------------*/
+(define (max-type left right)
+   (cond
+      ((eq? left right)
+       left)
+      ((eq? left 'uint29)
+       (case right
+	  ((int30 index length integer number) right)
+	  (else 'any)))
+      ((eq? left 'int30)
+       (case right
+	  ((uint29) left)
+	  ((index length integer number) right)
+	  (else 'any)))
+      ((eq? left 'index)
+       (case right
+	  ((uint29) left)
+	  ((length integer number) right)
+	  (else 'any)))
+      ((eq? left 'length)
+       (case right
+	  ((uint29 index) left)
+	  ((integer number) right)
+	  (else 'any)))
+      ((or (eq? left 'integer) (eq? left 'int53))
+       (case right
+	  ((uint29 index int30 int53) left)
+	  ((number) right)
+	  (else 'any)))
+      (else
+       'any)))

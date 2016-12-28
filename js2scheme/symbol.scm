@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Dec 10 05:42:23 2016 (serrano)                */
+;*    Last change :  Thu Dec 22 09:19:24 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -17,6 +17,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_symbol
 
+   (include "ast.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
@@ -379,6 +381,10 @@
 	    (val (instantiate::J2SRef
 		    (loc loc)
 		    (decl d))))))
+
+   (define (reassign! d::J2SDecl i::J2SDecl)
+      (with-access::J2SDecl d (loc)
+	 (J2SStmtExpr (J2SAssig (J2SRef d) (J2SRef i)))))
    
    (define (for-let for)
       (with-access::J2SFor for (init body)
@@ -386,15 +392,19 @@
 	    (mark-decls-loop! decls)
 	    (with-access::J2SLoop for (body)
 	       ;; create local variables for the loop body
-	       (set! body
-		  (instantiate::J2SBlock
-		     (endloc loc)
-		     (loc loc)
-		     (nodes (list
-			       (instantiate::J2SVarDecls
-				  (loc loc)
-				  (decls (map let->init decls)))
-			       body)))))
+	       (let ((inits (map let->init decls)))
+		  (set! body
+		     (instantiate::J2SBlock
+			(endloc loc)
+			(loc loc)
+			(nodes (list
+				  (instantiate::J2SVarDecls
+				     (loc loc)
+				     (decls inits))
+				  body
+				  (instantiate::J2SSeq
+				     (loc loc)
+				     (nodes (map reassign! decls inits)))))))))
 	    (let ((lift init))
 	       (set! init (instantiate::J2SNop (loc loc)))
 	       (instantiate::J2SBlock

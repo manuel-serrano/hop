@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Dec 12 08:53:45 2016 (serrano)                */
+;*    Last change :  Wed Dec 21 08:08:23 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -35,8 +35,13 @@
 	   (js+ left right ::JsGlobalObject)
 	   (inline js+fx::obj ::long ::long)
 	   (inline js+fx32::obj ::obj ::obj)
+	   (inline js+fx64::obj ::long ::long)
 	   (inline js-fx::obj ::long ::long)
 	   (inline js-fx32::obj ::obj ::obj)
+	   (inline js-fx64::obj ::long ::long)
+	   (inline js*fx::obj ::long ::long)
+	   (js*fx32::obj ::obj ::obj)
+	   (js*fx64::obj ::obj ::obj)
 	   (inline js/fx::obj ::long ::long)
 	   (js-slow+ left right ::JsGlobalObject)
 	   (js- left right ::JsGlobalObject)
@@ -47,6 +52,7 @@
 	   (js% left right ::JsGlobalObject)
 	   (js-%$$NN left right)
 	   (js-%$$NZ left right)
+	   (inline js-%u32 ::uint32 ::uint32)
 	   (js-bitlsh::obj left right ::JsGlobalObject)
 	   (js-bitrsh::obj left right ::JsGlobalObject)
 	   (js-bitursh::obj left right ::JsGlobalObject)
@@ -426,14 +432,24 @@
 ;*    Fixnum addition on 32 bits machines (two tagging bits).          */
 ;*    -------------------------------------------------------------    */
 ;*    See Hacker's Delight, second edition, page 29.                   */
+;*    -------------------------------------------------------------    */
+;*    This is the generic portable C implementation. Compilers and     */
+;*    platforms that supporting inlined assembly, this definition is   */
+;*    overriden the macro found in the include file arithmetic.sch     */
 ;*---------------------------------------------------------------------*/
 (define-inline (js+fx32::obj x::obj y::obj)
    ;; requires x and y to be tagged
    (let ((z::long (pragma::long "(~((long)$1 ^ (long)$2)) & 0x80000000" x y)))
       (if (pragma::bool "$1 & (~((((long)$2 ^ (long)$1) + ((long)$3)) ^ ((long) $3)))" z x y)
-	  (fixnum->flonum (+fx x y))
-	  (+fx x y))))
-	  
+          (fixnum->flonum (+fx x y))
+          (pragma::obj "(obj_t)((long)$1 + (long)$2 - TAG_INT)" x y))))
+
+;*---------------------------------------------------------------------*/
+;*    js+fx64 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js+fx64 x::long y::long)
+   (js+fx x y))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-fx32 ...                                                      */
 ;*    -------------------------------------------------------------    */
@@ -446,8 +462,85 @@
    (let ((z::long (pragma::long "((long)$1 ^ (long)$2) & 0x80000000" x y)))
       (if (pragma::bool "$1 & ((((long)$2 ^ (long)$1) - ((long)$3)) ^ ((long) $3))" z x y)
 	  (fixnum->flonum (-fx x y))
-	  (-fx x y))))
-	  
+	  (pragma::obj "(obj_t)(((long)$1 - (long)$2) + TAG_INT)" x y))))
+
+;*---------------------------------------------------------------------*/
+;*    js-fx64 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-fx64 x::long y::long)
+   (js-fx x y))
+   
+;*---------------------------------------------------------------------*/
+;*    js*fx ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js*fx::obj left::long right::long)
+   (js*fx32 left right))
+
+;*---------------------------------------------------------------------*/
+;*    js*fx32 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (js*fx32 x::obj y::obj)
+   
+   (define (neg? o)
+      (if (flonum? o)
+	  (not (=fx (signbitfl o) 0))
+	  (<fx o 0)))
+   
+   (let ((r (* x y)))
+      (cond
+	 ((fixnum? r)
+	  (if (=fx r 0)
+	      (if (or (and (neg? x) (not (neg? y)))
+		      (and (not (neg? x)) (neg? y)))
+		  -0.0
+		  r)
+	      r))
+	 ((bignum? r)
+	  (bignum->flonum r))
+	 (else
+	  r))))
+
+;*---------------------------------------------------------------------*/
+;*    js*fx64 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (js*fx64 x::obj y::obj)
+   
+   (define (neg? o)
+      (if (flonum? o)
+	  (not (=fx (signbitfl o) 0))
+	  (<fx o 0)))
+   
+   (let ((r (* x y)))
+      (cond
+	 ((fixnum? r)
+	  (cond-expand
+	     ((or bint30 bint32)
+	      (cond
+		 ((=fx r 0)
+		  (if (or (and (neg? x) (not (neg? y)))
+			  (and (not (neg? x)) (neg? y)))
+		      -0.0
+		      r))
+		 (else
+		  r)))
+	     (else
+	      (cond
+		 ((=fx r 0)
+		  (if (or (and (neg? x) (not (neg? y)))
+			  (and (not (neg? x)) (neg? y)))
+		      -0.0
+		      r))
+		 ((>fx r (bit-lsh 1 53))
+		  (fixnum->flonum r))
+		 ((<fx r (negfx (bit-lsh 1 53)))
+		  (fixnum->flonum r))
+		 (else
+		  r)))))
+	 ((bignum? r)
+	  (bignum->flonum r))
+	 (else
+	  r))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-fx ...                                                        */
 ;*---------------------------------------------------------------------*/
@@ -635,7 +728,17 @@
               (let ((m (remainder alnum arnum)))
                  (if (< lnum 0)
                      (if (= m 0) -0.0 (- m))
-                     (if (= m 0) +0.0 m))))))))
+		     ;; MS: CARE 21 dec 2016, why returning a flonum?
+                     ;; (if (= m 0) 0.0 m)
+		     m)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-%u32 ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-inline (js-%u32 lnum rnum)
+   (if (=u32 rnum #u32:0)
+       +nan.0
+       (remainderu32 lnum rnum)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitlsh ...                                                    */

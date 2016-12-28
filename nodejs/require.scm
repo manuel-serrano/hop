@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Dec  7 13:31:11 2016 (serrano)                */
+;*    Last change :  Wed Dec 21 07:28:36 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -561,6 +561,11 @@
 	     (let* ((mod (gensym))
 		    (expr (compile filename mod))
 		    (evmod (eval-module)))
+;* 		(tprint "REMOVE HERE..." filename)                     */
+;* 		(call-with-output-file                                 */
+;* 		      (make-file-name "/tmp/LOG" (string-replace filename #\/ #\_)) */
+;* 		   (lambda (op)                                        */
+;* 		      (pp expr op)))                                   */
 		(trace-item "expr=" (format "~s" expr))
 		(unwind-protect
 		   (begin

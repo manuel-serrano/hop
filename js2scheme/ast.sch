@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sun Nov 13 07:48:52 2016 (serrano)                */
+;*    Last change :  Tue Dec 20 08:23:30 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -215,6 +215,17 @@
        (val ,val)
        (id ,id)))
 
+(define-macro (J2SLetOptUtype utype usage id val)
+   `(instantiate::J2SDeclInit
+       (loc loc)
+       (writable #f)
+       (usecnt 1)
+       (utype ,utype)
+       (binder 'let-opt)
+       (usage ,usage)
+       (val ,val)
+       (id ,id)))
+
 (define-macro (%J2STail expr)
    `(instantiate::%J2STail
        (loc loc)
@@ -283,3 +294,8 @@
        (test ,test)
        (body ,body)))
 
+(define-macro (J2SCast totype expr)
+   `(instantiate::J2SCast
+       (loc loc)
+       (expr ,expr)
+       (type ,totype)))

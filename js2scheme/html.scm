@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Tue Oct  4 18:12:52 2016 (serrano)                */
+;*    Last change :  Wed Dec 21 12:40:28 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -592,18 +592,31 @@
    (define (html? tag)
       (when (symbol? (token-value tag))
 	 (memq (token-value tag) '(<html> <HTML>))))
-
+   
    (let ((attrs '())
 	 (abody '()))
       (for-each (lambda (x)
-		   (if (isa? x J2SDataPropertyInit)
-		       (set! attrs (cons x attrs))
-		       (set! abody (cons x abody))))
+		   (cond
+		      ((isa? x J2SDataPropertyInit)
+		       (set! attrs (cons x attrs)))
+		      ((isa? x J2SExpr)
+		       (with-access::J2SExpr x (loc)
+			  (let ((xp (instantiate::J2SDataPropertyInit
+				       (loc loc)
+				       (name x)
+				       (val (instantiate::J2SString
+					       (loc loc)
+					       (val ""))))))
+			     (set! attrs (cons xp attrs)))))
+		      (else
+		       (let ((loc (token-loc tag)))
+			  (xml-parse-error "Wrong attribute"
+			     (token-value tag)
+			     (cadr loc)
+			     (caddr loc))))))
 	 attributes)
       (let* ((loc (token-loc tag))
-	     (inits (filter (lambda (x)
-			       (isa? x J2SDataPropertyInit))
-		       (reverse! attrs)))
+	     (inits (reverse! attrs))
 	     (dbg (> (config-get conf :debug 0) 0))
 	     (inits (if dbg
 			(cons (debug-init loc (token-value tag)) inits)
@@ -611,16 +624,22 @@
 	     (inits (if (or (eq? lang 'hopscript) (not (html? tag)))
 			inits
 			(cons (hopautohead-init loc) inits)))
-	     (a (if (null? inits)
+	     (a (cond
+		   ((null? inits)
 		    (instantiate::J2SUndefined
-		       (loc loc))
+		       (loc loc)))
+		   ((null? abody)
 		    (instantiate::J2SObjInit
 		       (loc loc)
-		       (inits inits)))))
+		       (inits inits)))
+		   (else
+		    (instantiate::J2SObjInit
+		       (loc loc)
+		       (inits inits))))))
 	 (instantiate::J2SCall
 	    (loc loc)
 	    (fun (j2s-tag->expr tag #t))
-	    (args (cons a (append (reverse! abody) body)))))))
+	    (args (cons a body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    attribute-value-grammar ...                                      */

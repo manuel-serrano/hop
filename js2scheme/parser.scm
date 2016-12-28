@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Nov  5 09:30:39 2016 (serrano)                */
+;*    Last change :  Wed Dec 21 12:50:35 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2036,6 +2036,19 @@
 				      (loc (token-loc tokname))
 				      (val (symbol->string name))))
 			     (val val)))))
+		   ((LBRACKET)
+		    (let ((expr (expression #f)))
+		       (consume-token! 'RBRACKET)
+		       (consume-token! ':)
+		       (let* ((ignore (consume-any!))
+			      (val (assig-expr #f)))
+			  (with-access::J2SLiteral ignore (loc)
+			     (instantiate::J2SDataPropertyInit
+				(loc (token-loc tokname))
+				(name (instantiate::J2SString
+					 (loc (token-loc tokname))
+					 (val (symbol->string name))))
+				(val val))))))
 		   (else
 		    (if (j2s-reserved-id? (peek-token-type))
 			(property-accessor tokname name props)

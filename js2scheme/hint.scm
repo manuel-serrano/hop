@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Dec 10 13:52:18 2016 (serrano)                */
+;*    Last change :  Wed Dec 28 06:28:02 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -50,10 +50,10 @@
 				     (with-access::J2SDeclFun dup (usecnt)
 					(>fx usecnt 0)))
 			     dups)
-		     decls))
-	       (for-each call-hint! decls)
-	       (for-each call-hint! nodes)
-	       #t)))))
+		     decls)))
+	    (for-each call-hint! decls)
+	    (for-each call-hint! nodes)
+	    (pair? dups)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-reset-hint ::J2SNode ...                                     */
@@ -473,7 +473,7 @@
 		   (callu (call-hinted fu idthis newparams itypes)))
 	       (set! params newparams)
 	       (set! body (dispatch-body body pred callt callu))))))
-   
+
    (if (duplicable? this)
        (with-access::J2SDeclFun this (val %info)
 	  (with-access::J2SFun val (params body idthis)
@@ -602,9 +602,12 @@
 	    (binder 'const)
 	    (scope 'none)
 	    (usecnt 1)
+	    (itype 'function)
+	    (utype 'function)
 	    (%info 'duplicate)
 	    (val (duplicate::J2SFun val
 		    (generator #f)
+		    (optimize #f)
 		    (idgen generator)
 		    (name (when (symbol? name) (symbol-append name '$$)))
 		    (params params)
@@ -651,8 +654,10 @@
 			    (scope 'none)
 			    (usecnt 1)
 			    (%info 'duplicate)
+			    (itype 'function)
+			    (utype 'function)
 			    (val newfun))))
-	    ;;(use-count newbody +1)
+	    (use-count nbody +1)
 	    (with-access::J2SFun newfun (decl)
 	       (set! decl newdecl))
 	    (set! %info

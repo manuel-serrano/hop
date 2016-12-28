@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Oct 20 08:16:09 2016 (serrano)                */
+#*    Last change :  Sun Dec 18 08:14:36 2016 (serrano)                */
 #*    Copyright   :  2004-16 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1417,6 +1417,10 @@ echo "(cond-expand" >> $init
 echo "   (bigloo-compile" >> $init
 echo "" >> $init
 cat hopscript/property_expd.sch >> $init
+echo "" >> $init
+cat hopscript/arithmetic.sch >> $init
+echo "" >> $init
+cat hopscript/array.sch >> $init
 echo "" >> $init
 cat hopscript/expanders.sch >> $init
 echo "" >> $init

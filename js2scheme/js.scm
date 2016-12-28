@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Sep  6 17:08:58 2016 (serrano)                */
+;*    Last change :  Wed Dec 21 12:42:16 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -45,7 +45,7 @@
 		     (j2s-js ast #f
 			(lambda (this::J2SDollar tildec dollarc mode evalp conf)
 			   (with-access::J2SDollar this (node)
-			      (let ((expr (j2s-scheme node mode evalp conf '())))
+			      (let ((expr (j2s-scheme node mode evalp conf '() 'any)))
 				 (list (j2s-js-literal (eval! expr))))))
 			'normal (lambda (x) x) conf)))))))
 
@@ -488,10 +488,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDataPropertyInit tildec dollarc mode evalp conf)
    (with-access::J2SDataPropertyInit this (name val)
-      (cons this
-	 (append (j2s-js name tildec dollarc mode evalp conf)
-	    '(":")
-	    (j2s-js val j2s-js-attribute-tilde dollarc mode evalp conf)))))
+      (if (isa? name J2SString)
+	  (cons this
+	     (append (j2s-js name tildec dollarc mode evalp conf)
+		'(":")
+		(j2s-js val j2s-js-attribute-tilde dollarc mode evalp conf)))
+	  (cons this
+	     (cons "["
+		(append (j2s-js name tildec dollarc mode evalp conf)
+		   '("]:")
+		   (j2s-js val j2s-js-attribute-tilde dollarc mode evalp conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SAccessorPropertyInit ...                             */
@@ -655,6 +661,13 @@
 (define-method (j2s-js this::J2SSequence tildec dollarc mode evalp conf)
    (with-access::J2SSequence this (exprs)
       (j2s-js* this "" "" "," exprs tildec dollarc mode evalp conf)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js ::J2SCast ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js this::J2SCast tildec dollarc mode evalp conf)
+   (with-access::J2SCast this (expr)
+      (j2s-js expr tildec dollarc mode evalp conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SRef ...                                              */
@@ -1014,7 +1027,8 @@
       (list this
 	 `(call-with-output-string
 	     (lambda (op)
-		(obj->javascript-attr ,(j2s-scheme node mode evalp conf '()) op))))))
+		(obj->javascript-attr
+		   ,(j2s-scheme node mode evalp conf '() 'any) op))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-client-dollar ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec  4 09:04:26 2016 (serrano)                */
+;*    Last change :  Tue Dec 20 08:59:13 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -55,10 +55,10 @@
 ;*    dump-itype ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (dump-itype this::J2SDecl)
-   (with-access::J2SDecl this (itype)
+   (with-access::J2SDecl this (itype utype)
       (if (or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
-	  `(:itype ,itype)
+	  `(:itype ,itype :utype ,utype)
 	  '())))
       
 ;*---------------------------------------------------------------------*/
@@ -216,7 +216,14 @@
    (with-access::J2SUnresolvedRef this (id)
       `(,@(call-next-method) ,id
 	  ,@(dump-type this))))
- 
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SCast ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SCast)
+   (with-access::J2SCast this (expr type)
+      `(,@(call-next-method) ,type ,(j2s->list expr))))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -335,7 +342,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SReturn)
    (with-access::J2SReturn this (expr tail)
-      `(,@(call-next-method) ,@(if (> (bigloo-debug) 2) `(:tail ,tail) '())
+      `(,@(call-next-method)
+	  ,@(if (> (bigloo-debug) 2) `(:tail ,tail) '())
 	  ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
@@ -541,7 +549,7 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid usecnt usage ronly %info scope)
+   (with-access::J2SDecl this (id key binder _scmid usecnt usage ronly scope)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(dump-key key)

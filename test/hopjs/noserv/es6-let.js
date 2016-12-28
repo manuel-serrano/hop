@@ -183,6 +183,33 @@ function letFor() {
    return 5;
 }
 
+function letForAssig( n ) {
+   let j = 0;
+   
+   for( let i = 0; i < n; i++ ) {
+      j += i;
+      i += 10;
+   }
+
+   return j;
+}
+
+function letForAssigFun( n ) {
+   let j = 0;
+   var f = [];
+   
+   for( let i = 0; i < n; i++ ) {
+      i += 10;
+      f.push( function() { return i; } );
+   }
+
+   for( let k = 0; i < f.length; i++ ) {
+      j += f[ k ]();
+   }
+
+   return j;
+}
+
 function letFor2( files ) {
    for( let i = 0; i < files.length; i++ ) {
       var file = files[ i ];
@@ -247,6 +274,12 @@ assert.ok( letFun2() == "foo" );
 
 console.log( "   letFor()" );
 assert.ok( letFor() == 5 );
+
+console.log( "   letForAssig()" );
+assert.ok( letForAssig( 100 ) == 495 );
+
+console.log( "   letForAssigFun()" );
+assert.ok( letForAssigFun( 100 ) == 595 );
 
 console.log( "   letFor2()" );
 assert.ok( letFor2( ["foo"] ) == "foo" );
