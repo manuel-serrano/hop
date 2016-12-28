@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Dec 11 08:20:42 2016 (serrano)                */
+;*    Last change :  Sun Dec 18 17:25:18 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -46,7 +46,7 @@
 	   (js-array-ref-ur ::JsArray ::long ::JsGlobalObject)
 	   (inline js-array-inl-ref ::JsArray ::obj
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
-	   (inline js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
+	   (js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
 	   (inline js-array-index-inl-ref ::JsArray ::uint32
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   (inline js-array-fixnum-ref ::JsArray ::long ::JsGlobalObject)
@@ -56,7 +56,7 @@
 	   (js-array-set! ::JsArray idx ::obj ::JsGlobalObject)
 	   (inline js-array-inl-set! ::JsArray ::obj ::obj
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
-	   (inline js-array-index-set! ::JsArray ::uint32 ::obj ::JsGlobalObject)
+	   (js-array-index-set! ::JsArray ::uint32 ::obj ::JsGlobalObject)
 	   (inline js-array-index-inl-set! ::JsArray ::uint32 ::obj
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   (inline js-array-fixnum-set! ::JsArray ::long ::obj ::JsGlobalObject)
@@ -493,7 +493,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-ref ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-array-index-ref arr::JsArray idx::uint32 %this)
+(define (js-array-index-ref arr::JsArray idx::uint32 %this)
    (with-access::JsArray arr (vec ilen)
       (cond
 	 ((<u32 idx ilen)
@@ -578,11 +578,11 @@
 	    (eq? mark (js-array-mark)))
        (vector-set-ur! avec idx val)
        (js-array-index-set! arr (fixnum->uint32 idx) val %this)))
-   
+    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-set! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-array-index-set! arr::JsArray idx::uint32 val %this)
+(define (js-array-index-set! arr::JsArray idx::uint32 val %this)
    (with-access::JsArray arr (vec ilen)
       (cond
 	 ((<u32 idx ilen)

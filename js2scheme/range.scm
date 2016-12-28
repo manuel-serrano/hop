@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Dec  4 18:49:34 2016 (serrano)                */
+;*    Last change :  Thu Dec 22 08:43:10 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -56,7 +56,7 @@
 		  (set! *dump-stop* (read ip)))))))
    (when (isa? this J2SProgram)
       (when (>=fx (config-get args :optim 0) 4)
-	 ;; compute the integer value ranges
+	 ;; compute the integer value ranges, same condition as the CAST stage
 	 (j2s-range-program! this args)
 	 ;; allocate precise types according to the ranges
 	 (when (>=fx (config-get args :optim 0) 5)
@@ -111,12 +111,14 @@
 (define (j2s-range-program! this::J2SProgram args)
    (let* ((msize (config-get args :long-size (bigloo-config 'int-size)))
 	  (lsize (min 53 msize)))
-      (set! *minfix* (- (expt 2. (fixnum->flonum (-fx lsize 1)))))
       (set! *maxfix* (-fl (expt 2. (fixnum->flonum (-fx lsize 1))) 1.0))
-      (set! *maxidx* (-fl (expt 2. (fixnum->flonum 32)) 2.0))
-      (set! *index-intv* (interval 0.0 *maxidx*))
+      (set! *uint29-intv* (interval 0.0 (-fl (expt 2. 30) 1.0)))
+      (set! *index-intv* (interval 0.0 *max-index*))
+      (set! *length-intv* (interval 0.0 *max-length*))
+      (set! *int30-intv* (interval *min-int30* *max-int30*))
+      (set! *integer* (interval *min-integer* *max-integer*))
       (set! *infinity-intv* (interval -inf.0 +inf.0)))
-   (with-access::J2SProgram this (headers decls nodes)
+   (with-access::J2SProgram this (decls nodes)
       (let ((fix (fix 0 0)))
 	 (let loop ((i 0))
 	    (let ((ostamp (fix-stamp fix)))
@@ -139,14 +141,10 @@
 ;*    j2s-range-type-program! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-range-type-program! this::J2SProgram args)
-   (let* ((lsize (config-get args :long-size (bigloo-config 'int-size)))
-	  (minfix (- (expt 2. (fixnum->flonum (-fx lsize 1)))))
-	  (maxfix (-fl (expt 2. (fixnum->flonum (-fx lsize 1))) 1.0))
-	  (fixnum (interval (+fl minfix 1.0) (-fl maxfix 1.0))))
-      (with-access::J2SProgram this (headers decls nodes)
-	 (for-each (lambda (n) (type-range! n fixnum *index-intv*)) decls)
-	 (for-each (lambda (n) (type-range! n fixnum *index-intv*)) nodes)
-	 this)))
+   (with-access::J2SProgram this (decls nodes)
+      (for-each (lambda (n) (type-range! n)) decls)
+      (for-each (lambda (n) (type-range! n)) nodes)
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    unfix! ...                                                       */
@@ -157,26 +155,21 @@
    (fix-stamp-set! fix (+fx 1 (fix-stamp fix))))
 
 ;*---------------------------------------------------------------------*/
-;*    type-integer? ...                                                */
-;*---------------------------------------------------------------------*/
-(define-inline (type-integer? type::symbol)
-   (or (eq? type 'integer) (eq? type 'index)))
-   
-;*---------------------------------------------------------------------*/
-;*    type-number? ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-inline (type-number? type::symbol)
-   (or (type-integer? type) (eq? type 'number)))
-   
-;*---------------------------------------------------------------------*/
 ;*    integer bounds                                                   */
 ;*---------------------------------------------------------------------*/
 (define *max-length* (-fl (exptfl 2. 32.) 1.))
 (define *max-index* (-fl *max-length* 1.))
-(define *minfix* +nan.0)
+(define *max-int30* (-fl (exptfl 2. 29.) 1.))
+(define *min-int30* (negfl (exptfl 2. 29.)))
+(define *max-integer* (exptfl 2. 53.))
+(define *min-integer* (negfl (exptfl 2. 53.)))
 (define *maxfix* +nan.0)
-(define *maxidx* +nan.0)
+
+(define *uint29-intv* #f)
 (define *index-intv* #f)
+(define *length-intv* #f)
+(define *int30-intv* #f)
+(define *integer* #f)
 (define *infinity-intv* #f)
 
 ;*---------------------------------------------------------------------*/
@@ -424,8 +417,20 @@
 	     ((> oi -10)
 	      (let ((min -10))
 		 (interval min (max oa min))))
+	     ((> oi -1)
+	      (let ((min -1))
+		 (interval min (max oa min))))
+	     ((> oi -2)
+	      (let ((min -2))
+		 (interval min (max oa min))))
 	     ((> oi (- *max-length*))
 	      (let ((min (- *max-length*)))
+		 (interval min (max oa min))))
+	     ((> oi *min-int30*)
+	      (let ((min *min-int30*))
+		 (interval min (max oa min))))
+	     ((> oi *min-integer*)
+	      (let ((min *min-integer*))
 		 (interval min (max oa min))))
 	     (else
 	      (interval -inf.0 oa))))
@@ -436,6 +441,9 @@
 		 ((< oa 8192)
 		  (let ((max 8192))
 		     (interval (min oi max) max)))
+		 ((< oa *max-int30*)
+		  (let ((max *max-int30*))
+		     (interval (min oi max) max)))
 		 ((< oa (- *max-index* 10))
 		  (let ((max (- *max-index* 10)))
 		     (interval (min oi max) max)))
@@ -444,6 +452,9 @@
 		     (interval (min oi max) max)))
 		 ((<= oa *max-length*)
 		  (let ((max *max-length*))
+		     (interval (min oi max) max)))
+		 ((<= oa *max-integer*)
+		  (let ((max *max-integer*))
 		     (interval (min oi max) max)))
 		 (else
 		  (interval oi +inf.0))))
@@ -539,8 +550,8 @@
 		(set! %info intv)))
 	    ((not (interval-in? intv %info))
 	     (unfix! fix
-		(format "node-interval-set.2! ~a -> ~a => ~a"
-		   (j2s->list this) intv (interval-merge intv %info)))
+		(format "node-interval-set.2! ~a -> ~a/~a => ~a"
+		   (j2s->list this) intv %info (interval-merge intv %info)))
 	     (set! %info (interval-merge intv %info)))))
       (return %info env)))
    
@@ -830,6 +841,9 @@
 			  ((/)
 			   (node-interval-set! this env fix
 			      (interval-div intl intr)))
+			  ((%)
+			   (node-interval-set! this env fix
+			      intl))
 			  ((<<)
 			   (node-interval-set! this env fix
 			      (interval-shiftl intl intr)))
@@ -908,8 +922,9 @@
 					       (interval? %info))
 				       (cons p %info))))
 		     params)))
-	 (range body envp fix)
-	 (return #f env))))
+	 (multiple-value-bind (intv env)
+	    (range body envp fix)
+	    (node-interval-set! this env fix intv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    range ::J2SCall ...                                              */
@@ -917,19 +932,20 @@
 (define-walk-method (range this::J2SCall env::pair-nil fix::struct)
    
    (define (range-fun callee args env)
-      (with-access::J2SFun callee (rtype params)
+      (with-access::J2SFun callee (rtype params %info)
 	 (let loop ((params params)
 		    (args args))
-	    (when (and (pair? params) (pair? args))
-	       (with-access::J2SDecl (car params) (itype %info)
-		  (when (type-number? itype)
-		     (with-access::J2SExpr (car args) ((ainfo %info))
-			(let ((ni (interval-merge %info ainfo)))
-			   (unless (equal? ni %info)
-			      (unfix! fix "j2scall")
-			      (set! %info ni)))))
-		  (loop (cdr params) (cdr args)))))))
-
+	    (if (and (pair? params) (pair? args))
+		(with-access::J2SDecl (car params) (itype %info)
+		   (when (type-number? itype)
+		      (with-access::J2SExpr (car args) ((ainfo %info))
+			 (let ((ni (interval-merge %info ainfo)))
+			    (unless (equal? ni %info)
+			       (unfix! fix "j2scall")
+			       (set! %info ni)))))
+		   (loop (cdr params) (cdr args)))
+		(return %info env)))))
+   
    (call-default-walker)
    
    (with-access::J2SCall this ((callee fun) args)
@@ -946,8 +962,11 @@
 		((isa? decl J2SDeclFun)
 		 ;;(typing callee env fun fix)
 		 (with-access::J2SDeclFun decl (ronly val)
-		    (when ronly
-		       (range-fun val args env))))))))))
+		    (if ronly
+			(range-fun val args env)
+			(return *infinity-intv* env)))))))
+	 (else
+	  (return *infinity-intv* env)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    range ::J2SAccess ...                                            */
@@ -1085,33 +1104,89 @@
 			       (loop (env-merge bodye env))))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    range ::J2SWhile ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (range this::J2SWhile env::pair-nil fix::struct)
+   (with-access::J2SWhile this (test body)
+      (let ((denv (dump-env env))
+	    (ffix (fix-stamp fix)))
+	 (when (pair? denv)
+	    (tprint ">>> while [" ffix "] test=" (j2s->list test))
+	    (tprint ">>> env=" denv))
+	 (let loop ((env env))
+	    (let ((ostamp (fix-stamp fix)))
+	       (when (pair? denv)
+		  (tprint "--- while [" ffix "] / " ostamp))
+	       (multiple-value-bind (testi teste)
+		  (range test env fix)
+		  (when (pair? denv)
+		     (tprint "    [" ffix "] test=" (j2s->list test))
+		     (tprint "    [" ffix "] teste=" (dump-env teste)))
+		  (multiple-value-bind (testet testef)
+		     (test-envs test env fix)
+		     (when (pair? denv)
+			(when (pair? (dump-env testet))
+			   (tprint "    [" ffix "] testet="
+			      (dump-env testet))
+			   (tprint "    [" ffix "] testef="
+			      (dump-env testef))))
+		     (multiple-value-bind (bodyi bodye)
+			(range  body (append-env testet teste) fix)
+			(if (=fx ostamp (fix-stamp fix))
+			    (begin
+			       (when (pair? denv)
+				  (tprint "<<< while [" ffix "] "
+				     (dump-env (append-env testef bodye)))
+				  (return #f (append-env testef bodye))))
+			    (loop (env-merge bodye env)))))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SNode ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (type-range! this::J2SNode fixnum::struct index::struct)
+(define-walk-method (type-range! this::J2SNode)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    interval->type ...                                               */
+;*---------------------------------------------------------------------*/
+(define (interval->type intv::struct)
+   (cond
+      ((interval-in? intv *uint29-intv*) 'uint29)
+      ((interval-in? intv *int30-intv*) 'int30)
+      ((interval-in? intv *index-intv*) 'index)
+      ((interval-in? intv *length-intv*) 'length)
+      ((interval-in? intv *integer*) 'integer)
+      (else 'number)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SDecl ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (type-range! this::J2SDecl fixnum::struct index::struct)
+(define-walk-method (type-range! this::J2SDecl)
    (call-default-walker)
-   (with-access::J2SDecl this (%info itype)
+   (with-access::J2SDecl this (%info itype utype)
       (when (interval? %info)
-	 (cond
-	    ((interval-in? %info index) (set! itype 'index))
-	    ((interval-in? %info fixnum) (set! itype 'fixnum)))))
+	 (let ((ty (interval->type %info)))
+	    (when ty
+	       (set! itype ty)
+	       (set! utype ty)))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (type-range! this::J2SExpr fixnum::struct index::struct)
+(define-walk-method (type-range! this::J2SExpr)
    (call-default-walker)
    (with-access::J2SExpr this (%info type)
       (when (interval? %info)
-	 (cond
-	    ((interval-in? %info index) (set! type 'index))
-	    ((interval-in? %info fixnum) (set! type 'fixnum)))))
+	 (set! type (interval->type %info))))
    this)
 
-
+;*---------------------------------------------------------------------*/
+;*    type-range! ::J2SRef ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-range! this::J2SRef)
+   (call-next-method)
+   (with-access::J2SRef this (decl type)
+      (with-access::J2SDecl decl (utype)
+	 (set! utype (minimal-type utype type))))
+   this)

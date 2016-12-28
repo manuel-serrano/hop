@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Dec  3 11:20:42 2016 (serrano)                */
+;*    Last change :  Sun Dec 25 08:14:17 2016 (serrano)                */
 ;*    Copyright   :  2014-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -43,6 +43,8 @@
 	   (js-jsstring->bool::bool ::obj)
 	   (generic js-jsstring-normalize!::JsStringLiteral ::JsStringLiteral)
 	   
+	   (js-jsstring-normalize-ASCII! ::JsStringLiteral)
+	   (js-jsstring-normalize-UTF8! ::JsStringLiteral)
 	   (inline js-jsstring-append::JsStringLiteral ::obj ::obj)
 	   (utf8-codeunit-length::long ::bstring)
 	   (js-utf8-ref ::JsStringLiteralUTF8 ::bstring ::long)
@@ -158,9 +160,9 @@
        ((string? ,this)
 	(,(symbol-append 'ascii- fun) ,this ,@args))
        ((isa? ,this JsStringLiteralASCII)
-	(,(symbol-append 'ascii- fun) (js-jsstring->string ,this) ,@args))
+	(,(symbol-append 'ascii- fun) (js-jsstring-normalize-ASCII! ,this) ,@args))
        (else
-	(,(symbol-append 'utf8- fun) (js-jsstring->string ,this) ,@args))))
+	(,(symbol-append 'utf8- fun) (js-jsstring-normalize-UTF8! ,this) ,@args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    isascii? ...                                                     */
@@ -239,27 +241,21 @@
 ;*    js-jsstring->string ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-jsstring->string::bstring js::obj)
-   (if (string? js)
-       js
-       (with-access::JsStringLiteral (js-jsstring-normalize! js) (left)
-	  left)))
+   (cond
+      ((string? js) js)
+      ((isa? js JsStringLiteralASCII) (js-jsstring-normalize-ASCII! js))
+      ((isa? js JsStringLiteralUTF8) (js-jsstring-normalize-UTF8! js))
+      (else
+       (js-jsstring-normalize! js)
+       (with-access::JsStringLiteral js (left) left))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize! ...                                       */
-;*    -------------------------------------------------------------    */
-;*    Tailrec normalization (with explicit stack management).          */
+;*    js-jsstring-normalize-ASCII! ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteral))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize! ...                                       */
-;*    -------------------------------------------------------------    */
-;*    Tailrec normalization (with explicit stack management).          */
-;*---------------------------------------------------------------------*/
-(define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralASCII)
+(define (js-jsstring-normalize-ASCII! js::JsStringLiteral)
    (with-access::JsStringLiteral js (left right weight)
-      (if (and (string? left) (not right))
-	  js
+      (if (not right)
+	  left
 	  (let ((buffer (make-string (js-string-literal-length js))))
 	     (let loop ((i 0)
 			(stack (list js)))
@@ -268,7 +264,7 @@
 		       (set! weight i)
 		       (set! left buffer)
 		       (set! right #f)
-		       js)
+		       buffer)
 		    (let ((s (car stack)))
 		       (if (string? s)
 			   (let ((len (string-length s)))
@@ -280,14 +276,12 @@
 				  (loop i (cons left (cdr stack)))))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize! ...                                       */
-;*    -------------------------------------------------------------    */
-;*    Tailrec normalization (with explicit stack management).          */
+;*    js-jsstring-normalize-UTF8! ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralUTF8)
+(define (js-jsstring-normalize-UTF8! js::JsStringLiteral)
    (with-access::JsStringLiteralUTF8 js (left right weight %idxutf8 %idxstr)
       (if (and (string? left) (not right))
-	  js
+	  left
 	  (let ((buffer (make-string (js-string-literal-length js))))
 	     (let loop ((i 0)
 			(stack (list js)))
@@ -298,7 +292,7 @@
 		    (set! right #f)
 		    (set! %idxutf8 0)
 		    (set! %idxstr 0)
-		    js)
+		    left)
 		   ((string? (car stack))
 		    (let ((len (string-length (car stack))))
 		       (blit-string! (car stack) 0 buffer i len)
@@ -320,6 +314,31 @@
 			   (loop i (cons* left right (cdr stack))))
 			  (else
 			   (loop i (cons left (cdr stack)))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-normalize! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Tailrec normalization (with explicit stack management).          */
+;*---------------------------------------------------------------------*/
+(define-generic (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteral))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-normalize! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Tailrec normalization (with explicit stack management).          */
+;*---------------------------------------------------------------------*/
+(define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralASCII)
+   (js-jsstring-normalize-ASCII! js)
+   js)
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-normalize! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Tailrec normalization (with explicit stack management).          */
+;*---------------------------------------------------------------------*/
+(define-method (js-jsstring-normalize!::JsStringLiteral js::JsStringLiteralUTF8)
+   (js-jsstring-normalize-UTF8! js)
+   js)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-string-literal-length ...                                     */
@@ -773,43 +792,66 @@
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-indexof this search position %this)
    
-   (define (ascii-indexof s::bstring)
-      (if (not (isascii? search))
-	  -1
-	  (let* ((ulen (string-length s))
-		 (pos (if (eq? position (js-undefined))
-			  0
-			  (js-tointeger position %this)))
-		 (search (js-jsstring->string search))
-		 (start (inexact->exact (min (max pos 0) ulen))))
-	     (if (=fx (string-length search) 0)
-		 -1
-		 (let ((i start))
-		    (if (<fx i 0)
-			i
-			(let ((j (string-char-index s (string-ref search 0) i)))
-			   (if j
-			       (let ((kt (bm-table search)))
-				  (bm-string kt s j))
-			       -1))))))))
-   
-   (define (utf8-indexof s::bstring)
-      (let* ((ulen (utf8-string-length s))
-	     (pos (if (eq? position (js-undefined))
+   (define (ascii-indexof str::bstring)
+      (let* ((pat (js-jsstring->string search))
+	     (patlen (string-length pat))
+	     (ulen (string-length str))
+	     (n (-fx ulen patlen))
+	     (c0 (string-ref pat 0))
+	     (idx (if (eq? position (js-undefined))
 		      0
-		      (js-tointeger position %this)))
-	     (search (js-jsstring->string search))
-	     (start (inexact->exact (min (max pos 0) ulen))))
-	 (if (=fx (string-length search) 0)
-	     -1
-	     (let ((i (utf8-string-index->string-index s start)))
-		(if (<fx i 0)
-		    i
-		    (let ((j (string-char-index s (string-ref search 0) i)))
-		       (if j
-			   (let ((kt (bm-table search)))
-			      (string-index->utf8-string-index s (bm-string kt s j)))
-			   -1)))))))
+		      (inexact->exact
+			 (min (max (js-tointeger position %this) 0) ulen)))))
+	 (let loop ((i idx)
+		    (badness (-fx -10 (*fx patlen 4))))
+	    (if (>fx i n)
+		-1
+		(let ((j (string-char-index-ur str c0 i (-fx n i))))
+		   (if (not j)
+		       -1
+		       (let liip ((k 1))
+			  (cond
+			     ((=fx k patlen)
+			      j)
+			     ((char=? (string-ref pat k)
+				 (string-ref str (+fx k j)))
+			      (liip (+fx k 1)))
+			     ((<fx badness 0)
+			      (loop (+fx j 1) (+fx badness k)))
+			     (else
+			      (let ((t (bm-table pat)))
+				 (bm-string t str j)))))))))))
+   
+   (define (utf8-indexof str::bstring)
+      (let* ((pat (js-jsstring->string search))
+	     (patlen (string-length pat))
+	     (ulen (string-length str))
+	     (n (-fx ulen patlen))
+	     (c0 (string-ref pat 0))
+	     (idx (if (eq? position (js-undefined))
+		      0
+		      (inexact->exact
+			 (min (max (js-tointeger position %this) 0) ulen)))))
+	 (let loop ((i (utf8-string-index->string-index str idx))
+		    (badness (-fx -10 (*fx patlen 4))))
+	    (if (>fx i n)
+		-1
+		(let ((j (string-char-index-ur str c0 i (-fx n i))))
+		   (if (not j)
+		       -1
+		       (let liip ((k 1))
+			  (cond
+			     ((=fx k patlen)
+			      (string-index->utf8-string-index str j))
+			     ((char=? (string-ref pat k)
+				 (string-ref str (+fx k j)))
+			      (liip (+fx k 1)))
+			     ((<fx badness 0)
+			      (loop (+fx j 1) (+fx badness k)))
+			     (else
+			      (let ((t (bm-table pat)))
+				 (string-index->utf8-string-index str
+				    (bm-string t str j))))))))))))
 
    (string-dipatch indexof this))
 

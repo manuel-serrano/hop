@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Dec  4 08:38:07 2016 (serrano)                */
+;*    Last change :  Tue Dec 20 08:04:51 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -47,6 +47,9 @@
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown))
 	      (hint::pair-nil (default '()) (info '("notraverse"))))
+
+	   (class J2SCast::J2SExpr
+	      expr::J2SExpr)
 	   
 	   (final-class J2SStmtExpr::J2SStmt
 	      expr::J2SExpr)
@@ -141,6 +144,7 @@
 	      (vararg::obj (default #f))
 	      (name read-only (default '||))
 	      (generator::bool (default #f))
+	      (optimize read-only (default #t))
 	      (params::pair-nil (default '()))
 	      body::J2SBlock)
 	   
@@ -190,7 +194,9 @@
 	   
 	   (final-class J2SAref::J2SRef
 	      (array::J2SDecl read-only)
-	      (alen::J2SDecl read-only))
+	      (alen::J2SDecl read-only)
+	      (mark::obj read-only)
+	      (deps::pair-nil read-only))
 	   
 	   (final-class J2SThis::J2SExpr)
 	   
@@ -214,7 +220,7 @@
 	      (scope::symbol (default 'local))
 	      (usecnt::int (default 0))
 	      (usage::pair-nil (default '()))
-	      (utype::symbol read-only (default 'unknown))
+	      (utype::symbol (default 'unknown))
 	      (itype::symbol (default 'unknown))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      (binder::symbol (default 'var)))
@@ -832,6 +838,7 @@
 (gen-walks J2SComprehension (iterables) test expr)
 (gen-walks J2SYield expr)
 (gen-walks J2SKont body)
+(gen-walks J2SCast expr)
 
 (gen-traversals J2STilde)
 

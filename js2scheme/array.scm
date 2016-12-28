@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Dec 10 14:01:45 2016 (serrano)                */
+;*    Last change :  Tue Dec 20 10:24:49 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -67,8 +67,9 @@
 ;*    array! ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (array! this::J2SFun env::pair-nil)
-   (with-access::J2SFun this (body params)
-      (set! body (array! body (append params env)))
+   (with-access::J2SFun this (body params optimize)
+      (when optimize
+	 (set! body (array! body (append params env))))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -84,26 +85,27 @@
 ;*    decl->adecl ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (decl->adecl::J2SDeclInit decl::J2SDecl)
-      (with-access::J2SDecl decl (id loc)
-	 (J2SLetOpt '(read write)
-	    (symbol-append '%A id)
-	    (J2SCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
+   (with-access::J2SDecl decl (id loc)
+      (J2SLetOptUtype 'vector '(read write)
+	 (symbol-append '%A id)
+	 (J2SCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    decl->ldecl ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (decl->ldecl::J2SDeclInit adecl::J2SDecl decl::J2SDecl)
-      (with-access::J2SDecl decl (id loc)
-	 (J2SLetOpt '(read write)
-	    (symbol-append '%L id)
-	    (J2SCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
+   (with-access::J2SDecl decl (id loc)
+      (J2SLetOptUtype 'uint32 '(read write)
+	 (symbol-append '%L id)
+	 (J2SCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
 
 ;*---------------------------------------------------------------------*/
-;*    mdecl ...                                                        */
+;*    mark-decl ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (mdecl::J2SDeclInit loc)
-   (J2SLetOpt '(read write)
-      '%Mjs-array-mark (J2SCall (J2SHopRef 'js-array-mark))))
+(define (mark-decl::J2SDeclInit loc)
+   (J2SLetOptUtype 'fixnum '(read write)
+      (gensym '%Marray-mark)
+      (J2SCall (J2SHopRef 'js-array-mark))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array! ::J2SFor ...                                              */
@@ -116,17 +118,21 @@
 	     (let* ((adecls (map decl->adecl arrs))
 		    (ldecls (map decl->ldecl adecls arrs))
 		    (aenv (map list arrs adecls ldecls))
-		    (init (array-ref! init aenv))
-		    (incr (array-ref! incr aenv))
-		    (test (array-ref! test aenv))
-		    (body (array-ref! body aenv)))
+		    (closed? (array-closed? body aenv))
+		    (mdecl (unless closed? (mark-decl loc)))
+		    (init (array-ref! init aenv mdecl))
+		    (incr (array-ref! incr aenv mdecl))
+		    (test (array-ref! test aenv mdecl))
+		    (body (array-ref! body aenv mdecl)))
 		(if *j2s-array-cache*
-		    (J2SLetBlock (cons (mdecl loc) (append adecls ldecls))
-		       (duplicate::J2SFor this
-			  (init init)
-			  (incr incr)
-			  (test test)
-			  (body body)))
+		    (let* ((decls (append adecls ldecls))
+			   (decls (if closed? decls (cons mdecl decls))))
+		       (J2SLetBlock decls
+			  (duplicate::J2SFor this
+			     (init init)
+			     (incr incr)
+			     (test test)
+			     (body body))))
 		    (duplicate::J2SFor this
 		       (init init)
 		       (incr incr)
@@ -144,13 +150,17 @@
 	     (let* ((adecls (map decl->adecl arrs))
 		    (ldecls (map decl->ldecl adecls arrs))
 		    (aenv (map list arrs adecls ldecls))
-		    (test (array-ref! test aenv))
-		    (body (array-ref! body aenv)))
+		    (closed? (array-closed? body aenv))
+		    (mdecl (unless closed? (mark-decl loc)))
+		    (test (array-ref! test aenv mdecl))
+		    (body (array-ref! body aenv mdecl)))
 		(if *j2s-array-cache*
-		    (J2SLetBlock (cons (mdecl loc) (append adecls ldecls))
-		       (duplicate::J2SWhile this
-			  (test test)
-			  (body body)))
+		    (let* ((decls (append adecls ldecls))
+			   (decls (if closed? decls (cons mdecl decls))))
+		       (J2SLetBlock decls
+			  (duplicate::J2SWhile this
+			     (test test)
+			     (body body))))
 		    (duplicate::J2SWhile this
 		       (test test)
 		       (body body))))))))
@@ -166,13 +176,17 @@
 	     (let* ((adecls (map decl->adecl arrs))
 		    (ldecls (map decl->ldecl adecls arrs))
 		    (aenv (map list arrs adecls ldecls))
-		    (test (array-ref! test aenv))
-		    (body (array-ref! body aenv)))
+		    (closed? (array-closed? body aenv))
+		    (mdecl (unless closed? (mark-decl loc)))
+		    (test (array-ref! test aenv mdecl))
+		    (body (array-ref! body aenv mdecl)))
 		(if *j2s-array-cache*
-		    (J2SLetBlock (cons (mdecl loc) (append adecls ldecls))
-		       (duplicate::J2SDo this
-			  (test test)
-			  (body body)))
+		    (let* ((decls (append adecls ldecls))
+			   (decls (if closed? decls (cons mdecl decls))))
+		       (J2SLetBlock decls
+			  (duplicate::J2SDo this
+			     (test test)
+			     (body body))))
 		    (duplicate::J2SDo this
 		       (test test)
 		       (body body))))))))
@@ -190,12 +204,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (array-collect* this::J2SRef env::pair-nil)
    '())
-;*    (with-access::J2SRef this (type decl)                            */
-;*       (if (and (eq? type 'array)                                    */
-;* 	       (with-access::J2SDecl decl (ronly) #t)                  */
-;* 	       (memq decl env))                                        */
-;* 	  (list decl)                                                  */
-;* 	  '())))                                                       */
 
 ;*---------------------------------------------------------------------*/
 ;*    array-collect* ::J2SFun ...                                      */
@@ -214,7 +222,8 @@
 	     (with-access::J2SRef obj (type decl)
 		(if (and (eq? type 'array)
 			 (with-access::J2SDecl decl (ronly) #t)
-			 (memq decl env))
+			 (memq decl env)
+			 (type-number? (j2s-type field)))
 		    (cons decl fdaref)
 		    fdaref))))))
       
@@ -223,13 +232,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Transform all the access and assignment of arrays in env.        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (array-ref! this::J2SNode env::pair-nil)
+(define-walk-method (array-ref! this::J2SNode env::pair-nil mdecl)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    array-ref! ::J2SRef ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (array-ref! this::J2SRef env::pair-nil)
+(define-walk-method (array-ref! this::J2SRef env::pair-nil mdecl)
    (with-access::J2SRef this (decl type loc)
       (cond
 	 ((not (eq? type 'array))
@@ -238,39 +247,49 @@
 	  =>
 	  (lambda (arr)
 	     (duplicate::J2SAref this
+		(deps env)
+		(mark mdecl)
 		(array (cadr arr))
 		(alen (caddr arr)))))
 	 (else
 	  (call-default-walker)))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    array-ref! ::J2SAccess ...                                       *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (array-ref! this::J2SAccess env::pair-nil)      */
-;*                                                                     */
-;*    (define (access->aref this::J2SAccess arr::J2SDecl len::J2SDecl) */
-;*       (with-access::J2SAccess this (loc type hint cache obj field)  */
-;* 	 (instantiate::J2SAref                                         */
-;* 	    (loc loc)                                                  */
-;* 	    (type type)                                                */
-;* 	    (hint hint)                                                */
-;* 	    (cache cache)                                              */
-;* 	    (obj obj)                                                  */
-;* 	    (field field)                                              */
-;* 	    (array arr)                                                */
-;* 	    (alen len))))                                              */
-;*                                                                     */
-;*    (with-access::J2SAccess this (obj field)                         */
-;*       (if (isa? obj J2SRef)                                         */
-;* 	  (with-access::J2SRef obj (decl)                              */
-;* 	     (with-access::J2SExpr field (type)                        */
-;* 		(if (or (memq  type '(index integer)) (j2s-field-length? field)) */
-;* 		    (let ((arr (assq decl env)))                       */
-;* 		       (if arr                                         */
-;* 			   (apply access->aref this (cdr arr))         */
-;* 			   (call-default-walker)))                     */
-;* 		    (call-default-walker))))                           */
-;* 	  (call-default-walker))))                                     */
-		
-	     
-				      
+;*---------------------------------------------------------------------*/
+;*    array-closed? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (array-closed? body env::pair-nil)
+   (bind-exit (return)
+      (array-closed body env return)
+      #t))
+
+;*---------------------------------------------------------------------*/
+;*    array-closed ::J2SNode ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (array-closed this::J2SNode env return)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    array-closed ::J2SAccess ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (array-closed this::J2SAccess env return)
+   (with-access::J2SAccess this (obj field)
+      (if (isa? obj J2SRef)
+	  (with-access::J2SRef obj (decl type loc)
+	     (cond
+		((not (eq? type 'array))
+		 (return #f))
+		((assq decl env)
+		 =>
+		 (lambda (arr)
+		    (array-closed field env return)))
+		(else
+		 (return #f))))
+	  (return #f))))
+
+;*---------------------------------------------------------------------*/
+;*    array-closed ::J2SCall ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (array-closed this::J2SCall env return)
+   ;; could be improved by a following the function body
+   (return #f))
+   

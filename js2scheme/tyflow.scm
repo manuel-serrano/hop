@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/typing.scm              */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/tyflow.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Dec 19 18:35:04 2016 (serrano)                */
+;*    Last change :  Sun Dec 25 11:10:25 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -15,7 +15,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __js2scheme_typing
+(module __js2scheme_tyflow
 
    (import __js2scheme_ast
 	   __js2scheme_dump
@@ -25,14 +25,14 @@
 	   __js2scheme_utils
 	   __js2scheme_type-hint)
 
-   (export j2s-typing-stage))
+   (export j2s-tyflow-stage))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-typing-stage ...                                             */
+;*    j2s-tyflow-stage ...                                             */
 ;*---------------------------------------------------------------------*/
-(define j2s-typing-stage
+(define j2s-tyflow-stage
    (instantiate::J2SStageProc
-      (name "typing")
+      (name "tyflow")
       (comment "Dataflow type inference")
       (proc j2s-typing!)))
 
@@ -333,7 +333,7 @@
       (expr-type-set! this env fix
 	 (cond
 	    ((not (fixnum? val)) 'number)
-	    ((<fx val (bit-lsh 1 28)) 'integer)
+	    ((and (>=fx val 0) (<fx val (bit-lsh 1 28))) 'index)
 	    (else 'integer)))))
 
 ;*---------------------------------------------------------------------*/
@@ -455,7 +455,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SAssig env::pair-nil fun fix::cell)
    (with-access::J2SAssig this (lhs rhs)
-      (multiple-value-bind (_ __ lbk)
+      (multiple-value-bind (tyv __ lbk)
 	 (typing lhs env fun fix)
 	 (cond
 	    ((isa? lhs J2SRef)
@@ -472,20 +472,76 @@
 		(expr-type-set! this nenv fix tyr (append lbk rbk))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    typing ::J2SAssigOp ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SAssigOp env::pair-nil fun fix::cell)
+   (with-access::J2SAssigOp this (lhs rhs op)
+      (multiple-value-bind (tyr envr bkr)
+	 (typing-binary op lhs rhs env fun fix)
+	 (multiple-value-bind (tyv __ lbk)
+	    (typing lhs env fun fix)
+	    (cond
+	       ((isa? lhs J2SRef)
+		;; a variable assignment
+		(with-access::J2SRef lhs (decl)
+		   (let ((nenv (extend-env envr decl tyr)))
+		      (expr-type-set! this nenv fix tyr (append lbk bkr)))))
+	       (else
+		;; a non variable assinment
+		(expr-type-set! this envr fix tyr bkr)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    typing ::J2SPostfix ...                                          */
+;*    -------------------------------------------------------------    */
+;*    As a fix point is involved, POSTFIX and PREFIX operations        */
+;*    can be handled similarly.                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SPostfix env::pair-nil fun fix::cell)
-   (with-access::J2SPostfix this (lhs rhs)
-      (multiple-value-bind (tyl envl bkl)
-	 (typing lhs env fun fix)
-	 (call-next-method)
-	 (expr-type-set! this envl fix tyl bkl))))
+   (with-access::J2SPostfix this (lhs rhs op)
+      (multiple-value-bind (tyr envr bkr)
+	 (typing rhs env fun fix)
+	 (unless (type-number? tyr) (set! tyr 'number))
+	 (multiple-value-bind (tyv __ lbk)
+	    (typing lhs env fun fix)
+	    (cond
+	       ((isa? lhs J2SRef)
+		;; a variable assignment
+		(with-access::J2SRef lhs (decl)
+		   (let ((nenv (extend-env envr decl tyr)))
+		      (expr-type-set! this nenv fix tyr (append lbk bkr)))))
+	       (else
+		;; a non variable assinment
+		(expr-type-set! this envr fix tyr bkr)))))))
+;*                                                                     */
+;*    (with-access::J2SPostfix this (lhs rhs)                          */
+;*       (tprint ">>> POSTFIX=" (j2s->list this))                      */
+;*       (multiple-value-bind (tyl envl bkl)                           */
+;* 	 (typing lhs env fun fix)                                      */
+;* 	 (multiple-value-bind (typ envp bke)                           */
+;* 	    (call-next-method)                                         */
+;* 	    (unless (eq? typ tyl)                                      */
+;* 	       (unfix! fix (format "js2-postfix ~a/~a" typ tyl)))      */
+;* 	    (expr-type-set! this envp fix tyl bkl)))))                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SPrefix ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SPrefix env::pair-nil fun fix::cell)
-   (call-next-method))
+   (with-access::J2SPrefix this (lhs rhs op)
+      (multiple-value-bind (tyr envr bkr)
+	 (typing rhs env fun fix)
+	 (unless (type-number? tyr) (set! tyr 'number))
+	 (multiple-value-bind (tyv __ lbk)
+	    (typing lhs env fun fix)
+	    (cond
+	       ((isa? lhs J2SRef)
+		;; a variable assignment
+		(with-access::J2SRef lhs (decl)
+		   (let ((nenv (extend-env envr decl tyr)))
+		      (expr-type-set! this nenv fix tyr (append lbk bkr)))))
+	       (else
+		;; a non variable assinment
+		(expr-type-set! this envr fix tyr bkr)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SCond ...                                             */
@@ -646,58 +702,66 @@
 	    (expr-type-set! this env fix tye bk)))))
 
 ;*---------------------------------------------------------------------*/
+;*    typing-binary ...                                                */
+;*---------------------------------------------------------------------*/
+(define (typing-binary op lhs::J2SExpr rhs::J2SExpr env::pair-nil fun fix::cell)
+   (multiple-value-bind (typl envl bkl)
+      (typing lhs env fun fix)
+      (multiple-value-bind (typr envr bkr)
+	 (typing rhs envl fun fix)
+	 (let ((typ (case op
+		       ((+)
+			(cond
+			   ((and (type-integer? typl) (type-integer? typr))
+			    'integer)
+			   ((and (typnum? typl) (typnum? typr))
+			    'number)
+			   ((or (eq? typl 'string) (eq? typr 'string))
+			    'string)
+			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			    'unknown)
+			   (else
+			    'any)))
+		       ((- * /)
+			(cond
+			   ((and (type-integer? typl) (type-integer? typr))
+			    'integer)
+			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			    'unknown)
+			   (else
+			    'number)))
+		       ((%)
+			(cond
+			   ((and (type-integer? typl) (type-integer? typr))
+			    'number)
+			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			    'unknown)
+			   (else
+			    'number)))
+		       ((== === != !== < <= > >= instanceof in)
+			'bool)
+		       ((&& OR)
+			(merge-types typr typl))
+		       ((<< >> >>> ^ & BIT_OR)
+			(cond
+			   ((and (type-integer? typl) (type-integer? typr))
+			    'integer)
+			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
+			    'unknown)
+			   (else
+			    'number)))
+		       (else
+			'any))))
+	    (return typ env (append bkl bkr))))))
+   
+;*---------------------------------------------------------------------*/
 ;*    typing ::J2SBinary ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SBinary env::pair-nil fun fix::cell)
    (with-access::J2SBinary this (op lhs rhs)
-      (multiple-value-bind (typl envl bkl)
-	 (typing lhs env fun fix)
-	 (multiple-value-bind (typr envr bkr)
-	    (typing rhs envl fun fix)
-	    (let ((typ (case op
-			  ((+)
-			   (cond
-			      ((and (type-integer? typl) (type-integer? typr))
-			       'integer)
-			      ((and (typnum? typl) (typnum? typr))
-			       'number)
-			      ((or (eq? typl 'string) (eq? typr 'string))
-			       'string)
-			      ((or (eq? typl 'unknown) (eq? typr 'unknown))
-			       'unknown)
-			      (else
-			       'any)))
-			  ((- * /)
-			   (cond
-			      ((and (type-integer? typl) (type-integer? typr))
-			       'integer)
-			      ((or (eq? typl 'unknown) (eq? typr 'unknown))
-			       'unknown)
-			      (else
-			       'number)))
-			  ((%)
-			   (cond
-			      ((and (type-integer? typl) (type-integer? typr))
-			       'number)
-			      ((or (eq? typl 'unknown) (eq? typr 'unknown))
-			       'unknown)
-			      (else
-			       'number)))
-			  ((== === != !== < <= > >= instanceof in)
-			   'bool)
-			  ((&& OR)
-			   (merge-types typr typl))
-			  ((<< >> >>> ^ & BIT_OR)
-			   (cond
-			      ((and (type-integer? typl) (type-integer? typr))
-			       'integer)
-			      ((or (eq? typl 'unknown) (eq? typr 'unknown))
-			       'unknown)
-			      (else
-			       'number)))
-			  (else
-			   'any))))
-	       (expr-type-set! this env fix typ (append bkl bkr)))))))
+      (multiple-value-bind  (typ env bk)
+	 (typing-binary op lhs rhs env fun fix)
+	 (expr-type-set! this env fix typ bk))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SAccess ...                                           */
@@ -823,6 +887,7 @@
 	    ((eq? typ 'unknown)
 	     (return 'void env bk))
 	    (else
+	     (set! itype (merge-types itype typ))
 	     (return 'void (extend-env env this typ) bk))))))
 
 ;*---------------------------------------------------------------------*/
