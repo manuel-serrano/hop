@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Wed Oct 26 10:11:35 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Jan 17 13:58:56 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
 ;*=====================================================================*/
@@ -116,15 +116,15 @@
    this)
 
 ;*---------------------------------------------------------------------*/
-;*    ronly! ::J2SDecl ...                                             */
+;*    ronly-decl! ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SDecl mode::symbol)
+(define (ronly-decl! this::J2SDecl mode::symbol)
    (with-access::J2SDecl this (ronly id scope writable)
       (if (eq? mode 'hopscript)
 	  (set! ronly #t)
 	  (set! ronly (or (not (memq scope '(global %scope))) (not writable)))))
    this)
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -133,7 +133,23 @@
    (with-access::J2SDeclInit this (val ronly)
       (ronly! val mode))
    this)
-   
+
+;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SLetBlock ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SLetBlock mode::symbol)
+   (with-access::J2SLetBlock this (decls)
+      (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) decls)
+      (call-next-method)))
+		   
+;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SVarDecls ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SVarDecls mode::symbol)
+   (with-access::J2SVarDecls this (decls)
+      (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) decls)
+      (call-next-method)))
+		   
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    ronly! ::J2SLetInit ...                                          *} */
 ;* {*---------------------------------------------------------------------*} */

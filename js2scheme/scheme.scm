@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jan 17 10:55:29 2017 (serrano)                */
+;*    Last change :  Tue Jan 17 14:59:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -535,7 +535,7 @@
 ;*    j2s-scheme-decl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-decl this::J2SDecl value writable mode return conf)
-   (with-access::J2SDecl this (loc scope id utype)
+   (with-access::J2SDecl this (loc scope id utype ronly)
       (let ((ident (j2s-decl-scheme-id this)))
 	 (epairify-deep loc
 	    (cond
@@ -558,7 +558,9 @@
 					      (set! ,ident %v))
 					   2 ,fun-name)))))))
 	       ((memq scope '(letblock letvar))
-		`(,(utype-ident ident utype conf) ,value))
+		(if ronly
+		    `(,(utype-ident ident utype conf) ,value)
+		    `(,ident ,value)))
 	       (else
 		`(define ,ident ,value)))))))
 
@@ -576,11 +578,12 @@
 	 (j2s-scheme-decl this '(js-undefined) writable mode return conf)))
    
    (define (j2s-scheme-let this)
-      (with-access::J2SDecl this (loc scope id utype)
+      (with-access::J2SDecl this (loc scope id utype ronly)
 	 (epairify loc
 	    (if (memq scope '(global))
 		`(define ,(j2s-decl-scheme-id this) (js-make-let))
-		(let ((var (utype-ident (j2s-decl-scheme-id this) utype conf)))
+		(let* ((id (j2s-decl-scheme-id this))
+		       (var (if ronly (utype-ident id utype conf) id)))
 		   `(,var (js-make-let)))))))
    
    (cond
@@ -1341,7 +1344,6 @@
       ;;     argument
       ;;   - some typed functions implement a generator body and they take
       ;;     as extra argument the generator
-      (if %gen (tprint "id=" id " gen=" %gen))
       (let* ((targs (if this (cons this args) args))
 	     (gtargs (if %gen (cons '%gen targs) targs)))
 	 (if id
@@ -1774,9 +1776,9 @@
 (define-method (j2s-scheme this::J2SLetBlock mode return conf hint totype)
    
    (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return conf)
-      (with-access::J2SDeclInit d (val usage id utype)
+      (with-access::J2SDeclInit d (val usage id utype ronly)
 	 (let* ((ident (j2s-decl-scheme-id d))
-		(var (utype-ident ident utype conf)))
+		(var (if ronly (utype-ident ident utype conf) ident)))
 	    (cond
 	       ((or (not (isa? val J2SFun)) (isa? val J2SSvc) (memq 'assig usage))
 		(list `(,var ,(j2s-scheme val mode return conf hint utype))))
@@ -2078,19 +2080,19 @@
    
    (cond
       ((and (is-uint32? lhs) (is-uint32? rhs) (u32? conf))
-       `(,(u32op op)
-	 ,(j2s-scheme lhs mode return conf '(fixnum) 'uint32)
-	 ,(j2s-scheme rhs mode return conf '(fixnum) 'uint32)))
+       (binop lhs rhs mode return conf hint 'uint32
+	  (lambda (left right)
+	     `(,(u32op op) ,left ,right))))
       ((and (is-int30? lhs) (is-int30? rhs))
-       `(,(fxop op)
-	 ,(j2s-scheme lhs mode return conf '(fixnum) 'int30)
-	 ,(j2s-scheme rhs mode return conf '(fixnum) 'int30)))
+       (binop lhs rhs mode return conf hint 'int30
+	  (lambda (left right)
+	     `(,(fxop op) ,left ,right))))
       ((and (is-integer? lhs) (is-integer? rhs))
        (cond
 	  ((m64? conf)
-	   `(,(fxop op)
-	     ,(j2s-scheme lhs mode return conf '(fixnum) 'fixnum53)
-	     ,(j2s-scheme rhs mode return conf '(fixnum) 'fixnum53)))
+	   (binop lhs rhs mode return conf hint 'fixnum53
+	      (lambda (left right)
+		 `(,(fxop op) ,left ,right))))
 	  ((and (maybe-number? lhs) (maybe-number? rhs))
 	   (binop lhs rhs mode return conf hint 'integer
 	      (lambda (left right)
@@ -2098,13 +2100,13 @@
 		    `(,(fxop op) ,left ,right)
 		    `(,op ,left ,right)))))
 	  (else
-	   `(,op
-	       ,(j2s-scheme lhs mode return conf '(fixnum) 'integer)
-	       ,(j2s-scheme rhs mode return conf '(fixnum) 'integer)))))
+	   (binop lhs rhs mode return conf '(fixnum) 'integer
+	      (lambda (left right)
+		 `(,op ,left ,right))))))
       ((and (is-string? lhs) (is-string? rhs))
-       `(,(strop op)
-	 ,(j2s-scheme lhs mode return conf '(string) 'string)
-	 ,(j2s-scheme rhs mode return conf '(string) 'string)))
+       (binop lhs rhs mode return conf '(string) 'string
+	  (lambda (left right)
+	     `(,(strop op) ,left ,right))))
       ((memq 'integer hint)
        (binop lhs rhs mode return conf hint 'integer
 	  (lambda (left right)
@@ -2141,30 +2143,30 @@
 
    (cond
       ((and (is-uint32? lhs) (is-uint32? rhs) (type-uint32? type) (u32? conf))
-       (let ((scmlhs (j2s-scheme lhs mode return conf hint 'uint32))
-	     (scmrhs (j2s-scheme rhs mode return conf hint 'uint32)))
-	  `(,(u32op op) ,scmlhs ,scmrhs)))
+       (binop lhs rhs mode return conf hint 'uint32
+	  (lambda (left right)
+	     `(,(u32op op) ,left ,right))))
       ((or (and (is-int30? lhs) (is-int30? rhs) (type-int30? type))
 	   (and (m64? conf)
 		(is-integer? lhs) (is-integer? rhs) (type-integer? type)))
-       (let ((scmlhs (j2s-scheme lhs mode return conf hint type))
-	     (scmrhs (j2s-scheme rhs mode return conf hint 'type)))
-	  `(,(fxop op) ,scmlhs ,scmrhs)))
+       (binop lhs rhs mode return conf hint type
+	  (lambda (left right)
+	     `(,(fxop op) ,left ,right))))
       ((and (eq? op '+) 
 	    (or (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string)))
-       (let ((scmlhs (j2s-scheme lhs mode return conf hint type))
-	     (scmrhs (j2s-scheme rhs mode return conf hint type)))
-	  (cond
-	     ((and (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))
-	      `(js-jsstring-append ,scmlhs ,scmrhs))
-	     ((eq? (j2s-type lhs) 'string)
-	      `(js-jsstring-append
-		  ,scmlhs
-		  (js-tostring (js-toprimitive ,scmrhs 'any %this) %this)))
-	     (else
-	      `(js-jsstring-append
-		  (js-tostring (js-toprimitive ,scmlhs 'any %this) %this)
-		  ,scmrhs)))))
+       (binop lhs rhs mode return conf hint type
+	  (lambda (left right)
+	     (cond
+		((and (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))
+		 `(js-jsstring-append ,left ,right))
+		((eq? (j2s-type lhs) 'string)
+		 `(js-jsstring-append
+		     ,left
+		     (js-tostring (js-toprimitive ,right 'any %this) %this)))
+		(else
+		 `(js-jsstring-append
+		     (js-tostring (js-toprimitive ,left 'any %this) %this)
+		     ,right))))))
       ((or (memq 'integer hint) (type-integer? type))
        (binop lhs rhs mode return conf hint 'integer
 	  (lambda (left right)
@@ -2219,24 +2221,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-binop2 loc op type lhs rhs mode return conf hint::pair-nil totype)
    
-   (define (best-hint hints)
-      (when (pair? hints)
-	 (let loop ((hint (car hints))
-		    (hints (cdr hints)))
-	    (cond
-	       ((null? hints) (car hint))
-	       ((>fx (cdar hints) (cdr hint)) (loop (car hint) (cdr hints)))
-	       (else (loop hint (cdr hints)))))))
-   
-   (define (maybe-number? expr)
-      (let ((ty (j2s-type expr)))
-	 (or (memq ty '(any unknown)) (type-number? ty))))
-   
-   (define (atom? expr)
-      (or (number? expr) (string? expr) (boolean? expr)))
-   
-   
-
    (define (fxop op)
       (case op
 	 ((+ -)
@@ -2266,8 +2250,6 @@
 	      (symbol-append op 'u32))))
 	 (else
 	  (symbol-append op 'u32))))
-   
-   
 
    (define (rvar? scm js)
       (when (and (symbol? scm) (isa? js J2SRef))
@@ -2521,8 +2503,9 @@
 			      `(not ,test)
 			      test)))))
 	      (else
-	       (let ((res `(=fx ,(j2s-scheme lhs mode return conf '(fixnum) 'any)
-			      ,(j2s-scheme rhs mode return conf '(fixnum) 'any))))
+	       (let ((res (binop lhs rhs mode return conf '(fixnum) 'any
+			     (lambda (left right)
+				`(=fx ,left ,right)))))
 		  (if (memq op '(!= !==))
 		      `(not ,res)
 		      res)))))
@@ -2718,19 +2701,17 @@
 		    (if (pair? n)
 			(epairify loc n)
 			n)))
-		((type-uint32? typ)
+		((and (type-uint32? typ) (type-integer? type))
 		 (epairify loc
 		    `(negu32 ,expr)))
-		((type-int30? typ)
+		((and (type-int30? typ) (type-int30? type))
 		 (epairify loc
 		    `(negfx ,expr)))
 		((and (type-integer? typ)
+		      (type-integer? type)
 		      (=fx (config-get conf :long-size 0) 64))
 		 (epairify loc
 		    `(negfx ,expr)))
-		((type-number? typ)
-		 (epairify loc
-		    `(- ,expr)))
 		(else
 		 (epairify loc
 		    `(js-neg ,expr %this))))))
