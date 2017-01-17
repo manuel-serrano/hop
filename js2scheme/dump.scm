@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Dec 20 08:59:13 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Thu Jan 19 08:56:14 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
 ;*=====================================================================*/
@@ -35,10 +35,24 @@
 ;*    dump-info ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (dump-info this::J2SNode)
+   
+   (define (info this)
+      (cond
+	 ((and (pair? this) (null? (cdr this)))
+	  (cons (info (car this)) (info (cdr this))))
+	 ((list? this)
+	  (map info this))
+	 ((or (string? this) (symbol? this) (number? this) (boolean? this))
+	  this)
+	 ((or (char? this) (eq? this #unspecified))
+	  this)
+	 (else
+	  (format "[[~a]]" (typeof this)))))
+   
    (with-access::J2SNode this (%info)
       (if (or (>= (bigloo-debug) 3)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:info"))
-	  `(:%info ,(j2s->list %info))
+	  `(:%info ,(info %info))
 	  '())))
 
 ;*---------------------------------------------------------------------*/
@@ -135,9 +149,9 @@
 (define-generic (j2s->list this)
    `(,(string->symbol (typeof this))
      ,@(if (or (string? this) (symbol? this) (struct? this) (boolean? this)
-	       (number? this) (char? this))
-	   (list (format "~a" this))
-	   '())))
+               (number? this) (char? this))
+           (list (format "~a" this))
+           '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SStmt ...                                          */

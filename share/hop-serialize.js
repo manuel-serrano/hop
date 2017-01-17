@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:55:51 2007                          */
-/*    Last change :  Tue Jan 17 12:52:56 2017 (serrano)                */
+/*    Last change :  Sat Jan 21 08:18:52 2017 (serrano)                */
 /*    Copyright   :  2007-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HOP serialization (Bigloo compatible).                           */
@@ -234,7 +234,7 @@ function hop_bigloo_serialize_custom_object() {
        + hop_serialize_word( 2 )
        + hop_serialize_word( 0 );
 
-   var ctxdef = hop_serialize_context_key_se( item );
+   var ctxdef = hop_serialize_context_key_set( item );
 
    str += hop_bigloo_serialize_as_plist( item, item.__class__ );
    str += hop_serialize_word( hash );
