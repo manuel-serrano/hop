@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Apr 20 17:03:12 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Jan 17 09:07:03 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
 ;*=====================================================================*/
@@ -22,7 +22,9 @@
 
    (export j2s-use-stage
 	   j2s-dead-stage
-	   (generic use-count ::J2SNode inc::int)))
+	   (generic reset-use-count ::J2SNode)
+	   (generic use-count ::J2SNode inc::int)
+	   (filter-dead-declarations::pair-nil ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-use-stage ...                                                */
@@ -138,6 +140,28 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (usecnt)
 	 (set! usecnt (+fx inc usecnt))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    reset-use-count ::J2SNode ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-use-count this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    reset-use-count ::J2SRef ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-use-count this::J2SRef)
+   (with-access::J2SRef this (decl)
+      (reset-use-count decl))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    reset-use-count ::J2SDecl ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (reset-use-count this::J2SDecl)
+   (with-access::J2SDecl this (usecnt)
+      (set! usecnt 0))
    this)
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Wed Nov 16 11:33:47 2016 (serrano)                */
+;*    Last change :  Fri Dec 30 10:21:56 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -108,6 +108,31 @@
 (define-walk-method (j2s-find-init-blocks this::J2SBlock block fun)
    (with-access::J2SBlock this (nodes)
       (for-each (lambda (b) (j2s-find-init-blocks b this fun)) nodes)))
+
+;*---------------------------------------------------------------------*/
+;*    mark-init! ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (mark-init! n block fun)
+   (when (isa? n J2SSeq)
+      (with-access::J2SSeq n (nodes)
+	 (for-each (lambda (s)
+		      (when (isa? s J2SStmtExpr)
+			 (with-access::J2SStmtExpr s (expr)
+			    (when (isa? expr J2SInit)
+			       (with-access::J2SInit expr (lhs rhs)
+				  (when (isa? lhs J2SRef)
+				     (with-access::J2SRef lhs (decl)
+					(unless (or (j2s-let? decl) (j2s-param? decl))
+					   ;; skip let/const declarations
+					   (with-access::J2SDecl decl (%info)
+					      (if (isa? %info J2SNarrowInfo)
+						  (with-access::J2SNarrowInfo %info (narrowable)
+						     (set! narrowable #f))
+						  (set! %info
+						     (instantiate::J2SNarrowInfo
+							(deffun fun)
+							(defblock block)))))))))))))
+	    nodes))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-find-init-blocks ::J2SInit ...                               */

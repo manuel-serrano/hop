@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Nov 23 19:09:23 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Jan 17 09:16:43 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -106,6 +106,8 @@
 	   (js-equality? ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal? ::obj ::obj)
 	   (js-eq? ::obj ::obj)
+	   (inline js-eqil?::bool ::long ::obj)
+	   (inline js-eqir?::bool ::obj ::long)
 	   
 	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj ::obj)
 	   (%js-direct-eval ::obj ::bool ::JsGlobalObject ::obj ::JsObject)
@@ -1205,6 +1207,22 @@
       ((number? x) (and (number? y) (= x y)))
       ((js-jsstring? x) (and (js-jsstring? y) (js-jsstring=? x y)))
       (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-eqil? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-eqil? x y)
+   (cond
+      ((fixnum? y) (=fx x y))
+      ((flonum? y) (=fl (fixnum->flonum x) y))))
+
+;*---------------------------------------------------------------------*/
+;*    js-eqir? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (js-eqir? x y)
+   (cond
+      ((fixnum? x) (=fx x y))
+      ((flonum? x) (=fl x (fixnum->flonum y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-hss ...                                                      */

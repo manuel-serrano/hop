@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Dec 18 17:25:18 2016 (serrano)                */
+;*    Last change :  Fri Dec 30 07:20:04 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2256,7 +2256,8 @@
 	 (set! properties
 	    (append! properties (js-array-vector-properties arr %this)))
 	 (set! vec '#())
-	 (set! ilen #u32:0))
+	 (set! ilen #u32:0)
+	 (set! *JS-ARRAY-MARK* (+fx 1 *JS-ARRAY-MARK*)))
       arr))
 
 ;*---------------------------------------------------------------------*/

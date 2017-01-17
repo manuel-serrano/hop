@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Dec  2 15:42:05 2016 (serrano)                */
+;*    Last change :  Fri Dec 30 14:59:56 2016 (serrano)                */
 ;*    Copyright   :  2015-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -268,7 +268,7 @@
 		    (inits '()))
 	    (cond
 	       ((null? nodes)
-		(trace-item "" (map typeof inits) " " inits)
+		(trace-item "inits.1=" (map j2s->list inits))
 		(values '() inits))
 	       ((get-let-inits (car nodes) decls)
 		=>
@@ -276,7 +276,7 @@
 	       ((isa? (car nodes) J2SNop)
 		(loop (cdr nodes) inits))
 	       (else
-		(trace-item "" (map typeof inits) " " inits)
+		(trace-item "inits.2=" (map j2s->list inits))
 		(values nodes inits))))))
    
    (define (sort-inodes this::J2SLetBlock)

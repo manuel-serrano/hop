@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Dec 21 05:58:01 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Jan 17 09:29:28 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -147,6 +147,9 @@
       ((undefined) 'unspecified)
       ((regexp) 'JsRegExp)
       ((array) 'JsArray)
+      ((function) 'JsFunction)
+      ((date) 'JsDate)
+      ((string) 'obj)
       (else type)))
    
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Sat Jul  2 10:31:05 2016 (serrano)                */
+;*    Last change :  Fri Dec 30 08:53:38 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -59,12 +59,18 @@
 	 (fprintf (current-error-port) "~3d. ~a" count name))
       (when (procedure? before) (before ast))
       (let ((nast (proc ast args)))
-	 (when (and (>=fx (bigloo-debug) 1) (directory? tmp))
-	    (call-with-output-file
-		  (make-file-path tmp (string-replace name (file-separator) #\_))
-	       (lambda (p)
-		  (fprint p ";; " comment)
-		  (pp (j2s->list nast) p))))
+	 (when (directory? tmp)
+	    (let ((file (make-file-path tmp
+			   (string-replace name (file-separator) #\_))))
+	       (cond
+		  ((>=fx (bigloo-debug) 1)
+		   (call-with-output-file file
+		      
+		      (lambda (p)
+			 (fprint p ";; " comment)
+			 (pp (j2s->list nast) p))))
+		  ((file-exists? file)
+		   (delete-file file)))))
 	 (when (procedure? after) (after nast))
 	 (when (>=fx (j2s-verbose) 2) (newline (current-error-port)))
 	 nast)))

@@ -203,7 +203,7 @@ function letForAssigFun( n ) {
       f.push( function() { return i; } );
    }
 
-   for( let k = 0; i < f.length; i++ ) {
+   for( let k = 0; k < f.length; k++ ) {
       j += f[ k ]();
    }
 

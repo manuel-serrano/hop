@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Dec 22 08:00:48 2016 (serrano)                */
+;*    Last change :  Fri Dec 30 09:30:04 2016 (serrano)                */
 ;*    Copyright   :  2013-16 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -42,7 +42,8 @@
 	   __js2scheme_debug
 	   __js2scheme_stage
 	   __js2scheme_ecmascript5
-	   __js2scheme_cps)
+	   __js2scheme_cps
+	   __js2scheme_utils)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -301,7 +302,10 @@
 		     (if (string=? (input-port-name in) "[string]")
 			 "stdin"
 			 (input-port-name in)))))
-	 (opts (append args (j2s-compile-options))))
+	 (opts (let ((o (append args (j2s-compile-options))))
+		  (if (>=fx (config-get args :optim 0) 4)
+		      (cons* :optim-cast #t o)
+		      o))))
       (when (>=fx (bigloo-debug) 1) (make-directories tmp))
       (let ((ast (j2s-parser in opts)))
 	 (if (eof-object? ast)

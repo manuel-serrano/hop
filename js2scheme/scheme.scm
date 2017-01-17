@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Dec 28 06:35:17 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Jan 17 10:55:29 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -1929,6 +1929,14 @@
        `(eq? ,lhs ,rhs))
       ((!eq?)
        `(not (eq? ,lhs ,rhs)))
+      ((eqil?)
+       `(js-eqil? ,lhs ,rhs))
+      ((eqir?)
+       `(js-eqir? ,lhs ,rhs))
+      ((!eqil?)
+       `(not (js-eqil? ,lhs ,rhs)))
+      ((!eqir?)
+       `(not (js-eqir? ,lhs ,rhs)))
       ((<-)
        `(js<- ,lhs ,rhs %this))
       ((instanceof)
@@ -2150,9 +2158,13 @@
 	     ((and (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))
 	      `(js-jsstring-append ,scmlhs ,scmrhs))
 	     ((eq? (j2s-type lhs) 'string)
-	      `(js-jsstring-append ,scmlhs (js-tostring ,scmrhs %this)))
+	      `(js-jsstring-append
+		  ,scmlhs
+		  (js-tostring (js-toprimitive ,scmrhs 'any %this) %this)))
 	     (else
-	      `(js-jsstring-append (js-tostring ,scmlhs %this) ,scmrhs)))))
+	      `(js-jsstring-append
+		  (js-tostring (js-toprimitive ,scmlhs 'any %this) %this)
+		  ,scmrhs)))))
       ((or (memq 'integer hint) (type-integer? type))
        (binop lhs rhs mode return conf hint 'integer
 	  (lambda (left right)
@@ -2553,11 +2565,13 @@
 	  (else
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
-		 (let ((op (if (or (is-fixnum/conf? lhs)
-				   (is-fixnum/conf? rhs)
-				   (memq 'integer hint))
-			       (if (memq op '(== ===)) 'eq? '!eq?)
-			       op)))
+		 (let ((op (cond
+			      ((not (memq 'integer hint))
+			       op)
+			      ((is-fixnum/conf? lhs)
+			       (if (memq op '(== ===)) 'eqil? '!eqil?))
+			      ((is-fixnum/conf? rhs)
+			       (if (memq op '(== ===)) 'eqir? '!eqir?)))))
 		    (js-binop loc op left right)))))))
       ((/)
        (binop lhs rhs mode return conf hint 'any
@@ -2694,7 +2708,8 @@
 		    `(js-tonumber ,expr %this)))))
 	 ((-)
 	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
-	  (let ((expr (j2s-scheme expr mode return conf hint totype)))
+	  (let ((expr (j2s-scheme expr mode return conf hint totype))
+		(typ (j2s-type expr)))
 	     (cond
 		((eqv? expr 0)
 		 -0.0)
@@ -2703,17 +2718,17 @@
 		    (if (pair? n)
 			(epairify loc n)
 			n)))
-		((type-uint32? type)
+		((type-uint32? typ)
 		 (epairify loc
 		    `(negu32 ,expr)))
-		((type-int30? type)
+		((type-int30? typ)
 		 (epairify loc
 		    `(negfx ,expr)))
-		((and (type-integer? type)
+		((and (type-integer? typ)
 		      (=fx (config-get conf :long-size 0) 64))
 		 (epairify loc
 		    `(negfx ,expr)))
-		((type-number? type)
+		((type-number? typ)
 		 (epairify loc
 		    `(- ,expr)))
 		(else
@@ -4017,11 +4032,17 @@
 	    ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
 	     (array-ref obj field))
 	    ((and (eq? (j2s-type obj) 'array) (j2s-field-length? field))
-	     `(js-array-length
-		       ,(j2s-scheme obj mode return conf hint 'array)))
+	     (let ((x `(js-array-length
+			  ,(j2s-scheme obj mode return conf hint 'array))))
+		(if (eq? type 'index)
+		    x
+		    `(js-uint32->jsnum ,x))))
 	    ((and (eq? (j2s-type obj) 'string) (j2s-field-length? field))
-	     `(js-jsstring-codeunit-length
-		       ,(j2s-scheme obj mode return conf hint totype)))
+	     (let ((x `(js-jsstring-codeunit-length
+			  ,(j2s-scheme obj mode return conf hint totype))))
+		(if (eq? type 'index)
+		    x
+		    `(js-uint32->jsnum ,x))))
 	    (else
 	     (j2s-get loc (j2s-scheme obj mode return conf hint totype) (j2s-type obj)
 		(j2s-property-scheme field mode return conf)

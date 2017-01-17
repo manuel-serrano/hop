@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 16:36:28 2006                          */
-;*    Last change :  Mon Oct 31 07:58:56 2016 (serrano)                */
-;*    Copyright   :  2006-16 Manuel Serrano                            */
+;*    Last change :  Sun Jan  8 17:47:58 2017 (serrano)                */
+;*    Copyright   :  2006-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This file implements the service expanders. It is used both      */
 ;*    at compile-time and runtime-time.                                */
@@ -269,8 +269,8 @@
 		  (host #f)
 		  (port #f)
 		  (sync #f)
-		  (header #f)
-		  (auth #f))
+		  (auth #f)
+		  (header #f))
 	  (cond
 	     ((null? opts)
 	      (let ((nx (cond

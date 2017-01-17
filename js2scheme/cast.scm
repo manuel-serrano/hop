@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Dec 28 06:35:00 2016 (serrano)                */
+;*    Last change :  Fri Dec 30 09:25:25 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -52,7 +52,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-cast! this args)
    (when (isa? this J2SProgram)
-      (when (>=fx (config-get args :optim 0) 4)
+      (when (config-get args :optim-cast #f)
 	 ;; same optim condition as the RANGE stage
 	 (j2s-cast-program! this args))
       this))
@@ -163,7 +163,7 @@
 		       (cast this totype))
 		    this)))
 	  (begin
-	     (set! lhs (cast (type-cast! lhs totype fun) 'any))
+	     (set! lhs (type-cast! lhs totype fun))
 	     (set! rhs (cast (type-cast! rhs totype fun) 'any))
 	     this))))
 		
@@ -312,6 +312,15 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SNew ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SNew totype fun)
+   (with-access::J2SNew this (args clazz)
+      (set! args (map! (lambda (a) (cast (type-cast! a totype fun) 'any)) args))
+      (set! clazz (cast (type-cast! clazz totype fun) 'any))
+      this))
+
+;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SExpr ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-cast! this::J2SExpr totype fun)
@@ -320,8 +329,7 @@
 	   (isa? this J2SPragma)
 	   (isa? this J2SSequence)
 	   (isa? this J2SUnary)
-	   (isa? this J2SParen)
-	   (isa? this J2SNew))
+	   (isa? this J2SParen))
        (call-default-walker))
       ((or (isa? this J2SThis)
 	   (isa? this J2SLiteral)
