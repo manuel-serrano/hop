@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Tue Jul 26 15:41:20 2016 (serrano)                */
-;*    Copyright   :  2004-16 Manuel Serrano                            */
+;*    Last change :  Mon Jan 16 14:38:48 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
 ;*=====================================================================*/
@@ -326,7 +326,7 @@
 ;*    whose name start with "on" are event handlers!                   */
 ;*---------------------------------------------------------------------*/
 (define (xml-event-handler-attribute? keyword)
-   (substring-at? (keyword->string! keyword) "on" 0))
+   (substring-ci-at? (keyword->string! keyword) "on" 0))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-body ...                                                     */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Dec 28 06:28:02 2016 (serrano)                */
-;*    Copyright   :  2016 Manuel Serrano                               */
+;*    Last change :  Wed Jan 11 17:30:49 2017 (serrano)                */
+;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
 ;*=====================================================================*/
@@ -449,7 +449,7 @@
       ;; returns #t iff the function is duplicable, returns #f otherwise
       (with-access::J2SDeclFun this (val id %info)
 	 (with-access::J2SFun val (params vararg)
-	    (and (not (eq? %info 'duplicate))
+	    (and (not (isa? %info J2SDecl))
 		 (not (isa? %info FunHintInfo))
 		 (not vararg)
 		 (not (isa? val J2SSvc))
@@ -604,7 +604,7 @@
 	    (usecnt 1)
 	    (itype 'function)
 	    (utype 'function)
-	    (%info 'duplicate)
+	    (%info fun)
 	    (val (duplicate::J2SFun val
 		    (generator #f)
 		    (optimize #f)
@@ -653,7 +653,7 @@
 			    (binder 'const)
 			    (scope 'none)
 			    (usecnt 1)
-			    (%info 'duplicate)
+			    (%info fun)
 			    (itype 'function)
 			    (utype 'function)
 			    (val newfun))))

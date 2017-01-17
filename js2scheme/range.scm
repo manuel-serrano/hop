@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Dec 22 08:43:10 2016 (serrano)                */
+;*    Last change :  Fri Dec 30 09:25:21 2016 (serrano)                */
 ;*    Copyright   :  2016 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -55,7 +55,7 @@
 	       (lambda (ip)
 		  (set! *dump-stop* (read ip)))))))
    (when (isa? this J2SProgram)
-      (when (>=fx (config-get args :optim 0) 4)
+      (when (config-get args :optim-cast #f)
 	 ;; compute the integer value ranges, same condition as the CAST stage
 	 (j2s-range-program! this args)
 	 ;; allocate precise types according to the ranges

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Mon Oct 31 19:22:37 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Mon Jan 16 16:03:10 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
 /*=====================================================================*/
@@ -60,6 +60,10 @@ assert.equal( m.toFixed( 4 ), "0.0700" );
 
 var n = -0.07;
 assert.equal( n.toFixed( 4 ), "-0.0700" );
+
+var o = 0.9;
+assert.ok( 1.0 === o +  0.1, "float.eq" );
+assert.ok( 1 === o + 0.1, "float-int.eq" );
 
 /*---------------------------------------------------------------------*/
 /*    integer limits                                                   */

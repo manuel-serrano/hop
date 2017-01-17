@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 13 08:20:08 2016                          */
-;*    Last change :  Wed Dec 21 07:31:06 2016 (serrano)                */
-;*    Copyright   :  2016 Manuel Serrano                               */
+;*    Last change :  Tue Jan 17 08:59:03 2017 (serrano)                */
+;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic (overflow) expansion.                                 */
 ;*=====================================================================*/
@@ -66,23 +66,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    js*fx32 ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define-macro (js*fx32 x y)
-   (cond-expand
-      (bigloo-c
-       (set! fx-count (+fx 1 fx-count))
-       (let ((lbl (format "__fx32_~a" fx-count)))
-	  `(let* ((xl::long ,x)
-		  (y::obj ,y)
-		  (yl::long (pragma::long "(long)$1 - TAG_INT" y))
-		  (tmp::obj (pragma::obj "(obj_t)((long)$1 * (long)$2)" xl yl)))
-	      (pragma::void ,(format "asm goto ( \"jo %l0\" : : : : ~a )" lbl))
-	      (pragma::obj "$1 = (obj_t)((long)$1 + TAG_INT)" (pragma tmp))
-	      (pragma::void ,(format "goto ~a_ret" lbl))
-	      (pragma::void ,(format "~a: $1 = DOUBLE_TO_REAL( (long)($1) >> 2 )" lbl) tmp)
-	      (pragma ,(format "~a_ret:" lbl))
-	      tmp)))
-      (else
-       `((@ js*fx32 __hopscript_number) ,x ,y))))
+;* (define-macro (js*fx32 x y)                                         */
+;*    (cond-expand                                                     */
+;*       (bigloo-c                                                     */
+;*        (set! fx-count (+fx 1 fx-count))                             */
+;*        (let ((lbl (format "__fx32_~a" fx-count)))                   */
+;* 	  `(let* ((xl::long ,x)                                        */
+;* 		  (y::obj ,y)                                          */
+;* 		  (yl::long (pragma::long "(long)$1 - TAG_INT" y))     */
+;* 		  (tmp::obj (pragma::obj "(obj_t)((long)$1 * (long)$2)" xl yl))) */
+;* 	      (pragma::void ,(format "asm goto ( \"jo %l0\" : : : : ~a )" lbl)) */
+;* 	      (pragma::obj "$1 = (obj_t)((long)$1 + TAG_INT)" (pragma tmp)) */
+;* 	      (pragma::void ,(format "goto ~a_ret" lbl))               */
+;* 	      (pragma::void ,(format "~a: $1 = DOUBLE_TO_REAL( (long)($1) >> 2 )" lbl) tmp) */
+;* 	      (pragma ,(format "~a_ret:" lbl))                         */
+;* 	      tmp)))                                                   */
+;*       (else                                                         */
+;*        `((@ js*fx32 __hopscript_number) ,x ,y))))                   */
 
 ;* (define-macro (js*fx64 x y)                                         */
 ;*    (cond-expand                                                     */

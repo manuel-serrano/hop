@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sun Dec  4 18:23:26 2016 (serrano)                */
-;*    Copyright   :  2016 Manuel Serrano                               */
+;*    Last change :  Tue Jan 17 09:21:02 2017 (serrano)                */
+;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
 ;*=====================================================================*/
@@ -130,7 +130,6 @@
 ;*    alpha ::J2SDecl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SDecl)
-   (tprint "ALPHA DECL this=" (j2s->list this))
    (let* ((clazz (object-class this))
 	  (ctor (class-constructor clazz))
 	  (inst ((class-allocator clazz)))

@@ -106,7 +106,7 @@ function test() {
    } );
 
    req.on( 'response', function( result ) {
-      assert.ok( result.statusCode == 200 );
+      assert.ok( result.statusCode == 200, "statusCode" );
       result.on( 'data', function ( chunk ) {
 	 assert.ok( chunk.toString() == "OK" );
       });

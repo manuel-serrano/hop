@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Dec 21 07:28:36 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Mon Jan 16 15:45:54 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
 ;*=====================================================================*/
@@ -554,6 +554,12 @@
 	  (compile-file filename mod)
 	  (compile-url filename mod)))
 
+   (unless nodejs-debug-compile
+      (set! nodejs-debug-compile
+	 (if (string-contains (or (getenv "HOPTRACE") "") "nodejs:compile")
+	     'yes
+	     'no)))
+
    (synchronize compile-mutex
       (with-trace 'require "nodejs-compile"
 	 (trace-item "filename=" filename)
@@ -561,11 +567,15 @@
 	     (let* ((mod (gensym))
 		    (expr (compile filename mod))
 		    (evmod (eval-module)))
-;* 		(tprint "REMOVE HERE..." filename)                     */
-;* 		(call-with-output-file                                 */
-;* 		      (make-file-name "/tmp/LOG" (string-replace filename #\/ #\_)) */
-;* 		   (lambda (op)                                        */
-;* 		      (pp expr op)))                                   */
+		(when (eq? nodejs-debug-compile 'yes)
+		   (unless (directory? "/tmp/HOP")
+		      (make-directory "/tmp/HOP"))
+		   (tprint "nodejs-compile " filename
+		      " -> " (make-file-name "/tmp/HOP" (string-replace filename #\/ #\_)))
+		   (call-with-output-file
+			 (make-file-name "/tmp/HOP" (string-replace filename #\/ #\_))
+		      (lambda (op)
+			 (pp expr op))))
 		(trace-item "expr=" (format "~s" expr))
 		(unwind-protect
 		   (begin
@@ -574,6 +584,11 @@
 			 (hashtable-put! compile-table filename hopscript)
 			 hopscript))
 		   (eval-module-set! evmod)))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-debug-compile ...                                         */
+;*---------------------------------------------------------------------*/
+(define nodejs-debug-compile #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-cache ...                                               */
