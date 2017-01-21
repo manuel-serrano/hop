@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Jan 17 09:29:28 2017 (serrano)                */
+;*    Last change :  Wed Jan 18 08:08:33 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -139,7 +139,7 @@
 ;*---------------------------------------------------------------------*/
 (define (type-name type conf)
    (case type
-      ((unknown any number integer) 'obj)
+      ((unknown any number) 'obj)
       ((uint29 index uint32 length) 'uint32)
       ((int30 fixnum) 'long)
       ((integer int53) (if (=fx (config-get conf :long-size 0) 64) 'long 'obj))
@@ -150,6 +150,7 @@
       ((function) 'JsFunction)
       ((date) 'JsDate)
       ((string) 'obj)
+      ((null) 'nil)
       (else type)))
    
 ;*---------------------------------------------------------------------*/

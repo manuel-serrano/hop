@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Dec 10 05:59:15 2016 (serrano)                */
-;*    Copyright   :  2004-16 Manuel Serrano                            */
+;*    Last change :  Thu Jan 19 08:13:06 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -69,11 +69,15 @@
 		 (hop-verbose-set! (+fx 1 (hop-verbose)))
 		 (hop-verbose-set! (string->integer level))))
 	    (("-O?level" (help "Optimization level"))
-	     (if (string=? level "")
-		 (hopc-optim-level-set! 1)
-		 (hopc-optim-level-set! (string->integer level)))
+	     (cond
+		((string=? level "")
+		 (hopc-optim-level-set! 1))
+		((string=? level "x")
+		 (hopc-optim-level-set! 1000))
+		(else
+		 (hopc-optim-level-set! (string->integer level))))
 	     (hopc-bigloo-options-set!
-		(cons (format "-O~a" level) (hopc-bigloo-options))))
+		(cons (format "-O~a" (hopc-optim-level)) (hopc-bigloo-options))))
 	    (("-g?level" (help "Increase or set debug level"))
 	     (hopc-clientc-source-map-set! #t)
 	     (hopc-clientc-arity-check-set! #t)

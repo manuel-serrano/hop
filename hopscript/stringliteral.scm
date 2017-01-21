@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Dec 25 08:14:17 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Wed Jan 18 08:19:10 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
 ;*=====================================================================*/
@@ -806,7 +806,7 @@
 		    (badness (-fx -10 (*fx patlen 4))))
 	    (if (>fx i n)
 		-1
-		(let ((j (string-char-index-ur str c0 i (-fx n i))))
+		(let ((j (string-char-index-ur str c0 i (+fx 1 (-fx n i)))))
 		   (if (not j)
 		       -1
 		       (let liip ((k 1))
@@ -836,7 +836,7 @@
 		    (badness (-fx -10 (*fx patlen 4))))
 	    (if (>fx i n)
 		-1
-		(let ((j (string-char-index-ur str c0 i (-fx n i))))
+		(let ((j (string-char-index-ur str c0 i (+fx 1 (-fx n i)))))
 		   (if (not j)
 		       -1
 		       (let liip ((k 1))

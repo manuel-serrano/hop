@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jan 17 14:59:26 2017 (serrano)                */
+;*    Last change :  Wed Jan 18 14:29:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -90,10 +90,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    utype-ident ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (utype-ident ident utype conf)
-   (if (or (eq? utype 'any) (eq? utype 'unknown))
-       ident
-       (symbol-append ident '|::| (type-name utype conf))))
+(define (utype-ident ident utype conf #!optional compound)
+
+   (define (atomic-type? typ)
+      (memq typ '(uint29 index uint32 length number integer
+		  int30 int53 fixnum undefined bool null)))
+   (cond
+      ((or (eq? utype 'any) (eq? utype 'unknown))
+       ident)
+      ((or compound (atomic-type? utype))
+       (symbol-append ident '|::| (type-name utype conf)))
+      (else
+       ident)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast ...                                                         */
@@ -1775,10 +1783,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SLetBlock mode return conf hint totype)
    
-   (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return conf)
+   (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return conf singledecl)
       (with-access::J2SDeclInit d (val usage id utype ronly)
 	 (let* ((ident (j2s-decl-scheme-id d))
-		(var (if ronly (utype-ident ident utype conf) ident)))
+		(var (if ronly (utype-ident ident utype conf singledecl) ident)))
 	    (cond
 	       ((or (not (isa? val J2SFun)) (isa? val J2SSvc) (memq 'assig usage))
 		(list `(,var ,(j2s-scheme val mode return conf hint utype))))
@@ -1823,7 +1831,8 @@
 				       (cond
 					  ((j2s-let-opt? d)
 					   (j2s-let-decl-inner d
-					      mode return conf))
+					      mode return conf
+					      (null? (cdr decls))))
 					  ((isa? d J2SDeclFun)
 					   (j2s-scheme d mode return conf hint totype))
 					  (else
@@ -2146,9 +2155,7 @@
        (binop lhs rhs mode return conf hint 'uint32
 	  (lambda (left right)
 	     `(,(u32op op) ,left ,right))))
-      ((or (and (is-int30? lhs) (is-int30? rhs) (type-int30? type))
-	   (and (m64? conf)
-		(is-integer? lhs) (is-integer? rhs) (type-integer? type)))
+      ((and (is-int30? lhs) (is-int30? rhs) (or (type-int30? type) (m64? conf)))
        (binop lhs rhs mode return conf hint type
 	  (lambda (left right)
 	     `(,(fxop op) ,left ,right))))
@@ -2221,42 +2228,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-binop2 loc op type lhs rhs mode return conf hint::pair-nil totype)
    
-   (define (fxop op)
-      (case op
-	 ((+ -)
-	  (case (config-get conf :long-size 0)
-	     ((32)
-	      (case op
-		 ((+ -)
-		  (symbol-append op 'fx32))
-		 (else
-		  (symbol-append op 'fx))))
-	     (else
-	      (symbol-append op 'fx))))
-	 (else
-	  (symbol-append op 'fx))))
-
-   (define (u32op op)
-      (case op
-	 ((+ -)
-	  (case (config-get conf :long-size 0)
-	     ((32)
-	      (case op
-		 ((+ -)
-		  (symbol-append op 'u3232))
-		 (else
-		  (symbol-append op 'u32))))
-	     (else
-	      (symbol-append op 'u32))))
-	 (else
-	  (symbol-append op 'u32))))
-
-   (define (rvar? scm js)
-      (when (and (symbol? scm) (isa? js J2SRef))
-	 (with-access::J2SRef js (decl)
-	    (with-access::J2SDecl decl (ronly)
-	       ronly))))
-
    (define (j2s-aref-length? expr::J2SExpr)
       (when (isa? expr J2SAccess)
 	 (with-access::J2SAccess expr (obj field)

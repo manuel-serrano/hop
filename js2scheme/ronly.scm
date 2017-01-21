@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Tue Jan 17 13:58:56 2017 (serrano)                */
+;*    Last change :  Wed Jan 18 14:45:54 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -149,7 +149,15 @@
    (with-access::J2SVarDecls this (decls)
       (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) decls)
       (call-next-method)))
-		   
+
+;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SFun ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SFun mode::symbol)
+   (with-access::J2SFun this (params)
+      (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) params)
+      (call-next-method)))
+
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    ronly! ::J2SLetInit ...                                          *} */
 ;* {*---------------------------------------------------------------------*} */

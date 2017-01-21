@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Dec 30 08:39:36 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Wed Jan 18 14:53:13 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -178,6 +178,7 @@
 		  :hopscript-header (hopc-js-header)
 		  :type-annotations (hopc-js-type-annotations)
 		  :optim (hopc-optim-level)
+		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
 		  :debug (bigloo-debug)))))
       
@@ -202,6 +203,7 @@
 		  :hopscript-header (hopc-js-header)
 		  :type-annotations (hopc-js-type-annotations)
 		  :optim (hopc-optim-level)
+		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
 		  :debug (bigloo-debug)))))
       
@@ -313,6 +315,7 @@
 			:hopscript-header (hopc-js-header)
 			:type-annotations (hopc-js-type-annotations)
 			:optim (hopc-optim-level)
+			:verbose (hop-verbose)
 			:long-size (hopc-long-size)
 			:debug (bigloo-debug))))
 	       file

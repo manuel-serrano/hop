@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Jan 17 14:14:28 2017 (serrano)                */
+;*    Last change :  Thu Jan 19 09:21:09 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -49,33 +49,44 @@
 ;*    j2s-type-program! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2s-type-program! this::J2SProgram args)
+
+   (define j2s-verbose
+      (let ((l (memq :verbose args)))
+	 (if (pair? l)
+	     (cadr l)
+	     0)))
+
    (with-access::J2SProgram this (headers decls nodes)
-      (when (>=fx (bigloo-debug) 4) (display " " (current-error-port)))
-      (let optim-loop ()
+      (when (>=fx j2s-verbose 4) (display " " (current-error-port)))
+      (let optim-loop ((j 1))
 	 (let ((fix (make-cell 0)))
-	    (let loop ((i 0))
+	    (let loop ((i j))
+	       (when (>=fx j2s-verbose 4)
+		  (fprintf (current-error-port) "~a." i)
+		  (flush-output-port (current-error-port)))
 	       (let ((ofix (cell-ref fix)))
 		  ;; type all the nodes
 		  (typing-seq (append headers decls nodes) '() #f fix)
 		  (when (>=fx (config-get args :optim 0) 2)
 		     ;; type check resolution
-		     (j2s-resolve! this args fix)
-		     (when (j2s-hint! this args)
-			(unfix! fix "j2s-hint")))
+		     (j2s-resolve! this args fix))
 		  (if (=fx (cell-ref fix) ofix)
-		      (when (>=fx (bigloo-debug) 4)
-			 (fprintf (current-error-port) "~a." i)
-			 (flush-output-port (current-error-port)))
+		      (when (>=fx (config-get args :optim 0) 1000)
+			 (when (>=fx j2s-verbose 4)
+			    (fprintf (current-error-port) "hint."))
+			 (if (j2s-hint! this args)
+			     (loop (+fx i 1))
+			     (set! j i)))
 		      (loop (+fx i 1))))))
 	 (unless (config-get args :optim-cast)
 	    (unindex! this))
 	 (let ((fix (make-cell #f)))
 	    (for-each (lambda (n) (utype-ronly! n fix)) decls)
 	    (for-each (lambda (n) (utype-ronly! n fix)) nodes)
-	    (when (and (cell-ref fix) (>=fx (config-get args :optim 0) 4))
+	    (when (and (cell-ref fix) (>=fx (config-get args :optim 0) 1000))
 	       (for-each reset-type! decls)
 	       (for-each reset-type! nodes)
-	       (optim-loop))))
+	       (optim-loop (+fx j 1)))))
       ;; cleanup the ast use count and remove obviously useless definitions
       (program-cleanup! this))
    this)
@@ -177,8 +188,12 @@
    [assert (ty) (memq ty '(unknown any scm cmap void object global function
 			   number integer index u8 string scmstring regexp
 			   undefined null bool date array u8array tilde))]
-   (with-access::J2SExpr this (type)
+   (with-access::J2SExpr this (type %info)
       (unless (or (eq? ty 'unknown) (eq? type ty) (eq? type 'any))
+	 (unless (eq? ty 'any)
+	    (if (list? %info)
+		(set! %info (add-type %info ty))
+		(set! %info (list ty))))
 	 (let ((ntype (merge-types type ty)))
 	    (unless (eq? ntype type)
 	       (unfix! fix
@@ -199,6 +214,29 @@
       ((and (eq? left 'number) (type-integer? right)) 'number)
       ((and (eq? left 'number) (eq? right 'index)) 'number)
       (else 'any)))
+
+;*---------------------------------------------------------------------*/
+;*    add-types ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (add-types::pair-nil left::pair-nil right::pair-nil)
+   (delete-duplicates! (append left right)))
+
+;*---------------------------------------------------------------------*/
+;*    add-type ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (add-type::pair-nil types::pair-nil type::symbol)
+   (if (memq type types) types (cons type types)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-all-types ...                                                */
+;*---------------------------------------------------------------------*/
+(define (j2s-all-types::pair-nil node)
+   (cond
+      ((isa? node J2SExpr)
+       (with-access::J2SExpr node (%info)
+	  (if (pair? %info) %info '())))
+      (else
+       '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    typnum? ...                                                      */
@@ -237,24 +275,6 @@
 			(unless (eq? typm 'unknown)
 			   (cons decl typm))))
 	 env1))
-   
-   (merge2 right (merge2 left right)))
-
-(define (env-merge/debug::pair-nil left::pair-nil right::pair-nil)
-   
-   (define (merge2 env1 env2)
-      (filter-map (lambda (entry)
-		     (let* ((decl (car entry))
-			    (typl (cdr entry))
-			    (typf (env-lookup env2 decl))
-			    (typm (merge-types typl typf)))
-			(unless (eq? typm 'unknown)
-			   (cons decl typm))))
-	 env1))
-
-   (tprint "left =" (dump-env left))
-   (tprint "right=" (dump-env right))
-   (tprint "merge=" (dump-env (merge2 right (merge2 left right))))
    
    (merge2 right (merge2 left right)))
 
@@ -540,16 +560,6 @@
 	       (else
 		;; a non variable assinment
 		(expr-type-set! this envr fix tyr bkr)))))))
-;*                                                                     */
-;*    (with-access::J2SPostfix this (lhs rhs)                          */
-;*       (tprint ">>> POSTFIX=" (j2s->list this))                      */
-;*       (multiple-value-bind (tyl envl bkl)                           */
-;* 	 (typing lhs env fun fix)                                      */
-;* 	 (multiple-value-bind (typ envp bke)                           */
-;* 	    (call-next-method)                                         */
-;* 	    (unless (eq? typ tyl)                                      */
-;* 	       (unfix! fix (format "js2-postfix ~a/~a" typ tyl)))      */
-;* 	    (expr-type-set! this envp fix tyl bkl)))))                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SPrefix ...                                           */
@@ -592,7 +602,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SFun env::pair-nil fun fix::cell)
    (with-access::J2SFun this (body params rtype)
-      (let ((envp (filter-map (lambda (p)
+      ;; %info is used to filter out hint types (see hint.scm)
+      (for-each (lambda (p::J2SDecl)
+		   (with-access::J2SDecl p (%info)
+		      (unless (list? %info)
+			 (set! %info '()))))
+	 params)
+      (let ((envp (filter-map (lambda (p::J2SDecl)
 				 (with-access::J2SDecl p (itype utype usage)
 				    (cond
 				       ((eq? usage 'rest)
@@ -615,14 +631,17 @@
 	 (let loop ((params params)
 		    (args args))
 	    (when (pair? params)
-	       (with-access::J2SDecl (car params) (itype usage)
+	       (with-access::J2SDecl (car params) (itype usage %info)
 		  (cond
 		     ((and (null? (cdr params)) (memq 'rest usage))
+		      (set! %info (add-type %info 'array))
 		      (set! itype (merge-types itype 'array)))
 		     ((null? args)
+		      (set! %info (add-type %info 'undefined))
 		      (set! itype (merge-types itype 'undefined))
 		      (loop (cdr params) '()))
 		     (else
+		      (set! %info (add-types %info (j2s-all-types (car args))))
 		      (set! itype (merge-types itype (j2s-type (car args))))
 		      (loop (cdr params) (cdr args)))))))
 	 (expr-type-set! this env fix rtype bk)))
@@ -1161,7 +1180,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SNode ...                                           */
 ;*    -------------------------------------------------------------    */
-;*    Tries to resolve statically type checks using type information   */
+;*    Try to resolve statically type check using type informations     */
 ;*    computed by the TYPING method.                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SNode fix::cell)

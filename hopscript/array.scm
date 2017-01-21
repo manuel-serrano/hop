@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Dec 30 07:20:04 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Fri Jan 20 13:55:53 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -474,7 +474,11 @@
 ;*    js-array-ref ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (js-array-ref arr::JsArray idx %this)
-   (if (and (fixnum? idx) (>=fx idx 0))
+   (if (cond-expand
+	  ((or bint30 bint32)
+	   (and (fixnum? idx) (>=fx idx 0)))
+	  (else
+	   (and (fixnum? idx) (>=fx idx 0) (<=fx idx (-fx (bit-lsh 1 32) 2)))))
        (js-array-index-ref arr (fixnum->uint32 idx) %this)
        (js-get arr idx %this)))
 
@@ -1404,6 +1408,7 @@
 		(loop (-fx k 1))))))
 
       (define (array-lastindexof::int arr k::long)
+	 (tprint "array-lio=" k)
 	 (let loop ((k k))
 	    (cond
 	       ((<fx k 0)
