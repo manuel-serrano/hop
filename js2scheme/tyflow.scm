@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Jan 19 09:21:09 2017 (serrano)                */
+;*    Last change :  Sat Jan 21 07:16:54 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -188,12 +188,8 @@
    [assert (ty) (memq ty '(unknown any scm cmap void object global function
 			   number integer index u8 string scmstring regexp
 			   undefined null bool date array u8array tilde))]
-   (with-access::J2SExpr this (type %info)
+   (with-access::J2SExpr this (type)
       (unless (or (eq? ty 'unknown) (eq? type ty) (eq? type 'any))
-	 (unless (eq? ty 'any)
-	    (if (list? %info)
-		(set! %info (add-type %info ty))
-		(set! %info (list ty))))
 	 (let ((ntype (merge-types type ty)))
 	    (unless (eq? ntype type)
 	       (unfix! fix
@@ -214,29 +210,6 @@
       ((and (eq? left 'number) (type-integer? right)) 'number)
       ((and (eq? left 'number) (eq? right 'index)) 'number)
       (else 'any)))
-
-;*---------------------------------------------------------------------*/
-;*    add-types ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (add-types::pair-nil left::pair-nil right::pair-nil)
-   (delete-duplicates! (append left right)))
-
-;*---------------------------------------------------------------------*/
-;*    add-type ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (add-type::pair-nil types::pair-nil type::symbol)
-   (if (memq type types) types (cons type types)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-all-types ...                                                */
-;*---------------------------------------------------------------------*/
-(define (j2s-all-types::pair-nil node)
-   (cond
-      ((isa? node J2SExpr)
-       (with-access::J2SExpr node (%info)
-	  (if (pair? %info) %info '())))
-      (else
-       '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    typnum? ...                                                      */
@@ -602,12 +575,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SFun env::pair-nil fun fix::cell)
    (with-access::J2SFun this (body params rtype)
-      ;; %info is used to filter out hint types (see hint.scm)
-      (for-each (lambda (p::J2SDecl)
-		   (with-access::J2SDecl p (%info)
-		      (unless (list? %info)
-			 (set! %info '()))))
-	 params)
       (let ((envp (filter-map (lambda (p::J2SDecl)
 				 (with-access::J2SDecl p (itype utype usage)
 				    (cond
@@ -631,17 +598,14 @@
 	 (let loop ((params params)
 		    (args args))
 	    (when (pair? params)
-	       (with-access::J2SDecl (car params) (itype usage %info)
+	       (with-access::J2SDecl (car params) (itype usage)
 		  (cond
 		     ((and (null? (cdr params)) (memq 'rest usage))
-		      (set! %info (add-type %info 'array))
 		      (set! itype (merge-types itype 'array)))
 		     ((null? args)
-		      (set! %info (add-type %info 'undefined))
 		      (set! itype (merge-types itype 'undefined))
 		      (loop (cdr params) '()))
 		     (else
-		      (set! %info (add-types %info (j2s-all-types (car args))))
 		      (set! itype (merge-types itype (j2s-type (car args))))
 		      (loop (cdr params) (cdr args)))))))
 	 (expr-type-set! this env fix rtype bk)))

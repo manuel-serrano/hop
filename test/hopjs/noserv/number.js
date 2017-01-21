@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Mon Jan 16 16:03:10 2017 (serrano)                */
+/*    Last change :  Mon Jan 16 18:59:15 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -81,4 +81,4 @@ function foo( b ) {
   return ((b[0]) | (b[1] << 8) | (b[2] << 16)) + (b[3] * 0x1000000);
 }
 
-assert.ok( foo( b, 0 ) === 0xFFFFFFFF, "maxint" );
+assert.ok( foo( b ) === 0xFFFFFFFF, "maxint" );
