@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jan 18 14:29:14 2017 (serrano)                */
+;*    Last change :  Tue Jan 24 10:13:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -95,10 +95,11 @@
    (define (atomic-type? typ)
       (memq typ '(uint29 index uint32 length number integer
 		  int30 int53 fixnum undefined bool null)))
+
    (cond
       ((or (eq? utype 'any) (eq? utype 'unknown))
        ident)
-      ((or compound (atomic-type? utype))
+      (compound
        (symbol-append ident '|::| (type-name utype conf)))
       (else
        ident)))
@@ -590,8 +591,7 @@
 	 (epairify loc
 	    (if (memq scope '(global))
 		`(define ,(j2s-decl-scheme-id this) (js-make-let))
-		(let* ((id (j2s-decl-scheme-id this))
-		       (var (if ronly (utype-ident id utype conf) id)))
+		(let ((var (j2s-decl-scheme-id this)))
 		   `(,var (js-make-let)))))))
    
    (cond
@@ -967,14 +967,18 @@
 ;*    j2s-unresolved ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (j2s-unresolved name cache throw)
-   (if cache
+   (cond
+      ((eq? name 'undefined)
+       `(js-undefined))
+      (cache
        `(js-global-object-get-name/cache ,j2s-unresolved-get-workspace ',name
 	   ,(pcache cache)
 	   ,(if (pair? throw) `',throw throw)
-	   %this)
+	   %this))
+      (else
        `(js-global-object-get-name ,j2s-unresolved-get-workspace ',name
 	   ,(if (pair? throw) `',throw throw)
-	   %this)))
+	   %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-put! ...                                          */
@@ -2051,7 +2055,11 @@
 	  #f)))
    
    (define (atom? expr)
-      (or (number? expr) (string? expr) (boolean? expr)))
+      (or (number? expr)
+	  (string? expr)
+	  (boolean? expr)
+	  (equal? expr '(js-undefined))
+	  (equal? expr '(js-null))))
    
    (let* ((scmlhs (j2s-scheme lhs mode return conf hint optype))
 	  (scmrhs (j2s-scheme rhs mode return conf hint optype))
@@ -2516,6 +2524,17 @@
 		 (if (memq op '(!= !==))
 		     `(not (eq? ,left ,right))
 		     `(eq? ,left ,right)))))
+	  ((or (memq (j2s-type lhs) '(undefined null))
+	       (memq (j2s-type rhs) '(undefined null)))
+	   (binop lhs rhs mode return conf '(bool) 'any
+	      (lambda (left right)
+		 (case op
+		    ((!==)
+		     `(not (eq? ,left ,right)))
+		    ((===)
+		     `(eq? ,left ,right))
+		    (else
+		     (js-binop loc op left right))))))
 	  (else
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
@@ -2525,7 +2544,9 @@
 			      ((is-fixnum/conf? lhs)
 			       (if (memq op '(== ===)) 'eqil? '!eqil?))
 			      ((is-fixnum/conf? rhs)
-			       (if (memq op '(== ===)) 'eqir? '!eqir?)))))
+			       (if (memq op '(== ===)) 'eqir? '!eqir?))
+			      (else
+			       op))))
 		    (js-binop loc op left right)))))))
       ((/)
        (binop lhs rhs mode return conf hint 'any
@@ -3986,13 +4007,13 @@
 	    ((and (eq? (j2s-type obj) 'array) (j2s-field-length? field))
 	     (let ((x `(js-array-length
 			  ,(j2s-scheme obj mode return conf hint 'array))))
-		(if (eq? type 'index)
+		(if (memq type '(index uint32 length))
 		    x
 		    `(js-uint32->jsnum ,x))))
 	    ((and (eq? (j2s-type obj) 'string) (j2s-field-length? field))
 	     (let ((x `(js-jsstring-codeunit-length
 			  ,(j2s-scheme obj mode return conf hint totype))))
-		(if (eq? type 'index)
+		(if (memq type '(index uint32 length))
 		    x
 		    `(js-uint32->jsnum ,x))))
 	    (else

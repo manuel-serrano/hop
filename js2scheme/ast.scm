@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec 20 08:04:51 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Mon Jan 23 10:53:48 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -392,7 +392,8 @@
 
 	   (j2s-type ::obj)
 
-	   (j2s-expr-type-test ::J2SExpr))
+	   (j2s-expr-type-test ::J2SExpr)
+	   (class-of ::J2SExpr))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -1116,6 +1117,21 @@
        'void)))
 
 ;*---------------------------------------------------------------------*/
+;*    class-of ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    Used to find the class of an X instanceof Y expression.          */
+;*---------------------------------------------------------------------*/
+(define (class-of rhs::J2SExpr)
+   (when (isa? rhs J2SUnresolvedRef))
+   (with-access::J2SUnresolvedRef rhs (id)
+      (case id
+	 ((Array) 'array)
+	 ((Argument) 'argument)
+	 ((Date) 'date)
+	 ((RegExp) 'regexp)
+	 ((Object) 'object))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-expr-type-test ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Is an expression a type test. If it is returns                   */
@@ -1135,7 +1151,13 @@
 	 (else op)))
    
    (define (not-op op)
-      (if (eq? op '==) '!= '==))
+      (case op
+	 ((==) '!=)
+	 ((===) '!==)
+	 ((!=) '=)
+	 ((!==) '==)
+	 ((instanceof) '!instanceof)
+	 (else (error "j2s-expr-type-test" "Unknown op" op))))
    
    (define (typeof op expr str)
       (when (isa? expr J2SUnary)
@@ -1147,14 +1169,23 @@
    
    (define (binary-type-test expr)
       (with-access::J2SBinary expr (op lhs rhs)
-	 (when (memq op '(== === != !==))
-	    (cond
-	       ((isa? lhs J2SString)
-		(typeof op rhs lhs))
-	       ((isa? rhs J2SString)
-		(typeof op lhs rhs))
-	       (else
-		#f)))))
+	 (case op
+	    ((== === != !==)
+	     (cond
+		((isa? lhs J2SString)
+		 (typeof op rhs lhs))
+		((isa? rhs J2SString)
+		 (typeof op lhs rhs))
+		(else
+		 #f)))
+	    ((instanceof)
+	     (when (isa? lhs J2SRef)
+		(let ((typ (class-of rhs)))
+		   (when typ
+		      (with-access::J2SRef lhs (decl)
+			 (values 'instanceof decl typ lhs))))))
+	    (else
+	     #f))))
    
    (define (unary-type-test expr)
       (with-access::J2SUnary expr (op expr)

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec 30 09:25:25 2016 (serrano)                */
-;*    Copyright   :  2016 Manuel Serrano                               */
+;*    Last change :  Sun Jan 22 16:54:26 2017 (serrano)                */
+;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
 ;*    -------------------------------------------------------------    */
@@ -78,7 +78,7 @@
 (define (need-cast? type totype)
 
    (define (jstype? type)
-      (memq type '(integer object function array string)))
+      (memq type '(integer object function array string undefined)))
    
    (cond
       ((eq? type totype) #f)
