@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jan 20 13:55:53 2017 (serrano)                */
+;*    Last change :  Fri Jan 20 14:56:08 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1396,7 +1396,7 @@
    ;; lastIndexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.15
    (define (array-prototype-lastindexof this::obj el . indx)
-
+      
       (define (vector-lastindexof::int arr vec k::long)
 	 (let loop ((k k))
 	    (cond
@@ -1406,43 +1406,44 @@
 		k)
 	       (else
 		(loop (-fx k 1))))))
-
-      (define (array-lastindexof::int arr k::long)
-	 (tprint "array-lio=" k)
+      
+      (define (array-lastindexof::int arr k::uint32)
 	 (let loop ((k k))
 	    (cond
-	       ((<fx k 0)
-		-1)
 	       ((let ((name (js-toname k %this)))
 		   (and (js-has-property arr name %this)
 			(js-strict-equal? (js-get arr name %this) el)))
-		k)
+		(uint32->integer k))
+	       ((=u32 k #u32:0)
+		-1)
 	       (else
-		(loop (-fx k 1))))))
-
+		(loop (-u32 k #u32:1))))))
+      
+      (define (lastindexof::int o::JsObject k::uint32)
+	 (if (isa? o JsArray)
+	     (with-access::JsArray o (vec ilen)
+		(if (and (js-array-full-inlined? o) (<u32 k ilen))
+		    (vector-lastindexof o vec
+		       (minfx (uint32->fixnum k)
+			  (uint32->fixnum (-u32 ilen #u32:1))))
+		    (array-lastindexof o k)))
+	     (array-lastindexof o k)))
+      
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-touint32 (js-get-length o #f %this) %this)))
 	 (if (=u32 len #u32:0)
 	     -1
-	     (let* ((n (if (pair? indx)
-			   (js-tointeger (car indx) %this)
-			   (uint32->integer (-u32 len #u32:1))))
-		    (k (if (< n 0)
-			   (let ((absn (abs n)))
-			      (if (>uint32 len absn)
-				  (uint32->integer (-u32 len (->uint32 (abs n))))
-				  -1))
-			   (if (>=uint32 (-u32 len #u32:1) n)
-			       n
-			       (uint32->integer (-u32 len #u32:1))))))
-		(if (isa? o JsArray)
-		    (with-access::JsArray o (vec ilen)
-		       (if (and (js-array-full-inlined? o) (>= k 0))
-			   (vector-lastindexof o vec
-			      (minfx (->fixnum k)
-				 (uint32->fixnum (-u32 ilen #u32:1))))
-			   (array-lastindexof o (->fixnum k))))
-		    (array-lastindexof o (->fixnum k)))))))
+	     (let ((n (if (pair? indx)
+			  (js-tointeger (car indx) %this)
+			  (uint32->integer (-u32 len #u32:1)))))
+		(if (< n 0)
+		    (let ((absn (abs n)))
+		       (if (>uint32 len absn)
+			   (lastindexof o (-u32 len (->uint32 (abs n))))
+			   -1))
+		    (if (>=uint32 (-u32 len #u32:1) n)
+			(lastindexof o (->uint32 n))
+			(lastindexof o (-u32 len #u32:1))))))))
 
    (js-bind! %this js-array-prototype 'lastIndexOf
       :value (js-make-function %this array-prototype-lastindexof 1 'lastIndexOf

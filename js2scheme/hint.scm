@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Thu Jan 19 08:46:09 2017 (serrano)                */
+;*    Last change :  Mon Jan 23 10:48:09 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -181,7 +181,7 @@
 	     ((not (eq? (j2s-type rhs) 'any))
 	      (j2s-hint lhs (list (j2s-type rhs)) numctx))))
 	 ((instanceof)
-	  (j2s-hint lhs '(object) 'number)
+	  (j2s-hint lhs (list (or (class-of rhs) 'object)) 'number)
 	  (j2s-hint rhs '(function) 'number))
 	 (else
 	  (call-default-walker)))))
@@ -478,11 +478,7 @@
        (with-access::J2SDeclFun this (val %info)
 	  (with-access::J2SFun val (params body idthis)
 	     (let* ((htypes (map (lambda (p)
-				    (with-access::J2SDecl p (hint itype %info)
-				       (with-access::J2SDeclFun this (id)
-					  (tprint "F=" id " "
-					     (j2s->list p) " hint=" hint
-					     " itype=" itype " %info=" %info))
+				    (with-access::J2SDecl p (hint itype)
 				       (best-hint-type hint)))
 			       params))
 		    (itypes (map (lambda (p::J2SDecl)

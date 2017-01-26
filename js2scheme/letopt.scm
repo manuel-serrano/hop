@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Dec 30 14:59:56 2016 (serrano)                */
-;*    Copyright   :  2015-16 Manuel Serrano                            */
+;*    Last change :  Sun Jan 22 18:38:28 2017 (serrano)                */
+;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
@@ -282,7 +282,7 @@
    (define (sort-inodes this::J2SLetBlock)
       (with-trace 'j2s-letopt "sort-inodes"
 	 ;; sort the declarations list (move uninitialized and functions
-	 ;; upfront) and returns the list of sortted inits statement
+	 ;; upfront) and returns the list of sortted init statements
 	 (with-access::J2SLetBlock this (nodes decls loc)
 	    ;; extracts the initialization nodes
 	    (multiple-value-bind (rests inits)

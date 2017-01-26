@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Jan 18 08:08:33 2017 (serrano)                */
+;*    Last change :  Mon Jan 23 09:36:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -157,24 +157,26 @@
 ;*    minimal-type ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (minimal-type utype type)
-   (case utype
-      ((uint29)
-       type)
-      ((index)
-       (if (memq type '(uint29)) utype type))
-      ((length)
-       (if (memq type '(uint29 index)) utype type))
-      ((uint32)
-       (if (memq type '(uint29 index length)) utype type))
-      ((int30 fixnum)
-       (if (memq type '(uint29))
-	   utype
-	   (if (type-integer? type) 'integer 'number)))
-      ((integer)
-       (if (type-integer? type) 'integer 'number))
-      ((number)
-       (if (type-number? type) 'number 'any))
-      (else 'any)))
+   (if (eq? utype type)
+       utype
+       (case utype
+	  ((uint29)
+	   type)
+	  ((index)
+	   (if (memq type '(uint29)) utype type))
+	  ((length)
+	   (if (memq type '(uint29 index)) utype type))
+	  ((uint32)
+	   (if (memq type '(uint29 index length)) utype type))
+	  ((int30 fixnum)
+	   (if (memq type '(uint29))
+	       utype
+	       (if (type-integer? type) 'integer 'number)))
+	  ((integer)
+	   (if (type-integer? type) 'integer 'number))
+	  ((number)
+	   (if (type-number? type) 'number 'any))
+	  (else 'any))))
 
 ;*---------------------------------------------------------------------*/
 ;*    max-type ...                                                     */
