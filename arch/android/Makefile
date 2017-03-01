@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Tue Jan 10 17:47:04 2017 (serrano)                */
+#*    Last change :  Wed Mar  1 16:41:12 2017 (serrano)                */
 #*    Copyright   :  2010-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -76,7 +76,8 @@ HOPFULLNAME = hop-$(HOPRELEASE)$(HOPMINOR)
 #*    Sources                                                          */
 #*---------------------------------------------------------------------*/
 ANDROID_BUILD = Android.mk.in build.xml.in project.properties.in hop.keystore \
-  AndroidManifest.xml.in local.properties.in ant.properties.in proguard.cfg
+  AndroidManifest.xml.in local.properties.in ant.properties.in proguard.cfg \
+  README.md
 
 ANDROID_JNI = jni/Android.mk jni/termExec.cpp
 
@@ -120,6 +121,7 @@ ANDROID_RES = res/drawable/logo.png \
   res/layout/main.xml \
   res/layout/about.xml \
   res/layout/info.xml \
+  res/layout/web.xml \
   res/layout-sw720dp/info.xml \
   res/layout-sw720dp/main.xml \
   res/layout-sw720dp/about.xml \
