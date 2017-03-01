@@ -1,15 +1,18 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/nodejs_debug.sch           */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/nodejs_debug.sch           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jul 30 07:04:17 2014                          */
-;*    Last change :  Sat Sep 27 19:57:44 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Wed Feb 22 16:10:01 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Macro used for debugging the nodejs runtime implementation.      */
 ;*    This macros introduce debugging information when modules         */
 ;*    are compiled in safe type mode                                   */
 ;*=====================================================================*/
+
+(cond-expand (bigloo-debug
+;;;
 
 ;*---------------------------------------------------------------------*/
 ;*    js-callXXX                                                       */
@@ -173,3 +176,6 @@
 	  x)
 	 (else
 	  (error "js-put!" "wrong form" x)))))
+
+;;;
+))

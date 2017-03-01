@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Jan 23 10:48:09 2017 (serrano)                */
+;*    Last change :  Wed Feb 22 19:04:20 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -25,6 +25,7 @@
 
    (static (class FunHintInfo
 	      hinted
+	      unhinted
 	      types::pair-nil))
 
    (export (j2s-hint!::bool ::J2SProgram ::obj)))
@@ -266,7 +267,7 @@
 	  (j2s-hint obj '(object array string) numctx))
 	 ((memq (j2s-type field) '(index integer number))
 	  (with-access::J2SRef obj (decl)
-	     (j2s-add-hint! decl hints)))
+	     (j2s-add-hint! decl '(array string))))
 	 ((isa? field J2SString)
 	  (with-access::J2SString field (val)
 	     (cond
@@ -307,7 +308,7 @@
       ((and (pair? types) (member (car types) '(string)))
        (j2s-hint-access this types '(string) 'number))
       (else
-       (j2s-hint-access this types '(array string) 'number))))
+       (j2s-hint-access this types '(object) 'number))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAssig ...                                          */
@@ -315,7 +316,9 @@
 (define-walk-method (j2s-hint this::J2SAssig types numctx)
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? lhs J2SAccess)
-	 (j2s-hint-access lhs types '(array) 'number))
+	 (if (and (pair? types) (member (car types) '(index integer number)))
+	     (j2s-hint-access lhs types '(array) 'number)
+	     (j2s-hint-access lhs types '(object) 'number)))
       (j2s-hint rhs types 'number)))
 
 ;*---------------------------------------------------------------------*/
@@ -420,7 +423,7 @@
 		    (loc loc)))
 	    (this (instantiate::J2SHopRef
 		     (loc loc)
-		     (itype 'function)
+		     (itype 'any)
 		     (id idthis)))
 	    (args (map (lambda (p::J2SDecl type::symbol)
 			  (with-access::J2SDecl p (hint)
@@ -476,7 +479,7 @@
 
    (if (duplicable? this)
        (with-access::J2SDeclFun this (val %info)
-	  (with-access::J2SFun val (params body idthis)
+	  (with-access::J2SFun val (params body)
 	     (let* ((htypes (map (lambda (p)
 				    (with-access::J2SDecl p (hint itype)
 				       (best-hint-type hint)))
@@ -485,8 +488,8 @@
 				    (with-access::J2SDecl p (itype)
 				       itype))
 			       params))
-		    (ft (fun-duplicate-typed this htypes))
-		    (fu (fun-duplicate-untyped this)))
+		    (fu (fun-duplicate-untyped this))
+		    (ft (fun-duplicate-typed this htypes fu)))
 		(fun-dispatch! this htypes ft itypes fu)
 		(list ft fu))))
        '()))
@@ -513,7 +516,7 @@
 	     (loop (cdr l) (cons (car l) r))))))
 	     
    (let loop ((l (normalize-hint hint))
-	      (t 'any)
+	      (t 'unknown)
 	      (c 0))
       (cond
 	 ((null? l)
@@ -574,12 +577,12 @@
 	 (with-access::J2SDecl decl (itype)
 	    (cond
 	       ((null? (cdr decls))
-		(if (eq? htype 'any)
+		(if (memq htype '(unknown any))
 		    (instantiate::J2SBool
 		       (loc loc)
 		       (val #t))
 		    (test-hint-decl (car decls) htype)))
-	       ((eq? htype 'any)
+	       ((memq htype '(unknown any))
 		(loop (cdr decls) (cdr htypes)))
 	       (else
 		(instantiate::J2SBinary
@@ -593,31 +596,33 @@
 ;*---------------------------------------------------------------------*/
 (define (fun-duplicate-untyped::J2SDeclFun fun::J2SDeclFun)
    (with-access::J2SDeclFun fun (val id %info)
-      (with-access::J2SFun val (params body name generator)
+      (with-access::J2SFun val (params body name generator idthis)
 	 (duplicate::J2SDeclFun fun
 	    (parent fun)
 	    (key (ast-decl-key))
-	    (id (symbol-append id '$$))
+	    (id (symbol-append id '%%))
 	    (ronly #t)
 	    (writable #f)
-	    (binder 'const)
+	    (binder 'let)
 	    (scope 'none)
 	    (usecnt 1)
 	    (itype 'function)
 	    (utype 'function)
+	    (vtype 'function)
 	    (%info fun)
 	    (val (duplicate::J2SFun val
 		    (generator #f)
 		    (optimize #f)
 		    (idgen generator)
-		    (name (when (symbol? name) (symbol-append name '$$)))
+		    (idthis (if (this? body) idthis #f))
+		    (name (when (symbol? name) (symbol-append name '%%)))
 		    (params params)
 		    (body body)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-duplicate-typed ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (fun-duplicate-typed::J2SDeclFun fun::J2SDeclFun types)
+(define (fun-duplicate-typed::J2SDeclFun fun::J2SDeclFun types unhinted)
    
    (define (type-initial t)
       (case t
@@ -648,15 +653,16 @@
 		(newdecl (duplicate::J2SDeclFun fun
 			    (parent fun)
 			    (key (ast-decl-key))
-			    (id (symbol-append id '$$ typeid))
+			    (id (symbol-append id '%% typeid))
 			    (ronly #t)
 			    (writable #f)
-			    (binder 'const)
+			    (binder 'let)
 			    (scope 'none)
 			    (usecnt 1)
 			    (%info fun)
 			    (itype 'function)
 			    (utype 'function)
+			    (vtype 'function)
 			    (val newfun))))
 	    (use-count nbody +1)
 	    (with-access::J2SFun newfun (decl)
@@ -664,6 +670,7 @@
 	    (set! %info
 	       (instantiate::FunHintInfo
 		  (hinted newdecl)
+		  (unhinted unhinted)
 		  (types types)))
 	    ;; compute the new hints for the duplicated function
 	    ;;(tprint ">>> --- HINT loop ---------------------")
@@ -681,10 +688,12 @@
        (duplicate::J2SDeclInit p
 	  (key (ast-decl-key))
 	  (hint '())
+	  (utype type)
 	  (itype type))
        (duplicate::J2SDecl p
 	  (key (ast-decl-key))
 	  (hint '())
+	  (utype type)
 	  (itype type))))
 
 ;*---------------------------------------------------------------------*/
@@ -697,7 +706,7 @@
 ;*    call-hint! ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (call-hint! this::J2SCall)
-
+   
    (define (normalize-type t)
       (case t
 	 ((integer index) 'number)
@@ -722,10 +731,11 @@
       (let ((%info (fun-hint-info fun)))
 	 (if %info
 	     (with-access::J2SRef fun (decl)
-		(with-access::FunHintInfo %info (hinted types)
+		(with-access::FunHintInfo %info (hinted unhinted types)
 		   (with-access::J2SDeclFun hinted (val)
 		      (with-access::J2SFun val (generator)
-			 (if (or (equal? (map j2s-type args) types)
+			 (cond
+			    ((or (equal? (map j2s-type args) types)
 				 (equal? (map normalize-expr-type args) types))
 			     (with-access::J2SFun val (idthis)
 				;; adjust the usecnt count
@@ -736,8 +746,24 @@
 				(duplicate::J2SCall this
 				   (this (when idthis callthis))
 				   (fun (duplicate::J2SRef fun
-					   (decl hinted)))))
-			     this)))))
+					   (type 'function)
+					   (decl hinted))))))
+			    ((every (lambda (a t)
+				       (let ((tya (j2s-type a)))
+					  (or (memq tya '(any unknown))
+					      (eq? tya t)
+					      (eq? t 'unknown)
+					      (or (and (memq tya '(number integer))
+						       (eq? t 'index))))))
+				args types)
+			     this)
+			    (else
+			     (with-access::J2SFun val (idthis)
+				(duplicate::J2SCall this
+				   (this (when idthis callthis))
+				   (fun (duplicate::J2SRef fun
+					   (type 'function)
+					   (decl unhinted)))))))))))
 	     this))))
 
 ;*---------------------------------------------------------------------*/

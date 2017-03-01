@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Thu Dec  8 13:53:38 2016 (serrano)                */
-/*    Copyright   :  2016 Manuel Serrano                               */
+/*    Last change :  Fri Jan 27 13:07:33 2017 (serrano)                */
+/*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
 /*=====================================================================*/
@@ -25,6 +25,9 @@ hop.reactReactorQueue = [];
 /*---------------------------------------------------------------------*/
 hop.reactDelay = function( thunk ) {
    if( hop.reactIntialized ) {
+      setTimeout( thunk, 0 );
+   } else if( document.readyState == "complete" ) {
+      hop.reactIntialized = true;
       setTimeout( thunk, 0 );
    } else {
       if( hop.reactInitThunks.length == 0 ) {
@@ -194,7 +197,9 @@ hop.reactNode = function( proc, parent, sibling, anchor, key ) {
 		  parentNode.insertBefore( n, s );
 	       } );
 	    } else {
-	       return;
+	       for( var i = nodes.length - 1; i >= 0; i-- ) {
+		  parentNode.appendChild( nodes[ i ] );
+	       }
 	    }
 	 } else if( anchor ) {
 	    var s = getElementByAnchor( parentNode.childNodes, anchor );
@@ -254,12 +259,13 @@ function REACT( _ ) {
       var sc = document.createElement( "script" );
       var loader = "var el = document.getElementById( '" + id + "');"
 	  + "var sibling = el.nextSibling;"
-	  + "var sid = sibling ? sibing.id : false;"
+	  + "var sid = sibling ? sibling.id : false;"
 	  + "var parent = el.parentNode;"
 	  + "var pid = parent ? parent.id : false;"
 	  + "var proc = function() { return " + script.text + " };"
+          + "var anchor = false; console.log( 'sibling=', sid );"
 	  + "parent.removeChild( el );"
-	  + "hop.reactNode( proc, parent.id, sid, '" + id + "' );"
+	  + "hop.reactNode( proc, parent.id, sid, anchor, '" + id + "' );"
 
       sc.type = "text/javascript";
       sc.text = loader;

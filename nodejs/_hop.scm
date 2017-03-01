@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Oct 26 09:47:09 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:26:51 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -96,8 +96,7 @@
       
       (define js-urlframe-prototype
 	 (instantiate::JsObject
-	    (__proto__ __proto__)
-	    (extensible #t)))
+	    (__proto__ __proto__)))
       
       (define js-webservice
 	 (js-make-function %this
@@ -111,10 +110,9 @@
 			     js-urlframe-prototype
 			     url args))))
 
-      (define js-server-prototype
+      (define server-prototype
 	 (instantiate::JsObject
-	    (__proto__ __proto__)
-	    (extensible #t)))
+	    (__proto__ __proto__)))
       
       (define js-server
 	 (js-make-function %this
@@ -122,10 +120,10 @@
 	       (js-new %this host port auth))
 	    4 'Server
 	    :__proto__ js-function-prototype
-	    :prototype js-server-prototype
+	    :prototype server-prototype
 	    :construct (lambda (this host port auth ssl)
 			  (instantiate::JsServer
-			     (__proto__ js-server-prototype)
+			     (__proto__ server-prototype)
 			     (data '())
 			     (obj (instantiate::server
 				     (ssl (js-toboolean ssl))
@@ -154,7 +152,7 @@
 		      (js-string->jsstring (urlframe->string this %this)))
 		   0 'toString))
 
-      (js-bind! %this js-server-prototype 'addEventListener
+      (js-bind! %this server-prototype 'addEventListener
 	 :value (js-make-function %this
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
@@ -166,7 +164,7 @@
 				     (js-tostring event %this) f)))))
 		   3 'addEventListener)
 	 :enumerable #f)
-      (js-bind! %this js-server-prototype 'removeEventListener
+      (js-bind! %this server-prototype 'removeEventListener
 	 :value (js-make-function %this
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
@@ -177,7 +175,7 @@
 					(js-tostring event %this) (cdr f)))))))
 		   3 'removeEventListener)
 	 :enumerable #f)
-      (js-bind! %this js-server-prototype 'port
+      (js-bind! %this server-prototype 'port
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
@@ -186,7 +184,7 @@
 			     port))))
 		 0 'port)
 	 :writable #f)
-      (js-bind! %this js-server-prototype 'host
+      (js-bind! %this server-prototype 'host
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
@@ -195,7 +193,7 @@
 			     (js-string->jsstring host)))))
 		 0 'host)
 	 :writable #f)
-      (js-bind! %this js-server-prototype 'authorization
+      (js-bind! %this server-prototype 'authorization
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
@@ -205,7 +203,7 @@
 				(js-string->jsstring authorization))))))
 		 0 'authorization)
 	 :writable #f)
-      (js-bind! %this js-server-prototype 'ssl
+      (js-bind! %this server-prototype 'ssl
 	 :get (js-make-function %this
 		 (lambda (this::JsServer)
 		    (with-access::JsServer this (obj)
@@ -215,7 +213,8 @@
 		 0 'ssl)
 	 :writable #f)
 				
-      (with-access::JsGlobalObject %this (js-object)
+      (with-access::JsGlobalObject %this (js-object js-server-prototype)
+	 (set! js-server-prototype server-prototype)
 	 (js-alist->jsobject
 	    (list
 	       ;; info

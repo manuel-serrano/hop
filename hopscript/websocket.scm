@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon Oct 31 20:51:15 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:25:27 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
 ;*=====================================================================*/
@@ -155,18 +155,15 @@
 
 	 (define js-websocket-prototype
 	    (instantiate::JsObject
-	       (__proto__ __proto__)
-	       (extensible #t)))
+	       (__proto__ __proto__)))
 	 
 	 (define js-websocket-server-prototype
 	    (instantiate::JsObject
-	       (__proto__ __proto__)
-	       (extensible #t)))
+	       (__proto__ __proto__)))
 	 
 	 (define js-websocket-client-prototype
 	    (instantiate::JsObject
-	       (__proto__ __proto__)
-	       (extensible #t)))
+	       (__proto__ __proto__)))
 
 	 (define (js-websocket-construct o url options)
 	    (with-access::JsGlobalObject %this (js-object)

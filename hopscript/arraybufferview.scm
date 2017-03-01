@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Thu Nov 24 15:51:55 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:26:03 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -536,11 +536,11 @@
 	 (define (js-typedarray-alloc constructor::JsFunction %this)
 	    (let ((o (allocate-instance (symbol-append 'Js name))))
 	       (with-access::JsTypedArray o (cmap bpe __proto__ properties
-					       extensible elements)
+					       elements)
+		  (js-object-mode-extensible-set! o #t)
 		  (set! cmap #f)
 		  (set! properties '())
 		  (set! bpe (fixnum->uint32 bp))
-		  (set! extensible #t)
 		  (set! elements '#())
 		  (set! __proto__ (js-get constructor 'prototype %this)))
 	       o))

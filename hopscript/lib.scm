@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Nov 23 18:18:30 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:22:50 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -153,8 +153,7 @@
 		   (instantiate::JsObject
 		      (cmap cmap)
 		      (elements elements)
-		      (__proto__ __proto__)
-		      (extensible #t)))
+		      (__proto__ __proto__)))
 		(let ((descr (instantiate::JsIndexDescriptor
 				(name (vector-ref-ur names i))
 				(index i)
@@ -184,8 +183,7 @@
 		   (instantiate::JsObject
 		      (cmap cmap)
 		      (elements elements)
-		      (__proto__ __proto__)
-		      (extensible #t)))
+		      (__proto__ __proto__)))
 		(let* ((name (cond
 				((keyword? (caar alist))
 				 (keyword->symbol (caar alist)))
@@ -223,8 +221,7 @@
 		   (instantiate::JsObject
 		      (cmap cmap)
 		      (elements elements)
-		      (__proto__ __proto__)
-		      (extensible #t)))
+		      (__proto__ __proto__)))
 		(let* ((name (cond
 				((keyword? (car plist))
 				 (keyword->symbol (car plist)))

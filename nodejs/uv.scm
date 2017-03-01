@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Dec  7 13:40:07 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Wed Mar  1 09:23:56 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -2014,7 +2014,8 @@
 	    
 	    ;; options.cwd
 	    (let ((cwd (js-get options 'cwd %this)))
-	       (when (and (js-jsstring? cwd) (>fx (js-jsstring-length cwd) 0))
+	       (when (and (js-jsstring? cwd)
+			  (>u32 (js-jsstring-length cwd) #u32:0))
 		  (trace-item "cwd=" cwd)
 		  (set! ocwd (js-jsstring->string cwd))))
 	    

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Fri Dec 30 10:21:56 2016 (serrano)                */
-;*    Copyright   :  2015-16 Manuel Serrano                            */
+;*    Last change :  Fri Feb  3 15:26:34 2017 (serrano)                */
+;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
 ;*    -------------------------------------------------------------    */
@@ -17,6 +17,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_narrow
 
+   (include "ast.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_utils
@@ -55,8 +57,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-narrow this::J2SProgram conf)
    (with-access::J2SProgram this (decls nodes headers)
-      ;; mark that header declarations are not narrowalbe
+      ;; mark that header declarations are not narrowable
       (for-each j2s-mark-unnarrowable headers)
+      ;; add extra block before each init not already at the head of a block
+      (for-each (lambda (o)
+		   (when (isa? o J2SDeclFun)
+		      (with-access::J2SDeclFun o (val)
+			 (j2s-blockify! val))))
+	 decls)
       ;; statement optimization
       (for-each (lambda (o)
 		   (cond
@@ -70,10 +78,52 @@
       (set! nodes
 	 (map! (lambda (o)
 		  (j2s-find-init-blocks o #f #f)
-		  (j2s-mark-narrowable o '() #f (and (isa? o J2SFun) o) (make-cell #f))
+		  (j2s-mark-narrowable o '() #f
+		     (and (isa? o J2SFun) o) (make-cell #f))
 		  (j2s-lift-inits! (j2s-narrow! o)))
 	    nodes)))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-blockify! ...                                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-blockify! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-blockify! ::J2SBlock ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-blockify! this::J2SBlock)
+   
+   (define (is-init? n::J2SNode)
+      (when (isa? n J2SSeq)
+	 (with-access::J2SSeq n (nodes)
+	    (every (lambda (s)
+		      (when (isa? s J2SStmtExpr)
+			 (with-access::J2SStmtExpr s (expr)
+			    (isa? expr J2SInit))))
+	       nodes))))
+
+   (with-access::J2SBlock this (nodes)
+      (let loop ((nodes nodes)
+		 (prev #f))
+	 (cond
+	    ((null? nodes)
+	     this)
+	    (prev
+	     (if (is-init? (car nodes))
+		 (with-access::J2SNode (car nodes) (loc)
+		    (let ((nseq (j2s-blockify! (J2SBlock* nodes))))
+		       (set-cdr! prev (list nseq))
+		       this))
+		 (begin
+		    (set-car! nodes (j2s-blockify! (car nodes)))
+		    (loop (cdr nodes) nodes))))
+	    (else
+	     (set-car! nodes (j2s-blockify! (car nodes)))
+	     (if (is-init? (car nodes))
+		 (loop (cdr nodes) #f)
+		 (loop (cdr nodes) nodes)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow-fun! ...                                              */

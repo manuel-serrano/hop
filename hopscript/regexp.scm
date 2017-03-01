@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Nov 23 15:45:46 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:17:26 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -88,8 +88,7 @@
 	 (set! js-regexp-prototype
 	    (instantiate::JsRegExp
 	       (rx (pregexp ""))
-	       (__proto__ __proto__)
-	       (extensible #t)))
+	       (__proto__ __proto__)))
 	 
 	 ;; create a HopScript regexp object constructor
 	 (set! js-regexp
@@ -312,7 +311,6 @@
 		      (raise e)))
 	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
 		  (instantiate::JsRegExp
-		     (extensible #t)
 		     (__proto__ js-regexp-prototype)
 		     (rx (pregexp (make-js-regexp-pattern %this pattern)
 				     (when (fixnum? i) 'CASELESS)

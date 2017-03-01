@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Dec 20 08:23:30 2016 (serrano)                */
-;*    Copyright   :  2016 Manuel Serrano                               */
+;*    Last change :  Fri Feb  3 19:06:01 2017 (serrano)                */
+;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
 ;*=====================================================================*/
@@ -71,9 +71,10 @@
        (obj ,obj)
        (field ,field)))
 
-(define-macro (J2SThis)
+(define-macro (J2SThis this)
    `(instantiate::J2SThis
-      (loc loc)))
+       (decl ,this)
+       (loc loc)))
 
 (define-macro (J2SHopRef id . module)
    `(instantiate::J2SHopRef

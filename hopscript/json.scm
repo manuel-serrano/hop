@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Jan 16 16:51:21 2017 (serrano)                */
+;*    Last change :  Tue Feb 28 09:22:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -53,7 +53,6 @@
    (with-access::JsGlobalObject %this (__proto__ js-json)
       (set! js-json
 	 (instantiate::JsJSON
-	    (extensible #t)
 	    (__proto__ __proto__)))
       ;; parse
       (js-bind! %this js-json 'parse

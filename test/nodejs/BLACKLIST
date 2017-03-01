@@ -161,6 +161,7 @@ simple/test-zlib.js
 simple/test-regress-GH-4015.js
 
 # different timing
+simple/test-timers-ordering.js 
 pummel/test-process-uptime.js
 
 #*---------------------------------------------------------------------*/

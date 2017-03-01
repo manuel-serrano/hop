@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Jan 16 15:45:54 2017 (serrano)                */
+;*    Last change :  Thu Feb 16 18:18:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -579,6 +579,14 @@
 		(trace-item "expr=" (format "~s" expr))
 		(unwind-protect
 		   (begin
+		      (eval '(module g139933
+			      (library hop hopscript js2scheme nodejs)
+			      (export
+				 (hopscript
+				    ::JsGlobalObject
+				    ::JsObject
+				    ::JsObject
+				    ::JsObject))))
 		      (for-each eval expr)
 		      (let ((hopscript (eval! 'hopscript)))
 			 (hashtable-put! compile-table filename hopscript)

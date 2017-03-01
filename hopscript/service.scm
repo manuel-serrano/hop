@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Oct 28 08:54:59 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:23:08 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -109,21 +109,23 @@
 	       (js-jsobject->plist o (js-initial-global-object))))))
    (lambda (o ctx)
       (if (and (vector? o) (=fx (vector-length o) 6))
-	  (let ((srv (instantiate::JsServer
-			(obj (instantiate::server
-				(host (vector-ref o 0))
-				(port (vector-ref o 1))
-				(ssl (vector-ref o 2))
-				(authorization (vector-ref o 3))
-				(version (vector-ref o 4)))))))
-	     (let loop ((rest (vector-ref o 5)))
-		(if (null? rest)
-		    srv
-		    (begin
-		       (js-put! srv (keyword->symbol (car rest))
-			  (js-obj->jsobject (cadr rest) ctx)
-			  #f ctx)
-		       (loop (cddr rest))))))
+	  (with-access::JsGlobalObject ctx (js-server-prototype)
+	     (let ((srv (instantiate::JsServer
+			   (__proto__  js-server-prototype)
+			   (obj (instantiate::server
+				   (host (vector-ref o 0))
+				   (port (vector-ref o 1))
+				   (ssl (vector-ref o 2))
+				   (authorization (vector-ref o 3))
+				   (version (vector-ref o 4)))))))
+		(let loop ((rest (vector-ref o 5)))
+		   (if (null? rest)
+		       srv
+		       (begin
+			  (js-put! srv (keyword->symbol (car rest))
+			     (js-obj->jsobject (cadr rest) ctx)
+			     #f ctx)
+			  (loop (cddr rest)))))))
 	  (error "JsServer" "wrong server" o))))
 
 ;*---------------------------------------------------------------------*/
@@ -250,8 +252,7 @@
 				js-function-prototype)))
 	       (len -1)
 	       (procedure list)
-	       (svc #f)
-	       (extensible #t)))
+	       (svc #f)))
 	 
 	 (js-bind! %this js-service-prototype 'resource
 	    :value (js-make-function %this
@@ -299,8 +300,7 @@
 	 ;; HopFrame prototype and constructor
 	 (set! js-hopframe-prototype
 	    (instantiate::JsObject
-	       (__proto__ __proto__)
-	       (extensible #t)))
+	       (__proto__ __proto__)))
 	 
 	 (js-bind! %this js-hopframe-prototype 'post
 	    :value (js-make-function %this

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Thu Nov 24 11:28:19 2016 (serrano)                */
-;*    Copyright   :  2015-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:26:27 2017 (serrano)                */
+;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */
@@ -174,8 +174,7 @@
 	 (instantiate::JsPromise
 	    (worker (js-undefined))
 	    (%this %this)
-	    (__proto__ __proto__)
-	    (extensible #t))))
+	    (__proto__ __proto__))))
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise-constructor
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.3.1

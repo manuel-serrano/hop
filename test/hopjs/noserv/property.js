@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Wed Nov 23 14:44:23 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Tue Feb 28 07:14:27 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
 /*=====================================================================*/
@@ -159,16 +159,111 @@ var o = { get readwrite() { return 24; },set readwrite( val ) {} };
 
 assert.strictEqual( o.readwrite, 24 );
 
+
 /*---------------------------------------------------------------------*/
 /*    Prototypes                                                       */
 /*---------------------------------------------------------------------*/
+var p0 = { a: 456, x: 11 };
 var o1 = {};
-o1.__proto__ = { a: 456 };
+o1.__proto__ = p0;
 
 var o2 = { __proto__: o1.__proto__ };
 
-assert.strictEqual( o1.a, 456 );
-assert.strictEqual( o2.a, 456 );
+assert.strictEqual( o1.a, 456, "o1.prototype" );
+assert.strictEqual( o2.a, 456, "o2.prototype" );
 
 var o3 = {get __proto__() { return { a: 1 } } };
 assert.strictEqual( o3.a, undefined );
+
+var p1 = { x: 4 };
+var p2 = { x: 5 };
+var p3 = { __proto__: p1, x: 6 };
+var p4 = { __proto__: p1 };
+var p5 =  { __proto__: p3, x: 38 }
+
+var o = { __proto__: p1 };
+var o4 = { __proto__: p5, x: 49 };
+
+function getP( o ) { return o.x; }
+
+var v1 = getP( o );
+assert.strictEqual( v1, p1.x, "proto eq" );
+assert.strictEqual( v1, getP( o ), "proto eq.2" );
+
+o.__proto__ = p2;
+
+assert.ok( getP( o ) == p2.x, "proto mutated.1" );
+assert.ok( getP( o ) != p1.x, "proto mutated.2" );
+
+o.__proto__ = p3;
+
+assert.ok( getP( o ) != p1.x );
+assert.ok( getP( o ) != p2.x );
+assert.ok( getP( o ) == p3.x );
+
+o.__proto__ = p4;
+
+assert.ok( getP( o ) == p1.x );
+assert.ok( getP( o ) != p2.x );
+assert.ok( getP( o ) != p3.x );
+assert.ok( getP( o ) == p4.x );
+
+assert.strictEqual( getP( o4 ), 49, "o4 prototypes" );
+
+delete o4.x;
+assert.strictEqual( getP( o4 ), p5.x, "delete o2.x" );
+
+delete p5.x;
+assert.strictEqual( getP( o4 ), p3.x, "delete p5.x" );
+
+p5.__proto__ = p2;
+assert.strictEqual( getP( o4 ), p2.x, "p5.__proto__" );
+
+
+/*---------------------------------------------------------------------*/
+/*    Setters                                                          */
+/*---------------------------------------------------------------------*/
+function setX( o, v ) {
+   var r = o.x = ++v;
+   return r;
+}
+
+var o1 = {};
+var o2 = {};
+
+assert.ok( setX( o1, 4 ) == 5 );
+assert.ok( setX( o1, 10 ) == 11 );
+assert.ok( setX( o2, 41 ) == 42 );
+
+
+/*---------------------------------------------------------------------*/
+/*    Constructor                                                      */
+/*---------------------------------------------------------------------*/
+function Ctor( a, b, c, d ) {
+   this.a = a;
+   this.b = b;
+   this.c = c;
+   this.d = d;
+}
+
+assert( new Ctor( 1, 2, 3, 4 ).d == 4, "plain constructor" );
+
+Ctor.prototype = {
+   set d(v) { return 1 }, get d() { return 222; }
+};
+
+assert( new Ctor( 1, 2, 3, 4 ).d == 222, "prototype constructor" );
+
+Ctor.prototype = {
+   d: 333,
+   __proto__: { set d(v) { return 1 }, get d() { return 444; } }
+};
+
+assert( new Ctor( 1, 2, 3, 4 ).d == 4, "prototype.__proto__ constructor" );
+
+Ctor.prototype = {
+   __proto__: { set d(v) { return 1 }, get d() { return 444; } }
+};
+
+assert( new Ctor( 1, 2, 3, 4 ).d == 444, "prototype.__proto__ constructor" );
+

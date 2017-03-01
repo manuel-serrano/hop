@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Nov 24 08:46:36 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Wed Mar  1 07:28:08 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -77,20 +77,24 @@
 	   
 	   (class JsPropertyCache
 	      (cmap::obj (default #unspecified))
+	      (pmap::obj (default #t))
 	      (index::long (default -1))
-	      (name::obj (default '||)))
+	      (proto::obj (default #f))
+	      (name::obj (default '||))
+	      (method::obj (default #f)))
 	   
 	   (class JsConstructMap
 	      (transition::pair (default (cons #f #f)))
 	      (nextmap (default #f))
 	      (names::vector read-only (default '#()))
-	      (descriptors::vector read-only (default '#())))
+	      (descriptors::vector read-only (default '#()))
+	      (methods::vector read-only (default '#())))
 
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
 	   (abstract-class JsStringLiteral
 	      ;; the actual characters (string, tree, list)
-	      weight::ulong
+	      weight::uint32
 	      left::obj
 	      (right::obj (default #f)))
 
@@ -102,7 +106,8 @@
 	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))
-	      (extensible::bool (default #t))
+	      (mode::byte (default (js-object-default-mode)))
+	      ;; (extensible::bool (default #t))
 	      (properties::pair-nil (default '()))
 	      (cmap (default #f))
 	      (elements::vector (default '#())))
@@ -139,6 +144,7 @@
 	      (js-json::JsJSON (default (class-nil JsJSON)))
 	      (js-service-prototype::JsService (default (class-nil JsService)))
 	      (js-hopframe-prototype (default (class-nil JsFunction)))
+	      (js-server-prototype (default (class-nil JsFunction)))
 	      (js-error::JsFunction (default (class-nil JsFunction)))
 	      (js-syntax-error::JsFunction (default (class-nil JsFunction)))
 	      (js-type-error::JsFunction (default (class-nil JsFunction)))
@@ -158,8 +164,8 @@
 	      (js-main (default (js-null))))
 	   
 	   (class JsArray::JsObject
-	      (sealed::bool (default #f))
-	      (frozen::bool (default #f))
+	      ;; (sealed::bool (default #f))
+	      ;; (frozen::bool (default #f))
 	      (length::uint32 (default #u32:0))
 	      (vec::vector (default '#()))
 	      (ilen::uint32 (default #u32:0)))
@@ -217,6 +223,12 @@
 	      (worker::obj read-only)
 	      (svc::obj read-only))
 
+	   (final-class JsFunction1::JsFunction)
+	   (final-class JsFunction2::JsFunction)
+	   (final-class JsFunction3::JsFunction)
+	   (final-class JsFunction4::JsFunction)
+	   (final-class JsFunction5::JsFunction)
+
 	   (class JsHopFrame::JsObject
 	      (%this read-only)
 	      (args read-only (default #f))
@@ -269,6 +281,25 @@
 	   (class JsGenerator::JsObject
 	      %next)
 
+	   (inline js-object-default-mode::byte)
+	   
+	   (inline js-object-mode-extensible?::bool ::JsObject)
+	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
+
+	   (inline js-object-mode-frozen?::bool ::JsObject)
+	   (inline js-object-mode-frozen-set! ::JsObject ::bool)
+
+	   (inline js-object-mode-sealed?::bool ::JsObject)
+	   (inline js-object-mode-sealed-set! ::JsObject ::bool)
+
+	   (inline js-object-mode-inline?::bool ::JsObject)
+	   (inline js-object-mode-inline-set! ::JsObject ::bool)
+
+	   (inline JS-OBJECT-MODE-EXTENSIBLE::byte)
+	   (inline JS-OBJECT-MODE-SEALED::byte)
+	   (inline JS-OBJECT-MODE-FROZEN::byte)
+	   (inline JS-OBJECT-MODE-INLINE::byte)
+	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
 
@@ -292,6 +323,62 @@
 
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-default-mode ...                                       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-default-mode)
+   (bit-or (JS-OBJECT-MODE-EXTENSIBLE) (JS-OBJECT-MODE-INLINE)))
+
+(define-inline (JS-OBJECT-MODE-EXTENSIBLE) 1)
+(define-inline (JS-OBJECT-MODE-SEALED) 2)
+(define-inline (JS-OBJECT-MODE-FROZEN) 4)
+(define-inline (JS-OBJECT-MODE-INLINE) 8)
+
+(define-macro (JS-OBJECT-MODE-EXTENSIBLE) 1)
+(define-macro (JS-OBJECT-MODE-SEALED) 2)
+(define-macro (JS-OBJECT-MODE-FROZEN) 4)
+(define-macro (JS-OBJECT-MODE-INLINE) 8)
+
+(define-inline (js-object-mode-extensible? o)
+   (with-access::JsObject o (mode)
+      (=fx (bit-and (JS-OBJECT-MODE-EXTENSIBLE) mode) (JS-OBJECT-MODE-EXTENSIBLE))))
+
+(define-inline (js-object-mode-extensible-set! o flag)
+   (with-access::JsObject o (mode)
+      (if flag
+	  (set! mode (bit-or mode (JS-OBJECT-MODE-EXTENSIBLE)))
+	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-EXTENSIBLE)))))))
+
+(define-inline (js-object-mode-frozen? o)
+   (with-access::JsObject o (mode)
+      (=fx (bit-and (JS-OBJECT-MODE-FROZEN) mode) (JS-OBJECT-MODE-FROZEN))))
+
+(define-inline (js-object-mode-frozen-set! o flag)
+   (with-access::JsObject o (mode)
+      (if flag
+	  (set! mode (bit-or mode (JS-OBJECT-MODE-FROZEN)))
+	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-FROZEN)))))))
+
+(define-inline (js-object-mode-sealed? o)
+   (with-access::JsObject o (mode)
+      (=fx (bit-and (JS-OBJECT-MODE-SEALED) mode) (JS-OBJECT-MODE-SEALED))))
+
+(define-inline (js-object-mode-sealed-set! o flag)
+   (with-access::JsObject o (mode)
+      (if flag
+	  (set! mode (bit-or mode (JS-OBJECT-MODE-SEALED)))
+	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-SEALED)))))))
+
+(define-inline (js-object-mode-inline? o)
+   (with-access::JsObject o (mode)
+      (=fx (bit-and (JS-OBJECT-MODE-INLINE) mode) (JS-OBJECT-MODE-INLINE))))
+
+(define-inline (js-object-mode-inline-set! o flag)
+   (with-access::JsObject o (mode)
+      (if flag
+	  (set! mode (bit-or mode (JS-OBJECT-MODE-INLINE)))
+	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-INLINE)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */
