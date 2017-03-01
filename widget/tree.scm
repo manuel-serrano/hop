@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/widget/tree.scm                   */
+;*    serrano/prgm/project/hop/3.1.x/widget/tree.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug 18 10:01:02 2005                          */
-;*    Last change :  Tue Sep 15 08:41:16 2015 (serrano)                */
-;*    Copyright   :  2005-15 Manuel Serrano                            */
+;*    Last change :  Wed Mar  1 16:33:28 2017 (serrano)                */
+;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP implementation of trees.                                 */
 ;*=====================================================================*/
@@ -372,6 +372,9 @@
 				 (start-line "HTTP/1.0 501 Internal Server Error")
 				 (content-type (hop-mime-type))
 				 (value b))))
+			    ((xml-unpack b)
+			     =>
+			     loop)
 			    (else
 			     (error "<TREE>" "Illegal tree body" b)))))
 		   body)
