@@ -19,6 +19,7 @@ remote.onmessage = function( message ) {
    remoteServer.register( localServer )
       .post(
 	 function( server ) {
+	    var s = { __proto__: server };
 	    console.log( 'client: registration ok' );
 	    server.addSvc( 11 ).post(
 	       function( result ) {

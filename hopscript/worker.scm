@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu Oct 20 15:28:30 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:22:28 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
 ;*    -------------------------------------------------------------    */
@@ -98,8 +98,7 @@
 	 ;; first, create the builtin prototype
 	 (set! js-worker-prototype
 	    (instantiate::JsWorker
-	       (__proto__ __proto__)
-	       (extensible #t)))
+	       (__proto__ __proto__)))
 	 
 	 ;; then, Create a HopScript worker object constructor
 	 (set! js-worker
@@ -203,7 +202,6 @@
 	    ;; create the worker object
 	    (let ((worker (instantiate::JsWorker
 			     (__proto__ js-worker-prototype)
-			     (extensible #t)
 			     (thread thread))))
 	       (with-access::WorkerHopThread thread (prehook)
 		  (set! prehook

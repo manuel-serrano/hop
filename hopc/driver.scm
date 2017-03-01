@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Jan 18 14:53:13 2017 (serrano)                */
+;*    Last change :  Sun Feb 26 06:18:15 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -164,7 +164,7 @@
 		(mmap (when (and (string? fname) (file-exists? fname))
 			 (open-mmap fname :read #t :write #f))))
 	    (for-each (lambda (exp) (pp exp out))
-	       (j2s-compile in
+	       (apply j2s-compile in
 		  :return-as-exit (hopc-js-return-as-exit)
 		  :mmap-src mmap
 		  :driver (js-driver)
@@ -180,7 +180,9 @@
 		  :optim (hopc-optim-level)
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
-		  :debug (bigloo-debug)))))
+		  :uint32 (hopc-uint32)
+		  :debug (bigloo-debug)
+		  (hopc-j2s-flags)))))
       
       (define (generate-js out::output-port)
 	 (let* ((fname (input-port-name in))
@@ -189,7 +191,7 @@
 	    (for-each (lambda (exp)
 			 (unless (isa? exp J2SNode)
 			    (display exp out)))
-	       (j2s-compile in
+	       (apply j2s-compile in
 		  :return-as-exit (hopc-js-return-as-exit)
 		  :mmap-src mmap
 		  :driver (js-driver)
@@ -205,7 +207,9 @@
 		  :optim (hopc-optim-level)
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
-		  :debug (bigloo-debug)))))
+		  :uint32 (hopc-uint32)
+		  :debug (bigloo-debug)
+		  (hopc-j2s-flags)))))
       
       (define (generate out::output-port lang::symbol)
 	 (case lang
@@ -301,7 +305,7 @@
 			  (if (string? temp)
 			      (pp e out)
 			      (write (obj->string e) out)))
-		     (j2s-compile in
+		     (apply j2s-compile in
 			:return-as-exit (hopc-js-return-as-exit)
 			:mmap-src mmap
 			:driver (js-driver)
@@ -317,7 +321,9 @@
 			:optim (hopc-optim-level)
 			:verbose (hop-verbose)
 			:long-size (hopc-long-size)
-			:debug (bigloo-debug))))
+			:uint32 (hopc-uint32)
+			:debug (bigloo-debug)
+			(hopc-j2s-flags))))
 	       file
 	       temp)))
 
@@ -332,6 +338,9 @@
 		   (loop (cdr opts) (append (cdar opts) o)))
 		  (else
 		   (loop (cdr opts) o))))))
+
+      (define (dest-opts dest opts)
+	 (cons* "-o" dest opts))
       
       (let* ((opts (bigloo-options))
 	     (file (when (and (pair? (hopc-sources))
@@ -343,9 +352,10 @@
 			  (delete-file (hopc-destination)))
 		       (case (hopc-pass)
 			  ((object)
-			   (cons* "-c" "-o" (hopc-destination) opts))
+			   (cons "-c" (dest-opts (hopc-destination) opts)))
 			  ((so)
-			   (cons* "-dload-sym" "-y" "-o" (hopc-destination) opts))
+			   (cons* "-dload-sym" "-y"
+			      (dest-opts (hopc-destination) opts)))
 			  (else
 			   (cons* "-o" (hopc-destination) opts))))
 		      ((string? file)
@@ -353,14 +363,14 @@
 			  ((object)
 			   (let* ((base (prefix file))
 				  (dest (string-append base ".o")))
-			      (cons* "-c" "-o" dest opts)))
+			      (cons* "-c" (dest-opts dest opts))))
 			  ((so)
 			   (let* ((base (prefix file))
 				  (dest (string-append base "."
 					   (bigloo-config 'shared-lib-suffix))))
-			      (cons* "-y" "-o" dest opts)))
+			      (cons* "-y" (dest-opts dest opts))))
 			  (else
-			   (cons* "-o" "a.out" opts))))
+			   (dest-opts "a.out" opts))))
 		      (else
 		       (cons "--to-stdout" opts))))
 	     (exec (not (eq? (hopc-pass) 'object))))

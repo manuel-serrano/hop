@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.0.x/test/hopjs/serv/serialization.js      */
+/*    .../prgm/project/hop/3.1.x/test/hopjs/serv/serialization.js      */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Jan 11 18:14:33 2015                          */
-/*    Last change :  Thu Nov 26 07:29:49 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Sat Feb  4 10:23:58 2017 (serrano)                */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing server-to-server serialization                           */
 /*=====================================================================*/
@@ -27,6 +27,7 @@ function doTest( val ) {
       res++;
    } );
 }
+
 service serv( val ) {
    doTest( val );
    return val;
@@ -57,8 +58,11 @@ function test() {
 }
 
 setTimeout( function() {
-   assert.ok( res === 16 );
-   process.exit( 0 );
+   try { 
+      assert.ok( res === 16, "not all tests executed" );
+   } finally {
+      process.exit( 0 );
+   }
 }, 100 );
 
 test();

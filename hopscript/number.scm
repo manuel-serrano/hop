@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan 18 14:12:15 2017 (serrano)                */
+;*    Last change :  Tue Feb 28 09:17:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -60,6 +60,7 @@
 	   (js>::bool left right ::JsGlobalObject)
 	   (js<=::bool left right ::JsGlobalObject)
 	   (js>=::bool left right ::JsGlobalObject)
+	   
 	   (js-bitand left right ::JsGlobalObject)
 	   (js-bitor left right ::JsGlobalObject)
 	   (js-bitxor left right ::JsGlobalObject)
@@ -119,8 +120,7 @@
 	 (define js-number-prototype
 	    (instantiate::JsNumber
 	       (val 0)
-	       (__proto__ __proto__)
-	       (extensible #t)))
+	       (__proto__ __proto__)))
 
 	 (define (js-number-constructor f value)
 	    (instantiate::JsNumber
@@ -446,9 +446,14 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js+fx64 ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    Fixnum addition on 64 bits machines (three tagging bits).        */
 ;*---------------------------------------------------------------------*/
 (define-inline (js+fx64 x::long y::long)
-   (js+fx x y))
+   (let ((r::long (+fx x y)))
+      (if (bit-and r (bit-lsh 1 52))
+	  r
+	  (fixnum->flonum r))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-fx32 ...                                                      */
@@ -468,7 +473,10 @@
 ;*    js-fx64 ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-fx64 x::long y::long)
-   (js-fx x y))
+   (let ((r::long (-fx x y)))
+      (if (bit-and r (bit-lsh 1 52))
+	  r
+	  (fixnum->flonum r))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js*fx ...                                                        */

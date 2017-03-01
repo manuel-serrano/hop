@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jan 22 09:33:41 2017 (serrano)                */
+;*    Last change :  Tue Feb 14 21:28:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -218,7 +218,18 @@
 	    ((nanfl? x) x)
 	    ((=fl x +inf.0) x)
 	    ((=fl x -inf.0) x)
-	    (else (floor x))))
+	    (else
+	     (cond-expand
+		((or bint30 bint32)
+		 (cond
+		    ((> x (bit-lsh 1 29))
+		     (floor x))
+		    ((< x (- (bit-lsh 1 29)))
+		     (floor x))
+		    (else
+		     (flonum->fixnum (floor x)))))
+		(else
+		 (flonum->fixnum (floor x)))))))
       
       (js-bind! %this js-math 'floor
 	 :value (js-make-function %this js-math-floor 1 'floor)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Jan 19 08:13:06 2017 (serrano)                */
+;*    Last change :  Sun Feb 26 06:15:23 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -77,7 +77,8 @@
 		(else
 		 (hopc-optim-level-set! (string->integer level))))
 	     (hopc-bigloo-options-set!
-		(cons (format "-O~a" (hopc-optim-level)) (hopc-bigloo-options))))
+		(cons (format "-O~a" (min (hopc-optim-level) 6))
+		   (hopc-bigloo-options))))
 	    (("-g?level" (help "Increase or set debug level"))
 	     (hopc-clientc-source-map-set! #t)
 	     (hopc-clientc-arity-check-set! #t)
@@ -125,6 +126,8 @@
 	     (hopc-long-size-set! 32))
 	    (("-m64" (help "Generate 64-bit code"))
 	     (hopc-long-size-set! 64))
+	    (("-muint32" (help "Generate uint32 variables and constants"))
+	     (hopc-uint32-set! #t))
 	    (("--source-map" (help "Enable source-map table generation"))
 	     (hopc-clientc-source-map-set! #t))
 	    (("--no-source-map" (help "Disable source-map table generation"))
@@ -210,6 +213,10 @@
 	     #unspecified)
 	    (("-p" ?port (help "Hop compatibility, ignored"))
 	     #unspecified)
+	    (("-fccall" (help "Enable call caches"))
+	     (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
+	    (("-fthis" (help "Enable fast this access"))
+	     (hopc-j2s-flags-set! (cons* :optim-this #t (hopc-j2s-flags))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

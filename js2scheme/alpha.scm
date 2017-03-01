@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Tue Jan 17 09:21:02 2017 (serrano)                */
+;*    Last change :  Sat Feb  4 11:20:20 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -202,6 +202,18 @@
 		(duplicate::J2SRef this
 		   (decl new)))
 	     (duplicate::J2SRef this)))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SThis ...                                              */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SThis)
+   (with-access::J2SThis this (decl)
+      (with-access::J2SDecl decl (%info)
+	 (if (isa? %info AlphaInfo)
+	     (with-access::AlphaInfo %info (new)
+		(duplicate::J2SThis this
+		   (decl new)))
+	     (duplicate::J2SThis this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SFun ...                                               */

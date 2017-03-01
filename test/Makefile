@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Oct 13 09:02:31 2016 (serrano)                */
-#*    Copyright   :  2006-16 Manuel Serrano                            */
+#*    Last change :  Sat Feb  4 09:23:47 2017 (serrano)                */
+#*    Copyright   :  2006-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -56,6 +56,8 @@ POPULATION = Makefile \
   hopjs/noserv/es6-arrow.js \
   hopjs/noserv/es6-defval.js \
   hopjs/noserv/es6-generator.js \
+  hopjs/noserv/es6-generator-mdn.js \
+  hopjs/noserv/es6-generator-kangax.js \
   hopjs/noserv/es6-rest.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \

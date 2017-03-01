@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Jan 23 09:36:29 2017 (serrano)                */
+;*    Last change :  Mon Feb 27 14:49:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -26,6 +26,8 @@
 	   
 	   (type-uint32?::bool ::symbol)
 	   (type-int30?::bool ::symbol)
+	   (type-int53?::bool ::symbol)
+	   (type-fixnum?::bool ::symbol)
 	   (type-integer?::bool ::symbol)
 	   (type-number?::bool ::symbol)
 	   (type-name type conf)
@@ -120,13 +122,21 @@
 ;*    type-int53? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (type-int53? type)
-   (memq type '(uint29 int30 int53)))
+   (memq type '(uint29 int30 int53 ufixnum)))
+
+;*---------------------------------------------------------------------*/
+;*    type-fixnum? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (type-fixnum? type)
+   (memq type '(uint29 int30 fixnum ufixnum)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-integer? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (type-integer? type::symbol)
-   (or (type-int53? type)  (type-uint32? type) (memq type '(integer fixnum))))
+   (or (type-int53? type)
+       (type-uint32? type)
+       (memq type '(integer fixnum ufixnum))))
    
 ;*---------------------------------------------------------------------*/
 ;*    type-number? ...                                                 */
@@ -138,12 +148,17 @@
 ;*    type-name ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (type-name type conf)
+   
+   (define (m64? conf)
+      (=fx (config-get conf :long-size 0) 64))
+   
    (case type
       ((unknown any number) 'obj)
       ((uint29 index uint32 length) 'uint32)
-      ((int30 fixnum) 'long)
-      ((integer int53) (if (=fx (config-get conf :long-size 0) 64) 'long 'obj))
-      ((object) 'JsObject)
+      ((int30 fixnum ufixnum) 'long)
+      ((int53) (if (m64? conf) 'long 'obj))
+      ((integer) 'obj)
+      ((object this) 'JsObject)
       ((undefined) 'unspecified)
       ((regexp) 'JsRegExp)
       ((array) 'JsArray)
@@ -156,26 +171,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    minimal-type ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (minimal-type utype type)
-   (if (eq? utype type)
-       utype
-       (case utype
+(define (minimal-type t1 t2)
+   (if (eq? t1 t2)
+       t1
+       (case t1
 	  ((uint29)
-	   type)
+	   t2)
 	  ((index)
-	   (if (memq type '(uint29)) utype type))
+	   (if (memq t2 '(uint29)) t1 t2))
 	  ((length)
-	   (if (memq type '(uint29 index)) utype type))
+	   (if (memq t2 '(uint29 index)) t1 t2))
 	  ((uint32)
-	   (if (memq type '(uint29 index length)) utype type))
-	  ((int30 fixnum)
-	   (if (memq type '(uint29))
-	       utype
-	       (if (type-integer? type) 'integer 'number)))
+	   (if (memq t2 '(uint29 index length)) t1 t2))
+	  ((int30 fixnum ufixnum)
+	   (if (memq t2 '(uint29))
+	       t1
+	       (if (type-integer? t2) 'integer 'number)))
 	  ((integer)
-	   (if (type-integer? type) 'integer 'number))
+	   (if (type-integer? t2) 'integer 'number))
 	  ((number)
-	   (if (type-number? type) 'number 'any))
+	   (if (type-number? t2) 'number 'any))
 	  (else 'any))))
 
 ;*---------------------------------------------------------------------*/

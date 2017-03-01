@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Jan 23 10:53:48 2017 (serrano)                */
+;*    Last change :  Mon Feb 27 21:47:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -145,7 +145,9 @@
 	      (name read-only (default '||))
 	      (generator::bool (default #f))
 	      (optimize read-only (default #t))
+	      (thisp (default #f))
 	      (params::pair-nil (default '()))
+	      (constrsize::int (default 3))
 	      body::J2SBlock)
 	   
 	   (class J2SSvc::J2SFun
@@ -198,7 +200,7 @@
 	      (mark::obj read-only)
 	      (deps::pair-nil read-only))
 	   
-	   (final-class J2SThis::J2SExpr)
+	   (final-class J2SThis::J2SRef)
 	   
 	   (final-class J2SCond::J2SExpr
 	      test::J2SExpr
@@ -222,6 +224,7 @@
 	      (usage::pair-nil (default '()))
 	      (utype::symbol (default 'unknown))
 	      (itype::symbol (default 'unknown))
+	      (vtype::symbol (default 'unknown))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
 	      (binder::symbol (default 'var)))
 	   
@@ -315,6 +318,7 @@
 	      field::J2SExpr)
 	   
 	   (final-class J2SCall::J2SExpr
+	      (cache (default #f))
 	      fun::J2SExpr
 	      (protocol (default 'direct))
 	      (this (default #unspecified))
@@ -327,6 +331,7 @@
 	      node::J2SNode)
 	   
 	   (final-class J2SNew::J2SExpr
+	      (cache (default #f))
 	      clazz::J2SNode
 	      args::pair-nil)
 
@@ -1122,14 +1127,15 @@
 ;*    Used to find the class of an X instanceof Y expression.          */
 ;*---------------------------------------------------------------------*/
 (define (class-of rhs::J2SExpr)
-   (when (isa? rhs J2SUnresolvedRef))
-   (with-access::J2SUnresolvedRef rhs (id)
-      (case id
-	 ((Array) 'array)
-	 ((Argument) 'argument)
-	 ((Date) 'date)
-	 ((RegExp) 'regexp)
-	 ((Object) 'object))))
+   (when (isa? rhs J2SUnresolvedRef)
+      (with-access::J2SUnresolvedRef rhs (id)
+	 (case id
+	    ((Array) 'array)
+	    ((Argument) 'argument)
+	    ((Date) 'date)
+	    ((RegExp) 'regexp)
+	    ((Object) 'object)
+	    ((Function) 'function)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-expr-type-test ...                                           */

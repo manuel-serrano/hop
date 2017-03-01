@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Nov  8 09:29:10 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Wed Mar  1 08:10:29 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -113,8 +113,7 @@
 	 (define js-string-prototype
 	    (instantiate::JsString
 	       (val (js-ascii->jsstring ""))
-	       (__proto__ __proto__)
-	       (extensible #t)))
+	       (__proto__ __proto__)))
 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5
 	 (define (js-string-construct o::JsString . arg)
@@ -136,7 +135,8 @@
 			     (writable #f)
 			     (configurable #f)
 			     (enumerable #f)
-			     (value (js-jsstring-codeunit-length str)))))
+			     (value (uint32->fixnum
+				       (js-jsstring-codeunit-length str))))))
 		  (with-access::JsString o (val properties)
 		     (set! val str)
 		     (set! properties (list len)))))
@@ -459,7 +459,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.13
    (define (slice this::obj start end)
       (let* ((jss (js-cast-string %this this))
-	     (len (js-jsstring-length jss))
+	     (len (uint32->fixnum (js-jsstring-length jss)))
 	     (intstart (js-tointeger start %this))
 	     (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
 	     (from (->fixnum
@@ -560,8 +560,7 @@
       (letrec ((%gen (js-make-generator
 			(lambda (%v %e)
 			   (let* ((val (js-cast-string %this this))
-				  (len (fixnum->uint32
-					  (js-jsstring-character-length val))))
+				  (len (js-jsstring-character-length val)))
 			      (let ((i #u32:0))
 				 (let loop ((%v %v) (%e %e))
 				    (if (>=u32 i len)
@@ -612,7 +611,8 @@
 	 (apply vector
 	    (map! js-integer->jsstring
 	       (iota
-		  (js-jsstring-character-length (js-cast-string %this val)))))
+		  (uint32->fixnum
+		     (js-jsstring-character-length (js-cast-string %this val))))))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -623,9 +623,8 @@
 (define-method (js-has-property o::JsString p %this)
    (let ((index (js-toindex p)))
       (if (js-isindex? index)
-	  (let* ((len (js-jsstring-character-length (js-cast-string %this o)))
-		 (index (uint32->fixnum index)))
-	     (if (<=fx len index)
+	  (let* ((len (js-jsstring-character-length (js-cast-string %this o))))
+	     (if (<=u32 len index)
 		 (call-next-method)
 		 #t))
 	  (call-next-method))))
@@ -725,12 +724,12 @@
 (define-method (js-for-in o::JsString proc %this)
    (with-access::JsString o (val)
       (let ((len (js-jsstring-length val)))
-	 (if (>fx len 0)
-	     (let loop ((i 0))
-		(if (<fx i len)
+	 (if (>u32 len #u32:0)
+	     (let loop ((i #u32:0))
+		(if (<u32 i len)
 		    (begin
-		       (proc (js-integer->jsstring i))
-		       (loop (+fx i 1)))
+		       (proc (js-integer->jsstring (uint32->fixnum i)))
+		       (loop (+u32 i #u32:1)))
 		    (call-next-method)))
 	     (call-next-method)))))
 

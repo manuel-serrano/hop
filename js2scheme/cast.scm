@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Jan 22 16:54:26 2017 (serrano)                */
+;*    Last change :  Tue Feb 28 09:41:22 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -78,14 +78,17 @@
 (define (need-cast? type totype)
 
    (define (jstype? type)
-      (memq type '(integer object function array string undefined)))
+      (memq type '(null integer object function array string undefined
+		   fixnum ufixnum number int53)))
    
    (cond
       ((eq? type totype) #f)
-      ((eq? totype 'unknown) #f)
+      ((eq? totype 'unknown) (memq type '(index uint32 uint29 length)))
       ((and (eq? totype 'any) (jstype? type)) #f)
       ((and (any? type) (any? totype)) #f)
       ((and (eq? type 'int30) (eq? totype 'integer)) #f)
+      ((and (eq? type 'int53) (eq? totype 'integer)) #f)
+      ((and (eq? type 'any) (eq? totype 'void)) #f)
       (else #t)))
 
 ;*---------------------------------------------------------------------*/
@@ -129,11 +132,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-cast! this::J2SRef totype fun)
    (with-access::J2SRef this (loc decl type)
-      (with-access::J2SDecl decl (utype)
-	 (if (need-cast? type utype)
-	     (let ((totype type))
-		(set! type utype)
-		(cast this totype))
+      (with-access::J2SDecl decl (vtype id)
+	 (if (need-cast? vtype totype)
+	     (cast this totype)
 	     this))))
 
 ;*---------------------------------------------------------------------*/
@@ -141,9 +142,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-cast! this::J2SAccess totype fun)
    (with-access::J2SAccess this (obj field)
-      (set! obj (cast (type-cast! obj totype fun) 'any))
-      (set! field (type-cast! field totype fun))
-      this))
+      (set! obj (type-cast! obj 'any fun))
+      (set! field (type-cast! field 'any fun))
+      (if (need-cast? 'any totype)
+	  (cast this totype)
+	  this)))
 							   
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SAssig ...                                        */
@@ -152,19 +155,35 @@
    (with-access::J2SAssig this (lhs rhs type loc)
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
-	     (with-access::J2SDecl decl (utype)
-		(set! rhs (type-cast! rhs totype fun))
-		(with-access::J2SExpr rhs ((rtype type) loc)
-		   (when (need-cast? rtype utype)
-		      (set! rhs (cast rhs utype))))
-		(if (need-cast? type utype)
+	     (with-access::J2SDecl decl (vtype)
+		(set! rhs (type-cast! rhs vtype fun))
+		(if (need-cast? type vtype)
 		    (let ((totype type))
-		       (set! type utype)
+		       (set! type vtype)
 		       (cast this totype))
 		    this)))
 	  (begin
-	     (set! lhs (type-cast! lhs totype fun))
-	     (set! rhs (cast (type-cast! rhs totype fun) 'any))
+	     (set! lhs (type-cast! lhs 'any fun))
+	     (set! rhs (type-cast! rhs 'any fun))
+	     this))))
+		
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SPrefix ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SPrefix totype fun)
+   (with-access::J2SAssig this (lhs rhs type loc)
+      (if (isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (vtype)
+		(set! rhs (type-cast! rhs vtype fun))
+		(if (need-cast? type vtype)
+		    (let ((totype type))
+		       (set! type vtype)
+		       (cast this totype))
+		    this)))
+	  (begin
+	     (set! lhs (type-cast! lhs 'any fun))
+	     (set! rhs (type-cast! rhs 'any fun))
 	     this))))
 		
 ;*---------------------------------------------------------------------*/
@@ -186,16 +205,15 @@
 		   (loop params '()
 		      (append (reverse (map cast-any vals)) nvals)))
 		  (else
-		   (with-access::J2SDecl (car params) (utype)
+		   (with-access::J2SDecl (car params) (vtype)
 		      (loop (cdr params) (cdr vals)
-			 (cons (cast (car vals) utype) nvals)))))))))
+			 (cons (cast (car vals) vtype) nvals)))))))))
    
    (define (unknown-fun this)
-      (with-access::J2SCall this (args)
+      (with-access::J2SCall this (args fun)
+	 (set! fun (type-cast! fun 'any fun))
 	 (set! args (map! cast-any args)))
       this)
-   
-   (call-default-walker)
    
    (with-access::J2SCall this (fun)
       (cond
@@ -251,26 +269,25 @@
 	    (else
 	     (set! hint '())))))
    
-   (call-default-walker)
    (with-access::J2SBinary this (op lhs rhs type hint)
       (let ((tlhs (j2s-type lhs))
 	    (trhs (j2s-type rhs)))
 	 (case op
 	    ((+ - * / %)
 	     (let ((tym (max-type type (max-type tlhs trhs))))
-		(set! lhs (cast lhs tym))
-		(set! rhs (cast rhs tym))
+		(set! lhs (type-cast! lhs tym fun))
+		(set! rhs (type-cast! rhs tym fun))
 		(when (memq tym '(any number)) (set-hint! this tlhs trhs))
 		this))
 	    ((< <= > >= == === != !==)
 	     (let ((tym (max-type tlhs trhs)))
-		(set! lhs (cast lhs tym))
-		(set! rhs (cast rhs tym))
+		(set! lhs (type-cast! lhs tym fun))
+		(set! rhs (type-cast! rhs tym fun))
 		(when (memq tym '(any number)) (set-hint! this tlhs trhs))
 		this))
 	    (else
-	     (set! lhs (cast lhs 'any))
-	     (set! rhs (cast rhs 'any))
+	     (set! lhs (type-cast! lhs 'any fun))
+	     (set! rhs (type-cast! rhs 'any fun))
 	     this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -289,8 +306,8 @@
 ;*    type-cast! ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-cast! this::J2SDeclInit totype fun)
-   (with-access::J2SDeclInit this (val utype)
-      (set! val (cast (type-cast! val utype fun) utype))
+   (with-access::J2SDeclInit this (val vtype)
+      (set! val (cast (type-cast! val vtype fun) vtype))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -306,17 +323,11 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    type-cast! ::J2SPragma ...                                       */
-;*---------------------------------------------------------------------*/
-(define-walk-method (type-cast! this::J2SPragma totype fun)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SNew ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-cast! this::J2SNew totype fun)
    (with-access::J2SNew this (args clazz)
-      (set! args (map! (lambda (a) (cast (type-cast! a totype fun) 'any)) args))
+      (set! args (map! (lambda (a) (cast (type-cast! a 'any fun) 'any)) args))
       (set! clazz (cast (type-cast! clazz totype fun) 'any))
       this))
 
@@ -329,14 +340,67 @@
 	   (isa? this J2SPragma)
 	   (isa? this J2SSequence)
 	   (isa? this J2SUnary)
-	   (isa? this J2SParen))
-       (call-default-walker))
+	   (isa? this J2SParen)
+	   (isa? this J2SCond))
+       (call-default-walker)
+       this)
       ((or (isa? this J2SThis)
 	   (isa? this J2SLiteral)
 	   (isa? this J2SHopRef)
 	   (isa? this J2SUnresolvedRef))
-       #unspecified)
+       this)
       (else
        (tprint "TBD " (typeof this))
-       (call-default-walker)))
-   this)
+       (call-default-walker)
+       this)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SCast ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SCast totype fun)
+   (with-access::J2SCast this (loc)
+      (J2SCast totype this)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SArray ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SArray totype fun)
+   (call-default-walker))
+
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SNumber ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SNumber totype fun)
+   (with-access::J2SNumber this (loc type val)
+      (if (need-cast? type totype)
+	  (J2SCast totype this)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SSwitch ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SSwitch totype fun)
+   (with-access::J2SSwitch this (key cases)
+      (set! key (type-cast! key 'any fun))
+      (for-each (lambda (c) (type-cast! c 'any fun)) cases)
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SCase ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SCase totype fun)
+   (with-access::J2SCase this (expr body)
+      (set! expr (type-cast! expr 'any fun))
+      (set! body (type-cast! body 'void fun))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SForIn ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SForIn totype fun)
+   (with-access::J2SForIn this (obj body)
+      (set! obj (type-cast! obj 'any obj))
+      (set! body (type-cast! body 'void fun))
+      this))
+      

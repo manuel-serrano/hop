@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_pipe_wrap.scm             */
+;*    serrano/prgm/project/hop/3.1.x/nodejs/_pipe_wrap.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun May  3 05:06:44 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Wed Mar  1 09:25:47 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
 ;*=====================================================================*/
@@ -103,7 +103,7 @@
       (js-make-function %this 
 	 (lambda (this string handle)
 	    (stream-write-string %worker %this process this
-	       (js-jsstring->string string) 0 (js-jsstring-length string)
+	       (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 	       "ascii" #f handle))
 	 2 'writeAsciiString)
       #f %this)
@@ -113,7 +113,7 @@
       (js-make-function %this
 	 (lambda (this string handle)
 	    (stream-write-string %worker %this process this
-	       (js-jsstring->string string) 0 (js-jsstring-length string)
+	       (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 	       "utf8" #f handle))
 	 2 "writeUtf8String")
       #f %this)
@@ -125,7 +125,7 @@
 	    (let* ((ucs2string (utf8-string->ucs2-string string))
 		   (buffer (ucs2-string->buffer ucs2string)))
 	       (stream-write-string %worker %this process this
-		  (js-jsstring->string string) 0 (js-jsstring-length string)
+		  (js-jsstring->string string) 0 (js-jsstring-lengthfx string)
 		  "ascii" #f handle)))
 	 2 "writeUcs2String")
       #f %this)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Jan 17 09:07:03 2017 (serrano)                */
+;*    Last change :  Sun Feb 26 18:13:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -64,11 +64,16 @@
 	 (use-nodes headers)
 	 (use-nodes decls)
 	 (use-nodes nodes)
-	 (unless (cell-ref deval)
-	    ;; it might be valuable to count the number of direct
-	    ;; eval calls instead of using a simple boolean.
-	    (set! direct-eval #f)
-	    (j2s-dead! this args))))
+	 (if (cell-ref deval)
+	     (for-each (lambda (d::J2SDecl)
+			  (with-access::J2SDecl d (usage)
+			     (set! usage (cons 'eval usage))))
+		decls)
+	     (begin
+		;; it might be valuable to count the number of direct
+		;; eval calls instead of using a simple boolean.
+		(set! direct-eval #f)
+		(j2s-dead! this args)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -214,7 +219,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SAccess ctx deval)
    (with-access::J2SAccess this (obj field)
-      (usage obj 'ref deval)
+      (usage obj 'get deval)
       (usage field 'ref deval))
    this)
 

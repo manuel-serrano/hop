@@ -3,10 +3,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Feb 18 09:29:07 2016 (serrano)                */
-;*    Copyright   :  2016 Manuel Serrano                               */
+;*    Last change :  Sun Feb 26 20:31:16 2017 (serrano)                */
+;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
+;*    -------------------------------------------------------------    */
+;*    See expanders.sch for the actual expander bindings.              */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -17,15 +19,58 @@
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-expander %define-pcache %define-pcache-expander)
-(define-expander js-make-pcache js-make-pcache-expander)
-(define-expander js-pcache-ref js-pcache-ref-expander)
+(define-expander %define-pcache
+   %define-pcache-expander)
+(define-expander js-make-pcache
+   js-make-pcache-expander)
+(define-expander js-pcache-ref
+   js-pcache-ref-expander)
+(define-expander js-pcache-cmap
+   js-pcache-cmap-expander)
+;* (define-expander js-pcache-mmap                                     */
+;*    js-pcache-mmap-expander)                                         */
+(define-expander js-pcache-index
+   js-pcache-index-expander)
+(define-expander js-pcache-pmap
+   js-pcache-pmap-expander)
+;* (define-expander js-pcache-pelements                                */
+;*    js-pcache-pelements-expander)                                    */
+(define-expander js-pcache-proto
+   js-pcache-proto-expander)
+(define-expander js-pcache-method
+   js-pcache-method-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-XXX ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-expander js-get-name/cache js-get-name/cache-expander)
-(define-expander js-object-get-name/cache js-object-get-name/cache-expander)
-(define-expander js-global-object-get-name js-global-object-get-name-expander)
-(define-expander js-global-object-get-name/cache js-global-object-get-name/cache-expander)
+(define-expander js-get-name/cache
+   js-get-name/cache-expander)
+(define-expander js-object-get-name/cache
+   js-object-get-name/cache-expander)
+(define-expander js-this-get-name/cache
+   js-this-get-name/cache-expander)
+(define-expander js-global-object-get-name
+   js-global-object-get-name-expander)
+(define-expander js-global-object-get-name/cache
+   js-global-object-get-name/cache-expander)
 
+;*---------------------------------------------------------------------*/
+;*    js-put-XXX ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-expander js-put-name/cache!
+   js-put-name/cache-expander)
+(define-expander js-object-put-name/cache!
+   js-object-put-name/cache-expander)
+(define-expander js-this-put-name/cache!
+   js-this-put-name/cache-expander)
+
+;*---------------------------------------------------------------------*/
+;*    js-call-XXX ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-expander js-call-name/cache
+   js-call-name/cache-expander)
+(define-expander js-object-call-name/cache
+   js-object-call-name/cache-expander)
+(define-expander js-call/cache
+   js-call/cache-expander)
+		    

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Dec 20 08:05:29 2016 (serrano)                */
+#*    Last change :  Sun Feb  5 11:12:01 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -40,7 +40,7 @@ _OBJECTS = lexer header parser html ast dump utils \
   syntax return loopexit symbol scheme ronly resolve this \
   use property bestpractice sourcemap debug stmtassign letopt \
   cps ecmascript5 narrow constant tyflow hint range cast \
-  array alpha letfusion
+  array alpha letfusion uint32 constrsize
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

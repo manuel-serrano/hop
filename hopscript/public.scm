@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Jan 17 09:16:43 2017 (serrano)                */
+;*    Last change :  Wed Mar  1 08:40:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -39,6 +39,14 @@
 	   (js-new2 ::JsGlobalObject f a0 a1)
 	   (js-new3 ::JsGlobalObject f a0 a1 a2)
 	   (js-new4 ::JsGlobalObject f a0 a1 a2 a3)
+	   
+	   (js-new-fast0 ::JsGlobalObject ::JsFunction __proto__)
+	   (js-new-fast1 ::JsGlobalObject ::JsFunction __proto__ a0)
+	   (js-new-fast2 ::JsGlobalObject ::JsFunction __proto__ a0 a1)
+	   (js-new-fast3 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2)
+	   (js-new-fast4 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2 a3)
+	   (js-new-fast5 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2 a3 a4)
+	   (js-new-fastn ::JsGlobalObject ::JsFunction __proto__ . an)
 	   
 	   (js-object-alloc ::JsFunction ::JsGlobalObject)
 	   
@@ -77,9 +85,10 @@
 	   (js-in?/debug::bool ::JsGlobalObject loc f obj)
 
 	   (inline js-make-let::cell)
-	   (js-let-ref ::obj ::obj ::obj ::JsGlobalObject)
+	   (inline js-let-ref ::obj ::obj ::obj ::JsGlobalObject)
 	   (inline js-let-set! ::cell ::obj)
 	   
+	   (js-raise-reference-error/loc ::JsGlobalObject loc ::bstring obj . args)
 	   (inline js-totest::bool ::obj)
 	   (js-toboolean::bool ::obj)
 	   (generic js-tonumber ::obj ::JsGlobalObject)
@@ -185,72 +194,143 @@
 	     o))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-new0 ...                                                      */
+;*    js-newXXX ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-new0 %this f)
-   (if (isa? f JsFunction)
-       (with-access::JsFunction f (constructor construct name alloc)
+(define (js-new0 %this ctor)
+   (if (isa? ctor JsFunction)
+       (with-access::JsFunction ctor (constructor construct name alloc)
 	  (if constructor
-	      (constructor f (js-null))
-	      (let ((o (alloc f)))
+	      (constructor ctor (js-null))
+	      (let ((o (alloc ctor)))
 		 ;; CARE ARITY
-		 (let ((r (js-call0% %this f construct o)))
-		    (js-new-return f r o)))))
-       (js-raise-type-error %this "new: object is not a function ~s" f)))
+		 (let ((r (js-call0% %this ctor construct o)))
+		    (js-new-return ctor r o)))))
+       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
 
-(define (js-new1 %this f a0)
-   (if (isa? f JsFunction)
-       (with-access::JsFunction f (constructor construct alloc name)
+(define (js-new1 %this ctor a0)
+   (if (isa? ctor JsFunction)
+       (with-access::JsFunction ctor (constructor construct alloc name)
 	  (if constructor
-	      (constructor f a0)
-	      (let ((o (alloc f)))
+	      (constructor ctor a0)
+	      (let ((o (alloc ctor)))
 		 ;; CARE ARITY
-		 (let ((r (js-call1% %this f construct o a0)))
-		    (js-new-return f r o)))))
-       (js-raise-type-error %this "new: object is not a function ~s" f)))
+		 (let ((r (js-call1% %this ctor construct o a0)))
+		    (js-new-return ctor r o)))))
+       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
 
-(define (js-new2 %this f a0 a1)
-   (if (isa? f JsFunction)
-       (with-access::JsFunction f (constructor construct alloc name)
+(define (js-new2 %this ctor a0 a1)
+   (if (isa? ctor JsFunction)
+       (with-access::JsFunction ctor (constructor construct alloc name)
 	  (if constructor
-	      (constructor f a0 a1)
-	      (let ((o (alloc f)))
+	      (constructor ctor a0 a1)
+	      (let ((o (alloc ctor)))
 		 ;; CARE ARITY
-		 (let ((r (js-call2% %this f construct o a0 a1)))
-		    (js-new-return f r o)))))
-       (js-raise-type-error %this "new: object is not a function ~s" f)))
+		 (let ((r (js-call2% %this ctor construct o a0 a1)))
+		    (js-new-return ctor r o)))))
+       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
 
-(define (js-new3 %this f a0 a1 a2)
-   (if (isa? f JsFunction)
-       (with-access::JsFunction f (constructor construct alloc name)
-	  (let ((o (alloc f)))
+(define (js-new3 %this ctor a0 a1 a2)
+   (if (isa? ctor JsFunction)
+       (with-access::JsFunction ctor (constructor construct alloc name)
+	  (let ((o (alloc ctor)))
 	     ;; CARE ARITY
-	     (let ((r (js-call3% %this f construct o a0 a1 a2)))
-		(js-new-return f r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" f)))
+	     (let ((r (js-call3% %this ctor construct o a0 a1 a2)))
+		(js-new-return ctor r o))))
+       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
 
-(define (js-new4 %this f a0 a1 a2 a3)
-   (if (isa? f JsFunction)
-       (with-access::JsFunction f (construct alloc name)
-	  (let ((o (alloc f)))
+(define (js-new4 %this ctor a0 a1 a2 a3)
+   (if (isa? ctor JsFunction)
+       (with-access::JsFunction ctor (construct alloc name)
+	  (let ((o (alloc ctor)))
 	     ;; CARE ARITY
-	     (let ((r (js-call4% %this f construct o a0 a1 a2 a3)))
-		(js-new-return f r o))))
-       (js-raise-type-error %this "new: object is not a function ~s" f)))
+	     (let ((r (js-call4% %this ctor construct o a0 a1 a2 a3)))
+		(js-new-return ctor r o))))
+       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
 
+;*---------------------------------------------------------------------*/
+;*    js-new-return/fast ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-new-return/fast ctor r o)
+   (if (isa? r JsObject) r o))
+
+;*---------------------------------------------------------------------*/
+;*    get-prototypeof ...                                              */
+;*---------------------------------------------------------------------*/
+(define (get-prototypeof proto %this)
+   (if (isa? proto JsObject)
+       proto
+       (with-access::JsGlobalObject %this (__proto__)
+	  __proto__)))
+
+;*---------------------------------------------------------------------*/
+;*    js-new-fastXXX ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-new-fast0 %this ctor::JsFunction __proto__)
+   (with-access::JsFunction ctor (constrsize constrmap procedure)
+      (let ((this (instantiate::JsObject
+		     (cmap constrmap)
+		     (elements (make-vector constrsize (js-undefined)))
+		     (__proto__ (get-prototypeof __proto__ %this)))))
+	 (js-new-return/fast ctor (procedure this) this))))
+
+(define (js-new-fast1 %this ctor::JsFunction __proto__ a0)
+   (with-access::JsFunction ctor (constrsize constrmap procedure)
+      (let ((this (instantiate::JsObject
+		     (cmap constrmap)
+		     (elements (make-vector constrsize (js-undefined)))
+		     (__proto__ (get-prototypeof __proto__ %this)))))
+	 (js-new-return/fast ctor (procedure this a0) this))))
+
+(define (js-new-fast2 %this ctor::JsFunction __proto__ a0 a1)
+   (with-access::JsFunction ctor (constrsize constrmap procedure)
+      (let ((this (instantiate::JsObject
+		     (cmap constrmap)
+		     (elements (make-vector constrsize (js-undefined)))
+		     (__proto__ (get-prototypeof __proto__ %this)))))
+	 (js-new-return/fast ctor (procedure this a0 a1) this))))
+
+(define (js-new-fast3 %this ctor::JsFunction __proto__ a0 a1 a2)
+   (with-access::JsFunction ctor (constrsize constrmap procedure)
+      (let ((this (instantiate::JsObject
+		     (cmap constrmap)
+		     (elements (make-vector constrsize (js-undefined)))
+		     (__proto__ (get-prototypeof __proto__ %this)))))
+	 (js-new-return/fast ctor (procedure this a0 a1 a2) this))))
+
+(define (js-new-fast4 %this ctor::JsFunction __proto__ a0 a1 a2 a3)
+   (with-access::JsFunction ctor (constrsize constrmap procedure)
+      (let ((this (instantiate::JsObject
+		     (cmap constrmap)
+		     (elements (make-vector constrsize (js-undefined)))
+		     (__proto__ (get-prototypeof __proto__ %this)))))
+	 (js-new-return/fast ctor (procedure this a0 a1 a2 a3) this))))
+
+(define (js-new-fast5 %this ctor::JsFunction __proto__ a0 a1 a2 a3 a4)
+   (with-access::JsFunction ctor (constrsize constrmap procedure)
+      (let ((this (instantiate::JsObject
+		     (cmap constrmap)
+		     (elements (make-vector constrsize (js-undefined)))
+		     (__proto__ (get-prototypeof __proto__ %this)))))
+	 (js-new-return/fast ctor (procedure this a0 a1 a2 a3 a4) this))))
+
+(define (js-new-fastn %this ctor::JsFunction __proto__ . an)
+   (with-access::JsFunction ctor (constrsize constrmap procedure)
+      (let ((this (instantiate::JsObject
+		     (cmap constrmap)
+		     (elements (make-vector constrsize (js-undefined)))
+		     (__proto__ (get-prototypeof __proto__ %this)))))
+	 (js-new-return/fast ctor (apply procedure this an) this))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-object-alloc constructor::JsFunction %this::JsGlobalObject)
-   (with-access::JsFunction constructor (constrsize constrmap)
-      (let ((cproto (js-get constructor 'prototype %this)))
+(define (js-object-alloc ctor::JsFunction %this::JsGlobalObject)
+   (with-access::JsFunction ctor (constrsize constrmap)
+      (let ((cproto (js-get ctor 'prototype %this)))
 	 (instantiate::JsObject
 	    (cmap constrmap)
 	    (elements (make-vector constrsize (js-undefined)))
-	    (__proto__ (if (isa? cproto JsObject)
-			   cproto
-			   (with-access::JsGlobalObject %this (__proto__)
-			      __proto__)))))))
+	    (__proto__ (get-prototypeof cproto %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply ...                                                     */
@@ -265,7 +345,7 @@
 ;*    js-apply% ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-apply% %this fun::JsFunction proc::procedure obj args::pair-nil)
-   (with-access::JsFunction fun (arity rest len minlen)
+   (with-access::JsFunction fun (arity rest len minlen name)
       (let ((n (+fx 1 (length args))))
 	 (cond
 	    ((=fx arity n)
@@ -699,7 +779,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-let-ref ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (js-let-ref cell ident loc %this)
+(define-inline (js-let-ref cell ident loc %this)
    (let ((v (cell-ref cell)))
       (if (eq? v '__undefined__)
 	  (js-raise-reference-error/loc %this loc
@@ -731,7 +811,8 @@
       ((boolean? obj) obj)
       ((eq? obj (js-undefined)) #f)
       ((eq? obj (js-null)) #f)
-      ((number? obj) (not (or (= obj 0) (and (flonum? obj) (nanfl? obj)))))
+      ((fixnum? obj) (not (=fx obj 0)))
+      ((flonum? obj) (not (or (=fl obj 0.0) (nanfl? obj))))
       ((js-jsstring? obj) (js-jsstring->bool obj))
       (else #t)))
 
@@ -1130,7 +1211,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.1       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-equal? o1 o2 %this::JsGlobalObject)
-   (or (and (not (flonum? o1)) (eq? o1 o2)) (js-equality? o1 o2 %this)))
+   (or (and (eq? o1 o2) (not (flonum? o1))) (js-equality? o1 o2 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality? ...                                                 */

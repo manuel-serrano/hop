@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Dec 10 05:53:55 2016 (serrano)                */
-;*    Copyright   :  2004-16 Manuel Serrano                            */
+;*    Last change :  Sun Feb 26 06:15:52 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
 ;*=====================================================================*/
@@ -46,6 +46,9 @@
 
 	    (hopc-long-size::int)
 	    (hopc-long-size-set! ::int)
+
+	    (hopc-uint32::bool)
+	    (hopc-uint32-set! ::bool)
 
 	    (hopc-jsheap::obj)
 	    (hopc-jsheap-set! ::obj)
@@ -105,7 +108,10 @@
 	    (hopc-js-driver-set! ::obj)
 
 	    (hopc-js-return-as-exit::bool)
-	    (hopc-js-return-as-exit-set! ::bool))
+	    (hopc-js-return-as-exit-set! ::bool)
+
+	    (hopc-j2s-flags::pair-nil)
+	    (hopc-j2s-flags-set! ::pair-nil))
 	    
    (eval    (export-exports)))
 
@@ -131,7 +137,7 @@
 ;*    hopc-bigloo-O-options ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-O-options
-   '((1 . ("-unsafe")) (2 . ("-freturn")) (6 . ("-freturn-goto"))))
+   '((1 . ("-unsafe")) (2 . ("-freturn" "-fisa")) (6 . ("-freturn-goto"))))
    
 ;*---------------------------------------------------------------------*/
 ;*    hopc-pass ...                                                    */
@@ -180,6 +186,12 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-long-size
    (bigloo-config 'elong-size))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-uint32 ...                                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-uint32
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-jsheap ...                                                  */
@@ -309,3 +321,9 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-js-return-as-exit
    #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-j2s-flags ...                                               */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-j2s-flags
+   '())

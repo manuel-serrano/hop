@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Tue Nov  1 12:35:55 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:27:32 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
 ;*=====================================================================*/
@@ -38,7 +38,7 @@
 	      (content-length::int32 (default #s32:-1))
 	      (method::obj (default #f))
 	      (url::bstring (default ""))
-	      (mode::symbol (default 'default))
+	      (parsemode::symbol (default 'default))
 	      (errname (default #f))
 	      (type::symbol (default 'response))
 	      state::procedure))
@@ -83,7 +83,7 @@
 (define (reset-parsing! p::JsHttpParser)
    (with-access::JsHttpParser p (state errno prematch clen content-length
 				   status-code http-major http-minor headers
-				   flags method url mode type)
+				   flags method url parsemode type)
       (set! prematch #f)
       (set! state http-line-state)
       (set! errno 0)
@@ -96,7 +96,7 @@
       (set! clen -1)
       (set! method #f)
       (set! url "")
-      (set! mode 'default)
+      (set! parsemode 'default)
       (set! type 'response)))
 
 ;*---------------------------------------------------------------------*/
@@ -248,7 +248,7 @@
 	 (let ((ip (open-input-string! str stroff strend)))
 	    (let loop ((count 0)
 		       (avail (-fx strend stroff)))
-	       (with-access::JsHttpParser parser (state mode errno buffer)
+	       (with-access::JsHttpParser parser (state parsemode errno buffer)
 		  (multiple-value-bind (nstate nread)
 		     (state ip %this parser 0 avail)
 		     (when (>=fx debug-parser 2) 
@@ -285,7 +285,7 @@
 				     " partial-parse=" nread " prevec="
 				     (string-length prevec)))
 			       byteparsed)))
-			((and (=fx nread avail) (eq? mode 'flush-eof))
+			((and (=fx nread avail) (eq? parsemode 'flush-eof))
 			 ;; keep reading he message body
 			 (let ((byteparsed (+fx count nread)))
 			    (set! buffer #f)
@@ -294,7 +294,7 @@
 			       (tprint "<<< execute byteparsed=" byteparsed
 				  " read up to eof"))
 			    byteparsed))
-			((or (=fx nread avail) (not nstate) (eq? mode 'upgrade))
+			((or (=fx nread avail) (not nstate) (eq? parsemode 'upgrade))
 			 (let ((byteparsed (+fx count nread)))
 			    ;; everything has been parsed
 			    (reset-parser! parser)
@@ -693,7 +693,7 @@
 (define (http-header-value-state ip::input-port %this::JsGlobalObject parser::JsHttpParser nread::long avail::long)
 
    (define (add-header! parser value)
-      (with-access::JsHttpParser parser (headers flags content-length clen mode)
+      (with-access::JsHttpParser parser (headers flags content-length clen parsemode)
 	 (case (string->symbol (string-downcase (car headers)))
 	    ((connection)
 	     (cond
@@ -708,7 +708,7 @@
 	     (set! clen (string->integer value))
 	     (set! content-length (fixnum->int32 clen)))
 	    ((upgrade)
-	     (set! mode 'upgrade)))
+	     (set! parsemode 'upgrade)))
 	 (set! headers (cons value headers))))
 
    (define grammar
@@ -751,13 +751,13 @@
 ;*    http-body-state ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (http-body-state ip::input-port %this::JsGlobalObject parser::JsHttpParser nread::long avail::long)
-   (with-access::JsHttpParser parser (flags mode method content-length type
+   (with-access::JsHttpParser parser (flags parsemode method content-length type
 					status-code)
       (when (>fx debug-parser 0)
 	 (tprint "*** HTTP-BODY-STATE nread=" nread " avail=" avail))
 
       (cond
-	 ((eq? mode 'upgrade)
+	 ((eq? parsemode 'upgrade)
 	  (when (>fx debug-parser 0)
 	     (tprint "*** MESSAGE_COMPLETE.3.."))
 	  (http-on-message-complete %this parser)
@@ -785,7 +785,7 @@
 	  ;; MS CARE
 	  (when (>fx avail 0)
 	     (http-on-body %this parser nread avail))
-	  (set! mode 'flush-eof)
+	  (set! parsemode 'flush-eof)
 	  (values 'http-identity-eof (+fx nread avail))
 	  ;;(http-content-state ip %this parser nread avail)
 	  ))))
@@ -1082,7 +1082,7 @@
    (with-access::JsHttpParser parser (headers method
 					status-code
 					http-major http-minor
-					url mode flags)
+					url parsemode flags)
       (let ((cb (js-get parser 'onHeaders %this))
 	    (jsheaders (headers->jsheaders %this parser))
 	    (jsurl (js-string->jsstring url)))
@@ -1094,10 +1094,10 @@
 		  (with-access::JsGlobalObject %this (js-object)
 		     (let ((info (js-new0 %this js-object)))
 			;; upgrade
-			(unless (eq? mode 'upgrade)
+			(unless (eq? parsemode 'upgrade)
 			   (when (and (string? method)
 				      (string=? method "CONNECT"))
-			      (set! mode 'upgrade)))
+			      (set! parsemode 'upgrade)))
 			;; headers
 			(js-put! info 'headers jsheaders #f %this)
 			;; request or resposne
@@ -1116,7 +1116,7 @@
 			(let ((kalive (should-keep-alive? parser)))
 			   (js-put! info 'shouldKeepAlive kalive #f %this))
 			;; upgrade
-			(js-put! info 'upgrade (eq? mode 'upgrade) #f %this)
+			(js-put! info 'upgrade (eq? parsemode 'upgrade) #f %this)
 			;; invoke the callback
 			(let ((r (js-call2 %this cb parser info (js-undefined))))
 			   (when (js-totest r)

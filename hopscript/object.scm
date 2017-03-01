@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Nov 15 08:18:04 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 16:21:56 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
 ;*                                                                     */
@@ -81,17 +81,16 @@
 (define-method (js-donate obj::JsObject worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-object)
-	 (with-access::JsObject obj (extensible)
-	    (let ((nobj (duplicate::JsObject obj
-			   (__proto__ (js-get js-object 'prototype %this))
-			   (properties '()))))
-	       (js-for-in obj
-		  (lambda (k)
-		     (js-put! nobj k
-			(js-donate (js-get obj k %_this) worker %_this)
-			#f %this))
-		  %this)
-	       nobj)))))
+	 (let ((nobj (duplicate::JsObject obj
+			(__proto__ (js-get js-object 'prototype %this))
+			(properties '()))))
+	    (js-for-in obj
+	       (lambda (k)
+		  (js-put! nobj k
+		     (js-donate (js-get obj k %_this) worker %_this)
+		     #f %this))
+	       %this)
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsObject ...                               */
@@ -243,8 +242,7 @@
    (let* ((%prototype (instantiate::JsObject
 			 (__proto__ (js-null))
 			 (elements (make-vector 11))
-			 (cmap (instantiate::JsConstructMap))
-			 (extensible #t)))
+			 (cmap (instantiate::JsConstructMap))))
 	  (%this (instantiate::JsGlobalObject
 		    (__proto__ %prototype)
 		    (cmap (instantiate::JsConstructMap)))))
@@ -551,12 +549,11 @@
 	    (cond
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
 		;; 2
-		(with-access::JsFunction f (constrmap)
+		(with-access::JsFunction f (constrmap constrsize)
 		   (instantiate::JsObject
 		      (cmap constrmap)
-		      (elements ($create-vector 4))
-		      (__proto__ %prototype)
-		      (extensible #t))))
+		      (elements ($create-vector constrsize))
+		      (__proto__ %prototype))))
 	       ((isa? value JsObject)
 		;; 1.a
 		value)
@@ -573,7 +570,6 @@
 		(js-raise-type-error %this "illegal value ~s" value)))))
 
       (define (js-object-construct f . arg)
-	 (tprint "DEPRECATED, SHOULD NOT BE HERE...f=" f " arg=" arg)
 	 (with-access::JsGlobalObject %this (js-object)
 	    (js-object-constructor js-object
 	       (if (pair? arg) (car arg) (js-undefined)))))
@@ -586,7 +582,7 @@
 	       :construct js-object-construct
 	       :constructor js-object-constructor)))
       
-      ;; getprototypeof
+      ;; getPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2
       (define (getprototypeof this o)
 	 (let ((o (js-cast-object o %this "getPrototypeOf")))
@@ -732,8 +728,9 @@
 			     (not (eq? configurable #t))))
 		   properties)
 		;; 3
-		(with-access::JsObject o (extensible)
-		   (not extensible))))))
+;* 		(with-access::JsObject o (extensible)                  */
+ ;* 		   (not extensible))                                   */
+		(not (js-object-mode-extensible? o))))))
       
       (js-bind! %this js-object 'isSealed
 	 :value (js-make-function %this issealed 1 'isSealed)
@@ -760,8 +757,9 @@
 					 (not (eq? writable #t)))))))
 		   properties)
 		;; 3
-		(with-access::JsObject o (extensible)
-		   (not extensible))))))
+;* 		(with-access::JsObject o (extensible)                  */
+;* 		   (not extensible))                                   */
+		(not (js-object-mode-extensible? o))))))
       
       (js-bind! %this js-object 'isFrozen
 	 :value (js-make-function %this isfrozen 1 'isFrozen)
@@ -773,8 +771,9 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13
       (define (isextensible this obj)
 	 (let ((o (js-cast-object obj %this "Object.isExtensible")))
-	    (with-access::JsObject o (extensible)
-	       extensible)))
+;* 	    (with-access::JsObject o (extensible)                      */
+;* 	       extensible)                                             */
+	    (js-object-mode-extensible? o)))
       
       (js-bind! %this js-object 'isExtensible
 	 :value (js-make-function %this isextensible 1 'isExtensible)
@@ -816,12 +815,19 @@
 		 (lambda (o v)
 		    (let ((o (js-cast-object o %this "__proto__"))
 			  (v (js-cast-object v %this "__proto__")))
-		       (with-access::JsObject o (extensible)
-			  (if (not extensible)
-			      (js-raise-type-error %this 
-				 "Prototype of non-extensible object mutated" v)
-			      (with-access::JsObject o (__proto__)
-				 (set! __proto__ v))))))
+;* 		       (with-access::JsObject o (extensible)           */
+;* 			  (if (not extensible)                         */
+;* 			      (js-raise-type-error %this               */
+;* 				 "Prototype of non-extensible object mutated" v) */
+;* 			      (with-access::JsObject o (__proto__ cmap) */
+;* 				 (set! cmap (duplicate::JsConstructMap cmap)) */
+;* 				 (set! __proto__ v))))                 */
+		       (if (not (js-object-mode-extensible? o))
+			   (js-raise-type-error %this 
+			      "Prototype of non-extensible object mutated" v)
+			   (with-access::JsObject o (__proto__ cmap)
+			      (set! cmap (duplicate::JsConstructMap cmap))
+			      (set! __proto__ v)))))
 		 2 'set))
       
       ;; constructor
@@ -842,7 +848,10 @@
 		(js-string->jsstring (js-tostring obj %this))))
 	    (else
 	     (let* ((obj (js-toobject %this this))
-		    (name (symbol->string! (class-name (object-class obj)))))
+		    (clazz (if (isa? obj JsFunction)
+			       JsFunction
+			       (object-class obj)))
+		    (name (symbol->string! (class-name clazz))))
 		(js-string->jsstring
 		   (format "[object ~a]"
 		      (cond
@@ -1026,8 +1035,9 @@
 		      (set! configurable #f)))
 	 properties)
       ;; 3
-      (with-access::JsObject o (extensible)
-	 (set! extensible #f))
+;*       (with-access::JsObject o (extensible)                         */
+;* 	 (set! extensible #f))                                         */
+      (js-object-mode-extensible-set! o #f)
       ;; 4
       obj))
 
@@ -1042,8 +1052,9 @@
    (js-object-unmap! obj)
    (with-access::JsObject o (properties)
       (for-each js-freeze-property! properties)
-      (with-access::JsObject o (extensible)
-	 (set! extensible #f))
+;*       (with-access::JsObject o (extensible)                         */
+;* 	 (set! extensible #f))                                         */
+      (js-object-mode-extensible-set! o #f)
       obj))
 
 ;*---------------------------------------------------------------------*/

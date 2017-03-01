@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Thu Nov 24 15:48:32 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Wed Mar  1 09:25:34 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
 ;*=====================================================================*/
@@ -752,7 +752,7 @@
 	    (if (js-jsstring? string)
 		(with-access::JsSlowBuffer this (data)
 		   (let ((n (maxfx 0
-			       (minfx (js-jsstring-length string)
+			       (minfx (js-jsstring-lengthfx string)
 				  (minfx length
 				     (-fx (string-length data) offset))))))
 		      (if (>fx n 0)
@@ -771,7 +771,7 @@
 	    (if (js-jsstring? string)
 		(with-access::JsSlowBuffer this (data)
 		   (let ((n (maxfx 0
-			       (minfx (js-jsstring-length string)
+			       (minfx (js-jsstring-lengthfx string)
 				  (minfx length
 				     (-fx (string-length data) offset))))))
 		      (if (>fx n 0)
@@ -793,7 +793,7 @@
 	    (if (js-jsstring? string)
 		(with-access::JsSlowBuffer this (data)
 		   (let ((n (maxfx 0
-			       (minfx (js-jsstring-length string)
+			       (minfx (js-jsstring-lengthfx string)
 				  (minfx length
 				     (-fx (string-length data) offset))))))
 		      (if (>fx n 0)
@@ -1035,12 +1035,12 @@
       (js-make-function %this
 	 (lambda (this string encoding)
 	    (if (eq? encoding (js-undefined))
-		(js-jsstring-length string)
+		(js-jsstring-lengthfx string)
 		(let ((enc (js-tostring encoding %this)))
 		   (cond
 		      ((or (string-ci=? enc "utf8")
 			   (string-ci=? enc "utf-8"))
-		       (js-jsstring-length string))
+		       (js-jsstring-lengthfx string))
 		      ((or (string-ci=? enc "ucs2")
 			   (string-ci=? enc "ucs-2")
 			   (string-ci=? enc "utf16le")

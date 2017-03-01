@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Wed Nov 30 06:35:13 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Wed Feb 22 16:09:52 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
 ;*=====================================================================*/
@@ -17,8 +17,7 @@
    (cond-expand
       (enable-ssl (library ssl)))
 
-   (include "nodejs_debug.sch"
-	    "_crypto.sch")
+   (include "nodejs_debug.sch" "_crypto.sch")
    
    (library hopscript)
 

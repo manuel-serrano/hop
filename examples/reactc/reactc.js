@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed May 18 06:03:24 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Fri Jan 27 12:41:09 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Reactive programming with Hop.js                                 */
 /*    -------------------------------------------------------------    */
@@ -22,7 +22,7 @@ service react() {
 	  add element
      </button>
      <button onclick=~{ env.val++; }> increment </button>
-      <table border=1> ${tbody} </table>
+     <table border=1> ${tbody} </table>
    </html>
 }
 	    

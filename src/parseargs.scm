@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Nov  4 08:54:27 2016 (serrano)                */
-;*    Copyright   :  2004-16 Manuel Serrano                            */
+;*    Last change :  Wed Mar  1 07:24:53 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -620,7 +620,19 @@
    (print "Hop v" (hop-version))
    (print "usage: hop [options] ...")
    (print "       hop [options] file.hop|file.hz|file.js ...")
-   (args-parse-usage #f))
+   (args-parse-usage #f)
+   (newline)
+   (print "Shell Variables:")
+   (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
+   (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key")
+   (print "      nodejs:compile")
+   (print "   - HOPCFLAGS: hopc compilation flags")
+   (print "   - NODE_DEBUG: nodejs internal debugging [NODE_DEBUG=key]")
+   (print "   - NODE_PATH: nodejs require path")
+   (newline)
+   (print "Runtime Command file:")
+   (print "   - rc-dir: " (hop-rc-directory))
+   (print "   - rc-file: " (hop-rc-file)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %hop-load-rc ...                                                 */

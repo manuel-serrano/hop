@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Wed Jan 18 14:45:54 2017 (serrano)                */
+;*    Last change :  Tue Feb  7 14:23:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -47,6 +47,11 @@
 		     ((eq? mode 'hopscript) mode)
 		     ((or (not (eq? mode 'strict)) (direct-eval? this)) mode)
 		     (else 'hopscript))))
+	 (when (eq? mode 'hopscript)
+	    (for-each (lambda (d)
+			 (with-access::J2SDecl d (ronly)
+			    (set! ronly #t)))
+	       decls))
 	 (for-each (lambda (o) (ronly! o mode)) headers)
 	 (for-each (lambda (o) (ronly! o mode)) decls)
 	 (for-each (lambda (o) (ronly! o mode)) nodes))
@@ -154,7 +159,8 @@
 ;*    ronly! ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ronly! this::J2SFun mode::symbol)
-   (with-access::J2SFun this (params)
+   (with-access::J2SFun this (params thisp)
+      (when this (with-access::J2SDecl thisp (ronly) (set! ronly #t)))
       (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) params)
       (call-next-method)))
 

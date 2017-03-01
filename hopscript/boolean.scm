@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Jun  6 07:44:55 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Feb 28 09:17:36 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
 ;*    -------------------------------------------------------------    */
@@ -79,8 +79,7 @@
 	 (define js-boolean-prototype
 	    (instantiate::JsBoolean
 	       (val #f)
-	       (__proto__ __proto__)
-	       (extensible #t)))
+	       (__proto__ __proto__)))
 	 
 	 (define (js-boolean-alloc constructor::JsFunction)
 	    (instantiate::JsBoolean
