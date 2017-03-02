@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Feb 16 18:45:18 2017 (serrano)                */
+#*    Last change :  Thu Mar  2 08:12:53 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -528,7 +528,7 @@ fi
 #*---------------------------------------------------------------------*/
 #*    checking awk                                                     */
 #*---------------------------------------------------------------------*/
-echo "toto:tutu" | awk -F: '{ print $$1 }' 2> /dev/null > /dev/null
+echo "toto:tutu" | awk -F: '{ print $1 }' 2> /dev/null > /dev/null
 
 if [ $? != "0" ]; then
   echo "*** ERROR:configure:awk. Aborting!" >&2
@@ -932,7 +932,28 @@ fi
 #*---------------------------------------------------------------------*/
 #*    buildid ...                                                      */
 #*---------------------------------------------------------------------*/
-buildid=`md5sum hopscript/*.scm js2scheme/*.scm nodejs/*.js | md5sum | sed 's/[ ]*[-]$//'`
+buildid=
+
+# md5sum
+echo "1" | md5sum > /dev/null 2> /dev/null
+
+if [ "$? " = "0 " ]; then
+  buildid=`md5sum hopscript/*.scm js2scheme/*.scm nodejs/*.js | md5sum | sed 's/[ ]*[-]$//'`
+fi
+
+if [ "$buildid " = " " ]; then
+  # md5
+  echo "1" | md5 -q > /dev/null 2> /dev/null
+
+  if [ "$? " = "0 " ]; then
+    buildid=`md5 hopscript/*.scm js2scheme/*.scm nodejs/*.js | md5 -q | sed 's/[ ]*[-]$//'`
+  fi
+fi
+
+if [ "$buildid " = " " ]; then
+  # a default value, which is fine is not Hop self modification are planned
+  buildid=eaf970c60c0cd541124f5e641c097cb4
+fi  
 
 #*---------------------------------------------------------------------*/
 #*    Create directories                                               */
