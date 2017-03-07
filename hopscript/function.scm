@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Feb 28 13:07:12 2017 (serrano)                */
+;*    Last change :  Sat Mar  4 07:28:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -272,6 +272,7 @@
 				  (else js-not-a-constructor)))
 			(constrsize constrsize)
 			(construct constr)
+			(cmap (instantiate::JsConstructMap))
 			(constructor constructor)
 			(constrmap (when (or constructor construct)
 				      (instantiate::JsConstructMap))))))
@@ -411,7 +412,7 @@
 		    ;; CARE (5 jul 2014): MS NOT SURE OF THE SECOND ARGARRAY BELOW
 		    (js-apply %this this thisarg
 		       (map! (lambda (d)
-				(js-property-value argarray d argarray %this))
+				(js-property-value argarray argarray %this))
 			  (filter (lambda (d)
 				     (with-access::JsPropertyDescriptor d (name)
 					(js-isindex? (js-toindex name))))

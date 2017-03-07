@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Feb 26 20:31:16 2017 (serrano)                */
+;*    Last change :  Fri Mar  3 08:41:10 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -27,16 +27,14 @@
    js-pcache-ref-expander)
 (define-expander js-pcache-cmap
    js-pcache-cmap-expander)
-;* (define-expander js-pcache-mmap                                     */
-;*    js-pcache-mmap-expander)                                         */
-(define-expander js-pcache-index
-   js-pcache-index-expander)
 (define-expander js-pcache-pmap
    js-pcache-pmap-expander)
+(define-expander js-pcache-index
+   js-pcache-index-expander)
 ;* (define-expander js-pcache-pelements                                */
 ;*    js-pcache-pelements-expander)                                    */
-(define-expander js-pcache-proto
-   js-pcache-proto-expander)
+(define-expander js-pcache-owner
+   js-pcache-owner-expander)
 (define-expander js-pcache-method
    js-pcache-method-expander)
 

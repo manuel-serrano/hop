@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Feb 28 09:22:12 2017 (serrano)                */
+;*    Last change :  Sat Mar  4 19:13:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -99,44 +99,10 @@
 			  (list->vector (reverse! (cell-ref a))) %this))
       :object-alloc (lambda ()
 		       (with-access::JsGlobalObject %this (js-object)
-			  (js-new %this js-object)))
+			  (js-new0 %this js-object)))
       :object-set (lambda (o p val)
 		     (js-put! o (js-toname p %this) val #f %this))
-      :object-return (lambda (o)
-			o)
-      :parse-error (lambda (msg fname loc)
-		      (js-raise-syntax-error %this msg #f ip loc))
-      :reviver (when (isa? reviver JsFunction)
-		  (lambda (this key val)
-		     (let ((res (js-call2 %this reviver this key val)))
-			(unless (eq? res (js-undefined))
-			   res))))))
-
-(define (js-json-parser-vec ip::input-port reviver expr undefined %this::JsGlobalObject)
-   (json-parse ip
-      :expr expr
-      :undefined undefined
-      :string-alloc js-string->jsstring
-      :array-alloc (lambda ()
-		      (with-access::JsGlobalObject %this (js-array)
-			 (make-cell (make-vector 256))))
-      :array-set (lambda (a i val)
-		    (let* ((v (cell-ref a))
-			   (len (vector-length v)))
-		       (when (<=fx len i)
-			  (let ((nlen (maxfx (+fx i 1) (*fx len 2))))
-			     (set! v (copy-vector v nlen))
-			     (cell-set! a v)))
-		       (vector-set-ur! v i val)))
-      :array-return (lambda (a i)
-		       (js-vector->jsarray (copy-vector (cell-ref a) i) %this))
-      :object-alloc (lambda ()
-		       (with-access::JsGlobalObject %this (js-object)
-			  (js-new %this js-object)))
-      :object-set (lambda (o p val)
-		     (js-put! o (js-toname p %this) val #f %this))
-      :object-return (lambda (o)
-			o)
+      :object-return (lambda (o) o)
       :parse-error (lambda (msg fname loc)
 		      (js-raise-syntax-error %this msg #f ip loc))
       :reviver (when (isa? reviver JsFunction)
@@ -321,8 +287,9 @@
 	 (let loop ((o obj))
 	    (with-access::JsObject o (cmap properties __proto__)
 	       (if cmap
-		   (with-access::JsConstructMap cmap (descriptors)
-		      (vfor-each in-property descriptors))
+		   (with-access::JsConstructMap cmap (names)
+		      (vfor-each (lambda (n)
+				    (when n (proc n))) names))
 		   (for-each in-property properties)))))
       
       (define (str key holder stack)

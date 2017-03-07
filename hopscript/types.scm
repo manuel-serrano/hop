@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Mar  1 07:28:08 2017 (serrano)                */
+;*    Last change :  Sun Mar  5 07:03:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -69,25 +69,22 @@
 	      (writable (default #f)))
 	   (final-class JsValueDescriptor::JsDataDescriptor
 	      (value (default (js-undefined))))
-	   (final-class JsIndexDescriptor::JsDataDescriptor
-	      (index::int (default -1)))
 	   (final-class JsAccessorDescriptor::JsPropertyDescriptor
-	      get
-	      set)
+	      get set
+	      %get %set)
 	   
 	   (class JsPropertyCache
 	      (cmap::obj (default #unspecified))
 	      (pmap::obj (default #t))
 	      (index::long (default -1))
-	      (proto::obj (default #f))
+	      (owner::obj (default #f))
 	      (name::obj (default '||))
 	      (method::obj (default #f)))
 	   
 	   (class JsConstructMap
-	      (transition::pair (default (cons #f #f)))
+	      (transition::pair (default (cons '|| -1)))
 	      (nextmap (default #f))
 	      (names::vector read-only (default '#()))
-	      (descriptors::vector read-only (default '#()))
 	      (methods::vector read-only (default '#())))
 
 	   ;; Literal strings that are not plain Scheme string
@@ -208,6 +205,7 @@
 	   (class JsFunction::JsObject
 	      (name::bstring read-only)
 	      (constructor::obj read-only (default #f))
+	      (prototype::obj (default #f))
 	      alloc::procedure
 	      (construct::procedure read-only)
 	      (constrsize::int (default 3))
@@ -295,10 +293,14 @@
 	   (inline js-object-mode-inline?::bool ::JsObject)
 	   (inline js-object-mode-inline-set! ::JsObject ::bool)
 
+	   (inline js-object-mode-getter?::bool ::JsObject)
+	   (inline js-object-mode-getter-set! ::JsObject ::bool)
+
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::byte)
 	   (inline JS-OBJECT-MODE-SEALED::byte)
 	   (inline JS-OBJECT-MODE-FROZEN::byte)
 	   (inline JS-OBJECT-MODE-INLINE::byte)
+	   (inline JS-OBJECT-MODE-GETTER::byte)
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
@@ -334,11 +336,13 @@
 (define-inline (JS-OBJECT-MODE-SEALED) 2)
 (define-inline (JS-OBJECT-MODE-FROZEN) 4)
 (define-inline (JS-OBJECT-MODE-INLINE) 8)
+(define-inline (JS-OBJECT-MODE-GETTER) 16)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) 1)
 (define-macro (JS-OBJECT-MODE-SEALED) 2)
 (define-macro (JS-OBJECT-MODE-FROZEN) 4)
 (define-macro (JS-OBJECT-MODE-INLINE) 8)
+(define-macro (JS-OBJECT-MODE-GETTER) 16)
 
 (define-inline (js-object-mode-extensible? o)
    (with-access::JsObject o (mode)
@@ -379,6 +383,16 @@
       (if flag
 	  (set! mode (bit-or mode (JS-OBJECT-MODE-INLINE)))
 	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-INLINE)))))))
+
+(define-inline (js-object-mode-getter? o)
+   (with-access::JsObject o (mode)
+      (=fx (bit-and (JS-OBJECT-MODE-GETTER) mode) (JS-OBJECT-MODE-GETTER))))
+
+(define-inline (js-object-mode-getter-set! o flag)
+   (with-access::JsObject o (mode)
+      (if flag
+	  (set! mode (bit-or mode (JS-OBJECT-MODE-GETTER)))
+	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-GETTER)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */
@@ -460,20 +474,6 @@
 	 (if (not (isa? value JsObject)) value (typeof value)))))
 
 ;*---------------------------------------------------------------------*/
-;*    object-print ::JsIndexDescriptor ...                             */
-;*---------------------------------------------------------------------*/
-(define-method (object-print p::JsIndexDescriptor port pslot::procedure)
-   (with-access::JsIndexDescriptor p (name configurable enumerable writable index)
-      (fprintf port
-	 "#|~s name=~a configurable=~a enumerable=~a writable=~a index=~a|"
-	 (class-name (object-class p))
-	 name
-	 configurable
-	 enumerable
-	 writable
-	 index)))
-
-;*---------------------------------------------------------------------*/
 ;*    thread-specific ::WorkerHopThread ...                            */
 ;*---------------------------------------------------------------------*/
 (define-method (thread-specific obj::WorkerHopThread)
@@ -522,10 +522,9 @@
 ;*    js-clone ::JsConstructMap ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-clone obj::JsConstructMap)
-   (with-access::JsConstructMap obj (names descriptors)
+   (with-access::JsConstructMap obj (names)
       (duplicate::JsConstructMap obj
-	 (names (vector-copy names))
-	 (descriptors (vector-copy descriptors)))))
+	 (names (vector-copy names)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ...                                                    */

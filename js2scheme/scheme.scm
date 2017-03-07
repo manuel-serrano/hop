@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Mar  1 07:56:11 2017 (serrano)                */
+;*    Last change :  Sun Mar  5 07:07:24 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1349,6 +1349,8 @@
 			   (lambda (%) ,id) 0 "get"))
 		   (set (js-make-function %this
 			   (lambda (% %v) (set! ,id %v)) 1 "set"))
+		   (%get (lambda (%) ,id))
+		   (%set (lambda (% %v) (set! ,id %v)))
 		   (configurable #t)
 		   (enumerable #t))))))
    

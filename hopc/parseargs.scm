@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Feb 26 06:15:23 2017 (serrano)                */
+;*    Last change :  Tue Mar  7 07:29:20 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -215,6 +215,8 @@
 	     #unspecified)
 	    (("-fccall" (help "Enable call caches"))
 	     (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
+	    (("-fshared-pcache" (help "Share pcaches"))
+	     (hopc-j2s-flags-set! (cons* :shared-pcache #t (hopc-j2s-flags))))
 	    (("-fthis" (help "Enable fast this access"))
 	     (hopc-j2s-flags-set! (cons* :optim-this #t (hopc-j2s-flags))))
 	    (else

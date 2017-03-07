@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Tue Feb 28 07:14:27 2017 (serrano)                */
+/*    Last change :  Sat Mar  4 06:49:45 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
@@ -235,7 +235,6 @@ assert.ok( setX( o1, 4 ) == 5 );
 assert.ok( setX( o1, 10 ) == 11 );
 assert.ok( setX( o2, 41 ) == 42 );
 
-
 /*---------------------------------------------------------------------*/
 /*    Constructor                                                      */
 /*---------------------------------------------------------------------*/
@@ -265,5 +264,50 @@ Ctor.prototype = {
    __proto__: { set d(v) { return 1 }, get d() { return 444; } }
 };
 
-assert( new Ctor( 1, 2, 3, 4 ).d == 444, "prototype.__proto__ constructor" );
+assert( new Ctor( 1, 2, 3, 4 ).d == 444, "prototype.__proto__ constructor bis" );
 
+function SETX( o, v ) {
+   o.xxx = v;
+   return o.xxx;
+}
+
+function GETX( o ) {
+   return o.xxx;
+}
+
+var p = {};
+var o = { __proto__: p };
+
+var eq = assert.strictEqual;
+
+eq( SETX( o, 3 ), 3, "plain set" );
+
+eq( SETX( o, 4 ), 4, "plain set" );
+
+o = { __proto__: p };
+p.__proto__ = { get xxx() { return 18 }, set xxx( v ) {} };
+eq( SETX( o, 5 ), 18, "proto set" );
+p.__proto__ = {};
+eq( SETX( o, 5 ), 5, "proto unset" );
+
+var i = { get xxx() { return 19 }, set xxx( v ) {} };
+p = { __proto__: i, get xxx() { return 18 }, set xxx( v ) {} };
+p.__proto__ = i;
+
+eq( i.xxx, 19, "p.xxx " + i.xxx + "/19" );
+eq( p.xxx, 18, "p.xxx " + p.xxx + "/18" );
+
+var pxxx = GETX( p );
+eq( pxxx, 18, "p.xxx " + pxxx + "/18" );
+pxxx = GETX( p );
+eq( pxxx, 18, "p.xxx " + pxxx + "/18" );
+
+o = { __proto__: p };
+
+eq( o.xxx, 18, "proto with proto " + o.xxx + "/18" );
+
+eq( SETX( o, 3 ), 18, "proto set" );
+eq( SETX( o, 3 ), 18, "proto set2" );
+delete p.xxx;
+eq( SETX( o, 3 ), 19, "after delete" );
+   
