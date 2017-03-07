@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Feb  4 10:07:01 2017 (serrano)                */
+;*    Last change :  Sat Mar  4 17:45:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -343,7 +343,7 @@
       :writable #t
       :configurable #t
       :enumerable #f)
-
+   
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2
    (define (date-prototype-tostring this::JsDate)

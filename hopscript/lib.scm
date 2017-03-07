@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Feb 28 09:22:50 2017 (serrano)                */
+;*    Last change :  Fri Mar  3 09:26:34 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -143,25 +143,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-literal->jsobject::JsObject elements::vector names::vector %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (let* ((len (vector-length elements))
-	     (descrs ($create-vector len)))
-	 (let loop ((i 0))
-	    (if (=fx i len)
-		(let ((cmap (instantiate::JsConstructMap
-			       (names names)
-			       (descriptors descrs))))
-		   (instantiate::JsObject
-		      (cmap cmap)
-		      (elements elements)
-		      (__proto__ __proto__)))
-		(let ((descr (instantiate::JsIndexDescriptor
-				(name (vector-ref-ur names i))
-				(index i)
-				(writable #t)
-				(enumerable #t)
-				(configurable #t))))
-		   (vector-set-ur! descrs i descr)
-		   (loop (+fx i 1))))))))
+      (let ((cmap (instantiate::JsConstructMap
+		     (names names))))
+	 (instantiate::JsObject
+	    (cmap cmap)
+	    (elements elements)
+	    (__proto__ __proto__)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-alist->jsobject ...                                           */
@@ -172,14 +159,12 @@
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let* ((len (length alist))
 	     (elements ($create-vector len))
-	     (names ($create-vector len))
-	     (descrs ($create-vector len)))
+	     (names ($create-vector len)))
 	 (let loop ((i 0)
 		    (alist alist))
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
-			       (names names)
-			       (descriptors descrs))))
+			       (names names))))
 		   (instantiate::JsObject
 		      (cmap cmap)
 		      (elements elements)
@@ -191,15 +176,8 @@
 				 (string->symbol (caar alist)))
 				(else
 				 (caar alist))))
-		       (descr (instantiate::JsIndexDescriptor
-				 (name name)
-				 (index i)
-				 (writable #t)
-				 (enumerable #t)
-				 (configurable #t)))
 		       (val (js-obj->jsobject (cdar alist) %this)))
 		   (vector-set-ur! names i name)
-		   (vector-set-ur! descrs i descr)
 		   (vector-set-ur! elements i val)
 		   (loop (+fx i 1) (cdr alist))))))))
 
@@ -210,14 +188,12 @@
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let* ((len (/fx (length plist) 2))
 	     (elements ($create-vector len))
-	     (names ($create-vector len))
-	     (descrs ($create-vector len)))
+	     (names ($create-vector len)))
 	 (let loop ((i 0)
 		    (plist plist))
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
-			       (names names)
-			       (descriptors descrs))))
+			       (names names))))
 		   (instantiate::JsObject
 		      (cmap cmap)
 		      (elements elements)
@@ -229,15 +205,8 @@
 				 (string->symbol (car plist)))
 				(else
 				 (car plist))))
-		       (descr (instantiate::JsIndexDescriptor
-				 (name name)
-				 (index i)
-				 (writable #t)
-				 (enumerable #t)
-				 (configurable #t)))
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set-ur! names i name)
-		   (vector-set-ur! descrs i descr)
 		   (vector-set-ur! elements i val)
 		   (loop (+fx i 1) (cddr plist))))))))
 

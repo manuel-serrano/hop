@@ -4,9 +4,9 @@ var assert = require( "assert" );
 
 try {
    worker = new Worker('./aux/faultySubmodule.js' );
-   worker.onerror = function( e ) { err++ };
+   worker.onerror = function( e ) { err++; process.exit( 0 ) };
 };
 
 setTimeout( function() {
    assert.ok( err, 1 );
-}, 100 );
+}, 1000 );

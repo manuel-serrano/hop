@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Mar  1 08:40:28 2017 (serrano)                */
+;*    Last change :  Tue Mar  7 08:35:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -15,7 +15,7 @@
 (module __hopscript_public
 
    (option (set! *compiler-debug-trace* 0))
-   
+
    (library hop js2scheme)
    
    (import __hopscript_types
@@ -138,8 +138,7 @@
 	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (generic js-inspect ::obj ::int)
 
-	   (js-html-head ::JsGlobalObject)
-	   ))
+	   (js-html-head ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */
@@ -266,71 +265,74 @@
 ;*    js-new-fastXXX ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-new-fast0 %this ctor::JsFunction __proto__)
+   (update-ctor-cmap! ctor __proto__)
    (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let ((this (instantiate::JsObject
-		     (cmap constrmap)
-		     (elements (make-vector constrsize (js-undefined)))
-		     (__proto__ (get-prototypeof __proto__ %this)))))
+      (let* ((__proto__ (get-prototypeof __proto__ %this))
+	     (this (js-make-jsobject constrsize constrmap __proto__)))
 	 (js-new-return/fast ctor (procedure this) this))))
 
 (define (js-new-fast1 %this ctor::JsFunction __proto__ a0)
+   (update-ctor-cmap! ctor __proto__)
    (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let ((this (instantiate::JsObject
-		     (cmap constrmap)
-		     (elements (make-vector constrsize (js-undefined)))
-		     (__proto__ (get-prototypeof __proto__ %this)))))
+      (let* ((__proto__ (get-prototypeof __proto__ %this))
+	     (this (js-make-jsobject constrsize constrmap __proto__)))
 	 (js-new-return/fast ctor (procedure this a0) this))))
 
 (define (js-new-fast2 %this ctor::JsFunction __proto__ a0 a1)
+   (update-ctor-cmap! ctor __proto__)
    (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let ((this (instantiate::JsObject
-		     (cmap constrmap)
-		     (elements (make-vector constrsize (js-undefined)))
-		     (__proto__ (get-prototypeof __proto__ %this)))))
+      (let* ((__proto__ (get-prototypeof __proto__ %this))
+	     (this (js-make-jsobject constrsize constrmap __proto__)))
 	 (js-new-return/fast ctor (procedure this a0 a1) this))))
 
 (define (js-new-fast3 %this ctor::JsFunction __proto__ a0 a1 a2)
+   (update-ctor-cmap! ctor __proto__)
    (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let ((this (instantiate::JsObject
-		     (cmap constrmap)
-		     (elements (make-vector constrsize (js-undefined)))
-		     (__proto__ (get-prototypeof __proto__ %this)))))
+      (let* ((__proto__ (get-prototypeof __proto__ %this))
+	     (this (js-make-jsobject constrsize constrmap __proto__)))
 	 (js-new-return/fast ctor (procedure this a0 a1 a2) this))))
 
 (define (js-new-fast4 %this ctor::JsFunction __proto__ a0 a1 a2 a3)
+   (update-ctor-cmap! ctor __proto__)
    (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let ((this (instantiate::JsObject
-		     (cmap constrmap)
-		     (elements (make-vector constrsize (js-undefined)))
-		     (__proto__ (get-prototypeof __proto__ %this)))))
+      (let* ((__proto__ (get-prototypeof __proto__ %this))
+	     (this (js-make-jsobject constrsize constrmap __proto__)))
 	 (js-new-return/fast ctor (procedure this a0 a1 a2 a3) this))))
 
 (define (js-new-fast5 %this ctor::JsFunction __proto__ a0 a1 a2 a3 a4)
+   (update-ctor-cmap! ctor __proto__)
    (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let ((this (instantiate::JsObject
-		     (cmap constrmap)
-		     (elements (make-vector constrsize (js-undefined)))
-		     (__proto__ (get-prototypeof __proto__ %this)))))
+      (let* ((__proto__ (get-prototypeof __proto__ %this))
+	     (this (js-make-jsobject constrsize constrmap __proto__)))
 	 (js-new-return/fast ctor (procedure this a0 a1 a2 a3 a4) this))))
 
 (define (js-new-fastn %this ctor::JsFunction __proto__ . an)
+   (update-ctor-cmap! ctor __proto__)
    (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let ((this (instantiate::JsObject
-		     (cmap constrmap)
-		     (elements (make-vector constrsize (js-undefined)))
-		     (__proto__ (get-prototypeof __proto__ %this)))))
+      (let* ((__proto__ (get-prototypeof __proto__ %this))
+	     (this (js-make-jsobject constrsize constrmap __proto__)))
 	 (js-new-return/fast ctor (apply procedure this an) this))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    update-ctor-cmap! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (update-ctor-cmap! ctor::JsFunction __proto__)
+   (with-access::JsFunction ctor (constrsize constrmap prototype name)
+      (unless (eq? __proto__ prototype)
+	 (set! prototype __proto__)
+	 (set! constrmap (instantiate::JsConstructMap)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-object-alloc ctor::JsFunction %this::JsGlobalObject)
-   (with-access::JsFunction ctor (constrsize constrmap)
-      (let ((cproto (js-get ctor 'prototype %this)))
+   (let ((__proto__ (get-prototypeof (js-get ctor 'prototype %this) %this)))
+      (update-ctor-cmap! ctor __proto__)
+      (with-access::JsFunction ctor (constrsize constrmap)
 	 (instantiate::JsObject
 	    (cmap constrmap)
 	    (elements (make-vector constrsize (js-undefined)))
-	    (__proto__ (get-prototypeof cproto %this))))))
+	    (__proto__ __proto__)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply ...                                                     */

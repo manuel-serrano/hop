@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Tue Feb 28 09:27:32 2017 (serrano)                */
+;*    Last change :  Fri Mar  3 15:14:45 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -61,7 +61,6 @@
 	 ((?- ?port ?pos)
 	  (e `(with-handler
 		 (lambda (e)
-		    (tprint "GLOP")
 		    (exception-notify e))
 		 ((car (cons set-input-port-position! '())) ,port ,pos))
 	     e)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Tue Feb  7 13:37:44 2017 (serrano)                */
+;*    Last change :  Fri Mar  3 10:00:43 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -58,7 +58,7 @@
    (with-access::JsArguments obj (vec)
       (map! (lambda (desc)
 	       (unless (eq? desc (js-absent))
-		  (js-property-value obj obj desc (js-initial-global-object))))
+		  (js-property-value obj desc (js-initial-global-object))))
 	 (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/
@@ -288,7 +288,7 @@
 		    (let ((d (u32vref vec index)))
 		       (if (eq? d (js-absent))
 			   (call-next-method)
-			   (js-property-value o o d %this))))))
+			   (js-property-value o d %this))))))
 	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
@@ -306,7 +306,7 @@
 	     (let ((desc (u32vref vec i)))
 		(if (eq? desc (js-absent))
 		    (call-next-method)
-		    (js-property-value o o desc %this))))
+		    (js-property-value o desc %this))))
 	    (else
 	     (call-next-method))))))
 
@@ -395,7 +395,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments->vector obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
-      (vector-map (lambda (d) (js-property-value obj obj d %this))
+      (vector-map (lambda (d) (js-property-value obj d %this))
 	 vec)))
 
 ;*---------------------------------------------------------------------*/
@@ -403,7 +403,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments->list obj::JsArguments %this)
    (with-access::JsArguments obj (vec)
-      (map! (lambda (d) (js-property-value obj obj d %this))
+      (map! (lambda (d) (js-property-value obj d %this))
 	 (vector->list vec))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Feb 16 18:18:13 2017 (serrano)                */
+;*    Last change :  Fri Mar  3 15:30:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -321,15 +321,16 @@
 ;*    nodejs-new-global-object ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-global-object)
-   (unless *resolve-service*
+   (unless (or *resolve-service* (<fx (hop-port) -1))
       (when (memq (hop-sofile-compile-policy) '(nte nte+))
 	 (nodejs-compile-workers-inits!))
-      (let ((this (js-new-global-object)))
-	 (set! *resolve-this* this)
-	 (set! *resolve-service*
-	    (service :name *resolve-url-path* (name filename)
+      (set! *resolve-service*
+	 (service :name *resolve-url-path* (name filename)
+	    (unless *resolve-this*
+	       (set! *resolve-this* (js-new-global-object)))
+	    (let ((this *resolve-this*))
 	       (with-access::JsGlobalObject this (js-object)
-		  (let ((m (js-new0 *resolve-this* js-object)))
+		  (let ((m (js-new0 this js-object)))
 		     ;; module properties
 		     (js-put! m 'id (js-string->jsstring filename) #f this)
 		     ;; filename
@@ -1358,6 +1359,10 @@
 		  (proc (vector-ref-ur vec i))
 		  (loop (+fx i 1))))))
       
+      (define (in-mapped-property n)
+	 (when (symbol? n)
+	    (proc (js-string->jsstring (symbol->string! n)))))
+      
       (define (in-property p)
 	 (when (isa? p JsPropertyDescriptor)
 	    (with-access::JsPropertyDescriptor p (name)
@@ -1366,8 +1371,8 @@
       (let loop ((o obj))
 	 (with-access::JsObject o (cmap properties __proto__)
 	    (if cmap
-		(with-access::JsConstructMap cmap (descriptors)
-		   (vfor-each in-property descriptors))
+		(with-access::JsConstructMap cmap (names)
+		   (vfor-each in-mapped-property names))
 		(for-each in-property properties)))))
    
    ;; e start being undefined during the first steps of the rts boot

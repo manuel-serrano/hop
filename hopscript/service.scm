@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Tue Feb 28 09:23:08 2017 (serrano)                */
+;*    Last change :  Sun Mar  5 07:06:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -913,6 +913,28 @@
 	 (with-access::WorkerHopThread worker (services)
 	    (set! services (cons svc services)))))
 
+   (define (get-path o)
+      (with-access::JsService o (svc)
+	 (when svc
+	    (with-access::hop-service svc (path)
+	       (js-string->jsstring path)))))
+
+   (define (set-path o v)
+      (set-service-path! o (js-tostring v %this))
+      v)
+
+   (define (get-name o)
+      (with-access::JsService o (svc)
+	 (when svc
+	    (with-access::hop-service svc (id)
+	       (js-string->jsstring
+		  (symbol->string! id))))))
+
+   (define (set-name o v)
+      (set-service-path! o
+	 (make-file-name (hop-service-base) (js-tostring v %this)))
+      v)
+   
    (with-access::JsGlobalObject %this (js-service-prototype)
       (instantiate::JsService
 	 (procedure proc)
@@ -933,36 +955,16 @@
 			   (value 0))
 			(instantiate::JsAccessorDescriptor
 			   (name 'path)
-			   (get (js-make-function %this
-				   (lambda (o)
-				      (with-access::JsService o (svc)
-					 (when svc
-					    (with-access::hop-service svc (path)
-					       (js-string->jsstring path)))))
-				   1 'path))
-			   (set (js-make-function %this
-				   (lambda (o v)
-				      (set-service-path! o
-					 (js-tostring v %this))
-				      v)
-				   2 'path)))
+			   (get (js-make-function %this get-path 1 'path))
+			   (set (js-make-function %this set-path 2 'path))
+			   (%get get-path)
+			   (%set set-path))
 			(instantiate::JsAccessorDescriptor
 			   (name 'name)
-			   (get (js-make-function %this
-				   (lambda (o)
-				      (with-access::JsService o (svc)
-					 (when svc
-					    (with-access::hop-service svc (id)
-					       (js-string->jsstring
-						  (symbol->string! id))))))
-				   1 'name))
-			   (set (js-make-function %this
-				   (lambda (o v)
-				      (set-service-path! o
-					 (make-file-name (hop-service-base)
-					    (js-tostring v %this)))
-				      v)
-				   2 'name)))))
+			   (get (js-make-function %this get-name 1 'name))
+			   (set (js-make-function %this set-name 2 'name))
+			   (%get get-name)
+			   (%set set-name))))
 	 (svc (or svc (default-service))))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Feb 28 09:26:51 2017 (serrano)                */
+;*    Last change :  Fri Mar  3 15:34:16 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -41,52 +41,6 @@
    `(cons ',name
        (js-make-function %this ,proc ,arity ,(symbol->string name) ,@opt)))
 		 
-;*---------------------------------------------------------------------*/
-;*    bind-param! ...                                                  */
-;*---------------------------------------------------------------------*/
-(define-macro (bind-param! %this exports type id accessor . mutator)
-   `(js-bind! ,%this ,exports ',id
-       :get (js-make-function %this
-	       (lambda (this)
-		  ,(case type
-		      ((string)
-		       `(js-string->jsstring (,accessor)))
-		      ((symbol)
-		       `(js-string->jsstring (symbol->string (,accessor))))
-		      ((string-array)
-		       `(let ((v (map js-string->jsstring (,accessor))))
-			   (js-vector->jsarray (list->vector v) %this)))
-		      ((bool obj integer)
-		       `(,accessor))
-		      (else
-		       (error "bind-param!" "unsupported type" type))))
-	       0 ',id)
-       :set ,(when (pair? mutator)
-	       `(js-make-function %this
-		   (lambda (o v)
-		      ,(case type
-			  ((string)
-			   `(,(car mutator)
-			     (js-tostring v %this)))
-			  ((symbol)
-			   `(,(car mutator)
-			     (string->symbol (js-tostring v %this))))
-			  ((integer)
-			   `(,(car mutator)
-			     (js-tointeger v %this)))
-			  ((bool)
-			   `(,(car mutator)
-			     (js-totest v)))
-			  ((string-array)
-			   `(,(car mutator)
-			     (map! (lambda (s) (js-tostring s %this))
-				(jsarray->list v %this))))
-			  (else
-			   `(,(car mutator) v))))
-		   1 ',id))
-       :writable ,(pair? mutator)
-       :enumerable #t))
-   
 ;*---------------------------------------------------------------------*/
 ;*    hopjs-process-hop ...                                            */
 ;*---------------------------------------------------------------------*/
