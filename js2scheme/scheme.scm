@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Mar  5 07:07:24 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 13:27:32 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2140,7 +2140,7 @@
 (define (is-fixnum? expr::J2SExpr conf)
    (if (m64? conf)
        (or (type-integer? (j2s-type expr)) (type-int53? (j2s-type expr)))
-       (type-int30? (j2s-type expr))))
+       (or (type-int30? (j2s-type expr)) (eq? (j2s-type expr) 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-uint32? ...                                                   */
@@ -2472,6 +2472,10 @@
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
 		 (js-binop loc op left right))))))
+      ((remainderfx)
+       (binop lhs rhs mode return conf hint 'any
+	  (lambda (left right)
+	     `(remainderfx ,left ,right))))
       ((== === != !==)
        (cond
 	  ((and (is-uint32? lhs) (is-uint32? rhs))
@@ -4498,25 +4502,36 @@
 	      (vector ,@(j2s-scheme args mode return conf hint totype))
 	      %this))))
 
-   
+   (define (constructor-no-return? decl)
+      ;; does this constructor never returns something else than UNDEF?
+      (let ((fun (cond
+		    ((isa? decl J2SDeclFun)
+		     (with-access::J2SDeclFun decl (val) val))
+		    ((isa? decl J2SDeclFunCnst)
+		     (with-access::J2SDeclFunCnst decl (val) val))
+		    ((j2s-let-opt? decl)
+		     (with-access::J2SDeclInit decl (val) val)))))
+	 (when (isa? fun J2SFun)
+	    (with-access::J2SFun fun (rtype)
+	       (eq? rtype 'undefined)))))
+      
    (define (j2s-new-fast cache clazz args)
-      (let ((len (length args))
-	    (fun (j2s-scheme clazz mode return conf hint totype)))
-	 (if (<=fx len 5)
-	     `(,(string->symbol (format "js-new-fast~a" len))
-	       %this
-	       ,fun
-	       (js-object-get-name/cache ,fun 'prototype ,(pcache cache) %this)
-	       ,@(map (lambda (a)
-			 (j2s-scheme a mode return conf hint totype))
-		    args))
-	     `(js-new-fastn
-		 %this
-		 ,fun
-		 (js-object-get-name/cache ,fun 'prototype ,(pcache cache) %this)
-		 ,@(map (lambda (a)
-			   (j2s-scheme a mode return conf hint totype))
-		      args)))))
+      (with-access::J2SRef clazz (decl)
+	 (let* ((len (length args))
+		(fun (j2s-scheme clazz mode return conf hint totype))
+		(fid (with-access::J2SDecl decl (id) (j2s-fast-id id)))
+		(args (map (lambda (a)
+			      (j2s-scheme a mode return conf hint totype))
+			 args))
+		(proto `(js-object-get-name/cache ,fun 'prototype
+			   ,(pcache cache) %this))
+		(obj (gensym '%obj)))
+	    `(let ((,obj (js-new-fast %this ,fun ,proto)))
+		,(if (constructor-no-return? decl)
+		     `(,fid ,obj ,@args)
+		     (let ((res (gensym '%res)))
+			`(let ((,res (,fid ,obj ,@args)))
+			    (if (isa? ,res JsObject) ,res ,obj))))))))
    
    (with-access::J2SNew this (loc cache clazz args)
       (cond

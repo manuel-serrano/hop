@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Sun Mar  5 07:06:44 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 11:26:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -250,6 +250,8 @@
 	       (construct (lambda (constructor args)
 			     (js-raise-type-error %this "not a constructor ~s"
 				js-function-prototype)))
+	       (prototype (with-access::JsGlobalObject %this (__proto__)
+			     __proto__))
 	       (len -1)
 	       (procedure list)
 	       (svc #f)))
@@ -878,7 +880,7 @@
 ;*    js-make-service ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-make-service %this proc name register import arity worker svc)
-
+   
    (define (default-service)
       (instantiate::hop-service
 	 (id (string->symbol name))
@@ -912,24 +914,24 @@
       (unless import
 	 (with-access::WorkerHopThread worker (services)
 	    (set! services (cons svc services)))))
-
+   
    (define (get-path o)
       (with-access::JsService o (svc)
 	 (when svc
 	    (with-access::hop-service svc (path)
 	       (js-string->jsstring path)))))
-
+   
    (define (set-path o v)
       (set-service-path! o (js-tostring v %this))
       v)
-
+   
    (define (get-name o)
       (with-access::JsService o (svc)
 	 (when svc
 	    (with-access::hop-service svc (id)
 	       (js-string->jsstring
 		  (symbol->string! id))))))
-
+   
    (define (set-name o v)
       (set-service-path! o
 	 (make-file-name (hop-service-base) (js-tostring v %this)))
@@ -941,6 +943,8 @@
 	 (len arity)
 	 (arity arity)
 	 (worker worker)
+	 (prototype (with-access::JsGlobalObject %this (__proto__)
+		       __proto__))
 	 (__proto__ js-service-prototype)
 	 (name (if (symbol? name) (symbol->string! name) ""))
 	 (alloc (lambda (_)

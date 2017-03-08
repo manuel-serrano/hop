@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Sun Jan 24 02:49:17 2016 (serrano)                */
+;*    Last change :  Wed Mar  8 14:55:16 2017 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -21,6 +21,7 @@
 	    (hop-branch)
 	    (hop-backend)
 	    (hop-url)
+	    (inline hop-bigloo)
 	    (inline hop-bin-directory)
 	    (inline hop-lib-directory)
 	    (inline hop-etc-directory)
@@ -46,6 +47,7 @@
 	    (export hop-branch)
 	    (export hop-backend)
 	    (export hop-url)
+	    (export hop-bigloo)
 	    (export hop-etc-directory)
 	    (export hop-bin-directory)
 	    (export hop-lib-directory)
@@ -105,6 +107,8 @@
        (print (hop-runtime-system-files)))
       ((--hop-service-base)
        (print (hop-service-base)))
+      ((--bigloo)
+       (print (hop-bigloo)))
       (else
        (with-output-to-port (current-error-port)
 	  (lambda ()
@@ -125,7 +129,8 @@
              (print "  [--mimetypes]")
              (print "  [--javascript-mime-type]")
              (print "  [--css-mime-type]")
-	     (print "  [--url]"))))))
+	     (print "  [--url]")
+	     (print "  [--bigloo]"))))))
 	     
 ;*---------------------------------------------------------------------*/
 ;*    Name and version                                                 */

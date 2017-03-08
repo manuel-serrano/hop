@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Mar  1 09:25:22 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 12:24:02 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -200,11 +200,17 @@
 ;*    Create a JsStringLiteral from a Scheme string literal.           */
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsstring::obj val::bstring)
-   (case (string-minimal-charset val)
-      ((ascii) val)
-      ((latin1 utf8) (js-utf8->jsstring val))
-      (else (error "string->jsstring" "unsupported encoding"
-	       (string-minimal-charset val)))))
+   (let ((enc (string-minimal-charset val)))
+      (unless (eq? enc 'ascii)
+	 (tprint "ENC=[" enc "] " (typeof enc) " eq1="
+	    (eq? enc 'ascii) " sym=" 'ascii " glop=" 'GLOP
+	    " funcall=" 'funcall
+	    " eq2=" (eq? enc (string->symbol "ascii"))
+	    (/fx (string-length val) 0)))
+      (case enc
+	 ((ascii) val)
+	 ((latin1 utf8) (js-utf8->jsstring val))
+	 (else (error "string->jsstring" "unsupported encoding" enc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-stringlist->jsstring ...                                      */
@@ -1444,7 +1450,7 @@
 			      (portion (substring string (+fx k l))))
 			  (loop (+fx i 2) (+fx i 2)
 			     (cons portion segments))))
-		      ((#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8\ #\9)
+		      ((#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)
 		       (let ((len (-fx (js-get-length match #f %this) 1)))
 			  (if (or (=fx i (-fx stop 1))
 				  (not (char-numeric? (string-ref fmt (+fx i 2)))))

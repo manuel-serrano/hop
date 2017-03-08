@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar  7 07:29:20 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 07:38:35 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -73,7 +73,8 @@
 		((string=? level "")
 		 (hopc-optim-level-set! 1))
 		((string=? level "x")
-		 (hopc-optim-level-set! 1000))
+		 (hopc-optim-level-set! 1000)
+		 (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
 		(else
 		 (hopc-optim-level-set! (string->integer level))))
 	     (hopc-bigloo-options-set!
@@ -213,12 +214,18 @@
 	     #unspecified)
 	    (("-p" ?port (help "Hop compatibility, ignored"))
 	     #unspecified)
-	    (("-fccall" (help "Enable call caches"))
+	    (("-fccall" (help "Enable call caches (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
+	    (("-fno-ccall" (help "Disable call caches"))
+	     (hopc-j2s-flags-set! (cons* :optim-ccall #f (hopc-j2s-flags))))
 	    (("-fshared-pcache" (help "Share pcaches"))
 	     (hopc-j2s-flags-set! (cons* :shared-pcache #t (hopc-j2s-flags))))
+	    (("-fno-shared-pcache" (help "Share pcaches"))
+	     (hopc-j2s-flags-set! (cons* :shared-pcache #f (hopc-j2s-flags))))
 	    (("-fthis" (help "Enable fast this access"))
 	     (hopc-j2s-flags-set! (cons* :optim-this #t (hopc-j2s-flags))))
+	    (("-fno-this" (help "Enable fast this access"))
+	     (hopc-j2s-flags-set! (cons* :optim-this #f (hopc-j2s-flags))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

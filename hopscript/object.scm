@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Mar  7 08:35:27 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 13:12:19 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -21,9 +21,6 @@
    
    (include "stringliteral.sch"
 	    "property.sch")
-   
-   (extern ($js-make-jsobject::JsObject (::int ::obj ::obj ::byte)
-	      "bgl_make_jsobject"))
    
    (import __hopscript_types
 	   __hopscript_string
@@ -54,23 +51,7 @@
    
    (export (js-initial-global-object)
 	   (inline js-object?::bool ::obj)
-	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 	   (js-new-global-object::JsGlobalObject)))
-
-;*---------------------------------------------------------------------*/
-;*    js-make-jsobject ...                                             */
-;*---------------------------------------------------------------------*/
-(define-inline (js-make-jsobject constrsize constrmap __proto__)
-   (let ((mode (js-object-default-mode)))
-      (cond-expand
-	 (bigloo-c
-	  ($js-make-jsobject constrsize constrmap __proto__ mode))
-	 (else
-	  (instantiate::JsObject
-	     (mode mode)
-	     (cmap constrmap)
-	     (elements (make-vector constrsize (js-undefined)))
-	     (__proto__ __proto__))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */

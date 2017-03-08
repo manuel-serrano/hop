@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Mar  7 08:35:57 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 13:12:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -16,6 +16,9 @@
 
    (option (set! *compiler-debug-trace* 0))
 
+   (extern ($js-make-jsobject::JsObject (::int ::obj ::obj ::byte)
+	      "bgl_make_jsobject"))
+   
    (library hop js2scheme)
    
    (import __hopscript_types
@@ -31,6 +34,8 @@
 	   __hopscript_private
 	   __hopscript_worker
 	   __hopscript_array)
+
+   (with   __hopscript_stringliteral)
    
    (export (js-new ::JsGlobalObject f . args)
 	   (js-new/debug ::JsGlobalObject loc f . args)
@@ -40,6 +45,8 @@
 	   (js-new3 ::JsGlobalObject f a0 a1 a2)
 	   (js-new4 ::JsGlobalObject f a0 a1 a2 a3)
 	   
+	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
+	   (inline js-new-fast::JsObject ::JsGlobalObject ::JsFunction __proto__)
 	   (js-new-fast0 ::JsGlobalObject ::JsFunction __proto__)
 	   (js-new-fast1 ::JsGlobalObject ::JsFunction __proto__ a0)
 	   (js-new-fast2 ::JsGlobalObject ::JsFunction __proto__ a0 a1)
@@ -139,6 +146,21 @@
 	   (generic js-inspect ::obj ::int)
 
 	   (js-html-head ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-jsobject ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-jsobject constrsize constrmap __proto__)
+   (let ((mode (js-object-default-mode)))
+      (cond-expand
+	 (bigloo-c
+	  ($js-make-jsobject constrsize constrmap __proto__ mode))
+	 (else
+	  (instantiate::JsObject
+	     (mode mode)
+	     (cmap constrmap)
+	     (elements (make-vector constrsize (js-undefined)))
+	     (__proto__ __proto__))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */
@@ -264,6 +286,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-new-fastXXX ...                                               */
 ;*---------------------------------------------------------------------*/
+(define-inline (js-new-fast %this ctor::JsFunction __proto__)
+   (with-access::JsFunction ctor (constrsize constrmap prototype)
+      (unless (eq? __proto__ prototype)
+	 (when (isa? __proto__ JsObject)
+	    (set! prototype __proto__)
+	    (set! constrmap (instantiate::JsConstructMap))))
+      (js-make-jsobject constrsize constrmap prototype)))
+
 (define (js-new-fast0 %this ctor::JsFunction __proto__)
    (update-ctor-cmap! ctor __proto__)
    (with-access::JsFunction ctor (constrsize constrmap procedure)

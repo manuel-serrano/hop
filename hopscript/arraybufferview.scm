@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Tue Feb 28 09:26:03 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 11:29:34 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -570,8 +570,7 @@
 			    (with-access::JsArrayBuffer sbuffer ((source data))
 			       (let ((tstart (+u32 (*u32 (fixnum->uint32 bp) off) toff)))
 				  (cond
-				     ((or (>=u32 tstart tlength)
-					  (<u32 tstart 0))
+				     ((>=u32 tstart tlength)
 				      (js-raise-range-error %this
 					 "Offset out of range ~a"
 					 tstart))
@@ -595,7 +594,7 @@
 			 (let ((tstart (+u32 (*u32 (fixnum->uint32 bp) off) toff))
 			       (slength (js-get array 'length %this)))
 			    (cond
-			       ((or (>=u32 tstart tlength) (<u32 tstart 0))
+			       ((>=u32 tstart tlength)
 				(js-raise-range-error %this
 				   "Offset out of range ~a"
 				   tstart))

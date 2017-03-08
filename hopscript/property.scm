@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Mar  6 18:08:32 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 11:26:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -151,7 +151,8 @@
 	      procedure
 	      (lambda (this)
 		 (js-call0 %this fun this))))
-       fun))
+       (lambda (obj)
+	  (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    function1->proc ...                                              */
@@ -163,7 +164,8 @@
 	      procedure
 	      (lambda (this a0)
 		 (js-call1 %this fun this a0))))
-       fun))
+       (lambda (obj v)
+	  (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache ...                                               */
@@ -679,10 +681,8 @@
        (with-access::JsValueDescriptor desc (value)
 	  value))
       ((isa? desc JsAccessorDescriptor)
-       (with-access::JsAccessorDescriptor desc (get)
-	  (if (isa? get JsFunction)
-	      (js-call0 %this get obj)
-	      (js-undefined))))
+       (with-access::JsAccessorDescriptor desc (%get)
+	  (%get obj)))
       (else
        (js-undefined))))
 
@@ -698,12 +698,8 @@
 	  (set! value v)
 	  v))
       ((isa? desc JsAccessorDescriptor)
-       (with-access::JsAccessorDescriptor desc (set)
-	  (if (isa? set JsFunction)
-	      (begin
-		 (js-call1 %this set obj v)
-		 v)
-	      (js-undefined))))
+       (with-access::JsAccessorDescriptor desc (%set)
+	  (%set obj v)))
       (else
        (js-undefined))))
 
@@ -1524,7 +1520,7 @@
 		       [assert (pcache)
 		          (let ((osz (cmap-size omap))
 				(csz (cmap-size cmap)))
-			     (osz csz prop) (= (+ 1 osz) csz))]
+			     (= (+ 1 osz) csz))]
 		       (set! elements (js-elements-push! elements index v))
 		       (set! omap cmap)
 		       v)
