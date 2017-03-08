@@ -1,13 +1,18 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.2.x/etc/configure_noarch.sch.in       */
+;*    serrano/prgm/project/hop/3.1.x/etc/configure_noarch.sch.in       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  5 09:54:10 2009                          */
-;*    Last change :  Sat Jan 29 14:50:20 2011 (serrano)                */
-;*    Copyright   :  2009-11 Manuel Serrano                            */
+;*    Last change :  Wed Mar  8 14:55:34 2017 (serrano)                */
+;*    Copyright   :  2009-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common arch HOP configuration                                    */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    Bigloo                                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (hop-bigloo) "@BIGLOO@")
 
 ;*---------------------------------------------------------------------*/
 ;*    Install directories ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Feb 26 06:15:52 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 14:57:06 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -125,7 +125,7 @@
 ;*    hopc-bigloo ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo
-   "bigloo")
+   (hop-bigloo))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-bigloo-options ...                                          */

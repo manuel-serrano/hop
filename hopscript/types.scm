@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Mar  5 07:03:50 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 12:37:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -71,7 +71,7 @@
 	      (value (default (js-undefined))))
 	   (final-class JsAccessorDescriptor::JsPropertyDescriptor
 	      get set
-	      %get %set)
+	      %get::procedure %set::procedure)
 	   
 	   (class JsPropertyCache
 	      (cmap::obj (default #unspecified))
@@ -205,7 +205,7 @@
 	   (class JsFunction::JsObject
 	      (name::bstring read-only)
 	      (constructor::obj read-only (default #f))
-	      (prototype::obj (default #f))
+	      prototype::JsObject
 	      alloc::procedure
 	      (construct::procedure read-only)
 	      (constrsize::int (default 3))
@@ -594,13 +594,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    Constant strings ...                                             */
 ;*---------------------------------------------------------------------*/
-(define js-string-undefined (js-string->jsstring "undefined"))
-(define js-string-object (js-string->jsstring "object"))
-(define js-string-symbol (js-string->jsstring "symbol"))
-(define js-string-number (js-string->jsstring "number"))
-(define js-string-boolean (js-string->jsstring "boolean"))
-(define js-string-string (js-string->jsstring "string"))
-(define js-string-function (js-string->jsstring "function"))
+(define js-string-undefined (js-ascii->jsstring "undefined"))
+(define js-string-object (js-ascii->jsstring "object"))
+(define js-string-symbol (js-ascii->jsstring "symbol"))
+(define js-string-number (js-ascii->jsstring "number"))
+(define js-string-boolean (js-ascii->jsstring "boolean"))
+(define js-string-string (js-ascii->jsstring "string"))
+(define js-string-function (js-ascii->jsstring "function"))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-typeof ...                                                    */

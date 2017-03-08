@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Mar  3 15:34:16 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 14:59:44 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -175,6 +175,7 @@
 	       `(version . ,(hop-version))
 	       `(hostname . ,(js-string->jsstring (hostname)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
+	       `(buildid . ,(hop-build-id))
 
 	       ;; port
 	       (define-js port 0 (lambda (this) (hop-port)))

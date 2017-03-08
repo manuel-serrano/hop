@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Feb 28 08:22:44 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 08:39:04 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -63,7 +63,10 @@
 	 (j2s-range-program! this args)
 	 ;; allocate precise types according to the ranges
 	 (when (>=fx (config-get args :optim 0) 910)
-	    (j2s-range-type-program! this args)))
+	    (j2s-range-type-program! this args))
+	 ;; optimize operators according to ranges
+	 (when (>=fx (config-get args :optim 0) 2)
+	    (j2s-range-opt-program! this args)))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -427,6 +430,12 @@
       (cond
 	 ((> la oa)
 	  (cond
+	     ((>= oi 2)
+	      (let ((min 2))
+		 (interval min (max oa min))))
+	     ((>= oi 1)
+	      (let ((min 1))
+		 (interval min (max oa min))))
 	     ((>= oi 0)
 	      (let ((min 0))
 		 (interval min (max oa min))))
@@ -1251,5 +1260,42 @@
       (with-access::J2SDecl decl (vtype)
 	 (set! vtype (minimal-type vtype type))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    j2s-range-opt-program! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-range-opt-program! this::J2SProgram args)
+   (with-access::J2SProgram this (decls nodes)
+      (for-each (lambda (n) (opt-range! n)) decls)
+      (for-each (lambda (n) (opt-range! n)) nodes)
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    opt-range! ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (opt-range! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    opt-range! ::J2SBinary ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (opt-range! this::J2SBinary)
+
+   (define (integer? e::J2SExpr)
+      (with-access::J2SExpr e (type)
+	 (type-fixnum? type)))
+      
+   (define (positive-integer? e::J2SExpr)
+      (when (integer? e)
+	 (with-access::J2SExpr e (%info)
+	    (and (interval? %info) (> (interval-min %info) 0)))))
+   
+   (with-access::J2SBinary this (op lhs rhs)
+      (case op
+	 ((%)
+	  (when (and (integer? lhs) (positive-integer? rhs))
+	     (set! op 'remainderfx)))))
+   (call-default-walker))
+	  
 
 

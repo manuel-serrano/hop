@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Mar  2 08:12:53 2017 (serrano)                */
+#*    Last change :  Wed Mar  8 14:54:34 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1144,6 +1144,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
             -e "s|@HOPMACH@|$mach|" \
             -e "s|@HOPARCH@|$arch|" \
             -e "s|@BUILDID@|$buildid|" \
+            -e "s|@BIGLOO@|$bigloo|" \
       >> $configure
 done
 

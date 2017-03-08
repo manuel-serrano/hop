@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Mar  4 07:28:52 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 11:54:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -126,6 +126,8 @@
 			  (js-raise-type-error %this "not a constructor ~s"
 			     js-function-prototype)))
 	    (arity -1)
+	    (prototype (with-access::JsGlobalObject %this (__proto__)
+			  __proto__))
 	    (cmap (instantiate::JsConstructMap))
 	    (__proto__ js-object-prototype)))
       
@@ -252,7 +254,9 @@
 		(len 0)
 		(alloc js-not-a-constructor)
 		(construct list)
-		(name "source")))))
+		(name "source")
+		(prototype (with-access::JsGlobalObject %this (__proto__)
+			      __proto__))))))
    
    (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
@@ -273,6 +277,10 @@
 			(constrsize constrsize)
 			(construct constr)
 			(cmap (instantiate::JsConstructMap))
+			(prototype (if (isa? prototype JsObject)
+				       prototype
+				       (with-access::JsGlobalObject %this (__proto__)
+					  __proto__)))
 			(constructor constructor)
 			(constrmap (when (or constructor construct)
 				      (instantiate::JsConstructMap))))))

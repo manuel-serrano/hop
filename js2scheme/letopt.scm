@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Feb  3 14:06:45 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 10:39:42 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -357,6 +357,14 @@
 		  (set! decls (append noopts opts))
 		  (set! nodes (append! newinits restnodes)))))
 	 resnode))
+
+   (define (used-before-init? decl::J2SNode inits::pair-nil)
+      (let ((decls (list decl)))
+	 (let loop ((inits inits))
+	    (cond
+	       ((eq? decl (car inits)) #f)
+	       ((get-used-decls (car inits) decls) #t)
+	       (else (loop (cdr inits)))))))
    
    ;; the main optimization loop
    (with-trace 'j2s-letopt "tail-let!"
@@ -380,9 +388,17 @@
 			     (mark-used-noopt*! (decl-fun-val decl) decls)))
 		      (loop (cdr inodes))))
 		  ((isa? (car inodes) J2SDecl)
-		   (trace-item "no-init=" (j2s-dump-decls (car inodes)))
 		   ;; a variable declaration without init
-		   (mark-decl-noopt! (car inodes))
+		   (trace-item "no-init=" (j2s-dump-decls (car inodes)))
+		   (let ((decl (car inodes)))
+		      (if (used-before-init? decl inits)
+			  ;; potentially used before initialized
+			  (mark-decl-noopt! decl)
+			  ;; never used before initialized
+			  (with-access::J2SDecl decl (loc)
+			     (decl-update-info! decl
+				(new-let-opt decl
+				   (J2SInit (J2SRef decl) (J2SUndefined)))))))
 		   (loop (cdr inodes)))
 		  ((not (decl-maybe-opt? (init-decl (car inodes))))
 		   (trace-item "no-opt="
@@ -581,7 +597,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Amongst DECLS, returns those that appear in NODE.                */
 ;*---------------------------------------------------------------------*/
-(define (get-used-decls node::J2SNode decls)
+(define (get-used-decls node::J2SNode decls::pair-nil)
    (delete-duplicates! (node-used* node decls #t)))
 
 ;*---------------------------------------------------------------------*/
