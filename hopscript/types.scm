@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Mar  8 12:37:07 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 16:08:23 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -85,7 +85,8 @@
 	      (transition::pair (default (cons '|| -1)))
 	      (nextmap (default #f))
 	      (names::vector read-only (default '#()))
-	      (methods::vector read-only (default '#())))
+	      (methods::vector read-only (default '#()))
+	      (backup::pair-nil (default '())))
 
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance

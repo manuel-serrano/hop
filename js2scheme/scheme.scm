@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Mar  8 13:27:32 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 16:13:42 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -4528,7 +4528,9 @@
 		(obj (gensym '%obj)))
 	    `(let ((,obj (js-new-fast %this ,fun ,proto)))
 		,(if (constructor-no-return? decl)
-		     `(,fid ,obj ,@args)
+		     `(begin
+			 (,fid ,obj ,@args)
+			 ,obj)
 		     (let ((res (gensym '%res)))
 			`(let ((,res (,fid ,obj ,@args)))
 			    (if (isa? ,res JsObject) ,res ,obj))))))))

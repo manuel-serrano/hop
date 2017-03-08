@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Mar  5 18:25:24 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 17:56:49 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -500,7 +500,7 @@
 		       (,(string->symbol (format "js-call~a" len))
 			,%this
 			,fun ,this ,@args)))))))
-   
+
    (if (>= (bigloo-compiler-debug) 1)
        (map (lambda (x) (e x e)) x)
        (match-case x
@@ -512,7 +512,7 @@
 	      (and ?ccache (js-pcache-ref %pcache ?-))
 	      ?this . ?args)
 	   (let ((f (gensym '%fun)))
-	      `(let ((,f ,fun))
+	      `(let ((,f ,(e fun e)))
 		  ,(e (call %this f ccache this args) e))))
 	  (else
 	   (error "js-call/cache" "wrong form" x)))))
