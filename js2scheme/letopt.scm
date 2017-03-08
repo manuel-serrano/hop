@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Mar  8 10:39:42 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 17:42:41 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -358,13 +358,34 @@
 		  (set! nodes (append! newinits restnodes)))))
 	 resnode))
 
-   (define (used-before-init? decl::J2SNode inits::pair-nil)
-      (let ((decls (list decl)))
-	 (let loop ((inits inits))
-	    (cond
-	       ((eq? decl (car inits)) #f)
-	       ((get-used-decls (car inits) decls) #t)
-	       (else (loop (cdr inits)))))))
+   (define (used-before-init? decl::J2SNode inits::pair-nil rests::pair-nil)
+
+      (define (used-in-inits? decl inits)
+	 (let ((decls (list decl)))
+	    (let loop ((inits inits))
+	       (cond
+		  ((null? inits)
+		   #f)
+		  ((eq? decl (car inits))
+		   (loop (cdr inits)))
+		  ((memq decl (get-used-decls (car inits) decls))
+		   #t)
+		  (else
+		   (loop (cdr inits)))))))
+
+      (define (used-in-rests? decl rests)
+	 (let ((decls (list decl)))
+	    (let loop ((rests rests))
+	       (cond
+		  ((null? rests)
+		   #f)
+		  ((memq decl (get-used-decls (car rests) decls))
+		   #t)
+		  (else
+		   (loop (cdr rests)))))))
+
+      (or (used-in-inits? decl inits)
+	  (used-in-rests? decl rests)))
    
    ;; the main optimization loop
    (with-trace 'j2s-letopt "tail-let!"
@@ -391,7 +412,7 @@
 		   ;; a variable declaration without init
 		   (trace-item "no-init=" (j2s-dump-decls (car inodes)))
 		   (let ((decl (car inodes)))
-		      (if (used-before-init? decl inits)
+		      (if (used-before-init? decl inits rests)
 			  ;; potentially used before initialized
 			  (mark-decl-noopt! decl)
 			  ;; never used before initialized

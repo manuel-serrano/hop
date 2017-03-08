@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Mar  8 12:24:02 2017 (serrano)                */
+;*    Last change :  Wed Mar  8 18:01:30 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -201,12 +201,6 @@
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsstring::obj val::bstring)
    (let ((enc (string-minimal-charset val)))
-      (unless (eq? enc 'ascii)
-	 (tprint "ENC=[" enc "] " (typeof enc) " eq1="
-	    (eq? enc 'ascii) " sym=" 'ascii " glop=" 'GLOP
-	    " funcall=" 'funcall
-	    " eq2=" (eq? enc (string->symbol "ascii"))
-	    (/fx (string-length val) 0)))
       (case enc
 	 ((ascii) val)
 	 ((latin1 utf8) (js-utf8->jsstring val))
