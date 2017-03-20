@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Mar  8 13:12:17 2017 (serrano)                */
+;*    Last change :  Sat Mar 18 09:45:08 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -44,16 +44,20 @@
 	   (js-new2 ::JsGlobalObject f a0 a1)
 	   (js-new3 ::JsGlobalObject f a0 a1 a2)
 	   (js-new4 ::JsGlobalObject f a0 a1 a2 a3)
+
+	   (js-new-return::JsObject ::JsFunction ::obj ::JsObject)
+	   (inline js-new-return-fast::JsObject ::JsFunction ::JsObject)
 	   
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 	   (inline js-new-fast::JsObject ::JsGlobalObject ::JsFunction __proto__)
-	   (js-new-fast0 ::JsGlobalObject ::JsFunction __proto__)
-	   (js-new-fast1 ::JsGlobalObject ::JsFunction __proto__ a0)
-	   (js-new-fast2 ::JsGlobalObject ::JsFunction __proto__ a0 a1)
-	   (js-new-fast3 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2)
-	   (js-new-fast4 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2 a3)
-	   (js-new-fast5 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2 a3 a4)
-	   (js-new-fastn ::JsGlobalObject ::JsFunction __proto__ . an)
+
+;* 	   (js-new-fast0 ::JsGlobalObject ::JsFunction __proto__)      */
+;* 	   (js-new-fast1 ::JsGlobalObject ::JsFunction __proto__ a0)   */
+;* 	   (js-new-fast2 ::JsGlobalObject ::JsFunction __proto__ a0 a1) */
+;* 	   (js-new-fast3 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2) */
+;* 	   (js-new-fast4 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2 a3) */
+;* 	   (js-new-fast5 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2 a3 a4) */
+;* 	   (js-new-fastn ::JsGlobalObject ::JsFunction __proto__ . an) */
 	   
 	   (js-object-alloc ::JsFunction ::JsGlobalObject)
 	   
@@ -91,9 +95,8 @@
 	   (js-in?::bool ::JsGlobalObject f obj)
 	   (js-in?/debug::bool ::JsGlobalObject loc f obj)
 
-	   (inline js-make-let::cell)
+	   (inline js-make-let::bchar)
 	   (inline js-let-ref ::obj ::obj ::obj ::JsGlobalObject)
-	   (inline js-let-set! ::cell ::obj)
 	   
 	   (js-raise-reference-error/loc ::JsGlobalObject loc ::bstring obj . args)
 	   (inline js-totest::bool ::obj)
@@ -105,7 +108,8 @@
 	   (js-toint32::int32 ::obj ::JsGlobalObject)
 
 	   (inline uint32->integer::obj ::uint32)
-
+	   (inline int32->integer::obj ::int32)
+	   
 	   (js-toindex::uint32 ::obj)
 	   (inline js-isindex?::bool ::uint32)
 	   (inline js-index?::bool ::obj)
@@ -215,6 +219,16 @@
 	     o))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-new-return-fast ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-new-return-fast ctor o)
+   (with-access::JsFunction ctor (constrsize)
+      (with-access::JsObject o (elements)
+	 (when (vector? elements)
+	    (set! constrsize (vector-length elements)))
+	 o)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-newXXX ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-new0 %this ctor)
@@ -269,12 +283,6 @@
        (js-raise-type-error %this "new: object is not a function ~s" ctor)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-new-return/fast ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (js-new-return/fast ctor r o)
-   (if (isa? r JsObject) r o))
-
-;*---------------------------------------------------------------------*/
 ;*    get-prototypeof ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (get-prototypeof proto %this)
@@ -291,57 +299,57 @@
       (unless (eq? __proto__ prototype)
 	 (when (isa? __proto__ JsObject)
 	    (set! prototype __proto__)
-	    (set! constrmap (instantiate::JsConstructMap))))
+	    (set! constrmap (instantiate::JsConstructMap (ctor ctor)))))
       (js-make-jsobject constrsize constrmap prototype)))
 
-(define (js-new-fast0 %this ctor::JsFunction __proto__)
-   (update-ctor-cmap! ctor __proto__)
-   (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let* ((__proto__ (get-prototypeof __proto__ %this))
-	     (this (js-make-jsobject constrsize constrmap __proto__)))
-	 (js-new-return/fast ctor (procedure this) this))))
-
-(define (js-new-fast1 %this ctor::JsFunction __proto__ a0)
-   (update-ctor-cmap! ctor __proto__)
-   (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let* ((__proto__ (get-prototypeof __proto__ %this))
-	     (this (js-make-jsobject constrsize constrmap __proto__)))
-	 (js-new-return/fast ctor (procedure this a0) this))))
-
-(define (js-new-fast2 %this ctor::JsFunction __proto__ a0 a1)
-   (update-ctor-cmap! ctor __proto__)
-   (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let* ((__proto__ (get-prototypeof __proto__ %this))
-	     (this (js-make-jsobject constrsize constrmap __proto__)))
-	 (js-new-return/fast ctor (procedure this a0 a1) this))))
-
-(define (js-new-fast3 %this ctor::JsFunction __proto__ a0 a1 a2)
-   (update-ctor-cmap! ctor __proto__)
-   (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let* ((__proto__ (get-prototypeof __proto__ %this))
-	     (this (js-make-jsobject constrsize constrmap __proto__)))
-	 (js-new-return/fast ctor (procedure this a0 a1 a2) this))))
-
-(define (js-new-fast4 %this ctor::JsFunction __proto__ a0 a1 a2 a3)
-   (update-ctor-cmap! ctor __proto__)
-   (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let* ((__proto__ (get-prototypeof __proto__ %this))
-	     (this (js-make-jsobject constrsize constrmap __proto__)))
-	 (js-new-return/fast ctor (procedure this a0 a1 a2 a3) this))))
-
-(define (js-new-fast5 %this ctor::JsFunction __proto__ a0 a1 a2 a3 a4)
-   (update-ctor-cmap! ctor __proto__)
-   (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let* ((__proto__ (get-prototypeof __proto__ %this))
-	     (this (js-make-jsobject constrsize constrmap __proto__)))
-	 (js-new-return/fast ctor (procedure this a0 a1 a2 a3 a4) this))))
-
-(define (js-new-fastn %this ctor::JsFunction __proto__ . an)
-   (update-ctor-cmap! ctor __proto__)
-   (with-access::JsFunction ctor (constrsize constrmap procedure)
-      (let* ((__proto__ (get-prototypeof __proto__ %this))
-	     (this (js-make-jsobject constrsize constrmap __proto__)))
-	 (js-new-return/fast ctor (apply procedure this an) this))))
+;* (define (js-new-fast0 %this ctor::JsFunction __proto__)             */
+;*    (update-ctor-cmap! ctor __proto__)                               */
+;*    (with-access::JsFunction ctor (constrsize constrmap procedure)   */
+;*       (let* ((__proto__ (get-prototypeof __proto__ %this))          */
+;* 	     (this (js-make-jsobject constrsize constrmap __proto__))) */
+;* 	 (js-new-return/fast ctor (procedure this) this))))            */
+;*                                                                     */
+;* (define (js-new-fast1 %this ctor::JsFunction __proto__ a0)          */
+;*    (update-ctor-cmap! ctor __proto__)                               */
+;*    (with-access::JsFunction ctor (constrsize constrmap procedure)   */
+;*       (let* ((__proto__ (get-prototypeof __proto__ %this))          */
+;* 	     (this (js-make-jsobject constrsize constrmap __proto__))) */
+;* 	 (js-new-return/fast ctor (procedure this a0) this))))         */
+;*                                                                     */
+;* (define (js-new-fast2 %this ctor::JsFunction __proto__ a0 a1)       */
+;*    (update-ctor-cmap! ctor __proto__)                               */
+;*    (with-access::JsFunction ctor (constrsize constrmap procedure)   */
+;*       (let* ((__proto__ (get-prototypeof __proto__ %this))          */
+;* 	     (this (js-make-jsobject constrsize constrmap __proto__))) */
+;* 	 (js-new-return/fast ctor (procedure this a0 a1) this))))      */
+;*                                                                     */
+;* (define (js-new-fast3 %this ctor::JsFunction __proto__ a0 a1 a2)    */
+;*    (update-ctor-cmap! ctor __proto__)                               */
+;*    (with-access::JsFunction ctor (constrsize constrmap procedure)   */
+;*       (let* ((__proto__ (get-prototypeof __proto__ %this))          */
+;* 	     (this (js-make-jsobject constrsize constrmap __proto__))) */
+;* 	 (js-new-return/fast ctor (procedure this a0 a1 a2) this))))   */
+;*                                                                     */
+;* (define (js-new-fast4 %this ctor::JsFunction __proto__ a0 a1 a2 a3) */
+;*    (update-ctor-cmap! ctor __proto__)                               */
+;*    (with-access::JsFunction ctor (constrsize constrmap procedure)   */
+;*       (let* ((__proto__ (get-prototypeof __proto__ %this))          */
+;* 	     (this (js-make-jsobject constrsize constrmap __proto__))) */
+;* 	 (js-new-return/fast ctor (procedure this a0 a1 a2 a3) this)))) */
+;*                                                                     */
+;* (define (js-new-fast5 %this ctor::JsFunction __proto__ a0 a1 a2 a3 a4) */
+;*    (update-ctor-cmap! ctor __proto__)                               */
+;*    (with-access::JsFunction ctor (constrsize constrmap procedure)   */
+;*       (let* ((__proto__ (get-prototypeof __proto__ %this))          */
+;* 	     (this (js-make-jsobject constrsize constrmap __proto__))) */
+;* 	 (js-new-return/fast ctor (procedure this a0 a1 a2 a3 a4) this)))) */
+;*                                                                     */
+;* (define (js-new-fastn %this ctor::JsFunction __proto__ . an)        */
+;*    (update-ctor-cmap! ctor __proto__)                               */
+;*    (with-access::JsFunction ctor (constrsize constrmap procedure)   */
+;*       (let* ((__proto__ (get-prototypeof __proto__ %this))          */
+;* 	     (this (js-make-jsobject constrsize constrmap __proto__))) */
+;* 	 (js-new-return/fast ctor (apply procedure this an) this))))   */
 
 ;*---------------------------------------------------------------------*/
 ;*    update-ctor-cmap! ...                                            */
@@ -806,24 +814,15 @@
 ;*    js-make-let ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-let)
-   (make-cell '__undefined__))
+   #\Z)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-let-ref ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-let-ref cell ident loc %this)
-   (let ((v (cell-ref cell)))
-      (if (eq? v '__undefined__)
-	  (js-raise-reference-error/loc %this loc
-	     (format "\"~a\" is not defined" ident) cell)
-	  v)))
-
-;*---------------------------------------------------------------------*/
-;*    js-let-set! ...                                                  */
-;*---------------------------------------------------------------------*/
-(define-inline (js-let-set! cell val)
-   (cell-set! cell val)
-   val)
+(define-inline (js-let-ref val ident loc %this)
+   (if (eq? val #\Z)
+       (js-raise-reference-error/loc %this loc "dead-zone access" ident)
+       val))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-totest ...                                                    */
@@ -1054,11 +1053,29 @@
 (define-inline (uint32->integer u::uint32)
    (cond-expand
       (bint30
-       (if (<u32 u (fixnum->uint32 (bit-lsh 1 29)))
+       (if (<u32 u (bit-lshu32 #u32:1 29))
 	   (uint32->fixnum u)
 	   (uint32->flonum u)))
       (else
        (uint32->fixnum u))))
+
+;*---------------------------------------------------------------------*/
+;*    int32->integer ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (int32->integer i::int32)
+   (cond-expand
+      (bint30
+       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 28)))
+		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 28)))))
+	   (int32->fixnum i)
+	   (elong->flonum (uint32->elong i))))
+      (bint32
+       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 30)))
+		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 30)))))
+	   (int32->fixnum i)
+	   (elong->flonum (uint32->elong i))))
+      (else
+       (int32->fixnum i))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toindex ...                                                   */

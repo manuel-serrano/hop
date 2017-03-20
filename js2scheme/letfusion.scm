@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 27 13:16:54 2016                          */
-;*    Last change :  Wed Apr 27 10:08:21 2016 (serrano)                */
-;*    Copyright   :  2016 Manuel Serrano                               */
+;*    Last change :  Thu Mar  9 08:57:20 2017 (serrano)                */
+;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let fusion merges J2SBlock with variable decarations and         */
 ;*    J2SLetBlock.                                                     */

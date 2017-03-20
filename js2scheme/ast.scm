@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Feb 27 21:47:20 2017 (serrano)                */
+;*    Last change :  Fri Mar 17 08:43:19 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -42,6 +42,7 @@
 	      (cnsts::pair-nil (default '()))
 	      (decls::pair-nil (default '()))
 	      (headers::pair-nil (default '()))
+	      (globals::pair-nil (default '()))
 	      (direct-eval::bool (default #t)))
 
 	   (abstract-class J2SExpr::J2SNode
@@ -349,6 +350,11 @@
 	      (param::J2SDecl read-only)
 	      (exn::J2SDecl read-only)
 	      body::J2SNode)
+
+	   (final-class J2SOPTInitSeq::J2SSeq
+	      ref::J2SRef
+	      (cmap0::symbol read-only)
+	      (cmap1::symbol read-only))
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)

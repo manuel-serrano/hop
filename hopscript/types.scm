@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Mar  8 16:08:23 2017 (serrano)                */
+;*    Last change :  Tue Mar 14 07:41:39 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -77,6 +77,7 @@
 	      (cmap::obj (default #unspecified))
 	      (pmap::obj (default #t))
 	      (index::long (default -1))
+	      (vindex::long (default (js-vindex-max)))
 	      (owner::obj (default #f))
 	      (name::obj (default '||))
 	      (method::obj (default #f)))
@@ -86,7 +87,10 @@
 	      (nextmap (default #f))
 	      (names::vector read-only (default '#()))
 	      (methods::vector read-only (default '#()))
-	      (backup::pair-nil (default '())))
+	      (backup::pair-nil (default '()))
+	      (ctor::obj (default #f))
+	      (vtable::vector (default '#()))
+	      (vlen::long (default 0)))
 
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
@@ -159,7 +163,10 @@
 	      (js-symbol-table read-only (default (js-symbol-table)))
 	      (js-symbol-iterator (default (js-undefined)))
 	      (js-symbol-species (default (js-undefined)))
-	      (js-main (default (js-null))))
+	      (js-main (default (js-null)))
+	      (js-call (default #f))
+	      (js-apply (default #f))
+	      (js-vindex (default 0)))
 	   
 	   (class JsArray::JsObject
 	      ;; (sealed::bool (default #f))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Mon Feb 27 14:49:25 2017 (serrano)                */
+;*    Last change :  Sun Mar 19 06:37:39 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -110,7 +110,7 @@
 ;*    type-uint32? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (type-uint32? type)
-   (memq type '(uint29 index uint32 length)))
+   (memq type '(index uint32 length)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-int30? ...                                                  */
@@ -122,7 +122,7 @@
 ;*    type-int53? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (type-int53? type)
-   (memq type '(uint29 int30 int53 ufixnum)))
+   (memq type '(uint29 int30 int53 ufixnum index)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-fixnum? ...                                                 */
@@ -153,10 +153,10 @@
       (=fx (config-get conf :long-size 0) 64))
    
    (case type
+      ((int32 int53) (if (m64? conf) 'long 'obj))
       ((unknown any number) 'obj)
-      ((uint29 index uint32 length) 'uint32)
-      ((int30 fixnum ufixnum) 'long)
-      ((int53) (if (m64? conf) 'long 'obj))
+      ((index uint32 length) 'uint32)
+      ((uint29 int30 fixnum ufixnum) 'long)
       ((integer) 'obj)
       ((object this) 'JsObject)
       ((undefined) 'unspecified)

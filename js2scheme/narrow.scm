@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Fri Feb  3 15:26:34 2017 (serrano)                */
+;*    Last change :  Thu Mar  9 08:51:42 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -32,8 +32,7 @@
 	      (narrowable::bool (default #t))
 	      (ldecl (default #f))))
 
-   (export j2s-narrow-stage
-	   (generic j2s-narrow ::obj ::obj)))
+   (export j2s-narrow-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow-stage                                                 */
@@ -46,42 +45,37 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-generic (j2s-narrow this conf)
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-narrow ::J2SProgram ...                                      */
 ;*    -------------------------------------------------------------    */
 ;*    Warning, headers are not scanned for variable resolution!        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-narrow this::J2SProgram conf)
-   (with-access::J2SProgram this (decls nodes headers)
-      ;; mark that header declarations are not narrowable
-      (for-each j2s-mark-unnarrowable headers)
-      ;; add extra block before each init not already at the head of a block
-      (for-each (lambda (o)
-		   (when (isa? o J2SDeclFun)
-		      (with-access::J2SDeclFun o (val)
-			 (j2s-blockify! val))))
-	 decls)
-      ;; statement optimization
-      (for-each (lambda (o)
-		   (cond
-		      ((isa? o J2SDeclFun)
-		       (with-access::J2SDeclFun o (id val)
-			  (j2s-narrow-fun! val)))
-		      ((isa? o J2SDecl)
-		       (j2s-mark-unnarrowable o))))
-	 decls)
-      ;; nodes
-      (set! nodes
-	 (map! (lambda (o)
-		  (j2s-find-init-blocks o #f #f)
-		  (j2s-mark-narrowable o '() #f
-		     (and (isa? o J2SFun) o) (make-cell #f))
-		  (j2s-lift-inits! (j2s-narrow! o)))
-	    nodes)))
+(define (j2s-narrow this conf)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (decls nodes headers)
+	 ;; mark that header declarations are not narrowable
+	 (for-each j2s-mark-unnarrowable headers)
+	 ;; add extra block before each init not already at the head of a block
+	 (for-each (lambda (o)
+		      (when (isa? o J2SDeclFun)
+			 (with-access::J2SDeclFun o (val)
+			    (j2s-blockify! val))))
+	    decls)
+	 ;; statement optimization
+	 (for-each (lambda (o)
+		      (cond
+			 ((isa? o J2SDeclFun)
+			  (with-access::J2SDeclFun o (id val)
+			     (j2s-narrow-fun! val)))
+			 ((isa? o J2SDecl)
+			  (j2s-mark-unnarrowable o))))
+	    decls)
+	 ;; nodes
+	 (set! nodes
+	    (map! (lambda (o)
+		     (j2s-find-init-blocks o #f #f)
+		     (j2s-mark-narrowable o '() #f
+			(and (isa? o J2SFun) o) (make-cell #f))
+		     (j2s-lift-inits! (j2s-narrow! o)))
+	       nodes))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -378,14 +372,6 @@
       this))
    
 ;*---------------------------------------------------------------------*/
-;*    j2s-narrow! ::J2SFun ...                                         */
-;*---------------------------------------------------------------------*/
-;* (define-walk-method (j2s-narrow! this::J2SFun)                      */
-;*    (call-default-walker))                                           */
-;*    (j2s-narrow-fun! this)                                           */
-;*    this)                                                            */
-
-;*---------------------------------------------------------------------*/
 ;*    j2s-lift-inits! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-lift-inits! this::J2SNode)
@@ -395,7 +381,7 @@
 ;*    j2s-lift-inits! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-lift-inits! this::J2SLetBlock)
-
+   
    (define (lift? node::J2SNode decls)
       ;; lift everything that is not an initilazation of one decls
       (or (not (isa? node J2SStmtExpr))
@@ -405,7 +391,7 @@
 		    (or (not (isa? lhs J2SRef))
 			(with-access::J2SRef lhs (decl)
 			   (not (memq decl decls)))))))))
-
+   
    (call-default-walker)
    (with-access::J2SLetBlock this (nodes decls)
       (if (and (pair? nodes) (isa? (car nodes) J2SSeq))
@@ -422,5 +408,5 @@
 		   (else
 		    (set! snodes inodes)
 		    (duplicate::J2SBlock this
-				(nodes (reverse! (cons this lifts))))))))
+		       (nodes (reverse! (cons this lifts))))))))
 	  this)))

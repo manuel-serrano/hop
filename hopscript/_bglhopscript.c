@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Mar  7 08:27:37 2017 (serrano)                */
+/*    Last change :  Tue Mar 14 16:02:19 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -74,12 +74,12 @@ bgl_register_pcache( pcache_t *pcache, int len ) {
 /*    bgl_invalidate_pcaches_pmap ...                                  */
 /*---------------------------------------------------------------------*/
 void
-bgl_invalidate_pcaches_pmap() {
+bgl_invalidate_pcaches_pmap( obj_t proc ) {
    int i;
    for( i = 0; i < pcaches_index; i++ ) {
       int j;
       for( j = 0; j < pcaches[ i ].length; j++ ) {
-	 pcaches[ i ].pcache[ j ].BgL_pmapz00 = BTRUE;
+	 PROCEDURE_ENTRY( proc )( proc, &(pcaches[ i ].pcache[ j ]), BEOA );
       }
    }
 }

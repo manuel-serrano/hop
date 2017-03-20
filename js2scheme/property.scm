@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Mar  7 07:26:06 2017 (serrano)                */
+;*    Last change :  Fri Mar 17 09:36:32 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
@@ -41,8 +41,8 @@
    (define j2s-ccall (config-get args :optim-ccall #f))
    (define j2s-shared-pcache (config-get args :shared-pcache #f))
 
-   (when (>= j2s-verbose 4)
-      (fprintf (current-error-port) (format " [ccall=~a]" j2s-ccall)))
+   (when (and (>= j2s-verbose 4) j2s-ccall)
+      (fprintf (current-error-port) " [optim-ccall]"))
    
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes headers decls loc pcache-size)
@@ -50,13 +50,16 @@
 		(env (cons '() '()))
 		(caches (append
 			   (append-map (lambda (s)
-					  (property* s count env j2s-ccall #f j2s-shared-pcache))
+					  (property* s count env j2s-ccall
+					     #f j2s-shared-pcache))
 			      headers)
 			   (append-map (lambda (s)
-					  (property* s count env j2s-ccall #f j2s-shared-pcache))
+					  (property* s count env j2s-ccall
+					     #f j2s-shared-pcache))
 			      decls)
 			   (append-map (lambda (s)
-					  (property* s count env j2s-ccall #f j2s-shared-pcache))
+					  (property* s count env j2s-ccall
+					     #f j2s-shared-pcache))
 			      nodes))))
 	    (set! pcache-size (get count))))
       

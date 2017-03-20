@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Mar  8 18:01:50 2017 (serrano)                */
+;*    Last change :  Fri Mar 17 17:31:34 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -32,7 +32,7 @@
    
    (extern ($js-make-pcache::obj (::obj ::int ::JsPropertyCache)
 	      "bgl_make_pcache")
-	   ($js-invalidate-pcaches-pmap!::void ()
+	   ($js-invalidate-pcaches-pmap!::void (::obj)
 	      "bgl_invalidate_pcaches_pmap"))
    
    (export (%define-pcache ::int)
@@ -41,6 +41,7 @@
 	   (inline js-pcache-ref ::obj ::int)
 	   
 	   (js-names->cmap::JsConstructMap ::vector)
+	   (js-object-literal-init! ::JsObject)
 	   
 	   (js-object-unmap! ::JsObject)
 	   (js-toname::obj ::obj ::JsGlobalObject)
@@ -62,6 +63,7 @@
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 	   
+	   (js-get-lookup ::JsObject ::obj ::JsPropertyCache ::bool ::JsGlobalObject)
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 	   
 	   (js-get-notfound ::obj ::obj ::JsGlobalObject)
@@ -72,7 +74,6 @@
 	   (js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-object-get-name/cache ::JsObject ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (generic js-get-name/cache-miss ::JsObject ::obj ::JsPropertyCache ::obj ::JsGlobalObject)
-	   (js-get-symbol-name/cache-miss ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
 	   (js-global-object-get-name ::JsObject ::symbol ::obj ::JsGlobalObject)
 	   (js-global-object-get-name/cache
               ::JsObject ::symbol ::JsPropertyCache ::obj ::JsGlobalObject)
@@ -125,8 +126,19 @@
 	   
 	   (js-object-call-name/cache ::JsGlobalObject ::JsObject ::obj
 	      ::JsPropertyCache ::JsPropertyCache . args)
+	   (js-object-call/cache-fill ::JsGlobalObject ::JsObject ::obj
+	      ::JsPropertyCache ::JsPropertyCache ::pair-nil)
 	   (js-object-call/cache-miss ::JsGlobalObject ::JsObject ::obj
-	      ::JsPropertyCache ::JsPropertyCache ::pair-nil)))
+	      ::JsPropertyCache ::JsPropertyCache ::pair-nil)
+	   (js-call/cache ::JsGlobalObject obj ::JsPropertyCache this . args)
+
+	   (inline js-vindex-max::long)
+	   (js-get-vindex::long ::JsGlobalObject)
+	   (js-vtable-add!::procedure ::JsConstructMap ::long ::obj)
+
+	   (log-cache-miss!)
+	   (add-cache-miss! ::symbol ::symbol)
+	   (show-cache-misses)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-elements-push! ...                                            */
@@ -135,6 +147,22 @@
    (let ((len (vector-length vec)))
       (if (>=fx index len)
 	  (let ((nvec (copy-vector vec (+fx 1 index))))
+	     (vector-set! nvec index value)
+	     nvec)
+	  (begin
+	     (vector-set! vec index value)
+	     vec))))
+
+;*---------------------------------------------------------------------*/
+;*    js-elements-push/ctor! ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-elements-push/ctor!::vector ctor vec::vector index::long value)
+   (let ((len (vector-length vec)))
+      (if (>=fx index len)
+	  (let ((nvec (copy-vector vec (+fx 1 index))))
+	     (when (isa? ctor JsFunction)
+		(with-access::JsFunction ctor (constrsize)
+		   (set! constrsize (+fx 1 constrsize))))
 	     (vector-set! nvec index value)
 	     nvec)
 	  (begin
@@ -211,14 +239,22 @@
 ;*    object.                                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-invalidate-pcaches-pmap!)
-   ($js-invalidate-pcaches-pmap!)
+   
+   (define (invalidate-pcache-pmap! pcache)
+      (with-access::JsPropertyCache pcache (pmap)
+	 (when (isa? pmap JsConstructMap)
+	    (with-access::JsConstructMap pmap (vtable vlen)
+	       (set! vlen 0)
+	       (set! vtable '#())))
+	 (set! pmap #t)))
+   
+   ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap!)
    (for-each (lambda (pcache-entry)
 		(let ((vec (car pcache-entry)))
 		   (let loop ((i (-fx (cdr pcache-entry) 1)))
 		      (when (>=fx i 0)
 			 (let ((pcache (vector-ref vec i)))
-			    (with-access::JsPropertyCache pcache (pmap)
-			       (set! pmap #t)))
+			    (invalidate-pcache-pmap! pcache))
 			 (loop (-fx i 1))))))
       *pcaches*))
 
@@ -364,7 +400,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    find-old-transition ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (find-old-transition omap::JsConstructMap name::symbol flags::int)
+(define (find-old-transition omap::JsConstructMap name flags::int)
    (unless (eq? name '__proto__)
       (with-access::JsConstructMap omap (backup)
 	 (find (lambda (el)
@@ -383,7 +419,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    restore-cmap-transition! ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (restore-cmap-transition! cmap::JsConstructMap restore)
+(define (restore-cmap-transition! cmap::JsConstructMap restore::pair-nil)
    (save-cmap-transition! cmap)
    (with-access::JsConstructMap cmap (transition nextmap)
       (set! transition (car restore))
@@ -401,10 +437,11 @@
 	 (vector-set! nvec len val)
 	 nvec))
 
-   (with-access::JsConstructMap omap (names methods)
+   (with-access::JsConstructMap omap (names methods ctor)
       (let ((newnames (vector-extend names name))
 	    (newmethods (vector-extend methods #unspecified)))
 	 (instantiate::JsConstructMap
+	    (ctor ctor)
 	    (names newnames)
 	    (methods newmethods)))))
 
@@ -421,11 +458,32 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-names->cmap ...                                               */
+;*    -------------------------------------------------------------    */
+;*    Used by j2sscheme to create literal objects.                     */
 ;*---------------------------------------------------------------------*/
 (define (js-names->cmap names)
    (instantiate::JsConstructMap
       (names names)
       (methods (make-vector (vector-length names) #unspecified))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-literal-init! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-object-literal-init! o::JsObject)
+   (with-access::JsObject o (elements cmap)
+      (with-access::JsConstructMap cmap (methods)
+	 (let loop ((i (-fx (vector-length elements) 1)))
+	    (if (=fx i -1)
+		o
+		(let ((v (vector-ref elements i)))
+		   (cond
+		      ((not (isa? v JsFunction))
+		       (vector-set! methods i #f))
+		      ((eq? (vector-ref methods i) #unspecified)
+		       (vector-set! methods i #t))
+		      (else
+		       (vector-set! methods i #f)))
+		   (loop (-fx i 1))))))))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    js-descriptors->cmap ...                                         *} */
@@ -1029,6 +1087,7 @@
 ;*    the property value.                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-get-lookup o::JsObject name::obj cache::JsPropertyCache throw %this)
+   (add-cache-miss! 'get name)
    (let loop ((obj o))
       (jsobject-find obj name
 	 ;; map search
@@ -1125,7 +1184,7 @@
 			  (js-property-value o desc %this)))))
 	       (else
 		(js-get-name/cache-miss o name cache #f %this)))))))
-
+ 
 ;*---------------------------------------------------------------------*/
 ;*    js-global-object-get-name ...                                    */
 ;*    -------------------------------------------------------------    */
@@ -1149,7 +1208,7 @@
       (with-access::JsPropertyCache cache (cmap index)
          (if (eq? cmap omap)
 	     (vector-ref elements index)
-             (js-get-name/cache-miss o name cache throw %this)))))
+	     (js-get-name/cache-miss o name cache throw %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-this-object-get-name/cache ...                                */
@@ -1165,15 +1224,6 @@
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-get-name/cache-miss obj::JsObject name::obj cache::JsPropertyCache throw %this)
-   (js-get-lookup obj name cache throw %this))
-
-;*---------------------------------------------------------------------*/
-;*    js-get-symbol-name/cache-miss ...                                */
-;*    -------------------------------------------------------------    */
-;*    This function is prefered to the generic function when           */
-;*    name is a symbol different from length                           */
-;*---------------------------------------------------------------------*/
-(define (js-get-symbol-name/cache-miss obj::JsObject name::symbol cache::JsPropertyCache throw %this)
    (js-get-lookup obj name cache throw %this))
 
 ;*---------------------------------------------------------------------*/
@@ -1354,7 +1404,7 @@
 
    (define (update-mapped-object! obj i)
       (with-access::JsObject obj (cmap elements)
-	 (with-access::JsConstructMap cmap (nextmap methods)
+	 (with-access::JsConstructMap cmap (nextmap methods vtable vlen)
 	    (let ((el-or-desc (vector-ref elements i)))
 	       (cond
 		  ((isa? el-or-desc JsAccessorDescriptor)
@@ -1375,6 +1425,8 @@
 				 v))
 			     (else
 			      (when (invalidate-cache-method! v methods i)
+				 (set! vtable '#())
+				 (set! vlen 0)
 				 (set! cmap (duplicate::JsConstructMap cmap)))
 			      (when pcache
 				 [assert (i) (<=fx i (vector-length elements))]
@@ -1383,6 +1435,8 @@
 			      v)))
 		       (begin
 			  (when (invalidate-cache-method! v methods i)
+			     (set! vtable '#())
+			     (set! vlen 0)
 			     (set! cmap (duplicate::JsConstructMap cmap)))
 			  (when pcache
 			     [assert (i) (<=fx i (vector-length elements))]
@@ -1414,32 +1468,34 @@
 		  (cond
 		     ((cmap-same-transition? cmap name v flags)
 		      ;; follow the next map
-		      (with-access::JsConstructMap nextmap (names)
+		      (with-access::JsConstructMap nextmap (names ctor)
 			 (when pcache
 			    [assert (index) (<=fx index (vector-length elements))]
 			    (js-pcache-next-direct! pcache o nextmap index))
 			 [assert (o) (isa? nextmap JsConstructMap)]
+			 (set! elements
+			    (js-elements-push/ctor! ctor elements index v))
 			 (set! cmap nextmap)
-			 (set! elements (js-elements-push! elements index v))
 			 v))
-;* 		     ((find-old-transition cmap name flags)            */
-;* 		      =>                                               */
-;* 		      (lambda (restore)                                */
-;* 			 (tprint "FIND-OLD-TRANSITION!")               */
-;* 			 (restore-cmap-transition! cmap restore)       */
-;* 			 (loop)))                                      */
+		     ((find-old-transition cmap name flags)
+		      =>
+		      (lambda (restore)
+			 (restore-cmap-transition! cmap restore)
+			 (loop)))
 		     (else
 		      ;; create a new map
 		      (let ((nextmap (extend-cmap cmap name)))
-			 (with-access::JsConstructMap nextmap (methods)
+			 (with-access::JsConstructMap nextmap (methods ctor)
 			    (validate-cache-method! v methods index))
 			 (when pcache 
 			    [assert (index) (<=fx index (vector-length elements))]
 			    (js-pcache-next-direct! pcache o nextmap index))
 			 (link-cmap! cmap nextmap name v flags)
 			 [assert (o) (isa? nextmap JsConstructMap)]
+			 (with-access::JsConstructMap cmap (ctor)
+			    (set! elements
+			       (js-elements-push/ctor! ctor elements index v)))
 			 (set! cmap nextmap)
-			 (set! elements (js-elements-push! elements index v))
 			 v))))))))
    
    (define (update-properties-object! obj desc)
@@ -1498,12 +1554,14 @@
 	     ;; 8.12.5, step 6
 	     (extend-properties-object!)))))
 
-   (let loop ((obj o))
-      (jsobject-find obj (js-toname p %this)
-	 update-mapped-object!
-	 update-properties-object!
-	 extend-object!
-	 loop)))
+   (let ((name (js-toname p %this)))
+      (add-cache-miss! 'put name)
+      (let loop ((obj o))
+	 (jsobject-find obj name
+	    update-mapped-object!
+	    update-properties-object!
+	    extend-object!
+	    loop))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/debug! ...                                                */
@@ -1542,10 +1600,10 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-put-name/cache! o::JsObject prop::obj v::obj throw::bool pcache::JsPropertyCache %this)
    (with-access::JsObject o ((omap cmap) elements)
-      (with-access::JsPropertyCache pcache (cmap pmap index owner)
+      (with-access::JsPropertyCache pcache (cmap pmap index owner vindex)
 	 (let ((%omap omap))
 	    (cond
-	       ((eq? cmap omap)
+	       ((eq? cmap %omap)
 		[assert (pcache) (isa? cmap JsConstructMap)]
 		(with-access::JsObject o (elements)
 		   (vector-set! elements index v)
@@ -1565,8 +1623,38 @@
 		    (with-access::JsObject owner (elements)
 		       (let ((desc (vector-ref elements (-fx (negfx index) 1))))
 			  (js-property-value owner desc %this)))))
+	       ((not %omap)
+		(js-put-jsobject! o prop v throw #t pcache %this))
 	       (else
-		(js-object-put-name/cache-miss! o prop v throw pcache %this)))))))
+		(with-access::JsConstructMap %omap (vlen vtable)
+		   (if (and (<fx vindex vlen)
+			    (pair? (vector-ref vtable vindex)))
+		       (let ((index (car (vector-ref vtable vindex)))
+			     (cmap (cdr (vector-ref vtable vindex))))
+			  (vector-set! elements index v)
+			  (set! omap cmap)
+			  v)
+		       (js-object-put-name/cache-miss! o prop v throw
+			  pcache %this)))))))))
+;* 	       ((and %omap                                             */
+;* 		     (with-access::JsPropertyCache pcache (vindex)     */
+;* 			(with-access::JsConstructMap %omap (vtable)    */
+;* 			   (and (< vindex (vector-length vtable))      */
+;* 				(pair? (vector-ref vtable vindex)))))) */
+;* 		(with-access::JsConstructMap %omap (vtable)            */
+;* 		   (with-access::JsPropertyCache pcache (vindex)       */
+;* 		      (let ((index (car (vector-ref vtable vindex)))   */
+;* 			    (cmap (cdr (vector-ref vtable vindex))))   */
+;* 			 (set! elements (js-elements-push! elements index v)) */
+;* 			 (set! omap cmap)))))                          */
+;* 	       (else                                                   */
+;* 		(let ((r (js-object-put-name/cache-miss! o prop v throw pcache %this))) */
+;* 		   (when (>=fx index 0)                                */
+;* 		      (with-access::JsPropertyCache pcache (vindex cmap) */
+;* 			 (unless (<fx vindex (js-vindex-max))          */
+;* 			    (set! vindex (js-get-vindex %this)))       */
+;* 			 (js-vtable-add! %omap vindex (cons index cmap)))) */
+;* 		   r)))))))                                            */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-this-put-name/cache! ...                                      */
@@ -1578,30 +1666,15 @@
 ;*    js-object-put-name/cache-miss! ...                               */
 ;*---------------------------------------------------------------------*/
 (define (js-object-put-name/cache-miss! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
-   
-   (define (js-object-element-set! obj index value)
-      (with-access::JsObject obj (elements)
-	 (let ((len (vector-length elements)))
-	    (if (>=fx index len)
-		(let ((nvec (copy-vector elements (+fx 1 index))))
-		   (vector-set! nvec index value)
-		   (set! elements nvec)
-		   value)
-		(begin
-		   (vector-set! elements index value)
-		   value)))))
-   
-   (with-access::JsObject o ((omap cmap) elements)
-      (with-access::JsPropertyCache cache (cmap index)
-	 (let ((%omap omap))
-	    (if (and %omap
-		     (with-access::JsConstructMap %omap (nextmap)
-			(eq? nextmap cmap)))
-		(begin
-		   (tprint "A REVOIR...")
-		   (set! omap cmap)
-		   (js-object-element-set! o index v))
-		(js-put-jsobject! o prop v throw #t cache %this))))))
+   (with-access::JsObject o ((omap cmap))
+      (let* ((%omap omap)
+	     (tmp (js-put-jsobject! o prop v throw #t cache %this)))
+	 (with-access::JsPropertyCache cache (index cmap vindex)
+	    (when (>=fx index 0)
+	       (unless (<fx vindex (js-vindex-max))
+		  (set! vindex (js-get-vindex %this)))
+	       (js-vtable-add! %omap vindex (cons index cmap))))
+	 tmp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind! ...                                                     */
@@ -1626,6 +1699,10 @@
 	   (writable #t)
 	   (enumerable #t)
 	   (configurable #t))
+
+   (define (validate-cache-method! v methods i)
+      (when (isa? v JsFunction)
+	 (vector-set! methods i #t)))
    
    (define (accessor-property? get set)
       (or (and get (not (eq? get (js-undefined))))
@@ -1700,6 +1777,11 @@
 			 (set! elements
 			    (js-elements-push! elements index val-or-desc))
 			 value)))
+		  ((find-old-transition cmap name flags)
+		   =>
+		   (lambda (restore)
+		      (restore-cmap-transition! cmap restore)
+		      (extend-mapped-object!)))
 		  ((accessor-property? get set)
 		   ;; create a new map with a JsAccessorDescriptor
 		   (let* ((newdesc (instantiate::JsAccessorDescriptor
@@ -1720,6 +1802,8 @@
 		      (js-undefined)))
 		  ((plain-data-property? flags)
 		   (let ((nextmap (extend-cmap cmap name)))
+		      (with-access::JsConstructMap nextmap (methods)
+			 (validate-cache-method! value methods index))
 		      (link-cmap! cmap nextmap name value flags)
 		      [assert (o) (isa? nextmap JsConstructMap)]
 		      (set! cmap nextmap)
@@ -1735,6 +1819,8 @@
 				      (enumerable enumerable)
 				      (configurable configurable)))
 			  (nextmap (extend-cmap cmap name)))
+		      (with-access::JsConstructMap nextmap (methods)
+			 (validate-cache-method! value methods index))
 		      (link-cmap! cmap nextmap name value flags)
 		      [assert (o) (isa? nextmap JsConstructMap)]
 		      (set! cmap nextmap)
@@ -2291,13 +2377,33 @@
 (define (js-call-name/cache %this::JsGlobalObject obj::JsObject name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache . args)
    (if (isa? obj JsObject)
-       (apply js-call-name/cache %this obj name ccache ocache args)
+       (apply js-object-call-name/cache %this obj name ccache ocache args)
        (js-raise-type-error %this "call: not a function ~s" obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-call-name/cache ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-object-call-name/cache %this::JsGlobalObject obj::JsObject name::obj
+	   ccache::JsPropertyCache ocache::JsPropertyCache . args)
+   (with-access::JsObject obj ((omap cmap) __proto__)
+	 (with-access::JsPropertyCache ccache (cmap pmap method vindex)
+	    (cond
+	       ((eq? pmap omap)
+		;; in cache
+		(apply method obj args))
+	       ((not omap)
+		;; uncachable
+		(let ((f (js-get obj name %this)))
+		   (js-apply %this f obj args)))
+	       (else
+		;; cache miss
+		(with-access::JsConstructMap omap (vtable)
+		   (if (and (>fx (vector-length vtable) vindex)
+			    (procedure? (vector-ref vtable vindex)))
+		       (apply (vector-ref vtable vindex) obj args)
+		       (js-object-call/cache-miss %this obj name ccache ocache args))))))))
+
+(define (js-object-call-name/cache-old %this::JsGlobalObject obj::JsObject name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache . args)
    (with-access::JsObject obj ((omap cmap) __proto__)
       (with-access::JsPropertyCache ccache (cmap pmap method)
@@ -2313,7 +2419,7 @@
 		(apply js-calln %this m obj args)))
 	    ((eq? cmap #unspecified)
 	     ;; a cache miss
-	     (js-object-call/cache-miss %this obj name ccache ocache args))
+	     (js-object-call/cache-fill %this obj name ccache ocache args))
 	    (else
 	     ;; a polymorph call
 	     (let ((m (js-object-get-name/cache obj name ocache %this)))
@@ -2321,14 +2427,70 @@
 		(apply js-calln %this m obj args)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-call/cache-miss ...                                    */
+;*    js-object-call/cache-fill ...                                    */
+;*    -------------------------------------------------------------    */
+;*    This function is called when a ccache has to be filled, i.e.,    */
+;*    on the first call.                                               */
+;*    -------------------------------------------------------------    */
+;*    .call and .apply (not yet for the former) are handled in this    */
+;*    function.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-object-call/cache-miss %this::JsGlobalObject o::JsObject name::obj
+(define (js-object-call/cache-fill %this::JsGlobalObject o::JsObject name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache args::pair-nil)
    
    (define (jsapply method)
-      (apply js-calln %this method o args))
-   
+      (if (procedure? method)
+	  (apply method args)
+	  (apply js-calln %this method o args)))
+
+   (define (funval el-or-desc)
+      (if (isa? el-or-desc JsPropertyDescriptor)
+	  (with-access::JsGlobalObject %this (js-call)
+	     (let ((f (js-property-value o el-or-desc %this)))
+		(if (eq? f js-call)
+		    (with-access::JsFunction o (procedure)
+		       (if (=fx (procedure-arity procedure) (length args))
+			   procedure
+			   f))
+		    f)))
+	  el-or-desc))
+
+   (define (method->procedure f)
+      (case (procedure-arity f)
+	 ((1)
+	  (lambda (_ this) (f this)))
+	 ((2)
+	  (lambda (_ this a0) (f this a0)))
+	 ((3)
+	  (lambda (_ this a0 a1) (f this a0 a1)))
+	 ((4)
+	  (lambda (_ this a0 a1 a2) (f this a0 a1 a2)))
+	 ((5)
+	  (lambda (_ this a0 a1 a2 a3) (f this a0 a1 a2 a3)))
+	 ((6)
+	  (lambda (_ this a0 a1 a2 a3 a4) (f this a0 a1 a2 a3 a4)))
+	 ((7)
+	  (lambda (_ this a0 a1 a2 a3 a4 a5) (f this a0 a1 a2 a3 a4 a5)))
+	 ((8)
+	  (lambda (_ this a0 a1 a2 a3 a4 a5 a6) (f this a0 a1 a2 a3 a4 a5 a6)))
+	 (else
+	  (lambda (this . args) (apply f args)))))
+
+   (define (procedureN procedure largs)
+      (if (=fx (procedure-arity procedure) 1)
+	  (case largs
+	     ((1) (lambda (this a0) (procedure this)))
+	     ((2) (lambda (this a0 a1) (procedure this)))
+	     ((3) (lambda (this a0 a1 a2) (procedure this)))
+	     ((4) (lambda (this a0 a1 a2 a3) (procedure this)))
+	     ((5) (lambda (this a0 a1 a2 a3 a4) (procedure this)))
+	     ((6) (lambda (this a0 a1 a2 a3 a4 a5) (procedure this)))
+	     ((7) (lambda (this a0 a1 a2 a3 a4 a5 a6) (procedure this)))
+	     (else (lambda (this a0 a1 a2 a3 a4 a5 a6 . _) (procedure this))))
+	  #f))
+
+   (add-cache-miss! 'call name)
+
    (let loop ((obj o))
       (jsobject-find obj name
 	 ;; map search
@@ -2338,29 +2500,52 @@
 		  (with-access::JsConstructMap wmap (methods)
 		     (let ((el-or-desc (vector-ref elements i)))
 			(cond
-			   ((isa? el-or-desc JsPropertyDescriptor)
+			   ((isa? el-or-desc JsAccessorDescriptor)
+			    (with-access::JsPropertyCache ccache (pmap cmap)
+			       (set! pmap #t)
+			       (set! cmap #t))
 			    (jsapply (js-property-value o el-or-desc %this)))
 			   ((eq? (vector-ref methods i) #t)
-			    (when (isa? el-or-desc JsFunction)
-			       (with-access::JsFunction el-or-desc (len procedure)
-				  (if (=fx len (length args))
-				      (with-access::JsPropertyCache ccache (pmap cmap index method)
-					 ;; correct arity, put in cache
-					 (set! pmap omap)
-					 (set! cmap #t)
-					 (set! index i)
-					 (set! method procedure))
-				      ;; arity missmatch, never cache
-				      (with-access::JsPropertyCache ccache (cmap)
-					 (set! cmap #t)))))
-			    (jsapply el-or-desc))
+			    (let ((f (funval el-or-desc)))
+			       (cond
+				  ((procedure? f)
+				   (with-access::JsPropertyCache ccache (pmap cmap index method)
+				      ;; correct arity, put in cache
+				      (set! pmap omap)
+				      (set! cmap #t)
+				      (set! index i)
+				      (set! method (method->procedure f))))
+				  ((isa? f JsFunction)
+				   (with-access::JsFunction f (len procedure)
+				      (cond
+					 ((=fx len (length args))
+					  (with-access::JsPropertyCache ccache (pmap cmap index method)
+					     ;; correct arity, put in cache
+					     (set! pmap omap)
+					     (set! cmap #t)
+					     (set! index i)
+					     (set! method procedure)))
+					 ((procedureN procedure (length args))
+					  =>
+					  (lambda (procedure)
+					     (with-access::JsPropertyCache ccache (pmap cmap index method)
+						;; correct arity, put in cache
+						(set! pmap omap)
+						(set! cmap #t)
+						(set! index i)
+						(set! method procedure))))
+					 (else
+					  ;; arity missmatch, never cache
+					  (with-access::JsPropertyCache ccache (cmap)
+					     (set! cmap #t)))))))
+			       (jsapply f)))
 			   (else
 			    (with-access::JsPropertyCache ccache (pmap cmap)
 			       ;; invalidate the call cache and update the
 			       ;; object cache
 			       (set! cmap #t)
 			       (set! pmap #t)
-			       (jsapply el-or-desc)))))))))
+			       (jsapply (funval el-or-desc))))))))))
 	 ;; property search
 	 (lambda (obj v)
 	    (with-access::JsPropertyCache ccache (cmap pmap)
@@ -2373,3 +2558,97 @@
 	       (js-undefined)))
 	 ;; loop
 	 loop)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-call/cache-miss ...                                    */
+;*    -------------------------------------------------------------    */
+;*    This function is called on a true cache miss, i.e., this call    */
+;*    has already been filled with another method.                     */
+;*---------------------------------------------------------------------*/
+(define (js-object-call/cache-miss %this::JsGlobalObject o::JsObject name::obj
+	   ccache::JsPropertyCache ocache::JsPropertyCache args::pair-nil)
+   (with-access::JsPropertyCache ccache (pmap vtable vindex method)
+      (when (procedure? method)
+	 (when (=fx vindex (js-vindex-max))
+	    (set! vindex (js-get-vindex %this)))
+	 (js-vtable-add! pmap vindex method))
+      (js-object-call/cache-fill %this o name ccache ocache args)))
+
+;*---------------------------------------------------------------------*/
+;*    js-vindex-max ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-vindex-max::long)
+   (bit-lsh 1 28))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-vindex ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-get-vindex %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-vindex)
+      (let ((i js-vindex))
+	 (set! js-vindex (+fx 1 js-vindex))
+	 i)))
+
+;*---------------------------------------------------------------------*/
+;*    js-vtable-add! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-vtable-add! o::JsConstructMap idx::long obj)
+   (with-access::JsConstructMap o (vtable vlen)
+      (when (<=fx (vector-length vtable) idx)
+	 (set! vtable (copy-vector vtable (+fx idx 1))))
+      (vector-set! vtable idx obj)
+      (when (>=fx idx vlen) (set! vlen (+fx 1 idx)))
+      obj))
+
+;*---------------------------------------------------------------------*/
+;*    *misses* ...                                                     */
+;*---------------------------------------------------------------------*/
+(define *misses* '())
+(define *log-misses* #f)
+(define *log-miss-threshold* 100)
+
+;*---------------------------------------------------------------------*/
+;*    log-cache-miss! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (log-cache-miss!)
+   (set! *log-misses* #t))
+
+;*---------------------------------------------------------------------*/
+;*    add-cache-miss! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (add-cache-miss! what name)
+   (when *log-misses*
+      (let ((ow (assq what *misses*)))
+	 (if (not ow)
+	     (set! *misses*
+		(cons (cons what (cons 1 (list (cons name 1)))) *misses*))
+	     (let ((on (assq name (cddr ow))))
+		(set-car! (cdr ow) (+fx 1 (cadr ow)))
+		(if (not on)
+		    (set-cdr! (cdr ow) (cons (cons name 1) (cddr ow)))
+		    (set-cdr! on (+fx 1 (cdr on)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    show-cache-misses ...                                            */
+;*---------------------------------------------------------------------*/
+(define (show-cache-misses)
+   (let ((m (pregexp-match "hopscript:cache=([0-9]+)" (getenv "HOPTRACE"))))
+      (when m
+	 (set! *log-miss-threshold* (string->integer (cadr m)))))
+   (for-each (lambda (what)
+		(fprint (current-error-port) (car what) ": " (cadr what))
+		(for-each (lambda (e)
+			     (when (>=fx (cdr e) *log-miss-threshold*)
+				(fprint (current-error-port) "   "
+				   (car e) ": " (cdr e))))
+		   (sort (lambda (e1 e2)
+			    (cond
+			       ((>fx (cdr e1) (cdr e2)) #t)
+			       ((<fx (cdr e1) (cdr e2)) #f)
+			       (else
+				(string<=? (symbol->string! (car e1))
+				   (symbol->string! (car e2))))))
+		      (cddr what)))
+		(newline (current-error-port)))
+      *misses*)
+   (print "total cache misses: " (apply + (map cadr *misses*))))

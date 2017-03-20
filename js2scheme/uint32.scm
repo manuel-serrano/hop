@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sat Feb  4 11:03:35 2017 (serrano)                */
+;*    Last change :  Sat Mar 18 07:29:29 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Map uint32 types to plain integers.                              */
@@ -59,7 +59,7 @@
 ;*---------------------------------------------------------------------*/
 (define (uint->number type m64)
    (case type
-      ((uint29) 'ufixnum)
+      ;;((uint29) 'ufixnum)
       ((index length) (if m64 'ufixnum 'obj))
       (else type)))
 	   

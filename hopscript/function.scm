@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Mar  8 11:54:12 2017 (serrano)                */
+;*    Last change :  Sat Mar 11 07:37:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -281,9 +281,12 @@
 				       prototype
 				       (with-access::JsGlobalObject %this (__proto__)
 					  __proto__)))
-			(constructor constructor)
-			(constrmap (when (or constructor construct)
-				      (instantiate::JsConstructMap))))))
+			(constructor constructor))))
+	    
+	    (when (or constructor construct)
+	       (with-access::JsFunction fun (constrmap)
+		  (set! constrmap (instantiate::JsConstructMap (ctor fun)))))
+	    
 	    (cond
 	       (prototype
 		(when (isa? prototype JsObject)
@@ -459,9 +462,12 @@
 	 (else
 	  (js-apply %this this thisarg args))))
    
-   (js-bind! %this obj 'call
-      :value (js-make-function %this call 1 "call" :prototype (js-undefined))
-      :enumerable #f :writable #t :configurable #t)
+   (with-access::JsGlobalObject %this (js-call)
+      (set! js-call
+	 (js-make-function %this call 1 "call" :prototype (js-undefined)))
+      (js-bind! %this obj 'call
+	 :value js-call
+	 :enumerable #f :writable #t :configurable #t))
    
    ;; bind
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.5
@@ -479,7 +485,7 @@
 		   :strict 'strict
 		   :alloc alloc
 		   :construct fun)))))
-   
+
    (js-bind! %this obj 'bind
       :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t)

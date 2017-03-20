@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Mar  1 07:24:53 2017 (serrano)                */
+;*    Last change :  Mon Mar 13 14:35:03 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -625,7 +625,7 @@
    (print "Shell Variables:")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key")
-   (print "      nodejs:compile")
+   (print "      nodejs:compile, hopscript:cache")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print "   - NODE_DEBUG: nodejs internal debugging [NODE_DEBUG=key]")
    (print "   - NODE_PATH: nodejs require path")

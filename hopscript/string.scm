@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Mar  1 08:10:29 2017 (serrano)                */
+;*    Last change :  Sun Mar 19 17:15:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -232,6 +232,7 @@
 	 ;; bind String in the global object
 	 (js-bind! %this %this 'String
 	    :configurable #f :enumerable #f :value js-string)
+
 	 js-string)))
 
 ;*---------------------------------------------------------------------*/
