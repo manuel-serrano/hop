@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Mar  8 18:01:30 2017 (serrano)                */
+;*    Last change :  Sun Mar 19 17:19:32 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -152,6 +152,17 @@
 (define-method (scheme->response obj::JsStringLiteral req)
    (scheme->response (js-jsstring->string obj) req))
 
+;*---------------------------------------------------------------------*/
+;*    ascii-strings ...                                                */
+;*---------------------------------------------------------------------*/
+(define ascii-strings
+   (let ((vec (make-vector 128)))
+      (let loop ((i (-fx (vector-length vec) 1)))
+	 (when (>=fx i 0)
+	    (vector-set! vec i
+	       (js-ascii->jsstring (make-string 1 (integer->char i))))
+	    (loop (-fx i 1))))
+      vec))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-dipatch ...                                               */
@@ -707,7 +718,8 @@
    (define (ascii-string-ref val fxpos)
       (if (or (<fx fxpos 0) (>=fx fxpos (string-length val)))
 	  (js-undefined)
-	  (js-ascii->jsstring (make-string 1 (string-ref-ur val fxpos)))))
+	  (vector-ref ascii-strings
+	     (char->integer (string-ref-ur val fxpos)))))
    
    (define (utf8-string-ref val fxpos)
       (if (or (<fx fxpos 0) (>=fx fxpos (utf8-codeunit-length val)))

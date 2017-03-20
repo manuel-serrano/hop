@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Tue Feb 28 09:25:27 2017 (serrano)                */
+;*    Last change :  Wed Mar 15 08:38:26 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -39,7 +39,7 @@
 	   
 	   (class JsWebSocketClient::JsObject
 	      (%mutex::mutex read-only (default (make-mutex)))
-	      (state::symbol (default 'connecting))
+	      (state::long (default 0))
 	      (wss::JsWebSocketServer read-only)
 	      socket::obj 
 	      (onmessages::pair-nil (default '()))
@@ -47,7 +47,8 @@
 	      (onerrors::pair-nil (default '())))
 	   
 	   (class JsWebSocketServer::JsObject
-	      (state::symbol (default 'init))
+	      (downp::bool (default #f))
+	      (state::long (default 0))
 	      (worker read-only)
 	      (svc::procedure read-only)
 	      (conns::pair-nil (default '()))
@@ -144,6 +145,15 @@
       ((string=? name "error")
        (with-access::JsWebSocketClient this (onerrors)
 	  (set! onerrors (cons proc onerrors))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-websocket-states                                              */
+;*---------------------------------------------------------------------*/
+(define (js-websocket-state-connecting) 0)
+(define (js-websocket-state-open) 1)
+(define (js-websocket-state-closing) 2)
+(define (js-websocket-state-closed) 3)
+(define (js-websocket-state-error) -1)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-websocket! ...                                           */
@@ -345,7 +355,7 @@
 				 (websocket-server-response req 0
 				    (wss-onconnect wss) proto))))
 		      (wss (instantiate::JsWebSocketServer
-			      (state 'up)
+			      (state (js-websocket-state-open))
 			      (worker (js-current-worker))
 			      (__proto__ js-websocket-server-prototype)
 			      (svc svc))))
@@ -386,6 +396,19 @@
 	 (js-bind! %this %this 'WebSocketServer
 	    :configurable #f :enumerable #f :value js-websocket-server)
 
+	 (js-bind! %this js-websocket 'CONNECTING
+	    :configurable #f :enumerable #f
+	    :value (js-websocket-state-connecting))
+	 (js-bind! %this js-websocket 'OPEN
+	    :configurable #f :enumerable #f
+	    :value (js-websocket-state-open))
+	 (js-bind! %this js-websocket 'CLOSING
+	    :configurable #f :enumerable #f
+	    :value (js-websocket-state-closing))
+	 (js-bind! %this js-websocket 'CLOSED
+	    :configurable #f :enumerable #f
+	    :value (js-websocket-state-closed))
+
 	 (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
@@ -398,7 +421,12 @@
 	      (lambda (this)
 		 (with-access::JsWebSocket this (ws)
 		    (with-access::websocket ws (state)
-		       (js-string->jsstring (symbol->string state)))))
+		       (case state
+			  ((connecting) (js-websocket-state-connecting))
+			  ((open) (js-websocket-state-open))
+			  ((closing) (js-websocket-state-closing))
+			  ((close) (js-websocket-state-closed))
+			  (else (js-websocket-state-error))))))
 	      0 'readyState))
    ;; url
    (js-bind! %this obj 'url
@@ -523,9 +551,10 @@
    (js-bind! %this obj 'close
       :value (js-make-function %this
 		(lambda (this)
-		   (with-access::JsWebSocketServer this (svc state closes worker)
-		      (unless (eq? state 'down)
-			 (set! state 'down)
+		   (with-access::JsWebSocketServer this (svc state closes worker downp)
+		      (unless downp
+			 (set! downp #t)
+			 (set! state (js-websocket-state-closed))
 			 (unregister-service! (procedure-attr svc))
 			 (when (pair? closes)
 			    ;; invoke the onclose listener
@@ -572,7 +601,7 @@
 	    (when socket
 	       (socket-shutdown socket)
 	       (set! socket #f)
-	       (set! state 'closed)
+	       (set! state (js-websocket-state-closed))
 	       (with-access::JsWebSocketServer wss (worker)
 		  (let ((evt (instantiate::JsWebSocketEvent
 				(name "close")
@@ -590,7 +619,7 @@
 	    (when socket
 	       (socket-shutdown socket)
 	       (set! socket #f)
-	       (set! state 'closed)
+	       (set! state (js-websocket-state-closed))
 	       (with-access::JsWebSocketServer wss (worker)
 		  (let ((evt (instantiate::JsWebSocketEvent
 				(name "error")
@@ -677,7 +706,7 @@
 		     (let ((in (socket-input socket)))
 			(input-port-timeout-set! in 0))
 		     (with-access::JsWebSocketClient ws (state)
-			(set! state 'open))
+			(set! state (js-websocket-state-open)))
 		     ;; start reading the frames
 		     (with-handler
 			(lambda (e)
@@ -720,7 +749,7 @@
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocketClient this (socket state)
-		    (js-string->jsstring (symbol->string state))))
+		    state))
 	      0 'readyState))
    ;; close
    (js-bind! %this obj 'close
@@ -731,7 +760,7 @@
 			 (when (socket? socket)
 			    (socket-shutdown socket)
 			    (set! socket #f)
-			    (set! state 'closed)
+			    (set! state (js-websocket-state-closed))
 			    (with-access::JsWebSocketServer wss (worker)
 			       (js-worker-push-thunk! worker "ws-onclose"
 				  (lambda ()

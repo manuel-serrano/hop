@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Feb 27 13:14:19 2017 (serrano)                */
+;*    Last change :  Sat Mar 18 19:54:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -215,8 +215,13 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SAssigOp)
    (with-access::J2SAssigOp this (lhs rhs loc op)
-      `(,(call-next-method) ,op ,@(dump-type this))))
-
+      `(,(string->symbol (typeof this))
+	,@(dump-type this)
+	,@(dump-info this)
+	,(j2s->list lhs)
+	,(j2s->list rhs)
+	,op)))
+  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPrefix ...                                        */
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Fri Feb  3 19:06:01 2017 (serrano)                */
+;*    Last change :  Thu Mar  9 09:14:45 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -107,6 +107,12 @@
        (endloc loc)
        (nodes ,(if (pair? nodes) `(list ,@nodes) ''()))))
 
+(define-macro (J2SBlock* nodes)
+   `(instantiate::J2SBlock
+       (loc loc)
+       (endloc loc)
+       (nodes ,nodes)))
+
 (define-macro (J2SSeq . nodes)
    `(instantiate::J2SSeq
        (loc loc)
@@ -115,12 +121,6 @@
 (define-macro (J2SSeq* nodes)
    `(instantiate::J2SSeq
        (loc loc)
-       (nodes ,nodes)))
-
-(define-macro (J2SBlock* nodes)
-   `(instantiate::J2SBlock
-       (loc loc)
-       (endloc loc)
        (nodes ,nodes)))
 
 (define-macro (J2SSequence . exprs)

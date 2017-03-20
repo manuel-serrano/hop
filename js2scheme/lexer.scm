@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Dec 21 12:03:18 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Sat Mar 18 08:17:46 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -230,7 +230,7 @@
 		      ((>=fx len 18)
 		       (string->real (the-string)))
 		      (else
-		       (string->number (the-string))))))
+		       (js-string->number (the-string))))))
 	  (token 'NUMBER val len)))
       ((: (+ #\0) (in ("17")) (* (in ("07"))))
        ;; integer constant
@@ -240,14 +240,14 @@
 			  (if (>llong o (bit-lshllong #l1 29))
 			      (llong->bignum o)
 			      (llong->fixnum o)))
-		       (string->number (the-string) 8))))
+		       (js-string->number (the-string) 8))))
 	  (token 'OCTALNUMBER val len)))
       ((: (+ digit) (: (in #\e #\E) #\- (+ digit)))
        ;; floating-point constant
-       (token 'NUMBER (string->number (the-string)) (the-length)))
+       (token 'NUMBER (js-string->number (the-string)) (the-length)))
       ((: (or (: (+ digit) #\. (* digit)) (: #\. (+ digit)))
 	  (? (: (in #\e #\E) (? (in #\- #\+)) (+ digit))))
-       (token 'NUMBER (string->number (the-string)) (the-length)))
+       (token 'NUMBER (js-string->number (the-string)) (the-length)))
       ((: (+ digit) (: (in #\e #\E) (? #\+) (+ digit)))
        ;; a bignum
        (let* ((s (the-string))
@@ -260,10 +260,10 @@
 	  (token 'NUMBER (+ 0 (*bx base (exptbx #z10 rest))) (the-length))))
        
       ((: (uncase "0x") (+ xdigit))
-       (token 'NUMBER (string->number (the-substring 2 (the-length)) 16)
+       (token 'NUMBER (js-string->number (the-substring 2 (the-length)) 16)
 	  (the-length)))
       ((: (uncase "0o") (+ odigit))
-       (token 'NUMBER (string->number (the-substring 2 (the-length)) 8)
+       (token 'NUMBER (js-string->number (the-substring 2 (the-length)) 8)
 	  (the-length)))
       
       (#\{ (token 'LBRACE #\{ 1))
@@ -683,3 +683,12 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-regex-lexer)
    j2s-regex-grammar)
+
+;*---------------------------------------------------------------------*/
+;*    js-string->number ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-string->number str #!optional (radix 10))
+   (let ((n (string->number str radix)))
+      (if (bignum? n)
+	  (bignum->flonum n)
+	  n)))

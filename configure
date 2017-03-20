@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Mar  8 14:54:34 2017 (serrano)                */
+#*    Last change :  Mon Mar 13 08:23:01 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1111,6 +1111,7 @@ cat $mkmf.in \
 	  -e "s|@BGLARCH@|$arch|" \
           -e "s|@BUILDID@|$buildid|" \
           -e "s|@CLOSURE@|$closure|" \
+	  -e "s|@THREADS@|$threads|" \
     >> $mkmf
 
 # runtime/configure.scm

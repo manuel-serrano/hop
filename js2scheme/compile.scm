@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Feb 26 06:18:30 2017 (serrano)                */
+;*    Last change :  Fri Mar 17 09:40:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -30,6 +30,7 @@
 	   __js2scheme_use
 	   __js2scheme_property
 	   __js2scheme_constrsize
+	   __js2scheme_ctor
 	   __js2scheme_constant
 	   __js2scheme_tyflow
 	   __js2scheme_range
@@ -149,11 +150,11 @@
       j2s-ronly-stage
       j2s-return-stage
       j2s-property-stage
-      j2s-constrsize-stage
       j2s-cps-stage
       j2s-constant-stage
       j2s-tyflow-stage
       j2s-range-stage
+      j2s-ctor-stage
       j2s-uint32-stage
       j2s-cast-stage
       j2s-array-stage
@@ -307,14 +308,17 @@
 		     (if (string=? (input-port-name in) "[string]")
 			 "stdin"
 			 (input-port-name in)))))
-	 (opts (let ((o (append args (j2s-compile-options))))
-		  (cond
-		     ((>=fx (config-get args :optim 0) 900)
-		      (cons* :optim-hint #t :optim-cast #t o))
-		     ((>=fx (config-get args :optim 0) 4)
-		      (cons* :optim-cast #t o))
-		     (else
-		      o)))))
+	 (opts (let ((o (append args (j2s-compile-options)))
+		     (l (config-get args :optim 0)))
+		  (when (>=fx l 900)
+		     (unless (memq :optim-hint o)
+			(set! o (cons* :optim-hint #t o))))
+		  (when (>=fx l 4)
+		     (unless (memq :optim-cast o)
+			(set! o (cons* :optim-cast #t o)))
+		     (unless (memq :optim-ctor o)
+			(set! o (cons* :optim-ctor #t o))))
+		  o)))
       (let ((v (or (getenv "HOPCFLAGS") "")))
 	 (cond
 	    ((string-contains v "j2s:this")

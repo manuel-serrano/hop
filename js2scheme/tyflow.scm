@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Feb 28 07:24:02 2017 (serrano)                */
+;*    Last change :  Sun Mar 19 18:45:57 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -587,18 +587,54 @@
    (with-access::J2SAssigOp this (lhs rhs op)
       (multiple-value-bind (tyr envr bkr)
 	 (typing-binary op lhs rhs env fun fix)
-	 (multiple-value-bind (tyv __ lbk)
-	    (typing lhs env fun fix)
-	    (cond
-	       ((isa? lhs J2SRef)
-		;; a variable assignment
-		(with-access::J2SRef lhs (decl)
-		   (decl-vtype-set! decl tyr fix)
-		   (let ((nenv (extend-env envr decl tyr)))
-		      (expr-type-set! this nenv fix tyr (append lbk bkr)))))
-	       (else
-		;; a non variable assinment
-		(expr-type-set! this envr fix tyr bkr)))))))
+	 (cond
+	    ((isa? lhs J2SRef)
+	     ;; a variable assignment
+	     (with-access::J2SRef lhs (decl)
+		(decl-vtype-set! decl tyr fix)
+		(let ((nenv (extend-env envr decl tyr)))
+		   (expr-type-set! this nenv fix tyr bkr))))
+	    (else
+	     ;; a non variable assinment
+	     (expr-type-set! this envr fix tyr bkr))))))
+
+;* (define-walk-method (typing this::J2SAssigOp env::pair-nil fun fix::cell) */
+;*    (with-access::J2SAssigOp this (lhs rhs op)                       */
+;*       (multiple-value-bind (tyr envr bkr)                           */
+;* 	 (typing rhs env fun fix)                                      */
+;* 	 (multiple-value-bind (tyv __ lbk)                             */
+;* 	    (typing lhs env fun fix)                                   */
+;* 	    (cond                                                      */
+;* 	       ((isa? lhs J2SRef)                                      */
+;* 		;; a variable assignment                               */
+;* 		(with-access::J2SRef lhs (decl)                        */
+;* 		   (with-access::J2SDecl decl (id)                     */
+;* 		      (when (eq? id 'result)                           */
+;* 			 (tprint "rhs=" (j2s->list rhs) " tyr=" tyr))) */
+;* 		   (decl-vtype-set! decl tyr fix)                      */
+;* 		   (let ((nenv (extend-env envr decl tyr)))            */
+;* 		      (expr-type-set! this nenv fix tyr (append lbk bkr))))) */
+;* 	       (else                                                   */
+;* 		;; a non variable assinment                            */
+;* 		(expr-type-set! this envr fix tyr bkr)))))))           */
+
+;* (define-walk-method (typing this::J2SAssigOp env::pair-nil fun fix::cell) */
+;*    (with-access::J2SAssigOp this (lhs rhs op)                       */
+;*       (with-access::J2SBinary rhs (rhs)                             */
+;* 	 (multiple-value-bind (tyr envr bkr)                           */
+;* 	    (typing-binary op lhs rhs env fun fix)                     */
+;* 	    (multiple-value-bind (tyv __ lbk)                          */
+;* 	       (typing lhs env fun fix)                                */
+;* 	       (cond                                                   */
+;* 		  ((isa? lhs J2SRef)                                   */
+;* 		   ;; a variable assignment                            */
+;* 		   (with-access::J2SRef lhs (decl)                     */
+;* 		      (decl-vtype-set! decl tyr fix)                   */
+;* 		      (let ((nenv (extend-env envr decl tyr)))         */
+;* 			 (expr-type-set! this nenv fix tyr (append lbk bkr))))) */
+;* 		  (else                                                */
+;* 		   ;; a non variable assinment                         */
+;* 		   (expr-type-set! this envr fix tyr bkr))))))))       */
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SPostfix ...                                          */

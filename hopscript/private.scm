@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Nov 25 07:40:41 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Sat Mar 18 09:45:09 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
 ;*=====================================================================*/
@@ -42,8 +42,6 @@
 	   (<=uint32 ::uint32 ::obj)
 	   (>=uint32 ::uint32 ::obj)
 	   (>uint32 ::uint32 ::obj)
-	   
-	   (inline int32->integer::obj ::int32)
 	   
 	   (inline u32vref ::vector ::uint32)
 	   (inline u32vset! ::vector ::uint32 ::obj)
@@ -667,24 +665,6 @@
 	   (>u32 u (->uint32 obj)))
 	  (else
 	   (>fx (uint32->fixnum u) obj))))))
-
-;*---------------------------------------------------------------------*/
-;*    int32->integer ...                                               */
-;*---------------------------------------------------------------------*/
-(define-inline (int32->integer i::int32)
-   (cond-expand
-      (bint30
-       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 28)))
-		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 28)))))
-	   (int32->fixnum i)
-	   (elong->flonum (uint32->elong i))))
-      (bint32
-       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 30)))
-		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 30)))))
-	   (int32->fixnum i)
-	   (elong->flonum (uint32->elong i))))
-      (else
-       (int32->fixnum i))))
 
 ;*---------------------------------------------------------------------*/
 ;*    u32vref ...                                                      */

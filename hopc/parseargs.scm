@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Mar  8 07:38:35 2017 (serrano)                */
+;*    Last change :  Fri Mar 17 09:33:37 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -21,7 +21,6 @@
    
    (export  (parse-args ::pair-nil)))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    ecmascript-support ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -32,6 +31,21 @@
 (define ecmascript-es2017
    (append ecmascript-es6 '(es2017-async:)))
       
+;*---------------------------------------------------------------------*/
+;*    usage ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (usage args-parse-usage)
+   (print "Hopc v" (hop-version))
+   (print "usage: hopc [options] -- [bigloo-options]")
+   (args-parse-usage #f)
+   (newline)
+   (print "Shell Variables:")
+   (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
+   (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key")
+   (print "      nodejs:compile, hopscript:cache")
+   (print "   - HOPCFLAGS: hopc compilation flags")
+   (newline))
+
 ;*---------------------------------------------------------------------*/
 ;*    parse-args ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -46,10 +60,7 @@
       (bind-exit (stop)
 	 (args-parse (cdr args)
 	    ((("-h" "--help") (help "This message"))
-	     (print "Hopc v" (hop-version))
-	     (print "usage: hopc [options] -- [bigloo-options]")
-	     (newline)
-	     (args-parse-usage #f)
+	     (usage args-parse-usage)
 	     (exit 0))
 	    (("--version" (help "Print the version and exit"))
 	     (print (hop-name)"c-" (hop-version))
@@ -226,6 +237,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-this #t (hopc-j2s-flags))))
 	    (("-fno-this" (help "Enable fast this access"))
 	     (hopc-j2s-flags-set! (cons* :optim-this #f (hopc-j2s-flags))))
+	    (("-fctor" (help "Enable fast constructor init sequences"))
+	     (hopc-j2s-flags-set! (cons* :optim-ctor #t (hopc-j2s-flags))))
+	    (("-fno-ctor" (help "Disable fast constructor init sequences"))
+	     (hopc-j2s-flags-set! (cons* :optim-ctor #f (hopc-j2s-flags))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

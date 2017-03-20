@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Mar  8 17:42:41 2017 (serrano)                */
+;*    Last change :  Thu Mar  9 09:19:33 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -144,7 +144,7 @@
 ;*    j2s-letopt! ::J2SLetBlock ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-letopt! this::J2SLetBlock)
-
+   
    (define (init-decl! d)
       (with-access::J2SDecl d (%info scope binder)
 	 (set! scope 'letblock)
@@ -160,6 +160,76 @@
 	       (set! %info (instantiate::DeclInfo
 			      (optdecl optdecl)))))))
    
+   (define (split-letblock! this::J2SLetBlock)
+      (with-trace 'j2s-letopt "split-letblock!"
+	 (with-access::J2SLetBlock this (decls nodes loc)
+	    (let loop ((ns nodes)
+		       (stmts '()))
+	       (cond
+		  ((null? ns)
+		   (optimize-letblock! this))
+		  ((not (get-let-inits (car ns) decls))
+		   (if (null? (get-used-decls (car ns) decls))
+		       (loop (cdr ns) (cons (car ns) stmts))
+		       (begin
+			  (set! nodes ns)
+			  (J2SBlock*
+			     (reverse! (cons (optimize-letblock! this) stmts))))))
+		  (else
+		   (set! nodes ns)
+		   (J2SBlock*
+		      (reverse! (cons (optimize-letblock! this) stmts)))))))))
+   
+   (define (optimize-letblock! this::J2SLetBlock)
+      (with-trace 'j2s-letopt "optimize-letblock!"
+	 (with-access::J2SLetBlock this (decls nodes)
+	    ;; flatten the letblock
+	    (flatten-letblock! this)
+	    (let loop ((n nodes)
+		       (decls decls))
+	       (cond
+		  ((null? n)
+		   ;; should never be reached
+		   (trace-item "<<<.1 " (j2s->list this))
+		   this)
+		  ((not (get-let-inits (car n) decls))
+		   (trace-item "---.2 " (j2s->list (car n)))
+		   ;; optimize recursively
+		   (set-car! n (j2s-letopt! (car n)))
+		   ;; keep optimizing the current let block
+		   (mark-used-noopt*! (car n) decls)
+		   ;; keep the non-marked decls
+		   (loop (cdr n) (filter decl-maybe-opt? decls)))
+		  ((null? decls)
+		   (trace-item "---.3 " (j2s->list (car n)))
+		   ;; nothing more to be potentially optimzed
+		   (map! j2s-letopt! n)
+		   (trace-item "<<<.3 " (j2s->list (car n)))
+		   this)
+		  ((eq? n nodes)
+		   (trace-item "---.4 " (j2s->list (car n)))
+		   ;; got an initialization block, which can be optimized
+		   (let ((res (tail-let! this this)))
+		      (trace-item "<<<.4a " (j2s->list res))
+		      res))
+		  (else
+		   (trace-item "---.5 " (j2s->list (car n)))
+		   ;; re-organize the let-block to place this inits
+		   ;; at the head of a fresh let
+		   (let ((res (tail-let! this (head-let! this n))))
+		      (trace-item "<<<.5 " (j2s->list res))
+		      res)))))))
+
+   (define (flatten-letblock! this::J2SLetBlock)
+      (with-trace 'j2s-letopt "flatten-letblock!"
+	 (with-access::J2SLetBlock this (nodes)
+	    (let loop ()
+	       (when (and (pair? nodes) (null? (cdr nodes))
+			  (isa? (car nodes) J2SBlock))
+		  (with-access::J2SBlock (car nodes) ((ns nodes))
+		     (set! nodes ns))
+		  (loop))))))
+   
    (with-access::J2SLetBlock this (decls nodes)
       ;; start iterating over all the LetBlock statements to find
       ;; the first decl
@@ -167,40 +237,16 @@
 	 (trace-item "" (j2s->list this))
 	 ;; mark all declarations
 	 (for-each init-decl! decls)
-	 (let loop ((n nodes)
-		    (decls decls))
-	    (cond
-	       ((null? n)
-		;; should never be reached
-		(trace-item "<<<.1 " (j2s->list this))
-		this)
-	       ((not (get-let-inits (car n) decls))
-		(trace-item "---.2 " (j2s->list (car n)))
- 		;; optimize recursively
-		(set-car! n (j2s-letopt! (car n)))
-		;; keep optimizing the current let block
-		(mark-used-noopt*! (car n) decls)
-		;; keep the non-marked decls
-		(loop (cdr n) (filter decl-maybe-opt? decls)))
-	       ((null? decls)
-		(trace-item "---.3 " (j2s->list (car n)))
-		;; nothing more to be potentially optimzed
-		(map! j2s-letopt! n)
-		(trace-item "<<<.3 " (j2s->list (car n)))
-		this)
-	       ((eq? n nodes)
-		(trace-item "---.4 " (j2s->list (car n)))
-		;; got an initialization block, which can be optimized
-		(let ((res (tail-let! this this)))
-		   (trace-item "<<<.4a " (j2s->list res))
-		   res))
-	       (else
-		(trace-item "---.5 " (j2s->list (car n)))
-		;; re-organize the let-block to place this inits
-		;; at the head of a fresh let
-		(let ((res (tail-let! this (head-let! this n))))
-		   (trace-item "<<<.5 " (j2s->list res))
-		   res)))))))
+	 (if (every (lambda (d)
+		       (with-access::J2SDecl d (binder)
+			  (not (eq? binder 'let-opt))) )
+		decls)
+	     ;; try to move before the letblock statements not using any
+	     ;; of the introduced variable
+	     (split-letblock! this)
+	     ;; at least one binding is already optimized, splitting is
+	     ;; not possible as it would break the evaluation order
+	     (optimize-letblock! this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-let! ...                                                    */
@@ -735,9 +781,9 @@
 ;*    mark-used-noopt*! ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (mark-used-noopt*! node decls)
-   (with-trace 'j2s-letopt "make-used-noopt*"
+   (with-trace 'j2s-letopt "mark-used-noopt*"
       (trace-item "node=" (j2s->list node))
-      (trace-item "noused*=" (map j2s->list (node-used* node decls #t)))
+      (trace-item "no-used*=" (map j2s->list (node-used* node decls #t)))
       (for-each (lambda (d)
 		   (when (eq? (decl-maybe-opt? d) #unspecified)
 		      (mark-decl-noopt! d)))

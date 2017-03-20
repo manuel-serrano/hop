@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Mar  8 08:39:04 2017 (serrano)                */
+;*    Last change :  Sun Mar 19 08:26:01 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_range
 
+   (include "ast.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
@@ -88,9 +90,15 @@
    (lambda (x e)
       (match-case x
 	 ((?- ?min ?max)
-	  `(interval (exact->inexact ,(e min e)) (exact->inexact ,(e max e))))
-	 ((?- ?min ?max ?wstamp)
-	  `(interval (exact->inexact ,(e min e)) (exact->inexact ,(e max e))))
+	  `(let ((%min ,(e min e))
+		 (%max ,(e max e)))
+	      (if (llong? %min)
+		  (if (llong? %max)
+		      (interval
+			 (if (fixnum? %min) (fixnum->llong %min) %min)
+			 (if (fixnum? %max) (fixnum->llong %max) %max))
+		      (error "interval" "wrong interval max" %max))
+		  (error "interval" "wrong interval min" %min))))
 	 (else
 	  (error "interval" "wrong syntax" x)))))
 
@@ -106,21 +114,31 @@
 (define-struct fix stamp wstamp)
 
 ;*---------------------------------------------------------------------*/
+;*    exptllong ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (exptllong n exp::long)
+   (if (=llong n #l2)
+       (bit-lshllong #l1 exp)
+       (error "exptllong" "wrong number" n)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-range-program! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-range-program! this::J2SProgram args)
    (let* ((msize (config-get args :long-size (bigloo-config 'int-size)))
 	  (lsize (min 53 msize)))
-      (set! *maxfix* (-fl (expt 2. (fixnum->flonum (-fx lsize 1))) 1.0))
-      (set! *uint29-intv* (interval 0.0 (-fl (expt 2. 30) 1.0)))
-      (set! *index-intv* (interval 0.0 *max-index*))
-      (set! *indexof-intv* (interval -1 *max-index*))
-      (set! *length-intv* (interval 0.0 *max-length*))
+      (set! *maxfix* (-llong (exptllong 2 (-fx lsize 1)) #l1))
+      (set! *uint29-intv* (interval #l0 *max-uint29*))
+      (set! *index-intv* (interval #l0 *max-index*))
+      (set! *indexof-intv* (interval #l-1 *max-index*))
+      (set! *length-intv* (interval #l0 *max-length*))
       (set! *int30-intv* (interval *min-int30* *max-int30*))
       (set! *int32-intv* (interval *min-int32* *max-int32*))
       (set! *int53-intv* (interval *min-int53* *max-int53*))
       (set! *integer* (interval *min-integer* *max-integer*))
-      (set! *infinity-intv* (interval -inf.0 +inf.0)))
+      (set! *infinity-intv* (interval *-inf.0* *+inf.0*)))
+   (when (>=fx (config-get args :verbose 0) 4)
+      (display " " (current-error-port)))
    (with-access::J2SProgram this (decls nodes)
       (let ((fix (fix 0 0)))
 	 (let loop ((i 1))
@@ -159,16 +177,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    integer bounds                                                   */
 ;*---------------------------------------------------------------------*/
-(define *max-length* (-fl (exptfl 2. 32.) 1.))
-(define *max-index* (-fl *max-length* 1.))
-(define *max-int30* (-fl (exptfl 2. 29.) 1.))
-(define *min-int30* (negfl (exptfl 2. 29.)))
-(define *max-int32* (-fl (exptfl 2. 31.) 1.))
-(define *min-int32* (negfl (exptfl 2. 21.)))
-(define *max-int53* (exptfl 2. 53.))
-(define *min-int53* (negfl (exptfl 2. 53.)))
-(define *max-integer* (exptfl 2. 53.))
-(define *min-integer* (negfl (exptfl 2. 53.)))
+(define *max-length* (-llong (exptllong #l2 32) #l1))
+(define *max-index* (-llong *max-length* #l1))
+(define *max-uint29* (-llong (exptllong #l2 29) #l1))
+(define *max-int30* (-llong (exptllong #l2 29) #l1))
+(define *min-int30* (negllong (exptllong #l2 29)))
+(define *max-int32* (-llong (exptllong #l2 31) #l1))
+(define *min-int32* (negllong (exptllong #l2 31)))
+(define *max-int53* (exptllong #l2 53))
+(define *min-int53* (negllong (exptllong #l2 53)))
+(define *max-integer* (exptllong #l2 53))
+(define *min-integer* (negllong (exptllong #l2 53)))
 (define *maxfix* +nan.0)
 
 (define *uint29-intv* #f)
@@ -180,6 +199,9 @@
 (define *int53-intv* #f)
 (define *integer* #f)
 (define *infinity-intv* #f)
+
+(define *+inf.0* (exptllong #l2 54))
+(define *-inf.0* (negllong (exptllong #l2 54)))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-method-range ...                                          */
@@ -377,35 +399,35 @@
 ;*---------------------------------------------------------------------*/
 ;*    interval-neq-test ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-macro (interval-neq-test)
-   (when (>= (bigloo-debug) 0)
-      `(let ((L (interval 10 20)))
-	  ;; case 1
-	  [assert () (interval-equal? (interval-neq L (interval 0 0)) L)]
-	  [assert () (interval-equal? (interval-neq L (interval 0 1)) L)]
-	  ;; case 2
-	  [assert () (interval-equal? (interval-neq L (interval 0 10)) (interval 11 20))]
-	  [assert () (interval-equal? (interval-neq L (interval 0 11)) (interval 12 20))]
-	  [assert () (interval-equal? (interval-neq L (interval 10 11)) (interval 12 20))]
-	  [assert () (interval-equal? (interval-neq L (interval 10 12)) (interval 13 20))]
-	  [assert () (interval-equal? (interval-neq L (interval 10 10)) (interval 11 20))]
-	  ;; case 3
-	  [assert () (interval-equal? (interval-neq L (interval 15 15)) L)]
-	  [assert () (interval-equal? (interval-neq L (interval 15 16)) L)]
-	  ;; case 4
-	  [assert () (interval-equal? (interval-neq L (interval 15 20)) (interval 10 14))] 
-	  [assert () (interval-equal? (interval-neq L (interval 20 30)) (interval 10 19))] 
-	  [assert () (interval-equal? (interval-neq L (interval 15 22)) (interval 10 14))] 
-	  [assert () (interval-equal? (interval-neq L (interval 20 25)) (interval 10 19))]
-	  ;; case 5
-	  [assert () (interval-equal? (interval-neq L (interval 21 22)) L)]
-	  ;; case 6
-	  [assert () (interval-equal? (interval-neq L L) (interval 0 0))] 
-	  [assert () (interval-equal? (interval-neq L (interval 8 22)) (interval 0 0))]
-	  #t)))
-
-(interval-neq-test)
-
+;* (define-macro (interval-neq-test)                                   */
+;*    (when (>= (bigloo-debug) 0)                                      */
+;*       `(let ((L (interval 10 20)))                                  */
+;* 	  ;; case 1                                                    */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 0 0)) L)] */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 0 1)) L)] */
+;* 	  ;; case 2                                                    */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 0 10)) (interval 11 20))] */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 0 11)) (interval 12 20))] */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 10 11)) (interval 12 20))] */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 10 12)) (interval 13 20))] */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 10 10)) (interval 11 20))] */
+;* 	  ;; case 3                                                    */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 15 15)) L)] */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 15 16)) L)] */
+;* 	  ;; case 4                                                    */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 15 20)) (interval 10 14))]  */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 20 30)) (interval 10 19))]  */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 15 22)) (interval 10 14))]  */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 20 25)) (interval 10 19))] */
+;* 	  ;; case 5                                                    */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 21 22)) L)] */
+;* 	  ;; case 6                                                    */
+;* 	  [assert () (interval-equal? (interval-neq L L) (interval 0 0))]  */
+;* 	  [assert () (interval-equal? (interval-neq L (interval 8 22)) (interval 0 0))] */
+;* 	  #t)))                                                        */
+;*                                                                     */
+;* (interval-neq-test)                                                 */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    interval-binary ...                                              */
 ;*---------------------------------------------------------------------*/
@@ -430,23 +452,23 @@
       (cond
 	 ((> la oa)
 	  (cond
-	     ((>= oi 2)
-	      (let ((min 2))
+	     ((>= oi #l2)
+	      (let ((min #l2))
 		 (interval min (max oa min))))
-	     ((>= oi 1)
-	      (let ((min 1))
+	     ((>= oi #l1)
+	      (let ((min #l1))
 		 (interval min (max oa min))))
-	     ((>= oi 0)
-	      (let ((min 0))
+	     ((>= oi #l0)
+	      (let ((min #l0))
 		 (interval min (max oa min))))
-	     ((> oi -1)
-	      (let ((min -1))
+	     ((> oi #l-1)
+	      (let ((min #l-1))
 		 (interval min (max oa min))))
-	     ((> oi -2)
-	      (let ((min -2))
+	     ((> oi #l-2)
+	      (let ((min #l-2))
 		 (interval min (max oa min))))
-	     ((> oi -10)
-	      (let ((min -10))
+	     ((> oi #l-10)
+	      (let ((min #l-10))
 		 (interval min (max oa min))))
 	     ((> oi (- *max-length*))
 	      (let ((min (- *max-length*)))
@@ -458,19 +480,19 @@
 	      (let ((min *min-integer*))
 		 (interval min (max oa min))))
 	     (else
-	      (interval -inf.0 oa))))
+	      (interval *-inf.0* oa))))
 	 ((< la oa)
 	  (cond
 	     ((> ra 0)
 	      (cond
-		 ((< oa 8192)
-		  (let ((max 8192))
+		 ((< oa #l8192)
+		  (let ((max #l8192))
 		     (interval (min oi max) max)))
 		 ((< oa *max-int30*)
 		  (let ((max *max-int30*))
 		     (interval (min oi max) max)))
-		 ((< oa (- *max-index* 10))
-		  (let ((max (- *max-index* 10)))
+		 ((< oa (- *max-index* #l10))
+		  (let ((max (- *max-index* #l10)))
 		     (interval (min oi max) max)))
 		 ((<= oa *max-index*)
 		  (let ((max *max-index*))
@@ -482,9 +504,9 @@
 		  (let ((max *max-integer*))
 		     (interval (min oi max) max)))
 		 (else
-		  (interval oi +inf.0))))
+		  (interval oi *+inf.0*))))
 	     (else
-	      (interval -inf.0 oa))))
+	      (interval *-inf.0* oa))))
 	 (else
 	  o))))
    
@@ -530,40 +552,82 @@
 	       (widening left right intr))))))
    
 ;*---------------------------------------------------------------------*/
+;*    interval-bitop ...                                               */
+;*---------------------------------------------------------------------*/
+(define (interval-bitop op::procedure left right)
+   
+   (define (compiler-high::long val)
+      (cond-expand
+	 ((or bit61 bit63) (bit-lsh val 32))
+	 (else val)))
+
+   (define (compiler-low::long val)
+      (cond-expand
+	 ((or bit61 bit63) (bit-rsh val 32))
+	 (else val)))
+
+   (define (bitop x y def)
+      (compiler-low
+	 (op (compiler-high x) (compiler-high y) (compiler-high def))))
+
+   (define (int32 n)
+      (cond
+	 ((<llong n *min-int32*) *min-int32*)
+	 ((>llong n *max-int32*) *max-int32*)
+	 (else n)))
+   
+   (when (and (interval? left) (interval? right))
+      (let ((u (int32
+		  (max (interval-max left)
+		     (bitop (interval-max left) (interval-max right)
+			*max-int32*))))
+	    (l (int32
+		  (min (interval-min left)
+		     (bitop (interval-min left) (interval-min right)
+			*min-int32*)))))
+	 (interval (min u l) (max u l)))))
+
+;*---------------------------------------------------------------------*/
 ;*    interval-shiftl ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (interval-shiftl left right)
    
-   (define (lsh n s)
-      (cond
-	 ((fixnum? s)
-	  (llong->flonum (bit-lshllong (flonum->llong n) (fixnum->llong s))))
-	 ((> s 0)
-	  *max-int32*)
-	 (else
-	  *min-int32*)))
+   (define (lsh n s def)
+      (if (and (llong? s)
+	       (=llong (elong->llong (llong->elong s)) s)
+	       (<llong s #l32))
+	  (elong->llong (bit-lshelong (llong->elong n) (llong->fixnum s)))
+	  def))
    
-   (when (and (interval? left) (interval? right))
-      (let ((intr (interval-binary lsh left right)))
-	 (widening left right intr))))
+   (interval-bitop lsh left right))
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-shiftr ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (interval-shiftr left right)
-   
-   (define (rsh n s)
-      (cond
-	 ((fixnum? s)
-	  (llong->flonum (bit-rshllong (flonum->llong n) (fixnum->llong s))))
-	 ((> s 0)
-	  *max-int32*)
-	 (else
-	  *min-int32*)))
 
-   (when (and (interval? left) (interval? right))
-      (let ((intr (interval-binary rsh left right)))
-	 (widening left right intr))))
+   (define (rsh n s def)
+      (if (and (llong? s)
+	       (=llong (elong->llong (llong->elong s)) s)
+	       (<llong s #l33))
+	  (elong->llong (bit-rshelong (llong->elong n) (llong->fixnum s)))
+	  def))
+   
+   (interval-bitop rsh left right))
+   
+;*---------------------------------------------------------------------*/
+;*    interval-ushiftr ...                                             */
+;*---------------------------------------------------------------------*/
+(define (interval-ushiftr left right)
+
+   (define (ursh n s def)
+      (if (and (llong? s)
+	       (=llong (elong->llong (llong->elong s)) s)
+	       (<llong s #l33))
+	  (elong->llong (bit-urshelong (llong->elong n) (llong->fixnum s)))
+	  def))
+   
+   (interval-bitop ursh left right))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-interval-set! ...                                           */
@@ -694,8 +758,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SNumber env::pair-nil fix::struct)
    (with-access::J2SNumber this (val type)
-      (if (type-number? type)
-	  (let ((intv (interval val val)))
+      (if (and (type-number? type) (fixnum? val))
+	  (let ((intv (interval (fixnum->llong val) (fixnum->llong val))))
 	     (node-interval-set! this env fix intv))
 	  (return #f env))))
 
@@ -861,46 +925,56 @@
 	     (return #f env)))))
 
 ;*---------------------------------------------------------------------*/
+;*    range-binary ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (range-binary this op lhs rhs env::pair-nil fix::struct)
+   (with-access::J2SNode this (%info %%wstamp)
+      (multiple-value-bind (intl envl)
+	 (range lhs env fix)
+	 (multiple-value-bind (intr envr)
+	    (range rhs envl fix)
+	    (if (< %%wstamp (fix-wstamp fix))
+		(begin
+		   (set! %%wstamp (fix-wstamp fix))
+		   (case op
+		      ((+)
+		       (node-interval-set! this env fix
+			  (interval-add intl intr)))
+		      ((-)
+		       (node-interval-set! this env fix
+			  (interval-sub intl intr)))
+		      ((*)
+		       (node-interval-set! this env fix
+			  (interval-mul intl intr)))
+		      ((/)
+		       (node-interval-set! this env fix
+			  (interval-div intl intr)))
+		      ((%)
+		       (node-interval-set! this env fix
+			  intl))
+		      ((<<)
+		       (node-interval-set! this env fix
+			  (interval-shiftl intl intr)))
+		      ((>>)
+		       (node-interval-set! this env fix
+			  (interval-shiftr intl intr)))
+		      ((>>>)
+		       (node-interval-set! this env fix
+			  (interval-ushiftr intl intr)))
+		      ((^ & BIT_OR)
+		       (node-interval-set! this env fix
+			  *int32-intv*))
+		      (else
+		       (return *infinity-intv* env))))
+		(return %info env))))))
+
+;*---------------------------------------------------------------------*/
 ;*    range ::J2SBinary ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SBinary env::pair-nil fix::struct)
    (with-access::J2SBinary this (op lhs rhs type %info %%wstamp)
       (if (type-number? type)
-	  (multiple-value-bind (intl envl)
-	     (range lhs env fix)
-	     (multiple-value-bind (intr envr)
-		(range rhs envl fix)
-		(if (< %%wstamp (fix-wstamp fix))
-		    (begin
-		       (set! %%wstamp (fix-wstamp fix))
-		       (case op
-			  ((+)
-			   (node-interval-set! this env fix
-			      (interval-add intl intr)))
-			  ((-)
-			   (node-interval-set! this env fix
-			      (interval-sub intl intr)))
-			  ((*)
-			   (node-interval-set! this env fix
-			      (interval-mul intl intr)))
-			  ((/)
-			   (node-interval-set! this env fix
-			      (interval-div intl intr)))
-			  ((%)
-			   (node-interval-set! this env fix
-			      intl))
-			  ((<<)
-			   (node-interval-set! this env fix
-			      (interval-shiftl intl intr)))
-			  ((>>)
-			   (node-interval-set! this env fix
-			      (interval-shiftr intl intr)))
-			  ((^ & >>>)
-			   (node-interval-set! this env fix
-			      *int32-intv*))
-			  (else
-			   (return *infinity-intv* env))))
-		    %info)))
+	  (range-binary this op lhs rhs env fix)
 	  (begin
 	     (call-default-walker)
 	     (return #f env)))))
@@ -926,6 +1000,27 @@
 		 (multiple-value-bind (intv nenv)
 		    (range rhs env fix)
 		    (node-interval-set! this nenv fix intv)))))
+	  (begin
+	     (call-default-walker)
+	     (return #f env)))))
+
+;*---------------------------------------------------------------------*/
+;*    range ::J2SAssigOp ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (range this::J2SAssigOp env::pair-nil fix::struct)
+   (with-access::J2SAssigOp this (op lhs rhs type)
+      (if (type-number? type)
+	  (multiple-value-bind (intv nenv)
+	     (range-binary this op lhs rhs env fix)
+	     (cond
+		((isa? lhs J2SRef)
+		 ;; a variable assignment
+		 (with-access::J2SRef lhs (decl)
+		    (let ((nenv (extend-env env decl intv)))
+		       (node-interval-set! this nenv fix intv))))
+		(else
+		 ;; a non variable assinment
+		 (node-interval-set! this nenv fix intv))))
 	  (begin
 	     (call-default-walker)
 	     (return #f env)))))
@@ -1043,7 +1138,7 @@
       (if (type-number? type)
 	  (with-access::J2SExpr obj (type)
 	     (if (and (memq type '(string array)) (j2s-field-length? field))
-		 (node-interval-set! this env fix (interval 0.0 *max-length*))
+		 (node-interval-set! this env fix (interval #l0 *max-length*))
 		 (return #f env)))
 	  (begin
 	     (call-default-walker)
@@ -1224,6 +1319,7 @@
       ((interval-in? intv *int30-intv*) 'int30)
       ((interval-in? intv *index-intv*) 'index)
       ((interval-in? intv *length-intv*) 'length)
+      ((interval-in? intv *int32-intv*) 'int32)
       ((interval-in? intv *int53-intv*) 'int53)
       ((interval-in? intv *integer*) 'integer)
       (else 'number)))
@@ -1252,6 +1348,16 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    type-range! ::J2SParen ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-range! this::J2SParen)
+   (call-default-walker)
+   (with-access::J2SParen this (expr type)
+      (with-access::J2SExpr expr ((etype type))
+	 (set! type etype)))
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SRef ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SRef)
@@ -1266,36 +1372,46 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-range-opt-program! this::J2SProgram args)
    (with-access::J2SProgram this (decls nodes)
-      (for-each (lambda (n) (opt-range! n)) decls)
-      (for-each (lambda (n) (opt-range! n)) nodes)
+      (for-each (lambda (n) (opt-range! n args)) decls)
+      (for-each (lambda (n) (opt-range! n args)) nodes)
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    opt-range! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (opt-range! this::J2SNode)
+(define-walk-method (opt-range! this::J2SNode args)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    opt-range! ::J2SBinary ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (opt-range! this::J2SBinary)
+(define-walk-method (opt-range! this::J2SBinary args)
 
-   (define (integer? e::J2SExpr)
+   (define (fixnum? e::J2SExpr)
       (with-access::J2SExpr e (type)
 	 (type-fixnum? type)))
       
-   (define (positive-integer? e::J2SExpr)
-      (when (integer? e)
+   (define (int53? e::J2SExpr)
+      (with-access::J2SExpr e (type)
+	 (type-int53? type)))
+      
+   (define (positive-fixnum? e::J2SExpr)
+      (when (fixnum? e)
 	 (with-access::J2SExpr e (%info)
 	    (and (interval? %info) (> (interval-min %info) 0)))))
    
+   (define (m64? conf)
+      (=fx (config-get conf :long-size 0) 64))
+
    (with-access::J2SBinary this (op lhs rhs)
       (case op
 	 ((%)
-	  (when (and (integer? lhs) (positive-integer? rhs))
-	     (set! op 'remainderfx)))))
+	  (cond
+	     ((and (fixnum? lhs) (positive-fixnum? rhs))
+	      (set! op 'remainderfx))
+	     ((and (int53? lhs) (positive-fixnum? rhs))
+	      (if (m64? args)
+		  (set! op 'remainderfx)
+		  (set! op 'remainder)))))))
+   
    (call-default-walker))
-	  
-
-

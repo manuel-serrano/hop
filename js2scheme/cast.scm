@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Feb 28 09:41:22 2017 (serrano)                */
+;*    Last change :  Sat Mar 18 07:32:45 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -79,15 +79,14 @@
 
    (define (jstype? type)
       (memq type '(null integer object function array string undefined
-		   fixnum ufixnum number int53)))
+		   fixnum ufixnum number uint29 int29 int53)))
    
    (cond
       ((eq? type totype) #f)
       ((eq? totype 'unknown) (memq type '(index uint32 uint29 length)))
       ((and (eq? totype 'any) (jstype? type)) #f)
       ((and (any? type) (any? totype)) #f)
-      ((and (eq? type 'int30) (eq? totype 'integer)) #f)
-      ((and (eq? type 'int53) (eq? totype 'integer)) #f)
+      ((and (memq type '(int29 uint29 int30 int53)) (memq totype '(integer number))) #f)
       ((and (eq? type 'any) (eq? totype 'void)) #f)
       (else #t)))
 

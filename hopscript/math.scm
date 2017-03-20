@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Feb 14 21:28:18 2017 (serrano)                */
+;*    Last change :  Tue Mar 14 07:19:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -49,6 +49,7 @@
       ;; create the math object
       (set! js-math
 	 (instantiate::JsMath
+	    (cmap (instantiate::JsConstructMap))
 	    (__proto__ __proto__)))
       ;; other properties
       (js-bind! %this js-math 'E
