@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Thu Mar  9 09:19:33 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 10:25:31 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -76,7 +76,12 @@
 	       ;; this modify nodes in place
 	       (set! nodes
 		  (map! j2s-update-ref!
-		     (j2s-toplevel-letopt! nodes (reverse! lets) vars)))))))
+		     (j2s-toplevel-letopt! nodes (reverse! lets) vars)))))
+	 ;; optimze global variables literals
+	 (when (config-get args :optim-literals #f)
+	    (when (>= (config-get args :verbose 0) 4)
+	       (fprintf (current-error-port) " [optim-literal]"))
+	    (j2s-letopt-global-literals! decls nodes))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -119,8 +124,8 @@
 ;*    As GET-LET-INITS but returns #f if no init found (easier with    */
 ;*    COND forms).						       */
 ;*---------------------------------------------------------------------*/
-(define (get-inits::obj node::J2SNode)
-   (let ((inits (get-let-inits node '())))
+(define (get-inits::obj node::J2SNode decls::pair-nil)
+   (let ((inits (get-let-inits node decls)))
       (when (pair? inits)
 	 inits)))
 
@@ -504,8 +509,12 @@
 ;*---------------------------------------------------------------------*/
 (define (decl-update-init! decl::J2SDecl i)
    (with-access::J2SDecl decl (%info)
-      (with-access::DeclInfo %info (init)
-	 (set! init i))))
+      (if (isa? %info DeclInfo)
+	  (with-access::DeclInfo %info (init)
+	     (set! init i))
+	  (set! %info
+	     (instantiate::DeclInfo
+		(init i))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    new-let-opt ...                                                  */
@@ -592,7 +601,7 @@
 	  (reverse! res))
 	 ((null? decls)
 	  (append (reverse! res) n))
-	 ((get-inits (car n))
+	 ((get-inits (car n) decls)
 	  =>
 	  (lambda (inits)
 	     ;; a letinit node
@@ -789,3 +798,92 @@
 		      (mark-decl-noopt! d)))
 	 (node-used* node decls #t))))
    
+;*---------------------------------------------------------------------*/
+;*    j2s-letopt-global-literals! ...                                  */
+;*    -------------------------------------------------------------    */
+;*    Scan te nodes, skip the nop statements. Mark global constant     */
+;*    initializations as let-opt vars. Stop when the first non-let var */
+;*    is found.                                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-letopt-global-literals! decls nodes)
+   
+   (define (nop? node)
+      (or (isa? node J2SNop)
+	  (when (isa? node J2SStmtExpr)
+	     (with-access::J2SStmtExpr node (expr)
+		(isa? expr J2SLiteral)))
+	  (when (isa? node J2SSeq)
+	     (with-access::J2SSeq node (nodes)
+		(every nop? nodes)))))
+   
+   (define (init node)
+      (cond
+	 ((isa? node J2SSeq)
+	  (with-access::J2SSeq node (nodes)
+	     (when (and (pair? nodes) (null? (cdr nodes)))
+		(init (car nodes)))))
+	 ((isa? node J2SStmtExpr)
+	  (with-access::J2SStmtExpr node (expr)
+	     (when (isa? expr J2SInit)
+		expr)))))
+   
+   (define (literal? node)
+      (cond
+	 ((isa? node J2SLiteral)
+	  (or (not (isa? node J2SArray))
+	      (with-access::J2SArray node (exprs)
+		 (every literal? exprs))))
+	 ((isa? node J2SUnary)
+	  (with-access::J2SUnary node (op expr)
+	     (literal? expr)))))
+   
+   (define (letopt-literals literals)
+      (when (pair? literals)
+	 (for-each (lambda (literal)
+		      (with-access::J2SDecl (car literal) (%info loc)
+			 (let ((odecl (new-let-opt (car literal) (cdr literal))))
+			    (with-access::J2SDeclInit odecl (scope)
+			       (set! scope '%scope))
+			    (set! %info
+			       (instantiate::DeclInfo
+				  (optdecl odecl))))))
+	    literals)
+	 ;; modify the declaration lists
+	 (map! (lambda (decl)
+		  (with-access::J2SDecl decl (binder scope %info)
+		     (if (and (eq? binder 'var) (eq? scope '%scope)
+			      (isa? %info DeclInfo))
+			 (with-access::DeclInfo %info (optdecl)
+			    optdecl)
+			 decl)))
+	    decls)
+	 ;; change the references in the program nodes
+	 (for-each j2s-update-ref! decls)
+	 (for-each j2s-update-ref! nodes)))
+   
+   (let loop ((n nodes)
+	      (literals '()))
+      (cond
+	 ((null? n)
+	  (letopt-literals literals))
+	 ((nop? (car n))
+	  (loop (cdr n) literals))
+	 ((init (car n))
+	  =>
+	  (lambda (expr)
+	     (with-access::J2SInit expr (lhs rhs)
+		(if (isa? lhs J2SRef)
+		    (with-access::J2SRef lhs (decl)
+		       (with-access::J2SDecl decl (binder scope %info)
+			  (if (and (eq? binder 'var) (eq? scope '%scope))
+			      (if (literal? rhs)
+				  (loop (cdr n)
+				     (cons (cons decl expr) literals))
+				  (letopt-literals literals))
+			      (letopt-literals literals))))
+		    (letopt-literals literals)))))
+	 (else
+	  (letopt-literals literals)))))
+
+
+		   

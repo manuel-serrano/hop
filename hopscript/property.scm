@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar 17 17:31:34 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 13:34:08 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -131,13 +131,15 @@
 	   (js-object-call/cache-miss ::JsGlobalObject ::JsObject ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::pair-nil)
 	   (js-call/cache ::JsGlobalObject obj ::JsPropertyCache this . args)
+	   (js-call-name/cache ::JsGlobalObject ::JsObject ::obj
+	      ::JsPropertyCache ::JsPropertyCache . args)
 
 	   (inline js-vindex-max::long)
 	   (js-get-vindex::long ::JsGlobalObject)
-	   (js-vtable-add!::procedure ::JsConstructMap ::long ::obj)
+	   (js-vtable-add!::obj ::JsConstructMap ::long ::obj)
 
 	   (log-cache-miss!)
-	   (add-cache-miss! ::symbol ::symbol)
+	   (add-cache-miss! ::symbol ::obj)
 	   (show-cache-misses)))
 
 ;*---------------------------------------------------------------------*/
@@ -390,7 +392,6 @@
 ;*---------------------------------------------------------------------*/
 (define (link-cmap! omap::JsConstructMap nmap::JsConstructMap name value flags::int)
    (with-access::JsConstructMap omap (transition nextmap)
-      [assert (omap nmap) (= (+ 1 (cmap-size omap)) (cmap-size nmap))]
       ;; save the old transition
       (save-cmap-transition! omap)
       (set! transition (cmap-transition name value flags))
@@ -2403,29 +2404,6 @@
 		       (apply (vector-ref vtable vindex) obj args)
 		       (js-object-call/cache-miss %this obj name ccache ocache args))))))))
 
-(define (js-object-call-name/cache-old %this::JsGlobalObject obj::JsObject name::obj
-	   ccache::JsPropertyCache ocache::JsPropertyCache . args)
-   (with-access::JsObject obj ((omap cmap) __proto__)
-      (with-access::JsPropertyCache ccache (cmap pmap method)
-	 (cond
-	    ((eq? pmap omap)
-	     ;; in cache
-	     (apply method obj args))
-	    ((eq? cmap #t)
-	     ;; the call is not be cached because of arity missmatch
-	     ;; or because of property call
-	     ;; use the normal method invocation
-	     (let ((m (js-object-get-name/cache obj name ocache %this)))
-		(apply js-calln %this m obj args)))
-	    ((eq? cmap #unspecified)
-	     ;; a cache miss
-	     (js-object-call/cache-fill %this obj name ccache ocache args))
-	    (else
-	     ;; a polymorph call
-	     (let ((m (js-object-get-name/cache obj name ocache %this)))
-		(set! cmap #t)
-		(apply js-calln %this m obj args)))))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-object-call/cache-fill ...                                    */
 ;*    -------------------------------------------------------------    */
@@ -2479,6 +2457,7 @@
    (define (procedureN procedure largs)
       (if (=fx (procedure-arity procedure) 1)
 	  (case largs
+	     ((0) (lambda (this) (procedure this)))
 	     ((1) (lambda (this a0) (procedure this)))
 	     ((2) (lambda (this a0 a1) (procedure this)))
 	     ((3) (lambda (this a0 a1 a2) (procedure this)))
@@ -2568,7 +2547,7 @@
 (define (js-object-call/cache-miss %this::JsGlobalObject o::JsObject name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache args::pair-nil)
    (with-access::JsPropertyCache ccache (pmap vtable vindex method)
-      (when (procedure? method)
+      (when (and (procedure? method) (isa? pmap JsConstructMap))
 	 (when (=fx vindex (js-vindex-max))
 	    (set! vindex (js-get-vindex %this)))
 	 (js-vtable-add! pmap vindex method))

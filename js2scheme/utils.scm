@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Mar 19 06:37:39 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 13:12:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -24,6 +24,7 @@
 	   (config-put! ::pair-nil ::keyword ::obj)
 	   (this?::bool ::J2SNode)
 	   
+	   (type-int32?::bool ::symbol)
 	   (type-uint32?::bool ::symbol)
 	   (type-int30?::bool ::symbol)
 	   (type-int53?::bool ::symbol)
@@ -113,6 +114,12 @@
    (memq type '(index uint32 length)))
 
 ;*---------------------------------------------------------------------*/
+;*    type-int32? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (type-int32? type)
+   (memq type '(uint29 int30 int32)))
+
+;*---------------------------------------------------------------------*/
 ;*    type-int30? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (type-int30? type)
@@ -166,6 +173,8 @@
       ((date) 'JsDate)
       ((string) 'obj)
       ((null) 'nil)
+      ((String) 'JsString)
+      ((Promise) 'JsPromise)
       (else type)))
    
 ;*---------------------------------------------------------------------*/

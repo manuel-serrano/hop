@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Fri Mar 17 18:06:24 2017 (serrano)                */
+;*    Last change :  Mon Mar 20 19:13:51 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors sizes                       */
@@ -132,7 +132,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constrinit! this::J2SDeclInit prog)
    (with-access::J2SDeclInit this (id usage val)
-      (when (or #t (memq 'new usage))
+      (when (and (isa? val J2SFun) (or #t (memq 'new usage)))
 	 (constrinit-ctor! val prog)))
    this)
 
@@ -141,7 +141,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constrinit! this::J2SDeclFun prog)
    (with-access::J2SDeclFun this (id usage val)
-      (when (or #t (memq 'new usage))
+      (when (and (isa? val J2SFun) (or #t (memq 'new usage)))
 	 (constrinit-ctor! val prog)))
    this)
 

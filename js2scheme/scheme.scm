@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Mar 19 17:42:16 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 13:12:34 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -49,6 +49,7 @@
    (map (lambda (e)
 	   (apply inline-method e))
       '(;; string methods
+	("fromCharCode" js-jsstring-fromcharcode String (any) %this)
 	("charAt" js-jsstring-charat string (any) %this)
 	("charAt" js-jsstring-maybe-charat any (any) %this)
 	("charCodeAt" js-jsstring-charcodeat string (any) %this)
@@ -663,7 +664,7 @@
    
    (define (j2s-scheme-let-opt this)
       (with-access::J2SDeclInit this (scope id)
-	 (if (memq scope '(global))
+	 (if (memq scope '(global %scope))
 	     (j2s-let-decl-toplevel this mode return conf)
 	     (error "js-scheme" "Should not be here (not global)"
 		(j2s->list this)))))
@@ -2321,11 +2322,11 @@
 	  (bit-and val 31)
 	  `(bit-and ,val 31)))
    
-   (define (return expr)
+   (define (retnum expr)
       (if (type-fixnum? type)
 	  `(int32->fixnum ,expr)
 	  `(int32->integer ,expr)))
-   
+
    (let ((tl (j2s-type lhs))
 	 (tr (j2s-type rhs)))
       (cond
@@ -2335,12 +2336,12 @@
 	     ((<< >> >>>)
 	      (binop lhs rhs mode return conf hint type
 		 (lambda (left right)
-		    (return
+		    (retnum
 		       `(,(fxop op) ,(fx->int32 left) ,(bit-andfx right 31))))))
 	     (else
 	      (binop lhs rhs mode return conf hint type
 		 (lambda (left right)
-		    (return 
+		    (retnum
 		       `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right))))))))
 	 ((or (type-fixnum? tr) (eq? tr 'int32))
 	  (case op
@@ -2348,21 +2349,21 @@
 	      (binop lhs rhs mode return conf hint type
 		 (lambda (left right)
 		    `(if (fixnum? ,left)
-			 ,(return
+			 ,(retnum
 			     `(,(fxop op) ,(fx->int32 left) ,(bit-andfx right 31)))
 			 ,(js-binop loc op left right)))))
 	     (else
 	      (binop lhs rhs mode return conf hint type
 		 (lambda (left right)
 		    `(if (fixnum? ,left)
-			 ,(return 
+			 ,(retnum
 			     `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right)))
 			 ,(js-binop loc op left right)))))))
 	 ((memq op '(BIT_OR &))
 	  (binop lhs rhs mode return conf hint 'any
 	     (lambda (left right)
 		`(if (and (fixnum? ,left) (fixnum? ,right))
-		     ,(return
+		     ,(retnum
 			`(,(fxop op) ,(fx->int32 left) ,(fx->int32 right)))
 		     ,(js-binop loc op left right)))))
 	 (else
@@ -4336,7 +4337,21 @@
 	      `(js-array-ref ,obj ,prop %this)
 	      `(js-get ,obj ,prop %this)))
 	 ((eq? tyobj 'string)
-	  `(js-get-string ,obj ,prop %this))
+	  (cond
+	     ((type-int32? typrop)
+	      (if (or (symbol? prop) (number? prop))
+		  `(if (>=fx ,prop 0)
+		       (js-jsstring-ref ,obj (fixnum->uint32 ,prop))
+		       (js-undefined))
+		  (let ((tmp (gensym '%tmp)))
+		     `(let ((,tmp ,prop))
+			 (if (>=fx ,tmp 0)
+			     (js-jsstring-ref ,obj (fixnum->uint32 ,tmp))
+			     (js-undefined))))))
+	     ((type-uint32? typrop)
+	      `(js-jsstring-ref ,obj ,prop))
+	     (else
+	      `(js-get-string ,obj ,prop %this))))
 	 (cache
 	  (cond
 	     ((string? prop)
