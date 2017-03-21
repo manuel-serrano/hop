@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Jun 14 18:28:54 2016 (serrano)                */
+#*    Last change :  Tue Mar 21 15:30:04 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -85,6 +85,9 @@ build: $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
+
+heap-c: .afile
+lib-c: .afile
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

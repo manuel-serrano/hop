@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Mar  1 16:43:37 2017 (serrano)                */
+#*    Last change :  Tue Mar 21 15:31:48 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -76,6 +76,9 @@ build: $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
+
+heap-c: .afile
+lib-c: .afile
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */

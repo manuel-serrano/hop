@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Jun  3 17:24:59 2016 (serrano)                */
+#*    Last change :  Tue Mar 21 15:32:16 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -76,6 +76,9 @@ build: .afile
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
+
+heap-c: .afile
+lib-c: .afile
 
 #*---------------------------------------------------------------------*/
 #*    uv.sch ...                                                       */
