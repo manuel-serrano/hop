@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Wed Mar  8 14:57:06 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 14:58:45 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -24,7 +24,9 @@
 	    (hopc-bigloo-options::pair-nil)
 	    (hopc-bigloo-options-set! ::pair-nil)
 	    (hopc-bigloo-O-options::pair-nil)
-
+	    (hopc-bigloo-safe-option::obj)
+	    (hopc-bigloo-safe-option-set! ::obj)
+	    
 	    (hopc-pass::symbol)
 	    (hopc-pass-set! ::symbol)
 
@@ -138,7 +140,13 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-O-options
    '((1 . ("-unsafe")) (2 . ("-freturn" "-fisa")) (6 . ("-freturn-goto"))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    hopc-bigloo-safe-option ...                                      */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-bigloo-safe-option
+   #unspecified)
+
 ;*---------------------------------------------------------------------*/
 ;*    hopc-pass ...                                                    */
 ;*---------------------------------------------------------------------*/

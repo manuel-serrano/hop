@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar 21 09:08:10 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 15:00:30 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -122,6 +122,10 @@
 	     (hopc-js-module-main-set! #f)
 	     (hopc-pass-set! 'so))
 	    (section "Configuration and devkit")
+	    (("--safe" (help "Compile and link in safe mode"))
+	     (hopc-bigloo-safe-option-set! "-safe"))
+	    (("--unsafe" (help "Compile and link in safe mode"))
+	     (hopc-bigloo-safe-option-set! "-unsafe"))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
 	     (hopc-bigloo-set! bigloo))
 	    (("--reset-bigloo-options" (help "Reset all Bigloo options"))
