@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Mar 17 09:40:17 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 09:05:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -312,7 +312,9 @@
 		     (l (config-get args :optim 0)))
 		  (when (>=fx l 900)
 		     (unless (memq :optim-hint o)
-			(set! o (cons* :optim-hint #t o))))
+			(set! o (cons* :optim-hint #t o)))
+		     (unless (memq :optim-literals o)
+			(set! o (cons* :optim-literals #t o))))
 		  (when (>=fx l 4)
 		     (unless (memq :optim-cast o)
 			(set! o (cons* :optim-cast #t o)))

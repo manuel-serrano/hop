@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Mar 18 09:45:08 2017 (serrano)                */
+;*    Last change :  Mon Mar 20 18:27:39 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -45,7 +45,7 @@
 	   (js-new3 ::JsGlobalObject f a0 a1 a2)
 	   (js-new4 ::JsGlobalObject f a0 a1 a2 a3)
 
-	   (js-new-return::JsObject ::JsFunction ::obj ::JsObject)
+	   (js-new-return::JsObject ::JsFunction ::obj ::obj)
 	   (inline js-new-return-fast::JsObject ::JsFunction ::JsObject)
 	   
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
@@ -207,6 +207,7 @@
 ;*    js-new-return ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-new-return f r o)
+   [assert (r o) (or (isa? r JsObject) (isa? o JsObject))]
    (with-access::JsFunction f (constrsize)
       (if (isa? r JsObject)
 	  (with-access::JsObject r (elements)

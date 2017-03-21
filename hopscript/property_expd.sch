@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Mar 17 17:37:44 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 09:23:55 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -297,7 +297,7 @@
 	       (js-object-put-name/cache! ,o ,prop ,v ,throw ,cache ,%this)
 	       (js-put! ,o ,prop ,v ,throw ,%this))
 	  e))
-      ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-)) ?v ?throw ?cache (and (? symbol?) ?%this))
+      ((?- ?o (and ?prop ((kwote quote) ?-)) ?v ?throw ?cache (and (? symbol?) ?%this))
        (let ((tmp (gensym 'tmp)))
 	  (e `(let ((,tmp ,v))
 		 (if (isa? ,o JsObject)
@@ -369,7 +369,7 @@
 			    `(js-pcache-owner ,cache)
 			    `(js-pcache-vindex ,cache))))
 		 e)))
-	  ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-)) ?v ?throw
+	  ((?- ?o (and ?prop ((kwote quote) ?-)) ?v ?throw
 	      ?cache (and (? symbol?) ?%this))
 	   (let ((tmp (gensym 'tmp)))
 	      (e `(with-access::JsObject ,o ((omap cmap) elements)
@@ -439,21 +439,23 @@
 ;*    js-call-name/cache-expander ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-call-name/cache-expander x e)
-   (match-case x
-      ((?- ?%this (and (? symbol?) ?obj) ?prop ?ccache ?ocache . ?args)
-       (e `(if (isa? ,obj JsObject)
-	       (js-object-call-name/cache ,%this ,obj ,prop ,ccache ,ocache ,@args)
-	       (js-raise-type-error %this "call: not a function ~s" ,obj))
-	  e))
-      ((?- ?%this ?obj ?prop ?ccache ?ocache . ?args)
-       (let ((o (gensym '%obj)))
- 	  (e `(let ((,o ,obj))
-		 (if (isa? ,o JsObject)
-		     (js-object-call-name/cache ,%this ,o ,prop ,ccache ,ocache ,@args)
-		     (js-raise-type-error %this "call: not a function ~s" ,o)))
-	     e)))
-      (else
-       (error "js-object-call-name/cache" "wrong form" x))))
+   (if (>= (bigloo-compiler-debug) 1)
+       (map (lambda (x) (e x e)) x)
+       (match-case x
+	  ((?- ?%this (and (? symbol?) ?obj) ?prop ?ccache ?ocache . ?args)
+	   (e `(if (isa? ,obj JsObject)
+		   (js-object-call-name/cache ,%this ,obj ,prop ,ccache ,ocache ,@args)
+		   (js-raise-type-error %this "call: not a function ~s" ,obj))
+	      e))
+	  ((?- ?%this ?obj ?prop ?ccache ?ocache . ?args)
+	   (let ((o (gensym '%obj)))
+	      (e `(let ((,o ,obj))
+		     (if (isa? ,o JsObject)
+			 (js-object-call-name/cache ,%this ,o ,prop ,ccache ,ocache ,@args)
+			 (js-raise-type-error %this "call: not a function ~s" ,o)))
+		 e)))
+	  (else
+	   (error "js-object-call-name/cache" "wrong form" x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-call-name/cache-expander ...                           */

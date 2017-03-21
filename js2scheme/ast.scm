@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Mar 17 08:43:19 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 13:11:36 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1141,7 +1141,10 @@
 	    ((Date) 'date)
 	    ((RegExp) 'regexp)
 	    ((Object) 'object)
-	    ((Function) 'function)))))
+	    ((Function) 'function)
+	    ((String) 'String)
+	    ((Promise) 'Promise)
+	    (else 'unknown)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-expr-type-test ...                                           */
@@ -1254,6 +1257,4 @@
 		 #f))))
       (else
        #f)))
-
-
 

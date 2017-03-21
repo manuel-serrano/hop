@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Dec 22 09:19:24 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Mar 21 08:05:01 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -588,7 +588,7 @@
 ;*    resolve! ::J2SDeclInit ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SDeclInit env mode withs wenv lang)
-   (with-access::J2SDeclInit this (loc id val binder)
+   (with-access::J2SDeclInit this (loc id val)
       (let ((ndecl::J2SDecl (find-decl id env)))
 	 ;; strict mode restrictions
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1

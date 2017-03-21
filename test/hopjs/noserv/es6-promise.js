@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Aug 19 11:16:33 2015                          */
-/*    Last change :  Thu Nov 24 11:32:46 2016 (serrano)                */
-/*    Copyright   :  2015-16 Manuel Serrano                            */
+/*    Last change :  Tue Mar 21 13:34:46 2017 (serrano)                */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 promises.                                            */
 /*=====================================================================*/
@@ -17,7 +17,13 @@ var expected = 0;
 assert.check = function( val, name ) {
    expected++;
    console.log( ">>> ", name );
-   assert.ok( val, name );
+   try {
+      assert.ok( val, name );
+   } catch( e ) {
+      #:exception-notify( e );
+      console.log( "e=", e );
+      throw( e );
+   }
    console.log( "<<< ", name );
    ok++;
 }
@@ -66,7 +72,7 @@ p.then( function( o ) {
       setTimeout( resolve, 10, o * 3 );
    } )
 } ).then( function( o2 ) {
-   assert.check( o2,12 );
+   assert.check( o2, 12 );
 } )
 
 /*---------------------------------------------------------------------*/
@@ -76,23 +82,23 @@ console.log( "mdn" );
 
 function mdnResolve() {
    Promise.resolve( "Success" ).then( function( value ) {
-      assert.check( value === "Success" );
+      assert.check( value === "Success", "value" );
    }, function(value) {
       assert.check( false, "resolve: not called" );
    } );
 
    var p = Promise.resolve([ 1,2,3] );
    p.then( function( v ) {
-      assert.check( v[ 0 ] === 1 )
+      assert.check( v[ 0 ] === 1, "v[ 0 ]" )
    } );
 
    var original = Promise.resolve( true );
    var cast = Promise.resolve( original );
    cast.then( function( v ) {
-      assert.check( v === true );
+      assert.check( v === true, "cast" );
    } );
 
-   assert.check( original === cast );
+   assert.check( original === cast, "orginal" );
 }
 
 function mdnResolveThen() {
@@ -101,7 +107,7 @@ function mdnResolveThen() {
       then: function( onFulfill, onReject ) { onFulfill( "fulfilled!" ); }
    } );
 
-   assert.check( p1 instanceof Promise );
+   assert.check( p1 instanceof Promise, "instanceof" );
 
    p1.then( function( v ) {
       assert.check( v === "fulfilled!", "then" );
@@ -120,7 +126,7 @@ function mdnResolveThen() {
    p2.then( function( v ) {
       assert.check( false, "not called" );
    }, function( e ) {
-      assert.check( e instanceof TypeError );
+      assert.check( e instanceof TypeError, "instanceof TypeError" );
    });
 
    // Thenable throws after callback
@@ -132,7 +138,7 @@ function mdnResolveThen() {
 
    var p3 = Promise.resolve( thenable );
    p3.then( function( v ) {
-      assert.check( v === "Resolving" );
+      assert.check( v === "Resolving", "resolving" );
    }, function( e ) {
       assert.check( false, "not called" );
    });
@@ -148,7 +154,7 @@ function mdnReject() {
    Promise.reject( new Error( "fail" ) ).then( function( error ) {
       assert.check( false, "reject: not called" );
    }, function( error ) {
-      assert.check( error instanceof Error );
+      assert.check( error instanceof Error, "instanceof Error" );
    });
 }
 
@@ -226,7 +232,7 @@ function mdnAllSuccess() {
 
    Promise.all([p1, p2, p3, p4]).then(function(value) {
       assert.check( value[ 0 ] == "one" && value[ 1 ] == "two"
-		    && value[ 2 ] == "three" && value[ 3 ] == "four" );
+		    && value[ 2 ] == "three" && value[ 3 ] == "four", "all" );
    }, function(reason) {
       assert.check( false, "all: not called" );
    });
@@ -277,7 +283,6 @@ function mdnRace() {
       assert.check( value == "three", "resolve because p3 is faster" );
       // p3 is faster, so it resolves
    }, function(reason) {
-      console.log( "GLOP=", reason );
       assert.ok( false, "all: not called" );
    });
 

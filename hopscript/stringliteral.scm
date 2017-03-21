@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Mar 19 17:19:32 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 11:31:42 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -27,8 +27,8 @@
 	   (js-stringlist->jsstring ::pair-nil)
 	   (inline js-jsstring->string::bstring ::obj)
 	   (inline js-jsstring?::bool ::obj)
-	   (js-jsstring-ref ::obj ::uint32)
 	   (js-jsstring-character-ref ::obj ::uint32)
+	   (js-jsstring-ref ::obj ::uint32)
 	   (js-jsstring-length::uint32 ::obj)
 	   (inline js-jsstring-lengthfx::long ::obj)
 	   (js-jsstring-character-length::uint32 ::obj)
@@ -83,6 +83,7 @@
 	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-trim ::obj)
 	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject)
+	   (js-jsstring-fromcharcode ::JsObject ::obj ::JsGlobalObject)
 	   ))
 
 ;*---------------------------------------------------------------------*/
@@ -716,13 +717,13 @@
 (define (js-jsstring-ref o index::uint32)
    
    (define (ascii-string-ref val fxpos)
-      (if (or (<fx fxpos 0) (>=fx fxpos (string-length val)))
+      (if (>=fx fxpos (string-length val))
 	  (js-undefined)
 	  (vector-ref ascii-strings
 	     (char->integer (string-ref-ur val fxpos)))))
    
    (define (utf8-string-ref val fxpos)
-      (if (or (<fx fxpos 0) (>=fx fxpos (utf8-codeunit-length val)))
+      (if (>=fx fxpos (utf8-codeunit-length val))
 	  (js-undefined)
 	  (js-utf8-ref o val fxpos)))
 
@@ -737,12 +738,12 @@
 (define (js-jsstring-character-ref o index::uint32)
    
    (define (ascii-string-character-ref val fxpos)
-      (if (or (<fx fxpos 0) (>=fx fxpos (string-length val)))
+      (if (>=fx fxpos (string-length val))
 	  (js-undefined)
 	  (js-ascii->jsstring (make-string 1 (string-ref-ur val fxpos)))))
    
    (define (utf8-string-character-ref val fxpos)
-      (if (or (<fx fxpos 0) (>=fx fxpos (utf8-codeunit-length val)))
+      (if (>=fx fxpos (utf8-codeunit-length val))
 	  (js-undefined)
 	  (utf8-string-ref val fxpos)))
    
@@ -1762,3 +1763,14 @@
 	  (js-call0 %this (js-get this 'trim %this) this))
 	 (else
 	  (loop (js-toobject %this this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-fromcharcode ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-fromcharcode this code %this)
+   (if (and (fixnum? code) (>=fx code 0) (<fx code 128))
+       (vector-ref ascii-strings code)
+       (js-string->jsstring
+	  (ucs2-string->utf8-string
+	     (ucs2-string
+		(integer->ucs2 (uint16->fixnum (js-touint16 code %this))))))))
