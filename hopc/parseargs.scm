@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar 21 15:00:30 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 15:36:27 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -123,7 +123,7 @@
 	     (hopc-pass-set! 'so))
 	    (section "Configuration and devkit")
 	    (("--safe" (help "Compile and link in safe mode"))
-	     (hopc-bigloo-safe-option-set! "-safe"))
+	     (hopc-bigloo-safe-option-set! "-safel"))
 	    (("--unsafe" (help "Compile and link in safe mode"))
 	     (hopc-bigloo-safe-option-set! "-unsafe"))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
