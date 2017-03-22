@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Wed Feb 22 16:03:02 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 07:54:36 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
@@ -195,7 +195,6 @@
 	 `(if (<u32 ,i ,alen)
 	      (vector-ref ,avec (uint32->fixnum ,i))
 	      (let ((,tmp (js-array-index-ref ,arr ,i ,%this)))
-		 (tprint "FLOP")
 		 ,@(%update-deps deps)
 		 ,tmp))))
    

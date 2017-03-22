@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue Mar 21 10:25:31 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 22:17:14 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -825,7 +825,7 @@
 	 ((isa? node J2SStmtExpr)
 	  (with-access::J2SStmtExpr node (expr)
 	     (when (isa? expr J2SInit)
-		expr)))))
+		node)))))
    
    (define (literal? node)
       (cond
@@ -870,18 +870,21 @@
 	  (loop (cdr n) literals))
 	 ((init (car n))
 	  =>
-	  (lambda (expr)
-	     (with-access::J2SInit expr (lhs rhs)
-		(if (isa? lhs J2SRef)
-		    (with-access::J2SRef lhs (decl)
-		       (with-access::J2SDecl decl (binder scope %info)
-			  (if (and (eq? binder 'var) (eq? scope '%scope))
-			      (if (literal? rhs)
-				  (loop (cdr n)
-				     (cons (cons decl expr) literals))
-				  (letopt-literals literals))
-			      (letopt-literals literals))))
-		    (letopt-literals literals)))))
+	  (lambda (stmt)
+	     (with-access::J2SStmtExpr stmt (expr)
+		(with-access::J2SInit expr (lhs rhs loc)
+		   (if (isa? lhs J2SRef)
+		       (with-access::J2SRef lhs (decl)
+			  (with-access::J2SDecl decl (binder scope %info)
+			     (if (and (eq? binder 'var) (eq? scope '%scope))
+				 (if (literal? rhs)
+				     (let ((init expr))
+					(set! expr (J2SUndefined))
+					(loop (cdr n)
+					   (cons (cons decl init) literals)))
+				     (letopt-literals literals))
+				 (letopt-literals literals))))
+		       (letopt-literals literals))))))
 	 (else
 	  (letopt-literals literals)))))
 

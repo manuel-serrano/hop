@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Mar 21 13:12:34 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 15:09:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -289,6 +289,8 @@
    (case (config-get conf :long-size 0)
       ((32)
        `(js+fx32 ,x ,y))
+      ((64)
+       `(js+fx64 ,x ,y))
       (else
        `(js+fx ,x ,y))))
 
@@ -1997,6 +1999,8 @@
 	  (case (config-get conf :long-size 0)
 	     ((32)
 	      (symbol-append 'js op 'fx32))
+	     ((64)
+	      (symbol-append 'js op 'fx64))
 	     (else
 	      (symbol-append 'js op 'fx))))
 	 ((/)
@@ -2282,6 +2286,12 @@
 	     (scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
 		`(,(fxop op) ,left ,right)
 		(js-binop loc op left right)))))
+      ((or (eq? (j2s-type lhs) 'number) (eq? (j2s-type rhs) 'number))
+       (binop lhs rhs mode return conf hint 'integer
+	  (lambda (left right)
+	     (scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
+		`(,(fxop op) ,left ,right)
+		(js-binop loc op left right)))))
       ((or (eq? (j2s-type lhs) 'any) (eq? (j2s-type rhs) 'any))
        (if (and (maybe-number? lhs) (maybe-number? rhs))
 	   (binop lhs rhs mode return conf hint 'integer
@@ -2441,7 +2451,7 @@
 	  (lambda (left right)
 	     (scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
 		(js-binopfx op left right conf)
-		(j2s-num-op op left right lhs rhs conf)))))
+		`(,(jsop op) ,left ,right %this)))))
       (else
        (binop lhs rhs mode return conf hint 'integer
 	  (lambda (left right)
@@ -2855,7 +2865,7 @@
 			   tmp
 			   mode return conf)
 		       ,tmp))))))
-   
+
    (with-access::J2SPostfix this (loc lhs op type)
       (let ((inc (j2s-num (if (eq? op '++) (cast 1 conf 'fixnum type) -1))))
 	 (let loop ((lhs lhs))
@@ -3600,28 +3610,40 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-inline-method ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-inline-method field args type)
+(define (j2s-inline-method field args obj)
+   
+   (define (is-type-or-class? ty obj tyobj)
+      (cond
+	 ((eq? ty 'any)
+	  #t)
+	 ((eq? ty tyobj)
+	  #t)
+	 ((isa? obj J2SUnresolvedRef)
+	  (with-access::J2SUnresolvedRef obj (id)
+	     (eq? ty id)))))
+	 
    (when (isa? field J2SString)
       (with-access::J2SString field (val)
-	 (find (lambda (method)
-		  (when (string=? (inline-method-jsname method) val)
-		     (let ((ty (inline-method-ttype method)))
-			(when (or (eq? ty 'any) (eq? ty type))
-			   (let loop ((args args)
-				      (formals (inline-method-args method)))
-			      (cond
-				 ((null? args)
-				  (or (null? formals) (every pair? formals)))
-				 ((null? formals)
-				  #f)
-				 (else
-				  (let ((tya (j2s-type (car args)))
-					(tyf (if (pair? (car formals))
-						 (caar formals)
-						 (car formals))))
-				     (when (or (eq? tyf 'any) (eq? tyf tya))
-					(loop (cdr args) (cdr formals)))))))))))
-	    j2s-inline-methods))))
+	 (let ((tyobj (j2s-type obj)))
+	    (find (lambda (method)
+		     (when (string=? (inline-method-jsname method) val)
+			(let ((ty (inline-method-ttype method)))
+			   (when (is-type-or-class? ty obj tyobj)
+			      (let loop ((args args)
+					 (formals (inline-method-args method)))
+				 (cond
+				    ((null? args)
+				     (or (null? formals) (every pair? formals)))
+				    ((null? formals)
+				     #f)
+				    (else
+				     (let ((tya (j2s-type (car args)))
+					   (tyf (if (pair? (car formals))
+						    (caar formals)
+						    (car formals))))
+					(when (or (eq? tyf 'any) (eq? tyf tya))
+					   (loop (cdr args) (cdr formals)))))))))))
+	       j2s-inline-methods)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function ...                                           */
@@ -3668,7 +3690,7 @@
    (define (call-ref-method ccache ocache fun::J2SAccess obj::J2SExpr args)
       (with-access::J2SAccess fun (loc field)
 	 (cond
-	    ((j2s-inline-method field args (j2s-type obj))
+	    ((j2s-inline-method field args obj)
 	     =>
 	     (lambda (m)
 		(let* ((id (inline-method-scmid m))

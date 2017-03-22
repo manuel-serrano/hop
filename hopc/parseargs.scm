@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Mar 21 15:36:27 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 13:34:09 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -233,19 +233,27 @@
 	     (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
 	    (("-fno-ccall" (help "Disable call caches"))
 	     (hopc-j2s-flags-set! (cons* :optim-ccall #f (hopc-j2s-flags))))
-	    (("-fshared-pcache" (help "Share pcaches"))
+	    (("-fhint" (help "Enable hint typing (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-hint #t (hopc-j2s-flags))))
+	    (("-fno-hint" (help "Disable hint typing"))
+	     (hopc-j2s-flags-set! (cons* :optim-hint #f (hopc-j2s-flags))))
+	    (("-fcast" (help "Enable cast optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-cast #t (hopc-j2s-flags))))
+	    (("-fno-cast" (help "Disable cast optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-cast #f (hopc-j2s-flags))))
+	    (("-fshared-pcache" (help "Share pcaches (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :shared-pcache #t (hopc-j2s-flags))))
-	    (("-fno-shared-pcache" (help "Share pcaches"))
+	    (("-fno-shared-pcache" (help "Disable share pcaches"))
 	     (hopc-j2s-flags-set! (cons* :shared-pcache #f (hopc-j2s-flags))))
 	    (("-fthis" (help "Enable fast this access"))
 	     (hopc-j2s-flags-set! (cons* :optim-this #t (hopc-j2s-flags))))
 	    (("-fno-this" (help "Enable fast this access"))
 	     (hopc-j2s-flags-set! (cons* :optim-this #f (hopc-j2s-flags))))
-	    (("-fctor" (help "Enable fast constructor init sequences"))
+	    (("-fctor" (help "Enable fast constructor init sequences (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-ctor #t (hopc-j2s-flags))))
 	    (("-fno-ctor" (help "Disable fast constructor init sequences"))
 	     (hopc-j2s-flags-set! (cons* :optim-ctor #f (hopc-j2s-flags))))
-	    (("-fliterals" (help "Enable literals optimization"))
+	    (("-fliterals" (help "Enable literals optimization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #t (hopc-j2s-flags))))
 	    (("-fno-literals" (help "Disable literals optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #f (hopc-j2s-flags))))

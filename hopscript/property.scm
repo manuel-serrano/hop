@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Mar 21 13:34:08 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 12:56:51 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2039,9 +2039,11 @@
    
    (define (propagate-accessor-descriptor! current desc)
       (propagate-property-descriptor! current desc)
-      (with-access::JsAccessorDescriptor current (get set)
-	 (with-access::JsAccessorDescriptor desc ((dget get) (dset set))
-	    (when dget (set! get dget))
+      (with-access::JsAccessorDescriptor current (get %get set)
+	 (with-access::JsAccessorDescriptor desc ((dget get)
+						  (%dget %get)
+						  (dset set))
+	    (when dget (set! get dget) (set! %get %dget))
 	    (when dset (set! set dset))))
       #t)
 

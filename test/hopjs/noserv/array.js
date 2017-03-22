@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Wed Mar  1 08:34:12 2017 (serrano)                */
+/*    Last change :  Wed Mar 22 14:59:19 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -284,7 +284,6 @@ assert.throws( function() {
    var ap = { name: "glop" };
    Array.prototype = ap;
 }, undefined, "custom proto" );
-
 
 /*---------------------------------------------------------------------*/
 /*    overflow                                                         */

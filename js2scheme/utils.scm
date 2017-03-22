@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Mar 21 13:12:16 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 13:32:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -129,7 +129,7 @@
 ;*    type-int53? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (type-int53? type)
-   (memq type '(uint29 int30 int53 ufixnum index)))
+   (memq type '(uint29 int30 int32 int53 ufixnum index)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-fixnum? ...                                                 */

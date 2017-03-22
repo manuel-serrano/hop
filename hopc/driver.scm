@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Mar 21 15:08:48 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 15:12:59 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -419,11 +419,11 @@
 	      0
 	      (let ((r (call-with-input-file (car srcs)
 			  (lambda (in) (compile in (language (car srcs)))))))
-		 (call-with-output-file "/tmp/ERR"
-		    (lambda (p)
-		       (display "COMPILE r=" p)
-		       (display r p)
-		       (newline p)))
+;* 		 (call-with-output-file "/tmp/ERR"                     */
+;* 		    (lambda (p)                                        */
+;* 		       (display "COMPILE r=" p)                        */
+;* 		       (display r p)                                   */
+;* 		       (newline p)))                                   */
 		 (if (=fx r 0)
 		     (loop (cdr srcs))
 		     r)))))

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Fri Aug  5 13:36:38 2016 (serrano)                */
-/*    Copyright   :  2006-16 Manuel Serrano                            */
+/*    Last change :  Tue Mar 21 18:12:23 2017 (serrano)                */
+/*    Copyright   :  2006-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -337,14 +337,20 @@ function hop_dom_create( tag, args ) {
    var m;
 
    function valstr( val, k ) {
-      if( (val instanceof String) || (typeof val == "string") ) {
-	 return el[ attr ] = val;
-      } if( typeof( val ) === "function" ) {
-	 return hop.reactAttribute( function() { k( val() ) } );
-      } else {
-	 return el[ attr ] = val.toString();
+      try {
+	 if( (val instanceof String) || (typeof val == "string") ) {
+	    return el[ attr ] = val;
+	 } if( typeof( val ) === "function" ) {
+	    return hop.reactAttribute( function() { k( val() ) } );
+	 } else {
+	    return el[ attr ] = val.toString();
+	 }
+      } catch( e ) {
+	 if( (val instanceof String) || (typeof val == "string") ) {
+	    k( val );
+	 }
       }
-   }
+   } 
 
    function valfun( val ) {
       if( val instanceof hop_xml_tilde ) {
