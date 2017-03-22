@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Mar  3 15:59:40 2017 (serrano)                */
+;*    Last change :  Tue Mar 21 22:44:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2793,7 +2793,8 @@
 	    ((not (array-extensible? o))
 	     (js-raise-type-error %this
 		"Can't add property ~a: object is not extensible" length))
-	    ((and (=u32 n ilen) (<u32 ilen (fixnum->uint32 (vector-length vec))))
+	    ((and (=u32 n ilen)
+		  (<u32 ilen (fixnum->uint32 (vector-length vec))))
 	     (let ((idx (+u32 n 1)))
 		(vector-set-ur! vec (uint32->fixnum n) item)
 		(set! ilen idx)

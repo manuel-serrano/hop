@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Mar 18 07:32:45 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 08:55:02 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -86,7 +86,7 @@
       ((eq? totype 'unknown) (memq type '(index uint32 uint29 length)))
       ((and (eq? totype 'any) (jstype? type)) #f)
       ((and (any? type) (any? totype)) #f)
-      ((and (memq type '(int29 uint29 int30 int53)) (memq totype '(integer number))) #f)
+      ((and (memq type '(int29 uint29 int30 int53)) (memq totype '(integer number int30))) #f)
       ((and (eq? type 'any) (eq? totype 'void)) #f)
       (else #t)))
 

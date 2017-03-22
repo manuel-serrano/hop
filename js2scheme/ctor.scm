@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Mon Mar 20 19:13:51 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 15:29:02 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors sizes                       */
@@ -162,7 +162,36 @@
 ;*    constrinit-seq! ::J2SBlock ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constrinit-seq! this::J2SBlock prog)
-   
+
+   (define (simple-expr? expr obj)
+      ;; is the expr simple enough so we are certain that there is no
+      ;; occurrent of decl involved
+      (cond
+	 ((isa? expr J2SArray)
+	  (with-access::J2SArray expr (exprs)
+	     (every (lambda (e) (simple-expr? e obj)) exprs)))
+	 ((isa? expr J2SLiteral)
+	  #t)
+	 ((isa? expr J2SRef)
+	  (with-access::J2SRef expr (decl)
+	     (not (eq? decl obj))))
+	 ((isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr)
+	     (simple-expr? expr obj)))
+	 ((isa? expr J2SUnary)
+	  (with-access::J2SUnary expr (expr)
+	     (simple-expr? expr obj)))
+	 ((isa? expr J2SBinary)
+	  (with-access::J2SBinary expr (lhs rhs)
+	     (and (simple-expr? lhs obj) (simple-expr? rhs obj))))
+	 ((isa? expr J2SCond)
+	  (with-access::J2SCond expr (test then else)
+	     (and (simple-expr? test obj)
+		  (simple-expr? then obj)
+		  (simple-expr? else obj))))
+	 (else
+	  #f)))
+	     
    (define (obj-assign node ref-or-bool)
       ;; check the syntactic form
       ;; (J2SStmtExpr (J2SAssig (J2SAccess (J2SRef) (J2SString ...)) ..)))
@@ -170,7 +199,7 @@
       (when (isa? node J2SStmtExpr)
 	 (with-access::J2SStmtExpr node (expr)
 	    (when (isa? expr J2SAssig)
-	       (with-access::J2SAssig expr (lhs)
+	       (with-access::J2SAssig expr (lhs rhs)
 		  (when (isa? lhs J2SAccess)
 		     (with-access::J2SAccess lhs (obj field)
 			(when (isa? field J2SString)
@@ -178,17 +207,18 @@
 			      (with-access::J2SRef obj (decl)
 				 (if ref-or-bool
 				     (with-access::J2SRef ref-or-bool ((rd decl))
-					(eq? rd decl)))
-				 (with-access::J2SDecl decl (itype)
-				    (when (eq? itype 'object)
-				       obj))))))))))))
+					(when (eq? rd decl)
+					   (simple-expr? rhs decl)))
+				     (with-access::J2SDecl decl (itype)
+					(when (eq? itype 'object)
+					   obj)))))))))))))
    
    (define (split-init-sequence this)
       ;; split a block in two part
       ;;   1- the "ref" assignments
       ;;   2- the other statements
       (with-access::J2SBlock this (nodes)
-	 (if (null? (cdr nodes))
+	 (if (or (null? nodes) (null? (cdr nodes)))
 	     (values '() nodes #f)
 	     (let ((ref (obj-assign (car nodes) #f)))
 		(if (not ref)
@@ -234,4 +264,3 @@
 			    (cmap1 cmap1))
 		      (map! (lambda (n) (constrinit-seq! n prog)) rest))))
 	     this)))))
-

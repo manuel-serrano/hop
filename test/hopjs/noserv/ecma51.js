@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Nov 16 10:45:45 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Wed Mar 22 13:16:22 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
 /*=====================================================================*/
@@ -301,3 +301,16 @@ var i = '0';
 assert.ok( t[ 0 ] === 'a', "int access" );
 assert.ok( t[ '0' ] === 'a', "string access" );
 assert.ok( t[ i ] === 'a', "string access" );
+
+/*---------------------------------------------------------------------*/
+/*    constuctor                                                       */
+/*---------------------------------------------------------------------*/
+function ctor() {
+   this.a = 1; this.b = 2; this.c = 3; this.d = 4; this.e = 5; this.f = this.a;
+}
+
+var o = new ctor();
+
+assert.ok( o.a === 1, "ctor" );
+assert.ok( o.e === 5, "ctor" );
+assert.ok( o.f === o.a, "ctor" );

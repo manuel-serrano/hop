@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Mar 19 08:26:01 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 13:45:09 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -92,13 +92,15 @@
 	 ((?- ?min ?max)
 	  `(let ((%min ,(e min e))
 		 (%max ,(e max e)))
-	      (if (llong? %min)
-		  (if (llong? %max)
-		      (interval
-			 (if (fixnum? %min) (fixnum->llong %min) %min)
-			 (if (fixnum? %max) (fixnum->llong %max) %max))
-		      (error "interval" "wrong interval max" %max))
-		  (error "interval" "wrong interval min" %min))))
+	      ,(e `(cond
+		       ((fixnum? %min) (set! %min (fixnum->llong %min)))
+		       ((bignum? %min) (set! %min *-inf.0* )))
+		  e)
+	      ,(e `(cond
+		     ((fixnum? %max) (set! %max (fixnum->llong %max)))
+		     ((bignum? %max) (set! %max *+inf.0*)))
+		  e)
+	      (interval %min %max)))
 	 (else
 	  (error "interval" "wrong syntax" x)))))
 
@@ -148,8 +150,12 @@
 	    (let ((ostamp (fix-stamp fix)))
 	       (when (>=fx *dump-stop* 0)
 		  (tprint "================================= " ostamp))
-	       (for-each (lambda (n) (range n (empty-env) fix)) decls)
-	       (for-each (lambda (n) (range n (empty-env) fix)) nodes)
+	       (let ((env (empty-env)))
+		  (multiple-value-bind (_ env)
+		     (range* decls env fix)
+		     (range* nodes env fix)))
+;* 	       (for-each (lambda (n) (range n (empty-env) fix)) decls) */
+;* 	       (for-each (lambda (n) (range n (empty-env) fix)) nodes) */
 	       (unless (or (=fx (fix-stamp fix) ostamp)
 			   (and (>fx *dump-stop* 0)
 				(>=fx (fix-stamp fix) *dump-stop*)))
@@ -443,12 +449,19 @@
 ;*    widening operator for the interval approximation.                */
 ;*---------------------------------------------------------------------*/
 (define (widening left right o)
+
+   (define (inrange val)
+      (cond
+	 ((>llong val *+inf.0*) *+inf.0*)
+	 ((<llong val *-inf.0*) *-inf.0*)
+	 (else val)))
+   
    (let ((li (interval-min left))
 	 (la (interval-max left))
 	 (ri (interval-min right))
 	 (ra (interval-max right))
-	 (oi (interval-min o))
-	 (oa (interval-max o)))
+	 (oi (inrange (interval-min o)))
+	 (oa (inrange (interval-max o))))
       (cond
 	 ((> la oa)
 	  (cond
@@ -481,7 +494,7 @@
 		 (interval min (max oa min))))
 	     (else
 	      (interval *-inf.0* oa))))
-	 ((< la oa)
+	 ((and (< la oa) (< oa *+inf.0*))
 	  (cond
 	     ((> ra 0)
 	      (cond
@@ -507,6 +520,28 @@
 		  (interval oi *+inf.0*))))
 	     (else
 	      (interval *-inf.0* oa))))
+	 ((> li oi)
+	  (cond
+	     ((>= oi #l2)
+	      (let ((min #l2))
+		 (interval min (max oa min))))
+	     ((>= oi #l1)
+	      (let ((min #l1))
+		 (interval min (max oa min))))
+	     ((>= oi #l0)
+	      (let ((min #l0))
+		 (interval min (max oa min))))
+	     ((> oi #l-1)
+	      (let ((min #l-1))
+		 (interval min (max oa min))))
+	     ((> oi #l-2)
+	      (let ((min #l-2))
+		 (interval min (max oa min))))
+	     ((> oi #l-10)
+	      (let ((min #l-10))
+		 (interval min (max oa min))))
+	     (else
+	      (interval *-inf.0* oa))))
 	 (else
 	  o))))
    
@@ -519,7 +554,7 @@
 		     (+ (interval-min left) (interval-min right))
 		     (+ (interval-max left) (interval-max right)))))
 	 (widening left right intr))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    interval-sub ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -771,11 +806,6 @@
       (if (type-number? type)
 	  (with-access::J2SDecl decl (%info)
 	     (let ((intv (env-lookup env decl)))
-		(let ((denv (dump-env env)))
-		   (with-access::J2SDecl decl (key)
-		      (when (eq? key 10)
-			 (when (pair? denv)
-			    (tprint ">>> j2sref " (j2s->list this) " denv=" denv)))))
 		(if intv
 		    (node-interval-set! this env fix intv)
 		    (return %info env))))
@@ -972,7 +1002,7 @@
 ;*    range ::J2SBinary ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (range this::J2SBinary env::pair-nil fix::struct)
-   (with-access::J2SBinary this (op lhs rhs type %info %%wstamp)
+   (with-access::J2SBinary this (op lhs rhs type %info)
       (if (type-number? type)
 	  (range-binary this op lhs rhs env fix)
 	  (begin
@@ -985,7 +1015,7 @@
 (define-walk-method (range this::J2SAssig env::pair-nil fix::struct)
    (with-access::J2SAssig this (lhs rhs type)
       (if (type-number? type)
-	  (multiple-value-bind (intv env)
+	  (multiple-value-bind (_ env)
 	     (range lhs env fix)
 	     (cond
 		((isa? lhs J2SRef)
@@ -1017,7 +1047,7 @@
 		 ;; a variable assignment
 		 (with-access::J2SRef lhs (decl)
 		    (let ((nenv (extend-env env decl intv)))
-		       (node-interval-set! this nenv fix intv))))
+		       (node-interval-set! lhs nenv fix intv))))
 		(else
 		 ;; a non variable assinment
 		 (node-interval-set! this nenv fix intv))))
