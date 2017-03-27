@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Mar 22 13:34:09 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 10:32:12 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -85,7 +85,9 @@
 		 (hopc-optim-level-set! 1))
 		((string=? level "x")
 		 (hopc-optim-level-set! 1000)
-		 (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
+		 (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags)))
+		 (hopc-bigloo-options-set!
+		    (cons* "-srfi" "cache-level2" (hopc-bigloo-options))))
 		(else
 		 (hopc-optim-level-set! (string->integer level))))
 	     (hopc-bigloo-options-set!
@@ -123,7 +125,7 @@
 	     (hopc-pass-set! 'so))
 	    (section "Configuration and devkit")
 	    (("--safe" (help "Compile and link in safe mode"))
-	     (hopc-bigloo-safe-option-set! "-safel"))
+	     (hopc-bigloo-safe-option-set! "-unsafe -safel"))
 	    (("--unsafe" (help "Compile and link in safe mode"))
 	     (hopc-bigloo-safe-option-set! "-unsafe"))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
@@ -257,6 +259,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-literals #t (hopc-j2s-flags))))
 	    (("-fno-literals" (help "Disable literals optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #f (hopc-j2s-flags))))
+	    (("-fcache-level=?level" (help "Set cache inlining level"))
+	     (when (>=fx (string->integer level) 2)
+		(hopc-bigloo-options-set!
+		   (cons "-srfi cache-level2" (hopc-bigloo-options)))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

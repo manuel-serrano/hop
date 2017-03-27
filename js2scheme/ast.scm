@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Mar 22 15:09:53 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 09:26:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -24,6 +24,11 @@
 	      (%%wstamp (default -1)))
 	   
 	   (abstract-class J2SStmt::J2SNode)
+
+	   (class J2SMeta::J2SStmt
+	      (debug::long (default 0))
+	      (optim::long (default 0))
+	      stmt::J2SStmt)
 	   
 	   (class J2SSeq::J2SStmt
 	      nodes::pair-nil)
@@ -805,6 +810,7 @@
 ;*    default walk                                                     */
 ;*---------------------------------------------------------------------*/
 (gen-walks J2SNode)
+(gen-walks J2SMeta stmt)
 (gen-walks J2SSeq (nodes))
 (gen-walks J2SProgram (decls) (headers) (nodes))
 (gen-walks J2SReturn expr)

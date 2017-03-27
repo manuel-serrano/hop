@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Mar 22 13:45:09 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 09:27:21 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -737,6 +737,15 @@
 (define-walk-method (range this::J2SNode env::pair-nil fix::struct)
    (error "range" "not implemented" (typeof this)))
 
+;*---------------------------------------------------------------------*/
+;*    range ::J2SMeta ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (range this::J2SMeta env::pair-nil fix::struct)
+   (with-access::J2SMeta this (optim)
+      (if (=fx optim 0)
+	  (return #f env)
+	  (call-default-walker))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    range ::J2SExpr ...                                              */
 ;*---------------------------------------------------------------------*/

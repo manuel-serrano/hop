@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Mar 22 15:21:11 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 09:27:14 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -203,7 +203,8 @@
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-set! decl::J2SDecl ty fix::cell)
    (with-access::J2SDecl decl (vtype id)
-      (unless (or (eq? ty 'unknown)
+      (unless (or (not ty)
+		  (eq? ty 'unknown)
 		  (subtype? ty vtype)
 		  (eq? vtype 'any))
 	 (unfix! fix (format "J2SDecl(~a) vtype=~a/~a" id vtype ty))
@@ -346,6 +347,15 @@
     ;; conservative guard
    (tprint "*** typing node: " (typeof this))
    (return 'any '() '()))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SMeta ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SMeta env::pair-nil fun fix::cell)
+   (with-access::J2SMeta this (optim)
+      (if (=fx optim 0)
+	  (return 'void env '())
+	  (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SExpr ...                                             */
@@ -526,7 +536,7 @@
    (with-access::J2SDeclInit this (val itype)
       (multiple-value-bind (typ env bk)
 	 (typing val env fun fix)
-	 (if (eq? typ 'unknown)
+	 (if (or (eq? typ 'unknown) (not typ))
 	     (return 'void env bk)
 	     (begin
 		(decl-vtype-set! this typ fix)
@@ -572,10 +582,12 @@
 	     ;; a variable assignment
 	     (multiple-value-bind (tyr env rbk)
 		(typing rhs envl fun fix)
-		(with-access::J2SRef lhs (decl)
-		   (decl-vtype-set! decl tyr fix)
-		   (let ((nenv (extend-env env decl tyr)))
-		      (expr-type-set! this nenv fix tyr (append lbk rbk))))))
+		(if tyr
+		    (with-access::J2SRef lhs (decl)
+		       (decl-vtype-set! decl tyr fix)
+		       (let ((nenv (extend-env env decl tyr)))
+			  (expr-type-set! this nenv fix tyr (append lbk rbk))))
+		    (return 'unknown env (append lbk rbk)))))
 	    (else
 	     ;; a non variable assinment
 	     (multiple-value-bind (tyr nenv rbk)
@@ -1023,7 +1035,9 @@
    (with-access::J2SParen this (expr)
       (multiple-value-bind (tye enve bke)
 	 (typing expr env fun fix)
-	 (expr-type-set! this enve fix tye bke))))
+	 (if tye
+	     (expr-type-set! this enve fix tye bke)
+	     (return 'unknown enve bke)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SComprehension ...                                    */

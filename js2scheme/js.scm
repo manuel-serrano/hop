@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed Dec 21 12:42:16 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Mon Mar 27 08:56:59 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
 ;*=====================================================================*/
@@ -150,6 +150,13 @@
 	    ((normal) prgm)
 	    ((strict hopscript) (cons "\"use strict\";\n" prgm))
 	    (else prgm)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-js::pair-nil ::J2SMeta ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-js::pair-nil this::J2SMeta tildec dollarc mode evalp conf)
+   (with-access::J2SMeta this (stmt)
+      (j2s-js stmt tildec dollarc mode evalp conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SSeq ...                                              */

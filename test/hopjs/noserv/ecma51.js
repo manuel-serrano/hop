@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Mar 22 13:16:22 2017 (serrano)                */
+/*    Last change :  Thu Mar 23 06:58:37 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -314,3 +314,12 @@ var o = new ctor();
 assert.ok( o.a === 1, "ctor" );
 assert.ok( o.e === 5, "ctor" );
 assert.ok( o.f === o.a, "ctor" );
+
+/*---------------------------------------------------------------------*/
+/*    assignop                                                         */
+/*---------------------------------------------------------------------*/
+var x = 0;
+var a = [1,2,3,4,5];
+a[ x++ ] += 3;;
+
+assert.ok( x === 1, "increment in assignment" );

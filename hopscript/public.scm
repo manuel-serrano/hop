@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Mar 20 18:27:39 2017 (serrano)                */
+;*    Last change :  Fri Mar 24 13:17:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -123,8 +123,9 @@
 	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
 	   
 	   (inline js-equal? ::obj ::obj ::JsGlobalObject)
+	   (inline js-equal-sans-flonum? ::obj ::obj ::JsGlobalObject)
 	   (js-equality? ::obj ::obj ::JsGlobalObject)
-	   (inline js-strict-equal? ::obj ::obj)
+	   (inline js-strict-equal?::bool ::obj ::obj)
 	   (js-eq? ::obj ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
@@ -359,7 +360,7 @@
    (with-access::JsFunction ctor (constrsize constrmap prototype name)
       (unless (eq? __proto__ prototype)
 	 (set! prototype __proto__)
-	 (set! constrmap (instantiate::JsConstructMap)))))
+	 (set! constrmap (instantiate::JsConstructMap (ctor ctor))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
@@ -1262,6 +1263,14 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-equal? o1 o2 %this::JsGlobalObject)
    (or (and (eq? o1 o2) (not (flonum? o1))) (js-equality? o1 o2 %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-equal-sans-flonum? ...                                        */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.1       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-equal-sans-flonum? o1 o2 %this::JsGlobalObject)
+   (or (eq? o1 o2) (js-equality? o1 o2 %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality? ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Feb 28 09:17:07 2017 (serrano)                */
+;*    Last change :  Sat Mar 25 06:43:59 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -30,6 +30,7 @@
    (export (js-init-number! ::JsGlobalObject)
 	   (js-number->jsnumber ::obj ::JsGlobalObject)
 
+	   (inline fixnums?::bool ::obj ::obj)
 	   (inline js-uint32->jsnum::obj ::uint32)
 	   
 	   (js+ left right ::JsGlobalObject)
@@ -368,6 +369,14 @@
 (define (js-number->jsnumber val %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-number)
       (js-new1 %this js-number val)))
+
+;*---------------------------------------------------------------------*/
+;*    fixnums? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (fixnums? x y)
+   (cond-expand
+      (bigloo-c (pragma::bool "(((long)($1) & TAG_MASK) + ((long)($2) & TAG_MASK)) == (TAG_INT<<1)" x y))
+      (else (and (fixnum? x) (fixnum? y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-uint32->jsnum ...                                             */

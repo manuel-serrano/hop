@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Mar 22 13:32:17 2017 (serrano)                */
+;*    Last change :  Fri Mar 24 13:22:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -24,13 +24,13 @@
 	   (config-put! ::pair-nil ::keyword ::obj)
 	   (this?::bool ::J2SNode)
 	   
-	   (type-int32?::bool ::symbol)
-	   (type-uint32?::bool ::symbol)
-	   (type-int30?::bool ::symbol)
-	   (type-int53?::bool ::symbol)
-	   (type-fixnum?::bool ::symbol)
-	   (type-integer?::bool ::symbol)
-	   (type-number?::bool ::symbol)
+	   (type-int32?::bool ::obj)
+	   (type-uint32?::bool ::obj)
+	   (type-int30?::bool ::obj)
+	   (type-int53?::bool ::obj)
+	   (type-fixnum?::bool ::obj)
+	   (type-integer?::bool ::obj)
+	   (type-number?::bool ::obj)
 	   (type-name type conf)
 	   (minimal-type::symbol ::obj ::obj)
 	   (max-type::symbol ::obj ::obj)))
@@ -140,7 +140,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    type-integer? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (type-integer? type::symbol)
+(define (type-integer? type)
    (or (type-int53? type)
        (type-uint32? type)
        (memq type '(integer fixnum ufixnum))))
@@ -148,7 +148,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    type-number? ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (type-number? type::symbol)
+(define (type-number? type)
    (or (type-integer? type) (eq? type 'number)))
 
 ;*---------------------------------------------------------------------*/
