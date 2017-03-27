@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Mar 21 08:03:52 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 09:36:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -166,6 +166,14 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SStmt)
    (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SMeta ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SMeta)
+   (with-access::J2SMeta this (stmt optim debug)
+      `(,(string->symbol (typeof this)) :optim ,optim :debug ,debug
+	  ,(j2s->list stmt))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SProgram ...                                       */

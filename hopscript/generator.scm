@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Oct  7 10:47:45 2016 (serrano)                */
-;*    Copyright   :  2015-16 Manuel Serrano                            */
+;*    Last change :  Sat Mar 25 06:56:04 2017 (serrano)                */
+;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
@@ -20,8 +20,8 @@
    
    (library hop)
    
-   (include "stringliteral.sch"
-	    "property.sch")
+   (include "stringliteral.sch")
+;* 	    "property.sch")                                            */
    
    (import __hopscript_types
 	   __hopscript_lib

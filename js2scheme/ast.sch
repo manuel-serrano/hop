@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Thu Mar  9 09:14:45 2017 (serrano)                */
+;*    Last change :  Wed Mar 22 17:02:47 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -19,6 +19,7 @@
 (define-macro (J2SBool val)
    `(instantiate::J2SBool
        (loc loc)
+       (type 'bool)
        (val ,val)))
 
 (define-macro (J2SNumber val)
@@ -46,11 +47,17 @@
        (expr ,expr)))
 
 (define-macro (J2SBinary op lhs rhs)
-   `(instantiate::J2SBinary
-       (loc loc)
-       (op ,op)
-       (lhs ,lhs)
-       (rhs ,rhs)))
+   (let ((typ (match-case op
+		 (((kwote quote) ?op)
+		  (if (memq op '(=== == != !== < <= > >=))
+		      'bool
+		      'unknown)))))
+      `(instantiate::J2SBinary
+	  (type ',typ)
+	  (loc loc)
+	  (op ,op)
+	  (lhs ,lhs)
+	  (rhs ,rhs))))
 
 (define-macro (J2SPostfix op lhs rhs)
    `(instantiate::J2SPostfix

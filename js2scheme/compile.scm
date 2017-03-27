@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Mar 21 09:05:12 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 09:57:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -149,10 +149,10 @@
       j2s-use-stage
       j2s-ronly-stage
       j2s-return-stage
-      j2s-property-stage
       j2s-cps-stage
       j2s-constant-stage
       j2s-tyflow-stage
+      j2s-property-stage
       j2s-range-stage
       j2s-ctor-stage
       j2s-uint32-stage

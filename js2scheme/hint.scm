@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Feb 22 19:04:20 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 09:41:48 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -596,7 +596,7 @@
 ;*---------------------------------------------------------------------*/
 (define (fun-duplicate-untyped::J2SDeclFun fun::J2SDeclFun)
    (with-access::J2SDeclFun fun (val id %info)
-      (with-access::J2SFun val (params body name generator idthis)
+      (with-access::J2SFun val (params body name generator idthis loc)
 	 (duplicate::J2SDeclFun fun
 	    (parent fun)
 	    (key (ast-decl-key))
@@ -617,7 +617,13 @@
 		    (idthis (if (this? body) idthis #f))
 		    (name (when (symbol? name) (symbol-append name '%%)))
 		    (params params)
-		    (body body)))))))
+		    (body (instantiate::J2SBlock
+			     (loc loc)
+			     (endloc loc)
+			     (nodes (list (instantiate::J2SMeta
+					     (loc loc)
+					     (optim 0)
+					     (stmt body))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-duplicate-typed ...                                          */
@@ -634,13 +640,20 @@
 	 (else (string-ref (symbol->string t) 0))))
    
    (with-access::J2SDeclFun fun (val id %info)
-      (with-access::J2SFun val (params body idthis generator)
+      (with-access::J2SFun val (params body idthis generator thisp)
 	 (let* ((newparams (map j2sdecl-duplicate params types))
+		(newthisp (when thisp
+			     (with-access::J2SDecl thisp (itype)
+				(j2sdecl-duplicate thisp itype))))
 		(typeid (string->symbol
 			   (string-upcase!
 			      (apply string
 				 (map type-initial types)))))
-		(nbody (j2s-alpha body params newparams))
+		(nbody (if thisp
+			   (j2s-alpha body
+			      (cons thisp params)
+			      (cons newthisp newparams))
+			   (j2s-alpha body params newparams)))
 		(unbody (reset-type! nbody newparams))
 		(newfun (duplicate::J2SFun val
 			   (generator #f)
@@ -648,6 +661,7 @@
 			   (%info #unspecified)
 			   (rtype 'unknown)
 			   (idthis (if (this? body) idthis #f))
+			   (thisp newthisp)
 			   (params newparams)
 			   (body unbody)))
 		(newdecl (duplicate::J2SDeclFun fun
