@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Mar 27 09:27:14 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 11:40:47 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -489,8 +489,9 @@
 	  (expr-type-set! this env fix 'undefined))
 	 (else
 	  (let ((cla (class-of this)))
-	     (unless (eq? cla 'unknown)
-		(expr-type-set! this env fix 'object)))))))
+	     (if (eq? cla 'unknown)
+		 (return 'unknown env '())
+		 (expr-type-set! this env fix 'object)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SRef ...                                              */
@@ -577,7 +578,7 @@
       (multiple-value-bind (tyv envl lbk)
 	 (typing lhs env fun fix)
 	 (cond
-	     ;; this assignment
+	    ;; this assignment
 	    ((isa? lhs J2SRef)
 	     ;; a variable assignment
 	     (multiple-value-bind (tyr env rbk)
@@ -592,7 +593,9 @@
 	     ;; a non variable assinment
 	     (multiple-value-bind (tyr nenv rbk)
 		(typing rhs envl fun fix)
-		(expr-type-set! this nenv fix tyr (append lbk rbk))))))))
+		(if tyr
+		    (expr-type-set! this nenv fix tyr (append lbk rbk))
+		    (return 'unknown env (append lbk rbk)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SAssigOp ...                                          */
