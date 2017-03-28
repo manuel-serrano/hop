@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Mar 21 22:44:48 2017 (serrano)                */
+;*    Last change :  Tue Mar 28 08:04:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -450,7 +450,7 @@
 (define (js-array-find-length-property arr::JsArray)
    (with-access::JsArray arr (properties)
       (when (pair? properties)
-	 (with-access::JsValueDescriptor (car properties) (name)
+	 (with-access::JsPropertyDescriptor (car properties) (name)
 	    (when (eq? name 'length)
 	       (car properties))))))
 

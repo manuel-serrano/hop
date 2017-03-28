@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Mar 27 10:32:12 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 16:47:50 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -125,9 +125,9 @@
 	     (hopc-pass-set! 'so))
 	    (section "Configuration and devkit")
 	    (("--safe" (help "Compile and link in safe mode"))
-	     (hopc-bigloo-safe-option-set! "-unsafe -safel"))
+	     (hopc-bigloo-safe-option-set! '("-unsafe" "-safel")))
 	    (("--unsafe" (help "Compile and link in safe mode"))
-	     (hopc-bigloo-safe-option-set! "-unsafe"))
+	     (hopc-bigloo-safe-option-set! '("-unsafe")))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
 	     (hopc-bigloo-set! bigloo))
 	    (("--reset-bigloo-options" (help "Reset all Bigloo options"))
@@ -262,7 +262,7 @@
 	    (("-fcache-level=?level" (help "Set cache inlining level"))
 	     (when (>=fx (string->integer level) 2)
 		(hopc-bigloo-options-set!
-		   (cons "-srfi cache-level2" (hopc-bigloo-options)))))
+		   (cons* "-srfi" "cache-level2" (hopc-bigloo-options)))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

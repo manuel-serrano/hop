@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Mar 27 08:56:59 2017 (serrano)                */
+;*    Last change :  Tue Mar 28 10:19:10 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -1014,7 +1014,7 @@
 	    (symbol->string! temp) "; "
 	    (append body
 	       (list (format "\nreturn ~a}, [" temp))
-	       (join "," (cdr env))
+	       (join "," (reverse! (cdr env)))
 	       '("])"))))))
 
 ;*---------------------------------------------------------------------*/
