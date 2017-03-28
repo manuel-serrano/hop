@@ -1,14 +1,14 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/js2scheme/stmtassign.scm          */
+;*    serrano/prgm/project/hop/3.1.x/js2scheme/stmtassign.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Jan  8 15:05:39 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue Mar 28 10:05:47 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript stmt->assignment                                      */
 ;*    -------------------------------------------------------------    */
-;*    This module implements a pass that transform a statement into    */
+;*    This module implements a pass that transforms a statement into   */
 ;*    an assignment. It is used to compile attribute tilde statements. */
 ;*    -------------------------------------------------------------    */
 ;*    The caller is responsible of declaring the assigned var.         */
@@ -79,8 +79,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (assign! this::J2SSeq temp)
    (with-access::J2SSeq this (nodes)
-      (let ((l (last-pair nodes)))
-	 (set-car! l (assign! (car l) temp))))
+      (when (pair? nodes)
+	 (let ((l (last-pair nodes)))
+	    (set-car! l (assign! (car l) temp)))))
    this)
 
 ;*---------------------------------------------------------------------*/

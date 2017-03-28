@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 25 06:43:59 2017 (serrano)                */
+;*    Last change :  Mon Mar 27 19:19:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -375,7 +375,10 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (fixnums? x y)
    (cond-expand
-      (bigloo-c (pragma::bool "(((long)($1) & TAG_MASK) + ((long)($2) & TAG_MASK)) == (TAG_INT<<1)" x y))
+      ((and bigloo-c (or bint29 bint30 bint32))
+       (pragma::bool "(((long)($1) & TAG_MASK) + ((long)($2) & TAG_MASK)) == (TAG_INT<<1)" x y))
+      (bigloo-c
+       (pragma::bool "INTEGERP( $1 ) && INTEGERP( $2 )" x y))
       (else (and (fixnum? x) (fixnum? y)))))
 
 ;*---------------------------------------------------------------------*/
