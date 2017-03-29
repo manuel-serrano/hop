@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Mar 29 14:15:08 2017 (serrano)                */
+;*    Last change :  Wed Mar 29 16:00:57 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -350,7 +350,6 @@
 					(map (lambda (el)
 						(js-jsstring->string (car el)))
 					   (jsarray->list proto %this)))))))
-		      (_ (tprint "WS-CONSTRUCT path=" path))
 		      (svc (service :name path ()
 			      (let ((req (current-request)))
 				 (websocket-server-response req 0
