@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Mar 27 09:30:28 2017 (serrano)                */
+;*    Last change :  Wed Mar 29 08:42:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -35,6 +35,12 @@
 (define j2s-unresolved-del-workspace '%this)
 (define j2s-unresolved-get-workspace '%scope)
 (define j2s-unresolved-call-workspace '%this)
+
+;*---------------------------------------------------------------------*/
+;*    js-need-global? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-need-global? scope mode)
+   (not (and (eq? scope '%scope) (eq? mode 'hopscript))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-method ...                                                */
@@ -600,23 +606,15 @@
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
 		       `(js-decl-eval-put! %scope
 			   ',id ,value ,(strict-mode? mode) %this)
-		       `(begin
-			   (define ,ident ,value)
-;* 			   (js-bind! %this ,scope ',id                 */
-;* 			      :configurable #f                         */
-;* 			      :get (js-make-function %this             */
-;* 				      (lambda (%) ,ident)              */
-;* 				      1 ,fun-name)                     */
-;* 			      :set ,(when writable                     */
-;* 				       `(js-make-function %this        */
-;* 					   (lambda (% %v)              */
-;* 					      (set! ,ident %v))        */
-;* 					   2 ,fun-name)))              */
-			   (js-define %this ,scope ',id
-			      (lambda (%) ,ident)
-			      (lambda (% %v) (set! ,ident %v))
-			      %source
-			      ,(caddr loc))))))
+		       (if (js-need-global? scope mode)
+			   `(begin
+			       (define ,ident ,value)
+			       (js-define %this ,scope ',id
+				  (lambda (%) ,ident)
+				  (lambda (% %v) (set! ,ident %v))
+				  %source
+				  ,(caddr loc)))
+			   `(define ,ident ,value)))))
 	       ((memq scope '(letblock letvar))
 		(if ronly
 		    `(,(utype-ident ident utype conf) ,value)
@@ -855,10 +853,11 @@
 		       ,@(if (no-closure? this)
 			     '()
 			     `((define ,scmid
-				  (js-bind! %this ,scope ',id
-				     :configurable #f
-				     :value ,(make-function this)))))))
-		  
+				  ,(if (js-need-global? scope mode)
+				       `(js-bind! %this ,scope ',id
+					   :configurable #f
+					   :value ,(make-function this))
+				       (make-function this)))))))
 		  (else
 		   `(begin
 		       (define ,fastid
@@ -878,10 +877,11 @@
       (let ((scmid (j2s-decl-scheme-id this))
 	    (fastid (j2s-fast-id id)))
 	 (epairify-deep loc
-	    (if (memq scope '(global %scope))
+	    (if (and (memq scope '(global %scope)) (js-need-global? scope mode))
 		`(begin
-		    (define ,fastid ,(jssvc->scheme val id scmid mode return conf))
-		    (define ,scmid 
+		    (define ,fastid
+		       ,(jssvc->scheme val id scmid mode return conf))
+		    (define ,scmid
 		       (js-bind! %this ,scope ',id
 			  :configurable #f
 			  :writable #f

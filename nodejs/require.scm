@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Mar 27 10:20:52 2017 (serrano)                */
+;*    Last change :  Wed Mar 29 08:30:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -615,6 +615,7 @@
 (define socompile-worker-count 0)
 (define socompile-queue '())
 (define socompile-compiled '())
+(define socompile-incompile '())
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-dynamic-load ...                                             */
@@ -638,6 +639,8 @@
 	 (if (<fx socompile-worker-count (hop-sofile-max-workers))
 	     (begin
 		(set! socompile-worker-count (+fx 1 socompile-worker-count))
+		(set! socompile-queue (remq! e socompile-queue))
+		(set! socompile-incompile (cons (car e) socompile-incompile))
 		(thread-start! (make-compile-worker e)))
 	     (begin
 		(condition-variable-wait! socompile-condv socompile-mutex)
@@ -715,27 +718,40 @@
    proc)
 
 ;*---------------------------------------------------------------------*/
+;*    soworker-name ...                                                */
+;*---------------------------------------------------------------------*/
+(define soworker-name
+   (let ((count 0))
+      (lambda ()
+	 (set! count (+fx 1 count))
+	 (string-append "socompiler-worker-" (integer->string count)))))
+
+;*---------------------------------------------------------------------*/
 ;*    make-compile-worker ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (make-compile-worker e::pair)
    (instantiate::hopthread
-      (name "socompile-worker")
+      (name (soworker-name))
       (body (lambda ()
 	       (with-handler
 		  (lambda (e)
-			(tprint "************ SOCOMPILE EXN=" e)
-			(exception-notify e))
+		     (tprint "************ SOCOMPILE EXN=" e)
+		     (exception-notify e))
 		  (begin
-		     (nodejs-socompile (car e) (cdr e))
-		     (synchronize socompile-mutex
-			(set! socompile-worker-count
-			   (-fx socompile-worker-count 1))
-			(set! socompile-queue
-			   (remq! e socompile-queue))
-			(set! socompile-compiled
-			   (cons (car e) socompile-compiled))
-			(condition-variable-broadcast! socompile-condv))))))))
-		     
+		     (with-trace 'sorequire "make-compile-worker"
+			(trace-item "thread=" (current-thread))
+			(trace-item "e=" e)
+			(nodejs-socompile (car e) (cdr e))
+			(synchronize socompile-mutex
+			   (set! socompile-worker-count
+			      (-fx socompile-worker-count 1))
+			   (set! socompile-compiled
+			      (cons (car e) socompile-compiled))
+			   (set! socompile-incompile
+			      (remq! (car e) socompile-incompile))
+			   (condition-variable-broadcast! socompile-condv)))))))))
+
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-select-socompile ...                                      */
 ;*    -------------------------------------------------------------    */
@@ -759,14 +775,19 @@
 ;*    nodejs-socompile-queue-push ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-socompile-queue-push filename lang)
-   (synchronize socompile-mutex
-      (when (and (file-exists? filename)
-		 (not (member filename socompile-compiled))
-		 (not (assoc filename socompile-queue)))
-	 (set! socompile-queue
-	    (cons (econs filename lang (file-modification-time filename))
-	       socompile-queue)))
-      (condition-variable-broadcast! socompile-condv)))
+   (with-trace 'sorequire "nodejs-socompile-queue-push"
+      (synchronize socompile-mutex
+	 (trace-item "filename=" filename)
+	 (trace-item "socompile-queue=" (map car socompile-queue))
+	 (trace-item "socompile-compiled=" socompile-compiled)
+	 (when (and (file-exists? filename)
+		    (not (member filename socompile-compiled))
+		    (not (member filename socompile-incompile))
+		    (not (assoc filename socompile-queue)))
+	    (set! socompile-queue
+	       (cons (econs filename lang (file-modification-time filename))
+		  socompile-queue)))
+	 (condition-variable-broadcast! socompile-condv))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile ...                                             */
@@ -808,7 +829,7 @@
 			 (unregister-socompile-process! proc)
 			 (unless (=fx (process-exit-status proc) 0)
 			    estr))))))))
-
+   
    (define (dump-error cmd sopath msg)
       (display msg (current-error-port))
       (call-with-output-file (string-append sopath ".err")
@@ -816,7 +837,7 @@
 	    (display cmd op)
 	    (newline op)
 	    (display msg op))))
-
+   
    (define (make-ksucc sopath sopathtmp)
       (lambda ()
 	 (let ((o (string-append (prefix sopathtmp) ".o")))
@@ -829,53 +850,61 @@
 	 (when (file-exists? sopath) (delete-file sopath))
 	 (when (file-exists? sopathtmp) (delete-file sopathtmp))))
    
-   (let loop ()
-      (let ((tmp (synchronize socompile-mutex
-		    (cond
-		       ((hop-find-sofile filename)
-			=>
-			(lambda (x) x))
-		       ((member filename socompile-files)
-			(condition-variable-wait! socompile-condv socompile-mutex)
-			'loop)
-		       (else
-			(set! socompile-files (cons filename socompile-files))
-			'compile)))))
-	 (cond
-	    (socompile-ended #f)
-	    ((string? tmp) tmp)
-	    ((eq? tmp 'loop) (loop))
-	    (else
-	     (let* ((sopath (hop-sofile-path filename))
-		    (sopathtmp (hop-sofile-path
-				  (string-append "#"
-				     (prefix (basename filename)))))
-		    (cmd (format "~a ~a -y -v3 --js-no-module-main -o ~a ~a"
-			    (hop-hopc)
-			    filename sopathtmp
-			    (hop-hopc-flags)))
-		    (ksucc (make-ksucc sopath sopathtmp))
-		    (kfail (make-kfail sopath sopathtmp)))
-		(make-directories (dirname sopath))
-		(hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
-		(let ((msg (exec cmd ksucc kfail)))
-		   (unwind-protect
-		      (cond
-			 ((not msg)
-			  ;; compilation succeeded
-			  (ksucc))
-			 ((string? msg)
-			  ;; compilation failed
-			  (kfail)
-			  (hop-verb 3 (hop-color -1 -1 " COMPILE-ERROR")
-			     " " cmd "\n")
-			  (dump-error cmd sopath msg)
-			  'error))
-		      (synchronize socompile-mutex
-			 (unless socompile-ended
-			    (set! socompile-files
-			       (delete! filename socompile-files))
-			    (condition-variable-broadcast! socompile-condv)))))))))))
+   (with-trace 'sorequire "nodejs-socompile"
+      (trace-item "filename=" filename)
+      (let loop ()
+	 (let ((tmp (synchronize socompile-mutex
+		       (cond
+			  ((hop-find-sofile filename)
+			   =>
+			   (lambda (x) x))
+			  ((member filename socompile-files)
+			   (condition-variable-wait!
+			      socompile-condv socompile-mutex)
+			   'loop)
+			  (else
+			   (set! socompile-files (cons filename socompile-files))
+			   'compile)))))
+	    (trace-item "tmp=" tmp)
+	    (cond
+	       (socompile-ended #f)
+	       ((string? tmp) tmp)
+	       ((eq? tmp 'loop) (loop))
+	       (else
+		(let* ((sopath (hop-sofile-path filename))
+		       (sopathtmp (hop-sofile-path
+				     (string-append "#"
+					(prefix (basename filename)))))
+		       (cmd (format "~a ~a -y -v3 --js-no-module-main -o ~a ~a"
+			       (hop-hopc)
+			       filename sopathtmp
+			       (hop-hopc-flags)))
+		       (ksucc (make-ksucc sopath sopathtmp))
+		       (kfail (make-kfail sopath sopathtmp)))
+		   (make-directories (dirname sopath))
+		   (trace-item "sopath=" sopath)
+		   (trace-item "cmd=" cmd)
+		   (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
+		   (let ((msg (exec cmd ksucc kfail)))
+		      (trace-item "msg=" msg)
+		      (unwind-protect
+			 (cond
+			    ((not msg)
+			     ;; compilation succeeded
+			     (ksucc))
+			    ((string? msg)
+			     ;; compilation failed
+			     (kfail)
+			     (hop-verb 3 (hop-color -1 -1 " COMPILE-ERROR")
+				" " cmd "\n")
+			     (dump-error cmd sopath msg)
+			     'error))
+			 (synchronize socompile-mutex
+			    (unless socompile-ended
+			       (set! socompile-files
+				  (delete! filename socompile-files))
+			       (condition-variable-broadcast!
+				  socompile-condv))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
