@@ -11,6 +11,8 @@ export DYLD_LIBRARY_PATH;
 
 PATH=$BUILDBINDIR:$BUILDLIBDIR:$PATH;
 
+TMP=/tmp/$LOGNAME
+
 export PATH;
 
 rest=
@@ -66,6 +68,8 @@ success=0
 failure=0
 i=0
 
+mkdir -p $TMP
+
 run() {
   echo $1 | grep rc.js 2> /dev/null > /dev/null
   
@@ -73,17 +77,17 @@ run() {
     i=`expr $i + 1`
 
     echo -n "$i. $path ... "
-    echo "$i. $path ... " >> /tmp/TEST-HOPJS-ALL.out
+    echo "$i. $path ... " >> $TMP/TEST-HOPJS-ALL.out
     
     if [ "$verb " != " " ]; then
       echo ""
       echo -n "$hop --no-zeroconf $* ..."
     fi
-    $hop --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1 
+    $hop --no-zeroconf $* > $TMP/TEST-HOPJS.out 2>&1 
     lastres=$?
     
-    cat /tmp/TEST-HOPJS.out >> /tmp/TEST-HOPJS-ALL.out
-    echo "" >> /tmp/TEST-HOPJS-ALL.out
+    cat $TMP/TEST-HOPJS.out >> $TMP/TEST-HOPJS-ALL.out
+    echo "" >> $TMP/TEST-HOPJS-ALL.out
 
     if [ "$lastres" = "0" ]; then
       echo "ok.";
@@ -91,19 +95,19 @@ run() {
     else
       echo "failure !!!"
       if [ "$verb " != " " ]; then
-        cat /tmp/TEST-HOPJS.out
+        cat $TMP/TEST-HOPJS.out
       fi
       failure=`expr $failure + 1`
       if [ "$stoponfailure" = "yes" ]; then
 	exit 1
       fi
     fi
-    /bin/rm -f /tmp/TEST-HOPJS.out
+    /bin/rm -f $TMP/TEST-HOPJS.out
   fi
 }
 
-/bin/rm -f /tmp/TEST-HOPJS-ALL.out
-touch /tmp/TEST-HOPJS-ALL.out
+/bin/rm -f $TMP/TEST-HOPJS-ALL.out
+touch $TMP/TEST-HOPJS-ALL.out
 
 for path in noserv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then
