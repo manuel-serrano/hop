@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Mar 27 10:11:42 2017 (serrano)                */
+;*    Last change :  Wed Mar 29 14:32:34 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -288,13 +288,16 @@
 	       (js-object-put-name/cache! ,o ,prop ,v ,throw ,cache ,%this)
 	       (js-put! ,o ,prop ,v ,throw ,%this))
 	  e))
-      ((?- ?o (and ?prop ((kwote quote) ?-)) ?v ?throw ?cache (and (? symbol?) ?%this))
+      ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-)) ?v ?throw ?cache (and (? symbol?) ?%this))
        (let ((tmp (gensym 'tmp)))
 	  (e `(let ((,tmp ,v))
 		 (if (isa? ,o JsObject)
 		     (js-object-put-name/cache! ,o ,prop ,tmp ,throw ,cache ,%this)
 		     (js-put! ,o ,prop ,tmp ,throw ,%this)))
 	     e)))
+      ((?- ?o (and ?prop ((kwote quote) ?-)) ?v ?throw ?cache (and (? symbol?) ?%this))
+       (let ((tmp (gensym 'tmp)))
+	  (e `(let ((,tmp ,o)) (,(car x) ,tmp ,@(cddr x))) e)))
       (else
        (map (lambda (x) (e x e)) x))))
 
@@ -324,7 +327,7 @@
 			`(js-pcache-owner ,cache)
 			`(js-pcache-vindex ,cache)))))
 	  e))
-      ((?- ?o ?prop ?v ?throw ?cache ?%this)
+      ((?- (and (? symbol?) ?o) ?prop ?v ?throw ?cache ?%this)
        (e (expand/tmp v
 	     (lambda (tmp)
 		`(with-access::JsObject ,o ((omap cmap) elements)
@@ -332,6 +335,9 @@
 		       ,(set o prop tmp throw cache %this
 			   'index 'cmap 'pmap 'owner 'vindex)))))
 	  e))
+      ((?- ?o ?prop ?v ?throw ?cache ?%this)
+       (let ((tmp (gensym 'tmp)))
+	  (e `(let ((,tmp ,o)) (,(car x) ,tmp ,@(cddr x))) e)))
       (else
        (err x))))
 
@@ -346,7 +352,8 @@
 	      (begin
 		 (vector-set! elements ,cindx ,tmp)
 		 ,tmp)
-	      (js-object-put-name/cache-level2! ,@(cdr x)))))
+	      (js-object-put-name/cache-level2! ,o ,prop
+		 ,tmp ,throw ,cache ,%this))))
    
    (if (>= (bigloo-compiler-debug) 1)
        (map (lambda (x) (e x e)) x)
