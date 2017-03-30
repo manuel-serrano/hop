@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue Mar 21 22:17:14 2017 (serrano)                */
+;*    Last change :  Thu Mar 30 16:23:31 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -59,7 +59,7 @@
 	 (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) headers)
 	 (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) decls)
 	 (for-each (lambda (o) (j2s-update-ref! (j2s-letopt! o))) nodes)
-	 ;; toplevel lets optimization
+	 ;; toplevel let optimization
 	 (let ((lets '())
 	       (vars '()))
 	    (for-each (lambda (x)
@@ -72,6 +72,7 @@
 			    (else
 			     (set! vars (cons x vars)))))
 	       decls)
+	    (for-each (lambda (l) (tprint  "lets=" (j2s->list l))) lets)
 	    (when (pair? lets)
 	       ;; this modify nodes in place
 	       (set! nodes
@@ -230,10 +231,12 @@
 	 (with-access::J2SLetBlock this (nodes)
 	    (let loop ()
 	       (when (and (pair? nodes) (null? (cdr nodes))
-			  (isa? (car nodes) J2SBlock))
+			  (isa? (car nodes) J2SBlock)
+			  (not (isa? (car nodes) J2SLetBlock)))
 		  (with-access::J2SBlock (car nodes) ((ns nodes))
 		     (set! nodes ns))
-		  (loop))))))
+		  (loop))))
+	 (trace-item "this=" (j2s->list this))))
    
    (with-access::J2SLetBlock this (decls nodes)
       ;; start iterating over all the LetBlock statements to find
@@ -618,6 +621,8 @@
 			     ((null? used)
 			      ;; optimize this binding
 			      (let ((decl (init-decl init)))
+				 (tprint "OPT " 
+				    " decl=" (j2s->list decl))
 				 (with-access::J2SInit init (rsh)
 				    (with-access::J2SDeclInit decl (binder val)
 				       (set! val rhs)
@@ -628,7 +633,8 @@
 						    (expr init))))
 				    (liip (cdr inits) ndecls
 				       deps
-				       (cons stmtinit res)))))
+				       res))))
+;* 				       (cons stmtinit res)))))         */
 			     ((isa? rhs J2SFun)
 			      ;; optimize this binding but keep tracks
 			      ;; of its dependencies

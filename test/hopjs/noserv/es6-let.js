@@ -4,7 +4,7 @@
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
 /*    Last commit :  2015-12-27 [bffbda2] (Manuel Serrano)             */
-/*    Copyright   :  2015-16 Manuel Serrano                            */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 let construct                             */
 /*=====================================================================*/
@@ -574,3 +574,15 @@ function narrow() {
 
 console.log( "   narrow()" );
 assert.ok( narrow() == 3, "narrow" );
+
+function letopt( ast_node, type, children_interface ) {
+   for( let i in children_interface ) {
+      let res_childxxx = 34;
+
+      return 3;
+   }
+}
+
+console.log( "   letopt()" );
+assert.ok( letopt( false, true, { a: 1 } ) == 3, "letopt" );
+

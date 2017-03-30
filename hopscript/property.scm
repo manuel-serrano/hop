@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Mar 27 10:22:35 2017 (serrano)                */
+;*    Last change :  Thu Mar 30 19:08:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -623,24 +623,32 @@
 ;*    property. It calls on of the successXXX hooks when found.        */
 ;*---------------------------------------------------------------------*/
 (define-macro (jsobject-find o name foundinmap foundinprop notfound . loop)
+
+   (define (find obj name)
+      `(with-access::JsObject ,obj (cmap __proto__)
+	 (if cmap
+	     (jsobject-map-find ,obj ,name ,foundinmap
+		(lambda ()
+		   ,(if (pair? loop)
+			`(if (isa? __proto__ JsObject)
+			     (,(car loop) __proto__)
+			     (,notfound))
+			`(,notfound))))
+	     (jsobject-properties-find ,obj ,name ,foundinprop
+		(lambda ()
+		   ,(if (pair? loop)
+			`(if (isa? __proto__ JsObject)
+			     (,(car loop) __proto__)
+			     (,notfound))
+			`(,notfound)))))))
+
    (let ((obj (gensym 'o)))
       `(let ((,obj ,o))
-	  (with-access::JsObject ,obj (cmap __proto__)
-	     (if cmap
-		 (jsobject-map-find ,obj ,name ,foundinmap
-		    (lambda ()
-		       ,(if (pair? loop)
-			    `(if (isa? __proto__ JsObject)
-				 (,(car loop) __proto__)
-				 (,notfound))
-			    `(,notfound))))
-		 (jsobject-properties-find ,obj ,name ,foundinprop
-		    (lambda ()
-		       ,(if (pair? loop)
-			    `(if (isa? __proto__ JsObject)
-				 (,(car loop) __proto__)
-				 (,notfound))
-			    `(,notfound)))))))))
+	  ,(if (symbol? name)
+	       (find obj name)
+	       (let ((nm (gensym 'name)))
+		  `(let ((,nm ,name))
+		      ,(find obj nm)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-unmap! ...                                             */
@@ -1926,10 +1934,10 @@
 
    (with-access::JsObject o (cmap)
       (if cmap
-          (jsobject-map-find o name
-             update-mapped-object!
+	  (jsobject-map-find o name
+	     update-mapped-object!
 	     extend-mapped-object!)
-          (jsobject-properties-find o name
+	  (jsobject-properties-find o name
 	     update-properties-object!
 	     extend-properties-object!))))
 
