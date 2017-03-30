@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Thu Mar 30 16:23:31 2017 (serrano)                */
+;*    Last change :  Thu Mar 30 19:18:19 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -72,7 +72,6 @@
 			    (else
 			     (set! vars (cons x vars)))))
 	       decls)
-	    (for-each (lambda (l) (tprint  "lets=" (j2s->list l))) lets)
 	    (when (pair? lets)
 	       ;; this modify nodes in place
 	       (set! nodes
@@ -621,8 +620,6 @@
 			     ((null? used)
 			      ;; optimize this binding
 			      (let ((decl (init-decl init)))
-				 (tprint "OPT " 
-				    " decl=" (j2s->list decl))
 				 (with-access::J2SInit init (rsh)
 				    (with-access::J2SDeclInit decl (binder val)
 				       (set! val rhs)
