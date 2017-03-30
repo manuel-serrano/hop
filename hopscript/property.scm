@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 30 19:08:40 2017 (serrano)                */
+;*    Last change :  Thu Mar 30 20:32:36 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -14,6 +14,9 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_property
+
+   (export (glop x))
+   (extern (export glop "glop"))
    
    (library hop)
 
@@ -685,6 +688,9 @@
 	 (set! elements '#())))
    o)
 
+(define (glop x)
+   (tprint x))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-toname ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -694,6 +700,8 @@
 	 ((symbol? p)
 	  p)
 	 ((string? p)
+	  (if (string=? p "ADDRESS")
+	      (glop "ADDR..."))
 	  (string->symbol p))
 	 ((js-jsstring? p)
 	  (string->symbol (js-jsstring->string p)))
@@ -1439,6 +1447,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-put-jsobject! o p v throw extend::bool pcache %this)
 
+   (define name (js-toname p %this))
+   
    (define (invalidate-cache-method! v methods i)
       (when (and (isa? v JsFunction) (vector-ref methods i))
 	 (vector-set! methods i #f)
@@ -1592,13 +1602,12 @@
    
    (define (extend-properties-object!)
       (with-access::JsObject o (properties)
-	 (let* ((name (js-toname p %this))
-		(newdesc (instantiate::JsValueDescriptor
-			    (name name)
-			    (value v)
-			    (writable #t)
-			    (enumerable #t)
-			    (configurable #t))))
+	 (let ((newdesc (instantiate::JsValueDescriptor
+			   (name name)
+			   (value v)
+			   (writable #t)
+			   (enumerable #t)
+			   (configurable #t))))
 	    (js-define-own-property o name newdesc throw %this)
 	    v)))
    
@@ -1619,14 +1628,13 @@
 	     ;; 8.12.5, step 6
 	     (extend-properties-object!)))))
 
-   (let ((name (js-toname p %this)))
-      (add-cache-miss! 'put name)
-      (let loop ((obj o))
-	 (jsobject-find obj name
-	    update-mapped-object!
-	    update-properties-object!
-	    extend-object!
-	    loop))))
+   (add-cache-miss! 'put name)
+   (let loop ((obj o))
+      (jsobject-find obj name
+	 update-mapped-object!
+	 update-properties-object!
+	 extend-object!
+	 loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/debug! ...                                                */
@@ -1758,7 +1766,7 @@
 	   (writable #t)
 	   (enumerable #t)
 	   (configurable #t))
-
+   
    (define (validate-cache-method! v methods i)
       (when (isa? v JsFunction)
 	 (vector-set! methods i #t)))
@@ -1766,7 +1774,7 @@
    (define (accessor-property? get set)
       (or (and get (not (eq? get (js-undefined))))
 	  (and set (not (eq? set (js-undefined))))))
-
+   
    (define (assert-accessor-property! get set)
       (cond
 	 ((not (or (isa? get JsFunction) (eq? get (js-undefined))))
@@ -1776,7 +1784,7 @@
 	 ((and set (not (eq? set (js-undefined))) (not (isa? set JsFunction)))
 	  (js-raise-type-error %this
 	     (format "wrong setter for property \"~a\", ~~a" name) set))))
-
+   
    (define (plain-data-property? flags)
       (=fx flags (property-flags #t #t #t)))
    
@@ -1811,7 +1819,7 @@
 	  (with-access::JsObject o (elements)
 	     (vector-set! elements i value)
 	     value))))
-
+   
    (define (extend-mapped-object!)
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
@@ -1931,7 +1939,7 @@
 			 (configurable configurable)))))
 	 (js-define-own-property o name desc #f %this)
 	 (js-undefined)))
-
+   
    (with-access::JsObject o (cmap)
       (if cmap
 	  (jsobject-map-find o name
