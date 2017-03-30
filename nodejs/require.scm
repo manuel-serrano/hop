@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Mar 29 17:28:09 2017 (serrano)                */
+;*    Last change :  Thu Mar 30 15:12:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -786,8 +786,8 @@
 		    (not (assoc filename socompile-queue)))
 	    (set! socompile-queue
 	       (cons (econs filename lang (file-modification-time filename))
-		  socompile-queue)))
-	 (condition-variable-broadcast! socompile-condv))))
+		  socompile-queue))
+	    (condition-variable-broadcast! socompile-condv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-socompile ...                                             */
