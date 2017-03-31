@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Mar 31 08:24:35 2017 (serrano)                */
+;*    Last change :  Fri Mar 31 16:04:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -39,9 +39,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-need-global? ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-need-global? id scope mode)
-   ;; module is special as it is needed by the nodejs-require function
-   (or (eq? id 'module) (not (and (eq? scope '%scope) (eq? mode 'hopscript)))))
+(define (js-need-global? decl::J2SDecl scope mode)
+   (or (not (j2s-let-opt? decl))
+       (not (and (eq? scope '%scope) (eq? mode 'hopscript)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-method ...                                                */
@@ -607,7 +607,7 @@
 		   (if (and (not (isa? this J2SDeclExtern)) (in-eval? return))
 		       `(js-decl-eval-put! %scope
 			   ',id ,value ,(strict-mode? mode) %this)
-		       (if (js-need-global? id scope mode)
+		       (if (js-need-global? this scope mode)
 			   `(begin
 			       (define ,ident ,value)
 			       (js-define %this ,scope ',id
@@ -854,7 +854,7 @@
 		       ,@(if (no-closure? this)
 			     '()
 			     `((define ,scmid
-				  ,(if (js-need-global? id scope mode)
+				  ,(if (js-need-global? this scope mode)
 				       `(js-bind! %this ,scope ',id
 					   :configurable #f
 					   :value ,(make-function this))
@@ -878,7 +878,8 @@
       (let ((scmid (j2s-decl-scheme-id this))
 	    (fastid (j2s-fast-id id)))
 	 (epairify-deep loc
-	    (if (and (memq scope '(global %scope)) (js-need-global? id scope mode))
+	    (if (and (memq scope '(global %scope))
+		     (js-need-global? this scope mode))
 		`(begin
 		    (define ,fastid
 		       ,(jssvc->scheme val id scmid mode return conf))
