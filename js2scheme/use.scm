@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Feb 26 18:13:40 2017 (serrano)                */
+;*    Last change :  Fri Mar 31 16:23:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -105,7 +105,8 @@
 			     (or (>fx usecnt 0)
 				 (and (isa? d J2SDeclInit)
 				      (with-access::J2SDeclInit d (val)
-					 (isa? val J2SSvc)))
+					 (or (not (isa? val J2SLiteral))
+					     (isa? val J2SArray))))
 				 (begin
 				    (set! keep #t)
 				    (when (isa? d J2SDeclInit)
