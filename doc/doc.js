@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Mon Jan 16 18:31:40 2017 (serrano)                */
+/*    Last change :  Sun Apr  2 18:02:52 2017 (serrano)                */
 /*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */

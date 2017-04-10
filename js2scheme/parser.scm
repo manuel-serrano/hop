@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Feb 27 20:35:13 2017 (serrano)                */
+;*    Last change :  Fri Apr  7 18:13:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -897,6 +897,7 @@
 					     (id (cdr id))
 					     (writable #f)
 					     (ronly #t)
+					     (expression #t)
 					     (scope 'global)
 					     (val fun))))
 		      fun))
@@ -966,6 +967,7 @@
 				    (id (cdr id))
 				    (writable #f)
 				    (ronly #t)
+				    (expression #t)
 				    (scope  'global)
 				    (val fun))))
 	     fun))
@@ -2356,7 +2358,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Propagate the JavaScript mode into the funtion definitions       */ 
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hopscript-mode-fun! this::J2SNode mode)
+(define-walk-method (hopscript-mode-fun! this::J2SNode mode::symbol)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

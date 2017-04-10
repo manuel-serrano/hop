@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Mar 27 09:27:21 2017 (serrano)                */
+;*    Last change :  Mon Apr  3 07:43:49 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1141,12 +1141,10 @@
 	 ((isa? callee J2SRef)
 	  (with-access::J2SRef callee (decl)
 	     (cond
-		((isa? decl J2SDeclFunCnst)
-		 ;;(typing callee env fun fix)
-		 (with-access::J2SDeclFunCnst decl (val)
-		    (range-fun val args env)))
+;* 		((isa? decl J2SDeclFunCnst)                            */
+;* 		 (with-access::J2SDeclFunCnst decl (val)               */
+;* 		    (range-fun val args env)))                         */
 		((isa? decl J2SDeclFun)
-		 ;;(typing callee env fun fix)
 		 (with-access::J2SDeclFun decl (ronly val)
 		    (if ronly
 			(range-fun val args env)

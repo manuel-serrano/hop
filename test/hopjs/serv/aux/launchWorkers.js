@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Wed Nov 23 16:27:32 2016 (serrano)                */
-/*    Copyright   :  2015-16 Inria                                     */
+/*    Last change :  Sat Apr  8 12:37:42 2017 (serrano)                */
+/*    Copyright   :  2015-17 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    A generic launcher for stress test workers                       */
 /*=====================================================================*/
@@ -67,7 +67,6 @@ function runTest( args ) {
    
    // Create workers
    for ( var i = 0; i < numClients; i++ ) {
-      console.log( "I=", i, " clients=", clients );
       // console.log( 'start client', i );
       var client = new Worker( clientModule );
       clients.push( client );

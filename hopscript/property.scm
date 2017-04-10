@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 30 20:32:36 2017 (serrano)                */
+;*    Last change :  Sat Apr  8 10:03:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -15,9 +15,6 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_property
 
-   (export (glop x))
-   (extern (export glop "glop"))
-   
    (library hop)
 
    (option  (register-srfi! 'cache-level2)
@@ -45,6 +42,7 @@
 	   (js-make-pcache ::int)
 	   (js-invalidate-pcaches-pmap!)
 	   (inline js-pcache-ref ::obj ::int)
+	   (inline js-pcache-cmap ::JsPropertyCache)
 	   
 	   (js-names->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
@@ -79,6 +77,7 @@
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-object-get-name/cache ::JsObject ::obj ::JsPropertyCache ::JsGlobalObject)
+	   (js-object-get-name/cache-level1 ::JsObject ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-object-get-name/cache-level2 ::JsObject ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (generic js-get-name/cache-miss ::JsObject ::obj ::JsPropertyCache ::obj ::JsGlobalObject)
 	   (js-global-object-get-name ::JsObject ::symbol ::obj ::JsGlobalObject)
@@ -100,6 +99,7 @@
 	   (js-put/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 	   (js-put-name/cache! ::obj ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 	   (js-object-put-name/cache! ::JsObject ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
+	   (js-object-put-name/cache-level1! ::JsObject ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 	   (js-object-put-name/cache-level2! ::JsObject ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
 ;* 	   (js-this-put-name/cache! ::JsObject ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject) */
 	   (js-object-put-name/cache-miss! ::JsObject ::obj ::obj ::bool ::JsPropertyCache ::JsGlobalObject)
@@ -135,6 +135,8 @@
 	   (js-define ::JsGlobalObject ::JsObject
 	      ::symbol ::procedure ::obj ::obj ::obj)
 	   
+	   (js-method-call-name/cache ::JsGlobalObject ::obj ::obj
+	      ::JsPropertyCache ::JsPropertyCache . args)
 	   (js-object-method-call-name/cache ::JsGlobalObject ::JsObject ::obj
 	      ::JsPropertyCache ::JsPropertyCache . args)
 	   
@@ -188,8 +190,6 @@
 	      ::JsPropertyCache ::JsPropertyCache ::pair-nil)
 	   
 	   (js-call/cache ::JsGlobalObject obj ::JsPropertyCache this . args)
-	   (js-call-name/cache ::JsGlobalObject ::JsObject ::obj
-	      ::JsPropertyCache ::JsPropertyCache . args)
 
 	   (inline js-vindex-max::long)
 	   (js-get-vindex::long ::JsGlobalObject)
@@ -322,6 +322,15 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-pcache-ref pcache index)
    (vector-ref pcache index))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-cmap ...                                               */
+;*    -------------------------------------------------------------    */
+;*    !!! Overriden in property_expd.sch                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-pcache-cmap pcache)
+   (with-access::JsPropertyCache pcache (cmap)
+      cmap))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pache-invalidate! ...                                         */
@@ -688,9 +697,6 @@
 	 (set! elements '#())))
    o)
 
-(define (glop x)
-   (tprint x))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-toname ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -700,8 +706,6 @@
 	 ((symbol? p)
 	  p)
 	 ((string? p)
-	  (if (string=? p "ADDRESS")
-	      (glop "ADDR..."))
 	  (string->symbol p))
 	 ((js-jsstring? p)
 	  (string->symbol (js-jsstring->string p)))
@@ -1245,12 +1249,14 @@
 (define (js-object-get-name/cache o::JsObject
 	   name::obj cache::JsPropertyCache %this::JsGlobalObject)
    (js-object-get-name/cache o name cache %this))
- 
-;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-level2 ...                              */
-;*    -------------------------------------------------------------    */
-;*    !!! Overriden by a macro in property.sch                         */
-;*---------------------------------------------------------------------*/
+
+(define (js-object-get-name/cache-level1 o::JsObject
+	   name::obj cache::JsPropertyCache %this::JsGlobalObject)
+   ;; rewritten by macro expansion
+   (with-access::JsObject o ((omap cmap))
+      (let ((%omap omap))
+	 (js-object-get-name/cache-level1 o name cache %this))))
+
 (define (js-object-get-name/cache-level2 o::JsObject
 	   name::obj cache::JsPropertyCache %this::JsGlobalObject)
    ;; rewritten by macro expansion
@@ -1479,7 +1485,7 @@
 
    (define (update-mapped-object! obj i)
       (with-access::JsObject obj (cmap elements)
-	 (with-access::JsConstructMap cmap (nextmap methods vtable vlen)
+	 (with-access::JsConstructMap cmap (nextmap methods vtable vlen names)
 	    (let ((el-or-desc (vector-ref elements i)))
 	       (cond
 		  ((isa? el-or-desc JsAccessorDescriptor)
@@ -1531,7 +1537,7 @@
 			  (extend-object!)
 			  ;; 8.12.4, step 8.b
 			  (reject "Read-only property")))))))))
-   
+
    (define (extend-mapped-object!)
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
@@ -1558,6 +1564,7 @@
 			 (restore-cmap-transition! cmap restore)
 			 (loop)))
 		     (else
+		      
 		      ;; create a new map
 		      (let ((nextmap (extend-cmap cmap name)))
 			 (with-access::JsConstructMap nextmap (methods)
@@ -1572,7 +1579,7 @@
 			       (js-elements-push/ctor! ctor elements index v)))
 			 (set! cmap nextmap)
 			 v))))))))
-   
+
    (define (update-properties-object! obj desc)
       (cond
 	 ((isa? desc JsAccessorDescriptor)
@@ -1628,6 +1635,12 @@
 	     ;; 8.12.5, step 6
 	     (extend-properties-object!)))))
 
+   (assert (o p)
+      (with-access::JsObject o (elements cmap)
+	 (or (not cmap)
+	     (with-access::JsConstructMap cmap (names)
+		(>=fx (vector-length elements) (vector-length names))))))
+
    (add-cache-miss! 'put name)
    (let loop ((obj o))
       (jsobject-find obj name
@@ -1675,53 +1688,17 @@
    ;; rewritten by macro expansion
    (js-object-put-name/cache! o prop v throw pcache %this))
 
+(define (js-object-put-name/cache-level1! o::JsObject prop::obj v::obj throw::bool pcache::JsPropertyCache %this)
+   ;; rewritten by macro expansion
+   (with-access::JsObject o ((omap cmap))
+      (let ((%omap omap))
+	 (js-object-put-name/cache-level1! o prop v throw pcache %this))))
+
 (define (js-object-put-name/cache-level2! o::JsObject prop::obj v::obj throw::bool pcache::JsPropertyCache %this)
    ;; rewritten by macro expansion
    (with-access::JsObject o ((omap cmap))
       (let ((%omap omap))
 	 (js-object-put-name/cache-level2! o prop v throw pcache %this))))
-
-;*    (with-access::JsObject o ((omap cmap) elements)                  */
-;*       (with-access::JsPropertyCache pcache (cmap pmap index owner vindex) */
-;* 	 (let ((%omap omap))                                           */
-;* 	    (cond                                                      */
-;* 	       ((eq? cmap %omap)                                       */
-;* 		[assert (pcache) (isa? cmap JsConstructMap)]           */
-;* 		(with-access::JsObject o (elements)                    */
-;* 		   (vector-set! elements index v)                      */
-;* 		   v))                                                 */
-;* 	       ((eq? pmap %omap)                                       */
-;* 		[assert (pcache) (isa? pmap JsConstructMap)]           */
-;* 		(if (>=fx index 0)                                     */
-;* 		    (begin                                             */
-;* 		       [assert (pcache) (isa? cmap JsConstructMap)]    */
-;* 		       [assert (pcache)                                */
-;* 		          (let ((osz (cmap-size omap))                 */
-;* 				(csz (cmap-size cmap)))                */
-;* 			     (= (+ 1 osz) csz))]                       */
-;* 		       [assert (prop pcache)                           */
-;*                           (<fx (pmap-index pcache)(vector-length elements))] */
-;* 		       (vector-set! elements index v)                  */
-;* 		       (set! omap cmap)                                */
-;* 		       v)                                              */
-;* 		    (with-access::JsObject owner (elements)            */
-;* 		       (let ((desc (vector-ref elements (-fx (negfx index) 1)))) */
-;* 			  (js-property-value owner desc %this)))))     */
-;* 	       (%omap                                                  */
-;* 		(with-access::JsConstructMap %omap (vlen vtable)       */
-;* 		   (cond                                               */
-;* 		      ((and (<fx vindex vlen)                          */
-;* 			    (pair? (vector-ref vtable vindex)))        */
-;* 		       (let ((index (car (vector-ref vtable vindex)))  */
-;* 			     (cmap (cdr (vector-ref vtable vindex))))  */
-;* 			  (vector-set! elements index v)               */
-;* 			  (set! omap cmap)                             */
-;* 			  v))                                          */
-;* 		      (else                                            */
-;* 		       (js-object-put-name/cache-miss! o prop v throw  */
-;* 			  pcache %this)))))                            */
-;* 	       (else                                                   */
-;* 		(js-put-jsobject! o prop v throw #t pcache %this))))))) */
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    js-this-put-name/cache! ...                                      *} */
@@ -2455,9 +2432,9 @@
 	     (js-apply %this obj this args))))))
    
 ;*---------------------------------------------------------------------*/
-;*    js-call-name/cache ...                                           */
+;*    js-method-call-name/cache ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-call-name/cache %this::JsGlobalObject obj::JsObject name::obj
+(define (js-method-call-name/cache %this::JsGlobalObject obj::obj name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache . args)
    (if (isa? obj JsObject)
        (apply js-object-method-call-name/cache %this

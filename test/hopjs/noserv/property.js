@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Sat Mar  4 06:49:45 2017 (serrano)                */
+/*    Last change :  Sat Apr  8 08:05:33 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
@@ -310,4 +310,30 @@ eq( SETX( o, 3 ), 18, "proto set" );
 eq( SETX( o, 3 ), 18, "proto set2" );
 delete p.xxx;
 eq( SETX( o, 3 ), 19, "after delete" );
+   
+/*---------------------------------------------------------------------*/
+/*    Caches                                                           */
+/*---------------------------------------------------------------------*/
+function setCache( o ) {
+   o.z = 10;
+}
+
+function Root() {
+   this.a = 1;
+   this.b = 1;
+   this.c = 1;
+   this.d = 1;
+}
+
+function bugPutCache() {
+   var o1 = new Root();
+   var o2 = new Root();
+
+   setCache( o1 );
+   setCache( o2 );
+
+   return o1.z == o2.z;
+}
+
+assert.ok( bugPutCache, "put cache" );
    

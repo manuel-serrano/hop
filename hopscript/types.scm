@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Mar 14 07:41:39 2017 (serrano)                */
+;*    Last change :  Fri Apr  7 19:23:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -436,7 +436,10 @@
 	 (display #\: port)
 	 (display #\space port)
 	 (if (memq name '(__proto__ elements cmap))
-	     (display (typeof (get-value obj)) port)
+	     (let ((val (get-value obj)))
+		(if (vector? val)
+		    (display (format "vector[~a]" (vector-length val)) port)
+		    (display (typeof val) port)))
 	     (print-slot (get-value obj) port))
 	 (display #\] port)))
 

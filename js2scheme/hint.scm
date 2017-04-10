@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Mar 27 09:41:48 2017 (serrano)                */
+;*    Last change :  Mon Apr  3 07:42:36 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -75,18 +75,21 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-add-hint! decl::J2SDecl types::pair-nil)
    (with-access::J2SDecl decl (hint itype)
-      (when (or (eq? itype 'unknown)
-		(eq? itype 'any)
-		(and (eq? itype 'number)
-		     (or (memq 'integer types) (memq 'index types))))
-	 (for-each (lambda (type)
-		      [assert (type) (symbol? type)]
-		      (unless (memq type '(unknown any))
-			 (let ((c (assq type hint)))
-			    (if (pair? c)
-				(set-cdr! c (+fx 1 (cdr c)))
-				(set! hint (cons (cons type 1) hint))))))
-	    types))))
+      (cond
+	 ((or (eq? itype 'unknown)
+	      (eq? itype 'any)
+	      (and (eq? itype 'number)
+		   (or (memq 'integer types) (memq 'index types))))
+	  (for-each (lambda (type)
+		       [assert (type) (symbol? type)]
+		       (unless (memq type '(unknown any))
+			  (let ((c (assq type hint)))
+			     (if (pair? c)
+				 (set-cdr! c (+fx 1 (cdr c)))
+				 (set! hint (cons (cons type 1) hint))))))
+	     types))
+	 ((and (not (eq? itype '(unknown any number))) (null? hint))
+	  (set! hint (list (cons itype 1)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SNode ...                                           */
@@ -380,9 +383,9 @@
 	 ((isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
 	     (cond
-		((isa? decl J2SDeclFunCnst)
-		 (with-access::J2SDeclFunCnst decl ((fun val))
-		    (j2s-hint-fun fun args)))
+;* 		((isa? decl J2SDeclFunCnst)                            */
+;* 		 (with-access::J2SDeclFunCnst decl ((fun val))         */
+;* 		    (j2s-hint-fun fun args)))                          */
 		((isa? decl J2SDeclFun)
 		 (with-access::J2SDeclFun decl (ronly (fun val))
 		    (when ronly
@@ -749,8 +752,11 @@
 		   (with-access::J2SDeclFun hinted (val)
 		      (with-access::J2SFun val (generator)
 			 (cond
-			    ((or (equal? (map j2s-type args) types)
-				 (equal? (map normalize-expr-type args) types))
+			    ((every (lambda (a t)
+				       (or (eq? t 'unknown)
+					   (eq? (j2s-type a) t)
+					   (eq? normalize-expr-type a) t))
+				args types)
 			     (with-access::J2SFun val (idthis)
 				;; adjust the usecnt count
 				(with-access::J2SDecl hinted (usecnt)
@@ -763,12 +769,12 @@
 					   (type 'function)
 					   (decl hinted))))))
 			    ((every (lambda (a t)
-				       (let ((tya (j2s-type a)))
-					  (or (memq tya '(any unknown))
-					      (eq? tya t)
-					      (eq? t 'unknown)
-					      (or (and (memq tya '(number integer))
-						       (eq? t 'index))))))
+				       (or (eq? t 'unknown)
+					   (let ((tya (j2s-type a)))
+					      (or (memq tya '(any unknown))
+						  (eq? tya t)
+						  (or (and (memq tya '(number integer))
+							   (eq? t 'index)))))))
 				args types)
 			     this)
 			    (else

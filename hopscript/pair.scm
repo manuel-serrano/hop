@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Wed Feb  8 16:15:44 2017 (serrano)                */
+;*    Last change :  Thu Apr  6 16:23:45 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -205,7 +205,7 @@
       (else
        (if throw
 	   (js-raise-type-error %this
-	      "[[PUT]], read-only or unbound ~~s" (js-toname prop %this))
+	      "[[PUT]], read-only or unbound ~s" (js-toname prop %this))
 	   v))))
       
 ;*---------------------------------------------------------------------*/

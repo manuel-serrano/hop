@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Thu Mar 23 06:58:37 2017 (serrano)                */
+/*    Last change :  Sat Apr  8 07:37:04 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -46,7 +46,7 @@ assert.deepEqual( no, { foo_a: o.foo_a,
 			foo_nonenum: o.foo_nonenum,
 			gee_a: o.gee_a,
 			gee_b: o.gee_b } );
-assert.equal( no.foo_nonenum, 50 );
+assert.equal( no.foo_nonenum, 50, "defineProperty" );
 
 /*---------------------------------------------------------------------*/
 /*    value of an assignment                                           */
@@ -59,7 +59,7 @@ var val = (function() {
    return aaa;
 }());
 
-assert.strictEqual( val instanceof Function, true );
+assert.strictEqual( val instanceof Function, true, "instanceof" );
 
 
 /*---------------------------------------------------------------------*/
@@ -68,17 +68,17 @@ assert.strictEqual( val instanceof Function, true );
 function Ffoo1() { Ffoo1 = 5; }
 
 Ffoo1();
-assert.strictEqual( Ffoo1, 5 );
+assert.strictEqual( Ffoo1, 5, "mutable function.1" );
 
 var Ffoo2 = function Ffoo2() { Ffoo2 = 4; }
 var bck = Ffoo2;
 
 Ffoo2();
-assert.strictEqual( Ffoo2, bck );
+assert.strictEqual( Ffoo2, bck, "mutable function.2" );
 
 function Ffoo3() {
    Ffoo3 = 3;
-   assert.strictEqual( Ffoo3, 3 );
+   assert.strictEqual( Ffoo3, 3, "inner mutable function.1" );
 
 }
 
@@ -87,11 +87,11 @@ assert.strictEqual( Ffoo3, 3 );
 
 var Ffoo4 = function Ffoo4() {
    Ffoo4 = 3;
-   assert.ok( Ffoo4 instanceof Function );
+   assert.ok( Ffoo4 instanceof Function, "inner mutable function.2" );
 }
 
 Ffoo4();
-assert.ok( Ffoo4 instanceof Function );
+assert.ok( Ffoo4 instanceof Function, "mutable function.3" );
 
 var Ffoo5_aux = 0;
 var Ffoo5 = function Ffoo5( n ) {
@@ -101,7 +101,7 @@ var Ffoo5 = function Ffoo5( n ) {
 
 }
 Ffoo5( 1 );
-assert.strictEqual( Ffoo5_aux, 6 );
+assert.strictEqual( Ffoo5_aux, 6, "mutable function.4" );
 
 /*---------------------------------------------------------------------*/
 /*    switches                                                         */
