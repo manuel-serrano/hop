@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Mar 27 09:36:29 2017 (serrano)                */
+;*    Last change :  Thu Apr  6 18:33:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -47,13 +47,26 @@
 	 ((or (char? this) (eq? this #unspecified))
 	  this)
 	 ((struct? this)
-	  this)
+	  (let ((o (make-struct (struct-key this) (struct-length this) #f)))
+	     (let loop ((i 0))
+		(if (=fx i (struct-length this))
+		    o
+		    (begin
+		       (struct-set! o i (info (struct-ref this i)))
+		       (loop (+fx i 1)))))))
+	 ((isa? this J2SString)
+	  (with-access::J2SString this (val)
+	     (format "[[J2SString:~a]]" val)))
+	 ((isa? this J2SDecl)
+	  (with-access::J2SDecl this (id)
+	     (format "[[J2SDecl:~a]]" id)))
 	 (else
 	  (format "[[~a]]" (typeof this)))))
    
    (with-access::J2SNode this (%info)
-      (if (or (>= (bigloo-debug) 3)
-	      (string-contains (or (getenv "HOPTRACE") "") "j2s:info"))
+      (if (and (not (eq? %info #unspecified))
+	       (or (>= (bigloo-debug) 3)
+		   (string-contains (or (getenv "HOPTRACE") "") "j2s:info")))
 	  `(:%info ,(info %info))
 	  '())))
 
@@ -190,7 +203,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SSeq)
    (with-access::J2SSeq this (nodes)
-      `(,@(call-next-method) ,@(map j2s->list nodes))))
+      `(,@(call-next-method)
+	  ,@(dump-info this)
+	  ,@(map j2s->list nodes))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLetBlock ...                                      */
@@ -198,6 +213,7 @@
 (define-method (j2s->list this::J2SLetBlock)
    (with-access::J2SLetBlock this (decls nodes)
       `(,(string->symbol (typeof this))
+	,@(dump-info this)
 	,(map j2s->list decls) ,@(map j2s->list nodes))))
 
 ;*---------------------------------------------------------------------*/
@@ -453,7 +469,20 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SIf)
    (with-access::J2SIf this (test then else)
-      `(,@(call-next-method) ,(j2s->list test)
+      `(,@(call-next-method)
+	  ,@(dump-info this)
+	  ,(j2s->list test)
+	  ,(j2s->list then)
+	  ,(j2s->list else) )))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SPrecache ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SPrecache)
+   (with-access::J2SPrecache this (accesses test then else)
+      `(,(class-name (object-class this))
+	  ,@(dump-info this)
+	  ,(map j2s->list accesses)
 	  ,(j2s->list then)
 	  ,(j2s->list else) )))
 

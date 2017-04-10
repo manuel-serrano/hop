@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Mar 27 09:26:14 2017 (serrano)                */
+;*    Last change :  Thu Apr  6 16:20:30 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -63,10 +63,13 @@
 	   (final-class J2SExprStmt::J2SExpr
 	      stmt::J2SStmt)
 	   
-	   (final-class J2SIf::J2SStmt
+	   (class J2SIf::J2SStmt
 	      test::J2SExpr
 	      then::J2SStmt
 	      else::J2SStmt)
+
+	   (final-class J2SPrecache::J2SIf
+	      (accesses::pair-nil read-only (default '())))
 	   
 	   (final-class J2SVarDecls::J2SStmt
 	      decls::pair)
@@ -243,8 +246,7 @@
 
 	   (class J2SDeclFunType::J2SDeclFun)
 
-	   (class J2SDeclFunCnst::J2SDecl
-	      (val::J2SExpr read-only (info '("notraverse"))))
+	   (class J2SDeclFunCnst::J2SDeclFun)
 
 	   (class J2SDeclSvc::J2SDeclFun)
 
@@ -320,11 +322,13 @@
 	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f))
+	      (clevel::long (default 100))
 	      obj::J2SExpr
 	      field::J2SExpr)
 	   
 	   (final-class J2SCall::J2SExpr
 	      (cache (default #f))
+	      (clevel::long (default 100))
 	      fun::J2SExpr
 	      (protocol (default 'direct))
 	      (this (default #unspecified))
@@ -851,6 +855,7 @@
 (gen-walks J2SDeclFunCnst)
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
+(gen-walks J2SPrecache (accesses) test then else)
 (gen-walks J2SCond test then else)
 (gen-walks J2SDollar node)
 (gen-walks J2SComprehension (iterables) test expr)

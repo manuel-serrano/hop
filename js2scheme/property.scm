@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Mar 27 09:57:06 2017 (serrano)                */
+;*    Last change :  Mon Apr  3 07:43:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -174,8 +174,8 @@
 	    ((isa? decl J2SDeclFun)
 	     (with-access::J2SDecl decl (ronly)
 		(when ronly decl)))
-	    ((isa? decl J2SDeclFunCnst)
-	     decl)
+;* 	    ((isa? decl J2SDeclFunCnst)                                */
+;* 	     decl)                                                     */
 	    ((j2s-let-opt? decl)
 	     (with-access::J2SDeclInit decl (usage id val)
 		(when (isa? val J2SFun)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Mar 27 09:57:52 2017 (serrano)                */
+;*    Last change :  Fri Apr  7 19:45:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -31,6 +31,7 @@
 	   __js2scheme_property
 	   __js2scheme_constrsize
 	   __js2scheme_ctor
+	   __js2scheme_propcce
 	   __js2scheme_constant
 	   __js2scheme_tyflow
 	   __js2scheme_range
@@ -153,6 +154,7 @@
       j2s-constant-stage
       j2s-tyflow-stage
       j2s-property-stage
+      j2s-propcce-stage
       j2s-range-stage
       j2s-ctor-stage
       j2s-uint32-stage
@@ -319,7 +321,10 @@
 		     (unless (memq :optim-cast o)
 			(set! o (cons* :optim-cast #t o)))
 		     (unless (memq :optim-ctor o)
-			(set! o (cons* :optim-ctor #t o))))
+			(set! o (cons* :optim-ctor #t o)))
+;* 		     (unless (memq :optim-cce o)                       */
+;* 			(set! o (cons* :optim-cce #t o)))              */
+		     )
 		  o)))
       (let ((v (or (getenv "HOPCFLAGS") "")))
 	 (cond

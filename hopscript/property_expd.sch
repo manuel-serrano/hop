@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Mar 29 14:32:34 2017 (serrano)                */
+;*    Last change :  Sat Apr  8 10:02:09 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -210,6 +210,19 @@
 	  (js-object-get-name/cache-match-expander x e1 ref))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-get-name/cache-level1-expander ...                     */
+;*---------------------------------------------------------------------*/
+(define (js-object-get-name/cache-level1-expander x e)
+   
+   (define (ref o prop cache %this cindex ccmap cpmap cowner)
+      `(with-access::JsObject ,o (elements)
+	  (vector-ref elements ,cindex)))
+   
+   (if (>= (bigloo-compiler-debug) 1)
+       (map (lambda (x) (e x e)) x)
+       (js-object-get-name/cache-match-expander x e ref)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-level2-expander ...                     */
 ;*---------------------------------------------------------------------*/
 (define (js-object-get-name/cache-level2-expander x e)
@@ -371,10 +384,25 @@
 	     (lambda (x) (map (lambda (x) (e x e) x)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-put-name/cache-level1-expander ...                     */
+;*---------------------------------------------------------------------*/
+(define (js-object-put-name/cache-level1-expander x e)
+   
+   (define (set o prop tmp throw cache %this cindx ccmap cpmap cowner vindx)
+      `(begin
+	  (vector-set! elements ,cindx ,tmp)
+	  ,tmp))
+   
+   (if (>= (bigloo-compiler-debug) 1)
+       (map (lambda (x) (e x e)) x)
+       (js-object-put-name/cache-match-expander x e set
+	  (lambda (x) (map (lambda (x) (e x e) x))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-level2-expander ...                     */
 ;*---------------------------------------------------------------------*/
 (define (js-object-put-name/cache-level2-expander x e)
-   
+
    (define (set o prop tmp throw cache %this cindx ccmap cpmap cowner vindx)
       `(cond
 	  ((eq? ,cpmap %omap)
@@ -382,7 +410,10 @@
 	       (begin
 		  ;; there can be no overflow here, as if there one an
 		  ;; overfow, it occurs during the previous cache miss
-		  (vector-set! elements ,cindx ,tmp)
+		  (let ((%vec elements))
+		     (if (<fx ,cindx (vector-length %vec))
+			 (vector-set! %vec ,cindx ,tmp)
+			 (set! elements (js-elements-push! %vec ,cindx ,tmp))))
 		  (set! omap ,ccmap)
 		  ,tmp)
 	       (with-access::JsObject ,cowner (elements)
@@ -432,7 +463,7 @@
 			,%this
 			,fun ,this ,@args)))))))
 
-   (if (>= (bigloo-compiler-debug) 1)
+   (if (>= (bigloo-compiler-debug) 2)
        (map (lambda (x) (e x e)) x)
        (match-case x
 	  ((?- ?%this (and (? symbol?) ?fun)
@@ -452,7 +483,7 @@
 ;*    js-method-call-name/cache-expander ...                           */
 ;*---------------------------------------------------------------------*/
 (define (js-method-call-name/cache-expander x e)
-   (if (>= (bigloo-compiler-debug) 1)
+   (if (>= (bigloo-compiler-debug) 2)
        (map (lambda (x) (e x e)) x)
        (match-case x
 	  ((?- ?%this (and (? symbol?) ?obj) ?prop ?ccache ?ocache . ?args)
@@ -548,7 +579,7 @@
 		    (,method ,obj ,@args)
 		    (js-object-method-call-name/cache-level2 ,@(cdr x)))))))
    
-   (if (>= (bigloo-compiler-debug) 1)
+   (if (>= (bigloo-compiler-debug) 2)
        (map (lambda (x) (e x e)) x)
        (let ((e1 (cond-expand
 		    (cache-level2

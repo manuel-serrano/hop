@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Wed Nov 23 16:26:52 2016 (serrano)                */
-/*    Copyright   :  2015-16 Inria                                     */
+/*    Last change :  Sat Apr  8 12:39:41 2017 (serrano)                */
+/*    Copyright   :  2015-17 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    simple worker to stress test services                            */
 /*=====================================================================*/
@@ -18,15 +18,18 @@ function test( id, num ) {
    if ( num == 0 ) {
       postMessage( { messageType: 'done' });
    } else {
-      console.log( 'client #%s: call #%s', id, num );
+      console.log( 'client #%s: call #%s url=', id, num, toTest( id, num ) );
       try {
 	 toTest( id, num ).post( function( result ) {
 	    test( id, num - 1 );
-	 }, { fail: function( error ) {
-	    console.log( 'Service invocation failed for client #%s, #%s',
-			 id, num );
-	    postMessage( { messageType: 'failure' } );
-	 }});
+	 }, {
+	    fail: function( error ) {
+	       console.log( "error=", error );
+#:tprint( error );
+	       console.log( 'Service invocation failed for client #%s, #%s',
+			    id, num );
+	       postMessage( { messageType: 'failure' } );
+	    }});
       }
       catch( e ) {
 	 console.log( 'client %s cannot post at %s', id, num );

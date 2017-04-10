@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Mar 27 16:47:50 2017 (serrano)                */
+;*    Last change :  Wed Apr  5 08:00:16 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -255,6 +255,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-ctor #t (hopc-j2s-flags))))
 	    (("-fno-ctor" (help "Disable fast constructor init sequences"))
 	     (hopc-j2s-flags-set! (cons* :optim-ctor #f (hopc-j2s-flags))))
+	    (("-fcce" (help "Enable common inline caching (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-cce #t (hopc-j2s-flags))))
+	    (("-fno-cce" (help "Disable common inline caching"))
+	     (hopc-j2s-flags-set! (cons* :optim-cce #f (hopc-j2s-flags))))
 	    (("-fliterals" (help "Enable literals optimization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #t (hopc-j2s-flags))))
 	    (("-fno-literals" (help "Disable literals optimization"))

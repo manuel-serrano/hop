@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Wed Mar 22 17:02:47 2017 (serrano)                */
+;*    Last change :  Thu Apr  6 16:20:00 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -246,6 +246,14 @@
        (then ,then)
        (else ,else)))
 
+(define-macro (J2SPrecache accesses then else)
+   `(instantiate::J2SPrecache
+       (loc loc)
+       (accesses ,accesses)
+       (test (J2SBool #t))
+       (then ,then)
+       (else ,else)))
+
 (define-macro (J2SCond test then else)
    `(instantiate::J2SCond
        (loc loc)
@@ -307,3 +315,10 @@
        (loc loc)
        (expr ,expr)
        (type ,totype)))
+
+(define-macro (J2SMeta debug optim stmt)
+   `(instantiate::J2SMeta
+       (loc loc)
+       (optim ,optim)
+       (debug ,debug)
+       (stmt ,stmt)))

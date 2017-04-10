@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Mar 21 08:05:01 2017 (serrano)                */
+;*    Last change :  Fri Apr  7 18:45:31 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -662,10 +662,11 @@
    (define (find-property id::obj env::pair-nil)
       (find (lambda (prop)
 	       (with-access::J2SPropertyInit prop (name)
-		  (with-access::J2SLiteralValue name (val)
-		     (equal? id val))))
+		  (when (isa? name J2SLiteralValue)
+		     (with-access::J2SLiteralValue name (val)
+			(equal? id val)))))
 	 env))
-
+   
    (define (property-error id msg loc)
       (raise
 	 (instantiate::&io-parse-error
@@ -674,10 +675,10 @@
 	    (obj id)
 	    (fname (cadr loc))
 	    (location (caddr loc)))))
-
+   
    (define (proc? o)
       (isa? o J2SFun))
-
+   
    (with-access::J2SObjInit this (inits)
       (let loop ((inits inits)
 		 (ninits '()))
@@ -687,36 +688,38 @@
 		this)
 	     (with-access::J2SPropertyInit (car inits) (name loc)
 		(walk! (car inits) env mode withs wenv lang)
-		(with-access::J2SLiteralValue name (val)
-		   (let ((old (find-property val ninits)))
-		      (cond
-			 ((not old)
-			  (loop (cdr inits) (cons (car inits) ninits)))
-			 ((not (eq? (object-class old) (object-class (car inits))))
-			  (property-error name
-			     "duplicate data property in object literal not allowed in strict mode"
-			     loc))
-			 ((isa? (car inits) J2SAccessorPropertyInit)
-			  (with-access::J2SAccessorPropertyInit (car inits) (get set)
-			     (with-access::J2SAccessorPropertyInit old
-				   ((oget get) (oset set))
-				(if (or (and (proc? oget) (proc? oset))
-					(and (proc? get) (proc? set))
-					(and (proc? oget) (proc? get))
-					(and (proc? oset) (proc? set)))
-				    (property-error name
-				       "duplicate data property in object literal not allowed in strict mode"
-				       loc)
-				    (begin
-				       (unless (proc? oset) (set! oset set))
-				       (unless (proc? oget) (set! oget get))
-				       (loop (cdr inits) ninits))))))
-			 ((eq? mode 'strict)
-			  (property-error name
-			     "duplicate data property in object literal not allowed in strict mode"
-			     loc))
-			 (else
-			  (loop (cdr inits) (cons (car inits) ninits)))))))))))
+		(if (isa? name J2SLiteralValue)
+		    (with-access::J2SLiteralValue name (val)
+		       (let ((old (find-property val ninits)))
+			  (cond
+			     ((not old)
+			      (loop (cdr inits) (cons (car inits) ninits)))
+			     ((not (eq? (object-class old) (object-class (car inits))))
+			      (property-error name
+				 "duplicate data property in object literal not allowed in strict mode"
+				 loc))
+			     ((isa? (car inits) J2SAccessorPropertyInit)
+			      (with-access::J2SAccessorPropertyInit (car inits) (get set)
+				 (with-access::J2SAccessorPropertyInit old
+				       ((oget get) (oset set))
+				    (if (or (and (proc? oget) (proc? oset))
+					    (and (proc? get) (proc? set))
+					    (and (proc? oget) (proc? get))
+					    (and (proc? oset) (proc? set)))
+					(property-error name
+					   "duplicate data property in object literal not allowed in strict mode"
+					   loc)
+					(begin
+					   (unless (proc? oset) (set! oset set))
+					   (unless (proc? oget) (set! oget get))
+					   (loop (cdr inits) ninits))))))
+			     ((eq? mode 'strict)
+			      (property-error name
+				 "duplicate data property in object literal not allowed in strict mode"
+				 loc))
+			     (else
+			      (loop (cdr inits) (cons (car inits) ninits))))))
+		    (loop (cdr inits) (cons (car inits) ninits))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SOctalNumber ...                                    */
