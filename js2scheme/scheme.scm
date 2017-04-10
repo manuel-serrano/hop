@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Apr  8 07:57:09 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 16:06:58 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -744,13 +744,12 @@
 ;*    j2s-function-src ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (j2s-function-src loc val::J2SFun conf)
-   (when (or (<fx (config-get conf :optim 0) 2)
-	     (config-get conf :force-location))
-      (match-case loc
-	 ((at ?path ?start)
-	  (let ((m (config-get conf :mmap-src)))
-	     `'(,loc . ,(when (mmap? m)
-			   (with-access::J2SFun val (body)
+   (with-access::J2SFun val (src body)
+      (when src
+	 (match-case loc
+	    ((at ?path ?start)
+	     (let ((m (config-get conf :mmap-src)))
+		`'(,loc . ,(when (mmap? m)
 			      (with-access::J2SBlock body (endloc)
 				 (match-case endloc
 				    ((at ?- ?end)
@@ -802,7 +801,7 @@
 		  (generator
 		   `(js-make-function %this
 		       ,fastid ,len ,(symbol->string! id)
-		       :src ,(j2s-function-src loc val conf)
+		       :src ,src
 		       :rest ,(eq? vararg 'rest)
 		       :arity ,arity
 		       :minlen ,minlen

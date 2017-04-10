@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Thu Apr  6 18:36:12 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 16:01:28 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property common caching elimination optimization                 */
@@ -363,7 +363,7 @@
 			  (j2s-cachelevel1! (j2s-alpha this '() '()))
 			  (J2SMeta 0 0 (j2s-uncache! this)))))
 		(if (isa? this J2SBlock)
-		    (J2SBlock pc)
+		    (J2SBlock/w-endloc pc)
 		    pc)))
 	  (call-default-walker))))
 

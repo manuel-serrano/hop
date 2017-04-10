@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Apr  7 18:13:21 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 15:50:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -765,7 +765,7 @@
 	    (generator
 	     (parse-node-error "Wrong async function declaration" fun))
 	    (else
-	     (with-access::J2SNode body (loc)
+	     (with-access::J2SBlock body (loc endloc)
 		(let ((gen (instantiate::J2SFun
 			      (thisp thisp)
 			      (loc loc)
