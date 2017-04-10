@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Mar 28 08:04:27 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 20:09:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1883,6 +1883,20 @@
 		   0 '@@iterator
 		   :prototype (js-undefined))
 	 :enumerable #f))
+
+   ;; fill
+   (define (array-prototype-fill this::obj value start end)
+      (let* ((o (js-toobject %this this))
+	     (len::uint32 (js-touint32 (js-get-length o #f %this) %this)))
+	 (let loop ((i #u32:0))
+	    (when (<u32 i len)
+	       (js-put! o i value #f %this)
+	       (loop (+u32 i #u32:1))))))
+   
+   (js-bind! %this js-array-prototype 'fill
+      :value (js-make-function %this array-prototype-fill 1 'fill
+		:prototype (js-undefined))
+      :enumerable #f)   
 
    ;; arrayComprehension
    ;; http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions

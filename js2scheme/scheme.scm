@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Apr 10 16:06:58 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 21:07:36 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -4368,11 +4368,11 @@
    (define (aref/w-cache this::J2SAccess)
       (with-access::J2SAccess this (obj field)
 	 (case (j2s-type field)
-	    ((index uint29)
+	    ((index)
 	     `(js-array-index-ref ,(j2s-scheme obj mode return conf hint 'array)
 		 ,(j2s-scheme field mode return conf hint 'uint32)
 		 %this))
-	    ((ufixnum)
+	    ((ufixnum uint29)
 	     `(js-array-index-ref ,(j2s-scheme obj mode return conf hint 'array)
 		 ,(js-fixnum->uint32 (j2s-scheme field mode return conf hint 'uint32))
 		 %this))
