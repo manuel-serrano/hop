@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Apr  3 07:45:21 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 17:03:02 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -514,14 +514,11 @@
       (with-access::J2SDecl decl (ronly id key)
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val) (escape-fun val)))
-;* 	 (when (isa? decl J2SDeclFunCnst)                              */
-;* 	    (with-access::J2SDeclFunCnst decl (val) (escape-fun val))) */
 	 (let ((etyp (env-lookup env decl)))
 	    (when (eq? etyp 'unknown)
-	       (when (or (and ronly (isa? decl J2SDeclFun))
-			 ;;(isa? decl J2SDeclFunCnst)
-			 )
-		  (set! etyp 'function)))
+	       (when (and ronly (isa? decl J2SDeclInit))
+		  (with-access::J2SDeclInit decl (vtype)
+		     (set! etyp vtype))))
 	    (expr-type-set! this env fix etyp)))))
 
 ;*---------------------------------------------------------------------*/
