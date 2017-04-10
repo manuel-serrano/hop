@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Mar 31 07:44:33 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 15:52:08 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -167,7 +167,7 @@
    
    (define (split-letblock! this::J2SLetBlock)
       (with-trace 'j2s-letopt "split-letblock!"
-	 (with-access::J2SLetBlock this (decls nodes loc)
+	 (with-access::J2SLetBlock this (decls nodes loc endloc)
 	    (let loop ((ns nodes)
 		       (stmts '()))
 	       (cond

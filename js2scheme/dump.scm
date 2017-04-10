@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Apr  6 18:33:52 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 15:47:09 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -132,6 +132,16 @@
 	   (string-contains  (or (getenv "HOPTRACE") "") "j2s:key"))
        `(:key ,key)
        '()))
+
+;*---------------------------------------------------------------------*/
+;*    dump-loc ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (dump-loc loc #!optional (key :loc))
+   (if (and loc
+	    (or (>= (bigloo-debug) 2)
+		(string-contains (or (getenv "HOPTRACE") "") "j2s:loc")))
+       `(,key ,loc)
+       '()))
       
 ;*---------------------------------------------------------------------*/
 ;*    j2s-dump-decls ...                                               */
@@ -202,8 +212,20 @@
 ;*    j2s->list ::J2SSeq ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SSeq)
-   (with-access::J2SSeq this (nodes)
+   (with-access::J2SSeq this (nodes loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
+	  ,@(dump-info this)
+	  ,@(map j2s->list nodes))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SBlock ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SBlock)
+   (with-access::J2SBlock this (nodes loc endloc)
+      `(,(string->symbol (typeof this))
+	  ,@(dump-loc loc)
+	  ,@(dump-loc endloc :endloc)
 	  ,@(dump-info this)
 	  ,@(map j2s->list nodes))))
 
@@ -211,8 +233,10 @@
 ;*    j2s->list ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLetBlock)
-   (with-access::J2SLetBlock this (decls nodes)
+   (with-access::J2SLetBlock this (decls nodes loc endloc)
       `(,(string->symbol (typeof this))
+	,@(dump-loc loc)
+	,@(dump-loc endloc :endloc)
 	,@(dump-info this)
 	,(map j2s->list decls) ,@(map j2s->list nodes))))
 

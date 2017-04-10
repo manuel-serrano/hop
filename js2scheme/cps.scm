@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Wed Mar 22 17:02:55 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 16:01:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -243,7 +243,7 @@
 (define (make-stmt-kont loc stmt::J2SStmt)
    (let* ((name (gensym '%kstmt))
 	  (arg (J2SParam '(ref) (gensym '%karg)))
-	  (kfun (J2SFun #f (list arg) (J2SBlock stmt))))
+	  (kfun (J2SFun #f (list arg) (J2SBlock/w-endloc stmt))))
       (J2SLetOpt '(call) name kfun)))
    
 ;*---------------------------------------------------------------------*/
@@ -505,7 +505,7 @@
 					  k pack kbreaks kcontinues ktry)))
 				 this k)
 			      pack kbreaks kcontinues ktry)))
-		    (J2SBlock* (reverse! (cons ys stmts)))))))
+		    (J2SBlock*/w-endloc (reverse! (cons ys stmts)))))))
 	 (else
 	  (map! cps-fun! exprs)
 	  (kcall k this)))))
@@ -561,7 +561,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (cps this::J2SLetBlock k pack kbreaks kcontinues ktry)
    (assert-kont k KontStmt this)
-   (with-access::J2SLetBlock this (loc decls nodes)
+   (with-access::J2SLetBlock this (loc endloc decls nodes)
       (let loop ((wdecls decls)
 		 (pdecls '())
 		 (sdecls '()))
@@ -621,7 +621,7 @@
       (assert-kont k KontStmt this)
       (let* ((name (gensym '%kif))
 	     (kfun (J2SFun name '()
-		      (J2SBlock (kcall k (J2SNop))))))
+		      (J2SBlock/w-endloc (kcall k (J2SNop))))))
 	 (let ((decl (J2SLetOpt '(call) name kfun)))
 ;* 	    (with-access::J2SFun kfun ((fdecl decl))                   */
 ;* 	       (set! fdecl decl))                                      */
@@ -653,9 +653,9 @@
 		     (callt (make-kont-fun-call loc decl))
 		     (calle (make-kont-fun-call loc decl))
 		     (kt (lambda (b)
-			    (J2SBlock b (J2SReturn #t callt))))
+			    (J2SBlock/w-endloc b (J2SReturn #t callt))))
 		     (ke (lambda (b)
-			   (J2SBlock b (J2SReturn #t calle))))
+			   (J2SBlock/w-endloc b (J2SReturn #t calle))))
 		     (kif (duplicate::J2SIf this
 			     (then (cps then
 				      (KontStmt kt this k)
@@ -724,12 +724,13 @@
 	  (let* ((name (gensym '%kfor))
 		 (bname (gensym '%kbreak))
 		 (cname (gensym '%kcontinue))
-		 (block (J2SBlock))
+		 (block (J2SBlock/w-endloc))
 		 (for (J2SFun name '() block))
 		 (decl (J2SLetOpt '(call) name for))
 		 (break (J2SFun name '()
-			   (J2SBlock (kcall k (J2SStmtExpr (J2SUndefined))))))
-		 (fbody (J2SBlock
+			   (J2SBlock/w-endloc
+			      (kcall k (J2SStmtExpr (J2SUndefined))))))
+		 (fbody (J2SBlock/w-endloc
 			   (J2SSeq
 			      (J2SStmtExpr incr)
 			      (%J2STail (J2SCall (J2SRef decl))))))
@@ -740,8 +741,9 @@
 			      kcontinues ktry)))
 		 (bdecl (J2SLetOpt '(call) bname break))
 		 (cdecl (J2SLetOpt '(call) cname conti))
-		 (then (J2SBlock body (%J2STail (J2SCall (J2SRef cdecl)))))
-		 (stop (J2SBlock (%J2STail (J2SCall (J2SRef bdecl)))))
+		 (then (J2SBlock/w-endloc body
+			  (%J2STail (J2SCall (J2SRef cdecl)))))
+		 (stop (J2SBlock/w-endloc (%J2STail (J2SCall (J2SRef bdecl)))))
 		 (node (J2SIf test then stop)))
 	     (with-access::J2SBlock block (nodes)
 		(set! nodes
@@ -792,7 +794,7 @@
 		 (for (J2SFor (J2SUndefined)
 			 (J2SBinary '< (J2SRef idx) (J2SRef len))
 			 (J2SPostfix '++ (J2SRef idx) (J2SUndefined))
-			 (J2SBlock
+			 (J2SBlock/w-endloc
 			    (J2SStmtExpr
 			       (J2SAssig lhs
 				  (J2SAccess (J2SRef keys) (J2SRef idx))))
@@ -818,19 +820,21 @@
 	     (let* ((name (gensym '%kwhile))
 		    (bname (gensym '%kbreak))
 		    (cname (gensym '%kcontinue))
-		    (block (J2SBlock))
+		    (block (J2SBlock/w-endloc))
 		    (while (J2SFun name '() block))
 		    (decl (J2SLetOpt '(call) name while))
 		    (break (J2SFun bname '()
-			      (J2SBlock
+			      (J2SBlock/w-endloc
 				 (kcall k (J2SStmtExpr (J2SUndefined))))))
-		    (fbody (J2SBlock
+		    (fbody (J2SBlock/w-endloc
 			      (J2SReturn #t (J2SCall (J2SRef decl)))))
 		    (conti (J2SFun cname '() fbody))
 		    (bdecl (J2SLetOpt '(call) bname break))
 		    (cdecl (J2SLetOpt '(call) cname conti))
-		    (then (J2SBlock body (%J2STail (J2SCall (J2SRef cdecl)))))
-		    (else (J2SBlock (%J2STail (J2SCall (J2SRef bdecl)))))
+		    (then (J2SBlock/w-endloc body
+			     (%J2STail (J2SCall (J2SRef cdecl)))))
+		    (else (J2SBlock/w-endloc
+			     (%J2STail (J2SCall (J2SRef bdecl)))))
 		    (node (J2SIf test then else)))
 		(with-access::J2SBlock block (nodes)
 		   (set! nodes
@@ -860,12 +864,12 @@
 		    (bname (gensym '%kbreak))
 		    (cname (gensym '%kcontinue))
 		    (tname (gensym '%ktmp))
-		    (block (J2SBlock))
+		    (block (J2SBlock/w-endloc))
 		    (while (J2SFun name '() block))
 		    (decl (J2SLetOpt '(call) name while))
 		    (declv (J2SLetOpt '(ref) tname (J2SBool #t)))
 		    (conti (J2SFun name '()
-			      (cps (J2SBlock
+			      (cps (J2SBlock/w-endloc
 				      (J2SIf (J2SCond test
 						(J2SRef declv)
 						(J2SBool #f))
@@ -875,12 +879,13 @@
 				 pack kbreaks kcontinues ktry)))
 		    (cdecl (J2SLetOpt '(call) cname conti))
 		    (break (J2SFun name '()
-			      (J2SBlock
+			      (J2SBlock/w-endloc
 				 (J2SStmtExpr
 				    (J2SAssig (J2SRef declv) (J2SBool #f)))
 				 (%J2STail (J2SCall (J2SRef cdecl))))))
 		    (bdecl (J2SLetOpt '(call) bname break))
-		    (else (J2SBlock (%J2STail (J2SCall (J2SRef bdecl)))))
+		    (else (J2SBlock/w-endloc
+			     (%J2STail (J2SCall (J2SRef bdecl)))))
 		    (sbody (J2SSeq body (%J2STail (J2SCall (J2SRef cdecl)))))
 		    (body (cps sbody
 			     (KontStmt kid this k) kid
@@ -1007,7 +1012,7 @@
       (let* ((name (gensym '%kcond))
 	     (arg (J2SParam '(call ref) (gensym '%arg)))
 	     (kfun (J2SFun name (list arg)
-		      (J2SBlock (kcall k (J2SRef arg))))))
+		      (J2SBlock/w-endloc (kcall k (J2SRef arg))))))
 	 (J2SLetOpt '(call) name kfun)))
    
    (define (make-kont-fun-call loc decl expr)
@@ -1050,21 +1055,21 @@
    
    (define (Catch loc declc param)
       (J2SCatch param
-	 (J2SBlock
+	 (J2SBlock/w-endloc
 	    (%J2STail
 	       (J2SCall (J2SRef declc) (J2SRef param))))))
 
    (define (CatchFinally loc declc param)
       (J2SCatch param
-	 (J2SBlock
+	 (J2SBlock/w-endloc
 	    (%J2STail
 	       (J2SCall (J2SRef declc) (J2SNumber 1) (J2SRef param))))))
    
    (define (cps-try-body this k pack kbreaks kcontinues param declc)
       (with-access::J2SSeq this (loc)
-	 (J2SBlock
+	 (J2SBlock/w-endloc
 	    (cps this k (lambda (n)
-			   (J2STry (J2SBlock (pack n))
+			   (J2STry (J2SBlock/w-endloc (pack n))
 			      (Catch loc declc param)))
 	       kbreaks kcontinues declc))))
 
@@ -1099,7 +1104,7 @@
 	      (let* ((cname (gensym '%kcatch))
 		     (catch (with-access::J2SCatch catch (param body)
 			       (J2SFun cname (list param)
-				  (J2SBlock
+				  (J2SBlock/w-endloc
 				     (cps body
 					k pack kbreaks kcontinues ktry)))))
 		     (declc (J2SLetOpt '(call) cname catch))
@@ -1114,7 +1119,7 @@
 		 (paramf (J2SParam '(ref) (gensym '%excf)))
 		 (paramt (J2SParam '(ref) (gensym '%exct)))
 		 (final (J2SFun fname (list paramt paramf)
-			   (J2SBlock
+			   (J2SBlock/w-endloc
 			      (cps (SeqFinally loc finally paramt paramf)
 				 k pack kbreaks kcontinues ktry))))
 		 (declf (J2SLetOpt '(call ref) fname final))
@@ -1130,14 +1135,14 @@
 		    (paramf (J2SParam '(ref)  (gensym '%excf)))
 		    (paramt (J2SParam '(ref) (gensym '%exct)))
 		    (final (J2SFun fname (list paramt paramf)
-			      (J2SBlock 
+			      (J2SBlock/w-endloc
 				 (cps (SeqFinally loc finally paramt paramf)
 				    k pack kbreaks kcontinues ktry))))
 		    (declf (J2SLetOpt '(call ref) fname final))
 		    (cname (gensym '%kcatch))
 		    (eparam (J2SParam '(ref)  (gensym '%exc)))
 		    (catch (J2SFun cname (list param)
-			      (cps (J2SBlock
+			      (cps (J2SBlock/w-endloc
 				      (J2STry cbody (J2SNop)
 					 (%J2STail
 					    (J2SCall (J2SRef declf)
@@ -1179,7 +1184,7 @@
 	     body
 	     (J2SIf (J2SBinary 'OR
 		       (J2SRef tmp) (J2SBinary '=== (J2SRef key) expr))
-		(J2SBlock
+		(J2SBlock/w-endloc
 		   (J2SStmtExpr (J2SAssig (J2SRef tmp) (J2SBool #t)))
 		   body)
 		(J2SNop)))))
@@ -1220,8 +1225,8 @@
 	     (if need-bind-exit-break
 		 (let* ((bname (gensym '%kbreak))
 			(break (J2SFun bname '()
-				  (J2SBlock
-				     (J2SBlock
+				  (J2SBlock/w-endloc
+				     (J2SBlock/w-endloc
 					(kcall k
 					   (J2SStmtExpr (J2SUndefined)))))))
 			(bdecl (J2SLetOpt '(call) bname break)))

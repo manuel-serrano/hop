@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Apr  6 16:20:30 2017 (serrano)                */
+;*    Last change :  Mon Apr 10 16:06:23 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -157,6 +157,7 @@
 	      (thisp (default #f))
 	      (params::pair-nil (default '()))
 	      (constrsize::int (default 3))
+	      (src::bool (default #t))
 	      body::J2SBlock)
 	   
 	   (class J2SSvc::J2SFun
