@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Feb  4 09:23:47 2017 (serrano)                */
+#*    Last change :  Thu Apr 13 07:58:22 2017 (serrano)                */
 #*    Copyright   :  2006-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -59,6 +59,7 @@ POPULATION = Makefile \
   hopjs/noserv/es6-generator-mdn.js \
   hopjs/noserv/es6-generator-kangax.js \
   hopjs/noserv/es6-rest.js \
+  hopjs/noserv/es6-array.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \
   hopjs/noserv/parserFailure1.js \

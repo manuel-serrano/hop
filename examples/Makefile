@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Oct 29 08:41:00 2016 (serrano)                */
-#*    Copyright   :  2006-16 Manuel Serrano                            */
+#*    Last change :  Thu Apr 13 12:47:29 2017 (serrano)                */
+#*    Copyright   :  2006-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -110,6 +110,7 @@ POPULATION = Makefile \
   md/md.js md/markdown.hss md/tex.hss md/README.md md/example.json \
   mdtag/mdtag.js mdtag/README.md mdtag/example.json \
   syslog/README.md syslog/syslog.js syslog/example.json \
+  systime/README.md systime/systime.js systime/example.json \
   examples/doc.js examples/doc.wiki examples/example.json examples/examples.hss \
   examples/examples.js examples/libs/bootstrap/css/bootstrap-theme.css \
   examples/libs/bootstrap/css/bootstrap-theme.css.map \

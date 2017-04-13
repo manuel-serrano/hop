@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Apr 10 21:07:36 2017 (serrano)                */
+;*    Last change :  Thu Apr 13 08:17:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -95,7 +95,9 @@
 	("push" js-array-push array (any) %this)
 	("push" js-array-maybe-push any (any) %this)
 	("pop" js-array-pop array () %this)
-	("pop" js-array-maybe-pop any () %this))))
+	("pop" js-array-maybe-pop any () %this)
+	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this)
+	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache ...                                     */
