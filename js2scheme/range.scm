@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Apr  3 07:43:49 2017 (serrano)                */
+;*    Last change :  Thu Apr 13 09:06:42 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -154,8 +154,6 @@
 		  (multiple-value-bind (_ env)
 		     (range* decls env fix)
 		     (range* nodes env fix)))
-;* 	       (for-each (lambda (n) (range n (empty-env) fix)) decls) */
-;* 	       (for-each (lambda (n) (range n (empty-env) fix)) nodes) */
 	       (unless (or (=fx (fix-stamp fix) ostamp)
 			   (and (>fx *dump-stop* 0)
 				(>=fx (fix-stamp fix) *dump-stop*)))
@@ -813,8 +811,12 @@
 (define-walk-method (range this::J2SRef env::pair-nil fix::struct)
    (with-access::J2SRef this (decl type)
       (if (type-number? type)
-	  (with-access::J2SDecl decl (%info)
+	  (with-access::J2SDecl decl (%info ronly)
 	     (let ((intv (env-lookup env decl)))
+		(when ronly
+		   (with-access::J2SDecl decl (id %info)
+		      (when (and (interval? %info) (not (interval? intv)))
+			 (set! intv %info))))
 		(if intv
 		    (node-interval-set! this env fix intv)
 		    (return %info env))))

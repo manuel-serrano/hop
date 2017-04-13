@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Sun Oct  2 20:26:30 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Fri Apr 14 17:47:20 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
@@ -16,6 +16,7 @@ var hop = process.binding( "hop" );
 exports.hostname = hop.hostname;
 exports.version = hop.version;
 exports.__defineGetter__( 'port', function() { return hop.port(); } );
+exports.standalone = hop.standalone;
 
 /*---------------------------------------------------------------------*/
 /*    Services                                                         */
@@ -94,6 +95,7 @@ exports.user = hop.modulesDir + "/user";
 exports.hss = hop.modulesDir + "/hss";
 exports.markdown = hop.modulesDir + "/markdown";
 exports.syslog = hop.modulesDir + "/syslog";
+exports.systime = hop.modulesDir + "/systime";
 
 Object.seal( exports );
 Object.freeze( exports );

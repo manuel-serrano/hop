@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Fri Sep  9 07:57:02 2016 (serrano)                */
-#*    Copyright   :  2004-16 Manuel Serrano                            */
+#*    Last change :  Fri Apr 14 06:23:43 2017 (serrano)                */
+#*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
 #*=====================================================================*/
@@ -360,7 +360,7 @@ hop-debug.js: hop-debug.scm ../runtime/sourcemap.sch
 	$(call compile3,$(HOPC),--no-use-strict $(BJFLAGS),$(HFLAGS),$(BLFLAGS),-c,$< -o $@)
 
 hop-builtin-serializers.js: $(BUILDETCDIR)/mkserializer.hop
-	$(call compile,$(HOP),--no-autoload --no-cache,--eval "(hop-load-afile \".afile\")" -q --no-server,$< > $@) || ($(RM) -f $@; exit 1)
+	($(call compile,$(BIGLOO),-suffix hop ,-lib-dir $(BUILDLIBDIR), -static-all-bigloo $<) && a.out > $@ && $(RM) -f a.out $(BUILDETCDIR)/mkserializer.o) || ($(RM) -f $@; exit 1)
 
 #*---------------------------------------------------------------------*/
 #*    backends                                                         */

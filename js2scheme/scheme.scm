@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Apr 10 21:07:36 2017 (serrano)                */
+;*    Last change :  Tue Apr 18 11:08:08 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -95,7 +95,9 @@
 	("push" js-array-push array (any) %this)
 	("push" js-array-maybe-push any (any) %this)
 	("pop" js-array-pop array () %this)
-	("pop" js-array-maybe-pop any () %this))))
+	("pop" js-array-maybe-pop any () %this)
+	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this)
+	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache ...                                     */
@@ -547,10 +549,10 @@
 	       (define-pcache pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
 	       `(define %pcache (js-make-pcache ,pcache-size))
+	       '(hopjs-standalone-set! #t)
 	       `(define %this (nodejs-new-global-object))
 	       `(define %source ,path)
 	       '(define %resource (dirname %source))
-	       
 	       `(define (main args)
 		   (define %worker
 		      (js-init-main-worker! %this #f nodejs-new-global-object))
@@ -3830,8 +3832,6 @@
 	 ((isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (ronly)
 	     (when ronly decl)))
-;* 	 ((isa? decl J2SDeclFunCnst)                                   */
-;* 	  decl)                                                        */
 	 ((j2s-let-opt? decl)
 	  (with-access::J2SDeclInit decl (usage id val)
 	     (when (isa? val J2SFun)
@@ -4105,7 +4105,7 @@
 
    (define expr this)
 
-   (with-access::J2SCall this (loc fun this args protocol cache)
+   (with-access::J2SCall expr (loc fun this args protocol cache)
       (let loop ((fun fun))
 	 (epairify loc
 	    (cond

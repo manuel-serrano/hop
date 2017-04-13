@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Mar  8 14:59:44 2017 (serrano)                */
+;*    Last change :  Fri Apr 14 17:51:06 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -24,9 +24,23 @@
 	      (args read-only (default #f))
 	      (url read-only)))
 
+   (eval   (export hopjs-standalone-set!))
+   
    (export (nodejs-modules-directory::bstring)
 	   (nodejs-modules-directory-set! ::bstring)
+	   (hopjs-standalone-set! ::bool)
 	   (hopjs-process-hop ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-standalone ...                                             */
+;*---------------------------------------------------------------------*/
+(define (hopjs-standalone-set! val)
+   (set! hopjs-standalone val))
+
+;*---------------------------------------------------------------------*/
+;*    hopjs-standalone ...                                             */
+;*---------------------------------------------------------------------*/
+(define hopjs-standalone #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-modules-directory ...                                     */
@@ -166,7 +180,7 @@
 			     ssl))))
 		 0 'ssl)
 	 :writable #f)
-				
+
       (with-access::JsGlobalObject %this (js-object js-server-prototype)
 	 (set! js-server-prototype server-prototype)
 	 (js-alist->jsobject
@@ -176,6 +190,7 @@
 	       `(hostname . ,(js-string->jsstring (hostname)))
 	       `(modulesDir . ,(js-string->jsstring (nodejs-modules-directory)))
 	       `(buildid . ,(hop-build-id))
+	       `(standalone . ,hopjs-standalone)
 
 	       ;; port
 	       (define-js port 0 (lambda (this) (hop-port)))

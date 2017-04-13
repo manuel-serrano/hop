@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr 10 20:09:37 2017 (serrano)                */
+;*    Last change :  Sat Apr 15 10:01:51 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -77,6 +77,8 @@
 	   (js-array-maybe-push ::obj ::obj ::JsGlobalObject)
 	   (js-array-pop ::JsArray ::JsGlobalObject)
 	   (js-array-maybe-pop ::obj ::JsGlobalObject)
+	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-comprehension ::JsGlobalObject ::obj ::procedure
 	      ::obj ::pair ::bstring ::bstring ::pair)))
 
@@ -1885,13 +1887,9 @@
 	 :enumerable #f))
 
    ;; fill
+   ;; http://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.fill
    (define (array-prototype-fill this::obj value start end)
-      (let* ((o (js-toobject %this this))
-	     (len::uint32 (js-touint32 (js-get-length o #f %this) %this)))
-	 (let loop ((i #u32:0))
-	    (when (<u32 i len)
-	       (js-put! o i value #f %this)
-	       (loop (+u32 i #u32:1))))))
+      (js-array-maybe-fill this value start end %this))
    
    (js-bind! %this js-array-prototype 'fill
       :value (js-make-function %this array-prototype-fill 1 'fill
@@ -2830,7 +2828,7 @@
 		 (js-raise-range-error %this
 		    "Illegal length: ~s"
 		    (js-tostring #l4294967296 %this))
-		 (uint32->integer n)))))))
+		 (uint32->integer (+u32 #u32:1 n))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-push ...                                          */
@@ -2876,6 +2874,59 @@
    (if (isa? this JsArray)
        (js-array-pop this %this)
        (js-call0 %this (js-get this 'pop %this) this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-fill ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-array-fill this::JsArray value start end %this)
+   (let* ((len::uint32 (js-touint32 (js-get-length this #f %this) %this))
+	  (k (if (eq? start (js-undefined))
+		 #u32:0
+		 (let ((relstart (js-tointeger start %this)))
+		    (if (< relstart 0)
+			(let ((left (+ len relstart)))
+			   (if (< left 0)
+			       #u32:0
+			       (js-touint32 left %this)))
+			(minu32 (js-touint32 relstart %this) len)))))
+	  (final (if (eq? end (js-undefined))
+		     len
+		     (let ((relend (js-tointeger end %this)))
+			(if (< relend 0)
+			    (let ((left (+ len relend)))
+			       (if (< left 0)
+				   #u32:0
+				   (js-touint32 left %this)))
+			    (minu32 (js-touint32 relend %this) len))))))
+      (with-access::JsArray this (vec ilen length)
+	 (if (js-array-full-inlined? this)
+	     (let loop ((i k))
+		(if (<u32 i final)
+		    (begin
+		       (vector-set! vec (uint32->fixnum i) value)
+		       (loop (+u32 i #u32:1)))
+		    (when (>u32 i ilen)
+		       (set! ilen i))))
+	     (let loop ((i k))
+		(if (<u32 i final)
+		    (begin
+		       (if (<u32 i ilen)
+			   (vector-set! vec (uint32->fixnum i) value)    
+			   (js-put! this i value #f %this))
+		       (loop (+u32 i #u32:1)))
+		    (when (>u32 i length)
+		       (js-put-length! this (uint32->integer i) #f #f %this)))))
+	 this)))
+   
+;*---------------------------------------------------------------------*/
+;*    js-array-maybe-fill ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-array-maybe-fill this value start end %this)
+   (if (isa? this JsArray)
+       (begin
+	  (tprint "ICI: " (typeof this) " " (isa? this JsArray))
+	  (js-array-fill this value start end %this))
+       (js-call3 %this (js-get this 'fill %this) this value start end)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-comprehension ...                                       */
