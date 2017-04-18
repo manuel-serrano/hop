@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Sun Mar 19 07:13:21 2017 (serrano)                */
+/*    Last change :  Sun Apr 16 20:58:37 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -64,6 +64,12 @@ assert.equal( n.toFixed( 4 ), "-0.0700", "toFixed14" );
 var o = 0.9;
 assert.ok( 1.0 === o +  0.1, "float.eq" );
 assert.ok( 1 === o + 0.1, "float-int.eq" );
+
+var p = 0.51;
+assert.ok( p.toFixed( 2 ), "0.51" );
+
+var q = 0.49;
+assert.ok( q.toFixed( 2 ), "0.49" );
 
 /*---------------------------------------------------------------------*/
 /*    integer limits                                                   */

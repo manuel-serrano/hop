@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Apr 10 15:50:48 2017 (serrano)                */
+;*    Last change :  Fri Apr 14 10:07:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -127,7 +127,7 @@
 
    (define *peeked-tokens* '())
    (define *previous-token-type* #unspecified)
-   (define *open-tokens* #unspecified)
+   (define *open-tokens* '())
    
    (define (peek-token)
       (if (null? *peeked-tokens*)
@@ -245,7 +245,9 @@
 	      (statement)))
 	 ((EOF)
 	  (parse-token-error "unexpected end of file"
-	     (if (pair? *open-tokens*) (car *open-tokens*) (consume-any!))))
+	     (if (pair? *open-tokens*)
+		 (car (last-pair *open-tokens*))
+		 (consume-any!))))
 	 ((ERROR)
 	  (parse-token-error "error" (consume-any!)))
 	 (else
@@ -404,7 +406,7 @@
    
    (define (iff)
       (let ((tif (consume-any!)))
-	 (push-open-token (consume! 'LPAREN))
+	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((test (expression #f)))
 	    (consume! 'RPAREN)
 	    (pop-open-token)
@@ -442,7 +444,7 @@
 	    (else (expression #t))))
 
       (let ((loc (token-loc (consume-token! 'for))))
-	 (push-open-token (consume! 'LPAREN))
+	 (push-open-token (consume-token! 'LPAREN))
 	 (let* ((tok0 (peek-token-type))
 		(first-part (init-first-part tok0)))
 	    (case (peek-token-type)
@@ -501,7 +503,7 @@
    
    (define (while)
       (let ((token (consume-token! 'while)))
-	 (push-open-token (consume! 'LPAREN))
+	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((test (expression #f)))
 	    (consume! 'RPAREN)
 	    (pop-open-token)
@@ -515,7 +517,7 @@
       (let* ((loc (token-loc (consume-token! 'do)))
 	     (body (statement)))
 	 (consume! 'while)
-	 (push-open-token (consume! 'LPAREN))
+	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((test (expression #f)))
 	    (consume! 'RPAREN)
 	    (pop-open-token)
@@ -581,7 +583,7 @@
 
    (define (with)
       (let ((token (consume-token! 'with)))
-	 (push-open-token (consume! 'LPAREN))
+	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((expr (expression #f)))
 	    (consume! 'RPAREN)
 	    (pop-open-token)
@@ -593,7 +595,7 @@
    
    (define (switch)
       (let ((token (consume-token! 'switch)))
-	 (push-open-token (consume! 'LPAREN))
+	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((key (expression #f)))
 	    (consume! 'RPAREN)
 	    (pop-open-token)
@@ -604,7 +606,7 @@
 		  (cases cases))))))
 
    (define (case-block)
-      (push-open-token (consume! 'LBRACE))
+      (push-open-token (consume-token! 'LBRACE))
       (let loop ((rev-cases '())
 		 (default-case-done? #f))
 	 (case (peek-token-type)
@@ -683,7 +685,7 @@
    
    (define (catch)
       (let ((loc (token-loc (consume-token! 'catch))))
-	 (push-open-token (consume! 'LPAREN))
+	 (push-open-token (consume-token! 'LPAREN))
 	 (let ((id (consume! 'ID)))
 	    (consume! 'RPAREN)
 	    (pop-open-token)
@@ -818,11 +820,12 @@
 	  ;; a statement
 	  (fun-body params)
 	  ;; an expression
-	  (let ((expr (assig-expr #f)))
+	  (let* ((expr (assig-expr #f))
+		 (endloc (token-loc (peek-token) -1)))
 	     (with-access::J2SNode expr (loc)
 		(instantiate::J2SBlock
 		   (loc loc)
-		   (endloc loc)
+		   (endloc endloc)
 		   (nodes (append (fun-body-params-defval params)
 			     (list (instantiate::J2SReturn
 				      (loc loc)
@@ -1076,7 +1079,7 @@
 	    (id (token-value token)))))
       
    (define (params)
-      (push-open-token (consume! 'LPAREN))
+      (push-open-token (consume-token! 'LPAREN))
       (case (peek-token-type)
 	 ((RPAREN)
 	  (consume-any!)
@@ -1107,7 +1110,7 @@
 		    (reverse! rev-params)))))))
 
    (define (service-params)
-      (push-open-token (consume! 'LPAREN))
+      (push-open-token (consume-token! 'LPAREN))
       (case (peek-token-type)
 	 ((RPAREN)
 	  (consume-any!)
@@ -1517,7 +1520,7 @@
 	     expr))))
    
    (define (arguments)
-      (push-open-token (consume! 'LPAREN))
+      (push-open-token (consume-token! 'LPAREN))
       (if (eq? (peek-token-type) 'RPAREN)
 	  (begin
 	     (consume-any!)
@@ -2101,7 +2104,7 @@
 			 (name tokname)
 			 (val val))))))))
       
-      (push-open-token (consume! 'LBRACE))
+      (push-open-token (consume-token! 'LBRACE))
       (if (eq? (peek-token-type) 'RBRACE)
 	  (let ((token (consume-any!)))
 	     (pop-open-token)

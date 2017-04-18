@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon Mar 27 16:47:35 2017 (serrano)                */
+;*    Last change :  Sat Apr 15 07:00:09 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -113,7 +113,9 @@
 	    (hopc-js-return-as-exit-set! ::bool)
 
 	    (hopc-j2s-flags::pair-nil)
-	    (hopc-j2s-flags-set! ::pair-nil))
+	    (hopc-j2s-flags-set! ::pair-nil)
+
+	    (hop-max-threads::int))
 	    
    (eval    (export-exports)))
 
@@ -335,3 +337,13 @@
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-j2s-flags
    '())
+
+;*---------------------------------------------------------------------*/
+;*    hop-max-threads ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Merely a compatibility variable with Hop (for tools autoconf)    */
+;*---------------------------------------------------------------------*/
+(define-parameter hop-max-threads
+   (cond-expand
+      (enable-threads 12)
+      (else 1)))

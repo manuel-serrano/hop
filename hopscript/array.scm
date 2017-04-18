@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Apr 13 11:26:37 2017 (serrano)                */
+;*    Last change :  Sat Apr 15 10:01:51 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2828,7 +2828,7 @@
 		 (js-raise-range-error %this
 		    "Illegal length: ~s"
 		    (js-tostring #l4294967296 %this))
-		 (uint32->integer n)))))))
+		 (uint32->integer (+u32 #u32:1 n))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-push ...                                          */

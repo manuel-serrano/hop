@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 18:19:18 2015                          */
-;*    Last change :  Wed Aug 10 07:24:56 2016 (serrano)                */
-;*    Copyright   :  2015-16 Manuel Serrano                            */
+;*    Last change :  Fri Apr 14 10:08:15 2017 (serrano)                */
+;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Token tools                                                      */
 ;*=====================================================================*/
@@ -53,6 +53,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    token-loc ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (token-loc token)
-   (cer token))
+(define (token-loc token #!optional (shift 0))
+   (if (=fx shift 0)
+       (cer token)
+       (match-case (cer token)
+	  ((at ?name ?pos)
+	   `(at ,name ,(+fx pos shift)))
+	  (else
+	   (error "token-loc" "no location" token)))))
 

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Sun Nov 13 19:51:02 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Fri Apr 14 10:30:39 2017 (serrano)                */
+;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -794,12 +794,15 @@
        (error "hop-read" "Illegal closed input port" iport)
        (begin
 	  ((hop-read-pre-hook) iport)
-	  (with-access::clientc (hop-clientc) (macroe)
-	     (let* ((cset (charset-converter! charset (hop-charset)))
-		    (menv (or menv (macroe)))
-		    (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv location)))
-		((hop-read-post-hook) iport)
-		e)))))
+	  (let* ((cset (charset-converter! charset (hop-charset)))
+		 (menv (or menv
+			   (if (isa? (hop-clientc) clientc)
+			       (with-access::clientc (hop-clientc) (macroe)
+				  (macroe))
+			       '())))
+		 (e (read/rp *hop-grammar* iport '() 0 0 '() '() cset menv location)))
+	     ((hop-read-post-hook) iport)
+	     e))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *the-loading-file* ...                                           */
@@ -1021,8 +1024,11 @@
 		      ((string? abase) abase)
 		      (abase (dirname fname))
 		      (else ".")))
-	    (menv (or menv (with-access::clientc (hop-clientc) (macroe)
-			      (macroe)))))
+	    (menv (or menv
+		      (if (isa? (hop-clientc) clientc)
+			  (with-access::clientc (hop-clientc) (macroe)
+			     (macroe))
+			  '()))))
 	 (with-trace 'read "hop-eval-path"
 	    (trace-item "fname=" fname)
 	    (trace-item "path=" path)

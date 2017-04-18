@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Mar 28 10:28:03 2017 (serrano)                */
+;*    Last change :  Sun Apr 16 20:57:42 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -332,7 +332,9 @@
 					 (l (string-length s)))
 				     (signed val
 					(string-append (substring s 0 (-fx l f))
-					   "."
+					   (if (=fx (-fx l f) 0)
+					       "0."
+					       ".")
 					   (substring s (-fx l f)))))))))))))))
 
    (js-bind! %this obj 'toFixed
