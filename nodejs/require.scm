@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Mar 30 20:40:16 2017 (serrano)                */
+;*    Last change :  Thu Apr 20 13:03:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -18,7 +18,8 @@
 
    (import __nodejs
 	   __nodejs__hop
-	   __nodejs_process)
+	   __nodejs_process
+	   __nodejs_syncg)
 
    (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::symbol)
@@ -684,15 +685,19 @@
 	 (body (lambda ()
 		  (with-handler
 		     (lambda (e)
-			(tprint "************ SOCOMPILE ORCHESTRATOR EXN=" e)
 			(exception-notify e))
 		     (synchronize socompile-mutex
 			(let loop ()
 			   (let liip ()
 			      (when (pair? socompile-queue)
 				 (let ((e (nodejs-select-socompile socompile-queue)))
-				    (or (hop-find-sofile (car e))
-					(compile-worker e))
+				    (synchronize-global
+				       (make-file-name
+					  (dirname (hop-sofile-path "hop.lock"))
+					  "hop.lock")
+				       (lambda ()
+					  (or (hop-find-sofile (car e))
+					      (compile-worker e))))
 				    (liip))))
 			   (condition-variable-wait!
 			      socompile-condv socompile-mutex)

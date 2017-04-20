@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Apr 18 11:08:08 2017 (serrano)                */
+;*    Last change :  Wed Apr 19 11:30:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -4437,6 +4437,12 @@
       '(index uint29 int30 fixnum int53 ufixnum integer number any)))
 
 ;*---------------------------------------------------------------------*/
+;*    maybe-function? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (maybe-function? expr::J2SNode)
+   (memq (j2s-type expr) '(function any)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SInit mode return conf hint totype)
@@ -4717,12 +4723,22 @@
 			  (with-access::J2SDataPropertyInit i (val)
 			     (j2s-scheme val mode return conf hint totype)))
 		     inits)))
-	 `(with-access::JsGlobalObject %this (__proto__)
-	     (js-object-literal-init!
-		(instantiate::JsObject
-		   (cmap ,(j2s-scheme cmap mode return conf hint totype))
-		   (elements (vector ,@vals))
-		   (__proto__ __proto__))))))
+	 (if (or #t
+		 (any (lambda (i)
+			 (with-access::J2SDataPropertyInit i (val)
+			    (maybe-function? val)))
+		    inits))
+	     `(with-access::JsGlobalObject %this (__proto__)
+		 (js-object-literal-init!
+		    (instantiate::JsObject
+		       (cmap ,(j2s-scheme cmap mode return conf hint totype))
+		       (elements (vector ,@vals))
+		       (__proto__ __proto__))))
+	     `(with-access::JsGlobalObject %this (__proto__)
+		 (instantiate::JsObject
+		    (cmap ,(j2s-scheme cmap mode return conf hint totype))
+		    (elements (vector ,@vals))
+		    (__proto__ __proto__))))))
    
    (define (new->jsobj loc inits)
       (let ((tmp (gensym)))

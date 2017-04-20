@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Apr  3 07:42:36 2017 (serrano)                */
+;*    Last change :  Wed Apr 19 10:58:15 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -553,6 +553,7 @@
       ((bool) 'boolean?)
       ((undefined) 'js-undefined?)
       ((null) 'js-null?)
+      ((regexp) 'js-regexp?)
       (else (error "hint-type-predicate" "Unknown hint type predicate" type))))
 
 ;*---------------------------------------------------------------------*/

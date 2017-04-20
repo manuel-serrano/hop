@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Apr  8 09:35:52 2017 (serrano)                */
+;*    Last change :  Wed Apr 19 09:26:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -907,10 +907,6 @@
 	  (positive-double->uint32 obj))))
    
    (cond
-      ((uint32? obj)
-       (let ((r::uint32 obj)) r))
-      ((int32? obj)
-       (int32->uint32 obj))
       ((fixnum? obj)
        (cond-expand
 	  (bint30
@@ -925,6 +921,10 @@
 		      (posint (if (<fx obj 0) (+fx ^32 obj) obj))
 		      (int32bit (modulofx posint ^32)))
 		  (fixnum->uint32 int32bit))))))
+      ((uint32? obj)
+       (let ((r::uint32 obj)) r))
+      ((int32? obj)
+       (int32->uint32 obj))
       ((flonum? obj)
        (double->uint32 obj))
       (else
