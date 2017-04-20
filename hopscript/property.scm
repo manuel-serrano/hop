@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Apr  8 10:03:52 2017 (serrano)                */
+;*    Last change :  Wed Apr 19 10:43:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -543,20 +543,22 @@
 ;*    js-object-literal-init! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-object-literal-init! o::JsObject)
-   (with-access::JsObject o (elements cmap)
-      (with-access::JsConstructMap cmap (methods)
-	 (let loop ((i (-fx (vector-length elements) 1)))
-	    (if (=fx i -1)
-		o
-		(let ((v (vector-ref elements i)))
-		   (cond
-		      ((not (isa? v JsFunction))
-		       (vector-set! methods i #f))
-		      ((eq? (vector-ref methods i) #unspecified)
-		       (vector-set! methods i #t))
-		      (else
-		       (vector-set! methods i #f)))
-		   (loop (-fx i 1))))))))
+   (with-access::JsObject o ((%elements elements) cmap)
+      (with-access::JsConstructMap cmap ((%methods methods))
+	 (let ((elements %elements)
+	       (methods %methods))
+	    (let loop ((i (-fx (vector-length elements) 1)))
+	       (if (=fx i -1)
+		   o
+		   (let ((v (vector-ref elements i)))
+		      (cond
+			 ((not (isa? v JsFunction))
+			  (vector-set! methods i #f))
+			 ((eq? (vector-ref methods i) #unspecified)
+			  (vector-set! methods i #t))
+			 (else
+			  (vector-set! methods i #f)))
+		      (loop (-fx i 1)))))))))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    js-descriptors->cmap ...                                         *} */
@@ -1196,9 +1198,11 @@
 	    ;; cache the object access
 	    (with-access::JsPropertyCache cache (cmap pmap index owner)
 	       (with-access::JsObject o ((omap cmap))
+		  (when (eq? name 'key) (tprint "key in prop" v))
 		  (js-property-value o v %this))))
 	 ;; not found
 	 (lambda ()
+	    (when (eq? name 'key) (tprint "key not found"))
 	    (js-get-notfound name throw %this))
 	 ;; loop
 	 loop)))

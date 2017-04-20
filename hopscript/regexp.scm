@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Feb 28 09:17:26 2017 (serrano)                */
+;*    Last change :  Wed Apr 19 11:00:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -30,6 +30,7 @@
 	   __hopscript_error)
 
    (export (js-init-regexp! ::JsGlobalObject)
+	   (inline js-regexp?::bool ::obj)
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
@@ -45,6 +46,12 @@
       (with-access::JsRegExp o (rx) rx))
    (lambda (o %this)
       (js-regexp->jsregexp o (or %this (js-initial-global-object)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-regexp? obj)
+   (isa? obj JsRegExp))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsRegExp ...                                         */

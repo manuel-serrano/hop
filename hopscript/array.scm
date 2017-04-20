@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Apr 15 10:01:51 2017 (serrano)                */
+;*    Last change :  Wed Apr 19 09:22:34 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2044,6 +2044,8 @@
    (cond
       ((null? items-or-len)
        (js-array-construct/length %this this 0))
+      ((and (fixnum? (car items-or-len)) (null? (cdr items-or-len)))
+       (js-array-construct/length %this this (car items-or-len)))
       ((and (number? (car items-or-len)) (null? (cdr items-or-len)))
        (js-array-construct/length %this this (car items-or-len)))
       (else
@@ -2057,7 +2059,7 @@
 (define (js-vector->jsarray::JsArray vec::vector %this::JsGlobalObject)
    ;; MS 23 feb 2017
    (let* ((len (vector-length vec)))
-      (with-access::JsGlobalObject %this (js-array js-array-prototype)
+      (with-access::JsGlobalObject %this (js-array-prototype)
 	 (instantiate::JsArray
 	    (__proto__ js-array-prototype)
 	    (length (fixnum->uint32 len))
