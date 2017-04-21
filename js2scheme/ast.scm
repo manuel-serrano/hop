@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Apr 10 16:06:23 2017 (serrano)                */
+;*    Last change :  Fri Apr 21 09:07:31 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -21,7 +21,7 @@
    (export (abstract-class J2SNode
 	      (loc::pair read-only (info '("notraverse")))
 	      (%info (default #unspecified) (info '("notraverse")))
-	      (%%wstamp (default -1)))
+	      (%%wstamp (default -1) (info '("notraverse"))))
 	   
 	   (abstract-class J2SStmt::J2SNode)
 
@@ -51,7 +51,7 @@
 	      (direct-eval::bool (default #t)))
 
 	   (abstract-class J2SExpr::J2SNode
-	      (type::symbol (default 'unknown))
+	      (type::symbol (default 'unknown) (info '("notraverse")))
 	      (hint::pair-nil (default '()) (info '("notraverse"))))
 
 	   (class J2SCast::J2SExpr
@@ -144,27 +144,27 @@
 	      expr::J2SExpr)
 	   
 	   (class J2SFun::J2SExpr
-	      (rtype::symbol (default 'unknown))
-	      (idthis read-only (default 'this))
-	      (idgen read-only (default #f))
-	      (mode::symbol (default 'normal))
-	      (decl (default #f))
-	      (need-bind-exit-return::bool (default #f))
-	      (vararg::obj (default #f))
-	      (name read-only (default '||))
-	      (generator::bool (default #f))
-	      (optimize read-only (default #t))
-	      (thisp (default #f))
+	      (rtype::symbol (default 'unknown) (info '("notraverse")))
+	      (idthis read-only (default 'this) (info '("notraverse")))
+	      (idgen read-only (default #f) (info '("notraverse")))
+	      (mode::symbol (default 'normal) (info '("notraverse")))
+	      (decl (default #f) (info '("notraverse")))
+	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
+	      (vararg::obj (default #f) (info '("notraverse")))
+	      (name read-only (default '||) (info '("notraverse")))
+	      (generator::bool (default #f) (info '("notraverse")))
+	      (optimize read-only (default #t) (info '("notraverse")))
+	      (thisp (default #f) (info '("notraverse")))
 	      (params::pair-nil (default '()))
-	      (constrsize::int (default 3))
-	      (src::bool (default #t))
+	      (constrsize::int (default 3) (info '("notraverse")))
+	      (src::bool (default #t) (info '("notraverse")))
 	      body::J2SBlock)
 	   
 	   (class J2SSvc::J2SFun
 	      init::J2SNode
-	      (path::obj read-only (default #f))
-	      (register::bool read-only (default #t))
-	      (import::bool read-only))
+	      (path::obj read-only (default #f) (info '("notraverse")))
+	      (register::bool read-only (default #t) (info '("notraverse")))
+	      (import::bool read-only (info '("notraverse"))))
 
 	   (class J2SArrow::J2SFun)
 	   
@@ -225,18 +225,18 @@
 	   
 	   (class J2SDecl::J2SStmt
 	      id::symbol
-	      (_scmid (default #f))
-	      (key (default (ast-decl-key)))
-	      (writable (default #t))
-	      (ronly (default #f))
-	      (scope::symbol (default 'local))
-	      (usecnt::int (default 0))
-	      (usage::pair-nil (default '()))
-	      (utype::symbol (default 'unknown))
-	      (itype::symbol (default 'unknown))
-	      (vtype::symbol (default 'unknown))
+	      (_scmid (default #f) (info '("notraverse")))
+	      (key (default (ast-decl-key)) (info '("notraverse")))
+	      (writable (default #t) (info '("notraverse")))
+	      (ronly (default #f) (info '("notraverse")))
+	      (scope::symbol (default 'local) (info '("notraverse")))
+	      (usecnt::int (default 0) (info '("notraverse")))
+	      (usage::pair-nil (default '()) (info '("notraverse")))
+	      (utype::symbol (default 'unknown) (info '("notraverse")))
+	      (itype::symbol (default 'unknown) (info '("notraverse")))
+	      (vtype::symbol (default 'unknown) (info '("notraverse")))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
-	      (binder::symbol (default 'var)))
+	      (binder::symbol (default 'var) (info '("notraverse"))))
 	   
 	   (class J2SDeclInit::J2SDecl
 	      val::J2SExpr)
@@ -322,16 +322,16 @@
 	      (cmap (default #f)))
 	   
 	   (final-class J2SAccess::J2SExpr
-	      (cache (default #f))
-	      (clevel::long (default 100))
+	      (cache (default #f) (info '("notraverse")))
+	      (clevel::long (default 100) (info '("notraverse")))
 	      obj::J2SExpr
 	      field::J2SExpr)
 	   
 	   (final-class J2SCall::J2SExpr
-	      (cache (default #f))
-	      (clevel::long (default 100))
+	      (cache (default #f) (info '("notraverse")))
+	      (clevel::long (default 100) (info '("notraverse")))
 	      fun::J2SExpr
-	      (protocol (default 'direct))
+	      (protocol (default 'direct) (info '("notraverse")))
 	      (this (default #unspecified))
 	      (args::pair-nil (default '())))
 	   
