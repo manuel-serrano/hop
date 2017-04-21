@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Apr 14 17:51:06 2017 (serrano)                */
+;*    Last change :  Fri Apr 21 09:40:02 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -125,7 +125,9 @@
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
 			 (let ((f (lambda (evt)
-				     (js-call1 %this proc this evt))))
+				     (js-worker-exec (js-current-worker) "server"
+					(lambda ()
+					   (js-call1 %this proc this evt))))))
 			    (set! data (cons (cons proc f) data))
 			    (when (isa? obj server)
 			       (add-event-listener! obj
