@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Apr 21 09:40:02 2017 (serrano)                */
+;*    Last change :  Fri Apr 21 14:43:16 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -254,8 +254,17 @@
 		  (lambda (this name v)
 		     (hop-event-broadcast! (js-tostring name %this) v)))
 
-	       `(Server . ,js-server)
+	       (define-js addEventListener 3
+		  (lambda (this name proc capture)
+		     (add-event-listener! 'hop (js-tostring name %this)
+			(lambda (evt)
+			   (js-worker-exec (js-current-worker) "hop"
+			      (lambda ()
+				 (js-call1 %this proc this evt))))
+			(js-toboolean capture))))
 	       
+	       `(Server . ,js-server)
+
 	       ;; XML
 	       (define-js compileXML 3
 		  (lambda (this xml ofile backend)

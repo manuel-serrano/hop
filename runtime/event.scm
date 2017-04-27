@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Oct 31 09:43:44 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Sat Apr 22 07:18:39 2017 (serrano)                */
+;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -44,7 +44,8 @@
 	    __hop_service
 	    __hop_http-response
 	    __hop_http-error
-	    __hop_websocket)
+	    __hop_websocket
+	    __hop_watch)
 
    (static  (class http-response-event::%http-response-server
 	       (name::bstring read-only))
@@ -120,16 +121,24 @@
 ;*    add-event-listener! ::obj ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-generic (add-event-listener! obj::obj event proc . capture)
-   (if (and (string? event) (string? obj))
-       (add-server-listener! obj event proc capture)
+   (cond
+      ((and (string? event) (string? obj))
+       (add-server-listener! obj event proc capture))
+      ((eq? obj 'hop)
+       (add-hop-listener! event proc capture))
+      (else
        (error "add-event-listener!"
-	  (format "Illegal ~s listener" event) obj)))
+	  (format "Illegal ~s listener" event) obj))))
 
 (define-generic (remove-event-listener! obj::obj event proc . capture)
-   (if (and (string? event) (string? obj))
-       (remove-server-listener! obj event proc capture)
+   (cond
+      ((and (string? event) (string? obj))
+       (remove-server-listener! obj event proc capture))
+      ((eq? obj 'hop)
+       (remove-hop-listener! event proc capture))
+      (else
        (error "remove-event-listener!"
-	  (format "Illegal ~s listener" event) obj)))
+	  (format "Illegal ~s listener" event) obj))))
 
 (define-generic (stop-event-propagation event::event default::bool)
    (with-access::event event (stopped)
@@ -153,14 +162,14 @@
 	 ((#\i)
 	  (let ((val (string->integer text)))
 	     (instantiate::server-event
-		(target server)
+		(target srv)
 		(name id)
 		(value val)
 		(data val))))
 	 ((#\f)
 	  (let ((val (string->real text)))
 	     (instantiate::server-event
-		(target server)
+		(target srv)
 		(name id)
 		(value val)
 		(data val))))
@@ -171,14 +180,14 @@
 			      (last-pair
 				 (parse-html p (string-length text))))))))
 	     (instantiate::server-event
-		(target server)
+		(target srv)
 		(name id)
 		(value val)
 		(data val))))
 	 ((#\s)
 	  (let ((val (url-decode text)))
 	     (instantiate::server-event
-		(target server)
+		(target srv)
 		(name id)
 		(value val)
 		(data val))))
@@ -186,8 +195,15 @@
 	  (let ((val (string->obj
 			(url-decode (cadr (pregexp-match cdata-re text))))))
 	     (instantiate::server-event
-		(target server)
+		(target srv)
 		(name id)
+		(value val)
+		(data val))))
+	 ((#\r)
+	  (let ((val (url-decode text)))
+	     (instantiate::server-event
+		(target srv)
+		(name "ready")
 		(value val)
 		(data val))))))
    
@@ -195,9 +211,9 @@
       (with-access::websocket-event v (data)
 	 (let ((m (pregexp-match envelope-re data)))
 	    (when (pair? m)
-	       (let ((k (cadr m))
-		     (id (caddr m))
-		     (text (cadddr m)))
+	       (let* ((k (cadr m))
+		      (id (caddr m))
+		      (text (cadddr m)))
 		  (with-access::server srv (listeners)
 		     (let ((ltns (filter-map (lambda (l)
 						(when (string=? (car l) id)
@@ -252,24 +268,27 @@
    (let loop ((armed #f))
       (server-init! obj)
       (with-access::server obj (mutex host port ssl authorization %key listeners)
-	 (with-hop ((hop-event-register-service) :event event
-		      :key %key :mode "websocket")
-	    :host host :port port
-	    :authorization authorization
-	    :ssl ssl
-	    (lambda (v)
-	       (synchronize mutex
-		  (set! listeners (cons (cons event proc) listeners))))
-	    (lambda (exn)
-	       (if (isa? exn xml-http-request)
-		   (with-access::xml-http-request exn (status input-port header)
-		      (if (and (not armed) (=fx status 500))
-			  (let ((badkey (read-string input-port)))
-			     (when (string=? (md5sum %key) badkey)
-				(server-reset! obj)
-				(loop #t)))
-			  (tprint (read-string input-port))))
-		   (exception-notify exn)))))))
+	 (if (string=? event "ready")
+	     (synchronize mutex
+		(set! listeners (cons (cons event proc) listeners)))
+	     (with-hop ((hop-event-register-service) :event event
+			  :key %key :mode "websocket")
+		:host host :port port
+		:authorization authorization
+		:ssl ssl
+		(lambda (v)
+		   (synchronize mutex
+		      (set! listeners (cons (cons event proc) listeners))))
+		(lambda (exn)
+		   (if (isa? exn xml-http-request)
+		       (with-access::xml-http-request exn (status input-port header)
+			  (if (and (not armed) (=fx status 500))
+			      (let ((badkey (read-string input-port)))
+				 (when (string=? (md5sum %key) badkey)
+				    (server-reset! obj)
+				    (loop #t)))
+			      (tprint (read-string input-port))))
+		       (exception-notify exn))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ::server ...                              */
@@ -563,7 +582,7 @@
 	 (if (pair? c)
 	     (cdr c)
 	     default)))
-   
+
    (with-access::http-request req (header connection socket)
       (let ((host (get-header header host: #f))
 	    (version (get-header header sec-websocket-version: "-1")))
@@ -572,6 +591,9 @@
 	 (with-trace 'event "ws-register-new-connection"
 	    (trace-item "protocol-version=" version)
 	    (let ((resp (websocket-server-response req key :protocol '("json"))))
+	       (watch-socket! socket
+		  (lambda (s)
+		     (notify-client! "disconnect" #f req *disconnect-listeners*)))
 	       (trace-item "resp=" (typeof resp))
 	       ;; register the websocket
 	       (synchronize *event-mutex*
@@ -827,16 +849,16 @@
    (define (multipart-register-event! req key name)
       (with-trace 'event "multipart-register-event!"
 	 (let ((content (format "--~a\nContent-type: text/xml\n\n<r name='~a'></r>\n--~a\n"
-				hop-multipart-key name hop-multipart-key))
+			   hop-multipart-key name hop-multipart-key))
 	       (c (assq key *multipart-request-list*)))
 	    (if (pair? c)
 		(let ((oreq (cdr c)))
 		   ;; we already have a connection for that
 		   ;; client, we simply re-use it
 		   (hashtable-update! *multipart-socket-table*
-				      name
-				      (lambda (l) (cons oreq l))
-				      (list oreq))
+		      name
+		      (lambda (l) (cons oreq l))
+		      (list oreq))
 		   ;; we must response as a multipart response because
 		   ;; that's the way we have configured the xhr
 		   ;; on the client side but we must close the connection
@@ -851,22 +873,22 @@
 		(with-access::http-request req (socket)
 		   (output-port-flush-hook-set!
 		      (socket-output socket)
-		    (lambda (port size)
-		       (output-port-flush-hook-set! port chunked-flush-hook)
-		       ""))
+		      (lambda (port size)
+			 (output-port-flush-hook-set! port chunked-flush-hook)
+			 ""))
 		   (set! *multipart-request-list*
-			 (cons (cons key req)
-			       *multipart-request-list*))
+		      (cons (cons key req)
+			 *multipart-request-list*))
 		   (hashtable-update! *multipart-socket-table*
-				      name
-				      (lambda (l) (cons req l))
-				      (list req))
+		      name
+		      (lambda (l) (cons req l))
+		      (list req))
 		   (instantiate::http-response-persistent
 		      (request req)
 		      (body (format "HTTP/1.1 200 Ok\r\nTransfer-Encoding: chunked\r\nContent-type: multipart/x-mixed-replace; boundary=\"~a\"\r\n\r\n~a\r\n~a"
-				    hop-multipart-key
-				    (integer->string (string-length content) 16)
-				    content))))))))
+			       hop-multipart-key
+			       (integer->string (string-length content) 16)
+			       content))))))))
    
    (define (websocket-register-event! req key name)
       (with-trace 'event "websocket-register-event!"
@@ -876,6 +898,9 @@
 	    ;;(trace-item "c=" c)
 	    (if (pair? c)
 		(let ((resp (cdr c)))
+		   (websocket-signal resp
+		      (format "<r name='ready'>~a</r>"
+			 (url-path-encode name)))
 		   (hashtable-update! *websocket-socket-table*
 		      name
 		      (lambda (l) (cons resp l))
@@ -911,6 +936,7 @@
 				 (flash-register-event! req key event))
 				(else
 				 (ajax-register-event! req key event padding)))))
+		       (notify-client! "connect" event req *connect-listeners*)
 		       ;; cleanup the current connections
 		       (server-event-gc)
 		       r))
@@ -960,7 +986,9 @@
 	    (let ((resp (cdr c)))
 	       (hashtable-update! *websocket-socket-table*
 		  event
-		  (lambda (l) (delete! resp l))
+		  (lambda (l)
+		     (notify-client! "disconnect" event resp *connect-listeners*) 
+		     (delete! resp l))
 		  '())
 	       ;; Ping the client to check if it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client
@@ -1548,20 +1576,20 @@
 	     (parse-host str #f)
 	     (parse-host (cadr s) (car s)))))
 
-      (let ((olds (synchronize *listener-mutex*
-		     (hashtable-get *server-listeners* srv))))
-	 (if (isa? olds server)
-	     (add-event-listener! olds event proc capture)
-	     (multiple-value-bind (host port auth)
-		(parse-authenticated-host srv)
-		(let ((news (instantiate::server
-			       (host host)
-			       (port port)
-			       (ssl #f)
-			       (authorization auth))))
-		   (synchronize *listener-mutex*
-		      (hashtable-put! *server-listeners* srv news))
-		   (add-event-listener! news event proc capture))))))
+   (let ((olds (synchronize *listener-mutex*
+		  (hashtable-get *server-listeners* srv))))
+      (if (isa? olds server)
+	  (add-event-listener! olds event proc capture)
+	  (multiple-value-bind (host port auth)
+	     (parse-authenticated-host srv)
+	     (let ((news (instantiate::server
+			    (host host)
+			    (port port)
+			    (ssl #f)
+			    (authorization auth))))
+		(synchronize *listener-mutex*
+		   (hashtable-put! *server-listeners* srv news))
+		(add-event-listener! news event proc capture))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-server-listener! ...                                      */
@@ -1571,6 +1599,40 @@
 		  (hashtable-get *server-listeners* srv))))
       (when (isa? olds server)
 	 (apply remove-event-listener! olds event proc capture))))
+
+;*---------------------------------------------------------------------*/
+;*    *connect-listeners* ...                                          */
+;*---------------------------------------------------------------------*/
+(define *connect-listeners* '())
+(define *disconnect-listeners* '())
+
+;*---------------------------------------------------------------------*/
+;*    add-hop-listener! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (add-hop-listener! event::bstring proc::procedure capture)
+   (cond
+      ((string=? event "connect")
+       (synchronize *listener-mutex*
+	  (set! *connect-listeners*
+	     (cons proc *connect-listeners*))))
+      ((string=? event "disconnect")
+       (synchronize *listener-mutex*
+	  (set! *disconnect-listeners*
+	     (cons proc *disconnect-listeners*))))))
+
+;*---------------------------------------------------------------------*/
+;*    remove-hop-listener! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (remove-hop-listener! event::bstring proc::procedure capture)
+   (cond
+      ((string=? event "connect")
+       (synchronize *listener-mutex*
+	  (set! *connect-listeners*
+	     (delete! proc *connect-listeners*))))
+      ((string=? event "disconnect")
+       (synchronize *listener-mutex*
+	  (set! *disconnect-listeners*
+	     (delete! proc *disconnect-listeners*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    padding-response ...                                             */
@@ -1614,3 +1676,14 @@
 	    (unless stopped
 	       (loop (cdr l)))))))
 
+;*---------------------------------------------------------------------*/
+;*    notify-client! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (notify-client! event id req ltns)
+   (when (pair? ltns)
+      (let ((e (instantiate::server-event
+		  (target req)
+		  (name event)
+		  (value id)
+		  (data id))))
+	 (apply-listeners ltns e))))

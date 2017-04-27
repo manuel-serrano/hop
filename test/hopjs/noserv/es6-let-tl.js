@@ -20,14 +20,17 @@ var _K0 = 1;
 const K0 = _K0;
 var K1 = 666;
 
-let f = function( x ) { if( x != 34 ) return h( x + K0 + K1 ); };
-let h = function( y ) { return i( y + K2 ); };
+let fff = function( x ) { if( x != 34 ) return h( x + K0 + K1 ); };
+let h = function( y ) { return q( y + K2 ); };
 
-f( 34 );
+fff( 34 );
 
 const K3 = 10;
-let i = function( y ) { return y + K3; };
+let q = function( y ) { return y + K3; };
    
 var K2 = 555;
 
-assert.ok( f( 45 ) == (45 + K0 + K1 + K2 + K3), "Ks" );
+var X = fff( 45 );
+var Y = (45 + K0 + K1 + K2 + K3);
+
+assert.ok( X == Y, "Ks" + " " + X + "/" + Y );

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Apr 14 17:47:20 2017 (serrano)                */
+/*    Last change :  Fri Apr 21 14:07:02 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -59,6 +59,7 @@ exports.charsetConvert = hop.charsetConvert;
 /*---------------------------------------------------------------------*/
 exports.signal = hop.signal;
 exports.broadcast = hop.broadcast;
+exports.addEventListener = hop.addEventListener;
 exports.Server = hop.Server;
 
 /*---------------------------------------------------------------------*/
