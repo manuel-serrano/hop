@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 20 08:04:06 2017                          */
-;*    Last change :  Thu Apr 20 13:40:23 2017 (serrano)                */
+;*    Last change :  Thu Apr 27 09:06:17 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Global inter-process synchronization                             */
@@ -27,17 +27,29 @@
       (let ((dir (dirname lockfile)))
 	 (unless (directory? dir)
 	    (make-directories dir))
+	 (synchronize syncg-mutex
+	    (when (eq? syncg-state 'init)
+	       (set! syncg-state 'running)
+	       (register-exit-function!
+		  (lambda (status)
+		     (synchronize syncg-mutex
+			(set! syncg-state 'exit)
+			(when (file-exists? lockfile)
+			   (delete-file lockfile)))))))
 	 (let loop ()
 	    (if (file-exists? lockfile)
 		(begin
 		   (sleep 1000)
 		   (loop))
-		(unwind-protect
-		   (let ((p (open-output-file lockfile)))
-		      (display (getpid) p)
-		      (close-output-port p)
-		      (proc))
-		   (delete-file lockfile))))))
+		(synchronize syncg-mutex
+		   (when (eq? syncg-state 'running)
+		      (unwind-protect
+			 (begin
+			    (let ((p (open-output-file lockfile)))
+			       (display (getpid) p)
+			       (close-output-port p)
+			       (proc)))
+			 (delete-file lockfile))))))))
    
    (cond-expand
       (bigloo4.3a
@@ -56,3 +68,9 @@
 		    (delete-semaphore semname)))
 	      (synchronize-file lockfile proc))))))
 	  
+;*---------------------------------------------------------------------*/
+;*    global variables                                                 */
+;*---------------------------------------------------------------------*/
+(cond-expand (bigloo4.3a (define syncg-state 'init)))
+(cond-expand (bigloo4.3a (define syncg-mutex (make-mutex))))
+    

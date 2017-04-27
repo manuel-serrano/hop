@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Apr 18 11:15:17 2017 (serrano)                */
+;*    Last change :  Thu Apr 27 08:41:08 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -517,17 +517,22 @@
 	    (with-access::J2SDeclFun decl (val) (escape-fun val)))
 	 (let ((etyp (env-lookup env decl)))
 	    (when (eq? etyp 'unknown)
-	       (if (and ronly (isa? decl J2SDeclInit))
-		   (with-access::J2SDeclInit decl (vtype)
+	       (with-access::J2SDeclInit decl (vtype)
+		  (cond
+		     ((and ronly (isa? decl J2SDeclInit))
 		      (set! etyp vtype))
-		   (set! etyp 'any)))
+		     ((eq? vtype 'any)
+		      (set! etyp vtype)))))
 	    (expr-type-set! this env fix etyp)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDecl ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SDecl env::pair-nil fun fix::cell)
-   (return 'void env '()))
+   (with-access::J2SDecl this (itype)
+      (decl-vtype-set! this 'any fix)
+      (set! itype (merge-types itype 'any))
+      (return 'void env '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDeclInit ...                                         */
@@ -721,6 +726,10 @@
 		      (loop (cdr params) (cdr args)))))))
 	 (expr-type-set! this env fix rtype bk)))
 
+   (define (type-ref-call ref callee args env bk)
+      (expr-type-set! ref env fix 'function)
+      (type-call callee args env bk))
+
    (define (type-default callee env bk)
       (multiple-value-bind (_ env bk)
 	 (typing callee env fun fix)
@@ -742,14 +751,14 @@
 		   ((isa? decl J2SDeclFun)
 		    (with-access::J2SDeclFun decl (ronly val)
 		       (if ronly
-			   (type-call val args env bk)
+			   (type-ref-call callee val args env bk)
 			   (begin
 			      (typing callee env fun fix)
 			      (values 'any env bk)))))
 		   ((isa? decl J2SDeclInit)
 		    (with-access::J2SDeclInit decl (ronly val)
 		       (if (and ronly (isa? val J2SFun))
-			   (type-call val args env bk)
+			   (type-ref-call callee val args env bk)
 			   (begin
 			      (typing callee env fun fix)
 			      (values 'any env bk)))))
