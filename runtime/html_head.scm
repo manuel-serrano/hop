@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Tue Oct  4 18:16:14 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Wed May  3 08:49:15 2017 (serrano)                */
+;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -55,9 +55,11 @@
 (define head-runtime-system-packed-javascript #f)
 
 (define (head-runtime-system-packed idiom)
-   (if (string=? idiom "scheme")
-       head-runtime-system-packed-scheme
-       head-runtime-system-packed-javascript))
+   (cond
+      ((string=? idiom "scheme") head-runtime-system-packed-scheme)
+      ((string=? idiom "hopscript")  head-runtime-system-packed-javascript)
+      ((string=? idiom "javascript")  head-runtime-system-packed-javascript)
+      (else '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-system-unpacked ...                                 */
@@ -71,9 +73,11 @@
 (define head-runtime-system-inline-javascript #f)
 
 (define (head-runtime-system-inline idiom)
-   (if (string=? idiom "scheme")
-       head-runtime-system-inline-scheme
-       head-runtime-system-inline-javascript))
+   (cond
+      ((string=? idiom "scheme") head-runtime-system-inline-scheme)
+      ((string=? idiom "hopscript") head-runtime-system-inline-javascript)
+      ((string=? idiom "javascript") head-runtime-system-inline-javascript)
+      (else '())))
    
 ;*---------------------------------------------------------------------*/
 ;*    head-runtime-favicon ...                                         */
