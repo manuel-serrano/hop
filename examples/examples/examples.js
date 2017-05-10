@@ -262,7 +262,7 @@ function getExamples( dir ) {
 	    o.dir = p;
 
 	    if( !("title" in o) ) o.title = d;
-	    if( !("service" in o) ) o.service = d;
+	    if( !("service" in o) ) o["service"] = d;
 	    if( !("level" in o) ) o.level = 0.1;
 	    if( !("commands" in o) ) o.commands = [ CMD ];
 	    if( fs.existsSync( p + "/README.md" ) ) {
@@ -328,8 +328,8 @@ service examplesRun( o ) {
 	       hop.broadcast( file, <span class="stdout">${data.toString()}</span> );
 	       if( rep ) {
 		  rep = false;
-		  if( o.service ) {
-		     sendResponse( util.format( "http://%s:%d/hop/%s", hop.hostname, port, o.service ) );
+		  if( o[ "service" ] ) {
+		     sendResponse( util.format( "http://%s:%d/hop/%s", hop.hostname, port, o[ "service" ] ) );
 		  } else {
 		     sendResponse( false );
 		  }
