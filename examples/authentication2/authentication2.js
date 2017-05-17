@@ -1,19 +1,19 @@
 /*=====================================================================*/
-/*    .../hop/3.0.x/examples/authentication2/authentication2.js        */
+/*    .../hop/3.1.x/examples/authentication2/authentication2.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:41:35 2014                          */
-/*    Last change :  Wed Nov 18 10:22:08 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Wed May 17 14:33:43 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    show how to authenticate server-to-server requests               */
 /*    -------------------------------------------------------------    */
 /*    run: hop -p 9999 remote.js --rc-file passwd.js                   */
 /*         hop -- authentication2.js 9999                              */
 /*=====================================================================*/
-import service publicOnly();
-import service publicOrProtected();
-import service protectedOnly()
+service publicOnly();
+service publicOrProtected();
+service protectedOnly()
 
 var port = parseInt( process.argv[ process.argv.length - 1 ] );
 

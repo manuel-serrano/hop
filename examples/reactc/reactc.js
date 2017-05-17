@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Jan 27 12:41:09 2017 (serrano)                */
+/*    Last change :  Wed May 17 14:20:04 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Reactive programming with Hop.js                                 */
@@ -11,7 +11,7 @@
 /*    run: hop -v -g reactc.js                                         */
 /*    browser: http://localhost:8080/hop/reactc                        */
 /*=====================================================================*/
-service react() {
+service reactc() {
    var tbody = <tbody> <tr><td>toto</td></tr></tbody>;
    return <html>
      ~{ var env = hop.reactProxy( { val: 0 } ); }
