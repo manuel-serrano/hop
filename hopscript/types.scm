@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue May 16 14:21:07 2017 (serrano)                */
+;*    Last change :  Wed May 17 11:47:00 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -83,8 +83,7 @@
 	      (method::obj (default #f)))
 	   
 	   (final-class JsConstructMap
-	      (js-constructmap-init!)
-	      (%id (default (gensym)))
+	      (%id::long read-only (default (gencmapid)))
 	      (transition::vector (default (vector '|| -1)))
 	      (nextmap (default #f))
 	      (names::vector read-only (default '#()))
@@ -92,9 +91,7 @@
 	      (backup::pair-nil (default '()))
 	      (ctor::obj (default #f))
 	      (vtable::vector (default '#()))
-	      (vlen::long (default 0))
-	      (packed::bool (default #t))
-	      (twinmap (default #f)))
+	      (vlen::long (default 0)))
 
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
@@ -342,8 +339,7 @@
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)
 
-	   (js-constructmap-init! ::JsConstructMap)
-	   (inline js-cmap-twinmap::JsConstructMap ::JsConstructMap)))
+	   (gencmapid)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */
@@ -699,19 +695,13 @@
 (define-generic (js-typedarray-set!::procedure a::JsTypedArray))
 
 ;*---------------------------------------------------------------------*/
-;*    js-constructmap-init! ...                                        */
+;*    gencmapid ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-constructmap-init! this::JsConstructMap)
-   (with-access::JsConstructMap this (twinmap packed %id)
-      (unless twinmap
-	 (set! twinmap
-	    (duplicate::JsConstructMap this
-	       (%id (symbol-append %id 'UP))
-	       (twinmap this)
-	       (packed (not packed)))))))
+(define (gencmapid)
+   (set! cmapid (+fx 1 cmapid))
+   cmapid)
 
 ;*---------------------------------------------------------------------*/
-;*    js-cmap-twinmap ...                                              */
+;*    cmapid ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-cmap-twinmap::JsConstructMap cmap::JsConstructMap)
-   (with-access::JsConstructMap cmap (twinmap) twinmap))
+(define cmapid 0)

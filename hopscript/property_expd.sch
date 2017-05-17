@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed May 17 11:03:02 2017 (serrano)                */
+;*    Last change :  Wed May 17 11:49:58 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -22,13 +22,7 @@
    (match-case x
       ((?- ?obj ?idx)
        (e `(with-access::JsObject ,obj (elements cmap)
-	      (vector-ref 
-		 (cond-expand
-		    (bigloo-cXXX
-		     (pragma::vector "BVECTOR( (&(((BgL_jsobjectz00_bglt)BOBJECT($1))->BgL_elementsz00) + 1) )" ,obj))
-		    (else
-		     elements))
-		 ,idx))
+	      (vector-ref elements ,idx))
 	  e))
       (else
        (map (lambda (x) (e x e)) x))))
@@ -262,12 +256,9 @@
    (define (ref o prop cache %this cindex ccmap cpmap cowner)
       `(cond
 	  ((eq? ,cpmap %omap)
-	   (if (>=fx ,cindex 0)
-	       (if ,cowner
-		   (with-access::JsObject ,cowner (elements)
-		      (vector-ref elements ,cindex))
-		   (vector-ref elements ,cindex))
-	       (with-access::JsObject ,cowner (elements)
+	   (with-access::JsObject ,cowner (elements)
+	      (if (>=fx ,cindex 0)
+		  (vector-ref elements ,cindex)
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
 		     (js-property-value ,o desc ,%this)))))
 	  (else
@@ -446,8 +437,8 @@
 		     (if (<fx ,cindx (vector-length %vec))
 			 (vector-set! %vec ,cindx ,tmp)
 			 (js-object-add! ,o ,cindx ,tmp)))
-		  (js-object-cmap-set! ,o
-		     (if (eq? ,ccmap #t) ,cpmap ,ccmap))
+		  (with-access::JsObject ,o ((omap cmap))
+		     (set! omap (if (eq? ,ccmap #t) ,cpmap ,ccmap)))
 		  ,tmp)
 	       (with-access::JsObject ,cowner (elements)
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindx) 1))))
@@ -461,7 +452,8 @@
 		  (let ((indx (car (vector-ref vtable ,vindx)))
 			(cmap (cdr (vector-ref vtable ,vindx))))
 		     (vector-set! elements indx ,tmp)
-		     (js-object-cmap-set! ,o cmap)
+		     (with-access::JsObject ,o ((omap cmap))
+			(set! omap cmap))
 		     ,tmp)
 		  (js-object-put-name/cache-miss! ,o ,prop ,tmp ,throw
 		     ,cache ,%this))))))

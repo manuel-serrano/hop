@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed May 17 08:29:37 2017 (serrano)                */
+;*    Last change :  Wed May 17 11:51:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -4746,14 +4746,12 @@
 	     `(with-access::JsGlobalObject %this (__proto__)
 		 (js-object-literal-init!
 		    (instantiate::JsObject
-		       (cmap (js-cmap-twinmap
-				,(j2s-scheme cmap mode return conf hint totype)))
+		       (cmap ,(j2s-scheme cmap mode return conf hint totype))
 		       (elements (vector ,@vals))
 		       (__proto__ __proto__))))
 	     `(with-access::JsGlobalObject %this (__proto__)
 		 (instantiate::JsObject
-		    (cmap (js-cmap-twinmap
-			     ,(j2s-scheme cmap mode return conf hint totype)))
+		    (cmap ,(j2s-scheme cmap mode return conf hint totype))
 		    (elements (vector ,@vals))
 		    (__proto__ __proto__))))))
    
