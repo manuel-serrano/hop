@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed May 17 08:55:04 2017 (serrano)                */
+;*    Last change :  Wed May 17 14:26:43 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -238,7 +238,7 @@
 	     (append (j2s-js val tildec dollarc mode evalp conf)
 		(if (j2s-param? this) '() '(";")))))
 	 (else
-	  (list this (j2s-binder binder writable) (j2s-js-id this) ";")))))
+	  (list this (j2s-binder binder #t) (j2s-js-id this) ";")))))
                                              
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SReturn ...                                           */

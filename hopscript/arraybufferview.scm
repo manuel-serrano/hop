@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Wed Mar  8 11:29:34 2017 (serrano)                */
+;*    Last change :  Wed May 17 14:18:48 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -1104,7 +1104,7 @@
 	    (js-dataview-set this offset value (js-totest lendian)
 	       (lambda (vec off value lendian)
 		  (if (eq? host-lendian lendian)
-		      ($s16/u8vector-set! vec off value)
+		      ($s16/u8vector-set! vec off (fixnum->int16 value))
 		      (let ((b0 (bit-and (bit-rsh value 8) #xff))
 			    (b1 (bit-and value #xff)))
 			 (if lendian
@@ -1144,7 +1144,7 @@
 	    (js-dataview-set this offset value (js-totest lendian)
 	       (lambda (vec off value lendian)
 		  (if (eq? host-lendian lendian)
-		      ($s32/u8vector-set! vec off value)
+		      ($s32/u8vector-set! vec off (fixnum->int32 value))
 		      (let ((b0 (bit-and (bit-rsh value 24) #xff))
 			    (b1 (bit-and (bit-rsh value 16) #xff))
 			    (b2 (bit-and (bit-rsh value 8) #xff))

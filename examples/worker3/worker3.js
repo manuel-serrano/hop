@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/worker3/worker3.js       */
+/*    serrano/prgm/project/hop/3.1.x/examples/worker3/worker3.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 10:09:31 2014                          */
-/*    Last change :  Tue Nov  3 11:33:15 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Wed May 17 14:33:24 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Services in workers example                                      */
 /*    -------------------------------------------------------------    */
@@ -17,7 +17,7 @@ var bar = require( "./bar.js" );
 var w = new Worker( "./slave.js" );
 
 service worker3() {
-   import service worker3slave();
+   service worker3slave();
    
    var frames = <div style="display: none">
      <iframe style="border: 1px solid black" src=${worker3master()}/>
