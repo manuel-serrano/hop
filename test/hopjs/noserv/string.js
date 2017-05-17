@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Apr 25 07:44:19 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Sun May  7 09:54:33 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
 /*=====================================================================*/
@@ -85,3 +85,27 @@ function bigStr() {
 }
 
 bigStr();
+
+/*---------------------------------------------------------------------*/
+/*    typing                                                           */
+/*---------------------------------------------------------------------*/
+function typestr() {
+   let c1 = this.charCodeAt( 0 );
+   let s = this.toString();
+   
+   return s.length;
+}
+
+assert.equal( typestr.call( "bar", undefined ), 3, "typestr" );
+
+function typestr2() {
+   let f1 = this.charCodeAt;
+   let f2 = this.charCodeAt;
+
+   return f1 === f2;
+}
+
+assert.ok( typestr2.call( "bar", undefined ), "typestr2" );
+
+
+   

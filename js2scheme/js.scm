@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue Mar 28 10:19:10 2017 (serrano)                */
+;*    Last change :  Tue May 16 17:06:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -204,9 +204,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-binder ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (j2s-binder binder)
+(define (j2s-binder binder writable)
    (case binder
-      ((let let-opt) "let ")
+      ((let) "let ")
+      ((let-opt) (if writable "let " "const "))
       ((const const-opt) "const ")
       ((var) "var ")
       ((param) "")
@@ -216,21 +217,21 @@
 ;*    j2s-js ::J2SDecl ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDecl tildec dollarc mode evalp conf)
-   (with-access::J2SDecl this (binder)
+   (with-access::J2SDecl this (binder writable)
       (if (j2s-param? this)
-	  (list this (j2s-binder binder) (j2s-js-id this))
-	  (list this (j2s-binder binder) (j2s-js-id this) ";"))))
+	  (list this (j2s-binder binder writable) (j2s-js-id this))
+	  (list this (j2s-binder binder writable) (j2s-js-id this) ";"))))
                                              
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp conf)
-   (with-access::J2SDeclInit this (val binder)
+   (with-access::J2SDeclInit this (val binder writable)
       (if (or (j2s-let-opt? this) (not (isa? val J2SUndefined)))
-	  (cons* this (j2s-binder binder) (j2s-js-id this) "="
+	  (cons* this (j2s-binder binder writable) (j2s-js-id this) "="
 	     (append (j2s-js val tildec dollarc mode evalp conf)
 		(if (j2s-param? this) '() '(";"))))
-	  (list this (j2s-binder binder) (j2s-js-id this) ";"))))
+	  (list this (j2s-binder binder writable) (j2s-js-id this) ";"))))
                                              
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SReturn ...                                           */

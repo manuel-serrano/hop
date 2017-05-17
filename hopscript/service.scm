@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Mar  8 11:26:18 2017 (serrano)                */
+;*    Last change :  Fri May  5 10:24:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -328,7 +328,7 @@
 		      0 'inspect))
 	 (js-bind! %this js-hopframe-prototype 'getHeader
 	    :value (js-make-function %this
-		      (lambda (this::JsHopFrame hd)
+		      (lambda (this::JsHopFrame)
 			 (with-access::JsHopFrame this (header)
 			    header))
 		      0 'getHeader))

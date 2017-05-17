@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 19 11:30:12 2017 (serrano)                */
+;*    Last change :  Tue May 16 19:11:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -850,10 +850,13 @@
 		       (not (memq 'ref usage))
 		       (not (memq 'call usage))))))))
    
-   (with-access::J2SDeclFun this (loc id scope val usage ronly)
+   (with-access::J2SDeclFun this (loc id scope val usage ronly _scmid)
       (with-access::J2SFun val (params mode vararg body name generator)
 	 (let* ((scmid (j2s-decl-scheme-id this))
 		(fastid (j2s-fast-id id)))
+	    (when (eq? id 'matchesPeer)
+	       (tprint "matchesPeer no-closure=" (no-closure? this) " scope="
+		  scope))
 	    (epairify-deep loc
 	       (case scope
 		  ((none)
@@ -865,6 +868,7 @@
 		   (let ((def `(,fastid ,(jsfun->lambda val mode return conf
 					    (j2s-declfun-prototype this)
 					    (constructor-only? this)))))
+		      
 		      (if (no-closure? this)
 			  (list def)
 			  (list def `(,scmid ,(make-function this))))))
@@ -979,6 +983,14 @@
       'this))
 
 ;*---------------------------------------------------------------------*/
+;*    js-not ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (js-not expr)
+   (match-case expr
+      (((kwote not) ?val) val)
+      (else `(not ,expr))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-test ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-test test::J2SExpr mode return conf)
@@ -988,6 +1000,10 @@
 	  (j2s-bool-test test mode return conf))
 	 ((eq? ty 'object)
 	  #t)
+	 ((is-fixnum? test conf)
+	  `(not (=fx ,(j2s-scheme test mode return conf '(bool) 'any) 0)))
+	 ((type-number? ty)
+	  `(not (= ,(j2s-scheme test mode return conf '(bool) 'any) 0)))
 	 ((notbool-expr? test)
 	  `(js-toboolean ,(j2s-scheme test mode return conf '(bool) 'any)))
 	 (else
@@ -1594,7 +1610,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun->scheme ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (j2sfun->scheme this::J2SFun tmp mode return conf)
+(define (j2sfun->scheme this::J2SFun tmp ctor mode return conf)
    (with-access::J2SFun this (loc name params mode vararg mode generator
 				constrsize)
       (let* ((id (j2sfun-id this))
@@ -1617,7 +1633,7 @@
 		    :strict ',mode
 		    :minlen ,minlen
 		    :alloc (lambda (o) (js-object-alloc o %this))
-		    :construct ,tmp
+		    :construct ,ctor
 		    :constrsize ,constrsize)
 		`(js-make-function-simple %this
 		    ,tmp ,len
@@ -1637,11 +1653,11 @@
 			    `(letrec* ((,tmp ,(jsfun->lambda this mode return conf
 						 `(js-get ,tmp2 'prototype %this)
 						 #f))
-				       (,tmp2 ,(j2sfun->scheme this tmp mode return conf)))
+				       (,tmp2 ,(j2sfun->scheme this tmp tmp mode return conf)))
 				,tmp2))
 			 `(let ((,tmp ,(jsfun->lambda this mode return conf
 					  (j2s-fun-prototype this) #f)))
-			     ,(j2sfun->scheme this tmp mode return conf)))))
+			     ,(j2sfun->scheme this tmp tmp mode return conf)))))
 	 (epairify-deep loc
 	    (if id
 		(let ((scmid (j2s-scheme-id id '^)))
@@ -1806,13 +1822,13 @@
 	       ((labels (and ?bindings ((?id . ?-))) ?id)
 		`(labels ,bindings
 		    (js-create-service %this
-		       ,(j2sfun->scheme this id mode return conf)
+		       ,(j2sfun->scheme this id #f mode return conf)
 		       ,(when (symbol? path) (symbol->string path))
 		       ',loc
 		       ,register ,import (js-current-worker))))
 	       (else
 		`(js-create-service %this
-		   ,(j2sfun->scheme this lam mode return conf)
+		   ,(j2sfun->scheme this lam #f mode return conf)
 		   ,(when (symbol? path) (symbol->string path))
 		   ',loc
 		   ,register ,import (js-current-worker)))))))
@@ -1917,7 +1933,10 @@
    (with-access::J2SDeclInit d (val usage id hint)
       (let ((ident (j2s-decl-scheme-id d)))
 	 (cond
-	    ((or (not (isa? val J2SFun)) (isa? val J2SSvc) (memq 'assig usage))
+	    ((or (not (isa? val J2SFun))
+		 (isa? val J2SSvc)
+		 (memq 'init usage)
+		 (memq 'assig usage))
 	     `(define ,ident ,(j2s-scheme val mode return conf hint 'any)))
 	    ((or (memq 'ref usage) (memq 'get usage) (memq 'new usage))
 	     (let ((fun (jsfun->lambda val mode return conf
@@ -1925,7 +1944,7 @@
 		   (tmp (j2s-fast-id id)))
 		`(begin
 		    (define ,tmp ,fun)
-		    (define ,ident ,(j2sfun->scheme val tmp mode return conf)))))
+		    (define ,ident ,(j2sfun->scheme val tmp tmp mode return conf)))))
 	    ((memq 'call usage)
 	     `(define ,(j2s-fast-id id)
 		 ,(jsfun->lambda val mode return conf
@@ -1950,7 +1969,7 @@
 			      `(js-get ,ident 'prototype %this) #f))
 		      (tmp (j2s-fast-id id)))
 		   `((,tmp ,fun)
-		     (,var ,(j2sfun->scheme val tmp mode return conf)))))
+		     (,var ,(j2sfun->scheme val tmp tmp mode return conf)))))
 	       ((memq 'call usage)
 		`((,(j2s-fast-id id)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))
@@ -2368,7 +2387,7 @@
 			       (=u32 %lhs ,(j2s-scheme rhs mode return conf '(fixnum) 'any)))))
 		 `(let ((%lhs ,(j2s-scheme lhs mode return conf '(fixnum) 'any)))
 		     ,(if (memq op '(!= !==))
-			  `(not ,test)
+			  (js-not test)
 			  test)))))
 	  ((j2s-aref-length? lhs)
 	   (with-access::J2SAref (aref lhs) (field alen)
@@ -2377,13 +2396,13 @@
 				  %rhs))))
 		 `(let ((%rhs ,(j2s-scheme rhs mode return conf '(fixnum) 'any)))
 		     ,(if (memq op '(!= !==))
-			  `(not ,test)
+			  (js-not test)
 			  test)))))
 	  (else
 	   (let ((res `(=u32 ,(j2s-scheme lhs mode return conf '(fixnum) 'any)
 			  ,(j2s-scheme rhs mode return conf '(fixnum) 'any))))
 	      (if (memq op '(!= !==))
-		  `(not ,res)
+		  (js-not res)
 		  res)))))
       ((and (is-fixnum/conf? lhs) (is-fixnum/conf? rhs))
        (cond
@@ -2393,7 +2412,7 @@
 			       (=fx %lhs ,(j2s-scheme rhs mode return conf '(fixnum) 'any)))))
 		 `(let ((%lhs ,(j2s-scheme lhs mode return conf '(fixnum) 'any)))
 		     ,(if (memq op '(!= !==))
-			  `(not ,test)
+			  (js-not test)
 			  test)))))
 	  ((j2s-cast-aref-length? lhs)
 	   (with-access::J2SAref (cast-aref lhs) (field alen)
@@ -2402,14 +2421,14 @@
 				  %rhs))))
 		 `(let ((%rhs ,(j2s-scheme rhs mode return conf '(fixnum) 'any)))
 		     ,(if (memq op '(!= !==))
-			  `(not ,test)
+			  (js-not test)
 			  test)))))
 	  (else
 	   (let ((res (binop lhs rhs mode return conf '(fixnum) 'any
 			 (lambda (left right)
 			    `(=fx ,left ,right)))))
 	      (if (memq op '(!= !==))
-		  `(not ,res)
+		  (js-not res)
 		  res)))))
       ((and (is-number? lhs) (is-number? rhs))
        (cond
@@ -2419,7 +2438,7 @@
 			       (= %lhs ,(j2s-scheme rhs mode return conf '(number) 'any)))))
 		 `(let ((%lhs ,(j2s-scheme lhs mode return conf '(number) 'any)))
 		     ,(if (memq op '(!= !==))
-			  `(not ,test)
+			  (js-not test)
 			  test)))))
 	  ((j2s-cast-aref-length? lhs)
 	   (with-access::J2SAref (cast-aref lhs) (field alen)
@@ -2428,14 +2447,14 @@
 				  %rhs))))
 		 `(let ((%rhs ,(j2s-scheme rhs mode return conf '(number) 'any)))
 		     ,(if (memq op '(!= !==))
-			  `(not ,test)
+			  (js-not test)
 			  test)))))
 	  (else
 	   (let ((res (binop lhs rhs mode return conf hint 'any
 			 (lambda (left right)
 			    (j2s-num-op '= left right lhs rhs conf)))))
 	      (if (memq op '(!= !==))
-		  `(not ,res)
+		  (js-not res)
 		  res)))))
       ((and (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))
        (binop lhs rhs mode return conf '(string) 'any
@@ -3201,10 +3220,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SMeta mode return conf hint totype)
    (with-access::J2SMeta this (stmt optim)
-      (let ((conf (if (=fx optim 0)
-		      (cons* :optim 0 conf)
-		      conf)))
-	 (j2s-scheme stmt mode return conf hint totype))))
+      (if (=fx optim 0)
+	  `(%%noinline
+	      ,(j2s-scheme stmt mode return (cons* :optim 0 conf) hint totype))
+	  (j2s-scheme stmt mode return conf hint totype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SSeq ...                                          */
@@ -3833,9 +3852,10 @@
 	  (with-access::J2SDecl decl (ronly)
 	     (when ronly decl)))
 	 ((j2s-let-opt? decl)
-	  (with-access::J2SDeclInit decl (usage id val)
+	  (with-access::J2SDeclInit decl (usage id val scope)
 	     (when (isa? val J2SFun)
-		(unless (memq 'assig usage) decl))))
+		(unless (or (and (memq 'init usage) (eq? scope 'global))
+			    (memq 'assig usage)) decl))))
 	 (else
 	  #f))))
 
@@ -4065,7 +4085,7 @@
 
    (define (call-unknown-function fun thisarg args)
       (let* ((len (length args))
-	     (call (if (>=fx len 9)
+	     (call (if (>=fx len 11)
 		       'js-calln
 		       (string->symbol (format "js-call~a" len)))))
 	 (with-access::J2SCall this (loc cache)
@@ -4574,9 +4594,6 @@
 	      (if (string=? prop "length")
 		  `(js-get-length ,obj ,(pcache cache) %this)
 		  (case tyobj
-;* 		     ((this)                                           */
-;* 		      `(js-this-get-name/cache ,obj                    */
-;* 			  ',(string->symbol prop) ,(pcache cache) %this)) */
 		     ((object this)
 		      `(,(js-object-get-name/cache clevel) ,obj
 			  ',(string->symbol prop) ,(pcache cache) %this))
@@ -4731,12 +4748,14 @@
 	     `(with-access::JsGlobalObject %this (__proto__)
 		 (js-object-literal-init!
 		    (instantiate::JsObject
-		       (cmap ,(j2s-scheme cmap mode return conf hint totype))
+		       (cmap (js-cmap-twinmap
+				,(j2s-scheme cmap mode return conf hint totype)))
 		       (elements (vector ,@vals))
 		       (__proto__ __proto__))))
 	     `(with-access::JsGlobalObject %this (__proto__)
 		 (instantiate::JsObject
-		    (cmap ,(j2s-scheme cmap mode return conf hint totype))
+		    (cmap (js-cmap-twinmap
+			     ,(j2s-scheme cmap mode return conf hint totype)))
 		    (elements (vector ,@vals))
 		    (__proto__ __proto__))))))
    
@@ -5019,7 +5038,7 @@
 				  
 				  
 				  nodes (iota (length nodes)))
-			     (set! cmap ,cmap1)))
+			     (js-object-cmap-set! ,%ref ,cmap1)))
 		       ;; cache miss
 		       (with-access::JsConstructMap ,cmap (names)
 			  (let ((len0 (vector-length names)))
@@ -5092,6 +5111,6 @@
    (with-access::J2SUnary this (op expr loc)
       (case op
 	 ((!)
-	  (epairify loc `(not ,(j2s-bool-test expr mode return conf))))
+	  (epairify loc (js-not (j2s-bool-test expr mode return conf))))
 	 (else
 	  (call-next-method)))))

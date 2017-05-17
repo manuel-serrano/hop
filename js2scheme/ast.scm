@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Apr 21 09:07:31 2017 (serrano)                */
+;*    Last change :  Mon May  8 09:56:24 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -721,9 +721,9 @@
        (print "   return _ast;\n};\n\n")))
    
    `(begin
-       ,@(map (lambda (nb) (gen-method nb)) (iota 6))
-       ,@(map (lambda (nb) (gen-method* nb)) (iota 6))
-       ,@(map (lambda (nb) (gen-method! nb)) (iota 6))))
+       ,@(map (lambda (nb) (gen-method nb)) (iota 7))
+       ,@(map (lambda (nb) (gen-method* nb)) (iota 7))
+       ,@(map (lambda (nb) (gen-method! nb)) (iota 7))))
 
 ;*---------------------------------------------------------------------*/
 ;*    gen-traversals ...                                               */
@@ -807,9 +807,9 @@
 		    n))))))
 
    `(begin
-       ,@(map (lambda (nb) (gen-method nb)) (iota 6))
-       ,@(map (lambda (nb) (gen-method* nb)) (iota 6))
-       ,@(map (lambda (nb) (gen-method! nb)) (iota 6))))
+       ,@(map (lambda (nb) (gen-method nb)) (iota 7))
+       ,@(map (lambda (nb) (gen-method* nb)) (iota 7))
+       ,@(map (lambda (nb) (gen-method! nb)) (iota 7))))
 
 ;*---------------------------------------------------------------------*/
 ;*    default walk                                                     */

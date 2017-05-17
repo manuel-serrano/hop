@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Apr  7 19:45:21 2017 (serrano)                */
+;*    Last change :  Tue May 16 16:44:04 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -47,7 +47,9 @@
 	   __js2scheme_stage
 	   __js2scheme_ecmascript5
 	   __js2scheme_cps
-	   __js2scheme_utils)
+	   __js2scheme_utils
+	   __js2scheme_sweep
+	   __js2scheme_globvar)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -148,7 +150,9 @@
       j2s-letopt-stage
       j2s-this-stage
       j2s-use-stage
+      j2s-sweep-stage
       j2s-ronly-stage
+      j2s-globvar-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-constant-stage

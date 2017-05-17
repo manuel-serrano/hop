@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/etc/hopscript.init.in             */
+;*    serrano/prgm/project/hop/3.1.x/etc/hopscript.init.in             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 21 08:47:34 2008                          */
-;*    Last change :  Mon Apr 14 10:52:48 2014 (serrano)                */
-;*    Copyright   :  2008-14 Manuel Serrano                            */
+;*    Last change :  Sat May  6 09:11:52 2017 (serrano)                */
+;*    Copyright   :  2008-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPSCRIPT init file.                                             */
 ;*=====================================================================*/
@@ -30,3 +30,11 @@
 	  `(js-toobject ,(e `,%this e) ,(e `,o e)))
 	 (else
 	  (error "js-toobject" "wrong syntax" x)))))
+
+;*---------------------------------------------------------------------*/
+;*    %%noinline ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-macro (%%noinline . expr)
+   (cond-expand
+      (bigloo4.3a `(begin ,@expr))
+      (else `(|#meta| (noinline) ,@expr))))

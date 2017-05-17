@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 20 08:04:06 2017                          */
-;*    Last change :  Wed May  3 09:08:39 2017 (serrano)                */
+;*    Last change :  Mon May  8 19:43:10 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Global inter-process synchronization                             */
@@ -14,7 +14,9 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_syncg
 
-   (library pthread)
+   (cond-expand
+      ((and enable-threads (library pthread))
+       (library pthread)))
 
    (export (synchronize-global ::bstring ::procedure)))
 
@@ -53,6 +55,7 @@
    
    (cond-expand
       (bigloo4.3a (synchronize-file lockfile proc))
+      ((not enable-threads) (synchronize-file lockfile proc))
       (else
        (let* ((semname (string-append "/" (basename lockfile)))
 	      (sem (open-semaphore semname)))

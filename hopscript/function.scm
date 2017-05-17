@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Mar 20 18:06:46 2017 (serrano)                */
+;*    Last change :  Tue May 16 14:21:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -40,7 +40,7 @@
 	      #!key
 	      __proto__ prototype constructor construct alloc
 	      (strict 'normal) arity (minlen -1) src rest
-	      (constrsize 3))
+	      (constrsize 3) (maxconstrsize 100))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::obj ::int ::int ::symbol ::bool ::int)))
 
@@ -229,7 +229,8 @@
 (define (js-make-function %this procedure length name
 	   #!key __proto__ prototype
 	   constructor alloc construct (strict 'normal)
-	   arity (minlen -1) src rest (constrsize 3))
+	   arity (minlen -1) src rest
+	   (constrsize 3) (maxconstrsize 100))
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -275,6 +276,7 @@
 				  (construct (lambda (_) #unspecified))
 				  (else js-not-a-constructor)))
 			(constrsize constrsize)
+			(maxconstrsize maxconstrsize)
 			(construct constr)
 			(cmap (instantiate::JsConstructMap))
 			(prototype (if (isa? prototype JsObject)
