@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue May 16 19:11:41 2017 (serrano)                */
+;*    Last change :  Wed May 17 08:29:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1935,7 +1935,6 @@
 	 (cond
 	    ((or (not (isa? val J2SFun))
 		 (isa? val J2SSvc)
-		 (memq 'init usage)
 		 (memq 'assig usage))
 	     `(define ,ident ,(j2s-scheme val mode return conf hint 'any)))
 	    ((or (memq 'ref usage) (memq 'get usage) (memq 'new usage))
@@ -3854,8 +3853,7 @@
 	 ((j2s-let-opt? decl)
 	  (with-access::J2SDeclInit decl (usage id val scope)
 	     (when (isa? val J2SFun)
-		(unless (or (and (memq 'init usage) (eq? scope 'global))
-			    (memq 'assig usage)) decl))))
+		(not (memq 'assig usage)) decl)))
 	 (else
 	  #f))))
 

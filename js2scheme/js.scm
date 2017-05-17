@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Tue May 16 17:06:07 2017 (serrano)                */
+;*    Last change :  Wed May 17 08:55:04 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
@@ -206,8 +206,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-binder binder writable)
    (case binder
-      ((let) "let ")
-      ((let-opt) (if writable "let " "const "))
+      ((let let-opt) (if writable "let " "const "))
       ((const const-opt) "const ")
       ((var) "var ")
       ((param) "")
@@ -219,19 +218,27 @@
 (define-method (j2s-js this::J2SDecl tildec dollarc mode evalp conf)
    (with-access::J2SDecl this (binder writable)
       (if (j2s-param? this)
-	  (list this (j2s-binder binder writable) (j2s-js-id this))
-	  (list this (j2s-binder binder writable) (j2s-js-id this) ";"))))
+	  (list this (j2s-binder binder #t) (j2s-js-id this))
+	  (list this (j2s-binder binder #t) (j2s-js-id this) ";"))))
                                              
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SDeclInit tildec dollarc mode evalp conf)
-   (with-access::J2SDeclInit this (val binder writable)
-      (if (or (j2s-let-opt? this) (not (isa? val J2SUndefined)))
+   (with-access::J2SDeclInit this (val binder writable scope)
+      (cond
+	 ((and (eq? scope 'global)
+	       (> (config-get conf :debug-client 0) 0)
+	       (or (j2s-let-opt? this) (not (isa? val J2SUndefined))))
+	  (cons* this "var " (j2s-js-id this) "="
+	     (append (j2s-js val tildec dollarc mode evalp conf)
+		(if (j2s-param? this) '() '(";")))))
+	 ((or (j2s-let-opt? this) (not (isa? val J2SUndefined)))
 	  (cons* this (j2s-binder binder writable) (j2s-js-id this) "="
 	     (append (j2s-js val tildec dollarc mode evalp conf)
-		(if (j2s-param? this) '() '(";"))))
-	  (list this (j2s-binder binder writable) (j2s-js-id this) ";"))))
+		(if (j2s-param? this) '() '(";")))))
+	 (else
+	  (list this (j2s-binder binder writable) (j2s-js-id this) ";")))))
                                              
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SReturn ...                                           */
