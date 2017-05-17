@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Apr  7 18:45:31 2017 (serrano)                */
+;*    Last change :  Wed May 17 08:52:23 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -260,6 +260,17 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2STilde env mode withs wenv lang)
    (with-access::J2STilde this (stmt)
+      ;; mark global variables, used by the JS generation pass
+      (when (isa? stmt J2SSeq)
+	 (with-access::J2SSeq stmt (nodes)
+	    (for-each (lambda (n)
+			 (when (isa? n J2SVarDecls)
+			    (with-access::J2SVarDecls n (decls)
+			       (for-each (lambda (d)
+					    (with-access::J2SDecl d (scope)
+					       (set! scope 'global)))
+				  decls))))
+	       nodes)))
       (resolve-tilde! stmt
 	 (list (lambda (this resolvers)
 		  (resolve! this env mode withs wenv lang))))
@@ -283,30 +294,8 @@
 ;*    resolve! ::J2SBlock ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SBlock env mode withs wenv lang)
-
-;*    (define (blockify-vardecls::pair-nil nodes::pair-nil endloc)     */
-;*       ;; should be re-written without allocating new lists          */
-;*       (let loop ((nodes nodes)                                      */
-;* 		 (in-block #t))                                        */
-;* 	 (cond                                                         */
-;* 	    ((null? nodes)                                             */
-;* 	     nodes)                                                    */
-;* 	    ((isa? (car nodes) J2SVarDecls)                            */
-;* 	     (if in-block                                              */
-;* 		 (cons (car nodes) (loop (cdr nodes) #t))              */
-;* 		 (let* ((rest (loop (cdr nodes) #t))                   */
-;* 			(block (with-access::J2SVarDecls (car nodes) (loc) */
-;* 				  (instantiate::J2SBlock               */
-;* 				     (loc loc)                         */
-;* 				     (endloc loc)                      */
-;* 				     (nodes (cons (car nodes) rest)))))) */
-;* 		    (list block))))                                    */
-;* 	    (else                                                      */
-;* 	     (cons (car nodes) (loop (cdr nodes) #f))))))              */
-
    ;; a block is a letrec if it contains let or const declaration
    (with-access::J2SBlock this (nodes endloc)
-;*       (set! nodes (blockify-vardecls nodes endloc))                 */
       (let ((ldecls (collect-let nodes)))
 	 (if (pair? ldecls)
 	     (resolve-let! this env mode withs wenv ldecls lang)

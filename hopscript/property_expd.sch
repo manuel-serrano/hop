@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed May 17 08:10:50 2017 (serrano)                */
+;*    Last change :  Wed May 17 11:03:02 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -24,7 +24,7 @@
        (e `(with-access::JsObject ,obj (elements cmap)
 	      (vector-ref 
 		 (cond-expand
-		    ((and bigloo-c js-object-packed)
+		    (bigloo-cXXX
 		     (pragma::vector "BVECTOR( (&(((BgL_jsobjectz00_bglt)BOBJECT($1))->BgL_elementsz00) + 1) )" ,obj))
 		    (else
 		     elements))

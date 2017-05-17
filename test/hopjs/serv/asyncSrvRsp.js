@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Sat Apr  8 12:36:46 2017 (serrano)                */
+/*    Last change :  Wed May 17 09:59:48 2017 (serrano)                */
 /*    Copyright   :  2015-17 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test asynchronous responses in services                          */
@@ -14,11 +14,11 @@ var runTest = require( './aux/launchWorkers.js' ).runTest;
 var clientModule = require.resolve( './aux/stdClient.js' );
 
 // number of concurrent clients
-var NUMCLIENTS = 5;
+var NUMCLIENTS = 1;
 // number of service invocations per client
 var NUMCALLS = 200;
 // set delay for asynchronous response
-var DELAY = 5;
+var DELAY = 1;
 //global timeout (test will fail if not completed by then)
 var TIMEOUT = 10000; 
 // change TIMEOUT value to match your hardware
@@ -29,14 +29,18 @@ var requests = 0;
 service toTest( clientId, num ) {
    requests++;
    console.log( "toTest req=", requests );
-   return hop.HTTPResponseAsync(
-      function( sendResponse ) {
-	 setTimeout( function () {
-	    var r = { clientId: clientId, num: num };
-	    console.log( "sending response r=", r );
-	    sendResponse( r );
-	 }, DELAY );
-      }, this );
+   
+   var r = { clientId: clientId, num: num };
+   return r;
+   
+/*    return hop.HTTPResponseAsync(                                    */
+/*       function( sendResponse ) {                                    */
+/* 	 setTimeout( function () {                                     */
+/* 	    var r = { clientId: clientId, num: num };                  */
+/* 	    console.log( "sending response r=", r );                   */
+/* 	    sendResponse( r );                                         */
+/* 	 }, DELAY );                                                   */
+/*       }, this );                                                    */
 }
 
 function onTimeout() {
