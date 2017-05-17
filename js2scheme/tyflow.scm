@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Apr 27 08:41:08 2017 (serrano)                */
+;*    Last change :  Tue May 16 07:47:40 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -95,8 +95,9 @@
 			      (loop (+fx i 1)))))
 		   (loop (+fx i 1))))))
       (unless (config-get args :optim-cast)
-	 (unindex! this))
+	 (force-type! this 'index 'integer))
       ;; cleanup the ast use count and remove obviously useless definitions
+      (force-type! this 'unknown 'any)
       (program-cleanup! this))
    this)
 
@@ -517,7 +518,7 @@
 	    (with-access::J2SDeclFun decl (val) (escape-fun val)))
 	 (let ((etyp (env-lookup env decl)))
 	    (when (eq? etyp 'unknown)
-	       (with-access::J2SDeclInit decl (vtype)
+	       (with-access::J2SDecl decl (vtype)
 		  (cond
 		     ((and ronly (isa? decl J2SDeclInit))
 		      (set! etyp vtype))
@@ -578,6 +579,14 @@
 ;*    typing ::J2SAssig ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SAssig env::pair-nil fun fix::cell)
+   
+   (define (this-assig? lhs)
+      (when (isa? lhs J2SAccess)
+	 (with-access::J2SAccess lhs (obj)
+	    (when (isa? obj J2SThis)
+	       (with-access::J2SThis obj (decl)
+		  decl)))))
+   
    (with-access::J2SAssig this (lhs rhs)
       (multiple-value-bind (tyv envl lbk)
 	 (typing lhs env fun fix)
@@ -593,6 +602,18 @@
 		       (let ((nenv (extend-env env decl tyr)))
 			  (expr-type-set! this nenv fix tyr (append lbk rbk))))
 		    (return 'unknown env (append lbk rbk)))))
+	    ((this-assig? lhs)
+	     =>
+	     (lambda (decl)
+		;; this property assignment
+		(let ((envt (extend-env envl decl 'object)))
+		   (multiple-value-bind (tyr nenv rbk)
+		      (typing rhs envt fun fix)
+		      (if tyr
+			  (expr-type-set! this nenv fix tyr (append lbk rbk))
+			  (return 'unknown
+			     (extend-env env decl 'object)
+			     (append lbk rbk)))))))
 	    (else
 	     ;; a non variable assinment
 	     (multiple-value-bind (tyr nenv rbk)
@@ -935,6 +956,8 @@
 	 (typing-binary op lhs rhs env fun fix)
 	 (expr-type-set! this env fix typ bk))))
 
+(define *warning* #f)
+
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SAccess ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -955,7 +978,12 @@
 	    (multiple-value-bind (tyf envf bkf)
 	       (typing field envo fun fix)
 	       (cond
-		  ((isa? obj J2SThis)
+		  ((and #t (isa? obj J2SThis))
+		   ;; MS: 7 may 2017, this rule is wrong see
+		   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-8.7.1
+		   (unless *warning*
+		      (set! *warning* #t)
+		      (tprint "WRONG TYPING..."))
 		   (with-access::J2SThis obj (decl)
 		      (let ((envt (extend-env env decl 'object)))
 			 (expr-type-set! this envt fix 'any (append bko bkf)))))
@@ -1372,33 +1400,33 @@
 		    (call-default-walker)))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    unindex! ...                                                     */
+;*    force-type! ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unindex! this::J2SNode)
+(define-walk-method (force-type! this::J2SNode from to)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    unindex! ::J2SExpr ...                                           */
+;*    force-type! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unindex! this::J2SExpr)
+(define-walk-method (force-type! this::J2SExpr from to)
    (with-access::J2SExpr this (type)
-      (when (eq? type 'index) (set! type 'integer)))
+      (when (eq? type from) (set! type to)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    unindex! ::J2SFun ...                                            */
+;*    force-type! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unindex! this::J2SFun)
+(define-walk-method (force-type! this::J2SFun from to)
    (with-access::J2SFun this (rtype params)
-      (when (eq? rtype 'index) (set! rtype 'integer)))
+      (when (eq? rtype from) (set! rtype to)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    unindex! ::J2SDecl ...                                           */
+;*    force-type! ::J2SDecl ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (unindex! this::J2SDecl)
+(define-walk-method (force-type! this::J2SDecl from to)
    (with-access::J2SDecl this (itype)
-      (when (eq? itype 'index) (set! itype 'integer)))
+      (when (eq? itype from) (set! itype to)))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

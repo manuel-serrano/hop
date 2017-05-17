@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Apr 10 15:47:09 2017 (serrano)                */
+;*    Last change :  Sat May 13 20:39:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -79,6 +79,15 @@
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 	  `(:type ,type)
 	  '())))
+      
+;*---------------------------------------------------------------------*/
+;*    dump-scope ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (dump-scope scope)
+   (if (or (>= (bigloo-debug) 3)
+	   (string-contains (or (getenv "HOPTRACE") "") "j2s:scope"))
+       `(:scope ,scope)
+       '()))
       
 ;*---------------------------------------------------------------------*/
 ;*    dump-itype ...                                                   */
@@ -303,9 +312,10 @@
 ;*    j2s->list ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SRef)
-   (with-access::J2SRef this (decl)
+   (with-access::J2SRef this (decl loc)
       (with-access::J2SDecl decl (id key)
 	 `(,@(call-next-method) ,id
+	     ,@(dump-loc loc)
 	     ,@(dump-key key)
 	     ,@(dump-type this)
 	     ,@(dump-info this)))))
@@ -581,8 +591,9 @@
 ;*    j2s->list ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCall)
-   (with-access::J2SCall this (fun args (cthis this))
+   (with-access::J2SCall this (fun args (cthis this) loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
 	  ,@(if (>=fx (bigloo-debug) 3) `(:this ,(j2s->list cthis)) '())
@@ -647,7 +658,7 @@
 	,@(dump-hint this)
 	,@(if _scmid `(:_scmid ,_scmid) '())
 	,@(dump-info this)
-	,@(if (>= (bigloo-debug) 3) `(:scope ,scope) '()))))
+	,@(dump-scope scope))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDeclInit ...                                      */

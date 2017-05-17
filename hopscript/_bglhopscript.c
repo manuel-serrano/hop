@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Mar 14 16:02:19 2017 (serrano)                */
+/*    Last change :  Tue May 16 08:03:30 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -13,6 +13,8 @@
 #include "bglhopscript.h"
 
 #include <stdio.h>
+
+#define JS_OBJECT_MODE_PACKED 32 // see types.scm
 
 /*---------------------------------------------------------------------*/
 /*    JsObject imports                                                 */
@@ -129,7 +131,7 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
    
    // fields init
    o->BgL___proto__z00 = __proto__;
-   o->BgL_modez00 = mode;
+   o->BgL_modez00 = mode | JS_OBJECT_MODE_PACKED;
    o->BgL_propertiesz00 = BNIL; 
    o->BgL_cmapz00 = constrmap;
    

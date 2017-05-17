@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Mon Nov 21 14:00:19 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Tue May 16 14:50:13 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
 ;*=====================================================================*/
@@ -58,6 +58,7 @@
 	 (scope '%scope)
 	 (bind bind)
 	 (itype type)
+	 (binder 'let-opt)
 	 (val (instantiate::J2SPragma
 		 (type type)
 		 (loc loc)
@@ -66,7 +67,10 @@
    (list
       (js-def-extern 'global #t #t '%this 'global)
       (js-def-extern 'GLOBAL #t #f '%this 'global)
-      (js-def-extern 'module #t #t '%module)
+      (js-def-extern 'module #t #t 
+	 '(begin
+	   (js-put! %scope 'module %module #f %this)
+	   %module))
       (js-def-extern 'exports #t #t '(js-get %module 'exports %scope))
       (js-def-extern 'require #t #f `(nodejs-require %worker %this %module ',(config-get conf :language 'hopscript)))
       (js-def-extern 'HEAD #t #f `(nodejs-head %worker %this %scope %module))
@@ -75,14 +79,14 @@
       (js-def-extern '__dirname #t #f '(js-string->jsstring (dirname (js-jsstring->string (js-get %module 'filename %scope)))) 'string)
       (js-def-extern '%__GLOBAL #f #f
 	 ;; this will not be compiled as a global (see scheme.scm)
-	 `(js-put! GLOBAL 'global GLOBAL #f %this))
+	 '(js-put! GLOBAL 'global GLOBAL #f %this))
       (js-def-extern 'process #t #t '(nodejs-process %worker %this) 'object)
       (if (or (string=? id "console.js") (string=? id "node_stdio.js"))
 	  (instantiate::J2SUndefined
 	     (type 'undefined)
 	     (loc loc))
 	  (js-def-extern 'console #t #f
-	     '(nodejs-require-core "console" %worker %this)))
+	     '(nodejs-require-core "console" %worker %this) 'object))
       (if (string=? path "hop")
 	  (instantiate::J2SUndefined
 	     (type 'undefined)

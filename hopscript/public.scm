@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Apr 19 09:26:22 2017 (serrano)                */
+;*    Last change :  Sun May  7 10:02:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -74,6 +74,8 @@
 	   (js-call6 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5)
 	   (js-call7 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call8 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10 ::JsGlobalObject fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (js-calln ::JsGlobalObject fun::obj this . args)
 	   
 	   (js-call0/debug ::JsGlobalObject loc fun::obj this)
@@ -85,7 +87,16 @@
 	   (js-call6/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5)
 	   (js-call7/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6)
 	   (js-call8/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7)
+	   (js-call9/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+	   (js-call10/debug ::JsGlobalObject loc fun::obj this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
 	   (js-calln/debug ::JsGlobalObject loc fun::obj this . args)
+
+	   (js-call-method0 ::JsGlobalObject val prop)
+	   (js-call-method1 ::JsGlobalObject val prop ::obj)
+	   (js-call-method2 ::JsGlobalObject val prop ::obj ::obj)
+	   (js-call-method3 ::JsGlobalObject val prop ::obj ::obj ::obj)
+	   (js-call-method4 ::JsGlobalObject val prop ::obj ::obj ::obj ::obj)
+	   (js-call-methodn ::JsGlobalObject val prop . args)
 
 	   (js-service/debug ::obj ::obj ::procedure)
 
@@ -122,11 +133,11 @@
 	   
 	   (generic js-toprimitive ::obj ::symbol ::JsGlobalObject)
 	   
-	   (inline js-equal? ::obj ::obj ::JsGlobalObject)
-	   (inline js-equal-sans-flonum? ::obj ::obj ::JsGlobalObject)
-	   (js-equality? ::obj ::obj ::JsGlobalObject)
+	   (inline js-equal?::bool ::obj ::obj ::JsGlobalObject)
+	   (inline js-equal-sans-flonum?::bool ::obj ::obj ::JsGlobalObject)
+	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
-	   (js-eq? ::obj ::obj)
+	   (js-eq?::bool ::obj ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
 	   
@@ -322,10 +333,7 @@
    (let ((__proto__ (get-prototypeof (js-get ctor 'prototype %this) %this)))
       (update-ctor-cmap! ctor __proto__)
       (with-access::JsFunction ctor (constrsize constrmap)
-	 (instantiate::JsObject
-	    (cmap constrmap)
-	    (elements (make-vector constrsize (js-undefined)))
-	    (__proto__ __proto__)))))
+	 (js-make-jsobject constrsize constrmap __proto__))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply ...                                                     */
@@ -437,7 +445,7 @@
 					      (js-vector->jsarray '#() %this)))
 				      `(proc this ,@(take args i)
 					  (js-vector->jsarray (vector ,@(drop args i)) %this)))))
-			(iota 8 1))
+			(iota 10 1))
 		     (else
 		      (cond
 			 ((and (<=fx ,n minlen) (>=fx minlen 0))
@@ -466,7 +474,7 @@
 				   (proc this ,@args
 				      ,@(make-list (-fx i n) '(js-undefined)))
 				   (js-raise-arity-error %this fun ,(-fx n 1)))))))
-		(iota 8 1))
+		(iota 10 1))
 	     (else
 	      (cond
 		 ((<fx arity 0)
@@ -502,6 +510,10 @@
    (gen-calln a0 a1 a2 a3 a4 a5 a6))
 (define (js-call8% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4 a5 a6 a7)
    (gen-calln a0 a1 a2 a3 a4 a5 a6 a7))
+(define (js-call9% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (gen-calln a0 a1 a2 a3 a4 a5 a6 a7 a8))
+(define (js-call10% %this fun::JsFunction proc::procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (gen-calln a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))
 
 (define (js-call0 %this fun this)
    (if (not (isa? fun JsFunction))
@@ -548,6 +560,16 @@
        (js-raise-type-error %this "call8: not a function ~s" fun)
        (with-access::JsFunction fun (procedure)
 	  (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7))))
+(define (js-call9 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (if (not (isa? fun JsFunction))
+       (js-raise-type-error %this "call9: not a function ~s" fun)
+       (with-access::JsFunction fun (procedure)
+	  (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8))))
+(define (js-call10 %this fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (if (not (isa? fun JsFunction))
+       (js-raise-type-error %this "call10: not a function ~s" fun)
+       (with-access::JsFunction fun (procedure)
+	  (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9))))
 
 (define (js-calln% %this fun this args)
    (with-access::JsFunction fun (procedure arity minlen rest len)
@@ -689,6 +711,28 @@
 	     (let ((aux (js-call8% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7)))
 		($env-pop-trace env)
 		aux)))))
+(define (js-call9/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8)
+   (if (not (isa? fun JsFunction))
+       (js-raise-type-error/loc %this loc
+	  (format "call9: not a function ~~s ~a" loc) fun)
+       (with-access::JsFunction fun (procedure)
+	  (let ((env (current-dynamic-env))
+		(name (js-function-debug-name fun)))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call9% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8)))
+		($env-pop-trace env)
+		aux)))))
+(define (js-call10/debug %this loc fun this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)
+   (if (not (isa? fun JsFunction))
+       (js-raise-type-error/loc %this loc
+	  (format "call10: not a function ~~s ~a" loc) fun)
+       (with-access::JsFunction fun (procedure)
+	  (let ((env (current-dynamic-env))
+		(name (js-function-debug-name fun)))
+	     ($env-push-trace env name loc)
+	     (let ((aux (js-call10% %this fun procedure this a0 a1 a2 a3 a4 a5 a6 a7 a8 a9)))
+		($env-pop-trace env)
+		aux)))))
 (define (js-calln/debug %this loc fun this . args)
    (if (not (isa? fun JsFunction))
        (js-raise-type-error/loc %this loc
@@ -701,6 +745,36 @@
 		($env-pop-trace env)
 		aux)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-call-method ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This function is used when a method is invoked on a non-object   */
+;*    value.                                                           */
+;*---------------------------------------------------------------------*/
+(define (js-call-method0 %this val prop)
+   (let ((o (js-toobject %this val)))
+      (js-call0 %this (js-get o prop %this) o)))
+
+(define (js-call-method1 %this val prop a0)
+   (let ((o (js-toobject %this val)))
+      (js-call1 %this (js-get o prop %this) o a0)))
+
+(define (js-call-method2 %this val prop a0 a1)
+   (let ((o (js-toobject %this val)))
+      (js-call2 %this (js-get o prop %this) o a0 a1)))
+      
+(define (js-call-method3 %this val prop a0 a1 a2)
+   (let ((o (js-toobject %this val)))
+      (js-call3 %this (js-get o prop %this) o a0 a1 a2)))
+      
+(define (js-call-method4 %this val prop a0 a1 a2 a3)
+   (let ((o (js-toobject %this val)))
+      (js-call4 %this (js-get o prop %this) o a0 a1 a2 a3)))
+      
+(define (js-call-methodn %this val prop . args)
+   (let ((o (js-toobject %this val)))
+      (js-calln% %this (js-get o prop %this) o args)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    js-service/debug ...                                             */
 ;*---------------------------------------------------------------------*/

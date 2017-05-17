@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Apr  7 19:23:07 2017 (serrano)                */
+;*    Last change :  Tue May 16 14:21:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -73,7 +73,7 @@
 	      get set
 	      %get::procedure %set::procedure)
 	   
-	   (class JsPropertyCache
+	   (final-class JsPropertyCache
 	      (cmap::obj (default #unspecified))
 	      (pmap::obj (default #t))
 	      (index::long (default -1))
@@ -82,15 +82,19 @@
 	      (name::obj (default '||))
 	      (method::obj (default #f)))
 	   
-	   (class JsConstructMap
-	      (transition::pair (default (cons '|| -1)))
+	   (final-class JsConstructMap
+	      (js-constructmap-init!)
+	      (%id (default (gensym)))
+	      (transition::vector (default (vector '|| -1)))
 	      (nextmap (default #f))
 	      (names::vector read-only (default '#()))
 	      (methods::vector read-only (default '#()))
 	      (backup::pair-nil (default '()))
 	      (ctor::obj (default #f))
 	      (vtable::vector (default '#()))
-	      (vlen::long (default 0)))
+	      (vlen::long (default 0))
+	      (packed::bool (default #t))
+	      (twinmap (default #f)))
 
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
@@ -109,7 +113,6 @@
 	   (class JsObject
 	      (__proto__ (default (js-null)))
 	      (mode::byte (default (js-object-default-mode)))
-	      ;; (extensible::bool (default #t))
 	      (properties::pair-nil (default '()))
 	      (cmap (default #f))
 	      (elements::vector (default '#())))
@@ -216,7 +219,8 @@
 	      prototype::JsObject
 	      alloc::procedure
 	      (construct::procedure read-only)
-	      (constrsize::int (default 3))
+	      (constrsize::long (default 3))
+	      (maxconstrsize::long (default 100))
 	      (constrmap (default #f)) 
 	      (arity::int read-only (default -1))
 	      (minlen::int read-only (default -1))
@@ -304,11 +308,15 @@
 	   (inline js-object-mode-getter?::bool ::JsObject)
 	   (inline js-object-mode-getter-set! ::JsObject ::bool)
 
+	   (inline js-object-mode-packed?::bool ::JsObject)
+	   (inline js-object-mode-packed-set! ::JsObject ::bool)
+
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::byte)
 	   (inline JS-OBJECT-MODE-SEALED::byte)
 	   (inline JS-OBJECT-MODE-FROZEN::byte)
 	   (inline JS-OBJECT-MODE-INLINE::byte)
 	   (inline JS-OBJECT-MODE-GETTER::byte)
+	   (inline JS-OBJECT-MODE-PACKED::byte)
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
@@ -332,7 +340,10 @@
 	   (generic js-buffer->jsbuffer ::JsObject ::pair-nil ::JsGlobalObject)
 
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
-	   (generic js-typedarray-set!::procedure ::JsTypedArray)))
+	   (generic js-typedarray-set!::procedure ::JsTypedArray)
+
+	   (js-constructmap-init! ::JsConstructMap)
+	   (inline js-cmap-twinmap::JsConstructMap ::JsConstructMap)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */
@@ -345,12 +356,14 @@
 (define-inline (JS-OBJECT-MODE-FROZEN) 4)
 (define-inline (JS-OBJECT-MODE-INLINE) 8)
 (define-inline (JS-OBJECT-MODE-GETTER) 16)
+(define-inline (JS-OBJECT-MODE-PACKED) 32) ;; see _bglhopscript.c
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) 1)
 (define-macro (JS-OBJECT-MODE-SEALED) 2)
 (define-macro (JS-OBJECT-MODE-FROZEN) 4)
 (define-macro (JS-OBJECT-MODE-INLINE) 8)
 (define-macro (JS-OBJECT-MODE-GETTER) 16)
+(define-macro (JS-OBJECT-MODE-PACKED) 32) ;; see _bglhopscript.c
 
 (define-inline (js-object-mode-extensible? o)
    (with-access::JsObject o (mode)
@@ -401,6 +414,16 @@
       (if flag
 	  (set! mode (bit-or mode (JS-OBJECT-MODE-GETTER)))
 	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-GETTER)))))))
+
+(define-inline (js-object-mode-packed? o)
+   (with-access::JsObject o (mode)
+      (=fx (bit-and (JS-OBJECT-MODE-PACKED) mode) (JS-OBJECT-MODE-PACKED))))
+
+(define-inline (js-object-mode-packed-set! o flag)
+   (with-access::JsObject o (mode)
+      (if flag
+	  (set! mode (bit-or mode (JS-OBJECT-MODE-PACKED)))
+	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-PACKED)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */
@@ -674,3 +697,21 @@
 ;*    js-typedarray-set! ::JsTypedArray ...                            */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-typedarray-set!::procedure a::JsTypedArray))
+
+;*---------------------------------------------------------------------*/
+;*    js-constructmap-init! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-constructmap-init! this::JsConstructMap)
+   (with-access::JsConstructMap this (twinmap packed %id)
+      (unless twinmap
+	 (set! twinmap
+	    (duplicate::JsConstructMap this
+	       (%id (symbol-append %id 'UP))
+	       (twinmap this)
+	       (packed (not packed)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-cmap-twinmap ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-cmap-twinmap::JsConstructMap cmap::JsConstructMap)
+   (with-access::JsConstructMap cmap (twinmap) twinmap))

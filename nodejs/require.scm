@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 27 08:55:25 2017 (serrano)                */
+;*    Last change :  Tue May 16 14:57:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -485,6 +485,7 @@
 		   (__proto__ global)
 		   (properties '())
 		   (elements '#()))))
+      (js-object-mode-packed-set! scope #t)
       (nodejs-import! global scope global)
       (hopscript-global-object-init! scope)
       scope))
@@ -1107,7 +1108,7 @@
 	 (let* ((path (nodejs-resolve name %this %module 'body))
 		(mod (js-get-property-value module-cache module-cache path %this)))
 	    (trace-item "path=" path)
-	    (trace-item "mode=" (typeof mod))
+	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod)))
 	    (if (eq? mod (js-absent))
 		(let ((mod (load-module path worker %this %module)))
 		   (js-get mod 'exports %this))

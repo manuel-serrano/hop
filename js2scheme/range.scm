@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Apr 13 09:06:42 2017 (serrano)                */
+;*    Last change :  Fri May  5 08:02:48 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -313,7 +313,8 @@
       (if (< ra (interval-max left))
 	  (if (>= ra (interval-min left))
 	      (interval (min (interval-min left) ra) ra)
-	      (interval (interval-min left) (interval-min left)))
+	      ;;(interval (interval-min left) (interval-min left))
+	      (interval ra ra))
 	  left)))
 
 (define (interval-lt left right)
@@ -334,7 +335,8 @@
       (if (> ri (interval-min left))
 	  (if (<= ri (interval-max left))
 	      (interval ri (max (interval-max left) ri))
-	      (interval (interval-max left) (interval-max left)))
+	      ;;(interval (interval-max left) (interval-max left))
+	      (interval ri ri))
 	  left)))
 
 (define (interval-gt left right)
@@ -1342,6 +1344,30 @@
 				     (dump-env (append-env testef bodye)))
 				  (return #f (append-env testef bodye))))
 			    (loop (env-merge bodye env)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    range ::J2SSwitch ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (range this::J2SSwitch env::pair-nil fix::struct)
+   (with-access::J2SSwitch this (key cases)
+      (multiple-value-bind (_ env)
+	 (range key env fix)
+	 (let loop ((cases cases)
+		    (env env))
+	    (if (null? cases)
+		(return #f env)
+		(multiple-value-bind (_ envc)
+		   (range (car cases) env fix)
+		   (loop (cdr cases) (env-merge envc env))))))))
+
+;*---------------------------------------------------------------------*/
+;*    range ::J2SCase ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (range this::J2SCase env::pair-nil fix::struct)
+   (with-access::J2SCase this (expr body)
+      (multiple-value-bind (_ enve)
+	 (range expr env fix)
+	 (range body (env-merge enve env) fix))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SNode ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Apr 19 10:58:15 2017 (serrano)                */
+;*    Last change :  Sat May 13 19:19:01 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -180,9 +180,9 @@
 	      (j2s-hint rhs (list numctx 'string) 'number))))
 	 ((== === != !==)
 	  (cond
-	     ((not (eq? (j2s-type lhs) 'any))
+	     ((not (memq (j2s-type lhs) '(any null)))
 	      (j2s-hint rhs (list (j2s-type lhs)) numctx))
-	     ((not (eq? (j2s-type rhs) 'any))
+	     ((not (memq (j2s-type rhs) '(any null)))
 	      (j2s-hint lhs (list (j2s-type rhs)) numctx))))
 	 ((instanceof)
 	  (j2s-hint lhs (list (or (class-of rhs) 'object)) 'number)
@@ -307,9 +307,9 @@
 (define-walk-method (j2s-hint this::J2SAccess types numctx)
    (cond
       ((and (pair? types) (member (car types) '(index integer number)))
-       (j2s-hint-access this types '(array) 'number))
+       (j2s-hint-access this types '(object) 'number))
       ((and (pair? types) (member (car types) '(string)))
-       (j2s-hint-access this types '(string) 'number))
+       (j2s-hint-access this types '(object) 'number))
       (else
        (j2s-hint-access this types '(object) 'number))))
 
@@ -756,7 +756,7 @@
 			    ((every (lambda (a t)
 				       (or (eq? t 'unknown)
 					   (eq? (j2s-type a) t)
-					   (eq? normalize-expr-type a) t))
+					   (eq? (normalize-expr-type a) t)))
 				args types)
 			     (with-access::J2SFun val (idthis)
 				;; adjust the usecnt count

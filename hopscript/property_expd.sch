@@ -3,11 +3,35 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Apr  8 10:02:09 2017 (serrano)                */
+;*    Last change :  Wed May 17 08:10:50 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    js-object-packed-enable-expander ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-object-packed-enable-expander x e)
+   *js-object-packed-enable*)
+
+;*---------------------------------------------------------------------*/
+;*    js-object-packed-ref-expander ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-object-packed-ref-expander x e)
+   (match-case x
+      ((?- ?obj ?idx)
+       (e `(with-access::JsObject ,obj (elements cmap)
+	      (vector-ref 
+		 (cond-expand
+		    ((and bigloo-c js-object-packed)
+		     (pragma::vector "BVECTOR( (&(((BgL_jsobjectz00_bglt)BOBJECT($1))->BgL_elementsz00) + 1) )" ,obj))
+		    (else
+		     elements))
+		 ,idx))
+	  e))
+      (else
+       (map (lambda (x) (e x e)) x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache-expander ...                                      */
@@ -191,12 +215,13 @@
    (define (ref o prop cache %this cindex ccmap cpmap cowner)
       `(let ((%omap omap))
 	  (if (eq? ,ccmap %omap)
-	      (with-access::JsObject ,o (elements)
-		 (vector-ref elements ,cindex))
+	      (js-object-packed-ref ,o ,cindex)
 	      (js-object-get-name/cache-level2 ,@(cdr x)))))
    
-   (if (>= (bigloo-compiler-debug) 1)
-       (map (lambda (x) (e x e)) x)
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-get)
+       (map (lambda (x) (e x e)) x))
+      (else
        (let ((e1 (cond-expand
 		    (cache-level2
 		     e)
@@ -207,7 +232,7 @@
 			    (map (lambda (x) (e x e)) x))
 			   (else
 			    (e x e2))))))))
-	  (js-object-get-name/cache-match-expander x e1 ref))))
+	  (js-object-get-name/cache-match-expander x e1 ref)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-level1-expander ...                     */
@@ -218,9 +243,11 @@
       `(with-access::JsObject ,o (elements)
 	  (vector-ref elements ,cindex)))
    
-   (if (>= (bigloo-compiler-debug) 1)
-       (map (lambda (x) (e x e)) x)
-       (js-object-get-name/cache-match-expander x e ref)))
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-get)
+       (map (lambda (x) (e x e)) x))
+      (else
+       (js-object-get-name/cache-match-expander x e ref))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-level2-expander ...                     */
@@ -235,9 +262,12 @@
    (define (ref o prop cache %this cindex ccmap cpmap cowner)
       `(cond
 	  ((eq? ,cpmap %omap)
-	   (with-access::JsObject ,cowner (elements)
-	      (if (>=fx ,cindex 0)
-		  (vector-ref elements ,cindex)
+	   (if (>=fx ,cindex 0)
+	       (if ,cowner
+		   (with-access::JsObject ,cowner (elements)
+		      (vector-ref elements ,cindex))
+		   (vector-ref elements ,cindex))
+	       (with-access::JsObject ,cowner (elements)
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
 		     (js-property-value ,o desc ,%this)))))
 	  (else
@@ -367,9 +397,11 @@
 		 ,tmp)
 	      (js-object-put-name/cache-level2! ,o ,prop
 		 ,tmp ,throw ,cache ,%this))))
-   
-   (if (>= (bigloo-compiler-debug) 1)
-       (map (lambda (x) (e x e)) x)
+
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-put)
+       (map (lambda (x) (e x e)) x))
+      (else
        (let ((e1 (cond-expand
 		    (cache-level2
 		     e)
@@ -381,7 +413,7 @@
 			   (else
 			    (e x e2))))))))
 	  (js-object-put-name/cache-match-expander x e1 set
-	     (lambda (x) (map (lambda (x) (e x e) x)))))))
+	     (lambda (x) (map (lambda (x) (e x e) x))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-level1-expander ...                     */
@@ -393,10 +425,12 @@
 	  (vector-set! elements ,cindx ,tmp)
 	  ,tmp))
    
-   (if (>= (bigloo-compiler-debug) 1)
-       (map (lambda (x) (e x e)) x)
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-put)
+       (map (lambda (x) (e x e)) x))
+      (else
        (js-object-put-name/cache-match-expander x e set
-	  (lambda (x) (map (lambda (x) (e x e) x))))))
+	  (lambda (x) (map (lambda (x) (e x e) x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-level2-expander ...                     */
@@ -408,13 +442,12 @@
 	  ((eq? ,cpmap %omap)
 	   (if (>=fx ,cindx 0)
 	       (begin
-		  ;; there can be no overflow here, as if there one an
-		  ;; overfow, it occurs during the previous cache miss
 		  (let ((%vec elements))
 		     (if (<fx ,cindx (vector-length %vec))
 			 (vector-set! %vec ,cindx ,tmp)
-			 (set! elements (js-elements-push! %vec ,cindx ,tmp))))
-		  (set! omap ,ccmap)
+			 (js-object-add! ,o ,cindx ,tmp)))
+		  (js-object-cmap-set! ,o
+		     (if (eq? ,ccmap #t) ,cpmap ,ccmap))
 		  ,tmp)
 	       (with-access::JsObject ,cowner (elements)
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindx) 1))))
@@ -428,7 +461,7 @@
 		  (let ((indx (car (vector-ref vtable ,vindx)))
 			(cmap (cdr (vector-ref vtable ,vindx))))
 		     (vector-set! elements indx ,tmp)
-		     (set! omap cmap)
+		     (js-object-cmap-set! ,o cmap)
 		     ,tmp)
 		  (js-object-put-name/cache-miss! ,o ,prop ,tmp ,throw
 		     ,cache ,%this))))))
@@ -456,15 +489,17 @@
 		    (set! method procedure)
 		    (procedure ,this ,@args))))
 	     (else
-	      ,(if (>=fx len 9)
+	      ,(if (>=fx len 11)
 		   `(js-calln ,%this ,fun ,this ,@args)
 		   `(begin
 		       (,(string->symbol (format "js-call~a" len))
 			,%this
 			,fun ,this ,@args)))))))
-
-   (if (>= (bigloo-compiler-debug) 2)
-       (map (lambda (x) (e x e)) x)
+   
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-call)
+       (map (lambda (x) (e x e)) x))
+      (else
        (match-case x
 	  ((?- ?%this (and (? symbol?) ?fun)
 	      (and ?ccache (js-pcache-ref %pcache ?-))
@@ -477,20 +512,22 @@
 	      `(let ((,f ,(e fun e)))
 		  ,(e (call %this f ccache this args) e))))
 	  (else
-	   (error "js-call/cache" "wrong form" x)))))
+	   (error "js-call/cache" "wrong form" x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-method-call-name/cache-expander ...                           */
 ;*---------------------------------------------------------------------*/
 (define (js-method-call-name/cache-expander x e)
-   (if (>= (bigloo-compiler-debug) 2)
-       (map (lambda (x) (e x e)) x)
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-call)
+       (map (lambda (x) (e x e)) x))
+      (else
        (match-case x
 	  ((?- ?%this (and (? symbol?) ?obj) ?prop ?ccache ?ocache . ?args)
 	   (e `(if (isa? ,obj JsObject)
 		   (js-object-method-call-name/cache ,%this
 		      ,obj ,prop ,ccache ,ocache ,@args)
-		   (js-raise-type-error %this "call: not a function ~s" ,obj))
+		   (js-non-object-method-call-name %this ,obj ,prop ,@args))
 	      e))
 	  ((?- ?%this ?obj ?prop ?ccache ?ocache . ?args)
 	   (let ((o (gensym '%obj)))
@@ -498,10 +535,10 @@
 		     (if (isa? ,o JsObject)
 			 (js-object-method-call-name/cache ,%this
 			    ,o ,prop ,ccache ,ocache ,@args)
-			 (js-raise-type-error %this "call: not a function ~s" ,o)))
+			 (js-non-object-method-call-name %this ,o ,prop ,@args)))
 		 e)))
 	  (else
-	   (error "js-object-call-name/cache" "wrong form" x)))))
+	   (error "js-object-call-name/cache" "wrong form" x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-method-call-name/cache-match-expander ...                     */
@@ -539,7 +576,7 @@
    (define (calln m obj args)
       (let* ((len (length args))
 	     (call (string->symbol
-		      (format "js-call~a" (if (>=fx len 9) "n" len)))))
+		      (format "js-call~a" (if (>=fx len 11) "n" len)))))
 	 `(,call %this ,m ,obj ,@args)))
 
    (define (calln/miss obj name ccache ocache args)
@@ -558,8 +595,7 @@
 		 (if (and (<fx ,vindex vlen)
 			  (procedure? (vector-ref vtable ,vindex)))
 		     ;; polymorphic call
-		     ((vector-ref vtable ,vindex)
-		      ,obj ,@args)
+		     ((vector-ref vtable ,vindex) ,obj ,@args)
 		     ;; pure cache miss
 		     ,(calln/miss obj name ccache ocache args)))))))
 
@@ -579,8 +615,10 @@
 		    (,method ,obj ,@args)
 		    (js-object-method-call-name/cache-level2 ,@(cdr x)))))))
    
-   (if (>= (bigloo-compiler-debug) 2)
-       (map (lambda (x) (e x e)) x)
+   (cond-expand
+      (no-method-cache
+       (map (lambda (x) (e x e)) x))
+      (else
        (let ((e1 (cond-expand
 		    (cache-level2
 		     e)
@@ -590,9 +628,25 @@
 			   ((js-object-call-name/cache-level2! . ?-)
 			    (let* ((len (length args))
 				   (call (format "js-object-method-call~a/cache-miss"
-					    (if (>=fx len 9) "n" len))))
+					    (if (>=fx len 11) "n" len))))
 			       `(,call ,@(map (lambda (x) (e x e2)) x))))
 			   (else
 			    (e x e2))))))))
-	  (js-method-call-name/cache-match-expander x e1 call))))
+	  (js-method-call-name/cache-match-expander x e1 call)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-non-object-method-call-name-expander ...                      */
+;*---------------------------------------------------------------------*/
+(define (js-non-object-method-call-name-expander x e)
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-call)
+       (e `(js-call-methodn ,%this ,obj ,prop ,@args) e))
+      (else
+       (match-case x
+	  ((?- ?%this ?obj (quote toString))
+	   (e `(js-tostring ,obj ,%this) e))
+	  ((?- ?%this ?obj ?prop . ?args)
+	   (e `(js-call-methodn ,%this ,obj ,prop ,@args) e))
+	  (else
+	   (error "js-non-object-method-call-name" "Illegal form" x))))))
 

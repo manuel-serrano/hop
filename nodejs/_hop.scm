@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Apr 21 14:43:16 2017 (serrano)                */
+;*    Last change :  Fri May  5 10:26:15 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -119,6 +119,17 @@
 		   (lambda (this::JsUrlFrame)
 		      (js-string->jsstring (urlframe->string this %this)))
 		   0 'toString))
+      (js-bind! %this js-urlframe-prototype 'getHeader
+	 :value (js-make-function %this
+		   (lambda (this::JsUrlFrame hd)
+		      (js-get this 'header %this))
+		   0 'getHeader))
+      (js-bind! %this js-urlframe-prototype 'setHeader
+	 :value (js-make-function %this
+		   (lambda (this::JsUrlFrame hd)
+		      (js-put! this 'header hd #f %this)
+		      this)
+		   1 'setHeader))
 
       (js-bind! %this server-prototype 'addEventListener
 	 :value (js-make-function %this

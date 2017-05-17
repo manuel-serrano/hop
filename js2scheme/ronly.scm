@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Tue Feb  7 14:23:13 2017 (serrano)                */
+;*    Last change :  Mon May  8 08:23:02 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -125,6 +125,8 @@
 ;*---------------------------------------------------------------------*/
 (define (ronly-decl! this::J2SDecl mode::symbol)
    (with-access::J2SDecl this (ronly id scope writable)
+      (when (eq? id 'sc_Pair)
+	 (tprint "mode=" mode " scope=" scope " writable=" writable))
       (if (eq? mode 'hopscript)
 	  (set! ronly #t)
 	  (set! ronly (or (not (memq scope '(global %scope))) (not writable)))))

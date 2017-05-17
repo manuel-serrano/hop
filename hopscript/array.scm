@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 19 09:22:34 2017 (serrano)                */
+;*    Last change :  Tue May 16 08:07:43 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2754,7 +2754,7 @@
 	  [%assert-array! o "array-prototype-iterator"]
 	  (if (not (isa? proc JsFunction))
 	      (js-raise-type-error %this "Not a procedure ~s" proc)
-	      (with-access::JsArray o (length)
+	      (with-access::JsArray o (length vec ilen)
 		 (if (js-array-inlined? o)
 		     (vector-iterator o length proc t #u32:0)
 		     (array-iterator o length proc t #u32:0))))))))
