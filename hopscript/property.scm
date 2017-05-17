@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May 17 11:05:14 2017 (serrano)                */
+;*    Last change :  Wed May 17 11:48:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -63,7 +63,6 @@
 	   (inline js-object-packed-ref obj::JsObject index::long)
 	   (js-object-add! obj::JsObject index::long value)
 	   (js-object-push! obj::JsObject index::long value)
-	   (js-object-cmap-set! ::JsObject ::JsConstructMap)
 	   
 	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
 	   (generic js-properties-symbol::vector ::obj ::JsGlobalObject)
@@ -235,51 +234,15 @@
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
        (with-access::JsPropertyCache pcache (cmap pmap index)
-	  (with-access::JsConstructMap cmap ((%cid %id) (cnames names) (cpacked packed))
-	     (with-access::JsConstructMap pmap ((%pid %id) (pnames names) (ppacked packed))
+	  (with-access::JsConstructMap cmap ((%cid %id) (cnames names))
+	     (with-access::JsConstructMap pmap ((%pid %id) (pnames names))
 		(fprint (current-error-port) msg (typeof pcache) " index=" index
 		   "\n  cmap.%id=" %cid
 		   " cmap.names=" cnames
-		   " cmap.packed=" cpacked
 		   "\n  pmap.%id=" %pid
-		   " pmap.names=" pnames
-		   " pmap.packed=" ppacked))))
+		   " pmap.names=" pnames))))
        (fprint (current-error-port) msg (typeof pcache))))
 	 
-;*---------------------------------------------------------------------*/
-;*    check-cmap ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (check-cmap msg name omap)
-   (with-access::JsConstructMap omap (twinmap names packed)
-      (if (isa? twinmap JsConstructMap)
-	  (with-access::JsConstructMap twinmap ((ttwinmap twinmap)
-						(tpacked packed)
-						(tnames names))
-	     (unless (eq? ttwinmap omap)
-		(error (string-append "check-cmap/" msg)
-		   (format "twin mismatch (~a)" name) (cons names tnames)))
-	     (unless (equal? names tnames)
-		(error (string-append "check-cmap/" msg) "names mismatch"
-		   (cons names tnames)))
-	     (when (eq? packed tpacked)
-		(error (string-append "check-cmap/" msg) "pack and twin not inversed" names)))
-	  (error (string-append "check-cmap/" msg) "no twin" name))))
-
-(define (check-cache msg name o::JsObject)
-   (with-access::JsObject o ((omap cmap))
-      (when (isa? omap JsConstructMap)
-	 (with-access::JsConstructMap omap (twinmap names packed)
-	    (unless (eq? packed (js-object-mode-packed? o))
-	       (error (string-append "check-cache/" msg)
-		  (format "packed mismatch \"~a\"" name) (cons packed (js-object-mode-packed? o))))
-	    (check-cmap msg name omap)))))
-
-(define-macro (check-cmap m n o)
-   #unspecified)
-
-(define-macro (check-cache m n o)
-   #unspecified)
-   
 ;*---------------------------------------------------------------------*/
 ;*    js-object-packed-ref ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -295,10 +258,6 @@
       (let ((nels (copy-vector elements (+fx 1 idx))))
 	 (vector-set! nels idx value)
 	 (set! elements nels)
-	 (with-access::JsConstructMap cmap (packed twinmap)
-	    (when packed
-	       (js-object-mode-packed-set! obj #f)
-	       (set! cmap twinmap)))
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -323,18 +282,6 @@
 		   (when (<fx constrsize maxconstrsize)
 		      (set! constrsize (+fx 1 constrsize))))))
 	  (vector-set! elements idx value))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-cmap-set! ...                                          */
-;*---------------------------------------------------------------------*/
-(define (js-object-cmap-set! obj map)
-   (with-access::JsObject obj (cmap)
-      (with-access::JsConstructMap map (packed %id)
-	 (if (eq? packed (js-object-mode-packed? obj))
-	     (set! cmap map)
-	     (with-access::JsConstructMap map (twinmap)
-		(check-cmap "cmap-set!" "-" cmap)
-		(set! cmap twinmap))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-elements-push! ...                                            */
@@ -502,16 +449,9 @@
 (define (js-pcache-update-direct! pcache::JsPropertyCache i o::JsObject)
    [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
-      (with-access::JsPropertyCache pcache (cmap pmap index owner)
-	 (with-access::JsConstructMap omap (packed twinmap)
-	    (if (or #t packed)
-		(begin
-		   (set! cmap omap)
-		   (set! pmap twinmap))
-		(begin
-		   (set! cmap twinmap)
-		   (set! pmap omap)
-		   (set! owner #f))))
+      (with-access::JsPropertyCache pcache (cmap pmap index)
+	 (set! cmap omap)
+	 (set! pmap #t)
 	 (set! index i))))
 
 ;*---------------------------------------------------------------------*/
@@ -653,63 +593,25 @@
 	 (vector-set! nvec len val)
 	 nvec))
    
-   (define (cmap-extend omap name ctor newnames newmethods %id)
-      (with-access::JsConstructMap omap (packed)
-	 (instantiate::JsConstructMap
-	    (%id (if (not packed) (symbol-append %id 'UP) %id))
-	    (ctor ctor)
-	    (names newnames)
-	    (methods newmethods)
-	    (packed packed))))
-   
    (with-access::JsConstructMap omap (names methods ctor)
       (let ((newnames (vector-extend names name))
 	    (newmethods (vector-extend methods #unspecified)))
-	 (let* ((%id (gensym))
-		(nm (cmap-extend omap name ctor newnames newmethods %id)))
-	    (with-access::JsConstructMap omap (twinmap)
-	       (let ((tm (cmap-extend twinmap name ctor newnames newmethods %id)))
-		  (with-access::JsConstructMap nm (twinmap)
-		     (set! twinmap tm))
-		  (with-access::JsConstructMap tm (twinmap)
-		     (set! twinmap nm))))
-	    nm))))
+	 (instantiate::JsConstructMap
+	    (ctor ctor)
+	    (names newnames)
+	    (methods newmethods)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    clone-cmap ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (clone-cmap cmap::JsConstructMap)
-   (with-access::JsConstructMap cmap (names methods twinmap)
+   (with-access::JsConstructMap cmap (names methods)
       (let ((newnames (vector-copy names))
-	    (newmethods (vector-copy methods))
-	    (%id (gensym)))
-	 (let ((d (duplicate::JsConstructMap cmap
-		     (%id %id)
-		     (names newnames)
-		     (methods newmethods))))
-	    (when twinmap
-	       (let ((dtwin (duplicate::JsConstructMap twinmap
-			       (%id (symbol-append %id 'UP))
-			       (names newnames)
-			       (methods newmethods)
-			       (twinmap d))))
-		  (with-access::JsConstructMap d (twinmap)
-		     (set! twinmap dtwin))))
-	    d))))
-
-;*---------------------------------------------------------------------*/
-;*    duplicate-JsConstructMap ...                                     */
-;*---------------------------------------------------------------------*/
-(define (duplicate-JsConstructMap cmap)
-   (let* ((%id (gensym))
-	  (n (duplicate::JsConstructMap cmap
-		(%id %id))))
-      (with-access::JsConstructMap n (twinmap)
-	 (let ((nt (duplicate::JsConstructMap twinmap
-		      (%id (symbol-append %id 'UP))
-		      (twinmap n))))
-	    (set! twinmap nt)
-	    n))))
+	    (newmethods (vector-copy methods)))
+	 (duplicate::JsConstructMap cmap
+	    (%id (gencmapid))
+	    (names newnames)
+	    (methods newmethods)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-names->cmap ...                                               */
@@ -717,22 +619,9 @@
 ;*    Used by j2sscheme to create literal objects.                     */
 ;*---------------------------------------------------------------------*/
 (define (js-names->cmap names)
-   (let ((methods (make-vector (vector-length names) #unspecified))
-	 (%id (gensym)))
-      (co-instantiate
-	    ((packed (instantiate::JsConstructMap
-			(%id %id)
-			(names names)
-			(methods methods)
-			(packed #t)
-			(twinmap unpacked)))
-	     (unpacked (instantiate::JsConstructMap
-			  (%id (symbol-append %id 'UP))
-			  (names names)
-			  (methods methods)
-			  (packed #f)
-			  (twinmap packed))))
-	 packed)))
+   (instantiate::JsConstructMap
+      (names names)
+      (methods (make-vector (vector-length names) #unspecified))))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-object-literal-init! ...                                      */
@@ -1391,7 +1280,6 @@
       (jsobject-find obj name
 	 ;; map search
 	 (lambda (obj i)
-	    (check-cache "js-get-lookup.1 >>>" name o)
 	    (with-access::JsObject o ((omap cmap))
 	       (with-access::JsObject obj (elements)
 		  (with-access::JsPropertyCache cache (cmap pmap index owner)
@@ -1405,12 +1293,10 @@
 			    ;; direct access to the direct object
 			    [assert (i) (<=fx i (vector-length elements))]
 			    (js-pcache-update-direct! cache i o)
-			    (check-cache "js-get-lookup.1 <<<" name o)
 			    el-or-desc)
 			   (else
 			    ;; direct access to a prototype object
 			    (js-pcache-update-owner! cache i o obj)
-			    (check-cache "js-get-lookup.2 <<<" name o)
 			    el-or-desc)))))))
 	 ;; property search
 	 (lambda (obj v)
@@ -1707,77 +1593,61 @@
    (define (update-mapped-object! obj i)
       (with-trace 'prop "update-mapped-object"
 	 (trace-item "name=" name)
-	 (check-cache "update-mapped-object.0/o >>>" name o)
-	 (check-cache "update-mapped-object.0/obj >>>" name obj)
-	 (let ((r
-		  (with-access::JsObject obj (cmap elements)
-		     (with-access::JsConstructMap cmap (nextmap methods vtable vlen names)
-			(let ((el-or-desc (vector-ref elements i)))
-			   (cond
-			      ((isa? el-or-desc JsAccessorDescriptor)
-			       (with-trace 'prop "update-mapped-object.1"
-				  (trace-item "name=" name)
-				  (check-cache "update-mapped-object.0.1/o >>>" name o)
-				  ;; 8.12.5, step 5
-				  (let ((v (update-from-descriptor! o obj i v el-or-desc)))
-				     (check-cache "update-mapped-object.0.1/o <<<" name o)
-				     v)))
-			      ((eq? o obj)
-			       (check-cache "update-mapped-object.0.2" name obj)
-			       (if (isa? el-or-desc JsPropertyDescriptor)
-				   ;; 8.12.5, step 3
-				   (with-access::JsDataDescriptor el-or-desc (writable)
-				      (cond
-					 ((not writable)
-					  ;; 8.12.4, step 2.b
-					  (reject "Read-only property"))
-					 ((isa? el-or-desc JsValueDescriptor)
-					  ;; 8.12.5, step 3,b
-					  (with-access::JsValueDescriptor el-or-desc (value)
-					     (set! value v)
-					     v))
-					 (else
-					  (when (invalidate-cache-method! v methods i)
-					     (set! vtable '#())
-					     (set! vlen 0)
-					     (set! cmap (duplicate-JsConstructMap cmap))
-					     (check-cmap "update-mapped.0.2.a" name cmap))
-					  (when pcache
-					     [assert (i) (<=fx i (vector-length elements))]
-					     (js-pcache-update-direct! pcache i o))
-					  (check-cache "update-mapped-object.0.3" name obj)
-					  (vector-set! elements i v)
-					  v)))
-				   (begin
-				      (check-cache "update-mapped-object.0.3.a" name obj)
-				      (when (invalidate-cache-method! v methods i)
-					 (set! vtable '#())
-					 (set! vlen 0)
-					 (set! cmap (duplicate-JsConstructMap cmap))
-					 (check-cmap "updat-mapped.0.2.b" name cmap))
-				      (check-cache "update-mapped-object.0.3.b" name obj)
-				      (when pcache
-					 [assert (i) (<=fx i (vector-length elements))]
-					 (js-pcache-update-direct! pcache i o))
-				      (check-cache "update-mapped-object.0.4" name obj)
-				      (vector-set! elements i v)
-				      v)))
-			      ((not (js-object-mode-extensible? obj))
-			       ;; 8.12.9, step 3
-			       (reject "Sealed object"))
-			      ((not (isa? el-or-desc JsPropertyDescriptor))
-			       ;; 8.12.5, step 6
-			       (extend-object!))
-			      (else
-			       (with-access::JsDataDescriptor el-or-desc (writable)
-				  (if writable
-				      ;; 8.12.5, step 6
-				      (extend-object!)
-				      ;; 8.12.4, step 8.b
-				      (reject "Read-only property"))))))))))
-	    (check-cache "update-mapped-object.0/obj <<<" name obj)
-	    (check-cache "update-mapped-object.0/o <<<" name o)
-	    r)))
+	 (with-access::JsObject obj (cmap elements)
+	    (with-access::JsConstructMap cmap (nextmap methods vtable vlen names)
+	       (let ((el-or-desc (vector-ref elements i)))
+		  (cond
+		     ((isa? el-or-desc JsAccessorDescriptor)
+		      (with-trace 'prop "update-mapped-object.1"
+			 (trace-item "name=" name)
+			 ;; 8.12.5, step 5
+			 (update-from-descriptor! o obj i v el-or-desc)))
+		     ((eq? o obj)
+		      (if (isa? el-or-desc JsPropertyDescriptor)
+			  ;; 8.12.5, step 3
+			  (with-access::JsDataDescriptor el-or-desc (writable)
+			     (cond
+				((not writable)
+				 ;; 8.12.4, step 2.b
+				 (reject "Read-only property"))
+				((isa? el-or-desc JsValueDescriptor)
+				 ;; 8.12.5, step 3,b
+				 (with-access::JsValueDescriptor el-or-desc (value)
+				    (set! value v)
+				    v))
+				(else
+				 (when (invalidate-cache-method! v methods i)
+				    (set! vtable '#())
+				    (set! vlen 0)
+				    (set! cmap (duplicate::JsConstructMap cmap)))
+				 (when pcache
+				    [assert (i) (<=fx i (vector-length elements))]
+				    (js-pcache-update-direct! pcache i o))
+				 (vector-set! elements i v)
+				 v)))
+			  (begin
+			     (when (invalidate-cache-method! v methods i)
+				(set! vtable '#())
+				(set! vlen 0)
+				(set! cmap (duplicate::JsConstructMap cmap)))
+			     (when pcache
+				[assert (i) (<=fx i (vector-length elements))]
+				(js-pcache-update-direct! pcache i o))
+			     (vector-set! elements i v)
+			     v)))
+		     ((not (js-object-mode-extensible? obj))
+		      ;; 8.12.9, step 3
+		      (reject "Sealed object"))
+		     ((not (isa? el-or-desc JsPropertyDescriptor))
+		      ;; 8.12.5, step 6
+		      (extend-object!))
+		     (else
+		      (with-access::JsDataDescriptor el-or-desc (writable)
+			 (if writable
+			     ;; 8.12.5, step 6
+			     (extend-object!)
+			     ;; 8.12.4, step 8.b
+			     (reject "Read-only property"))))))))))
    
    (define (extend-mapped-object!)
       (with-trace 'prop "extend-mapped-object!"
@@ -1797,7 +1667,7 @@
 			       (js-pcache-next-direct! pcache o nextmap index))
 			    [assert (o) (isa? nextmap JsConstructMap)]
 			    (js-object-push/ctor! o index v ctor)
-			    (js-object-cmap-set! o nextmap)
+			    (set! cmap nextmap)
 			    v))
 			((find-old-transition cmap name flags)
 			 =>
@@ -1816,7 +1686,7 @@
 			       (link-cmap! cmap nextmap name v flags)
 			       [assert (o) (isa? nextmap JsConstructMap)]
 			       (js-object-push/ctor! o index v ctor))
-			    (js-object-cmap-set! o nextmap)
+			    (set! cmap nextmap)
 			    v)))))))))
    
    (define (update-properties-object! obj desc)
@@ -2085,7 +1955,7 @@
 		      (assert-accessor-property! get set)
 		      (link-cmap! cmap nextmap name #f flags)
 		      [assert (o) (isa? nextmap JsConstructMap)]
-		      (js-object-cmap-set! o nextmap)
+		      (set! cmap nextmap)
 		      ;; extending the elements vector is mandatory
 		      (js-object-push! o index newdesc)
 		      (js-undefined)))
@@ -2095,7 +1965,7 @@
 			 (validate-cache-method! value methods index))
 		      (link-cmap! cmap nextmap name value flags)
 		      [assert (o) (isa? nextmap JsConstructMap)]
-		      (js-object-cmap-set! o nextmap)
+		      (set! cmap nextmap)
 		      ;; store in the obj
 		      (js-object-push! o index value)
 		      value))
@@ -2112,7 +1982,7 @@
 			 (validate-cache-method! value methods index))
 		      (link-cmap! cmap nextmap name value flags)
 		      [assert (o) (isa? nextmap JsConstructMap)]
-		      (js-object-cmap-set! o nextmap)
+		      (set! cmap nextmap)
 		      (js-object-push! o index newdesc)
 		      value)))))))
    
@@ -2229,7 +2099,7 @@
 			     (let ((nextmap (clone-cmap cmap)))
 				(link-cmap! cmap nextmap n #f -1)
 				[assert (o) (isa? nextmap JsConstructMap)]
-				(js-object-cmap-set! o nextmap)
+				(set! cmap nextmap)
 				(with-access::JsConstructMap nextmap (names)
 				   ;; remove the prop from the cmap
 				   (vector-set! names i #f)

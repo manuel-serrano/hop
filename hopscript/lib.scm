@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue May 16 08:26:49 2017 (serrano)                */
+;*    Last change :  Wed May 17 11:48:03 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -146,7 +146,7 @@
       (let ((cmap (instantiate::JsConstructMap
 		     (names names))))
 	 (instantiate::JsObject
-	    (cmap (js-cmap-twinmap cmap))
+	    (cmap cmap)
 	    (elements elements)
 	    (__proto__ __proto__)))))
 
@@ -166,7 +166,7 @@
 		(let ((cmap (instantiate::JsConstructMap
 			       (names names))))
 		   (instantiate::JsObject
-		      (cmap (js-cmap-twinmap cmap))
+		      (cmap cmap)
 		      (elements elements)
 		      (__proto__ __proto__)))
 		(let* ((name (cond
@@ -195,7 +195,7 @@
 		(let ((cmap (instantiate::JsConstructMap
 			       (names names))))
 		   (instantiate::JsObject
-		      (cmap (js-cmap-twinmap cmap))
+		      (cmap cmap)
 		      (elements elements)
 		      (__proto__ __proto__)))
 		(let* ((name (cond

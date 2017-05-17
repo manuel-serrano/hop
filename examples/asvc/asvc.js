@@ -1,22 +1,22 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/async/async.js           */
+/*    serrano/prgm/project/hop/3.1.x/examples/async/async.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Wed Aug 19 13:49:48 2015 (serrano)                */
-/*    Copyright   :  2014-15 Manuel Serrano                            */
+/*    Last change :  Wed May 17 13:59:22 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Simple example showing asynchronous response                     */
 /*    -------------------------------------------------------------    */
-/*    run: hop -v -g async.js                                          */
-/*    browser: http://localhost:8080/hop/async                         */
+/*    run: hop -v -g asvc.js                                           */
+/*    browser: http://localhost:8080/hop/asvc                          */
 /*=====================================================================*/
 var fs = require( "fs" );
 var fontifier = require( hop.fontifier );
 
-service async() {
+service asvc() {
    return new Promise( function( resolve, reject ) {
-      fs.readFile( async.resource( "async.js" ), "ascii",
+      fs.readFile( asvc.resource( "asvc.js" ), "ascii",
                    function( err, data ) {
                       resolve( <html>
 			<head css=${fontifier.css}/>
@@ -27,4 +27,4 @@ ${fontifier.hopscript( data )}
       } );
 }
 
-console.log( 'Go to "http://%s:%d/hop/async"', hop.hostname, hop.port );
+console.log( 'Go to "http://%s:%d/hop/asvc"', hop.hostname, hop.port );

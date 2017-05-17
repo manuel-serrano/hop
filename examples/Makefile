@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Thu Apr 13 12:47:29 2017 (serrano)                */
+#*    Last change :  Wed May 17 14:06:51 2017 (serrano)                */
 #*    Copyright   :  2006-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -20,7 +20,7 @@
 #*---------------------------------------------------------------------*/
 POPULATION = Makefile \
   README.md \
-  async/async.js async/example.json async/README.md \
+  asvc/asvc.js asvc/example.json asvc/README.md \
   arraybuffer/arraybuffer.js arraybuffer/example.json \
   require/node_modules require/node_modules/mod2.js require/require.js \
   require/mod1.js require/example.json \

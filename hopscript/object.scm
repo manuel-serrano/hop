@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue May 16 14:57:08 2017 (serrano)                */
+;*    Last change :  Wed May 17 11:38:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -812,22 +812,6 @@
 ;*    js-setprototypeof ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-setprototypeof o v %this msg)
-
-   ;; MS: TO BE IMPROVED
-   (define (duplicate-JsConstructMap cmap)
-      (let* ((%id (gensym))
-	     (n (duplicate::JsConstructMap cmap (%id %id))))
-	 (with-access::JsConstructMap n (twinmap)
-	    (let ((nt (duplicate::JsConstructMap twinmap
-			 (%id (symbol-append %id 'UP))
-			 (twinmap n))))
-	       (set! twinmap nt)
-	       (with-access::JsConstructMap n (packed)
-		  (with-access::JsConstructMap nt ((tpacked packed))
-		     (when (eq? packed tpacked)
-			(error "js-setprototypeof" "pas bon packed..." msg))))
-	       n))))
-   
    (let ((o (js-cast-object o %this msg))
 	 (v (js-cast-object v %this msg)))
       (if (not (js-object-mode-extensible? o))
@@ -835,7 +819,7 @@
 	     "Prototype of non-extensible object mutated" v)
 	  (with-access::JsObject o (__proto__ cmap)
 	     (js-invalidate-pcaches-pmap!)
-	     (set! cmap (duplicate-JsConstructMap cmap))
+	     (set! cmap (duplicate::JsConstructMap cmap (%id (gencmapid))))
 	     (set! __proto__ v)))))
 
 ;*---------------------------------------------------------------------*/
