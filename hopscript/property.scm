@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May 17 07:38:40 2017 (serrano)                */
+;*    Last change :  Wed May 17 08:14:56 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -18,7 +18,6 @@
    (library hop)
 
    (option  (register-srfi! 'cache-level2)
-      ;;(tprint "COMPILER-DEBUG-SET to be to 0")
             (bigloo-compiler-debug-set! 0))
    
    (include "stringliteral.sch"

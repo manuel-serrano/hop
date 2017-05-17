@@ -3,11 +3,17 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed May 17 07:37:56 2017 (serrano)                */
+;*    Last change :  Wed May 17 08:10:50 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    js-object-packed-enable-expander ...                             */
+;*---------------------------------------------------------------------*/
+(define (js-object-packed-enable-expander x e)
+   *js-object-packed-enable*)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-packed-ref-expander ...                                */
@@ -18,7 +24,7 @@
        (e `(with-access::JsObject ,obj (elements cmap)
 	      (vector-ref 
 		 (cond-expand
-		    (bigloo-c
+		    ((and bigloo-c js-object-packed)
 		     (pragma::vector "BVECTOR( (&(((BgL_jsobjectz00_bglt)BOBJECT($1))->BgL_elementsz00) + 1) )" ,obj))
 		    (else
 		     elements))
@@ -259,10 +265,11 @@
 	   (if (>=fx ,cindex 0)
 	       (if ,cowner
 		   (with-access::JsObject ,cowner (elements)
-		      (vector-ref elements ,cindex)
-		      (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
-			 (js-property-value ,o desc ,%this)))
-		   (vector-ref elements ,cindex))))
+		      (vector-ref elements ,cindex))
+		   (vector-ref elements ,cindex))
+	       (with-access::JsObject ,cowner (elements)
+		  (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
+		     (js-property-value ,o desc ,%this)))))
 	  (else
 	   (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))
 
