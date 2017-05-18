@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Sep 20 07:19:56 2007                          */
-/*    Last change :  Mon May 30 08:53:56 2016 (serrano)                */
-/*    Copyright   :  2007-16 Manuel Serrano                            */
+/*    Last change :  Thu May 18 14:35:52 2017 (serrano)                */
+/*    Copyright   :  2007-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop event machinery.                                             */
 /*=====================================================================*/
@@ -1058,7 +1058,6 @@ function hop_start_servevt_proxy() {
 	 var port = v[ 1 ];
 	 var key = v[ 2 ];
 	 var ssl = v[ 3 ];
-
 	 if( servevt_websocketp() ) {
 	    // websocket backend
 	    start_servevt_websocket_proxy( key, host, port, ssl );

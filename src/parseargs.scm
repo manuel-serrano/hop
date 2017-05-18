@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Mar 13 14:35:03 2017 (serrano)                */
+;*    Last change :  Thu May 18 14:05:54 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -122,7 +122,7 @@
 	     (set! clear-libs #f))
 	    (("--no-sofile" (help "Disable loading pre-compiled file"))
 	     (hop-sofile-enable-set! #f))
-	    (("--sofile-policy" ?policy (help "So file compile policy"))
+	    (("--sofile-policy" ?policy (help "Sofile compile policy [none, aot, nte, nte+]"))
 	     (hop-sofile-compile-policy-set! (string->symbol policy)))
 	    (("--autoload" (help "Enable autoload (default)"))
 	     (set! autoloadp #t))

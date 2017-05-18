@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Tue Mar  1 07:11:53 2016 (serrano)                */
-;*    Copyright   :  2008-16 Manuel Serrano                            */
+;*    Last change :  Thu May 18 14:31:58 2017 (serrano)                */
+;*    Copyright   :  2008-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
 ;*=====================================================================*/
