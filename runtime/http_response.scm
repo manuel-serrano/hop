@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Sat Oct 29 07:26:26 2016 (serrano)                */
-;*    Copyright   :  2004-16 Manuel Serrano                            */
+;*    Last change :  Thu May 18 14:52:08 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
 ;*=====================================================================*/
@@ -118,9 +118,8 @@
 	    (http-write-line p)
 	    (display-string rep p))))
 
-   (define (response-x-javascript value conn p padding)
-      (set! conn 'close)
-      (http-write-line p "Connection: " conn)
+   (define (response-x-javascript value p padding)
+      (http-write-line p "Connection: close")
       (http-write-line p)
       (when padding (display padding p))
       (display "(" p)
@@ -134,15 +133,13 @@
 	 (http-write-line p)
 	 (display s p)))
 
-   (define (response-x-json-hop value conn p)
-      (set! conn 'close)
-      (http-write-line p "Connection: " conn)
+   (define (response-x-json-hop value p)
+      (http-write-line p "Connection: close")
       (http-write-line p)
       (byte-array->json (serialize value) p))
    
-   (define (response-json value conn p padding)
-      (set! conn 'close)
-      (http-write-line p "Connection: " conn)
+   (define (response-json value p padding)
+      (http-write-line p "Connection: close")
       (http-write-line p)
       (if padding
 	  (begin
@@ -182,15 +179,17 @@
 		      (response-x-hop value conn p))
 		     ((string-prefix? "application/x-javascript" ctype)
 		      ;; standard javascript serialization
-		      (response-x-javascript value conn p padding))
+		      (set! conn 'close)
+		      (response-x-javascript value p padding))
 		     ((string-prefix? "application/x-url-hop" ctype)
 		      ;; fast path, bigloo serialization
 		      (response-x-url-hop value conn p))
 		     ((string-prefix? "application/x-json-hop" ctype)
-		      (response-x-json-hop value conn p))
+		      (set! conn 'close)
+		      (response-x-json-hop value p))
 		     ((string-prefix? "application/json" ctype)
 		      ;; json encoding
-		      (response-json value conn p padding))
+		      (response-json value p padding))
 		     (else
 		      (error "http-response"
 			 (format "Unsupported serialization method \"~a\""

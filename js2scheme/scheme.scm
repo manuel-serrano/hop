@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed May 17 11:51:20 2017 (serrano)                */
+;*    Last change :  Wed May 17 16:35:33 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -5034,7 +5034,8 @@
 				  
 				  
 				  nodes (iota (length nodes)))
-			     (js-object-cmap-set! ,%ref ,cmap1)))
+			     (with-access::JsObject ,%ref ((omap cmap))
+				(set! omap ,cmap1))))
 		       ;; cache miss
 		       (with-access::JsConstructMap ,cmap (names)
 			  (let ((len0 (vector-length names)))

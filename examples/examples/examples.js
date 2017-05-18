@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Fri Apr 29 19:21:04 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Thu May 18 14:52:00 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
 /*    -------------------------------------------------------------    */
@@ -22,7 +22,7 @@ var doc = require( "hopdoc" );
 var PORT = hop.port + 1;
 var PROCESSES = [];
 var SHELL = "/bin/sh";
-var CMD = "hop -g --no-color --no-zeroconf -p $(PORT) $(SRC) --rc-file $(RCFILE)";
+var CMD = "hop -g --sofile-policy none --no-color --no-zeroconf -p $(PORT) $(SRC) --rc-file $(RCFILE)";
 var PASSWD = path.join( __dirname, "passwd.hop" );
 
 var CLASSLEVELS = [ "success", "info", "warning", "danger", "default" ];

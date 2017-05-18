@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue May 16 14:21:41 2017 (serrano)                */
+;*    Last change :  Fri May 19 08:36:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -461,6 +461,10 @@
 	  (js-call0 %this this thisarg))
 	 ((null? (cdr args))
 	  (js-call1 %this this thisarg (car args)))
+	 ((null? (cddr args))
+	  (js-call2 %this this thisarg (car args) (cadr args)))
+	 ((null? (cdddr args))
+	  (js-call3 %this this thisarg (car args) (cadr args) (caddr args)))
 	 (else
 	  (js-apply %this this thisarg args))))
    
