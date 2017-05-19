@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue May 16 17:00:30 2017 (serrano)                */
+;*    Last change :  Wed May 17 17:34:35 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removable stage.                                       */
@@ -44,6 +44,8 @@
 			 (cond
 			    ((isa? d J2SDeclSvc)
 			     (mark d deval))
+			    ((isa? d J2SDeclFun)
+			     #unspecified)
 			    ((isa? d J2SDeclInit)
 			     (with-access::J2SDeclInit d (val %info)
 				(mark val deval)
