@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Mar  4 17:45:45 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:31:43 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -265,7 +265,8 @@
 	    :value (js-make-function %this js-date-parse 1 'parse)
 	    :writable #t
 	    :configurable #t
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 
 	 ;; UTC
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.3
@@ -291,7 +292,8 @@
 	    :value (js-make-function %this js-date-utc 7 'UTC)
 	    :writable #t
 	    :configurable #t
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 
 	 ;; now
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.4.4
@@ -303,13 +305,15 @@
 	    :value (js-make-function %this js-date-now 0 'now)
 	    :writable #t
 	    :configurable #t
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 	 
 	 ;; prototype properties
 	 (init-builtin-date-prototype! %this js-date js-date-prototype)
 	 ;; bind Date in the global object
 	 (js-bind! %this %this 'Date
-	    :configurable #f :enumerable #f :value js-date)
+	    :configurable #f :enumerable #f :value js-date
+	    :hidden-class #t)
 	 js-date)))
 
 ;*---------------------------------------------------------------------*/
@@ -342,7 +346,8 @@
       :value js-date
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.2
@@ -357,7 +362,8 @@
       :value (js-make-function %this date-prototype-tostring 0 'toString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toDateString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.3
@@ -377,7 +383,8 @@
 		0 'toDateString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toTimeString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.4
@@ -397,7 +404,8 @@
 		0 'toTimeString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toLocaleString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.5
@@ -409,7 +417,8 @@
 		0 'toLocaleString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toLocaleDateString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.6
@@ -421,7 +430,8 @@
 		0 'toLocaleDateString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toLocaleTimeString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.7
@@ -433,7 +443,8 @@
 		0 'toLocaleTimeString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toUTCString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.42
@@ -447,7 +458,8 @@
       :value (js-make-function %this date-prototype-toutcstring 0 'toUTCString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toISOString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.43
@@ -476,7 +488,8 @@
       :value (js-make-function %this date-prototype-toisostring 0 'toISOString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toJSON
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.44
@@ -495,7 +508,8 @@
       :value (js-make-function %this date-prototype-toJSON 1 'toJSON)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; valueOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.8
@@ -509,7 +523,8 @@
       :value (js-make-function %this date-prototype-valueof 0 'valueOf)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getTime
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.9
@@ -523,7 +538,8 @@
       :value (js-make-function %this date-prototype-gettime 0 'getTime)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getFullYear
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.10
@@ -537,7 +553,8 @@
       :value (js-make-function %this date-prototype-getfullyear 0 'getFullYear)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getUTCFullYear
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.11
@@ -553,7 +570,8 @@
       :value (js-make-function %this date-prototype-getutcfullyear 0 'getUTCFullYear)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getMonth
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.12
@@ -567,7 +585,8 @@
       :value (js-make-function %this date-prototype-getmonth 0 'getMonth)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getUTCMonth
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.13
@@ -583,7 +602,8 @@
       :value (js-make-function %this date-prototype-getutcmonth 0 'getUTCMonth)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getDate
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.14
@@ -597,7 +617,8 @@
       :value (js-make-function %this date-prototype-getdate 0 'getDate)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getUTCDate
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.15
@@ -613,7 +634,8 @@
       :value (js-make-function %this date-prototype-getutcdate 0 'getUTCDate)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getDay
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.16
@@ -627,7 +649,8 @@
       :value (js-make-function %this date-prototype-getday 0 'getDay)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getUTCDay
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.17
@@ -641,7 +664,8 @@
       :value (js-make-function %this date-prototype-getutcday 0 'getUTCDay)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getHours
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.18
@@ -655,7 +679,8 @@
       :value (js-make-function %this date-prototype-gethours 0 'getHours)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getUTCHours
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.19
@@ -675,7 +700,8 @@
       :value (js-make-function %this date-prototype-getutchours 0 'getUTCHours)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getMinutes
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.20
@@ -689,7 +715,8 @@
       :value (js-make-function %this date-prototype-getminutes 0 'getMinutes)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getUTCMinutes
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.21
@@ -703,7 +730,8 @@
       :value (js-make-function %this date-prototype-getutcminutes 0 'getUTCMinutes)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getSeconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.22
@@ -717,7 +745,8 @@
       :value (js-make-function %this date-prototype-getseconds 0 'getSeconds)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getUTCSeconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.23
@@ -731,7 +760,8 @@
       :value (js-make-function %this date-prototype-getutcseconds 0 'getUTCSeconds)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getMilliseconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.24
@@ -745,7 +775,8 @@
       :value (js-make-function %this date-prototype-getmilliseconds 0 'getMilliseconds)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getUTCMilliseconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.25
@@ -759,7 +790,8 @@
       :value (js-make-function %this date-prototype-getutcmilliseconds 0 'getUTCMilliseconds)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getTimezoneOffset
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.26
@@ -773,7 +805,8 @@
       :value (js-make-function %this date-prototype-gettimezoneoffset 0 'getTimezoneOffset)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setTime
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.27
@@ -800,7 +833,8 @@
       :value (js-make-function %this date-prototype-settime 1 'setTime)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; getYear
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.4
@@ -814,7 +848,8 @@
       :value (js-make-function %this date-prototype-getyear 0 'getYear)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setYear
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.5
@@ -839,7 +874,8 @@
       :value (js-make-function %this date-prototype-setyear 1 'setYear)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setMilliseconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.28
@@ -867,7 +903,8 @@
       :value (js-make-function %this date-prototype-setmilliseconds 1 'setMilliseconds)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setUTCMilliseconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.29
@@ -895,7 +932,8 @@
       :value (js-make-function %this date-prototype-setutcmilliseconds 1 'setUTCMilliseconds)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; setSeconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.30
@@ -916,7 +954,8 @@
       :value (js-make-function %this date-prototype-setseconds 2 'setSeconds)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setUTCSeconds
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.31
@@ -937,7 +976,8 @@
       :value (js-make-function %this date-prototype-setutcseconds 2 'setUTCSeconds)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setMinutes
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.32
@@ -960,7 +1000,8 @@
       :value (js-make-function %this date-prototype-setminutes 3 'setMinutes)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setUTCMinutes
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.33
@@ -983,7 +1024,8 @@
       :value (js-make-function %this date-prototype-setutcminutes 3 'setUTCMinutes)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setHours
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.34
@@ -1009,7 +1051,8 @@
       :value (js-make-function %this date-prototype-sethours 4 'setHours)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setUTCHours
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.35
@@ -1040,7 +1083,8 @@
       :value (js-make-function %this date-prototype-setutchours 4 'setUTCHours)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setDate
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.36
@@ -1065,7 +1109,8 @@
       :value (js-make-function %this date-prototype-setdate 1 'setDate)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setUTCDate
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.37
@@ -1086,7 +1131,8 @@
       :value (js-make-function %this date-prototype-setutcdate 1 'setUTCDate)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setMonth
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.38
@@ -1111,7 +1157,8 @@
       :value (js-make-function %this date-prototype-setmonth 2 'setMonth)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setUTCMonth
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.39
@@ -1135,7 +1182,8 @@
       :value (js-make-function %this date-prototype-setutcmonth 2 'setUTCMonth)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setFullYear
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.40
@@ -1161,7 +1209,8 @@
       :value (js-make-function %this date-prototype-setfullyear 3 'setFullYear)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; setUTCFullYear
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.9.5.41
@@ -1187,7 +1236,8 @@
       :value (js-make-function %this date-prototype-setutcfullyear 3 'setUTCFullYear)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toGMTString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.6
@@ -1198,7 +1248,8 @@
       :value (js-make-function %this date-prototype-togmtstring 0 'toGMTString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    obj)
 

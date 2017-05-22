@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May 16 14:57:37 2017 (serrano)                */
+;*    Last change :  Mon May 22 13:54:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -692,13 +692,8 @@
 			   (let liip ()
 			      (when (pair? socompile-queue)
 				 (let ((e (nodejs-select-socompile socompile-queue)))
-				    (synchronize-global
-				       (make-file-name
-					  (dirname (hop-sofile-path "hop.lock"))
-					  "hop.lock")
-				       (lambda ()
-					  (or (hop-find-sofile (car e))
-					      (compile-worker e))))
+				    (or (hop-find-sofile (car e))
+					(compile-worker e))
 				    (liip))))
 			   (condition-variable-wait!
 			      socompile-condv socompile-mutex)
@@ -741,8 +736,8 @@
       (body (lambda ()
 	       (with-handler
 		  (lambda (e)
-		     (tprint "************ SOCOMPILE EXN=" e)
-		     (exception-notify e))
+		     (exception-notify e)
+		     (raise e))
 		  (begin
 		     (with-trace 'sorequire "make-compile-worker"
 			(trace-item "thread=" (current-thread))
@@ -880,41 +875,49 @@
 	       ((string? tmp) tmp)
 	       ((eq? tmp 'loop) (loop))
 	       (else
-		(let* ((sopath (hop-sofile-path filename))
-		       (sopathtmp (make-file-name
-				     (dirname sopath)
-				     (string-append "#" (basename sopath))))
-		       (cmd (format "~a ~a -y -v3 --js-no-module-main -o ~a ~a"
-			       (hop-hopc)
-			       filename sopathtmp
-			       (hop-hopc-flags)))
-		       (ksucc (make-ksucc sopath sopathtmp))
-		       (kfail (make-kfail sopath sopathtmp)))
-		   (make-directories (dirname sopath))
-		   (trace-item "sopath=" sopath)
-		   (trace-item "sopathtmp=" sopathtmp)
-		   (trace-item "cmd=" cmd)
-		   (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
-		   (let ((msg (exec cmd ksucc kfail)))
-		      (trace-item "msg=" msg)
-		      (unwind-protect
-			 (cond
-			    ((not msg)
-			     ;; compilation succeeded
-			     (ksucc))
-			    ((string? msg)
-			     ;; compilation failed
-			     (kfail)
-			     (hop-verb 3 (hop-color -1 -1 " COMPILE-ERROR")
-				" " cmd "\n")
-			     (dump-error cmd sopath msg)
-			     'error))
-			 (synchronize socompile-mutex
-			    (unless socompile-ended
-			       (set! socompile-files
-				  (delete! filename socompile-files))
-			       (condition-variable-broadcast!
-				  socompile-condv))))))))))))
+		(with-handler
+		   exception-notify
+		   (let* ((sopath (hop-sofile-path filename))
+			  (sopathtmp (make-file-name
+					(dirname sopath)
+					(string-append "#" (basename sopath))))
+			  (cmd (format "~a ~a -y -v3 --js-no-module-main -o ~a ~a"
+				  (hop-hopc)
+				  filename sopathtmp
+				  (hop-hopc-flags)))
+			  (ksucc (make-ksucc sopath sopathtmp))
+			  (kfail (make-kfail sopath sopathtmp)))
+		      (make-directories (dirname sopath))
+		      (trace-item "sopath=" sopath)
+		      (trace-item "sopathtmp=" sopathtmp)
+		      (trace-item "cmd=" cmd)
+		      (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
+		      (synchronize-global
+			 (make-file-name
+			    (dirname (hop-sofile-path "hop.lock"))
+			    "hop.lock")
+			 (lambda ()
+			    (let ((msg (exec cmd ksucc kfail)))
+			       (trace-item "msg=" msg)
+			       (unwind-protect
+				  (cond
+				     ((not msg)
+				      ;; compilation succeeded
+				      (ksucc))
+				     ((string? msg)
+				      ;; compilation failed
+				      (kfail)
+				      (hop-verb 3
+					 (hop-color -1 -1 " COMPILE-ERROR")
+					 " " cmd "\n")
+				      (dump-error cmd sopath msg)
+				      'error))
+				  (synchronize socompile-mutex
+				     (unless socompile-ended
+					(set! socompile-files
+					   (delete! filename socompile-files))
+					(condition-variable-broadcast!
+					   socompile-condv)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
@@ -931,9 +934,7 @@
 		    (js-raise-error (js-new-global-object)
 		       (format "Wrong compiled file format ~s" sopath)
 		       sopath))))
-	    ((and (not (eq? sopath 'error))
-		  (hop-sofile-enable)
-		  (=fx (bigloo-debug) 0))
+	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
 	     (case (hop-sofile-compile-policy)
 		((aot)
 		 (loop (nodejs-socompile filename lang)))

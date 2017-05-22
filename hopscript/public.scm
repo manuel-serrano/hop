@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun May  7 10:02:16 2017 (serrano)                */
+;*    Last change :  Mon May 22 19:16:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -51,14 +51,6 @@
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 	   (inline js-new-fast::JsObject ::JsGlobalObject ::JsFunction __proto__)
 
-;* 	   (js-new-fast0 ::JsGlobalObject ::JsFunction __proto__)      */
-;* 	   (js-new-fast1 ::JsGlobalObject ::JsFunction __proto__ a0)   */
-;* 	   (js-new-fast2 ::JsGlobalObject ::JsFunction __proto__ a0 a1) */
-;* 	   (js-new-fast3 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2) */
-;* 	   (js-new-fast4 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2 a3) */
-;* 	   (js-new-fast5 ::JsGlobalObject ::JsFunction __proto__ a0 a1 a2 a3 a4) */
-;* 	   (js-new-fastn ::JsGlobalObject ::JsFunction __proto__ . an) */
-	   
 	   (js-object-alloc ::JsFunction ::JsGlobalObject)
 	   
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
@@ -305,7 +297,7 @@
 	  __proto__)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-new-fastXXX ...                                               */
+;*    js-new-fast ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-new-fast %this ctor::JsFunction __proto__)
    (with-access::JsFunction ctor (constrsize constrmap prototype)

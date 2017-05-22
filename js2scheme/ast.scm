@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon May  8 09:56:24 2017 (serrano)                */
+;*    Last change :  Mon May 22 18:21:02 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -158,6 +158,7 @@
 	      (params::pair-nil (default '()))
 	      (constrsize::int (default 3) (info '("notraverse")))
 	      (src::bool (default #t) (info '("notraverse")))
+	      (method (default #f) (info '("notraverse")))
 	      body::J2SBlock)
 	   
 	   (class J2SSvc::J2SFun
@@ -167,6 +168,10 @@
 	      (import::bool read-only (info '("notraverse"))))
 
 	   (class J2SArrow::J2SFun)
+
+	   (class J2SMethod::J2SExpr
+	      function::J2SFun
+	      method::J2SFun)
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl
@@ -848,6 +853,7 @@
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body (params))
 (gen-walks J2SSvc body init (params))
+(gen-walks J2SMethod function method)
 (gen-walks J2SObjInit (inits))
 (gen-walks J2SDataPropertyInit name val)
 (gen-walks J2SAccessorPropertyInit name get set)

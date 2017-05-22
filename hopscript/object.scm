@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed May 17 11:38:26 2017 (serrano)                */
+;*    Last change :  Sun May 21 08:32:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -202,7 +202,7 @@
                            (apply ,(symbol-append '< tag '>)
                               nodes)))
                     2 ',tag)
-          :writable #f :configurable #f :enumerable #f)))
+          :writable #f :configurable #f :enumerable #f :hidden-class #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind-tags! ...                                                */
@@ -275,16 +275,16 @@
 	    ;; bind the global object properties
 	    (js-bind! %this %this 'Object
 	       :value js-object
-	       :writable #t :enumerable #f :configurable #f)
+	       :writable #t :enumerable #f :configurable #f :hidden-class #f)
 	    (js-bind! %this %this 'NaN
 	       :value +nan.0
-	       :writable #f :enumerable #f :configurable #f)
+	       :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	    (js-bind! %this %this 'Infinity
 	       :value +inf.0
-	       :writable #f :enumerable #f :configurable #f)
+	       :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	    (js-bind! %this %this 'undefined
 	       :value (js-undefined)
-	       :writable #f :enumerable #f :configurable #f)
+	       :writable #f :enumerable #f :configurable #f :hidden-class #f)
 
 	    ;; eval
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1
@@ -299,7 +299,7 @@
 	    (js-bind! %this %this 'eval
 	       :value (js-make-function %this js-eval 1 'eval
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 	    
 	    ;; parseInt
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.2
@@ -311,7 +311,7 @@
 	    (js-bind! %this %this 'parseInt
 	       :value (js-make-function %this parseint 2 'parseInt
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; parseFloat
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.3
@@ -324,7 +324,7 @@
 	    (js-bind! %this %this 'parseFloat
 	       :value (js-make-function %this parsefloat 1 'parseFloat
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; isNaN
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.4
@@ -335,7 +335,7 @@
 	    (js-bind! %this %this 'isNaN
 	       :value (js-make-function %this isnan 1 'isNaN
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; isFinite
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.5
@@ -349,7 +349,7 @@
 	    (js-bind! %this %this 'isFinite
 	       :value (js-make-function %this isfinite 1 'isFinite
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; check-utfi-validity
 	    (define (check-utf8-validity str)
@@ -368,7 +368,7 @@
 	    (js-bind! %this %this 'decodeURI
 	       :value (js-make-function %this decodeuri 1 'decodeURI
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; decodeURIComponent
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.3.2
@@ -382,7 +382,7 @@
 	       :value (js-make-function %this decodeuricomponent
 			 1 'decodeURIComponent
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; encodeURI
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.3.3
@@ -395,7 +395,7 @@
 	    (js-bind! %this %this 'encodeURI
 	       :value (js-make-function %this encodeuri 1 'encodeURI
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; encodeURIComponent
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.3.4
@@ -409,7 +409,7 @@
 	       :value (js-make-function %this encodeuricomponent
 			 1 'encodeURIComponent
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; escape
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.1
@@ -419,7 +419,7 @@
 	    (js-bind! %this %this 'escape
 	       :value (js-make-function %this escape 1 'escape
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; unescape
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.1
@@ -429,7 +429,7 @@
 	    (js-bind! %this %this 'unescape
 	       :value (js-make-function %this unescape 1 'unescape
 			 :prototype (js-undefined))
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t :hidden-class #f)
 
 	    ;; html_base
 	    (js-bind-tags! %this %this
@@ -462,12 +462,12 @@
 		  1 'HTML))
 	    
 	    (js-bind! %this %this 'HTML
-	       :value (js-html-html %this) :enumerable #f)
+	       :value (js-html-html %this) :enumerable #f :hidden-class #f)
 
 	    ;; only used with the global object, see nodejs/require.scm
 	    ;; rebound in generated code
 	    (js-bind! %this %this 'HEAD
-	       :value (js-html-head %this) :enumerable #f)
+	       :value (js-html-head %this) :enumerable #f :hidden-class #f)
 
 	    ;; html_head
 	    (js-bind-tags! %this %this
@@ -497,7 +497,7 @@
 			    (instantiate::xml-comment
 			       (data data)))
 			 1 '<!--)
-	       :enumerable #f :writable #f :configurable #f)
+	       :enumerable #f :writable #f :configurable #f :hidden-class #f)
 
 	    (define (string->xml-tilde body)
 	       (let ((expr (js-tostring body %this)))
@@ -518,7 +518,7 @@
 			 :__proto__ js-function-prototype
 			 :construct (lambda (this body)
 				       (string->xml-tilde body)))
-	       :enumerable #f :writable #f :configurable #f)
+	       :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	    
 	    ;; return the newly created object
 	    %this))))
@@ -590,7 +590,8 @@
 	 :value (js-make-function %this getprototypeof 1 'getPrototypeOf)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; setPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/6.0/#sec-object.setprototypeof
@@ -601,7 +602,8 @@
 	 :value (js-make-function %this getprototypeof 1 'setPrototypeOf)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; getOwnPropertyDescriptor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.3
@@ -615,7 +617,8 @@
 		   getownpropertydescriptor 2 'getOwnPropertyDescriptor)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; getOwnPropertyNames
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.4
@@ -628,7 +631,8 @@
 		   getownpropertynames 1 'getOwnPropertyNames)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; getOwnPropertySymbols
       ;; http://www.ecma-international.org/ecma-262/6.0/#sec-19.1.2.8
@@ -641,7 +645,8 @@
 		   getownpropertysymbols 1 'getOwnPropertySymbols)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; create
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.5
@@ -654,12 +659,13 @@
 		   (unless (eq? properties (js-undefined))
 		      (object-defineproperties %this this obj properties)))
 		obj)))
-      
+
       (js-bind! %this js-object 'create
 	 :value (js-make-function %this create 2 'create)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
 
       ;; defineProperty
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.6
@@ -674,7 +680,8 @@
 	 :value (js-make-function %this defineproperty 3 'defineProperty)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; defineProperties
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.7
@@ -685,7 +692,8 @@
 		   2 'defineProperties)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; seal
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.8
@@ -696,7 +704,8 @@
 	 :value (js-make-function %this seal 1 'seal)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; freeze
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.9
@@ -707,7 +716,8 @@
 	 :value (js-make-function %this freeze 1 'freeze)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; preventExtensions
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.10
@@ -720,7 +730,8 @@
 	 :value (js-make-function %this preventextensions 1 'preventExtensions)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; isSealed
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.11
@@ -736,15 +747,14 @@
 			     (not (eq? configurable #t))))
 		   properties)
 		;; 3
-;* 		(with-access::JsObject o (extensible)                  */
- ;* 		   (not extensible))                                   */
 		(not (js-object-mode-extensible? o))))))
       
       (js-bind! %this js-object 'isSealed
 	 :value (js-make-function %this issealed 1 'isSealed)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; isFrozen
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.12
@@ -765,29 +775,27 @@
 					 (not (eq? writable #t)))))))
 		   properties)
 		;; 3
-;* 		(with-access::JsObject o (extensible)                  */
-;* 		   (not extensible))                                   */
 		(not (js-object-mode-extensible? o))))))
       
       (js-bind! %this js-object 'isFrozen
 	 :value (js-make-function %this isfrozen 1 'isFrozen)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; isExtensible
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.13
       (define (isextensible this obj)
 	 (let ((o (js-cast-object obj %this "Object.isExtensible")))
-;* 	    (with-access::JsObject o (extensible)                      */
-;* 	       extensible)                                             */
 	    (js-object-mode-extensible? o)))
       
       (js-bind! %this js-object 'isExtensible
 	 :value (js-make-function %this isextensible 1 'isExtensible)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; keys
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14
@@ -799,7 +807,9 @@
 	 :value (js-make-function %this keys 1 'keys)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)))
+	 :enumerable #f
+	 :hidden-class #f)))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-getprototypeof ...                                            */
 ;*---------------------------------------------------------------------*/
@@ -841,12 +851,14 @@
 	 :set (js-make-function %this
 		 (lambda (o v)
 		    (js-setprototypeof o v %this "__proto__"))
-		 2 'set))
+		 2 'set)
+	 :hidden-class #f)
       
       ;; constructor
       (js-bind! %this obj 'constructor
 	 :value js-object
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; toString
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.2
@@ -883,7 +895,8 @@
 	 :value (js-make-function %this
 		   js-object-prototype-tostring 0 'toString
 		   :prototype (js-undefined))
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; toLocaleString
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.3
@@ -894,14 +907,16 @@
 	 :value (js-make-function %this
 		   js-object-prototype-tolocalestring 0 'toLocaleString
 		   :prototype (js-undefined))
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; valueOf
       (js-bind! %this obj 'valueOf
 	 :value (js-make-function %this (lambda (o) (js-valueof o %this))
 		   0 'valueOf
 		   :prototype (js-undefined))
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; hasOwnProperty
       (js-bind! %this obj 'hasOwnProperty
@@ -910,7 +925,8 @@
 		      (js-object-prototype-hasownproperty this v %this))
 		   1 'hasOwnProperty
 		   :prototype (js-undefined))
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; isPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.6
@@ -926,7 +942,8 @@
 	 :value (js-make-function %this
 		   js-object-prototype-isprototypeof 1 'isPrototypeOf
 		   :prototype (js-undefined))
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; propertyIsEnumerable
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4.7
@@ -942,7 +959,8 @@
 	 :value (js-make-function %this
 		   js-object-prototype-propertyisenumerable 1 'propertyIsEnumerable
 		   :prototype (js-undefined))
-	 :enumerable #f)))
+	 :enumerable #f
+	 :hidden-class #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-prototype-hasownproperty ...                           */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Mon May  8 08:23:02 2017 (serrano)                */
+;*    Last change :  Fri May 19 20:03:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -121,12 +121,22 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SUnary ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SUnary mode::symbol)
+   (with-access::J2SUnary this (op expr)
+      (if (and (eq? op 'delete) (isa? expr J2SRef))
+	  (with-access::J2SRef expr (decl)
+	     (with-access::J2SDecl decl (ronly)
+		(set! ronly #f))
+	     this)
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
 ;*    ronly-decl! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (ronly-decl! this::J2SDecl mode::symbol)
    (with-access::J2SDecl this (ronly id scope writable)
-      (when (eq? id 'sc_Pair)
-	 (tprint "mode=" mode " scope=" scope " writable=" writable))
       (if (eq? mode 'hopscript)
 	  (set! ronly #t)
 	  (set! ronly (or (not (memq scope '(global %scope))) (not writable)))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Tue Feb 28 09:26:27 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:32:39 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -256,7 +256,8 @@
    
    (js-bind! %this js-promise 'all
       :configurable #f :enumerable #t
-      :value (js-make-function %this js-promise-all 1 'all))
+      :value (js-make-function %this js-promise-all 1 'all)
+      :hidden-class #t)
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.race
    (define (js-promise-race this iterable)
@@ -282,7 +283,8 @@
 
    (js-bind! %this js-promise 'race
       :configurable #f :enumerable #t
-      :value (js-make-function %this js-promise-race 1 'race))
+      :value (js-make-function %this js-promise-race 1 'race)
+      :hidden-class #t)
    
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.reject
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.4.4.4
@@ -301,7 +303,8 @@
    
    (js-bind! %this js-promise 'reject
       :configurable #f :enumerable #t
-      :value (js-make-function %this promise-reject 1 'reject))
+      :value (js-make-function %this promise-reject 1 'reject)
+      :hidden-class #t)
 
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-promise.resolve
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.4.4.5
@@ -323,7 +326,8 @@
    
    (js-bind! %this js-promise 'resolve
       :configurable #f :enumerable #t
-      :value (js-make-function %this promise-resolve 1 'resolve))
+      :value (js-make-function %this promise-resolve 1 'resolve)
+      :hidden-class #t)
    
    ;; prototype properties
    (init-builtin-promise-prototype! %this js-promise-alloc js-promise-prototype)
@@ -331,11 +335,13 @@
    (with-access::JsGlobalObject %this (js-symbol-species)
       (js-bind! %this js-promise js-symbol-species
 	 :configurable #f :enumerable #f :writable #f
-	 :get (js-make-function %this (lambda (o) js-promise) 0 '@@species)))
+	 :get (js-make-function %this (lambda (o) js-promise) 0 '@@species)
+	 :hidden-class #t))
    
    ;; bind Promise in the global object
    (js-bind! %this %this 'Promise
-      :configurable #f :enumerable #f :value js-promise)
+      :configurable #f :enumerable #f :value js-promise
+      :hidden-class #t)
 
    ;; bind the promise object in the global environment
    (with-access::JsGlobalObject %this ((%js-promise js-promise))
@@ -401,7 +407,8 @@
 		(lambda (this fail)
 		   (then-catch this (js-undefined) fail))
 		1 'catch)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; then
    ;; http://www.ecma-international.org/ecma-262/6.0/#25.4.5.3
@@ -410,7 +417,8 @@
 		(lambda (this proc fail)
 		   (then-catch this proc fail))
 		2 'then)
-      :enumerable #f))
+      :enumerable #f
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-create-resolving-functions ...                                */

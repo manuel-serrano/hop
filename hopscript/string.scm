@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Mar 19 17:15:52 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:34:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -187,7 +187,8 @@
 		      js-string-fromcharcode 1 'fromCharCode)
 	    :writable #t
 	    :enumerable #f
-	    :configurable #t)
+	    :configurable #t
+	    :hidden-class #t)
 
 	 ;; raw
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#21.1.2.4
@@ -224,14 +225,16 @@
 		      js-string-raw 1 'raw)
 	    :writable #t
 	    :enumerable #f
-	    :configurable #t)
+	    :configurable #t
+	    :hidden-class #t)
 	 
 	 ;; prototype properties
 	 (init-builtin-string-prototype! %this js-string js-string-prototype)
 	 
 	 ;; bind String in the global object
 	 (js-bind! %this %this 'String
-	    :configurable #f :enumerable #f :value js-string)
+	    :configurable #f :enumerable #f :value js-string
+	    :hidden-class #t)
 
 	 js-string)))
 
@@ -290,12 +293,14 @@
    ;; length
    (js-bind! %this obj 'length
       :value 0
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; constructor
    (js-bind! %this obj 'constructor
       :value js-string
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.2
@@ -310,7 +315,8 @@
    
    (js-bind! %this obj 'toString
       :value (js-make-function %this tostring 0 'toString)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; valueOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.3
@@ -325,7 +331,8 @@
    
    (js-bind! %this obj 'valueOf
       :value (js-make-function %this valueof 0 'valueOf)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; charAt
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.4
@@ -334,7 +341,8 @@
    
    (js-bind! %this obj 'charAt
       :value (js-make-function %this charat 1 'charAt)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; charCodeAt
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.5
@@ -343,7 +351,8 @@
    
    (js-bind! %this obj 'charCodeAt
       :value (js-make-function %this charcodeat 1 'charCodeAt)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; concat
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.6
@@ -377,7 +386,8 @@
    
    (js-bind! %this obj 'concat
       :value (js-make-function %this concat 1 'concat)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; indexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.7
@@ -388,7 +398,8 @@
 
    (js-bind! %this obj 'indexOf
       :value (js-make-function %this indexof 1 'indexOf)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; lastIndexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.8
@@ -399,7 +410,8 @@
    
    (js-bind! %this obj 'lastIndexOf
       :value (js-make-function %this last-indexof 1 'lastIndexOf)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; localeCompare
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.9
@@ -408,7 +420,8 @@
    
    (js-bind! %this obj 'localeCompare
       :value (js-make-function %this locale-compare 1 'localeCompare)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; naturalCompare
    ;; hopscript extension
@@ -417,7 +430,8 @@
    
    (js-bind! %this obj 'naturalCompare
       :value (js-make-function %this natural-compare 1 'naturalCompare)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; match
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.10
@@ -426,7 +440,8 @@
    
    (js-bind! %this obj 'match
       :value (js-make-function %this match 1 'match)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; replace
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11
@@ -437,7 +452,8 @@
       
    (js-bind! %this obj 'replace
       :value (js-make-function %this replace 2 'replace)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; search
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.12
@@ -454,7 +470,8 @@
 		      -1))))))
    (js-bind! %this obj 'search
       :value (js-make-function %this search 1 'search)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; slice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.13
@@ -479,7 +496,8 @@
    
    (js-bind! %this obj 'slice
       :value (js-make-function %this slice 2 'slice)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; split
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.14
@@ -488,7 +506,8 @@
    
    (js-bind! %this obj 'split
       :value (js-make-function %this split 2 'split)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; substring
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.15
@@ -497,7 +516,8 @@
    
    (js-bind! %this obj 'substring
       :value (js-make-function %this js-substring 2 'substring)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toLowerCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.16
@@ -506,7 +526,8 @@
    
    (js-bind! %this obj 'toLowerCase
       :value (js-make-function %this tolowercase 0 'toLowerCase)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toLocaleLowerCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.17
@@ -515,7 +536,8 @@
    
    (js-bind! %this obj 'toLocaleLowerCase
       :value (js-make-function %this tolocalelowercase 0 'toLocaleLowerCase)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toUpperCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.18
@@ -524,7 +546,8 @@
    
    (js-bind! %this obj 'toUpperCase
       :value (js-make-function %this touppercase 0 'toUpperCase)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toLocaleUpperCase
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.19
@@ -533,7 +556,8 @@
    
    (js-bind! %this obj 'toLocaleUpperCase
       :value (js-make-function %this tolocaleuppercase 0 'toLocaleUpperCase)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; trim
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.20
@@ -542,7 +566,8 @@
    
    (js-bind! %this obj 'trim
       :value (js-make-function %this trim 0 'trim)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; substr
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.3
@@ -551,7 +576,8 @@
    
    (js-bind! %this obj 'substr
       :value (js-make-function %this substr 2 'substr)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; iterator
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-21.1.3.27
@@ -583,7 +609,8 @@
 	 :value (js-make-function %this string-prototype-string-values
 		   0 '@@iterator
 		   :prototype (js-undefined))
-	 :enumerable #f)))
+	 :enumerable #f
+	 :hidden-class #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tonumber ::JsString ...                                       */
@@ -739,7 +766,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-template-raw arr::JsArray raw::JsArray %this)
    (js-bind! %this arr 'raw :value raw
-      :writable #f :enumerable #f :configurable #f)
+      :writable #f :enumerable #f :configurable #f
+      :hidden-class #t)
    (js-freeze arr %this)
    (js-freeze raw %this)
    arr)

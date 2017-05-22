@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue May 16 08:07:43 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:31:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -18,6 +18,9 @@
    
    (include "../nodejs/nodejs_debug.sch"
 	    "stringliteral.sch")
+   
+   (extern ($js-make-jsarray::JsArray (::int ::obj ::obj ::byte)
+	      "bgl_make_jsarray"))
    
    (import __hopscript_types
 	   __hopscript_object
@@ -38,7 +41,7 @@
 	   (inline js-array?::bool ::obj)
 	   (inline js-array-length::uint32 ::JsArray)
 	   (inline js-array-update-length!::long ::JsArray ::long)
-
+	   
 	   (inline js-array-vec::vector ::JsArray)
 	   (inline js-array-ilen::uint32 ::JsArray)
 	   
@@ -67,7 +70,7 @@
 	   (js-array-set-ur! ::JsArray ::long ::obj ::bool ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
 	   (js-vector->sparse-jsarray::JsArray ::vector ::JsGlobalObject)
-	   (js-empty-vector->jsarray::JsArray ::JsGlobalObject)
+	   
 	   (js-array-alloc::JsArray ::JsGlobalObject)
 	   (js-array-construct::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (js-array-construct/length::JsArray ::JsGlobalObject ::JsArray ::obj)
@@ -80,7 +83,15 @@
 	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-array-comprehension ::JsGlobalObject ::obj ::procedure
-	      ::obj ::pair ::bstring ::bstring ::pair)))
+	      ::obj ::pair ::bstring ::bstring ::pair))
+   
+   (cond-expand
+      (bigloo-c
+       (export
+	  (inline js-empty-vector->jsarray::JsArray ::JsGlobalObject)
+	  (inline DEFAULT-EMPTY-ARRAY-SIZE::long)))
+      (else
+       (export (js-empty-vector->jsarray::JsArray ::JsGlobalObject)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toindex ...                                                   */
@@ -324,7 +335,8 @@
 		      (lambda (this arg) (isa? arg JsArray))
 		      1 'isArray)
 	    :writable #t
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 
 	 ;; from
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-22.1.2.1
@@ -376,14 +388,16 @@
 	    :value (js-make-function %this array-from
 		      0 'from
 		      :prototype (js-undefined))
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 	 
 	 ;; init the prototype properties
 	 (init-builtin-array-prototype! %this js-array js-array-prototype)
 	 
 	 ;; bind Array in the global object
 	 (js-bind! %this %this 'Array
-	    :configurable #f :enumerable #f :value js-array)
+	    :configurable #f :enumerable #f :value js-array
+	    :hidden-class #t)
 
 	 js-array)))
 
@@ -711,7 +725,8 @@
    
    ;; constructor
    (js-bind! %this js-array-prototype 'constructor
-      :value js-array :enumerable #f)
+      :value js-array :enumerable #f
+      :hidden-class #t)
    
    ;; tostring
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.2
@@ -725,7 +740,8 @@
    (js-bind! %this js-array-prototype 'toString
       :value (js-make-function %this array-prototype-tostring 0 'toString
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; tolocaleString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.3
@@ -759,7 +775,8 @@
    (js-bind! %this js-array-prototype 'toLocaleString
       :value (js-make-function %this array-prototype-tolocalestring 0 'toLocaleString
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; concat
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.4
@@ -825,7 +842,8 @@
    (js-bind! %this js-array-prototype 'concat
       :value (js-make-function %this array-prototype-concat 1 'concat
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; join
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.5
@@ -854,7 +872,8 @@
    (js-bind! %this js-array-prototype 'join
       :value (js-make-function %this array-prototype-join 1 'join
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; pop
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.6
@@ -875,7 +894,8 @@
    (js-bind! %this js-array-prototype 'pop
       :value (js-make-function %this array-prototype-pop 0 'pop
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; push
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.7
@@ -905,7 +925,8 @@
    (js-bind! %this js-array-prototype 'push
       :value (js-make-function %this array-prototype-push 1 'push
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; reverse
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.8
@@ -968,7 +989,8 @@
    (js-bind! %this js-array-prototype 'reverse
       :value (js-make-function %this array-prototype-reverse 0 'reverse
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; shift
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.9
@@ -1026,7 +1048,8 @@
    (js-bind! %this js-array-prototype 'shift
       :value (js-make-function %this array-prototype-shift 0 'shift
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; slice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.10
@@ -1150,7 +1173,8 @@
    (js-bind! %this js-array-prototype 'slice
       :value (js-make-function %this array-prototype-slice 2 'slice
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; sort
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.11
@@ -1247,7 +1271,8 @@
    (js-bind! %this js-array-prototype 'sort
       :value (js-make-function %this array-prototype-sort 1 'sort
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; splice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.12
@@ -1344,7 +1369,8 @@
    (js-bind! %this js-array-prototype 'splice
       :value (js-make-function %this array-prototype-splice 2 'splice
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; unshift
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.13
@@ -1407,7 +1433,8 @@
    (js-bind! %this js-array-prototype 'unshift
       :value (js-make-function %this array-prototype-unshift 1 'unshift
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; indexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.14
@@ -1461,7 +1488,8 @@
    (js-bind! %this js-array-prototype 'indexOf
       :value (js-make-function %this array-prototype-indexof 1 'indexOf
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; lastIndexOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.15
@@ -1518,7 +1546,8 @@
    (js-bind! %this js-array-prototype 'lastIndexOf
       :value (js-make-function %this array-prototype-lastindexof 1 'lastIndexOf
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; every
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.16
@@ -1560,7 +1589,8 @@
    (js-bind! %this js-array-prototype 'every
       :value (js-make-function %this array-prototype-every 1 'every
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; some
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.17
@@ -1603,7 +1633,8 @@
       :value (js-make-function %this
 		array-prototype-some 1 'some
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; forEach
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.18
@@ -1640,7 +1671,8 @@
    (js-bind! %this js-array-prototype 'forEach
       :value (js-make-function %this array-prototype-foreach 1 'forEach
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; map
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.19
@@ -1690,7 +1722,8 @@
       :value (js-make-function %this
 		(make-array-prototype-map %this) 1 'map
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
    ;; filter
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.20
@@ -1756,7 +1789,8 @@
       :value (js-make-function %this
 		array-prototype-filter 1 'filter
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
 
 
    ;; find
@@ -1794,7 +1828,8 @@
       :value (js-make-function %this
 		array-prototype-find 1 'find
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; reduce
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.21
@@ -1833,7 +1868,8 @@
       :value (js-make-function %this
 		array-prototype-reduce 1 'reduce
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; reduceRight
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.22
@@ -1872,7 +1908,8 @@
    (js-bind! %this js-array-prototype 'reduceRight
       :value (js-make-function %this array-prototype-reduceright 1 'reduceRight
 		:prototype (js-undefined))
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; iterator
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-22.1.3.30
@@ -1884,7 +1921,8 @@
 	 :value (js-make-function %this array-prototype-array-values
 		   0 '@@iterator
 		   :prototype (js-undefined))
-	 :enumerable #f))
+	 :enumerable #f
+	 :hidden-class #t))
 
    ;; fill
    ;; http://www.ecma-international.org/ecma-262/6.0/#sec-array.prototype.fill
@@ -1894,7 +1932,8 @@
    (js-bind! %this js-array-prototype 'fill
       :value (js-make-function %this array-prototype-fill 1 'fill
 		:prototype (js-undefined))
-      :enumerable #f)   
+      :enumerable #f
+      :hidden-class #t)   
 
    ;; arrayComprehension
    ;; http://wiki.ecmascript.org/doku.php?id=harmony:array_comprehensions
@@ -1964,7 +2003,8 @@
       :value (js-make-function %this array-prototype-comprehension 6
 		'comprehension
 		:prototype (js-undefined))
-      :enumerable #f))
+      :enumerable #f
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-array ...                                                    */
@@ -2084,15 +2124,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-empty-vector->jsarray ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
-   ;; MS 23 feb 2017
-   (let ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-undefined))))
-      (with-access::JsGlobalObject %this (js-array js-array-prototype)
-	 (instantiate::JsArray
-	    (__proto__ js-array-prototype)
-	    (length #u32:0)
-	    (ilen #u32:0)
-	    (vec vec)))))
+(cond-expand
+   (bigloo-c
+    (define-inline (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
+       (let ((mode (js-object-default-mode)))
+	  (with-access::JsGlobalObject %this (js-array-prototype)
+	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) #f js-array-prototype mode)))))
+   (else
+    (define (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
+       (let ((mode (js-object-default-mode)))
+	  (with-access::JsGlobalObject %this (js-array-prototype)
+	     (let ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-undefined))))
+		(instantiate::JsArray
+		   (__proto__ js-array-prototype)
+		   (length #u32:0)
+		   (ilen #u32:0)
+		   (vec vec))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name ::JsArray ...                                 */
@@ -2115,14 +2162,9 @@
    (with-access::JsArray o (vec ilen length)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
-	    ((<u32 i ilen)
-	     ;; fast zone
-	     #t)
-	    ;; MS: 23 feb 2017
-	    ((eq? p 'length)
-	     #t)
-	    (else
-	     (call-next-method))))))
+	    ((<u32 i ilen) #t)
+	    ((eq? p 'length) #t)
+	    (else (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-own-property ...                                          */

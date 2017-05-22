@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr 20 08:04:06 2017                          */
-;*    Last change :  Wed May 17 09:33:39 2017 (serrano)                */
+;*    Last change :  Mon May 22 14:02:11 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Global inter-process synchronization                             */
@@ -14,10 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs_syncg
 
-   (cond-expand
-      ((and enable-threads (library pthread))
-       (library pthread)))
-
+   (library hop hopscript js2scheme web)
+   
    (export (synchronize-global ::bstring ::procedure)))
 
 ;*---------------------------------------------------------------------*/
@@ -55,24 +53,17 @@
    
    (cond-expand
       (bigloo4.3a (synchronize-file lockfile proc))
-      ((not enable-threads) (synchronize-file lockfile proc))
       (else
-       (let* ((semname (string-append "/" (basename lockfile)))
-	      (sem (open-semaphore semname)))
-	  (if (semaphore? sem)
-	      (unwind-protect
-		 (begin
-		    (semaphore-wait sem)
-		    (proc))
-		 (begin
-		    (semaphore-post sem)
-		    (close-semaphore sem)
-		    (delete-semaphore semname)))
-	      (synchronize-file lockfile proc))))))
-	  
+       (call-with-output-file lockfile
+	  (lambda (port)
+	     (unwind-protect
+		(begin
+		   (lockf port 'lock)
+		   (proc))
+		(lockf port 'ulock)))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    global variables                                                 */
 ;*---------------------------------------------------------------------*/
 (define syncg-state 'init)
 (define syncg-mutex (make-mutex))
-    

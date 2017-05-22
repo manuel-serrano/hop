@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed May 17 11:47:00 2017 (serrano)                */
+;*    Last change :  Mon May 22 17:45:55 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -77,18 +77,18 @@
 	      (cmap::obj (default #unspecified))
 	      (pmap::obj (default #t))
 	      (index::long (default -1))
-	      (vindex::long (default (js-vindex-max)))
+	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
 	      (name::obj (default '||))
-	      (method::obj (default #f)))
+	      (method::obj (default #f))
+	      (minid::uint32 (default 0))
+	      (maxid::uint32 (default 0)))
 	   
 	   (final-class JsConstructMap
-	      (%id::long read-only (default (gencmapid)))
-	      (transition::vector (default (vector '|| -1)))
-	      (nextmap (default #f))
-	      (names::vector read-only (default '#()))
-	      (methods::vector read-only (default '#()))
-	      (backup::pair-nil (default '()))
+	      (%id::uint32 read-only (default (gencmapid)))
+	      (names::vector (default '#()))
+	      (methods::vector (default '#()))
+	      (transitions::pair-nil (default '()))
 	      (ctor::obj (default #f))
 	      (vtable::vector (default '#()))
 	      (vlen::long (default 0)))
@@ -172,8 +172,8 @@
 	      ;; (sealed::bool (default #f))
 	      ;; (frozen::bool (default #f))
 	      (length::uint32 (default #u32:0))
-	      (vec::vector (default '#()))
-	      (ilen::uint32 (default #u32:0)))
+	      (ilen::uint32 (default #u32:0))
+	      (vec::vector (default '#())))
 
 	   (class JsArrayBuffer::JsObject
 	      (frozen::bool (default #f))
@@ -224,6 +224,7 @@
 	      (len::int read-only)
 	      (rest::bool read-only (default #f))
 	      (procedure::procedure read-only)
+	      (method::procedure read-only)
 	      (src read-only (default #f)))
 	   
 	   (class JsService::JsFunction
@@ -339,7 +340,7 @@
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)
 
-	   (gencmapid)))
+	   (gencmapid::uint32)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */
@@ -699,7 +700,7 @@
 ;*---------------------------------------------------------------------*/
 (define (gencmapid)
    (set! cmapid (+fx 1 cmapid))
-   cmapid)
+   (fixnum->uint32 cmapid))
 
 ;*---------------------------------------------------------------------*/
 ;*    cmapid ...                                                       */

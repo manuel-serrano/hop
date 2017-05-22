@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Feb 18 17:29:47 2000                          */
-;*    Last change :  Wed Mar  8 14:55:16 2017 (serrano)                */
+;*    Last change :  Sun May 21 06:08:32 2017 (serrano)                */
 ;*    -------------------------------------------------------------    */
 ;*    HOP configuration                                                */
 ;*=====================================================================*/
@@ -40,7 +40,8 @@
 	    (hop-configure-cache-directory)
 	    (hop-srfis::pair-nil)
 	    (hop-zeroconf-default)
-	    (hop-build-id))
+	    (hop-build-id)
+	    (hop-build-tag))
    
    (eval    (export hop-name)
 	    (export hop-version)
@@ -66,7 +67,8 @@
 	    (export hop-configure-cache-directory)
 	    (export hop-srfis)
 	    (export hop-zeroconf-default)
-	    (export hop-build-id)))
+	    (export hop-build-id)
+	    (export hop-build-tag)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-configure ...                                                */
@@ -109,6 +111,10 @@
        (print (hop-service-base)))
       ((--bigloo)
        (print (hop-bigloo)))
+      ((--build-id)
+       (print (hop-build-id)))
+      ((--build-tag)
+       (print (hop-build-tag)))
       (else
        (with-output-to-port (current-error-port)
 	  (lambda ()
@@ -130,7 +136,9 @@
              (print "  [--javascript-mime-type]")
              (print "  [--css-mime-type]")
 	     (print "  [--url]")
-	     (print "  [--bigloo]"))))))
+	     (print "  [--bigloo]")
+	     (print "  [--build-id]")
+	     (print "  [--build-tag]"))))))
 	     
 ;*---------------------------------------------------------------------*/
 ;*    Name and version                                                 */
@@ -142,6 +150,7 @@
 (define (hop-url) "@URL@")
 
 (define (hop-build-id) "@BUILDID@")
+(define (hop-build-tag) "@BUILDTAG@")
 
 ;*---------------------------------------------------------------------*/
 ;*    Misc ...                                                         */

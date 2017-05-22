@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed May 17 17:36:38 2017 (serrano)                */
+;*    Last change :  Mon May 22 20:20:36 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -96,6 +96,8 @@
 		   (loop (+fx i 1))))))
       (unless (config-get args :optim-cast)
 	 (force-type! this 'index 'integer))
+      (unless (config-get args :optim-range)
+	 (force-unary-type! this))
       ;; cleanup the ast use count and remove obviously useless definitions
       (force-type! this 'unknown 'any)
       (program-cleanup! this))
@@ -723,6 +725,13 @@
 	 (typing-fun this envc fun fix))))
 
 ;*---------------------------------------------------------------------*/
+;*    typing ::J2SMethod ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SMethod env::pair-nil fun fix::cell)
+   (call-default-walker)
+   (expr-type-set! this env fix 'function))
+
+;*---------------------------------------------------------------------*/
 ;*    typing ::J2SCall ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SCall env::pair-nil fun fix::cell)
@@ -868,9 +877,10 @@
 (define-walk-method (typing this::J2SUnary env::pair-nil fun fix::cell)
 
    (define (non-zero-integer? ty expr)
-      (when (and (type-integer? ty) (isa? expr J2SNumber))
-	 (with-access::J2SNumber expr (val)
-	    (not (= val 0)))))
+      (when (type-integer? ty)
+	 (or (not (isa? expr J2SNumber))
+	     (with-access::J2SNumber expr (val)
+		(not (= val 0))))))
 
    (with-access::J2SUnary this (op expr)
       (multiple-value-bind (ty env bk)
@@ -903,7 +913,7 @@
 			    'unknown)
 			   (else
 			    'any)))
-		       ((- * /)
+		       ((- *)
 			(cond
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'integer)
@@ -911,7 +921,7 @@
 			    'unknown)
 			   (else
 			    'number)))
-		       ((%)
+		       ((% /)
 			(cond
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'number)
@@ -978,14 +988,14 @@
 	    (multiple-value-bind (tyf envf bkf)
 	       (typing field envo fun fix)
 	       (cond
-		  ((and #t
+		  ((and #f
 			(isa? obj J2SThis)
 			(not (string-contains (or (getenv "HOPTRACE") "") "j2s:tyflow")))
 		   ;; MS: 7 may 2017, this rule is wrong see
 		   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-8.7.1
 		   (unless *warning*
 		      (set! *warning* #t)
-		      (tprint "WRONG TYPING..."))
+		      (tprint "WRONG TYPING... try HOPTRACE=j2s:tyflow"))
 		   (with-access::J2SThis obj (decl)
 		      (let ((envt (extend-env env decl 'object)))
 			 (expr-type-set! this envt fix 'any (append bko bkf)))))
@@ -1468,4 +1478,29 @@
    (with-access::J2SExpr this (type)
       (set! type 'unknown))
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    force-get-type! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-unary-type! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SUnary ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-unary-type! this::J2SUnary)
+
+   (define (non-zero-integer? expr)
+      (when (isa? expr J2SNumber)
+	 (with-access::J2SNumber expr (val)
+	    (not (= val 0)))))
+
+   (with-access::J2SUnary this (op expr type)
+      (when (eq? type 'integer)
+	 (unless (non-zero-integer? expr)
+	    (when (memq op '(+ -))
+	       (set! type 'number)))))
+
+   this)
+
 

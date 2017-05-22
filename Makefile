@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Apr 18 11:02:10 2017 (serrano)                */
+#*    Last change :  Sun May 21 06:36:16 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -35,7 +35,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin \
   share-afile scheme2js hopscript js2scheme nodejs \
-  android node_modules doc test
+  android node_modules doc test .buildtag
 
 build: bindir libdir lib weblets widget nodejs doc \
   $(BUILDSPECIFIC) bin share node_modules
@@ -390,7 +390,7 @@ distrib-pre:
           fi; \
           (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision || exit 0)
 
-distrib-native: distrib-tmp
+distrib-native: distrib-tmp distrib-buildtag
 	(version=$(HOPRELEASE); \
          devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \
@@ -454,6 +454,11 @@ distrib-tmp:
           echo "*** ERROR: $(HOPTMPDIR)/hop-$(HOPRELEASE) exists!"; \
           exit 1; \
         fi
+
+distrib-buildtag: .buildtag
+
+.buildtag:
+	$(MAKE) buildid > .buildtag
 
 #*---------------------------------------------------------------------*/
 #*    predistrib:                                                      */

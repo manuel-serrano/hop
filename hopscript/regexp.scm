@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 19 11:00:41 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:32:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -107,7 +107,8 @@
 	 (init-builtin-regexp-prototype! %this js-regexp js-regexp-prototype)
 	 ;; bind Regexp in the global object
 	 (js-bind! %this %this 'RegExp
-	    :configurable #f :enumerable #f :value js-regexp)
+	    :configurable #f :enumerable #f :value js-regexp
+	    :hidden-class #t)
 	 js-regexp)))
    
 ;*---------------------------------------------------------------------*/
@@ -335,7 +336,8 @@
    ;; prototype fields
    (js-bind! %this obj 'constructor
       :value js-regexp
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; toString
    (js-bind! %this obj 'toString
       :value (js-make-function %this
@@ -350,7 +352,8 @@
 		0 'toString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; exec
    (js-bind! %this obj 'exec
       :value (js-make-function %this
@@ -359,49 +362,57 @@
 		1 'exec)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; test
    (js-bind! %this obj 'test
       :value (js-make-function %this (make-regexp-prototype-test %this) 1 'test)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; source
    (js-bind! %this obj 'source
       :value ""
       :writable #f
       :configurable #f
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; global
    (js-bind! %this obj 'global
       :value #f
       :writable #f
       :configurable #f
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; ignoreCase
    (js-bind! %this obj 'ignoreCase
       :value #f
       :writable #f
       :configurable #f
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; multiline
    (js-bind! %this obj 'multiline
       :value #f
       :writable #f
       :configurable #f
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; lastindex
    (js-bind! %this obj 'lastIndex
       :value 0
       :writable #t
       :configurable #f
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; compile
    (js-bind! %this obj 'compile
       :value (js-make-function %this regexp-prototype-compile 1 'compile)
       :writable #t
       :configurable #t
-      :enumerable #f))
+      :enumerable #f
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    regexp-prototype-exec ...                                        */

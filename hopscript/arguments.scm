@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Mar 22 12:56:53 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:31:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -344,10 +344,12 @@
 		    (__proto__ __proto__))))
 	 (js-bind! %this obj 'length
 	    :value (vector-length vec)
-	    :enumerable #f :configurable #t :writable #t)
+	    :enumerable #f :configurable #t :writable #t
+	    :hidden-class #t)
 	 (js-bind! %this obj 'callee
 	    :value (js-undefined)
-	    :enumerable #f :configurable #t :writable #t)
+	    :enumerable #f :configurable #t :writable #t
+	    :hidden-class #t)
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -379,15 +381,18 @@
 		       (__proto__ __proto__))))
 	    (js-bind! %this obj 'length
 	       :value len
-	       :enumerable #f :configurable #t :writable #t)
+	       :enumerable #f :configurable #t :writable #t
+	       :hidden-class #t)
 	    (js-bind! %this obj 'caller
 	       :get thrower-get
 	       :set thrower-set
-	       :enumerable #f :configurable #f)
+	       :enumerable #f :configurable #f
+	       :hidden-class #t)
 	    (js-bind! %this obj 'callee
 	       :get thrower-get
 	       :set thrower-set
-	       :enumerable #f :configurable #f)
+	       :enumerable #f :configurable #f
+	       :hidden-class #t)
 	    obj))))
 
 ;*---------------------------------------------------------------------*/

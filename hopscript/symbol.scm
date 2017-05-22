@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Feb 28 09:26:16 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:34:10 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -130,7 +130,8 @@
 		  :value sym
 		  :writable #f
 		  :enumerable #f
-		  :configurable #f)
+		  :configurable #f
+		  :hidden-class #t)
 	       sym))
 	 
 	 ;; for
@@ -149,7 +150,8 @@
 	    :value (js-make-function %this js-symbol-for 1 'for)
 	    :writable #t
 	    :enumerable #f
-	    :configurable #t)
+	    :configurable #t
+	    :hidden-class #t)
 	 
 	 ;; keyFor
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.keyfor
@@ -163,7 +165,8 @@
 	    :value (js-make-function %this js-symbol-keyfor 1 'keyFor)
 	    :writable #t
 	    :enumerable #f
-	    :configurable #t)
+	    :configurable #t
+	    :hidden-class #t)
 
 	 ;; global symbols
 	 (for-each bind-sym!
@@ -176,7 +179,8 @@
 	 
 	 ;; bind Symbol in the global object
 	 (js-bind! %this %this 'Symbol
-	    :configurable #f :enumerable #f :value js-symbol)
+	    :configurable #f :enumerable #f :value js-symbol
+	    :hidden-class #t)
 
 	 ;; prototype properties
 	 (init-builtin-symbol-prototype! %this js-symbol js-symbol-prototype)
@@ -200,7 +204,8 @@
    ;; length
    (js-bind! %this obj 'length
       :value 0
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/6.0/#19.4.3.2
@@ -216,7 +221,8 @@
    
    (js-bind! %this obj 'toString
       :value (js-make-function %this tostring 0 'toString)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    (define (valueof::JsSymbol this)
       (cond
@@ -229,7 +235,8 @@
    
    (js-bind! %this obj 'valueOf
       :value (js-make-function %this valueof 0 'valueOf)
-      :enumerable #f))
+      :enumerable #f
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    Jsstringliteral end                                              */

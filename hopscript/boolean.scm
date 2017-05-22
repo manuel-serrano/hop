@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Feb 28 09:17:36 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:31:38 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
@@ -97,7 +97,8 @@
 	 (init-builtin-boolean-prototype! %this js-boolean js-boolean-prototype)
 	 ;; bind Boolean in the global object
 	 (js-bind! %this %this 'Boolean
-	    :configurable #f :enumerable #f :value js-boolean)
+	    :configurable #f :enumerable #f :value js-boolean
+	    :hidden-class #t)
 	 js-boolean)))
 
 ;*---------------------------------------------------------------------*/
@@ -142,7 +143,8 @@
    ;; prototype fields
    (js-bind! %this obj 'constructor
       :value js-boolean
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; toString
    (js-bind! %this obj 'toString
       :value (js-make-function %this
@@ -153,14 +155,16 @@
 			  (js-string->jsstring "false"))))
 		0
 		'toString)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; valueOf
    (js-bind! %this obj 'valueOf
       :value (js-make-function %this
 		(lambda (this)
 		   (js-cast-boolean this #f))
 		0 'valueOf)
-      :enumerable #f))
+      :enumerable #f
+      :hidden-class #t))
       
 ;*---------------------------------------------------------------------*/
 ;*    js-bool->jsboolean ...                                           */

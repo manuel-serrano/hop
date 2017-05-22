@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Wed Mar 29 16:00:57 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:34:14 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -392,22 +392,28 @@
 	       :construct js-websocket-server-construct))
 	 
 	 (js-bind! %this %this 'WebSocket
-	    :configurable #f :enumerable #f :value js-websocket)
+	    :configurable #f :enumerable #f :value js-websocket
+	    :hidden-class #t)
 	 (js-bind! %this %this 'WebSocketServer
-	    :configurable #f :enumerable #f :value js-websocket-server)
+	    :configurable #f :enumerable #f :value js-websocket-server
+	    :hidden-class #t)
 
 	 (js-bind! %this js-websocket 'CONNECTING
 	    :configurable #f :enumerable #f
-	    :value (js-websocket-state-connecting))
+	    :value (js-websocket-state-connecting)
+	    :hidden-class #t)
 	 (js-bind! %this js-websocket 'OPEN
 	    :configurable #f :enumerable #f
-	    :value (js-websocket-state-open))
+	    :value (js-websocket-state-open)
+	    :hidden-class #t)
 	 (js-bind! %this js-websocket 'CLOSING
 	    :configurable #f :enumerable #f
-	    :value (js-websocket-state-closing))
+	    :value (js-websocket-state-closing)
+	    :hidden-class #t)
 	 (js-bind! %this js-websocket 'CLOSED
 	    :configurable #f :enumerable #f
-	    :value (js-websocket-state-closed))
+	    :value (js-websocket-state-closed)
+	    :hidden-class #t)
 
 	 (js-undefined))))
 
@@ -427,7 +433,8 @@
 			  ((closing) (js-websocket-state-closing))
 			  ((close) (js-websocket-state-closed))
 			  (else (js-websocket-state-error))))))
-	      0 'readyState))
+	      0 'readyState)
+      :hidden-class #t)
    ;; url
    (js-bind! %this obj 'url
       :get (js-make-function %this
@@ -443,7 +450,8 @@
 			      (list "wss://" (substring url 8))))
 			  (else
 			   (js-string->jsstring url))))))
-	      0 'url))
+	      0 'url)
+      :hidden-class #t)
    ;; send
    (js-bind! %this obj 'send
       :value (js-make-function %this
@@ -454,7 +462,8 @@
 			    (when (socket? %socket)
 			       (websocket-send %socket
 				  (js-tostring value %this)))))))
-		1 'send))
+		1 'send)
+      :hidden-class #t)
    ;; close
    (js-bind! %this obj 'close
       :value (js-make-function %this
@@ -462,13 +471,15 @@
 		   (with-access::JsWebSocket this (ws)
 		      (when (isa? ws websocket)
 			 (websocket-close ws))))
-		0 'close))
+		0 'close)
+      :hidden-class #t)
    ;; addEventListener
    (js-bind! %this obj 'addEventListener
       :value (js-make-function %this
 		(lambda (this message proc)
 		   (add-event-listener! this (js-tostring message %this) proc))
-		2 'addEventListener))
+		2 'addEventListener)
+      :hidden-class #t)
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -506,7 +517,8 @@
 		    (with-access::JsWebSocket this (worker)
 		       (add-event-listener! this
 			     name (action->listener worker %this action this)))))
-              1 (car action))))
+              1 (car action))
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-server-listener! ...                              */
@@ -523,7 +535,8 @@
 		    (with-access::JsWebSocketServer this (worker)
 		       (add-event-listener! this
 			     name (action->listener worker %this action this)))))
-              1 (car action))))
+              1 (car action))
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-websocket-client-listener! ...                              */
@@ -541,7 +554,8 @@
 		       (with-access::JsWebSocketServer wss (worker)
 			  (add-event-listener! this
 				name (action->listener worker %this action this))))))
-              1 (car action))))
+              1 (car action))
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-websocket-server-prototype! ...                     */
@@ -565,7 +579,8 @@
 			       (js-worker-push-thunk! worker "wss-onclose"
 				  (lambda ()
 				     (apply-listeners closes evt))))))))
-		0 'close))
+		0 'close)
+      :hidden-class #t)
    ;; addEventListner
    (js-bind! %this obj 'addEventListener
       :value (js-make-function %this
@@ -573,7 +588,8 @@
 		   (with-access::JsWebSocketServer this (worker)
 		      (add-event-listener! this (js-tostring message %this)
 			 (proc->listener worker %this proc this))))
-		2 'addEventListener))
+		2 'addEventListener)
+      :hidden-class #t)
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -750,7 +766,8 @@
 	      (lambda (this)
 		 (with-access::JsWebSocketClient this (socket state)
 		    state))
-	      0 'readyState))
+	      0 'readyState)
+      :hidden-class #t)
    ;; close
    (js-bind! %this obj 'close
       :value (js-make-function %this
@@ -771,14 +788,16 @@
 						      (target this)
 						      (value this))))
 					   (apply-listeners oncloses evt))))))))))
-		0 'close))
+		0 'close)
+      :hidden-class #t)
    ;; client
    (js-bind! %this obj 'socket
       :get (js-make-function %this
 	      (lambda (this)
 		 (with-access::JsWebSocketClient this (socket)
 		    socket))
-	      0 'socket))
+	      0 'socket)
+      :hidden-class #t)
    ;; send
    (js-bind! %this obj 'send
       :value (js-make-function %this
@@ -788,7 +807,8 @@
 			 (when socket
 			    (websocket-send socket
 			       (js-tostring value %this) :mask #f)))))
-		1 'send))
+		1 'send)
+      :hidden-class #t)
    ;; addEventListner
    (js-bind! %this obj 'addEventListener
       :value (js-make-function %this
@@ -798,7 +818,8 @@
 			 (let ((action (js-tostring message %this)))
 			    (add-event-listener! this action
 			       (proc->listener worker %this proc this))))))
-		2 'addEventListener))
+		2 'addEventListener)
+      :hidden-class #t)
    obj)
 
 ;*---------------------------------------------------------------------*/

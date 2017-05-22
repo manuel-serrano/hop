@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed May 17 11:49:58 2017 (serrano)                */
+;*    Last change :  Fri May 19 09:26:24 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -576,20 +576,19 @@
 	  (list ,@args)))
 
    (define (call obj name ccache ocache args pmap method vindex)
-      `(with-access::JsConstructMap %omap (vtable)
+      `(with-access::JsConstructMap %omap (vtable vlen)
 	  (cond
 	     ((not %omap)
 	      ;; 2. uncachable call
 	      (let ((f (js-get ,obj ',name %this)))
 		 ,(calln 'f obj args)))
 	     (else
-	      (with-access::JsConstructMap %omap (vtable vlen)
-		 (if (and (<fx ,vindex vlen)
-			  (procedure? (vector-ref vtable ,vindex)))
-		     ;; polymorphic call
-		     ((vector-ref vtable ,vindex) ,obj ,@args)
-		     ;; pure cache miss
-		     ,(calln/miss obj name ccache ocache args)))))))
+	      (if (and (<fx ,vindex vlen)
+		       (procedure? (vector-ref vtable ,vindex)))
+		  ;; polymorphic call
+		  ((vector-ref vtable ,vindex) ,obj ,@args)
+		  ;; pure cache miss
+		  ,(calln/miss obj name ccache ocache args))))))
 
    (js-method-call-name/cache-match-expander x e call))
    
