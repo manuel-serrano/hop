@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sat Mar 25 06:56:04 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:31:58 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -180,28 +180,32 @@
 	 :value (js-make-function %this
 		   js-generator-construct
 		   1 'constructor
-		   :construct js-generator-construct))
+		   :construct js-generator-construct)
+	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto 'next
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #f))
-		   1 'next))
+		   1 'next)
+	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto 'return
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-return this val #f))
-		   1 'return))
+		   1 'return)
+	 :hidden-class #t)
       
       (js-bind! %this js-gen-proto 'throw
 	 :configurable #f :enumerable #f
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      (js-generator-next this val #t))
-		   1 'throw))
+		   1 'throw)
+	 :hidden-class #t)
       
       (set! js-generator-prototype js-gen-proto)
       

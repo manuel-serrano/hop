@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri May 19 08:36:27 2017 (serrano)                */
+;*    Last change :  Mon May 22 18:04:02 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -40,7 +40,7 @@
 	      #!key
 	      __proto__ prototype constructor construct alloc
 	      (strict 'normal) arity (minlen -1) src rest
-	      (constrsize 3) (maxconstrsize 100))
+	      (constrsize 3) (maxconstrsize 100) method)
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::obj ::int ::int ::symbol ::bool ::int)))
 
@@ -121,6 +121,7 @@
 	    (src "[Function.__proto__@function.scm]")
 	    (len -1)
 	    (procedure (lambda l (js-undefined)))
+	    (method (lambda l (js-undefined)))
 	    (alloc (lambda (_) #unspecified))
 	    (construct (lambda (constructor args)
 			  (js-raise-type-error %this "not a constructor ~s"
@@ -151,7 +152,8 @@
       ;; bind Function in the global object
       (js-bind! %this %this 'Function
 	 :value js-function
-	 :configurable #f :enumerable #f)
+	 :configurable #f :enumerable #f
+	 :hidden-class #f)
       ;; return the js-function object
       js-function))
 
@@ -230,7 +232,7 @@
 	   #!key __proto__ prototype
 	   constructor alloc construct (strict 'normal)
 	   arity (minlen -1) src rest
-	   (constrsize 3) (maxconstrsize 100))
+	   (constrsize 3) (maxconstrsize 100) method)
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -250,6 +252,7 @@
 	  (set! js-get-source
 	     (instantiate::JsFunction
 		(procedure source)
+		(method source)
 		(arity 0)
 		(minlen 0)
 		(len 0)
@@ -266,6 +269,7 @@
 		(fun (INSTANTIATE-JSFUNCTION
 			(arity (or arity (procedure-arity procedure)))
 			(procedure procedure)
+			(method (or method procedure))
 			(rest rest)
 			(len length)
 			(__proto__ (or __proto__ js-function-prototype))
@@ -294,10 +298,12 @@
 		(when (isa? prototype JsObject)
 		   (js-bind! %this prototype 'constructor
 		      :value fun
-		      :configurable #t :writable #t :enumerable #f))
+		      :configurable #t :writable #t :enumerable #f
+		      :hidden-class #t))
 		(js-bind! %this fun 'prototype
 		   :value prototype
-		   :enumerable #f :configurable #f :writable #f))
+		   :enumerable #f :configurable #f :writable #f
+		   :hidden-class #t))
 	       (construct
 		(with-access::JsObject %this ((js-object-prototype __proto__))
 		   (let ((prototype (instantiate::JsObject
@@ -305,29 +311,36 @@
 				       (__proto__ js-object-prototype))))
 		      (js-bind! %this prototype 'constructor
 			 :value fun
-			 :configurable #t :writable #t :enumerable #f)
+			 :configurable #t :writable #t :enumerable #f
+			 :hidden-class #t)
 		      (js-bind! %this fun 'prototype
 			 :value prototype
-			 :enumerable #f :configurable #f :writable #t)))))
+			 :enumerable #f :configurable #f :writable #t
+			 :hidden-class #t)))))
 	    (js-bind! %this fun 'length
 	       :value length
-	       :enumerable #f :configurable #f :writable #f)
+	       :enumerable #f :configurable #f :writable #f
+	       :hidden-class #f)
 	    (unless (eq? strict 'normal)
 	       (js-bind! %this fun 'arguments
 		  :get thrower-get :set thrower-set
-		  :enumerable #f :configurable #f)
+		  :enumerable #f :configurable #f
+		  :hidden-class #t)
 	       (js-bind! %this fun 'caller
 		  :get thrower-get :set thrower-set
-		  :enumerable #f :configurable #f))
+		  :enumerable #f :configurable #f
+		  :hidden-class #t))
 	    (js-bind! %this fun 'name
 	       :value (js-string->jsstring fname)
 	       :writable #f
-	       :enumerable #f :configurable #f)
+	       :enumerable #f :configurable #f
+	       :hidden-class #f)
 	    ;; source is an hop extension
 	    (js-bind! %this fun 'source
 	       :get (get-source)
 	       :writable #f
-	       :enumerable #f :configurable #f)
+	       :enumerable #f :configurable #f
+	       :hidden-class #f)
 	    fun))))
 
 ;*---------------------------------------------------------------------*/
@@ -357,12 +370,14 @@
    ;; length
    (js-bind! %this obj 'length
       :value 0
-      :enumerable #f :configurable #f :writable #f)
+      :enumerable #f :configurable #f :writable #f
+      :hidden-class #t)
    
    ;; constructor
    (js-bind! %this obj 'constructor
       :value js-function
-      :enumerable #f :configurable #t :writable #t)
+      :enumerable #f :configurable #t :writable #t
+      :hidden-class #t)
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.2
@@ -398,7 +413,8 @@
    (js-bind! %this obj 'toString
       :value (js-make-function %this tostring 0 "toString"
 		:prototype (js-undefined))
-      :enumerable #f :writable #t :configurable #t)
+      :enumerable #f :writable #t :configurable #t
+      :hidden-class #t)
    
    ;; apply
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.3
@@ -451,7 +467,8 @@
    (js-bind! %this obj 'apply
       :value (js-make-function %this prototype-apply 2 "apply"
 		:prototype (js-undefined))
-      :enumerable #f :writable #t :configurable #t)
+      :enumerable #f :writable #t :configurable #t
+      :hidden-class #t)
    
    ;; call
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.4
@@ -473,7 +490,8 @@
 	 (js-make-function %this call 1 "call" :prototype (js-undefined)))
       (js-bind! %this obj 'call
 	 :value js-call
-	 :enumerable #f :writable #t :configurable #t))
+	 :enumerable #f :writable #t :configurable #t
+	 :hidden-class #t))
    
    ;; bind
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.5
@@ -494,13 +512,15 @@
 
    (js-bind! %this obj 'bind
       :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))
-      :enumerable #f :writable #t :configurable #t)
+      :enumerable #f :writable #t :configurable #t
+      :hidden-class #t)
    
    ;; hopscript does not support caller
    (js-bind! %this obj 'caller
       :get thrower-get
       :set thrower-set
-      :enumerable #f :configurable #f))
+      :enumerable #f :configurable #f
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */

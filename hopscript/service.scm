@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri May  5 10:24:28 2017 (serrano)                */
+;*    Last change :  Mon May 22 18:04:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -254,6 +254,7 @@
 			     __proto__))
 	       (len -1)
 	       (procedure list)
+	       (method list)
 	       (svc #f)))
 	 
 	 (js-bind! %this js-service-prototype 'resource
@@ -264,7 +265,8 @@
 		      1 'resource)
 	    :writable #t
 	    :configurable #t
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 	 (js-bind! %this js-service-prototype 'unregister
 	    :value (js-make-function %this
 		      (lambda (this)
@@ -275,7 +277,8 @@
 		      0 'unregister)
 	    :writable #t
 	    :configurable #t
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 	 
 	 (js-bind! %this js-service-prototype 'timeout
 	    :get (js-make-function %this
@@ -283,7 +286,8 @@
 		       (with-access::JsService this (svc)
 			  (with-access::hop-service svc (timeout)
 			     timeout)))
-		    0 'timeout))
+		    0 'timeout)
+	    :hidden-class #t)
 
 	 (js-bind! %this js-service-prototype 'ttl
 	    :get (js-make-function %this
@@ -297,7 +301,8 @@
 		       (with-access::JsService this (svc)
 			  (with-access::hop-service svc (ttl)
 			     (set! ttl (js-tointeger v %this)))))
-		    0 'ttl))
+		    0 'ttl)
+	    :hidden-class #t)
 	 
 	 ;; HopFrame prototype and constructor
 	 (set! js-hopframe-prototype
@@ -309,48 +314,56 @@
 		      (lambda (this::JsHopFrame success fail-or-opt)
 			 (with-access::JsHopFrame this (url args)
 			    (post this success fail-or-opt %this #t)))
-		      3 'post))
+		      3 'post)
+	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype 'postSync
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame opt)
 			 (with-access::JsHopFrame this (url args)
 			    (post this #f opt %this #f)))
-		      2 'postSync))
+		      2 'postSync)
+	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype 'toString
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
 			 (js-string->jsstring (hopframe->string this %this)))
-		      0 'toString))
+		      0 'toString)
+	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype 'inspect
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
 			 (js-string->jsstring (hopframe->string this %this)))
-		      0 'inspect))
+		      0 'inspect)
+	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype 'getHeader
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame)
 			 (with-access::JsHopFrame this (header)
 			    header))
-		      0 'getHeader))
+		      0 'getHeader)
+	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype 'setHeader
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame hd)
 			 (with-access::JsHopFrame this (header)
 			    (set! header hd)
 			    this))
-		      1 'setHeader))
+		      1 'setHeader)
+	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype 'getOptions
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame opts)
 			 opts)
-		      0 'getOptions))
+		      0 'getOptions)
+	    :hidden-class #t)
 	 (js-bind! %this js-hopframe-prototype 'setOptions
 	    :value (js-make-function %this
 		      (lambda (this::JsHopFrame opts)
 			 (with-access::JsHopFrame this (options)
 			    (set! options opts)
 			    this))
-		      1 'setOptions))
+		      1 'setOptions)
+	    :hidden-class #t)
 
 	 (letrec ((js-service (js-make-function %this
 				 (lambda (this proc path)
@@ -373,16 +386,19 @@
 						(js-make-hopframe %this 
 						   this path args)))))
 	    (js-bind! %this %this 'Service
-	       :configurable #f :enumerable #f :value js-service)
+	       :configurable #f :enumerable #f :value js-service
+	       :hidden-class #t)
 	    (js-bind! %this %this 'HopFrame
-	       :configurable #f :enumerable #f :value js-hopframe)
+	       :configurable #f :enumerable #f :value js-hopframe
+	       :hidden-class #t)
 	    
 	    (js-bind! %this js-service 'exists
 	       :configurable #f :enumerable #f
 	       :value (js-make-function %this
 			 (lambda (this svc)
 			    (service-exists? (js-tostring svc %this)))
-			 1 'exists)))
+			 1 'exists)
+	       :hidden-class #t))
 
 	 (js-undefined))))
 
@@ -940,6 +956,7 @@
    (with-access::JsGlobalObject %this (js-service-prototype)
       (instantiate::JsService
 	 (procedure proc)
+	 (method proc)
 	 (len arity)
 	 (arity arity)
 	 (worker worker)

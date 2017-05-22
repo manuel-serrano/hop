@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Mar  4 19:13:18 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:32:09 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -59,15 +59,18 @@
 	 :value (js-make-function %this (js-json-parse %this) 2 'parse)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #t)
       ;; stringify
       (js-bind! %this js-json 'stringify
 	 :value (js-make-function %this (js-json-stringify %this) 3 'stringify)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #t)
       ;; bind the global object
-      (js-bind! %this %this 'JSON :configurable #t :value js-json :enumerable #f)
+      (js-bind! %this %this 'JSON :configurable #t :value js-json :enumerable #f
+	 :hidden-class #t)
       js-json))
 
 ;*---------------------------------------------------------------------*/

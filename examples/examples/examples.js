@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Thu May 18 14:52:00 2017 (serrano)                */
+/*    Last change :  Tue May 23 22:06:55 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -257,7 +257,7 @@ function getExamples( dir ) {
       .map( function( d ) {
 	 var p = dir + "/" + d;
 	 var o = require( p + "/example.json" );
-
+	 
 	 if( !("dir" in o) ) {
 	    o.dir = p;
 

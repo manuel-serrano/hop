@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Tue Feb 28 09:22:28 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:34:18 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -112,7 +112,8 @@
 	 
 	 ;; bind Worker in the global object
 	 (js-bind! %this %this 'Worker
-	    :configurable #f :enumerable #f :value js-worker)
+	    :configurable #f :enumerable #f :value js-worker
+	    :hidden-class #t)
 	 js-worker)))
 
 ;*---------------------------------------------------------------------*/
@@ -140,7 +141,8 @@
 		   1 'postMessage)
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #t)
       
       ;; close
       (js-bind! %this scope 'close
@@ -150,7 +152,8 @@
 		   0 'close)
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #t)
       
       (with-access::JsWorker worker (thread)
 	 ;; onmessage
@@ -168,7 +171,8 @@
 		    1 'onmessage)
 	    :configurable #f
 	    :writable #t
-	    :enumerable #t)))
+	    :enumerable #t
+	    :hidden-class #t)))
    
    (lambda (_ src)
       (with-access::JsGlobalObject %this (js-worker js-worker-prototype js-object)
@@ -224,7 +228,8 @@
 				      (js-call1 %this v this e))))
 			     2 'onmessage)
 		     :configurable #t
-		     :enumerable #t)
+		     :enumerable #t
+		     :hidden-class #t)
 		  (js-bind! %this worker 'onerror
 		     :get (js-make-function %this
 			     (lambda (this) onerror)
@@ -237,7 +242,8 @@
 				      (js-call0 %this v this))))
 			     1 'onerror)
 		     :configurable #t
-		     :enumerable #t)
+		     :enumerable #t
+		     :hidden-class #t)
 		  (js-bind! %this worker 'onexit
 		     :get (js-make-function %this
 			     (lambda (this) onexit)
@@ -250,7 +256,8 @@
 				      (js-call1 %this v this e))))
 			     2 'onexit)
 		     :configurable #t
-		     :enumerable #t))
+		     :enumerable #t
+		     :hidden-class #t))
 	       
 	       ;; return the newly created worker
 	       worker)))))
@@ -262,7 +269,8 @@
    ;; prototype fields
    (js-bind! %this obj 'constructor
       :value js-worker
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; toString
    (js-bind! %this obj 'toString
       :value (js-make-function %this
@@ -270,7 +278,8 @@
 		0 'toString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; postMessage
    (js-bind! %this obj 'postMessage
       :value (js-make-function %this
@@ -280,7 +289,8 @@
 		1 'postMessage)
       :writable #f
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    ;; terminate
    (js-bind! %this obj 'terminate
       :value (js-make-function %this
@@ -290,7 +300,8 @@
 		1 'terminate)
       :writable #f
       :enumerable #t
-      :configurable #f))
+      :configurable #f
+      :hidden-class #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-self-terminate ::WorkerHopThread ...                   */

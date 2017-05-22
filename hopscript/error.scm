@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Mar  3 15:31:16 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:31:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -167,28 +167,33 @@
 	       (match-case args
 		  ((?m)
 		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f)
+		      (js-bind! %this this 'message :value m :enumerable #f
+			 :hidden-class #t)
 		      (set! msg m)))
 		  ((?m (and (? string?) ?f) ?l)
 		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f)
+		      (js-bind! %this this 'message :value m :enumerable #f
+			 :hidden-class #t)
 		      (set! msg m))
 		   (set! fname (js-string->jsstring f))
 		   (set! location l))
 		  ((?m (and (? js-jsstring?) ?f) ?l)
 		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f)
+		      (js-bind! %this this 'message :value m :enumerable #f
+			 :hidden-class #t)
 		      (set! msg m))
 		   (set! fname f)
 		   (set! location l))
 		  ((?m . ?-)
 		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f)
+		      (js-bind! %this this 'message :value m :enumerable #f
+			 :hidden-class #t)
 		      (set! msg m))))
 
 	       (js-bind! %this this 'name
 		  :value name
-		  :enumerable #f))
+		  :enumerable #f
+		  :hidden-class #t))
 	    this)
 
 	 (define (js-error-construct/stack this::JsError . args)
@@ -250,35 +255,40 @@
 			    (with-access::JsFrame o (file)
 			       (js-string->jsstring file)))
 			 0 'getFileName)
-	       :enumerable #t)
+	       :enumerable #t
+	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'getLineNumber
 	       :value (js-make-function %this
 			 (lambda (o)
 			    (with-access::JsFrame o (line)
 			       line))
 			 0 'getLineNumber)
-	       :enumerable #t)
+	       :enumerable #t
+	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'getColumnNumber
 	       :value (js-make-function %this
 			 (lambda (o)
 			    (with-access::JsFrame o (column)
 			       column))
 			 0 'getColumnNumber)
-	       :enumerable #t)
+	       :enumerable #t
+	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'getFunctionName
 	       :value (js-make-function %this
 			 (lambda (o)
 			    (with-access::JsFrame o (fun)
 			       (js-string->jsstring fun)))
 			 0 'getFunctionName)
-	       :enumerable #t)
+	       :enumerable #t
+	       :hidden-class #t)
 	    (js-bind! %this frame-proto 'isEval
 	       :value (js-make-function %this
 			 (lambda (o)
 			    (with-access::JsFrame o (iseval)
 			       iseval))
 			 0 'isEval)
-	       :enumerable #t)
+	       :enumerable #t
+	       :hidden-class #t)
 	    
 	    
 	    (let ((limit (js-get js-error 'stackTraceLimit %this)))
@@ -310,7 +320,8 @@
 				(js-undefined))
 			     2 'set)
 		     :enumerable #f
-		     :configurable #f))))
+		     :configurable #f
+		     :hidden-class #t))))
 	 
 	 ;; bind the properties of the prototype
 	 (js-bind! %this js-error-prototype 'message
@@ -325,7 +336,8 @@
 			   (js-undefined)))
 		    0 'message)
 	    :enumerable #f
-	    :configurable #t)
+	    :configurable #t
+	    :hidden-class #t)
 	 (js-bind! %this js-error-prototype 'name
 	    :set (js-make-function %this
 		    (lambda (o v)
@@ -337,7 +349,8 @@
 			   (with-access::JsError o (name) name)
 			   (js-undefined)))
 		    0 'name)
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 	 
 	 ;; then, create a HopScript object
 	 (set! js-error
@@ -404,29 +417,38 @@
 	       :construct js-error-construct/stack))
 	 ;; bind Error in the global object
 	 (js-bind! %this %this 'Error :configurable #f :enumerable #f
-	    :value js-error)
+	    :value js-error
+	    :hidden-class #t)
 	 (js-bind! %this %this 'SyntaxError :configurable #f :enumerable #f
-	    :value js-syntax-error)
+	    :value js-syntax-error
+	    :hidden-class #t)
 	 (js-bind! %this %this 'TypeError :configurable #f :enumerable #f
-	    :value js-type-error)
+	    :value js-type-error
+	    :hidden-class #t)
 	 (js-bind! %this %this 'URIError :configurable #f :enumerable #f
-	    :value js-uri-error)
+	    :value js-uri-error
+	    :hidden-class #t)
 	 (js-bind! %this %this 'EvalError :configurable #f :enumerable #f
-	    :value js-eval-error)
+	    :value js-eval-error
+	    :hidden-class #t)
 	 (js-bind! %this %this 'RangeError :configurable #f :enumerable #f
-	    :value js-range-error)
+	    :value js-range-error
+	    :hidden-class #t)
 	 (js-bind! %this %this 'ReferenceError :configurable #f :enumerable #f
-	    :value js-reference-error)
+	    :value js-reference-error
+	    :hidden-class #t)
 	 ;; nodejs addon
 	 (js-bind! %this js-error 'stackTraceLimit
 	    :value 10
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 	 (js-bind! %this js-error 'captureStackTrace
 	    :value (js-make-function %this
 		      (lambda (o this start-func)
 			 (capture-stack-trace this start-func))
 		      2 'captureStackTrace)
-	    :enumerable #f)
+	    :enumerable #f
+	    :hidden-class #t)
 	 js-error)))
 
 ;*---------------------------------------------------------------------*/
@@ -505,7 +527,8 @@
    ;; prototype fields
    (js-bind! %this obj 'constructor
       :value js-error
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.11.4.4
@@ -531,7 +554,8 @@
       
    (js-bind! %this obj 'toString
       :value (js-make-function %this error-prototype-tostring 1 'toString)
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #t)
    
    (set! *js-builtin-error-prototype* obj))
 

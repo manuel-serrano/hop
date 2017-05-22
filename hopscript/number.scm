@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri May  5 08:34:10 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:35:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -166,35 +166,42 @@
 	    :value +inf.0
 	    :writable #f
 	    :enumerable #f
-	    :configurable #f)
+	    :configurable #f
+	    :hidden-class #f)
 	 (js-bind! %this js-number 'NEGATIVE_INFINITY
 	    :value -inf.0
 	    :writable #f
 	    :enumerable #f
-	    :configurable #f)
+	    :configurable #f
+	    :hidden-class #f)
 	 (js-bind! %this js-number 'MAX_VALUE
 	    :value (*fl 1.7976931348623157 (exptfl 10. 308.))
 	    :writable #f
 	    :enumerable #f
-	    :configurable #f)
+	    :configurable #f
+	    :hidden-class #f)
 	 (js-bind! %this js-number 'MIN_VALUE
 	    :value 5e-324
 	    :writable #f
 	    :enumerable #f
-	    :configurable #f)
+	    :configurable #f
+	    :hidden-class #f)
 	 (js-bind! %this js-number 'NaN
 	    :value +nan.0
 	    :writable #f
 	    :enumerable #f
-	    :configurable #f)
+	    :configurable #f
+	    :hidden-class #f)
 	 (js-bind! %this js-number 'isInteger
 	    :value (js-make-function %this is-integer? 1 'isInteger)
-	    :writable #f :configurable #f :enumerable #f)
+	    :writable #f :configurable #f :enumerable #f
+	    :hidden-class #f)
 	 ;; bind the builtin prototype properties
 	 (init-builtin-number-prototype! %this js-number js-number-prototype)
 	 ;; bind Number in the global object
 	 (js-bind! %this %this 'Number
-	    :configurable #f :enumerable #f :value js-number)
+	    :configurable #f :enumerable #f :value js-number
+	    :hidden-class #f)
 	 js-number)))
 
 ;*---------------------------------------------------------------------*/
@@ -243,7 +250,8 @@
       :value js-number
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #f)
 
    (define (js-cast-number this shape)
       (cond
@@ -260,7 +268,8 @@
       :value (js-make-function %this js-number-tostring 2 'toString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #f)
 
    ;; toLocaleString
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.3
@@ -271,7 +280,8 @@
       :value (js-make-function %this js-number-tolocalestring 2 'toLocaleString)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #f)
 
    ;; valueOf
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.4
@@ -282,7 +292,8 @@
       :value (js-make-function %this js-number-valueof 0 'valueOf)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #f)
 
    ;; toFixed
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.5
@@ -341,7 +352,8 @@
       :value (js-make-function %this js-number-tofixed 1 'toFixed)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #f)
 
    ;; toExponential
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.6
@@ -352,7 +364,8 @@
 		1 'toExponential)
       :writable #t
       :configurable #t
-      :enumerable #f)
+      :enumerable #f
+      :hidden-class #f)
 
    ;; toPrecision
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.7
@@ -363,7 +376,8 @@
 		1 'toPrecision)
       :writable #t
       :configurable #t
-      :enumerable #f))
+      :enumerable #f
+      :hidden-class #f))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number->jsnumber ...                                          */

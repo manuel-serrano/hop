@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue May 16 08:03:30 2017 (serrano)                */
+/*    Last change :  Mon May 22 07:56:31 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -14,17 +14,21 @@
 
 #include <stdio.h>
 
-#define JS_OBJECT_MODE_PACKED 32 // see types.scm
-
 /*---------------------------------------------------------------------*/
 /*    JsObject imports                                                 */
 /*---------------------------------------------------------------------*/
 extern obj_t BGl_JsObjectz00zz__hopscript_typesz00;
+extern obj_t BGl_JsArrayz00zz__hopscript_typesz00;
 
 #define JSOBJECT_SIZE \
    sizeof( struct BgL_jsobjectz00_bgl )
 #define JSOBJECT_CLASS_INDEX \
    BGL_CLASS_INDEX( BGl_JsObjectz00zz__hopscript_typesz00 )
+
+#define JSARRAY_SIZE \
+   sizeof( struct BgL_jsarrayz00_bgl )
+#define JSARRAY_CLASS_INDEX \
+   BGL_CLASS_INDEX( BGl_JsArrayz00zz__hopscript_typesz00 )
 
 /*---------------------------------------------------------------------*/
 /*    type alias                                                       */
@@ -131,7 +135,7 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
    
    // fields init
    o->BgL___proto__z00 = __proto__;
-   o->BgL_modez00 = mode | JS_OBJECT_MODE_PACKED;
+   o->BgL_modez00 = mode;
    o->BgL_propertiesz00 = BNIL; 
    o->BgL_cmapz00 = constrmap;
    
@@ -153,14 +157,60 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
    return BREF( o );
 }
 
-/* {*---------------------------------------------------------------------*} */
-/* {*    pcache_t *                                                       *} */
-/* {*    bgl_pcache_ref ...                                               *} */
-/* {*    -------------------------------------------------------------    *} */
-/* {*    The accessor PCACHE-REF is inlined in property.scm. This         *} */
-/* {*    version is documentation only.                                   *} */
-/* {*---------------------------------------------------------------------*} */
-/* pcache_t *                                                          */
-/* bgl_pcache_ref( obj_t pcache, int len ) {                           */
-/*    return &(((struct BgL_jspropertycachez00_bgl *)&(VECTOR_REF( pcache, 0 )))[ len ]); */
-/* }                                                                   */
+/*---------------------------------------------------------------------*/
+/*    static obj_t                                                     */
+/*    empty_vector ...                                                 */
+/*---------------------------------------------------------------------*/
+#if( !defined( TAG_VECTOR ) )
+static struct {
+   __CNST_ALIGN header_t header;
+   long length;
+} _empty_vector = { __CNST_FILLER, MAKE_HEADER( VECTOR_TYPE, 0 ), 0 };
+static obj_t empty_vector = BVECTOR( &(_empty_vector.header ) );
+#else   
+static struct {
+   __CNST_ALIGN long length;
+} _empty_vector = { __CNST_FILLER, 0 };
+static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
+#endif   
+   
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_make_jsarray ...                                             */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_make_jsarray( int size, obj_t constrmap, obj_t __proto__, char mode ) {
+   long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE );
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)GC_MALLOC( bsize );
+   obj_t vector;
+   int i;
+
+   // class initialization
+   BGL_OBJECT_CLASS_NUM_SET( BREF( o ), JSARRAY_CLASS_INDEX );
+   
+   // fields init
+   o->BgL___proto__z00 = __proto__;
+   o->BgL_modez00 = mode; 
+   o->BgL_propertiesz00 = BNIL; 
+   o->BgL_cmapz00 = constrmap;
+   o->BgL_elementsz00 = BVECTOR( empty_vector );
+   o->BgL_lengthz00 = 0;
+   o->BgL_ilenz00 = 0;
+   
+   // vector initialization
+   vector = (obj_t)(&(o->BgL_vecz00) + 1);
+
+#if( !defined( TAG_VECTOR ) )
+   vector->vector_t.header = MAKE_HEADER( VECTOR_TYPE, 0 );
+#endif		
+   vector->vector_t.length = size;
+   vector = BVECTOR( vector );
+   
+   o->BgL_vecz00 = vector;
+
+   for( i = 0; i < size; i++ ) {
+      VECTOR_SET( vector, i, BUNSPEC );
+   }
+
+   return BREF( o );
+}

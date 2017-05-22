@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri May  5 08:02:48 2017 (serrano)                */
+;*    Last change :  Wed May 24 07:55:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -64,7 +64,7 @@
 	 ;; compute the integer value ranges, same condition as the CAST stage
 	 (j2s-range-program! this args)
 	 ;; allocate precise types according to the ranges
-	 (when (>=fx (config-get args :optim 0) 910)
+	 (when (config-get args :optim-range #f)
 	    (j2s-range-type-program! this args))
 	 ;; optimize operators according to ranges
 	 (when (>=fx (config-get args :optim 0) 2)
@@ -313,19 +313,14 @@
       (if (< ra (interval-max left))
 	  (if (>= ra (interval-min left))
 	      (interval (min (interval-min left) ra) ra)
-	      ;;(interval (interval-min left) (interval-min left))
 	      (interval ra ra))
 	  left)))
 
 (define (interval-lt left right)
-   (let ((i (interval-lts left right 1)))
-      [assert (i left right) (and (interval-ok? i) (interval-in? i left))]
-      i))
+   (interval-lts left right 1))
 
 (define (interval-lte left right)
-   (let ((i (interval-lts left right 0)))
-      [assert (i left right) (and (interval-ok? i) (interval-in? i left))]
-      i))
+   (interval-lts left right 0))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-gts ...                                                 */
@@ -335,19 +330,14 @@
       (if (> ri (interval-min left))
 	  (if (<= ri (interval-max left))
 	      (interval ri (max (interval-max left) ri))
-	      ;;(interval (interval-max left) (interval-max left))
 	      (interval ri ri))
 	  left)))
 
 (define (interval-gt left right)
-   (let ((i (interval-gts left right 1)))
-      [assert (i left right) (and (interval-ok? i) (interval-in? i left))]
-      i))
+   (interval-gts left right 1))
 
 (define (interval-gte left right)
-   (let ((i (interval-gts left right 0)))
-      [assert (i left right) (and (interval-ok? i) (interval-in? i left))]
-      i))
+   (interval-gts left right 0))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-eq ...                                                  */
@@ -580,11 +570,17 @@
 ;*---------------------------------------------------------------------*/
 (define (interval-div left right)
    (when (and (interval? left) (interval? right))
-      (let ((min (truncate (/ (interval-min left) (interval-max right))))
-	    (max (ceiling (/ (interval-max left) (interval-min right)))))
-	 (when (and (integer? min) (integer? max))
-	    (let ((intr (interval min max)))
-	       (widening left right intr))))))
+      (unless (or (= (interval-max right) 0) (= (interval-min right) 0))
+	 ;; MS: 22 May 2017, don't know how to ensure that the result is
+	 ;; an integer
+	 #f)))
+;* 	 (let ((min (truncate (/ (interval-min left) (interval-max right)))) */
+;* 	       (max (ceiling (/ (interval-max left) (interval-min right))))) */
+;* 	    (when (and (integer? min) (integer? max))                  */
+;* 	       (let ((intr (interval                                   */
+;* 			      (fixnum->llong (inexact->exact min))     */
+;* 			      (fixnum->llong (inexact->exact max)))))  */
+;* 		  (widening left right intr)))))))                     */
    
 ;*---------------------------------------------------------------------*/
 ;*    interval-bitop ...                                               */
@@ -951,11 +947,17 @@
 	     ((-)
 	      (multiple-value-bind (intv env)
 		 (range expr env fix)
-		 (if (interval? intv)
+		 (cond
+		    ((not (interval? intv))
+		     (return *infinity-intv* env))
+		    ((and (= (interval-max intv) 0) (= (interval-min intv) 0))
+		     ;; -0 is the flonum -0.0
+		     (set! type 'number)
+		     (return #f env))
+		    (else
 		     (node-interval-set! this env fix
 			(interval
-			   (- (interval-max intv)) (- (interval-min intv))))
-		     (return *infinity-intv* env))))
+			   (- (interval-max intv)) (- (interval-min intv))))))))
 	     ((~)
 	      (multiple-value-bind (intv env)
 		 (range expr env fix)

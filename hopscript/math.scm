@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Mar 14 07:19:12 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:35:24 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -56,42 +56,50 @@
 	 :value 2.7182818284590452354
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       (js-bind! %this js-math 'LN10
 	 :value (log 10)
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       (js-bind! %this js-math 'LN2
 	 :value (log 2)
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       (js-bind! %this js-math 'LOG2E
 	 :value 1.4426950408889634
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       (js-bind! %this js-math 'LOG10E
 	 :value 0.4342944819032518
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       (js-bind! %this js-math 'PI
 	 :value (* 2 (atan 1 0))
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       (js-bind! %this js-math 'SQRT1_2
 	 :value (sqrt (/ 1 2))
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       (js-bind! %this js-math 'SQRT2
 	 :value (sqrt 2)
 	 :writable #f
 	 :configurable #f
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; abs
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.1
@@ -105,7 +113,8 @@
 	 :value (js-make-function %this js-math-abs 1 'abs)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; acos
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.2
@@ -116,7 +125,8 @@
 	 :value (js-make-function %this js-math-acos 1 'acos)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; asin
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.3
@@ -127,7 +137,8 @@
 	 :value (js-make-function %this js-math-asin 1 'asin)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; atan
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.4
@@ -138,7 +149,8 @@
 	 :value (js-make-function %this js-math-atan 1 'atan)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; atan2
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.5
@@ -166,7 +178,8 @@
 	 :value (js-make-function %this js-math-atan2 2 'atan2)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; ceil
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.6
@@ -187,7 +200,8 @@
 	 :value (js-make-function %this js-math-ceil 1 'ceil)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; cos
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.7
@@ -198,7 +212,8 @@
 	 :value (js-make-function %this js-math-cos 1 'cos)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; exp
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.8
@@ -209,7 +224,8 @@
 	 :value (js-make-function %this js-math-exp 1 'exp)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; floor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9
@@ -236,7 +252,8 @@
 	 :value (js-make-function %this js-math-floor 1 'floor)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; log
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.10
@@ -247,7 +264,8 @@
 	 :value (js-make-function %this js-math-log 1 'log)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; max
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.11
@@ -265,7 +283,8 @@
 	 :value (js-make-function %this js-math-max 2 'max)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; min
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.12
@@ -283,7 +302,8 @@
 	 :value (js-make-function %this js-math-min 2 'min)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; pow
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.13
@@ -328,7 +348,8 @@
 	 :value (js-make-function %this js-math-pow 1 'pow)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; random
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.14
@@ -339,7 +360,8 @@
 	 :value (js-make-function %this js-math-random 1 'random)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; round
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.15
@@ -355,7 +377,8 @@
 	 :value (js-make-function %this js-math-round 1 'round)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; sin
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.16
@@ -366,7 +389,8 @@
 	 :value (js-make-function %this js-math-sin 1 'sin)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; sqrt
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.17
@@ -377,7 +401,8 @@
 	 :value (js-make-function %this js-math-sqrt 1 'sqrt)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; ran
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.18
@@ -388,11 +413,13 @@
 	 :value (js-make-function %this js-math-tan 1 'tan)
 	 :writable #t
 	 :configurable #t
-	 :enumerable #f)
+	 :enumerable #f
+	 :hidden-class #f)
       
       ;; bind Math in the global object
       (js-bind! %this %this 'Math
-	 :configurable #f :enumerable #f :value js-math)
+	 :configurable #f :enumerable #f :value js-math
+	 :hidden-class #f)
       js-math))
 
 

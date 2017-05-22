@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue Apr 18 11:02:10 2017 (serrano)                */
+#*    Last change :  Tue May 23 08:16:26 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -35,7 +35,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
 #*---------------------------------------------------------------------*/
 .PHONY: bindir libdir lib widget share weblets bin \
   share-afile scheme2js hopscript js2scheme nodejs \
-  android node_modules doc test
+  android node_modules doc test .buildtag
 
 build: bindir libdir lib weblets widget nodejs doc \
   $(BUILDSPECIFIC) bin share node_modules
@@ -455,6 +455,9 @@ distrib-tmp:
           exit 1; \
         fi
 
+.buildtag:
+	$(MAKE) buildid > .buildtag
+
 #*---------------------------------------------------------------------*/
 #*    predistrib:                                                      */
 #*---------------------------------------------------------------------*/
@@ -465,3 +468,4 @@ predistrib:
 	$(MAKE) -C widget predistrib
 	$(MAKE) -C share predistrib
 	$(MAKE) -C hophz predistrib
+	$(MAKE) .buildtag

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat May 13 19:19:01 2017 (serrano)                */
+;*    Last change :  Wed May 24 13:58:38 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_type-hint
 
+   (include "ast.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
@@ -33,7 +35,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint! ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-hint! prgm args)
+(define (j2s-hint! prgm conf)
    (with-access::J2SProgram prgm (decls nodes)
       ;; reset previously collected hints
       (for-each j2s-reset-hint decls)
@@ -43,8 +45,8 @@
       (for-each (lambda (n) (j2s-hint n '() 'number)) nodes)
       ;; then, for each function whose parameters are "hinted", we generate
       ;; an ad-hoc typed version
-      (when (>=fx (config-get args :optim 0) 3)
-	 (let ((dups (append-map j2s-hint-function* decls)))
+      (when (>=fx (config-get conf :optim 0) 3)
+	 (let ((dups (append-map (lambda (d) (j2s-hint-function* d conf)) decls)))
 	    (when (pair? dups)
 	       (set! decls
 		  (append (filter (lambda (dup::J2SDeclFun)
@@ -408,13 +410,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint-function ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint-function* this::J2SNode)
+(define-walk-method (j2s-hint-function* this::J2SNode conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint-function ::J2SDeclFun ...                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-hint-function* this::J2SDeclFun)
+(define-walk-method (j2s-hint-function* this::J2SDeclFun conf)
    
    (define (call-hinted orig idthis params types)
       (with-access::J2SDeclFun this (loc)
@@ -491,8 +493,8 @@
 				    (with-access::J2SDecl p (itype)
 				       itype))
 			       params))
-		    (fu (fun-duplicate-untyped this))
-		    (ft (fun-duplicate-typed this htypes fu)))
+		    (fu (fun-duplicate-untyped this conf))
+		    (ft (fun-duplicate-typed this htypes fu conf)))
 		(fun-dispatch! this htypes ft itypes fu)
 		(list ft fu))))
        '()))
@@ -596,43 +598,53 @@
 		   (rhs (loop (cdr decls) (cdr htypes))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    profile-fun ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (profile-fun fun::J2SDeclFun typed)
+   (with-access::J2SDeclFun fun (val id %info loc)
+      (J2SStmtExpr
+	 (J2SPragma
+	    `(profile-hint ,(format "~a" id) ,typed)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    fun-duplicate-untyped ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (fun-duplicate-untyped::J2SDeclFun fun::J2SDeclFun)
+(define (fun-duplicate-untyped::J2SDeclFun fun::J2SDeclFun conf)
    (with-access::J2SDeclFun fun (val id %info)
       (with-access::J2SFun val (params body name generator idthis loc)
-	 (duplicate::J2SDeclFun fun
-	    (parent fun)
-	    (key (ast-decl-key))
-	    (id (symbol-append id '%%))
-	    (ronly #t)
-	    (writable #f)
-	    (binder 'let)
-	    (scope 'none)
-	    (usecnt 1)
-	    (itype 'function)
-	    (utype 'function)
-	    (vtype 'function)
-	    (%info fun)
-	    (val (duplicate::J2SFun val
-		    (generator #f)
-		    (optimize #f)
-		    (idgen generator)
-		    (idthis (if (this? body) idthis #f))
-		    (name (when (symbol? name) (symbol-append name '%%)))
-		    (params params)
-		    (body (instantiate::J2SBlock
-			     (loc loc)
-			     (endloc loc)
-			     (nodes (list (instantiate::J2SMeta
-					     (loc loc)
-					     (optim 0)
-					     (stmt body))))))))))))
+	 (let ((mbody (instantiate::J2SMeta
+			 (loc loc)
+			 (optim 0)
+			 (stmt body))))
+	    (duplicate::J2SDeclFun fun
+	       (parent fun)
+	       (key (ast-decl-key))
+	       (id (symbol-append id '%%))
+	       (ronly #t)
+	       (writable #f)
+	       (binder 'let)
+	       (scope 'none)
+	       (usecnt 1)
+	       (itype 'function)
+	       (utype 'function)
+	       (vtype 'function)
+	       (%info fun)
+	       (val (duplicate::J2SFun val
+		       (generator #f)
+		       (optimize #f)
+		       (idgen generator)
+		       (idthis (if (this? body) idthis #f))
+		       (name (when (symbol? name) (symbol-append name '%%)))
+		       (params params)
+		       (body (duplicate::J2SBlock body
+				(nodes (if (config-get conf :profile #f)
+					   (list (profile-fun fun #f) mbody)
+					   (list mbody))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-duplicate-typed ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (fun-duplicate-typed::J2SDeclFun fun::J2SDeclFun types unhinted)
+(define (fun-duplicate-typed::J2SDeclFun fun::J2SDeclFun types unhinted conf)
    
    (define (type-initial t)
       (case t
@@ -658,7 +670,11 @@
 			      (cons thisp params)
 			      (cons newthisp newparams))
 			   (j2s-alpha body params newparams)))
-		(unbody (reset-type! nbody newparams))
+		(pnbody (if (config-get conf :profile #f)
+			    (duplicate::J2SBlock body
+			       (nodes (list (profile-fun fun #f) nbody)))
+			    nbody))
+		(unbody (reset-type! pnbody newparams))
 		(newfun (duplicate::J2SFun val
 			   (generator #f)
 			   (idgen generator)
@@ -690,12 +706,6 @@
 		  (hinted newdecl)
 		  (unhinted unhinted)
 		  (types types)))
-	    ;; compute the new hints for the duplicated function
-	    ;;(tprint ">>> --- HINT loop ---------------------")
-	    ;;(j2s-hint newbody '() 'number)
-	    ;;(tprint "~~~ --- HINT loop ---------------------")
-	    ;(j2s-hint-loop! newbody #f)
-	    ;;(tprint "<<< --- HINT loop ---------------------")
 	    newdecl))))
 
 ;*---------------------------------------------------------------------*/

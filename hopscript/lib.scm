@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed May 17 11:48:03 2017 (serrano)                */
+;*    Last change :  Sun May 21 09:32:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -305,14 +305,18 @@
 		     (obj obj))))
 	 (js-bind! %this sock 'hostname
 	    :value (js-string->jsstring (socket-hostname obj))
-	    :writable #f :configurable #f)
+	    :writable #f :configurable #f
+	    :hidden-class #t)
 	 (js-bind! %this sock 'hostAddress
 	    :value (js-string->jsstring (socket-host-address obj))
-	    :writable #f :configurable #f)
+	    :writable #f :configurable #f
+	    :hidden-class #t)
 	 (js-bind! %this sock 'localAddress
 	    :value (js-string->jsstring (socket-local-address obj))
-	    :writable #f :configurable #f)
+	    :writable #f :configurable #f
+	    :hidden-class #t)
 	 (js-bind! %this sock 'port
 	    :value (socket-port-number obj)
-	    :writable #f :configurable #f)
+	    :writable #f :configurable #f
+	    :hidden-class #t)
 	 sock)))

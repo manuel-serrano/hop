@@ -22,6 +22,7 @@ hop=$BUILDBINDIR/hop.sh
 test=
 stoponfailure=no
 gflags="--sofile-policy nte+ -g --clear-libs"
+oflags="--no-zeroconf"
 
 while : ; do
 
@@ -81,9 +82,9 @@ run() {
     
     if [ "$verb " != " " ]; then
       echo ""
-      echo -n "$hop --no-zeroconf $* ..."
+      echo -n "$hop $oflags $* ..."
     fi
-    $hop --no-zeroconf $* > $TMP/TEST-HOPJS.out 2>&1 
+    $hop $oflags $* > $TMP/TEST-HOPJS.out 2>&1 
     lastres=$?
     
     cat $TMP/TEST-HOPJS.out >> $TMP/TEST-HOPJS-ALL.out

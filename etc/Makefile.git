@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 14:43:37 2006                          */
-#*    Last change :  Thu Aug 11 08:15:41 2016 (serrano)                */
-#*    Copyright   :  2006-16 Manuel Serrano                            */
+#*    Last change :  Sun May 21 06:16:57 2017 (serrano)                */
+#*    Copyright   :  2006-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Git config                                                       */
 #*=====================================================================*/
@@ -20,6 +20,7 @@ VM-TAG		= git tag
 VM-BRANCH	= git checkout
 VM-PUSH-BRANCH	= -r
 VM-LOG          = git log --date=short --pretty=format:"(\"%cd\" \"%cn <%ce>\" \"b\" \"%f\"  \"%h\" \"%T\")"
+VM-ID		= git log -1 --abbrev-commit --pretty="%h"
 
 git-push:
 	$(VM-PUSH)
@@ -27,3 +28,6 @@ git-push:
 
 git-pull:
 	$(VM-PULL)
+
+git-id:
+	$(VM-ID)

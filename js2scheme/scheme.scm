@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed May 17 16:35:33 2017 (serrano)                */
+;*    Last change :  Mon May 22 19:01:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1476,7 +1476,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    jsfun->lambda ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (jsfun->lambda this::J2SFun mode return conf proto constructor-only::bool)
+(define (jsfun->lambda this::J2SFun mode return conf proto
+	   constructor-only::bool)
 
    (define (lambda-or-labels %gen this id args body)
       ;; in addition to the user explicit arguments, this and %gen
@@ -1612,7 +1613,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sfun->scheme this::J2SFun tmp ctor mode return conf)
    (with-access::J2SFun this (loc name params mode vararg mode generator
-				constrsize)
+				constrsize method)
       (let* ((id (j2sfun-id this))
 	     (lparams (length params))
 	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
@@ -1622,7 +1623,7 @@
 	     (prototype (j2s-fun-prototype this))
 	     (__proto__ (j2s-fun-__proto__ this)))
 	 (epairify-deep loc
-	    (if (or src prototype __proto__)
+	    (if (or src prototype __proto__ method)
 		`(js-make-function %this
 		    ,tmp ,len ,(symbol->string! (or name (j2s-decl-scheme-id id)))
 		    :src ,src
@@ -1634,7 +1635,9 @@
 		    :minlen ,minlen
 		    :alloc (lambda (o) (js-object-alloc o %this))
 		    :construct ,ctor
-		    :constrsize ,constrsize)
+		    :constrsize ,constrsize
+		    :method ,(when method
+				(jsfun->lambda method mode return conf #f #f)))
 		`(js-make-function-simple %this
 		    ,tmp ,len
 		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
@@ -1644,7 +1647,7 @@
 ;*    j2s-scheme ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SFun mode return conf hint totype)
-   (with-access::J2SFun this (loc name params mode vararg generator)
+   (with-access::J2SFun this (loc name params mode vararg generator method)
       (let* ((id (j2sfun-id this))
 	     (tmp (gensym id))
 	     (arity (if vararg -1 (+fx 1 (length params))))
@@ -1665,6 +1668,13 @@
 		       (set! ,scmid ,fundef)
 		       ,scmid))
 		fundef)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SMethod ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SMethod mode return conf hint totype)
+   (with-access::J2SMethod this (function)
+      (j2s-scheme function mode return conf hint totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    jssvc->scheme ::J2SSvc ...                                       */
@@ -4069,11 +4079,6 @@
 	     (let ((%gen (if (typed-generator? fun) '(%gen) '())))
 		(call-fun-function val this protocol
 		   (j2s-fast-id id) %gen args))))
-;* 	 ((isa? fun J2SDeclFunCnst)                                    */
-;* 	  (with-access::J2SDeclFunCnst fun (id val)                    */
-;* 	     (check-hopscript-fun-arity val id args)                   */
-;* 	     (call-fun-function val this protocol                      */
-;* 		(j2s-fast-id id) '() args)))                           */
 	 ((j2s-let-opt? fun)
 	  (with-access::J2SDeclInit fun (id val)
 	     (call-fun-function val this protocol

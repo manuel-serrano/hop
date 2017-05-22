@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue May  9 08:33:29 2017 (serrano)                */
+;*    Last change :  Fri May 19 20:53:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -176,7 +176,7 @@
 ;*    usage ::J2SNode ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SNode ctx deval)
-   (default-walk this 'ref deval))
+   (default-walk this ctx deval))
    
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SRef ...                                               */
@@ -188,6 +188,19 @@
 	    (unless (memq ctx usage)
 	       (set! usage (cons ctx usage))))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SUnary ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (usage this::J2SUnary ctx deval)
+   (with-access::J2SUnary this (op expr)
+      (if (and (eq? op 'delete) (isa? expr J2SRef))
+	  (with-access::J2SRef expr (decl)
+	     (with-access::J2SDecl decl (usage)
+		(unless (memq 'delete usage)
+		   (set! usage (cons 'delete usage))))
+	     this)
+	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SUnresolvedRef ...                                     */

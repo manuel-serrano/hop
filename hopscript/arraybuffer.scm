@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Tue Nov  8 09:38:18 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Sun May 21 09:31:27 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
 ;*=====================================================================*/
@@ -192,7 +192,8 @@
 			:value f
 			:configurable #f
 			:writable #f
-			:enumerable #t)
+			:enumerable #t
+			:hidden-class #t)
 		     
 		     ;; slice
 		     (define (arraybuffer-slice this::JsArrayBuffer beg end)
@@ -225,13 +226,15 @@
 				  arraybuffer-slice 2 'slice)
 			:configurable #f
 			:writable #t
-			:enumerable #t)))
+			:enumerable #t
+			:hidden-class #t)))
 	       
 	       this))
 
 	 ;; bind the ArrayBuffer in the global object
 	 (js-bind! %this %this 'ArrayBuffer
-	    :configurable #f :enumerable #f :value js-arraybuffer)
+	    :configurable #f :enumerable #f :value js-arraybuffer
+	    :hidden-class #t)
 
 	 js-arraybuffer)))
 
