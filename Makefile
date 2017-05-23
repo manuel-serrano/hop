@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Sun May 21 06:36:16 2017 (serrano)                */
+#*    Last change :  Tue May 23 08:16:26 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -390,7 +390,7 @@ distrib-pre:
           fi; \
           (cd weblets/home && make) && make OPT="-m 'build $$distrib'" revision || exit 0)
 
-distrib-native: distrib-tmp distrib-buildtag
+distrib-native: distrib-tmp
 	(version=$(HOPRELEASE); \
          devel=$(HOPDEVEL); \
           if [ -f .hoprelease ]; then \
@@ -455,8 +455,6 @@ distrib-tmp:
           exit 1; \
         fi
 
-distrib-buildtag: .buildtag
-
 .buildtag:
 	$(MAKE) buildid > .buildtag
 
@@ -470,3 +468,4 @@ predistrib:
 	$(MAKE) -C widget predistrib
 	$(MAKE) -C share predistrib
 	$(MAKE) -C hophz predistrib
+	$(MAKE) .buildtag
