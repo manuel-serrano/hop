@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon May 22 13:54:12 2017 (serrano)                */
+;*    Last change :  Wed May 24 08:46:56 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -827,7 +827,7 @@
 	       (synchronize socompile-mutex
 		  (when debug-abort
 		     (tprint "spcompile-ended=" socompile-ended " estr=" estr))
-		  (if socompile-ended
+		  (if (and socompile-ended (=fx (process-exit-status proc) 0))
 		      'ended
 		      (begin
 			 (unregister-socompile-process! proc)

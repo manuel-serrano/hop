@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Apr 10 16:01:38 2017 (serrano)                */
+;*    Last change :  Wed May 24 08:08:06 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -126,7 +126,7 @@
    (with-access::J2SFun o (body)
       ;; find the declaring block of all declarations
       (j2s-find-init-blocks body #f o)
-      ;; get the set of narrowable declrations
+      ;; get the set of narrowable declarations
       (j2s-mark-narrowable body '() #f o (make-cell #f))
       ;; narrow the function body
       (set! body (j2s-lift-inits! (j2s-narrow! body)))))
@@ -272,7 +272,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-mark-narrowable this::J2SLoop blocks inloop fun yield)
    (with-access::J2SLoop this (body)
-      (let ((res (j2s-mark-narrowable body blocks #t fun yield)))
+      (let ((res (call-default-walker)))
 	 (unless inloop (cell-set! yield #f))
 	 res)))
 

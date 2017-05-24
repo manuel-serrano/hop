@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon May 22 20:12:11 2017 (serrano)                */
+;*    Last change :  Wed May 24 07:55:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -313,19 +313,14 @@
       (if (< ra (interval-max left))
 	  (if (>= ra (interval-min left))
 	      (interval (min (interval-min left) ra) ra)
-	      ;;(interval (interval-min left) (interval-min left))
 	      (interval ra ra))
 	  left)))
 
 (define (interval-lt left right)
-   (let ((i (interval-lts left right 1)))
-      [assert (i left right) (and (interval-ok? i) (interval-in? i left))]
-      i))
+   (interval-lts left right 1))
 
 (define (interval-lte left right)
-   (let ((i (interval-lts left right 0)))
-      [assert (i left right) (and (interval-ok? i) (interval-in? i left))]
-      i))
+   (interval-lts left right 0))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-gts ...                                                 */
@@ -335,19 +330,14 @@
       (if (> ri (interval-min left))
 	  (if (<= ri (interval-max left))
 	      (interval ri (max (interval-max left) ri))
-	      ;;(interval (interval-max left) (interval-max left))
 	      (interval ri ri))
 	  left)))
 
 (define (interval-gt left right)
-   (let ((i (interval-gts left right 1)))
-      [assert (i left right) (and (interval-ok? i) (interval-in? i left))]
-      i))
+   (interval-gts left right 1))
 
 (define (interval-gte left right)
-   (let ((i (interval-gts left right 0)))
-      [assert (i left right) (and (interval-ok? i) (interval-in? i left))]
-      i))
+   (interval-gts left right 0))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-eq ...                                                  */

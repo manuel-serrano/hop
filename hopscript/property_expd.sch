@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri May 19 09:26:24 2017 (serrano)                */
+;*    Last change :  Wed May 24 07:46:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -446,12 +446,13 @@
 	  ((not %omap)
 	   (js-put-jsobject! ,o ,prop ,tmp ,throw #t ,cache ,%this))
 	  (else
-	   (with-access::JsConstructMap %omap (vlen vtable)
-	      (if (and (<fx ,vindx vlen)
+	   (with-access::JsConstructMap %omap (vtable)
+	      (if (and (<fx ,vindx (vector-length vtable))
 		       (pair? (vector-ref vtable ,vindx)))
 		  (let ((indx (car (vector-ref vtable ,vindx)))
 			(cmap (cdr (vector-ref vtable ,vindx))))
-		     (vector-set! elements indx ,tmp)
+;* 		     (vector-set! elements indx ,tmp)                  */
+		     (js-object-push! ,o indx ,tmp)
 		     (with-access::JsObject ,o ((omap cmap))
 			(set! omap cmap))
 		     ,tmp)
@@ -576,14 +577,14 @@
 	  (list ,@args)))
 
    (define (call obj name ccache ocache args pmap method vindex)
-      `(with-access::JsConstructMap %omap (vtable vlen)
+      `(with-access::JsConstructMap %omap (vtable)
 	  (cond
 	     ((not %omap)
-	      ;; 2. uncachable call
+	      ;; uncachable call
 	      (let ((f (js-get ,obj ',name %this)))
 		 ,(calln 'f obj args)))
 	     (else
-	      (if (and (<fx ,vindex vlen)
+	      (if (and (<fx ,vindex (vector-length vtable))
 		       (procedure? (vector-ref vtable ,vindex)))
 		  ;; polymorphic call
 		  ((vector-ref vtable ,vindex) ,obj ,@args)
@@ -600,11 +601,10 @@
    (define (call obj name ccache ocache args pmap method vindex)
       `(with-access::JsObject ,obj ((omap cmap))
 	  (let ((%omap omap))
-	     (with-access::JsConstructMap %omap (vtable)
-		(if (eq? ,pmap %omap)
-		    ;; prototype method invocation
-		    (,method ,obj ,@args)
-		    (js-object-method-call-name/cache-level2 ,@(cdr x)))))))
+	     (if (eq? ,pmap %omap)
+		 ;; prototype method invocation
+		 (,method ,obj ,@args)
+		 (js-object-method-call-name/cache-level2 ,@(cdr x))))))
    
    (cond-expand
       (no-method-cache

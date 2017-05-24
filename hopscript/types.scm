@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon May 22 17:45:55 2017 (serrano)                */
+;*    Last change :  Wed May 24 07:44:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -90,8 +90,7 @@
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))
 	      (ctor::obj (default #f))
-	      (vtable::vector (default '#()))
-	      (vlen::long (default 0)))
+	      (vtable::vector (default '#())))
 
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
