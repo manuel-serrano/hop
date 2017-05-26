@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed May 24 07:46:17 2017 (serrano)                */
+;*    Last change :  Thu May 25 11:11:43 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -182,21 +182,22 @@
 		  `(js-pcache-index ,cache)
 		  `(js-pcache-cmap ,cache)
 		  `(js-pcache-pmap ,cache)
-		  `(js-pcache-owner ,cache)))
+		  `(js-pcache-owner ,cache)
+		  `(js-pcache-vindex ,cache)))
 	  e))
       ((?- (and (? symbol?) ?obj) ?prop ?cache ?%this)
        (e `(with-access::JsObject ,obj ((omap cmap) elements)
-	      (with-access::JsPropertyCache ,cache (cmap pmap index owner)
+	      (with-access::JsPropertyCache ,cache (cmap pmap index owner vindex)
 		 ,(ref obj prop cache %this
-		     'index 'cmap 'pmap 'owner)))
+		     'index 'cmap 'pmap 'owner 'vindex)))
 	  e))
       ((?- ?obj ?prop ?cache ?%this)
        (let ((tmp (gensym 'tmp)))
 	  (e `(let ((,tmp ,obj))
 		 (with-access::JsObject ,tmp ((omap cmap) elements)
-		    (with-access::JsPropertyCache ,cache (cmap pmap index owner)
+		    (with-access::JsPropertyCache ,cache (cmap pmap index owner vindex)
 		       ,(ref tmp prop cache %this
-			   'index 'cmap 'pmap 'owner))))
+			   'index 'cmap 'pmap 'owner 'vindex))))
 	     e)))
       (else
        (map (lambda (x) (e x e)) x))))
@@ -206,7 +207,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-get-name/cache-expander x e)
    
-   (define (ref o prop cache %this cindex ccmap cpmap cowner)
+   (define (ref o prop cache %this cindex ccmap cpmap cowner vindx)
       `(let ((%omap omap))
 	  (if (eq? ,ccmap %omap)
 	      (js-object-packed-ref ,o ,cindex)
@@ -233,7 +234,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-get-name/cache-level1-expander x e)
    
-   (define (ref o prop cache %this cindex ccmap cpmap cowner)
+   (define (ref o prop cache %this cindex ccmap cpmap cowner vindx)
       `(with-access::JsObject ,o (elements)
 	  (vector-ref elements ,cindex)))
    
@@ -253,7 +254,7 @@
 	 (((kwote quote) length) 'js-get-name/cache-miss)
 	 (else 'js-get-lookup)))
    
-   (define (ref o prop cache %this cindex ccmap cpmap cowner)
+   (define (ref o prop cache %this cindex ccmap cpmap cowner vindx)
       `(cond
 	  ((eq? ,cpmap %omap)
 	   (with-access::JsObject ,cowner (elements)
@@ -261,8 +262,13 @@
 		  (vector-ref elements ,cindex)
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
 		     (js-property-value ,o desc ,%this)))))
+	  ((not %omap)
+	   (js-get ,o ,prop %this))
 	  (else
-	   (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))
+	   (with-access::JsConstructMap %omap (vlen vtable %id)
+	      (if (<fx ,vindx vlen)
+		  (vector-ref elements (vector-ref vtable ,vindx))
+		  (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))))
 
    (js-object-get-name/cache-match-expander x e ref))
 
@@ -446,12 +452,11 @@
 	  ((not %omap)
 	   (js-put-jsobject! ,o ,prop ,tmp ,throw #t ,cache ,%this))
 	  (else
-	   (with-access::JsConstructMap %omap (vtable)
-	      (if (and (<fx ,vindx (vector-length vtable))
+	   (with-access::JsConstructMap %omap (vlen vtable)
+	      (if (and (<fx ,vindx vlen)
 		       (pair? (vector-ref vtable ,vindx)))
 		  (let ((indx (car (vector-ref vtable ,vindx)))
 			(cmap (cdr (vector-ref vtable ,vindx))))
-;* 		     (vector-set! elements indx ,tmp)                  */
 		     (js-object-push! ,o indx ,tmp)
 		     (with-access::JsObject ,o ((omap cmap))
 			(set! omap cmap))
@@ -577,14 +582,14 @@
 	  (list ,@args)))
 
    (define (call obj name ccache ocache args pmap method vindex)
-      `(with-access::JsConstructMap %omap (vtable)
+      `(with-access::JsConstructMap %omap (vlen vtable)
 	  (cond
 	     ((not %omap)
 	      ;; uncachable call
 	      (let ((f (js-get ,obj ',name %this)))
 		 ,(calln 'f obj args)))
 	     (else
-	      (if (and (<fx ,vindex (vector-length vtable))
+	      (if (and (<fx ,vindex vlen)
 		       (procedure? (vector-ref vtable ,vindex)))
 		  ;; polymorphic call
 		  ((vector-ref vtable ,vindex) ,obj ,@args)
@@ -607,7 +612,7 @@
 		 (js-object-method-call-name/cache-level2 ,@(cdr x))))))
    
    (cond-expand
-      (no-method-cache
+      ((or no-macro-cache no-method-cache)
        (map (lambda (x) (e x e)) x))
       (else
        (let ((e1 (cond-expand

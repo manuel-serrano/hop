@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed May 24 07:44:45 2017 (serrano)                */
+;*    Last change :  Thu May 25 10:59:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -82,7 +82,8 @@
 	      (name::obj (default '||))
 	      (method::obj (default #f))
 	      (minid::uint32 (default 0))
-	      (maxid::uint32 (default 0)))
+	      (maxid::uint32 (default 0))
+	      (cntmiss::long (default 0)))
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))
@@ -90,6 +91,7 @@
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))
 	      (ctor::obj (default #f))
+	      (vlen::long (default 0))
 	      (vtable::vector (default '#())))
 
 	   ;; Literal strings that are not plain Scheme string
