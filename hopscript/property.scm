@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed May 24 13:48:22 2017 (serrano)                */
+;*    Last change :  Thu May 25 11:04:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -19,10 +19,6 @@
 
    (option  (register-srfi! 'cache-level2)
       (bigloo-compiler-debug-set! 0))
-   
-;*    (option  (register-srfi! 'cache-level2)                          */
-;*       (tprint "DEBUG-SET 2")                                        */
-;*       (bigloo-compiler-debug-set! 2))                               */
    
    (include "stringliteral.sch"
 	    "property.sch")
@@ -630,15 +626,17 @@
 ;*    reset-cmap-vtable! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (reset-cmap-vtable! omap::JsConstructMap)
-   (with-access::JsConstructMap omap (vtable)
+   (with-access::JsConstructMap omap (vtable vlen)
+      (set! vlen 0)
       (set! vtable '#())))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-cmap-vtable-add! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-cmap-vtable-add! o::JsConstructMap idx::long obj)
-   (with-access::JsConstructMap o (vtable)
+   (with-access::JsConstructMap o (vlen vtable)
       (when (>=fx idx (vector-length vtable))
+	 (set! vlen (+fx idx 1))
 	 (set! vtable (copy-vector vtable (+fx idx 1))))
       (vector-set! vtable idx obj)
       obj))
@@ -1287,13 +1285,24 @@
    
    (add-cache-miss! 'get name)
 
+   (define *vtable-threshold* 10)
+   
+   (define (js-pcache-vtable! omap cache i)
+      (with-access::JsPropertyCache cache (cntmiss vindex)
+	 (if (= cntmiss *vtable-threshold*)
+	     (begin
+		(when (=fx vindex (js-not-a-index))
+		   (set! vindex (js-get-vindex %this)))
+		(js-cmap-vtable-add! omap vindex i))
+	     (set! cntmiss (+fx cntmiss 1)))))
+      
    (let loop ((obj o))
       (jsobject-find obj name
 	 ;; map search
 	 (lambda (obj i)
 	    (with-access::JsObject o ((omap cmap))
 	       (with-access::JsObject obj (elements)
-		  (with-access::JsPropertyCache cache (cmap pmap index owner)
+		  (with-access::JsPropertyCache cache (cmap pmap index owner cntmiss)
 		     (let ((el-or-desc (vector-ref elements i)))
 			(cond
 			   ((isa? el-or-desc JsPropertyDescriptor)
@@ -1304,6 +1313,7 @@
 			    ;; direct access to the direct object
 			    [assert (i) (<=fx i (vector-length elements))]
 			    (js-pcache-update-direct! cache i o)
+			    (js-pcache-vtable! omap cache i)
 			    el-or-desc)
 			   (else
 			    ;; direct access to a prototype object
@@ -1630,6 +1640,7 @@
 				 (when (invalidate-cache-method! v methods i)
 				    (reset-cmap-vtable! cmap)
 				    (set! cmap (duplicate::JsConstructMap cmap
+						  (vlen 0)
 						  (vtable '#()))))
 				 (when pcache
 				    [assert (i) (<=fx i (vector-length elements))]
@@ -1640,6 +1651,7 @@
 			     (when (invalidate-cache-method! v methods i)
 				(reset-cmap-vtable! cmap)
 				(set! cmap (duplicate::JsConstructMap cmap
+					      (vlen 0)
 					      (vtable '#()))))
 			     (when pcache
 				[assert (i) (<=fx i (vector-length elements))]
@@ -2574,8 +2586,8 @@
 		(js-apply %this f obj args)))
 	    (else
 	     ;; cache miss
-	     (with-access::JsConstructMap omap (vtable)
-		(if (and (<fx vindex (vector-length vtable))
+	     (with-access::JsConstructMap omap (vlen vtable %id)
+		(if (and (<fx vindex vlen)
 			 (procedure? (vector-ref vtable vindex)))
 		    (let ((m (vector-ref vtable vindex)))
 		       (apply m obj args))
@@ -2693,8 +2705,8 @@
 		   (js-apply %this f obj args)))
 	       (else
 		;; cache miss
-		(with-access::JsConstructMap %omap (vtable)
-		   (if (and (<fx vindex (vector-length vtable))
+		(with-access::JsConstructMap %omap (vlen vtable)
+		   (if (and (<fx vindex vlen)
 			    (procedure? (vector-ref vtable vindex)))
 		       (let ((m (vector-ref vtable vindex)))
 			  (apply m obj args))
@@ -2710,8 +2722,10 @@
 (define (js-object-method-call/cache-miss %this::JsGlobalObject
 	   o::JsObject name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache args::pair-nil)
-   (with-access::JsPropertyCache ccache (pmap vtable vindex method)
-      (when (and (procedure? method) (isa? pmap JsConstructMap))
+   (with-access::JsPropertyCache ccache (pmap vindex method)
+      (when (and (procedure? method)
+		 (isa? pmap JsConstructMap)
+		 (=fx (procedure-arity method) (+fx 1 (length args))))
 	 (when (=fx vindex (js-not-a-index))
 	    (set! vindex (js-get-vindex %this)))
 	 (js-cmap-vtable-add! pmap vindex method))
@@ -2835,7 +2849,7 @@
 				  ((isa? f JsFunction)
 				   (with-access::JsFunction f (len method)
 				      (cond
-					 ((=fx len (length args))
+					 ((=fx (procedure-arity method) (+fx 1 (length args)))
 					  (with-access::JsPropertyCache ccache (pmap cmap index (cmethod method))
 					     ;; correct arity, put in cache
 					     (set! pmap omap)
@@ -2850,7 +2864,7 @@
 						(set! pmap omap)
 						(set! cmap #t)
 						(set! index i)
-						(set! cmethod method))))
+						(set! cmethod procedure))))
 					 (else
 					  ;; arity missmatch, never cache
 					  (with-access::JsPropertyCache ccache (cmap)
