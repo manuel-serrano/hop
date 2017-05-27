@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Sun May 21 09:31:58 2017 (serrano)                */
+;*    Last change :  Fri May 26 07:25:45 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -265,7 +265,7 @@
    (with-access::JsGenerator this (cmap properties elements)
       (when (and (null? properties) (isa? cmap JsConstructMap))
 	 ;; de-optimze the generator first
-	 (set! cmap #f)
+	 (set! cmap (js-not-a-cmap))
 	 (set! elements '#()))
       ;; regular [[PUT]] invocation
       (call-next-method)))

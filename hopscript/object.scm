@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun May 21 08:32:16 2017 (serrano)                */
+;*    Last change :  Fri May 26 09:45:34 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -740,7 +740,7 @@
 	 (let ((o (js-cast-object o %this "isSealed")))
 	    (with-access::JsObject o (properties cmap)
 	       (and
-		(not cmap)
+		(eq? cmap (js-not-a-cmap))
 		;; 2
 		(every (lambda (desc::JsPropertyDescriptor)
 			  (with-access::JsPropertyDescriptor desc (configurable)
@@ -763,7 +763,7 @@
 	 (let ((o (js-cast-object o %this "isFrozen")))
 	    (with-access::JsObject o (properties cmap)
 	       (and
-		(or (not cmap)
+		(or (eq? cmap (js-not-a-cmap))
 		    (with-access::JsConstructMap cmap (names)
 		       (=fx (vector-length names) 0)))
 		;; 2
@@ -829,7 +829,9 @@
 	     "Prototype of non-extensible object mutated" v)
 	  (with-access::JsObject o (__proto__ cmap)
 	     (js-invalidate-pcaches-pmap!)
-	     (set! cmap (duplicate::JsConstructMap cmap (%id (gencmapid))))
+	     (set! cmap (if (eq? cmap (js-not-a-cmap))
+			    cmap
+			    (duplicate::JsConstructMap cmap (%id (gencmapid)))))
 	     (set! __proto__ v)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1050,7 +1052,7 @@
 	  (props (js-cast-object (js-toobject %this properties) %this
 		    "defineProperties")))
       (with-access::JsObject props (cmap (oprops properties))
-	 (if cmap
+	 (if (not (eq? cmap (js-not-a-cmap)))
 	     (defineproperties/cmap cmap o props)
 	     (defineproperties/properties oprops o props)))
       obj))

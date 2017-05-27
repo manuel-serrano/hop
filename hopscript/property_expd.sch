@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu May 25 11:11:43 2017 (serrano)                */
+;*    Last change :  Fri May 26 08:06:50 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -262,8 +262,6 @@
 		  (vector-ref elements ,cindex)
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
 		     (js-property-value ,o desc ,%this)))))
-	  ((not %omap)
-	   (js-get ,o ,prop %this))
 	  (else
 	   (with-access::JsConstructMap %omap (vlen vtable %id)
 	      (if (<fx ,vindx vlen)
@@ -449,8 +447,6 @@
 	       (with-access::JsObject ,cowner (elements)
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindx) 1))))
 		     (js-property-value-set! ,o desc ,tmp %this)))))
-	  ((not %omap)
-	   (js-put-jsobject! ,o ,prop ,tmp ,throw #t ,cache ,%this))
 	  (else
 	   (with-access::JsConstructMap %omap (vlen vtable)
 	      (if (and (<fx ,vindx vlen)
@@ -483,6 +479,7 @@
 		      (=fx len ,len)))
 	      (with-access::JsPropertyCache ,ccache (method cmap)
 		 (with-access::JsFunction ,fun (procedure)
+		    ;; MS CARE: vraiment tres bizarre
 		    (set! cmap ,fun)
 		    (set! method procedure)
 		    (procedure ,this ,@args))))

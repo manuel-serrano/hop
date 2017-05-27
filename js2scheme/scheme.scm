@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon May 22 19:01:07 2017 (serrano)                */
+;*    Last change :  Sat May 27 06:17:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -573,6 +573,13 @@
 		      (register-exit-function!
 			 (lambda (n)
 			    (show-cache-misses)
+			    n)))
+		   (when (string-contains (or (getenv "HOPTRACE") "")
+			    "hopscript:hint")
+		      (log-hint! ,(config-get conf :profile #f))
+		      (register-exit-function!
+			 (lambda (n)
+			    (show-hints)
 			    n)))
 		   (thread-join! (thread-start-joinable! %worker)))))))
 	 
@@ -4743,11 +4750,10 @@
 			  (with-access::J2SDataPropertyInit i (val)
 			     (j2s-scheme val mode return conf hint totype)))
 		     inits)))
-	 (if (or #t
-		 (any (lambda (i)
-			 (with-access::J2SDataPropertyInit i (val)
-			    (maybe-function? val)))
-		    inits))
+	 (if (any (lambda (i)
+		     (with-access::J2SDataPropertyInit i (val)
+			(maybe-function? val)))
+		inits)
 	     `(with-access::JsGlobalObject %this (__proto__)
 		 (js-object-literal-init!
 		    (instantiate::JsObject

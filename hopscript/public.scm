@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon May 22 19:16:18 2017 (serrano)                */
+;*    Last change :  Fri May 26 09:45:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -16,7 +16,7 @@
 
    (option (set! *compiler-debug-trace* 0))
 
-   (extern ($js-make-jsobject::JsObject (::int ::obj ::obj ::byte)
+   (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::byte)
 	      "bgl_make_jsobject"))
    
    (library hop js2scheme)

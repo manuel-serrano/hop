@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sun May 21 09:31:34 2017 (serrano)                */
+;*    Last change :  Fri May 26 07:25:06 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -546,7 +546,7 @@
 	       (with-access::JsTypedArray o (cmap bpe __proto__ properties
 					       elements)
 		  (js-object-mode-extensible-set! o #t)
-		  (set! cmap #f)
+		  (set! cmap (js-not-a-cmap))
 		  (set! properties '())
 		  (set! bpe (fixnum->uint32 bp))
 		  (set! elements '#())
@@ -1054,7 +1054,7 @@
 	 
 	 (define (js-dataview-alloc constructor::JsFunction %this)
 	    (instantiate::JsDataView
-	       (cmap #f)
+	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor 'prototype %this))))
 	 
 	 (define js-dataview

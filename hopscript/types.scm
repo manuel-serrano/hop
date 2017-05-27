@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu May 25 10:59:44 2017 (serrano)                */
+;*    Last change :  Fri May 26 08:04:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -74,7 +74,7 @@
 	      %get::procedure %set::procedure)
 	   
 	   (final-class JsPropertyCache
-	      (cmap::obj (default #unspecified))
+	      (cmap::obj (default #f))
 	      (pmap::obj (default #t))
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
@@ -112,7 +112,7 @@
 	      (__proto__ (default (js-null)))
 	      (mode::byte (default (js-object-default-mode)))
 	      (properties::pair-nil (default '()))
-	      (cmap (default #f))
+	      (cmap::JsConstructMap (default (js-not-a-cmap)))
 	      (elements::vector (default '#())))
 
 	   (class JsWrapper::JsObject
@@ -341,6 +341,10 @@
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)
 
+	   *js-not-a-cmap*
+	   (inline js-not-a-cmap::JsConstructMap)
+	   (inline js-not-a-index::long)
+
 	   (gencmapid::uint32)))
 
 ;*---------------------------------------------------------------------*/
@@ -554,9 +558,11 @@
 ;*    js-clone ::JsConstructMap ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-clone obj::JsConstructMap)
-   (with-access::JsConstructMap obj (names)
-      (duplicate::JsConstructMap obj
-	 (names (vector-copy names)))))
+   (if (eq? obj (js-not-a-cmap))
+       obj
+       (with-access::JsConstructMap obj (names)
+	  (duplicate::JsConstructMap obj
+	     (names (vector-copy names))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ...                                                    */
@@ -707,3 +713,23 @@
 ;*    cmapid ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define cmapid 0)
+
+;*---------------------------------------------------------------------*/
+;*    *js-not-a-cmap* ...                                              */
+;*---------------------------------------------------------------------*/
+(define *js-not-a-cmap*
+   (instantiate::JsConstructMap
+      (%id 0)))
+
+;*---------------------------------------------------------------------*/
+;*    js-not-a-cmap ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-not-a-cmap::JsConstructMap)
+   *js-not-a-cmap*)
+
+;*---------------------------------------------------------------------*/
+;*    js-not-a-index ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-not-a-index::long)
+   (bit-lsh 1 28))
+
