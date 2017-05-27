@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Mon May 22 07:56:31 2017 (serrano)                */
+/*    Last change :  Fri May 26 07:26:45 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -137,7 +137,7 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
    o->BgL___proto__z00 = __proto__;
    o->BgL_modez00 = mode;
    o->BgL_propertiesz00 = BNIL; 
-   o->BgL_cmapz00 = constrmap;
+   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
@@ -192,7 +192,7 @@ bgl_make_jsarray( int size, obj_t constrmap, obj_t __proto__, char mode ) {
    o->BgL___proto__z00 = __proto__;
    o->BgL_modez00 = mode; 
    o->BgL_propertiesz00 = BNIL; 
-   o->BgL_cmapz00 = constrmap;
+   o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = BVECTOR( empty_vector );
    o->BgL_lengthz00 = 0;
    o->BgL_ilenz00 = 0;

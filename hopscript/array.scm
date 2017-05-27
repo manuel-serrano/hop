@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu May 25 08:25:01 2017 (serrano)                */
+;*    Last change :  Fri May 26 10:08:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -19,7 +19,7 @@
    (include "../nodejs/nodejs_debug.sch"
 	    "stringliteral.sch")
    
-   (extern ($js-make-jsarray::JsArray (::int ::obj ::obj ::byte)
+   (extern ($js-make-jsarray::JsArray (::int ::JsConstructMap ::obj ::byte)
 	      "bgl_make_jsarray"))
    
    (import __hopscript_types
@@ -2022,8 +2022,7 @@
 (define (js-array-alloc::JsArray %this)
    (with-access::JsGlobalObject %this (js-array-prototype)
       (instantiate::JsArray
-	 ;; (cmap (instantiate::JsConstructMap)))
-	 (cmap #f)
+	 (cmap (js-not-a-cmap))
 	 (__proto__ js-array-prototype))))
 
 ;*---------------------------------------------------------------------*/
@@ -2035,8 +2034,7 @@
 		       js-array-prototype
 		       (js-get constructor 'prototype %this))))
 	 (instantiate::JsArray
-	    ;; (cmap (instantiate::JsConstructMap)))
-	    (cmap #f)
+	    (cmap (js-not-a-cmap))
 	    (__proto__ proto)))))
 
 ;*---------------------------------------------------------------------*/
@@ -2129,7 +2127,8 @@
     (define-inline (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
        (let ((mode (js-object-default-mode)))
 	  (with-access::JsGlobalObject %this (js-array-prototype)
-	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) #f js-array-prototype mode)))))
+	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) (js-not-a-cmap)
+		js-array-prototype mode)))))
    (else
     (define (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
        (let ((mode (js-object-default-mode)))
@@ -2285,7 +2284,7 @@
 	   #!optional (offset #u32:0))
    ;; this function switches from a fast inlined array representation
    ;; to a slow inefficient object representation
-   (with-access::JsArray arr (vec ilen properties cmap)
+   (with-access::JsArray arr (vec ilen properties)
       (js-object-mode-inline-set! arr #f)
       (js-array-update-length-property! arr)
       (when (>fx (vector-length vec) 0)
@@ -2294,9 +2293,6 @@
 	       (cons plen
 		  (append! (js-array-vector-properties arr %this offset)
 		     (cdr properties)))))
-	 ;; (set! cmap #f)
-	 ;; (set! vec '#())
-	 ;; (set! ilen #u32:0)
 	 (set! ilen offset)
 	 (set! *JS-ARRAY-MARK* (+fx 1 *JS-ARRAY-MARK*)))
       arr))
@@ -2316,7 +2312,7 @@
 	    (if (<u32 i len)
 		(let ((d (js-get-own-property o (js-toname i %this) %this)))
 		   (if (js-array-inline-value-descriptor? d)
-		       (if cmap
+		       (if (not (eq? cmap (js-not-a-cmap)))
 			   (error "reinilne-array!" "array cmap not implemented" i)
 			   (begin
 			      (set! properties (remq! d properties))
@@ -2509,7 +2505,7 @@
    (define (js-array-property-names arr)
       (let loop ((o arr))
 	 (with-access::JsObject o (cmap properties __proto__)
-	    (append (if cmap
+	    (append (if (not (eq? cmap (js-not-a-cmap)))
 			(with-access::JsConstructMap cmap (names)
 			   (vector->list names))
 			(map (lambda (d)
@@ -2967,9 +2963,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-maybe-fill this value start end %this)
    (if (isa? this JsArray)
-       (begin
-	  (tprint "ICI: " (typeof this) " " (isa? this JsArray))
-	  (js-array-fill this value start end %this))
+       (js-array-fill this value start end %this)
        (js-call3 %this (js-get this 'fill %this) this value start end)))
 
 ;*---------------------------------------------------------------------*/

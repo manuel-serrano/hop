@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed May 24 13:58:38 2017 (serrano)                */
+;*    Last change :  Sat May 27 06:08:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -638,7 +638,7 @@
 		       (params params)
 		       (body (duplicate::J2SBlock body
 				(nodes (if (config-get conf :profile #f)
-					   (list (profile-fun fun #f) mbody)
+					   (list (profile-fun fun #t) mbody)
 					   (list mbody))))))))))))
 
 ;*---------------------------------------------------------------------*/

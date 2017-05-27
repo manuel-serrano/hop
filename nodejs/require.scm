@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed May 24 08:46:56 2017 (serrano)                */
+;*    Last change :  Fri May 26 07:55:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1409,7 +1409,7 @@
       
       (let loop ((o obj))
 	 (with-access::JsObject o (cmap properties __proto__)
-	    (if cmap
+	    (if (not (eq? cmap (js-not-a-cmap)))
 		(with-access::JsConstructMap cmap (names)
 		   (vfor-each in-mapped-property names))
 		(for-each in-property properties)))))

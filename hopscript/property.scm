@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu May 25 11:04:21 2017 (serrano)                */
+;*    Last change :  Sat May 27 06:30:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -14,11 +14,12 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_property
-
+   
    (library hop)
-
+   
    (option  (register-srfi! 'cache-level2)
-      (bigloo-compiler-debug-set! 0))
+;*       (bigloo-compiler-debug-set! 0))                               */
+      (bigloo-compiler-debug-set! 2))
    
    (include "stringliteral.sch"
 	    "property.sch")
@@ -37,7 +38,7 @@
 	      "bgl_make_pcache")
 	   ($js-invalidate-pcaches-pmap!::void (::obj)
 	      "bgl_invalidate_pcaches_pmap"))
-
+   
    (export (js-debug-object ::obj #!optional (msg ""))
 	   (js-debug-pcache ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
@@ -45,7 +46,7 @@
 	   (js-invalidate-pcaches-pmap!)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-cmap ::JsPropertyCache)
-
+	   
 	   (js-names->cmap::JsConstructMap ::vector)
 	   (js-object-literal-init! ::JsObject)
 	   
@@ -133,7 +134,7 @@
 	      (enumerable #t)
 	      (configurable #t)
 	      (hidden-class #t))
-
+	   
 	   (js-define ::JsGlobalObject ::JsObject
 	      ::symbol ::procedure ::obj ::obj ::obj)
 	   
@@ -196,24 +197,33 @@
 	      ::JsPropertyCache ::JsPropertyCache ::pair-nil)
 	   
 	   (js-call/cache ::JsGlobalObject obj ::JsPropertyCache this . args)
-
-	   (inline js-not-a-index::long)
+	   
 	   (js-get-vindex::long ::JsGlobalObject)
-
-	   (profile-hint ::obj ::bool)
+	   
 	   (log-cache-miss!)
 	   (add-cache-miss! ::symbol ::obj)
-	   (show-cache-misses)))
+	   (show-cache-misses)
+	   (log-hint! ::bool)
+	   (profile-hint ::obj ::bool)
+	   (show-hints)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-debug-object obj #!optional (msg ""))
    (if (isa? obj JsObject)
-       (with-access::JsObject obj (cmap elements)
-	  (if (isa? cmap JsConstructMap)
+       (with-access::JsObject obj (cmap elements properties)
+	  (if (eq? cmap (js-not-a-cmap))
 	      (with-access::JsConstructMap cmap (%id names)
-		 (fprint (current-error-port) msg (typeof obj)
+		 (fprint (current-error-port) msg (typeof obj) " UNMAPPED"
+		    " length=" (length properties)
+		    "\n  prop.names="
+		    (map (lambda (d)
+			    (with-access::JsPropertyDescriptor d (name)
+			       name))
+		       properties)))
+	      (with-access::JsConstructMap cmap (%id names)
+		 (fprint (current-error-port) msg (typeof obj) " MAPPED"
 		    " length=" (vector-length elements)
 		    "\n  elements=" (vector-map
 				       (lambda (v)
@@ -222,10 +232,7 @@
 					      v))
 				       elements)
 		    "\n  cmap.%id=" %id
-		    " cmap.names=" names))
-		 (fprint (current-error-port) msg (typeof obj)
-		    " packed=" (js-object-mode-packed? obj)
-		    " elements=" (vector-length elements))))
+		    " cmap.names=" names))))
        (fprint (current-error-port) msg (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -491,46 +498,6 @@
        (transition value flags nextmap)
        (transition name flags nextmap)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    cmap-same-transition? ...                                        *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (cmap-same-transition?::bool cmap::JsConstructMap name::obj val flags::int) */
-;*    (with-access::JsConstructMap cmap ((t1 transition))              */
-;*       (and (=fx (transition-flags t1) flags)                        */
-;* 	   (if (eq? name '__proto__)                                   */
-;* 	       (eq? (transition-name-or-value t1) val)                 */
-;* 	       (eq? (transition-name-or-value t1) name)))))            */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    find-old-transition ...                                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (find-old-transition omap::JsConstructMap name flags::int)  */
-;*    (unless (eq? name '__proto__)                                    */
-;*       (with-access::JsConstructMap omap (backup)                    */
-;* 	 (find (lambda (el)                                            */
-;* 		  (let ((t (car el)))                                  */
-;* 		     (and (eq? (transition-name-or-value t) name)      */
-;* 			  (=fx (transition-flags t) flags))))          */
-;* 	    backup))))                                                 */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    save-cmap-transition! ...                                        *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (save-cmap-transition! cmap::JsConstructMap)                */
-;*    (with-access::JsConstructMap cmap (transition nextmap backup)    */
-;*       (when nextmap                                                 */
-;* 	 (unless (assq transition backup)                              */
-;* 	    (set! backup (cons (cons transition nextmap) backup))))))  */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    restore-cmap-transition! ...                                     *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (restore-cmap-transition! cmap::JsConstructMap restore::pair-nil) */
-;*    (save-cmap-transition! cmap)                                     */
-;*    (with-access::JsConstructMap cmap (transition nextmap)           */
-;*       (set! transition (car restore))                               */
-;*       (set! nextmap (cdr restore))))                                */
-
 ;*---------------------------------------------------------------------*/
 ;*    cmap-find-transition ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -642,12 +609,6 @@
       obj))
 
 ;*---------------------------------------------------------------------*/
-;*    js-not-a-index ...                                               */
-;*---------------------------------------------------------------------*/
-(define-inline (js-not-a-index::long)
-   (bit-lsh 1 28))
-
-;*---------------------------------------------------------------------*/
 ;*    js-get-vindex ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-get-vindex %this::JsGlobalObject)
@@ -747,7 +708,7 @@
 
    (define (find obj name)
       `(with-access::JsObject ,obj (cmap __proto__)
-	 (if cmap
+	 (if (not (eq? cmap (js-not-a-cmap)))
 	     (jsobject-map-find ,obj ,name ,foundinmap
 		(lambda ()
 		   ,(if (pair? loop)
@@ -782,7 +743,7 @@
 ;; I don't understand why.
 (define (js-object-unmap! o::JsObject)
    (with-access::JsObject o (cmap elements properties)
-      (when cmap
+      (unless (eq? cmap (js-not-a-cmap))
 	 (with-access::JsConstructMap cmap (names)
 	    (let loop ((i (-fx (vector-length names) 1))
 		       (acc '()))
@@ -802,7 +763,7 @@
 				  (name (vector-ref names i))
 				  (value (vector-ref elements i)))))
 		      (loop (-fx i 1) (cons desc acc)))))))
-	 (set! cmap #f)
+	 (set! cmap (js-not-a-cmap))
 	 (set! elements '#())))
    o)
 
@@ -1019,7 +980,7 @@
    
    (with-access::JsObject o (cmap properties)
       (cond
-	 (cmap
+	 ((not (eq? cmap (js-not-a-cmap)))
 	  (cmap->names cmap))
 	 ((not enump)
 	  (map (lambda (p)
@@ -1039,7 +1000,7 @@
    (define (symbol->jsstring n)
       (js-string->jsstring (symbol->string! n)))
 
-   (with-access::JsObject o (cmap properties)
+   (with-access::JsObject o (properties)
       (apply vector
 	 (filter-map (lambda (n) (when (symbol? n) (symbol->jsstring n)))
 	    (properties-names o enump)))))
@@ -1056,7 +1017,7 @@
 ;*    js-properties-symbol::vector ::JsObject ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-symbol::vector o::JsObject %this::JsGlobalObject)
-   (with-access::JsObject o (cmap properties)
+   (with-access::JsObject o (properties)
       (apply vector
 	 (filter-map (lambda (n) (when (isa? n JsSymbol) n))
 	    (properties-names o #t)))))
@@ -1295,7 +1256,7 @@
 		   (set! vindex (js-get-vindex %this)))
 		(js-cmap-vtable-add! omap vindex i))
 	     (set! cntmiss (+fx cntmiss 1)))))
-      
+
    (let loop ((obj o))
       (jsobject-find obj name
 	 ;; map search
@@ -1760,18 +1721,12 @@
 		;; 11.13.1
 		(js-raise-reference-error %this
 		   "[[PUT]], \"~a\" is not defined" p))
-	       (cmap
+	       ((not (eq? cmap (js-not-a-cmap)))
 		;; 8.12.5, step 6
 		(extend-mapped-object!))
 	       (else
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
-   
-   (assert (o p)
-      (with-access::JsObject o (elements cmap)
-	 (or (not cmap)
-	     (with-access::JsConstructMap cmap (names)
-		(>=fx (vector-length elements) (vector-length names))))))
    
    (add-cache-miss! 'put name)
    
@@ -1838,14 +1793,16 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-put-name/cache-miss! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
    (with-access::JsObject o ((omap cmap))
-      (let* ((%omap omap)
-	     (tmp (js-put-jsobject! o prop v throw #t cache %this)))
-	 (with-access::JsPropertyCache cache (index cmap vindex)
-	    (when (>=fx index 0)
-	       (when (=fx vindex (js-not-a-index))
-		  (set! vindex (js-get-vindex %this)))
-	       (js-cmap-vtable-add! %omap vindex (cons index cmap))))
-	 tmp)))
+      (if (eq? omap (js-not-a-cmap))
+	  (js-put-jsobject! o prop v throw #t cache %this)
+	  (let* ((%omap omap)
+		 (tmp (js-put-jsobject! o prop v throw #t cache %this)))
+	     (with-access::JsPropertyCache cache (index cmap vindex)
+		(when (>=fx index 0)
+		   (when (=fx vindex (js-not-a-index))
+		      (set! vindex (js-get-vindex %this)))
+		   (js-cmap-vtable-add! %omap vindex (cons index cmap))))
+	     tmp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind! ...                                                     */
@@ -2044,7 +2001,7 @@
 	 (js-undefined)))
 
    (with-access::JsObject o (cmap)
-      (if cmap
+      (if (not (eq? cmap (js-not-a-cmap)))
 	  (jsobject-map-find o name
 	     update-mapped-object!
 	     extend-mapped-object!)
@@ -2099,7 +2056,7 @@
       (cond
 	 ((isa? o JsObject)
 	  (with-access::JsObject o (cmap)
-	     (if cmap
+	     (if (not (eq? cmap (js-not-a-cmap)))
 		 (jsobject-map-find o n
 		    (lambda (o i)
 		       (delete-configurable o
@@ -2515,7 +2472,7 @@
    
    (let loop ((o obj))
       (with-access::JsObject o (cmap properties __proto__ elements)
-	 (if cmap
+	 (if (not (eq? cmap (js-not-a-cmap)))
 	     (with-access::JsConstructMap cmap (names)
 		(vfor-each in-mapped-property elements names))
 	     (for-each in-property properties))
@@ -2891,12 +2848,6 @@
 	 loop)))
 
 ;*---------------------------------------------------------------------*/
-;*    profile-hint ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (profile-hint name typed)
-   (tprint name " " typed))
-
-;*---------------------------------------------------------------------*/
 ;*    *misses* ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define *misses* '())
@@ -2947,5 +2898,71 @@
 		      (cddr what)))
 		(newline (current-error-port)))
       *misses*)
-   (print "total cache misses: " (apply + (map cadr *misses*)))
-   (print "hidden classes num: " (gencmapid)))
+   (fprint (current-error-port)
+      "total cache misses: " (apply + (map cadr *misses*)))
+   (fprint (current-error-port)
+      "hidden classes num: " (gencmapid)))
+
+;*---------------------------------------------------------------------*/
+;*    *hints* ...                                                      */
+;*---------------------------------------------------------------------*/
+(define *hints* '())
+(define *log-hints* #f)
+(define *hint-threshold* 10)
+
+;*---------------------------------------------------------------------*/
+;*    log-hint! ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (log-hint! enable)
+   (unless enable
+      (warning "To enable hints logging, recompile with --profile"))
+   (set! *log-hints* #t))
+
+;*---------------------------------------------------------------------*/
+;*    profile-hint ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (profile-hint name typed)
+   (when *log-hints*
+      (let ((o (assq name *hints*)))
+	 (cond
+	    ((not o)
+	     (set! *hints*
+		(cons (cons name (if typed (cons 1 0) (cons 0 1))) *hints*)))
+	    (typed
+	     (set-car! (cdr o) (+fx 1 (cadr o))))
+	    (else
+	     (set-cdr! (cdr o) (+fx 1 (cddr o))))))))
+
+;*---------------------------------------------------------------------*/
+;*    show-hints ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (show-hints)
+   (let ((m (pregexp-match "hopscript:hint([0-9]+)" (getenv "HOPTRACE"))))
+      (when m
+	 (set! *hint-threshold* (string->integer (cadr m)))))
+   (newline (current-error-port))
+   (fprint (current-error-port) "function hints:")
+   (for-each (lambda (e)
+		(when (>=fx (+ (cadr e) (cddr e)) *hint-threshold*))
+		(fprint (current-error-port) "   "
+		   (car e) ": " (cadr e) "/" (cddr e)))
+      (sort (lambda (e1 e2)
+	       (cond
+		  ((>fx (+fx (cadr e1) (cddr e1)) (+fx (cadr e2) (cddr e2))) #t)
+		  ((<fx (+fx (cadr e1) (cddr e1)) (+fx (cadr e2) (cddr e2))) #f)
+		  ((<fx (cdr e1) (cdr e2)) #f)
+		  (else
+		   (string<=? (symbol->string! (car e1))
+		      (symbol->string! (car e2))))))
+	 *hints*))
+   (newline (current-error-port))
+   (fprint (current-error-port)
+      "hinted functions num: " (length *hints*))
+   (fprint (current-error-port)
+      "total hint hits: " (apply + (map cadr *hints*)))
+   (fprint (current-error-port)
+      "total hint misses: " (apply + (map cddr *hints*))))
+
+
+
+

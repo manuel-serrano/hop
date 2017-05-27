@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 21 09:32:09 2017 (serrano)                */
+;*    Last change :  Fri May 26 07:12:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -289,7 +289,7 @@
 	 
 	 (let loop ((o obj))
 	    (with-access::JsObject o (cmap properties __proto__)
-	       (if cmap
+	       (if (not (eq? cmap (js-not-a-cmap)))
 		   (with-access::JsConstructMap cmap (names)
 		      (vfor-each (lambda (n)
 				    (when n (proc n))) names))

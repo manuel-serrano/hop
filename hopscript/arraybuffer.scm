@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Sun May 21 09:31:27 2017 (serrano)                */
+;*    Last change :  Fri May 26 07:25:24 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -164,7 +164,7 @@
 
 	 (define (js-arraybuffer-alloc constructor::JsFunction %this)
 	    (instantiate::JsArrayBuffer
-	       (cmap #f)
+	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 (define (js-arraybuffer-construct this::JsArrayBuffer . items)
