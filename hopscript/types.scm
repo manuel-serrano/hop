@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri May 26 08:04:26 2017 (serrano)                */
+;*    Last change :  Sun May 28 07:24:06 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -169,9 +169,7 @@
 	      (js-apply (default #f))
 	      (js-vindex (default 0)))
 	   
-	   (class JsArray::JsObject
-	      ;; (sealed::bool (default #f))
-	      ;; (frozen::bool (default #f))
+	   (final-class JsArray::JsObject
 	      (length::uint32 (default #u32:0))
 	      (ilen::uint32 (default #u32:0))
 	      (vec::vector (default '#())))
