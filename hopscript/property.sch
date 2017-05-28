@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed May 17 08:14:29 2017 (serrano)                */
+;*    Last change :  Sun May 28 06:45:34 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -55,12 +55,12 @@
    js-object-get-name/cache-level1-expander)
 (define-expander js-object-get-name/cache-level2
    js-object-get-name/cache-level2-expander)
-;* (define-expander js-this-get-name/cache                             */
-;*    js-this-get-name/cache-expander)                                 */
 (define-expander js-global-object-get-name
    js-global-object-get-name-expander)
 (define-expander js-global-object-get-name/cache
    js-global-object-get-name/cache-expander)
+(define-expander js-get-length
+   js-get-length-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-XXX ...                                                   */
@@ -73,9 +73,6 @@
    js-object-put-name/cache-level1-expander)
 (define-expander js-object-put-name/cache-level2!
    js-object-put-name/cache-level2-expander)
-
-;* (define-expander js-this-put-name/cache!                            */
-;*    js-this-put-name/cache-expander)                                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-call-XXX ...                                                  */
