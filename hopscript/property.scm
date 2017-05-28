@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat May 27 06:30:26 2017 (serrano)                */
+;*    Last change :  Sun May 28 06:43:03 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -18,8 +18,7 @@
    (library hop)
    
    (option  (register-srfi! 'cache-level2)
-;*       (bigloo-compiler-debug-set! 0))                               */
-      (bigloo-compiler-debug-set! 2))
+            (bigloo-compiler-debug-set! 0))
    
    (include "stringliteral.sch"
 	    "property.sch")
@@ -2882,6 +2881,9 @@
    (let ((m (pregexp-match "hopscript:cache=([0-9]+)" (getenv "HOPTRACE"))))
       (when m
 	 (set! *log-miss-threshold* (string->integer (cadr m)))))
+   (fprint (current-error-port)
+      "caches:\n"
+      "=======\n")
    (for-each (lambda (what)
 		(fprint (current-error-port) (car what) ": " (cadr what))
 		(for-each (lambda (e)
@@ -2940,8 +2942,9 @@
    (let ((m (pregexp-match "hopscript:hint([0-9]+)" (getenv "HOPTRACE"))))
       (when m
 	 (set! *hint-threshold* (string->integer (cadr m)))))
-   (newline (current-error-port))
-   (fprint (current-error-port) "function hints:")
+   (fprint (current-error-port)
+      "function hints:\n"
+      "===============\n")
    (for-each (lambda (e)
 		(when (>=fx (+ (cadr e) (cddr e)) *hint-threshold*))
 		(fprint (current-error-port) "   "
@@ -2959,9 +2962,10 @@
    (fprint (current-error-port)
       "hinted functions num: " (length *hints*))
    (fprint (current-error-port)
-      "total hint hits: " (apply + (map cadr *hints*)))
+      "  total hint hits: " (apply + (map cadr *hints*)))
    (fprint (current-error-port)
-      "total hint misses: " (apply + (map cddr *hints*))))
+      "  total hint misses: " (apply + (map cddr *hints*)))
+   (newline))
 
 
 
