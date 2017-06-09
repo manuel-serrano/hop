@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun May 28 06:43:03 2017 (serrano)                */
+;*    Last change :  Thu Jun  8 13:57:56 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -14,6 +14,12 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_property
+
+   (cond-expand
+      (enable-patch (library patch)))
+
+   (cond-expand
+      (enable-patch (option (set! *optim-patch?* #t))))
    
    (library hop)
    
@@ -60,7 +66,6 @@
 	   (js-property-value ::obj ::JsPropertyDescriptor ::JsGlobalObject)
 	   (js-property-value-set! obj::JsObject ::JsPropertyDescriptor v ::JsGlobalObject)
 	   
-	   (inline js-object-packed-ref obj::JsObject index::long)
 	   (js-object-add! obj::JsObject index::long value)
 	   (js-object-push! obj::JsObject index::long value)
 	   
@@ -202,9 +207,9 @@
 	   (log-cache-miss!)
 	   (add-cache-miss! ::symbol ::obj)
 	   (show-cache-misses)
-	   (log-hint! ::bool)
-	   (profile-hint ::obj ::bool)
-	   (show-hints)))
+	   (log-function! ::bool)
+	   (profile-function ::obj ::symbol)
+	   (show-functions)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -251,13 +256,6 @@
 		      " pmap.names=" pnames)))))
        (fprint (current-error-port) msg (typeof pcache))))
 	 
-;*---------------------------------------------------------------------*/
-;*    js-object-packed-ref ...                                         */
-;*---------------------------------------------------------------------*/
-(define-inline (js-object-packed-ref obj::JsObject idx::long)
-   (with-access::JsObject obj (elements)
-      (vector-ref elements idx)))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-object-add! ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -430,7 +428,14 @@
       (with-access::JsPropertyCache pcache (cmap pmap index)
 	 (set! cmap omap)
 	 (set! pmap #t)
-	 (set! index i))))
+	 (set! index i)
+	 (cond-expand
+	    (enable-patch
+	     (with-access::JsPropertyCache pcache (%patchmap %patchindex %patchtable)
+		(when (>=fx %patchmap 0)
+		   (tprint "PATCHING...")
+		   (patch-set! %patchtable %patchmap omap)
+		   (patch-set! %patchtable %patchindex i))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-owner! ...                                      */
@@ -2881,9 +2886,7 @@
    (let ((m (pregexp-match "hopscript:cache=([0-9]+)" (getenv "HOPTRACE"))))
       (when m
 	 (set! *log-miss-threshold* (string->integer (cadr m)))))
-   (fprint (current-error-port)
-      "caches:\n"
-      "=======\n")
+   (fprint (current-error-port) "\nCACHES:\n" "=======\n")
    (for-each (lambda (what)
 		(fprint (current-error-port) (car what) ": " (cadr what))
 		(for-each (lambda (e)
@@ -2906,67 +2909,83 @@
       "hidden classes num: " (gencmapid)))
 
 ;*---------------------------------------------------------------------*/
-;*    *hints* ...                                                      */
+;*    *functions* ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define *hints* '())
-(define *log-hints* #f)
-(define *hint-threshold* 10)
+(define *functions* '())
+(define *log-functions* #f)
+(define *function-threshold* 10)
 
 ;*---------------------------------------------------------------------*/
-;*    log-hint! ...                                                    */
+;*    log-function! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (log-hint! enable)
+(define (log-function! enable)
    (unless enable
-      (warning "To enable hints logging, recompile with --profile"))
-   (set! *log-hints* #t))
+      (warning "To enable functions logging, recompile with --profile"))
+   (set! *log-functions* #t))
 
 ;*---------------------------------------------------------------------*/
-;*    profile-hint ...                                                 */
+;*    attr->index ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (profile-hint name typed)
-   (when *log-hints*
-      (let ((o (assq name *hints*)))
-	 (cond
-	    ((not o)
-	     (set! *hints*
-		(cons (cons name (if typed (cons 1 0) (cons 0 1))) *hints*)))
-	    (typed
-	     (set-car! (cdr o) (+fx 1 (cadr o))))
-	    (else
-	     (set-cdr! (cdr o) (+fx 1 (cddr o))))))))
+(define (attr->index attr)
+   (case attr
+      ((hint) 0)
+      ((nohint) 1)
+      ((type) 2)
+      ((notype) 3)
+      (else (error "profile-function" "illegal attr" attr))))
 
 ;*---------------------------------------------------------------------*/
-;*    show-hints ...                                                   */
+;*    profile-function ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (show-hints)
-   (let ((m (pregexp-match "hopscript:hint([0-9]+)" (getenv "HOPTRACE"))))
-      (when m
-	 (set! *hint-threshold* (string->integer (cadr m)))))
-   (fprint (current-error-port)
-      "function hints:\n"
-      "===============\n")
-   (for-each (lambda (e)
-		(when (>=fx (+ (cadr e) (cddr e)) *hint-threshold*))
-		(fprint (current-error-port) "   "
-		   (car e) ": " (cadr e) "/" (cddr e)))
-      (sort (lambda (e1 e2)
-	       (cond
-		  ((>fx (+fx (cadr e1) (cddr e1)) (+fx (cadr e2) (cddr e2))) #t)
-		  ((<fx (+fx (cadr e1) (cddr e1)) (+fx (cadr e2) (cddr e2))) #f)
-		  ((<fx (cdr e1) (cdr e2)) #f)
-		  (else
-		   (string<=? (symbol->string! (car e1))
-		      (symbol->string! (car e2))))))
-	 *hints*))
-   (newline (current-error-port))
-   (fprint (current-error-port)
-      "hinted functions num: " (length *hints*))
-   (fprint (current-error-port)
-      "  total hint hits: " (apply + (map cadr *hints*)))
-   (fprint (current-error-port)
-      "  total hint misses: " (apply + (map cddr *hints*)))
-   (newline))
+(define (profile-function name attr)
+   (when *log-functions*
+      (let ((o (assq name *functions*))
+	    (i (attr->index attr)))
+	 (if (not o)
+	     (let ((vec (make-vector (+fx 1 (attr->index 'notype)) 0)))
+		(vector-set! vec i 1)
+		(set! *functions* (cons (cons name (cons -1 vec)) *functions*)))
+	     (vector-set! (cddr o) i (+fx 1 (vector-ref (cddr o) i)))))))
 
-
-
-
+;*---------------------------------------------------------------------*/
+;*    show-functions ...                                               */
+;*---------------------------------------------------------------------*/
+(define (show-functions)
+   (with-output-to-port (current-error-port)
+      (lambda ()
+	 (let ((m (pregexp-match "hopscript:function([0-9]+)"
+		     (getenv "HOPTRACE"))))
+	    (when m
+	       (set! *function-threshold* (string->integer (cadr m)))))
+	 (for-each (lambda (e)
+		      (set-car! (cdr e) (apply + (vector->list (cddr e)))))
+	    *functions*)
+	 (print  "\nFUNCTIONS:\n" "==========\n")
+	 (print "total number of functions: "
+	    (length *functions*))
+	 (print "  total function hinted calls: "
+	    (let ((i (attr->index 'hint)))
+	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
+	 (print "  total function typed calls: " 
+	    (let ((i (attr->index 'type)))
+	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
+	 (print "  total function untyped calls: "
+	    (+ 
+	       (let ((i (attr->index 'notype)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*)))
+	       (let ((i (attr->index 'nohint)))
+		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*)))))
+	 (newline)
+	 (for-each (lambda (e)
+		      (when (>=fx (cadr e) *function-threshold*)
+			 (print (car e) ": "
+			    (format "~(/)" (vector->list (cddr e))))))
+	    (sort (lambda (e1 e2)
+		     (cond
+			((>fx (cadr e1) (cadr e2)) #t)
+			((<fx (cadr e1) (cadr e2)) #f)
+			(else
+			 (string<=? (symbol->string! (car e1))
+			    (symbol->string! (car e2))))))
+	       *functions*))
+	 (newline))))

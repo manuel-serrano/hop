@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopc/main.scm                     */
+;*    serrano/prgm/project/hop/3.1.x/hopc/main.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Dec  9 14:15:29 2015 (serrano)                */
-;*    Copyright   :  2004-15 Manuel Serrano                            */
+;*    Last change :  Fri Jun  9 09:21:31 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOPC entry point                                             */
 ;*=====================================================================*/
@@ -15,6 +15,8 @@
 (module hopc
 
    (library scheme2js hopscheme js2scheme hop)
+
+   (cond-expand (enable-patch (library patch)))
 
    (import  hopc_parseargs
 	    hopc_param

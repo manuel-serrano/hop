@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Fri May 19 20:03:18 2017 (serrano)                */
+;*    Last change :  Fri Jun  9 11:06:19 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -48,14 +48,20 @@
 		     ((or (not (eq? mode 'strict)) (direct-eval? this)) mode)
 		     (else 'hopscript))))
 	 (when (eq? mode 'hopscript)
-	    (for-each (lambda (d)
-			 (with-access::J2SDecl d (ronly)
-			    (set! ronly #t)))
-	       decls))
+	    (init-decls-ronly! decls))
 	 (for-each (lambda (o) (ronly! o mode)) headers)
 	 (for-each (lambda (o) (ronly! o mode)) decls)
 	 (for-each (lambda (o) (ronly! o mode)) nodes))
       this))
+
+;*---------------------------------------------------------------------*/
+;*    init-decls-ronly! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (init-decls-ronly! decls)
+   (for-each (lambda (d::J2SDecl)
+		(with-access::J2SDecl d (ronly)
+		   (set! ronly #t)))
+      decls))
 
 ;*---------------------------------------------------------------------*/
 ;*    direct-eval? ...                                                 */
@@ -136,7 +142,7 @@
 ;*    ronly-decl! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (ronly-decl! this::J2SDecl mode::symbol)
-   (with-access::J2SDecl this (ronly id scope writable)
+   (with-access::J2SDecl this (ronly scope writable)
       (if (eq? mode 'hopscript)
 	  (set! ronly #t)
 	  (set! ronly (or (not (memq scope '(global %scope))) (not writable)))))

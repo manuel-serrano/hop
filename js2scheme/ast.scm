@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed May 24 13:44:28 2017 (serrano)                */
+;*    Last change :  Thu Jun  8 18:35:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1194,10 +1194,15 @@
    (define (typeof op expr str)
       (when (isa? expr J2SUnary)
 	 (with-access::J2SUnary expr ((bop op) expr)
-	    (when (and (eq? bop 'typeof) (isa? expr J2SRef))
-	       (with-access::J2SRef expr (decl)
-		  (with-access::J2SString str (val)
-		     (values op decl (string->symbol val) expr)))))))
+	    (let loop ((expr expr))
+	       (cond
+		  ((isa? expr J2SParen)
+		   (with-access::J2SParen expr (expr)
+		      (loop expr)))
+		  ((and (eq? bop 'typeof) (isa? expr J2SRef))
+		   (with-access::J2SRef expr (decl)
+		      (with-access::J2SString str (val)
+			 (values op decl (string->symbol val) expr)))))))))
    
    (define (binary-type-test expr)
       (with-access::J2SBinary expr (op lhs rhs)

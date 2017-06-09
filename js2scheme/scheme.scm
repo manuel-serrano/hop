@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat May 27 06:17:14 2017 (serrano)                */
+;*    Last change :  Thu Jun  8 08:45:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -473,12 +473,12 @@
 ;*    j2s-scheme ::J2SProgram ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SProgram mode return conf hint totype)
-
+   
    (define (exit-body body)
       (if (config-get conf :return-as-exit)
 	  `((bind-exit (%jsexit) ,@body))
 	  body))
-
+   
    (define (%cnsts-debug cnsts)
       `(vector
 	  ,@(map (lambda (n)
@@ -503,15 +503,15 @@
 		(vector 2 val)))
 	    (else
 	     (error "j2s-constant" "wrong literal" this))))
-
+      
       `(js-constant-init
 	  ,(obj->string (list->vector (map j2s-constant cnsts))) %this))
-
+   
    (define (%cnsts cnsts)
       (if (>fx (bigloo-debug) 0)
 	  (%cnsts-debug cnsts)
 	  (%cnsts-intext cnsts)))
-
+   
    (define (define-pcache pcache-size)
       `(%define-pcache ,pcache-size))
    
@@ -530,7 +530,7 @@
 		,@(exit-body body))
 	    ;; for dynamic loading
 	    'hopscript)))
-
+   
    (define (j2s-main-module name body)
       (let ((module `(module ,(string->symbol name)
 			(eval (library hop)
@@ -539,9 +539,8 @@
 			   (library js2scheme)
 			   (library hopwidget))
 			(library hop hopscript nodejs js2scheme hopwidget)
-			(cond-expand
-			   (enable-libuv
-			    (library libuv)))
+			(cond-expand (enable-libuv (library libuv)))
+			(cond-expand (enable-patch (library patch)))
 			(main main))))
 	 (with-access::J2SProgram this (mode pcache-size %this path cnsts globals)
 	    (list
@@ -575,21 +574,21 @@
 			    (show-cache-misses)
 			    n)))
 		   (when (string-contains (or (getenv "HOPTRACE") "")
-			    "hopscript:hint")
-		      (log-hint! ,(config-get conf :profile #f))
+			    "hopscript:function")
+		      (log-function! ,(config-get conf :profile #f))
 		      (register-exit-function!
 			 (lambda (n)
-			    (show-hints)
+			    (show-functions)
 			    n)))
 		   (thread-join! (thread-start-joinable! %worker)))))))
-	 
-
+   
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size cnsts globals)
       (let ((body (flatten-nodes
 		     (append
 			(j2s-scheme headers mode return conf hint totype)
 			(j2s-scheme decls mode return conf hint totype)
+			(list (self-modifying-code-init this conf))
 			(j2s-scheme nodes mode return conf hint totype)))))
 	 (cond
 	    (module
@@ -613,6 +612,7 @@
 	     ;; generate the module clause
 	     (let ((module `(module ,(string->symbol name)
 			       (library hop hopscript js2scheme nodejs)
+			       (cond-expand (enable-patch (library patch)))
 			       (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
 		(j2s-module module body)))))))
 
@@ -5122,3 +5122,50 @@
 	  (epairify loc (js-not (j2s-bool-test expr mode return conf))))
 	 (else
 	  (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    self-modifying-code-init ...                                     */
+;*---------------------------------------------------------------------*/
+(define (self-modifying-code-init this::J2SProgram conf)
+   (when (config-get conf :self-modifying-code #f)
+      (with-access::J2SProgram this (decls nodes)
+	 ;; collect all the cache uses
+	 (let ((caches (append
+			  (append-map collect-pcaches* decls)
+			  (append-map collect-pcaches* nodes)))
+	       (cpatcher (if (>fx (config-get conf :long-size 0) 32)
+			     '%init-patch-64
+			     '%init-patch-32)))
+	    `(begin
+		,@(append-map (lambda (en)
+				 (if (pair? en)
+				     (let ((fun (car en)))
+					(map (lambda (c)
+						`(,cpatcher XX ,c))
+					   (cdr en)))
+				     '()))
+		     caches))))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-pcaches* ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-pcaches* this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-pcaches* ::J2SFun ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-pcaches* this::J2SFun)
+   (with-access::J2SFun this (body)
+      (let ((caches (collect-pcaches* body)))
+	 (list (cons this caches)))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-pcaches* ::J2SAccess ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-pcaches* this::J2SAccess)
+   (with-access::J2SAccess this (cache)
+      (if cache
+	  (cons cache (call-default-walker))
+	  (call-default-walker))))
+   

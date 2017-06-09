@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon May 22 20:20:36 2017 (serrano)                */
+;*    Last change :  Fri Jun  9 11:40:45 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -32,6 +32,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_tyflow
 
+   (include "ast.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
@@ -69,6 +71,8 @@
    
    (with-access::J2SProgram this (headers decls nodes)
       (when (>=fx j2s-verbose 4) (display " " (current-error-port)))
+      ;; mark local captured variables
+      (program-capture! this)
       ;; main fix point
       (let ((fix (make-cell 0)))
 	 (let loop ((i 1))
@@ -87,11 +91,19 @@
 			      (when (config-get args :optim-hint #f)
 				 ;; hint typing optimization
 				 (when (>=fx j2s-verbose 4)
-				    (fprintf (current-error-port) "hint."))
-				 (when (j2s-hint! this args)
-				    (for-each reset-type! decls)
-				    (for-each reset-type! nodes)
-				    (loop (+fx i 1))))
+				    (fprintf (current-error-port) "hint"))
+				 (let ((dups (j2s-hint! this args)))
+				    (when (pair? dups)
+				       (when (>=fx j2s-verbose 4)
+					  (fprintf (current-error-port)
+					     (format "[~(,)]."
+						(map (lambda (d)
+							(with-access::J2SDecl d (id)
+							   id))
+						   dups))))
+				       (for-each reset-type! decls)
+				       (for-each reset-type! nodes)
+				       (loop (+fx i 1)))))
 			      (loop (+fx i 1)))))
 		   (loop (+fx i 1))))))
       (unless (config-get args :optim-cast)
@@ -104,6 +116,55 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    program-capture! ...                                             */
+;*---------------------------------------------------------------------*/
+(define (program-capture! this::J2SProgram)
+   (with-access::J2SProgram this (decls nodes direct-eval)
+      (unless direct-eval
+	 (for-each (lambda (d) (mark-capture d '())) decls)
+	 (for-each (lambda (n) (mark-capture n '())) nodes))))
+
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SNode ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SNode env::pair-nil)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SRef ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SRef env::pair-nil)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (scope ronly %info)
+	 (when (and (not ronly) (eq? scope 'local))
+	    (unless (memq decl env)
+	       (set! %info 'capture))))))
+
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SFun ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SFun env::pair-nil)
+   (with-access::J2SFun this (params body)
+      (for-each (lambda (p::J2SDecl)
+		   (with-access::J2SDecl p (%info)
+		      (set! %info 'nocapture)))
+	 params)
+      (mark-capture body params)))
+
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SLetBlock ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SLetBlock env::pair-nil)
+   (with-access::J2SLetBlock this (decls nodes)
+      (for-each (lambda (p::J2SDecl)
+		   (with-access::J2SDecl p (%info)
+		      (set! %info 'nocapture)))
+	 decls)
+      (let ((nenv (append decls env)))
+	 (for-each (lambda (d) (mark-capture d nenv)) decls)
+	 (for-each (lambda (n) (mark-capture n nenv)) nodes))))
+   
+;*---------------------------------------------------------------------*/
 ;*    program-cleanup! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (program-cleanup! this::J2SProgram)
@@ -115,7 +176,8 @@
       (for-each (lambda (n) (use-count n +1)) decls)
       (for-each (lambda (n) (use-count n +1)) nodes)
       (unless direct-eval
-	 (set! decls (filter-dead-declarations decls)))
+	 (set! decls (filter-dead-declarations decls))
+	 (for-each j2s-hint-meta-noopt! decls))
       this))
    
 ;*---------------------------------------------------------------------*/
@@ -254,6 +316,16 @@
    (memq typ '(integer number)))
 
 ;*---------------------------------------------------------------------*/
+;*    env? ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (env? o)
+   ;; heuristic check (not very precise but should be enough)
+   (or (null? o)
+       (and (pair? o)
+	    (isa? (caar o) J2SDecl)
+	    (symbol? (cdar o)))))
+
+;*---------------------------------------------------------------------*/
 ;*    extend-env ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (extend-env::pair-nil env::pair-nil decl::J2SDecl ty::symbol)
@@ -286,6 +358,12 @@
 	 env1))
    
    (merge2 right (merge2 left right)))
+
+;*---------------------------------------------------------------------*/
+;*    env-override ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (env-override left::pair-nil right::pair-nil)
+   (append right left))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing* ...                                                      */
@@ -684,14 +762,14 @@
 		   (let ((nenv (extend-env envr decl tyr)))
 		      (expr-type-set! this nenv fix tyr (append lbk bkr)))))
 	       (else
-		;; a non variable assinment
+		;; a non variable assignment
 		(expr-type-set! this envr fix tyr bkr)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (typing-fun this::J2SFun env::pair-nil fun fix::cell)
-   (with-access::J2SFun this (body params rtype thisp)
+   (with-access::J2SFun this (body params rtype thisp %info)
       (let* ((envp (filter-map (lambda (p::J2SDecl)
 				  (with-access::J2SDecl p (itype utype usage)
 				     (cond
@@ -708,7 +786,9 @@
 			      (extend-env envp thisp 'object)
 			      envp))
 		       envp)))
-	 (typing body (append envt env) this fix)
+	 (multiple-value-bind (_ envf _)
+	    (typing body (append envt env) this fix)
+	    (set! %info envf))
 	 (expr-type-set! this env fix 'function))))
 
 ;*---------------------------------------------------------------------*/
@@ -733,10 +813,23 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SCall ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Function calls may affect the typing environment, depending      */
+;*    on the called function. Each case comes with a special rule,     */
+;*    detailed in the code below.                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SCall env::pair-nil fun fix::cell)
-
-   (define (type-call callee args env bk)
+   
+   (define (unknown-call-env env)
+      ;; compute a new typing environment where all mutated globals
+      ;; and all mutated captured locals are removed
+      (filter (lambda (e)
+		 (with-access::J2SDecl (car e) (ronly scope %info id)
+		    (or ronly
+			(and (eq? scope 'local) (eq? %info 'nocapture)))))
+	 env))
+   
+   (define (type-known-call-args callee args env bk)
       (with-access::J2SFun callee (rtype params)
 	 (let loop ((params params)
 		    (args args))
@@ -753,71 +846,88 @@
 		     (else
 		      (set! itype (merge-types itype (j2s-type (car args))))
 		      (set! vtype (merge-types vtype (j2s-type (car args))))
-		      (loop (cdr params) (cdr args)))))))
-	 (expr-type-set! this env fix rtype bk)))
+		      (loop (cdr params) (cdr args)))))))))
+   
+   (define (type-inline-call callee args env bk)
+      ;; type a direct function call: ((function (...) { ... })( ... ))
+      ;; side effects are automatically handled when
+      ;; typing the function body
+      (type-known-call-args callee args env bk)
+      (multiple-value-bind (_ envf _)
+	 (typing-fun callee env fun fix)
+	 (with-access::J2SFun callee (rtype)
+	    (expr-type-set! this envf fix rtype bk))))
 
-   (define (type-ref-call ref callee args env bk)
+   (define (type-known-call ref::J2SRef callee args env bk)
+      ;; type a known constant function call: F( ... )
+      ;; the new typing environment is a merge of env and the environment
+      ;; produced by the function
       (expr-type-set! ref env fix 'function)
-      (type-call callee args env bk))
-
-   (define (type-default callee env bk)
+      (type-known-call-args callee args env bk)
+      (with-access::J2SRef ref (decl)
+	 (with-access::J2SDecl decl (scope)
+	    (with-access::J2SFun callee (rtype %info)
+	       (let ((nenv (if (env? %info) (env-override env %info) env)))
+		  (expr-type-set! this nenv fix rtype bk))))))
+   
+   (define (type-ref-call callee args env bk)
+      ;; call a JS variable, check is it a known function
+      (with-access::J2SRef callee (decl)
+	 (cond
+	    ((isa? decl J2SDeclFun)
+	     (with-access::J2SDeclFun decl (ronly val)
+		(if ronly
+		    (type-known-call callee val args env bk)
+		    (type-unknown-call callee env bk))))
+	    ((isa? decl J2SDeclInit)
+	     (with-access::J2SDeclInit decl (ronly val)
+		(if (and ronly (isa? val J2SFun))
+		    (type-known-call callee val args env bk)
+		    (type-unknown-call callee env bk))))
+	    (else
+	     (type-unknown-call callee env bk)))))
+   
+   (define (type-method-call callee args env bk)
+      ;; type a method call: O.m( ... )
       (multiple-value-bind (_ env bk)
 	 (typing callee env fun fix)
-	 (expr-type-set! this env fix 'unknown bk)))
-
+	 (with-access::J2SAccess callee (obj field)
+	    (let* ((fn (j2s-field-name field))
+		   (ty (if (string? fn)
+			   (case (j2s-type obj)
+			      ((string) (string-method-type fn))
+			      ((regexp) (regexp-method-type fn))
+			      ((number integer index) (number-method-type fn))
+			      ((array) (array-method-type fn))
+			      (else 'any))
+			   'any)))
+	       (if (eq? ty 'any)
+		   ;; the method is unknown, filter out the typing env
+		   (expr-type-set! this (unknown-call-env env) fix ty bk)
+		   (expr-type-set! this env fix ty bk))))))
+   
+   (define (type-hop-call callee args env bk)
+      ;; type a hop (foreign function) call: H( ... )
+      ;; hop calls have no effect on the typing env
+      (with-access::J2SHopRef callee (rtype)
+	 (expr-type-set! this env fix rtype bk)))
+   
+   (define (type-unknown-call callee env bk)
+      ;; type a unknown function call: expr( ... )
+      ;; filter out the typing env
+      (multiple-value-bind (_ env bk)
+	 (typing callee env fun fix)
+	 (expr-type-set! this (unknown-call-env env) fix 'any bk)))
+   
    (with-access::J2SCall this ((callee fun) args)
       (multiple-value-bind (env bk)
 	 (typing-args args env fun fix)
 	 (cond
-	    ((isa? callee J2SFun)
-	     (typing-fun callee env fun fix)
-	     (type-call callee args env bk))
-	    ((isa? callee J2SRef)
-	     (with-access::J2SRef callee (decl)
-		(cond
-;* 		   ((isa? decl J2SDeclFunCnst)                         */
-;* 		    (with-access::J2SDeclFunCnst decl (val)            */
-;* 		       (type-call val args env bk)))                   */
-		   ((isa? decl J2SDeclFun)
-		    (with-access::J2SDeclFun decl (ronly val)
-		       (if ronly
-			   (type-ref-call callee val args env bk)
-			   (begin
-			      (typing callee env fun fix)
-			      (values 'any env bk)))))
-		   ((isa? decl J2SDeclInit)
-		    (with-access::J2SDeclInit decl (ronly val)
-		       (if (and ronly (isa? val J2SFun))
-			   (type-ref-call callee val args env bk)
-			   (begin
-			      (typing callee env fun fix)
-			      (values 'any env bk)))))
-		   (else
-		    (type-default callee env bk))))) 
-	    ((isa? callee J2SHopRef)
-	     (with-access::J2SHopRef callee (rtype)
-		(expr-type-set! this env fix rtype bk)))
-	    ((isa? callee J2SAccess)
-	     (multiple-value-bind (_ env bk)
-		(typing callee env fun fix)
-		(with-access::J2SAccess callee (obj field)
-		   (let* ((fn (j2s-field-name field))
-			  (ty (if (string? fn)
-				  (case (j2s-type obj)
-				     ((string)
-				      (string-method-type fn))
-				     ((regexp)
-				      (regexp-method-type fn))
-				     ((number integer index)
-				      (number-method-type fn))
-				     ((array)
-				      (array-method-type fn))
-				     (else
-				      'any))
-				  'any)))
-		      (expr-type-set! this env fix ty bk)))))
-	    (else
-	     (type-default callee env bk))))))
+	    ((isa? callee J2SFun) (type-inline-call callee args env bk))
+	    ((isa? callee J2SRef) (type-ref-call callee args env bk))
+	    ((isa? callee J2SHopRef) (type-hop-call callee args env bk))
+	    ((isa? callee J2SAccess) (type-method-call callee args env bk))
+	    (else (type-unknown-call callee env bk))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SCond ...                                             */
@@ -889,6 +999,7 @@
 		       ((+) (if (non-zero-integer? ty expr) 'integer 'number))
 		       ((~ -) (if (non-zero-integer? ty expr) 'integer 'number))
 		       ((!) 'bool)
+		       ((typeof) 'string)
 		       (else 'any))))
 	    (expr-type-set! this env fix tye bk)))))
 
@@ -966,8 +1077,6 @@
 	 (typing-binary op lhs rhs env fun fix)
 	 (expr-type-set! this env fix typ bk))))
 
-(define *warning* #f)
-
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SAccess ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -988,17 +1097,6 @@
 	    (multiple-value-bind (tyf envf bkf)
 	       (typing field envo fun fix)
 	       (cond
-		  ((and #f
-			(isa? obj J2SThis)
-			(not (string-contains (or (getenv "HOPTRACE") "") "j2s:tyflow")))
-		   ;; MS: 7 may 2017, this rule is wrong see
-		   ;; http://www.ecma-international.org/ecma-262/5.1/#sec-8.7.1
-		   (unless *warning*
-		      (set! *warning* #t)
-		      (tprint "WRONG TYPING... try HOPTRACE=j2s:tyflow"))
-		   (with-access::J2SThis obj (decl)
-		      (let ((envt (extend-env env decl 'object)))
-			 (expr-type-set! this envt fix 'any (append bko bkf)))))
 		  ((and (memq tyo '(array string)) (j2s-field-length? field))
 		   (expr-type-set! this envf fix 'index (append bko bkf)))
 		  ((eq? tyo 'string)
@@ -1304,6 +1402,9 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-resolve! ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Resolve statically type checks using type informations           */
+;*    computed by the TYPING method.                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-resolve! this::J2SProgram args fix)   
    (with-access::J2SProgram this (headers decls nodes)
@@ -1313,39 +1414,109 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SNode ...                                           */
-;*    -------------------------------------------------------------    */
-;*    Resolve statically type checks using type informations           */
-;*    computed by the TYPING method.                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SNode fix::cell)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SIf ...                                             */
+;*    resolve! ::J2SBinary ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SIf fix::cell)
-   
+(define-walk-method (resolve! this::J2SBinary fix)
+
    (define (eq-typeof? type typ)
       (or (eq? type typ)
 	  (and (memq type '(date array)) (eq? typ 'object))
 	  (and (eq? typ 'number) (memq type '(integer index)))
 	  (and (eq? typ 'boolean) (eq? type 'bool))))
    
+   (with-access::J2SBinary this (loc)
+      (multiple-value-bind (op decl typ ref)
+	 (j2s-expr-type-test this)
+	 (case op
+	    ((== ===)
+	     (with-access::J2SExpr ref (type)
+		(cond
+		   ((eq-typeof? type typ)
+		    (unfix! fix "resolve.J2SBinary")
+		    (J2SBool #t))
+		   ((memq type '(unknown any))
+		    (call-default-walker))
+		   ((and (eq? type 'number) (memq typ '(integer index)))
+		    (call-default-walker))
+		   (else
+		    (unfix! fix "resolve.J2SBinary")
+		    (J2SBool #f)))))
+	    ((!= !==)
+	     (with-access::J2SExpr ref (type)
+		(cond
+		   ((eq-typeof? type typ)
+		    (unfix! fix "resolve.J2SBinary")
+		    (J2SBool #f))
+		   ((memq type '(unknown any))
+		    (call-default-walker))
+		   ((and (eq? type 'number) (memq typ '(integer index)))
+		    (call-default-walker))
+		   (else
+		    (unfix! fix "resolve.J2SBinary")
+		    (J2SBool #t)))))
+	    ((instanceof)
+	     (with-access::J2SExpr ref (type)
+		(cond
+		   ((memq type '(unknown any object))
+		    (call-default-walker))
+		   ((eq? type typ)
+		    (unfix! fix "resolve.J2SBinary")
+		    (J2SBool #t))
+		   (else
+		    (unfix! fix "resolve.J2SBinary")
+		    (J2SBool #f)))))
+	    ((!instanceof)
+	     (with-access::J2SExpr ref (type)
+		(cond
+		   ((memq type '(unknown any object))
+		    (call-default-walker))
+		   ((eq? type typ)
+		    (unfix! fix "resolve.J2SBinary")
+		    (J2SBool #f))
+		   (else
+		    (unfix! fix "resolve.J2SBinary")
+		    (J2SBool #t)))))
+	    (else
+	     (call-default-walker))))))
+   
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SIf ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SIf fix::cell)
+   
+;*    (define (eq-typeof? type typ)                                    */
+;*       (or (eq? type typ)                                            */
+;* 	  (and (memq type '(date array)) (eq? typ 'object))            */
+;* 	  (and (eq? typ 'number) (memq type '(integer index)))         */
+;* 	  (and (eq? typ 'boolean) (eq? type 'bool))))                  */
+   
    (define (is-true? expr)
-      (when (isa? expr J2SBinary)
-	 (with-access::J2SBinary expr (lhs rhs op)
-	    (and (eq? op '==)
-		 (memq (j2s-type lhs) '(null undefined))
-		 (memq (j2s-type rhs) '(null undefined))))))
+      (cond
+	 ((isa? expr J2SBool)
+	  (with-access::J2SBool expr (val) val))
+	 ((isa? expr J2SBinary)
+	  (with-access::J2SBinary expr (lhs rhs op)
+	     (and (eq? op '==)
+		  (memq (j2s-type lhs) '(null undefined))
+		  (memq (j2s-type rhs) '(null undefined)))))))
 
    (define (is-false? expr)
-      (when (isa? expr J2SBinary)
-	 (with-access::J2SBinary expr (lhs rhs op)
-	    (and (eq? op '!=)
-		 (memq (j2s-type lhs) '(null undefined))
-		 (memq (j2s-type rhs) '(null undefined))))))
+      (cond
+	 ((isa? expr J2SBool)
+	  (with-access::J2SBool expr (val) (not val)))
+	 ((isa? expr J2SBinary)
+	  (with-access::J2SBinary expr (lhs rhs op)
+	     (and (eq? op '!=)
+		  (memq (j2s-type lhs) '(null undefined))
+		  (memq (j2s-type rhs) '(null undefined)))))))
    
    (with-access::J2SIf this (test then else)
+      (set! test (resolve! test fix))
       (with-access::J2SExpr test (type)
 	 (cond
 	    ((memq type '(any unknown))
@@ -1357,59 +1528,63 @@
 	     (unfix! fix "resolve.J2SIf")
 	     (resolve! else fix))
 	    (else
-	     (multiple-value-bind (op decl typ ref)
-		(j2s-expr-type-test test)
-		(case op
-		   ((== ===)
-		    (with-access::J2SExpr ref (type)
-		       (cond
-			  ((eq-typeof? type typ)
-			   (unfix! fix "resolve.J2SIf")
-			   (resolve! then fix))
-			  ((memq type '(unknown any))
-			   (call-default-walker))
-			  ((and (eq? type 'number) (memq typ '(integer index)))
-			   (call-default-walker))
-			  (else
-			   (unfix! fix "return.J2SIf")
-			   (resolve! else fix)))))
-		   ((!= !==)
-		    (with-access::J2SExpr ref (type)
-		       (cond
-			  ((eq-typeof? type typ)
-			   (unfix! fix "return.J2SIf")
-			   (resolve! else fix))
-			  ((memq type '(unknown any))
-			   (call-default-walker))
-			  ((and (eq? type 'number) (memq typ '(integer index)))
-			   (call-default-walker))
-			  (else
-			   (unfix! fix "return.J2SIf")
-			   (resolve! then fix)))))
-		   ((instanceof)
-		    (with-access::J2SExpr ref (type)
-		       (cond
-			  ((memq type '(unknown any object))
-			   (call-default-walker))
-			  ((eq? type typ)
-			   (unfix! fix "resolve.J2SIf")
-			   (resolve! then fix))
-			  (else
-			   (unfix! fix "return.J2SIf")
-			   (resolve! else fix)))))
-		   ((!instanceof)
-		    (with-access::J2SExpr ref (type)
-		       (cond
-			  ((memq type '(unknown any object))
-			   (call-default-walker))
-			  ((eq? type typ)
-			   (unfix! fix "resolve.J2SIf")
-			   (resolve! else fix))
-			  (else
-			   (unfix! fix "return.J2SIf")
-			   (resolve! then fix)))))
-		   (else
-		    (call-default-walker)))))))))
+	     (set! then (resolve! then fix))
+	     (set! else (resolve! else fix))
+	     this)))))
+		
+;* 	     (multiple-value-bind (op decl typ ref)                    */
+;* 		(j2s-expr-type-test test)                              */
+;* 		(case op                                               */
+;* 		   ((== ===)                                           */
+;* 		    (with-access::J2SExpr ref (type)                   */
+;* 		       (cond                                           */
+;* 			  ((eq-typeof? type typ)                       */
+;* 			   (unfix! fix "resolve.J2SIf")                */
+;* 			   (resolve! then fix))                        */
+;* 			  ((memq type '(unknown any))                  */
+;* 			   (call-default-walker))                      */
+;* 			  ((and (eq? type 'number) (memq typ '(integer index))) */
+;* 			   (call-default-walker))                      */
+;* 			  (else                                        */
+;* 			   (unfix! fix "return.J2SIf")                 */
+;* 			   (resolve! else fix)))))                     */
+;* 		   ((!= !==)                                           */
+;* 		    (with-access::J2SExpr ref (type)                   */
+;* 		       (cond                                           */
+;* 			  ((eq-typeof? type typ)                       */
+;* 			   (unfix! fix "return.J2SIf")                 */
+;* 			   (resolve! else fix))                        */
+;* 			  ((memq type '(unknown any))                  */
+;* 			   (call-default-walker))                      */
+;* 			  ((and (eq? type 'number) (memq typ '(integer index))) */
+;* 			   (call-default-walker))                      */
+;* 			  (else                                        */
+;* 			   (unfix! fix "return.J2SIf")                 */
+;* 			   (resolve! then fix)))))                     */
+;* 		   ((instanceof)                                       */
+;* 		    (with-access::J2SExpr ref (type)                   */
+;* 		       (cond                                           */
+;* 			  ((memq type '(unknown any object))           */
+;* 			   (call-default-walker))                      */
+;* 			  ((eq? type typ)                              */
+;* 			   (unfix! fix "resolve.J2SIf")                */
+;* 			   (resolve! then fix))                        */
+;* 			  (else                                        */
+;* 			   (unfix! fix "return.J2SIf")                 */
+;* 			   (resolve! else fix)))))                     */
+;* 		   ((!instanceof)                                      */
+;* 		    (with-access::J2SExpr ref (type)                   */
+;* 		       (cond                                           */
+;* 			  ((memq type '(unknown any object))           */
+;* 			   (call-default-walker))                      */
+;* 			  ((eq? type typ)                              */
+;* 			   (unfix! fix "resolve.J2SIf")                */
+;* 			   (resolve! else fix))                        */
+;* 			  (else                                        */
+;* 			   (unfix! fix "return.J2SIf")                 */
+;* 			   (resolve! then fix)))))                     */
+;* 		   (else                                               */
+;* 		    (call-default-walker)))))))))                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ...                                                  */
