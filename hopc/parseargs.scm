@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May 24 13:45:35 2017 (serrano)                */
+;*    Last change :  Thu Jun  8 08:44:32 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -42,8 +42,10 @@
    (print "Shell Variables:")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key")
-   (print "      nodejs:compile, hopscript:cache")
+   (print "      nodejs:compile, hopscript:cache[num] (*), hopscript:function[num] (*)")
    (print "   - HOPCFLAGS: hopc compilation flags")
+   (newline)
+   (print "(*) runtime shell variable value")
    (newline))
 
 ;*---------------------------------------------------------------------*/
@@ -75,7 +77,7 @@
 	     (bigloo-library-path-set! (cons dir (bigloo-library-path))))
 	    (("--share-dir" ?dir (help "Set hopc share directory"))
 	     (hopc-share-directory-set! dir))
-	    (("-v?level" (help "Increase or set verbosity level (-v0 crystal silence)"))
+	    (("-v?level" (help "Increase/set verbosity level (-v0 crystal silence)"))
 	     (if (string=? level "")
 		 (hop-verbose-set! (+fx 1 (hop-verbose)))
 		 (hop-verbose-set! (string->integer level))))
@@ -269,6 +271,12 @@
 		   (cons* "-srfi" "cache-level2" (hopc-bigloo-options)))))
 	    (("--profile" (help "Profiling mode"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))
+	    (section "Experimental features")
+	    (("--self-modifying-code" (help "Enable runtime code modification"))
+	     (hopc-j2s-flags-set! (cons* :self-modifying-code #t (hopc-j2s-flags)))
+	     (hopc-bigloo-options-set!
+		(append '("-copt" "'-DBGL_FUNCTION_BEGIN=AN_OBJECT;PATCHABLE_FUNCTION_BEGIN() -DBGL_FUNCTION_END=PATCHABLE_FUNCTION_END()'")
+		   (hopc-bigloo-options))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

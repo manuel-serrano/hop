@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun May 28 06:45:34 2017 (serrano)                */
+;*    Last change :  Wed Jun  7 11:10:00 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -15,12 +15,6 @@
 ;*    directives                                                       */
 ;*---------------------------------------------------------------------*/
 (directives (option (loadq "property_expd.sch")))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-packed-ref ...                                         */
-;*---------------------------------------------------------------------*/
-(define-expander js-object-packed-ref
-   js-object-packed-ref-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache ...                                               */

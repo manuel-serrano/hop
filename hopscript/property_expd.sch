@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun May 28 07:18:05 2017 (serrano)                */
+;*    Last change :  Wed Jun  7 13:22:23 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -11,44 +11,66 @@
 ;*    See expanders.sch and property.sch                               */
 ;*=====================================================================*/
 
-;*---------------------------------------------------------------------*/
-;*    js-object-packed-enable-expander ...                             */
-;*---------------------------------------------------------------------*/
-(define (js-object-packed-enable-expander x e)
-   *js-object-packed-enable*)
-
-;*---------------------------------------------------------------------*/
-;*    js-object-packed-ref-expander ...                                */
-;*---------------------------------------------------------------------*/
-(define (js-object-packed-ref-expander x e)
-   (match-case x
-      ((?- ?obj ?idx)
-       (e `(with-access::JsObject ,obj (elements cmap)
-	      (vector-ref elements ,idx))
-	  e))
-      (else
-       (map (lambda (x) (e x e)) x))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-object-packed-ref-expander ...                                *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (js-object-packed-ref-expander x e)                         */
+;*    (match-case x                                                    */
+;*       ((?- ?obj ?idx)                                               */
+;*        (e `(with-access::JsObject ,obj (elements cmap)              */
+;* 	      (vector-ref elements ,idx))                              */
+;* 	  e))                                                          */
+;*       (else                                                         */
+;*        (map (lambda (x) (e x e)) x))))                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache-expander ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (%define-pcache-expander x e)
-   (e `(cond-expand
-	  (bigloo-c
-	   (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[ ~a ];" (cadr x)))))
-      e))
+   (match-case x
+      ((?- (and (? integer?) ?num))
+       (e `(cond-expand
+	     ((and bigloo-c enable-patch self-modify-code)
+	      (begin
+		 (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[ ~a ];" num))
+		 ,@(append
+		      (map (lambda (i)
+			      `(define ,(string->symbol (format "%pcache-cmap-~a" i)) (patch-index)))
+			 (iota num))
+		      (map (lambda (i)
+			      `(define ,(string->symbol (format "%pcache-indx-~a" i)) (patch-index)))
+			 (iota num)))))
+	     (bigloo-c
+	      (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[ ~a ];" num))))
+	  e))
+      (else
+       (error "%define-pache" "bad syntax" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-pcache-expander ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (js-make-pcache-expander x e)
-   (e `(cond-expand
-	  (bigloo-c
-	   ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
-	       ,(cadr x) (instantiate::JsPropertyCache)))
-	  (else
-	   ((@ js-make-pache __hopscript_property) ,(cadr x))))
-      e))
+   (match-case x
+      ((?- (and (? integer?) ?num))
+       (e `(cond-expand
+	     ((and bigloo-c enable-patch self-modify-code)
+	      (begin
+		 ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
+		    ,num (instantiate::JsPropertyCache))
+		 ,@(map (lambda (i)
+			   `(with-access::JsPropertyCache (js-pcache-ref %pcache ,i) (%patchmap %patchindex %patchtable)
+			       (set! %patchtable (the-patch-table))
+			       (set! %patchmap ,(string->symbol (format "%pcache-cmap-~a" i)))
+			       (set! %patchindex ,(string->symbol (format "%pcache-indx-~a" i)))))
+		      (iota num))))
+	     (bigloo-c
+	      ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
+		 ,(cadr x) (instantiate::JsPropertyCache)))
+	     (else
+	      ((@ js-make-pache __hopscript_property) ,(cadr x))))
+	  e))
+      (else
+       (error "js-make-pcache" "bad syntax" x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-ref-expander ...                                       */
@@ -159,18 +181,18 @@
       (else
        (map (lambda (x) (e x e)) x))))
 
-;*---------------------------------------------------------------------*/
-;*    js-get-name-index/cache-expander ...                             */
-;*---------------------------------------------------------------------*/
-(define (js-get-name-index/cache-expander x e)
-   (match-case x
-      ((?- (and (? symbol?) ?obj) ((kwote quote) ?name) ?idx ?cache (and (? symbol?) ?%this))
-       (e `(if (isa? ,obj JsObject)
-	       (js-object-get-name-index/cache ,obj ',name ,idx ,cache ,%this)
-	       (js-get ,obj ',name ,%this))
-	  e))
-      (else
-       (map (lambda (x) (e x e)) x))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-get-name-index/cache-expander ...                             *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (js-get-name-index/cache-expander x e)                      */
+;*    (match-case x                                                    */
+;*       ((?- (and (? symbol?) ?obj) ((kwote quote) ?name) ?idx ?cache (and (? symbol?) ?%this)) */
+;*        (e `(if (isa? ,obj JsObject)                                 */
+;* 	       (js-object-get-name-index/cache ,obj ',name ,idx ,cache ,%this) */
+;* 	       (js-get ,obj ',name ,%this))                            */
+;* 	  e))                                                          */
+;*       (else                                                         */
+;*        (map (lambda (x) (e x e)) x))))                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-match-expander ...                      */
@@ -187,7 +209,7 @@
 		  `(js-pcache-owner ,cache)
 		  `(js-pcache-vindex ,cache)))
 	  e))
-      ((?- (and (? symbol?) ?obj) ?prop ?cache ?%this)
+      ((?- (and (? symbol?) ?obj) ?prop ?cache ?%this . ?rest)
        (e `(with-access::JsObject ,obj ((omap cmap) elements)
 	      (with-access::JsPropertyCache ,cache (cmap pmap index owner vindex)
 		 ,(ref obj prop cache %this
@@ -212,8 +234,23 @@
    (define (ref o prop cache %this cindex ccmap cpmap cowner vindx)
       `(let ((%omap omap))
 	  (if (eq? ,ccmap %omap)
-	      (js-object-packed-ref ,o ,cindex)
+	      (with-access::JsObject ,o (elements)
+		 (vector-ref elements ,cindex))
 	      (js-object-get-name/cache-level2 ,@(cdr x)))))
+   
+   (define (patchref o prop cache %this cindex ccmap cpmap cowner vindx)
+      (match-case cache
+	 ((js-pcache-ref %pcache ?ci)
+	  (let* ((sci (number->string ci))
+		 (ccmap (string->symbol (string-append "%pcache-cmap-" sci)))
+		 (cindx (string->symbol (string-append "%pcache-indx-" sci))))
+	     `(let ((%omap omap))
+		 (if (eq? (patch ,ccmap %omap) %omap)
+		     (with-access::JsObject ,o (elements)
+			(vector-ref elements (patch ,cindx 0)))
+		     (js-object-get-name/cache-level2 ,@(cdr x))))))
+	 (else
+	  (ref o prop cache %this cindex ccmap cpmap cowner vindx))))
    
    (cond-expand
       ((or no-macro-cache no-macro-cache-get)
@@ -229,7 +266,11 @@
 			    (map (lambda (x) (e x e)) x))
 			   (else
 			    (e x e2))))))))
-	  (js-object-get-name/cache-match-expander x e1 ref)))))
+	  (cond-expand
+	     ((and enable-patch self-modify-code)
+	      (js-object-get-name/cache-match-expander x e1 patchref))
+	     (else
+	      (js-object-get-name/cache-match-expander x e1 ref)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-level1-expander ...                     */
@@ -269,23 +310,23 @@
 	      (if (<fx ,vindx vlen)
 		  (vector-ref elements (vector-ref vtable ,vindx))
 		  (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))))
-
+   
    (js-object-get-name/cache-match-expander x e ref))
 
-;*---------------------------------------------------------------------*/
-;*    js-object-get-name-index/cache-expander ...                      */
-;*---------------------------------------------------------------------*/
-(define (js-object-get-name-index/cache-expander x e)
-   (match-case x
-      ((?- (and (? symbol?) ?obj) ((kwote quote) ?name) ?cache ?%this)
-       (e `(with-access::JsObject ,obj ((omap cmap) elements)
-	      (with-access::JsPropertyCache ,cache (cmap index)
-		 (if (eq? cmap omap)
-		     (vector-ref elements index)
-		     (js-get-name/cache-miss ,obj ',name ,cache #f ,%this))))
-	  e))
-      (else
-       (map (lambda (x) (e x e)) x))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    js-object-get-name-index/cache-expander ...                      *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (js-object-get-name-index/cache-expander x e)               */
+;*    (match-case x                                                    */
+;*       ((?- (and (? symbol?) ?obj) ((kwote quote) ?name) ?cache ?%this) */
+;*        (e `(with-access::JsObject ,obj ((omap cmap) elements)       */
+;* 	      (with-access::JsPropertyCache ,cache (cmap index)        */
+;* 		 (if (eq? cmap omap)                                   */
+;* 		     (vector-ref elements index)                       */
+;* 		     (js-get-name/cache-miss ,obj ',name ,cache #f ,%this)))) */
+;* 	  e))                                                          */
+;*       (else                                                         */
+;*        (map (lambda (x) (e x e)) x))))                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-global-object-get-name-expander ...                           */

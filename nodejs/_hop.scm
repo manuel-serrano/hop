@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun May 21 06:26:17 2017 (serrano)                */
+;*    Last change :  Tue Jun  6 18:17:54 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -152,7 +152,7 @@
 			 (when (isa? obj server)
 			    (let ((f (assq proc data)))
 			       (when (pair? f)
-				  (remove-event-listener! server
+				  (remove-event-listener! obj
 					(js-tostring event %this) (cdr f)))))))
 		   3 'removeEventListener)
 	 :enumerable #f)

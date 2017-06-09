@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri May 26 07:55:45 2017 (serrano)                */
+;*    Last change :  Thu Jun  1 20:17:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -736,22 +736,19 @@
       (body (lambda ()
 	       (with-handler
 		  (lambda (e)
-		     (exception-notify e)
-		     (raise e))
-		  (begin
-		     (with-trace 'sorequire "make-compile-worker"
-			(trace-item "thread=" (current-thread))
-			(trace-item "e=" e)
-			(nodejs-socompile (car e) (cdr e))
-			(synchronize socompile-mutex
-			   (set! socompile-worker-count
-			      (-fx socompile-worker-count 1))
-			   (set! socompile-compiled
-			      (cons (car e) socompile-compiled))
-			   (set! socompile-incompile
-			      (remq! (car e) socompile-incompile))
-			   (condition-variable-broadcast! socompile-condv)))))))))
-
+		     (exception-notify e))
+		  (with-trace 'sorequire "make-compile-worker"
+		     (trace-item "thread=" (current-thread))
+		     (trace-item "e=" e)
+		     (nodejs-socompile (car e) (cdr e))
+		     (synchronize socompile-mutex
+			(set! socompile-worker-count
+			   (-fx socompile-worker-count 1))
+			(set! socompile-compiled
+			   (cons (car e) socompile-compiled))
+			(set! socompile-incompile
+			   (remq! (car e) socompile-incompile))
+			(condition-variable-broadcast! socompile-condv))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-select-socompile ...                                      */
@@ -818,7 +815,7 @@
 	 (with-handler
 	    (lambda (e)
 	       (exception-notify e))
-	    (begin
+	    (when (process? proc)
 	       (when debug-abort
 		  (tprint ">>> wait-process " proc " " cmd))
 	       (process-wait proc)

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun May 21 06:53:28 2017 (serrano)                */
+#*    Last change :  Wed Jun  7 11:19:58 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -40,6 +40,7 @@ btflags="-gtrace"
 
 bglpcre=required
 bglunistring=required
+bglpatch=no
 
 bcflagsdev=""
 bcflagsdbg="-copt -g -O2"
@@ -216,6 +217,9 @@ while : ; do
 
     --bigloo-unistring=*)
       bglunistring="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --bigloo-patch=*)
+      bglpatch="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bglafile=*)
       afile="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -416,6 +420,7 @@ while : ; do
       echo "   --bigloolibdir=path........ The Bigloo lib-dir path" >&2;
       echo "   --bigloo-prce=yes|no....... Enable/disable libunistring" >&2;
       echo "   --bigloo-unistring=yes|no.. Enable/disable pcre" >&2;
+      echo "   --bigloo-patch=yes|no...... Enable/disable code patching" >&2;
       echo "   --backend=backend.......... The execution platform [native,jvm,dotnet]" >&2;
       echo "   --link=method.............. The link method [static,dynamic,library,felix]" >&2;
       echo "   --afile=afile.............. The Bigloo afile tool" >&2;
@@ -824,6 +829,27 @@ if [ "$pcre " != "pcre " -a "$bglpcre " != "no " ]; then
     echo "" >&2
     bglfail=true;
 fi
+
+#*---------------------------------------------------------------------*/
+#*    patch                                                            */
+#*---------------------------------------------------------------------*/
+patch=`$bigloo -q -eval "(exit (display (cond-expand ((library patch) 'patch) (else 'no))))"`
+
+if [ "$patch " != "patch " -a "$bglpatch " != "no " ]; then
+    echo "*** ERROR:configure: your Bigloo setting  does not support code patching." >&2
+    echo "  As a consequence JavaScript regular expressions are not fully supported." >&2
+    echo "  If you known what you are doing and if you don't want compatible regexp" >&2
+    echo "  re-configure Hop with the following option:" >&2
+    echo "    ./configure --bigloo-patch=no ..." >&2
+    echo "  Otherwise, re-configure and re-compile Bigloo first." >&2
+    echo "" >&2
+    bglfail=true;
+fi
+
+if [ "$bglpatch " = "yes " ]; then
+  hopsrfis="$hopsrfis enable-patch"
+  bglcloselibs="$bglcloselibs patch"
+fi  
 
 #*---------------------------------------------------------------------*/
 #*    bgl test completion                                              */
@@ -1268,39 +1294,6 @@ for file in etc/hopjs.el; do
       >> $file
   chmod a+x $file
 done
-
-#* # hopscript/configure.sch                                           */
-#* for p in hopscript.sch; do                                          */
-#*   configure=hopscript/$p                                            */
-#*   rm -f $configure 2> /dev/null                                     */
-#*   echo ";* Automatically generated file (don't edit) *}" > $configure */
-#*   cat etc/$p.in \                                                   */
-#*       | sed -e "s|@VERSION@|$version|" \                            */
-#*             -e "s|@BIGLOOVERSION@|$bglversion|" \                   */
-#*             -e "s|@BRANCH@|$branch|" \                              */
-#*             -e "s|@BACKEND@|$backend|" \                            */
-#*             -e "s|@LINK@|$link|" \                                  */
-#*             -e "s|@URL@|$url|" \                                    */
-#*             -e "s|@BINDIR@|$bindir|" \                              */
-#*             -e "s|@LIBDIR@|$libdir|" \                              */
-#*             -e "s|@LIBPATH@|$libdir/hop/$version|" \                */
-#*             -e "s|@SHAREDIR@|$sharedir/$version|" \                 */
-#*             -e "s|@ETCDIR@|$etcdir|" \                              */
-#*             -e "s|@WEBLETSDIR@|$webletsdir|" \                      */
-#*             -e "s|@CONTRIBSDIR@|$contribsdir|" \                    */
-#*             -e "s|@DOCDIR@|$docdir|" \                    */
-#*             -e "s|@MIMETYPES@|$mimetypes|" \                        */
-#*             -e "s|@JSMIMETYPE@|$jsmimetype|" \                      */
-#*             -e "s|@CSSMIMETYPE@|$cssmimetype|" \                    */
-#*             -e "s|@HOPJSSANSSUFFIX@|$hopjssanssuffix|" \            */
-#*             -e "s|@HOPJSFILES@|$hopjsfiles|" \                      */
-#*             -e "s|@HOPSERVICEBASE@|$hopservicebase|" \              */
-#*             -e "s|@HOPZEROCONF@|$zeroconf|" \                       */
-#*             -e "s|@HOPSRFIS@|$hopsrfis|" \                          */
-#*             -e "s|@HOPMACH@|$mach|" \                               */
-#*             -e "s|@HOPARCH@|$arch|" \                               */
-#*       >> $configure                                                 */
-#* done                                                                */
 
 # etc/hoprc.hop
 hoprc=etc/hoprc.hop

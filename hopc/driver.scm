@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Mon Mar 27 16:47:12 2017 (serrano)                */
+;*    Last change :  Fri Jun  9 09:20:05 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -377,7 +377,8 @@
 					   (bigloo-config 'shared-lib-suffix))))
 			      (cons* "-y" (dest-opts dest opts))))
 			  (else
-			   (dest-opts "a.out" opts))))
+			   (dest-opts "a.out" opts)
+			   opts)))
 		      (else
 		       (cons "--to-stdout" opts))))
 	     (exec (not (eq? (hopc-pass) 'object))))
