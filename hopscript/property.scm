@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Jun  8 13:57:56 2017 (serrano)                */
+;*    Last change :  Sat Jun 10 08:30:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2930,8 +2930,9 @@
    (case attr
       ((hint) 0)
       ((nohint) 1)
-      ((type) 2)
-      ((notype) 3)
+      ((dispatch) 2)
+      ((type) 3)
+      ((notype) 4)
       (else (error "profile-function" "illegal attr" attr))))
 
 ;*---------------------------------------------------------------------*/
@@ -2963,19 +2964,23 @@
 	 (print  "\nFUNCTIONS:\n" "==========\n")
 	 (print "total number of functions: "
 	    (length *functions*))
-	 (print "  total function hinted calls: "
+	 (print "  total function hinted calls  : "
 	    (let ((i (attr->index 'hint)))
 	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
-	 (print "  total function typed calls: " 
+	 (print "  total function unhinted calls: "
+	    (let ((i (attr->index 'nohint)))
+	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
+	 (print "  total function dipatch calls : "
+	    (let ((i (attr->index 'dispatch)))
+	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
+	 (print "  total function typed calls   : " 
 	    (let ((i (attr->index 'type)))
 	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
-	 (print "  total function untyped calls: "
-	    (+ 
-	       (let ((i (attr->index 'notype)))
-		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*)))
-	       (let ((i (attr->index 'nohint)))
-		  (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*)))))
+	 (print "  total function untyped calls : "
+	    (let ((i (attr->index 'notype)))
+	       (apply + (map (lambda (e) (vector-ref (cddr e) i)) *functions*))))
 	 (newline)
+	 (print ";; function: hint/nohint/dispatch/type/notype")
 	 (for-each (lambda (e)
 		      (when (>=fx (cadr e) *function-threshold*)
 			 (print (car e) ": "
@@ -2984,8 +2989,6 @@
 		     (cond
 			((>fx (cadr e1) (cadr e2)) #t)
 			((<fx (cadr e1) (cadr e2)) #f)
-			(else
-			 (string<=? (symbol->string! (car e1))
-			    (symbol->string! (car e2))))))
+			(else (string<=? (car e1) (car e2)))))
 	       *functions*))
 	 (newline))))

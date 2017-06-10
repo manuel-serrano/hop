@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jun  9 11:40:45 2017 (serrano)                */
+;*    Last change :  Sat Jun 10 08:41:13 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -94,7 +94,7 @@
 				    (fprintf (current-error-port) "hint"))
 				 (let ((dups (j2s-hint! this args)))
 				    (when (pair? dups)
-				       (when (>=fx j2s-verbose 4)
+				       (when (>=fx j2s-verbose 2)
 					  (fprintf (current-error-port)
 					     (format "[~(,)]."
 						(map (lambda (d)
@@ -267,7 +267,7 @@
 ;*    decl-vtype-set! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (decl-vtype-set! decl::J2SDecl ty fix::cell)
-   (with-access::J2SDecl decl (vtype id)
+   (with-access::J2SDecl decl (vtype id writable)
       (unless (or (not ty)
 		  (eq? ty 'unknown)
 		  (subtype? ty vtype)
@@ -673,15 +673,23 @@
 	 (cond
 	    ;; this assignment
 	    ((isa? lhs J2SRef)
-	     ;; a variable assignment
-	     (multiple-value-bind (tyr env rbk)
-		(typing rhs envl fun fix)
-		(if tyr
-		    (with-access::J2SRef lhs (decl)
-		       (decl-vtype-set! decl tyr fix)
-		       (let ((nenv (extend-env env decl tyr)))
-			  (expr-type-set! this nenv fix tyr (append lbk rbk))))
-		    (return 'unknown env (append lbk rbk)))))
+	     (with-access::J2SRef lhs (decl)
+		(with-access::J2SDecl decl (writable utype)
+		   (multiple-value-bind (tyr env rbk)
+		      (typing rhs envl fun fix)
+		      (cond
+			 ((and (not writable) (not (isa? this J2SInit)))
+			  (let ((nenv (extend-env env decl utype)))
+			     (expr-type-set! this nenv fix utype
+				(append lbk rbk))))
+			 (tyr
+			  (with-access::J2SRef lhs (decl)
+			     (decl-vtype-set! decl tyr fix)
+			     (let ((nenv (extend-env env decl tyr)))
+				(expr-type-set! this nenv fix tyr
+				   (append lbk rbk)))))
+			 (else
+			  (return 'unknown env (append lbk rbk))))))))
 	    ((this-assig? lhs)
 	     =>
 	     (lambda (decl)
@@ -795,7 +803,12 @@
 ;*    typing ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SFun env::pair-nil fun fix::cell)
-   (with-access::J2SFun this (body params rtype)
+   (with-access::J2SFun this (body params rtype decl)
+      (when (isa? decl J2SDecl)
+	 (with-access::J2SDecl decl (vtype utype itype)
+	    (set! vtype 'function)
+	    (set! itype 'function)
+	    (set! utype 'function)))
       (let ((envc (filter-map (lambda (c)
 				 (let ((d (car c))
 				       (t (cdr c)))
@@ -1376,13 +1389,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2STry env::pair-nil fun fix::cell)
    (with-access::J2STry this (body catch finally)
-      (multiple-value-bind (_ __ bkb)
+      (multiple-value-bind (_ envb bkb)
 	 (typing body env fun fix)
-	 (multiple-value-bind (_ __ bkh)
+	 (when (isa? catch J2SCatch)
+	    (with-access::J2SCatch catch (param)
+	       (decl-vtype-set! param 'any fix)))
+	 (multiple-value-bind (_ envc bkh)
 	    (typing catch env fun fix)
-	    (multiple-value-bind (_ __ bkf)
-	       (typing finally env fun fix)
-	       (return 'void env (append bkb bkh bkf)))))))
+	    (multiple-value-bind (_ envf bkf)
+	       (typing finally (env-merge envb envc) fun fix)
+	       (return 'void envf (append bkb bkh bkf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SCatch ...                                            */
@@ -1462,7 +1478,7 @@
 	    ((instanceof)
 	     (with-access::J2SExpr ref (type)
 		(cond
-		   ((memq type '(unknown any object))
+		   ((or (memq type '(unknown any object)) (eq? typ 'object))
 		    (call-default-walker))
 		   ((eq? type typ)
 		    (unfix! fix "resolve.J2SBinary")
@@ -1473,7 +1489,7 @@
 	    ((!instanceof)
 	     (with-access::J2SExpr ref (type)
 		(cond
-		   ((memq type '(unknown any object))
+		   ((or (memq type '(unknown any object)) (eq? typ 'object))
 		    (call-default-walker))
 		   ((eq? type typ)
 		    (unfix! fix "resolve.J2SBinary")
