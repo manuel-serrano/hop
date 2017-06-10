@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat May 13 20:39:25 2017 (serrano)                */
+;*    Last change :  Sat Jun 10 10:24:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -318,7 +318,8 @@
 	     ,@(dump-loc loc)
 	     ,@(dump-key key)
 	     ,@(dump-type this)
-	     ,@(dump-info this)))))
+	     ,@(dump-info this)
+	     ,@(dump-hint this)))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWithRef ...                                       */

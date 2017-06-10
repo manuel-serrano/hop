@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Jun  8 08:45:49 2017 (serrano)                */
+;*    Last change :  Fri Jun  9 18:07:30 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -586,9 +586,9 @@
 					 mode name pcache-size cnsts globals)
       (let ((body (flatten-nodes
 		     (append
+			(list (self-modifying-code-init this conf))
 			(j2s-scheme headers mode return conf hint totype)
 			(j2s-scheme decls mode return conf hint totype)
-			(list (self-modifying-code-init this conf))
 			(j2s-scheme nodes mode return conf hint totype)))))
 	 (cond
 	    (module
