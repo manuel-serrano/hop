@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Jun 12 08:32:52 2017 (serrano)                */
+;*    Last change :  Tue Jun 13 07:54:09 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -475,26 +475,64 @@
 			    (else (instantiate::J2SReturn
 				     (loc loc)
 				     (expr callu)))))))))
+
+   (define (unparen expr::J2SExpr)
+      (if (isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr)
+	     (unparen expr))
+	  expr))
    
+   (define (typeof? expr::J2SExpr)
+      (when (isa? (unparen expr) J2SUnary)
+	 (with-access::J2SUnary expr (op)
+	    (eq? op 'typeof))))
+   
+   (define (type-checker? fun::J2SFun)
+
+      (define (check-node? node)
+	 (when (isa? node J2SReturn)
+	    (with-access::J2SReturn node (expr)
+	       (when (isa? (unparen expr) J2SBinary)
+		  (with-access::J2SBinary (unparen expr) (op lhs rhs)
+		     (or (eq? op 'instanceof)
+			 (when (memq op '(== != === !==))
+			    (or (typeof? lhs) (typeof? rhs)))))))))
+
+      (define (block-check-node? node)
+	 (when (isa? node J2SBlock)
+	    (with-access::J2SBlock node (nodes)
+	       (match-case nodes
+		  (((? check-node?)) #t)
+		  (else #f)))))
+
+      (with-access::J2SFun fun (body)
+	 (with-access::J2SBlock body (nodes)
+	    (match-case nodes
+	       (((? profile-node?) (? block-check-node?)) #t)
+	       (((? check-node?)) #t)
+	       (else #f)))))
+
    (define (duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
       (with-access::J2SDeclFun this (val id %info)
-	 (with-access::J2SFun val (params vararg)
+	 (with-access::J2SFun val (params vararg body)
 	    (and (not (isa? %info J2SDecl))
 		 (not (isa? %info FunHintInfo))
 		 (not vararg)
 		 (not (isa? val J2SSvc))
 		 (pair? params)
 		 (any (lambda (p::J2SDecl)
-			 (with-access::J2SDecl p (hint usecnt itype)
-			    (when (and (>=fx usecnt 2)
-				       (not (eq? (best-hint-type hint #f) 'unknown)))
-			       (or (eq? itype 'unknown)
-				   (eq? itype 'any)
-				   (and (eq? itype 'number)
-					(or (assq 'integer hint)
-					    (assq 'index hint)))))))
-		    params)))))
+			 (with-access::J2SDecl p (hint usecnt itype ronly)
+			    (when (>=fx usecnt 1)
+			       (let ((bt (best-hint-type p #f)))
+				  (unless (eq? bt 'unknown)
+				     (or (eq? itype 'unknown)
+					 (eq? itype 'any)
+					 (and (eq? itype 'number)
+					      (or (assq 'integer hint)
+						  (assq 'index hint)))))))))
+		    params)
+		 (not (type-checker? val))))))
    
    (define (typed? decl::J2SDeclFun)
       ;; return #t iff the function's arguments are all typed
@@ -532,14 +570,12 @@
 		  (with-access::FunHintInfo %info (unhinted hinted)
 		     (or (eq? hinted fun) (eq? unhinted fun))))))))
    
-   
    (cond
       ((duplicable? this)
        (with-access::J2SDeclFun this (val id)
 	  (with-access::J2SFun val (params body)
 	     (let* ((htypes (map (lambda (p)
-				    (with-access::J2SDecl p (hint itype)
-				       (best-hint-type hint #t)))
+				    (best-hint-type p #t))
 			       params))
 		    (itypes (map (lambda (p::J2SDecl)
 				    (with-access::J2SDecl p (itype)
@@ -551,13 +587,15 @@
 		(list ft fu)))))
       ((typed? this)
        (when (config-get conf :profile #f)
-	  (with-access::J2SDeclFun this (id)
-	     (profile-fun! this id 'type)))
+	  (unless (profile-fun? this)
+	     (with-access::J2SDeclFun this (id)
+		(profile-fun! this id 'type))))
        '())
       ((not (duplicated? this))
        (when (config-get conf :profile #f)
-	  (with-access::J2SDeclFun this (id)
-	     (profile-fun! this id 'notype)))
+	  (unless (profile-fun? this)
+	     (with-access::J2SDeclFun this (id)
+		(profile-fun! this id 'notype))))
        '())
       (else
        '())))
@@ -565,7 +603,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    best-hint-type ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (best-hint-type::symbol hint normalize)
+(define (best-hint-type::symbol decl::J2SDecl normalize)
 
    (define (normalize-hint hint)
       (let loop ((l hint)
@@ -582,32 +620,36 @@
 		    (loop (cons (cons 'num (cdar l)) (cdr l)) r))))
 	    (else
 	     (loop (cdr l) (cons (car l) r))))))
-	     
-   (let loop ((l (if normalize (normalize-hint hint) hint))
-	      (t 'unknown)
-	      (c 0))
-      (cond
-	 ((null? l)
-	  (cond
-	     ((eq? t 'object)
-	      (if (or (assq 'undefined hint) (assq 'null hint)) 'unknown 'object))
-	     ((not (eq? t 'num))
-	      t)
-	     ((assq 'index hint)
-	      'index)
-	     ((assq 'integer hint)
-	      'integer)
-	     (else
-	      'number)))
-	 ((>fx (cdr (car l)) c)
-	  (loop (cdr l) (caar l) (cdar l)))
-	 ((and (=fx (cdr (car l)) c) (eq? t 'string))
-	  ;; in doubt, prefer arrays over strings
-	  (loop (cdr l) (caar l) (cdar l)))
-	 ((and (=fx (cdr (car l)) c) (eq? t 'any))
-	  (loop (cdr l) (caar l) (cdar l)))
-	 (else
-	  (loop (cdr l) t c)))))
+
+   (with-access::J2SDecl decl (hint ronly)
+      (let loop ((l (if normalize (normalize-hint hint) hint))
+		 (t 'unknown)
+		 (c 0))
+	 (cond
+	    ((null? l)
+	     (cond
+		((eq? t 'object)
+		 (cond
+		    (ronly 'object)
+		    ((or (assq 'undefined hint) (assq 'null hint)) 'unknown)
+		    (else 'object)))
+		((not (eq? t 'num))
+		 t)
+		((assq 'index hint)
+		 'index)
+		((assq 'integer hint)
+		 'integer)
+		(else
+		 'number)))
+	    ((>fx (cdr (car l)) c)
+	     (loop (cdr l) (caar l) (cdar l)))
+	    ((and (=fx (cdr (car l)) c) (eq? t 'string))
+	     ;; in doubt, prefer arrays over strings
+	     (loop (cdr l) (caar l) (cdar l)))
+	    ((and (=fx (cdr (car l)) c) (eq? t 'any))
+	     (loop (cdr l) (caar l) (cdar l)))
+	    (else
+	     (loop (cdr l) t c))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hint-type-predicate ...                                          */
@@ -687,13 +729,19 @@
       (with-access::J2SFun val (body)
 	 (with-access::J2SBlock body (nodes)
 	    (when (pair? nodes)
-	       (when (isa? (car nodes) J2SStmtExpr)
-		  (with-access::J2SStmtExpr (car nodes) (expr)
-		     (when (isa? expr J2SPragma)
-			(with-access::J2SPragma expr (expr)
-			   (match-case expr
-			      ((profile-function .?-) #t)
-			      (else #f)))))))))))
+	       (profile-node? (car nodes)))))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-node? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (profile-node? node)
+   (when (isa? node J2SStmtExpr)
+      (with-access::J2SStmtExpr node (expr)
+	 (when (isa? expr J2SPragma)
+	    (with-access::J2SPragma expr (expr)
+	       (match-case expr
+		  ((profile-function . ?-) #t)
+		  (else #f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-duplicate-untyped ...                                        */
@@ -944,8 +992,7 @@
 		      decls)))
 	 (if (and inloop (duplicable? this decls))
 	     (let ((htypes (map (lambda (p)
-				   (with-access::J2SDecl p (hint)
-				      (best-hint-type hint #t)))
+				   (best-hint-type p #t))
 			      decls)))
 		(set! nodes (list (loop-dispatch this decls htypes)))
 		this)
