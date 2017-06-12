@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Jun  9 07:48:11 2017                          */
-/*    Last change :  Fri Jun  9 07:49:59 2017 (serrano)                */
+/*    Last change :  Mon Jun 12 08:20:24 2017 (serrano)                */
 /*    Copyright   :  2017 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Compilation and optimization tests                               */
@@ -27,4 +27,23 @@ function tyflow( x ) {
 }
 
 assert.ok( tyflow( "foo" ), "tyflow" );
-      
+
+/*---------------------------------------------------------------------*/
+/*    rettype ...                                                      */
+/*---------------------------------------------------------------------*/
+function rettype( x ) {
+
+   while( x != null ) {
+      if( x.car == 1 ) {
+	 return x.car;
+      } else {
+	 x = x.cdr;
+      }
+   }
+
+   zzz = x;
+   return typeof x != "object";
+}
+
+assert.ok( rettype( { car: 10, cdr: null } ), "return typing" );
+	 
