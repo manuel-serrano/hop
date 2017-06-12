@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jun 10 08:30:44 2017 (serrano)                */
+;*    Last change :  Mon Jun 12 11:51:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -15,6 +15,9 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_property
 
+   (extern (macro STDERR::void* "stderr"))
+   (extern (macro _FPRINTF::int (::void* ::string) "fprintf"))
+   
    (cond-expand
       (enable-patch (library patch)))
 
@@ -209,7 +212,9 @@
 	   (show-cache-misses)
 	   (log-function! ::bool)
 	   (profile-function ::obj ::symbol)
-	   (show-functions)))
+	   (show-functions)
+	   (FPRINTF o)
+	   ))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -2992,3 +2997,9 @@
 			(else (string<=? (car e1) (car e2)))))
 	       *functions*))
 	 (newline))))
+
+;*---------------------------------------------------------------------*/
+;*    FPRINTF ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (FPRINTF o)
+   (_FPRINTF STDERR "o"))

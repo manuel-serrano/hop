@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Jun 10 10:52:07 2017 (serrano)                */
+;*    Last change :  Mon Jun 12 08:32:52 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -193,10 +193,18 @@
 	      (j2s-hint rhs (list numctx 'string) 'number))))
 	 ((== === != !==)
 	  (cond
-	     ((not (memq (j2s-type lhs) '(any null)))
+	     ((isa? lhs J2SNull)
+	      (j2s-hint rhs '(null) 'any))
+	     ((isa? lhs J2SUndefined)
+	      (j2s-hint rhs '(undefined) 'any))
+	     ((isa? rhs J2SNull)
+	      (j2s-hint lhs '(null) 'any))
+	     ((isa? rhs J2SUndefined)
+	      (j2s-hint lhs '(undefined) 'any))
+	     ((not (eq? (j2s-type lhs) 'any))
 	      (j2s-hint lhs '() numctx)
 	      (j2s-hint rhs (list (j2s-type lhs)) numctx))
-	     ((not (memq (j2s-type rhs) '(any null)))
+	     ((not (eq? (j2s-type rhs) 'any))
 	      (j2s-hint lhs (list (j2s-type rhs)) numctx)
 	      (j2s-hint rhs '() numctx))
 	     (else
@@ -305,7 +313,8 @@
 		 (with-access::J2SRef obj (decl)
 		    (j2s-add-hint! decl '(array))))
 		(else
-		 (j2s-hint obj hints numctx)))))
+		 ;; (j2s-hint obj hints numctx)
+		 (j2s-hint obj '(object) numctx)))))
 	 ((isa? field J2SLiteralCnst)
 	  (with-access::J2SLiteralCnst field (val)
 	     (if (isa? val J2SString)
@@ -381,7 +390,8 @@
 (define-walk-method (j2s-hint this::J2SCall types numctx)
    
    (define (j2s-hint-fun fun args)
-      (with-access::J2SFun fun (params)
+      ;; MS CARE: should not hint on calls
+      '(with-access::J2SFun fun (params)
 	 (let loop ((args args)
 		    (params params))
 	    (when (and (pair? args) (pair? params))
@@ -477,7 +487,8 @@
 		 (pair? params)
 		 (any (lambda (p::J2SDecl)
 			 (with-access::J2SDecl p (hint usecnt itype)
-			    (when (and (>=fx usecnt 2) (pair? hint))
+			    (when (and (>=fx usecnt 2)
+				       (not (eq? (best-hint-type hint #f) 'unknown)))
 			       (or (eq? itype 'unknown)
 				   (eq? itype 'any)
 				   (and (eq? itype 'number)
@@ -528,7 +539,7 @@
 	  (with-access::J2SFun val (params body)
 	     (let* ((htypes (map (lambda (p)
 				    (with-access::J2SDecl p (hint itype)
-				       (best-hint-type hint)))
+				       (best-hint-type hint #t)))
 			       params))
 		    (itypes (map (lambda (p::J2SDecl)
 				    (with-access::J2SDecl p (itype)
@@ -554,7 +565,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    best-hint-type ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (best-hint-type::symbol hint)
+(define (best-hint-type::symbol hint normalize)
 
    (define (normalize-hint hint)
       (let loop ((l hint)
@@ -572,16 +583,22 @@
 	    (else
 	     (loop (cdr l) (cons (car l) r))))))
 	     
-   (let loop ((l (normalize-hint hint))
+   (let loop ((l (if normalize (normalize-hint hint) hint))
 	      (t 'unknown)
 	      (c 0))
       (cond
 	 ((null? l)
 	  (cond
-	     ((not (eq? t 'num)) t)
-	     ((assq 'index hint) 'index)
-	     ((assq 'integer hint) 'integer)
-	     (else 'number)))
+	     ((eq? t 'object)
+	      (if (or (assq 'undefined hint) (assq 'null hint)) 'unknown 'object))
+	     ((not (eq? t 'num))
+	      t)
+	     ((assq 'index hint)
+	      'index)
+	     ((assq 'integer hint)
+	      'integer)
+	     (else
+	      'number)))
 	 ((>fx (cdr (car l)) c)
 	  (loop (cdr l) (caar l) (cdar l)))
 	 ((and (=fx (cdr (car l)) c) (eq? t 'string))
@@ -928,7 +945,7 @@
 	 (if (and inloop (duplicable? this decls))
 	     (let ((htypes (map (lambda (p)
 				   (with-access::J2SDecl p (hint)
-				      (best-hint-type hint)))
+				      (best-hint-type hint #t)))
 			      decls)))
 		(set! nodes (list (loop-dispatch this decls htypes)))
 		this)

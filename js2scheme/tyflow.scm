@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Jun 10 08:41:13 2017 (serrano)                */
+;*    Last change :  Mon Jun 12 09:13:30 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -366,20 +366,6 @@
    (append right left))
 
 ;*---------------------------------------------------------------------*/
-;*    typing* ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (typing* nodes::pair-nil env::pair-nil fun fix::cell)
-   (let loop ((nodes nodes)
-	      (typ 'undefined)
-	      (env env)
-	      (bks '()))
-      (if (null? nodes)
-	  (return typ env bks)
-	  (multiple-value-bind (typ env bk)
-	     (typing (car nodes) env fun fix)
-	     (loop (cdr nodes) typ env (append bk bks))))))
-
-;*---------------------------------------------------------------------*/
 ;*    typing-args ...                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    Types all the arguments and returns a new environment. The       */
@@ -396,20 +382,39 @@
 	     (loop (cdr args) enva (append bk bks))))))
 
 ;*---------------------------------------------------------------------*/
+;*    typing* ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (typing* nodes::pair-nil env::pair-nil fun fix::cell)
+   (let loop ((nodes nodes)
+	      (typ 'undefined)
+	      (env env)
+	      (bks '()))
+      (if (null? nodes)
+	  (return typ env bks)
+	  (multiple-value-bind (typn envn bk)
+	     (typing (car nodes) env fun fix)
+	     (if (pair? bk)
+		 (multiple-value-bind (typr envr bkr)
+		    (typing-seq (cdr nodes) envn fun fix)
+		    (return typr (env-merge envn envr) (append bk bk bks)))
+		 (loop (cdr nodes) typn envn (append bk bks)))))))
+
+;*---------------------------------------------------------------------*/
 ;*    typing-seq ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (typing-seq nodes::pair-nil env::pair-nil fun fix::cell)
    (let loop ((nodes nodes)
 	      (env env)
-	      (bks '())
-	      (envr #f))
+	      (bks '()))
       (if (null? nodes)
-	  (return 'void (or envr env) bks)
+	  (return 'void env bks)
 	  (multiple-value-bind (_ envn bk)
 	     (typing (car nodes) env fun fix)
 	     (if (pair? bk)
-		 (loop (cdr nodes) envn (append bk bks) (or envr env))
-		 (loop (cdr nodes) envn (append bk bks) envr))))))
+		 (multiple-value-bind (_ envr bkr)
+		    (typing-seq (cdr nodes) envn fun fix)
+		    (return 'void (env-merge envn envr) (append bk bk bks)))
+		 (loop (cdr nodes) envn (append bk bks)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-breaks ...                                                */
@@ -1036,7 +1041,7 @@
 			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
 			    'unknown)
 			   (else
-			    'any)))
+			    'unknown)))
 		       ((- *)
 			(cond
 			   ((and (type-integer? typl) (type-integer? typr))
@@ -1219,7 +1224,7 @@
 			     (cons d itype)))
 		     decls)))
 	 (multiple-value-bind (_ denv bk)
-	    (typing* decls (append ienv env) fun fix)
+	    (typing-seq decls (append ienv env) fun fix)
 	    (multiple-value-bind (_ benv bks)
 	       (typing-seq nodes denv fun fix)
 	       (let ((nenv (filter (lambda (d)
@@ -1505,12 +1510,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SIf fix::cell)
    
-;*    (define (eq-typeof? type typ)                                    */
-;*       (or (eq? type typ)                                            */
-;* 	  (and (memq type '(date array)) (eq? typ 'object))            */
-;* 	  (and (eq? typ 'number) (memq type '(integer index)))         */
-;* 	  (and (eq? typ 'boolean) (eq? type 'bool))))                  */
-   
    (define (is-true? expr)
       (cond
 	 ((isa? expr J2SBool)
@@ -1536,7 +1535,9 @@
       (with-access::J2SExpr test (type)
 	 (cond
 	    ((memq type '(any unknown))
-	     (call-default-walker))
+	     (set! then (resolve! then fix))
+	     (set! else (resolve! else fix))
+	     this)
 	    ((is-true? test)
 	     (unfix! fix "resolve.J2SIf")
 	     (resolve! then fix))
@@ -1547,60 +1548,6 @@
 	     (set! then (resolve! then fix))
 	     (set! else (resolve! else fix))
 	     this)))))
-		
-;* 	     (multiple-value-bind (op decl typ ref)                    */
-;* 		(j2s-expr-type-test test)                              */
-;* 		(case op                                               */
-;* 		   ((== ===)                                           */
-;* 		    (with-access::J2SExpr ref (type)                   */
-;* 		       (cond                                           */
-;* 			  ((eq-typeof? type typ)                       */
-;* 			   (unfix! fix "resolve.J2SIf")                */
-;* 			   (resolve! then fix))                        */
-;* 			  ((memq type '(unknown any))                  */
-;* 			   (call-default-walker))                      */
-;* 			  ((and (eq? type 'number) (memq typ '(integer index))) */
-;* 			   (call-default-walker))                      */
-;* 			  (else                                        */
-;* 			   (unfix! fix "return.J2SIf")                 */
-;* 			   (resolve! else fix)))))                     */
-;* 		   ((!= !==)                                           */
-;* 		    (with-access::J2SExpr ref (type)                   */
-;* 		       (cond                                           */
-;* 			  ((eq-typeof? type typ)                       */
-;* 			   (unfix! fix "return.J2SIf")                 */
-;* 			   (resolve! else fix))                        */
-;* 			  ((memq type '(unknown any))                  */
-;* 			   (call-default-walker))                      */
-;* 			  ((and (eq? type 'number) (memq typ '(integer index))) */
-;* 			   (call-default-walker))                      */
-;* 			  (else                                        */
-;* 			   (unfix! fix "return.J2SIf")                 */
-;* 			   (resolve! then fix)))))                     */
-;* 		   ((instanceof)                                       */
-;* 		    (with-access::J2SExpr ref (type)                   */
-;* 		       (cond                                           */
-;* 			  ((memq type '(unknown any object))           */
-;* 			   (call-default-walker))                      */
-;* 			  ((eq? type typ)                              */
-;* 			   (unfix! fix "resolve.J2SIf")                */
-;* 			   (resolve! then fix))                        */
-;* 			  (else                                        */
-;* 			   (unfix! fix "return.J2SIf")                 */
-;* 			   (resolve! else fix)))))                     */
-;* 		   ((!instanceof)                                      */
-;* 		    (with-access::J2SExpr ref (type)                   */
-;* 		       (cond                                           */
-;* 			  ((memq type '(unknown any object))           */
-;* 			   (call-default-walker))                      */
-;* 			  ((eq? type typ)                              */
-;* 			   (unfix! fix "resolve.J2SIf")                */
-;* 			   (resolve! else fix))                        */
-;* 			  (else                                        */
-;* 			   (unfix! fix "return.J2SIf")                 */
-;* 			   (resolve! then fix)))))                     */
-;* 		   (else                                               */
-;* 		    (call-default-walker)))))))))                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ...                                                  */
