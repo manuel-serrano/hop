@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jun  9 18:07:30 2017 (serrano)                */
+;*    Last change :  Mon Jun 12 20:37:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2393,8 +2393,36 @@
    (define (aref::J2SAref expr::J2SAccess)
       (with-access::J2SAccess expr (obj field)
 	 obj))
-   
+
+   (define (j2s-typeof-predicate this::J2SExpr expr)
+      (when (isa? this J2SUnary)
+	 (with-access::J2SUnary this (op)
+	    (when (eq? op 'typeof)
+	       (when (or (isa? expr J2SString) (isa? expr J2SNativeString))
+		  (with-access::J2SLiteralValue expr (val)
+		     (cond
+			((string=? val "number") 'js-number?)
+			((string=? val "function") 'js-function?)
+			((string=? val "string") 'js-jsstring?)
+			(else (tprint "PAS OPT" val) #f))))))))
+
    (cond
+      ((j2s-typeof-predicate lhs rhs)
+       =>
+       (lambda (pred)
+	  (with-access::J2SUnary lhs (expr)
+	     (let ((t `(,pred ,(j2s-scheme expr mode return conf hint totype))))
+		(if (memq op '(!= !==))
+		    `(not ,t)
+		    t)))))
+      ((j2s-typeof-predicate rhs lhs)
+       =>
+       (lambda (pred)
+	  (with-access::J2SUnary rhs (expr)
+	     (let ((t `(,pred ,(j2s-scheme expr mode return conf hint totype))))
+		(if (memq op '(!= !==))
+		    `(not ,t)
+		    t)))))
       ((and (is-uint32? lhs) (is-uint32? rhs))
        (cond
 	  ((j2s-aref-length? rhs)

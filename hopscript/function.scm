@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon May 22 18:04:02 2017 (serrano)                */
+;*    Last change :  Mon Jun 12 20:36:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -29,7 +29,6 @@
 	   __hopscript_worker)
    
    (export (js-init-function! ::JsGlobalObject)
-	   (inline js-function?::bool ::obj)
 	   
 	   thrower-get
 	   thrower-set
@@ -156,12 +155,6 @@
 	 :hidden-class #f)
       ;; return the js-function object
       js-function))
-
-;*---------------------------------------------------------------------*/
-;*    js-function? ...                                                 */
-;*---------------------------------------------------------------------*/
-(define-inline (js-function? obj)
-   (isa? obj JsFunction))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-function ...                                                 */
