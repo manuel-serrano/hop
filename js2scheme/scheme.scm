@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Jun 12 20:37:53 2017 (serrano)                */
+;*    Last change :  Tue Jun 20 22:03:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -165,7 +165,6 @@
 ;*    js-uint32->fixnum ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-uint32->fixnum expr conf)
-   (tprint "js-uint32->fixnum expr=" expr " " (typeof expr))
    (cond
       ((uint32? expr)
        (uint32->fixnum expr))
@@ -586,7 +585,7 @@
 					 mode name pcache-size cnsts globals)
       (let ((body (flatten-nodes
 		     (append
-			(list (self-modifying-code-init this conf))
+			(self-modifying-code-init this conf)
 			(j2s-scheme headers mode return conf hint totype)
 			(j2s-scheme decls mode return conf hint totype)
 			(j2s-scheme nodes mode return conf hint totype)))))
@@ -2404,14 +2403,29 @@
 			((string=? val "number") 'js-number?)
 			((string=? val "function") 'js-function?)
 			((string=? val "string") 'js-jsstring?)
-			(else (tprint "PAS OPT" val) #f))))))))
+			((string=? val "undefined") 'js-undefined?)
+			((string=? val "boolean") 'boolean?)
+			((string=? val "object") #f)
+			(else (tprint "TYPEOF PAS OPT " val) #f))))))))
+
+   (define (typeof-expr expr mode return conf hint totype)
+      (cond
+	 ((isa? expr J2SUnresolvedRef)
+	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3
+	  (with-access::J2SUnresolvedRef expr (id loc cache)
+	     (j2s-unresolved id cache #f)))
+	 ((isa? expr J2SParen)
+	  (with-access::J2SParen expr (expr)
+	     (typeof-expr expr mode return conf hint totype)))
+	 (else
+	  (j2s-scheme expr mode return conf hint totype))))
 
    (cond
       ((j2s-typeof-predicate lhs rhs)
        =>
        (lambda (pred)
 	  (with-access::J2SUnary lhs (expr)
-	     (let ((t `(,pred ,(j2s-scheme expr mode return conf hint totype))))
+	     (let ((t `(,pred ,(typeof-expr expr mode return conf hint totype))))
 		(if (memq op '(!= !==))
 		    `(not ,t)
 		    t)))))
@@ -2419,7 +2433,7 @@
        =>
        (lambda (pred)
 	  (with-access::J2SUnary rhs (expr)
-	     (let ((t `(,pred ,(j2s-scheme expr mode return conf hint totype))))
+	     (let ((t `(,pred ,(typeof-expr expr mode return conf hint totype))))
 		(if (memq op '(!= !==))
 		    `(not ,t)
 		    t)))))
@@ -2912,7 +2926,7 @@
 	     (delete->scheme expr)))
 	 (else
 	  `(begin ,(j2s-scheme expr mode return conf hint totype) #t))))
-   
+
    (define (typeof->scheme expr)
       (cond
 	 ((isa? expr J2SUnresolvedRef)
@@ -5155,24 +5169,27 @@
 ;*    self-modifying-code-init ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (self-modifying-code-init this::J2SProgram conf)
-   (when (config-get conf :self-modifying-code #f)
-      (with-access::J2SProgram this (decls nodes)
-	 ;; collect all the cache uses
-	 (let ((caches (append
-			  (append-map collect-pcaches* decls)
-			  (append-map collect-pcaches* nodes)))
-	       (cpatcher (if (>fx (config-get conf :long-size 0) 32)
-			     '%init-patch-64
-			     '%init-patch-32)))
-	    `(begin
-		,@(append-map (lambda (en)
-				 (if (pair? en)
-				     (let ((fun (car en)))
-					(map (lambda (c)
-						`(,cpatcher XX ,c))
-					   (cdr en)))
-				     '()))
-		     caches))))))
+   '())
+
+(define (self-modifying-code-init.toberemoved.2017-06-20 this::J2SProgram conf)
+   (if (config-get conf :self-modifying-code #f)
+       (with-access::J2SProgram this (decls nodes)
+	  ;; collect all the cache uses
+	  (let ((caches (append
+			   (append-map collect-pcaches* decls)
+			   (append-map collect-pcaches* nodes)))
+		(cpatcher (if (>fx (config-get conf :long-size 0) 32)
+			      '%init-patch-64
+			      '%init-patch-32)))
+	     (map (lambda (en)
+		     (if (pair? en)
+			 (let ((fun (car en)))
+			    (map (lambda (c)
+				    `(,cpatcher XX ,c))
+			       (cdr en)))
+			 '()))
+		caches)))
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-pcaches* ...                                             */

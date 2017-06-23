@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Jun 12 20:32:53 2017 (serrano)                */
+;*    Last change :  Tue Jun 20 15:02:11 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -347,6 +347,7 @@
 	   (inline js-not-a-index::long)
 
 	   (inline js-number?::bool ::obj)
+	   (inline js-object?::bool ::obj)
 	   (inline js-function?::bool ::obj)
 
 	   (gencmapid::uint32)))
@@ -742,6 +743,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-number? o)
    (or (fixnum? o) (flonum? o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object? o)
+   (isa? o JsObject))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function? ...                                                 */

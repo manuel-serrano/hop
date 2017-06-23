@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Thu May 18 14:30:01 2017 (serrano)                */
+;*    Last change :  Sat Jun 17 15:52:27 2017 (serrano)                */
 ;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -593,6 +593,7 @@
 	    (let ((resp (websocket-server-response req key :protocol '("json"))))
 	       (watch-socket! socket
 		  (lambda (s)
+		     (socket-close s)
 		     (notify-client! "disconnect" #f req *disconnect-listeners*)))
 	       (trace-item "resp=" (typeof resp))
 	       ;; register the websocket

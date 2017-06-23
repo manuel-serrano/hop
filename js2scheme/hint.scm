@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Jun 12 19:30:43 2017 (serrano)                */
+;*    Last change :  Tue Jun 13 07:54:09 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -488,17 +488,29 @@
 	    (eq? op 'typeof))))
    
    (define (type-checker? fun::J2SFun)
+
+      (define (check-node? node)
+	 (when (isa? node J2SReturn)
+	    (with-access::J2SReturn node (expr)
+	       (when (isa? (unparen expr) J2SBinary)
+		  (with-access::J2SBinary (unparen expr) (op lhs rhs)
+		     (or (eq? op 'instanceof)
+			 (when (memq op '(== != === !==))
+			    (or (typeof? lhs) (typeof? rhs)))))))))
+
+      (define (block-check-node? node)
+	 (when (isa? node J2SBlock)
+	    (with-access::J2SBlock node (nodes)
+	       (match-case nodes
+		  (((? check-node?)) #t)
+		  (else #f)))))
+
       (with-access::J2SFun fun (body)
 	 (with-access::J2SBlock body (nodes)
-	    (when (pair? nodes)
-	       (unless (pair? (cdr nodes))
-		  (when (isa? (car nodes) J2SReturn)
-		     (with-access::J2SReturn (car nodes) (expr)
-			(when (isa? (unparen expr) J2SBinary)
-			   (with-access::J2SBinary (unparen expr) (op lhs rhs)
-			      (or (eq? op 'instanceof)
-				  (when (memq op '(== != === !==))
-				     (or (typeof? lhs) (typeof? rhs)))))))))))))
+	    (match-case nodes
+	       (((? profile-node?) (? block-check-node?)) #t)
+	       (((? check-node?)) #t)
+	       (else #f)))))
 
    (define (duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
@@ -557,7 +569,6 @@
 	       (when (isa? %info FunHintInfo)
 		  (with-access::FunHintInfo %info (unhinted hinted)
 		     (or (eq? hinted fun) (eq? unhinted fun))))))))
-   
    
    (cond
       ((duplicable? this)
@@ -718,13 +729,19 @@
       (with-access::J2SFun val (body)
 	 (with-access::J2SBlock body (nodes)
 	    (when (pair? nodes)
-	       (when (isa? (car nodes) J2SStmtExpr)
-		  (with-access::J2SStmtExpr (car nodes) (expr)
-		     (when (isa? expr J2SPragma)
-			(with-access::J2SPragma expr (expr)
-			   (match-case expr
-			      ((profile-function . ?-) #t)
-			      (else #f)))))))))))
+	       (profile-node? (car nodes)))))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-node? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (profile-node? node)
+   (when (isa? node J2SStmtExpr)
+      (with-access::J2SStmtExpr node (expr)
+	 (when (isa? expr J2SPragma)
+	    (with-access::J2SPragma expr (expr)
+	       (match-case expr
+		  ((profile-function . ?-) #t)
+		  (else #f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fun-duplicate-untyped ...                                        */
