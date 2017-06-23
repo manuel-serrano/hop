@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jun 23 11:23:05 2017 (serrano)                */
+;*    Last change :  Fri Jun 23 11:30:15 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1248,7 +1248,6 @@
 	 (if fun
 	     (with-access::J2SFun fun (rtype)
 		(let ((tyr (merge-types rtype tye)))
-		   (tprint "RET " (j2s->list this) " tyr=" tyr)
 		   (unless (eq? tyr rtype)
 		      (unfix! fix (format "J2SReturn(~a) ~a/~a" tye tyr rtype))
 		      (set! rtype tyr)))
