@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jun 23 10:34:20 2017 (serrano)                */
+;*    Last change :  Fri Jun 23 15:31:35 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -257,7 +257,8 @@
 		     (js-property-value ,o desc ,%this)))))
 	  (else
 	   (with-access::JsConstructMap %omap (vlen vtable %id)
-	      (if (<fx ,vindx vlen)
+	      (if (and (<fx ,vindx vlen)
+		       (fixnum? (vector-ref vtable ,vindx)))
 		  (vector-ref elements (vector-ref vtable ,vindx))
 		  (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))))
    
