@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr  6 08:37:55 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Fri Jan 20 14:02:25 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -952,7 +952,7 @@
 		    (k (if (< n 0)
 			   (let ((absn (abs n)))
 			      (if (>uint32 len absn)
-				  (uint32->integer (-u32 len (->uint32 (abs n))))
+				  (-u32 len (->uint32 (abs n)))
 				  -1))
 			   (if (>=uint32 (-u32 len #u32:1) n)
 			       n
