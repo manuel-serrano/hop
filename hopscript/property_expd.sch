@@ -3,25 +3,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Jun  7 13:22:23 2017 (serrano)                */
+;*    Last change :  Fri Jun 23 10:34:20 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
 ;*    See expanders.sch and property.sch                               */
 ;*=====================================================================*/
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-object-packed-ref-expander ...                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (js-object-packed-ref-expander x e)                         */
-;*    (match-case x                                                    */
-;*       ((?- ?obj ?idx)                                               */
-;*        (e `(with-access::JsObject ,obj (elements cmap)              */
-;* 	      (vector-ref elements ,idx))                              */
-;* 	  e))                                                          */
-;*       (else                                                         */
-;*        (map (lambda (x) (e x e)) x))))                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache-expander ...                                      */
@@ -30,16 +18,6 @@
    (match-case x
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
-	     ((and bigloo-c enable-patch self-modify-code)
-	      (begin
-		 (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[ ~a ];" num))
-		 ,@(append
-		      (map (lambda (i)
-			      `(define ,(string->symbol (format "%pcache-cmap-~a" i)) (patch-index)))
-			 (iota num))
-		      (map (lambda (i)
-			      `(define ,(string->symbol (format "%pcache-indx-~a" i)) (patch-index)))
-			 (iota num)))))
 	     (bigloo-c
 	      (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[ ~a ];" num))))
 	  e))
@@ -53,16 +31,6 @@
    (match-case x
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
-	     ((and bigloo-c enable-patch self-modify-code)
-	      (begin
-		 ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
-		    ,num (instantiate::JsPropertyCache))
-		 ,@(map (lambda (i)
-			   `(with-access::JsPropertyCache (js-pcache-ref %pcache ,i) (%patchmap %patchindex %patchtable)
-			       (set! %patchtable (the-patch-table))
-			       (set! %patchmap ,(string->symbol (format "%pcache-cmap-~a" i)))
-			       (set! %patchindex ,(string->symbol (format "%pcache-indx-~a" i)))))
-		      (iota num))))
 	     (bigloo-c
 	      ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
 		 ,(cadr x) (instantiate::JsPropertyCache)))
@@ -238,20 +206,6 @@
 		 (vector-ref elements ,cindex))
 	      (js-object-get-name/cache-level2 ,@(cdr x)))))
    
-   (define (patchref o prop cache %this cindex ccmap cpmap cowner vindx)
-      (match-case cache
-	 ((js-pcache-ref %pcache ?ci)
-	  (let* ((sci (number->string ci))
-		 (ccmap (string->symbol (string-append "%pcache-cmap-" sci)))
-		 (cindx (string->symbol (string-append "%pcache-indx-" sci))))
-	     `(let ((%omap omap))
-		 (if (eq? (patch ,ccmap %omap) %omap)
-		     (with-access::JsObject ,o (elements)
-			(vector-ref elements (patch ,cindx 0)))
-		     (js-object-get-name/cache-level2 ,@(cdr x))))))
-	 (else
-	  (ref o prop cache %this cindex ccmap cpmap cowner vindx))))
-   
    (cond-expand
       ((or no-macro-cache no-macro-cache-get)
        (map (lambda (x) (e x e)) x))
@@ -266,11 +220,7 @@
 			    (map (lambda (x) (e x e)) x))
 			   (else
 			    (e x e2))))))))
-	  (cond-expand
-	     ((and enable-patch self-modify-code)
-	      (js-object-get-name/cache-match-expander x e1 patchref))
-	     (else
-	      (js-object-get-name/cache-match-expander x e1 ref)))))))
+	  (js-object-get-name/cache-match-expander x e1 ref)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-level1-expander ...                     */
