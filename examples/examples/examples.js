@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Tue May 23 22:06:55 2017 (serrano)                */
+/*    Last change :  Mon Jun 26 10:32:07 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -26,6 +26,8 @@ var CMD = "hop -g --sofile-policy none --no-color --no-zeroconf -p $(PORT) $(SRC
 var PASSWD = path.join( __dirname, "passwd.hop" );
 
 var CLASSLEVELS = [ "success", "info", "warning", "danger", "default" ];
+
+var EXAMPLES;
 
 service examplesSrc();
 service examplesDoc();
@@ -166,7 +168,7 @@ service examples() {
 		  })();
 	       }
 
-	       ${examplesRun}( o )
+	       ${examplesRun}( o.idx )
 		  .post( function( url ) {
 		     if( url ) {
 			${url}.innerHTML = url;
@@ -245,9 +247,11 @@ service examples() {
 /*    are characterized by their example.json file.                    */
 /*---------------------------------------------------------------------*/
 function getExamples( dir ) {
+   let idx = 0;
+   
    // extract all the example.json file, adding a
    // path prop and a title prop
-   return fs.readdirSync( dir )
+   return EXAMPLES = fs.readdirSync( dir )
       .filter( function( d ) {
 	 var p = dir + "/" + d;
 	 return fs.statSync( p ).isDirectory()
@@ -260,6 +264,7 @@ function getExamples( dir ) {
 	 
 	 if( !("dir" in o) ) {
 	    o.dir = p;
+	    o.idx = idx++;
 
 	    if( !("title" in o) ) o.title = d;
 	    if( !("service" in o) ) o.service = d;
@@ -297,11 +302,13 @@ function getExamples( dir ) {
       } );
 }
 
+   
 /*---------------------------------------------------------------------*/
 /*    examplesRun ...                                                  */
 /*---------------------------------------------------------------------*/
-service examplesRun( o ) {
+service examplesRun( idx ) {
    var PORTINC = 5;
+   var o = EXAMPLES[ idx ];
 
    PORT += PORTINC;
    
