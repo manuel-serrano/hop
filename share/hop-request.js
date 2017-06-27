@@ -649,6 +649,7 @@ HopFrame.prototype.hop_bigloo_serialize = hop_bigloo_serialize_hopframe;
 /*    onPostMessage ...                                                */
 /*---------------------------------------------------------------------*/
 function onPostMessage( e ) {
+   var ws = this;
    if( e.data instanceof ArrayBuffer ) {
       var buf = new Uint8Array( e.data );
 
@@ -701,7 +702,7 @@ function WebSocketPostFrame( frame, succ, fail ) {
       ws.postCount = 0;
       ws.binaryType = "arraybuffer";
 
-      ws.addEventListener( "message", onPostMessage );
+      ws.addEventListener( "message", onPostMessage.bind( ws ) );
       ws.addEventListener( "close", function( e ) {
 	 if( ws.preOpenQueue ) { ws.preOpenQueue.forEach( closeFrame ) }
 	 for( var k in ws.postHandlers ) { closeFrame( ws.postHandlers[ k ] ) }
