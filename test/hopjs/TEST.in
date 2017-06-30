@@ -75,10 +75,10 @@ run() {
     $hop --no-zeroconf $* > /tmp/TEST-HOPJS.out 2>&1
 
     if [ $? = 0 ]; then
-      echo "ok.";
+      echo -e "\x1b[32m\x1b[1mok\x1b[0m.";
       success=`expr $success + 1`
     else
-      echo "failure !!!"
+      echo -e "\x1b[31m\x1b[1mfailure\x1b[0m."
       if [ "$verb " != " " ]; then
         cat /tmp/TEST-HOPJS.out
       fi
