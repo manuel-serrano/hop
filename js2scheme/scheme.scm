@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jun 20 22:03:41 2017 (serrano)                */
+;*    Last change :  Wed Jun 28 17:47:33 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -539,7 +539,6 @@
 			   (library hopwidget))
 			(library hop hopscript nodejs js2scheme hopwidget)
 			(cond-expand (enable-libuv (library libuv)))
-			(cond-expand (enable-patch (library patch)))
 			(main main))))
 	 (with-access::J2SProgram this (mode pcache-size %this path cnsts globals)
 	    (list
@@ -585,7 +584,6 @@
 					 mode name pcache-size cnsts globals)
       (let ((body (flatten-nodes
 		     (append
-			(self-modifying-code-init this conf)
 			(j2s-scheme headers mode return conf hint totype)
 			(j2s-scheme decls mode return conf hint totype)
 			(j2s-scheme nodes mode return conf hint totype)))))
@@ -611,7 +609,6 @@
 	     ;; generate the module clause
 	     (let ((module `(module ,(string->symbol name)
 			       (library hop hopscript js2scheme nodejs)
-			       (cond-expand (enable-patch (library patch)))
 			       (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
 		(j2s-module module body)))))))
 
@@ -4820,7 +4817,7 @@
 				     ;; __proto__ field is special during
 				     ;; initialization, it must be assigned
 				     ;; using the generic js-put! function
-				     (j2s-put! loc tmp (typeof-this val conf)
+				     (j2s-put! loc tmp 'obj
 					"__proto__"
 					(j2s-scheme val mode return conf hint totype)
 					(strict-mode? mode) #f)
@@ -5164,53 +5161,4 @@
 	  (epairify loc (js-not (j2s-bool-test expr mode return conf))))
 	 (else
 	  (call-next-method)))))
-
-;*---------------------------------------------------------------------*/
-;*    self-modifying-code-init ...                                     */
-;*---------------------------------------------------------------------*/
-(define (self-modifying-code-init this::J2SProgram conf)
-   '())
-
-(define (self-modifying-code-init.toberemoved.2017-06-20 this::J2SProgram conf)
-   (if (config-get conf :self-modifying-code #f)
-       (with-access::J2SProgram this (decls nodes)
-	  ;; collect all the cache uses
-	  (let ((caches (append
-			   (append-map collect-pcaches* decls)
-			   (append-map collect-pcaches* nodes)))
-		(cpatcher (if (>fx (config-get conf :long-size 0) 32)
-			      '%init-patch-64
-			      '%init-patch-32)))
-	     (map (lambda (en)
-		     (if (pair? en)
-			 (let ((fun (car en)))
-			    (map (lambda (c)
-				    `(,cpatcher XX ,c))
-			       (cdr en)))
-			 '()))
-		caches)))
-       '()))
-
-;*---------------------------------------------------------------------*/
-;*    collect-pcaches* ...                                             */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-pcaches* this::J2SNode)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    collect-pcaches* ::J2SFun ...                                    */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-pcaches* this::J2SFun)
-   (with-access::J2SFun this (body)
-      (let ((caches (collect-pcaches* body)))
-	 (list (cons this caches)))))
-
-;*---------------------------------------------------------------------*/
-;*    collect-pcaches* ::J2SAccess ...                                 */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-pcaches* this::J2SAccess)
-   (with-access::J2SAccess this (cache)
-      (if cache
-	  (cons cache (call-default-walker))
-	  (call-default-walker))))
    

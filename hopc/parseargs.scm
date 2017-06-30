@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Jun 20 18:38:43 2017 (serrano)                */
+;*    Last change :  Fri Jun 23 10:32:50 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -272,14 +272,6 @@
 	    (("--profile" (help "Profiling mode"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))
 	    (section "Experimental features")
-	    (("--self-modifying-code" (help "Enable runtime code modification"))
-	     (hopc-j2s-flags-set! (cons* :self-modifying-code #t (hopc-j2s-flags)))
-;* 	     (hopc-bigloo-options-set!                                 */
-;* 		(append '("-copt" "'-DBGL_FUNCTION_BEGIN=AN_OBJECT;PATCHABLE_FUNCTION_BEGIN() -DBGL_FUNCTION_END=PATCHABLE_FUNCTION_END()'") */
-;* 		   (hopc-bigloo-options)))                             */
-	     (hopc-bigloo-options-set!
-		(append '("-runtime-code-patching")
-		   (hopc-bigloo-options))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

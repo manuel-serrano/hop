@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat Apr  8 07:37:04 2017 (serrano)                */
+/*    Last change :  Wed Jun 28 17:49:49 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -323,3 +323,20 @@ var a = [1,2,3,4,5];
 a[ x++ ] += 3;;
 
 assert.ok( x === 1, "increment in assignment" );
+
+/*---------------------------------------------------------------------*/
+/*    literal with prototype                                           */
+/*---------------------------------------------------------------------*/
+function protoLit( CNT, m ) {
+   function fun( i ) {
+      return this.x + i;
+   }
+
+   const proto = { f: fun };
+   let os = [ { x: 12345, y : 2, __proto__: proto } ];
+   let o = os [ 0 ];
+   
+   return o.f( 0 );
+}
+
+assert.ok( protoLit( 20000, 1 ) === 12345, "literal with __proto__" );

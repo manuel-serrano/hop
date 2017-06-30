@@ -1,27 +1,15 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/property_expd.sch       */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/property_expd.sch       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Jun  7 13:22:23 2017 (serrano)                */
+;*    Last change :  Thu Jun 29 10:36:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
 ;*    See expanders.sch and property.sch                               */
 ;*=====================================================================*/
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-object-packed-ref-expander ...                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (js-object-packed-ref-expander x e)                         */
-;*    (match-case x                                                    */
-;*       ((?- ?obj ?idx)                                               */
-;*        (e `(with-access::JsObject ,obj (elements cmap)              */
-;* 	      (vector-ref elements ,idx))                              */
-;* 	  e))                                                          */
-;*       (else                                                         */
-;*        (map (lambda (x) (e x e)) x))))                              */
 
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache-expander ...                                      */
@@ -30,16 +18,6 @@
    (match-case x
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
-	     ((and bigloo-c enable-patch self-modify-code)
-	      (begin
-		 (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[ ~a ];" num))
-		 ,@(append
-		      (map (lambda (i)
-			      `(define ,(string->symbol (format "%pcache-cmap-~a" i)) (patch-index)))
-			 (iota num))
-		      (map (lambda (i)
-			      `(define ,(string->symbol (format "%pcache-indx-~a" i)) (patch-index)))
-			 (iota num)))))
 	     (bigloo-c
 	      (static-pragma ,(format "static struct BgL_jspropertycachez00_bgl __bgl_pcache[ ~a ];" num))))
 	  e))
@@ -53,21 +31,11 @@
    (match-case x
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
-	     ((and bigloo-c enable-patch self-modify-code)
-	      (begin
-		 ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
-		    ,num (instantiate::JsPropertyCache))
-		 ,@(map (lambda (i)
-			   `(with-access::JsPropertyCache (js-pcache-ref %pcache ,i) (%patchmap %patchindex %patchtable)
-			       (set! %patchtable (the-patch-table))
-			       (set! %patchmap ,(string->symbol (format "%pcache-cmap-~a" i)))
-			       (set! %patchindex ,(string->symbol (format "%pcache-indx-~a" i)))))
-		      (iota num))))
 	     (bigloo-c
 	      ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
 		 ,(cadr x) (instantiate::JsPropertyCache)))
 	     (else
-	      ((@ js-make-pache __hopscript_property) ,(cadr x))))
+	      ((@ js-make-pache __hopscript_property) ,num)))
 	  e))
       (else
        (error "js-make-pcache" "bad syntax" x))))
@@ -238,20 +206,6 @@
 		 (vector-ref elements ,cindex))
 	      (js-object-get-name/cache-level2 ,@(cdr x)))))
    
-   (define (patchref o prop cache %this cindex ccmap cpmap cowner vindx)
-      (match-case cache
-	 ((js-pcache-ref %pcache ?ci)
-	  (let* ((sci (number->string ci))
-		 (ccmap (string->symbol (string-append "%pcache-cmap-" sci)))
-		 (cindx (string->symbol (string-append "%pcache-indx-" sci))))
-	     `(let ((%omap omap))
-		 (if (eq? (patch ,ccmap %omap) %omap)
-		     (with-access::JsObject ,o (elements)
-			(vector-ref elements (patch ,cindx 0)))
-		     (js-object-get-name/cache-level2 ,@(cdr x))))))
-	 (else
-	  (ref o prop cache %this cindex ccmap cpmap cowner vindx))))
-   
    (cond-expand
       ((or no-macro-cache no-macro-cache-get)
        (map (lambda (x) (e x e)) x))
@@ -266,11 +220,7 @@
 			    (map (lambda (x) (e x e)) x))
 			   (else
 			    (e x e2))))))))
-	  (cond-expand
-	     ((and enable-patch self-modify-code)
-	      (js-object-get-name/cache-match-expander x e1 patchref))
-	     (else
-	      (js-object-get-name/cache-match-expander x e1 ref)))))))
+	  (js-object-get-name/cache-match-expander x e1 ref)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-level1-expander ...                     */
@@ -307,7 +257,8 @@
 		     (js-property-value ,o desc ,%this)))))
 	  (else
 	   (with-access::JsConstructMap %omap (vlen vtable %id)
-	      (if (<fx ,vindx vlen)
+	      (if (and (<fx ,vindx vlen)
+		       (fixnum? (vector-ref vtable ,vindx)))
 		  (vector-ref elements (vector-ref vtable ,vindx))
 		  (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))))
    
@@ -542,7 +493,6 @@
 		      (=fx len ,len)))
 	      (with-access::JsPropertyCache ,ccache (method cmap)
 		 (with-access::JsFunction ,fun (procedure)
-		    ;; MS CARE: vraiment tres bizarre
 		    (set! cmap ,fun)
 		    (set! method procedure)
 		    (procedure ,this ,@args))))
@@ -610,18 +560,19 @@
 	  . ?args)
        (e (call obj name ccache ocache args
 	     `(js-pcache-pmap ,ccache)
+	     `(js-pcache-cmap ,ccache)
 	     `(js-pcache-method ,ccache)
 	     `(js-pcache-vindex ,ccache))
 	  e))
       ((?- ?%this (and (? symbol?) ?obj) ?name ?ccache ?ocache . ?args)
-       (e `(with-access::JsPropertyCache ,ccache (pmap method vindex)
-	      ,(call obj name ccache ocache args 'pmap 'method 'vindex))
+       (e `(with-access::JsPropertyCache ,ccache (pmap cmap method vindex)
+	      ,(call obj name ccache ocache args 'pmap 'cmap 'method 'vindex))
 	  e))
       ((?- ?%this ?obj ?name ?ccache ?ocache . ?args)
        (let ((this (gensym 'this)))
 	  (e `(let ((,this ,obj))
-		 (with-access::JsPropertyCache ,ccache (pmap method vindex)
-		    ,(call obj name ccache ocache args 'pmap 'method 'vindex)))
+		 (with-access::JsPropertyCache ,ccache (pmap cmap method vindex)
+		    ,(call obj name ccache ocache args 'pmap 'cmap 'method 'vindex)))
 	     e)))
       (else
        (error "js-object-call-name/cache" "wrong form" x))))
@@ -641,20 +592,21 @@
       `(js-object-method-call/cache-miss %this ,obj ',name ,ccache ,ocache
 	  (list ,@args)))
 
-   (define (call obj name ccache ocache args pmap method vindex)
+   (define (call obj name ccache ocache args _ cmap method vindex)
       `(with-access::JsConstructMap %omap (vlen vtable)
 	  (cond
-	     ((not %omap)
+	     ((and (<fx ,vindex vlen)
+		   (procedure? (vector-ref vtable ,vindex)))
+	      ;; polymorphic call
+	      ((vector-ref vtable ,vindex) ,obj ,@args))
+	     ((eq? ,cmap #t)
 	      ;; uncachable call
-	      (let ((f (js-get ,obj ',name %this)))
+	      (let ((f ((@ js-object-get-name/cache __hopscript_property)
+			,obj ',name ,ocache %this)))
 		 ,(calln 'f obj args)))
 	     (else
-	      (if (and (<fx ,vindex vlen)
-		       (procedure? (vector-ref vtable ,vindex)))
-		  ;; polymorphic call
-		  ((vector-ref vtable ,vindex) ,obj ,@args)
-		  ;; pure cache miss
-		  ,(calln/miss obj name ccache ocache args))))))
+	      ;; pure cache miss
+	      ,(calln/miss obj name ccache ocache args)))))
 
    (js-method-call-name/cache-match-expander x e call))
    
@@ -663,7 +615,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-method-call-name/cache-expander x e)
    
-   (define (call obj name ccache ocache args pmap method vindex)
+   (define (call obj name ccache ocache args pmap _ method vindex)
       `(with-access::JsObject ,obj ((omap cmap))
 	  (let ((%omap omap))
 	     (if (eq? ,pmap %omap)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 21 18:31:30 2017                          */
-;*    Last change :  Sat Apr 22 07:14:29 2017 (serrano)                */
+;*    Last change :  Sat Jun 24 09:41:04 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Watch for socket close                                           */
@@ -64,7 +64,10 @@
 		      (set! *inpipe* in)
 		      (set! *outpipe* out))))
 	     (multiple-value-bind (readfs _ _)
-		(select :read (cons *inpipe* *sockets*))
+		(with-handler
+		   (lambda (e)
+		      (values '() #f #f))
+		   (select :read (cons *inpipe* *sockets*)))
 		(let ((socks (filter socket? readfs)))
 		   (for-each onclose socks)
 		   (synchronize *watch-mutex*

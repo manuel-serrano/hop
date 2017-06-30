@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Sun May 21 09:34:14 2017 (serrano)                */
+;*    Last change :  Mon Jun 26 09:48:35 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -329,7 +329,7 @@
 	 (define (js->hop x)
 	    (if (js-jsstring? x)
 		(js-jsstring->string x)
-		x))
+		(js-raise-type-error %this "WebSocketServer: cannot convert ~s" x)))
 	 
 	 (define (js-websocket-server-construct this opt)
 	    (letrec* ((path (cond
@@ -337,8 +337,10 @@
 				opt)
 			       ((js-jsstring? opt)
 				(js-jsstring->string opt))
+			       ((isa? opt JsObject)
+				(js->hop (js-get opt 'path %this)))
 			       (else
- 				(js->hop (js-get opt 'path %this)))))
+ 				(js->hop opt))))
 		      (proto (if (isa? opt JsObject)
 				 (let ((proto (js-get opt 'protocol %this)))
 				    (cond

@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/trashcan/websocket/wsserver.js                           */
+/*    serrano/prgm/project/hop/3.1.x/examples/wspost/wsserver.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Sat Oct 29 08:40:19 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Mon Jun 26 10:00:53 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WebSocket server example                                         */
 /*    -------------------------------------------------------------    */
@@ -35,3 +35,5 @@ service asyn( o ) {
       setTimeout( function( e ) { resolve( o ) }, 1000 );
    } );
 }
+
+console.log( "wsserver ready" );

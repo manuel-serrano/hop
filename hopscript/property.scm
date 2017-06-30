@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/property.scm            */
+;*    serrano/prgm/project/hop/3.0.x/hopscript/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jun 12 11:51:20 2017 (serrano)                */
+;*    Last change :  Thu Jun 29 07:40:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -15,15 +15,6 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_property
 
-   (extern (macro STDERR::void* "stderr"))
-   (extern (macro _FPRINTF::int (::void* ::string) "fprintf"))
-   
-   (cond-expand
-      (enable-patch (library patch)))
-
-   (cond-expand
-      (enable-patch (option (set! *optim-patch?* #t))))
-   
    (library hop)
    
    (option  (register-srfi! 'cache-level2)
@@ -212,9 +203,7 @@
 	   (show-cache-misses)
 	   (log-function! ::bool)
 	   (profile-function ::obj ::symbol)
-	   (show-functions)
-	   (FPRINTF o)
-	   ))
+	   (show-functions)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -433,14 +422,7 @@
       (with-access::JsPropertyCache pcache (cmap pmap index)
 	 (set! cmap omap)
 	 (set! pmap #t)
-	 (set! index i)
-	 (cond-expand
-	    (enable-patch
-	     (with-access::JsPropertyCache pcache (%patchmap %patchindex %patchtable)
-		(when (>=fx %patchmap 0)
-		   (tprint "PATCHING...")
-		   (patch-set! %patchtable %patchmap omap)
-		   (patch-set! %patchtable %patchindex i))))))))
+	 (set! index i))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-owner! ...                                      */
@@ -2809,7 +2791,7 @@
 				   (with-access::JsPropertyCache ccache (pmap cmap index method)
 				      ;; correct arity, put in cache
 				      (set! pmap omap)
-				      (set! cmap #t)
+				      (set! cmap #f)
 				      (set! index i)
 				      (set! method (method->procedure f))))
 				  ((isa? f JsFunction)
@@ -2819,7 +2801,7 @@
 					  (with-access::JsPropertyCache ccache (pmap cmap index (cmethod method))
 					     ;; correct arity, put in cache
 					     (set! pmap omap)
-					     (set! cmap #t)
+					     (set! cmap #f)
 					     (set! index i)
 					     (set! cmethod method)))
 					 ((procedureN method (length args))
@@ -2828,13 +2810,15 @@
 					     (with-access::JsPropertyCache ccache (pmap cmap index (cmethod method))
 						;; correct arity, put in cache
 						(set! pmap omap)
-						(set! cmap #t)
+						(set! cmap #f)
 						(set! index i)
 						(set! cmethod procedure))))
 					 (else
 					  ;; arity missmatch, never cache
-					  (with-access::JsPropertyCache ccache (cmap)
-					     (set! cmap #t)))))))
+					  (with-access::JsPropertyCache ccache (pmap cmap)
+					     (set! pmap #t)
+					     (set! cmap #t))
+					  )))))
 			       (jsapply f)))
 			   (else
 			    (with-access::JsPropertyCache ccache (pmap cmap)
@@ -2997,9 +2981,3 @@
 			(else (string<=? (car e1) (car e2)))))
 	       *functions*))
 	 (newline))))
-
-;*---------------------------------------------------------------------*/
-;*    FPRINTF ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (FPRINTF o)
-   (_FPRINTF STDERR "o"))

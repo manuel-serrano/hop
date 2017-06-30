@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jun 20 15:02:11 2017 (serrano)                */
+;*    Last change :  Fri Jun 23 10:35:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -83,10 +83,7 @@
 	      (method::obj (default #f))
 	      (minid::uint32 (default 0))
 	      (maxid::uint32 (default 0))
-	      (cntmiss::long (default 0))
-	      (%patchtable::obj (default #f))
-	      (%patchmap::long (default -1))
-	      (%patchindex::long (default -1)))
+	      (cntmiss::long (default 0)))
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))
