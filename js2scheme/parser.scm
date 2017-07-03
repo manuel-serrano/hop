@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Apr 21 09:07:14 2017 (serrano)                */
+;*    Last change :  Sun Jul  2 07:24:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1334,7 +1334,7 @@
 		    (instantiate::J2SPrefix
 		       (loc loc)
 		       (lhs expr)
-		       (rhs rhs)
+		       (rhs (dup-expr rhs))
 		       (op (token-tag token))))
 		 (parse-token-error
 		    "Invalid left-hand side expression in prefix operation"
@@ -1361,7 +1361,7 @@
 		(expr (unary)))))
 	 (else
 	  (postfix (token-loc (peek-token))))))
-   
+
    (define (postfix loc)
       (let ((expr (lhs loc)))
 	 (if (not (at-new-line-token?))
@@ -1384,7 +1384,7 @@
 			   ;; of the AST
 			   (instantiate::J2SPostfix
 			      (loc (token-loc token))
-			      (lhs expr)
+			      (lhs (dup-expr expr))
 			      (rhs rhs)
 			      (op (token-tag token))))
 			(parse-token-error
@@ -2525,3 +2525,32 @@
 		(fname (cadr loc))
 		(location (caddr loc))))
 	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    dup-expr ::J2SExpr ...                                           */
+;*---------------------------------------------------------------------*/
+(define-generic (dup-expr e::J2SExpr)
+   e)
+
+;*---------------------------------------------------------------------*/
+;*    dup-expr ::J2SUnresolvedRef ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (dup-expr e::J2SUnresolvedRef)
+   (duplicate::J2SUnresolvedRef e))
+
+;*---------------------------------------------------------------------*/
+;*    dup-expr ::J2SAccess ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (dup-expr e::J2SAccess)
+   (with-access::J2SAccess e (obj field)
+      (duplicate::J2SAccess e
+	 (obj (dup-expr obj))
+	 (field (dup-expr field)))))
+
+;*---------------------------------------------------------------------*/
+;*    dup-expr ::J2SParen ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (dup-expr e::J2SParen)
+   (with-access::J2SParen e (expr)
+      (duplicate::J2SParen e
+	 (expr (dup-expr expr)))))

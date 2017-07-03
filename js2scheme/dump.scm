@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Jun 10 10:24:12 2017 (serrano)                */
+;*    Last change :  Sat Jul  1 18:18:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -118,6 +118,16 @@
 		      (else
 		       '()))))
 	  (if (pair? hint) `(:hint ,hint) '()))
+       '()))
+
+;*---------------------------------------------------------------------*/
+;*    dump-cache ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (dump-cache this::J2SAccess)
+   (if (or (>= (bigloo-debug) 2)
+	   (string-contains (or (getenv "HOPTRACE") "") "j2s:cache"))
+       (with-access::J2SAccess this (cache)
+	  `((:cache ,cache)))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -608,6 +618,7 @@
       `(,@(call-next-method)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
+	  ,@(dump-cache this)
 	  ,(j2s->list obj) ,(j2s->list field))))
    
 ;*---------------------------------------------------------------------*/
@@ -650,7 +661,7 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid usecnt usage ronly scope)
+   (with-access::J2SDecl this (id key binder _scmid usecnt usage ronly scope cache)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(dump-key key)
