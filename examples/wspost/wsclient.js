@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed May 14 17:02:10 2014                          */
-/*    Last change :  Sat Oct 29 09:22:31 2016 (serrano)                */
-/*    Copyright   :  2014-16 Manuel Serrano                            */
+/*    Last change :  Tue Jul  4 09:33:07 2017 (serrano)                */
+/*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WebSocket client example                                         */
 /*    -------------------------------------------------------------    */
@@ -39,4 +39,4 @@ f3.post()
 
 f4.post()
    .then( result => console.log( "str4 result=", result ) )
-   .catch( reason => console.log( "str4 reason=", reason ) );
+   .catch( reason => console.log( "str4 reason (expected)=", reason ) );

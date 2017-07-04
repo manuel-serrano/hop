@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Thu May 18 14:47:02 2017 (serrano)                */
+/*    Last change :  Tue Jul  4 09:29:44 2017 (serrano)                */
 /*    Copyright   :  2004-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -665,21 +665,23 @@ function onPostMessage( e ) {
 	 var status = parseInt( String.fromCharCode.apply( null, buf.slice( i1 + 1, i2 ) ) );
 	 var ctype = String.fromCharCode.apply( null, buf.slice( i2 + 1, i3 ) ) 
 	 var msg = buf.slice( i3 + 1 );
-	 var val = ( ctype == "application/x-frame-hop" )
+	 var val = (ctype == "application/x-frame-hop")
 	     ? hop_bytearray_to_obj( msg )
+	     : (ctype == "application/x-frame-json")
+	     ? hop_json_parse( String.fromCharCode.apply( null, msg ) )
 	     : String.fromCharCode.apply( null, msg );
 
-	 if( ws.postHandlers[ id ] ) {
+	 if( this.postHandlers[ id ] ) {
 	    if( status >= 100 && status <= 299 ) {
-	       if( ws.postHandlers[ id ].succ ) {
-		  ws.postHandlers[ id ].succ( val );
+	       if( this.postHandlers[ id ].succ ) {
+		  this.postHandlers[ id ].succ( val );
 	       }
 	    } else {
-	       if( ws.postHandlers[ id ].fail ) {
-		  ws.postHandlers[ id ].fail( val );
+	       if( this.postHandlers[ id ].fail ) {
+		  this.postHandlers[ id ].fail( val );
 	       }
 	    }
-	    delete ws.postHandlers[ id ];
+	    delete this.postHandlers[ id ];
 	 }
       }
    }
@@ -701,14 +703,15 @@ function WebSocketPostFrame( frame, succ, fail ) {
       ws.postCount = 0;
       ws.binaryType = "arraybuffer";
 
-      ws.addEventListener( "message", onPostMessage );
+      ws.addEventListener( "message", onPostMessage.bind( ws ) );
       ws.addEventListener( "close", function( e ) {
 	 if( ws.preOpenQueue ) { ws.preOpenQueue.forEach( closeFrame ) }
 	 for( var k in ws.postHandlers ) { closeFrame( ws.postHandlers[ k ] ) }
       } );
    }
 
-   var msg = "PoST:" + ws.postCount + ":application/x-frame-hop:" + frame.toString();
+   var msg = "PoST:" + ws.postCount
+       + ":application/x-frame-hop:" + frame.toString();
    
    ws.postHandlers[ ws.postCount++ ] = { succ: succ, fail: fail };
    ws.send( hexStringToUint8( msg ) );

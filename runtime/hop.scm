@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Oct 31 08:06:23 2016 (serrano)                */
-;*    Copyright   :  2004-16 Manuel Serrano                            */
+;*    Last change :  Tue Jul  4 09:24:36 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -245,7 +245,7 @@
 	 ((string? obj) obj)
 	 ((>elong content-length #e0) (read-chars content-length obj))
 	 (else (read-string obj))))
-   
+
    (case content-type
       ((application/x-hop)
        (let* ((chars (get-chars))
@@ -279,7 +279,24 @@
 		((("hop-encoding" . "hop") ("vals" . ?vals))
 		 (cons svc (string->obj vals #f ctx)))
 		((("hop-encoding" . "json") ("vals" . ?vals))
-		 (cons svc (json-parser vals ctx)))
+		 (cons svc
+		    (call-with-input-string vals
+		       (lambda (p) (json-parser p ctx)))))
+		(else
+		 (error "hop-http-decode-value" "bad query" args))))))
+      ((application/x-frame-json)
+       (let* ((path (get-chars))
+	      (qi (string-index path #\?))
+	      (query (if qi (substring path (+fx qi 1)) path))
+	      (svc (if qi (substring path 0 qi) #f)))
+	  (let ((args (cgi-args->list query)))
+	     (match-case args
+		((("hop-encoding" . "hop") ("vals" . ?vals))
+		 (cons svc (string->obj vals #f ctx)))
+		((("hop-encoding" . "json") ("vals" . ?vals))
+		 (cons svc
+		    (call-with-input-string vals
+		       (lambda (p) (json-parser p ctx)))))
 		(else
 		 (error "hop-http-decode-value" "bad query" args))))))
       ((text/html application/xhtml+xml)

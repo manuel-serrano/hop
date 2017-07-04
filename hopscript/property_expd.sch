@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/hopscript/property_expd.sch       */
+;*    serrano/prgm/project/hop/3.1.x/hopscript/property_expd.sch       */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Jun 29 10:36:17 2017 (serrano)                */
+;*    Last change :  Tue Jul  4 13:46:05 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -33,7 +33,7 @@
        (e `(cond-expand
 	     (bigloo-c
 	      ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
-		 ,(cadr x) (instantiate::JsPropertyCache)))
+		 ,num (instantiate::JsPropertyCache)))
 	     (else
 	      ((@ js-make-pache __hopscript_property) ,num)))
 	  e))
