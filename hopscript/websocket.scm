@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon Jun 26 09:48:35 2017 (serrano)                */
+;*    Last change :  Tue Jul  4 09:29:59 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -156,6 +156,15 @@
 (define (js-websocket-state-error) -1)
 
 ;*---------------------------------------------------------------------*/
+;*    ws-json-parser ...                                               */
+;*---------------------------------------------------------------------*/
+(define (ws-json-parser ip ctx %this)
+   (let ((j (json-parser ip ctx)))
+      (if (isa? j JsArray)
+	  (map! car (jsarray->list j %this))
+	  j)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-init-websocket! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-init-websocket! %this::JsGlobalObject)
@@ -255,7 +264,8 @@
 				     (bind-websocket-client-listener! %this
 					ws act))
 			   (list (cons 'onmessage #f)
-			      (cons 'onclose #f)))
+			      (cons 'onclose #f)
+			      (cons 'onerror #f)))
 			(let ((evt (instantiate::server-event
 				      (name "connection")
 				      (target wss)
@@ -284,7 +294,8 @@
 			       (string->symbol content-type) %this
 			       :response-type 'arraybuffer
 			       :x-javascript-parser x-javascript-parser
-			       :json-parser json-parser))
+			       :json-parser (lambda (ip ctx)
+					       (ws-json-parser ip ctx %this))))
 		       (status (string->integer status)))
 		   (when (pair? pcell)
 		      (cell-set! recvqueue (remq! pcell (cell-ref recvqueue)))
@@ -662,7 +673,7 @@
 		    (string->symbol content-type)
 		    %this
 		    :response-type 'arraybuffer
-		    :json-parser json-parser
+		    :json-parser (lambda (ip ctx) (ws-json-parser ip ctx %this))
 		    :x-javascript-parser x-javascript-parser)))
 	 (cond
 	    ((isa? val JsHopFrame)
@@ -694,22 +705,20 @@
    (define (PoST-message msg::bstring socket req::http-request %this)
       (match-case (message-split msg 4)
 	 ((?protocol ?id ?content-type ?data)
-	  (with-handler
-	     (lambda (e) (exception-notify e) #f)
-	     (let* ((frame (decode-ws-message content-type data))
-		    (id (string->integer id))
-		    (nreq (with-access::http-request req (header)
-			     (with-access::JsHopFrame frame ((hd header) path)
-				(duplicate::http-request req
-				   (id id)
-				   (scheme 'ws)
-				   (abspath path)
-				   (header (jsheader->header hd header))
-				   (query path)))))
-		    (resp (invoke-websocket-service frame)))
-		(http-ws-response resp nreq socket content-type 200 '()))))
+	  (let* ((frame (decode-ws-message content-type data))
+		 (id (string->integer id))
+		 (nreq (with-access::http-request req (header)
+			  (with-access::JsHopFrame frame ((hd header) path)
+			     (duplicate::http-request req
+				(id id)
+				(scheme 'ws)
+				(abspath path)
+				(header (jsheader->header hd header))
+				(query path)))))
+		 (resp (invoke-websocket-service frame)))
+	     (http-ws-response resp nreq socket content-type 200 '())))
 	 (else
-	  (tprint "*** ERROR: bad msg " (format "~s" msg))
+	  (error "PoST-message" "bad message" (format "~s" msg))
 	  #f)))
 
    (define (is-proto? proto::bstring data::bstring)
@@ -728,6 +737,8 @@
 		     ;; start reading the frames
 		     (with-handler
 			(lambda (e)
+			   (when (>= (bigloo-debug) 1)
+			      (exception-notify e))
 			   (if (eof-error? e)
 			       (onclose)
 			       (onerror)))
@@ -842,7 +853,8 @@
 	   (string-prefix? "application/x-frame-hop" content-type))
        ;; fast path, bigloo serialization
        (obj->string obj (request-type request)))
-      ((string-prefix? "application/json" content-type)
+      ((or (string-prefix? "application/json" content-type)
+	   (string-prefix? "application/x-frame-json" content-type))
        ;; json encoding
        (call-with-output-string
 	  (lambda (p) (obj->json obj p))))
