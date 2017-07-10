@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri May 19 09:19:18 2017 (serrano)                */
+;*    Last change :  Sat Jul  1 18:15:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -91,7 +91,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    decl-cache ...                                                   */
 ;*    -------------------------------------------------------------    */
-;*    The ENV is split in two, read env and writ env, discriminated    */
+;*    The ENV is split in two, read env and write env, discriminated   */
 ;*    with the ASSIG parameter.                                        */
 ;*---------------------------------------------------------------------*/
 (define (decl-cache decl::J2SDecl field::bstring count::cell env::pair assig::bool shared-pcache)
@@ -109,11 +109,12 @@
 		       cache)))))
 	 (else
 	  (let ((cache (inc! count)))
-	     (if assig 
-		 (set-cdr! env
-		    (cons (cons decl (list (cons field cache))) (cdr env)))
-		 (set-car! env
-		    (cons (cons decl (list (cons field cache))) (car env))))
+	     (when shared-pcache
+		(if assig 
+		    (set-cdr! env
+		       (cons (cons decl (list (cons field cache))) (cdr env)))
+		    (set-car! env
+		       (cons (cons decl (list (cons field cache))) (car env)))))
 	     cache)))))
 	 
 ;*---------------------------------------------------------------------*/

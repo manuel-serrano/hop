@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Dec 13 08:20:08 2016                          */
-;*    Last change :  Fri Feb 24 19:40:04 2017 (serrano)                */
+;*    Last change :  Mon Jul  3 17:31:16 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic (overflow) expansion.                                 */
@@ -38,7 +38,6 @@
 		  x y)
 	       (pragma::bint "(obj_t)($1 - TAG_INT)" res))))
       (else
-       (yipi)
        `((@ js+fx32 __hopscript_number) ,x ,y))))
 
 ;*---------------------------------------------------------------------*/
@@ -56,7 +55,6 @@
 		  x y)
 	       (pragma::bint "(obj_t)($1 + TAG_INT)" res))))
       (else
-       (yipi)
        `((@ js-fx32 __hopscript_number) ,x ,y))))
 
 ;* (define-macro (js+fx32 x y)                                         */
