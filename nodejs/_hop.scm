@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Jun  6 18:17:54 2017 (serrano)                */
+;*    Last change :  Sun Jul  9 19:06:22 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -139,7 +139,7 @@
 				     (js-worker-exec (js-current-worker) "server"
 					(lambda ()
 					   (js-call1 %this proc this evt))))))
-			    (set! data (cons (cons proc f) data))
+			    (set! data (cons (cons (cons event proc) f) data))
 			    (when (isa? obj server)
 			       (add-event-listener! obj
 				     (js-tostring event %this) f)))))
@@ -150,7 +150,7 @@
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
 			 (when (isa? obj server)
-			    (let ((f (assq proc data)))
+			    (let ((f (assoc (cons event proc) data)))
 			       (when (pair? f)
 				  (remove-event-listener! obj
 					(js-tostring event %this) (cdr f)))))))
@@ -648,4 +648,3 @@
       (charset-convert (js-tostring text %this)
 	 (if (string? from) (string->symbol from) (hop-locale))
 	 (if (string? to) (string->symbol to) (hop-charset)))))
-   

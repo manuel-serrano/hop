@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/mdtag/mdtag.js           */
+/*    serrano/prgm/project/hop/3.1.x/examples/custom/foo-bar.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Aug 23 08:07:57 2015                          */
-/*    Last change :  Fri Oct 23 11:10:57 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Mon Jul 10 08:29:47 2017 (serrano)                */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    An example using the custom Html tag                             */
 /*    -------------------------------------------------------------    */
@@ -19,5 +19,3 @@ proto.createdCallback = function() {
 };
 
 document.registerElement( 'foo-bar', { prototype: proto } );
-
-alert( "glop" );
