@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jul  3 16:41:47 2017 (serrano)                */
+;*    Last change :  Sun Jul  9 20:02:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -30,6 +30,7 @@
 	   __hopscript_public
 	   __hopscript_worker
 	   __hopscript_pair
+	   __hopscript_obj
 	   __hopscript_function
 	   __hopscript_lib)
    
@@ -1165,33 +1166,6 @@
    (js-get-jsobject o o prop %this))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get ::object ...                                              */
-;*    -------------------------------------------------------------    */
-;*    Accessing Bigloo objects from hopscript                          */
-;*---------------------------------------------------------------------*/
-(define-method (js-get o::object prop %this)
-   (let* ((name (js-toname prop %this))
-	  (clazz (object-class o))
-	  (field (find-class-field clazz name)))
-      (if (not field)
-	  (case name
-	     ((inspect)
-	      (js-make-function %this js-inspect 1 'inspect))
-	     ((constructor)
-	      (js-undefined))
-	     ((toString)
-	      (js-make-function %this
-		 (lambda (this)
-		    (js-tostring this %this))
-		 0
-		 'toString))
-	     (else
-	      (js-raise-type-error %this
-		 (format "no such field \"~a\" ~~a" name) o)))
-	  (let ((v ((class-field-accessor field) o)))
-	     (js-obj->jsobject v %this)))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-get-jsobject ::JsObject ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.3       */
@@ -1474,23 +1448,6 @@
 	  (if o
 	      (js-put! o prop v throw %this)
 	      (js-raise-type-error %this "[[PUT]]: not an object ~s" _o))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-put! ::object ...                                             */
-;*    -------------------------------------------------------------    */
-;*    Mutating Bigloo objects from hopscript                           */
-;*---------------------------------------------------------------------*/
-(define-method (js-put! o::object prop v::obj throw::bool %this::JsGlobalObject)
-   (let* ((name (js-toname prop %this))
-	  (clazz (object-class o))
-	  (field (find-class-field clazz name)))
-      (cond
-	 ((not field)
-	  (js-raise-type-error %this (format "no such field \"~a\" ~~a" name) o))
-	 ((not (class-field-mutable? field))
-	  (js-raise-type-error %this (format "field \"~a\" read-only ~~a" name) o))
-	 (else
-	  ((class-field-mutator field) o v)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-length! ::obj ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Jun 23 10:35:29 2017 (serrano)                */
+;*    Last change :  Sun Jul  9 18:28:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -664,6 +664,8 @@
       ((js-jsstring? obj)
        js-string-string)
       ((eq? obj (js-null))
+       js-string-object)
+      ((isa? obj object)
        js-string-object)
       (else
        (js-string->jsstring (typeof obj)))))

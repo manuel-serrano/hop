@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri May 26 07:12:12 2017 (serrano)                */
+;*    Last change :  Sun Jul  9 18:02:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -273,7 +273,7 @@
 				   (liip (+fx i 1)))))
 			 (set! gap mind)))))))
 
-      (define (for-in obj::JsObject proc)
+      (define (for-in obj proc)
 	 
 	 (define (vfor-each proc vec)
 	    (let ((len (vector-length vec)))
@@ -287,13 +287,20 @@
 	       (with-access::JsPropertyDescriptor p (name)
 		  (proc name))))
 	 
-	 (let loop ((o obj))
-	    (with-access::JsObject o (cmap properties __proto__)
-	       (if (not (eq? cmap (js-not-a-cmap)))
-		   (with-access::JsConstructMap cmap (names)
-		      (vfor-each (lambda (n)
-				    (when n (proc n))) names))
-		   (for-each in-property properties)))))
+	 (cond
+	    ((isa? obj JsObject)
+	     (let loop ((o obj))
+		(with-access::JsObject o (cmap properties __proto__)
+		   (if (not (eq? cmap (js-not-a-cmap)))
+		       (with-access::JsConstructMap cmap (names)
+			  (vfor-each (lambda (n)
+					(when n (proc n))) names))
+		       (for-each in-property properties)))))
+	    ((object? obj)
+	     (vfor-each (lambda (f) (proc (class-field-name f)))
+		(class-all-fields (object-class obj))))
+	    (else
+	     '#())))
       
       (define (str key holder stack)
 	 (let* ((value (js-get holder key %this))

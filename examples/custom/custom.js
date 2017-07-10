@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/custom/custom.js         */
+/*    serrano/prgm/project/hop/3.1.x/examples/custom/custom.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sun Aug 23 08:07:57 2015                          */
-/*    Last change :  Thu Nov 26 19:08:22 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Mon Jul 10 08:28:53 2017 (serrano)                */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    An example using the custom Html tag                             */
 /*    -------------------------------------------------------------    */
@@ -29,3 +29,5 @@ global[ "FOO-BAR" ] = function( attr, ... body ) {
    el.children = body;
    return el;
 }
+
+console.log( "Go to \"http://%s:%d/hop/custom\"", hop.hostname, hop.port );

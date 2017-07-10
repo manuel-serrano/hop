@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Jun 20 15:02:51 2017 (serrano)                */
+;*    Last change :  Sun Jul  9 18:31:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -20,7 +20,6 @@
    (library hop hopwidget js2scheme)
    
    (include "stringliteral.sch")
-	    ;;"property.sch")
    
    (import __hopscript_types
 	   __hopscript_string
@@ -601,7 +600,9 @@
       ;; getOwnPropertyDescriptor
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.3
       (define (getownpropertydescriptor this o p)
-	 (let* ((o (js-cast-object o %this "getOwnPropertyDescriptor"))
+	 (let* ((o (if (isa? o object)
+		       o
+		       (js-cast-object o %this "getOwnPropertyDescriptor")))
 		(desc (js-get-own-property o p %this)))
 	    (js-from-property-descriptor %this desc o)))
       
@@ -793,7 +794,9 @@
       ;; keys
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.14
       (define (keys this obj)
-	 (let ((o (js-cast-object obj %this "Object.keys")))
+	 (let ((o (if (isa? obj object)
+		      obj
+		      (js-cast-object obj %this "Object.keys"))))
 	    (js-vector->jsarray (js-properties-name o #t %this) %this)))
       
       (js-bind! %this js-object 'keys
