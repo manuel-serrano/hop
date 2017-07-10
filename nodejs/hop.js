@@ -3,11 +3,13 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Apr 21 14:07:02 2017 (serrano)                */
+/*    Last change :  Sun Jul  9 19:13:54 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
 /*=====================================================================*/
+"use hopscript";
+
 var hop = process.binding( "hop" );
 
 /*---------------------------------------------------------------------*/
@@ -81,6 +83,111 @@ exports.sha1sum = hop.sha1sum;
 /*---------------------------------------------------------------------*/
 exports.List = hop.List;
 exports.Cons = hop.Cons;
+
+/*---------------------------------------------------------------------*/
+/*    applyListeners ...                                               */
+/*---------------------------------------------------------------------*/
+function applyListeners( listeners, e ) {
+   let ltns = listeners;
+   let len = ltns.length;
+
+   for( let i = 0; i < len && true; i++ ) {
+      ltns[ i ]( e );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    eventListenerMonitor                                             */
+/*---------------------------------------------------------------------*/
+function eventListenerMonitor( ... events ) {
+   if( !(this instanceof Object) ) {
+      throw "this not an object";
+   }
+
+   Object.defineProperty( this, "conlisteners", {
+      configurable: false, enumerable: false, writable: true,
+      value: []
+   } );
+   Object.defineProperty( this, "dislisteners", {
+      configurable: false, enumerable: false, writable: true,
+      value: []
+   } );
+   Object.defineProperty( this, "events", {
+      configurable: false, enumerable: false, writable: true,
+      value: []
+   } );
+
+   // Although the two following methods have no free variables, they
+   // must be created for each monitor. If they would be shared by
+   // all monitors the removeEventListener would not work properly.
+   Object.defineProperty( eventListenerMonitor.prototype, "connectListener", {
+      configurable: false, enumerable: false, writable: false,
+      value: e => {
+	 if( this.events.indexOf( e.data ) >= 0 ) {
+	    applyListeners( this.conlisteners, e );
+	 }
+      }
+   } );
+   Object.defineProperty( eventListenerMonitor.prototype, "disconnectListener", {
+      configurable: false, enumerable: false, writable: false,
+      value: e => {
+	 if( this.events.indexOf( e.data ) >= 0 ) {
+	    applyListeners( this.dislisteners, e );
+	 }
+      }
+   } );
+
+   events.forEach( this.monitor, this );
+   
+   return this;
+}
+
+eventListenerMonitor.prototype.monitor = function( evname ) {
+   if( this.events.indexOf( evname ) < 0 ) {
+      this.events.push( evname );
+      if( this.events.length == 1 ) {
+	 hop.addEventListener( "connect", this.connectListener );
+	 hop.addEventListener( "disconnect", this.disconnectListener );
+      }
+   }
+}
+
+eventListenerMonitor.prototype.ignore = function( evname ) {
+   let i = this.events.indexOf( evname );
+   if( i >= 0 ) {
+      this.events.splice( i, 1 );
+   }
+   if( this.events.length == 0 ) {
+      hop.removeEventListener( "connect", this.connectListener );
+      hop.removeEventListener( "disconnect", this.disconnectListener );
+   }
+}
+
+eventListenerMonitor.prototype.addEventListener = function( evname, ltn ) {
+   switch( evname ) {
+      case "newListener":
+	 this.conlisteners.push( ltn );
+	 break;
+	 
+      case "removeListener":
+	 this.dislisteners.push( ltn );
+	 break;
+   }
+}
+
+eventListenerMonitor.prototype.removeEventListener = function( evname, ltn ) {
+   switch( evname ) {
+      case "newListener":
+	 this.conlisteners.filter( l => l != ltn );
+	 break;
+	 
+      case "removeListener":
+	 this.dislisteners.filter( l => l != ltn );
+	 break;
+   }
+}
+
+exports.eventListenerMonitor = eventListenerMonitor;
 
 /*---------------------------------------------------------------------*/
 /*    Hop sub modules                                                  */

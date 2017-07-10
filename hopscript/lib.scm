@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sun May 21 09:32:13 2017 (serrano)                */
+;*    Last change :  Sun Jul  9 20:09:36 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -82,6 +82,11 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-obj->jsobject obj::obj %this::JsGlobalObject)
    (cond
+      ((fixnum? obj) obj)
+      ((flonum? obj) obj)
+      ((boolean? obj) obj)
+      ((eq? obj #unspecified) obj)
+      ((null? obj) obj)
       ((string? obj) (js-string->jsstring obj))
       ((date? obj) (js-date->jsdate obj %this))
       ((vector? obj) (js-vector->jsobject obj %this))
@@ -95,7 +100,7 @@
       ((u8vector? obj) (js-u8vector->jsarraybuffer obj %this))
       ((null? obj) (js-undefined))
       ((socket? obj) (js-socket->jsobject obj %this))
-      (else obj)))
+      (else (tprint "ELSE " (typeof obj)) (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector->jsobject ...                                          */
@@ -133,8 +138,10 @@
        (js-plist->jsobject l %this))
       ((alist? l)
        (js-alist->jsobject l %this))
+      ((list? l)
+       (map! (lambda (o) (js-obj->jsobject o %this)) l))
       (else
-       (map! (lambda (o) (js-obj->jsobject o %this)) l))))
+       l)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-literal->jsobject ...                                         */

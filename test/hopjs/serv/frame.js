@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/test/hopjs/serv/frame.js          */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/serv/frame.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 26 09:36:15 2015                          */
-/*    Last change :  Fri Nov 27 08:09:30 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Sun Jul  9 20:07:32 2017 (serrano)                */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing HopFrames                                                */
 /*=====================================================================*/
@@ -24,19 +24,19 @@ var o = { a: 1, b: 2 };
 var f = foo.call( srv, o );
 
 f.post( function( v ) {
-   assert.ok( v == 3 );
+   assert.ok( v == 3, "post.1" );
    res++;
    
    o.a = 4;
    f.post( function( v ) {
-      assert.ok( v == 6 );
+      assert.ok( v == 6, "post.2" );
       res++;
    } )
 } );
    
 setTimeout( function() {
    try {
-      assert.ok( res === 2 );
+      assert.ok( res === 2, "res" );
    } finally {
       process.exit( res === 2 ? 0 : 1 );
    }

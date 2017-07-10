@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Dec 12 15:48:12 2014                          */
-/*    Last change :  Mon Jun 26 10:32:07 2017 (serrano)                */
+/*    Last change :  Mon Jul 10 08:24:05 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The example driver                                               */
@@ -264,7 +264,6 @@ function getExamples( dir ) {
 	 
 	 if( !("dir" in o) ) {
 	    o.dir = p;
-	    o.idx = idx++;
 
 	    if( !("title" in o) ) o.title = d;
 	    if( !("service" in o) ) o.service = d;
@@ -299,6 +298,9 @@ function getExamples( dir ) {
 	    return 1;
 	 }
 	 return 0;
+      } ).map( function ( o ) {
+	 o.idx = idx++;
+	 return o;
       } );
 }
 
@@ -344,7 +346,7 @@ service examplesRun( idx ) {
 	    } );
 
 	    proc.stderr.on( "data", function( data ) {
-	       hop.broadcast( file, <span> class="stderr">${data.toString()}</span> );
+	       hop.broadcast( file, <span class="stderr">${data.toString()}</span> );
 	    } );
 
 	    // remove ended process from the running processes list

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Jul  3 16:41:48 2017 (serrano)                */
+;*    Last change :  Tue Jul  4 13:46:05 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -33,7 +33,7 @@
        (e `(cond-expand
 	     (bigloo-c
 	      ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
-		 ,(cadr x) (instantiate::JsPropertyCache)))
+		 ,num (instantiate::JsPropertyCache)))
 	     (else
 	      ((@ js-make-pache __hopscript_property) ,num)))
 	  e))
