@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sun Apr  2 18:02:52 2017 (serrano)                */
+/*    Last change :  Tue Jul 11 19:05:36 2017 (serrano)                */
 /*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -155,7 +155,8 @@ function compileSection( page ) {
    var toc = hopdoc.toc( ast );
    var title = path.basename( page ).replace( /[0-9]+[-]|[.][^.]*$/g, "" );
    var key = path.basename( path.dirname( page ) ).toLowerCase();
-
+   var affix = "normal";
+   
    if( key == "doc" ) {
       key = alias[ path.basename( page ) ];
    } else if( key == "." ) {
@@ -173,7 +174,6 @@ function compileSection( page ) {
 	      var top = (window.pageYOffset || document.scrollTop)-(document.clientTop||0);
 	      if( top > 180 ) {
 		 document.body.setAttribute( "scrolled", "yes" );
-		 console.log( "top=", top );
 	      } else {
 		 document.body.setAttribute( "scrolled", "no" );
 	      }
@@ -190,6 +190,7 @@ function compileSection( page ) {
           ${title}
        </docxml.title>
        <div class="container">
+	 <div class="filler">.keep</div>
          <div class=${toc == [] ? "col-md-12" : "col-md-9"} role="main">
            <h1 class="toc" id="toc">Table of Contents</h1>
            <ul class="toc">
@@ -200,8 +201,8 @@ function compileSection( page ) {
          <div class="row">
            ${(toc.length > 0) ?
            <div id="navbar" class="col-md-3" role="complementary">
-             <nav class="sidebar"
-		  data-spy="affix"
+             <nav class="sidebar noaffix"
+		  data-spy=${affix}
 	          data-offset-top="215" data-offset-bottom="100">
                <ul class="nav bs-docs-sidenav">
                   ${makeToc( toc, 0, function( el ) {
@@ -248,6 +249,7 @@ function compileChapter( json ) {
        </docxml.title>
 
        <div class="container">
+	 <div class="filler">.keep</div>
          ${chapter.description ? <div class="chapter-header">
 	   ${ fs.existsSync( ROOT + "/" + chapter.description ) ?
 	      hopdoc.load( ROOT + "/" + chapter.description ).XML
@@ -296,6 +298,7 @@ function compileMain( content ) {
 		     root=${ROOT}/>
 
        <div class="container home-body">
+	 <div class="filler">.keep</div>
          ${hopdoc.load( content ).XML}
 	 <docxml.footer root=${ROOT}/>
        </div>
@@ -327,6 +330,7 @@ function compileLibrary( content ) {
 		     root=${ROOT}/>
 
        <div class="container home-body">
+	 <div class="filler">.keep</div>
          ${hopdoc.load( content ).XML}
 	 ${fs.existsSync( footer )
 	   ? hopdoc.load( footer ).XML
@@ -366,6 +370,7 @@ function compileIdx( json ) {
        </docxml.title>
 
        <div class="container">
+	 <div class="filler">.keep</div>
 	 <docxml.idx>${idx}</docxml.idx>
 	 <docxml.footer root=${ROOT}/>
        </div>
