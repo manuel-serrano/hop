@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Tue Jul  4 09:29:59 2017 (serrano)                */
+;*    Last change :  Mon Jul 10 19:08:38 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -135,16 +135,17 @@
 ;*    add-event-listener! ::JsWebSocketClient ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (add-event-listener! this::JsWebSocketClient name proc . l)
-   (cond
-      ((string=? name "message")
-       (with-access::JsWebSocketClient this (onmessages)
-	  (set! onmessages (cons proc onmessages))))
-      ((string=? name "close")
-       (with-access::JsWebSocketClient this (oncloses)
-	  (set! oncloses (cons proc oncloses))))
-      ((string=? name "error")
-       (with-access::JsWebSocketClient this (onerrors)
-	  (set! onerrors (cons proc onerrors))))))
+   (when (procedure? proc)
+      (cond
+	 ((string=? name "message")
+	  (with-access::JsWebSocketClient this (onmessages)
+	     (set! onmessages (cons proc onmessages))))
+	 ((string=? name "close")
+	  (with-access::JsWebSocketClient this (oncloses)
+	     (set! oncloses (cons proc oncloses))))
+	 ((string=? name "error")
+	  (with-access::JsWebSocketClient this (onerrors)
+	     (set! onerrors (cons proc onerrors)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-websocket-states                                              */
