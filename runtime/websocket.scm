@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue Jul  4 09:30:46 2017 (serrano)                */
+;*    Last change :  Tue Jul 11 08:58:57 2017 (serrano)                */
 ;*    Copyright   :  2012-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */

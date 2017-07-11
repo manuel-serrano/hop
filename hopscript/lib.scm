@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Sun Jul  9 20:09:36 2017 (serrano)                */
+;*    Last change :  Tue Jul 11 08:57:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -100,13 +100,14 @@
       ((u8vector? obj) (js-u8vector->jsarraybuffer obj %this))
       ((null? obj) (js-undefined))
       ((socket? obj) (js-socket->jsobject obj %this))
-      (else (tprint "ELSE " (typeof obj)) (js-undefined))))
+      ((procedure? obj) (js-procedure->jsobject obj %this))
+      (else (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-vector->jsobject ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-vector->jsobject vec %this)
-   (vector-map! (lambda (o) (js-obj->jsobject o %this)) vec)
+   (vector-map (lambda (o) (js-obj->jsobject o %this)) vec)
    (js-vector->jsarray vec %this))
 
 ;*---------------------------------------------------------------------*/
@@ -139,9 +140,9 @@
       ((alist? l)
        (js-alist->jsobject l %this))
       ((list? l)
-       (map! (lambda (o) (js-obj->jsobject o %this)) l))
+       (map (lambda (o) (js-obj->jsobject o %this)) l))
       (else
-       l)))
+       (cons (js-obj->jsobject (car l) %this) (js-obj->jsobject (cdr l) %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-literal->jsobject ...                                         */
@@ -327,3 +328,10 @@
 	    :writable #f :configurable #f
 	    :hidden-class #t)
 	 sock)))
+
+;*---------------------------------------------------------------------*/
+;*    js-procedure->jsobject ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-procedure->jsobject obj %this)
+   (js-make-function %this obj (procedure-arity obj) 'native))
+      

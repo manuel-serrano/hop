@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Sun Jul  9 19:23:13 2017 (serrano)                */
+;*    Last change :  Tue Jul 11 08:48:55 2017 (serrano)                */
 ;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -287,7 +287,7 @@
 				 (when (string=? (md5sum %key) badkey)
 				    (server-reset! obj)
 				    (loop #t)))
-			      (tprint (read-string input-port))))
+			      (tprint "error: " (read-string input-port))))
 		       (exception-notify exn))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -295,21 +295,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (remove-event-listener! obj::server event proc . capture)
    (with-access::server obj (listeners mutex host port ssl authorization %key)
-      (synchronize mutex
-	 (set! listeners
-	    (filter (lambda (l)
-		       (if (and (eq? (cdr l) proc) (string=? (car l) event))
-			   (begin
-			      (with-hop ((hop-event-unregister-service)
-					 :event event :key %key)
-				 :host host :port port
-				 :authorization authorization
-				 :ssl ssl)
-			      #f)
-			   #t))
-	       listeners))
-	 (when (null? listeners)
-	    (server-reset-sans-lock! obj)))))
+      (when (synchronize mutex
+	       (let loop ((ls listeners))
+		  (when (pair? ls)
+		     (let ((l (car ls)))
+			(if (and (eq? (cdr l) proc) (string=? (car l) event))
+			    (begin
+			       (set! listeners (remq! l listeners))
+			       (when (null? listeners)
+				  (server-reset-sans-lock! obj))
+			       #t)
+			    (loop (cdr ls)))))))
+	 (with-hop ((hop-event-unregister-service) :event event :key %key)
+	    :host host :port port
+	    :authorization authorization
+	    :ssl ssl))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
