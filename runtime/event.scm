@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Jul 11 08:10:23 2017 (serrano)                */
+;*    Last change :  Tue Jul 11 09:45:47 2017 (serrano)                */
 ;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -295,21 +295,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (remove-event-listener! obj::server event proc . capture)
    (with-access::server obj (listeners mutex host port ssl authorization %key)
-      (synchronize mutex
-	 (set! listeners
-	    (filter (lambda (l)
-		       (if (and (eq? (cdr l) proc) (string=? (car l) event))
-			   (begin
-			      (with-hop ((hop-event-unregister-service)
-					 :event event :key %key)
-				 :host host :port port
-				 :authorization authorization
-				 :ssl ssl)
-			      #f)
-			   #t))
-	       listeners))
-	 (when (null? listeners)
-	    (server-reset-sans-lock! obj)))))
+      (when (synchronize mutex
+	       (let loop ((ls listeners))
+		  (when (pair? ls)
+		     (let ((l (car ls)))
+			(if (and (eq? (cdr l) proc) (string=? (car l) event))
+			    (begin
+			       (set! listeners (remq! l listeners))
+			       (when (null? listeners)
+				  (server-reset-sans-lock! obj))
+			       #t)
+			    (loop (cdr ls)))))))
+	 (with-hop ((hop-event-unregister-service) :event event :key %key)
+	    :host host :port port
+	    :authorization authorization
+	    :ssl ssl))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
@@ -990,6 +990,20 @@
 	       ;; will be removed from the tables.
 	       (multipart-signal req
 		  (envelope-value *ping* #unspecified))))))
+
+   (define (remq-one! x y)
+      (let laap ((x x)
+		 (y y))
+	 (cond
+	    ((null? y) y)
+	    ((eq? x (car y)) (cdr y))
+	    (else (let loop ((prev y))
+		     (cond ((null? (cdr prev))
+			    y)
+			   ((eq? (cadr prev) x)
+			    (set-cdr! prev (cddr prev))
+			    y)
+			   (else (loop (cdr prev)))))))))
    
    (define (unregister-websocket-event! event key)
       (let ((c (assq (string->symbol key) *websocket-response-list*)))
@@ -1001,7 +1015,7 @@
 		  (lambda (l)
 		     (notify-client! "disconnect" event req
 			*disconnect-listeners*) 
-		     (delete! resp l))
+		     (remq-one! resp l))
 		  '())
 	       ;; Ping the client to check if it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client
