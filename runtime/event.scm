@@ -294,11 +294,19 @@
 ;*    remove-event-listener! ::server ...                              */
 ;*---------------------------------------------------------------------*/
 (define-method (remove-event-listener! obj::server event proc . capture)
-   (with-access::server obj (listeners mutex)
+   (with-access::server obj (listeners mutex host port ssl authorization %key)
       (synchronize mutex
 	 (set! listeners
 	    (filter (lambda (l)
-		       (not (and (eq? (cdr l) proc) (string=? (car l) event))))
+		       (if (and (eq? (cdr l) proc) (string=? (car l) event))
+			   (begin
+			      (with-hop ((hop-event-unregister-service)
+					 :event event :key %key)
+				 :host host :port port
+				 :authorization authorization
+				 :ssl ssl)
+			      #f)
+			   #t))
 	       listeners))
 	 (when (null? listeners)
 	    (server-reset-sans-lock! obj)))))
@@ -594,12 +602,13 @@
 	       (watch-socket! socket
 		  (lambda (s)
 		     (socket-close s)
-		     (notify-client! "disconnect" #f req *disconnect-listeners*)))
+		     (notify-client! "disconnect" #f req
+			*disconnect-listeners*)))
 	       (trace-item "resp=" (typeof resp))
 	       ;; register the websocket
 	       (synchronize *event-mutex*
 		  (set! *websocket-response-list*
-		     (cons (cons (string->symbol key) resp)
+		     (cons (cons (string->symbol key) (cons resp req))
 			*websocket-response-list*))
 		  (trace-item "key=" key)
 		  (trace-item "socket=" socket )
@@ -898,7 +907,7 @@
 	    (trace-item "name=" name)
 	    ;;(trace-item "c=" c)
 	    (if (pair? c)
-		(let ((resp (cdr c)))
+		(let ((resp (cadr c)))
 		   (websocket-signal resp
 		      (format "<r name='ready'>~a</r>"
 			 (url-path-encode name)))
@@ -937,7 +946,8 @@
 				 (flash-register-event! req key event))
 				(else
 				 (ajax-register-event! req key event padding)))))
-		       (notify-client! "connect" event req *connect-listeners*)
+		       (notify-client! "connect" event req
+			  *connect-listeners*)
 		       ;; cleanup the current connections
 		       (server-event-gc)
 		       r))
@@ -984,11 +994,13 @@
    (define (unregister-websocket-event! event key)
       (let ((c (assq (string->symbol key) *websocket-response-list*)))
 	 (when (pair? c)
-	    (let ((resp (cdr c)))
+	    (let ((resp (cadr c))
+		  (req (cddr c)))
 	       (hashtable-update! *websocket-socket-table*
 		  event
 		  (lambda (l)
-		     (notify-client! "disconnect" event resp *connect-listeners*) 
+		     (notify-client! "disconnect" event req
+			*disconnect-listeners*) 
 		     (delete! resp l))
 		  '())
 	       ;; Ping the client to check if it still exists. If the client
@@ -1067,7 +1079,7 @@
       ;; remove the request from the *websocket-response-list*
       (set! *websocket-response-list*
 	 (filter! (lambda (e)
-		     (not (eq? (cdr e) resp)))
+		     (not (eq? (cadr e) resp)))
 	    *websocket-response-list*))
       ;; remove the response from the *websocket-socket-table*
       (hashtable-for-each *websocket-socket-table*
