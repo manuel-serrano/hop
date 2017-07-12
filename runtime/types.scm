@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:55:24 2004                          */
-;*    Last change :  Wed Sep 28 01:56:34 2016 (serrano)                */
-;*    Copyright   :  2004-16 Manuel Serrano                            */
+;*    Last change :  Wed Jul 12 07:03:54 2017 (serrano)                */
+;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP's classes                                                    */
 ;*=====================================================================*/
@@ -73,7 +73,8 @@
 	   (class xml-http-request
 	      (status::int read-only)
 	      (header::pair-nil read-only (default '()))
-	      (input-port read-only))
+	      (input-port read-only)
+	      (req::obj read-only))
 	   
 	   (abstract-class %http-response::%http-message
 	      (content-type::obj (default #f))
