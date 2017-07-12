@@ -275,8 +275,69 @@ ${ <span class="label label-info">image/image.js</span> }
 ${ doc.include( doc.BUILDDIR + "/examples/image/image.js", 14 ) }
 ```
 
+Server
+------
+
+Server objects denotes a remote server. They are used to attached
+listeners to server events (see [Broadcast](00-hop.html#broadcast))
+and to invoke services from server to another server (see
+[service](01-service.html)).
+
+
+### new hop.Server( [ hostname [, port [, authorization [, ssl ] ] ] ) ###
+[:server@glyphicon glyphicon-tag constructor]
+
+Creates a new server object. The arguments are as follows:
+
+  * `hostname`: a string, the name or IP number of the remote host that
+  will emit signals. If omitted, defaults to the running host name.
+  * `port`: the port number of the remote host. If omitted, defaults to
+  the running Hop port.
+  * `authorization`: a string, an optional authorization for accessing
+  the remote host. This has the syntax of the
+  frame `[post](01-service.html#post)` method.
+  * `ssl`: a optional boolean. When true, the established channel between
+  the two servers uses SSL.
+  
+
+### Server.addEventListener( eventName, handler [, options] ) ###
+[:@glyphicon glyphicon-tag function]
+
+Use this method on the client side to register to the `eventName`
+server event. The effect of this method is to establish a persistent
+connection with the Hop server, register the client for the given
+event type, and trigger the handler whenever the event is received by
+the client. `handler` takes one argument, the event. The transmitted
+`value` can be retrieved in the `value` property of the event.
+
+When used within a web browser, connection is established with the Hop 
+server serving the current page, the exact syntax is 
+`server.addEventListener( eventName, handler )` where `server` denotes 
+the current server (the runtime system automatically binds the 
+`server` variable to the current server). 
+
+```hopscript
+server.addEventListener( 'refreshScore', function( event ) {
+  var score = event.value;
+  var scoreElement = this.document.getElementById( 'score' );
+  // update GUI element with new score
+```
+
+Two predefined events are automatically sent to clients:
+
+  * `ready`: that event is emitted when a new listener is attached to a server.
+  * `down`: that event is emtted when the connection with the server is lost.
+  
+
+### Server.removeEventListener( eventName, handler ) ###
+[:@glyphicon glyphicon-tag function]
+
+Removes an attached listener.
+
+
 Broadcast
 ---------
+[:broadcast]
 
 Broadcast is an abstraction on top of webSockets to let a Hop server
 send events to connected clients (either web browsers or Hop client
@@ -305,59 +366,6 @@ hop.broadcast( 'refreshScore', 14 );
 
 This function is similar to `broadcast` but only one receiver will be
 notified of the message.
-
-### Server.addEventListener( eventName, handler [, options] ) ###
-[:@glyphicon glyphicon-tag function]
-
-Use this method on the client side to register to the `eventName`
-server event. The effect of this method is to establish a persistent
-connection with the Hop server, register the client for the given
-event type, and trigger the handler whenever the event is received by
-the client. `handler` takes one argument, the event. The transmitted
-`value` can be retrieved in the `value` property of the event.
-
-When used within a web browser, connection is established with the Hop 
-server serving the current page, the exact syntax is 
-`server.addEventListener( eventName, handler )` where `server` denotes 
-the current server (the runtime system automatically binds the 
-`server` variable to the current server). 
-
-```hopscript
-server.addEventListener( 'refreshScore', function( event ) {
-  var score = event.value;
-  var scoreElement = this.document.getElementById( 'score' );
-  // update GUI element with new score
-```
-
-On the server side, server objects are instances of the Server class.
-
-### new hop.Server( [ hostname [, port [, authorization [, ssl ] ] ] ) ###
-[:server@glyphicon glyphicon-tag constructor]
-
-the arguments are as follows:
-
-  * `hostname`: a string, the name or IP number of the remote host that
-  will emit signals. If omitted, defaults to the running host name.
-  * `port`: the port number of the remote host. If omitted, defaults to
-  the running Hop port.
-  * `authorization`: a string, an optional authorization for accessing
-  the remote host. This has the syntax of the
-  frame `[post](01-service.html#post)` method.
-  * `ssl`: a optional boolean. When true, the established channel between
-  the two servers uses SSL.
-  
-  
-```hopscript
-var srv = new hop.Server( "localhost", 9999 );
-
-srv.addEventListener( 'refreshScore', function( event ) {
-   var score = event.value;
-   ...
-} )
-
-service getScore();
-getScore.call( srv, "jean dupont" ).post( v => ... );
-```
 
 
 Web Service

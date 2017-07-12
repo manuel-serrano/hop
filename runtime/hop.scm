@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Tue Jul  4 09:24:36 2017 (serrano)                */
+;*    Last change :  Wed Jul 12 07:04:11 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -319,7 +319,8 @@
 	  (fail (instantiate::xml-http-request
 		   (status status)
 		   (header header)
-		   (input-port p)))
+		   (input-port p)
+		   (req req)))
 	  (raise
 	     (instantiate::&error
 		(proc url)
@@ -358,13 +359,15 @@
 	     (success (instantiate::xml-http-request
 			 (status status)
 			 (header header)
-			 (input-port p))))
+			 (input-port p)
+			 (req req))))
 	    ((401 407)
 	     (if (procedure? fail)
 		 (fail (instantiate::xml-http-request
 			  (status status)
 			  (header header)
-			  (input-port p)))
+			  (input-port p)
+			  (req req)))
 		 (raise
 		    (instantiate::&hop-authentication-error
 		       (proc url)
