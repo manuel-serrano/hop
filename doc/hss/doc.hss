@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Sat Oct 29 10:09:17 2016 (serrano)                */
-/*    Copyright   :  2015-16 Manuel Serrano                            */
+/*    Last change :  Tue Jul 11 18:59:55 2017 (serrano)                */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
 /*=====================================================================*/
@@ -50,6 +50,39 @@ p.danger {
 /*---------------------------------------------------------------------*/
 .jumbotron {
   margin-top: 40px;
+  position: fixed;
+  top: 0px;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  transition: 0.5s all;
+  border-bottom: 4px solid white;
+}
+
+.jumbotron svg {
+  transition: 0.5s all;
+}
+
+[scrolled="yes"] .jumbotron {
+  margin-top: 0;
+  padding-top: 48px;
+  padding-bottom: 0px;
+}
+
+[scrolled="yes"] .jumbotron h1 {
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+[scrolled="yes"] .jumbotron svg {
+  transform: scale(0.6);
+}
+/*---------------------------------------------------------------------*/
+/*    filler                                                           */
+/*---------------------------------------------------------------------*/
+.filler {
+  height: 290px;
+  visibility: hidden;
 }
 
 /*---------------------------------------------------------------------*/
@@ -233,19 +266,27 @@ nav.sidebar {
   opacity: 0.9;
 }
 
+nav.noaffix {
+  position: fixed;
+  top: 310px
+}
+
 nav.sidebar a {
   color: #777;
 }
   
 .affix-top {
   position: absolute;
+  top: 20px;
 }
 
 .affix {
-  top: 80px;
+  position: absolute;
+  top: 310px;
 }
 
 .affix-bottom {
+  position: absolute;
   top: 80px;
 }
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Tue Jul 11 08:48:55 2017 (serrano)                */
+;*    Last change :  Wed Jul 12 08:36:53 2017 (serrano)                */
 ;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -87,6 +87,8 @@
 	       (authorization read-only (default #f))
 	       (version::bstring read-only (default (hop-version)))
 	       (listeners::pair-nil (default '()))
+	       (ready-listeners::pair-nil (default '()))
+	       (down-listeners::pair-nil (default '()))
 	       (%websocket (default #f))
 	       (%key (default #f)))
 	    
@@ -214,15 +216,23 @@
 	       (let* ((k (cadr m))
 		      (id (caddr m))
 		      (text (cadddr m)))
-		  (with-access::server srv (listeners)
-		     (let ((ltns (filter-map (lambda (l)
-						(when (string=? (car l) id)
-						   (cdr l)))
-				    listeners)))
-			(when (pair? ltns)
-			   (let ((event (message->event k id text)))
-			      (apply-listeners ltns event))))))))))
-   
+		  (if (char=? (string-ref k 0) #\r)
+		      (with-access::server srv (ready-listeners)
+			 (apply-listeners ready-listeners
+			    (message->event k id text)))
+		      (with-access::server srv (listeners)
+			 (let ((ltns (filter-map (lambda (l)
+						    (when (string=? (car l) id)
+						       (cdr l)))
+					listeners)))
+			    (when (pair? ltns)
+			       (let ((event (message->event k id text)))
+				  (apply-listeners ltns event)))))))))))
+
+   (define (down e)
+      (with-access::server srv (down-listeners)
+	 (apply-listeners down-listeners e)))
+
    (with-access::server srv (host port ssl authorization %websocket %key mutex)
       (synchronize mutex
 	 (unless %websocket
@@ -241,6 +251,7 @@
 			(instantiate::websocket
 			   (url url)
 			   (authorization authorization)
+			   (oncloses (list down))
 			   (onmessages (list parse-message))))
 		     (websocket-connect! %websocket))))))))
 
@@ -267,10 +278,17 @@
 (define-method (add-event-listener! obj::server event proc . capture)
    (let loop ((armed #f))
       (server-init! obj)
-      (with-access::server obj (mutex host port ssl authorization %key listeners)
-	 (if (string=? event "ready")
+      (with-access::server obj (mutex host port ssl authorization %key)
+	 (cond
+	    ((string=? event "ready")
 	     (synchronize mutex
-		(set! listeners (cons (cons event proc) listeners)))
+		(with-access::server obj (ready-listeners)
+		   (set! ready-listeners (cons proc ready-listeners)))))
+	    ((string=? event "down")
+	     (synchronize mutex
+		(with-access::server obj (down-listeners)
+		   (set! down-listeners (cons proc down-listeners)))))
+	    (else
 	     (with-hop ((hop-event-register-service) :event event
 			  :key %key :mode "websocket")
 		:host host :port port
@@ -278,7 +296,8 @@
 		:ssl ssl
 		(lambda (v)
 		   (synchronize mutex
-		      (set! listeners (cons (cons event proc) listeners))))
+		      (with-access::server obj (listeners)
+			 (set! listeners (cons (cons event proc) listeners)))))
 		(lambda (exn)
 		   (if (isa? exn xml-http-request)
 		       (with-access::xml-http-request exn (status input-port header)
@@ -288,7 +307,7 @@
 				    (server-reset! obj)
 				    (loop #t)))
 			      (tprint "error: " (read-string input-port))))
-		       (exception-notify exn))))))))
+		       (exception-notify exn)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    remove-event-listener! ::server ...                              */
@@ -990,6 +1009,20 @@
 	       ;; will be removed from the tables.
 	       (multipart-signal req
 		  (envelope-value *ping* #unspecified))))))
+
+   (define (remq-one! x y)
+      (let laap ((x x)
+		 (y y))
+	 (cond
+	    ((null? y) y)
+	    ((eq? x (car y)) (cdr y))
+	    (else (let loop ((prev y))
+		     (cond ((null? (cdr prev))
+			    y)
+			   ((eq? (cadr prev) x)
+			    (set-cdr! prev (cddr prev))
+			    y)
+			   (else (loop (cdr prev)))))))))
    
    (define (unregister-websocket-event! event key)
       (let ((c (assq (string->symbol key) *websocket-response-list*)))
@@ -1001,7 +1034,7 @@
 		  (lambda (l)
 		     (notify-client! "disconnect" event req
 			*disconnect-listeners*) 
-		     (delete! resp l))
+		     (remq-one! resp l))
 		  '())
 	       ;; Ping the client to check if it still exists. If the client
 	       ;; no longer exists, an error will be raised and the client

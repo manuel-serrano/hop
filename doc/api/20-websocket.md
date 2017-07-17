@@ -79,8 +79,8 @@ is in the `value`property of the event argument.
 ### WebSocketServer.onclose ###
 [:@glyphicon glyphicon-tag parameter]
 
-An `EventListener` on the `close`event called when a WebSocketServer is closed (see
-method `WebSocketServer.close`).
+An `EventListener` on the `close`event called when a WebSocketServer is
+closed (see method `WebSocketServer.close`).
 
 ### WebSocket.readyState ###
 [:@glyphicon glyphicon-tag parameter]

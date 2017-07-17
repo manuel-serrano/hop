@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Tue Dec 20 19:19:07 2016 (serrano)                */
-/*    Copyright   :  2015-16 Manuel Serrano                            */
+/*    Last change :  Tue Jul 11 19:00:31 2017 (serrano)                */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
 /*=====================================================================*/
@@ -28,7 +28,7 @@ function title( attrs, ... subtitle ) {
 	 <div class="col-md-2">
 	   <svg:img
              src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
-             height="20ex" width="10em"/>
+             height="16ex" width="10em"/>
 	 </div>
 	 <div class="col-md-10">
 	   <h1>
@@ -90,11 +90,13 @@ function navbar( attrs, chapters ) {
 
    return <nav class="navbar navbar-inverse navbar-fixed-top">
      <div class="container">
+       <!--
        <a class="navbar-brand" href="#">
 	 <svg:img
              src=${attrs.logo ? attrs.logo : path.join( ipath, "hop.svg" )}
              height="3ex" width="3em"/>
        </a>
+       -->
        <ul class="nav navbar-nav">
          ${chapters.map( function( p, idx = undefined, arr = undefined ) {
 	    if( p.entries.length == 0 ) {

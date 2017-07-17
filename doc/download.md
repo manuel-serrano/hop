@@ -10,11 +10,11 @@ ${doc.include( "./license.md" )}
 ## Source code ##
 
 ${<div class="row">
-  <div class="col-xs-9">
+  <div class="col-xs-8">
 This is the file you should download if you want to build the Hop stable
 version from the sources.
   </div>
-  <div class="col-xs-3">
+  <div class="col-xs-4">
     <xml.downloadButton
        class="warning"
        title="Stable"
@@ -24,10 +24,10 @@ version from the sources.
 </div>}
 
 ${<div class="row">
-  <div class="col-xs-9">
+  <div class="col-xs-8">
 Compiling Hop.js requires the Bigloo compiler.
   </div>
-  <div class="col-xs-3">
+  <div class="col-xs-4">
     <xml.downloadButton
        class="danger"
        title="Stable"
