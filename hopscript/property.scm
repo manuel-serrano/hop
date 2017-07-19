@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jul 19 11:49:06 2017 (serrano)                */
+;*    Last change :  Wed Jul 19 12:00:56 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1238,6 +1238,9 @@
 		     (let ((el-or-desc (vector-ref elements i)))
 			(cond
 			   ((isa? el-or-desc JsPropertyDescriptor)
+			    (unless (eq? o obj)
+			       (with-access::JsGlobalObject %this (js-pmap-valid)
+				  (set! js-pmap-valid #t)))
 			    ;; accessor property
 			    (js-pcache-update-descriptor! cache i o obj)
 			    (js-property-value o el-or-desc %this))
