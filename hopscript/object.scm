@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Jul  9 18:31:45 2017 (serrano)                */
+;*    Last change :  Wed Jul 19 11:35:31 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -824,7 +824,7 @@
 	  (js-raise-type-error %this 
 	     "Prototype of non-extensible object mutated" v)
 	  (with-access::JsObject o (__proto__ cmap)
-	     (js-invalidate-pcaches-pmap!)
+	     (js-invalidate-pcaches-pmap! %this)
 	     (set! cmap (if (eq? cmap (js-not-a-cmap))
 			    cmap
 			    (duplicate::JsConstructMap cmap (%id (gencmapid)))))

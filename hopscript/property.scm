@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jul  9 20:02:48 2017 (serrano)                */
+;*    Last change :  Wed Jul 19 11:49:06 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -43,7 +43,7 @@
 	   (js-debug-pcache ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
 	   (js-make-pcache ::int)
-	   (js-invalidate-pcaches-pmap!)
+	   (js-invalidate-pcaches-pmap! ::JsGlobalObject)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-cmap ::JsPropertyCache)
 	   
@@ -350,11 +350,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-pcaches-pmap! ...                                  */
 ;*    -------------------------------------------------------------    */
-;*    Called when a __proto__ is changed or when an accessor           */
-;*    property or a non default data property is added to an           */
-;*    object.                                                          */
+;*    Called when:                                                     */
+;*       1) a __proto__ is changed, or                                 */
+;*       2) an accessor property or a non default data property is     */
+;*          added to an object, or                                     */
+;*       3) a property is deleted, or                                  */
+;*       4) a property hidding a prototype property is added.          */
 ;*---------------------------------------------------------------------*/
-(define (js-invalidate-pcaches-pmap!)
+(define (js-invalidate-pcaches-pmap! %this::JsGlobalObject)
    
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap)
@@ -362,15 +365,18 @@
 	    (reset-cmap-vtable! pmap))
 	 (set! pmap #t)))
 
-   ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap!)
-   (for-each (lambda (pcache-entry)
-		(let ((vec (car pcache-entry)))
-		   (let loop ((i (-fx (cdr pcache-entry) 1)))
-		      (when (>=fx i 0)
-			 (let ((pcache (vector-ref vec i)))
-			    (invalidate-pcache-pmap! pcache))
-			 (loop (-fx i 1))))))
-      *pcaches*))
+   (with-access::JsGlobalObject %this (js-pmap-valid)
+      (when js-pmap-valid
+	 (set! js-pmap-valid #f)
+	 ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap!)
+	 (for-each (lambda (pcache-entry)
+		      (let ((vec (car pcache-entry)))
+			 (let loop ((i (-fx (cdr pcache-entry) 1)))
+			    (when (>=fx i 0)
+			       (let ((pcache (vector-ref vec i)))
+				  (invalidate-pcache-pmap! pcache))
+			       (loop (-fx i 1))))))
+	    *pcaches*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-ref ...                                                */
@@ -1243,6 +1249,8 @@
 			    el-or-desc)
 			   (else
 			    ;; direct access to a prototype object
+			    (with-access::JsGlobalObject %this (js-pmap-valid)
+			       (set! js-pmap-valid #t))
 			    (js-pcache-update-owner! cache i o obj)
 			    el-or-desc)))))))
 	 ;; property search
@@ -1572,6 +1580,7 @@
 		      (reject "Sealed object"))
 		     ((not (isa? el-or-desc JsPropertyDescriptor))
 		      ;; 8.12.5, step 6
+		      (js-invalidate-pcaches-pmap! %this)
 		      (extend-object!))
 		     (else
 		      (with-access::JsDataDescriptor el-or-desc (writable)
@@ -2010,7 +2019,7 @@
 		       (delete-configurable o
 			  (configurable-mapped-property? o i)
 			  (lambda (o)
-			     (js-invalidate-pcaches-pmap!)
+			     (js-invalidate-pcaches-pmap! %this)
 			     ;; create a new cmap for the object
 			     (let ((nextmap (clone-cmap cmap)))
 				(link-cmap! cmap nextmap n #f -1)

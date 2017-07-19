@@ -71,7 +71,7 @@ p.danger {
 
 [scrolled="yes"] .jumbotron h1 {
   margin-top: 8px;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 [scrolled="yes"] .jumbotron svg {

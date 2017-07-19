@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jul 11 15:58:40 2017 (serrano)                */
+;*    Last change :  Wed Jul 19 11:37:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -167,7 +167,8 @@
 	      (js-main (default (js-null)))
 	      (js-call (default #f))
 	      (js-apply (default #f))
-	      (js-vindex (default 0)))
+	      (js-vindex (default 0))
+	      (js-pmap-valid::bool (default #f)))
 	   
 	   (final-class JsArray::JsObject
 	      (length::uint32 (default #u32:0))
