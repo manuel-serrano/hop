@@ -9,6 +9,11 @@
 /*    Testing services, webSockets and Broadcast over http and https   */
 /*=====================================================================*/
 
+setTimeout( function() {
+   console.log( 'TIMEOUT while running tests. Abort' );
+   process.exit( 1 );
+}, 2000 );
+
 var assert = require( 'assert' );
 var hop = require( 'hop' );
 var config = require( hop.config );
@@ -35,7 +40,7 @@ service foo( arg ) {
 }
 
 function goToService() {
-   
+
    function testService( i ) {
       if ( i == payload.length ) {
 	 console.log( 'Service test ok' );
@@ -79,7 +84,7 @@ function goToServiceNamedArgs() {
 }
 
 
-   
+
 var WSFlag = false;
 
 /* WebSocket test. We test that a string is passed unchanged from the
@@ -90,7 +95,7 @@ function goToWS() {
    console.log( 'WS test' );
    var server = new WebSocketServer( {path: 'server'} );
    console.log( 'server WS listening' );
-   
+
    server.onconnection = function( event ) {
       console.log( 'server: accepting new connection' );
       var ws = event.value;
@@ -133,7 +138,7 @@ function goToWS() {
 /* broadcast: we test that the client receives any of the payload
  * elements. TODO: replace the weak (and false) toString equality test
  * with a comprehensive object comparison */
-   
+
 function goToBroadcast(){
    console.log( 'Broadcast test' );
    var i = 0
@@ -159,10 +164,3 @@ function goToEnd() {
 
 
 goToService();
-
-setTimeout( function() {
-   console.log( 'TIMEOUT while running tests. Abort' );
-   process.exit( 1 );
-}, 2000 );
-
-
