@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jul 19 12:00:56 2017 (serrano)                */
+;*    Last change :  Wed Jul 26 08:12:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -205,6 +205,11 @@
 	   (log-function! ::bool)
 	   (profile-function ::obj ::symbol)
 	   (show-functions)))
+
+;*---------------------------------------------------------------------*/
+;*    *vtable-threshold* ...                                           */
+;*---------------------------------------------------------------------*/
+(define *vtable-threshold* 10)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -1217,8 +1222,6 @@
    
    (add-cache-miss! 'get name)
 
-   (define *vtable-threshold* 10)
-   
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
 	 (if (= cntmiss *vtable-threshold*)
@@ -1608,7 +1611,7 @@
 			 (lambda (nextmap)
 			    ;; follow the next map
 			    (with-access::JsConstructMap nextmap (names ctor)
-			       (when (and pcache ctor)
+			       (when pcache
 				  [assert (index) (<=fx index (vector-length elements))]
 				  (js-pcache-next-direct! pcache o nextmap index))
 			       [assert (o) (isa? nextmap JsConstructMap)]
@@ -1621,7 +1624,7 @@
 			    (with-access::JsConstructMap nextmap (methods)
 			       (validate-cache-method! v methods index))
 			    (with-access::JsConstructMap cmap (ctor)
-			       (when (and pcache ctor)
+			       (when pcache
 				  [assert (index) (<=fx index (vector-length elements))]
 				  (js-pcache-next-direct! pcache o nextmap index))
 			       (link-cmap! cmap nextmap name v flags)
@@ -1689,7 +1692,7 @@
 		(extend-properties-object!))))))
    
    (add-cache-miss! 'put name)
-   
+
    (let loop ((obj o))
       (jsobject-find obj name
 	 update-mapped-object!
@@ -1753,16 +1756,18 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-put-name/cache-miss! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
    (with-access::JsObject o ((omap cmap))
-      (if (eq? omap (js-not-a-cmap))
-	  (js-put-jsobject! o prop v throw #t cache %this)
-	  (let* ((%omap omap)
-		 (tmp (js-put-jsobject! o prop v throw #t cache %this)))
-	     (with-access::JsPropertyCache cache (index cmap vindex)
-		(when (>=fx index 0)
-		   (when (=fx vindex (js-not-a-index))
-		      (set! vindex (js-get-vindex %this)))
-		   (js-cmap-vtable-add! %omap vindex (cons index cmap))))
-	     tmp))))
+      (let* ((%omap omap)
+	     (tmp (js-put-jsobject! o prop v throw #t cache %this)))
+	 (unless (eq? %omap (js-not-a-cmap))
+	    (with-access::JsPropertyCache cache (index cmap vindex cntmiss)
+	       (if (= cntmiss *vtable-threshold*)
+		   (when (>=fx index 0)
+		      (when (=fx vindex (js-not-a-index))
+			 (set! vindex (js-get-vindex %this)))
+		      (with-access::JsObject o (cmap)
+			 (js-cmap-vtable-add! %omap vindex (cons index cmap))))
+		   (set! cntmiss (+fx cntmiss 1)))))
+	 tmp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind! ...                                                     */
