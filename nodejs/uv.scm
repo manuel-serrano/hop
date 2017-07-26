@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Fri May 26 09:57:54 2017 (serrano)                */
+;*    Last change :  Wed Jul 26 15:47:38 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -189,6 +189,12 @@
 	   (nodejs-pipe-listen ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj ::obj ::int)
 	   ))
 
+(define-expander assert-thread
+   (lambda (x e)
+      (cond-expand
+	 (enable-threads (e `(assert ,@(cdr x)) e))
+	 (else #unspecified))))
+      
 (cond-expand
    (enable-libuv
 ;;;
@@ -403,7 +409,7 @@
 	    (condition-variable-broadcast! condv)
 	    (with-access::JsLoop loop ((lasync async))
 	       (set! lasync async))
-	    [assert (th) (eq? th (current-thread))]
+	    [assert-thread (th) (eq? th (current-thread))]
 	    (unless (>=fx (bigloo-debug) 2)
 	       (with-access::WorkerHopThread th (%this)
 		  (signal sigsegv
@@ -704,14 +710,14 @@
 ;*    nodejs-idle-start ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-idle-start %worker %this obj)
-   [assert (%worker) (eq? %worker (current-thread))]
+   [assert-thread (%worker) (eq? %worker (current-thread))]
    (uv-idle-start obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-idle-stop ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-idle-stop %worker %this obj)
-   [assert (%worker) (eq? %worker (current-thread))]
+   [assert-thread (%worker) (eq? %worker (current-thread))]
    (uv-idle-stop obj))
 
 ;*---------------------------------------------------------------------*/
@@ -724,7 +730,7 @@
 ;*    nodejs-make-check ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-make-check %worker %this process)
-   [assert (%worker) (eq? %worker (current-thread))]
+   [assert-thread (%worker) (eq? %worker (current-thread))]
    (let ((check (instantiate::UvCheck
 		   (loop (worker-loop %worker))
 		   (cb (lambda (_)
@@ -739,7 +745,7 @@
 ;*    nodejs-check-stop ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-check-stop %worker %this obj)
-   [assert (%worker) (eq? %worker (current-thread))]
+   [assert-thread (%worker) (eq? %worker (current-thread))]
    (uv-check-stop obj))
    
 ;*---------------------------------------------------------------------*/
@@ -1488,7 +1494,7 @@
 ;*    nodejs-getaddrinfo ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-getaddrinfo %worker %this process node family)
-   [assert (%worker) (eq? (current-thread) %worker)]
+   [assert-thread (%worker) (eq? (current-thread) %worker)]
    (with-access::JsGlobalObject %this (js-object)
       (let ((wrap (js-new %this js-object)))
 	 (uv-getaddrinfo (js-jsstring->string node) #f
@@ -1523,7 +1529,7 @@
 	     (!js-callback2 'query %worker %this cb (js-undefined) #f v))
 	  (!js-callback2 'query %worker %this cb (js-undefined) res '#())))
    
-   [assert () (isa? (current-thread) WorkerHopThread)]
+   [assert-thread () (isa? (current-thread) WorkerHopThread)]
    (with-access::JsGlobalObject %this (js-object)
       (let ((res (uv-getaddrinfo (js-jsstring->string node) #f :family family
 		    :loop (worker-loop %worker)
@@ -1582,7 +1588,7 @@
 ;*    nodejs-tcp-connect ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-connect %worker %this handle host port family callback)
-   [assert (%worker) (eq? (current-thread) %worker)]
+   [assert-thread (%worker) (eq? (current-thread) %worker)]
    ;; (tprint "tcp-connect host=" host " port=" port " family=" family)
    (uv-tcp-connect handle (js-jsstring->string host) port :family family
       :loop (worker-loop %worker)
@@ -1652,7 +1658,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-tcp-listen %worker %this process this handle backlog tcp-wrap)
    ;; (tprint "tcp-listen")
-   [assert (%worker) (eq? (current-thread) %worker)]
+   [assert-thread (%worker) (eq? (current-thread) %worker)]
    (let ((r (uv-listen handle backlog
 	       :loop (worker-loop %worker)
 	       :callback
@@ -1717,7 +1723,7 @@
 ;*    nodejs-udp-send ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-udp-send %worker %this handle buffer offset length port address family callback)
-   [assert (%worker) (eq? %worker (current-thread))]
+   [assert-thread (%worker) (eq? %worker (current-thread))]
    (uv-udp-send handle buffer offset length port address
       :family family
       :loop (worker-loop %worker)
@@ -1727,7 +1733,7 @@
 ;*    nodejs-udp-recv-start ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-udp-recv-start %worker %this handle onalloc callback)
-   [assert (%worker) (eq? %worker (current-thread))]
+   [assert-thread (%worker) (eq? %worker (current-thread))]
    (uv-udp-recv-start handle
       :onalloc onalloc
       :loop (worker-loop %worker)
@@ -1782,7 +1788,7 @@
 ;*    nodejs-stream-write ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-write %worker %this handle buffer offset length callback)
-   [assert (%worker) (eq? %worker (current-thread))]
+   [assert-thread (%worker) (eq? %worker (current-thread))]
 ;*    (tprint "WriteBuffer offset=" offset " length=" length)          */
    (uv-stream-write handle buffer offset length
       :loop (worker-loop %worker)
@@ -1813,7 +1819,7 @@
 ;*    nodejs-stream-read-start ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-read-start %worker %this process handle onalloc callback)
-   [assert (%worker) (or (not (current-thread)) (eq? %worker (current-thread)))]
+   [assert-thread (%worker) (or (not (current-thread)) (eq? %worker (current-thread)))]
    (uv-stream-read-start handle
       :onalloc onalloc
       :loop (worker-loop %worker)
@@ -1829,7 +1835,7 @@
 ;*    nodejs-stream-shutdown ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-shutdown %worker %this handle callback)
-   [assert (%worker) (eq? %worker (current-thread))]
+   [assert-thread (%worker) (eq? %worker (current-thread))]
    (uv-stream-shutdown handle
       :loop (worker-loop %worker)
       :callback callback))
@@ -2155,7 +2161,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-pipe-connect %worker %this handle name callback)
    ;; (tprint "tcp-listen, pipe-connect")
-   [assert (%worker) (eq? (current-thread) %worker)]
+   [assert-thread (%worker) (eq? (current-thread) %worker)]
    (uv-pipe-connect handle (js-jsstring->string name)
       :loop (worker-loop %worker)
       :callback callback))
@@ -2170,7 +2176,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-pipe-listen %worker %this process this handle backlog)
    ;; rint "pipe-listen...")
-   [assert (%worker) (eq? (current-thread) %worker)]
+   [assert-thread (%worker) (eq? (current-thread) %worker)]
    (let ((r (uv-listen handle backlog
 	       :loop (worker-loop %worker)
 	       :callback
