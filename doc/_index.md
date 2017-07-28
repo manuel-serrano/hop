@@ -81,9 +81,14 @@ user.add( { name: "hopjs",
             services: "*",
             directories: "*"
           } );
+user.add( { name: "anonymous",
+            password: user.encryptPassword( "hopjs", "23^73++_*" ),
+            services: "",
+            directories: ""
+          } );	  
 EOF
 ```
 
 You are now ready to execute Hop.js programs! Many more additional examples
 can be found in the
-[source development tree](https://github.com/manuel-serrano/hop/tree/3.0.x/examples).
+[source development tree](https://github.com/manuel-serrano/hop/tree/3.1.x/examples).

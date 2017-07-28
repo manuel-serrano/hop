@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep  4 09:28:11 2008                          */
-;*    Last change :  Thu May 18 14:31:58 2017 (serrano)                */
+;*    Last change :  Fri Jul 28 15:20:54 2017 (serrano)                */
 ;*    Copyright   :  2008-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The pipeline into which requests transit.                        */
@@ -180,10 +180,13 @@
 		       (socket-port-number sock))
 		    "")
 		"\n")
-	     (when (>fx (bigloo-debug) 0)
-		(hop-verb 1
-		   (with-error-to-string
-		      (lambda () (exception-notify e))))))
+	     (cond
+		((isa? e &hop-security-error)
+		 (exception-notify e))
+		((>fx (bigloo-debug) 0)
+		 (hop-verb 1
+		    (with-error-to-string
+		       (lambda () (exception-notify e)))))))
 	  (when (and (isa? e &io-unknown-host-error) (not (socket-down? sock)))
 	     (with-handler
 		(lambda (e)

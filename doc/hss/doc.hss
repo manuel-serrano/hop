@@ -61,6 +61,9 @@ p.danger {
 
 .jumbotron svg {
   transition: 0.5s all;
+}  
+  .jumbotron h1, .jumbotron p {
+  transition: 0.2s all;
 }
 
 [scrolled="yes"] .jumbotron {
@@ -77,6 +80,16 @@ p.danger {
 [scrolled="yes"] .jumbotron svg {
   transform: scale(0.6);
 }
+
+[scrolled="yes"] .jumbotron h1 {
+  margin-top: 20px;
+  font-size: 300%;
+}
+[scrolled="yes"] .jumbotron p {
+  margin-top: 8px;
+  font-size: 110%;
+}
+
 /*---------------------------------------------------------------------*/
 /*    filler                                                           */
 /*---------------------------------------------------------------------*/
