@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jul 31 13:35:54 2017 (serrano)                */
+;*    Last change :  Tue Aug  1 17:14:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -226,9 +226,10 @@
 			    (with-access::JsPropertyDescriptor d (name)
 			       name))
 		       properties)))
-	      (with-access::JsConstructMap cmap (%id names)
+	      (with-access::JsConstructMap cmap (%id names methods)
 		 (fprint (current-error-port) msg (typeof obj) " MAPPED"
 		    " length=" (vector-length elements)
+		    " mlengths=" (vector-length methods)
 		    "\n  elements=" (vector-map
 				       (lambda (v)
 					  (if (isa? v JsObject)

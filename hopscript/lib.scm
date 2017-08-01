@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Jul 11 08:57:18 2017 (serrano)                */
+;*    Last change :  Tue Aug  1 17:16:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -151,12 +151,10 @@
 ;*---------------------------------------------------------------------*/
 (define (js-literal->jsobject::JsObject elements::vector names::vector %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (let ((cmap (instantiate::JsConstructMap
-		     (names names))))
-	 (instantiate::JsObject
-	    (cmap cmap)
-	    (elements elements)
-	    (__proto__ __proto__)))))
+      (instantiate::JsObject
+	 (cmap (js-names->cmap names))
+	 (elements elements)
+	 (__proto__ __proto__))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-alist->jsobject ...                                           */
