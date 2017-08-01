@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Jul 26 16:31:18 2017 (serrano)                */
+;*    Last change :  Mon Jul 31 13:22:57 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -257,7 +257,8 @@
 		     (js-property-value ,o desc ,%this)))))
 	  (else
 	   (with-access::JsConstructMap %omap (vlen vtable %id)
-	      (if (and (<fx ,vindx vlen)
+	      (if (and (cond-expand (no-vtable-cache #f) (else #t))
+		       (<fx ,vindx vlen)
 		       (fixnum? (vector-ref vtable ,vindx)))
 		  (vector-ref elements (vector-ref vtable ,vindx))
 		  (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))))
@@ -463,7 +464,8 @@
 		     (js-property-value-set! ,o desc ,tmp %this)))))
 	  (else
 	   (with-access::JsConstructMap %omap (vlen vtable)
-	      (if (and (<fx ,vindx vlen)
+	      (if (and (cond-expand (no-vtable-cache #f) (else #t))
+		       (<fx ,vindx vlen)
 		       (pair? (vector-ref vtable ,vindx)))
 		  (let ((indx (car (vector-ref vtable ,vindx)))
 			(cmap (cdr (vector-ref vtable ,vindx))))
@@ -595,7 +597,8 @@
    (define (call obj name ccache ocache args _ cmap method vindex)
       `(with-access::JsConstructMap %omap (vlen vtable)
 	  (cond
-	     ((and (<fx ,vindex vlen)
+	     ((and (cond-expand (no-vtable-cache #f) (else #t))
+		   (<fx ,vindex vlen)
 		   (procedure? (vector-ref vtable ,vindex)))
 	      ;; polymorphic call
 	      ((vector-ref vtable ,vindex) ,obj ,@args))

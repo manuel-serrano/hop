@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat May 27 06:16:34 2017 (serrano)                */
+;*    Last change :  Tue Aug  1 10:53:17 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -83,6 +83,9 @@
 	     (exit 0))
 	    (("--version" (help "Print the version and exit"))
 	     (print (hop-name) "-" (hop-version))
+	     (exit 0))
+	    (("--buildtag" (help "Print the buildtag and exit"))
+	     (print (hop-build-tag))
 	     (exit 0))
 	    
 	    ;; RC

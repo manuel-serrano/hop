@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Jul 19 11:35:31 2017 (serrano)                */
+;*    Last change :  Tue Aug  1 10:33:51 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -579,7 +579,7 @@
 	 (js-getprototypeof o %this "getPrototypeOf"))
       
       (js-bind! %this js-object 'getPrototypeOf
-	 :value (js-make-function %this getprototypeof 1 'getPrototypeOf)
+	 :value (js-make-function %this getprototypeof 0 'getPrototypeOf)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -591,7 +591,7 @@
 	 (js-setprototypeof o v %this "setPrototypeOf"))
       
       (js-bind! %this js-object 'setPrototypeOf
-	 :value (js-make-function %this getprototypeof 1 'setPrototypeOf)
+	 :value (js-make-function %this setprototypeof 1 'setPrototypeOf)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -825,9 +825,8 @@
 	     "Prototype of non-extensible object mutated" v)
 	  (with-access::JsObject o (__proto__ cmap)
 	     (js-invalidate-pcaches-pmap! %this)
-	     (set! cmap (if (eq? cmap (js-not-a-cmap))
-			    cmap
-			    (duplicate::JsConstructMap cmap (%id (gencmapid)))))
+	     (unless (eq? cmap (js-not-a-cmap))
+		(set! cmap (duplicate::JsConstructMap cmap (%id (gencmapid)))))
 	     (set! __proto__ v)))))
 
 ;*---------------------------------------------------------------------*/

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Jul 20 09:56:01 2017 (serrano)                */
+#*    Last change :  Tue Aug  1 10:51:02 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -935,7 +935,7 @@ fi
 buildid=
 buildtag=
 
-if [ -d .git ]; then
+if [ -f .git ]; then
   buildtag=`git log -1 --abbrev-commit --pretty="%h"`
 
   git status -s | grep M > /dev/null
