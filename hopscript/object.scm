@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Aug  1 10:33:51 2017 (serrano)                */
+;*    Last change :  Wed Aug  2 06:57:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -579,7 +579,7 @@
 	 (js-getprototypeof o %this "getPrototypeOf"))
       
       (js-bind! %this js-object 'getPrototypeOf
-	 :value (js-make-function %this getprototypeof 0 'getPrototypeOf)
+	 :value (js-make-function %this getprototypeof 1 'getPrototypeOf)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
