@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Aug  1 17:14:16 2017 (serrano)                */
+;*    Last change :  Wed Aug  2 11:06:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -207,9 +207,9 @@
 	   (show-functions)))
 
 ;*---------------------------------------------------------------------*/
-;*    *vtable-threshold* ...                                           */
+;*    vtable-threshold ...                                             */
 ;*---------------------------------------------------------------------*/
-(define *vtable-threshold* 10)
+(define (vtable-threshold) 100)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
@@ -1225,7 +1225,7 @@
 
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
-	 (if (= cntmiss *vtable-threshold*)
+	 (if (=fx cntmiss (vtable-threshold))
 	     (begin
 		(when (=fx vindex (js-not-a-index))
 		   (set! vindex (js-get-vindex %this)))
@@ -1761,7 +1761,7 @@
 	     (tmp (js-put-jsobject! o prop v throw #t cache %this)))
 	 (unless (eq? %omap (js-not-a-cmap))
 	    (with-access::JsPropertyCache cache (index cmap vindex cntmiss)
-	       (if (= cntmiss *vtable-threshold*)
+	       (if (=fx cntmiss (vtable-threshold))
 		   (when (>=fx index 0)
 		      (when (=fx vindex (js-not-a-index))
 			 (set! vindex (js-get-vindex %this)))

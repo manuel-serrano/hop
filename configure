@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Aug  1 10:51:02 2017 (serrano)                */
+#*    Last change :  Thu Aug  3 08:57:09 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -269,7 +269,8 @@ while : ; do
       devmode="devel";
       bcflagsrts=;
       bcflagsdev=-cg;
-      bscm2jsflags=;;
+      bscm2jsflags=;
+      bcflags="$bcflags -Wall";;
 
     --debug)
       devmode="debug";
@@ -277,7 +278,7 @@ while : ; do
       bcflagsrts=-g;
       bscm2jsflags=-g;
       bhopcflags=-g;
-      bcflags="$bcflags $bcflagsdbg";;
+      bcflags="$bcflags $bcflagsdbg -Wall";;
 
     --debug2)
       devmode="debug2";
@@ -285,7 +286,7 @@ while : ; do
       bcflagsrts=-g;
       bscm2jsflags=-g;
       bhopcflags=-g;
-      bcflags="$bcflags $bcflagsdbg2";;
+      bcflags="$bcflags $bcflagsdbg2 -Wall";;
 
     --pmem)
       devmode="pmem";
