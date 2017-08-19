@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Aug  1 15:13:52 2017 (serrano)                */
+;*    Last change :  Thu Aug  3 16:24:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -857,9 +857,6 @@
       (with-access::J2SFun val (params mode vararg body name generator)
 	 (let* ((scmid (j2s-decl-scheme-id this))
 		(fastid (j2s-fast-id id)))
-	    (when (eq? id 'matchesPeer)
-	       (tprint "matchesPeer no-closure=" (no-closure? this) " scope="
-		  scope))
 	    (epairify-deep loc
 	       (case scope
 		  ((none)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Aug  2 11:06:49 2017 (serrano)                */
+;*    Last change :  Thu Aug  3 17:06:23 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -373,6 +373,8 @@
 
    (with-access::JsGlobalObject %this (js-pmap-valid)
       (when js-pmap-valid
+	 (when *log-pmap-invalidate*
+	    (set! *pmap-invalidations* (+fx 1 *pmap-invalidations*)))
 	 (set! js-pmap-valid #f)
 	 ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap!)
 	 (for-each (lambda (pcache-entry)
@@ -607,6 +609,9 @@
 (define (js-cmap-vtable-add! o::JsConstructMap idx::long obj)
    (with-access::JsConstructMap o (vlen vtable)
       (when (>=fx idx (vector-length vtable))
+	 (when *log-vtables*
+	    (set! *vtables* (+fx 1 *vtables*))
+	    (set! *vtables-mem* (+fx *vtables-mem* (+fx idx 1))))
 	 (set! vlen (+fx idx 1))
 	 (set! vtable (copy-vector vtable (+fx idx 1))))
       (vector-set! vtable idx obj)
@@ -2821,12 +2826,20 @@
 (define *misses* '())
 (define *log-misses* #f)
 (define *log-miss-threshold* 100)
+(define *log-pmap-invalidate* #f)
+(define *log-vtables* #f)
+
+(define *pmap-invalidations* 0)
+(define *vtables* 0)
+(define *vtables-mem* 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    log-cache-miss! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (log-cache-miss!)
-   (set! *log-misses* #t))
+   (set! *log-misses* #t)
+   (set! *log-pmap-invalidate* #t)
+   (set! *log-vtables* #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-cache-miss! ...                                              */
@@ -2850,27 +2863,72 @@
    (let ((m (pregexp-match "hopscript:cache=([0-9]+)" (getenv "HOPTRACE"))))
       (when m
 	 (set! *log-miss-threshold* (string->integer (cadr m)))))
-   (fprint (current-error-port) "\nCACHES:\n" "=======\n")
-   (for-each (lambda (what)
-		(fprint (current-error-port) (car what) ": " (cadr what))
-		(for-each (lambda (e)
-			     (when (>=fx (cdr e) *log-miss-threshold*)
-				(fprint (current-error-port) "   "
-				   (car e) ": " (cdr e))))
-		   (sort (lambda (e1 e2)
-			    (cond
-			       ((>fx (cdr e1) (cdr e2)) #t)
-			       ((<fx (cdr e1) (cdr e2)) #f)
-			       (else
-				(string<=? (symbol->string! (car e1))
-				   (symbol->string! (car e2))))))
-		      (cddr what)))
-		(newline (current-error-port)))
-      *misses*)
-   (fprint (current-error-port)
-      "total cache misses: " (apply + (map cadr *misses*)))
-   (fprint (current-error-port)
-      "hidden classes num: " (gencmapid)))
+   (cond
+      ((string-contains (getenv "HOPTRACE") "format:json")
+       (with-output-to-port (current-error-port)
+	  (lambda ()
+	     (let ((m (pregexp-match "name=([^ ]+)" (getenv "HOPTRACE"))))
+		(print "{")
+		(print "  \"name\": \""
+		   (if (pair? m) (cadr m) (car (command-line)))
+		   "\","))
+	     (display "  \"caches\": {\n")
+	     (for-each (lambda (what)
+			  (print "    \"" (car what) "\": {")
+			  (print "      \"total\": " (cadr what) ",")
+			  (print "      \"" (car what) "\": " (cadr what) ",")
+			  (print "      \"entries\": [")
+			  (for-each (lambda (e)
+				       (when (>=fx (cdr e) *log-miss-threshold*)
+					  (print "       { \"" (car e) "\": "
+					     (cdr e) "},")))
+			     (sort (lambda (e1 e2)
+				      (cond
+					 ((>fx (cdr e1) (cdr e2)) #t)
+					 ((<fx (cdr e1) (cdr e2)) #f)
+					 (else
+					  (string<=? (symbol->string! (car e1))
+					     (symbol->string! (car e2))))))
+				(cddr what)))
+			  (print "     -1 ] },"))
+		*misses*)
+	     (print "  },")
+	     (print "  \"total-cache-misses\": "
+		(apply + (map cadr *misses*)) ", ")
+	     (print "  \"hidden-class-number\": "
+		(gencmapid) ",")
+	     (print "  \"pmap invalidations\": "
+		*pmap-invalidations* ",")
+	     (print "  \"vtables\": { \"number\": " *vtables*
+		", \"mem\": " *vtables-mem* "}")
+	     (print "}"))))
+      (else
+       (fprint (current-error-port) "{\n\"CACHES\":")
+       (fprint (current-error-port) "\nCACHES:\n" "=======\n")
+       (for-each (lambda (what)
+		    (fprint (current-error-port) (car what) ": " (cadr what))
+		    (for-each (lambda (e)
+				 (when (>=fx (cdr e) *log-miss-threshold*)
+				    (fprint (current-error-port) "   "
+				       (car e) ": " (cdr e))))
+		       (sort (lambda (e1 e2)
+				(cond
+				   ((>fx (cdr e1) (cdr e2)) #t)
+				   ((<fx (cdr e1) (cdr e2)) #f)
+				   (else
+				    (string<=? (symbol->string! (car e1))
+				       (symbol->string! (car e2))))))
+			  (cddr what)))
+		    (newline (current-error-port)))
+	  *misses*)
+       (fprint (current-error-port)
+	  "total cache misses: " (apply + (map cadr *misses*)))
+       (fprint (current-error-port)
+	  "hidden classes num: " (gencmapid))
+       (fprint (current-error-port)
+	  "pmap invalidations: " *pmap-invalidations*)
+       (fprint (current-error-port)
+	  "vtables           : " *vtables* " (" *vtables-mem* "b)"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *functions* ...                                                  */
