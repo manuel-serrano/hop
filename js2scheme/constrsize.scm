@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sun Feb  5 11:30:47 2017 (serrano)                */
+;*    Last change :  Tue Aug  1 15:58:19 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors sizes                       */
@@ -111,3 +111,14 @@
 	 (cell-set! acc
 	    (+fx (cell-ref acc) (max (cell-ref athen) (cell-ref aelse)))))))
 
+;*---------------------------------------------------------------------*/
+;*    count-this-assig ::J2SCall ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (count-this-assig this::J2SCall acc::cell)
+   (with-access::J2SCall this (protocol fun)
+      (if (eq? protocol 'bounce)
+	  (with-access::J2SRef fun (decl)
+	     (with-access::J2SDeclFun decl (val)
+		(with-access::J2SFun val (body)
+		   (count-this-assig body acc))))
+	  (call-next-method))))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Feb 19 14:13:15 2005                          */
-;*    Last change :  Sun Apr  3 09:34:17 2016 (serrano)                */
-;*    Copyright   :  2005-16 Manuel Serrano                            */
+;*    Last change :  Fri Jul 28 15:25:03 2017 (serrano)                */
+;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    User support                                                     */
 ;*=====================================================================*/
@@ -364,7 +364,11 @@
        (let ((a (hashtable-get *users* "anonymous")))
 	  (if (isa? a user)
 	      (set! *anonymous-user* a)
-	      (error "anonymous-user" "No anonymous user declared" a))
+	      (raise
+		 (instantiate::&hop-security-error
+		    (proc "anonymous-user")
+		    (msg "No anonymous user declared")
+		    (obj (hop-rc-file)))))
 	  *anonymous-user*)))
 
 ;*---------------------------------------------------------------------*/

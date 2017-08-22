@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Jul  9 18:31:45 2017 (serrano)                */
+;*    Last change :  Wed Aug  2 06:57:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -591,7 +591,7 @@
 	 (js-setprototypeof o v %this "setPrototypeOf"))
       
       (js-bind! %this js-object 'setPrototypeOf
-	 :value (js-make-function %this getprototypeof 1 'setPrototypeOf)
+	 :value (js-make-function %this setprototypeof 1 'setPrototypeOf)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -824,10 +824,9 @@
 	  (js-raise-type-error %this 
 	     "Prototype of non-extensible object mutated" v)
 	  (with-access::JsObject o (__proto__ cmap)
-	     (js-invalidate-pcaches-pmap!)
-	     (set! cmap (if (eq? cmap (js-not-a-cmap))
-			    cmap
-			    (duplicate::JsConstructMap cmap (%id (gencmapid)))))
+	     (js-invalidate-pcaches-pmap! %this)
+	     (unless (eq? cmap (js-not-a-cmap))
+		(set! cmap (duplicate::JsConstructMap cmap (%id (gencmapid)))))
 	     (set! __proto__ v)))))
 
 ;*---------------------------------------------------------------------*/

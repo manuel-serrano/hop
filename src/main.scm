@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Jun 23 10:36:29 2017 (serrano)                */
+;*    Last change :  Tue Aug  1 16:46:44 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -260,6 +260,7 @@
 (define (javascript-rc %worker %global)
    
    (define (load-rc path)
+      (hop-rc-file-set! path)
       ;; behave as if rc file is not loaded yet
       (hop-rc-loaded! #f)
       ;; set the preferred language

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jul  9 20:02:48 2017 (serrano)                */
+;*    Last change :  Thu Aug  3 17:06:23 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -43,7 +43,7 @@
 	   (js-debug-pcache ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
 	   (js-make-pcache ::int)
-	   (js-invalidate-pcaches-pmap!)
+	   (js-invalidate-pcaches-pmap! ::JsGlobalObject)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-cmap ::JsPropertyCache)
 	   
@@ -207,6 +207,11 @@
 	   (show-functions)))
 
 ;*---------------------------------------------------------------------*/
+;*    vtable-threshold ...                                             */
+;*---------------------------------------------------------------------*/
+(define (vtable-threshold) 100)
+
+;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-debug-object obj #!optional (msg ""))
@@ -221,9 +226,10 @@
 			    (with-access::JsPropertyDescriptor d (name)
 			       name))
 		       properties)))
-	      (with-access::JsConstructMap cmap (%id names)
+	      (with-access::JsConstructMap cmap (%id names methods)
 		 (fprint (current-error-port) msg (typeof obj) " MAPPED"
 		    " length=" (vector-length elements)
+		    " mlengths=" (vector-length methods)
 		    "\n  elements=" (vector-map
 				       (lambda (v)
 					  (if (isa? v JsObject)
@@ -350,11 +356,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-pcaches-pmap! ...                                  */
 ;*    -------------------------------------------------------------    */
-;*    Called when a __proto__ is changed or when an accessor           */
-;*    property or a non default data property is added to an           */
-;*    object.                                                          */
+;*    Called when:                                                     */
+;*       1) a __proto__ is changed, or                                 */
+;*       2) an accessor property or a non default data property is     */
+;*          added to an object, or                                     */
+;*       3) a property is deleted, or                                  */
+;*       4) a property hidding a prototype property is added.          */
 ;*---------------------------------------------------------------------*/
-(define (js-invalidate-pcaches-pmap!)
+(define (js-invalidate-pcaches-pmap! %this::JsGlobalObject)
    
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap)
@@ -362,15 +371,20 @@
 	    (reset-cmap-vtable! pmap))
 	 (set! pmap #t)))
 
-   ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap!)
-   (for-each (lambda (pcache-entry)
-		(let ((vec (car pcache-entry)))
-		   (let loop ((i (-fx (cdr pcache-entry) 1)))
-		      (when (>=fx i 0)
-			 (let ((pcache (vector-ref vec i)))
-			    (invalidate-pcache-pmap! pcache))
-			 (loop (-fx i 1))))))
-      *pcaches*))
+   (with-access::JsGlobalObject %this (js-pmap-valid)
+      (when js-pmap-valid
+	 (when *log-pmap-invalidate*
+	    (set! *pmap-invalidations* (+fx 1 *pmap-invalidations*)))
+	 (set! js-pmap-valid #f)
+	 ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap!)
+	 (for-each (lambda (pcache-entry)
+		      (let ((vec (car pcache-entry)))
+			 (let loop ((i (-fx (cdr pcache-entry) 1)))
+			    (when (>=fx i 0)
+			       (let ((pcache (vector-ref vec i)))
+				  (invalidate-pcache-pmap! pcache))
+			       (loop (-fx i 1))))))
+	    *pcaches*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-ref ...                                                */
@@ -595,6 +609,9 @@
 (define (js-cmap-vtable-add! o::JsConstructMap idx::long obj)
    (with-access::JsConstructMap o (vlen vtable)
       (when (>=fx idx (vector-length vtable))
+	 (when *log-vtables*
+	    (set! *vtables* (+fx 1 *vtables*))
+	    (set! *vtables-mem* (+fx *vtables-mem* (+fx idx 1))))
 	 (set! vlen (+fx idx 1))
 	 (set! vtable (copy-vector vtable (+fx idx 1))))
       (vector-set! vtable idx obj)
@@ -1211,11 +1228,9 @@
    
    (add-cache-miss! 'get name)
 
-   (define *vtable-threshold* 10)
-   
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
-	 (if (= cntmiss *vtable-threshold*)
+	 (if (=fx cntmiss (vtable-threshold))
 	     (begin
 		(when (=fx vindex (js-not-a-index))
 		   (set! vindex (js-get-vindex %this)))
@@ -1232,6 +1247,9 @@
 		     (let ((el-or-desc (vector-ref elements i)))
 			(cond
 			   ((isa? el-or-desc JsPropertyDescriptor)
+			    (unless (eq? o obj)
+			       (with-access::JsGlobalObject %this (js-pmap-valid)
+				  (set! js-pmap-valid #t)))
 			    ;; accessor property
 			    (js-pcache-update-descriptor! cache i o obj)
 			    (js-property-value o el-or-desc %this))
@@ -1243,6 +1261,8 @@
 			    el-or-desc)
 			   (else
 			    ;; direct access to a prototype object
+			    (with-access::JsGlobalObject %this (js-pmap-valid)
+			       (set! js-pmap-valid #t))
 			    (js-pcache-update-owner! cache i o obj)
 			    el-or-desc)))))))
 	 ;; property search
@@ -1572,6 +1592,7 @@
 		      (reject "Sealed object"))
 		     ((not (isa? el-or-desc JsPropertyDescriptor))
 		      ;; 8.12.5, step 6
+		      (js-invalidate-pcaches-pmap! %this)
 		      (extend-object!))
 		     (else
 		      (with-access::JsDataDescriptor el-or-desc (writable)
@@ -1596,7 +1617,7 @@
 			 (lambda (nextmap)
 			    ;; follow the next map
 			    (with-access::JsConstructMap nextmap (names ctor)
-			       (when (and pcache ctor)
+			       (when pcache
 				  [assert (index) (<=fx index (vector-length elements))]
 				  (js-pcache-next-direct! pcache o nextmap index))
 			       [assert (o) (isa? nextmap JsConstructMap)]
@@ -1609,7 +1630,7 @@
 			    (with-access::JsConstructMap nextmap (methods)
 			       (validate-cache-method! v methods index))
 			    (with-access::JsConstructMap cmap (ctor)
-			       (when (and pcache ctor)
+			       (when pcache
 				  [assert (index) (<=fx index (vector-length elements))]
 				  (js-pcache-next-direct! pcache o nextmap index))
 			       (link-cmap! cmap nextmap name v flags)
@@ -1677,7 +1698,7 @@
 		(extend-properties-object!))))))
    
    (add-cache-miss! 'put name)
-   
+
    (let loop ((obj o))
       (jsobject-find obj name
 	 update-mapped-object!
@@ -1741,16 +1762,18 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-put-name/cache-miss! o::JsObject prop::obj v::obj throw::bool cache::JsPropertyCache %this)
    (with-access::JsObject o ((omap cmap))
-      (if (eq? omap (js-not-a-cmap))
-	  (js-put-jsobject! o prop v throw #t cache %this)
-	  (let* ((%omap omap)
-		 (tmp (js-put-jsobject! o prop v throw #t cache %this)))
-	     (with-access::JsPropertyCache cache (index cmap vindex)
-		(when (>=fx index 0)
-		   (when (=fx vindex (js-not-a-index))
-		      (set! vindex (js-get-vindex %this)))
-		   (js-cmap-vtable-add! %omap vindex (cons index cmap))))
-	     tmp))))
+      (let* ((%omap omap)
+	     (tmp (js-put-jsobject! o prop v throw #t cache %this)))
+	 (unless (eq? %omap (js-not-a-cmap))
+	    (with-access::JsPropertyCache cache (index cmap vindex cntmiss)
+	       (if (=fx cntmiss (vtable-threshold))
+		   (when (>=fx index 0)
+		      (when (=fx vindex (js-not-a-index))
+			 (set! vindex (js-get-vindex %this)))
+		      (with-access::JsObject o (cmap)
+			 (js-cmap-vtable-add! %omap vindex (cons index cmap))))
+		   (set! cntmiss (+fx cntmiss 1)))))
+	 tmp)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind! ...                                                     */
@@ -2010,7 +2033,7 @@
 		       (delete-configurable o
 			  (configurable-mapped-property? o i)
 			  (lambda (o)
-			     (js-invalidate-pcaches-pmap!)
+			     (js-invalidate-pcaches-pmap! %this)
 			     ;; create a new cmap for the object
 			     (let ((nextmap (clone-cmap cmap)))
 				(link-cmap! cmap nextmap n #f -1)
@@ -2803,12 +2826,20 @@
 (define *misses* '())
 (define *log-misses* #f)
 (define *log-miss-threshold* 100)
+(define *log-pmap-invalidate* #f)
+(define *log-vtables* #f)
+
+(define *pmap-invalidations* 0)
+(define *vtables* 0)
+(define *vtables-mem* 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    log-cache-miss! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (log-cache-miss!)
-   (set! *log-misses* #t))
+   (set! *log-misses* #t)
+   (set! *log-pmap-invalidate* #t)
+   (set! *log-vtables* #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    add-cache-miss! ...                                              */
@@ -2832,27 +2863,72 @@
    (let ((m (pregexp-match "hopscript:cache=([0-9]+)" (getenv "HOPTRACE"))))
       (when m
 	 (set! *log-miss-threshold* (string->integer (cadr m)))))
-   (fprint (current-error-port) "\nCACHES:\n" "=======\n")
-   (for-each (lambda (what)
-		(fprint (current-error-port) (car what) ": " (cadr what))
-		(for-each (lambda (e)
-			     (when (>=fx (cdr e) *log-miss-threshold*)
-				(fprint (current-error-port) "   "
-				   (car e) ": " (cdr e))))
-		   (sort (lambda (e1 e2)
-			    (cond
-			       ((>fx (cdr e1) (cdr e2)) #t)
-			       ((<fx (cdr e1) (cdr e2)) #f)
-			       (else
-				(string<=? (symbol->string! (car e1))
-				   (symbol->string! (car e2))))))
-		      (cddr what)))
-		(newline (current-error-port)))
-      *misses*)
-   (fprint (current-error-port)
-      "total cache misses: " (apply + (map cadr *misses*)))
-   (fprint (current-error-port)
-      "hidden classes num: " (gencmapid)))
+   (cond
+      ((string-contains (getenv "HOPTRACE") "format:json")
+       (with-output-to-port (current-error-port)
+	  (lambda ()
+	     (let ((m (pregexp-match "name=([^ ]+)" (getenv "HOPTRACE"))))
+		(print "{")
+		(print "  \"name\": \""
+		   (if (pair? m) (cadr m) (car (command-line)))
+		   "\","))
+	     (display "  \"caches\": {\n")
+	     (for-each (lambda (what)
+			  (print "    \"" (car what) "\": {")
+			  (print "      \"total\": " (cadr what) ",")
+			  (print "      \"" (car what) "\": " (cadr what) ",")
+			  (print "      \"entries\": [")
+			  (for-each (lambda (e)
+				       (when (>=fx (cdr e) *log-miss-threshold*)
+					  (print "       { \"" (car e) "\": "
+					     (cdr e) "},")))
+			     (sort (lambda (e1 e2)
+				      (cond
+					 ((>fx (cdr e1) (cdr e2)) #t)
+					 ((<fx (cdr e1) (cdr e2)) #f)
+					 (else
+					  (string<=? (symbol->string! (car e1))
+					     (symbol->string! (car e2))))))
+				(cddr what)))
+			  (print "     -1 ] },"))
+		*misses*)
+	     (print "  },")
+	     (print "  \"total-cache-misses\": "
+		(apply + (map cadr *misses*)) ", ")
+	     (print "  \"hidden-class-number\": "
+		(gencmapid) ",")
+	     (print "  \"pmap invalidations\": "
+		*pmap-invalidations* ",")
+	     (print "  \"vtables\": { \"number\": " *vtables*
+		", \"mem\": " *vtables-mem* "}")
+	     (print "}"))))
+      (else
+       (fprint (current-error-port) "{\n\"CACHES\":")
+       (fprint (current-error-port) "\nCACHES:\n" "=======\n")
+       (for-each (lambda (what)
+		    (fprint (current-error-port) (car what) ": " (cadr what))
+		    (for-each (lambda (e)
+				 (when (>=fx (cdr e) *log-miss-threshold*)
+				    (fprint (current-error-port) "   "
+				       (car e) ": " (cdr e))))
+		       (sort (lambda (e1 e2)
+				(cond
+				   ((>fx (cdr e1) (cdr e2)) #t)
+				   ((<fx (cdr e1) (cdr e2)) #f)
+				   (else
+				    (string<=? (symbol->string! (car e1))
+				       (symbol->string! (car e2))))))
+			  (cddr what)))
+		    (newline (current-error-port)))
+	  *misses*)
+       (fprint (current-error-port)
+	  "total cache misses: " (apply + (map cadr *misses*)))
+       (fprint (current-error-port)
+	  "hidden classes num: " (gencmapid))
+       (fprint (current-error-port)
+	  "pmap invalidations: " *pmap-invalidations*)
+       (fprint (current-error-port)
+	  "vtables           : " *vtables* " (" *vtables-mem* "b)"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *functions* ...                                                  */

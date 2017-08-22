@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Mar 21 11:31:42 2017 (serrano)                */
+;*    Last change :  Thu Aug  3 08:41:50 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -83,8 +83,11 @@
 	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-trim ::obj)
 	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject)
-	   (js-jsstring-fromcharcode ::JsObject ::obj ::JsGlobalObject)
-	   ))
+	   (js-jsstring-fromcharcode ::JsObject ::obj ::JsGlobalObject))
+
+   (cond-expand
+      ((not bigloo4.3a)
+       (pragma (js-string->jsstring default-inline)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */

@@ -14,6 +14,7 @@
 #*---------------------------------------------------------------------*/
 # failures that need to be fixed
 simple/test-http-pipeline-flood.js # Hop too slow start (need 500 setTimeout)
+pummel/test-tls-ci-reneg-attack.js
 
 #*---------------------------------------------------------------------*/
 #*    bad (javascript or nodejs) tests                                 */
@@ -161,8 +162,10 @@ simple/test-zlib.js
 simple/test-regress-GH-4015.js
 
 # different timing
-simple/test-timers-ordering.js 
+simple/test-timers-ordering.js
+
 pummel/test-process-uptime.js
+pummel/test-net-write-callbacks.js
 
 #*---------------------------------------------------------------------*/
 #*    undeterministics error (observed also with node)                 */

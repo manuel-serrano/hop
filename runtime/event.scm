@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Jul 12 08:36:53 2017 (serrano)                */
+;*    Last change :  Wed Jul 26 18:14:52 2017 (serrano)                */
 ;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -267,7 +267,7 @@
 ;*    server-reset-sans-lock! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (server-reset-sans-lock! obj::server)
-   (with-access::server obj (%websocket %key)
+   (with-access::server obj (%websocket %key host port)
       (websocket-close %websocket)
       (set! %websocket #f)
       (set! %key #f)))
@@ -314,21 +314,23 @@
 ;*---------------------------------------------------------------------*/
 (define-method (remove-event-listener! obj::server event proc . capture)
    (with-access::server obj (listeners mutex host port ssl authorization %key)
-      (when (synchronize mutex
-	       (let loop ((ls listeners))
-		  (when (pair? ls)
-		     (let ((l (car ls)))
-			(if (and (eq? (cdr l) proc) (string=? (car l) event))
-			    (begin
-			       (set! listeners (remq! l listeners))
-			       (when (null? listeners)
-				  (server-reset-sans-lock! obj))
-			       #t)
-			    (loop (cdr ls)))))))
-	 (with-hop ((hop-event-unregister-service) :event event :key %key)
-	    :host host :port port
-	    :authorization authorization
-	    :ssl ssl))))
+      (let ((key %key))
+	 (when (synchronize mutex
+		  (let loop ((ls listeners))
+		     (when (pair? ls)
+			(let ((l (car ls)))
+			   (if (and (eq? (cdr l) proc) (string=? (car l) event))
+			       (begin
+				  (set! listeners (remq! l listeners))
+				  (when (null? listeners)
+				     (server-reset-sans-lock! obj))
+				  #t)
+			       (loop (cdr ls)))))))
+	    (when key
+	       (with-hop ((hop-event-unregister-service) :event event :key key)
+		  :host host :port port
+		  :authorization authorization
+		  :ssl ssl))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *event-mutex* ...                                                */
@@ -1009,7 +1011,7 @@
 	       ;; will be removed from the tables.
 	       (multipart-signal req
 		  (envelope-value *ping* #unspecified))))))
-
+   
    (define (remq-one! x y)
       (let laap ((x x)
 		 (y y))
@@ -1044,11 +1046,12 @@
    
    (synchronize *event-mutex*
       (let ((event (url-decode! event)))
-	 (unregister-websocket-event! event key)
-	 (unregister-multipart-event! event key)
-	 (unregister-ajax-event! event key)
-	 (unregister-flash-event! event key)
-	 #f)))
+	 (when (and (string? key) event)
+	    (unregister-websocket-event! event key)
+	    (unregister-multipart-event! event key)
+	    (unregister-ajax-event! event key)
+	    (unregister-flash-event! event key)
+	    #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    flash-close-request! ...                                         */

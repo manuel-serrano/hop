@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Sat Apr  8 08:05:33 2017 (serrano)                */
+/*    Last change :  Wed Jul 19 11:43:39 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
@@ -336,4 +336,18 @@ function bugPutCache() {
 }
 
 assert.ok( bugPutCache, "put cache" );
-   
+
+/*---------------------------------------------------------------------*/
+/*    Caches & prototypes                                              */
+/*---------------------------------------------------------------------*/
+function getZ( o ) {
+   return o.z;
+}
+
+var pz0 = { z : 45 };
+var pz = { __proto__: pz0 };
+var o = { __proto__: pz };
+
+eq( getZ( o ), 45, "first cache" );
+pz.z = 55;
+eq( getZ( o ), 55, "second cache" );

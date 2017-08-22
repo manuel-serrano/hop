@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri May 26 07:26:45 2017 (serrano)                */
+/*    Last change :  Thu Aug  3 14:00:36 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -85,7 +85,7 @@ bgl_invalidate_pcaches_pmap( obj_t proc ) {
    for( i = 0; i < pcaches_index; i++ ) {
       int j;
       for( j = 0; j < pcaches[ i ].length; j++ ) {
-	 PROCEDURE_ENTRY( proc )( proc, &(pcaches[ i ].pcache[ j ]), BEOA );
+	 PROCEDURE_ENTRY( proc )( proc, BOBJECT( &(pcaches[ i ].pcache[ j ]) ), BEOA );
       }
    }
 }
@@ -103,7 +103,7 @@ bgl_make_pcache( obj_t obj, int len, obj_t template ) {
    int i;
 
    for( i = 0; i < len; i++ ) {
-      memcpy( &(pcache[ i ]), template, sizeof( pcache_t ) );
+      memcpy( &(pcache[ i ]), COBJECT( template ), sizeof( pcache_t ) );
    }
 
    bgl_register_pcache( pcache, len );
@@ -131,7 +131,7 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
    int i;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BREF( o ), JSOBJECT_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BOBJECT( o ), JSOBJECT_CLASS_INDEX );
    
    // fields init
    o->BgL___proto__z00 = __proto__;
@@ -154,7 +154,7 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
       VECTOR_SET( vector, i, BUNSPEC );
    }
 
-   return BREF( o );
+   return BOBJECT( o );
 }
 
 /*---------------------------------------------------------------------*/
@@ -186,14 +186,14 @@ bgl_make_jsarray( int size, obj_t constrmap, obj_t __proto__, char mode ) {
    int i;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BREF( o ), JSARRAY_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BOBJECT( o ), JSARRAY_CLASS_INDEX );
    
    // fields init
    o->BgL___proto__z00 = __proto__;
    o->BgL_modez00 = mode; 
    o->BgL_propertiesz00 = BNIL; 
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
-   o->BgL_elementsz00 = BVECTOR( empty_vector );
+   o->BgL_elementsz00 = empty_vector;
    o->BgL_lengthz00 = 0;
    o->BgL_ilenz00 = 0;
    
@@ -212,5 +212,5 @@ bgl_make_jsarray( int size, obj_t constrmap, obj_t __proto__, char mode ) {
       VECTOR_SET( vector, i, BUNSPEC );
    }
 
-   return BREF( o );
+   return BOBJECT( o );
 }

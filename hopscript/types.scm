@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Jul 11 15:58:40 2017 (serrano)                */
+;*    Last change :  Thu Aug  3 08:44:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -15,7 +15,7 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_types
-
+   
    (library hop)
    
    (use __hopscript_object
@@ -57,10 +57,10 @@
 	      (handlers::pair-nil (default '()))
 	      (services::pair-nil (default '()))
 	      (%exn (default #unspecified)))
-
+	   
 	   (class MessageEvent::event
 	      data::obj)
-
+	   
 	   (class JsPropertyDescriptor
 	      (name::obj read-only)
 	      (configurable (default #f))
@@ -93,7 +93,7 @@
 	      (ctor::obj (default #f))
 	      (vlen::long (default 0))
 	      (vtable::vector (default '#())))
-
+	   
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance
 	   (abstract-class JsStringLiteral
@@ -101,7 +101,7 @@
 	      weight::uint32
 	      left::obj
 	      (right::obj (default #f)))
-
+	   
 	   (final-class JsStringLiteralASCII::JsStringLiteral)
 	   (final-class JsStringLiteralUTF8::JsStringLiteral
 	      (%idxutf8::long (default 0))
@@ -114,7 +114,7 @@
 	      (properties::pair-nil (default '()))
 	      (cmap::JsConstructMap (default (js-not-a-cmap)))
 	      (elements::vector (default '#())))
-
+	   
 	   (class JsWrapper::JsObject
 	      obj
 	      data)
@@ -167,13 +167,14 @@
 	      (js-main (default (js-null)))
 	      (js-call (default #f))
 	      (js-apply (default #f))
-	      (js-vindex (default 0)))
+	      (js-vindex (default 0))
+	      (js-pmap-valid::bool (default #f)))
 	   
 	   (final-class JsArray::JsObject
 	      (length::uint32 (default #u32:0))
 	      (ilen::uint32 (default #u32:0))
 	      (vec::vector (default '#())))
-
+	   
 	   (class JsArrayBuffer::JsObject
 	      (frozen::bool (default #f))
 	      (data (default '#u8())))
@@ -183,11 +184,11 @@
 	      (buffer::JsArrayBuffer (default (class-nil JsArrayBuffer)))
 	      (%data (default '#u8()))
 	      (byteoffset::uint32 (default #u32:0)))
-
+	   
 	   (abstract-class JsTypedArray::JsArrayBufferView
 	      (length::uint32 (default #u32:0))
 	      bpe::uint32)
-
+	   
 	   (class JsInt8Array::JsTypedArray)
 	   (class JsUint8Array::JsTypedArray)
 	   (class JsUint8ClampedArray::JsTypedArray)
@@ -202,10 +203,10 @@
 	   
 	   (class JsArguments::JsObject
 	      vec::vector)
-
+	   
 	   (class JsString::JsObject
 	      val::obj)
-
+	   
 	   (class JsSymbol::JsObject
 	      val::bstring)
 	   
@@ -229,13 +230,13 @@
 	   (class JsService::JsFunction
 	      (worker::obj read-only)
 	      (svc::obj read-only))
-
+	   
 	   (final-class JsFunction1::JsFunction)
 	   (final-class JsFunction2::JsFunction)
 	   (final-class JsFunction3::JsFunction)
 	   (final-class JsFunction4::JsFunction)
 	   (final-class JsFunction5::JsFunction)
-
+	   
 	   (class JsHopFrame::JsObject
 	      (%this read-only)
 	      (args read-only (default #f))
@@ -243,7 +244,7 @@
 	      (options (default #f))
 	      (header (default #f))
 	      (path read-only))
-
+	   
 	   (class JsServer::JsObject
 	      (data::pair-nil (default '()))
 	      (obj::server read-only))
@@ -260,7 +261,7 @@
 	      (val::bool (default #t)))
 	   
 	   (class JsError::JsObject
-	      (name (default (js-string->jsstring "Error")))
+	      (name (default ((@ js-string->jsstring __hopscript_stringliteral) "Error")))
 	      msg
 	      (stack (default #f))
 	      (fname (default #f))
@@ -268,12 +269,12 @@
 	   
 	   (class JsDate::JsObject
 	      (val (default #f)))
-
+	   
 	   (class JsJSON::JsObject)
-
+	   
 	   (class JsWorker::JsObject
 	      (thread::obj (default #unspecified)))
-
+	   
 	   (class JsPromise::JsObject
 	      (state::symbol (default 'pending))
 	      (val::obj (default #unspecified))
@@ -284,30 +285,30 @@
 	      worker
 	      %this
 	      (%name (default (gensym 'promise))))
-
+	   
 	   (class JsGenerator::JsObject
 	      %next)
-
+	   
 	   (inline js-object-default-mode::byte)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
-
+	   
 	   (inline js-object-mode-frozen?::bool ::JsObject)
 	   (inline js-object-mode-frozen-set! ::JsObject ::bool)
-
+	   
 	   (inline js-object-mode-sealed?::bool ::JsObject)
 	   (inline js-object-mode-sealed-set! ::JsObject ::bool)
-
+	   
 	   (inline js-object-mode-inline?::bool ::JsObject)
 	   (inline js-object-mode-inline-set! ::JsObject ::bool)
-
+	   
 	   (inline js-object-mode-getter?::bool ::JsObject)
 	   (inline js-object-mode-getter-set! ::JsObject ::bool)
-
+	   
 	   (inline js-object-mode-packed?::bool ::JsObject)
 	   (inline js-object-mode-packed-set! ::JsObject ::bool)
-
+	   
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::byte)
 	   (inline JS-OBJECT-MODE-SEALED::byte)
 	   (inline JS-OBJECT-MODE-FROZEN::byte)
@@ -317,37 +318,47 @@
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
-
+	   
 	   (inline js-undefined?::bool ::obj)
 	   (inline js-undefined)
 	   
 	   (inline js-null?::bool ::obj)
 	   (inline js-null)
-
+	   
 	   %absent-value
 	   (inline js-absent)
 	   (inline js-absent?::bool ::obj)
-
+	   
 	   (generic js-typeof obj)
-
+	   
 	   (generic js-arraybuffer-length ::JsArrayBuffer)
 	   (generic js-arraybuffer-ref ::JsArrayBuffer ::int)
 	   (generic js-arraybuffer-set! ::JsArrayBuffer ::int ::obj)
-
+	   
 	   (generic js-buffer->jsbuffer ::JsObject ::pair-nil ::JsGlobalObject)
-
+	   
 	   (generic js-typedarray-ref::procedure ::JsTypedArray)
 	   (generic js-typedarray-set!::procedure ::JsTypedArray)
-
+	   
 	   *js-not-a-cmap*
 	   (inline js-not-a-cmap::JsConstructMap)
 	   (inline js-not-a-index::long)
-
+	   
 	   (inline js-number?::bool ::obj)
 	   (inline js-object?::bool ::obj)
 	   (inline js-function?::bool ::obj)
+	   
+	   (gencmapid::uint32))
+   
+   (pragma (js-not-a-cmap side-effect-free)
+	   (js-null side-effect-free)
+	   (js-undefined side-effect-free)
+	   (js-object-default-mode side-effect-free))
+   
+   (cond-expand
+      ((not bigloo4.3a)
+       (pragma (gencmapid default-inline)))))
 
-	   (gencmapid::uint32)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-default-mode ...                                       */

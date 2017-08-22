@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jun 23 10:32:50 2017 (serrano)                */
+;*    Last change :  Tue Aug  1 10:52:12 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -66,6 +66,9 @@
 	     (exit 0))
 	    (("--version" (help "Print the version and exit"))
 	     (print (hop-name)"c-" (hop-version))
+	     (exit 0))
+	    (("--buildtag" (help "Print the buildtag and exit"))
+	     (print (hop-build-tag))
 	     (exit 0))
 	    (("-q" (help "Do not load an init file"))
 	     (set! loadp #f))
