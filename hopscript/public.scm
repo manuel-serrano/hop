@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jul  9 17:44:07 2017 (serrano)                */
+;*    Last change :  Wed Aug 23 17:25:03 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -35,7 +35,8 @@
 	   __hopscript_worker
 	   __hopscript_array)
 
-   (with   __hopscript_stringliteral)
+   (with   __hopscript_stringliteral
+           __hopscript_expanders)
    
    (export (js-new ::JsGlobalObject f . args)
 	   (js-new/debug ::JsGlobalObject loc f . args)
