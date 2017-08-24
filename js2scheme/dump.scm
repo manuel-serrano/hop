@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Aug 23 07:08:29 2017 (serrano)                */
+;*    Last change :  Thu Aug 24 13:14:59 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -431,6 +431,7 @@
 		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:need-bind-exit-return ,need-bind-exit-return) '())
+	      :mode ,mode
 	      ,(j2s->list thisp) ,(map j2s->list params) ,(j2s->list body))))))
 
 ;*---------------------------------------------------------------------*/

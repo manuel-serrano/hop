@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Aug 23 07:15:37 2017 (serrano)                */
+;*    Last change :  Thu Aug 24 13:34:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2511,9 +2511,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hopscript-mode-fun! this::J2SDeclFun mode)
    (with-access::J2SDeclFun this (val immutable)
-      (when immutable
-	 (hopscript-mode-fun! val mode)))
-   this)
+      (if immutable
+	  (begin
+	     (hopscript-mode-fun! val mode)
+	     this)
+	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-cnst-fun! ...                                          */
