@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Fri Oct  7 10:47:58 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Wed Aug 23 17:22:46 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
 ;*=====================================================================*/
@@ -39,7 +39,8 @@
 	   __hopscript_websocket
 	   __hopscript_promise
 	   __hopscript_generator
-	   __hopscript_spawn)
+	   __hopscript_spawn
+	   __hopscript_expanders)
    
    (eval   (export-all)
 

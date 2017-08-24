@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Aug 22 06:52:17 2017 (serrano)                */
+;*    Last change :  Thu Aug 24 08:31:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -563,13 +563,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-set! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-scheme-set! lhs val result mode return conf)
+(define (j2s-scheme-set! lhs val result mode return conf init?)
    
-   (define (set decl hint utype)
-      (if (and (j2s-let? decl) (not (j2s-let-opt? decl)))
-	  ;; `(js-let-set! ,(j2s-decl-scheme-id decl) ,val)
-	  `(set! ,(j2s-decl-scheme-id decl) ,val)
-	  `(set! ,(j2s-scheme lhs mode return conf hint utype) ,val)))
+   (define (set decl hint utype loc)
+      (cond
+	 ((not (and (j2s-let? decl) (not (j2s-let-opt? decl))))
+	  `(set! ,(j2s-scheme lhs mode return conf hint utype) ,val))
+	 (init?
+	  `(set! ,(j2s-decl-scheme-id decl) ,val))
+	 (else
+	  `(js-let-set! ,(j2s-decl-scheme-id decl) ,val ',loc %this))))
    
    (with-access::J2SRef lhs (decl)
       (cond
@@ -586,17 +589,19 @@
 			 ,result))
 		    (result
 		     `(begin
-			 ,(set decl hint utype)
+			 ,(set decl hint utype loc)
 			 ,result))
 		    (else
-		     (set decl hint utype)))
+		     (set decl hint utype loc)))
 		 val)))
 	 ((not result)
-	  (set decl '() 'any))
+	  (with-access::J2SDecl decl (loc)
+	     (set decl '() 'any loc)))
 	 (else
-	  `(begin
-	      ,(set decl '() 'any)
-	      ,result)))))
+	  (with-access::J2SDecl decl (loc)
+	     `(begin
+		 ,(set decl '() 'any loc)
+		 ,result))))))
 	      
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclExtern ...                                   */
@@ -1497,7 +1502,7 @@
       (let loop ((lhs lhs))
 	 (cond
 	    ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
-	     (epairify loc (j2s-scheme-set! lhs name #f mode return conf)))
+	     (epairify loc (j2s-scheme-set! lhs name #f mode return conf #f)))
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(epairify loc
@@ -2244,7 +2249,7 @@
 		   (let ((assig (j2s-scheme-set! lhs
 				   (j2s-scheme rhs mode return conf hint totype)
 				   (j2s-scheme lhs mode return conf hint totype)
-				   mode return conf)))
+				   mode return conf #f)))
 		      (if (pair? assig)
 			  (epairify loc assig)
 			  assig)))))
@@ -2292,10 +2297,10 @@
    
    (define (var++ inc lhs tmp)
       (if (eq? totype 'void)
-	  (j2s-scheme-set! lhs (inc tmp) #f mode return conf)
+	  (j2s-scheme-set! lhs (inc tmp) #f mode return conf #f)
 	  (new-or-old tmp (inc tmp)
 	     (lambda (val tmp)
-		(j2s-scheme-set! lhs val tmp mode return conf)))))
+		(j2s-scheme-set! lhs val tmp mode return conf #f)))))
    
    (define (var++/suf op lhs type typesuf)
       (let ((tmp (gensym 'tmp))
@@ -2555,7 +2560,7 @@
 		   (j2s-scheme-set! lhs
 		      (js-binop2 loc op type lhs rhs mode return conf hint utype)
 		      (j2s-scheme lhs mode return conf '() utype)
-		      mode return conf))))
+		      mode return conf #f))))
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(j2s-unresolved-put! `',id
@@ -2699,7 +2704,7 @@
 		   `(begin
 		       ,(j2s-scheme-set! lhs
 			   (j2s-scheme rhs mode return conf hint totype)
-			   #f mode return conf)
+			   #f mode return conf #t)
 		       (js-undefined)))))
 	  (call-next-method))))
 

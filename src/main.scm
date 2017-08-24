@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Aug  1 16:46:44 2017 (serrano)                */
+;*    Last change :  Wed Aug 23 17:21:24 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -244,6 +244,8 @@
 	    (for-each (lambda (f) (load-command-line-weblet f %worker)) files)
 	    ;; unset the dummy request
 	    (thread-request-set! #unspecified #unspecified)))
+      ;; install the hopscript expanders
+      (hopscript-install-expanders!)
       ;; start the javascript loop
       (hop-hopscript-worker (hop-scheduler) %global %worker)
       ;; start the JS repl loop

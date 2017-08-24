@@ -17,14 +17,14 @@
 /*---------------------------------------------------------------------*/
 if( !('hop' in window) ) {
    window.hop = {
-      'version': "3.1.0",
+      'version': "3.2.0",
       'build': "@BUILD@",
       'etcDir': "/usr/local/etc",
       'binDir': "/usr/local/bin",
       'libDir': "/usr/local/lib",
-      'shareDir': "/usr/local/share/hop/3.1.0",
+      'shareDir': "/usr/local/share/hop/3.2.0",
       'contribsDir': "/usr/local/share/hop/contribs",
-      'webletsDir': "/usr/local/lib/hop/3.1.0/weblets",
+      'webletsDir': "/usr/local/lib/hop/3.2.0/weblets",
       'serviceBase': "/hop",
       'backend': "native",
       '%modules': {},
