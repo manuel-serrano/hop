@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/js2scheme/Makefile                */
+#*    serrano/prgm/project/hop/3.2.x/js2scheme/Makefile                */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon May 22 17:55:06 2017 (serrano)                */
+#*    Last change :  Mon Aug 21 07:42:19 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -36,12 +36,12 @@ BLIBFLAGS = $(BCFLAGSRTS)
 #*    Scheme extended objects                                          */
 #*---------------------------------------------------------------------*/
 _OBJECTS = lexer header parser html ast dump utils \
-  stage compile js \
-  syntax return loopexit symbol scheme ronly resolve this \
+  stage compile js globvar method \
+  syntax return loopexit symbol ronly resolve this \
   use property bestpractice sourcemap debug stmtassign letopt \
   cps ecmascript5 narrow constant tyflow hint range cast \
   array alpha letfusion uint32 constrsize ctor propcce sweep \
-  globvar method
+  scheme scheme-utils scheme-fun scheme-ops scheme-test scheme-class
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

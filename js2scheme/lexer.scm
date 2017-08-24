@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/lexer.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/lexer.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Mar 18 08:17:46 2017 (serrano)                */
+;*    Last change :  Sun Aug 20 06:54:46 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -77,15 +77,17 @@
      "void"
      "while"
      "with"
-     "yield"))
+     "yield"
+     ;; es2015 classes
+     "class"
+     "extends"
+     "super"
+     "static"))
 
 (define *future-reserved-list*
-   '("class"
-     "enum"
+   '("enum"
      "export"
-     "extends"
-     "import"
-     "super"))
+     "import"))
 
 (define *future-strict-reserved-list*
    '("implements"
@@ -94,8 +96,7 @@
      "package"
      "private"
      "protected"
-     "public"
-     "static"))
+     "public"))
 
 (for-each (lambda (word)
 	     (putprop! (string->symbol word) 'reserved #t))

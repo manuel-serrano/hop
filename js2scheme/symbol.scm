@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/symbol.scm              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed May 17 08:52:23 2017 (serrano)                */
+;*    Last change :  Tue Aug 22 07:48:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -88,7 +88,8 @@
 ;*    debug-dump-env ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (debug-dump-env env)
-   (map (lambda (d::J2SDecl) (with-access::J2SDecl d (id) id)) env))
+   (map (lambda (d::J2SDecl) (with-access::J2SDecl d (id key) (cons id key)))
+      env))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-decls! ...                                                  */
@@ -228,8 +229,6 @@
 			 (with-access::J2SDecl decl (scope)
 			    (set! scope 'fun)))
 	       ldecls)
-;* 	    (tprint "**** fun=" id " decl=" (debug-dump-env decls))    */
-;* 	    (tprint (j2s->list body))                                  */
 	    (if (pair? decls)
 		(set! body
 		   (with-access::J2SBlock body (endloc)
@@ -351,7 +350,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SFor ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (resolve! this::J2SFor env mode withs wenv lang)
+(define-walk-method (resolve! this::J2SFor env mode withs wenv lang)
    
    (define (mark-decls-loop! decls)
       (for-each (lambda (decl::J2SDecl)
@@ -543,12 +542,6 @@
 		(loc loc))))))
 
 ;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SDollar ...                                         */
-;*---------------------------------------------------------------------*/
-;* (define-method (resolve! this::J2SDollar env mode withs wenv lang)       */
-;*    this)                                                            */
-
-;*---------------------------------------------------------------------*/
 ;*    check-strict-mode-eval ...                                       */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-10.1.1       */
@@ -572,6 +565,20 @@
 	     (obj id)
 	     (fname (cadr loc))
 	     (location (caddr loc)))))))
+
+;*---------------------------------------------------------------------*/
+;*    check-immutable ...                                              */
+;*---------------------------------------------------------------------*/
+(define (check-immutable decl::J2SDecl loc)
+   (with-access::J2SDecl decl (immutable id)
+      (when (and immutable (isa? decl J2SDeclClass))
+	 (raise
+	    (instantiate::&io-parse-error
+	       (proc "js-symbol")
+	       (msg "Assignment to constant variable")
+	       (obj id)
+	       (fname (cadr loc))
+	       (location (caddr loc)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SDeclInit ...                                       */
@@ -623,9 +630,30 @@
 	 (loc loc))))
 
 ;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SDeclClass ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SDeclClass env mode withs wenv lang)
+   (with-access::J2SDeclClass this (loc val)
+      (let ((nenv (cons this env)))
+	 (set! val (resolve! val nenv mode withs wenv lang))
+	 this)))
+
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SClass ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SClass env mode withs wenv lang)
+   (with-access::J2SClass this (name decl methods)
+      (let ((nenv (if decl (cons decl env) env)))
+	 (set! methods
+	    (map! (lambda (m) (resolve! m nenv mode withs wenv lang))
+	       methods))
+	 this)))
+
+;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SAssign ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SAssig env mode withs wenv lang)
+   (call-default-walker)
    (when (eq? mode 'strict)
       ;; strict mode restrictions
       (with-access::J2SAssig this (lhs loc)
@@ -634,14 +662,15 @@
 	       ((isa? lhs J2SRef)
 		(with-access::J2SRef lhs (decl)
 		   (with-access::J2SDecl decl (id)
-		      (check-strict-mode-eval id "Assignment to" loc))))
+		      (check-strict-mode-eval id "Assignment to" loc)
+		      (check-immutable decl loc))))
 	       ((isa? lhs J2SUnresolvedRef)
 		(with-access::J2SUnresolvedRef lhs (id)
 		   (check-strict-mode-eval id "Assignment to" loc)))
 	       ((isa? lhs J2SParen)
 		(with-access::J2SParen lhs (expr)
 		   (loop expr)))))))
-   (call-default-walker))
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SObjInit ...                                        */

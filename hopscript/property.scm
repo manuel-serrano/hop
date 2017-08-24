@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/property.scm            */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/property.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Aug  3 17:06:23 2017 (serrano)                */
+;*    Last change :  Tue Aug 22 16:18:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -133,7 +133,7 @@
 	      (enumerable #t)
 	      (configurable #t)
 	      (hidden-class #t))
-	   
+
 	   (js-define ::JsGlobalObject ::JsObject
 	      ::symbol ::procedure ::obj ::obj ::obj)
 	   

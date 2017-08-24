@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/dump.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/dump.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Jul  1 18:18:44 2017 (serrano)                */
+;*    Last change :  Wed Aug 23 07:08:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -397,7 +397,7 @@
    (with-access::J2SFun this (name thisp params body decl mode rtype
 				need-bind-exit-return idthis generator)
       (cond
-	 ((or (isa? decl J2SDeclFun) (isa? decl J2SDeclFunCnst))
+	 ((isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (key usage)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
@@ -763,3 +763,35 @@
    (with-access::J2SDefault this (body)
       (list 'J2SDefault (j2s->list body))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SDeclClass ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SDeclClass)
+   (with-access::J2SDeclClass this (val key ronly writable val _scmid scope id)
+      `(,@(call-next-method)
+	  ,@(dump-key key)
+	  ,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
+	  ,@(if (> (bigloo-debug) 2) `(:writable ,writable) '())
+	  ,@(if (> (bigloo-debug) 3) `(:scope ,scope) '())
+	  ,@(if (nodefval? val) '() (list (j2s->list val))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SClass ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SClass)
+   (with-access::J2SClass this (name methods decl)
+      `(J2SClass ,@(if name (list name) '())
+	  ,@(if (isa? decl J2SDecl)
+		(with-access::J2SDecl decl (key)
+		   (dump-key key))
+		'())
+	  ,@(map j2s->list methods))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SClassElement ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SClassElement)
+   (with-access::J2SClassElement this (static prop)
+      (if static
+	  `(static ,(j2s->list prop))
+	  (j2s->list prop))))

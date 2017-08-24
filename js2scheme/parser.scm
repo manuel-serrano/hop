@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/parser.scm              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/parser.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Jul  2 07:24:53 2017 (serrano)                */
+;*    Last change :  Wed Aug 23 07:15:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -181,7 +181,6 @@
       (let ((res (peek-token)))
 	 (set! *previous-token-type* (car res))
 	 (set! *peeked-tokens* (cdr *peeked-tokens*))
-	 ;; (peek-token) ;; prepare new token.
 	 res))
    
    (define (consume-statement-semicolon! where)
@@ -239,6 +238,8 @@
 	  (async-declaration))
 	 ((service)
 	  (service-declaration))
+	 ((class)
+	  (class-declaration))
 	 ((RESERVED)
 	  (if (eq? (peek-token-value) 'import)
 	      (import (consume-any!))
@@ -262,6 +263,7 @@
 	 ((function) (function-declaration))
 	 ((service) (service-declaration))
 	 ((async) (async-declaration))
+	 ((class) (class-declaration))
 	 ((EOF) (cdr (consume-any!)))
 	 ((ERROR) (parse-token-error "error" (consume-any!)))
 	 (else (statement))))
@@ -290,6 +292,7 @@
 	 ;; we mimic this behavior.
 	 ((function) (function-declaration))
 	 ((async) (async-declaration))
+	 ((class) (class-declaration))
 	 ((debugger) (debugger-statement))
 	 (else (expression-statement))))
    
@@ -742,6 +745,9 @@
 		(set! val (async->generator val))
 		fun)
 	     (parse-token-error "Illegal async function declaration" tok))))
+
+   (define (class-declaration)
+      (clazz #t))
    
    (define (function-expression)
       (function #f))
@@ -751,6 +757,9 @@
    
    (define (service-expression)
       (service #f))
+
+   (define (class-expression)
+      (clazz #f))
 
    (define (async->generator fun::J2SFun)
       ;; generates the async function body by the following transformation
@@ -861,8 +870,9 @@
 	 (with-this 'this loc
 	    (let* ((gen (when (eq? (peek-token-type) '*)
 			   (consume-any!) '*))
-		   (id (when (or declaration? (eq? (peek-token-type) 'ID))
-			  (consume-token! 'ID)))
+		   (id (when (or declaration?
+				 (memq (peek-token-type) '(ID service)))
+			  (consume-any!)))
 		   (params (params))
 		   (body (fun-body params))
 		   (mode (or (javascript-mode body) 'normal)))
@@ -895,9 +905,10 @@
 					    (params params)
 					    (vararg (rest-params params))
 					    (body body)))
-				    (decl (instantiate::J2SDeclFunCnst
+				    (decl (instantiate::J2SDeclFun
 					     (loc (token-loc id))
 					     (id (cdr id))
+					     (immutable #t)
 					     (writable #f)
 					     (ronly #t)
 					     (expression #t)
@@ -965,9 +976,10 @@
 				   (mode mode)
 				   (path (cdr id))
 				   (body body)))
-			   (decl (instantiate::J2SDeclFunCnst
+			   (decl (instantiate::J2SDeclFun
 				    (loc (token-loc id))
 				    (id (cdr id))
+				    (immutable #t)
 				    (writable #f)
 				    (ronly #t)
 				    (expression #t)
@@ -1193,6 +1205,112 @@
 			 (nodes (append (fun-body-params-defval params)
 				   (reverse! rev-ses)))))
 		   (loop (cons (source-element) rev-ses)))))))
+
+   (define (clazz declaration?)
+      (let* ((token (consume-token! 'class))
+	     (id (when (or declaration? (eq? (peek-token-type) 'ID))
+		    (consume-token! 'ID)))
+	     (extends (when (eq? (peek-token-type) 'extends)
+			 (consume-token! 'extends)
+			 (assig-expr #f)))
+	     (lbrace (push-open-token (consume-token! 'LBRACE)))
+	     (loc (current-loc)))
+	 (let loop ((rev-ses '()))
+	    (case (peek-token-type)
+	       ((RBRACE)
+		(let ((etoken (consume-any!)))
+		   (pop-open-token)
+		   (let ((clazz (instantiate::J2SClass
+				   (endloc (token-loc etoken))
+				   (name (token-value id))
+				   (loc (token-loc token))
+				   (extends extends)
+				   (methods (reverse! rev-ses)))))
+		      (cond
+			 (declaration?
+			  (instantiate::J2SVarDecls
+			     (loc loc)
+			     (decls (list (instantiate::J2SDeclInit
+					     (id (token-value id))
+					     (loc loc)
+					     (binder 'class)
+					     (val clazz))))))
+			 (id
+			  (let ((cdecl (instantiate::J2SDeclClass
+					  (loc (token-loc id))
+					  (id (token-value id))
+					  (immutable #t)
+					  (writable #f)
+					  (ronly #t)
+					  (scope 'global)
+					  (val clazz))))
+			     (with-access::J2SClass clazz (decl)
+				(set! decl cdecl)
+				clazz)))
+			 (else
+			  clazz)))))
+	       ((SEMICOLON)
+		(loop rev-ses))
+	       (else
+		(loop (cons (class-element) rev-ses)))))))
+
+   (define (class-element)
+      (if (eq? (peek-token-type) 'static)
+	  (begin
+	     (consume-token! 'static)
+	     (class-method #t))
+	  (class-method #f)))
+
+   (define (class-method static?)
+      (let* ((loc (token-loc (peek-token)))
+	     (gen (when (eq? (peek-token-type) '*)
+		     (consume-any!) '*))
+	     (name-or-get (property-name)))
+	 (if (isa? name-or-get J2SNode)
+	     (let* ((params (params))
+		    (body (fun-body params))
+		    (fun (instantiate::J2SFun
+			    (loc loc)
+			    (thisp (current-this))
+			    (params params)
+			    (mode 'strict)
+			    (generator gen)
+			    (body body)
+			    (vararg (rest-params params))))
+		    (prop (instantiate::J2SDataPropertyInit
+			     (loc loc)
+			     (name name-or-get)
+			     (val fun))))
+		(instantiate::J2SClassElement
+		   (loc loc)
+		   (static static?)
+		   (prop prop)))
+	     (let* ((name (property-name))
+		    (params (params))
+		    (body (fun-body params))
+		    (fun (instantiate::J2SFun
+			    (loc loc)
+			    (thisp (current-this))
+			    (params params)
+			    (mode 'strict)
+			    (generator gen)
+			    (body body)
+			    (vararg (rest-params params))))
+		    (prop (instantiate::J2SAccessorPropertyInit
+			     (loc loc)
+			     (name name)
+			     (get (if (eq? (token-value name-or-get) 'get)
+				      fun
+				      (instantiate::J2SUndefined
+					 (loc loc))))
+			     (set (if (eq? (token-value name-or-get) 'set)
+				      fun
+				      (instantiate::J2SUndefined
+					 (loc loc)))))))
+		(instantiate::J2SClassElement
+		   (loc loc)
+		   (static static?)
+		   (prop prop))))))
    
    (define (expression::J2SExpr in-for-init?)
       (let ((assig (assig-expr in-for-init?)))
@@ -1687,10 +1805,19 @@
 	  (service-expression))
 	 ((async)
 	  (async-expression))
+	 ((class)
+	  (class-expression))
 	 ((this)
 	  (instantiate::J2SThis
 	     (decl (current-this))
 	     (loc (token-loc (consume-any!)))))
+	 ((super)
+	  (let ((tok (consume-any!)))
+	     (unless (memq (peek-token-type) '(DOT LPAREN))
+		(parse-token-error "'super' keyword unexpected here" tok))
+	     (instantiate::J2SSuper
+		(decl (current-this))
+		(loc (token-loc tok)))))
 	 ((ID RESERVED)
 	  (let ((token (consume-any!)))
 	     (if (eq? (peek-token-type) '=>)
@@ -1955,65 +2082,71 @@
 	 (consume-token! 'RPAREN)
 	 (pop-open-token)
 	 test))
+
+   (define (property-name)
+      (case (peek-token-type)
+	 ;; IDs are automatically transformed to strings.
+	 ((ID RESERVED service)
+	  (let ((token (consume-any!)))
+	     (case (token-value token)
+		((get set)
+		 token)
+		(else
+		 (instantiate::J2SString
+		    (loc (token-loc token))
+		    (val (symbol->string (token-value token))))))))
+	 ((STRING)
+	  (let ((token (consume-token! 'STRING)))
+	     (instantiate::J2SString
+		(escape '())
+		(loc (token-loc token))
+		(val (token-value token)))))
+	 ((ESTRING)
+	  (let ((token (consume-token! 'ESTRING)))
+	     (instantiate::J2SString
+		(escape '(escape))
+		(loc (token-loc token))
+		(val (token-value token)))))
+	 ((OSTRING)
+	  (let ((token (consume-token! 'OSTRING)))
+	     (instantiate::J2SString
+		(escape '(escape octal))
+		(loc (token-loc token))
+		(val (token-value token)))))
+	 ((NUMBER)
+	  (let ((token (consume-token! 'NUMBER)))
+	     (instantiate::J2SNumber
+		(loc (token-loc token))
+		(val (token-value token)))))
+	 ((OCTALNUMBER)
+	  (let ((token (consume-token! 'OCTALNUMBER)))
+	     (instantiate::J2SOctalNumber
+		(loc (token-loc token))
+		(val (token-value token)))))
+	 ((true false null)
+	  (let ((token (consume-any!)))
+	     (instantiate::J2SString
+		(loc (token-loc token))
+		(val (symbol->string (token-value token))))))
+	 ((LBRACKET)
+	  (let* ((token (push-open-token (consume-token! 'LBRACKET)))
+		 (expr (expression #f)))
+	     (consume! 'RBRACKET)
+	     (pop-open-token)
+	     expr))
+	 (else
+	  (if (j2s-reserved-id? (peek-token-type))
+	      (let ((token (consume-any!)))
+		 (case (token-value token)
+		    ((get set)
+		     token)
+		    (else
+		     (instantiate::J2SString
+			(loc (token-loc token))
+			(val (symbol->string (token-value token)))))))
+	      (parse-token-error "wrong property name" (peek-token))))))
    
    (define (object-literal)
-      
-      (define (property-name)
-	 (case (peek-token-type)
-	    ;; IDs are automatically transformed to strings.
-	    ((ID RESERVED service)
-	     (let ((token (consume-any!)))
-		(case (token-value token)
-		   ((get set)
-		    token)
-		   (else
-		    (instantiate::J2SString
-		       (loc (token-loc token))
-		       (val (symbol->string (token-value token))))))))
-	    ((STRING)
-	     (let ((token (consume-token! 'STRING)))
-		(instantiate::J2SString
-		   (escape '())
-		   (loc (token-loc token))
-		   (val (token-value token)))))
-	    ((ESTRING)
-	     (let ((token (consume-token! 'ESTRING)))
-		(instantiate::J2SString
-		   (escape '(escape))
-		   (loc (token-loc token))
-		   (val (token-value token)))))
-	    ((OSTRING)
-	     (let ((token (consume-token! 'OSTRING)))
-		(instantiate::J2SString
-		   (escape '(escape octal))
-		   (loc (token-loc token))
-		   (val (token-value token)))))
-	    ((NUMBER)
-	     (let ((token (consume-token! 'NUMBER)))
-		(instantiate::J2SNumber
-		   (loc (token-loc token))
-		   (val (token-value token)))))
-	    ((OCTALNUMBER)
-	     (let ((token (consume-token! 'OCTALNUMBER)))
-		(instantiate::J2SOctalNumber
-		   (loc (token-loc token))
-		   (val (token-value token)))))
-	    ((true false null)
-	     (let ((token (consume-any!)))
-		(instantiate::J2SString
-		   (loc (token-loc token))
-		   (val (symbol->string (token-value token))))))
-	    (else
-	     (if (j2s-reserved-id? (peek-token-type))
-		 (let ((token (consume-any!)))
-		    (case (token-value token)
-		       ((get set)
-			token)
-		       (else
-			(instantiate::J2SString
-			   (loc (token-loc token))
-			   (val (symbol->string (token-value token)))))))
-		 (parse-token-error "wrong property name" (peek-token))))))
       
       (define (find-prop name props)
 	 (find (lambda (prop)
@@ -2374,11 +2507,12 @@
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    hopscript-mode-fun! ::J2SDeclFunCnst ...                         */
+;*    hopscript-mode-fun! ::J2SDeclFun ...                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (hopscript-mode-fun! this::J2SDeclFunCnst mode)
-   (with-access::J2SDeclFunCnst this (val loc id)
-      (hopscript-mode-fun! val mode))
+(define-walk-method (hopscript-mode-fun! this::J2SDeclFun mode)
+   (with-access::J2SDeclFun this (val immutable)
+      (when immutable
+	 (hopscript-mode-fun! val mode)))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -2395,20 +2529,24 @@
 ;*    hopscript-cnst-fun! ::J2SDeclFun ...                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hopscript-cnst-fun! this::J2SDeclFun)
-   (with-access::J2SDeclFun this (val loc id ronly writable binder)
+   (with-access::J2SDeclFun this (val mode ronly writable immutable)
       (with-access::J2SFun val (mode)
 	 (when (eq? mode 'hopscript)
 	    (set! writable #f)
-	    (set! ronly #t))))
-   (call-default-walker))
+	    (set! ronly #t)))
+      (if immutable
+	  this
+	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopscript-cnst-fun! ::J2SFun ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (hopscript-cnst-fun! this::J2SFun)
    (with-access::J2SFun this (decl)
-      (when (isa? decl J2SDeclFunCnst)
-	 (hopscript-cnst-fun! decl)))
+      (when (isa? decl J2SDeclFun)
+	 (with-access::J2SDeclFun decl (immutable)
+	    (when immutable
+	       (hopscript-cnst-fun! decl)))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -2493,17 +2631,6 @@
 		  (obj id)
 		  (fname (cadr loc))
 		  (location (caddr loc))))))))
-;*                                                                     */
-;* (define-walk-method (disable-es6-default-value this::J2SParam)      */
-;*    (with-access::J2SParam this (defval id loc)                      */
-;*       (unless (nodefval? defval)                                    */
-;* 	 (raise                                                        */
-;* 	    (instantiate::&io-parse-error                              */
-;* 	       (proc "js-parser")                                      */
-;* 	       (msg "default parameter values disabled")               */
-;* 	       (obj id)                                                */
-;* 	       (fname (cadr loc))                                      */
-;* 	       (location (caddr loc)))))))                             */
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-rest-argument ::J2SNode ...                          */

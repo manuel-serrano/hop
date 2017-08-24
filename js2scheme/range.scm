@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/range.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/range.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Jul 25 07:44:39 2017 (serrano)                */
+;*    Last change :  Tue Aug 22 06:43:24 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1153,9 +1153,6 @@
 	 ((isa? callee J2SRef)
 	  (with-access::J2SRef callee (decl)
 	     (cond
-;* 		((isa? decl J2SDeclFunCnst)                            */
-;* 		 (with-access::J2SDeclFunCnst decl (val)               */
-;* 		    (range-fun val args env)))                         */
 		((isa? decl J2SDeclFun)
 		 (with-access::J2SDeclFun decl (ronly val)
 		    (if ronly

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/types.scm               */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/types.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Aug  3 08:44:44 2017 (serrano)                */
+;*    Last change :  Tue Aug 22 09:40:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -309,12 +309,16 @@
 	   (inline js-object-mode-packed?::bool ::JsObject)
 	   (inline js-object-mode-packed-set! ::JsObject ::bool)
 	   
+	   (inline js-object-mode-instance?::bool ::JsObject)
+	   (inline js-object-mode-instance-set! ::JsObject ::bool)
+	   
 	   (inline JS-OBJECT-MODE-EXTENSIBLE::byte)
 	   (inline JS-OBJECT-MODE-SEALED::byte)
 	   (inline JS-OBJECT-MODE-FROZEN::byte)
 	   (inline JS-OBJECT-MODE-INLINE::byte)
 	   (inline JS-OBJECT-MODE-GETTER::byte)
 	   (inline JS-OBJECT-MODE-PACKED::byte)
+	   (inline JS-OBJECT-MODE-INSTANCE::byte)
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
@@ -372,6 +376,7 @@
 (define-inline (JS-OBJECT-MODE-INLINE) 8)
 (define-inline (JS-OBJECT-MODE-GETTER) 16)
 (define-inline (JS-OBJECT-MODE-PACKED) 32) ;; see _bglhopscript.c
+(define-inline (JS-OBJECT-MODE-INSTANCE) 64)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) 1)
 (define-macro (JS-OBJECT-MODE-SEALED) 2)
@@ -379,6 +384,7 @@
 (define-macro (JS-OBJECT-MODE-INLINE) 8)
 (define-macro (JS-OBJECT-MODE-GETTER) 16)
 (define-macro (JS-OBJECT-MODE-PACKED) 32) ;; see _bglhopscript.c
+(define-macro (JS-OBJECT-MODE-INSTANCE) 64)
 
 (define-inline (js-object-mode-extensible? o)
    (with-access::JsObject o (mode)
@@ -439,6 +445,16 @@
       (if flag
 	  (set! mode (bit-or mode (JS-OBJECT-MODE-PACKED)))
 	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-PACKED)))))))
+
+(define-inline (js-object-mode-instance? o)
+   (with-access::JsObject o (mode)
+      (=fx (bit-and (JS-OBJECT-MODE-INSTANCE) mode) (JS-OBJECT-MODE-INSTANCE))))
+
+(define-inline (js-object-mode-instance-set! o flag)
+   (with-access::JsObject o (mode)
+      (if flag
+	  (set! mode (bit-or mode (JS-OBJECT-MODE-INSTANCE)))
+	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-INSTANCE)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */

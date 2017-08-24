@@ -1,10 +1,10 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/configure                         */
+#*    serrano/prgm/project/hop/3.2.x/configure                         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Aug  3 08:57:09 2017 (serrano)                */
+#*    Last change :  Wed Aug 23 07:14:00 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -68,7 +68,7 @@ closure=
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
 #*---------------------------------------------------------------------*/
-version="3.1.0"
+version="3.2.0"
 devel=pre
 
 hopc=$PWD/bin/hopc
@@ -270,7 +270,7 @@ while : ; do
       bcflagsrts=;
       bcflagsdev=-cg;
       bscm2jsflags=;
-      bcflags="$bcflags -Wall";;
+      bcflags="$bcflags -Wall -Wno-slot";;
 
     --debug)
       devmode="debug";
@@ -278,7 +278,7 @@ while : ; do
       bcflagsrts=-g;
       bscm2jsflags=-g;
       bhopcflags=-g;
-      bcflags="$bcflags $bcflagsdbg -Wall";;
+      bcflags="$bcflags $bcflagsdbg -Wall -Wno-slot";;
 
     --debug2)
       devmode="debug2";
@@ -286,7 +286,7 @@ while : ; do
       bcflagsrts=-g;
       bscm2jsflags=-g;
       bhopcflags=-g;
-      bcflags="$bcflags $bcflagsdbg2 -Wall";;
+      bcflags="$bcflags $bcflagsdbg2 -Wall -Wno-slot";;
 
     --pmem)
       devmode="pmem";

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/cast.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/cast.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon May 22 18:17:40 2017 (serrano)                */
+;*    Last change :  Tue Aug 22 06:41:02 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -221,11 +221,8 @@
 	 ((isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
 	     (cond
-		((isa? decl J2SDeclFunCnst)
-		 (with-access::J2SDeclFunCnst decl (val)
-		    (known-fun this val)))
 		((isa? decl J2SDeclFun)
-		 (with-access::J2SDeclFun decl (ronly val)
+		 (with-access::J2SDeclFun decl (val)
 		    (known-fun this val)))
 		(else
 		 (unknown-fun this)))))

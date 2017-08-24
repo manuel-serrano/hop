@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/letopt.scm              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/letopt.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Mon Apr 10 15:52:08 2017 (serrano)                */
+;*    Last change :  Tue Aug 22 06:51:44 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -304,14 +304,6 @@
 	    (loc loc)
 	    (expr init))))
    
-   (define (decl-fun? d)
-      (or (isa? d J2SDeclFun) (isa? d J2SDeclFunCnst)))
-   
-   (define (decl-fun-val d)
-      (if (isa? d J2SDeclFun)
-	  (with-access::J2SDeclFun d (val) val)
-	  (with-access::J2SDeclFunCnst d (val) val)))
-   
    (define (letblock-nodes-split nodes::pair-nil decls)
       ;; Split the NODES of a LET-BLOCK in two parts: INITS x RESTS
       ;;    INITS = the consecutive inits of NODES
@@ -347,13 +339,13 @@
 		  (trace-item "odecls=" (j2s-dump-decls odecls))
 		  ;; add the function definitions
 		  (for-each (lambda (d)
-			       (when (decl-fun? d)
+			       (when (isa? d J2SDeclFun)
 				  (set! inits (cons d inits))
 				  (set! odecls (cons d odecls))))
 		     revdecls)
 		  ;; add the non-initialized variable definitions
 		  (for-each (lambda (d)
-			       (when (and (not (decl-fun? d))
+			       (when (and (not (isa? d J2SDeclFun))
 					  (not (memq d odecls)))
 				  (set! inits (cons d inits))
 				  (set! odecls (cons d odecls))))
@@ -451,7 +443,7 @@
 	       (cond
 		  ((null? inodes)
 		   (optimize-letblock! this resnode inits rests))
-		  ((decl-fun? (car inodes))
+		  ((isa? (car inodes) J2SDeclFun)
 		   (trace-item "decl-fun=" (j2s-dump-decls (car inodes)))
 		   ;; a function
 		   (let ((decl (car inodes)))
@@ -459,7 +451,8 @@
 		      (with-access::J2SDecl decl (binder %info)
 			 (if (decl-maybe-opt? decl)
 			     (mark-decl-opt! decl)
-			     (mark-used-noopt*! (decl-fun-val decl) decls)))
+			     (with-access::J2SDeclFun decl (val)
+				(mark-used-noopt*! val decls))))
 		      (loop (cdr inodes))))
 		  ((isa? (car inodes) J2SDecl)
 		   ;; a variable declaration without init

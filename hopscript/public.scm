@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/public.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/public.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Jul  9 17:44:07 2017 (serrano)                */
+;*    Last change :  Tue Aug 22 15:21:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -52,6 +52,7 @@
 	   (inline js-new-fast::JsObject ::JsGlobalObject ::JsFunction __proto__)
 
 	   (js-object-alloc ::JsFunction ::JsGlobalObject)
+	   (js-instance-alloc ::JsFunction ::JsGlobalObject)
 	   
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 	   (js-apply-service% ::procedure obj args::pair-nil ::int)
@@ -132,6 +133,8 @@
 	   (js-eq?::bool ::obj ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
+
+	   (js-check-class-instance ::obj ::obj ::JsGlobalObject)
 	   
 	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj ::obj)
 	   (%js-direct-eval ::obj ::bool ::JsGlobalObject ::obj ::JsObject)
@@ -326,6 +329,14 @@
       (update-ctor-cmap! ctor __proto__)
       (with-access::JsFunction ctor (constrsize constrmap)
 	 (js-make-jsobject constrsize constrmap __proto__))))
+
+;*---------------------------------------------------------------------*/
+;*    js-instance-alloc ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-instance-alloc ctor::JsFunction %this::JsGlobalObject)
+   (let ((obj (js-object-alloc ctor %this)))
+      (js-object-mode-instance-set! obj #t)
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply ...                                                     */
@@ -1383,6 +1394,14 @@
       ((fixnum? x) (=fx x y))
       ((flonum? x) (=fl x (fixnum->flonum y)))))
 
+;*---------------------------------------------------------------------*/
+;*    js-check-class-instance ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-check-class-instance obj loc %this)
+   (if (and (isa? obj JsObject) (js-object-mode-instance? obj))
+       (js-object-mode-instance-set! obj #f)
+       (js-raise-type-error/loc %this loc "Class constructors cannot be invoked without `new'" obj)))
+	  
 ;*---------------------------------------------------------------------*/
 ;*    %js-hss ...                                                      */
 ;*---------------------------------------------------------------------*/

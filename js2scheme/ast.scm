@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/ast.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Jun  8 18:35:17 2017 (serrano)                */
+;*    Last change :  Wed Aug 23 07:07:54 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -172,6 +172,18 @@
 	   (class J2SMethod::J2SExpr
 	      function::J2SFun
 	      method::J2SFun)
+
+	   (class J2SClass::J2SExpr
+	      (endloc::pair read-only (info '("notraverse")))
+	      (name read-only (info '("notraverse")))
+	      (decl (default #f) (info '("notraverse")))
+	      (extends read-only (default #f))
+	      (src::bool (default #t) (info '("notraverse")))
+	      methods::pair-nil)
+
+	   (class J2SClassElement::J2SNode
+	      (static::bool read-only)
+	      prop::J2SPropertyInit)
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl
@@ -217,6 +229,8 @@
 	   
 	   (final-class J2SThis::J2SRef)
 	   
+	   (final-class J2SSuper::J2SRef)
+
 	   (final-class J2SCond::J2SExpr
 	      test::J2SExpr
 	      then::J2SExpr
@@ -233,6 +247,7 @@
 	      (_scmid (default #f) (info '("notraverse")))
 	      (key (default (ast-decl-key)) (info '("notraverse")))
 	      (writable (default #t) (info '("notraverse")))
+	      (immutable (default #f) (info '("notraverse")))
 	      (ronly (default #f) (info '("notraverse")))
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
@@ -252,7 +267,8 @@
 
 	   (class J2SDeclFunType::J2SDeclFun)
 
-	   (class J2SDeclFunCnst::J2SDeclFun)
+	   (class J2SDeclClass::J2SDecl
+	      val::J2SClass)
 
 	   (class J2SDeclSvc::J2SDeclFun)
 
@@ -451,7 +467,7 @@
       (case binder
 	 ((var) #t)
 	 ((let let-opt) #t)
-	 ((param) #f)
+	 ((param class) #f)
 	 (else (error "j2s-var?" "wrong binder" binder)))))
 
 ;*---------------------------------------------------------------------*/
@@ -461,7 +477,7 @@
    (with-access::J2SDecl decl (binder)
       (case binder
 	 ((let let-opt) #t)
-	 ((var param) #f)
+	 ((var param class) #f)
 	 (else (error "j2s-let?" "wrong binder" binder)))))
 
 ;*---------------------------------------------------------------------*/
@@ -472,7 +488,7 @@
       (unless writable
 	 (case binder
 	    ((let let-opt) #t)
-	    ((var param) #f)
+	    ((var param class) #f)
 	    (else (error "j2s-const?" "wrong binder" binder))))))
 
 ;*---------------------------------------------------------------------*/
@@ -482,7 +498,7 @@
    (with-access::J2SDecl decl (binder)
       (case binder
 	 ((let-opt) #t)
-	 ((let var param) #f)
+	 ((let var param class) #f)
 	 (else (error "j2s-let-opt?" "wrong binder" binder)))))
 
 ;*---------------------------------------------------------------------*/
@@ -512,7 +528,7 @@
    (with-access::J2SDecl decl (binder)
       (case binder
 	 ((param) #t)
-	 ((var let const let-opt const-opt) #f)
+	 ((var let const let-opt const-opt class) #f)
 	 (else (error "j2s-param?" "wrong binder" binder)))))
 
 ;*---------------------------------------------------------------------*/
@@ -529,10 +545,8 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sfun-expression? this::J2SFun)
    (with-access::J2SFun this (decl)
-      (if (isa? decl J2SDeclFun)
-	  (with-access::J2SDeclFun decl (expression)
-	     expression)
-	  (isa? decl J2SDeclFunCnst))))
+      (when (isa? decl J2SDeclFun)
+	 (with-access::J2SDeclFun decl (expression) expression))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *ast-decl-key* ...                                               */
@@ -859,7 +873,6 @@
 (gen-walks J2SAccessorPropertyInit name get set)
 (gen-walks J2SArray (exprs))
 (gen-walks J2SDeclInit val)
-(gen-walks J2SDeclFunCnst)
 (gen-walks J2SWithRef expr)
 (gen-walks J2SIf test then else)
 (gen-walks J2SPrecache (accesses) test then else)
@@ -869,6 +882,8 @@
 (gen-walks J2SYield expr)
 (gen-walks J2SKont body)
 (gen-walks J2SCast expr)
+(gen-walks J2SClass (methods))
+(gen-walks J2SClassElement prop)
 
 (gen-traversals J2STilde)
 
