@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Aug  3 14:01:56 2017 (serrano)                */
+;*    Last change :  Wed Aug 23 17:27:40 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -35,7 +35,7 @@
 	      ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
 		 ,num (instantiate::JsPropertyCache)))
 	     (else
-	      ((@ js-make-pache __hopscript_property) ,num)))
+	      ((@ js-make-pcache __hopscript_property) ,num)))
 	  e))
       (else
        (error "js-make-pcache" "bad syntax" x))))
@@ -407,7 +407,7 @@
 		 ,tmp)
 	      (js-object-put-name/cache-level2! ,o ,prop
 		 ,tmp ,throw ,cache ,%this))))
-
+   
    (cond-expand
       ((or no-macro-cache no-macro-cache-put)
        (map (lambda (x) (e x e)) x))
@@ -423,7 +423,7 @@
 			   (else
 			    (e x e2))))))))
 	  (js-object-put-name/cache-match-expander x e1 set
-	     (lambda (x) (map (lambda (x) (e x e) x))))))))
+	     (lambda (x) (map (lambda (x) (e x e)) x)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-level1-expander ...                     */
@@ -440,7 +440,7 @@
        (map (lambda (x) (e x e)) x))
       (else
        (js-object-put-name/cache-match-expander x e set
-	  (lambda (x) (map (lambda (x) (e x e) x)))))))
+	  (lambda (x) (map (lambda (x) (e x e)) x))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-level2-expander ...                     */
@@ -636,7 +636,7 @@
 		    (else
 		     (lambda (x e2)
 			(match-case x
-			   ((js-object-call-name/cache-level2! . ?-)
+			   ((js-object-call-name/cache-level2 ?%this ?obj ?name ?ccache ?ocache . ?args)
 			    (let* ((len (length args))
 				   (call (format "js-object-method-call~a/cache-miss"
 					    (if (>=fx len 11) "n" len))))

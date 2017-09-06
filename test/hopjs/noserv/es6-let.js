@@ -297,7 +297,27 @@ function compBug( x ) {
    return LEFT + y;
 }
 
+function dzBug( x ) {
+    if( x > 1 ) z = 5;
+
+   let z = 4;
+
+   return z;
+}
+
+console.log( "   compBug()" );
 assert.ok( compBug( 15 ), 35 );
+
+console.log( "   dzBug()" );
+assert.ok( dzBug( 1 ), 4 );
+
+try {
+   dzBug( 2 )
+   assert.fail( "dzBug" );
+} catch( e ) {
+   assert.ok( e instanceof ReferenceError );
+}
+
 
 /*---------------------------------------------------------------------*/
 /*    Kangax                                                           */
