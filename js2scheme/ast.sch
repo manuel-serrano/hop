@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/ast.sch                 */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/ast.sch                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Mon Apr 10 15:57:29 2017 (serrano)                */
+;*    Last change :  Sun Sep  3 10:38:49 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -29,6 +29,11 @@
 
 (define-macro (J2SString val)
    `(instantiate::J2SString
+       (loc loc)
+       (val ,val)))
+
+(define-macro (J2SNativeString val)
+   `(instantiate::J2SNativeString
        (loc loc)
        (val ,val)))
 

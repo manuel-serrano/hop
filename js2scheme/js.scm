@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sun Aug 20 11:15:07 2017 (serrano)                */
+;*    Last change :  Sat Sep  2 02:08:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -1171,11 +1171,11 @@
 ;*    j2s-js ::J2SClass ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SClass tildec dollarc mode evalp conf)
-   (with-access::J2SClass this (name extends methods)
+   (with-access::J2SClass this (name extends elements)
       (cons* this "class "
 	 (append (if name (list name " ") '())
 	    (j2s-js* this "{\n" "}\n" ""
-	       methods tildec dollarc mode evalp conf)))))
+	       elements tildec dollarc mode evalp conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js ::J2SClassElement ...                                     */

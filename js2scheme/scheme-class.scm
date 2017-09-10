@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Aug 23 06:24:56 2017 (serrano)                */
+;*    Last change :  Sat Sep  9 11:55:18 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -24,7 +24,10 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_scheme
-	   __js2scheme_scheme-fun))
+	   __js2scheme_scheme-fun
+	   __js2scheme_scheme-utils)
+
+   (export (j2s-scheme-super ::J2SCall mode return conf hint totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclClass ...                                    */
@@ -43,31 +46,48 @@
 	    (with-access::J2SLiteralValue name (val)
 	       (equal? val "constructor")))))
    
-   (define (find-constructor methods)
+   (define (find-constructor elements)
       (find (lambda (m)
 	       (with-access::J2SClassElement m (prop static)
 		  (unless static
 		     (when (isa? prop J2SDataPropertyInit)
 			(constructor? prop)))))
-	 methods))
-   
+	 elements))
+
+   (define (j2s-propname name)
+      (cond
+	 ((isa? name J2SString)
+	  (with-access::J2SString name (val)
+	     (let ((str (string-for-read val)))
+		(if (string=? str val)
+		    `(quote ,(string->symbol val))
+		    `(string->symbol ,val)))))
+	 ((isa? name J2SNumber)
+	  (with-access::J2SNumber name (val)
+	     (if (fixnum? val)
+		 `(quote ,(string->symbol (number->string val)))
+		 `(js-toname ,(j2s-scheme val mode return conf hint totype) %this))))
+	 ((isa? name J2SPragma)
+	  `(js-toname ,(j2s-scheme name mode return conf hint totype) %this))
+	 ((isa? name J2SLiteralCnst)
+	  `(js-toname ,(j2s-scheme name mode return conf hint totype) %this))
+	 ((isa? name J2SLiteralValue)
+	  (with-access::J2SLiteralValue name (val)
+	     `(js-toname ,(j2s-scheme val mode return conf hint totype) %this)))
+	 (else
+	  `(js-toname ,(j2s-scheme name mode return conf hint totype) %this))))
+
    (define (bind-class-method obj prop)
       (cond
 	 ((isa? prop J2SDataPropertyInit)
 	  (with-access::J2SDataPropertyInit prop (name val)
-	     `(js-bind! %this ,obj
-		 (js-toname
-		    ,(j2s-scheme name mode return conf hint totype)
-		    %this)
-		 :value ,(j2s-scheme val mode return conf hint totype)
-		 :writable #t :enumerable #f :configurable #t)))
+	     (unless (constructor? prop)
+		`(js-bind! %this ,obj ,(j2s-propname name)
+		    :value ,(j2s-scheme val mode return conf hint totype)
+		    :writable #t :enumerable #f :configurable #t))))
 	 ((isa? prop J2SAccessorPropertyInit)
 	  (with-access::J2SAccessorPropertyInit prop (name get set)
-	     `(js-bind! %this ,obj
-		 (js-toname
-		    ,(j2s-scheme name mode return
-			conf hint totype)
-		    %this)
+	     `(js-bind! %this ,obj ,(j2s-propname name)
 		 :get ,(when get
 			  (j2s-scheme get mode return conf hint totype))
 		 :set ,(when set
@@ -86,13 +106,36 @@
 	 (when (not static)
 	    (bind-class-method proto prop))))
    
-   (define (make-class name scmext methods constructor length ctorsz src loc)
+   (define (let-super super proc)
+      (cond
+	 ((isa? super J2SUndefined)
+	  (proc #f))
+	 ((isa? super J2SNull)
+	  (proc '()))
+	 (else
+	  (let ((superid (gensym 'super)))
+	     `(let* ((,superid ,(j2s-scheme super mode return conf hint totype))
+		     (%super (js-get ,superid 'prototype %this))
+		     (%superctor (js-get %super 'constructor %this)))
+		 ,(proc superid))))))
+   
+   (define (make-class name super els constructor length ctorsz src loc)
       (let ((ctor (gensym 'ctor))
 	    (clazz (gensym 'clazz))
 	    (proto (gensym 'prototype)))
 	 `(letrec* ((,ctor ,constructor)
-		    (,proto (with-access::JsGlobalObject %this (js-object)
-			       (js-new0 %this js-object)))
+		    (,proto ,(cond
+				((eq? super #f)
+				 `(with-access::JsGlobalObject %this (js-object)
+				     (js-new0 %this js-object)))
+				((null? super)
+				 `(with-access::JsGlobalObject %this (js-object)
+				     (let ((o (js-new0 %this js-object)))
+					(with-access::JsObject o (__proto__)
+					   (set! __proto__ '())
+					   o))))
+				(else
+				 `(js-new0 %this ,super))))
 		    (,clazz (js-make-function %this
 			       ,ctor
 			       ,length
@@ -101,34 +144,46 @@
 			       :strict ',mode
 			       :alloc (lambda (o) (js-instance-alloc o %this))
 			       :construct ,ctor
-			       :__proto__ ,scmext
 			       :prototype  ,proto
-			       :constrsize ,ctorsz)))
-	     ,@(filter-map (lambda (m) (bind-static clazz m))
-		  methods)
-	     ,@(filter-map (lambda (m) (bind-method proto m))
-		  methods)
+			       :__proto__ ,(if (null? super)
+					       '(with-access::JsGlobalObject %this (js-function-prototype)
+						 js-function-prototype)
+					       super)
+			       :constrsize ,ctorsz))
+		    ,@(if name `((,(j2s-fast-id name) (js-make-let))) '()))
+	     ,@(filter-map (lambda (m) (bind-static clazz m)) els)
+	     ,@(filter-map (lambda (m) (bind-method proto m)) els)
+	     ,@(if name `((set! ,(j2s-fast-id name) ,clazz)) '())
 	     ,clazz)))
    
-   (with-access::J2SClass this (extends methods name src loc)
-      (let ((ctor (find-constructor methods))
-	    (scmext (when extends
-			   (j2s-scheme extends mode return conf hint totype))))
-	 (if ctor
-	     (with-access::J2SClassElement ctor (prop)
-		(with-access::J2SDataPropertyInit prop (val)
-		   (with-access::J2SFun val (constrsize params)
-		      (make-class name scmext methods
-			 (jsmethod->lambda val mode return conf #f #t)
-			 (length params) constrsize
-			 src loc))))
-	     (make-class name scmext methods
-		'(lambda (this) this) 0 0 src loc)))))
+   (with-access::J2SClass this (super elements name src loc decl)
+      (let ((ctor (find-constructor elements)))
+	 (when decl
+	    (with-access::J2SDecl decl (_scmid)
+	       (set! _scmid (j2s-fast-id name))))
+	 (let-super super
+	    (lambda (super)
+	       (if ctor
+		   (with-access::J2SClassElement ctor (prop)
+		      (with-access::J2SDataPropertyInit prop (val)
+			 (with-access::J2SFun val (constrsize params thisp)
+			    (when super
+			       (with-access::J2SDecl thisp (binder)
+				  (set! binder 'let)))
+			    (make-class name super elements
+			       (ctor->lambda val mode return conf #f #t super)
+			       (length params) constrsize
+			       src loc))))
+		   (make-class name super elements
+		      '(lambda (this)
+			(let ((%nothis (js-check-class-instance this ',loc %this)))
+			   %nothis))
+		      0 0 src loc)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    jsmethod->lambda ...                                             */
+;*    ctor->lambda ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (jsmethod->lambda val::J2SFun mode return conf proto ctor-only)
+(define (ctor->lambda val::J2SFun mode return conf proto ctor-only super)
 
    (define (check-instance this loc)
       (instantiate::J2SStmtExpr
@@ -136,13 +191,34 @@
 	 (expr (instantiate::J2SPragma
 		  (loc loc)
 		  (expr `(js-check-class-instance ,this ',loc %this))))))
+
+   (define (unthis this loc)
+      (instantiate::J2SStmtExpr
+	 (loc loc)
+	 (expr (instantiate::J2SPragma
+		  (loc loc)
+		  (expr `(set! ,this (js-make-let)))))))
+
+   (define (returnthis this loc)
+      (J2SRef this))
    
-   (with-access::J2SFun val (body idthis loc)
-      (set! body
-	 (duplicate::J2SBlock body
-	    (nodes (list (check-instance idthis loc) body))))
+   (with-access::J2SFun val (body idthis loc thisp)
+      (with-access::J2SBlock body (loc endloc)
+	 (let ((decl (J2SLetOpt '(ref) '%nothis (J2SThis thisp))))
+	    (with-access::J2SDecl decl (_scmid)
+	       (set! _scmid '%nothis))
+	    (set! body
+	       (instantiate::J2SLetBlock
+		  (loc loc)
+		  (endloc endloc)
+		  (decls (list decl))
+		  (nodes (if (symbol? super)
+			     (list (unthis idthis loc)
+				body
+				(returnthis thisp loc))
+			     (list body)))))))
       (jsfun->lambda val mode return conf proto ctor-only)))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    class-src ...                                                    */
 ;*---------------------------------------------------------------------*/
@@ -159,3 +235,21 @@
 				     (fixnum->elong start)
 				     (+elong 1 (fixnum->elong end)))))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-super ...                                             */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-super this::J2SCall mode return conf hint totype)
+   (with-access::J2SCall this (loc fun this args protocol cache)
+      (let* ((len (length args))
+	     (call (if (>=fx len 11)
+		       'js-calln
+		       (string->symbol (format "js-call~a" len))))
+	     (ctor (gensym 'ctor)))
+	 `(with-access::JsObject %nothis (__proto__)
+	     (set! this
+		(,call ,j2s-unresolved-call-workspace
+		   %superctor
+		   %nothis
+		   ,@(j2s-scheme args mode return conf hint totype)))
+	     this))))
+   

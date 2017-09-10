@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/property.js     */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/property.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Wed Jul 19 11:43:39 2017 (serrano)                */
+/*    Last change :  Sat Sep  2 13:38:04 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
@@ -351,3 +351,21 @@ var o = { __proto__: pz };
 eq( getZ( o ), 45, "first cache" );
 pz.z = 55;
 eq( getZ( o ), 55, "second cache" );
+
+/*---------------------------------------------------------------------*/
+/*    Cmap property bug                                                */
+/*---------------------------------------------------------------------*/
+function Foo() {};
+function Bar() {};
+
+Object.defineProperty( Foo.prototype, "prop", {
+   get: function() {}, set: function(v) {}, enumerable: true
+} );
+
+Object.defineProperty( Bar.prototype, "prop", {
+   value: 10, enumerable: false
+} );
+
+
+assert.strictEqual( Foo.prototype.propertyIsEnumerable( "prop" ), true );
+assert.strictEqual( Bar.prototype.propertyIsEnumerable( "prop" ), false );

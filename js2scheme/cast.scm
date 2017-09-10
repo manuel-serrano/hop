@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Aug 22 06:41:02 2017 (serrano)                */
+;*    Last change :  Sat Sep  2 03:28:14 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -338,7 +338,9 @@
 	   (isa? this J2SUnary)
 	   (isa? this J2SParen)
 	   (isa? this J2SCond)
-	   (isa? this J2SMethod))
+	   (isa? this J2SMethod)
+	   (isa? this J2SClass)
+	   (isa? this J2SClassElement))
        (call-default-walker)
        this)
       ((or (isa? this J2SThis)

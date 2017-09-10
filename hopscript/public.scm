@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Aug 23 17:25:03 2017 (serrano)                */
+;*    Last change :  Sat Sep  9 11:47:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -136,6 +136,7 @@
 	   (inline js-eqir?::bool ::obj ::long)
 
 	   (js-check-class-instance ::obj ::obj ::JsGlobalObject)
+	   (js-super ::obj ::obj ::JsGlobalObject)
 	   
 	   (%js-eval-hss ::input-port ::JsGlobalObject ::obj ::obj)
 	   (%js-direct-eval ::obj ::bool ::JsGlobalObject ::obj ::JsObject)
@@ -1400,8 +1401,22 @@
 ;*---------------------------------------------------------------------*/
 (define (js-check-class-instance obj loc %this)
    (if (and (isa? obj JsObject) (js-object-mode-instance? obj))
-       (js-object-mode-instance-set! obj #f)
+       (begin
+	  (js-object-mode-instance-set! obj #f)
+	  obj)
        (js-raise-type-error/loc %this loc "Class constructors cannot be invoked without `new'" obj)))
+
+;*---------------------------------------------------------------------*/
+;*    js-super ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (js-super obj loc %this)
+   (if (isa? obj JsObject)
+       (with-access::JsObject obj (__proto__)
+	  (if (isa? __proto__ JsObject)
+	      __proto__
+	      (js-raise-type-error/loc %this loc
+		 "Prototype of prototype not an object" obj)))
+       (js-raise-type-error/loc %this loc "Not an object" obj)))
 	  
 ;*---------------------------------------------------------------------*/
 ;*    %js-hss ...                                                      */

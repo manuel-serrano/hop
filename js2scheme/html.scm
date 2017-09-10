@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/html.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/html.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Wed Dec 21 12:40:28 2016 (serrano)                */
-;*    Copyright   :  2015-16 Manuel Serrano                            */
+;*    Last change :  Thu Aug 31 16:24:52 2017 (serrano)                */
+;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
 ;*=====================================================================*/
@@ -23,16 +23,17 @@
 	   __js2scheme_dump
 	   __js2scheme_utils)
    
-   (export (html-parser ::input-port ::pair-nil #!optional tag)))
+   (export (html-parser ::input-port ::pair-nil #!optional tag sep)))
 
 ;*---------------------------------------------------------------------*/
 ;*    html-parser ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (html-parser port conf::pair-nil #!optional tag)
+(define (html-parser port conf::pair-nil #!optional tag sep)
    (let ((lang (config-get conf :language 'hopscript)))
       (if tag
 	  (let ((str (symbol->string! (token-value tag))))
-	     (rgc-buffer-unget-char port (char->integer #\space))
+	     (when sep
+		(rgc-buffer-unget-char port (char->integer #\space)))
 	     (rgc-buffer-insert-substring! port str 0 (string-length str))
 	     (read/rp xml-grammar port '()
 		(eq? lang 'hopscript) #f

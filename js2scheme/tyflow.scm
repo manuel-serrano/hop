@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/tyflow.scm              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/tyflow.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Jul 10 19:21:43 2017 (serrano)                */
+;*    Last change :  Sat Sep  2 02:59:18 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -983,7 +983,23 @@
 	    (expr-type-set! this env fix (class-type clazz) (append bk bka))))))
 
 ;*---------------------------------------------------------------------*/
-;*    type ::J2SObjInit ...                                            */
+;*    typing ::J2SDataPropertyInit ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SDataPropertyInit env::pair-nil fun fix::cell)
+   (with-access::J2SDataPropertyInit this (val)
+      (typing val env fun fix)))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SAccessorPropertyInit ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SAccessorPropertyInit env::pair-nil fun fix::cell)
+   (with-access::J2SAccessorPropertyInit this (get set)
+      (typing get env fun fix)
+      (typing set env fun fix)
+      (return 'void env '())))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SObjInit ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SObjInit env::pair-nil fun fix::cell)
    (with-access::J2SObjInit this (inits)
@@ -1101,7 +1117,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SAccess ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-method (typing this::J2SAccess env::pair-nil fun fix::cell)
+(define-walk-method (typing this::J2SAccess env::pair-nil fun fix::cell)
 
    (define (is-number-ref? expr::J2SNode)
       (when (isa? expr J2SUnresolvedRef)
@@ -1424,6 +1440,22 @@
 	 (typing expr env fun fix)
 	 (return 'void env (cons this bk)))))
 
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SClass ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SClass env::pair-nil fun fix::cell)
+   (with-access::J2SClass this (expr)
+      (call-default-walker)
+      (expr-type-set! this env fix 'class)))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SClassElement ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SClassElement env::pair-nil fun fix::cell)
+   (with-access::J2SClassElement this (prop)
+      (typing prop env fun fix)
+      (return 'void env '())))
+      
 ;*---------------------------------------------------------------------*/
 ;*    j2s-resolve! ...                                                 */
 ;*    -------------------------------------------------------------    */

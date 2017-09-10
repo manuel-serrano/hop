@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/utils.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/utils.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Mar 24 13:22:41 2017 (serrano)                */
+;*    Last change :  Sat Sep  9 03:37:06 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -23,6 +23,8 @@
 	   (config-get ::pair-nil ::keyword #!optional def)
 	   (config-put! ::pair-nil ::keyword ::obj)
 	   (this?::bool ::J2SNode)
+
+	   (j2s-expression-src loc ::pair-nil ::bstring)
 	   
 	   (type-int32?::bool ::obj)
 	   (type-uint32?::bool ::obj)
@@ -106,7 +108,33 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (use-this? this::J2SFun res)
    #f)
- 
+
+;*---------------------------------------------------------------------*/
+;*    j2s-expression-src ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-expression-src loc conf default::bstring)
+
+   (define delims
+      '(#\space #\newline #\tab #\; #\{ #\} #\( #\) #\* #\+ #\- #\/))
+   
+   (define (find-delim mmap start #!optional (max #e20))
+      (let ((end (minelong (mmap-length mmap) (+elong start max))))
+	 (let loop ((i (+elong start 1)))
+	    (cond
+	       ((>=elong i end) i)
+	       ((memq (mmap-ref mmap i) delims) i)
+	       (else (loop (+elong i #e1)))))))
+	     
+   (let ((m (config-get conf :mmap-src)))
+      (if (mmap? m)
+	  (match-case loc
+	     ((at ?path ?start)
+	      (mmap-substring m
+		 (fixnum->elong start) (find-delim m (fixnum->elong start))))
+	     (else
+	      default))
+	  default)))
+
 ;*---------------------------------------------------------------------*/
 ;*    type-uint32? ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -175,6 +203,7 @@
       ((null) 'nil)
       ((String) 'JsString)
       ((Promise) 'JsPromise)
+      ((class) 'JsFunction)
       (else type)))
    
 ;*---------------------------------------------------------------------*/

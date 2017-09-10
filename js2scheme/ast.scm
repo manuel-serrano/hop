@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Aug 23 07:07:54 2017 (serrano)                */
+;*    Last change :  Sat Sep  9 10:51:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -159,6 +159,7 @@
 	      (constrsize::int (default 3) (info '("notraverse")))
 	      (src::bool (default #t) (info '("notraverse")))
 	      (method (default #f) (info '("notraverse")))
+	      (ismethodof (default #f) (info '("notraverse")))
 	      body::J2SBlock)
 	   
 	   (class J2SSvc::J2SFun
@@ -177,9 +178,9 @@
 	      (endloc::pair read-only (info '("notraverse")))
 	      (name read-only (info '("notraverse")))
 	      (decl (default #f) (info '("notraverse")))
-	      (extends read-only (default #f))
+	      super::J2SExpr
 	      (src::bool (default #t) (info '("notraverse")))
-	      methods::pair-nil)
+	      elements::pair-nil)
 
 	   (class J2SClassElement::J2SNode
 	      (static::bool read-only)
@@ -229,7 +230,8 @@
 	   
 	   (final-class J2SThis::J2SRef)
 	   
-	   (final-class J2SSuper::J2SRef)
+	   (final-class J2SSuper::J2SRef
+	      clazz::J2SExpr)
 
 	   (final-class J2SCond::J2SExpr
 	      test::J2SExpr
@@ -882,7 +884,7 @@
 (gen-walks J2SYield expr)
 (gen-walks J2SKont body)
 (gen-walks J2SCast expr)
-(gen-walks J2SClass (methods))
+(gen-walks J2SClass super (elements))
 (gen-walks J2SClassElement prop)
 
 (gen-traversals J2STilde)

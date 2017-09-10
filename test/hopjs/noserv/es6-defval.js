@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.0.x/test/hopjs/noserv/es6-defval.js       */
+/*    .../prgm/project/hop/3.2.x/test/hopjs/noserv/es6-defval.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sat Aug 22 09:20:47 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Sat Sep  2 03:13:21 2017 (serrano)                */
+/*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 arrow functions                           */
 /*=====================================================================*/
@@ -42,3 +42,13 @@ assert.strictEqual( d3b( 6 ), 3 );
 assert.strictEqual( d3b( undefined, 3 ), 2 );
 assert.strictEqual( d3b( 10, 2 ), 8 );
 
+var d3 = function d3() {
+   try {
+      d3 = 4;
+      return false;
+   } catch( e ) {
+      return e instanceof TypeError;
+   }
+}
+
+assert.ok( d3, "d3" );

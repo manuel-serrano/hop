@@ -62,7 +62,7 @@ service serv3() {
       f64: new Float64Array( [10001.0, 10001.1, 10001.2] ),
       dv: new DataView( new Int8Array( [1,2,3,4,5,-6] ).buffer ),
       buf: new Buffer( [-3,-2,-1,0,1,2,3,127 ] ),
-      el: <DIV> { style: "border: 2px solid green", id: "bar", "toto" }
+      el: <div style="border: 2px solid green" id="bar">toto</div>
    };
    return o;
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Aug 23 12:59:50 2017 (serrano)                */
+;*    Last change :  Sat Sep  2 13:39:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -225,7 +225,8 @@
 		    (map (lambda (d)
 			    (with-access::JsPropertyDescriptor d (name)
 			       name))
-		       properties)))
+		       properties)
+		    "\n  props=" properties))
 	      (with-access::JsConstructMap cmap (%id names methods)
 		 (fprint (current-error-port) msg (typeof obj) " MAPPED"
 		    " length=" (vector-length elements)
@@ -486,10 +487,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    property-flags ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-macro (property-flags writable enumerable configurable)
+(define-macro (property-flags writable enumerable configurable accessor)
    `(bit-or (if ,writable 1 0)
        (bit-or (if ,enumerable 2 0)
-	  (if ,configurable 4 0))))
+	  (bit-or (if ,configurable 4 0)
+	     (if ,accessor 8 0)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    transition ...                                                   */
@@ -1608,7 +1610,7 @@
 	 (with-access::JsObject o (cmap elements)
 	    (with-access::JsConstructMap cmap (names)
 	       (let* ((name (js-toname p %this))
-		      (flags (property-flags #t #t #t))
+		      (flags (property-flags #t #t #t #f))
 		      (index (vector-length names)))
 		  (let loop ()
 		     (cond
@@ -1819,7 +1821,7 @@
 	     (format "wrong setter for property \"~a\", ~~a" name) set))))
    
    (define (plain-data-property? flags)
-      (=fx flags (property-flags #t #t #t)))
+      (=fx flags (property-flags #t #t #t #f)))
    
    (define (update-mapped-object! obj i)
       (cond
@@ -1865,10 +1867,12 @@
 		cmap))))
    
    (define (extend-mapped-object!)
+      
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (names)
-	    (let* ((flags (property-flags writable enumerable configurable))
+	    (let* ((axs (accessor-property? get set))
+		   (flags (property-flags writable enumerable configurable axs))
 		   (index (vector-length names)))
 	       (cond
 		  ((cmap-find-transition cmap name value flags)
@@ -1889,7 +1893,7 @@
 			    (set! cmap nextmap)
 			    (js-object-push! o index val-or-desc)
 			    value))))
-		  ((accessor-property? get set)
+		  (axs
 		   ;; create a new map with a JsAccessorDescriptor
 		   (let* ((newdesc (instantiate::JsAccessorDescriptor
 				      (name name)

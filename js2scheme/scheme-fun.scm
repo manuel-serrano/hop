@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Tue Aug 22 09:29:33 2017 (serrano)                */
+;*    Last change :  Sat Sep  9 02:36:42 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -96,7 +96,7 @@
 		       (not (memq 'ref usage))
 		       (not (memq 'call usage))))))))
    
-   (with-access::J2SDeclFun this (loc id scope val usage ronly _scmid)
+   (with-access::J2SDeclFun this (loc id scope val usage ronly)
       (with-access::J2SFun val (params mode vararg body name generator)
 	 (let* ((scmid (j2s-decl-scheme-id this))
 		(fastid (j2s-fast-id id)))
@@ -632,7 +632,9 @@
 				    ((at ?- ?end)
 				     (mmap-substring m
 					(fixnum->elong start)
-					(+elong 1 (fixnum->elong end))))))))))))))
+					(+elong 1 (fixnum->elong end))))))))))
+	    (else
+	     (error "j2s-function-src" "bad location" loc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-fun-prototype ...                                            */

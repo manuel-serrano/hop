@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Aug 24 13:14:59 2017 (serrano)                */
+;*    Last change :  Sat Sep  9 11:39:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -410,7 +410,8 @@
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
 		 :mode ,mode
-		 ,(j2s->list thisp) ,(map j2s->list params) ,(j2s->list body))))
+		 :thisp ,(j2s->list thisp)
+		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
 	  (with-access::J2SDecl decl (key)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
@@ -422,7 +423,8 @@
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
 		 :mode ,mode
-		 ,(j2s->list thisp) ,(map j2s->list params) ,(j2s->list body))))
+		 :thisp ,(j2s->list thisp)
+		 ,(map j2s->list params) ,(j2s->list body))))
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name
@@ -432,7 +434,8 @@
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:need-bind-exit-return ,need-bind-exit-return) '())
 	      :mode ,mode
-	      ,(j2s->list thisp) ,(map j2s->list params) ,(j2s->list body))))))
+	      :thisp ,(j2s->list thisp)
+	      ,(map j2s->list params) ,(j2s->list body))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturn ...                                        */
@@ -677,7 +680,7 @@
 ;*    j2s->list ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclInit)
-   (with-access::J2SDeclInit this (val ronly writable val _scmid scope id)
+   (with-access::J2SDeclInit this (val ronly writable val scope id)
       `(,@(call-next-method)
 	  ,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
 	  ,@(if (> (bigloo-debug) 2) `(:writable ,writable) '())
@@ -768,7 +771,7 @@
 ;*    j2s->list ::J2SDeclClass ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDeclClass)
-   (with-access::J2SDeclClass this (val key ronly writable val _scmid scope id)
+   (with-access::J2SDeclClass this (val key ronly writable val scope id)
       `(,@(call-next-method)
 	  ,@(dump-key key)
 	  ,@(if (> (bigloo-debug) 2) `(:ronly ,ronly) '())
@@ -780,19 +783,19 @@
 ;*    j2s->list ::J2SClass ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SClass)
-   (with-access::J2SClass this (name methods decl)
-      `(J2SClass ,@(if name (list name) '())
+   (with-access::J2SClass this (name super elements decl)
+      `(J2SClass ,@(if name (list :name name) '())
+	  :super ,(j2s->list super)
 	  ,@(if (isa? decl J2SDecl)
 		(with-access::J2SDecl decl (key)
 		   (dump-key key))
 		'())
-	  ,@(map j2s->list methods))))
+	  ,@(map j2s->list elements))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SClassElement ...                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SClassElement)
-   (with-access::J2SClassElement this (static prop)
-      (if static
-	  `(static ,(j2s->list prop))
-	  (j2s->list prop))))
+   (with-access::J2SClassElement this (prop static)
+      `(J2SClassElement :static ,static
+	  ,(j2s->list prop))))

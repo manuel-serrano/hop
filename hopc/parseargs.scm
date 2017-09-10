@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopc/parseargs.scm                */
+;*    serrano/prgm/project/hop/3.2.x/hopc/parseargs.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Aug  1 10:52:12 2017 (serrano)                */
+;*    Last change :  Sat Sep  2 04:45:57 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -102,6 +102,7 @@
 	     (hopc-clientc-source-map-set! #t)
 	     (hopc-clientc-arity-check-set! #t)
 	     (hopc-clientc-type-check-set! #t)
+	     (bigloo-warning-set! (string->integer level))
 	     (if (string=? level "")
 		 (bigloo-debug-set! (+fx 1 (bigloo-debug)))
 		 (bigloo-debug-set! (string->integer level)))
