@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Sep 12 01:48:44 2017 (serrano)                */
+;*    Last change :  Sat Sep 16 06:45:02 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -687,7 +687,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SThis mode return conf hint totype)
    (with-access::J2SThis this (loc type decl)
-      (if (j2s-let? decl)
+      (if (and (j2s-let? decl) (not (j2s-let-opt? decl)))
 	  `(js-let-ref this 'this ',loc %this)
 	  'this)))
 

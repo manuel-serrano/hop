@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Sep  9 11:55:18 2017 (serrano)                */
+;*    Last change :  Sat Sep 16 06:45:10 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -204,7 +204,8 @@
    
    (with-access::J2SFun val (body idthis loc thisp)
       (with-access::J2SBlock body (loc endloc)
-	 (let ((decl (J2SLetOpt '(ref) '%nothis (J2SThis thisp))))
+	 (let* ((thisp-safe (duplicate::J2SDecl thisp (binder 'let-opt)))
+		(decl (J2SLetOpt '(ref) '%nothis (J2SThis thisp-safe))))
 	    (with-access::J2SDecl decl (_scmid)
 	       (set! _scmid '%nothis))
 	    (set! body
@@ -216,7 +217,7 @@
 			     (list (unthis idthis loc)
 				body
 				(returnthis thisp loc))
-			     (list body)))))))
+			     (list body (returnthis thisp loc))))))))
       (jsfun->lambda val mode return conf proto ctor-only)))
 
 ;*---------------------------------------------------------------------*/
