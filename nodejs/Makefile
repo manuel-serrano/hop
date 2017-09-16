@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/nodejs/Makefile                   */
+#*    serrano/prgm/project/hop/3.2.x/nodejs/Makefile                   */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Apr 20 08:07:31 2017 (serrano)                */
+#*    Last change :  Tue Sep 12 10:47:08 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -28,7 +28,7 @@ HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -lhop_s-$(HOPRELEASE) -lhopscheme_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
   -ljs2scheme_u-$(HOPRELEASE) -lhopscript_u-$(HOPRELEASE) \
-  -lhop_u-$(HOPRELEASE) -lhopscheme_s-$(HOPRELEASE)
+  -lhop_u-$(HOPRELEASE) -lhopscheme_u-$(HOPRELEASE)
 HOPCLOSELIBS_ES = $(BGLCLOSELIBS_ES) \
   -lnodejs_s-$(HOPRELEASE)
 HOPCLOSELIBS_EU = $(BGLCLOSELIBS_EU) \

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Sep  9 11:40:21 2017 (serrano)                */
+;*    Last change :  Tue Sep 12 01:48:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -387,10 +387,8 @@
       (let ((module `(module ,(string->symbol name)
 			(eval (library hop)
 			   (library hopscript)
-			   (library nodejs)
-			   (library js2scheme)
-			   (library hopwidget))
-			(library hop hopscript nodejs js2scheme hopwidget)
+			   (library nodejs))
+			(library hop hopscript nodejs)
 			(cond-expand (enable-libuv (library libuv)))
 			(main main))))
 	 (with-access::J2SProgram this (mode pcache-size %this path cnsts globals)

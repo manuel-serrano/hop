@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Sep  2 02:59:18 2017 (serrano)                */
+;*    Last change :  Thu Sep 14 06:59:23 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -232,6 +232,13 @@
 	("localeCompare" . integer)
 	("trim" . string))))
 
+;*---------------------------------------------------------------------*/
+;*    string-static-method-type ...                                    */
+;*---------------------------------------------------------------------*/
+(define (string-static-method-type name)
+   (builtin-method-type name
+      '(("fromCharCode" . string))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    regexp-method-type ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -901,6 +908,11 @@
 		    (type-unknown-call callee env bk))))
 	    (else
 	     (type-unknown-call callee env bk)))))
+
+   (define (String? obj)
+      (when (isa? obj J2SUnresolvedRef)
+	 (with-access::J2SUnresolvedRef obj (id)
+	    (eq? id 'String))))
    
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
@@ -914,7 +926,11 @@
 			      ((regexp) (regexp-method-type fn))
 			      ((number integer index) (number-method-type fn))
 			      ((array) (array-method-type fn))
-			      (else 'any))
+			      (else (cond
+				       ((String? obj)
+					(string-static-method-type fn))
+				       (else
+					'any))))
 			   'any)))
 	       (if (eq? ty 'any)
 		   ;; the method is unknown, filter out the typing env
