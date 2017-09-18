@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Wed Jul 26 18:14:52 2017 (serrano)                */
+;*    Last change :  Mon Sep 18 17:32:16 2017 (serrano)                */
 ;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
@@ -1540,8 +1540,8 @@
 	    (if (or (string? value) (symbol? value) (number? value))
 		value
 		(typeof value)))
-	 (for-each-socket
-	    *websocket-socket-table*
+	 (trace-item "ws-table=" (hashtable-key-list *websocket-socket-table*))
+	 (for-each-socket *websocket-socket-table*
 	    name
 	    (lambda (l)
 	       (with-trace 'event "ws-event-broadcast"
