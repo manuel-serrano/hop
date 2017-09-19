@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Sep  9 10:51:15 2017 (serrano)                */
+;*    Last change :  Mon Sep 18 09:40:51 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -28,10 +28,10 @@
 	   (class J2SMeta::J2SStmt
 	      (debug::long (default 0))
 	      (optim::long (default 0))
-	      stmt::J2SStmt)
+	      (stmt::J2SStmt (info '("ast"))))
 	   
 	   (class J2SSeq::J2SStmt
-	      nodes::pair-nil)
+	      (nodes::pair-nil (info '("ast"))))
 	   
 	   (class J2SBlock::J2SSeq
 	      (endloc::pair read-only (info '("notraverse"))))
@@ -45,9 +45,9 @@
 	      (main read-only (default #f))
 	      (module read-only (default #f))
 	      (cnsts::pair-nil (default '()))
-	      (decls::pair-nil (default '()))
-	      (headers::pair-nil (default '()))
-	      (globals::pair-nil (default '()))
+	      (decls::pair-nil (default '()) (info '("ast")))
+	      (headers::pair-nil (default '()) (info '("ast")))
+	      (globals::pair-nil (default '()) (info '("ast")))
 	      (direct-eval::bool (default #t)))
 
 	   (abstract-class J2SExpr::J2SNode
@@ -55,56 +55,56 @@
 	      (hint::pair-nil (default '()) (info '("notraverse"))))
 
 	   (class J2SCast::J2SExpr
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SStmtExpr::J2SStmt
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SExprStmt::J2SExpr
-	      stmt::J2SStmt)
+	      (stmt::J2SStmt (info '("ast"))))
 	   
 	   (class J2SIf::J2SStmt
-	      test::J2SExpr
-	      then::J2SStmt
-	      else::J2SStmt)
+	      (test::J2SExpr (info '("ast")))
+	      (then::J2SStmt (info '("ast")))
+	      (else::J2SStmt (info '("ast"))))
 
 	   (final-class J2SPrecache::J2SIf
 	      (accesses::pair-nil read-only (default '())))
 	   
 	   (final-class J2SVarDecls::J2SStmt
-	      decls::pair)
+	      (decls::pair (info '("ast"))))
 
 	   (final-class J2SLetBlock::J2SBlock
-	      decls::pair-nil)
+	      (decls::pair-nil (info '("ast"))))
 	   
 	   (class J2SIdStmt::J2SStmt
 	      (need-bind-exit-break::bool (default #t))
 	      (id::obj (default #unspecified)))
 	   
 	   (final-class J2SSwitch::J2SIdStmt
-	      key::J2SExpr
-	      cases::pair-nil)
+	      (key::J2SExpr (info '("ast")))
+	      (cases::pair-nil (info '("ast"))))
 	   
 	   (class J2SLoop::J2SIdStmt
 	      (need-bind-exit-continue::bool (default #t))
-	      body::J2SStmt)
+	      (body::J2SStmt (info '("ast"))))
 	   
 	   (final-class J2SFor::J2SLoop
-	      init::J2SNode
-	      test::J2SExpr
-	      incr::J2SExpr)
+	      (init::J2SNode (info '("ast")))
+	      (test::J2SExpr (info '("ast")))
+	      (incr::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SForIn::J2SLoop
-	      lhs::J2SNode
-	      obj::J2SExpr)
+	      (lhs::J2SNode (info '("ast")))
+	      (obj::J2SExpr (info '("ast"))))
 	   
 	   (class J2SWhile::J2SLoop
-	      test::J2SExpr)
+	      (test::J2SExpr (info '("ast"))))
 	   
 	   (class J2SDo::J2SWhile)
 	   
 	   (final-class J2SLabel::J2SIdStmt
-	      body::J2SStmt)
+	      (body::J2SStmt (info '("ast"))))
 	   
 	   (class J2SBreak::J2SStmt
 	      (target (default #f) (info '("notraverse")))
@@ -115,8 +115,8 @@
 	   (final-class J2SNop::J2SStmt)
 	   
 	   (class J2SCase::J2SStmt
-	      expr::J2SExpr
-	      body::J2SSeq
+	      (expr::J2SExpr (info '("ast")))
+	      (body::J2SSeq (info '("ast")))
 	      (cascade::bool (default #f)))
 	   
 	   (final-class J2SDefault::J2SCase)
@@ -124,24 +124,24 @@
 	   (class J2SReturn::J2SStmt
 	      (exit::bool (default #f))
 	      (tail::bool (default #t))
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SReturnYield::J2SStmt
-	      expr::J2SExpr
+	      (expr::J2SExpr (info '("ast")))
 	      (generator::bool read-only (default #f))
-	      kont::J2SExpr)
+	      (kont::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SYield::J2SExpr
-	      expr::J2SExpr
+	      (expr::J2SExpr (info '("ast")))
 	      (generator::bool read-only (default #f)))
 	   
 	   (final-class J2SWith::J2SStmt
 	      (id::symbol read-only (default (gensym '__with)))
-	      obj::J2SExpr
-	      block::J2SStmt)
+	      (obj::J2SExpr (info '("ast")))
+	      (block::J2SStmt (info '("ast"))))
 	   
 	   (final-class J2SThrow::J2SStmt
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SFun::J2SExpr
 	      (rtype::symbol (default 'unknown) (info '("notraverse")))
@@ -160,7 +160,7 @@
 	      (src::bool (default #t) (info '("notraverse")))
 	      (method (default #f) (info '("notraverse")))
 	      (ismethodof (default #f) (info '("notraverse")))
-	      body::J2SBlock)
+	      (body::J2SBlock (info '("ast"))))
 	   
 	   (class J2SSvc::J2SFun
 	      init::J2SNode
@@ -172,35 +172,35 @@
 
 	   (class J2SMethod::J2SExpr
 	      function::J2SFun
-	      method::J2SFun)
+	      (method::J2SFun (info '("ast"))))
 
 	   (class J2SClass::J2SExpr
 	      (endloc::pair read-only (info '("notraverse")))
 	      (name read-only (info '("notraverse")))
 	      (decl (default #f) (info '("notraverse")))
-	      super::J2SExpr
+	      (super::J2SExpr (info '("ast")))
 	      (src::bool (default #t) (info '("notraverse")))
-	      elements::pair-nil)
+	      (elements::pair-nil (info '("ast"))))
 
 	   (class J2SClassElement::J2SNode
 	      (static::bool read-only)
-	      prop::J2SPropertyInit)
+	      (prop::J2SPropertyInit (info '("ast"))))
 	   
 	   (final-class J2SCatch::J2SStmt
 	      param::J2SDecl
-	      body::J2SNode)
+	      (body::J2SNode (info '("ast"))))
 	   
 	   (final-class J2STry::J2SStmt
-	      body::J2SBlock
-	      catch::J2SStmt
-	      finally::J2SStmt)
+	      (body::J2SBlock (info '("ast")))
+	      (catch::J2SStmt (info '("ast")))
+	      (finally::J2SStmt (info '("ast"))))
 	   
 	   (class J2SPragma::J2SExpr
 	      (lang::symbol (default 'scheme))
-	      expr)
+	      (expr (info '("ast"))))
 	   
 	   (class J2SSequence::J2SExpr
-	      exprs::pair)
+	      (exprs::pair (info '("ast"))))
 	   
 	   (class J2SUnresolvedRef::J2SExpr
 	      (cache (default #f))
@@ -212,7 +212,7 @@
 	   (class J2SWithRef::J2SExpr
 	      (id::symbol read-only)
 	      withs::pair
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
@@ -231,18 +231,18 @@
 	   (final-class J2SThis::J2SRef)
 	   
 	   (final-class J2SSuper::J2SRef
-	      clazz::J2SExpr)
+	      (clazz::J2SExpr (info '("ast"))))
 
 	   (final-class J2SCond::J2SExpr
-	      test::J2SExpr
-	      then::J2SExpr
-	      else::J2SExpr)
+	      (test::J2SExpr (info '("ast")))
+	      (then::J2SExpr (info '("ast")))
+	      (else::J2SExpr (info '("ast"))))
 
 	   (class J2SComprehension::J2SExpr
-	      decls::pair
+	      (decls::pair (info '("ast")))
 	      iterables::pair
-	      test::J2SExpr
-	      expr::J2SExpr)
+	      (test::J2SExpr (info '("ast")))
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SDecl::J2SStmt
 	      id::symbol
@@ -261,7 +261,7 @@
 	      (binder::symbol (default 'var) (info '("notraverse"))))
 	   
 	   (class J2SDeclInit::J2SDecl
-	      val::J2SExpr)
+	      (val::J2SExpr (info '("ast"))))
 
 	   (class J2SDeclFun::J2SDeclInit
 	      (parent read-only (default #f))
@@ -270,7 +270,7 @@
 	   (class J2SDeclFunType::J2SDeclFun)
 
 	   (class J2SDeclClass::J2SDecl
-	      val::J2SClass)
+	      (val::J2SClass (info '("ast"))))
 
 	   (class J2SDeclSvc::J2SDeclFun)
 
@@ -304,26 +304,26 @@
 	       
 	   (final-class J2SArray::J2SLiteral
 	      len::int
-	      exprs::pair-nil)
+	      (exprs::pair-nil (info '("ast"))))
 	   
 	   (final-class J2STemplate::J2SExpr
-	      (exprs::pair read-only))
+	      (exprs::pair read-only (info '("ast"))))
 	   
 	   (final-class J2SParen::J2SExpr
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SUnary::J2SExpr
 	      op::symbol
-	      expr::J2SExpr)
+	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SBinary::J2SExpr
 	      op::symbol
-	      lhs::J2SExpr
-	      rhs::J2SExpr)
+	      (lhs::J2SExpr (info '("ast")))
+	      (rhs::J2SExpr (info '("ast"))))
 	   
 	   (class J2SAssig::J2SExpr
-	      lhs::J2SExpr
-	      rhs::J2SExpr)
+	      (lhs::J2SExpr (info '("ast")))
+	      (rhs::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SPrefix::J2SAssig
 	      op::symbol)
@@ -341,48 +341,48 @@
 	   (final-class J2SFunBinding::J2SInit)
 	   
 	   (final-class J2SObjInit::J2SExpr
-	      inits::pair-nil
+	      (inits::pair-nil (info '("ast")))
 	      (cmap (default #f)))
 	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f) (info '("notraverse")))
 	      (clevel::long (default 100) (info '("notraverse")))
-	      obj::J2SExpr
-	      field::J2SExpr)
+	      (obj::J2SExpr (info '("ast")))
+	      (field::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SCall::J2SExpr
 	      (cache (default #f) (info '("notraverse")))
 	      (clevel::long (default 100) (info '("notraverse")))
-	      fun::J2SExpr
+	      (fun::J2SExpr (info '("ast")))
 	      (protocol (default 'direct) (info '("notraverse")))
-	      (this (default #unspecified))
-	      (args::pair-nil (default '())))
+	      (this (default #unspecified) (info '("ast")))
+	      (args::pair-nil (default '()) (info '("ast"))))
 	   
 	   (final-class J2STilde::J2SExpr
 	      stmt::J2SStmt)
 	   
 	   (final-class J2SDollar::J2SExpr
-	      node::J2SNode)
+	      (node::J2SNode (info '("ast"))))
 	   
 	   (final-class J2SNew::J2SExpr
 	      (cache (default #f))
-	      clazz::J2SNode
-	      args::pair-nil)
+	      (clazz::J2SNode (info '("ast")))
+	      (args::pair-nil (info '("ast"))))
 
 	   (abstract-class J2SPropertyInit::J2SNode
-	      name::J2SExpr)
+	      (name::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SDataPropertyInit::J2SPropertyInit
-	      val::J2SExpr)
+	      (val::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SAccessorPropertyInit::J2SPropertyInit
-	      (get::obj (default #f))
-	      (set::obj (default #f)))
+	      (get::obj (default #f) (info '("ast")))
+	      (set::obj (default #f) (info '("ast"))))
 
 	   (final-class J2SKont::J2SExpr
 	      (param::J2SDecl read-only)
 	      (exn::J2SDecl read-only)
-	      body::J2SNode)
+	      (body::J2SNode (info '("ast"))))
 
 	   (final-class J2SOPTInitSeq::J2SSeq
 	      ref::J2SRef

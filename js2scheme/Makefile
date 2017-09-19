@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Aug 21 07:42:19 2017 (serrano)                */
+#*    Last change :  Mon Sep 18 07:21:26 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -40,7 +40,7 @@ _OBJECTS = lexer header parser html ast dump utils \
   syntax return loopexit symbol ronly resolve this \
   use property bestpractice sourcemap debug stmtassign letopt \
   cps ecmascript5 narrow constant tyflow hint range cast \
-  array alpha letfusion uint32 constrsize ctor propcce sweep \
+  array alpha letfusion uint32 constrsize ctor propcce sweep imethod \
   scheme scheme-utils scheme-fun scheme-ops scheme-test scheme-class
 
 OBJECTS = $(_OBJECTS:%=o/%.o)

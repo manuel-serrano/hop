@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Sep  2 13:39:15 2017 (serrano)                */
+;*    Last change :  Mon Sep 18 18:31:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2907,7 +2907,6 @@
 		", \"mem\": " *vtables-mem* "}")
 	     (print "}"))))
       (else
-       (fprint (current-error-port) "{\n\"CACHES\":")
        (fprint (current-error-port) "\nCACHES:\n" "=======\n")
        (for-each (lambda (what)
 		    (fprint (current-error-port) (car what) ": " (cadr what))

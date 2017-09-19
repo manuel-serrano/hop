@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Sep  9 11:39:12 2017 (serrano)                */
+;*    Last change :  Mon Sep 18 18:11:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -127,7 +127,7 @@
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:cache"))
        (with-access::J2SAccess this (cache)
-	  `((:cache ,cache)))
+	  `(:cache ,cache))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -394,7 +394,7 @@
 	     `(:rtype ,rtype)
 	     '())))
       
-   (with-access::J2SFun this (name thisp params body decl mode rtype
+   (with-access::J2SFun this (name thisp params body decl mode rtype optimize
 				need-bind-exit-return idthis generator)
       (cond
 	 ((isa? decl J2SDeclFun)
@@ -409,6 +409,7 @@
 		       `(:usage ,usage) '())
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
+		 :optimize ,optimize
 		 :mode ,mode
 		 :thisp ,(j2s->list thisp)
 		 ,(map j2s->list params) ,(j2s->list body))))
@@ -422,6 +423,7 @@
 		       `(:idthis ,idthis) '())
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
+		 :optimize ,optimize
 		 :mode ,mode
 		 :thisp ,(j2s->list thisp)
 		 ,(map j2s->list params) ,(j2s->list body))))
@@ -433,9 +435,19 @@
 		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:need-bind-exit-return ,need-bind-exit-return) '())
+	      :optimize ,optimize
 	      :mode ,mode
 	      :thisp ,(j2s->list thisp)
 	      ,(map j2s->list params) ,(j2s->list body))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SMethod ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SMethod)
+   (with-access::J2SMethod this (function method)
+      `(,(call-next-method)
+	:function ,(j2s->list function)
+	:method ,(j2s->list method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturn ...                                        */
@@ -611,8 +623,9 @@
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
-	  ,@(if (>=fx (bigloo-debug) 3) `(:this ,(j2s->list cthis)) '())
-	  ,(j2s->list fun) ,@(map j2s->list args))))
+	  ,(j2s->list fun)
+	  ,@(if (eq? cthis #unspecified) '() `(:this ,(j2s->list cthis)))
+	  ,@(map j2s->list args))))
 		  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SAccess ...                                        */

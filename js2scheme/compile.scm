@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/compile.scm             */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/compile.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Aug  1 15:45:27 2017 (serrano)                */
+;*    Last change :  Tue Sep 19 04:42:43 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -50,7 +50,8 @@
 	   __js2scheme_utils
 	   __js2scheme_sweep
 	   __js2scheme_globvar
-	   __js2scheme_method)
+	   __js2scheme_method
+	   __js2scheme_imethod)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -159,6 +160,7 @@
       j2s-cps-stage
       j2s-constant-stage
       j2s-tyflow-stage
+      j2s-imethod-stage
       j2s-property-stage
       j2s-propcce-stage
       j2s-range-stage
@@ -322,6 +324,8 @@
 		  (when (>=fx l 900)
 		     (unless (memq :optim-range o)
 			(set! o (cons* :optim-range #t o)))
+;* 		     (unless (memq :optim-imethod o)                   */
+;* 			(set! o (cons* :optim-imethod #t o)))          */
 		     (unless (memq :optim-hint o)
 			(set! o (cons* :optim-hint #t o)))
 		     (unless (memq :optim-literals o)

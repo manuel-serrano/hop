@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/constrsize.scm          */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/constrsize.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Tue Aug  1 15:58:19 2017 (serrano)                */
+;*    Last change :  Mon Sep 18 04:17:22 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors sizes                       */
@@ -32,7 +32,7 @@
 (define j2s-constrsize-stage
    (instantiate::J2SStageProc
       (name "constrsize")
-      (comment "Type constrsizes")
+      (comment "Constructor static size approximation")
       (proc j2s-constrsize!)))
 
 ;*---------------------------------------------------------------------*/

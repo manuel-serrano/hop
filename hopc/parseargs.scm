@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sat Sep  2 04:45:57 2017 (serrano)                */
+;*    Last change :  Mon Sep 18 07:22:18 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -249,6 +249,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-cast #t (hopc-j2s-flags))))
 	    (("-fno-cast" (help "Disable cast optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-cast #f (hopc-j2s-flags))))
+	    (("-fimethod" (help "Enable method inlining (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-imethod #t (hopc-j2s-flags))))
+	    (("-fno-imethod" (help "Disable method inlining"))
+	     (hopc-j2s-flags-set! (cons* :optim-imethod #f (hopc-j2s-flags))))
 	    (("-fshared-pcache" (help "Share pcaches (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :shared-pcache #t (hopc-j2s-flags))))
 	    (("-fno-shared-pcache" (help "Disable share pcaches"))
