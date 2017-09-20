@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Sun Jul  9 19:06:22 2017 (serrano)                */
+;*    Last change :  Mon Sep 18 17:12:06 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -136,7 +136,7 @@
 		   (lambda (this::JsServer event proc . capture)
 		      (with-access::JsServer this (obj data)
 			 (let ((f (lambda (evt)
-				     (js-worker-exec (js-current-worker) "server"
+				     (js-worker-push-thunk! (js-current-worker) "server"
 					(lambda ()
 					   (js-call1 %this proc this evt))))))
 			    (set! data (cons (cons (cons event proc) f) data))
@@ -270,7 +270,7 @@
 		  (lambda (this name proc capture)
 		     (add-event-listener! 'hop (js-tostring name %this)
 			(lambda (evt)
-			   (js-worker-exec (js-current-worker) "hop"
+			   (js-worker-push-thunk! (js-current-worker) "hop"
 			      (lambda ()
 				 (js-call1 %this proc this evt))))
 			(js-toboolean capture))))

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Fri Apr 21 18:36:20 2017 (serrano)                */
+#*    Last change :  Tue Sep 12 13:40:08 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -23,8 +23,8 @@ do: build
 #*---------------------------------------------------------------------*/
 # the library name
 TARGETNAME = hop
-HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) -lhopscheme_s-$(HOPRELEASE) 
-HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) -lhopscheme_u-$(HOPRELEASE) 
+HOPCLOSELIBS_S = $(BGLCLOSELIBS_S)
+HOPCLOSELIBS_U = $(BGLCLOSELIBS_U)
 HOPCLOSELIBS_ES = -lhop_s-$(HOPRELEASE)
 HOPCLOSELIBS_EU = -lhop_u-$(HOPRELEASE)
 

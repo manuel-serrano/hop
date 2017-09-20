@@ -26,7 +26,6 @@ TARGETNAME = hopscript
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
   -ljs2scheme_s-$(HOPRELEASE) \
   -lhop_s-$(HOPRELEASE) \
-  -lhopscheme_s-$(HOPRELEASE) \
   -lhopwidget_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
   -ljs2scheme_u-$(HOPRELEASE) \

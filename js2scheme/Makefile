@@ -24,9 +24,9 @@ do: build
 # the library name
 TARGETNAME = js2scheme
 HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
-  -lhop_s-$(HOPRELEASE) -lhopscheme_s-$(HOPRELEASE)
+  -lhop_s-$(HOPRELEASE)
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
-  -lhop_u-$(HOPRELEASE) -lhopscheme_u-$(HOPRELEASE)
+  -lhop_u-$(HOPRELEASE)
 HOPCLOSELIBS_ES = -ljs2scheme_s-$(HOPRELEASE)
 HOPCLOSELIBS_EU = -ljs2scheme_u-$(HOPRELEASE)
 

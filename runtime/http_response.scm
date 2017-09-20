@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 14:15:42 2004                          */
-;*    Last change :  Tue Jul  4 09:19:28 2017 (serrano)                */
+;*    Last change :  Mon Sep 11 00:37:20 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HTTP response                                                */
@@ -189,6 +189,7 @@
 		      (response-x-json-hop value p))
 		     ((string-prefix? "application/json" ctype)
 		      ;; json encoding
+		      (set! conn 'close)
 		      (response-json value p padding))
 		     (else
 		      (error "http-response"
