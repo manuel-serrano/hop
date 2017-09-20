@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Sep 18 09:40:51 2017 (serrano)                */
+;*    Last change :  Tue Sep 19 12:28:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -355,7 +355,7 @@
 	      (clevel::long (default 100) (info '("notraverse")))
 	      (fun::J2SExpr (info '("ast")))
 	      (protocol (default 'direct) (info '("notraverse")))
-	      (this (default #unspecified) (info '("ast")))
+	      (thisarg::J2SExpr (info '("ast")))
 	      (args::pair-nil (default '()) (info '("ast"))))
 	   
 	   (final-class J2STilde::J2SExpr
@@ -864,7 +864,7 @@
 (gen-walks J2SBinary lhs rhs)
 (gen-walks J2SDefault body)
 (gen-walks J2SAccess obj field)
-(gen-walks J2SCall fun (args))
+(gen-walks J2SCall fun thisarg (args))
 (gen-walks J2SNew clazz (args))
 (gen-walks J2SAssig lhs rhs)
 (gen-walks J2SFun body (params))
