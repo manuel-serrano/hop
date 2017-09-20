@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Sep 20 08:31:09 2017 (serrano)                */
+;*    Last change :  Wed Sep 20 10:26:43 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -205,7 +205,10 @@
 	  #t)
 	 (else
 	  (with-access::JsStringLiteral s (weight left right)
-	     (unless (=uint32 (js-string-literal-length left) weight)
+	     (unless (=uint32 (if (string? left)
+				  (fixnum->uint32 (string-length left))
+				  (js-string-literal-length left))
+			weight)
 		(error "js-string-debug-check!" "bad string" (cons js s)))
 	     (loop left)
 	     (loop right))))))
@@ -322,8 +325,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
 ;*---------------------------------------------------------------------*/
-;;(define (js-jsstring-normalize-ASCII!-toberemoved-20sep2017 js::JsStringLiteral)
-(define (js-jsstring-normalize-ASCII!-old js::JsStringLiteral)
+(define (js-jsstring-normalize-ASCII!-toberemoved-20sep2017 js::JsStringLiteral)
    (with-access::JsStringLiteral js (left right weight)
       (if (not right)
 	  left
@@ -347,7 +349,6 @@
 				  (loop i (cons* left right (cdr stack)))
 				  (loop i (cons left (cdr stack)))))))))))))
 
-
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
 ;*---------------------------------------------------------------------*/
@@ -360,7 +361,7 @@
 	    ((1) (begin (string-set! buffer i (string-ref s 0)) 1))
 	    (else (begin (blit-string! s 0 buffer i len) len)))))
 
-   (js-jsstring-debug-check! js)
+   ;;(js-jsstring-debug-check! js)
    (with-access::JsStringLiteral js (left right weight)
       (cond
 	 ((not right)
@@ -376,7 +377,7 @@
 		 (set! weight (fixnum->uint32 (string-length r)))
 		 (set! left r)
 		 (set! right #f)
-		 (js-jsstring-debug-check! js)
+		 ;;(js-jsstring-debug-check! js)
 		 r)))
 	 (else
 	  (let ((buffer (make-string
@@ -397,7 +398,7 @@
 				 (fixnum->uint32 (string-length buffer)))
 			      (set! left buffer)
 			      (set! right #f)
-			      (js-jsstring-debug-check! js)
+			      ;;(js-jsstring-debug-check! js)
 			      buffer)))
 		    (with-access::JsStringLiteral s (left right weight)
 		       (cond

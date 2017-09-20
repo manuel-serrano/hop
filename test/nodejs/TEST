@@ -76,7 +76,7 @@ rm -f /tmp/TEST-NODEJS.out
 
 touch /tmp/TEST-NODEJS.out
 
-echo "Logs in /tmp/TEST-HOPJS.out"
+echo "Logs in /tmp/TEST-NODEJS.out"
 echo ""
 
 if [ ! -x $hopexec ]; then
