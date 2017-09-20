@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Sep  9 11:59:39 2017 (serrano)                */
+;*    Last change :  Wed Sep 20 06:16:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -64,7 +64,7 @@
 	  (unwind-protect
 	     (begin ,@body)
 	     (set! _this othis))))
-p
+
    (define (current-this) _this)
    
    (define (current-loc)
@@ -367,7 +367,7 @@ p
 	       (loc loc)
 	       (id id)
 	       (binder 'let)
-	       (val (instantiate::J2SUndefined (loc loc)))))))
+	       (val (J2SUndefined))))))
 
    (define (const-decl-list in-for-init?)
       ;; ES6 const block
@@ -474,7 +474,7 @@ p
 		  (loc loc)
 		  (init (or init (instantiate::J2SNop (loc loc))))
 		  (test (or test (instantiate::J2SBool (val #t) (loc loc))))
-		  (incr (or incr (instantiate::J2SUndefined (loc loc))))
+		  (incr (or incr (J2SUndefined)))
 		  (body body))))))
    
    ;; for (lhs/var x in obj)
@@ -642,7 +642,7 @@ p
 	 (consume! ':)
 	 (instantiate::J2SDefault
 	    (loc loc)
-	    (expr (instantiate::J2SUndefined (loc loc)))
+	    (expr (J2SUndefined))
 	    (body (switch-clause-statements (token-loc token))))))
    
    (define (switch-clause-statements loc)
@@ -1598,6 +1598,7 @@ p
 		  (fun (instantiate::J2SHopRef
 			  (loc loc)
 			  (id 'js-template-raw)))
+		  (thisarg (list (J2SUndefined)))
 		  (args (list (instantiate::J2SArray
 				 (loc loc)
 				 (exprs strse)
@@ -1647,12 +1648,14 @@ p
 		 (loop (instantiate::J2SCall
 			  (loc loc)
 			  (fun expr)
+			  (thisarg (list (J2SUndefined)))
 			  (args (arguments))))
 		 expr))
 	    ((TSTRING TEMPLATE)
 	     (instantiate::J2SCall
 		(loc loc)
 		(fun expr)
+		(thisarg (list (J2SUndefined)))
 		(args (tag-call-arguments loc))))
 	    (else
 	     expr))))
@@ -1761,7 +1764,6 @@ p
 	     (unless (memq (peek-token-type) '(DOT LPAREN LBRACKET))
 		(parse-token-error "'super' keyword unexpected here" tok))
 	     (instantiate::J2SSuper
-		(clazz (J2SUndefined))
 		(decl (current-this))
 		(loc loc))))
 	 ((ID RESERVED)
@@ -1874,10 +1876,12 @@ p
 	 ((OTAG)
 	  (xml-expression (consume-any!) #f))
 	 ((HTML)
-	  (let ((tag (consume-any!)))
+	  (let* ((tag (consume-any!))
+		 (loc (token-loc tag)))
 	     (instantiate::J2SCall
-		(loc (token-loc tag))
+		(loc loc)
 		(fun (j2s-tag->expr tag #t))
+		(thisarg (list (J2SUndefined)))
 		(args '()))))
 	 ((HTMLCOMMENT)
 	  (let* ((tag (consume-any!))
@@ -1885,6 +1889,7 @@ p
 	     (instantiate::J2SCall
 		(loc (token-loc tag))
 		(fun (j2s-tag->expr (make-token tag '<!--> loc) #t))
+		(thisarg (list (J2SUndefined)))
 		(args (list (instantiate::J2SNativeString
 			       (loc loc)
 			       (val (token-value tag))))))))
@@ -2011,7 +2016,7 @@ p
 		(decl (instantiate::J2SDeclInit
 			 (binder 'let-opt)
 			 (id (cdr id))
-			 (val (instantiate::J2SUndefined (loc loc)))
+			 (val (J2SUndefined))
 			 (loc loc))))
 	    (consume-token! 'RPAREN)
 	    (pop-open-token)
@@ -2150,14 +2155,14 @@ p
 		    (property-accessor tokname name props))
 		   ((:)
 		    (let* ((ignore (consume-any!))
+			   (loc (token-loc ignore))
 			   (val (assig-expr #f)))
-		       (with-access::J2SLiteral ignore (loc)
-			  (instantiate::J2SDataPropertyInit
-			     (loc loc)
-			     (name (instantiate::J2SString
-				      (loc loc)
-				      (val (symbol->string name))))
-			     (val val)))))
+		       (instantiate::J2SDataPropertyInit
+			  (loc loc)
+			  (name (instantiate::J2SString
+				   (loc loc)
+				   (val (symbol->string name))))
+			  (val val))))
 		   ((LBRACKET)
 		    (let ((expr (expression #f)))
 		       (consume-token! 'RBRACKET)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Sep 16 05:50:42 2017 (serrano)                */
+;*    Last change :  Wed Sep 20 10:26:43 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -173,14 +173,45 @@
 ;*    js-jsstring-debug ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-debug msg obj)
+   
+   (define (excerpt str)
+      (if (<fx (string-length str) 20)
+	  (format "~s" str)
+	  (format "~s..." (substring str 0 17))))
+
+   (define (literal-or-string obj)
+      (if (string? obj)
+	  (excerpt obj)
+	  (typeof obj)))
+   
    (cond
       ((string? obj)
-       (tprint msg " [string length=" (string-length obj) "]"))
+       (tprint msg " [string length=" (string-length obj) ":" (excerpt obj) "]"))
       (else
        (with-access::JsStringLiteral obj (left right weight)
 	  (tprint msg "[" (typeof obj)
-	     " weight=" weight " left=" (typeof left) " right="
-	     (typeof right) "]")))))
+	     " weight=" weight " left=" (literal-or-string left) " right="
+	     (literal-or-string right) "]")))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-debug-check! ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-debug-check! js::JsStringLiteral)
+   (let loop ((s js))
+      (cond
+	 ((string? s)
+	  #t)
+	 ((not s)
+	  #t)
+	 (else
+	  (with-access::JsStringLiteral s (weight left right)
+	     (unless (=uint32 (if (string? left)
+				  (fixnum->uint32 (string-length left))
+				  (js-string-literal-length left))
+			weight)
+		(error "js-string-debug-check!" "bad string" (cons js s)))
+	     (loop left)
+	     (loop right))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    string-dispatch ...                                              */
@@ -294,6 +325,33 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
 ;*---------------------------------------------------------------------*/
+(define (js-jsstring-normalize-ASCII!-toberemoved-20sep2017 js::JsStringLiteral)
+   (with-access::JsStringLiteral js (left right weight)
+      (if (not right)
+	  left
+	  (let ((buffer (make-string
+			   (uint32->fixnum (js-string-literal-length js)))))
+	     (let loop ((i 0)
+			(stack (list js)))
+		(if (null? stack)
+		    (begin
+		       (set! weight i)
+		       (set! left buffer)
+		       (set! right #f)
+		       buffer)
+		    (let ((s (car stack)))
+		       (if (string? s)
+			   (let ((len (string-length s)))
+			      (blit-string! s 0 buffer i len)
+			      (loop (+fx i len) (cdr stack)))
+			   (with-access::JsStringLiteral s (left right)
+			      (if right
+				  (loop i (cons* left right (cdr stack)))
+				  (loop i (cons left (cdr stack)))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-normalize-ASCII! ...                                 */
+;*---------------------------------------------------------------------*/
 (define (js-jsstring-normalize-ASCII! js::JsStringLiteral)
    
    (define (blit-buffer!::long s::bstring buffer::bstring i::long)
@@ -302,7 +360,8 @@
 	    ((0) 0)
 	    ((1) (begin (string-set! buffer i (string-ref s 0)) 1))
 	    (else (begin (blit-string! s 0 buffer i len) len)))))
-   
+
+   ;;(js-jsstring-debug-check! js)
    (with-access::JsStringLiteral js (left right weight)
       (cond
 	 ((not right)
@@ -310,22 +369,22 @@
 	 ((=uint32 weight 0)
 	  (if (string? right)
 	      (let ((r right))
-		 (set! weight (string-length r))
+		 (set! weight (fixnum->uint32 (string-length r)))
 		 (set! left r)
 		 (set! right #f)
 		 r)
 	      (let ((r (js-jsstring-normalize-ASCII! right)))
-		 (set! weight (string-length r))
+		 (set! weight (fixnum->uint32 (string-length r)))
 		 (set! left r)
 		 (set! right #f)
+		 ;;(js-jsstring-debug-check! js)
 		 r)))
 	 (else
 	  (let ((buffer (make-string
 			   (uint32->fixnum (js-string-literal-length js)))))
 	     (let loop ((i 0)
 			(s js)
-			(stack '())
-			(rlen 0))
+			(stack '()))
 		(if (string? s)
 		    (let* ((len (blit-buffer! s buffer i))
 			   (ni (+fx i len)))
@@ -333,28 +392,30 @@
 			   (let* ((top (car stack))
 				  (ni (car top))
 				  (s (cdr top)))
-			      (loop ni s (cdr stack) 0))
+			      (loop ni s (cdr stack)))
 			   (begin
-			      (set! weight (+fx ni rlen))
+			      (set! weight
+				 (fixnum->uint32 (string-length buffer)))
 			      (set! left buffer)
 			      (set! right #f)
+			      ;;(js-jsstring-debug-check! js)
 			      buffer)))
 		    (with-access::JsStringLiteral s (left right weight)
 		       (cond
 			  ((not right)
 			   ;; plain left descent
-			   (loop i left stack rlen))
+			   (loop i left stack))
 			  ((string? right)
 			   ;; write the rhs in advance
 			   (let ((len (string-length right)))
 			      (blit-buffer! right buffer
 				 (+fx i (uint32->fixnum weight)))
-			      (loop i left stack (+fx rlen len))))
+			      (loop i left stack)))
 			  (else
 			   ;; full recursive call with pushed right
 			   (let* ((ni (+fx i (uint32->fixnum weight)))
 				  (nstack (cons (cons ni right) stack)))
-			      (loop i left nstack rlen))))))))))))
+			      (loop i left nstack))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-UTF8! ...                                  */

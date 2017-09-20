@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/hint.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/hint.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Jun 13 07:54:09 2017 (serrano)                */
+;*    Last change :  Wed Sep 20 05:39:53 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typping.                                                    */
@@ -449,10 +449,10 @@
 	    (fun (instantiate::J2SRef
 		    (decl orig)
 		    (loc loc)))
-	    (this (instantiate::J2SHopRef
-		     (loc loc)
-		     (itype 'any)
-		     (id idthis)))
+	    (thisarg (list (instantiate::J2SHopRef
+			       (loc loc)
+			       (itype 'any)
+			       (id idthis))))
 	    (args (map (lambda (p::J2SDecl type::symbol)
 			  (with-access::J2SDecl p (hint)
 			     (instantiate::J2SRef
@@ -683,6 +683,7 @@
 		    (itype 'function)
 		    (rtype 'bool)
 		    (id (hint-type-predicate htype))))
+	    (thisarg (list (J2SUndefined)))
 	    (args (list (instantiate::J2SRef
 			   (loc loc)
 			   (decl param)))))))
@@ -887,7 +888,7 @@
 			(when (isa? %info FunHintInfo)
 			   %info))))))))
    
-   (with-access::J2SCall this (fun args (callthis this))
+   (with-access::J2SCall this (fun args thisarg)
       (set! args (map! call-hint! args))
       (set! fun (call-hint! fun))
       (let ((%info (fun-hint-info fun)))
@@ -909,7 +910,7 @@
 				(with-access::J2SDecl decl (usecnt)
 				   (set! usecnt (-fx usecnt 1)))
 				(duplicate::J2SCall this
-				   (this (when idthis callthis))
+				   (thisarg thisarg)
 				   (fun (duplicate::J2SRef fun
 					   (type 'function)
 					   (decl hinted))))))
@@ -925,7 +926,7 @@
 			    (else
 			     (with-access::J2SFun val (idthis)
 				(duplicate::J2SCall this
-				   (this (when idthis callthis))
+				   (thisarg thisarg)
 				   (fun (duplicate::J2SRef fun
 					   (type 'function)
 					   (decl unhinted)))))))))))

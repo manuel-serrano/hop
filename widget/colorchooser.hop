@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/widget/colorchooser.hop           */
+;*    serrano/prgm/project/hop/3.2.x/widget/colorchooser.hop           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 14 12:01:13 2009                          */
-;*    Last change :  Fri Feb 21 16:27:51 2014 (serrano)                */
-;*    Copyright   :  2009-14 Manuel Serrano                            */
+;*    Last change :  Wed Sep 20 17:48:55 2017 (serrano)                */
+;*    Copyright   :  2009-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Color Chooser implementation                                     */
 ;*=====================================================================*/
@@ -26,6 +26,7 @@
 ;*---------------------------------------------------------------------*/
 (define-tag <COLORCHOOSER> ((id #unspecified string)
 			    (onselect #f)
+			    (value #f)
 			    (attributes)
 			    body)
    (let ((cc (xml-make-id id 'colorchooser))
@@ -48,7 +49,18 @@
 	 (green (xml-make-id 'green))
 	 (blue (xml-make-id 'blue))
 	 (grid1 (<DIV> :class "hop-colorchooser-grid hop-colorchooser-grid-tl"))
-	 (grid2 (<DIV> :class "hop-colorchooser-grid hop-colorchooser-grid-br")))
+	 (grid2 (<DIV> :class "hop-colorchooser-grid hop-colorchooser-grid-br"))
+	 (hsvhue 360)
+	 (hsvsaturation 100)
+	 (hsvvalue 100))
+      (when value
+	 (multiple-value-bind (r g b)
+	    (parse-hex-color value)
+	    (multiple-value-bind (h s v)
+	       (rgb->hsv r g b)
+	       (set! hsvhue h)
+	       (set! hsvsaturation s)
+	       (set! hsvvalue v))))
       (list
        (<TABLE> :hssclass "hop-colorchooser" :class "hop-colorchooser"
 	  :id cc
@@ -79,7 +91,7 @@
 		   (<TR>
 		      (<TD>
 			 (<INPUT> :class "hop-colorchooser-rgb" :id rgb :type 'text
-			    :value "#ff0000"
+			    :value (or value "#ff0000")
 			    :onchange ~(colorchooser-value-set! $cc this.value))))))
 	     (<TD>
 		(<DIV> :class "hop-colorchooser-hmodel" :id hmodel
@@ -177,9 +189,9 @@
 	      ;; init the colorchooser object
 	      (let ((cc (dom-get-element-by-id $cc)))
 		 ;; default values
-		 (set! cc.hue 360)
-		 (set! cc.saturation 100)
-		 (set! cc.value 100)
+		 (set! cc.hue $hsvhue)
+		 (set! cc.saturation $hsvsaturation)
+		 (set! cc.value $hsvvalue)
 		 ;; inner widgets
 		 (set! cc.huespinbutton (dom-get-element-by-id $huespinbutton))
 		 (set! cc.satspinbutton (dom-get-element-by-id $satspinbutton))
@@ -214,6 +226,7 @@
 		 (colorchooser-init-colorscale (dom-get-element-by-id $green))
 		 (colorchooser-init-colorscale (dom-get-element-by-id $blue))
 		 (colorchooser-update-colorscales! cc)
+		 (when $value (colorchooser-value-set! cc $value))
 		 #t))))))
     
 ;*---------------------------------------------------------------------*/

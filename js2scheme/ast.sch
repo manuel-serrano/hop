@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Mon Sep 18 07:31:28 2017 (serrano)                */
+;*    Last change :  Wed Sep 20 05:35:07 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -75,19 +75,21 @@
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
+       (thisarg (list (J2SUndefined)))
        (args ,(if (pair? args) `(list ,@args) ''()))))
 
 (define-macro (J2SCall* fun args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
+       (thisarg (list (J2SUndefined)))
        (args ,args)))
 
-(define-macro (J2SMethodCall* fun this args)
+(define-macro (J2SMethodCall* fun thisarg args)
    `(instantiate::J2SCall
        (loc loc)
        (fun ,fun)
-       (this ,this)
+       (thisarg ,thisarg)
        (args ,args)))
 
 (define-macro (J2SAccess obj field)
