@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Sep 18 15:28:05 2017 (serrano)                */
+;*    Last change :  Wed Sep 20 05:23:30 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -178,7 +178,7 @@
 	    (set! body
 	       (inline-method! body pmethods (cons met stack)
 		  (* 0.8 kfactor)))
-	    (J2SMethodCall* nfun obj args))))
+	    (J2SMethodCall* nfun (list obj) args))))
 
    (with-access::J2SCall this (fun args loc)
       (let ((imets (inline-methods fun)))

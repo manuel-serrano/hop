@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Sep 18 18:11:17 2017 (serrano)                */
+;*    Last change :  Wed Sep 20 05:48:58 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -618,13 +618,13 @@
 ;*    j2s->list ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCall)
-   (with-access::J2SCall this (fun args (cthis this) loc)
+   (with-access::J2SCall this (fun thisarg args loc)
       `(,@(call-next-method)
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
 	  ,(j2s->list fun)
-	  ,@(if (eq? cthis #unspecified) '() `(:this ,(j2s->list cthis)))
+	  :thisarg ,@(map j2s->list thisarg)
 	  ,@(map j2s->list args))))
 		  
 ;*---------------------------------------------------------------------*/

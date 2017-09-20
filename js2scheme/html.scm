@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Thu Aug 31 16:24:52 2017 (serrano)                */
+;*    Last change :  Wed Sep 20 05:37:11 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_html
 
-   (include "token.sch")
+   (include "token.sch"
+	    "ast.sch")
    
    (library hop)
    
@@ -412,12 +413,14 @@
       ((: "<!--"
 	  (* (or (out "-") (: "-" (out "-")) (: "--" (out ">"))))
 	  (+ "-") "->")
-       (let ((tag (token 'HTML '<!--> (the-length)))
-	     (data (the-substring 4 -3)))
+       (let* ((tag (token 'HTML '<!--> (the-length)))
+	      (data (the-substring 4 -3))
+	      (loc (token-loc tag)))
 	  (push-ignore
 	     (instantiate::J2SCall
-		(loc (token-loc tag))
+		(loc loc)
 		(fun (j2s-tag->expr tag #t))
+		(thisarg (list (J2SUndefined)))
 		(args (list (instantiate::J2SNativeString
 			       (val (decoder data))
 			       (loc (the-coord (the-port) (+fx (the-length) 6))))))))))
@@ -640,6 +643,7 @@
 	 (instantiate::J2SCall
 	    (loc loc)
 	    (fun (j2s-tag->expr tag #t))
+	    (thisarg (list (J2SUndefined)))
 	    (args (cons a body))))))
 
 ;*---------------------------------------------------------------------*/

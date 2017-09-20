@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Sep 18 18:09:04 2017 (serrano)                */
+;*    Last change :  Wed Sep 20 05:19:06 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -198,24 +198,20 @@
 ;*    property* ::J2SCall ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (property* this::J2SCall count env ccall assig infunp shared-pcache)
-   (with-access::J2SCall this (cache fun (cthis this))
-      (let ((ccache (cond
-		       ((not infunp)
-			(call-default-walker))
-		       ((not ccall)
-			(call-default-walker))
-		       ((isa? fun J2SAccess)
-			(set! cache (inc! count))
-			(cons cache (call-default-walker)))
-		       ((read-only-function? fun)
-			(call-default-walker))
-		       (else
-			(set! cache (inc! count))
-			(cons cache (call-default-walker))))))
-	 (if (eq? cthis #unspecified)
-	     ccache
-	     (append (property* cthis count env ccall assig infunp shared-pcache)
-		ccache)))))
+   (with-access::J2SCall this (cache fun)
+      (cond
+	 ((not infunp)
+	  (call-default-walker))
+	 ((not ccall)
+	  (call-default-walker))
+	 ((isa? fun J2SAccess)
+	  (set! cache (inc! count))
+	  (cons cache (call-default-walker)))
+	 ((read-only-function? fun)
+	  (call-default-walker))
+	 (else
+	  (set! cache (inc! count))
+	  (cons cache (call-default-walker))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    property* ::J2SNew ...                                           */
