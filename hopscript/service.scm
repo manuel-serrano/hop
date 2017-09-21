@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Sep 21 08:42:49 2017 (serrano)                */
+;*    Last change :  Thu Sep 21 10:11:31 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -1071,6 +1071,11 @@
 	 ((not (member u *allow-urls*))
 	  (js-raise-type-error %this
 	     "URL now allowed for redirection ~s (see Service.allowURL)" u))
+	 ((string-prefix? (hop-service-base) u)
+	  (js-raise-type-error %this
+	     (format "Illegal URL prefix ~~s (must not be a prefix of ~s)"
+		(hop-service-base))
+	     u))
 	 (else
 	  (with-access::JsService svc (svc)
 	     (with-access::hop-service svc (path)
