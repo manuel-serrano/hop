@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Tue Aug  1 17:16:35 2017 (serrano)                */
+;*    Last change :  Thu Sep 21 18:50:46 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -107,8 +107,8 @@
 ;*    js-vector->jsobject ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-vector->jsobject vec %this)
-   (vector-map (lambda (o) (js-obj->jsobject o %this)) vec)
-   (js-vector->jsarray vec %this))
+   (let ((vec (vector-map (lambda (o) (js-obj->jsobject o %this)) vec)))
+      (js-vector->jsarray vec %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-struct->jsobject ...                                          */
