@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/src/main.scm                      */
+;*    serrano/prgm/project/hop/3.2.x/src/main.scm                      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Wed Aug 23 17:21:24 2017 (serrano)                */
+;*    Last change :  Thu Sep 21 07:23:18 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -103,7 +103,8 @@
 	 (when (hop-enable-webdav) (init-webdav!))
 	 (when (hop-enable-fast-server-event) (init-flash!))
 	 ;; close filter installation
-	 (hop-filters-close!)
+	 (unless (hop-javascript)
+	    (hop-filters-close!))
 	 ;; https file handling
 	 (cond-expand
 	    (enable-ssl
@@ -230,6 +231,7 @@
       (js-worker-push-thunk! %worker "cmdline"
 	 (lambda ()
 	    (users-close!)
+	    (hop-filters-close!)
 	    (synchronize jsmutex
 	       (set! jsinit #t)
 	       (condition-variable-signal! jscondv))))

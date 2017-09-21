@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Sep 12 10:48:31 2017 (serrano)                */
+#*    Last change :  Thu Sep 21 05:18:57 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -30,7 +30,6 @@ HOPCLOSELIBS_S = $(BGLCLOSELIBS_S) \
 HOPCLOSELIBS_U = $(BGLCLOSELIBS_U) \
   -ljs2scheme_u-$(HOPRELEASE) \
   -lhop_u-$(HOPRELEASE) \
-  -lhopscheme_u-$(HOPRELEASE) \
   -lhopwidget_u-$(HOPRELEASE)
 HOPCLOSELIBS_ES = -lhopscript_s-$(HOPRELEASE)
 HOPCLOSELIBS_EU = -lhopscript_u-$(HOPRELEASE)
