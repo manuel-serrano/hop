@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/param.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/runtime/param.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Mon May 22 09:23:02 2017 (serrano)                */
+;*    Last change :  Fri Sep 22 08:14:25 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP global parameters                                            */
@@ -758,7 +758,7 @@
    '()
    (lambda (v)
       (if (not *hop-filters-open*)
-	  (error "hop-http-response-proxy-hook-set!" "Hooks closed" #f)
+	  (error "hop-http-response-proxy-hook-set!" "Hooks closed" v)
 	  v)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Thu Sep 21 07:23:18 2017 (serrano)                */
+;*    Last change :  Fri Sep 22 08:22:03 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -160,7 +160,9 @@
 		  (when jsworker
 		     (synchronize jsmutex
 			(unless jsinit
-			   (condition-variable-wait! jscondv jsmutex))))
+			   (condition-variable-wait! jscondv jsmutex)
+			   (users-close!)
+			   (hop-filters-close!))))
 		  ;; start the main loop
 		  (scheduler-accept-loop (hop-scheduler) serv #t))
 	       (if jsworker
@@ -230,8 +232,6 @@
       ;; close user registration
       (js-worker-push-thunk! %worker "cmdline"
 	 (lambda ()
-	    (users-close!)
-	    (hop-filters-close!)
 	    (synchronize jsmutex
 	       (set! jsinit #t)
 	       (condition-variable-signal! jscondv))))
