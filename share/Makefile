@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Wed May  3 09:10:08 2017 (serrano)                */
+#*    Last change :  Fri Sep 22 11:07:33 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -394,7 +394,6 @@ predistrib-clean:
 .PHONY: clean predistrib-clean devclean
 
 clean:
-	$(RM) hop-builtin-serializers.js
 	$(RM) hop_u.js hop_s.js 
 	$(RM) hopjs_u.js hopjs_s.js 
 	$(RM) hop-runtime.sch 

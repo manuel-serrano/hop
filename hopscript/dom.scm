@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Sun Jul  9 17:49:56 2017 (serrano)                */
+;*    Last change :  Tue Sep 12 13:38:20 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_dom
 
-   (library hop hopwidget)
+   (library hop)
    
    (include "stringliteral.sch")
    

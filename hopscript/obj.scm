@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Tue Jul 11 08:58:04 2017 (serrano)                */
+;*    Last change :  Tue Sep 12 13:38:44 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_obj
    
-   (library hop hopwidget js2scheme)
+   (library hop js2scheme)
    
    (include "stringliteral.sch")
    
