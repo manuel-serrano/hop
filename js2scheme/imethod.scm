@@ -3,14 +3,14 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Sep 20 05:23:30 2017 (serrano)                */
+;*    Last change :  Sun Sep 24 08:04:44 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
 ;*    -------------------------------------------------------------    */
 ;*    The method inlining proceeds as follows:                         */
-;*      1- the AST is traversed to find all the method assigned to     */
-;*         prototype objects.                                          */
+;*      1- the AST is traversed to find all toplevel methods assigned  */
+;*         to prototype objects.                                       */
 ;*      2- the AST is traversed to detect all the method calls, that   */
 ;*         might concern one the prototype methods, and to inline      */
 ;*         the call, protecting it with a hidden class check.          */
@@ -30,7 +30,8 @@
 	   __js2scheme_syntax
 	   __js2scheme_utils
 	   __js2scheme_type-hint
-	   __js2scheme_alpha)
+	   __js2scheme_alpha
+	   __js2scheme_node-size)
 
    (export j2s-imethod-stage))
 
@@ -50,9 +51,9 @@
 (define (j2s-imethod! this args)
    (if (and (isa? this J2SProgram) (config-get args :optim-imethod #f))
        (with-access::J2SProgram this (decls nodes)
-	  (let ((pmethods (ptable (append-map prototype-methods* nodes))))
-	     (inline-method!* decls pmethods '() 1.0)
-	     (inline-method!* nodes pmethods '() 1.0)
+	  (let ((pms (ptable (append-map toplevel-prototype-methods* nodes))))
+	     (inline-method!* decls pms '() 1.0)
+	     (inline-method!* nodes pms '() 1.0)
 	     this))
        this))
 
@@ -62,15 +63,27 @@
 (define-struct size value)
 
 ;*---------------------------------------------------------------------*/
-;*    prototype-methods* ...                                           */
+;*    toplevel-prototype-methods* ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (prototype-methods* this::J2SNode)
+(define-walk-method (toplevel-prototype-methods* this::J2SNode)
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    toplevel-prototype-methods* ::J2SSeq ...                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (toplevel-prototype-methods* this::J2SSeq)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    prototype-methods* ::J2SAssig ...                                */
+;*    toplevel-prototype-methods* ::J2SStmtExpr ...                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (prototype-methods* this::J2SAssig)
+(define-walk-method (toplevel-prototype-methods* this::J2SStmtExpr)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    toplevel-prototype-methods* ::J2SAssig ...                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (toplevel-prototype-methods* this::J2SAssig)
 
    (define (method-of rhs)
       (if (isa? rhs J2SMethod)
@@ -102,7 +115,7 @@
       (for-each (lambda (e)
 		   (hashtable-add! table (car e) cons (cdr e) '()))
 	 alist)
-      (tprint "itable=" (hashtable-map table (lambda (k e) (cons k (length e)))))
+      (tprint "ptable=" (hashtable-map table (lambda (k e) (cons k (length e)))))
       table))
 
 ;*---------------------------------------------------------------------*/
@@ -209,6 +222,75 @@
 		this)))))
 
 ;*---------------------------------------------------------------------*/
+;*    imethod ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (imethod this::J2SExpr pmethods stack kfactor)
+
+   (define (same-arity? fun::J2SFun arity)
+      (with-access::J2SFun fun (params)
+	 (=fx (length params) arity)))
+
+   (define (inline-methods fun)
+      (when (isa? fun J2SAccess)
+	 (with-access::J2SAccess fun (obj field)
+	    (when (isa? field J2SString)
+	       (with-access::J2SString field (val)
+		  (hashtable-get pmethods val))))))
+
+   (define (small-enough? met::J2SFun stack kfactor)
+      (with-access::J2SFun met (%info params)
+	 (let ((sz (if (size? %info)
+		       (size-value %info)
+		       (let ((sz (method-size met)))
+			  (set! %info (size sz))
+			  sz))))
+	    (< sz (* kfactor (+fx 8 (+fx 1 (length params))))))))
+
+   (define (method-size obj)
+      (if (isa? obj J2SFun)
+	  (with-access::J2SFun obj (body)
+	     (node-size body))
+	  (with-access::J2SMethod obj (method)
+	     (with-access::J2SFun method (body)
+		(node-size body)))))
+   
+   (when (isa? this J2SCall)
+      (with-access::J2SCall this (fun args loc)
+	 (let ((imets (inline-methods fun)))
+	    (when (and (pair? imets) (null? (cdr imets)))
+	       ;; for now we consider methods inlining only where this
+	       ;; is a single method candidate
+	       (when (same-arity? (car imets) (length args))
+		  ;; the arities match
+		  (when (small-enough? (car imets) stack kfactor)
+		     (car imets))))))))
+      
+;*---------------------------------------------------------------------*/
+;*    inline-method! ::J2SStmtExpr ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (inline-method! this::J2SStmtExpr pmethods stack kfactor)
+   (with-access::J2SStmtExpr this (expr)
+      (let ((met (imethod expr pmethods stack kfactor)))
+	 (if met
+	     (let ((ithis (inline-as-statement expr met pmethods stack kfactor)))
+		(inline-method! ithis pmethods stack kfactor)))
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    inline-as-statement ...                                          */
+;*---------------------------------------------------------------------*/
+(define (inline-as-statement expr::J2SCall met pmethods stack kfactor)
+   (let ((nfun (j2s-alpha met '() '())))
+      (with-access::J2SFun nfun (thisp body)
+	 (with-access::J2SDecl thisp (vtype itype utype ronly)
+	    (set! vtype 'object)
+	    (set! utype 'object)
+	    (set! itype 'object)
+	    (when ronly (this-type nfun)))
+	 (inline-method! body pmethods (cons met stack)
+	    (* 0.8 kfactor)))))
+
+;*---------------------------------------------------------------------*/
 ;*    this-type ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (this-type this::J2SNode)
@@ -221,93 +303,4 @@
    (with-access::J2SThis this (type)
       (set! type 'object)))
    
-;*---------------------------------------------------------------------*/
-;*    node-size ::obj ...                                              */
-;*---------------------------------------------------------------------*/
-(define-generic (node-size::long this::obj)
-   (cond
-      ((null? this) 0)
-      ((pair? this) (apply + (map node-size this)))
-      (else 1)))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SNode ...                                          */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SNode)
-   (let ((fields (class-all-fields (object-class this))))
-      (let loop ((i (-fx (vector-length fields) 1))
-		 (s 0))
-	 (if (=fx i -1)
-	     s
-	     (let* ((f (vector-ref fields i))
-		    (info (class-field-info f)))
-		(if (and (pair? info) (member "ast" info))
-		    (loop (-fx i 1)
-		       (+fx (node-size ((class-field-accessor f) this)) s))
-		    (loop (-fx i 1)
-		       s)))))))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SSeq ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SSeq)
-   (with-access::J2SSeq this (nodes)
-      (apply + (map node-size nodes))))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SStmt ...                                          */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SStmt)
-   (+fx 1 (call-next-method)))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2Seq ...                                            */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SLetBlock)
-   (call-next-method))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SIf ...                                            */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SIf)
-   (+fx 1 (call-next-method)))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SStmtExpr ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SStmtExpr)
-   (call-next-method))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SNop ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SNop)
-   0)
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SExpr ...                                          */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SExpr)
-   (+fx 1 (call-next-method)))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SExprStmt ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SExprStmt)
-   (call-next-method))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SFun ...                                           */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SFun)
-   (with-access::J2SFun this (params)
-      (+ (call-next-method) 1 (length params))))
-
-;*---------------------------------------------------------------------*/
-;*    node-size ::J2SMethod ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (node-size this::J2SMethod)
-   (with-access::J2SMethod this (method)
-      (node-size method)))
-
 

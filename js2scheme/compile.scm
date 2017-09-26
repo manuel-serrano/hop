@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Sep 19 04:42:43 2017 (serrano)                */
+;*    Last change :  Sun Sep 24 06:58:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -157,10 +157,10 @@
       j2s-globvar-stage
       j2s-method-stage
       j2s-return-stage
+      j2s-imethod-stage
       j2s-cps-stage
       j2s-constant-stage
       j2s-tyflow-stage
-      j2s-imethod-stage
       j2s-property-stage
       j2s-propcce-stage
       j2s-range-stage

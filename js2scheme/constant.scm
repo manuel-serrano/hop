@@ -1,12 +1,12 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/constant.scm            */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/constant.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Oct 16 08:31:03 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Sun Sep 24 07:09:59 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Init the this variable of all functions in non-strict mode       */
+;*    Preallocate object literal cmaps                                 */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -117,14 +117,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constant! this::J2SNode env::struct nesting)
    (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    constant! ::J2SString ...                                        */
-;*---------------------------------------------------------------------*/
-;* (define-walk-method (constant! this::J2SString env nesting)         */
-;*    (if (=fx nesting 0)                                              */
-;*        (add-expr! this env #t)                                      */
-;*        this))                                                       */
 
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SRegExp ...                                        */
