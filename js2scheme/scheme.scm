@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Aug 23 17:45:07 2017 (serrano)                */
+;*    Last change :  Tue Sep 26 15:05:47 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1179,9 +1179,16 @@
 	  ((or bint30 bint32)
 	   val)
 	  ((or bint61 62 64)
-	   (if (and (<fx val (bit-lsh 1 53)) (>fx val (negfx (bit-lsh 1 53))))
-	       val
-	       (fixnum->flonum val)))
+	   (cond
+	      ((and (>=fx (config-get conf :long-size 0) 64)
+		    (<fx val (bit-lsh 1 53))
+		    (>fx val (negfx (bit-lsh 1 53))))
+	       val)
+	      ((and (<fx val (-fx (bit-lsh 1 29) 1))
+		    (>=fx val (negfx (bit-lsh 1 29))))
+	       val)
+	      (else
+	       (fixnum->flonum val))))
 	  (else
 	   (error "j2s-scheme" "unknown integer size"
 	      (bigloo-config 'elong-size)))))
@@ -1207,7 +1214,7 @@
 	      (cond
 		 ((>=fx (config-get conf :long-size 0) 64)
 		  val)
-		 ((<fx val (bit-lsh 1 29))
+		 ((<fx val (-fx (bit-lsh 1 29) 1))
 		  val)
 		 (else
 		  (fixnum->flonum val))))
