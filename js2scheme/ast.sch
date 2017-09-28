@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Wed Sep 20 05:35:07 2017 (serrano)                */
+;*    Last change :  Wed Sep 27 09:37:03 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -354,3 +354,10 @@
        (optim ,optim)
        (debug ,debug)
        (stmt ,stmt)))
+
+(define-macro (J2SCacheCheck cache obj field)
+   `(instantiate::J2SCacheCheck
+       (loc loc)
+       (cache ,cache)
+       (obj ,obj)
+       (fields (list ,field))))
