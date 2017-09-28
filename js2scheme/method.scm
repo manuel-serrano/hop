@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/method.scm              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/method.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon May 22 18:21:33 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 07:20:50 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -57,7 +57,7 @@
 	 (with-access::J2SFun rhs (thisp loc)
 	    (when thisp
 	       (with-access::J2SDecl thisp (usecnt)
-		  (when (>=fx usecnt 2)
+		  (when (>=fx usecnt 1)
 		     (set! rhs
 			(instantiate::J2SMethod
 			   (loc loc)

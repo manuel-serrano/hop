@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Sep 24 07:23:12 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 08:31:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -351,6 +351,7 @@
 	      (field::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SCacheCheck::J2SExpr
+	      (prop::symbol read-only)
 	      (cache read-only (info '("notraverse")))
 	      (obj::J2SExpr (info '("ast")))
 	      fields::pair-nil)

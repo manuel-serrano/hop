@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Sep 20 05:48:58 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 07:21:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -445,7 +445,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SMethod)
    (with-access::J2SMethod this (function method)
-      `(,(call-next-method)
+      `(,@(call-next-method)
 	:function ,(j2s->list function)
 	:method ,(j2s->list method))))
 
@@ -637,6 +637,15 @@
 	  ,@(dump-info this)
 	  ,@(dump-cache this)
 	  ,(j2s->list obj) ,(j2s->list field))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SCacheCheck ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SCacheCheck)
+   (with-access::J2SCacheCheck this (cache obj fields)
+      `(,@(call-next-method) :cache ,cache
+	  ,(j2s->list obj)
+	  ,@(map j2s->list fields))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SStmtExpr ...                                      */

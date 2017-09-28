@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Aug 22 09:40:50 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 08:56:30 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -351,6 +351,8 @@
 	   (inline js-number?::bool ::obj)
 	   (inline js-object?::bool ::obj)
 	   (inline js-function?::bool ::obj)
+
+	   (inline js-object-cmap::JsConstructMap ::JsObject)
 	   
 	   (gencmapid::uint32))
    
@@ -779,3 +781,9 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function? o)
    (isa? o JsFunction))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-cmap ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-cmap o)
+   (with-access::JsObject o (cmap) cmap))

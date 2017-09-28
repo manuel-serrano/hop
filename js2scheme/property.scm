@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Sep 20 05:19:06 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 09:06:43 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -49,7 +49,7 @@
    
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes headers decls loc pcache-size)
-	 (let* ((count (make-counter 0))
+	 (let* ((count (make-counter pcache-size))
 		(env (cons '() '()))
 		(caches (append
 			   (append-map (lambda (s)
@@ -200,6 +200,8 @@
 (define-walk-method (property* this::J2SCall count env ccall assig infunp shared-pcache)
    (with-access::J2SCall this (cache fun)
       (cond
+	 (cache
+	  (call-default-walker))
 	 ((not infunp)
 	  (call-default-walker))
 	 ((not ccall)

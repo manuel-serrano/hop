@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Sep  2 03:28:14 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 08:44:31 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -143,6 +143,17 @@
    (with-access::J2SAccess this (obj field)
       (set! obj (type-cast! obj 'any fun))
       (set! field (type-cast! field 'any fun))
+      (if (need-cast? 'any totype)
+	  (cast this totype)
+	  this)))
+							   
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SCacheCheck ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SCacheCheck totype fun)
+   (with-access::J2SCacheCheck this (obj fields)
+      (set! obj (type-cast! obj 'any fun))
+      (set! fields (map (lambda (f) (type-cast! f 'any fun)) fields))
       (if (need-cast? 'any totype)
 	  (cast this totype)
 	  this)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Sep 20 06:03:27 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 09:15:54 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -687,9 +687,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SThis mode return conf hint totype)
    (with-access::J2SThis this (loc type decl)
-      (if (and (j2s-let? decl) (not (j2s-let-opt? decl)))
-	  `(js-let-ref this 'this ',loc %this)
-	  'this)))
+      (let ((id (j2s-decl-scheme-id decl)))
+	 (if (and (j2s-let? decl) (not (j2s-let-opt? decl)))
+	     `(js-let-ref this id ',loc %this)
+	     id))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCond ...                                         */
@@ -2713,6 +2714,18 @@
 		(j2s-get loc (j2s-scheme obj mode return conf hint totype) tyo
 		   (j2s-property-scheme field mode return conf)
 		   (j2s-type field) cache clevel)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SCacheCheck ...                                   */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SCacheCheck mode return conf hint totype)
+   (with-access::J2SCacheCheck this (prop cache obj)
+      (case prop
+	 ((proto-method)
+	  `(eq? (js-pcache-pmap (js-pcache-ref %pcache ,cache))
+	      (js-object-cmap ,(j2s-scheme obj mode return conf hint totype))))
+	 (else
+	  (error "j2s-scheme" "Illegal J2SCacheCheck property" prop)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    maybe-function? ...                                              */

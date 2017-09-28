@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Sep 14 06:59:23 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 08:42:32 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1182,6 +1182,15 @@
 		   (expr-type-set! this envf fix 'unknown (append bko bkf)))
 		  (else
 		   (expr-type-set! this envf fix 'any (append bko bkf)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SCacheCheck ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SCacheCheck env::pair-nil fun fix::cell)
+   (multiple-value-bind (typf envf bkf)
+      (call-default-walker)
+      (with-access::J2SCacheCheck this (type)
+	 (expr-type-set! this envf fix 'bool bkf))))
    
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SPragma ...                                           */
