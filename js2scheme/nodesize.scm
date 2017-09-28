@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Sun Sep 24 07:28:19 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 14:48:52 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
@@ -63,7 +63,7 @@
    (+fx 1 (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
-;*    node-size ::J2Seq ...                                            */
+;*    node-size ::J2SLetBLock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SLetBlock)
    (call-next-method))

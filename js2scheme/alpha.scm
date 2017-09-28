@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/alpha.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/alpha.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Thu Apr  6 17:00:35 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 16:06:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -267,15 +267,6 @@
 	    (param nparam)
 	    (exn nexn)
 	    (body (j2s-alpha body (list param exn) (list nparam nexn)))))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    alpha ::J2SAccess ...                                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (alpha this::J2SAccess)                              */
-;*    (with-access::J2SAccess this (obj field)                         */
-;*       (duplicate::J2SAccess this                                    */
-;* 	 (obj (alpha obj))                                             */
-;* 	 (field (alpha field)))))                                      */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sdecl-duplicate ...                                            */

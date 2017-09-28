@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Sep 28 08:31:25 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 17:00:51 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -75,6 +75,7 @@
 	      (decls::pair (info '("ast"))))
 
 	   (final-class J2SLetBlock::J2SBlock
+	      (rec::bool (default #t))
 	      (decls::pair-nil (info '("ast"))))
 	   
 	   (class J2SIdStmt::J2SStmt

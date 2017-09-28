@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Sep 28 09:10:31 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 17:06:03 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -52,8 +52,8 @@
    (if (and (isa? this J2SProgram) (config-get args :optim-imethod #f))
        (with-access::J2SProgram this (decls nodes)
 	  (let ((pms (ptable (append-map collect-proto-methods* nodes))))
-	     (inline-method!* decls pms '() 1.0 this)
-	     (inline-method!* nodes pms '() 1.0 this)
+	     (inline-method!* decls pms '() 2.0 this)
+	     (inline-method!* nodes pms '() 2.0 this)
 	     this))
        this))
 
@@ -92,6 +92,11 @@
       (if (isa? rhs J2SMethod)
 	  (with-access::J2SMethod rhs (method) method)
 	  rhs))
+
+   (define blacklist
+      '())
+   (define whitelist
+      '())
    
    (with-access::J2SAssig this (lhs rhs)
       (if (and (isa? lhs J2SAccess) (or (isa? rhs J2SFun) (isa? rhs J2SMethod)))
@@ -102,7 +107,15 @@
 			(with-access::J2SString field (val)
 			   (if (string=? val "prototype")
 			       (with-access::J2SString metname (val)
-				  (list (cons val (method-of rhs))))
+				  (cond
+				     ((member val blacklist)
+				      (tprint "black " val)
+				      '())
+				     ((or (null? whitelist) (member val whitelist))
+				      (list (cons val (method-of rhs))))
+				     (else
+				      (tprint "not white " val)
+				      '())))
 			       '()))
 			'()))
 		 '()))
@@ -228,7 +241,7 @@
    (define (inline-methods fun)
       (when (isa? fun J2SAccess)
 	 (with-access::J2SAccess fun (obj field)
-	    (when (isa? field J2SString)
+	    (when (and (isa? field J2SString) (isa? obj J2SRef))
 	       (with-access::J2SString field (val)
 		  (hashtable-get pmethods val))))))
    
@@ -250,7 +263,7 @@
 		(node-size body)))))
    
    (with-access::J2SCall this (fun args loc)
-      (filter (lambda (m)
+      (filter (lambda (m::J2SFun)
 		 (unless (memq m stack)
 		    ;; for now we consider methods inlining only where this
 		    ;; is a single method candidate
@@ -275,7 +288,7 @@
 	 (let ((n pcache-size))
 	    (set! pcache-size (+fx pcache-size 1))
 	    n)))
-
+   
    (define (cache-check loc obj field inline::J2SStmt)
       (let ((c (get-cache prgm)))
 	 (with-access::J2SCall this (cache)
@@ -283,28 +296,44 @@
 	    (J2SIf (J2SCacheCheck 'proto-method c obj field)
 	       inline
 	       (J2SReturn #f this)))))
-   
-   (with-access::J2SCall this (fun loc)
+
+   (with-access::J2SCall this (fun loc args)
       (with-access::J2SAccess fun (obj field)
-	 (with-access::J2SFun callee (body thisp)
+	 (with-access::J2SFun callee (body thisp params)
 	    (with-access::J2SDecl thisp (loc usage id)
 	       (cond
 		  ((not (isa? obj J2SRef))
-		   (let ((d (J2SLetOptUtype 'object usage id obj)))
+		   (let ((d (J2SLetOptUtype 'object usage id obj))
+			 (t (map (lambda (p a)
+				    (with-access::J2SDecl p (usage id)
+				       (J2SLetOpt usage id a)))
+			       params args)))
 		      (cache-check loc (J2SRef d) field 
-			 (J2SLetBlock (list d)
-			    (j2s-alpha body (list thisp) (list d))))))
+			 (J2SLetRecBlock #f (append t (list d))
+			    (j2s-alpha body
+			       (cons thisp params) (cons d t))))))
 		  ((ronly-variable? obj)
 		   ;; not need to rebind this
-		   (with-access::J2SRef obj (decl)
-		      (cache-check loc obj field 
-			 (j2s-alpha body (list thisp) (list decl)))))
+		   (let ((t (map (lambda (p a)
+				    (with-access::J2SDecl p (usage id)
+				       (J2SLetOpt usage id a)))
+			       params args)))
+		      (with-access::J2SRef obj (decl)
+			 (cache-check loc obj field 
+			    (J2SLetRecBlock #f t
+			       (j2s-alpha body
+				  (cons thisp params) (cons decl t)))))))
 		  (else
 		   ;; create a temporary for this
-		   (let ((d (J2SLetOptUtype 'object usage id obj)))
+		   (let ((d (J2SLetOptUtype 'object usage id obj))
+			 (t (map (lambda (p a)
+				    (with-access::J2SDecl p (usage id)
+				       (J2SLetOpt usage id a)))
+			       params args)))
 		      (cache-check loc (J2SRef d) field
-			 (J2SLetBlock (list d)
-			    (j2s-alpha body (list thisp) (list d))))))))))))
+			 (J2SLetRecBlock #f (append t (list d))
+			    (j2s-alpha body
+			       (cons thisp params) (cons d t))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SNode ...                                          */

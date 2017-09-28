@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Sep 28 10:27:22 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 17:01:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1093,7 +1093,7 @@
 	       (else
 		'())))))
    
-   (with-access::J2SLetBlock this (loc decls nodes)
+   (with-access::J2SLetBlock this (loc decls nodes rec)
       (cond
 	 ((null? decls)
 	  (epairify loc
@@ -1138,9 +1138,9 @@
 		   ((null? ds)
 		    `(begin ,@body))
 		   ((null? (cdr ds))
-		    `(letrec ,ds ,@body))
+		    `(,(if rec 'letrec 'let) ,ds ,@body))
 		   (else
-		    `(letrec* ,ds ,@body)))))))))
+		    `(,(if rec 'letrec* 'let*) ,ds ,@body)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SParen ...                                        */
@@ -1964,8 +1964,7 @@
 	    (cond
 	       ((=fx lenf lena)
 		;; matching arity
-		`(,f ,@%gen
-		    ,@(j2s-self thisarg)
+		`(,f ,@%gen ,@(j2s-self thisarg)
 		    ,@(map (lambda (a p)
 			      (with-access::J2SDecl p (utype)
 				 (j2s-scheme a mode return conf hint utype)))
@@ -2016,9 +2015,9 @@
 	     `(,f ,@%gen ,@(if idthis (j2s-self thisarg) '())
 		 ,@(j2s-scheme args mode return conf hint totype)))
 	    ((rest)
-	     (call-rest-function fun (and idthis thisarg) f %gen args))
+	     (call-rest-function fun (if idthis thisarg '()) f %gen args))
 	    (else
-	     (call-fix-function fun (and idthis thisarg) f %gen args)))))
+	     (call-fix-function fun (if idthis thisarg '()) f %gen args)))))
 
    (define (call-with-function fun::J2SWithRef args)
       (with-access::J2SWithRef fun (id withs loc)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Sep 28 07:20:50 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 16:09:27 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -77,7 +77,7 @@
    (with-access::J2SFun this (params thisp name body method)
       (let* ((nparams (map j2sdecl-duplicate params))
 	     (nthisp (j2sdecl-duplicate thisp))
-	     (nbody (j2s-alpha body (cons thisp params) (cons nthisp params))))
+	     (nbody (j2s-alpha body (cons thisp params) (cons nthisp nparams))))
 	 (with-access::J2SDecl nthisp (itype vtype utype)
 	    (set! itype 'object)
 	    (set! vtype 'object)
