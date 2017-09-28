@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Aug 21 07:50:03 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 10:27:18 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -292,9 +292,16 @@
 	  ((or bint30 bint32)
 	   val)
 	  ((or bint61 62 64)
-	   (if (and (<fx val (bit-lsh 1 53)) (>fx val (negfx (bit-lsh 1 53))))
-	       val
-	       (fixnum->flonum val)))
+	   (cond
+	      ((and (>=fx (config-get conf :long-size 0) 64)
+		    (<fx val (bit-lsh 1 53))
+		    (>fx val (negfx (bit-lsh 1 53))))
+	       val)
+	      ((and (<fx val (-fx (bit-lsh 1 29) 1))
+		    (>=fx val (negfx (bit-lsh 1 29))))
+	       val)
+	      (else
+	       (fixnum->flonum val))))
 	  (else
 	   (error "j2s-scheme" "unknown integer size"
 	      (bigloo-config 'elong-size)))))

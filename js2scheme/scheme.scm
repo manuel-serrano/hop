@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Sep 28 09:15:54 2017 (serrano)                */
+;*    Last change :  Thu Sep 28 10:27:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -814,7 +814,7 @@
 	      (cond
 		 ((>=fx (config-get conf :long-size 0) 64)
 		  val)
-		 ((<fx val (bit-lsh 1 29))
+		 ((<fx val (-fx (bit-lsh 1 29) 1))
 		  val)
 		 (else
 		  (fixnum->flonum val))))
