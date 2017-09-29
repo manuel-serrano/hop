@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Sep 28 17:06:03 2017 (serrano)                */
+;*    Last change :  Fri Sep 29 07:18:27 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -94,10 +94,14 @@
 	  rhs))
 
    (define blacklist
-      '())
+      (if (string? (getenv "BLACKLIST"))
+	  (call-with-input-string (getenv "BLACKLIST") port->string-list)
+	  '()))
    (define whitelist
-      '())
-   
+      (if (string? (getenv "WHITELIST"))
+	  (call-with-input-string (getenv "WHITELIST") port->string-list)
+	  '()))
+
    (with-access::J2SAssig this (lhs rhs)
       (if (and (isa? lhs J2SAccess) (or (isa? rhs J2SFun) (isa? rhs J2SMethod)))
 	  (with-access::J2SAccess lhs (obj (metname field))
@@ -241,7 +245,7 @@
    (define (inline-methods fun)
       (when (isa? fun J2SAccess)
 	 (with-access::J2SAccess fun (obj field)
-	    (when (and (isa? field J2SString) (isa? obj J2SRef))
+	    (when (isa? field J2SString)
 	       (with-access::J2SString field (val)
 		  (hashtable-get pmethods val))))))
    
@@ -308,10 +312,11 @@
 				    (with-access::J2SDecl p (usage id)
 				       (J2SLetOpt usage id a)))
 			       params args)))
-		      (cache-check loc (J2SRef d) field 
-			 (J2SLetRecBlock #f (append t (list d))
-			    (j2s-alpha body
-			       (cons thisp params) (cons d t))))))
+		      (J2SLetRecBlock #f (list d)
+			 (cache-check loc (J2SRef d) field 
+			    (J2SLetRecBlock #f t
+			       (j2s-alpha body
+				  (cons thisp params) (cons d t)))))))
 		  ((ronly-variable? obj)
 		   ;; not need to rebind this
 		   (let ((t (map (lambda (p a)
