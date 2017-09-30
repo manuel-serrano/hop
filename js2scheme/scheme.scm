@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Sep 26 15:05:47 2017 (serrano)                */
+;*    Last change :  Sat Sep 30 09:28:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2706,10 +2706,10 @@
 		((eq? (j2s-type lhs) 'string)
 		 `(js-jsstring-append
 		     ,left
-		     (js-tostring (js-toprimitive ,right 'any %this) %this)))
+		     (js-tojsstring (js-toprimitive ,right 'any %this) %this)))
 		(else
 		 `(js-jsstring-append
-		     (js-tostring (js-toprimitive ,left 'any %this) %this)
+		     (js-tojsstring (js-toprimitive ,left 'any %this) %this)
 		     ,right))))))
       ((or (memq 'integer hint) (type-integer? type))
        (binop lhs rhs mode return conf hint 'integer
