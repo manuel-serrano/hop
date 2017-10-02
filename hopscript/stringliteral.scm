@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Oct  2 08:05:57 2017 (serrano)                */
+;*    Last change :  Mon Oct  2 19:23:38 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1750,12 +1750,16 @@
 ;*    js-jsstring-fromcharcode ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-fromcharcode this code %this)
-   (if (and (fixnum? code) (>=fx code 0) (<=fx code 255))
-       (vector-ref prealloc-strings code)
-       (js-utf8->jsstring
-	  (ucs2-string->utf8-string
-	     (ucs2-string
-		(integer->ucs2 (uint16->fixnum (js-touint16 code %this))))))))
+   (let loop ((code code))
+      (cond
+	 ((not (fixnum? code))
+	  (loop (uint16->fixnum (js-touint16 code %this))))
+	 ((and (>=fx code 0) (<=fx code 255))
+	  (vector-ref prealloc-strings code))
+	 (else
+	  (js-utf8->jsstring
+	     (ucs2-string->utf8-string
+		(ucs2-string (integer->ucs2 code))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-escape ...                                           */
