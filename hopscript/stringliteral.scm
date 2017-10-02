@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Sep 30 10:22:57 2017 (serrano)                */
+;*    Last change :  Mon Oct  2 08:05:57 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -159,15 +159,23 @@
    (scheme->response (js-jsstring->string obj) req))
 
 ;*---------------------------------------------------------------------*/
-;*    ascii-strings ...                                                */
+;*    prealloc-strings ...                                             */
 ;*---------------------------------------------------------------------*/
-(define ascii-strings
-   (let ((vec (make-vector 128)))
-      (let loop ((i (-fx (vector-length vec) 1)))
-	 (when (>=fx i 0)
+(define prealloc-strings
+   (let ((vec (make-vector 256)))
+      (let loop ((i 0))
+	 (when (<=fx i 127)
 	    (vector-set! vec i
-	       (js-ascii->jsstring (make-string 1 (integer->char i))))
-	    (loop (-fx i 1))))
+	       (js-ascii->jsstring
+		  (make-string 1 (integer->char i))))
+	    (loop (+fx i 1))))
+      (let loop ((i 128))
+	 (when (<=fx i 255)
+	    (vector-set! vec i
+	       (js-utf8->jsstring
+		  (ucs2-string->utf8-string
+		     (make-ucs2-string 1 (integer->ucs2 i)))))
+	    (loop (+fx i 1))))
       vec))
 
 ;*---------------------------------------------------------------------*/
@@ -643,7 +651,7 @@
 ;*    Returns the ith code unit (UTF16 code unit) of the UTF8 source   */
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
-(define (utf8-codeunit-ref-fast this::JsStringLiteralUTF8 str i::long)
+(define (utf8-codeunit-ref this::JsStringLiteralUTF8 str i::long)
    (let ((len (string-length str)))
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 ;; adjust with respect to the last position
@@ -672,45 +680,13 @@
 				  (ucs2 (utf8-string->ucs2-string utf8)))
 			      (ucs2->integer (ucs2-string-ref ucs2 j)))))))))))))
 
-(define (utf8-codeunit-ref-debug str i::long)
-   (let ((len (string-length str)))
-      (let loop ((r 0) (i i))
-	 (if (>=fx r len)
-	     +nan.0
-	     (let* ((c (string-ref str r))
-		    (s (utf8-char-size c))
-		    (u (codepoint-length c)))
-		(cond
-		   ((>=fx i u)
-		    (loop (+fx r s) (-fx i u)))
-		   ((=fx s 1)
-		    (char->integer (string-ref str r)))
-		   ((char=? c (integer->char #xf8))
-		    (utf8-left-replacement-codeunit str r))
-		   ((char=? c (integer->char #xfc))
-		    (utf8-right-replacement-codeunit str r))
-		   (else
-		    (let* ((utf8 (substring str r (+fx r s)))
-			   (ucs2 (utf8-string->ucs2-string utf8)))
-		       (ucs2->integer (ucs2-string-ref ucs2 i))))))))))
-
-(define (utf8-codeunit-ref this::JsStringLiteralUTF8 str i::long)
-   (let ((c1 (utf8-codeunit-ref-fast this str i)))
-;*       (assert (c1)                                                  */
-;* 	 (let ((c2 (utf8-codeunit-ref-debug str i)))                   */
-;* 	 (or (= c1 c2)                                                 */
-;* 	     (and (not (integer? c1))                                  */
-;* 		  (not (integer? c2))))))                              */
-      c1))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-ref ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-utf8-ref this::JsStringLiteralUTF8 str::bstring index::long)
    (let ((n (utf8-codeunit-ref this str index)))
-      (if (<= n 127)
-	  (js-ascii->jsstring
-	     (make-string 1 (integer->char n)))
+      (if (<=fx n 255)
+	  (vector-ref prealloc-strings n)
 	  (js-utf8->jsstring
 	     (ucs2-string->utf8-string
 		(ucs2-string
@@ -724,7 +700,7 @@
    (define (ascii-string-ref val fxpos)
       (if (>=fx fxpos (string-length val))
 	  (js-undefined)
-	  (vector-ref ascii-strings
+	  (vector-ref prealloc-strings
 	     (char->integer (string-ref-ur val fxpos)))))
    
    (define (utf8-string-ref val fxpos)
@@ -1774,8 +1750,8 @@
 ;*    js-jsstring-fromcharcode ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-fromcharcode this code %this)
-   (if (and (fixnum? code) (>=fx code 0) (<fx code 128))
-       (vector-ref ascii-strings code)
+   (if (and (fixnum? code) (>=fx code 0) (<=fx code 255))
+       (vector-ref prealloc-strings code)
        (js-utf8->jsstring
 	  (ucs2-string->utf8-string
 	     (ucs2-string
