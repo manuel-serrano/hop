@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Mon Mar 13 08:23:38 2017 (serrano)                */
+#*    Last change :  Tue Oct  3 09:57:26 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -27,7 +27,7 @@ RELEASE		= @BIGLOOVERSION@
 HOP		= @HOP@
 HOPC		= @HOPC@
 BGLCPP		= @BGLCPP@
-HFLAGS		= --reset-bigloo-options --bigloo=$(BIGLOO) -L $(BUILDLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) -- -lib-dir $(BUILDLIBDIR)
+HFLAGS		= --reset-bigloo-options --bigloo=$(BIGLOO) --bigloo-lib-dir=$(BIGLOOLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) --
 BACKEND         = @BACKEND@
 LINK		= @LINK@
 BIGLOOLIBDIR	= @BIGLOOLIBDIR@

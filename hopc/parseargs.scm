@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Aug  1 10:52:12 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 09:45:50 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -17,7 +17,8 @@
    (library hop js2scheme)
    
    (import  hopc_param
-	    hopc_driver)
+	    hopc_driver
+	    hopc_libdir)
    
    (export  (parse-args ::pair-nil)))
 
@@ -135,6 +136,10 @@
 	     (hopc-bigloo-safe-option-set! '("-unsafe")))
 	    (("--bigloo=?bigloo" (help "Set the Bigloo binary file path"))
 	     (hopc-bigloo-set! bigloo))
+	    (("--bigloo-lib-dir=?dir" (help "Set the Bigloo library path"))
+	     (bigloo-override-config! dir)
+	     (hopc-bigloo-options-set!
+		(cons* "-lib-dir" dir (hopc-bigloo-options))))
 	    (("--reset-bigloo-options" (help "Reset all Bigloo options"))
 	     (hopc-bigloo-options-set! '()))
 	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
@@ -300,4 +305,5 @@
        (when (file-exists? path)
 	  (hop-verb 2 "Loading `" path "'...\n")
 	  (hop-load path :menv #unspecified))))      
+
 
