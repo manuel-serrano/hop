@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/function.scm            */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/function.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Jun 12 20:36:15 2017 (serrano)                */
+;*    Last change :  Mon Oct  2 20:44:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -39,7 +39,7 @@
 	      #!key
 	      __proto__ prototype constructor construct alloc
 	      (strict 'normal) arity (minlen -1) src rest
-	      (constrsize 3) (maxconstrsize 100) method)
+	      (constrsize 3) (maxconstrsize 100) noarguments method)
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::obj ::int ::int ::symbol ::bool ::int)))
 
@@ -138,12 +138,13 @@
 	    :src (cons (current-loc) "Function() { /* function.scm */}")
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype
-	    :construct (js-function-construct %this)))
+	    :construct (js-function-construct %this)
+	    :noarguments #t))
       ;; throwers
       (let ((thrower (js-make-function %this
 			(lambda (o)
 			   (js-raise-type-error %this "[[ThrowTypeError]] ~a" o))
-			1 'thrower)))
+			1 'thrower :noarguments #t)))
 	 (set! thrower-get thrower)
 	 (set! thrower-set thrower))
       ;; prototype properties
@@ -178,7 +179,7 @@
    (lambda (this . args)
       (if (null? args)
 	  (js-make-function %this (lambda (this) (js-undefined))
-	     0 "" :construct (lambda (_) (js-undefined)))
+	     0 "" :construct (lambda (_) (js-undefined)) :noarguments #t)
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
 		 (body (car (last-pair args)))
@@ -225,7 +226,7 @@
 	   #!key __proto__ prototype
 	   constructor alloc construct (strict 'normal)
 	   arity (minlen -1) src rest
-	   (constrsize 3) (maxconstrsize 100) method)
+	   (constrsize 3) (maxconstrsize 100) noarguments method)
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -314,7 +315,7 @@
 	       :value length
 	       :enumerable #f :configurable #f :writable #f
 	       :hidden-class #f)
-	    (unless (eq? strict 'normal)
+	    (unless (or (eq? strict 'normal) noarguments)
 	       (js-bind! %this fun 'arguments
 		  :get thrower-get :set thrower-set
 		  :enumerable #f :configurable #f
@@ -352,7 +353,7 @@
       :arity arity :strict strict :rest rest :minlen minlen
       :src #f
       :alloc (lambda (o) (js-object-alloc o %this))
-      :construct proc :constrsize constrsize))
+      :construct proc :constrsize constrsize :noarguments #t))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-function-prototype! ...                             */
@@ -501,7 +502,8 @@
 		   name
 		   :strict 'strict
 		   :alloc alloc
-		   :construct fun)))))
+		   :construct fun
+		   :noarguments #t)))))
 
    (js-bind! %this obj 'bind
       :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sun May  7 09:54:33 2017 (serrano)                */
+/*    Last change :  Sat Sep 30 09:35:05 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
@@ -107,5 +107,38 @@ function typestr2() {
 
 assert.ok( typestr2.call( "bar", undefined ), "typestr2" );
 
+/*---------------------------------------------------------------------*/
+/*    encoding                                                         */
+/*---------------------------------------------------------------------*/
+var su = unescape( "%C3%A0" );
+var se = escape( su );
 
-   
+assert.ok( su.length === 2, "unescape1.length" );
+assert.ok( su.charCodeAt( 0 ) === 0xc3 , "unescape1.charCodeAt( 0 )" );
+assert.ok( su.charCodeAt( 1 ) === 0xa0 , "unescape1.charCodeAt( 1 )" );
+assert.ok( se == "%C3%A0", "escape1" );
+
+var su2 = unescape( "foo%C3%A0" );
+var se2 = escape( su2 );
+
+assert.ok( su2.length === 5, "unescape2.length" );
+assert.ok( su2.charCodeAt( 3 ) === 0xc3 , "unescape2.charCodeAt( 0 )" );
+assert.ok( su2.charCodeAt( 4 ) === 0xa0 , "unescape2.charCodeAt( 1 )" );
+assert.ok( se2 == "foo%C3%A0", "escape2" );
+
+var su3 = unescape( "bar%u5555foo" );
+var se3 = escape( su3 );
+
+assert.ok( su3.length === 7, "unescape3.length" );
+assert.ok( su3.charCodeAt( 3 ) === 21845 , "unescape3.charCodeAt( 3 )" );
+assert.ok( su3.charCodeAt( 4 ) === 102 , "unescape3.charCodeAt( 4 )" );
+assert.ok( se3 == "bar%u5555foo", "escape3" );
+
+var su4 = "foo" + su;
+var se4 = escape( su4 );
+
+assert.ok( su4.length === 5, "unescape4.length" );
+assert.ok( su4.charCodeAt( 3 ) === 0xc3 , "unescape4.charCodeAt( 0 )" );
+assert.ok( su4.charCodeAt( 4 ) === 0xa0 , "unescape4.charCodeAt( 1 )" );
+assert.ok( se4 == "foo%C3%A0", "escape4" );
+

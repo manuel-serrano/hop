@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Sep  9 02:36:42 2017 (serrano)                */
+;*    Last change :  Mon Oct  2 20:44:23 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -47,8 +47,8 @@
 		   (src (j2s-function-src loc val conf)))
 	       (cond
 		  (generator
-		   `(js-make-function %this
-		       ,fastid ,len ,(symbol->string! id)
+		   `(js-make-function %this ,fastid
+		       ,len ,(symbol->string! id)
 		       :src ,src
 		       :rest ,(eq? vararg 'rest)
 		       :arity ,arity
@@ -59,10 +59,11 @@
 		       :prototype ,(j2s-fun-prototype val)
 		       :__proto__ ,(j2s-fun-__proto__ val)
 		       :construct ,fastid
-		       :constrsize ,constrsize))
+		       :constrsize ,constrsize
+		       :noarguments ,(not (eq? vararg 'arguments))))
 		  (src
-		   `(js-make-function %this
-		       ,fastid ,len ,(symbol->string! id)
+		   `(js-make-function %this ,fastid
+		       ,len ,(symbol->string! id)
 		       :src ,src
 		       :rest ,(eq? vararg 'rest)
 		       :arity ,arity
@@ -70,10 +71,19 @@
 		       :strict ',mode
 		       :alloc (lambda (o) (js-object-alloc o %this))
 		       :construct ,fastid
+		       :constrsize ,constrsize
+		       :noarguments ,(not (eq? vararg 'arguments))))
+		  ((eq? vararg 'arguments)
+		   `(js-make-function %this ,fastid
+		       ,len ,(symbol->string! id)
+		       :rest ,(eq? vararg 'rest)
+		       :arity ,arity
+		       :minlen ,minlen
+		       :strict ',mode 
 		       :constrsize ,constrsize))
 		  (else
-		   `(js-make-function-simple %this
-		       ,fastid ,len ,(symbol->string! id)
+		   `(js-make-function-simple %this ,fastid
+		       ,len ,(symbol->string! id)
 		       ,arity ,minlen
 		       ',mode ,(eq? vararg 'rest)
 		       ,constrsize)))))))
@@ -313,7 +323,8 @@
 	     (prototype (j2s-fun-prototype this))
 	     (__proto__ (j2s-fun-__proto__ this)))
 	 (epairify-deep loc
-	    (if (or src prototype __proto__ method)
+	    (cond
+	       ((or src prototype __proto__ method)
 		`(js-make-function %this
 		    ,tmp ,len ,(symbol->string! (or name (j2s-decl-scheme-id id)))
 		    :src ,src
@@ -327,11 +338,21 @@
 		    :construct ,ctor
 		    :constrsize ,constrsize
 		    :method ,(when method
-				(jsfun->lambda method mode return conf #f #f)))
+				(jsfun->lambda method mode return conf #f #f))
+		    :noarguments ,(not (eq? vararg 'arguments))))
+	       ((eq? vararg 'arguments)
+		`(js-make-function %this ,tmp
+		    ,len ,(symbol->string! (or name (j2s-decl-scheme-id id)))
+		    :rest ,(eq? vararg 'rest)
+		    :arity ,arity ,
+		    :minlen minlen
+		    :strict ',mode
+		    :constrsize ,constrsize))
+	       (else
 		`(js-make-function-simple %this
 		    ,tmp ,len
 		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
-		    ,arity ,minlen ',mode ,(eq? vararg 'rest) ,constrsize))))))
+		    ,arity ,minlen ',mode ,(eq? vararg 'rest) ,constrsize)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SFun ...                                          */
@@ -568,9 +589,11 @@
 		(instantiate::JsAccessorDescriptor
 		   (name (string->symbol (integer->string ,indx)))
 		   (get (js-make-function %this
-			   (lambda (%) ,id) 0 "get"))
+			   (lambda (%) ,id) 0 "get"
+			   :noarguments #t))
 		   (set (js-make-function %this
-			   (lambda (% %v) (set! ,id %v)) 1 "set"))
+			   (lambda (% %v) (set! ,id %v)) 1 "set"
+			   :noarguments #t))
 		   (%get (lambda (%) ,id))
 		   (%set (lambda (% %v) (set! ,id %v)))
 		   (configurable #t)

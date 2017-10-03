@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Sep 18 18:31:45 2017 (serrano)                */
+;*    Last change :  Mon Oct  2 20:09:59 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -561,6 +561,7 @@
    (with-access::JsConstructMap omap (names methods ctor)
       (let ((newnames (vector-extend names name))
 	    (newmethods (vector-extend methods #unspecified)))
+	 ;;(tprint "CREATE CMAP: " name)
 	 (instantiate::JsConstructMap
 	    (ctor ctor)
 	    (names newnames)

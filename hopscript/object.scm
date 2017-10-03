@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Wed Aug  2 06:57:53 2017 (serrano)                */
+;*    Last change :  Sat Sep 30 07:36:06 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -406,7 +406,7 @@
 	    ;; escape
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.1
 	    (define (escape this string)
-	       (js-string->jsstring (url-path-encode (js-tostring string %this))))
+	       (js-jsstring-escape (js-tojsstring string %this)))
 	    
 	    (js-bind! %this %this 'escape
 	       :value (js-make-function %this escape 1 'escape
@@ -416,7 +416,7 @@
 	    ;; unescape
 	    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-B.2.1
 	    (define (unescape this string)
-	       (js-string->jsstring (url-decode! (js-tostring string %this))))
+	       (js-jsstring-unescape (js-tojsstring string %this) %this))
 
 	    (js-bind! %this %this 'unescape
 	       :value (js-make-function %this unescape 1 'unescape

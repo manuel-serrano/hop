@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Sep 20 10:26:43 2017 (serrano)                */
+;*    Last change :  Mon Oct  2 20:04:45 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -84,11 +84,19 @@
 	   (js-jsstring-maybe-localecompare ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-trim ::obj)
 	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject)
-	   (js-jsstring-fromcharcode ::JsObject ::obj ::JsGlobalObject))
+	   (js-jsstring-fromcharcode ::JsObject ::obj ::JsGlobalObject)
+	   (js-jsstring-escape ::obj)
+	   (js-jsstring-unescape ::obj ::JsGlobalObject))
 
    (cond-expand
       ((not bigloo4.3a)
        (pragma (js-string->jsstring default-inline)))))
+
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 4)
+(define %pcache (js-make-pcache 4))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -158,15 +166,23 @@
    (scheme->response (js-jsstring->string obj) req))
 
 ;*---------------------------------------------------------------------*/
-;*    ascii-strings ...                                                */
+;*    prealloc-strings ...                                             */
 ;*---------------------------------------------------------------------*/
-(define ascii-strings
-   (let ((vec (make-vector 128)))
-      (let loop ((i (-fx (vector-length vec) 1)))
-	 (when (>=fx i 0)
+(define prealloc-strings
+   (let ((vec (make-vector 256)))
+      (let loop ((i 0))
+	 (when (<=fx i 127)
 	    (vector-set! vec i
-	       (js-ascii->jsstring (make-string 1 (integer->char i))))
-	    (loop (-fx i 1))))
+	       (js-ascii->jsstring
+		  (make-string 1 (integer->char i))))
+	    (loop (+fx i 1))))
+      (let loop ((i 128))
+	 (when (<=fx i 255)
+	    (vector-set! vec i
+	       (js-utf8->jsstring
+		  (ucs2-string->utf8-string
+		     (make-ucs2-string 1 (integer->ucs2 i)))))
+	    (loop (+fx i 1))))
       vec))
 
 ;*---------------------------------------------------------------------*/
@@ -766,7 +782,7 @@
 ;*    Returns the ith code unit (UTF16 code unit) of the UTF8 source   */
 ;*    string.                                                          */
 ;*---------------------------------------------------------------------*/
-(define (utf8-codeunit-ref-fast this::JsStringLiteralUTF8 str i::long)
+(define (utf8-codeunit-ref this::JsStringLiteralUTF8 str i::long)
    (let ((len (string-length str)))
       (with-access::JsStringLiteralUTF8 this (%idxutf8 %idxstr)
 	 ;; adjust with respect to the last position
@@ -795,45 +811,13 @@
 				  (ucs2 (utf8-string->ucs2-string utf8)))
 			      (ucs2->integer (ucs2-string-ref ucs2 j)))))))))))))
 
-(define (utf8-codeunit-ref-debug str i::long)
-   (let ((len (string-length str)))
-      (let loop ((r 0) (i i))
-	 (if (>=fx r len)
-	     +nan.0
-	     (let* ((c (string-ref str r))
-		    (s (utf8-char-size c))
-		    (u (codepoint-length c)))
-		(cond
-		   ((>=fx i u)
-		    (loop (+fx r s) (-fx i u)))
-		   ((=fx s 1)
-		    (char->integer (string-ref str r)))
-		   ((char=? c (integer->char #xf8))
-		    (utf8-left-replacement-codeunit str r))
-		   ((char=? c (integer->char #xfc))
-		    (utf8-right-replacement-codeunit str r))
-		   (else
-		    (let* ((utf8 (substring str r (+fx r s)))
-			   (ucs2 (utf8-string->ucs2-string utf8)))
-		       (ucs2->integer (ucs2-string-ref ucs2 i))))))))))
-
-(define (utf8-codeunit-ref this::JsStringLiteralUTF8 str i::long)
-   (let ((c1 (utf8-codeunit-ref-fast this str i)))
-;*       (assert (c1)                                                  */
-;* 	 (let ((c2 (utf8-codeunit-ref-debug str i)))                   */
-;* 	 (or (= c1 c2)                                                 */
-;* 	     (and (not (integer? c1))                                  */
-;* 		  (not (integer? c2))))))                              */
-      c1))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-utf8-ref ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-utf8-ref this::JsStringLiteralUTF8 str::bstring index::long)
    (let ((n (utf8-codeunit-ref this str index)))
-      (if (<= n 127)
-	  (js-ascii->jsstring
-	     (make-string 1 (integer->char n)))
+      (if (<=fx n 255)
+	  (vector-ref prealloc-strings n)
 	  (js-utf8->jsstring
 	     (ucs2-string->utf8-string
 		(ucs2-string
@@ -847,7 +831,7 @@
    (define (ascii-string-ref val fxpos)
       (if (>=fx fxpos (string-length val))
 	  (js-undefined)
-	  (vector-ref ascii-strings
+	  (vector-ref prealloc-strings
 	     (char->integer (string-ref-ur val fxpos)))))
    
    (define (utf8-string-ref val fxpos)
@@ -1695,17 +1679,18 @@
 	     (let* ((previousLastIndex 0)
 		    (exec (js-get (js-get js-regexp 'prototype %this)
 			     'exec %this)))
-		(js-put! searchvalue 'lastIndex 0 #f %this)
+		(js-object-put-name/cache! searchvalue 'lastIndex 0
+		   #f (js-pcache-ref %pcache 0) %this)
 		(let loop ((n 0)
 			   (ms '()))
 		   (let ((result (js-call1 %this exec searchvalue string)))
 		      (if (eq? result (js-null))
 			  (cond
 			     ((null? ms)
-			      string)
+			      this)
 			     ((isa? replacevalue JsFunction)
 			      (let loop ((matches (reverse! ms))
-					 (res string)
+					 (res this)
 					 (offset 0))
 				 (if (null? matches)
 				     res
@@ -1731,7 +1716,7 @@
 			      (let ((newstring (js-tostring replacevalue %this))
 				    (str (js-jsstring->string string)))
 				 (let loop ((matches (reverse! ms))
-					    (res string)
+					    (res this)
 					    (offset 0))
 				    (if (null? matches)
 					res
@@ -1749,7 +1734,8 @@
 			  (let ((thisIndex (js-get searchvalue 'lastIndex %this)))
 			     (if (= thisIndex previousLastIndex)
 				 (begin
-				    (js-put! searchvalue 'lastIndex (+ thisIndex 1) #f %this)
+				    (js-object-put-name/cache! searchvalue 'lastIndex
+				       (+ thisIndex 1) #f (js-pcache-ref %pcache 1) %this)
 				    (set! previousLastIndex (+ 1 thisIndex)))
 				 (set! previousLastIndex thisIndex))
 			     (let ((matchStr (js-get result 0 %this)))
@@ -1788,7 +1774,8 @@
 	     ;; 8
 	     (let ((previousLastIndex 0)
 		   (a (js-null)))
-		(js-put! rx 'lastIndex 0  #f %this)
+		(js-object-put-name/cache! rx 'lastIndex 0
+		   #f (js-pcache-ref %pcache 2) %this)
 		(let loop ((n 0))
 		   (let ((result (js-call1 %this exec rx s)))
 		      (if (eq? result (js-null))
@@ -1796,8 +1783,8 @@
 			  (let ((thisIndex (js-get rx 'lastIndex %this)))
 			     (if (= thisIndex previousLastIndex)
 				 (begin
-				    (js-put! rx 'lastIndex
-				       (+ thisIndex 1) #f %this)
+				    (js-object-put-name/cache! rx 'lastIndex (+ thisIndex 1)
+				       #f (js-pcache-ref %pcache 3) %this)
 				    (set! previousLastIndex (+ 1 thisIndex)))
 				 (set! previousLastIndex thisIndex))
 			     (when (eq? a (js-null))
@@ -1896,11 +1883,207 @@
 ;*    js-jsstring-fromcharcode ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-fromcharcode this code %this)
-   (if (and (fixnum? code) (>=fx code 0) (<fx code 128))
-       (vector-ref ascii-strings code)
-       (let ((num (uint16->fixnum (js-touint16 code %this))))
-	  (if (and (>=fx num 0) (<fx num 128))
-	      (vector-ref ascii-strings num)
-	      (js-string->jsstring
-		 (ucs2-string->utf8-string
-		    (ucs2-string (integer->ucs2 num))))))))
+   (let loop ((code code))
+      (cond
+	 ((not (fixnum? code))
+	  (loop (uint16->fixnum (js-touint16 code %this))))
+	 ((and (>=fx code 0) (<=fx code 255))
+	  (vector-ref prealloc-strings code))
+	 (else
+	  (js-utf8->jsstring
+	     (ucs2-string->utf8-string
+		(ucs2-string (integer->ucs2 code))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-escape ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-escape this)
+   
+   (define (ascii-escape str::bstring)
+      (js-ascii->jsstring (url-path-encode str)))
+   
+   (define (utf8-escape str::bstring)
+      (js-ascii->jsstring (utf8-path-encode str)))
+   
+   (string-dispatch escape this))
+   
+;*---------------------------------------------------------------------*/
+;*    utf8-path-encode ...                                             */
+;*---------------------------------------------------------------------*/
+(define (utf8-path-encode str)
+   
+   (define set "# \"'`&=%?:\n^[]\\<>;,{|}()~$!")
+   
+   (define (ucs2-string-index? set n)
+      (when (<fx n 127)
+	 (string-index set (integer->char n))))
+   
+   (define (int->char c)
+      (cond
+	 ((<fx c 10)
+	  (integer->char (+fx c (char->integer #\0))))
+	 ((<fx c 16)
+	  (integer->char (+fx (-fx c 10) (char->integer #\A))))))
+   
+   (define (encode-char res j n)
+      (string-set! res j #\%)
+      (cond
+	 ((<fx n 16)
+	  (string-set! res (+fx j 1) #\0)
+	  (string-set! res (+fx j 2) (int->char n)))
+	 ((<fx n 256)
+	  (let ((n1 (/fx n 16))
+		(n2 (remainderfx n 16)))
+	     (string-set! res (+fx j 1) (int->char n1))
+	     (string-set! res (+fx j 2) (int->char n2))))
+	 (else
+	  (let ((n2 (bit-rsh (bit-and n #xf000) 12))
+		(n3 (bit-rsh (bit-and n #xf00) 8))
+		(n4 (bit-rsh (bit-and n #xf0) 4))
+		(n5 (bit-and n #xf)))
+	     (string-set! res (+fx j 1) #\u)
+	     (string-set! res (+fx j 2) (int->char n2))
+	     (string-set! res (+fx j 3) (int->char n3))
+	     (string-set! res (+fx j 4) (int->char n4))
+	     (string-set! res (+fx j 5) (int->char n5))))))
+   
+   (define (count str ol)
+      (let loop ((i 0)
+		 (k 0))
+	 (if (=fx i ol)
+	     k
+	     (let ((n (ucs2->integer (ucs2-string-ref str i))))
+		(cond
+		   ((ucs2-string-index? set n)
+		    (loop (+fx i 1) (+fx k 3)))
+		   ((>=fx n 256)
+		    (loop (+fx i 1) (+fx k 6)))
+		   ((or (<fx n 32) (>=fx n 127))
+		    (loop (+fx i 1) (+fx k 3)))
+		   (else
+		    (loop (+fx i 1) (+fx k 1))))))))
+   
+   (define (encode str ol nl)
+      (if (=fx nl ol)
+	  str
+	  (let ((res (make-string nl)))
+	     (let loop ((i 0)
+			(j 0))
+		(if (=fx j nl)
+		    res
+		    (let ((n (ucs2->integer (ucs2-string-ref str i))))
+		       (cond
+			  ((ucs2-string-index? set n)
+			   (encode-char res j n)
+			   (loop (+fx i 1) (+fx j 3)))
+			  ((>=fx n 256)
+			   (encode-char res j n)
+			   (loop (+fx i 1) (+fx j 6)))
+			  ((or (<fx n 32) (>=fx n 127))
+			   (encode-char res j n)
+			   (loop (+fx i 1) (+fx j 3)))
+			  (else
+			   (string-set! res j (integer->char n))
+			   (loop (+fx i 1) (+fx j 1))))))))))
+   (let* ((ustr (utf8-string->ucs2-string str))
+	  (ol (ucs2-string-length ustr)))
+      (encode ustr ol (count ustr ol))))
+      
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-unescape ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-unescape this %this)
+   
+   (define (ascii-unescape str::bstring)
+      (if (string-index str #\%)
+	  (let ((s (url-decode-extended str)))
+	     (if s 
+		 (js-string->jsstring s)
+		 (js-raise-type-error %this "unescape, illegal value ~s" str)))
+	  (js-string->jsstring str)))
+   
+   (define (utf8-unescape str::bstring)
+      (js-raise-type-error %this "unescape, illegal value ~s" str))
+
+   (string-dispatch unescape this))
+
+;*---------------------------------------------------------------------*/
+;*    url-decode-extended ...                                          */
+;*---------------------------------------------------------------------*/
+(define (url-decode-extended str)
+   
+   (define (char-value c)
+      (cond
+	 ((char-numeric? c)
+	  (-fx (char->integer c) (char->integer #\0)))
+	 ((char<=? c #\F)
+	  (+fx 10 (-fx (char->integer c) (char->integer #\A))))
+	 (else
+	  (+fx 10 (-fx (char->integer c) (char->integer #\a))))))
+   
+   (define (char-hexnumeric? c)
+      (or (char-numeric? c)
+	  (and (char>=? c #\A) (char<=? c #\F))
+	  (and (char>=? c #\a) (char<=? c #\f))))
+   
+   (let* ((ol (string-length str))
+	  (buf (make-string (*fx ol 4)))) ;; 4: max utf8 sequence
+      (let loop ((i 0)
+		 (j 0))
+	 (cond
+	    ((=fx i ol)
+	     (string-shrink! buf j))
+	    ((string-index str #\% i)
+	     =>
+	     (lambda (ni)
+		(cond
+		   ((>fx ni (-fx ol 3))
+		    (blit-string! str i buf j (-fx ol i)))
+		   ((char=? (string-ref str (+fx ni 1)) #\u)
+		    (blit-string! str i buf j (-fx ni i))
+		    (set! j (+fx j (-fx ni i)))
+		    (unless (>fx ni (-fx ol 5))
+		       (let ((c1 (string-ref str (+fx ni 2)))
+			     (c2 (string-ref str (+fx ni 3)))
+			     (c3 (string-ref str (+fx ni 4)))
+			     (c4 (string-ref str (+fx ni 5))))
+			  (when (and (char-hexnumeric? c1) (char-hexnumeric? c2)
+				     (char-hexnumeric? c3) (char-hexnumeric? c4))
+			     (let* ((v1 (char-value c1))
+				    (v2 (char-value c2))
+				    (v3 (char-value c3))
+				    (v4 (char-value c4))
+				    (d (integer->ucs2
+					  (+fx (bit-lsh v1 12)
+					     (+fx (bit-lsh v2 8)
+						(+fx (bit-lsh v3 4) v4)))))
+				    (ucs2 (ucs2-string d))
+				    (utf8 (ucs2-string->utf8-string ucs2))
+				    (l (string-length utf8)))
+				
+				(blit-string! utf8 0 buf j l)
+				(loop (+fx ni 6) (+fx j l)))))))
+		   (else
+		    (blit-string! str i buf j (-fx ni i))
+		    (set! j (+fx j (-fx ni i)))
+		    (unless (>fx ni (-fx ol 3))
+		       (let ((c1 (string-ref str (+fx ni 1)))
+			     (c2 (string-ref str (+fx ni 2))))
+			  (when (and (char-hexnumeric? c1) (char-hexnumeric? c2))
+			     (let* ((v1 (char-value c1))
+				    (v2 (char-value c2))
+				    (d (+fx (bit-lsh v1 4) v2)))
+				(if (<fx d 128)
+				    (begin
+				       (string-set! buf j (integer->char d))
+				       (loop (+fx i 3) (+fx j 1)))
+				    (let* ((ucs2 (ucs2-string (integer->ucs2 d)))
+					   (utf8 (ucs2-string->utf8-string ucs2))
+					   (l (string-length utf8)))
+				       
+				       (blit-string! utf8 0 buf j l)
+				       (loop (+fx ni 3) (+fx j l))))))))))))
+	    (else
+	     (let ((l (-fx ol i)))
+		(blit-string! str i buf j l)
+		(loop ol (+fx j l))))))))

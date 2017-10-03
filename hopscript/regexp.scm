@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/regexp.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/regexp.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun May 21 09:32:44 2017 (serrano)                */
+;*    Last change :  Mon Oct  2 19:55:51 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -34,6 +34,12 @@
 	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 3)
+(define %pcache (js-make-pcache 3))
+
+;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-begin!)
@@ -48,7 +54,7 @@
       (js-regexp->jsregexp o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-regexp? ...                                                    */
+;*    js-regexp? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-regexp? obj)
    (isa? obj JsRegExp))
@@ -166,7 +172,8 @@
 	 ((and (>=fx n #xD800) (<=fx n #xdbff))
 	  ;; MS 9feb2016: don't know what to do as PCRE cannot handle
 	  ;; "red" cells https://en.wikipedia.org/wiki/UTF-8
-	  (ucs2-string->utf8-string (make-ucs2-string 1 (integer->ucs2 #xd7ff))))
+	  (ucs2-string->utf8-string
+	     (make-ucs2-string 1 (integer->ucs2 #xd7ff))))
 	 (else
 	  (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
 	     (ucs2-string->utf8-string u)))))
@@ -247,10 +254,24 @@
 						(l (string-length s)))
 					    (blit-string! s 0 res w l)
 					    (loop (+fx j 6) (+fx w l) inrange)))))))
-			     ((#\\)
-			      (string-set! res w #\\)
-			      (string-set! res (+fx w 1) #\\)
-			      (loop (+fx j 2) (+fx w 2) inrange))
+			     ((#\t)
+			      (string-set! res w #\Tab)
+			      (loop (+fx j 2) (+fx w 1) inrange))
+			     ((#\n)
+			      (string-set! res w #\Newline)
+			      (loop (+fx j 2) (+fx w 1) inrange))
+			     ((#\v)
+			      (string-set! res w #a011)
+			      (loop (+fx j 2) (+fx w 1) inrange))
+			     ((#\f)
+			      (string-set! res w #a012)
+			      (loop (+fx j 2) (+fx w 1) inrange))
+			     ((#\r)
+			      (string-set! res w #\Return)
+			      (loop (+fx j 2) (+fx w 1) inrange))
+			     ((#\")
+			      (string-set! res w c)
+			      (loop (+fx j 2) (+fx w 1) inrange))
 			     (else
 			      (string-set! res w #\\)
 			      (string-set! res (+fx w 1) c)
@@ -432,7 +453,8 @@
 	     (let loop ()
 		(cond
 		   ((or (<fx i 0) (>fx i len))
-		    (js-put! this 'lastIndex 0 #f %this)
+		    (js-object-put-name/cache! this 'lastIndex 0
+		       #f (js-pcache-ref %pcache 0) %this)
 		    (js-null))
 		   ((pregexp-match-positions rx s i)
 		    =>
@@ -440,7 +462,9 @@
 		       ;; 10
 		       (let ((e (cdar r)))
 			  ;; 11
-			  (when global (js-put! this 'lastIndex e #f %this))
+			  (when global
+			     (js-object-put-name/cache! this 'lastIndex e
+				#f (js-pcache-ref %pcache 1) %this))
 			  (let* ((n (length r))
 				 (a (with-access::JsGlobalObject %this (js-array)
 				       (js-new %this js-array n)))
@@ -502,7 +526,8 @@
 				   (loop (cdr c) (+fx i 1))))
 			     a))))
 		   (else
-		    (js-put! this 'lastIndex 0 #f %this)
+		    (js-object-put-name/cache! this 'lastIndex 0
+		       #f (js-pcache-ref %pcache 2) %this)
 		    (js-null))))))))
 
 ;*---------------------------------------------------------------------*/

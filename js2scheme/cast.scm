@@ -104,7 +104,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (cast this::J2SNumber totype)
    (with-access::J2SNumber this (val type)
-      (set! type totype)
+      (when (need-cast? type totype)
+	 (set! type totype))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -334,7 +335,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-cast! this::J2SNew totype fun)
    (with-access::J2SNew this (args clazz)
-      (set! args (map! (lambda (a) (cast (type-cast! a 'any fun) 'any)) args))
+      (set! args (map! cast-any args))
       (set! clazz (cast (type-cast! clazz totype fun) 'any))
       this))
 
