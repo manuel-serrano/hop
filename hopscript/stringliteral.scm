@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Oct  2 19:23:38 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 11:59:50 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1752,7 +1752,7 @@
 (define (js-jsstring-fromcharcode this code %this)
    (let loop ((code code))
       (cond
-	 ((not (fixnum? code))
+	 ((or (not (fixnum? code)) (<fx code 0) (>=fx code 65536))
 	  (loop (uint16->fixnum (js-touint16 code %this))))
 	 ((and (>=fx code 0) (<=fx code 255))
 	  (vector-ref prealloc-strings code))
