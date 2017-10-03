@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Oct  3 07:10:21 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 13:20:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1149,7 +1149,7 @@
 	  ((and (>=elong val (-elong #e0 (bit-lshelong #e1 29)))
 		(<=elong val (bit-lshelong #e1 29)))
 	   (elong->fixnum val))
-	  ((>=fx (config-get conf :long-size 0) 64)
+	  ((=fx (config-get conf :long-size 0) 64)
 	   (cond-expand
 	      ((or bint30 bint32)
 	       `(elong->fixnum ,val))
@@ -1212,7 +1212,7 @@
 		 (else (error "j2s-scheme" "wrong number" (j2s->list this)))))
 	     ((fixnum? val)
 	      (cond
-		 ((>=fx (config-get conf :long-size 0) 64)
+		 ((=fx (config-get conf :long-size 0) 64)
 		  val)
 		 ((<fx val (-fx (bit-lsh 1 29) 1))
 		  val)
@@ -1220,7 +1220,7 @@
 		  (fixnum->flonum val))))
 	     ((elong? val)
 	      (cond
-		 ((>=fx (config-get conf :long-size 0) 64)
+		 ((=fx (config-get conf :long-size 0) 64)
 		  val)
 		 ((<fx val (bit-lshelong #e1 29))
 		  (elong->fixnum val))

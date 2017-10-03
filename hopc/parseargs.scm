@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Oct  3 09:45:50 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 13:19:17 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -295,6 +295,9 @@
 		   (if (file-exists? path)
 		       path
 		       (make-file-name (hop-etc-directory) (hopc-rc-file)))))))
+      ;; long-size
+      (unless (fixnum? (hopc-long-size))
+	 (hopc-long-size-set! (bigloo-config 'elong-size)))
       exprs))
 
 ;*---------------------------------------------------------------------*/
