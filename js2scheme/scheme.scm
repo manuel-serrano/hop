@@ -812,7 +812,7 @@
 		 (else (error "j2s-scheme" "wrong number" (j2s->list this)))))
 	     ((fixnum? val)
 	      (cond
-		 ((>=fx (config-get conf :long-size 0) 64)
+		 ((=fx (config-get conf :long-size 0) 64)
 		  val)
 		 ((<fx val (-fx (bit-lsh 1 29) 1))
 		  val)
@@ -820,7 +820,7 @@
 		  (fixnum->flonum val))))
 	     ((elong? val)
 	      (cond
-		 ((>=fx (config-get conf :long-size 0) 64)
+		 ((=fx (config-get conf :long-size 0) 64)
 		  val)
 		 ((<fx val (bit-lshelong #e1 29))
 		  (elong->fixnum val))

@@ -1885,7 +1885,7 @@
 (define (js-jsstring-fromcharcode this code %this)
    (let loop ((code code))
       (cond
-	 ((not (fixnum? code))
+	 ((or (not (fixnum? code)) (<fx code 0) (>=fx code 65536))
 	  (loop (uint16->fixnum (js-touint16 code %this))))
 	 ((and (>=fx code 0) (<=fx code 255))
 	  (vector-ref prealloc-strings code))
