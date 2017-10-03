@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Thu Sep 28 10:27:18 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 16:07:56 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -262,7 +262,7 @@
 	  ((and (>=elong val (-elong #e0 (bit-lshelong #e1 29)))
 		(<=elong val (bit-lshelong #e1 29)))
 	   (elong->fixnum val))
-	  ((>=fx (config-get conf :long-size 0) 64)
+	  ((=fx (config-get conf :long-size 0) 64)
 	   (cond-expand
 	      ((or bint30 bint32)
 	       `(elong->fixnum ,val))
@@ -275,7 +275,7 @@
 	  ((and (>=llong val (-llong #l0 (bit-lshllong #l1 29)))
 		(<=llong val (bit-lshllong #l1 29)))
 	   (llong->fixnum val))
-	  ((and (>=fx (config-get conf :long-size 0) 64)
+	  ((and (=fx (config-get conf :long-size 0) 64)
 		(>=llong val (-llong #l0 (bit-lshllong #l1 53)))
 		(<=llong val (bit-lshllong #l1 53)))
 	   (cond-expand
@@ -293,7 +293,7 @@
 	   val)
 	  ((or bint61 62 64)
 	   (cond
-	      ((and (>=fx (config-get conf :long-size 0) 64)
+	      ((and (=fx (config-get conf :long-size 0) 64)
 		    (<fx val (bit-lsh 1 53))
 		    (>fx val (negfx (bit-lsh 1 53))))
 	       val)
@@ -304,7 +304,7 @@
 	       (fixnum->flonum val))))
 	  (else
 	   (error "j2s-scheme" "unknown integer size"
-	      (bigloo-config 'elong-size)))))
+	      (config-get conf :long-size (bigloo-config 'elong-size))))))
       (else val)))
 
 ;*---------------------------------------------------------------------*/

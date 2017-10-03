@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Sep  9 11:47:49 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 11:53:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -307,10 +307,12 @@
 (define-inline (js-new-fast %this ctor::JsFunction __proto__)
    (with-access::JsFunction ctor (constrsize constrmap prototype)
       ;; manually UPDATE-CTOR-CMAP! inline to avoid loading twice ctor fields
-      (unless (eq? __proto__ prototype)
-	 (when (isa? __proto__ JsObject)
-	    (set! prototype __proto__)
-	    (set! constrmap (instantiate::JsConstructMap (ctor ctor)))))
+      (cond
+	 ((and (not (eq? __proto__ prototype)) (isa? __proto__ JsObject))
+	  (set! prototype __proto__)
+	  (set! constrmap (instantiate::JsConstructMap (ctor ctor))))
+	 ((not constrmap)
+	  (set! constrmap (instantiate::JsConstructMap (ctor ctor)))))
       (js-make-jsobject constrsize constrmap prototype)))
 
 ;*---------------------------------------------------------------------*/
@@ -318,10 +320,12 @@
 ;*---------------------------------------------------------------------*/
 (define (update-ctor-cmap! ctor::JsFunction __proto__)
    (with-access::JsFunction ctor (constrsize constrmap prototype name)
-      (unless (eq? __proto__ prototype)
-	 (when (isa? __proto__ JsObject)
-	    (set! prototype __proto__)
-	    (set! constrmap (instantiate::JsConstructMap (ctor ctor)))))))
+      (cond
+	 ((and (not (eq? __proto__ prototype)) (isa? __proto__ JsObject))
+	  (set! prototype __proto__)
+	  (set! constrmap (instantiate::JsConstructMap (ctor ctor))))
+	 ((not constrmap)
+	  (set! constrmap (instantiate::JsConstructMap (ctor ctor)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
@@ -330,6 +334,8 @@
    (let ((__proto__ (get-prototypeof (js-get ctor 'prototype %this) %this)))
       (update-ctor-cmap! ctor __proto__)
       (with-access::JsFunction ctor (constrsize constrmap)
+	 (unless constrmap
+	    (set! constrmap (instantiate::JsConstructMap (ctor ctor))))
 	 (js-make-jsobject constrsize constrmap __proto__))))
 
 ;*---------------------------------------------------------------------*/

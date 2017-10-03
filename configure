@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Aug 23 09:04:14 2017 (serrano)                */
+#*    Last change :  Tue Oct  3 10:17:04 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -64,6 +64,8 @@ bglcloselibs="web multimedia"
 bglextracloselibs=
 
 closure=
+
+hostbigloo=bigloo
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
@@ -210,6 +212,9 @@ while : ; do
       
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --host-bigloo=*)
+      hostbigloo="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bigloo-pcre=*)
       bglpcre="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -413,6 +418,7 @@ while : ; do
       echo "   --hop=comp................. The Hop binary ($hop)" >&2;
       echo "   --hopc=comp................ The Hopc binary ($hopc)" >&2;
       echo "   --bigloo=comp.............. The Bigloo compiler ($bigloo)" >&2;
+      echo "   --host-bigloo=comp......... The host Bigloo compiler ($hostbigloo)" >&2;
       echo "   --bigloobindir=path........ The Bigloo bin-dir path" >&2;
       echo "   --bigloolibdir=path........ The Bigloo lib-dir path" >&2;
       echo "   --bigloo-prce=yes|no....... Enable/disable libunistring" >&2;
@@ -1069,6 +1075,7 @@ cat $mkmf.in \
           -e "s|@DEVEL@|$devel|" \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@HOSTBIGLOO@|$hostbigloo|" \
           -e "s|@BIGLOOVERSION@|$bglversion|" \
           -e "s|@HOP@|$mkmfhop|" \
           -e "s|@HOPC@|$mkmfhopc|" \
@@ -1170,6 +1177,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
             -e "s|@BUILDID@|$buildid|" \
             -e "s|@BUILDTAG@|$buildtag|" \
             -e "s|@BIGLOO@|$bigloo|" \
+            -e "s|@HOSTBIGLOO@|$hostbigloo|" \
       >> $configure
 done
 
@@ -1513,6 +1521,7 @@ for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
             -e "s|@DEVEL@|$devel|" \
             -e "s|@DEBUG@|$debug|" \
             -e "s|@BIGLOO@|$bigloo|" \
+            -e "s|@HOSTBIGLOO@|$hostbigloo|" \
             -e "s|@BACKEND@|$backend|" \
             -e "s|@LINK@|$link|" \
       > $p

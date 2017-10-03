@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/object.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/object.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Sep 30 07:36:06 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 15:35:30 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -543,6 +543,8 @@
 	       ((or (eq? value (js-null)) (eq? value (js-undefined)))
 		;; 2
 		(with-access::JsFunction f (constrmap constrsize)
+		   (unless constrmap
+		      (set! constrmap (instantiate::JsConstructMap (ctor f))))
 		   (js-make-jsobject constrsize constrmap %prototype)))
 	       ((isa? value JsObject)
 		;; 1.a

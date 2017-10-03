@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Sep 28 17:01:28 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 15:50:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -689,7 +689,7 @@
    (with-access::J2SThis this (loc type decl)
       (let ((id (j2s-decl-scheme-id decl)))
 	 (if (and (j2s-let? decl) (not (j2s-let-opt? decl)))
-	     `(js-let-ref this id ',loc %this)
+	     `(js-let-ref this ,id ',loc %this)
 	     id))))
 
 ;*---------------------------------------------------------------------*/

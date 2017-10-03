@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Oct  2 20:44:40 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 15:35:11 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -256,7 +256,9 @@
 		(prototype (with-access::JsGlobalObject %this (__proto__)
 			      __proto__))))))
    
-   (with-access::JsGlobalObject %this (js-function js-object)
+   (with-access::JsGlobalObject %this (js-function js-object
+					 js-function-cmap
+					 js-function-prototype-cmap)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 (let* ((constr (or construct list))
 		(fname (if (symbol? name) (symbol->string! name) name))
@@ -276,17 +278,16 @@
 			(constrsize constrsize)
 			(maxconstrsize maxconstrsize)
 			(construct constr)
-			(cmap (instantiate::JsConstructMap))
 			(prototype (if (isa? prototype JsObject)
 				       prototype
 				       (with-access::JsGlobalObject %this (__proto__)
 					  __proto__)))
 			(constructor constructor))))
-	    
-	    (when (or constructor construct)
-	       (with-access::JsFunction fun (constrmap)
-		  (set! constrmap (instantiate::JsConstructMap (ctor fun)))))
-	    
+
+;* 	    (when (or constructor construct)                           */
+;* 	       (with-access::JsFunction fun (constrmap)                */
+;* 		  (set! constrmap (instantiate::JsConstructMap (ctor fun))))) */
+
 	    (cond
 	       (prototype
 		(when (isa? prototype JsObject)
@@ -301,7 +302,6 @@
 	       (construct
 		(with-access::JsObject %this ((js-object-prototype __proto__))
 		   (let ((prototype (instantiate::JsObject
-				       (cmap (instantiate::JsConstructMap))
 				       (__proto__ js-object-prototype))))
 		      (js-bind! %this prototype 'constructor
 			 :value fun
@@ -309,32 +309,27 @@
 			 :hidden-class #t)
 		      (js-bind! %this fun 'prototype
 			 :value prototype
-			 :enumerable #f :configurable #f :writable #t
+			 :enumerable #f :writable #t :configurable #f 
 			 :hidden-class #t)))))
 	    (js-bind! %this fun 'length
 	       :value length
-	       :enumerable #f :configurable #f :writable #f
-	       :hidden-class #f)
+	       :enumerable #f :configurable #f :writable #f)
 	    (unless (or (eq? strict 'normal) noarguments)
 	       (js-bind! %this fun 'arguments
 		  :get thrower-get :set thrower-set
-		  :enumerable #f :configurable #f
-		  :hidden-class #t)
+		  :enumerable #f :configurable #f)
 	       (js-bind! %this fun 'caller
 		  :get thrower-get :set thrower-set
-		  :enumerable #f :configurable #f
-		  :hidden-class #t))
+		  :enumerable #f :configurable #f))
 	    (js-bind! %this fun 'name
 	       :value (js-string->jsstring fname)
 	       :writable #f
-	       :enumerable #f :configurable #f
-	       :hidden-class #f)
+	       :enumerable #f :configurable #f)
 	    ;; source is an hop extension
 	    (js-bind! %this fun 'source
 	       :get (get-source)
 	       :writable #f
-	       :enumerable #f :configurable #f
-	       :hidden-class #f)
+	       :enumerable #f :configurable #f)
 	    fun))))
 
 ;*---------------------------------------------------------------------*/
