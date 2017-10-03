@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Oct  3 15:35:11 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 21:15:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -90,6 +90,11 @@
 (define thrower-get #f)
 (define thrower-set #f)
 
+(define strict-arguments-property #f)
+(define strict-caller-property #f)
+
+(define length-properties '#())
+
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -141,12 +146,43 @@
 	    :construct (js-function-construct %this)
 	    :noarguments #t))
       ;; throwers
-      (let ((thrower (js-make-function %this
-			(lambda (o)
-			   (js-raise-type-error %this "[[ThrowTypeError]] ~a" o))
-			1 'thrower :noarguments #t)))
-	 (set! thrower-get thrower)
-	 (set! thrower-set thrower))
+      (let ((throw1 (lambda (o)
+		       (js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
+	    (throw2 (lambda (o v)
+		       (js-raise-type-error %this "[[ThrowTypeError]] ~a" o))))
+	 (set! thrower-get (js-make-function %this throw1
+			      1 'thrower :noarguments #t))
+	 (set! thrower-set (js-make-function %this throw2
+			      2 'thrower :noarguments #t))
+	 (set! strict-arguments-property
+	    (instantiate::JsAccessorDescriptor
+	       (name 'arguments)
+	       (get thrower-get)
+	       (set thrower-set)
+	       (%get throw1)
+	       (%set throw2)
+	       (enumerable #f)
+	       (configurable #f)))
+	 (set! strict-caller-property
+	    (instantiate::JsAccessorDescriptor
+	       (name 'caller)
+	       (get thrower-get)
+	       (set thrower-set)
+	       (%get throw1)
+	       (%set throw2)
+	       (enumerable #f)
+	       (configurable #f))))
+      ;; length properties
+      (set! length-properties
+	 (list->vector
+	    (map! (lambda (l)
+		     (instantiate::JsValueDescriptor
+			(name 'length)
+			(enumerable #f)
+			(configurable #f)
+			(writable #f)
+			(value l)))
+	       (iota 0 8))))
       ;; prototype properties
       (init-builtin-function-prototype! %this js-function js-function-prototype)
       ;; bind Function in the global object
@@ -282,7 +318,8 @@
 				       prototype
 				       (with-access::JsGlobalObject %this (__proto__)
 					  __proto__)))
-			(constructor constructor))))
+			(constructor constructor)))
+		(props '()))
 
 ;* 	    (when (or constructor construct)                           */
 ;* 	       (with-access::JsFunction fun (constrmap)                */
@@ -295,10 +332,19 @@
 		      :value fun
 		      :configurable #t :writable #t :enumerable #f
 		      :hidden-class #t))
-		(js-bind! %this fun 'prototype
-		   :value prototype
-		   :enumerable #f :configurable #f :writable #f
-		   :hidden-class #t))
+;* 		(js-bind! %this fun 'prototype                         */
+;* 		   :value prototype                                    */
+;* 		   :enumerable #f :configurable #f :writable #f        */
+;* 		   :hidden-class #t)                                   */
+		(set! props
+		   (cons
+		      (instantiate::JsValueDescriptor
+			 (name 'prototype)
+			 (enumerable #f)
+			 (configurable #f)
+			 (writable #f)
+			 (value prototype))
+		      props)))
 	       (construct
 		(with-access::JsObject %this ((js-object-prototype __proto__))
 		   (let ((prototype (instantiate::JsObject
@@ -307,29 +353,69 @@
 			 :value fun
 			 :configurable #t :writable #t :enumerable #f
 			 :hidden-class #t)
-		      (js-bind! %this fun 'prototype
-			 :value prototype
-			 :enumerable #f :writable #t :configurable #f 
-			 :hidden-class #t)))))
-	    (js-bind! %this fun 'length
-	       :value length
-	       :enumerable #f :configurable #f :writable #f)
-	    (unless (or (eq? strict 'normal) noarguments)
-	       (js-bind! %this fun 'arguments
-		  :get thrower-get :set thrower-set
-		  :enumerable #f :configurable #f)
-	       (js-bind! %this fun 'caller
-		  :get thrower-get :set thrower-set
-		  :enumerable #f :configurable #f))
-	    (js-bind! %this fun 'name
-	       :value (js-string->jsstring fname)
-	       :writable #f
-	       :enumerable #f :configurable #f)
+;* 		      (js-bind! %this fun 'prototype                   */
+;* 			 :value prototype                              */
+;* 			 :enumerable #f :writable #t :configurable #f  */
+;* 			 :hidden-class #t)                             */
+		      (set! props
+			 (cons
+			    (instantiate::JsValueDescriptor
+			       (name 'prototype)
+			       (enumerable #f)
+			       (configurable #f)
+			       (writable #t)
+			       (value prototype))
+			    props))))))
+;* 	    (js-bind! %this fun 'length                                */
+;* 	       :value length                                           */
+;* 	       :enumerable #f :configurable #f :writable #f)           */
+	    (set! props
+	       (cons
+		  (if (and (>=fx length 0)
+			   (<fx length (vector-length length-properties)))
+		      (vector-ref length-properties length)
+		      (instantiate::JsValueDescriptor
+			 (name 'length)
+			 (enumerable #f)
+			 (configurable #f)
+			 (writable #f)
+			 (value length)))
+		  props))
+	    (unless (eq? strict 'normal)
+;* 	       (js-bind! %this fun 'arguments                          */
+;* 		  :get thrower-get :set thrower-set                    */
+;* 		  :enumerable #f :configurable #f)                     */
+;* 	       (js-bind! %this fun 'caller                             */
+;* 		  :get thrower-get :set thrower-set                    */
+;* 		  :enumerable #f :configurable #f)                     */
+	       (set! props
+		  (cons* strict-arguments-property strict-caller-property
+		     props)))
+;* 	    (js-bind! %this fun 'name                                  */
+;* 	       :value (js-string->jsstring fname)                      */
+;* 	       :writable #f :enumerable #f :configurable #f)           */
+	    (set! props
+	       (cons (instantiate::JsValueDescriptor
+			(name 'name)
+			(writable #f)
+			(enumerable #f)
+			(configurable #f)
+			(value (js-string->jsstring fname)))
+		  props))
 	    ;; source is an hop extension
-	    (js-bind! %this fun 'source
-	       :get (get-source)
-	       :writable #f
-	       :enumerable #f :configurable #f)
+;* 	    (js-bind! %this fun 'source                                */
+;* 	       :get (get-source)                                       */
+;* 	       :writable #f :enumerable #f :configurable #f)           */
+	    (set! props
+	       (cons (instantiate::JsValueDescriptor
+			(name 'source)
+			(writable #f)
+			(enumerable #f)
+			(configurable #f)
+			(value (get-source)))
+		  props))
+	    (with-access::JsFunction fun (properties)
+	       (set! properties props))
 	    fun))))
 
 ;*---------------------------------------------------------------------*/
