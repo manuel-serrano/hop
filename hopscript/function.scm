@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Oct  3 21:15:44 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 21:37:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -146,14 +146,14 @@
 	    :construct (js-function-construct %this)
 	    :noarguments #t))
       ;; throwers
-      (let ((throw1 (lambda (o)
-		       (js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
-	    (throw2 (lambda (o v)
-		       (js-raise-type-error %this "[[ThrowTypeError]] ~a" o))))
-	 (set! thrower-get (js-make-function %this throw1
-			      1 'thrower :noarguments #t))
-	 (set! thrower-set (js-make-function %this throw2
-			      2 'thrower :noarguments #t))
+      (let* ((throw1 (lambda (o)
+			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
+	     (throw2 (lambda (o v)
+			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
+	     (thrower (js-make-function %this throw1
+			 1 'thrower :noarguments #t)))
+	 (set! thrower-get thrower)
+	 (set! thrower-set thrower)
 	 (set! strict-arguments-property
 	    (instantiate::JsAccessorDescriptor
 	       (name 'arguments)
