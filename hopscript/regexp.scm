@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Oct  2 19:55:51 2017 (serrano)                */
+;*    Last change :  Wed Oct  4 15:33:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -100,6 +100,10 @@
 	 
 	 (set! js-regexp-prototype
 	    (instantiate::JsRegExp
+	       (lastindex (instantiate::JsValueDescriptor
+			     (name 'lastIndex)
+			     (writable #t)
+			     (value 0)))
 	       (rx (pregexp ""))
 	       (__proto__ __proto__)))
 	 
@@ -346,6 +350,7 @@
 				     'JAVASCRIPT_COMPAT
 				     'UTF8
 				     (when (fixnum? m) 'MULTILINE)))
+		     (lastindex lastindex)
 		     (properties (list lastindex global icase mline source)))))))))
        
 ;*---------------------------------------------------------------------*/
@@ -443,92 +448,97 @@
 (define (regexp-prototype-exec %this::JsGlobalObject this string::obj)
    (if (not (isa? this JsRegExp))
        (js-raise-type-error %this "Not a RegExp ~s" this)
-       (with-access::JsRegExp this (rx)
-	  (let* ((s (js-tostring string %this))
-		 (len (string-length s))
-		 (lastindex (js-get this 'lastIndex %this))
-		 (i (js-tointeger lastindex %this)) 
-		 (global (js-get this 'global %this)))
-	     (unless global (set! i 0))
-	     (let loop ()
-		(cond
-		   ((or (<fx i 0) (>fx i len))
-		    (js-object-put-name/cache! this 'lastIndex 0
-		       #f (js-pcache-ref %pcache 0) %this)
-		    (js-null))
-		   ((pregexp-match-positions rx s i)
-		    =>
-		    (lambda (r)
-		       ;; 10
-		       (let ((e (cdar r)))
-			  ;; 11
-			  (when global
-			     (js-object-put-name/cache! this 'lastIndex e
-				#f (js-pcache-ref %pcache 1) %this))
-			  (let* ((n (length r))
-				 (a (with-access::JsGlobalObject %this (js-array)
-				       (js-new %this js-array n)))
-				 (matchindex (caar r)))
-			     ;; 15
-			     (js-define-own-property a 'index
-				(instantiate::JsValueDescriptor
-				   (name 'index)
-				   (value matchindex)
-				   (writable #t)
-				   (enumerable #t)
-				   (configurable #t))
-				#t %this)
-			     ;; 16
-			     (js-define-own-property a 'input
-				(instantiate::JsValueDescriptor
-				   (name 'input)
-				   (value (js-string->jsstring s))
-				   (writable #t)
-				   (enumerable #t)
-				   (configurable #t))
-				#t %this)
-			     ;; 17
-			     (js-define-own-property a 'length
-				(instantiate::JsValueDescriptor
-				   (name 'length)
-				   (value n)
-				   (writable #t)
-				   (enumerable #f)
-				   (configurable #f))
-				#t %this)
-			     ;; 19
-			     (js-define-own-property a 0
-				(instantiate::JsValueDescriptor
-				   (name (js-toname 0 %this))
-				   (value (js-string->jsstring
-					     (substring s (caar r) (cdar r))))
-				   (writable #f)
-				   (enumerable #t)
-				   (configurable #t))
-				#t %this)
-			     ;; 20
-			     (let loop ((c (cdr r))
-					(i 1))
-				(when (pair? c)
-				   (let* ((r (car c))
-					  (v (if (pair? r)
-						 (js-string->jsstring
-						    (substring s (car r) (cdr r)))
-						 (js-undefined))))
-				      (js-define-own-property a i
-					 (instantiate::JsValueDescriptor
-					    (name (js-toname i %this))
-					    (value v)
-					    (writable #f)
-					    (enumerable #t)
-					    (configurable #t))
-					 #t %this))
-				   (loop (cdr c) (+fx i 1))))
-			     a))))
-		   (else
-		    (js-object-put-name/cache! this 'lastIndex 0
-		       #f (js-pcache-ref %pcache 2) %this)
-		    (js-null))))))))
+       (with-access::JsRegExp this (rx lastindex)
+	  (with-access::JsValueDescriptor lastindex ((lastindex value))
+	     (let* ((s (js-tostring string %this))
+		    (len (string-length s))
+;* 		 (lastindex (js-get this 'lastIndex %this))            */
+		    (i (js-tointeger lastindex %this)) 
+		    (global (js-get this 'global %this)))
+		(unless global (set! i 0))
+		(let loop ()
+		   (cond
+		      ((or (<fx i 0) (>fx i len))
+		       (set! lastindex 0)
+;* 		    (js-object-put-name/cache! this 'lastIndex 0       */
+;* 		       #f (js-pcache-ref %pcache 0) %this)             */
+		       (js-null))
+		      ((pregexp-match-positions rx s i)
+		       =>
+		       (lambda (r)
+			  ;; 10
+			  (let ((e (cdar r)))
+			     ;; 11
+			     (when global
+				(set! lastindex e)
+;* 			     (js-object-put-name/cache! this 'lastIndex e */
+;* 				#f (js-pcache-ref %pcache 1) %this)    */
+				)
+			     (let* ((n (length r))
+				    (a (with-access::JsGlobalObject %this (js-array)
+					  (js-new %this js-array n)))
+				    (matchindex (caar r)))
+				;; 15
+				(js-define-own-property a 'index
+				   (instantiate::JsValueDescriptor
+				      (name 'index)
+				      (value matchindex)
+				      (writable #t)
+				      (enumerable #t)
+				      (configurable #t))
+				   #t %this)
+				;; 16
+				(js-define-own-property a 'input
+				   (instantiate::JsValueDescriptor
+				      (name 'input)
+				      (value (js-string->jsstring s))
+				      (writable #t)
+				      (enumerable #t)
+				      (configurable #t))
+				   #t %this)
+				;; 17
+				(js-define-own-property a 'length
+				   (instantiate::JsValueDescriptor
+				      (name 'length)
+				      (value n)
+				      (writable #t)
+				      (enumerable #f)
+				      (configurable #f))
+				   #t %this)
+				;; 19
+				(js-define-own-property a 0
+				   (instantiate::JsValueDescriptor
+				      (name (js-toname 0 %this))
+				      (value (js-string->jsstring
+						(substring s (caar r) (cdar r))))
+				      (writable #f)
+				      (enumerable #t)
+				      (configurable #t))
+				   #t %this)
+				;; 20
+				(let loop ((c (cdr r))
+					   (i 1))
+				   (when (pair? c)
+				      (let* ((r (car c))
+					     (v (if (pair? r)
+						    (js-string->jsstring
+						       (substring s (car r) (cdr r)))
+						    (js-undefined))))
+					 (js-define-own-property a i
+					    (instantiate::JsValueDescriptor
+					       (name (js-toname i %this))
+					       (value v)
+					       (writable #f)
+					       (enumerable #t)
+					       (configurable #t))
+					    #t %this))
+				      (loop (cdr c) (+fx i 1))))
+				a))))
+		      (else
+		       (set! lastindex 0)
+;* 		    (js-object-put-name/cache! this 'lastIndex 0       */
+;* 		       #f (js-pcache-ref %pcache 2) %this)             */
+		       (js-null)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-regexp-prototype-test ...                                   */

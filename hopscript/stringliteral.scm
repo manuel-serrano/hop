@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Oct  2 20:04:45 2017 (serrano)                */
+;*    Last change :  Wed Oct  4 15:20:20 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1676,70 +1676,75 @@
 				(substring str
 				   (+fx i (js-jsstring-lengthfx (js-get res (js-toname 0 %this) %this))))))))))))
 	    (else
-	     (let* ((previousLastIndex 0)
-		    (exec (js-get (js-get js-regexp 'prototype %this)
-			     'exec %this)))
-		(js-object-put-name/cache! searchvalue 'lastIndex 0
-		   #f (js-pcache-ref %pcache 0) %this)
-		(let loop ((n 0)
-			   (ms '()))
-		   (let ((result (js-call1 %this exec searchvalue string)))
-		      (if (eq? result (js-null))
-			  (cond
-			     ((null? ms)
-			      this)
-			     ((isa? replacevalue JsFunction)
-			      (let loop ((matches (reverse! ms))
-					 (res this)
-					 (offset 0))
-				 (if (null? matches)
-				     res
-				     (let* ((m (car matches))
-					    (i (js-get m 'index %this))
-					    (l (js-jsstring-lengthfx (js-get m (js-toname 0 %this) %this)))
-					    (v (js-tostring
-						  (js-apply %this replacevalue
-						     (js-undefined)
-						     (cons
-							(js-get m (js-toname 0 %this) %this)
-							(append (matches->string-list m)
-							   (list i string))))
-						  %this)))
-					(let ((str (js-jsstring->string res)))
-					   (loop (cdr matches)
-					      (js-stringlist->jsstring
-						 (list (substring str 0 (+fx offset i))
-						    v
-						    (substring str (+fx offset (+fx i l)))))
-					      (+fx offset (-fx (string-length v) l))))))))
-			     (else
-			      (let ((newstring (js-tostring replacevalue %this))
-				    (str (js-jsstring->string string)))
-				 (let loop ((matches (reverse! ms))
-					    (res this)
-					    (offset 0))
-				    (if (null? matches)
-					res
-					(let* ((m (car matches))
-					       (i (js-get m 'index %this))
-					       (l (js-jsstring-lengthfx (js-get m (js-toname 0 %this) %this)))
-					       (sres (js-jsstring->string res))
-					       (v (apply utf8-string-append* (table22 newstring m str ""))))
-					   (loop (cdr matches)
-					      (js-stringlist->jsstring
-						 (list (substring sres 0 (+fx offset i))
-						    v
-						    (substring sres (+fx offset (+fx i l)))))
-					      (+fx offset (-fx (string-length v) l)))))))))
-			  (let ((thisIndex (js-get searchvalue 'lastIndex %this)))
-			     (if (= thisIndex previousLastIndex)
-				 (begin
-				    (js-object-put-name/cache! searchvalue 'lastIndex
-				       (+ thisIndex 1) #f (js-pcache-ref %pcache 1) %this)
-				    (set! previousLastIndex (+ 1 thisIndex)))
-				 (set! previousLastIndex thisIndex))
-			     (let ((matchStr (js-get result 0 %this)))
-				(loop (+fx 1 n) (cons result ms)))))))))))))
+	     (with-access::JsRegExp searchvalue (lastindex)
+		(with-access::JsValueDescriptor lastindex ((lastindex value))
+		   (let* ((previousLastIndex 0)
+			  (exec (js-get (js-get js-regexp 'prototype %this)
+				   'exec %this)))
+		      (set! lastindex 0)
+;* 		   (js-object-put-name/cache! searchvalue 'lastIndex 0 */
+;* 		      #f (js-pcache-ref %pcache 0) %this)              */
+		      (let loop ((n 0)
+				 (ms '()))
+			 (let ((result (js-call1 %this exec searchvalue string)))
+			    (if (eq? result (js-null))
+				(cond
+				   ((null? ms)
+				    this)
+				   ((isa? replacevalue JsFunction)
+				    (let loop ((matches (reverse! ms))
+					       (res this)
+					       (offset 0))
+				       (if (null? matches)
+					   res
+					   (let* ((m (car matches))
+						  (i (js-get m 'index %this))
+						  (l (js-jsstring-lengthfx (js-get m (js-toname 0 %this) %this)))
+						  (v (js-tostring
+							(js-apply %this replacevalue
+							   (js-undefined)
+							   (cons
+							      (js-get m (js-toname 0 %this) %this)
+							      (append (matches->string-list m)
+								 (list i string))))
+							%this)))
+					      (let ((str (js-jsstring->string res)))
+						 (loop (cdr matches)
+						    (js-stringlist->jsstring
+						       (list (substring str 0 (+fx offset i))
+							  v
+							  (substring str (+fx offset (+fx i l)))))
+						    (+fx offset (-fx (string-length v) l))))))))
+				   (else
+				    (let ((newstring (js-tostring replacevalue %this))
+					  (str (js-jsstring->string string)))
+				       (let loop ((matches (reverse! ms))
+						  (res this)
+						  (offset 0))
+					  (if (null? matches)
+					      res
+					      (let* ((m (car matches))
+						     (i (js-get m 'index %this))
+						     (l (js-jsstring-lengthfx (js-get m (js-toname 0 %this) %this)))
+						     (sres (js-jsstring->string res))
+						     (v (apply utf8-string-append* (table22 newstring m str ""))))
+						 (loop (cdr matches)
+						    (js-stringlist->jsstring
+						       (list (substring sres 0 (+fx offset i))
+							  v
+							  (substring sres (+fx offset (+fx i l)))))
+						    (+fx offset (-fx (string-length v) l)))))))))
+;* 				(let ((thisIndex (js-get searchvalue 'lastIndex %this))) */
+				(let ((thisIndex lastindex))
+				   (if (= thisIndex previousLastIndex)
+				       (begin
+					  (set! lastindex (+ thisIndex 1))
+;* 					  (js-object-put-name/cache! searchvalue 'lastIndex */
+;* 					     (+ thisIndex 1) #f (js-pcache-ref %pcache 1) %this) */
+					  (set! previousLastIndex (+ 1 thisIndex)))
+				       (set! previousLastIndex thisIndex))
+				   (let ((matchStr (js-get result 0 %this)))
+				      (loop (+fx 1 n) (cons result ms)))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-replace ...                                    */
