@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sat Apr 15 07:00:09 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 13:17:29 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -46,8 +46,8 @@
 	    (hopc-access-file::obj)
 	    (hopc-access-file-set! ::obj)
 
-	    (hopc-long-size::int)
-	    (hopc-long-size-set! ::int)
+	    (hopc-long-size::obj)
+	    (hopc-long-size-set! ::obj)
 
 	    (hopc-uint32::bool)
 	    (hopc-uint32-set! ::bool)
@@ -135,7 +135,7 @@
 ;*    hopc-bigloo-options ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-options
-   `("-lib-dir" ,(make-file-path (hop-lib-directory) "hop" (hop-version))))
+   `("-L" ,(make-file-path (hop-lib-directory) "hop" (hop-version))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-bigloo-O-options ...                                        */
@@ -195,7 +195,7 @@
 ;*    hopc-long-size ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-long-size
-   (bigloo-config 'elong-size))
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-uint32 ...                                                  */

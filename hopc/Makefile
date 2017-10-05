@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.0.x/hopc/Makefile                     */
+#*    serrano/prgm/project/hop/3.1.x/hopc/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  serrano                                           */
 #*    Creation    :  Fri Feb 18 17:48:08 2000                          */
-#*    Last change :  Mon Nov 30 18:15:13 2015 (serrano)                */
+#*    Last change :  Tue Oct  3 09:18:18 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile that builds Hopc                                    */
 #*=====================================================================*/
@@ -24,7 +24,7 @@ EXEC = hopc
 #*---------------------------------------------------------------------*/
 #*    Sources    					               */
 #*---------------------------------------------------------------------*/
-MODULES = hopc_param parseargs main driver
+MODULES = hopc_param parseargs main driver libdir
 
 INCLUDES =  
 

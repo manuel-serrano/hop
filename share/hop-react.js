@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Fri Jan 27 13:07:33 2017 (serrano)                */
+/*    Last change :  Wed Sep 27 19:00:14 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
@@ -84,7 +84,7 @@ hop.reactProxy = function( val ) {
 
    function getHandler( target, prop ) {
       // name mangling for avoid confusion with existing properties
-      let nprop = "%" + prop;
+      var nprop = "%" + prop;
       
       if( hop.reactInCollect ) {
 	 if( !(nprop in reactors) ) { reactors[ nprop ] = [] }
@@ -98,7 +98,7 @@ hop.reactProxy = function( val ) {
    };
    
    function setHandler( obj, prop, value ) {
-      let nprop = "%" + prop;
+      var nprop = "%" + prop;
       
       obj[ prop ] = value;
 

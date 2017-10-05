@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Sep 26 15:05:47 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 13:20:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1149,7 +1149,7 @@
 	  ((and (>=elong val (-elong #e0 (bit-lshelong #e1 29)))
 		(<=elong val (bit-lshelong #e1 29)))
 	   (elong->fixnum val))
-	  ((>=fx (config-get conf :long-size 0) 64)
+	  ((=fx (config-get conf :long-size 0) 64)
 	   (cond-expand
 	      ((or bint30 bint32)
 	       `(elong->fixnum ,val))
@@ -1162,7 +1162,7 @@
 	  ((and (>=llong val (-llong #l0 (bit-lshllong #l1 29)))
 		(<=llong val (bit-lshllong #l1 29)))
 	   (llong->fixnum val))
-	  ((and (>=fx (config-get conf :long-size 0) 64)
+	  ((and (=fx (config-get conf :long-size 0) 64)
 		(>=llong val (-llong #l0 (bit-lshllong #l1 53)))
 		(<=llong val (bit-lshllong #l1 53)))
 	   (cond-expand
@@ -1180,7 +1180,7 @@
 	   val)
 	  ((or bint61 62 64)
 	   (cond
-	      ((and (>=fx (config-get conf :long-size 0) 64)
+	      ((and (=fx (config-get conf :long-size 0) 64)
 		    (<fx val (bit-lsh 1 53))
 		    (>fx val (negfx (bit-lsh 1 53))))
 	       val)
@@ -1191,7 +1191,7 @@
 	       (fixnum->flonum val))))
 	  (else
 	   (error "j2s-scheme" "unknown integer size"
-	      (bigloo-config 'elong-size)))))
+	      (config-get conf :long-size (bigloo-config 'elong-size))))))
       (else val)))
    
 ;*---------------------------------------------------------------------*/
@@ -1212,7 +1212,7 @@
 		 (else (error "j2s-scheme" "wrong number" (j2s->list this)))))
 	     ((fixnum? val)
 	      (cond
-		 ((>=fx (config-get conf :long-size 0) 64)
+		 ((=fx (config-get conf :long-size 0) 64)
 		  val)
 		 ((<fx val (-fx (bit-lsh 1 29) 1))
 		  val)
@@ -1220,7 +1220,7 @@
 		  (fixnum->flonum val))))
 	     ((elong? val)
 	      (cond
-		 ((>=fx (config-get conf :long-size 0) 64)
+		 ((=fx (config-get conf :long-size 0) 64)
 		  val)
 		 ((<fx val (bit-lshelong #e1 29))
 		  (elong->fixnum val))
@@ -2706,10 +2706,10 @@
 		((eq? (j2s-type lhs) 'string)
 		 `(js-jsstring-append
 		     ,left
-		     (js-tostring (js-toprimitive ,right 'any %this) %this)))
+		     (js-tojsstring (js-toprimitive ,right 'any %this) %this)))
 		(else
 		 `(js-jsstring-append
-		     (js-tostring (js-toprimitive ,left 'any %this) %this)
+		     (js-tojsstring (js-toprimitive ,left 'any %this) %this)
 		     ,right))))))
       ((or (memq 'integer hint) (type-integer? type))
        (binop lhs rhs mode return conf hint 'integer

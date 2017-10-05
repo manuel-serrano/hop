@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Aug 23 09:04:14 2017 (serrano)                */
+#*    Last change :  Thu Oct  5 18:09:10 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -64,6 +64,8 @@ bglcloselibs="web multimedia"
 bglextracloselibs=
 
 closure=
+
+hostbigloo=bigloo
 
 #*---------------------------------------------------------------------*/
 #*    Private variables                                                */
@@ -210,6 +212,9 @@ while : ; do
       
     --bigloo=*)
       bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --host-bigloo=*)
+      hostbigloo="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bigloo-pcre=*)
       bglpcre="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -413,6 +418,7 @@ while : ; do
       echo "   --hop=comp................. The Hop binary ($hop)" >&2;
       echo "   --hopc=comp................ The Hopc binary ($hopc)" >&2;
       echo "   --bigloo=comp.............. The Bigloo compiler ($bigloo)" >&2;
+      echo "   --host-bigloo=comp......... The host Bigloo compiler ($hostbigloo)" >&2;
       echo "   --bigloobindir=path........ The Bigloo bin-dir path" >&2;
       echo "   --bigloolibdir=path........ The Bigloo lib-dir path" >&2;
       echo "   --bigloo-prce=yes|no....... Enable/disable libunistring" >&2;
@@ -572,7 +578,7 @@ else
 fi
 
 if [ "$cc " = " " ]; then
-  cc=`$bigloo $bcflags -eval '(begin (print *cc*) (exit 0))'`
+  cc=`$bigloo -lib-dir $bigloolibdir $bcflags -eval '(begin (print *cc*) (exit 0))'`
 else  
   bcflags="$bcflags -cc $cc"
 fi
@@ -799,7 +805,7 @@ fi
 #*---------------------------------------------------------------------*/
 #*    unistring                                                        */
 #*---------------------------------------------------------------------*/
-haveunistring=`$bigloo -q -eval "(exit (display (bigloo-config 'have-unistring)))"`
+haveunistring=`$bigloo -lib-dir $bigloolibdir -q -eval "(exit (display (bigloo-config 'have-unistring)))"`
 if [ "$haveunistring " != "#t " -a "$bglunistring " != "no " ]; then
     echo "*** ERROR:configure: your Bigloo setting  does not support \"unistring\"." >&2
     echo "  As a consequence JavaScript locale comparison are not correctly supported." >&2
@@ -813,7 +819,7 @@ fi
 #*---------------------------------------------------------------------*/
 #*    pcre                                                             */
 #*---------------------------------------------------------------------*/
-pcre=`$bigloo -q -eval "(exit (display (bigloo-config 'regexp)))"`
+pcre=`$bigloo -lib-dir $bigloolibdir -q -eval "(exit (display (bigloo-config 'regexp)))"`
 
 if [ "$pcre " != "pcre " -a "$bglpcre " != "no " ]; then
     echo "*** ERROR:configure: your Bigloo setting  does not support \"pcre\"." >&2
@@ -1020,11 +1026,11 @@ rm -f $mkmf 2> /dev/null
 echo "#* Automatically generated file (don't edit) */" > $mkmf
 
 if [ "$bldflags " = " " ]; then
-  bldflags="-rpath \$(DESTDIR)\$(HOPLIBDIR)/\$(HOPFILDIR)"
+  bldflags="-rpath \$(HOPLIBDIR)/\$(HOPFILDIR)"
 fi
 
 if [ "$mach " = " " ]; then
-  mach="`$bigloo -eval '(begin (display (os-name)) (exit 0))'`-`$bigloo -eval '(begin (display (os-arch)) (exit 0))'`"
+  mach="`$bigloo -eval \"(begin (display (bigloo-config 'os-name)) (exit 0))\"`-`$bigloo -eval \"(begin (display (bigloo-config 'os-arch)) (exit 0))\"`"
 fi
 
 for p in hopc.sh hop.sh; do
@@ -1069,6 +1075,7 @@ cat $mkmf.in \
           -e "s|@DEVEL@|$devel|" \
           -e "s|@DEBUG@|$debug|" \
           -e "s|@BIGLOO@|$bigloo|" \
+          -e "s|@HOSTBIGLOO@|$hostbigloo|" \
           -e "s|@BIGLOOVERSION@|$bglversion|" \
           -e "s|@HOP@|$mkmfhop|" \
           -e "s|@HOPC@|$mkmfhopc|" \
@@ -1170,6 +1177,7 @@ for p in configure.scm configure_noarch.sch configure_macosx.sch configure_andro
             -e "s|@BUILDID@|$buildid|" \
             -e "s|@BUILDTAG@|$buildtag|" \
             -e "s|@BIGLOO@|$bigloo|" \
+            -e "s|@HOSTBIGLOO@|$hostbigloo|" \
       >> $configure
 done
 
@@ -1513,6 +1521,7 @@ for p in etc/hop.man etc/hopsh.man etc/hopreplay.man; do
             -e "s|@DEVEL@|$devel|" \
             -e "s|@DEBUG@|$debug|" \
             -e "s|@BIGLOO@|$bigloo|" \
+            -e "s|@HOSTBIGLOO@|$hostbigloo|" \
             -e "s|@BACKEND@|$backend|" \
             -e "s|@LINK@|$link|" \
       > $p

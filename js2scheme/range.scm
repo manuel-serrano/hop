@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Jul 25 07:44:39 2017 (serrano)                */
+;*    Last change :  Tue Oct  3 07:07:39 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -127,18 +127,15 @@
 ;*    j2s-range-program! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-range-program! this::J2SProgram args)
-   (let* ((msize (config-get args :long-size (bigloo-config 'int-size)))
-	  (lsize (min 53 msize)))
-      (set! *maxfix* (-llong (exptllong 2 (-fx lsize 1)) #l1))
-      (set! *uint29-intv* (interval #l0 *max-uint29*))
-      (set! *index-intv* (interval #l0 *max-index*))
-      (set! *indexof-intv* (interval #l-1 *max-index*))
-      (set! *length-intv* (interval #l0 *max-length*))
-      (set! *int30-intv* (interval *min-int30* *max-int30*))
-      (set! *int32-intv* (interval *min-int32* *max-int32*))
-      (set! *int53-intv* (interval *min-int53* *max-int53*))
-      (set! *integer* (interval *min-integer* *max-integer*))
-      (set! *infinity-intv* (interval *-inf.0* *+inf.0*)))
+   (set! *uint29-intv* (interval #l0 *max-uint29*))
+   (set! *index-intv* (interval #l0 *max-index*))
+   (set! *indexof-intv* (interval #l-1 *max-index*))
+   (set! *length-intv* (interval #l0 *max-length*))
+   (set! *int30-intv* (interval *min-int30* *max-int30*))
+   (set! *int32-intv* (interval *min-int32* *max-int32*))
+   (set! *int53-intv* (interval *min-int53* *max-int53*))
+   (set! *integer* (interval *min-integer* *max-integer*))
+   (set! *infinity-intv* (interval *-inf.0* *+inf.0*))
    (when (>=fx (config-get args :verbose 0) 4)
       (display " " (current-error-port)))
    (with-access::J2SProgram this (decls nodes)
@@ -192,7 +189,6 @@
 (define *min-int53* (negllong (exptllong #l2 53)))
 (define *max-integer* (exptllong #l2 53))
 (define *min-integer* (negllong (exptllong #l2 53)))
-(define *maxfix* +nan.0)
 
 (define *uint29-intv* #f)
 (define *index-intv* #f)
