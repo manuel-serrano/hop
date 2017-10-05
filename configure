@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Tue Oct  3 10:17:04 2017 (serrano)                */
+#*    Last change :  Thu Oct  5 18:09:10 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -578,7 +578,7 @@ else
 fi
 
 if [ "$cc " = " " ]; then
-  cc=`$bigloo $bcflags -eval '(begin (print *cc*) (exit 0))'`
+  cc=`$bigloo -lib-dir $bigloolibdir $bcflags -eval '(begin (print *cc*) (exit 0))'`
 else  
   bcflags="$bcflags -cc $cc"
 fi
@@ -805,7 +805,7 @@ fi
 #*---------------------------------------------------------------------*/
 #*    unistring                                                        */
 #*---------------------------------------------------------------------*/
-haveunistring=`$bigloo -q -eval "(exit (display (bigloo-config 'have-unistring)))"`
+haveunistring=`$bigloo -lib-dir $bigloolibdir -q -eval "(exit (display (bigloo-config 'have-unistring)))"`
 if [ "$haveunistring " != "#t " -a "$bglunistring " != "no " ]; then
     echo "*** ERROR:configure: your Bigloo setting  does not support \"unistring\"." >&2
     echo "  As a consequence JavaScript locale comparison are not correctly supported." >&2
@@ -819,7 +819,7 @@ fi
 #*---------------------------------------------------------------------*/
 #*    pcre                                                             */
 #*---------------------------------------------------------------------*/
-pcre=`$bigloo -q -eval "(exit (display (bigloo-config 'regexp)))"`
+pcre=`$bigloo -lib-dir $bigloolibdir -q -eval "(exit (display (bigloo-config 'regexp)))"`
 
 if [ "$pcre " != "pcre " -a "$bglpcre " != "no " ]; then
     echo "*** ERROR:configure: your Bigloo setting  does not support \"pcre\"." >&2
@@ -1026,11 +1026,11 @@ rm -f $mkmf 2> /dev/null
 echo "#* Automatically generated file (don't edit) */" > $mkmf
 
 if [ "$bldflags " = " " ]; then
-  bldflags="-rpath \$(DESTDIR)\$(HOPLIBDIR)/\$(HOPFILDIR)"
+  bldflags="-rpath \$(HOPLIBDIR)/\$(HOPFILDIR)"
 fi
 
 if [ "$mach " = " " ]; then
-  mach="`$bigloo -eval '(begin (display (os-name)) (exit 0))'`-`$bigloo -eval '(begin (display (os-arch)) (exit 0))'`"
+  mach="`$bigloo -eval \"(begin (display (bigloo-config 'os-name)) (exit 0))\"`-`$bigloo -eval \"(begin (display (bigloo-config 'os-arch)) (exit 0))\"`"
 fi
 
 for p in hopc.sh hop.sh; do
