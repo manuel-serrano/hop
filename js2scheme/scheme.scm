@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Oct  3 15:50:41 2017 (serrano)                */
+;*    Last change :  Thu Oct  5 05:57:23 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -28,7 +28,9 @@
 	   __js2scheme_scheme-fun
 	   __js2scheme_scheme-ops
 	   __js2scheme_scheme-test
-	   __js2scheme_scheme-class)
+	   __js2scheme_scheme-class
+	   __js2scheme_scheme-string)
+	   
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
@@ -37,7 +39,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-method ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-struct inline-method jsname scmid ttype args %this)
+(define-struct inline-method jsname met ttype args %this)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-inline-methods ...                                           */
@@ -46,7 +48,7 @@
    ;; jsname, scmname, (this.types), [optional-args] %this
    (map (lambda (e)
 	   (apply inline-method e))
-      '(;; string methods
+      `(;; string methods
 	("fromCharCode" js-jsstring-fromcharcode String (any) %this)
 	("charAt" js-jsstring-charat string (any) %this)
 	("charAt" js-jsstring-maybe-charat any (any) %this)
@@ -70,7 +72,7 @@
 	("toLocaleLowerCase" js-jsstring-maybe-tolocalelowercase any () %this)
 	("split" js-jsstring-split string (string (any (js-undefined))) %this)
 	("split" js-jsstring-maybe-split any (any (any (js-undefined))) %this)
-	("replace" js-jsstring-replace string (any string) %this)
+	("replace" ,j2s-jsstring-replace string (any string) %this)
 	("replace" js-jsstring-maybe-replace any (any any) %this)
 	("match" js-jsstring-match string (any) %this)
 	("match" js-jsstring-maybe-match any (any) %this)
@@ -1868,22 +1870,34 @@
 	    ((j2s-inline-method field args self (j2s-type obj))
 	     =>
 	     (lambda (m)
-		(let* ((id (inline-method-scmid m))
+		(let* ((met (inline-method-met m))
 		       (opt (inline-method-args m))
 		       (arity (length opt))
 		       (len (length args)))
-		   `(,id ,(j2s-scheme obj mode return conf hint totype)
-		       ,@(map (lambda (arg)
-				 (j2s-scheme arg mode return conf hint totype))
-			    args)
-		       ,@(if (=fx len arity)
-			     '()
-			     (let* ((lopt (length opt))
-				    (nopt (-fx arity len)))
-				(map cadr (list-tail opt (-fx lopt nopt)))))
-		       ,@(if (inline-method-%this m)
-			     '(%this)
-			     '())))))
+		   (if (symbol? met)
+		       `(,met ,(j2s-scheme obj mode return conf hint totype)
+			   ,@(map (lambda (arg)
+				     (j2s-scheme arg mode return conf hint totype))
+				args)
+			   ,@(if (=fx len arity)
+				 '()
+				 (let* ((lopt (length opt))
+					(nopt (-fx arity len)))
+				    (map cadr (list-tail opt (-fx lopt nopt)))))
+			   ,@(if (inline-method-%this m)
+				 '(%this)
+				 '()))
+		       (met obj
+			  (append args
+			     (if (=fx len arity)
+				 '()
+				 (let* ((lopt (length opt))
+					(nopt (-fx arity len)))
+				    (map cadr (list-tail opt (-fx lopt nopt)))))
+			     (if (inline-method-%this m)
+				 '(%this)
+				 '()))
+			  mode return conf hint totype)))))
 	    ((and ccache (= (bigloo-debug) 0))
 	     (cond
 		((isa? field J2SString)

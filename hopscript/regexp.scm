@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Oct  4 15:33:18 2017 (serrano)                */
+;*    Last change :  Thu Oct  5 05:40:38 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -16,7 +16,8 @@
 
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "stringliteral.sch"
+	    "property.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -446,13 +447,19 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.2    */
 ;*---------------------------------------------------------------------*/
 (define (regexp-prototype-exec %this::JsGlobalObject this string::obj)
+   
+   (define (js-substring s start end)
+      (if (=fx end (+fx start 1))
+	  (js-jsstring-fromcharcode %this (char->integer (string-ref s start)) %this)
+	  (js-string->jsstring (substring s start end))))
+      
    (if (not (isa? this JsRegExp))
        (js-raise-type-error %this "Not a RegExp ~s" this)
        (with-access::JsRegExp this (rx lastindex)
 	  (with-access::JsValueDescriptor lastindex ((lastindex value))
-	     (let* ((s (js-tostring string %this))
+	     (let* ((jss (js-tojsstring string %this))
+		    (s (js-jsstring->string jss))
 		    (len (string-length s))
-;* 		 (lastindex (js-get this 'lastIndex %this))            */
 		    (i (js-tointeger lastindex %this)) 
 		    (global (js-get this 'global %this)))
 		(unless global (set! i 0))
@@ -460,8 +467,6 @@
 		   (cond
 		      ((or (<fx i 0) (>fx i len))
 		       (set! lastindex 0)
-;* 		    (js-object-put-name/cache! this 'lastIndex 0       */
-;* 		       #f (js-pcache-ref %pcache 0) %this)             */
 		       (js-null))
 		      ((pregexp-match-positions rx s i)
 		       =>
@@ -469,11 +474,7 @@
 			  ;; 10
 			  (let ((e (cdar r)))
 			     ;; 11
-			     (when global
-				(set! lastindex e)
-;* 			     (js-object-put-name/cache! this 'lastIndex e */
-;* 				#f (js-pcache-ref %pcache 1) %this)    */
-				)
+			     (when global (set! lastindex e))
 			     (let* ((n (length r))
 				    (a (with-access::JsGlobalObject %this (js-array)
 					  (js-new %this js-array n)))
@@ -491,7 +492,7 @@
 				(js-define-own-property a 'input
 				   (instantiate::JsValueDescriptor
 				      (name 'input)
-				      (value (js-string->jsstring s))
+				      (value jss)
 				      (writable #t)
 				      (enumerable #t)
 				      (configurable #t))
@@ -509,8 +510,7 @@
 				(js-define-own-property a 0
 				   (instantiate::JsValueDescriptor
 				      (name (js-toname 0 %this))
-				      (value (js-string->jsstring
-						(substring s (caar r) (cdar r))))
+				      (value (js-substring s (caar r) (cdar r)))
 				      (writable #f)
 				      (enumerable #t)
 				      (configurable #t))
@@ -521,8 +521,7 @@
 				   (when (pair? c)
 				      (let* ((r (car c))
 					     (v (if (pair? r)
-						    (js-string->jsstring
-						       (substring s (car r) (cdr r)))
+						    (js-substring s (car r) (cdr r))
 						    (js-undefined))))
 					 (js-define-own-property a i
 					    (instantiate::JsValueDescriptor
@@ -536,8 +535,6 @@
 				a))))
 		      (else
 		       (set! lastindex 0)
-;* 		    (js-object-put-name/cache! this 'lastIndex 0       */
-;* 		       #f (js-pcache-ref %pcache 2) %this)             */
 		       (js-null)))))))))
 
 ;*---------------------------------------------------------------------*/

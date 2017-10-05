@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Oct  3 11:53:05 2017 (serrano)                */
+;*    Last change :  Thu Oct  5 05:21:39 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1217,8 +1217,6 @@
        (js-number->string obj))
       ((symbol? obj)
        (symbol->string! obj))
-;*       ((string? obj)                                                */
-;*        (bigloo-type-error "js-tostring" "JsStringLiteral" obj))     */
       (else
        (typeof obj))))
 
