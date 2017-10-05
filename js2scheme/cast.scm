@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Sep 28 08:44:31 2017 (serrano)                */
+;*    Last change :  Thu Oct  5 07:52:22 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -78,8 +78,9 @@
 (define (need-cast? type totype)
 
    (define (jstype? type)
-      (memq type '(null integer object function array string undefined
-		   fixnum ufixnum number uint29 int29 int53)))
+      (memq type
+	 '(null integer object function array string undefined
+	   fixnum ufixnum number uint29 int29 int53 regexp)))
    
    (cond
       ((eq? type totype) #f)

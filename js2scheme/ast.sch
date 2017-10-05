@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Thu Sep 28 17:02:39 2017 (serrano)                */
+;*    Last change :  Thu Oct  5 07:47:35 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -14,6 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (J2SUndefined)
    `(instantiate::J2SUndefined
+       (type 'undefined)
        (loc loc)))
 
 (define-macro (J2SBool val)

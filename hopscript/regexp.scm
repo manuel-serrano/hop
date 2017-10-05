@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Oct  5 05:40:38 2017 (serrano)                */
+;*    Last change :  Thu Oct  5 08:31:03 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -80,13 +80,15 @@
 ;*    of the generic.                                                  */
 ;*---------------------------------------------------------------------*/
 (define-method (hop->javascript o::JsRegExp op compile isexpr)
-   (let ((%this (js-initial-global-object)))
-      (display "/" op)
-      (display (js-tostring (js-get o 'source %this) %this) op)
-      (display "/" op)
-      (when (js-totest (js-get o 'global %this)) (display "g" op))
-      (when (js-totest (js-get o 'ignoreCase %this)) (display "i" op))
-      (when (js-totest (js-get o 'multiline %this)) (display "m" op))))
+   (with-access::JsRegExp o (global)
+      (with-access::JsValueDescriptor global ((global value))
+	 (let ((%this (js-initial-global-object)))
+	    (display "/" op)
+	    (display (js-tostring (js-get o 'source %this) %this) op)
+	    (display "/" op)
+	    (when (js-totest global) (display "g" op))
+	    (when (js-totest (js-get o 'ignoreCase %this)) (display "i" op))
+	    (when (js-totest (js-get o 'multiline %this)) (display "m" op))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-regexp! ...                                              */
@@ -105,6 +107,9 @@
 			     (name 'lastIndex)
 			     (writable #t)
 			     (value 0)))
+	       (global (instantiate::JsValueDescriptor
+			  (name 'global)
+			  (value #f)))
 	       (rx (pregexp ""))
 	       (__proto__ __proto__)))
 	 
@@ -296,15 +301,17 @@
 	    (g #f))
 	 (cond
 	    ((isa? pattern JsRegExp)
-	     (if (eq? flags (js-undefined))
-		 (begin
-		    (when (js-totest (js-get pattern 'global %this))
-		       (set! g -1))
-		    (when (js-totest (js-get pattern 'ignoreCase %this))
-		       (set! i -1))
-		    (when (js-totest (js-get pattern 'multiline %this))
-		       (set! m -1)))
-		 (js-raise-type-error %this "wrong regexp flags ~s" flags))
+	     (with-access::JsRegExp pattern (global)
+		(with-access::JsValueDescriptor global ((global value))
+		   (if (eq? flags (js-undefined))
+		       (begin
+			  (when (js-totest global)
+			     (set! g -1))
+			  (when (js-totest (js-get pattern 'ignoreCase %this))
+			     (set! i -1))
+			  (when (js-totest (js-get pattern 'multiline %this))
+			     (set! m -1)))
+		       (js-raise-type-error %this "wrong regexp flags ~s" flags))))
 	     (set! pattern (js-tostring (js-get pattern 'source %this) %this)))
 	    (else
 	     (if (eq? pattern (js-undefined))
@@ -352,6 +359,7 @@
 				     'UTF8
 				     (when (fixnum? m) 'MULTILINE)))
 		     (lastindex lastindex)
+		     (global global)
 		     (properties (list lastindex global icase mline source)))))))))
        
 ;*---------------------------------------------------------------------*/
@@ -405,13 +413,6 @@
       :configurable #f
       :enumerable #f
       :hidden-class #t)
-   ;; global
-   (js-bind! %this obj 'global
-      :value #f
-      :writable #f
-      :configurable #f
-      :enumerable #f
-      :hidden-class #t)
    ;; ignoreCase
    (js-bind! %this obj 'ignoreCase
       :value #f
@@ -423,13 +424,6 @@
    (js-bind! %this obj 'multiline
       :value #f
       :writable #f
-      :configurable #f
-      :enumerable #f
-      :hidden-class #t)
-   ;; lastindex
-   (js-bind! %this obj 'lastIndex
-      :value 0
-      :writable #t
       :configurable #f
       :enumerable #f
       :hidden-class #t)
@@ -452,18 +446,17 @@
       (if (=fx end (+fx start 1))
 	  (js-jsstring-fromcharcode %this (char->integer (string-ref s start)) %this)
 	  (js-string->jsstring (substring s start end))))
-      
+   
    (if (not (isa? this JsRegExp))
        (js-raise-type-error %this "Not a RegExp ~s" this)
-       (with-access::JsRegExp this (rx lastindex)
+       (with-access::JsRegExp this (rx lastindex global)
 	  (with-access::JsValueDescriptor lastindex ((lastindex value))
-	     (let* ((jss (js-tojsstring string %this))
-		    (s (js-jsstring->string jss))
-		    (len (string-length s))
-		    (i (js-tointeger lastindex %this)) 
-		    (global (js-get this 'global %this)))
-		(unless global (set! i 0))
-		(let loop ()
+	     (with-access::JsValueDescriptor global ((global value))
+		(let* ((jss (js-tojsstring string %this))
+		       (s (js-jsstring->string jss))
+		       (len (string-length s))
+		       (i (js-tointeger lastindex %this)) )
+		   (unless global (set! i 0))
 		   (cond
 		      ((or (<fx i 0) (>fx i len))
 		       (set! lastindex 0)

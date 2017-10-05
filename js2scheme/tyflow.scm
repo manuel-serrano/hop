@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Sep 28 08:42:32 2017 (serrano)                */
+;*    Last change :  Thu Oct  5 07:46:34 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -950,7 +950,7 @@
 	 (typing callee env fun fix)
 	 (expr-type-set! this (unknown-call-env env) fix 'any bk)))
    
-   (with-access::J2SCall this ((callee fun) args)
+   (with-access::J2SCall this ((callee fun) thisarg args)
       (multiple-value-bind (env bk)
 	 (typing-args args env fun fix)
 	 (cond

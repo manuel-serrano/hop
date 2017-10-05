@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Oct  4 15:20:20 2017 (serrano)                */
+;*    Last change :  Thu Oct  5 10:55:48 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -74,6 +74,7 @@
 	   (js-jsstring-maybe-tolocaleuppercase ::obj ::JsGlobalObject)
 	   (js-jsstring-split ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-split ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-replace-regexp ::obj ::regexp ::long ::bool ::obj ::JsGlobalObject)
 	   (js-jsstring-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-replace ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-match ::obj ::obj ::JsGlobalObject)
@@ -1525,6 +1526,147 @@
 	  (loop (js-toobject %this this))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-jsstring-replace-regexp ...                                   */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-replace-regexp this::obj rx::regexp
+	   lastindex::long global::bool replacevalue %this)
+   
+   (define (digit->number c)
+      (-fx (char->integer c) (char->integer #\0)))
+   
+   (define (digit10->number c1 c2)
+      (+fx (*fx (digit->number c1) 10) (digit->number c2)))
+   
+   (define (js-substring s::bstring start::long end::long)
+      (cond
+	 ((=fx end (+fx start 1))
+	  (js-jsstring-fromcharcode %this (char->integer (string-ref s start)) %this))
+	 ((=fx end start)
+	  (js-ascii->jsstring ""))
+	 (else
+	  (js-string->jsstring (substring s start end)))))
+   
+   (define (table22::pair-nil fmt::bstring match::pair string::bstring init)
+      (let ((stop (-fx (string-length fmt) 1)))
+	 (let loop ((i 0)
+		    (j 0)
+		    (segments '()))
+	    (cond
+	       ((>=fx i stop)
+		(reverse (cons* init (js-substring fmt j (+fx stop 1)) segments)))
+	       ((not (char=? (string-ref fmt i) #\$))
+		(loop (+fx i 1) j segments))
+	       (else
+		(let ((segments (cons (substring fmt j i) segments)))
+		   (case (string-ref fmt (+fx i 1))
+		      ((#\$)
+		       (loop (+fx i 2) (+fx i 2)
+			  (cons "$" segments)))
+		      ((#\&)
+		       (let ((portion (js-substring string (caar match) (cdar match))))
+			  (loop (+fx i 2) (+fx i 2)
+			     (cons portion segments))))
+		      ((#\`)
+		       (let ((portion (js-substring string 0 (caar match))))
+			  (loop (+fx i 2) (+fx i 2)
+			     (cons portion segments))))
+		      ((#\')
+		       (let ((portion (js-substring string (cdar match)
+					 (string-length string))))
+			  (loop (+fx i 2) (+fx i 2)
+			     (cons portion segments))))
+		      ((#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)
+		       (let ((len (length match)))
+			  (if (or (=fx i (-fx stop 1))
+				  (not (char-numeric? (string-ref fmt (+fx i 2)))))
+			      (let ((n (digit->number (string-ref fmt (+fx i 1)))))
+				 (if (>fx n len)
+				     (loop (+fx i 2) j segments)
+				     (let* ((m (list-ref match n))
+					    (portion (js-substring string (car m) (cdr m))))
+					(loop (+fx i 2) (+fx i 2)
+					   (cons portion segments)))))
+			      (let ((n (digit10->number
+					  (string-ref fmt (+fx i 1))
+					  (string-ref fmt (+fx i 2)))))
+				 (if (>fx n len)
+				     (let ((n (digit->number (string-ref fmt (+fx i 1)))))
+					(if (>=fx n len)
+					    (loop (+fx i 3) j segments)
+					    (let* ((m (list-ref match n))
+						   (seg (js-substring string (car m) (cdr m))))
+					       (loop (+fx i 2) (+fx i 2)
+						  (cons seg segments)))))
+				     (let* ((m (list-ref match n))
+					    (portion (js-substring string (car m) (cdr m))))
+					(loop (+fx i 3) (+fx i 3)
+					   (cons portion segments))))))))
+		      (else
+		       (loop (+fx i 2) j segments)))))))))
+   
+   (define (matches->string-list::pair-nil matches::pair-nil s::bstring)
+      (map (lambda (m) (js-substring s (car m) (cdr m))) matches))
+
+   (with-access::JsGlobalObject %this (js-regexp js-array)
+      (let ((s (js-jsstring->string this)))
+	 (cond
+	    ((not global)
+	     (let ((r (pregexp-match-positions rx s lastindex)))
+		(cond
+		   ((not r)
+		    (values string lastindex))
+		   ((isa? replacevalue JsFunction)
+		    (js-jsstring-append
+		       (js-substring s 0 (caar r))
+		       (js-jsstring-append
+			  (js-tojsstring
+			     (js-apply %this replacevalue (js-undefined)
+				(append (matches->string-list r s)
+				   (list (caar r) this)))
+			     %this)
+			  (js-substring s
+			     (cdar r) (string-length s)))))
+		   (else
+		    (let ((newstring (js-tostring replacevalue %this)))
+		       (js-jsstring-append
+			  (js-substring s 0 (caar r))
+			  (table22 newstring r s
+			     (js-substring s (cdar r) (string-length s)))))))))
+	    ((isa? replacevalue JsFunction)
+	     (let loop ((i 0)
+			(res (js-ascii->jsstring "")))
+		(let ((r (pregexp-match-positions rx s i)))
+		   (if (not r)
+		       (if (=fx i 0)
+			   (values this 0)
+			   (values res i))
+		       (let ((v (js-tojsstring
+				   (js-apply %this replacevalue (js-undefined)
+				      (append (matches->string-list r s)
+					 (list (caar r) this)))
+				   %this)))
+			  (loop (if (=fx (cdar r) i) (+fx i 1) (cdar r))
+			     (js-jsstring-append
+				(js-jsstring-append res (js-substring s i (caar r)))
+				v)))))))
+	    (else
+	     (let ((newstring (js-tostring replacevalue %this)))
+		(let loop ((i 0)
+			   (res (js-ascii->jsstring "")))
+		   (let ((r (pregexp-match-positions rx s i)))
+		      (if (not r)
+			  (if (=fx i 0)
+			      (values this 0)
+			      (values res i))
+			  (let ((v (apply utf8-string-append* (table22 newstring r s ""))))
+			     (loop (if (=fx (cdar r) i) (+fx i 1) (cdar r))
+				(js-jsstring-append
+				   (js-jsstring-append res (js-substring s i (caar r)))
+				   v))))))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-jsstring-replace ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
@@ -1678,12 +1820,10 @@
 	    (else
 	     (with-access::JsRegExp searchvalue (lastindex)
 		(with-access::JsValueDescriptor lastindex ((lastindex value))
-		   (let* ((previousLastIndex 0)
-			  (exec (js-get (js-get js-regexp 'prototype %this)
-				   'exec %this)))
+		   (let ((previousLastIndex 0)
+			 (exec (js-get (js-get js-regexp 'prototype %this)
+				  'exec %this)))
 		      (set! lastindex 0)
-;* 		   (js-object-put-name/cache! searchvalue 'lastIndex 0 */
-;* 		      #f (js-pcache-ref %pcache 0) %this)              */
 		      (let loop ((n 0)
 				 (ms '()))
 			 (let ((result (js-call1 %this exec searchvalue string)))
@@ -1700,7 +1840,7 @@
 					   (let* ((m (car matches))
 						  (i (js-get m 'index %this))
 						  (l (js-jsstring-lengthfx (js-get m (js-toname 0 %this) %this)))
-						  (v (js-tostring
+						  (v (js-tojsstring
 							(js-apply %this replacevalue
 							   (js-undefined)
 							   (cons
@@ -1734,17 +1874,13 @@
 							  v
 							  (substring sres (+fx offset (+fx i l)))))
 						    (+fx offset (-fx (string-length v) l)))))))))
-;* 				(let ((thisIndex (js-get searchvalue 'lastIndex %this))) */
 				(let ((thisIndex lastindex))
 				   (if (= thisIndex previousLastIndex)
 				       (begin
 					  (set! lastindex (+ thisIndex 1))
-;* 					  (js-object-put-name/cache! searchvalue 'lastIndex */
-;* 					     (+ thisIndex 1) #f (js-pcache-ref %pcache 1) %this) */
 					  (set! previousLastIndex (+ 1 thisIndex)))
 				       (set! previousLastIndex thisIndex))
-				   (let ((matchStr (js-get result 0 %this)))
-				      (loop (+fx 1 n) (cons result ms)))))))))))))))
+				   (loop (+fx 1 n) (cons result ms))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-replace ...                                    */
@@ -1753,7 +1889,17 @@
    (let loop ((this this))
       (cond
 	 ((js-jsstring? this)
-	  (js-jsstring-replace this searchvalue replacevalue %this))
+	  (if (isa? searchvalue JsRegExp)
+	      (with-access::JsRegExp searchvalue (rx global lastindex)
+		 (with-access::JsValueDescriptor lastindex ((lastindex value))
+		    (with-access::JsValueDescriptor global ((global value))
+		       (multiple-value-bind (res lindex)
+			  (js-jsstring-replace-regexp this rx
+			     lastindex (js-totest global)
+			     replacevalue %this)
+			  (set! lastindex lindex)
+			  res))))
+	      (js-jsstring-replace this searchvalue replacevalue %this)))
 	 ((isa? this JsObject)
 	  (js-call2 %this (js-get this 'replace %this) this
 	     searchvalue replacevalue))

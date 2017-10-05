@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Oct  5 05:57:23 2017 (serrano)                */
+;*    Last change :  Thu Oct  5 10:47:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -72,7 +72,8 @@
 	("toLocaleLowerCase" js-jsstring-maybe-tolocalelowercase any () %this)
 	("split" js-jsstring-split string (string (any (js-undefined))) %this)
 	("split" js-jsstring-maybe-split any (any (any (js-undefined))) %this)
-	("replace" ,j2s-jsstring-replace string (any string) %this)
+	("replace" ,j2s-jsstring-replace-regexp string (regexp any) %this)
+	("replace" ,j2s-jsstring-replace string (any any) %this)
 	("replace" js-jsstring-maybe-replace any (any any) %this)
 	("match" js-jsstring-match string (any) %this)
 	("match" js-jsstring-maybe-match any (any) %this)
