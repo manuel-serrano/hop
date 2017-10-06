@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Thu Oct  5 18:42:13 2017 (serrano)                */
+#*    Last change :  Fri Oct  6 12:00:18 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1030,7 +1030,7 @@ if [ "$bldflags " = " " ]; then
 fi
 
 if [ "$mach " = " " ]; then
-  mach="`$bigloo -lib-dir $bigloolibdir -eval \"(begin (display (bigloo-config 'os-name)) (exit 0))\"`-`$bigloo -eval \"(begin (display (bigloo-config 'os-arch)) (exit 0))\"`"
+  mach="`$bigloo -lib-dir $bigloolibdir -eval \"(begin (display (bigloo-config 'os-name)) (exit 0))\"`-`$biglooo -lib-dir $bigloolibdir -eval \"(begin (display (bigloo-config 'os-arch)) (exit 0))\"`"
 fi
 
 for p in hopc.sh hop.sh; do
