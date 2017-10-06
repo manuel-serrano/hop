@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Tue May 23 08:16:26 2017 (serrano)                */
+#*    Last change :  Fri Oct  6 13:31:49 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -93,7 +93,7 @@ node_modules: libdir hopc-bin hopscript-lib nodejs
 	$(MAKE) -C node_modules build
 
 doc: lib hopc-bin src-bin js2scheme scheme2js hopscript nodejs node_modules
-	if [ "$(THREADS) " = "yes " ]; then \
+	if [ "$(NODOC) " != "yes" -a "$(THREADS) " = "yes " ]; then \
 	  $(MAKE) -C doc build; \
         fi
 
@@ -164,7 +164,7 @@ install-quick: hop-dirs install-init
 	$(MAKE) -C hophz install && \
 	$(MAKE) -C node_modules install && \
 	$(MAKE) -C etc install && \
-	if [ "$(THREADS) " = "yes " ]; then \
+	if [ "$(NODOC) " != "yes" -a "$(THREADS) " = "yes " ]; then \
 	  $(MAKE) -C doc install; \
         fi
 
