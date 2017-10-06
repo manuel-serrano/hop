@@ -22,8 +22,6 @@ CLASS_EDIR	= o/class_es/bigloo/$(TARGETNAME)
 # the library version
 LIBVERSION	= $(HOPRELEASE)
 
-RPATH		= $(BIGLOOLIBDIR) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
-
 #*---------------------------------------------------------------------*/
 #*    Suffixes                                                         */
 #*---------------------------------------------------------------------*/
@@ -100,7 +98,7 @@ lib-c-static: .afile $(OBJECTS)
 # order when invoking make with --jobs N
 lib-c-shared: lib-c-static
 	@ if [ "$(SHAREDLIBRARYSUPPORT)" = "yes" ]; then \
-           $(MAKE) LIBVERSION=$(LIBVERSION) lib-c.$(SHAREDSUFFIX); \
+           $(MAKE) LIBVERSION=$(LIBVERSION) RPATH=$(HOPLIBDIR)/$(HOPFILDIR):$(RPATH) lib-c.$(SHAREDSUFFIX); \
         fi
 
 # we have 4 versions of each library:
