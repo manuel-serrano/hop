@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Sep 20 06:16:27 2017 (serrano)                */
+;*    Last change :  Sat Oct  7 18:57:03 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -35,6 +35,7 @@
 
    (define tilde-level (config-get conf :tilde-level 0))
    (define lang (config-get conf :language 'hopscript))
+   (define current-mode 'normal)
 
    (define (with-tilde proc)
       (set! tilde-level (+fx tilde-level 1))
@@ -211,9 +212,14 @@
 	     (parse-error "Bad regular-expression literal" token))
 	    (else
 	     token))))
-   
+
+   (define (source-element-mode! node::J2SNode)
+      (let ((mode (javascript-mode node)))
+	 (when mode (set! current-mode mode))))
+
    (define (source-elements::J2SBlock)
-      (let loop ((rev-ses '()))
+      (let loop ((rev-ses '())
+		 (first #t))
 	 (if (eof?)
 	     (if (null? rev-ses)
 		 (instantiate::J2SBlock
@@ -228,7 +234,10 @@
 			     (loc loc)
 			     (endloc endloc)
 			     (nodes nodes))))))
-	     (loop (cons (source-element) rev-ses)))))
+	     (let ((el (source-element)))
+		(when first
+		   (source-element-mode! el))
+		(loop (cons el rev-ses) #f)))))
    
    (define (source-element)
       (case (peek-token-type)
@@ -385,14 +394,16 @@
    (define (var in-for-init? constrinit constr)
       (let ((id (consume-any!)))
 	 (case (car id)
-	    ((ID)
-	     (case (peek-token-type)
-		((=)
-		 (let* ((token (consume-any!))
-			(expr (assig-expr in-for-init?)))
-		    (constrinit (token-loc token) (cdr id) expr)))
-		(else
-		 (constr (token-loc id) (cdr id)))))
+	    ((ID static)
+	     (if (or (eq? (car id) 'ID) (eq? current-mode 'normal))
+		 (case (peek-token-type)
+		    ((=)
+		     (let* ((token (consume-any!))
+			    (expr (assig-expr in-for-init?)))
+			(constrinit (token-loc token) (cdr id) expr)))
+		    (else
+		     (constr (token-loc id) (cdr id))))
+		 (parse-token-error "Illegal lhs" id))) 
 	    ((undefined NaN Infinity)
 	     (case (peek-token-type)
 		((=)
@@ -827,7 +838,7 @@
    (define (arrow-body params::pair-nil)
       (if (eq? (peek-token-type) 'LBRACE)
 	  ;; a statement
-	  (fun-body params)
+	  (fun-body params current-mode)
 	  ;; an expression
 	  (let* ((expr (assig-expr #f))
 		 (endloc (token-loc (peek-token) -1)))
@@ -874,8 +885,8 @@
 				 (memq (peek-token-type) '(ID service)))
 			  (consume-any!)))
 		   (params (params))
-		   (body (fun-body params))
-		   (mode (or (javascript-mode body) 'normal)))
+		   (body (fun-body params current-mode))
+		   (mode (or (javascript-mode body) current-mode)))
 	       (cond
 		  (declaration?
 		   (co-instantiate ((val (instantiate::J2SFun
@@ -1029,7 +1040,7 @@
 			  inits
 			  (instantiate::J2SNop
 			     (loc (token-loc token)))))
-		(body (fun-body params))
+		(body (fun-body params 'strict))
 		(mode (or (if (eq? (javascript-mode body) 'hopscript)
 			      'hopscript 'strict))))
 	    (when (isa? inits J2SObjInit)
@@ -1192,19 +1203,26 @@
    (define (fun-body-params-defval params::pair-nil)
       (filter-map param-defval params))
 
-   (define (fun-body params::pair-nil)
-      (let ((token (push-open-token (consume-token! 'LBRACE))))
-	 (let ((loc (current-loc)))
-	    (let loop ((rev-ses '()))
-	       (if (eq? (peek-token-type) 'RBRACE)
-		   (let ((etoken (consume-any!)))
-		      (pop-open-token)
-		      (instantiate::J2SBlock
-			 (loc (token-loc token))
-			 (endloc (token-loc etoken))
-			 (nodes (append (fun-body-params-defval params)
-				   (reverse! rev-ses)))))
-		   (loop (cons (source-element) rev-ses)))))))
+   (define (fun-body params::pair-nil mode)
+      (let ((cmode current-mode))
+	 (set! current-mode mode)
+	 (unwind-protect
+	    (let ((token (push-open-token (consume-token! 'LBRACE))))
+	       (let ((loc (current-loc)))
+		  (let loop ((rev-ses '())
+			     (first #t))
+		     (if (eq? (peek-token-type) 'RBRACE)
+			 (let ((etoken (consume-any!)))
+			    (pop-open-token)
+			    (instantiate::J2SBlock
+			       (loc (token-loc token))
+			       (endloc (token-loc etoken))
+			       (nodes (append (fun-body-params-defval params)
+					 (reverse! rev-ses)))))
+			 (let ((el (source-element)))
+			    (source-element-mode! el)
+			    (loop (cons el rev-ses) #f))))))
+	    (set! current-mode cmode))))
 
    (define (clazz declaration?)
       (let* ((loc (current-loc))
@@ -1288,7 +1306,7 @@
 	 (with-this 'this loc
 	    (if (isa? name-or-get J2SNode)
 		(let* ((params (params))
-		       (body (fun-body params))
+		       (body (fun-body params 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
 			       (thisp (current-this))
@@ -1308,7 +1326,7 @@
 		      (prop prop)))
 		(let* ((name (property-name))
 		       (params (params))
-		       (body (fun-body params))
+		       (body (fun-body params 'strict))
 		       (fun (instantiate::J2SFun
 			       (loc loc)
 			       (thisp (current-this))
@@ -2111,8 +2129,8 @@
 	 (with-this 'this (token-loc tokname)
 	    (let* ((id (consume-any!))
 		   (params (params))
-		   (body (fun-body params))
-		   (mode (or (javascript-mode body) 'normal))
+		   (body (fun-body params current-mode))
+		   (mode (or (javascript-mode body) current-mode))
 		   (loc (token-loc tokname))
 		   (fun (instantiate::J2SFun
 			   (mode mode)
@@ -2184,8 +2202,8 @@
 		(if (eq? (peek-token-type) 'LPAREN)
 		    (with-this 'this loc
 		       (let* ((params (params))
-			      (body (fun-body params))
-			      (mode (or (javascript-mode body) 'normal))
+			      (body (fun-body params current-mode))
+			      (mode (or (javascript-mode body) current-mode))
 			      (val (instantiate::J2SFun
 				      (loc loc)
 				      (mode mode)

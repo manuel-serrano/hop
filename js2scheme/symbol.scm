@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Sep  9 11:39:50 2017 (serrano)                */
+;*    Last change :  Fri Oct  6 11:55:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -838,7 +838,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SCall ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SCall env mode withs withs ctx conf)
+(define-walk-method (resolve! this::J2SCall env mode withs wenvs ctx conf)
    (call-default-walker)
    (with-access::J2SCall this (fun)
       (when (isa? fun J2SSuper)

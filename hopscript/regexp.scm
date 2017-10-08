@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Oct  5 08:31:03 2017 (serrano)                */
+;*    Last change :  Sat Oct  7 21:55:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -100,18 +100,20 @@
    (with-access::JsGlobalObject %this (__proto__ js-regexp js-function
 					 js-regexp-prototype)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 
-	 (set! js-regexp-prototype
-	    (instantiate::JsRegExp
+	 (let ((global (instantiate::JsValueDescriptor
+			  (name 'global)
+			  (value #f)))
 	       (lastindex (instantiate::JsValueDescriptor
 			     (name 'lastIndex)
 			     (writable #t)
-			     (value 0)))
-	       (global (instantiate::JsValueDescriptor
-			  (name 'global)
-			  (value #f)))
-	       (rx (pregexp ""))
-	       (__proto__ __proto__)))
+			     (value 0))))
+	    (set! js-regexp-prototype
+	       (instantiate::JsRegExp
+		  (lastindex lastindex)
+		  (global global)
+		  (rx (pregexp ""))
+		  (properties (list lastindex global))
+		  (__proto__ __proto__))))
 	 
 	 ;; create a HopScript regexp object constructor
 	 (set! js-regexp
@@ -354,10 +356,10 @@
 		  (instantiate::JsRegExp
 		     (__proto__ js-regexp-prototype)
 		     (rx (pregexp (make-js-regexp-pattern %this pattern)
-				     (when (fixnum? i) 'CASELESS)
-				     'JAVASCRIPT_COMPAT
-				     'UTF8
-				     (when (fixnum? m) 'MULTILINE)))
+			    (when (fixnum? i) 'CASELESS)
+			    'JAVASCRIPT_COMPAT
+			    'UTF8
+			    (when (fixnum? m) 'MULTILINE)))
 		     (lastindex lastindex)
 		     (global global)
 		     (properties (list lastindex global icase mline source)))))))))
@@ -449,7 +451,7 @@
    
    (if (not (isa? this JsRegExp))
        (js-raise-type-error %this "Not a RegExp ~s" this)
-       (with-access::JsRegExp this (rx lastindex global)
+       (with-access::JsRegExp this (rx lastindex global properties)
 	  (with-access::JsValueDescriptor lastindex ((lastindex value))
 	     (with-access::JsValueDescriptor global ((global value))
 		(let* ((jss (js-tojsstring string %this))

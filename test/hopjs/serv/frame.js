@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/serv/frame.js          */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/serv/frame.js          */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 26 09:36:15 2015                          */
-/*    Last change :  Sun Jul  9 20:07:32 2017 (serrano)                */
+/*    Last change :  Fri Oct  6 09:37:05 2017 (serrano)                */
 /*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing HopFrames                                                */
@@ -26,21 +26,20 @@ var f = foo.call( srv, o );
 f.post( function( v ) {
    assert.ok( v == 3, "post.1" );
    res++;
+
+   if( ++res === 2 ) process.exit( 0 );
    
    o.a = 4;
    f.post( function( v ) {
       assert.ok( v == 6, "post.2" );
-      res++;
+      if( ++res === 2 ) process.exit( 0 );
    } )
 } );
    
 setTimeout( function() {
-   try {
-      assert.ok( res === 2, "res" );
-   } finally {
-      process.exit( res === 2 ? 0 : 1 );
-   }
-}, 500 );
+   assert.ok( res === 2, "res" );
+   process.exit( res === 2 ? 0 : 1 );
+}, 1000 );
   
 
 

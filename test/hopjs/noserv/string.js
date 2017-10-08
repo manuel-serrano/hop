@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/string.js       */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/string.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sat Sep 30 09:35:05 2017 (serrano)                */
+/*    Last change :  Fri Oct  6 09:14:38 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
@@ -142,3 +142,32 @@ assert.ok( su4.charCodeAt( 3 ) === 0xc3 , "unescape4.charCodeAt( 0 )" );
 assert.ok( su4.charCodeAt( 4 ) === 0xa0 , "unescape4.charCodeAt( 1 )" );
 assert.ok( se4 == "foo%C3%A0", "escape4" );
 
+/*---------------------------------------------------------------------*/
+/*    replace                                                          */
+/*---------------------------------------------------------------------*/
+var str1 = "foobargeebar";
+var re1 = /bar/;
+var re2 = /bar/g;
+
+assert.equal( str1.replace( "bar", "" ), "foogeebar" );
+assert.equal( str1.replace( "bar", "----" ), "foo----geebar" );
+assert.equal( str1.replace( /bar/, "----" ), "foo----geebar" );
+
+assert.equal( str1.replace( /bar/g, "----" ), "foo----gee----" );
+
+assert.equal( str1.replace( "bar", function( s ) { return "!" + s + "!" } ), "foo!bar!geebar" );
+assert.equal( str1.replace( /bar/, function( s ) { return "!" + s + "!" } ), "foo!bar!geebar" );
+assert.equal( str1.replace( /bar/g, function( s ) { return "!" + s + "!" } ), "foo!bar!gee!bar!" );
+
+assert.equal( str1.replace( re1, function( s ) { return "!" + s + "!" } ), "foo!bar!geebar" );
+assert.equal( re1.lastIndex, 0, "re1.lastIndex" );
+
+
+assert.equal( str1.match( re2 )[ 0 ], "bar" );
+assert.equal( re2.lastIndex, 0 );
+
+assert.equal( re2.exec( str1 ).index, 3 );
+assert.equal( re2.lastIndex, 6 );
+
+assert.equal( str1.replace( re2, function( s ) { return "!" + s + "!" } ), "foo!bar!gee!bar!" );
+assert.equal( re2.lastIndex, 0 );

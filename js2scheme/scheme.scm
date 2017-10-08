@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Oct  5 10:47:26 2017 (serrano)                */
+;*    Last change :  Fri Oct  6 18:15:00 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -351,8 +351,8 @@
 	     (with-access::J2SString this (val)
 		(vector 0 val)))
 	    ((isa? this J2SRegExp)
-	     (with-access::J2SRegExp this (loc val flags)
-		(vector 1 val flags)))
+	     (with-access::J2SRegExp this (loc val flags inline)
+		(vector (if inline 3 1) val flags)))
 	    ((isa? this J2SCmap)
 	     (with-access::J2SCmap this (val)
 		(vector 2 val)))
@@ -363,6 +363,8 @@
 	  ,(obj->string (list->vector (map j2s-constant cnsts))) %this))
    
    (define (%cnsts cnsts)
+      ;; this must be executed after the code is compiled as this
+      ;; compilation might change or add new constants.
       (if (>fx (bigloo-debug) 0)
 	  (%cnsts-debug cnsts)
 	  (%cnsts-intext cnsts)))
@@ -866,7 +868,7 @@
    (with-access::J2SLiteralCnst this (index val)
       (if (isa? val J2SRegExp)
 	  ;; regexp are hybrid, the rx part is precompiled but the
-	  ;; JS object is dynamically allocation
+	  ;; JS object is dynamically allocated
  	  `(let ((rx (vector-ref-ur %cnsts ,index)))
 	      (with-access::JsRegExp rx (properties)
 		 (duplicate::JsRegExp rx

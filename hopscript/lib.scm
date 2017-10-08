@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/lib.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/lib.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Sep 21 18:50:46 2017 (serrano)                */
+;*    Last change :  Fri Oct  6 18:14:54 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -47,35 +47,50 @@
 ;*---------------------------------------------------------------------*/
 (define (js-constant-init str %this)
    (let ((cnsts (string->obj str)))
-       (let loop ((i (-fx (vector-length cnsts) 1)))
-	  (when (>=fx i 0)
-	     (let ((el (vector-ref-ur cnsts i)))
-		(cond
-		   ((isa? el JsRegExp)
-		    ;; patch the regexp prototype
-		    (with-access::JsGlobalObject %this (js-regexp-prototype)
-		       (with-access::JsRegExp el (__proto__)
-			  (set! __proto__ js-regexp-prototype))))
-		   ((vector? el)
-		    (vector-set-ur! cnsts i
-		       (case (vector-ref el 0)
-			  ((0)
-			   (let ((str (vector-ref-ur el 1)))
-			      (js-string->jsstring str)))
-			  ((1)
-			   (with-access::JsGlobalObject %this (js-regexp)
-			      (let* ((cnsts (vector-ref-ur el 1))
-				     (flags (vector-ref-ur el 2))
-				     (rx (js-string->jsstring cnsts)))
-				 (if flags
-				     (js-new2 %this js-regexp rx
-					(js-string->jsstring flags))
-				     (js-new1 %this js-regexp rx)))))
-			  ((2)
-			   (let ((names (vector-ref-ur el 1)))
-			      (js-names->cmap names)))))))
-		(loop (-fx i 1)))))
-       cnsts))
+      (let loop ((i (-fx (vector-length cnsts) 1)))
+	 (when (>=fx i 0)
+	    (let ((el (vector-ref-ur cnsts i)))
+	       (cond
+		  ((isa? el JsRegExp)
+		   ;; patch the regexp prototype
+		   (with-access::JsGlobalObject %this (js-regexp-prototype)
+		      (with-access::JsRegExp el (__proto__)
+			 (set! __proto__ js-regexp-prototype))))
+		  ((vector? el)
+		   (vector-set-ur! cnsts i
+		      (case (vector-ref el 0)
+			 ((0)
+			  ;; a plain string
+			  (let ((str (vector-ref-ur el 1)))
+			     (js-string->jsstring str)))
+			 ((1)
+			  ;; a plain regexp
+			  (with-access::JsGlobalObject %this (js-regexp)
+			     (let* ((cnsts (vector-ref-ur el 1))
+				    (flags (vector-ref-ur el 2))
+				    (rx (js-string->jsstring cnsts)))
+				(if flags
+				    (js-new2 %this js-regexp rx
+				       (js-string->jsstring flags))
+				    (js-new1 %this js-regexp rx)))))
+			 ((2)
+			  ;; a literal cmap
+			  (let ((names (vector-ref-ur el 1)))
+			     (js-names->cmap names)))
+			 ((3)
+			  ;; an inlined regexp
+			  (with-access::JsGlobalObject %this (js-regexp)
+			     (let* ((cnsts (vector-ref-ur el 1))
+				    (flags (vector-ref-ur el 2))
+				    (rx (js-string->jsstring cnsts))
+				    (regexp (if flags
+						(js-new2 %this js-regexp rx
+						   (js-string->jsstring flags))
+						(js-new1 %this js-regexp rx))))
+				(with-access::JsRegExp regexp (rx)
+				   rx))))))))
+	       (loop (-fx i 1)))))
+      cnsts))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-obj->jsobject ...                                             */

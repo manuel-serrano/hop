@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/serv/webService.js     */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/serv/webService.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  11 14:00:00 2015                         */
-/*    Last change :  Wed Feb 15 18:58:13 2017 (serrano)                */
+/*    Last change :  Fri Oct  6 09:38:20 2017 (serrano)                */
 /*    Copyright   :  2015-17 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing WebService                                               */
@@ -109,5 +109,5 @@ testLocalWS();
 setTimeout( function() {
    console.log( 'timeout: test failed' );
    process.exit( 1 );
-}, 2000 );
+}, 5000 );
 

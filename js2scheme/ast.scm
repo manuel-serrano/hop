@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Sep 28 17:00:51 2017 (serrano)                */
+;*    Last change :  Fri Oct  6 18:07:34 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -296,7 +296,8 @@
 	   (class J2SNumber::J2SLiteralValue)
 	   (final-class J2SOctalNumber::J2SNumber)
 	   (final-class J2SRegExp::J2SLiteralValue
-	      (flags::bstring read-only))
+	      (flags::bstring read-only)
+	      (inline::bool (default #f)))
 	   (final-class J2SCmap::J2SLiteralValue)
 
 	   (final-class J2SLiteralCnst::J2SLiteral
