@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Jun 13 15:44:33 2016 (serrano)                */
-#*    Copyright   :  2006-16 Manuel Serrano                            */
+#*    Last change :  Fri Oct  6 13:39:01 2017 (serrano)                */
+#*    Copyright   :  2006-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -22,7 +22,7 @@ CLASS_EDIR	= o/class_es/bigloo/$(TARGETNAME)
 # the library version
 LIBVERSION	= $(HOPRELEASE)
 
-RPATH		= $(BIGLOOLIBDIR) $(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)
+RPATH		+= $(HOPLIBDIR)/$(HOPFILDIR)
 
 #*---------------------------------------------------------------------*/
 #*    Suffixes                                                         */

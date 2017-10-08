@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Tue Oct  3 09:57:26 2017 (serrano)                */
+#*    Last change :  Fri Oct  6 13:34:55 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -54,6 +54,7 @@ INSTALL		= @INSTALL@
 MACH		= @BGLMACH@
 ARCH		= @BGLARCH@
 THREADS		= @THREADS@
+NODOC		= @NODOC@
 
 #*---------------------------------------------------------------------*/
 #*    Compilation flags                                                */
