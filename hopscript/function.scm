@@ -39,7 +39,7 @@
 	      #!key
 	      __proto__ prototype constructor construct alloc
 	      (strict 'normal) arity (minlen -1) src rest
-	      (constrsize 3) (maxconstrsize 100) noarguments method)
+	      (constrsize 3) (maxconstrsize 100) method)
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::obj ::int ::int ::symbol ::bool ::int)))
 
@@ -143,15 +143,14 @@
 	    :src (cons (current-loc) "Function() { /* function.scm */}")
 	    :__proto__ js-function-prototype
 	    :prototype js-function-prototype
-	    :construct (js-function-construct %this)
-	    :noarguments #t))
+	    :construct (js-function-construct %this)))
       ;; throwers
       (let* ((throw1 (lambda (o)
 			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
 	     (throw2 (lambda (o v)
 			(js-raise-type-error %this "[[ThrowTypeError]] ~a" o)))
 	     (thrower (js-make-function %this throw1
-			 1 'thrower :noarguments #t)))
+			 1 'thrower)))
 	 (set! thrower-get thrower)
 	 (set! thrower-set thrower)
 	 (set! strict-arguments-property
@@ -215,7 +214,7 @@
    (lambda (this . args)
       (if (null? args)
 	  (js-make-function %this (lambda (this) (js-undefined))
-	     0 "" :construct (lambda (_) (js-undefined)) :noarguments #t)
+	     0 "" :construct (lambda (_) (js-undefined)))
 	  (let* ((len (length args))
 		 (formals (take args (-fx len 1)))
 		 (body (car (last-pair args)))
@@ -262,7 +261,7 @@
 	   #!key __proto__ prototype
 	   constructor alloc construct (strict 'normal)
 	   arity (minlen -1) src rest
-	   (constrsize 3) (maxconstrsize 100) noarguments method)
+	   (constrsize 3) (maxconstrsize 100) method)
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -348,6 +347,7 @@
 	       (construct
 		(with-access::JsObject %this ((js-object-prototype __proto__))
 		   (let ((prototype (instantiate::JsObject
+				       (cmap (instantiate::JsConstructMap))
 				       (__proto__ js-object-prototype))))
 		      (js-bind! %this prototype 'constructor
 			 :value fun
@@ -434,7 +434,7 @@
       :arity arity :strict strict :rest rest :minlen minlen
       :src #f
       :alloc (lambda (o) (js-object-alloc o %this))
-      :construct proc :constrsize constrsize :noarguments #t))
+      :construct proc :constrsize constrsize))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-function-prototype! ...                             */
@@ -583,8 +583,7 @@
 		   name
 		   :strict 'strict
 		   :alloc alloc
-		   :construct fun
-		   :noarguments #t)))))
+		   :construct fun)))))
 
    (js-bind! %this obj 'bind
       :value (js-make-function %this bind 1 "bind" :prototype (js-undefined))

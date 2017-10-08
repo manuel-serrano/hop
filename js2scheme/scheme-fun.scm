@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Mon Oct  2 20:44:23 2017 (serrano)                */
+;*    Last change :  Sun Oct  8 06:42:25 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -59,8 +59,7 @@
 		       :prototype ,(j2s-fun-prototype val)
 		       :__proto__ ,(j2s-fun-__proto__ val)
 		       :construct ,fastid
-		       :constrsize ,constrsize
-		       :noarguments ,(not (eq? vararg 'arguments))))
+		       :constrsize ,constrsize))
 		  (src
 		   `(js-make-function %this ,fastid
 		       ,len ,(symbol->string! id)
@@ -71,8 +70,7 @@
 		       :strict ',mode
 		       :alloc (lambda (o) (js-object-alloc o %this))
 		       :construct ,fastid
-		       :constrsize ,constrsize
-		       :noarguments ,(not (eq? vararg 'arguments))))
+		       :constrsize ,constrsize))
 		  ((eq? vararg 'arguments)
 		   `(js-make-function %this ,fastid
 		       ,len ,(symbol->string! id)
@@ -338,8 +336,7 @@
 		    :construct ,ctor
 		    :constrsize ,constrsize
 		    :method ,(when method
-				(jsfun->lambda method mode return conf #f #f))
-		    :noarguments ,(not (eq? vararg 'arguments))))
+				(jsfun->lambda method mode return conf #f #f))))
 	       ((eq? vararg 'arguments)
 		`(js-make-function %this ,tmp
 		    ,len ,(symbol->string! (or name (j2s-decl-scheme-id id)))
@@ -589,11 +586,9 @@
 		(instantiate::JsAccessorDescriptor
 		   (name (string->symbol (integer->string ,indx)))
 		   (get (js-make-function %this
-			   (lambda (%) ,id) 0 "get"
-			   :noarguments #t))
+			   (lambda (%) ,id) 0 "get"))
 		   (set (js-make-function %this
-			   (lambda (% %v) (set! ,id %v)) 1 "set"
-			   :noarguments #t))
+			   (lambda (% %v) (set! ,id %v)) 1 "set"))
 		   (%get (lambda (%) ,id))
 		   (%set (lambda (% %v) (set! ,id %v)))
 		   (configurable #t)

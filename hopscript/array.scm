@@ -326,15 +326,14 @@
 	       :prototype js-array-prototype
 	       :alloc (lambda (ctor) (js-array-alloc-ctor ctor %this))
 	       :construct (lambda (this . is)
-			     (js-array-construct %this this is))
-	       :noarguments #f))
+			     (js-array-construct %this this is))))
 	 
 	 ;; other properties of the Array constructor
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.5.1
 	 (js-bind! %this js-array 'isArray
 	    :value (js-make-function %this
 		      (lambda (this arg) (isa? arg JsArray))
-		      1 'isArray :noarguments #t)
+		      1 'isArrayK)
 	    :writable #t
 	    :enumerable #f
 	    :hidden-class #t)
@@ -388,8 +387,7 @@
 	 (js-bind! %this js-array 'from
 	    :value (js-make-function %this array-from
 		      0 'from
-		      :prototype (js-undefined)
-		      :noarguments #t)
+		      :prototype (js-undefined))
 	    :enumerable #f
 	    :hidden-class #t)
 	 
@@ -741,8 +739,7 @@
    
    (js-bind! %this js-array-prototype 'toString
       :value (js-make-function %this array-prototype-tostring 0 'toString
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -777,8 +774,7 @@
    
    (js-bind! %this js-array-prototype 'toLocaleString
       :value (js-make-function %this array-prototype-tolocalestring 0 'toLocaleString
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -845,8 +841,7 @@
    
    (js-bind! %this js-array-prototype 'concat
       :value (js-make-function %this array-prototype-concat 1 'concat
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -876,8 +871,7 @@
    
    (js-bind! %this js-array-prototype 'join
       :value (js-make-function %this array-prototype-join 1 'join
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -899,8 +893,7 @@
    
    (js-bind! %this js-array-prototype 'pop
       :value (js-make-function %this array-prototype-pop 0 'pop
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -931,8 +924,7 @@
    
    (js-bind! %this js-array-prototype 'push
       :value (js-make-function %this array-prototype-push 1 'push
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -996,8 +988,7 @@
    
    (js-bind! %this js-array-prototype 'reverse
       :value (js-make-function %this array-prototype-reverse 0 'reverse
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -1056,8 +1047,7 @@
 
    (js-bind! %this js-array-prototype 'shift
       :value (js-make-function %this array-prototype-shift 0 'shift
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1182,8 +1172,7 @@
       
    (js-bind! %this js-array-prototype 'slice
       :value (js-make-function %this array-prototype-slice 2 'slice
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1281,8 +1270,7 @@
 
    (js-bind! %this js-array-prototype 'sort
       :value (js-make-function %this array-prototype-sort 1 'sort
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1380,8 +1368,7 @@
 
    (js-bind! %this js-array-prototype 'splice
       :value (js-make-function %this array-prototype-splice 2 'splice
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1445,8 +1432,7 @@
 
    (js-bind! %this js-array-prototype 'unshift
       :value (js-make-function %this array-prototype-unshift 1 'unshift
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1501,8 +1487,7 @@
 
    (js-bind! %this js-array-prototype 'indexOf
       :value (js-make-function %this array-prototype-indexof 1 'indexOf
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1560,8 +1545,7 @@
 
    (js-bind! %this js-array-prototype 'lastIndexOf
       :value (js-make-function %this array-prototype-lastindexof 1 'lastIndexOf
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -1604,8 +1588,7 @@
    
    (js-bind! %this js-array-prototype 'every
       :value (js-make-function %this array-prototype-every 1 'every
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1649,8 +1632,7 @@
    (js-bind! %this js-array-prototype 'some
       :value (js-make-function %this
 		array-prototype-some 1 'some
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1688,8 +1670,7 @@
 
    (js-bind! %this js-array-prototype 'forEach
       :value (js-make-function %this array-prototype-foreach 1 'forEach
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1740,8 +1721,7 @@
    (js-bind! %this js-array-prototype 'map
       :value (js-make-function %this
 		(make-array-prototype-map %this) 1 'map
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1808,8 +1788,7 @@
    (js-bind! %this js-array-prototype 'filter
       :value (js-make-function %this
 		array-prototype-filter 1 'filter
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
 
@@ -1848,8 +1827,7 @@
    (js-bind! %this js-array-prototype 'find
       :value (js-make-function %this
 		array-prototype-find 1 'find
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -1889,8 +1867,7 @@
    (js-bind! %this js-array-prototype 'reduce
       :value (js-make-function %this
 		array-prototype-reduce 1 'reduce
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -1930,8 +1907,7 @@
    
    (js-bind! %this js-array-prototype 'reduceRight
       :value (js-make-function %this array-prototype-reduceright 1 'reduceRight
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)
    
@@ -1944,8 +1920,7 @@
       (js-bind! %this js-array-prototype js-symbol-iterator
 	 :value (js-make-function %this array-prototype-array-values
 		   0 '@@iterator
-		   :prototype (js-undefined)
-		   :noarguments #t)
+		   :prototype (js-undefined))
 	 :enumerable #f
 	 :hidden-class #t))
 
@@ -1956,8 +1931,7 @@
    
    (js-bind! %this js-array-prototype 'fill
       :value (js-make-function %this array-prototype-fill 1 'fill
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t)   
 
@@ -1988,7 +1962,7 @@
       
       (define (iterables->lists iterables)
 	 
-	 (define jsid (js-make-function %this (lambda (this n) n) 1 "id" :noarguments #t))
+	 (define jsid (js-make-function %this (lambda (this n) n) 1 "id"))
 	 
 	 (map (lambda (el)
 		 (if (isa? el JsArray)
@@ -2028,8 +2002,7 @@
    (js-bind! %this js-array-prototype 'comprehension
       :value (js-make-function %this array-prototype-comprehension 6
 		'comprehension
-		:prototype (js-undefined)
-		:noarguments #t)
+		:prototype (js-undefined))
       :enumerable #f
       :hidden-class #t))
 
@@ -3000,10 +2973,10 @@
    (let ((jscomp (js-get (car iterables) 'comprehension %this))
 	 (len (length iterables)))
       (js-call6 %this jscomp iterables
-	 (js-make-function %this fun len "comprehension-expr" :noarguments #t)
+	 (js-make-function %this fun len "comprehension-expr")
 	 (if (eq? test #t)
 	     #t
-	     (js-make-function %this test len "comprehension-test" :noarguments #t))
+	     (js-make-function %this test len "comprehension-test"))
 	 _names _astp _aste _astd)))
 	
 ;*---------------------------------------------------------------------*/
