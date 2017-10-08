@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sat Oct  7 08:39:57 2017 (serrano)                */
+;*    Last change :  Sun Oct  8 15:18:22 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -934,6 +934,12 @@
    (uint32->fixnum (js-jsstring-codeunit-length o)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsStringLiteralASCII ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-length o::JsStringLiteralASCII cache %this)
+   (js-jsstring-lengthfx o))
+
+;*---------------------------------------------------------------------*/
 ;*    js-put-string! ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (js-put-string! _o::bstring prop v throw %this)
@@ -1742,37 +1748,37 @@
 (define (js-jsstring-replace-regexp-fun1 this::obj rx::regexp
 	   lastindex::long global::bool replacevalue %this)
    
-   (define (first-match matches::pair-nil s::bstring)
-      (let ((m (car matches)))
-	 (if (pair? m)
-	     (js-substring s (car m) (cdr m))
-	     (js-ascii->jsstring ""))))
-   
+   (define (first-match pos::vector s::bstring)
+      (if (>=fx (vector-ref pos 0) 0)
+	  (js-substring s (vector-ref pos 0) (vector-ref pos 1))
+	  (js-ascii->jsstring "")))
+
    (with-access::JsGlobalObject %this (js-regexp js-array)
       (let ((s (js-jsstring->string this))
-	    (enc (isa? this JsStringLiteralUTF8)))
+	    (enc (isa? this JsStringLiteralUTF8))
+	    (pos (vector -1 -1)))
 	 (cond
 	    ((not global)
-	     (let ((r (pregexp-match-positions rx s lastindex)))
+	     (let ((r (pregexp-match-n-positions! rx s pos lastindex)))
 		(cond
-		   ((not r)
+		   ((<=fx r 0)
 		    this)
 		   (else
 		    (js-jsstring-append
-		       (js-substring/enc s 0 (caar r) enc)
+		       (js-substring/enc s 0 (vector-ref pos 0) enc)
 		       (js-jsstring-append
 			  (js-tojsstring
 			     (replacevalue (js-undefined)
-				(first-match r s))
+				(first-match pos s))
 			     %this)
 			  (js-substring/enc s
-			     (cdar r) (string-length s) enc)))))))
+			     (vector-ref pos 1) (string-length s) enc)))))))
 	    (else
 	     (let loop ((len (string-length s)))
 		(let loop ((i 0)
 			   (res (js-ascii->jsstring "")))
-		   (let ((r (pregexp-match-positions rx s i)))
-		      (if (not r)
+		   (let ((r (pregexp-match-n-positions! rx s pos i)))
+		      (if (<=fx r 0)
 			  (cond
 			     ((=fx i 0)
 			      this)
@@ -1783,27 +1789,29 @@
 				 (js-substring/enc s i len enc))))
 			  (let ((v (js-tojsstring
 				      (replacevalue (js-undefined)
-					 (first-match r s))
+					 (first-match pos s))
 				      %this)))
 			     (cond
-				((>fx (cdar r) i)
-				 (loop (cdar r)
+				((>fx (vector-ref pos 1) i)
+				 (loop (vector-ref pos 1)
 				    (js-jsstring-append
 				       (js-jsstring-append res
-					  (js-substring/enc s i (caar r) enc))
+					  (js-substring/enc s i (vector-ref pos 0) enc))
 				       v)))
 				((<fx i len)
 				 (loop (+fx i 1)
 				    (js-jsstring-append
 				       (js-jsstring-append res
-					  (js-substring/enc s i (caar r) enc))
+					  (js-substring/enc s i
+					     (vector-ref pos 0) enc))
 				       (js-jsstring-append
 					  v
 					  (js-substring/enc s i (+fx i 1) enc)))))
 				(else
 				 (js-jsstring-append
 				    (js-jsstring-append res
-				       (js-substring/enc s i (caar r) enc))
+				       (js-substring/enc s i
+					  (vector-ref pos 0) enc))
 				    v)))))))))))))
 
 ;*---------------------------------------------------------------------*/
