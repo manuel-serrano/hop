@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Apr 14 10:30:39 2017 (serrano)                */
+;*    Last change :  Fri Oct  6 21:32:52 2017 (serrano)                */
 ;*    Copyright   :  2005-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -939,13 +939,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    so-arch-directory ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-macro (so-arch-directory)
+(define (so-arch-directory)
    (string-append (os-name) "-" (os-arch)))
 
 ;*---------------------------------------------------------------------*/
 ;*    so-suffix ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-macro (so-suffix)
+(define (so-suffix)
    (string-append "." (shared-library-suffix)))
 
 ;*---------------------------------------------------------------------*/
