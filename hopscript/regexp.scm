@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Oct 10 12:43:08 2017 (serrano)                */
+;*    Last change :  Tue Oct 10 17:12:34 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -247,7 +247,7 @@
 			     (else
 			      (string-set! res w #\\)
 			      (string-set! res (+fx w 1) c)
-			      (loop (+fx j 2) (+fx w 2) ascii))))))))))))
+			      (loop (+fx j 2) (+fx w 2) #f))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-js-regexp-range ...                                         */
