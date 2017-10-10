@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Oct  8 15:18:22 2017 (serrano)                */
+;*    Last change :  Tue Oct 10 08:29:42 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1752,14 +1752,15 @@
       (if (>=fx (vector-ref pos 0) 0)
 	  (js-substring s (vector-ref pos 0) (vector-ref pos 1))
 	  (js-ascii->jsstring "")))
-
+   
    (with-access::JsGlobalObject %this (js-regexp js-array)
-      (let ((s (js-jsstring->string this))
-	    (enc (isa? this JsStringLiteralUTF8))
-	    (pos (vector -1 -1)))
+      (let* ((s (js-jsstring->string this))
+	     (len (string-length s))
+	     (enc (isa? this JsStringLiteralUTF8))
+	     (pos (vector -1 -1)))
 	 (cond
 	    ((not global)
-	     (let ((r (pregexp-match-n-positions! rx s pos lastindex)))
+	     (let ((r (pregexp-match-n-positions! rx s pos lastindex len)))
 		(cond
 		   ((<=fx r 0)
 		    this)
@@ -1774,45 +1775,44 @@
 			  (js-substring/enc s
 			     (vector-ref pos 1) (string-length s) enc)))))))
 	    (else
-	     (let loop ((len (string-length s)))
-		(let loop ((i 0)
-			   (res (js-ascii->jsstring "")))
-		   (let ((r (pregexp-match-n-positions! rx s pos i)))
-		      (if (<=fx r 0)
+	     (let loop ((i 0)
+			(res (js-ascii->jsstring "")))
+		(let ((r (pregexp-match-n-positions! rx s pos i len)))
+		   (if (<=fx r 0)
+		       (cond
+			  ((=fx i 0)
+			   this)
+			  ((>=fx i len)
+			   res)
+			  (else
+			   (js-jsstring-append res
+			      (js-substring/enc s i len enc))))
+		       (let ((v (js-tojsstring
+				   (replacevalue (js-undefined)
+				      (first-match pos s))
+				   %this)))
 			  (cond
-			     ((=fx i 0)
-			      this)
-			     ((>=fx i len)
-			      res)
-			     (else
-			      (js-jsstring-append res
-				 (js-substring/enc s i len enc))))
-			  (let ((v (js-tojsstring
-				      (replacevalue (js-undefined)
-					 (first-match pos s))
-				      %this)))
-			     (cond
-				((>fx (vector-ref pos 1) i)
-				 (loop (vector-ref pos 1)
-				    (js-jsstring-append
-				       (js-jsstring-append res
-					  (js-substring/enc s i (vector-ref pos 0) enc))
-				       v)))
-				((<fx i len)
-				 (loop (+fx i 1)
-				    (js-jsstring-append
-				       (js-jsstring-append res
-					  (js-substring/enc s i
-					     (vector-ref pos 0) enc))
-				       (js-jsstring-append
-					  v
-					  (js-substring/enc s i (+fx i 1) enc)))))
-				(else
+			     ((>fx (vector-ref pos 1) i)
+			      (loop (vector-ref pos 1)
+				 (js-jsstring-append
+				    (js-jsstring-append res
+				       (js-substring/enc s i (vector-ref pos 0) enc))
+				    v)))
+			     ((<fx i len)
+			      (loop (+fx i 1)
 				 (js-jsstring-append
 				    (js-jsstring-append res
 				       (js-substring/enc s i
 					  (vector-ref pos 0) enc))
-				    v)))))))))))))
+				    (js-jsstring-append
+				       v
+				       (js-substring/enc s i (+fx i 1) enc)))))
+			     (else
+			      (js-jsstring-append
+				 (js-jsstring-append res
+				    (js-substring/enc s i
+				       (vector-ref pos 0) enc))
+				 v))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-replace ...                                          */

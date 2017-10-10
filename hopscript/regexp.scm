@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Oct  7 21:55:16 2017 (serrano)                */
+;*    Last change :  Tue Oct 10 12:43:08 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -151,73 +151,32 @@
    (define (err fmt str)
       (js-raise-syntax-error %this fmt str))
    
-   (define (char-alpha c)
-      (cond
-	 ((char>=? c #\a)
-	  (when (char<=? c #\f)
-	     (+fx 10 (-fx (char->integer c) (char->integer #\a)))))
-	 ((char>=? c #\A)
-	  (when (char<=? c #\F)
-	     (+fx 10 (-fx  (char->integer c) (char->integer #\A)))))
-	 ((char>=? c #\0)
-	  (when (char<=? c #\9)
-	     (-fx (char->integer c) (char->integer #\0))))
-	 (else
-	  #f)))
-   
-   (define (hex2 str j)
-      (let ((n1 (char-alpha (string-ref str j))))
-	 (when n1
-	    (let ((n2 (char-alpha (string-ref str (+fx j 1)))))
-	       (when n2
-		  (+fx (*fx n1 16) n2))))))
-   
-   (define (hex4 str j)
-      (let ((n1 (hex2 str j)))
-	 (when n1
-	    (let ((n2 (hex2 str (+fx j 2))))
-	       (when n2
-		  (+fx (*fx n1 256) n2))))))
-   
-   (define (integer->utf8 n)
-      (cond
-	 ((and (>=fx n #xD800) (<=fx n #xdbff))
-	  ;; MS 9feb2016: don't know what to do as PCRE cannot handle
-	  ;; "red" cells https://en.wikipedia.org/wiki/UTF-8
-	  (ucs2-string->utf8-string
-	     (make-ucs2-string 1 (integer->ucs2 #xd7ff))))
-	 (else
-	  (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
-	     (ucs2-string->utf8-string u)))))
-   
    (let* ((len (string-length str))
-	  (res (make-string (*fx 2 len))))
+	  (res (make-string (*fx 3 len))))
       (let loop ((i 0)
 		 (w 0)
-		 (inrange #f))
+		 (ascii #t))
 	 (let ((j (string-index str "\\[]" i)))
 	    (if (not j)
 		(begin
 		   (blit-string! str i res w (-fx len i))
 		   (string-shrink! res (+fx w (-fx len i)))
-		   res)
+		   (values res (if ascii 'ascii 'utf8)))
 		(let ((tag (string-ref str j)))
 		   (when (>fx j i)
 		      (blit-string! str i res w (-fx j i))
 		      (set! w (+fx w (-fx j i))))
 		   (cond
 		      ((char=? tag #\[)
-		       (string-set! res w tag)
-		       (loop (+fx j 1) (+fx w 1) #t))
+		       (multiple-value-bind (pat rascii j)
+			  (make-js-regexp-range %this str j)
+			  (blit-string! pat 0 res w (string-length pat))
+			  (loop (+fx j 1) (+fx w (string-length pat))
+			     (and ascii rascii))))
 		      ((char=? tag #\])
-		       (if inrange
-			   (begin
-			      (string-set! res w tag)
-			      (loop (+fx j 1) (+fx w 1) #f))
-			   (begin
-			      (string-set! res w #\\)
-			      (string-set! res (+fx w 1) tag)
-			      (loop (+fx j 1) (+fx w 2) #f))))
+		       (string-set! res w #\\)
+		       (string-set! res (+fx w 1) tag)
+		       (loop (+fx j 1) (+fx w 2) ascii))
 		      ((=fx j (-fx len 1))
 		       (err "wrong pattern \"~a\"" str))
 		      (else
@@ -232,19 +191,19 @@
 					 (err "wrong \"\\x\" pattern \"~a\"" str))
 					((=fx n 0)
 					 (blit-string! "\\000" 0 res w 4)
-					 (loop (+fx j 4) (+fx w 4) inrange))
+					 (loop (+fx j 4) (+fx w 4) ascii))
 					((=fx n #x5d)
 					 ;; "]" character
 					 ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
 					 (string-set! res w #\\)
 					 (string-set! res (+fx 1 w) #\])
-					 (loop (+fx j 4) (+fx w 2) inrange))
-					(n
+					 (loop (+fx j 4) (+fx w 2) ascii))
+					(else
 					 (let* ((s (integer->utf8 n))
 						(l (string-length s)))
 					    (blit-string! s 0 res w l)
-					    (loop (+fx j 4) (+fx w l) inrange))
-					 )))))
+					    (loop (+fx j 4) (+fx w l)
+					       (and ascii (<=fx n 127)))))))))
 			     ((#\u)
 			      (if (>=fx j (-fx len 5))
 				  (err "wrong \"\\u\" pattern \"~a\"" str)
@@ -254,40 +213,216 @@
 					 (err "wrong \"\\u\" pattern \"~a\"" str))
 					((=fx n 0)
 					 (blit-string! "\\000" 0 res w 4)
-					 (loop (+fx j 6) (+fx w 4) inrange))
+					 (loop (+fx j 6) (+fx w 4) ascii))
 					((=fx n #x5d)
 					 ;; "]" character
 					 ;; https://lists.exim.org/lurker/message/20130111.082459.a6aa1d5b.fr.html
 					 (string-set! res w #\\)
 					 (string-set! res (+fx 1 w) #\])
-					 (loop (+fx j 6) (+fx w 2) inrange))
+					 (loop (+fx j 6) (+fx w 2) ascii))
 					(else
 					 (let* ((s (integer->utf8 n))
 						(l (string-length s)))
 					    (blit-string! s 0 res w l)
-					    (loop (+fx j 6) (+fx w l) inrange)))))))
+					    (loop (+fx j 6) (+fx w l)
+					       (and ascii (<fx n 127)))))))))
 			     ((#\t)
 			      (string-set! res w #\Tab)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\n)
 			      (string-set! res w #\Newline)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\v)
 			      (string-set! res w #a011)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\f)
 			      (string-set! res w #a012)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\r)
 			      (string-set! res w #\Return)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     ((#\")
 			      (string-set! res w c)
-			      (loop (+fx j 2) (+fx w 1) inrange))
+			      (loop (+fx j 2) (+fx w 1) ascii))
 			     (else
 			      (string-set! res w #\\)
 			      (string-set! res (+fx w 1) c)
-			      (loop (+fx j 2) (+fx w 2) inrange))))))))))))
+			      (loop (+fx j 2) (+fx w 2) ascii))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    make-js-regexp-range ...                                         */
+;*---------------------------------------------------------------------*/
+(define (make-js-regexp-range %this str::bstring i0)
+   
+   (define (ending-range? str w)
+      (and (>fx w 0) (char=? (string-ref str (-fx w 1)) #\-)))
+   
+   (define (starting-range? str i)
+      (and (<fx i (string-length str)) (char=? (string-ref str i) #\-)))
+   
+   (define (err fmt str)
+      (js-raise-syntax-error %this fmt str))
+   
+   ;; (string-ref str j) == #\[
+   (let* ((len (string-length str))
+	  (res (make-string (*fx 3 len))))
+      (let loop ((i (+fx i0 1))
+		 (w 0)
+		 (chars '())
+		 (ascii #t))
+	 (let ((j (string-index str "\\]" i)))
+	    (if (not j)
+		(err "wrong pattern \"~a\"" (substring str j))
+		(let ((tag (string-ref str j)))
+		   (when (>fx j i)
+		      (blit-string! str i res w (-fx j i))
+		      (set! w (+fx w (-fx j i))))
+		   (cond
+		      ((char=? tag #\])
+		       (let ((r (string-shrink! res w)))
+			  (if (null? chars)
+			      (values
+				 (string-append "[" r "]") ascii j)
+			      (values
+				 (format "(?:[~a]|~(|))" r chars) ascii j))))
+		      ((=fx j (-fx len 1))
+		       (err "wrong pattern \"~a\"" str))
+		      (else
+		       (let ((c (string-ref str (+fx j 1))))
+			  (case c
+			     ((#\x)
+			      (if (>=fx j (-fx len 3))
+				  (err "wrong \"\\x\" pattern \"~a\"" str)
+				  (let ((n (hex2 str (+fx j 2))))
+				     (cond
+					((not n)
+					 (err "wrong \"\\x\" pattern \"~a\"" str))
+					((=fx n 0)
+					 (blit-string! "\\000" 0 res w 4)
+					 (loop (+fx j 4) (+fx w 4) chars ascii))
+					((=fx n #x5d)
+					 (string-set! res w #\\)
+					 (string-set! res (+fx 1 w) #\])
+					 (loop (+fx j 4) (+fx w 2) chars ascii))
+					((and (>=fx n 128) ascii)
+					 (if (or (ending-range? res w)
+						 (starting-range? str (+fx j 3)))
+					     (let* ((s (integer->utf8 n))
+						    (l (string-length s)))
+						(blit-string! s 0 res w l)
+						(loop (+fx j 4) (+fx w l) chars #f))
+					     (let ((s (integer->utf8 n)))
+						(loop (+fx j 4) w
+						   (cons s chars) ascii))))
+					(else
+					 (let* ((s (integer->utf8 n))
+						(l (string-length s)))
+					    (blit-string! s 0 res w l)
+					    (loop (+fx j 4) (+fx w l)
+					       chars ascii)))))))
+			     ((#\u)
+			      (if (>=fx j (-fx len 5))
+				  (err "wrong \"\\u\" pattern \"~a\"" str)
+				  (let ((n (hex4 str (+fx j 2))))
+				     (cond
+					((not n)
+					 (err "wrong \"\\u\" pattern \"~a\"" str))
+					((=fx n 0)
+					 (blit-string! "\\000" 0 res w 4)
+					 (loop (+fx j 6) (+fx w 4) chars ascii))
+					((=fx n #x5d)
+					 (string-set! res w #\\)
+					 (string-set! res (+fx 1 w) #\])
+					 (loop (+fx j 6) (+fx w 2) chars ascii))
+					((and (>=fx n 128) ascii)
+					 (if (or (ending-range? res w)
+						 (starting-range? str (+fx j 5)))
+					     (let* ((s (integer->utf8 n))
+						    (l (string-length s)))
+						(blit-string! s 0 res w l)
+						(loop (+fx j 6) (+fx w l) chars #f))
+					     (let ((s (integer->utf8 n)))
+						(loop (+fx j 6) w
+						   (cons s chars) ascii))))
+					(else
+					 (let* ((s (integer->utf8 n))
+						(l (string-length s)))
+					    (blit-string! s 0 res w l)
+					    (loop (+fx j 6) (+fx w l)
+					       chars (and ascii (<fx n 127)))))))))
+			     ((#\t)
+			      (string-set! res w #\Tab)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\n)
+			      (string-set! res w #\Newline)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\v)
+			      (string-set! res w #a011)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\f)
+			      (string-set! res w #a012)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\r)
+			      (string-set! res w #\Return)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     ((#\")
+			      (string-set! res w c)
+			      (loop (+fx j 2) (+fx w 1) chars ascii))
+			     (else
+			      (string-set! res w #\\)
+			      (string-set! res (+fx w 1) c)
+			      (loop (+fx j 2) (+fx w 2) chars ascii))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    hex2 ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (hex2 str j)
+   (let ((n1 (char-alpha (string-ref str j))))
+      (when n1
+	 (let ((n2 (char-alpha (string-ref str (+fx j 1)))))
+	    (when n2
+	       (+fx (*fx n1 16) n2))))))
+
+;*---------------------------------------------------------------------*/
+;*    hex4 ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (hex4 str j)
+   (let ((n1 (hex2 str j)))
+      (when n1
+	 (let ((n2 (hex2 str (+fx j 2))))
+	    (when n2
+	       (+fx (*fx n1 256) n2))))))
+
+;*---------------------------------------------------------------------*/
+;*    char-alpha ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (char-alpha c)
+   (cond
+      ((char>=? c #\a)
+       (when (char<=? c #\f)
+	  (+fx 10 (-fx (char->integer c) (char->integer #\a)))))
+      ((char>=? c #\A)
+       (when (char<=? c #\F)
+	  (+fx 10 (-fx  (char->integer c) (char->integer #\A)))))
+      ((char>=? c #\0)
+       (when (char<=? c #\9)
+	  (-fx (char->integer c) (char->integer #\0))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    integer->utf8 ...                                                */
+;*---------------------------------------------------------------------*/
+(define (integer->utf8 n)
+   (cond
+      ((and (>=fx n #xD800) (<=fx n #xdbff))
+       ;; MS 9feb2016: don't know what to do as PCRE cannot handle
+       ;; "red" cells https://en.wikipedia.org/wiki/UTF-8
+       (ucs2-string->utf8-string
+	  (make-ucs2-string 1 (integer->ucs2 #xd7ff))))
+      (else
+       (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
+	  (ucs2-string->utf8-string u)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-construct ...                                          */
@@ -353,16 +488,20 @@
 			    (format "~a \"~a\"" msg pattern) ""))
 		      (raise e)))
 	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
-		  (instantiate::JsRegExp
-		     (__proto__ js-regexp-prototype)
-		     (rx (pregexp (make-js-regexp-pattern %this pattern)
-			    (when (fixnum? i) 'CASELESS)
-			    'JAVASCRIPT_COMPAT
-			    'UTF8
-			    (when (fixnum? m) 'MULTILINE)))
-		     (lastindex lastindex)
-		     (global global)
-		     (properties (list lastindex global icase mline source)))))))))
+		  (multiple-value-bind (pat enc)
+		     (make-js-regexp-pattern %this pattern)
+		     (instantiate::JsRegExp
+			(__proto__ js-regexp-prototype)
+			(rx (pregexp pat
+			       (when (fixnum? i) 'CASELESS)
+			       'JAVASCRIPT_COMPAT
+			       (if (eq? enc 'ascii)
+				   'JAVASCRIPT_COMPAT
+				   'UTF8)
+			       (when (fixnum? m) 'MULTILINE)))
+			(lastindex lastindex)
+			(global global)
+			(properties (list lastindex global icase mline source))))))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-regexp-prototype! ...                               */
