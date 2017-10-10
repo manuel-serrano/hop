@@ -603,6 +603,17 @@ function letopt( ast_node, type, children_interface ) {
    }
 }
 
+function letoptbug() {
+   var s5 = 0;
+   var s5 = 1;
+   var s4 = 4;
+
+   return s4;
+}
+
 console.log( "   letopt()" );
 assert.ok( letopt( false, true, { a: 1 } ) == 3, "letopt" );
+
+console.log( "   letoptbug()" );
+assert.ok( letoptbug() == 4, "letoptbug" );
 
