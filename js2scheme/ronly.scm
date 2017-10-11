@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/ronly.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/ronly.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Fri Jun  9 11:06:19 2017 (serrano)                */
+;*    Last change :  Wed Oct 11 19:14:38 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -178,7 +178,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ronly! this::J2SFun mode::symbol)
    (with-access::J2SFun this (params thisp)
-      (when this (with-access::J2SDecl thisp (ronly) (set! ronly #t)))
+      (when thisp (with-access::J2SDecl thisp (ronly) (set! ronly #t)))
       (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) params)
       (call-next-method)))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Oct  7 18:57:03 2017 (serrano)                */
+;*    Last change :  Wed Oct 11 19:08:36 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -798,7 +798,8 @@
 		      (J2SBlock
 			 (J2SReturn #t
 			    (J2SCall (J2SHopRef 'js-spawn)
-			       gen (J2SThis (current-this)) (J2SHopRef '%this)))))
+			       gen (J2SThis (current-this))
+			       (J2SHopRef '%this)))))
 		   fun))))))
       
    (define (async-expression)
@@ -855,15 +856,13 @@
       ;; ES6 arrow functions
       (let* ((=> (consume-any!))
 	     (params (arrow-params args)))
-	 (with-this '% loc
-	    (instantiate::J2SArrow
-	       (idthis '%)
-	       (thisp (current-this))
-	       (loc loc)
-	       (name '||)
-	       (mode 'strict)
-	       (params params)
-	       (body (arrow-body params))))))
+	 (instantiate::J2SArrow
+	    (idthis '%)
+	    (loc loc)
+	    (name '||)
+	    (mode 'strict)
+	    (params params)
+	    (body (arrow-body params)))))
 
    (define (rest-params params)
       (when (pair? params)
