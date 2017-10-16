@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Aug 23 17:27:40 2017 (serrano)                */
+;*    Last change :  Tue Oct 10 07:45:35 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -324,7 +324,7 @@
 	  (e `(let ((,tmp ,o))
 		 (if (isa? ,tmp JsArray)
 		     (uint32->integer (js-array-length ,tmp))
-		     ((@ js-get-length __hopscript_property) ,@(cdr x))))
+		     ((@ js-get-length __hopscript_property) ,tmp ,@(cddr x))))
 	     e)))
       (else
        (map (lambda (x) (e x e)) x))))
