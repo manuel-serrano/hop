@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Oct 10 08:29:42 2017 (serrano)                */
+;*    Last change :  Mon Oct 16 09:29:41 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -45,8 +45,8 @@
 	   (js-jsstring->bool::bool ::obj)
 	   (generic js-jsstring-normalize!::JsStringLiteral ::JsStringLiteral)
 	   
-	   (js-jsstring-normalize-ASCII! ::JsStringLiteral)
-	   (js-jsstring-normalize-UTF8! ::JsStringLiteral)
+	   (js-jsstring-normalize-ASCII!::bstring ::JsStringLiteral)
+	   (js-jsstring-normalize-UTF8!::bstring ::JsStringLiteral)
 	   (inline js-jsstring-append::JsStringLiteral ::obj ::obj)
 	   (utf8-codeunit-length::long ::bstring)
 	   (js-utf8-ref ::JsStringLiteralUTF8 ::bstring ::long)
@@ -369,33 +369,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-ASCII! ...                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-normalize-ASCII!-toberemoved-20sep2017 js::JsStringLiteral)
-   (with-access::JsStringLiteral js (left right weight)
-      (if (not right)
-	  left
-	  (let ((buffer (make-string
-			   (uint32->fixnum (js-string-literal-length js)))))
-	     (let loop ((i 0)
-			(stack (list js)))
-		(if (null? stack)
-		    (begin
-		       (set! weight i)
-		       (set! left buffer)
-		       (set! right #f)
-		       buffer)
-		    (let ((s (car stack)))
-		       (if (string? s)
-			   (let ((len (string-length s)))
-			      (blit-string! s 0 buffer i len)
-			      (loop (+fx i len) (cdr stack)))
-			   (with-access::JsStringLiteral s (left right)
-			      (if right
-				  (loop i (cons* left right (cdr stack)))
-				  (loop i (cons left (cdr stack)))))))))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsstring-normalize-ASCII! ...                                 */
-;*---------------------------------------------------------------------*/
 (define (js-jsstring-normalize-ASCII! js::JsStringLiteral)
    
    (define (blit-buffer!::long s::bstring buffer::bstring i::long)
@@ -405,7 +378,6 @@
 	    ((1) (begin (string-set! buffer i (string-ref s 0)) 1))
 	    (else (begin (blit-string! s 0 buffer i len) len)))))
 
-   ;;(js-jsstring-debug-check! js)
    (with-access::JsStringLiteral js (left right weight)
       (cond
 	 ((not right)
@@ -421,7 +393,6 @@
 		 (set! weight (fixnum->uint32 (string-length r)))
 		 (set! left r)
 		 (set! right #f)
-		 ;;(js-jsstring-debug-check! js)
 		 r)))
 	 (else
 	  (let ((buffer (make-string
@@ -442,7 +413,6 @@
 				 (fixnum->uint32 (string-length buffer)))
 			      (set! left buffer)
 			      (set! right #f)
-			      ;;(js-jsstring-debug-check! js)
 			      buffer)))
 		    (with-access::JsStringLiteral s (left right weight)
 		       (cond
@@ -464,7 +434,93 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-UTF8! ...                                  */
 ;*---------------------------------------------------------------------*/
+(define (js-jsstring-normalize-UTF8!-assert js::JsStringLiteral)
+   (let* ((jsdup1 (duplicate::JsStringLiteralUTF8 js))
+	  (jsdup2 (duplicate::JsStringLiteralUTF8 js))
+	  (s1 (js-jsstring-normalize-UTF8! js))
+	  (s2 (js-jsstring-normalize-UTF8!-toberemoved jsdup1)))
+      (unless (equal? s1 s2)
+	 (js-jsstring-debug "PAS BON jsdup=" jsdup2)
+	 (js-jsstring-debug "           s1=" (string-for-read s1))
+	 (js-jsstring-debug "           s2=" (string-for-read s2)))
+      s1))
+
 (define (js-jsstring-normalize-UTF8! js::JsStringLiteral)
+   
+   (define (blit-utf8-buffer!::long s::bstring buffer::bstring i::long)
+      (let ((len (string-length s)))
+	 (case len
+	    ((0) i)
+	    ((1) (begin (string-set! buffer i (string-ref s 0)) (+fx i 1)))
+	    (else (utf8-string-append-fill! buffer i s)))))
+
+   (with-access::JsStringLiteralUTF8 js (left right weight %idxutf8 %idxstr)
+      (cond
+	 ((not right)
+	  left)
+	 ((=uint32 weight 0)
+	  (cond
+	     ((string? right)
+	      (let ((r right))
+		 (set! weight (fixnum->uint32 (string-length r)))
+		 (set! left r)
+		 (set! right #f)
+		 (set! %idxutf8 0)
+		 (set! %idxstr 0)
+		 r))
+	     ((isa? right JsStringLiteralASCII)
+	      (let ((r (js-jsstring-normalize-ASCII! right)))
+		 (set! weight (fixnum->uint32 (string-length r)))
+		 (set! left r)
+		 (set! right #f)
+		 (set! %idxutf8 0)
+		 (set! %idxstr 0)
+		 r))
+	     (else
+	      (with-access::JsStringLiteralUTF8 right ((ridxutf8 %idxutf8)
+						       (ridxstr %idxstr))
+		 (let ((r (js-jsstring-normalize-UTF8! right)))
+		    (set! weight (fixnum->uint32 (string-length r)))
+		    (set! left r)
+		    (set! right #f)
+		    (set! %idxutf8 ridxutf8)
+		    (set! %idxstr ridxstr)
+		    r)))))
+	 (else
+	  (let ((buffer (make-string
+			   (uint32->fixnum (js-string-literal-length js)))))
+	     (let loop ((i 0)
+			(s js)
+			(stack '()))
+		(if (string? s)
+		    (let ((ni (blit-utf8-buffer! s buffer i)))
+		       (if (pair? stack)
+			   (let* ((top (car stack))
+				  (ni (car top))
+				  (s (cdr top)))
+			      (loop ni s (cdr stack)))
+			   (begin
+			      (string-shrink! buffer ni)
+			      (set! weight
+				 (fixnum->uint32 (string-length buffer)))
+			      (set! left buffer)
+			      (set! right #f)
+			      buffer)))
+		    (with-access::JsStringLiteral s (left right weight)
+		       (cond
+			  ((not right)
+			   ;; plain left descent
+			   (loop i left stack))
+			  (else
+			   ;; full recursive call with pushed right
+			   (let* ((ni (+fx i (uint32->fixnum weight)))
+				  (nstack (cons (cons ni right) stack)))
+			      (loop i left nstack))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-normalize-UTF8!-toberemoved ...                      */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-normalize-UTF8!-toberemoved js::JsStringLiteral)
    (with-access::JsStringLiteralUTF8 js (left right weight %idxutf8 %idxstr)
       (if (and (string? left) (not right))
 	  left

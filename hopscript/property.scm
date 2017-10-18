@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Oct  2 20:09:59 2017 (serrano)                */
+;*    Last change :  Tue Oct 17 13:32:42 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2910,20 +2910,24 @@
       (else
        (fprint (current-error-port) "\nCACHES:\n" "=======\n")
        (for-each (lambda (what)
-		    (fprint (current-error-port) (car what) ": " (cadr what))
-		    (for-each (lambda (e)
-				 (when (>=fx (cdr e) *log-miss-threshold*)
-				    (fprint (current-error-port) "   "
-				       (car e) ": " (cdr e))))
-		       (sort (lambda (e1 e2)
-				(cond
-				   ((>fx (cdr e1) (cdr e2)) #t)
-				   ((<fx (cdr e1) (cdr e2)) #f)
-				   (else
-				    (string<=? (symbol->string! (car e1))
-				       (symbol->string! (car e2))))))
-			  (cddr what)))
-		    (newline (current-error-port)))
+		    (let ((c 0))
+		       (fprint (current-error-port) (car what) ": "
+			  (cadr what))
+		       (for-each (lambda (e)
+				    (when (or (>=fx (cdr e) *log-miss-threshold*)
+					      (<fx c 10))
+				       (set! c (+fx c 1))
+				       (fprint (current-error-port) "   "
+					  (car e) ": " (cdr e))))
+			  (sort (lambda (e1 e2)
+				   (cond
+				      ((>fx (cdr e1) (cdr e2)) #t)
+				      ((<fx (cdr e1) (cdr e2)) #f)
+				      (else
+				       (string<=? (symbol->string! (car e1))
+					  (symbol->string! (car e2))))))
+			     (cddr what)))
+		       (newline (current-error-port))))
 	  *misses*)
        (fprint (current-error-port)
 	  "total cache misses: " (apply + (map cadr *misses*)))

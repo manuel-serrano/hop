@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Sep 28 07:21:35 2017 (serrano)                */
+;*    Last change :  Tue Oct 17 17:41:46 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -221,8 +221,9 @@
 ;*    j2s->list ::J2SProgram ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SProgram)
-   (with-access::J2SProgram this (nodes headers decls)
+   (with-access::J2SProgram this (nodes headers decls mode)
       `(,(string->symbol (typeof this))
+	mode: ,mode
 	headers: ,(map j2s->list headers)
 	decls: ,(map j2s->list decls)
 	nodes: ,(map j2s->list nodes))))
@@ -311,6 +312,15 @@
       `(,@(call-next-method) ,id
 	  ,@(dump-type this))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SGlobalRef ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SGlobalRef)
+   (with-access::J2SGlobalRef this (id decl loc)
+      (with-access::J2SDecl decl (id usage)
+	 `(,@(call-next-method)
+	     ,@(dump-access decl)))))
+ 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SCast ...                                          */
 ;*---------------------------------------------------------------------*/

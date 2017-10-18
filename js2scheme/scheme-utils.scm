@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Oct  3 16:07:56 2017 (serrano)                */
+;*    Last change :  Tue Oct 17 18:07:00 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -136,8 +136,10 @@
 ;*    js-need-global? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-need-global? decl::J2SDecl scope mode)
-   (or (not (j2s-let-opt? decl))
-       (not (and (eq? scope '%scope) (eq? mode 'hopscript)))))
+   (with-access::J2SDecl decl (usage)
+      (or (not (j2s-let-opt? decl))
+	  (memq 'eval usage)
+	  (not (and (eq? scope '%scope) (eq? mode 'hopscript))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    flatten-begin ...                                                */

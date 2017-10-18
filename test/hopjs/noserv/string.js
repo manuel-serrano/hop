@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Fri Oct  6 09:14:38 2017 (serrano)                */
+/*    Last change :  Mon Oct 16 08:09:16 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing strings                                                  */
@@ -44,6 +44,22 @@ assert.equal( s5.charCodeAt( 0 ), 65 );
 assert.equal( s5.charCodeAt( 1 ), 55349 );
 assert.equal( s5.charCodeAt( 2 ), 56424 );
 assert.equal( s5.charCodeAt( 3 ), 67 );
+
+var s6 = "\ud801\udc37";
+
+assert.equal( s6.length, 2 );
+
+var s7a = "\ud801";
+var s7b = "\udc37";
+var s7 = s7a + s7b;
+
+assert.equal( s7.length, 2 );
+assert.equal( s7a.length, 1 );
+assert.equal( s7b.length, 1 );
+assert.equal( s7.charCodeAt( 0 ), 0xd801 );
+assert.equal( s7a.charCodeAt( 0 ), 0xd801 );
+assert.equal( s7.charCodeAt( 1 ), 0xdc37 );
+assert.equal( s7b.charCodeAt( 0 ), 0xdc37 );
 
 /*---------------------------------------------------------------------*/
 /*    generic                                                          */

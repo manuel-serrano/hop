@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/math.scm                */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/math.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 21 09:35:24 2017 (serrano)                */
+;*    Last change :  Tue Oct 17 08:53:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -26,7 +26,9 @@
 	   __hopscript_function
 	   __hopscript_error)
 
-   (export (js-init-math! ::JsObject)))
+   (export (js-init-math! ::JsObject)
+	   (js-math-ceil ::obj)
+	   (js-math-floor ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math ...                                                      */
@@ -181,23 +183,9 @@
 	 :enumerable #f
 	 :hidden-class #f)
       
-      ;; ceil
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.6
-      (define (js-math-ceil this x)
-	 (cond
-	    ((not (flonum? x))
-	     x)
-	    ((nanfl? x)
-	     x)
-	    ((=fl x +inf.0)
-	     x)
-	    ((=fl x -inf.0)
-	     x)
-	    (else
-	     (ceilingfl x))))
-      
       (js-bind! %this js-math 'ceil
-	 :value (js-make-function %this js-math-ceil 1 'ceil)
+	 :value (js-make-function %this
+		   (lambda (this x) (js-math-ceil x)) 1 'ceil)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -227,29 +215,9 @@
 	 :enumerable #f
 	 :hidden-class #f)
       
-      ;; floor
-      ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9
-      (define (js-math-floor this x)
-	 (cond
-	    ((not (flonum? x)) x)
-	    ((nanfl? x) x)
-	    ((=fl x +inf.0) x)
-	    ((=fl x -inf.0) x)
-	    (else
-	     (cond-expand
-		((or bint30 bint32)
-		 (cond
-		    ((> x (bit-lsh 1 29))
-		     (floor x))
-		    ((< x (- (bit-lsh 1 29)))
-		     (floor x))
-		    (else
-		     (flonum->fixnum (floor x)))))
-		(else
-		 (flonum->fixnum (floor x)))))))
-      
       (js-bind! %this js-math 'floor
-	 :value (js-make-function %this js-math-floor 1 'floor)
+	 :value (js-make-function %this
+		   (lambda (this x) (js-math-floor x)) 1 'floor)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -421,6 +389,45 @@
 	 :configurable #f :enumerable #f :value js-math
 	 :hidden-class #f)
       js-math))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-ceil ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.6     */
+;*---------------------------------------------------------------------*/
+(define (js-math-ceil x)
+   (cond
+      ((not (flonum? x)) x)
+      ((nanfl? x) x)
+      ((=fl x +inf.0) x)
+      ((=fl x -inf.0) x)
+      (else (ceilingfl x))))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-floor ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9     */
+;*---------------------------------------------------------------------*/
+(define (js-math-floor x)
+   (cond
+      ((not (flonum? x)) x)
+      ((nanfl? x) x)
+      ((=fl x +inf.0) x)
+      ((=fl x -inf.0) x)
+      (else
+       (cond-expand
+	  ((or bint30 bint32)
+	   (cond
+	      ((> x (bit-lsh 1 29))
+	       (floor x))
+	      ((< x (- (bit-lsh 1 29)))
+	       (floor x))
+	      (else
+	       (flonum->fixnum (floor x)))))
+	  (else
+	   (flonum->fixnum (floor x)))))))
+      
+
 
 
 

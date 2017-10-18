@@ -1,0 +1,51 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-math.scm         */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
+;*    Last change :  Tue Oct 17 13:12:31 2017 (serrano)                */
+;*    Copyright   :  2017 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Scheme code generation of JavaScript Math functions.             */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __js2scheme_scheme-math
+
+   (include "ast.sch")
+   
+   (import __js2scheme_ast
+	   __js2scheme_dump
+	   __js2scheme_utils
+	   __js2scheme_js
+	   __js2scheme_stmtassign
+	   __js2scheme_compile
+	   __js2scheme_stage
+	   __js2scheme_scheme
+	   __js2scheme_scheme-utils
+	   __js2scheme_scheme-fun)
+
+   (export (j2s-math-inline-method fun::J2SAccess args
+	      mode return::procedure conf hint totype::symbol)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-inline-method ...                                       */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-inline-method fun::J2SAccess args mode return conf hint totype)
+   (with-access::J2SAccess fun (obj field)
+      (when (isa? field J2SString)
+	 (with-access::J2SString field (val)
+	    (cond
+	       ((string=? val "floor")
+		(when (=fx (length args) 1)
+		   `(js-math-floor
+		       ,(j2s-scheme (car args) mode return conf hint totype))))
+	       ((string=? val "ceil")
+		(when (=fx (length args) 1)
+		   `(js-math-ceil
+		       ,(j2s-scheme (car args) mode return conf hint totype))))
+	       (else
+		#f))))))
+

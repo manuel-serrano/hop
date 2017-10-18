@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Sep 28 09:06:43 2017 (serrano)                */
+;*    Last change :  Tue Oct 17 07:40:38 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -168,9 +168,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    property* ::J2SUnresolvedRef ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (property* this::J2SUnresolvedRef count env ccall assig infunp shared-pcache)
+(define-walk-method (property* this::J2SGlobalRef count env ccall assig infunp shared-pcache)
    (if infunp
-       (with-access::J2SUnresolvedRef this (cache)
+       (with-access::J2SGlobalRef this (cache)
 	  (set! cache (inc! count))
 	  (cons cache (call-default-walker)))
        (call-default-walker)))

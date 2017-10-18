@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/globvar.scm             */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/globvar.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon May 22 14:39:05 2017 (serrano)                */
+;*    Last change :  Tue Oct 17 17:34:25 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization)                   */

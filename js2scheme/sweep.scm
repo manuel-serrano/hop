@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/sweep.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/sweep.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Wed May 17 17:34:35 2017 (serrano)                */
+;*    Last change :  Tue Oct 17 17:31:41 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removable stage.                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Oct  6 18:15:00 2017 (serrano)                */
+;*    Last change :  Tue Oct 17 18:57:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -29,8 +29,9 @@
 	   __js2scheme_scheme-ops
 	   __js2scheme_scheme-test
 	   __js2scheme_scheme-class
-	   __js2scheme_scheme-string)
-	   
+	   __js2scheme_scheme-string
+	   __js2scheme_scheme-math
+	   __js2scheme_scheme-date)
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
@@ -84,10 +85,14 @@
 	("trim" js-jsstring-trim string () #f)
 	("trim" js-jsstring-maybe-trim any () %this)
 	;; array methods
+;* 	("concat" js-array-concat array (any) %this)                   */
+;* 	("concat" js-array-maybe-concat any (any) %this)               */
 	("push" js-array-push array (any) %this)
 	("push" js-array-maybe-push any (any) %this)
 	("pop" js-array-pop array () %this)
 	("pop" js-array-maybe-pop any () %this)
+;* 	("slice" js-array-slice array () %this)                        */
+;* 	("slice" js-array-maybe-slice any () %this)                    */
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this)
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this))))
 
@@ -524,7 +529,7 @@
 		`(define ,(j2s-decl-scheme-id this) (js-make-let))
 		(let ((var (j2s-decl-scheme-id this)))
 		   `(,var (js-make-let)))))))
-   
+
    (cond
       ((j2s-let? this)
        (j2s-scheme-let this))
@@ -1053,9 +1058,18 @@
 ;*    j2s-let-decl-toplevel ...                                        */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-decl-toplevel::pair-nil d::J2SDeclInit mode return conf)
-   (with-access::J2SDeclInit d (val usage id hint)
+   (with-access::J2SDeclInit d (val usage id hint scope loc)
       (let ((ident (j2s-decl-scheme-id d)))
 	 (cond
+	    ((js-need-global? d scope mode)
+	     `(begin
+		 (define ,ident
+		    ,(j2s-scheme val mode return conf hint 'any))
+		 (js-define %this ,scope ',id
+		    (lambda (%) ,ident)
+		    (lambda (% %v) (set! ,ident %v))
+		    %source
+		    ,(caddr loc))))
 	    ((or (not (isa? val J2SFun))
 		 (isa? val J2SSvc)
 		 (memq 'assig usage))
@@ -1925,24 +1939,61 @@
 	     (call-unknown-function fun
 		(j2s-scheme obj mode return conf hint totype)
 		args)))))
+
+   (define (call-globalref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
+      (with-access::J2SGlobalRef self (id decl)
+	 (with-access::J2SDecl decl (usage)
+	    (unless (memq 'assig usage)
+	       (case id
+		  ((Math)
+		   (j2s-math-inline-method fun args
+		      mode return conf hint totype))
+		  (else
+		   #f))))))
+
+   (define (call-new-method obj::J2SNew field args mode return conf hint totype)
+      (with-access::J2SNew obj (clazz)
+	 (when (isa? clazz J2SGlobalRef)
+	    (with-access::J2SGlobalRef clazz (id decl)
+	       (with-access::J2SDecl decl (usage)
+		  (unless (memq 'assig usage)
+		     (case id
+			((Date)
+			 (j2s-date-new-method clazz field args mode return
+			    conf hint totype))
+			(else
+			 #f))))))))
    
    (define (call-method ccache ocache fun::J2SAccess args)
       (with-access::J2SAccess fun (loc obj field)
-	 (if (isa? obj J2SRef)
-	     (call-ref-method obj ccache ocache fun obj args)
-	     (let ((tmp (gensym)))
-		`(let ((,tmp ,(j2s-scheme obj mode return conf hint totype)))
-		    ,(call-ref-method obj
-			ccache ocache
-			(duplicate::J2SAccess fun
-			   (obj (instantiate::J2SPragma
-				   (loc loc)
-				   (expr tmp))))
-			(instantiate::J2SHopRef
-			   (type (j2s-type obj))
-			   (loc loc)
-			   (id tmp))
-			args))))))
+	 (let loop ((obj obj))
+	    (cond
+	       ((isa? obj J2SRef)
+		(call-ref-method obj ccache ocache fun obj args))
+	       ((isa? obj J2SGlobalRef)
+		(or (call-globalref-method obj ccache ocache fun obj args)
+		    (call-ref-method obj ccache ocache fun obj args)))
+	       ((isa? obj J2SParen)
+		(with-access::J2SParen obj (expr)
+		   (loop expr)))
+	       ((and (isa? obj J2SNew)
+		     (call-new-method obj field args mode return conf hint totype))
+		=>
+		(lambda (sexp) sexp))
+	       (else
+		(let ((tmp (gensym)))
+		   `(let ((,tmp ,(j2s-scheme obj mode return conf hint totype)))
+		       ,(call-ref-method obj
+			   ccache ocache
+			   (duplicate::J2SAccess fun
+			      (obj (instantiate::J2SPragma
+				      (loc loc)
+				      (expr tmp))))
+			   (instantiate::J2SHopRef
+			      (type (j2s-type obj))
+			      (loc loc)
+			      (id tmp))
+			   args))))))))
    
    (define (call-hop-function fun::J2SHopRef args)
       `(,(j2s-scheme fun mode return conf hint 'any)
@@ -2113,6 +2164,11 @@
       (with-access::J2SUnresolvedRef fun (id)
 	 (eq? id 'eval)))
 
+   (define (call-unresolved-function fun args)
+      (if (is-eval? fun)
+	  (call-eval-function fun args)
+	  (call-unknown-function fun '(js-undefined) args)))
+
    (with-access::J2SCall this (loc fun thisarg args protocol cache)
       (let loop ((fun fun))
 	 (epairify loc
@@ -2133,9 +2189,7 @@
 		   '()
 		   args))
 	       ((isa? fun J2SUnresolvedRef)
-		(if (is-eval? fun)
-		    (call-eval-function fun args)
-		    (call-unknown-function fun '(js-undefined) args)))
+		(call-unresolved-function fun args))
 	       ((isa? fun J2SWithRef)
 		(call-with-function fun args))
 	       ((isa? fun J2SPragma)
@@ -2566,7 +2620,7 @@
 		  (js-binop2 loc op (typeof-this obj conf)
 		     lhs rhs mode return conf hint totype)
 		  (strict-mode? mode)
-		  cache (min cl clevel))))))
+		  cache (if (is-number? field) 100 (min cl clevel)))))))
 
    (define (access-assigop op lhs rhs)
       (with-access::J2SAccess lhs (obj field cache clevel)
@@ -2578,7 +2632,7 @@
 		,(cond
 		    ((<=fx clevel 2)
 		     (aput-assigop otmp pro prov op lhs rhs clevel))
-		    ((not cache)
+		    ((or (not cache) (is-integer? field))
 		     (aput-assigop otmp pro prov op lhs rhs 100))
 		    ((memq (typeof-this obj conf) '(object this global))
 		     `(with-access::JsObject ,otmp (cmap)
@@ -2861,7 +2915,7 @@
 			(else
 			 `(js-put-name/cache! ,obj
 			     ',(string->symbol prop) ,val ,mode ,(js-pcache cache) %this))))))
-	     ((number? prop)
+	     ((or (number? prop) (>=fx clevel 10))
 	      `(js-put! ,obj ,prop ,val ,mode %this))
 	     (else
 	      `(js-put/cache! ,obj ,prop ,val ,mode ,(js-pcache cache) %this))))

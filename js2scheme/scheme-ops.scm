@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Oct  2 19:28:39 2017 (serrano)                */
+;*    Last change :  Tue Oct 17 15:36:00 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -236,7 +236,7 @@
 	      (lambda (left right)
 		 (js-binop loc op left right)))
 	   (js-cmp loc op lhs rhs mode return conf hint totype)))
-      ((& BIT_OR >> >>> <<)
+      ((& ^ BIT_OR >> >>> <<)
        (if (=fx (config-get conf :optim 0) 0)
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
@@ -776,6 +776,7 @@
       (case op
 	 ((&) 'bit-ands32)
 	 ((BIT_OR) 'bit-ors32)
+	 ((^) 'bit-xors32)
 	 ((>>) 'bit-rshs32)
 	 ((>>>) 'bit-urshs32)
 	 ((<<) 'bit-lshs32)
@@ -828,7 +829,14 @@
 			 ,(retnum
 			     `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right)))
 			 ,(js-binop loc op left right)))))))
-	 ((memq op '(BIT_OR &))
+	 ((or (type-fixnum? tl) (eq? tl 'int32))
+	  (binop lhs rhs mode return conf hint type
+	     (lambda (left right)
+		`(if (fixnum? ,right)
+		     ,(retnum
+			 `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right)))
+		     ,(js-binop loc op left right)))))
+	 ((memq op '(BIT_OR & ^))
 	  (binop lhs rhs mode return conf hint 'any
 	     (lambda (left right)
 		(scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
