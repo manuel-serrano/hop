@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Oct 17 18:57:40 2017 (serrano)                */
+;*    Last change :  Wed Oct 18 11:25:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1061,7 +1061,7 @@
    (with-access::J2SDeclInit d (val usage id hint scope loc)
       (let ((ident (j2s-decl-scheme-id d)))
 	 (cond
-	    ((js-need-global? d scope mode)
+	    ((memq 'eval usage)
 	     `(begin
 		 (define ,ident
 		    ,(j2s-scheme val mode return conf hint 'any))
