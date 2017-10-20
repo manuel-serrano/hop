@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Jun  1 20:17:49 2017 (serrano)                */
+;*    Last change :  Fri Oct 20 17:54:24 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -29,6 +29,9 @@
 	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
+	   (nodejs-compile-pending::int)
+	   (nodejs-compile-add-event-listener! ::bstring ::procedure ::bool)
+	   (nodejs-compile-remove-event-listener! ::bstring ::procedure)
 	   (nodejs-resolve ::bstring ::JsGlobalObject ::obj ::symbol)
 	   (nodejs-resolve-extend-path! ::pair-nil)
 	   (nodejs-new-global-object::JsGlobalObject)
@@ -40,9 +43,21 @@
 ;;(define-macro (bigloo-debug) 0)
 
 ;*---------------------------------------------------------------------*/
+;*    compile-mutex ...                                                */
+;*---------------------------------------------------------------------*/
+(define compile-mutex (make-mutex))
+(define compile-table (make-hashtable))
+
+(define compile-pending 0)
+
+(define compile-listeners-all '())
+(define compile-listeners-start '())
+(define compile-listeners-end '())
+
+;*---------------------------------------------------------------------*/
 ;*    socompile ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-struct socompile proc cmd ksucc kfail)
+(define-struct socompile proc cmd src ksucc kfail)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
@@ -61,6 +76,47 @@
 	 (call-with-output-file srcmap
 	    (lambda (p)
 	       (generate-source-map tree ifile ofile p))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-pending ...                                       */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-pending)
+   (synchronize compile-mutex
+      (+fx compile-pending (length socompile-queue))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-add-event-listener! ...                           */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-add-event-listener! event proc capture)
+   (synchronize compile-mutex
+      (cond
+	 ((string=? event "all")
+	  (set! compile-listeners-all (cons proc compile-listeners-all))
+	  (when (=fx compile-pending 0)
+	     (let ((evt (instantiate::event
+			   (name "all")
+			   (target (js-undefined))
+			   (value 0))))
+		(apply-listeners compile-listeners-all evt))))
+	 ((string=? event "end")
+	  (set! compile-listeners-end (cons proc compile-listeners-end)))
+	 ((string=? event "start")
+	  (set! compile-listeners-start (cons proc compile-listeners-start)))))
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-remove-event-listener! ...                        */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-remove-event-listener! event proc)
+   (synchronize compile-mutex
+      (cond
+	 ((string=? event "all")
+	  (set! compile-listeners-all (remq! proc compile-listeners-all)))
+	 ((string=? event "start")
+	  (set! compile-listeners-start (remq! proc compile-listeners-start)))
+	 ((string=? event "end")
+	  (set! compile-listeners-end (remq! proc compile-listeners-end)))))
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hop-boot ...                                                     */
@@ -497,12 +553,6 @@
    (js-put! scope 'HEAD (js-html-head scope) #f scope))
 
 ;*---------------------------------------------------------------------*/
-;*    compile-mutex ...                                                */
-;*---------------------------------------------------------------------*/
-(define compile-mutex (make-mutex))
-(define compile-table (make-hashtable))
-
-;*---------------------------------------------------------------------*/
 ;*    debug-compile-trace ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (debug-compile-trace filename)
@@ -632,6 +682,27 @@
 		v)))))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-process-wait ...                                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-process-wait proc filename)
+   (process-wait proc)
+   (synchronize compile-mutex
+      (when (pair? compile-listeners-end)
+	 (let ((evt (instantiate::event
+		       (name "end")
+		       (target  filename)
+		       (value (process-exit-status proc)))))
+		       (apply-listeners compile-listeners-end evt)))
+      (set! compile-pending (-fx compile-pending 1))
+      (when (=fx compile-pending 0)
+	 (when (pair? compile-listeners-all)
+	    (let ((evt (instantiate::event
+			  (name "all")
+			  (target (js-undefined))
+			  (value 0))))
+	       (apply-listeners compile-listeners-all evt))))))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-workers-inits! ...                                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile-workers-inits!)
@@ -650,7 +721,7 @@
    
    (define (socompile-wait p::struct status::bool)
       (let ((proc (socompile-proc p)))
-	 (process-wait proc)
+	 (nodejs-process-wait proc (socompile-src p))
 	 (if (and status (=fx (process-exit-status proc) 0))
 	     ((socompile-ksucc p))
 	     ((socompile-kfail p)))))
@@ -702,10 +773,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    register-socompile-process! ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (register-socompile-process! proc::process cmd::bstring ksucc kfail)
+(define (register-socompile-process! proc::process cmd::bstring src ksucc kfail)
    ;; socompile-mutex already locked
    (set! socompile-processes
-      (cons (socompile proc cmd ksucc kfail) socompile-processes))
+      (cons (socompile proc cmd src ksucc kfail) socompile-processes))
    proc)
 
 ;*---------------------------------------------------------------------*/
@@ -793,6 +864,7 @@
 (define (nodejs-socompile filename lang)
    
    (define (exec cmd::bstring ksucc::procedure kfail::procedure)
+      
       (let* ((line (string-split cmd " "))
 	     (proc (synchronize socompile-mutex
 		      (unless socompile-ended
@@ -802,8 +874,7 @@
 			       error: pipe:
 			       output: "/dev/null"
 			       (cdr line))
-			    cmd ksucc kfail))))
-	     
+			    cmd  filename ksucc kfail))))
 	     (estr (when (process? proc)
 		      (let ((err (process-error-port proc)))
 			 (with-handler
@@ -816,9 +887,17 @@
 	    (lambda (e)
 	       (exception-notify e))
 	    (when (process? proc)
+	       (synchronize socompile-mutex
+		  (set! compile-pending (+fx compile-pending 1))
+		  (when (pair? compile-listeners-start)
+		     (let ((evt (instantiate::event
+				   (name "start")
+				   (target filename)
+				   (value compile-pending))))
+			(apply-listeners compile-listeners-start evt))))
 	       (when debug-abort
 		  (tprint ">>> wait-process " proc " " cmd))
-	       (process-wait proc)
+	       (nodejs-process-wait proc filename)
 	       (when debug-abort
 		  (tprint "<<< wait-process " proc " " cmd))
 	       (synchronize socompile-mutex

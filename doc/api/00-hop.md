@@ -442,6 +442,41 @@ the asynchronous `post` when applicable. The options are shared with the
 `post` method.
 
 
+Compiler Driver
+---------------
+
+The compiler driver provides information about the background compilation
+status.
+
+### hop.compilerDriver ###
+[:@glyphicon glyphicon-tag parameter]
+
+### hop.compilerDriver.pending ###
+[:@glyphicon glyphicon-tag parameter]
+
+The number of pending background compilations.
+
+### hop.compilerDriver.addEventListener( eventName, handler [, options] ) ###
+[:@glyphicon glyphicon-tag function]
+
+This method is used to add an listener to the compiler driver. The known
+events are
+
+  * `start`: emitted when a background compilation starts.
+    The `event.target` denotes the file name.
+  * `end`: emitted when a background compilation starts.
+    The `event.target` denotes the file name and `event.value` the
+    compilation termination status (an integer).
+  * `all`: emitted when all background compilation complete. This event
+    fires, when the listener is added and when there is no pending
+    compilation.
+
+### hop.compilerDrive.removeEventListener( eventName, handler ) ###
+[:@glyphicon glyphicon-tag function]
+
+Removes an attached listener.
+
+
 Miscellaneous
 -------------
 
@@ -514,6 +549,7 @@ ${ <span class="label label-warning">Note:</span> }
 for service responses. Services can directly return XML objects
 in response to HTTP requests.
 [:@warning]
+
 
 Sub Modules
 ----------
