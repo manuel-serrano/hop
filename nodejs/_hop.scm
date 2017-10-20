@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Sep 18 17:12:06 2017 (serrano)                */
+;*    Last change :  Fri Oct 20 08:37:22 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -17,7 +17,8 @@
    (library hopscript hop)
 
    (import  __nodejs_uv
-	    __nodejs__buffer)
+	    __nodejs__buffer
+	    __nodejs_require)
 
    (static (class JsUrlFrame::JsObject
 	      (%this read-only)
@@ -103,6 +104,46 @@
 					       (js-tointeger port %this)))
 				     (authorization (when (js-totest auth)
 						       (js-tostring auth %this)))))))))
+
+      (define compiler-driver-alist '())
+      
+      (define (js-compiler-driver-add-event-listener this event proc . cap)
+	 (let ((e (js-tostring event %this))
+	       (f (lambda (evt)
+		     (js-worker-push-thunk! (js-current-worker) "server"
+			(lambda ()
+			   (js-call1 %this proc this evt))))))
+	    (nodejs-compile-add-event-listener! e f (when (pair? cap) cap))))
+
+      (define (js-compiler-driver-remove-event-listener this event proc . cap)
+	 (let ((e (js-tostring event %this))
+	       (f (assoc (cons event proc) compiler-driver-alist)))
+	    (when (pair? f)
+	       (nodejs-compile-remove-event-listener! e (cdr f)))))
+	 
+      (define js-compiler-driver
+	 (let ((driver (instantiate::JsObject
+		       (__proto__ __proto__))))
+	    (js-bind! %this driver 'pending
+	       :get (js-make-function %this
+		       (lambda (this)
+			  (nodejs-compile-pending))
+		       0 'get)
+	       :writable #f
+	       :configurable #f)
+	    (js-bind! %this driver 'addEventListener
+	       :value (js-make-function %this
+			 js-compiler-driver-add-event-listener
+			 3 'addEventListener)
+	       :writable #f
+	       :configurable #f)
+	    (js-bind! %this driver 'removeEventListener
+	       :value (js-make-function %this
+			 js-compiler-driver-remove-event-listener
+			 3 'removeEventListener)
+	       :writable #f
+	       :configurable #f)
+	    driver))
       
       (js-bind! %this js-urlframe-prototype 'post
 	 :value (js-make-function %this
@@ -276,6 +317,8 @@
 			(js-toboolean capture))))
 	       
 	       `(Server . ,js-server)
+
+	       `(compilerDriver . ,js-compiler-driver)
 
 	       ;; XML
 	       (define-js compileXML 3
