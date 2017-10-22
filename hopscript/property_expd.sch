@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Oct 10 07:45:35 2017 (serrano)                */
+;*    Last change :  Sat Oct 21 21:08:08 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -574,7 +574,7 @@
        (let ((this (gensym 'this)))
 	  (e `(let ((,this ,obj))
 		 (with-access::JsPropertyCache ,ccache (pmap cmap method vindex)
-		    ,(call obj name ccache ocache args 'pmap 'cmap 'method 'vindex)))
+		    ,(call this name ccache ocache args 'pmap 'cmap 'method 'vindex)))
 	     e)))
       (else
        (error "js-object-call-name/cache" "wrong form" x))))
@@ -624,7 +624,8 @@
 	     (if (eq? ,pmap %omap)
 		 ;; prototype method invocation
 		 (,method ,obj ,@args)
-		 (js-object-method-call-name/cache-level2 ,@(cdr x))))))
+		 (js-object-method-call-name/cache-level2
+		    ,(cadr x) ,obj ,@(cdddr x))))))
    
    (cond-expand
       ((or no-macro-cache no-method-cache)

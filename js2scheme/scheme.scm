@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Oct 18 11:25:48 2017 (serrano)                */
+;*    Last change :  Sat Oct 21 15:29:23 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1959,7 +1959,7 @@
 		  (unless (memq 'assig usage)
 		     (case id
 			((Date)
-			 (j2s-date-new-method clazz field args mode return
+			 (j2s-date-new-method obj field args mode return
 			    conf hint totype))
 			(else
 			 #f))))))))
@@ -2327,6 +2327,29 @@
 			,(j2s-scheme rhs mode return conf hint totype)
 			,(strict-mode? mode)
 			%this))))))))
+
+   (define (maybe-array-set lhs::J2SAccess rhs::J2SExpr)
+      (with-access::J2SAccess lhs (obj field cache loc)
+	 (if (isa? lhs J2SRef)
+	     `(if (isa? ,(j2s-scheme obj mode return conf hint totype) JsArray)
+		  ,(array-set lhs rhs)
+		  (j2s-put! loca (j2s-scheme obj mode return conf hint totype)
+		     (typeof-this obj conf)
+		     (j2s-scheme field mode return conf hint totype)
+		     (j2s-scheme rhs mode return conf hint totype)
+		     (strict-mode? mode)
+		     cache)))
+	 (let* ((tmp (gensym 'tmp))
+		(access (duplicate::J2SAccess lhs (obj (J2SHopRef tmp)))))
+	    `(let ((,tmp ,(j2s-scheme obj mode return conf hint totype)))
+		(if (isa? ,tmp JsArray)
+		    ,(array-set access rhs)
+		    ,(j2s-put! loc tmp
+			(typeof-this obj conf)
+			(j2s-scheme field mode return conf hint totype)
+			(j2s-scheme rhs mode return conf hint totype)
+			(strict-mode? mode)
+			cache))))))
    
    (with-access::J2SAssig this (loc lhs rhs)
       (let loop ((lhs lhs))
@@ -2334,14 +2357,18 @@
 	    ((isa? lhs J2SAccess)
 	     (with-access::J2SAccess lhs (obj field cache (loca loc))
 		(epairify loc
-		   (if (and (eq? (j2s-type obj) 'array) (maybe-number? field))
-		       (array-set lhs rhs)
+		   (cond
+		      ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
+		       (array-set lhs rhs))
+		      ((is-number? field)
+		       (maybe-array-set lhs rhs))
+		      (else
 		       (j2s-put! loca (j2s-scheme obj mode return conf hint totype)
 			  (typeof-this obj conf)
 			  (j2s-scheme field mode return conf hint totype)
 			  (j2s-scheme rhs mode return conf hint totype)
 			  (strict-mode? mode)
-			  cache)))))
+			  cache))))))
 	    ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
 	     (with-access::J2SRef lhs (decl loc)
 		(with-access::J2SDecl decl (hint)
@@ -2762,6 +2789,26 @@
 	      ,(j2s-scheme field mode return conf hint totype)
 	      %this))))
 
+   (define (maybe-array-ref obj field cache clevel)
+      (with-access::J2SExpr obj (loc)
+	 (if (isa? obj J2SRef)
+	     `(if (isa? ,(j2s-scheme obj mode return conf hint totype) JsArray)
+		  ,(array-ref obj field)
+		  ,(let ((tyo (typeof-this obj conf)))
+		      (j2s-get loc
+			 (j2s-scheme obj mode return conf hint totype) tyo
+			 (j2s-property-scheme field mode return conf)
+			 (j2s-type field) cache clevel)))
+	     (let ((tmp (gensym 'tmp)))
+		`(let ((,tmp ,(j2s-scheme obj mode return conf hint totype)))
+		    (if (isa? ,tmp JsArray)
+			,(array-ref (J2SHopRef tmp) field)
+			,(let ((tyo (typeof-this obj conf)))
+			    (j2s-get loc
+			       tmp tyo
+			       (j2s-property-scheme field mode return conf)
+			       (j2s-type field) cache clevel))))))))
+
    (with-access::J2SAccess this (loc obj field cache clevel type)
       (epairify-deep loc 
 	 (cond
@@ -2779,6 +2826,8 @@
 		(if (memq type '(index uint32 length))
 		    x
 		    (js-uint32->jsnum x conf))))
+	    ((is-number? field)
+	     (maybe-array-ref obj field cache clevel))
 	    (else
 	     (let ((tyo (typeof-this obj conf)))
 		(j2s-get loc (j2s-scheme obj mode return conf hint totype) tyo
@@ -3093,13 +3142,21 @@
 	 (with-access::J2SUnresolvedRef clazz (id)
 	    (eq? id 'Array))))
 
+   (define (smaller-than? o k)
+      (when (isa? o J2SNumber)
+	 (with-access::J2SNumber o (val)
+	    (and (fixnum? val) (>=fx val 0) (<fx val k)))))
+
    (define (j2s-new-array args)
       (cond
 	 ((null? args)
 	  '(js-empty-vector->jsarray %this))
 	 ((and (is-integer? (car args)) (null? (cdr args)))
-	  `(js-array-construct/length %this (js-array-alloc %this)
-	      ,(j2s-scheme (car args) mode return conf hint totype)))
+	  (if (smaller-than? (car args) 16)
+	      `(js-array-construct-alloc-small %this 
+		  ,(j2s-scheme (car args) mode return conf hint totype))
+	      `(js-array-construct/length %this (js-array-alloc %this)
+		  ,(j2s-scheme (car args) mode return conf hint totype))))
 	 ((null? (cdr args))
 	  `(js-array-construct %this (js-array-alloc %this)
 	      (list ,@(j2s-scheme args mode return conf hint totype))))

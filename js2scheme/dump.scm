@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Oct 17 17:41:46 2017 (serrano)                */
+;*    Last change :  Sat Oct 21 14:09:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -645,6 +645,7 @@
       `(,@(call-next-method)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
+	  ,@(dump-hint this)
 	  ,@(dump-cache this)
 	  ,(j2s->list obj) ,(j2s->list field))))
 

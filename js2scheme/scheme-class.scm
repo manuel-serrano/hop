@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon Sep 18 03:57:35 2017 (serrano)                */
+;*    Last change :  Sat Oct 21 20:15:54 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -135,7 +135,7 @@
 					   (set! __proto__ '())
 					   o))))
 				(else
-				 `(js-new0 %this ,super))))
+				 `(js-new-sans-construct %this ,super))))
 		    (,clazz (js-make-function %this
 			       ,ctor
 			       ,length

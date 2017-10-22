@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Oct  7 19:05:18 2017 (serrano)                */
+;*    Last change :  Sat Oct 21 20:15:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -49,6 +49,8 @@
 	   (js-new-return::JsObject ::JsFunction ::obj ::obj)
 	   (inline js-new-return-fast::JsObject ::JsFunction ::JsObject)
 	   
+	   (js-new-sans-construct ::JsGlobalObject f)
+
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 	   (inline js-new-fast::JsObject ::JsGlobalObject ::JsFunction __proto__)
 
@@ -237,6 +239,18 @@
 	 (when (vector? elements)
 	    (set! constrsize (vector-length elements)))
 	 o)))
+
+;*---------------------------------------------------------------------*/
+;*    js-new-sans-construct ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-new-sans-construct %this ctor)
+   ;; used to initialize classes
+   (if (isa? ctor JsFunction)
+       (with-access::JsFunction ctor (name alloc)
+	  (let ((o (alloc ctor)))
+	     ;; CARE ARITY
+	     (js-new-return ctor o o)))
+       (js-raise-type-error %this "new: object is not a function ~s" ctor)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-newXXX ...                                                    */

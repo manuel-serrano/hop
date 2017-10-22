@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/hopscript/_bglhopscript.c         */
+/*    serrano/prgm/project/hop/3.2.x/hopscript/_bglhopscript.c         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Aug  3 14:00:36 2017 (serrano)                */
+/*    Last change :  Sat Oct 21 14:01:40 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -177,9 +177,19 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 /*---------------------------------------------------------------------*/
 /*    obj_t                                                            */
 /*    bgl_make_jsarray ...                                             */
+/*    -------------------------------------------------------------    */
+/*    !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!! WARNING !!!  */
+/*    -------------------------------------------------------------    */
+/*    This C version of the array allocation, creates inner pointer    */
+/*    from the object to its vector component. This is safe as long    */
+/*    as the array lives in the JavaScript world but not if the        */
+/*    array is passed to Scheme as in this situation, there will       */
+/*    not necessary be any pointer to the beginning of the object.     */
+/*    For this to be safe the GC has to be configured with             */
+/*    INNER_POINTER activated.                                         */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsarray( int size, obj_t constrmap, obj_t __proto__, char mode ) {
+bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, char mode ) {
    long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE );
    BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)GC_MALLOC( bsize );
    obj_t vector;
@@ -194,9 +204,9 @@ bgl_make_jsarray( int size, obj_t constrmap, obj_t __proto__, char mode ) {
    o->BgL_propertiesz00 = BNIL; 
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
-   o->BgL_lengthz00 = 0;
+   o->BgL_lengthz00 = len;
    o->BgL_ilenz00 = 0;
-   
+  
    // vector initialization
    vector = (obj_t)(&(o->BgL_vecz00) + 1);
 

@@ -19,7 +19,7 @@
    (include "../nodejs/nodejs_debug.sch"
 	    "stringliteral.sch")
    
-   (extern ($js-make-jsarray::JsArray (::int ::JsConstructMap ::obj ::byte)
+   (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::byte)
 	      "bgl_make_jsarray"))
    
    (import __hopscript_types
@@ -73,6 +73,7 @@
 	   
 	   (js-array-alloc::JsArray ::JsGlobalObject)
 	   (js-array-construct::JsArray ::JsGlobalObject ::JsArray ::obj)
+	   (inline js-array-construct-alloc-small::JsArray ::JsGlobalObject ::long)
 	   (js-array-construct/length::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
@@ -2038,19 +2039,44 @@
 	    (__proto__ proto)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-array-construct-alloc-small ...                               */
+;*    -------------------------------------------------------------    */
+;*    Specialised version of js-array-construct and js-array-alloc     */
+;*    for small arrays.                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array-construct-alloc-small %this::JsGlobalObject len)
+   (cond-expand
+      (bigloo-c
+       (with-access::JsGlobalObject %this (js-array-prototype)
+	  ($js-make-jsarray len (fixnum->uint32 len)
+	     (js-not-a-cmap) js-array-prototype
+	     (js-object-default-mode))))
+      (else
+       (define (array-set! this v::vector iln::uint32 ulen::uint32)
+	  (with-access::JsArray this (vec ilen length)
+	     (set! length ulen)
+	     (set! ilen iln)
+	     (set! vec v))
+	  this)
+       
+       (let* ((this (js-array-alloc %this))
+	      (vec (make-vector len (js-undefined))))
+	  (array-set! this vec #u32:0 (fixnum->uint32 len))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-array-construct ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.2.1     */
 ;*---------------------------------------------------------------------*/
 (define (js-array-construct/length %this::JsGlobalObject this::JsArray len)
-
+   
    (define (array-set! v::vector iln::uint32 ulen::uint32)
       (with-access::JsArray this (vec ilen length)
 	 (set! length ulen)
 	 (set! ilen iln)
 	 (set! vec v))
       this)
-
+   
    (cond
       ((not (=uint32 (js-touint32 len %this) len))
        (js-raise-range-error %this "index out of range ~a" len))
@@ -2127,7 +2153,7 @@
     (define-inline (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
        (let ((mode (js-object-default-mode)))
 	  (with-access::JsGlobalObject %this (js-array-prototype)
-	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) (js-not-a-cmap)
+	     ($js-make-jsarray (DEFAULT-EMPTY-ARRAY-SIZE) #u32:0 (js-not-a-cmap)
 		js-array-prototype mode)))))
    (else
     (define (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
