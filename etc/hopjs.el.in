@@ -4,8 +4,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Wed Nov  9 08:11:55 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Sat Oct 21 06:59:26 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
 ;*=====================================================================*/
@@ -303,7 +303,7 @@
   "<\\([^>/\n]\\|/[^>]\\)*/>")
 
 (defconst hopjs-re-entering-var
-  (concat "\\(?:var[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*=[ \t]*"
+  (concat "\\(?:\\(?:var\\|let\\|const\\)[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*=[ \t]*"
 	  hopjs-re-open-tag))
 
 (defconst hopjs-re-entering-retun
@@ -313,10 +313,10 @@
   (concat hopjs-re-entering-var "\\|" hopjs-re-entering-retun))
 
 (defconst hopjs-re-entering-html
-  "\\(?:var[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\|[^/]>\\)")
+  "\\(?:\\(?:var\\|let\\|const\\)[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\|[^/]>\\)")
 
 (defconst hopjs-re-entering-attr-html
-  "\\(?:var[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\)[ \t]+\\([^\n<>]+\\)$")
+  "\\(?:\\(?:var\\|let\\|const\\)[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\)[ \t]+\\([^\n<>]+\\)$")
 
 (defconst hopjs-re-special-tag
   "<\\(link\\|LINK\\)")
