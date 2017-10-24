@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Oct 17 15:36:00 2017 (serrano)                */
+;*    Last change :  Tue Oct 24 02:06:24 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -900,9 +900,21 @@
 		((and (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))
 		 `(js-jsstring-append ,left ,right))
 		((eq? (j2s-type lhs) 'string)
-		 `(js-jsstring-append
-		     ,left
-		     (js-tojsstring (js-toprimitive ,right 'any %this) %this)))
+		 (case (j2s-type rhs)
+		    ((uint29)
+		     `(js-jsstring-append ,left
+			 (js-ascii->jsstring (fixnum->string ,right))))
+		    ((int30 int53)
+		     `(js-jsstring-append
+			 ,left
+			 ,(if (m64? conf)
+			      `(js-ascii->jssstring (fixnum->string ,right))
+			      `(js-tojsstring
+				  (js-toprimitive ,right 'any %this) %this))))
+		    (else
+		     `(js-jsstring-append
+			 ,left
+			 (js-tojsstring (js-toprimitive ,right 'any %this) %this)))))
 		(else
 		 `(js-jsstring-append
 		     (js-tojsstring (js-toprimitive ,left 'any %this) %this)

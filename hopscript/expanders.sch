@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/expanders.sch           */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/expanders.sch           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Wed Aug 23 17:28:02 2017 (serrano)                */
+;*    Last change :  Tue Oct 24 02:19:11 2017 (serrano)                */
 ;*    Copyright   :  2006-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -70,6 +70,9 @@
 	     ,js-call/cache-expander))
 
    (eval `(define-expander js-let-set!
-	     ,js-let-set!-expander)))
+	     ,js-let-set!-expander))
+
+   (eval `(define-expander js-jsstring-append
+	     ,js-jsstring-append-expander)))
       
    

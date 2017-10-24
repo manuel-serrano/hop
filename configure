@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Oct  6 13:46:26 2017 (serrano)                */
+#*    Last change :  Tue Oct 24 02:21:11 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -1454,6 +1454,8 @@ echo "" >> $init
 cat hopscript/public_expd.sch >> $init
 echo "" >> $init
 cat hopscript/expanders.sch >> $init
+echo "" >> $init
+cat hopscript/stringliteral_expd.sch >> $init
 echo "" >> $init
 echo "(hopscript-install-expanders!)" >> $init
 echo "   ))" >> $init

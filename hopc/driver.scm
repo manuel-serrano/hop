@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopc/driver.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/hopc/driver.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Jun  9 11:43:45 2017 (serrano)                */
+;*    Last change :  Sun Oct 22 14:36:43 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -300,6 +300,10 @@
 				 "hop" (hop-version)))
 		  opts)
 	       (lambda (out)
+		  (when (string? temp)
+		     (display ";; " out)
+		     (display (format "~( )" (command-line)) out)
+		     (newline out))
 		  ;; compile
 		  (map (lambda (e)
 			  (if (string? temp)

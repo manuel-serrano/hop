@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Oct 21 20:15:54 2017 (serrano)                */
+;*    Last change :  Mon Oct 23 17:41:25 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -120,9 +120,10 @@
 		 ,(proc superid))))))
    
    (define (make-class name super els constructor length ctorsz src loc)
-      (let ((ctor (gensym 'ctor))
-	    (clazz (gensym 'clazz))
-	    (proto (gensym 'prototype)))
+      (let* ((cname (or name (gensym 'class)))
+	     (clazz (symbol-append cname '%CLASS))
+	     (ctor (symbol-append cname '%CTOR))
+	     (proto (symbol-append name '%PROTOTYPE)))
 	 `(letrec* ((,ctor ,constructor)
 		    (,proto ,(cond
 				((eq? super #f)
@@ -139,7 +140,7 @@
 		    (,clazz (js-make-function %this
 			       ,ctor
 			       ,length
-			       ,(symbol->string! (or name 'toto))
+			       ,(symbol->string! cname)
 			       :src ,(when src (class-src loc this conf))
 			       :strict ',mode
 			       :alloc (lambda (o) (js-instance-alloc o %this))

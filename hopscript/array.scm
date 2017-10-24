@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/array.scm               */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/array.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri May 26 10:08:26 2017 (serrano)                */
+;*    Last change :  Tue Oct 24 16:15:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2424,6 +2424,17 @@
 		    v)
 		   (else
 		    (aput! o (js-toname p %this) v)))))
+	    ((and (=u32 idx (fixnum->uint32 (vector-length vec)))
+		  (array-extensible? o)
+		  (js-array-full-inlined? o))
+	     ;; extend the inlined vector
+	     (with-access::JsArray o (length vec ilen)
+		(set! vec (copy-vector vec (*fx (vector-length vec) 2)))
+		(vector-set-ur! vec (uint32->fixnum idx) v)
+		(let ((nilen (+u32 ilen #u32:1)))
+		       (set! ilen nilen)
+		       (when (>=u32 idx length)
+			  (set! length nilen)))))
 	    (else
 	     (aput! o (js-toname p %this) v))))))
 

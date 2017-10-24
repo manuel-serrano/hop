@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Oct 21 15:29:23 2017 (serrano)                */
+;*    Last change :  Mon Oct 23 18:14:58 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -265,6 +265,10 @@
 		     ((2) 'js-new2)
 		     ((3) 'js-new3)
 		     ((4) 'js-new4)
+		     ((5) 'js-new5)
+		     ((6) 'js-new6)
+		     ((7) 'js-new7)
+		     ((8) 'js-new8)
 		     (else 'js-new))))
 	  `(,new %this ,clazz ,@args))))
 
