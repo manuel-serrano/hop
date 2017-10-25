@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/arguments.scm           */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/arguments.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sun May 21 09:31:15 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 15:57:03 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -18,7 +18,7 @@
 
    (library hop)
 
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -337,7 +337,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsObject %this (__proto__)
-      (let ((obj (instantiate::JsArguments
+      (let ((obj (instantiate-JsArguments
 		    (vec vec)
 		    (cmap (instantiate::JsConstructMap))
 		    (elements (make-vector 1))
@@ -375,7 +375,7 @@
 	    (loop (+fx i 1) (cdr lst))))
       ;; build the arguments object
       (with-access::JsObject %this (__proto__)
-	 (let ((obj (instantiate::JsArguments
+	 (let ((obj (instantiate-JsArguments
 		       (vec vec)
 		       (elements (make-vector 1))
 		       (__proto__ __proto__))))

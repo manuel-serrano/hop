@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_udp_wrap.scm              */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_udp_wrap.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Mon Jul  6 14:06:39 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Wed Oct 25 17:28:58 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
 
    (library hopscript)
 
-   (include "nodejs_async.sch")
+   (include "nodejs_async.sch" "nodejs_types.sch")
    
    (import  __nodejs_uv
 	    __nodejs_process
@@ -193,7 +193,7 @@
    
    (define (udp-wrap hdl)
       (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (instantiate::JsHandle
+	 (let ((obj (instantiate-JsHandle
 		       (handle hdl)
 		       (__proto__ (get-udp-proto)))))
 	    (js-bind! %this obj 'fd

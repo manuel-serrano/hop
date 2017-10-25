@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Oct  3 15:35:30 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 00:19:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -19,7 +19,7 @@
    
    (library hop hopwidget js2scheme)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_string
@@ -81,7 +81,9 @@
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((nobj (duplicate::JsObject obj
 			(__proto__ (js-get js-object 'prototype %this))
-			(properties '()))))
+;* 			(properties '())                               */
+			)))
+	    (js-object-properties-set! nobj '())
 	    (js-for-in obj
 	       (lambda (k)
 		  (js-put! nobj k
@@ -231,11 +233,11 @@
 (define (js-new-global-object)
    ;; before all, initialize the builtin object prototype
    ;; and then create the global object
-   (let* ((%prototype (instantiate::JsObject
+   (let* ((%prototype (instantiate-JsObject
 			 (__proto__ (js-null))
 			 (elements (make-vector 20))
 			 (cmap (instantiate::JsConstructMap))))
-	  (%this (instantiate::JsGlobalObject
+	  (%this (instantiate-JsGlobalObject
 		    (__proto__ %prototype)
 		    (cmap (instantiate::JsConstructMap)))))
       ;; init the builtin function class
@@ -493,7 +495,7 @@
 
 	    (define (string->xml-tilde body)
 	       (let ((expr (js-tostring body %this)))
-		  (instantiate::JsWrapper
+		  (instantiate-JsWrapper
 		     (__proto__ %prototype)
 		     (data body)
 		     (obj (instantiate::xml-tilde
@@ -734,14 +736,14 @@
       (define (issealed this o)
 	 ;; 1
 	 (let ((o (js-cast-object o %this "isSealed")))
-	    (with-access::JsObject o (properties cmap)
+	    (with-access::JsObject o (cmap)
 	       (and
 		(eq? cmap (js-not-a-cmap))
 		;; 2
 		(every (lambda (desc::JsPropertyDescriptor)
 			  (with-access::JsPropertyDescriptor desc (configurable)
 			     (not (eq? configurable #t))))
-		   properties)
+		   (js-object-properties o))
 		;; 3
 		(not (js-object-mode-extensible? o))))))
       
@@ -757,7 +759,7 @@
       (define (isfrozen this o)
 	 ;; 1
 	 (let ((o (js-cast-object o %this "isFrozen")))
-	    (with-access::JsObject o (properties cmap)
+	    (with-access::JsObject o (cmap)
 	       (and
 		(or (eq? cmap (js-not-a-cmap))
 		    (with-access::JsConstructMap cmap (names)
@@ -769,7 +771,7 @@
 				  (or (not (isa? desc JsValueDescriptor))
 				      (with-access::JsValueDescriptor desc (writable)
 					 (not (eq? writable #t)))))))
-		   properties)
+		   (js-object-properties o))
 		;; 3
 		(not (js-object-mode-extensible? o))))))
       
@@ -1048,10 +1050,11 @@
    (let* ((o (js-cast-object obj %this "defineProperties"))
 	  (props (js-cast-object (js-toobject %this properties) %this
 		    "defineProperties")))
-      (with-access::JsObject props (cmap (oprops properties))
-	 (if (not (eq? cmap (js-not-a-cmap)))
-	     (defineproperties/cmap cmap o props)
-	     (defineproperties/properties oprops o props)))
+      (with-access::JsObject props (cmap)
+	 (let ((oprops (js-object-properties props)))
+	    (if (not (eq? cmap (js-not-a-cmap)))
+		(defineproperties/cmap cmap o props)
+		(defineproperties/properties oprops o props))))
       obj))
 
 ;*---------------------------------------------------------------------*/
@@ -1063,18 +1066,15 @@
    (when (>=fx (bigloo-debug) 3)
       (tprint "TODO, why js-seal need unmap?"))
    (js-object-unmap! obj)
-   (with-access::JsObject o (properties)
-      ;; 2
-      (for-each (lambda (desc::JsPropertyDescriptor)
-		   (with-access::JsPropertyDescriptor desc (name configurable)
-		      (set! configurable #f)))
-	 properties)
-      ;; 3
-;*       (with-access::JsObject o (extensible)                         */
-;* 	 (set! extensible #f))                                         */
-      (js-object-mode-extensible-set! o #f)
-      ;; 4
-      obj))
+   ;; 2
+   (for-each (lambda (desc::JsPropertyDescriptor)
+		(with-access::JsPropertyDescriptor desc (name configurable)
+		   (set! configurable #f)))
+      (js-object-properties o))
+   ;; 3
+   (js-object-mode-extensible-set! o #f)
+   ;; 4
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-freeze ::JsObject ...                                         */
@@ -1085,12 +1085,11 @@
    (when (>=fx (bigloo-debug) 3)
       (tprint "TODO, why js-freeze need unmap?"))
    (js-object-unmap! obj)
-   (with-access::JsObject o (properties)
-      (for-each js-freeze-property! properties)
+   (for-each js-freeze-property! (js-object-properties o))
 ;*       (with-access::JsObject o (extensible)                         */
 ;* 	 (set! extensible #f))                                         */
-      (js-object-mode-extensible-set! o #f)
-      obj))
+   (js-object-mode-extensible-set! o #f)
+   obj)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toprimitive ...                                               */

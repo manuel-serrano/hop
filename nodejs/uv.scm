@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/uv.scm                     */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/uv.scm                     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Tue Aug  1 16:46:46 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 17:28:01 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -20,7 +20,7 @@
       (enable-libuv
        (library libuv)))
 
-   (include "nodejs_debug.sch" "nodejs_async.sch" "uv.sch")
+   (include "nodejs_debug.sch" "nodejs_async.sch" "uv.sch" "nodejs_types.sch")
 
    (cond-expand
       (enable-libuv
@@ -194,7 +194,7 @@
       (cond-expand
 	 (enable-threads (e `(assert ,@(cdr x)) e))
 	 (else #unspecified))))
-      
+
 (cond-expand
    (enable-libuv
 ;;;

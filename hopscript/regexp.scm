@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Oct 10 17:12:34 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 14:52:11 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -16,8 +16,7 @@
 
    (library hop)
    
-   (include "stringliteral.sch"
-	    "property.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -100,20 +99,20 @@
    (with-access::JsGlobalObject %this (__proto__ js-regexp js-function
 					 js-regexp-prototype)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
-	 (let ((global (instantiate::JsValueDescriptor
-			  (name 'global)
-			  (value #f)))
-	       (lastindex (instantiate::JsValueDescriptor
-			     (name 'lastIndex)
-			     (writable #t)
-			     (value 0))))
-	    (set! js-regexp-prototype
-	       (instantiate::JsRegExp
-		  (lastindex lastindex)
-		  (global global)
-		  (rx (pregexp ""))
-		  (properties (list lastindex global))
-		  (__proto__ __proto__))))
+	 (let* ((global (instantiate::JsValueDescriptor
+			   (name 'global)
+			   (value #f)))
+		(lastindex (instantiate::JsValueDescriptor
+			      (name 'lastIndex)
+			      (writable #t)
+			      (value 0)))
+		(proto (instantiate-JsRegExp
+			  (lastindex lastindex)
+			  (global global)
+			  (rx (pregexp ""))
+			  (__proto__ __proto__))))
+	    (js-object-properties-set! proto (list lastindex global))
+	    (set! js-regexp-prototype proto))
 	 
 	 ;; create a HopScript regexp object constructor
 	 (set! js-regexp
@@ -490,18 +489,20 @@
 	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
 		  (multiple-value-bind (pat enc)
 		     (make-js-regexp-pattern %this pattern)
-		     (instantiate::JsRegExp
-			(__proto__ js-regexp-prototype)
-			(rx (pregexp pat
-			       (when (fixnum? i) 'CASELESS)
-			       'JAVASCRIPT_COMPAT
-			       (if (eq? enc 'ascii)
-				   'JAVASCRIPT_COMPAT
-				   'UTF8)
-			       (when (fixnum? m) 'MULTILINE)))
-			(lastindex lastindex)
-			(global global)
-			(properties (list lastindex global icase mline source))))))))))
+		     (let ((nobj (instantiate-JsRegExp
+				    (__proto__ js-regexp-prototype)
+				    (rx (pregexp pat
+					   (when (fixnum? i) 'CASELESS)
+					   'JAVASCRIPT_COMPAT
+					   (if (eq? enc 'ascii)
+					       'JAVASCRIPT_COMPAT
+					       'UTF8)
+					   (when (fixnum? m) 'MULTILINE)))
+				    (lastindex lastindex)
+				    (global global))))
+			(js-object-properties-set! nobj
+			   (list lastindex global icase mline source))
+			nobj))))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-regexp-prototype! ...                               */

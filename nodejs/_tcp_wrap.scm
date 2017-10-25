@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_tcp_wrap.scm              */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_tcp_wrap.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Mar  1 09:25:55 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 17:28:38 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -21,7 +21,7 @@
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 
-   (include "nodejs_async.sch")
+   (include "nodejs_async.sch" "nodejs_types.sch")
    
    (export (process-tcp-wrap ::WorkerHopThread ::JsGlobalObject 
 	      ::JsProcess ::obj ::JsObject)))
@@ -242,7 +242,7 @@
 
    (define (tcp-wrap hdl)
       (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (instantiate::JsHandle
+	 (let ((obj (instantiate-JsHandle
 		       (handle hdl)
 		       (__proto__ (get-tcp-proto)))))
 	    (js-bind! %this obj 'fd

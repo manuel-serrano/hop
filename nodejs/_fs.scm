@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_fs.scm                    */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_fs.scm                    */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Thu Jun  9 17:33:47 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Wed Oct 25 17:25:27 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
 
    (library hopscript)
 
-   (include "nodejs_async.sch")
+   (include "nodejs_async.sch" "nodejs_types.sch")
    
    (import  __nodejs_uv
 	    __nodejs_process)
@@ -304,7 +304,7 @@
 	 fs-watcher-proto))
    
    (define (fs-watcher this)
-      (instantiate::JsHandle
+      (instantiate-JsHandle
 	 (handle (nodejs-make-fs-poll %worker))
 	 (__proto__ (get-fs-watcher-proto process))))
    

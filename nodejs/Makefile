@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Sep 12 13:39:44 2017 (serrano)                */
+#*    Last change :  Thu Oct 26 00:37:59 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -57,7 +57,8 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm) $(_JS_OBJECTS:%=%.js)
 
-INCLUDES = nodejs_debug.sch nodejs_async.sch uv.sch _crypto.sch
+INCLUDES = nodejs_debug.sch nodejs_async.sch uv.sch _crypto.sch \
+  nodejs_types.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

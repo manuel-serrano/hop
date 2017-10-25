@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Oct 21 21:09:45 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 00:06:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -216,29 +216,30 @@
 ;*---------------------------------------------------------------------*/
 (define (js-debug-object obj #!optional (msg ""))
    (if (isa? obj JsObject)
-       (with-access::JsObject obj (cmap elements properties)
-	  (if (eq? cmap (js-not-a-cmap))
-	      (with-access::JsConstructMap cmap (%id names)
-		 (fprint (current-error-port) msg (typeof obj) " UNMAPPED"
-		    " length=" (length properties)
-		    "\n  prop.names="
-		    (map (lambda (d)
-			    (with-access::JsPropertyDescriptor d (name)
-			       name))
-		       properties)
-		    "\n  props=" properties))
-	      (with-access::JsConstructMap cmap (%id names methods)
-		 (fprint (current-error-port) msg (typeof obj) " MAPPED"
-		    " length=" (vector-length elements)
-		    " mlengths=" (vector-length methods)
-		    "\n  elements=" (vector-map
-				       (lambda (v)
-					  (if (isa? v JsObject)
-					      (typeof v)
-					      v))
-				       elements)
-		    "\n  cmap.%id=" %id
-		    " cmap.names=" names))))
+       (with-access::JsObject obj (cmap elements)
+	  (let ((properties (js-object-properties obj)))
+	     (if (eq? cmap (js-not-a-cmap))
+		 (with-access::JsConstructMap cmap (%id names)
+		    (fprint (current-error-port) msg (typeof obj) " UNMAPPED"
+		       " length=" (length properties)
+		       "\n  prop.names="
+		       (map (lambda (d)
+			       (with-access::JsPropertyDescriptor d (name)
+				  name))
+			  properties)
+		       "\n  props=" properties))
+		 (with-access::JsConstructMap cmap (%id names methods)
+		    (fprint (current-error-port) msg (typeof obj) " MAPPED"
+		       " length=" (vector-length elements)
+		       " mlengths=" (vector-length methods)
+		       "\n  elements=" (vector-map
+					  (lambda (v)
+					     (if (isa? v JsObject)
+						 (typeof v)
+						 v))
+					  elements)
+		       "\n  cmap.%id=" %id
+		       " cmap.names=" names)))))
        (fprint (current-error-port) msg (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
@@ -702,7 +703,7 @@
    (let ((desc (gensym 'desc))
 	 (name (gensym 'name))
 	 (prop (gensym 'properties)))
-      `(with-access::JsObject ,o ((,prop properties))
+      `(let ((,prop (js-object-properties ,o)))
 	  (let ((,desc (find (lambda (d::JsPropertyDescriptor)
 				(with-access::JsPropertyDescriptor d ((,name name))
 				   (eq? ,p ,name)))
@@ -754,14 +755,14 @@
 ;; MS CARE 27 sep 2014: This function is used by js-freeze and js-seal
 ;; I don't understand why.
 (define (js-object-unmap! o::JsObject)
-   (with-access::JsObject o (cmap elements properties)
+   (with-access::JsObject o (cmap elements)
       (unless (eq? cmap (js-not-a-cmap))
 	 (with-access::JsConstructMap cmap (names)
 	    (let loop ((i (-fx (vector-length names) 1))
 		       (acc '()))
 	       (cond
 		  ((=fx i -1)
-		   (set! properties acc))
+		   (js-object-properties-set! o acc))
 		  ((not (vector-ref names i))
 		   (loop (-fx i 1) acc))
 		  ((isa? (vector-ref elements i) JsPropertyDescriptor)
@@ -990,19 +991,19 @@
 		  (else
 		   (loop (-fx i 1) acc)))))))
    
-   (with-access::JsObject o (cmap properties)
+   (with-access::JsObject o (cmap)
       (cond
 	 ((not (eq? cmap (js-not-a-cmap)))
 	  (cmap->names cmap))
 	 ((not enump)
 	  (map (lambda (p)
 		  (with-access::JsPropertyDescriptor p (name) name))
-	     properties))
+	     (js-object-properties o)))
 	 (else
 	  (filter-map (lambda (p)
 			 (with-access::JsPropertyDescriptor p (enumerable name)
 			    (when enumerable name)))
-	     properties)))))
+	     (js-object-properties o))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name ::JsObject ...                                */
@@ -1012,10 +1013,9 @@
    (define (symbol->jsstring n)
       (js-string->jsstring (symbol->string! n)))
 
-   (with-access::JsObject o (properties)
-      (apply vector
-	 (filter-map (lambda (n) (when (symbol? n) (symbol->jsstring n)))
-	    (properties-names o enump)))))
+   (apply vector
+      (filter-map (lambda (n) (when (symbol? n) (symbol->jsstring n)))
+	 (properties-names o enump))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-symbol ...                                         */
@@ -1029,10 +1029,9 @@
 ;*    js-properties-symbol::vector ::JsObject ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-symbol::vector o::JsObject %this::JsGlobalObject)
-   (with-access::JsObject o (properties)
-      (apply vector
-	 (filter-map (lambda (n) (when (isa? n JsSymbol) n))
-	    (properties-names o #t)))))
+   (apply vector
+      (filter-map (lambda (n) (when (isa? n JsSymbol) n))
+	 (properties-names o #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ...                                              */
@@ -1672,19 +1671,18 @@
    
    (define (extend-properties-object!)
       (with-trace 'prop "extend-properties-object!"
-	 (with-access::JsObject o (properties)
-	    (let ((newdesc (instantiate::JsValueDescriptor
-			      (name name)
-			      (value v)
-			      (writable #t)
-			      (enumerable #t)
-			      (configurable #t))))
-	       (js-define-own-property o name newdesc throw %this)
-	       v))))
+	 (let ((newdesc (instantiate::JsValueDescriptor
+			   (name name)
+			   (value v)
+			   (writable #t)
+			   (enumerable #t)
+			   (configurable #t))))
+	    (js-define-own-property o name newdesc throw %this)
+	    v)))
    
    (define (extend-object!)
       (with-trace 'prop "extend-object!"
-	 (with-access::JsObject o (cmap properties)
+	 (with-access::JsObject o (cmap)
 	    (cond
 	       ((not (js-object-mode-extensible? o))
 		;; 8.12.9. step 3
@@ -1942,19 +1940,18 @@
 			    (configurable configurable))))
 	     (js-define-own-property o name newdesc #f %this)
 	     (js-undefined))
-	  (with-access::JsObject obj (properties)
-	     (let ((props (filter! (lambda (d)
-				      (with-access::JsPropertyDescriptor d ((n name))
-					 (not (eq? n name))))
-			     properties)))
-		(set! properties
-		   (cons (instantiate::JsValueDescriptor
-			    (name name)
-			    (value value)
-			    (writable writable)
-			    (enumerable enumerable)
-			    (configurable configurable))
-		      props)))
+	  (let ((props (filter! (lambda (d)
+				   (with-access::JsPropertyDescriptor d ((n name))
+				      (not (eq? n name))))
+			  (js-object-properties obj))))
+	     (js-object-properties-set! obj
+		(cons (instantiate::JsValueDescriptor
+			 (name name)
+			 (value value)
+			 (writable writable)
+			 (enumerable enumerable)
+			 (configurable configurable))
+		   props))
 	     value)))
    
    (define (extend-properties-object!)
@@ -2054,9 +2051,9 @@
 		       (with-access::JsPropertyDescriptor d (configurable)
 			  (delete-configurable o configurable
 			     (lambda (o)
-				(with-access::JsObject o (properties)
-				   (set! properties (remq! d properties))
-				   #t)))))
+				(js-object-properties-set! o
+				   (remq! d (js-object-properties o)))
+				#t))))
 		    (lambda () #t)))))
 	 (else
 	  (js-raise-type-error %this
@@ -2076,7 +2073,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.9       */
 ;*---------------------------------------------------------------------*/
 (define (js-define-own-property%::bool o::JsObject name::obj desc::JsPropertyDescriptor throw %this::JsGlobalObject)
-
+   
    (define rejected #f)
    
    (define (reject msg)
@@ -2162,7 +2159,7 @@
 	    (when dget (set! get dget) (set! %get %dget))
 	    (when dset (set! set dset))))
       #t)
-
+   
    (define (same-value v1 v2)
       (if (flonum? v1)
 	  (or (and (flonum? v2)
@@ -2170,7 +2167,7 @@
 		       (and (nanfl? v1) (nanfl? v2))))
 	      (and (fixnum? v2) (=fl v1 (fixnum->flonum v2))))
 	  (equal? v1 v2)))
-
+   
    (define (same-property-descriptor? current::JsPropertyDescriptor desc::JsPropertyDescriptor)
       (with-access::JsPropertyDescriptor current
 	    ((cname name) (cconf configurable) (cenum enumerable))
@@ -2179,17 +2176,17 @@
 	    (and (eq? cname dname)
 		 (or (not (boolean? dconf)) (eq? cconf dconf))
 		 (or (not (boolean? denum)) (eq? cenum denum))))))
-
+   
    (define (same-accessor-descriptor? current::JsAccessorDescriptor desc::JsAccessorDescriptor)
       (with-access::JsAccessorDescriptor current ((cget get) (cset set))
 	 (with-access::JsAccessorDescriptor desc ((dget get) (dset set))
 	    (and (eq? cget dget) (eq? cset dset)))))
-
+   
    (define (same-data-descriptor? current::JsDataDescriptor desc::JsDataDescriptor)
       (with-access::JsDataDescriptor current ((cwritable writable))
 	 (with-access::JsDataDescriptor desc ((dwritable writable))
 	    (eq? cwritable dwritable))))
-
+   
    (define (same-descriptor? current desc)
       (when (same-property-descriptor? current desc)
 	 (cond
@@ -2211,158 +2208,159 @@
 	     (and (same-property-descriptor? current desc)
 		  (with-access::JsValueDescriptor current (value writable)
 		     (and (eq? value (js-undefined)) #f)))))))
-
+   
    ;; MS CARE, to be improved
    (js-object-unmap! o)
    (let ((current (js-get-own-property o name %this)))
-      ;; 1
-      (with-access::JsObject o (properties)
-	 ;; 2
-	 (cond
-	    ((eq? current (js-undefined))
+      ;; 1 & 2
+      (cond
+	 ((eq? current (js-undefined))
+	  (cond
+	     ((not (js-object-mode-extensible? o))
+	      ;; 3
+	      (reject (format "~a not extensible" (js-tostring o %this))))
+	     (else
+	      ;; 4
+	      (let ((ndesc (cond
+			      ((isa? desc JsValueDescriptor)
+			       ;; 4.a
+			       (with-access::JsValueDescriptor desc
+				     (writable enumerable configurable)
+				  (unless (boolean? writable)
+				     (set! writable #f))
+				  (unless (boolean? enumerable)
+				     (set! enumerable #f))
+				  (unless (boolean? configurable)
+				     (set! configurable #f)))
+			       desc)
+			      ((isa? desc JsDataDescriptor)
+			       (with-access::JsDataDescriptor desc
+				     (enumerable configurable name writable)
+				  (instantiate::JsValueDescriptor
+				     (name name)
+				     (writable (boolify writable))
+				     (enumerable (boolify enumerable))
+				     (configurable (boolify configurable))
+				     (value (js-undefined)))))
+			      ;; 4.b
+			      ((isa? desc JsAccessorDescriptor)
+			       (with-access::JsAccessorDescriptor desc
+				     (enumerable configurable get set name)
+				  (unless (boolean? enumerable)
+				     (set! enumerable #f))
+				  (unless (boolean? configurable)
+				     (set! configurable #f))
+				  (unless get
+				     (set! get (js-undefined)))
+				  (unless set
+				     (set! set (js-undefined))))
+			       desc)
+			      (else
+			       ;; 4.a
+			       (with-access::JsPropertyDescriptor desc
+				     (enumerable configurable name)
+				  (instantiate::JsValueDescriptor
+				     (name name)
+				     (writable #f)
+				     (enumerable (boolify enumerable))
+				     (configurable (boolify configurable))
+				     (value (js-undefined))))))))
+		 (unless (list? (js-object-properties o))
+		    (tprint "PAS BON:  "  o " " name " " desc))
+		 (js-object-properties-set! o
+		    (append! (js-object-properties o) (list ndesc)))
+		 #t))))
+	 ((same-descriptor? current desc)
+	  #t)
+	 ((equal? current desc)
+	  ;; 5 & 6
+	  (error "define-property" "equal but not same" name)
+	  #t)
+	 (else
+	  (when (eq? (configurable current) #f)
+	     ;; 7
 	     (cond
-		((not (js-object-mode-extensible? o))
-		 ;; 3
-		 (reject (format "~a not extensible" (js-tostring o %this))))
+		((eq? (configurable desc) #t)
+		 ;; 7.a
+		 (reject
+		    (format "~a.~a configurability mismatch"
+		       (js-tostring o %this) name)))
+		((and (boolean? (enumerable desc))
+		      (not (eq? (enumerable current) (enumerable desc))))
+		 ;; 7.b
+		 (reject
+		    (format "~a.~a enumerability mismatch"
+		       (js-tostring o %this) name)))))
+	  (unless rejected
+	     (cond
+		((js-is-generic-descriptor? desc)
+		 ;; 8
+		 (propagate-property-descriptor! current desc))
+		((not (eq? (isa? current JsDataDescriptor)
+			 (isa? desc JsDataDescriptor)))
+		 ;; 9
+		 (cond
+		    ((eq? (configurable current) #f)
+		     ;; 9.a
+		     (reject
+			(format "~a.~a configurability mismatch"
+			   (js-tostring o %this) name)))
+		    ((isa? current JsDataDescriptor)
+		     ;; 9.b
+		     (when (isa? desc JsAccessorDescriptor)
+			(with-access::JsAccessorDescriptor desc (set get)
+			   (unless (isa? get JsFunction)
+			      (set! get (js-undefined)))
+			   (unless (isa? set JsFunction)
+			      (set! set (js-undefined)))))
+		     (propagate-property-descriptor2! desc current)
+		     (replace-property-descriptor! current desc))
+		    (else
+		     ;; 9.c
+		     (propagate-property-descriptor2! desc current)
+		     (replace-property-descriptor! current desc))))
+		((and (isa? current JsDataDescriptor)
+		      (isa? desc JsDataDescriptor))
+		 ;; 10
+		 (if (eq? (configurable current) #f)
+		     (cond
+			((and (eq? (writable current) #f)
+			      (eq? (writable desc) #t))
+			 ;; 10.a.i
+			 (reject
+			    (format "~a.~a read-only"
+			       (js-tostring o %this) name)))
+			((eq? (writable current) #f)
+			 ;; 10.a.ii
+			 (if (and (isa? desc JsValueDescriptor)
+				  (not (same-value (value desc) (value current))))
+			     (reject
+				(format "~a.~a value mismatch"
+				   (js-tostring o %this) name))
+			     #t))
+			(else
+			 (propagate-data-descriptor! current desc)))
+		     (propagate-data-descriptor! current desc)))
+		((and (isa? current JsAccessorDescriptor)
+		      (isa? desc JsAccessorDescriptor))
+		 ;; 11
+		 (if (eq? (configurable current) #f)
+		     (cond
+			((and (set desc) (not (equal? (set current) (set desc))))
+			 (reject
+			    (format "~a.~a setter mismatch"
+			       (js-tostring o %this) name)))
+			((and (get desc)
+			      (not (equal? (get current) (get desc))))
+			 (reject
+			    (format "~a.~a getter mismatch"
+			       (js-tostring o %this) name)))
+			(else
+			 (propagate-accessor-descriptor! current desc)))
+		     (propagate-accessor-descriptor! current desc)))
 		(else
-		 ;; 4
-		 (let ((ndesc (cond
-				 ((isa? desc JsValueDescriptor)
-				  ;; 4.a
-				  (with-access::JsValueDescriptor desc
-					(writable enumerable configurable)
-				     (unless (boolean? writable)
-					(set! writable #f))
-				     (unless (boolean? enumerable)
-					(set! enumerable #f))
-				     (unless (boolean? configurable)
-					(set! configurable #f)))
-				  desc)
-				 ((isa? desc JsDataDescriptor)
-				  (with-access::JsDataDescriptor desc
-					(enumerable configurable name writable)
-				     (instantiate::JsValueDescriptor
-					(name name)
-					(writable (boolify writable))
-					(enumerable (boolify enumerable))
-					(configurable (boolify configurable))
-					(value (js-undefined)))))
-				 ;; 4.b
-				 ((isa? desc JsAccessorDescriptor)
-				  (with-access::JsAccessorDescriptor desc
-					(enumerable configurable get set name)
-				     (unless (boolean? enumerable)
-					(set! enumerable #f))
-				     (unless (boolean? configurable)
-					(set! configurable #f))
-				     (unless get
-					(set! get (js-undefined)))
-				     (unless set
-					(set! set (js-undefined))))
-				  desc)
-				 (else
-				  ;; 4.a
-				  (with-access::JsPropertyDescriptor desc
-					(enumerable configurable name)
-				     (instantiate::JsValueDescriptor
-					(name name)
-					(writable #f)
-					(enumerable (boolify enumerable))
-					(configurable (boolify configurable))
-					(value (js-undefined))))))))
-		    (set! properties (append! properties (list ndesc)))
-		    #t))))
-	    ((same-descriptor? current desc)
-	     #t)
-	    ((equal? current desc)
-	     ;; 5 & 6
-	     (error "define-property" "equal but not same" name)
-	     #t)
-	    (else
-	     (when (eq? (configurable current) #f)
-		;; 7
-		(cond
-		   ((eq? (configurable desc) #t)
-		    ;; 7.a
-		    (reject
-		       (format "~a.~a configurability mismatch"
-			  (js-tostring o %this) name)))
-		   ((and (boolean? (enumerable desc))
-			 (not (eq? (enumerable current) (enumerable desc))))
-		    ;; 7.b
-		    (reject
-		       (format "~a.~a enumerability mismatch"
-			  (js-tostring o %this) name)))))
-	     (unless rejected
-		(cond
-		   ((js-is-generic-descriptor? desc)
-		    ;; 8
-		    (propagate-property-descriptor! current desc))
-		   ((not (eq? (isa? current JsDataDescriptor)
-			    (isa? desc JsDataDescriptor)))
-		    ;; 9
-		    (cond
-		       ((eq? (configurable current) #f)
-			;; 9.a
-			(reject
-			   (format "~a.~a configurability mismatch"
-			      (js-tostring o %this) name)))
-		       ((isa? current JsDataDescriptor)
-			;; 9.b
-			(when (isa? desc JsAccessorDescriptor)
-			   (with-access::JsAccessorDescriptor desc (set get)
-			      (unless (isa? get JsFunction)
-				 (set! get (js-undefined)))
-			      (unless (isa? set JsFunction)
-				 (set! set (js-undefined)))))
-			(propagate-property-descriptor2! desc current)
-			(replace-property-descriptor! current desc))
-		       (else
-			;; 9.c
-			(propagate-property-descriptor2! desc current)
-			(replace-property-descriptor! current desc))))
-		   ((and (isa? current JsDataDescriptor)
-			 (isa? desc JsDataDescriptor))
-		    ;; 10
-		    (if (eq? (configurable current) #f)
-			(cond
-			   ((and (eq? (writable current) #f)
-				 (eq? (writable desc) #t))
-			    ;; 10.a.i
-			    (reject
-			       (format "~a.~a read-only"
-				  (js-tostring o %this) name)))
-			   ((eq? (writable current) #f)
-			    ;; 10.a.ii
-			    (if (and (isa? desc JsValueDescriptor)
-				     (not (same-value (value desc) (value current))))
-				(reject
-				   (format "~a.~a value mismatch"
-				      (js-tostring o %this) name))
-				#t))
-			   (else
-			    (propagate-data-descriptor! current desc)))
-			(propagate-data-descriptor! current desc)))
-		   ((and (isa? current JsAccessorDescriptor)
-			 (isa? desc JsAccessorDescriptor))
-		    ;; 11
-		    (if (eq? (configurable current) #f)
-			(cond
-			   ((and (set desc) (not (equal? (set current) (set desc))))
-			    (reject
-			       (format "~a.~a setter mismatch"
-				  (js-tostring o %this) name)))
-			   ((and (get desc)
-				 (not (equal? (get current) (get desc))))
-			    (reject
-			       (format "~a.~a getter mismatch"
-				  (js-tostring o %this) name)))
-			   (else
-			    (propagate-accessor-descriptor! current desc)))
-			(propagate-accessor-descriptor! current desc)))
-		   (else
-		    ;; 12 & 13
-		    (propagate-property-descriptor! current desc)))))))))
+		 ;; 12 & 13
+		 (propagate-property-descriptor! current desc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-replace-own-property! ...                                     */
@@ -2381,8 +2379,8 @@
 	     (loop (cdr lst))))))
    
    (let loop ((o o))
-      (with-access::JsObject o (properties __proto__)
-	 (unless (replace-list! properties old new)
+      (with-access::JsObject o (__proto__)
+	 (unless (replace-list! (js-object-properties o) old new)
 	    (loop __proto__)))))
 
 ;*---------------------------------------------------------------------*/
@@ -2447,11 +2445,11 @@
 		  (proc (js-string->jsstring (symbol->string! name))))))))
    
    (let loop ((o obj))
-      (with-access::JsObject o (cmap properties __proto__ elements)
+      (with-access::JsObject o (cmap __proto__ elements)
 	 (if (not (eq? cmap (js-not-a-cmap)))
 	     (with-access::JsConstructMap cmap (names)
 		(vfor-each in-mapped-property elements names))
-	     (for-each in-property properties))
+	     (for-each in-property (js-object-properties o)))
 	 (when (isa? __proto__ JsObject)
 	    (loop __proto__)))))
 

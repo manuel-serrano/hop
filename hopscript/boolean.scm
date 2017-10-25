@@ -18,7 +18,7 @@
 
    (library hop)
 
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_private
@@ -77,12 +77,12 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 (define js-boolean-prototype
-	    (instantiate::JsBoolean
+	    (instantiate-JsBoolean
 	       (val #f)
 	       (__proto__ __proto__)))
 	 
 	 (define (js-boolean-alloc constructor::JsFunction)
-	    (instantiate::JsBoolean
+	    (instantiate-JsBoolean
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 ;; then, Create a HopScript string object

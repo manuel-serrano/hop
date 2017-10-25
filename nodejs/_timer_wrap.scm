@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_timer_wrap.scm            */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_timer_wrap.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Thu Feb 19 11:30:29 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Wed Oct 25 17:30:00 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
 ;*=====================================================================*/
@@ -27,12 +27,17 @@
    (export (hopjs-process-timer ::WorkerHopThread ::JsGlobalObject ::JsObject)))
 
 ;*---------------------------------------------------------------------*/
+;*    constructors                                                     */
+;*---------------------------------------------------------------------*/
+(define-instantiate JsTimer)
+
+;*---------------------------------------------------------------------*/
 ;*    hopjs-process-timer ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (hopjs-process-timer %worker %this process)
    
    (define js-timer-prototype
-      (instantiate::JsObject))
+      (instantiate-JsObject))
    
    (init-timer-prototype! %this js-timer-prototype)
    
@@ -60,7 +65,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-timer-construct! %worker %this::JsGlobalObject process js-timer-prototype)
    (lambda (_)
-      (let ((obj (instantiate::JsTimer
+      (let ((obj (instantiate-JsTimer
 		    (__proto__ js-timer-prototype)
 		    (worker (js-current-worker)))))
 	 (with-access::JsTimer obj (timer)

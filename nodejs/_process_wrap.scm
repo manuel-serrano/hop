@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_process_wrap.scm          */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_process_wrap.scm          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 17 17:07:03 2014                          */
-;*    Last change :  Wed Jan 28 07:01:20 2015 (serrano)                */
-;*    Copyright   :  2014-15 Manuel Serrano                            */
+;*    Last change :  Wed Oct 25 17:28:22 2017 (serrano)                */
+;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs child processes bindings                                  */
 ;*=====================================================================*/
@@ -15,6 +15,8 @@
 (module __nodejs__process-wrap
 
    (library hopscript)
+
+   (include "nodejs_types.sch")
 
    (import  __nodejs_uv
 	    __nodejs_process)
@@ -74,7 +76,7 @@
 			  (lambda (this) this)
 			  1 'Process
 			  :alloc (lambda (o)
-				    (instantiate::JsHandle
+				    (instantiate-JsHandle
 				       (handle (nodejs-new-process))
 				       (__proto__ process-prototype))))))
 	 %this)))

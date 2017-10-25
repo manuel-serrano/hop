@@ -17,6 +17,7 @@
    (library hop)
    
    (include "../nodejs/nodejs_debug.sch"
+	    "types.sch"
 	    "stringliteral.sch")
    
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::byte)
@@ -292,23 +293,24 @@
 	 
 	 ;; builtin prototype
 	 (set! js-array-prototype
-	    (instantiate::JsArray
+	    (instantiate-JsArray
 	       (vec '#())
-	       (__proto__ __proto__)
-	       (properties (list
-			      ;; cannot be defined with js-bind! because
-			      ;; of bootstrap specificities
-			      (instantiate::JsValueDescriptor
-				 (name 'length)
-				 (value 0)
-				 (configurable #f)
-				 (writable #t))))))
+	       (__proto__ __proto__)))
+	 (js-object-properties-set! js-array-prototype
+	    (list
+	       ;; cannot be defined with js-bind! because
+	       ;; of bootstrap specificities
+	       (instantiate::JsValueDescriptor
+		  (name 'length)
+		  (value 0)
+		  (configurable #f)
+		  (writable #t))))
 
 	 ;; DO NOT REMOVE !
 	 ;; when array are ready for caching this should replace
 	 ;; the old definition of js-array-prototype
 	 ;; (set! js-array-prototype
-	    ;; (instantiate::JsArray
+	    ;; (instantiate-JsArray
 	       ;; (vec '#())
 	       ;; (__proto__ __proto__)
 	       ;; (elements '#(0))
@@ -465,7 +467,7 @@
 ;*    js-array-find-length-property ...                                */
 ;*---------------------------------------------------------------------*/
 (define (js-array-find-length-property arr::JsArray)
-   (with-access::JsArray arr (properties)
+   (let ((properties (js-object-properties arr)))
       (when (pair? properties)
 	 (with-access::JsPropertyDescriptor (car properties) (name)
 	    (when (eq? name 'length)
@@ -477,14 +479,13 @@
 (define (js-array-update-length-property! arr::JsArray)
    
    (define (add-length-property! arr::JsArray)
-      (with-access::JsArray arr (properties)
-	 (let ((prop (instantiate::JsValueDescriptor
-			(name 'length)
-			(value (uint32->integer (js-array-length arr)))
-			(configurable #f)
-			(writable #t))))
-	    (set! properties (cons prop properties))
-	    prop)))
+      (let ((prop (instantiate::JsValueDescriptor
+		     (name 'length)
+		     (value (uint32->integer (js-array-length arr)))
+		     (configurable #f)
+		     (writable #t))))
+	 (js-object-properties-set! arr (cons prop (js-object-properties arr)))
+	 prop))
    
    (let ((desc (js-array-find-length-property arr)))
       (if desc
@@ -944,7 +945,7 @@
 		     (loop ni))))))
       
       (define (array-reverse! o)
-	 (with-access::JsArray o (properties ilen)
+	 (with-access::JsArray o (ilen)
 	    (let* ((len::uint32 (js-touint32 (js-get-length o #f %this) %this))
 		   (len/2::uint32 (/u32 len #u32:2)))
 	       (let loop ((i #u32:0))
@@ -2022,7 +2023,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-alloc::JsArray %this)
    (with-access::JsGlobalObject %this (js-array-prototype)
-      (instantiate::JsArray
+      (instantiate-JsArray
 	 (cmap (js-not-a-cmap))
 	 (__proto__ js-array-prototype))))
 
@@ -2034,7 +2035,7 @@
       (let ((proto (if (eq? constructor js-array)
 		       js-array-prototype
 		       (js-get constructor 'prototype %this))))
-	 (instantiate::JsArray
+	 (instantiate-JsArray
 	    (cmap (js-not-a-cmap))
 	    (__proto__ proto)))))
 
@@ -2124,7 +2125,7 @@
    ;; MS 23 feb 2017
    (let* ((len (vector-length vec)))
       (with-access::JsGlobalObject %this (js-array-prototype)
-	 (instantiate::JsArray
+	 (instantiate-JsArray
 	    (__proto__ js-array-prototype)
 	    (length (fixnum->uint32 len))
 	    (ilen (fixnum->uint32 len))
@@ -2160,7 +2161,7 @@
        (let ((mode (js-object-default-mode)))
 	  (with-access::JsGlobalObject %this (js-array-prototype)
 	     (let ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-undefined))))
-		(instantiate::JsArray
+		(instantiate-JsArray
 		   (__proto__ js-array-prototype)
 		   (length #u32:0)
 		   (ilen #u32:0)
@@ -2310,15 +2311,15 @@
 	   #!optional (offset #u32:0))
    ;; this function switches from a fast inlined array representation
    ;; to a slow inefficient object representation
-   (with-access::JsArray arr (vec ilen properties)
+   (with-access::JsArray arr (vec ilen)
       (js-object-mode-inline-set! arr #f)
       (js-array-update-length-property! arr)
       (when (>fx (vector-length vec) 0)
-	 (let ((plen (car properties)))
-	    (set! properties
+	 (let ((plen (car (js-object-properties arr))))
+	    (js-object-properties-set! arr
 	       (cons plen
 		  (append! (js-array-vector-properties arr %this offset)
-		     (cdr properties)))))
+		     (cdr (js-object-properties arr))))))
 	 (set! ilen offset)
 	 (set! *JS-ARRAY-MARK* (+fx 1 *JS-ARRAY-MARK*)))
       arr))
@@ -2331,7 +2332,7 @@
 ;*    included in the inline part. This is handled by this function.   */
 ;*---------------------------------------------------------------------*/
 (define (reinline-array! o::JsArray nilen %this)
-   (with-access::JsArray o (vec ilen length cmap properties)
+   (with-access::JsArray o (vec ilen length cmap)
       (js-object-mode-inline-set! o #t)
       (let ((len (minu32 (fixnum->uint32 (vector-length vec)) length)))
 	 (let loop ((i nilen))
@@ -2341,7 +2342,8 @@
 		       (if (not (eq? cmap (js-not-a-cmap)))
 			   (error "reinilne-array!" "array cmap not implemented" i)
 			   (begin
-			      (set! properties (remq! d properties))
+			      (js-object-properties-set! o
+				 (remq! d (js-object-properties o)))
 			      (with-access::JsValueDescriptor d (value)
 				 (vector-set! vec (uint32->fixnum i) value)
 				 (loop (+u32 i 1)))))
@@ -2462,7 +2464,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-put-length! o::JsArray v::obj throw::bool cache %this)
    (js-array-put! o 'length v throw %this)
-   (with-access::JsArray o (length ilen properties)
+   (with-access::JsArray o (length ilen)
       (let ((len (->uint32 v)))
 	 (set! length len)
 	 (when (<u32 len ilen) (set! ilen len))
@@ -2472,7 +2474,7 @@
 ;*    js-delete! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (js-delete! o::JsArray p throw %this)
-   (with-access::JsArray o (vec properties length ilen)
+   (with-access::JsArray o (vec length ilen)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
 	    ((and (=uint32 (+u32 i #u32:1) ilen) (js-isindex? i))
@@ -2541,14 +2543,14 @@
    
    (define (js-array-property-names arr)
       (let loop ((o arr))
-	 (with-access::JsObject o (cmap properties __proto__)
+	 (with-access::JsObject o (cmap __proto__)
 	    (append (if (not (eq? cmap (js-not-a-cmap)))
 			(with-access::JsConstructMap cmap (names)
 			   (vector->list names))
 			(map (lambda (d)
 				(with-access::JsPropertyDescriptor d (name)
 				   name))
-			   properties))
+			   (js-object-properties o)))
 	       (if (isa? __proto__ JsObject)
 		   (loop __proto__)
 		   '())))))
@@ -2618,8 +2620,9 @@
 		(js-array-property-names a)))))
    
    (define (js-define-own-length% a newlendesc throw %this)
-      (with-access::JsArray a (length ilen properties)
-	 (let ((old (car properties)))
+      (with-access::JsArray a (length ilen)
+	 (let* ((properties (js-object-properties a))
+		(old (car properties)))
 	    (let ((r (js-define-own-property% a 'length
 			newlendesc throw %this)))
 	       (when r

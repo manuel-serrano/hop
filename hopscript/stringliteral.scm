@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Oct 16 09:29:41 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 00:21:05 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -15,6 +15,8 @@
 (module __hopscript_stringliteral
 
    (library hop)
+
+   (include "types.sch")
    
    (import __hopscript_types
 	   __hopscript_public
@@ -434,17 +436,6 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-normalize-UTF8! ...                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring-normalize-UTF8!-assert js::JsStringLiteral)
-   (let* ((jsdup1 (duplicate::JsStringLiteralUTF8 js))
-	  (jsdup2 (duplicate::JsStringLiteralUTF8 js))
-	  (s1 (js-jsstring-normalize-UTF8! js))
-	  (s2 (js-jsstring-normalize-UTF8!-toberemoved jsdup1)))
-      (unless (equal? s1 s2)
-	 (js-jsstring-debug "PAS BON jsdup=" jsdup2)
-	 (js-jsstring-debug "           s1=" (string-for-read s1))
-	 (js-jsstring-debug "           s2=" (string-for-read s2)))
-      s1))
-
 (define (js-jsstring-normalize-UTF8! js::JsStringLiteral)
    
    (define (blit-utf8-buffer!::long s::bstring buffer::bstring i::long)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Oct  5 08:07:29 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 14:49:19 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -111,7 +111,7 @@
 	   (class JsObject
 	      (__proto__ (default (js-null)))
 	      (mode::byte (default (js-object-default-mode)))
-	      (properties::pair-nil (default '()))
+	      (_properties::pair-nil (default '()))
 	      (cmap::JsConstructMap (default (js-not-a-cmap)))
 	      (elements::vector (default '#())))
 	   
@@ -354,7 +354,9 @@
 	   (inline js-object?::bool ::obj)
 	   (inline js-function?::bool ::obj)
 
-	   (inline js-object-cmap::JsConstructMap ::JsObject)
+	   ;;(inline js-object-cmap::JsConstructMap ::JsObject)
+	   (inline js-object-properties ::JsObject)
+	   (inline js-object-properties-set! ::JsObject ::obj)
 	   
 	   (gencmapid::uint32))
    
@@ -581,11 +583,15 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-clone obj::JsGlobalObject)
    (with-access::JsObject obj (properties __proto__ cmap elements)
-      (duplicate::JsGlobalObject obj
-	 (__proto__ (js-clone __proto__))
-	 (cmap (js-clone cmap))
-	 (elements (when (vector? elements) (vector-map js-clone elements)))
-	 (properties (js-properties-clone properties)))))
+      (let ((nobj (duplicate::JsGlobalObject obj
+		     (__proto__ (js-clone __proto__))
+		     (cmap (js-clone cmap))
+		     (elements (vector-map js-clone elements))
+		     ;;(properties (js-properties-clone properties))
+		     )))
+	 (let ((properties (js-object-properties obj)))
+	    (js-object-properties-set! nobj (js-properties-clone properties))
+	    nobj))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-clone ::JsConstructMap ...                                    */
@@ -789,3 +795,17 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-cmap o)
    (with-access::JsObject o (cmap) cmap))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-properties ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-properties o)
+   (object-widening o))
+;*    (with-access::JsObject o (_properties) _properties))             */
+
+;*---------------------------------------------------------------------*/
+;*    js-object-properties-set! ...                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-properties-set! o p)
+   (object-widening-set! o p))
+;*    (with-access::JsObject o (_properties) (set! _properties p)))    */

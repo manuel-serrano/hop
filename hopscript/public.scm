@@ -18,6 +18,8 @@
 
    (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::byte)
 	      "bgl_make_jsobject"))
+
+   (include "types.sch")
    
    (library hop js2scheme)
    
@@ -37,7 +39,7 @@
 
    (with   __hopscript_stringliteral
            __hopscript_expanders)
-   
+
    (export (js-new ::JsGlobalObject f . args)
 	   (js-new/debug ::JsGlobalObject loc f . args)
 	   (js-new0 ::JsGlobalObject f)
@@ -175,7 +177,7 @@
 	 (bigloo-c
 	  ($js-make-jsobject constrsize constrmap __proto__ mode))
 	 (else
-	  (instantiate::JsObject
+	  (instantiate-JsObject
 	     (mode mode)
 	     (cmap constrmap)
 	     (elements (make-vector constrsize (js-undefined)))

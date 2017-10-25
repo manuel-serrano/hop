@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_crypto.scm                */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_crypto.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Wed Feb 22 16:09:52 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 17:16:00 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -60,7 +60,7 @@
 	     (offset::long (default 0))
 	     (body-offset::long (default 0))
 	     (frame-len::long (default 0))
-	     (conn::JsSSLConnection read-only)))))
+	     (conn::JsSSLConnection (default (class-nil JsSSLConnection)))))))
 	       
    (import  __nodejs_process
 	    __nodejs__buffer
@@ -68,6 +68,19 @@
    
    (export  (crypto-constants::pair-nil)
 	    (process-crypto ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    constructors                                                     */
+;*---------------------------------------------------------------------*/
+(define-instantiate JsSecureContext)
+(define-instantiate JsSSLConnection)
+(define-instantiate JsDH)
+(define-instantiate JsHash)
+(define-instantiate JsHmac)
+(define-instantiate JsSign)
+(define-instantiate JsVerify)
+(define-instantiate JsCipher)
+(define-instantiate JsDecipher)
 
 ;*---------------------------------------------------------------------*/
 ;*    debug-crypto ...                                                 */
@@ -556,7 +569,7 @@
 	 proto))
    
    (define (secure-context this . args)
-      (instantiate::JsSecureContext
+      (instantiate-JsSecureContext
 	 (__proto__ secure-context-proto)))
 
    (define (info-callback this state)
@@ -587,28 +600,29 @@
    
    (define (connection this jsctx serverp request-cert-or-server-name reject)
       (with-access::JsSecureContext jsctx (ctx)
-	 (co-instantiate ((hparser (instantiate::HelloParser
-				      (%worker %worker)
-				      (%this %this)
-				      (conn conn)))
-			  (conn (instantiate::JsSSLConnection
-				   (__proto__ connection-proto)
-				   (hparser hparser)
-				   (ssl (instantiate::ssl-connection
-					   (ctx ctx)
-					   (info-callback (lambda (start-or-done)
-							     (info-callback
-								conn start-or-done)))
-					   (newsession-callback (lambda (session-id serialized)
-								   (newsession-callback conn
-								      session-id serialized)))
-					   (isserver (js-toboolean serverp))
-					   (request-cert (when serverp
-							    request-cert-or-server-name))
-					   (server-name (unless serverp
-							   (when (js-jsstring? request-cert-or-server-name)
-							      (js-jsstring->string request-cert-or-server-name))))
-					   (reject-unauthorized reject))))))
+	 (letrec* ((hparser (instantiate::HelloParser
+			       (%worker %worker)
+			       (%this %this)))
+		   (conn (instantiate-JsSSLConnection
+			    (__proto__ connection-proto)
+			    (hparser hparser)
+			    (ssl (instantiate::ssl-connection
+				    (ctx ctx)
+				    (info-callback (lambda (start-or-done)
+						      (info-callback
+							 conn start-or-done)))
+				    (newsession-callback (lambda (session-id serialized)
+							    (newsession-callback conn
+							       session-id serialized)))
+				    (isserver (js-toboolean serverp))
+				    (request-cert (when serverp
+						     request-cert-or-server-name))
+				    (server-name (unless serverp
+						    (when (js-jsstring? request-cert-or-server-name)
+						       (js-jsstring->string request-cert-or-server-name))))
+				    (reject-unauthorized reject))))))
+	    (with-access::HelloParser hparser ((hconn conn))
+	       (set! hconn conn))
 	    (js-bind! %this conn 'receivedShutdown
 	       :get (js-make-function %this
 		       (lambda (this)
@@ -836,7 +850,7 @@
    
    (define (diffie-hellman this . args)
       (let* ((dh (instantiate::dh))
-	     (obj (instantiate::JsDH
+	     (obj (instantiate-JsDH
 		     (__proto__ diffie-hellman-proto)
 		     (dh dh))))
 	 (cond
@@ -905,7 +919,7 @@
 	 proto))
 
    (define (hmac this type data)
-      (instantiate::JsHmac
+      (instantiate-JsHmac
 	 (__proto__ hmac-proto)
 	 (hmac (instantiate::ssl-hmac))))
 
@@ -936,7 +950,7 @@
 	 proto))
 
    (define (hash this type)
-      (instantiate::JsHash
+      (instantiate-JsHash
 	 (__proto__ hash-proto)
 	 (hash (instantiate::ssl-hash
 		  (type (js-jsstring->string type))))))
@@ -981,7 +995,7 @@
 	 proto))
 
    (define (sign this)
-      (instantiate::JsSign
+      (instantiate-JsSign
 	 (__proto__ sign-proto)
 	 (sign (instantiate::ssl-sign))))
 
@@ -1029,7 +1043,7 @@
 	 proto))
 
    (define (verify this)
-      (instantiate::JsVerify
+      (instantiate-JsVerify
 	 (__proto__ verify-proto)
 	 (verify (instantiate::ssl-verify))))
 
@@ -1127,12 +1141,12 @@
 	 proto))
 	    
    (define (cipher this)
-      (instantiate::JsCipher
+      (instantiate-JsCipher
 	 (__proto__ cipher-proto)
 	 (cipher (instantiate::ssl-cipher))))
 
    (define (decipher this)
-      (instantiate::JsDecipher
+      (instantiate-JsDecipher
 	 (__proto__ decipher-proto)
 	 (cipher (instantiate::ssl-cipher))))
 

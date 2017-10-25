@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_evals.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_evals.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Fri Mar  3 15:21:58 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 17:16:29 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
@@ -24,6 +24,11 @@
 	      filename::obj))
 	   
    (export (process-evals ::WorkerHopThread ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    constructors                                                     */
+;*---------------------------------------------------------------------*/
+(define-instantiate JsScript)
 
 ;*---------------------------------------------------------------------*/
 ;*    process-evals ...                                                */
@@ -145,7 +150,7 @@
 	    obj)))
    
    (define (NodeScript this code ctx filename)
-      (instantiate::JsScript
+      (instantiate-JsScript
 	 (code code)
 	 (ctx ctx)
 	 (filename (js-tostring filename %this))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_buffer.scm                */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_buffer.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Fri May 26 07:46:49 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 17:24:51 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
@@ -14,8 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __nodejs__buffer
 
-   (include "nodejs_debug.sch")
-   
+   (include "nodejs_debug.sch" "nodejs_types.sch")
+
    (library hopscript hop)
 
    (import  __nodejs_process
@@ -113,7 +113,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsslowbuffer str %this)
    (with-access::JsGlobalObject %this (js-slowbuffer-proto)
-      (let ((buf (instantiate::JsSlowBuffer
+      (let ((buf (instantiate-JsSlowBuffer
 		    (__proto__ js-slowbuffer-proto)
 		    (data str))))
 	 (js-put! buf 'length (string-length str) #f %this)
@@ -126,7 +126,7 @@
    (with-access::JsGlobalObject %this (js-buffer-proto)
       (let ((slowbuffer (js-string->jsslowbuffer str %this)))
 	 (with-access::JsSlowBuffer slowbuffer (data)
-	    (let ((buf (instantiate::JsFastBuffer
+	    (let ((buf (instantiate-JsFastBuffer
 			  (__proto__ js-buffer-proto)
 			  (%data data)
 			  (frozen #f)
@@ -239,7 +239,7 @@
 ;*    js-buffer-constr ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-buffer-constr proto %this)
-   (instantiate::JsFastBuffer
+   (instantiate-JsFastBuffer
       (cmap (js-not-a-cmap))
       (bpe #u32:1)
       (__proto__ proto)))
@@ -501,7 +501,7 @@
 		    (js-raise-range-error %this "length (~s) > kMaxLength" a0))
 		   (else
 		    (with-access::JsGlobalObject %this (js-object)
-		       (let ((this (instantiate::JsSlowBuffer
+		       (let ((this (instantiate-JsSlowBuffer
 				      (__proto__ slowbuffer-proto)
 				      (data (make-string (->fixnum a0) #a000)))))
 			  ;; length
@@ -514,7 +514,7 @@
 	    ((string? a0)
 	     (with-access::JsGlobalObject %this (js-object)
 		(let* ((data a0)
-		       (this (instantiate::JsSlowBuffer
+		       (this (instantiate-JsSlowBuffer
 				(__proto__ slowbuffer-proto)
 				(data data))))
 		   ;; length
@@ -527,7 +527,7 @@
 	    ((js-jsstring? a0)
 	     (with-access::JsGlobalObject %this (js-object)
 		(let* ((data (js-jsstring->string a0))
-		       (this (instantiate::JsSlowBuffer
+		       (this (instantiate-JsSlowBuffer
 				(__proto__ slowbuffer-proto)
 				(data data))))
 		   ;; length

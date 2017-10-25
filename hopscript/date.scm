@@ -18,7 +18,7 @@
    
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -112,12 +112,12 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 (define js-date-prototype
-	    (instantiate::JsDate
+	    (instantiate-JsDate
 	       (val (current-date))
 	       (__proto__ __proto__)))
 	 
 	 (define (js-date-alloc constructor::JsFunction)
-	    (instantiate::JsDate
+	    (instantiate-JsDate
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 (define (parse-date-arguments args)
@@ -233,7 +233,7 @@
 		  this))
 	    
 	    (if (any (lambda (a) (eq? a (js-undefined))) args)
-		(instantiate::JsDate
+		(instantiate-JsDate
 		   (__proto__ js-date-prototype))
 		(let ((d (parse-date-arguments args)))
 		   (cond

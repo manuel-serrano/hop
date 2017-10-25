@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/nodejs/_zlib.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_zlib.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last change :  Mon Dec 28 10:28:29 2015 (serrano)                */
-;*    Copyright   :  2015 Manuel Serrano                               */
+;*    Last change :  Wed Oct 25 17:30:18 2017 (serrano)                */
+;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
 ;*=====================================================================*/
@@ -24,6 +24,11 @@
 	    __nodejs_process)
 
    (export  (process-zlib ::WorkerHopThread ::JsGlobalObject ::JsObject)))
+
+;*---------------------------------------------------------------------*/
+;*    constructors                                                     */
+;*---------------------------------------------------------------------*/
+(define-instantiate JsZlib)
 
 ;*---------------------------------------------------------------------*/
 ;*    process-zlib ...                                                 */
@@ -67,7 +72,7 @@
 	 proto))
    
    (define (zlib this)
-      (instantiate::JsZlib
+      (instantiate-JsZlib
 	 (__proto__ zlib-proto)))
    
    (let* ((zlib (js-make-function %this zlib 0 "Zlib"

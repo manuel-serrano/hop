@@ -17,6 +17,8 @@
 (module __hopscript_math
 
    (library hop)
+
+   (include "types.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -50,7 +52,7 @@
    (with-access::JsGlobalObject %this (__proto__ js-math)
       ;; create the math object
       (set! js-math
-	 (instantiate::JsMath
+	 (instantiate-JsMath
 	    (cmap (instantiate::JsConstructMap))
 	    (__proto__ __proto__)))
       ;; other properties

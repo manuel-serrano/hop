@@ -136,8 +136,9 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
    // fields init
    o->BgL___proto__z00 = __proto__;
    o->BgL_modez00 = mode;
-   o->BgL_propertiesz00 = BNIL; 
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
+   BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
+/*    o->BgL__propertiesz00 = BNIL;                                    */
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
@@ -201,11 +202,12 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, cha
    // fields init
    o->BgL___proto__z00 = __proto__;
    o->BgL_modez00 = mode; 
-   o->BgL_propertiesz00 = BNIL; 
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
    o->BgL_lengthz00 = len;
    o->BgL_ilenz00 = 0;
+   BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
+/*    o->BgL__propertiesz00 = BNIL;                                    */
   
    // vector initialization
    vector = (obj_t)(&(o->BgL_vecz00) + 1);

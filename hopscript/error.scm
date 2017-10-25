@@ -18,7 +18,7 @@
 
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -64,7 +64,7 @@
 		 (proc (js-string->jsstring (vector-ref o 3)))
 		 (location (vector-ref o 4)))
 	      (with-access::JsGlobalObject ctx (js-error)
-		 (instantiate::JsError
+		 (instantiate-JsError
 		    (__proto__ (js-get js-error 'prototype ctx))
 		    (name (js-string->jsstring (vector-ref o 0)))
 		    (msg (js-string->jsstring (vector-ref o 1)))
@@ -149,13 +149,13 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 (define js-error-prototype
-	    (instantiate::JsError
+	    (instantiate-JsError
 	       (__proto__ __proto__)
 	       (msg (js-ascii->jsstring ""))))
 	 
 	 (define (js-error-alloc constructor::JsFunction)
 	    (with-access::JsFunction constructor (name)
-	       (instantiate::JsError
+	       (instantiate-JsError
 		  (name (js-string->jsstring name))
 		  (msg (js-ascii->jsstring ""))
 		  (__proto__ (js-get constructor 'prototype %this))
@@ -215,6 +215,7 @@
 				(line line)
 				(column column)
 				(fun fun))))
+		     (js-object-properties-set! obj '())
 		     (js-put! obj 'receiver (js-undefined) #f %this)
 		     (js-put! obj 'fun (js-string->jsstring fun) #f %this)
 		     (js-put! obj 'pos (js-string->jsstring loc) #f %this)
@@ -365,7 +366,7 @@
 	    (js-make-function %this (%js-syntax-error %this) 1
 	       'SyntaxError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiate-JsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -374,7 +375,7 @@
 	    (js-make-function %this (%js-type-error %this) 1
 	       'TypeError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiate-JsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -383,7 +384,7 @@
 	    (js-make-function %this (%js-uri-error %this) 1
 	       'URIError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiate-JsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -392,7 +393,7 @@
 	    (js-make-function %this (%js-eval-error %this) 1
 	       'EvalError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiate-JsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -401,7 +402,7 @@
 	    (js-make-function %this (%js-range-error %this) 1
 	       'RangeError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiate-JsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -410,7 +411,7 @@
 	    (js-make-function %this (%js-reference-error %this) 1
 	       'ReferenceError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate::JsError 
+	       :prototype (instantiate-JsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc

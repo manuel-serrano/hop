@@ -16,6 +16,8 @@
 
    (library hop)
 
+   (include "types.sch")
+   
    (import __hopscript_types
 	   __hopscript_property
 	   __hopscript_object
@@ -166,7 +168,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-literal->jsobject::JsObject elements::vector names::vector %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (instantiate::JsObject
+      (instantiate-JsObject
 	 (cmap (js-names->cmap names))
 	 (elements elements)
 	 (__proto__ __proto__))))
@@ -186,7 +188,7 @@
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
 			       (names names))))
-		   (instantiate::JsObject
+		   (instantiate-JsObject
 		      (cmap cmap)
 		      (elements elements)
 		      (__proto__ __proto__)))
@@ -215,7 +217,7 @@
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
 			       (names names))))
-		   (instantiate::JsObject
+		   (instantiate-JsObject
 		      (cmap cmap)
 		      (elements elements)
 		      (__proto__ __proto__)))
@@ -320,7 +322,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-socket->jsobject obj %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (let ((sock (instantiate::JsWrapper
+      (let ((sock (instantiate-JsWrapper
 		     (__proto__ __proto__)
 		     (data #unspecified)
 		     (obj obj))))

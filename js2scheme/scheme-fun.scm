@@ -661,7 +661,7 @@
    (with-access::J2SFun this (generator)
       (if generator
 	  `(with-access::JsGlobalObject %this (js-generator-prototype)
-	      (instantiate::JsObject
+	      (instantiate-JsObject
 		 (__proto__ js-generator-prototype)))
 	  #f)))
    

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/arraybufferview.scm     */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/arraybufferview.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri May 26 07:25:06 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 16:19:29 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -16,6 +16,8 @@
 
    (library hop)
 
+   (include "types.sch")
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_function
@@ -39,7 +41,7 @@
    `(lambda (o %this)
        (let ((this (or %this (js-initial-global-object))))
 	  (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
-	     (let ((abuf (instantiate::JsArrayBuffer
+	     (let ((abuf (instantiate-JsArrayBuffer
 			    (__proto__ (js-get js-arraybuffer 'prototype this))
 			    (data o))))
 		(,(symbol-append 'instantiate:: type)
@@ -84,10 +86,10 @@
    (lambda (o %this)
       (let ((this (or %this (js-initial-global-object))))
 	 (with-access::JsGlobalObject this (js-arraybuffer js-int8array)
-	    (let ((abuf (instantiate::JsArrayBuffer
+	    (let ((abuf (instantiate-JsArrayBuffer
 			   (__proto__ (js-get js-arraybuffer 'prototype this))
 			   (data o))))
-	       (instantiate::JsDataView
+	       (instantiate-JsDataView
 		  (__proto__ (js-get js-int8array 'prototype this))
 		  (%data o)
 		  (byteoffset 0)
@@ -101,7 +103,7 @@
       (with-access::JsGlobalObject %this (js-arraybuffer)
 	 (with-access::JsDataView obj (%data buffer frozen byteoffset)
 	    (let ((nbuffer (js-donate buffer worker %_this)))
-	       (instantiate::JsDataView
+	       (instantiate-JsDataView
 		  (__proto__ (js-get js-arraybuffer 'prototype %this))
 		  (frozen frozen)
 		  (buffer nbuffer)
@@ -148,7 +150,7 @@
 ;*---------------------------------------------------------------------*/
 (define (javascript-buffer->arraybufferview name args %this)
    (with-access::JsArrayBuffer (caddr args) (data)
-      (let ((buf (instantiate::JsDataView
+      (let ((buf (instantiate-JsDataView
 		    (frozen (car args))
 		    (byteoffset (fixnum->uint32 (cadr args)))
 		    (buffer (caddr args))
@@ -356,7 +358,7 @@
 	 
 	 ;; builtin ArrayBufferview prototype
 	 (define js-typedarray-prototype
-	    (instantiate::JsObject
+	    (instantiate-JsObject
 	       (__proto__ __proto__)))
 
 	 (define (js-create-from-arraybuffer this::JsTypedArray
@@ -543,11 +545,10 @@
 
 	 (define (js-typedarray-alloc constructor::JsFunction %this)
 	    (let ((o (allocate-instance (symbol-append 'Js name))))
-	       (with-access::JsTypedArray o (cmap bpe __proto__ properties
-					       elements)
+	       (with-access::JsTypedArray o (cmap bpe __proto__ elements)
 		  (js-object-mode-extensible-set! o #t)
 		  (set! cmap (js-not-a-cmap))
-		  (set! properties '())
+		  (js-object-properties-set! o '())
 		  (set! bpe (fixnum->uint32 bp))
 		  (set! elements '#())
 		  (set! __proto__ (js-get constructor 'prototype %this)))
@@ -848,7 +849,7 @@
 	 
 	 ;; builtin DataView prototype
 	 (define js-dataview-prototype
-	    (instantiate::JsObject
+	    (instantiate-JsObject
 	       (__proto__ __proto__)))
 	 
 	 (define (js-create-from-arraybuffer this::JsDataView
@@ -1053,7 +1054,7 @@
 	       items))
 	 
 	 (define (js-dataview-alloc constructor::JsFunction %this)
-	    (instantiate::JsDataView
+	    (instantiate-JsDataView
 	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor 'prototype %this))))
 	 

@@ -18,7 +18,7 @@
 
    (library web hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -52,7 +52,7 @@
 (define (js-init-json! %this)
    (with-access::JsGlobalObject %this (__proto__ js-json)
       (set! js-json
-	 (instantiate::JsJSON
+	 (instantiate-JsJSON
 	    (__proto__ __proto__)))
       ;; parse
       (js-bind! %this js-json 'parse
@@ -290,12 +290,12 @@
 	 (cond
 	    ((isa? obj JsObject)
 	     (let loop ((o obj))
-		(with-access::JsObject o (cmap properties __proto__)
+		(with-access::JsObject o (cmap __proto__)
 		   (if (not (eq? cmap (js-not-a-cmap)))
 		       (with-access::JsConstructMap cmap (names)
 			  (vfor-each (lambda (n)
 					(when n (proc n))) names))
-		       (for-each in-property properties)))))
+		       (for-each in-property (js-object-properties o))))))
 	    ((object? obj)
 	     (vfor-each (lambda (f) (proc (class-field-name f)))
 		(class-all-fields (object-class obj))))

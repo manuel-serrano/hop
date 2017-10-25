@@ -880,8 +880,10 @@
 	  ;; JS object is dynamically allocated
  	  `(let ((rx (vector-ref-ur %cnsts ,index)))
 	      (with-access::JsRegExp rx (properties)
-		 (duplicate::JsRegExp rx
-		     (properties (list-copy properties)))))
+		 (let ((nrx (duplicate::JsRegExp rx)))
+		    (js-object-properties-set! nrx
+		       (list-copy (js-object-properties rx)))
+		    nrx)))
 	  `(vector-ref-ur %cnsts ,index))))
 
 ;*---------------------------------------------------------------------*/
@@ -3070,12 +3072,12 @@
 		inits)
 	     `(with-access::JsGlobalObject %this (__proto__)
 		 (js-object-literal-init!
-		    (instantiate::JsObject
+		    (instantiate-JsObject
 		       (cmap ,(j2s-scheme cmap mode return conf hint totype))
 		       (elements (vector ,@vals))
 		       (__proto__ __proto__))))
 	     `(with-access::JsGlobalObject %this (__proto__)
-		 (instantiate::JsObject
+		 (instantiate-JsObject
 		    (cmap ,(j2s-scheme cmap mode return conf hint totype))
 		    (elements (vector ,@vals))
 		    (__proto__ __proto__))))))

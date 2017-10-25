@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/process.scm                */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/process.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed May 17 11:16:55 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 17:23:58 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -22,6 +22,7 @@
       (enable-ssl (library ssl)))
 
    (include "nodejs.sch"
+	    "nodejs_types.sch"
 	    "nodejs_debug.sch"
 	    "nodejs_async.sch")
 
@@ -229,7 +230,7 @@
 ;*---------------------------------------------------------------------*/
 (define (new-process-object %worker::WorkerHopThread %this)
    (with-access::JsGlobalObject %this (js-object)
-      (let ((proc (instantiate::JsProcess
+      (let ((proc (instantiate-JsProcess
 		     (cmap (instantiate::JsConstructMap))
 		     (__proto__ (js-new %this js-object)))))
 
@@ -812,7 +813,7 @@
 	 fs-event-proto))
    
    (define (fs-event this)
-      (instantiate::JsHandle
+      (instantiate-JsHandle
 	 (handle (nodejs-make-fs-event %worker))
 	 (__proto__ (get-fs-event-proto process))))
    

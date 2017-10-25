@@ -539,8 +539,8 @@
    (let ((scope (duplicate::JsGlobalObject global
 		   (cmap (instantiate::JsConstructMap))
 		   (__proto__ global)
-		   (properties '())
 		   (elements '#()))))
+      (js-object-properties-set! scope '())
       (js-object-mode-packed-set! scope #t)
       (nodejs-import! global scope global)
       (hopscript-global-object-init! scope)
@@ -1484,11 +1484,11 @@
 	       (proc name))))
       
       (let loop ((o obj))
-	 (with-access::JsObject o (cmap properties __proto__)
+	 (with-access::JsObject o (cmap __proto__)
 	    (if (not (eq? cmap (js-not-a-cmap)))
 		(with-access::JsConstructMap cmap (names)
 		   (vfor-each in-mapped-property names))
-		(for-each in-property properties)))))
+		(for-each in-property (js-object-properties o))))))
    
    ;; e start being undefined during the first steps of the rts boot
    (when (isa? e JsObject)

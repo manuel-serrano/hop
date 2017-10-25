@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/string.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/string.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 21 09:34:05 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 14:50:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -20,7 +20,7 @@
    
    (library hop js2scheme)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_lib
@@ -54,7 +54,7 @@
    (lambda (o %this)
       (let ((this (or %this (js-initial-global-object))))
 	 (with-access::JsGlobalObject this (js-string)
-	    (instantiate::JsString
+	    (instantiate-JsString
 	       (val (js-string->jsstring o))
 	       (__proto__ (js-get js-string 'prototype this)))))))
 
@@ -111,7 +111,7 @@
 	 
 	 ;; builtin prototype
 	 (define js-string-prototype
-	    (instantiate::JsString
+	    (instantiate-JsString
 	       (val (js-ascii->jsstring ""))
 	       (__proto__ __proto__)))
 
@@ -125,9 +125,9 @@
 			     (configurable #f)
 			     (enumerable #f)
 			     (value (string-length str)))))
-		  (with-access::JsString o (val properties)
+		  (with-access::JsString o (val)
 		     (set! val (js-ascii->jsstring str))
-		     (set! properties (list len)))))
+		     (js-object-properties-set! o (list len)))))
 	    
 	    (define (set-string! str)
 	       (let ((len (instantiate::JsValueDescriptor
@@ -137,9 +137,9 @@
 			     (enumerable #f)
 			     (value (uint32->fixnum
 				       (js-jsstring-codeunit-length str))))))
-		  (with-access::JsString o (val properties)
+		  (with-access::JsString o (val)
 		     (set! val str)
-		     (set! properties (list len)))))
+		     (js-object-properties-set! o (list len)))))
 	    
 	    (if (null? arg)
 		;; 2
@@ -158,7 +158,7 @@
 
 	 ;; string allocation
 	 (define (js-string-alloc::JsString constructor::JsFunction)
-	    (instantiate::JsString
+	    (instantiate-JsString
 	       (val (js-ascii->jsstring ""))
 	       (__proto__ (js-get constructor 'prototype %this))))
 

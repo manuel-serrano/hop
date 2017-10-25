@@ -14,7 +14,7 @@
 ;*---------------------------------------------------------------------*/
 (module __hopscript_websocket
 
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (library web hop js2scheme)
    
@@ -174,15 +174,15 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 (define js-websocket-prototype
-	    (instantiate::JsObject
+	    (instantiate-JsObject
 	       (__proto__ __proto__)))
 	 
 	 (define js-websocket-server-prototype
-	    (instantiate::JsObject
+	    (instantiate-JsObject
 	       (__proto__ __proto__)))
 	 
 	 (define js-websocket-client-prototype
-	    (instantiate::JsObject
+	    (instantiate-JsObject
 	       (__proto__ __proto__)))
 
 	 (define (js-websocket-construct o url options)
@@ -219,7 +219,7 @@
 					     (lambda (e)
 						(exception-notify e))
 					     (wss-onbinary data queue worker))))))
-		      (obj (instantiate::JsWebSocket
+		      (obj (instantiate-JsWebSocket
 			      (__proto__ js-websocket-prototype)
 			      (worker worker)
 			      (recvqueue queue)
@@ -256,7 +256,7 @@
 	    (lambda (resp)
 	       (with-access::http-response-websocket resp (request)
 		  (with-access::http-request request (socket)
-		     (let  ((ws (instantiate::JsWebSocketClient
+		     (let  ((ws (instantiate-JsWebSocketClient
 				   (socket socket)
 				   (wss wss)
 				   (__proto__ js-websocket-client-prototype))))
@@ -368,7 +368,7 @@
 			      (let ((req (current-request)))
 				 (websocket-server-response req 0
 				    (wss-onconnect wss) proto))))
-		      (wss (instantiate::JsWebSocketServer
+		      (wss (instantiate-JsWebSocketServer
 			      (state (js-websocket-state-open))
 			      (worker (js-current-worker))
 			      (__proto__ js-websocket-server-prototype)
@@ -680,7 +680,7 @@
 	    ((isa? val JsHopFrame)
 	     val)
 	    ((isa? val JsObject)
-	     (instantiate::JsHopFrame
+	     (instantiate-JsHopFrame
 		(%this %this)
 		(args (map! cdr
 			 (js-jsobject->alist (js-get val 'args %this) %this)))
@@ -690,7 +690,7 @@
 		(path (string-append
 			 (hop-service-base) "/" (js-get val 'path %this)))))
 	    ((pair? val)
-	     (instantiate::JsHopFrame
+	     (instantiate-JsHopFrame
 		(%this %this)
 		(args (cdr val))
 		(header '())

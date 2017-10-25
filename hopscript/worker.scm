@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/worker.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/worker.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Aug 23 17:22:44 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 00:17:15 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -18,7 +18,7 @@
    
    (library web hop js2scheme)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -97,7 +97,7 @@
 
 	 ;; first, create the builtin prototype
 	 (set! js-worker-prototype
-	    (instantiate::JsWorker
+	    (instantiate-JsWorker
 	       (__proto__ __proto__)))
 	 
 	 ;; then, Create a HopScript worker object constructor
@@ -204,7 +204,7 @@
 	    (thread-start! thread)
 	       
 	    ;; create the worker object
-	    (let ((worker (instantiate::JsWorker
+	    (let ((worker (instantiate-JsWorker
 			     (__proto__ js-worker-prototype)
 			     (thread thread))))
 	       (with-access::WorkerHopThread thread (prehook)
@@ -321,10 +321,12 @@
    (with-access::JsWorker worker (thread)
       (with-access::WorkerHopThread thread (parent listeners %this)
 	 (when (isa? parent WorkerHopThread)
+	    (tprint "POST_SLAVE_MESSAGE.1 " (typeof data))
 	    (let ((e (instantiate::MessageEvent
 			(name "message")
 			(target worker)
 			(data (js-donate data parent %this)))))
+	    (tprint "POST_SLAVE_MESSAGE.2")
 	       (js-worker-push-thunk! parent "post-slave-message"
 		  (lambda ()
 		     (apply-listeners listeners e))))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Tue Oct  3 21:37:44 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 16:06:55 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -18,7 +18,7 @@
    
    (library hop js2scheme)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_property
@@ -70,9 +70,12 @@
       (with-access::JsGlobalObject %this (js-function)
 	 (with-access::JsFunction obj (procedure src)
 	    (if (eq? src 'builtin)
-		(duplicate::JsFunction obj
-		   (__proto__ (js-get js-function 'prototype %this))
-		   (properties '()))
+		(let ((nobj (duplicate::JsFunction obj
+			       (__proto__ (js-get js-function 'prototype %this))
+			       ;;(properties '())
+			       )))
+		   (js-object-properties-set! nobj '())
+		   nobj)
 		(js-undefined))))))
    
 ;*---------------------------------------------------------------------*/
@@ -120,7 +123,7 @@
 				       js-function)
       
       (set! js-function-prototype
-	 (instantiate::JsFunction
+	 (instantiate-JsFunction
 	    (name "builtin")
 	    (src "[Function.__proto__@function.scm]")
 	    (len -1)
@@ -245,11 +248,11 @@
    `(case ,(cadr arity)
        ,@(map (lambda (n)
 		 `((,n)
-		   (,(string->symbol (format "instantiate::JsFunction~a" n))
+		   (,(string->symbol (format "instantiate-JsFunction~a" n))
 		    ,arity ,@rest)))
 	  (iota 5 1))
        (else
-	(instantiate::JsFunction
+	(instantiate-JsFunction
 	   ,arity ,@rest))))
 
 ;*---------------------------------------------------------------------*/
@@ -279,7 +282,7 @@
       (if js-get-source
 	  js-get-source
 	  (set! js-get-source
-	     (instantiate::JsFunction
+	     (instantiate-JsFunction
 		(procedure source)
 		(method source)
 		(arity 0)
@@ -320,10 +323,6 @@
 			(constructor constructor)))
 		(props '()))
 
-;* 	    (when (or constructor construct)                           */
-;* 	       (with-access::JsFunction fun (constrmap)                */
-;* 		  (set! constrmap (instantiate::JsConstructMap (ctor fun))))) */
-
 	    (cond
 	       (prototype
 		(when (isa? prototype JsObject)
@@ -331,10 +330,6 @@
 		      :value fun
 		      :configurable #t :writable #t :enumerable #f
 		      :hidden-class #t))
-;* 		(js-bind! %this fun 'prototype                         */
-;* 		   :value prototype                                    */
-;* 		   :enumerable #f :configurable #f :writable #f        */
-;* 		   :hidden-class #t)                                   */
 		(set! props
 		   (cons
 		      (instantiate::JsValueDescriptor
@@ -346,17 +341,13 @@
 		      props)))
 	       (construct
 		(with-access::JsObject %this ((js-object-prototype __proto__))
-		   (let ((prototype (instantiate::JsObject
+		   (let ((prototype (instantiate-JsObject
 				       (cmap (instantiate::JsConstructMap))
 				       (__proto__ js-object-prototype))))
 		      (js-bind! %this prototype 'constructor
 			 :value fun
 			 :configurable #t :writable #t :enumerable #f
 			 :hidden-class #t)
-;* 		      (js-bind! %this fun 'prototype                   */
-;* 			 :value prototype                              */
-;* 			 :enumerable #f :writable #t :configurable #f  */
-;* 			 :hidden-class #t)                             */
 		      (set! props
 			 (cons
 			    (instantiate::JsValueDescriptor
@@ -366,9 +357,6 @@
 			       (writable #t)
 			       (value prototype))
 			    props))))))
-;* 	    (js-bind! %this fun 'length                                */
-;* 	       :value length                                           */
-;* 	       :enumerable #f :configurable #f :writable #f)           */
 	    (set! props
 	       (cons
 		  (if (and (>=fx length 0)
@@ -382,18 +370,9 @@
 			 (value length)))
 		  props))
 	    (unless (eq? strict 'normal)
-;* 	       (js-bind! %this fun 'arguments                          */
-;* 		  :get thrower-get :set thrower-set                    */
-;* 		  :enumerable #f :configurable #f)                     */
-;* 	       (js-bind! %this fun 'caller                             */
-;* 		  :get thrower-get :set thrower-set                    */
-;* 		  :enumerable #f :configurable #f)                     */
 	       (set! props
 		  (cons* strict-arguments-property strict-caller-property
 		     props)))
-;* 	    (js-bind! %this fun 'name                                  */
-;* 	       :value (js-string->jsstring fname)                      */
-;* 	       :writable #f :enumerable #f :configurable #f)           */
 	    (set! props
 	       (cons (instantiate::JsValueDescriptor
 			(name 'name)
@@ -403,9 +382,6 @@
 			(value (js-string->jsstring fname)))
 		  props))
 	    ;; source is an hop extension
-;* 	    (js-bind! %this fun 'source                                */
-;* 	       :get (get-source)                                       */
-;* 	       :writable #f :enumerable #f :configurable #f)           */
 	    (set! props
 	       (cons (instantiate::JsValueDescriptor
 			(name 'source)
@@ -414,8 +390,7 @@
 			(configurable #f)
 			(value (get-source)))
 		  props))
-	    (with-access::JsFunction fun (properties)
-	       (set! properties props))
+	    (js-object-properties-set! fun props)
 	    fun))))
 
 ;*---------------------------------------------------------------------*/
@@ -505,7 +480,7 @@
 	     "apply: argument not an object ~s" argarray))
 	 ((isa? argarray JsArray)
 	  (let ((len (js-get argarray 'length %this)))
-	     (with-access::JsArray argarray (vec properties)
+	     (with-access::JsArray argarray (vec)
 		(if (>fx (vector-length vec) 0)
 		    ;; fast path
 		    (js-apply %this this thisarg
@@ -514,13 +489,14 @@
 			  (vector->sublist vec len)))
 		    ;; slow path
 		    ;; CARE (5 jul 2014): MS NOT SURE OF THE SECOND ARGARRAY BELOW
-		    (js-apply %this this thisarg
-		       (map! (lambda (d)
-				(js-property-value argarray argarray %this))
-			  (filter (lambda (d)
-				     (with-access::JsPropertyDescriptor d (name)
-					(js-isindex? (js-toindex name))))
-			     properties)))))))
+		    (let ((properties (js-object-properties argarray)))
+		       (js-apply %this this thisarg
+			  (map! (lambda (d)
+				   (js-property-value argarray argarray %this))
+			     (filter (lambda (d)
+					(with-access::JsPropertyDescriptor d (name)
+					   (js-isindex? (js-toindex name))))
+				properties))))))))
 	 (else
 	  ;; slow path
 	  (let ((len (uint32->fixnum

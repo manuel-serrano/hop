@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/promise.scm             */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/promise.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Sun May 21 09:32:39 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 00:24:12 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -20,7 +20,7 @@
    
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_lib
@@ -171,7 +171,7 @@
    ;; builtin prototype
    (define js-promise-prototype
       (with-access::JsGlobalObject %this (__proto__)
-	 (instantiate::JsPromise
+	 (instantiate-JsPromise
 	    (worker (js-undefined))
 	    (%this %this)
 	    (__proto__ __proto__))))
@@ -206,7 +206,7 @@
    
    ;; promise allocation
    (define (js-promise-alloc::JsPromise constructor::JsFunction)
-      (instantiate::JsPromise
+      (instantiate-JsPromise
 	 (worker (js-current-worker))
 	 (%this %this)
 	 (__proto__ (js-get constructor 'prototype %this))))
@@ -398,6 +398,7 @@
 			  (rejecter #f)
 			  (state 'pending)
 			  (%name "then-catch"))))
+		(js-object-properties-set! np '())
 		(js-promise-then-catch %this this onfullfilled onrejected np)))))
       
    ;; catch

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_http.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_http.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Fri Mar  3 15:14:45 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 17:17:53 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -44,6 +44,11 @@
 	      state::procedure))
 
    (export (process-http-parser ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    constructors                                                     */
+;*---------------------------------------------------------------------*/
+(define-instantiate JsHttpParser)
 
 ;*---------------------------------------------------------------------*/
 ;*    debug-parser ...                                                 */
@@ -182,7 +187,7 @@
    
    (define (http-parser this kind)
       (with-access::JsGlobalObject %this (js-object)
-	 (instantiate::JsHttpParser
+	 (instantiate-JsHttpParser
 	    (__proto__ http-parser-proto)
 	    (state http-line-state))))
    

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_pipe_wrap.scm             */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_pipe_wrap.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Mar  1 09:25:47 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 17:21:20 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -21,7 +21,7 @@
 	    __nodejs__buffer
 	    __nodejs__stream-wrap)
 
-   (include "nodejs_async.sch")
+   (include "nodejs_types.sch" "nodejs_async.sch")
    
    (export (process-pipe-wrap ::WorkerHopThread ::JsGlobalObject ::JsProcess ::obj)))
 
@@ -182,7 +182,7 @@
    (define (pipe . val)
       (with-access::JsGlobalObject %this (js-object)
 	 (let* ((hdl (nodejs-new-pipe %worker (and (pair? val) (car val))))
-		(obj (instantiate::JsHandle
+		(obj (instantiate-JsHandle
 			(handle hdl)
 			(__proto__ pipe-prototype))))
 	    ;; fd

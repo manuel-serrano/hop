@@ -16,7 +16,7 @@
    
    (library hop)
    
-   (include "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -119,12 +119,12 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 (define js-number-prototype
-	    (instantiate::JsNumber
+	    (instantiate-JsNumber
 	       (val 0)
 	       (__proto__ __proto__)))
 
 	 (define (js-number-constructor f value)
-	    (instantiate::JsNumber
+	    (instantiate-JsNumber
 	       (__proto__ (js-get f 'prototype %this))
 	       (val (if (eq? value (js-null)) 0 (js-tonumber value %this)))))
 		
@@ -135,7 +135,7 @@
 ;* 	    this)                                                      */
 
 	 (define (js-number-alloc constructor::JsFunction)
-	    (instantiate::JsNumber
+	    (instantiate-JsNumber
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
