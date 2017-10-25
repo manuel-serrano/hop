@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Mon Oct 23 17:41:25 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 05:10:58 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -123,7 +123,7 @@
       (let* ((cname (or name (gensym 'class)))
 	     (clazz (symbol-append cname '%CLASS))
 	     (ctor (symbol-append cname '%CTOR))
-	     (proto (symbol-append name '%PROTOTYPE)))
+	     (proto (symbol-append cname '%PROTOTYPE)))
 	 `(letrec* ((,ctor ,constructor)
 		    (,proto ,(cond
 				((eq? super #f)
