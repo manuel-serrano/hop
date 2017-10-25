@@ -2432,9 +2432,9 @@
 		(set! vec (copy-vector vec (*fx (vector-length vec) 2)))
 		(vector-set-ur! vec (uint32->fixnum idx) v)
 		(let ((nilen (+u32 ilen #u32:1)))
-		       (set! ilen nilen)
-		       (when (>=u32 idx length)
-			  (set! length nilen)))))
+		   (set! ilen nilen)
+		   (when (>=u32 idx length)
+		      (set! length (+u32 idx #u32:1))))))
 	    (else
 	     (aput! o (js-toname p %this) v))))))
 
