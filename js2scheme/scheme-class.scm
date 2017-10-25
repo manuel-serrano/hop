@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Oct 25 05:10:58 2017 (serrano)                */
+;*    Last change :  Wed Oct 25 05:51:24 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -53,7 +53,7 @@
 		     (when (isa? prop J2SDataPropertyInit)
 			(constructor? prop)))))
 	 elements))
-
+   
    (define (j2s-propname name)
       (cond
 	 ((isa? name J2SString)
@@ -76,7 +76,7 @@
 	     `(js-toname ,(j2s-scheme val mode return conf hint totype) %this)))
 	 (else
 	  `(js-toname ,(j2s-scheme name mode return conf hint totype) %this))))
-
+   
    (define (bind-class-method obj prop)
       (cond
 	 ((isa? prop J2SDataPropertyInit)
@@ -116,7 +116,9 @@
 	  (let ((superid (gensym 'super)))
 	     `(let* ((,superid ,(j2s-scheme super mode return conf hint totype))
 		     (%super (js-get ,superid 'prototype %this))
-		     (%superctor (js-get %super 'constructor %this)))
+;* 		     (%superctor (js-get %super 'constructor %this))   */
+		     (%superctor ,superid)
+		     )
 		 ,(proc superid))))))
    
    (define (make-class name super els constructor length ctorsz src loc)
@@ -164,19 +166,29 @@
 	       (set! _scmid (j2s-fast-id name))))
 	 (let-super super
 	    (lambda (super)
-	       (if ctor
+	       (cond
+		  (ctor
 		   (with-access::J2SClassElement ctor (prop)
 		      (with-access::J2SDataPropertyInit prop (val)
 			 (with-access::J2SFun val (constrsize params thisp)
 			    (make-class name super elements
 			       (ctor->lambda val mode return conf #f #t super)
 			       (length params) constrsize
-			       src loc))))
+			       src loc)))))
+		  (super
+		   (make-class name super elements
+		      '(lambda (this)
+			(let ((%nothis this))
+			   (js-call0 %this %superctor this)
+			   (set! this %nothis)
+			   (js-undefined)))
+		      0 0 src loc))
+		  (else
 		   (make-class name super elements
 		      '(lambda (this)
 			(let ((%nothis (js-check-class-instance this ',loc %this)))
 			   %nothis))
-		      0 0 src loc)))))))
+		      0 0 src loc))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    ctor->lambda ...                                                 */
