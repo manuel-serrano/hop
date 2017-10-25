@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Oct 26 00:06:22 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 00:39:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2265,8 +2265,6 @@
 				     (enumerable (boolify enumerable))
 				     (configurable (boolify configurable))
 				     (value (js-undefined))))))))
-		 (unless (list? (js-object-properties o))
-		    (tprint "PAS BON:  "  o " " name " " desc))
 		 (js-object-properties-set! o
 		    (append! (js-object-properties o) (list ndesc)))
 		 #t))))
