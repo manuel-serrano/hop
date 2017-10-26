@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Oct 26 05:54:17 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 14:37:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -418,6 +418,7 @@
 	       `(define (main args)
 		   (define %worker
 		      (js-init-main-worker! %this #f nodejs-new-global-object))
+		   (hopscript-install-expanders!)
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
 		      (lambda ()
 			 (define %scope (nodejs-new-scope-object %this))

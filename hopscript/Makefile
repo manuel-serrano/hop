@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Thu Oct 26 00:37:28 2017 (serrano)                */
+#*    Last change :  Thu Oct 26 14:34:24 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -117,6 +117,8 @@ bglhopscript.h: types.scm
 #*---------------------------------------------------------------------*/
 o/_bglhopscript.o: _bglhopscript.c bglhopscript.h
 	@ $(call compile2,$(CCOMP),$(CCFLAGS), -c $< -o $@)
+
+o/expanders.o: expanders.sch
 
 #bdepend start (don't edit)
 #*---------------------------------------------------------------------*/
