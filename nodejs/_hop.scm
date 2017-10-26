@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Wed Oct 25 17:17:27 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:55:21 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -69,7 +69,7 @@
 					 __proto__)
       
       (define js-urlframe-prototype
-	 (instantiate-JsObject
+	 (instantiateJsObject
 	    (__proto__ __proto__)))
       
       (define js-webservice
@@ -85,7 +85,7 @@
 			     url args))))
 
       (define server-prototype
-	 (instantiate-JsObject
+	 (instantiateJsObject
 	    (__proto__ __proto__)))
       
       (define js-server
@@ -96,7 +96,7 @@
 	    :__proto__ js-function-prototype
 	    :prototype server-prototype
 	    :construct (lambda (this host port auth ssl)
-			  (instantiate-JsServer
+			  (instantiateJsServer
 			     (__proto__ server-prototype)
 			     (data '())
 			     (obj (instantiate::server
@@ -127,7 +127,7 @@
 	       (nodejs-compile-remove-event-listener! e (cdr f)))))
 	 
       (define js-compiler-driver
-	 (let ((driver (instantiate-JsObject
+	 (let ((driver (instantiateJsObject
 		       (__proto__ __proto__))))
 	    (js-bind! %this driver 'pending
 	       :get (js-make-function %this
@@ -386,7 +386,7 @@
 ;*    js-make-urlframe ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (js-make-urlframe %this::JsGlobalObject js-urlframe-prototype url args)
-   (instantiate-JsUrlFrame
+   (instantiateJsUrlFrame
       (%this %this)
       (url url)
       (args (if (eq? args (js-undefined))

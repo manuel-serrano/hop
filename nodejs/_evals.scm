@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 22 13:35:17 2014                          */
-;*    Last change :  Wed Oct 25 17:16:29 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:55:03 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    VM bindings                                                      */
@@ -150,7 +150,7 @@
 	    obj)))
    
    (define (NodeScript this code ctx filename)
-      (instantiate-JsScript
+      (instantiateJsScript
 	 (code code)
 	 (ctx ctx)
 	 (filename (js-tostring filename %this))

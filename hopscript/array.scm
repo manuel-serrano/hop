@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Oct 24 16:15:27 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:46:03 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -293,24 +293,23 @@
 	 
 	 ;; builtin prototype
 	 (set! js-array-prototype
-	    (instantiate-JsArray
+	    (instantiateJsArray
 	       (vec '#())
-	       (__proto__ __proto__)))
-	 (js-object-properties-set! js-array-prototype
-	    (list
-	       ;; cannot be defined with js-bind! because
-	       ;; of bootstrap specificities
-	       (instantiate::JsValueDescriptor
-		  (name 'length)
-		  (value 0)
-		  (configurable #f)
-		  (writable #t))))
+	       (__proto__ __proto__)
+	       (properties (list
+			      ;; cannot be defined with js-bind! because
+			      ;; of bootstrap specificities
+			      (instantiate::JsValueDescriptor
+				 (name 'length)
+				 (value 0)
+				 (configurable #f)
+				 (writable #t))))))
 
 	 ;; DO NOT REMOVE !
 	 ;; when array are ready for caching this should replace
 	 ;; the old definition of js-array-prototype
 	 ;; (set! js-array-prototype
-	    ;; (instantiate-JsArray
+	    ;; (instantiateJsArray
 	       ;; (vec '#())
 	       ;; (__proto__ __proto__)
 	       ;; (elements '#(0))
@@ -2023,7 +2022,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-alloc::JsArray %this)
    (with-access::JsGlobalObject %this (js-array-prototype)
-      (instantiate-JsArray
+      (instantiateJsArray
 	 (cmap (js-not-a-cmap))
 	 (__proto__ js-array-prototype))))
 
@@ -2035,7 +2034,7 @@
       (let ((proto (if (eq? constructor js-array)
 		       js-array-prototype
 		       (js-get constructor 'prototype %this))))
-	 (instantiate-JsArray
+	 (instantiateJsArray
 	    (cmap (js-not-a-cmap))
 	    (__proto__ proto)))))
 
@@ -2125,7 +2124,7 @@
    ;; MS 23 feb 2017
    (let* ((len (vector-length vec)))
       (with-access::JsGlobalObject %this (js-array-prototype)
-	 (instantiate-JsArray
+	 (instantiateJsArray
 	    (__proto__ js-array-prototype)
 	    (length (fixnum->uint32 len))
 	    (ilen (fixnum->uint32 len))
@@ -2161,7 +2160,7 @@
        (let ((mode (js-object-default-mode)))
 	  (with-access::JsGlobalObject %this (js-array-prototype)
 	     (let ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-undefined))))
-		(instantiate-JsArray
+		(instantiateJsArray
 		   (__proto__ js-array-prototype)
 		   (length #u32:0)
 		   (ilen #u32:0)

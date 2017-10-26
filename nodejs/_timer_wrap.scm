@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  6 15:01:14 2014                          */
-;*    Last change :  Wed Oct 25 17:30:00 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:56:06 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop Timer                                                        */
@@ -37,7 +37,7 @@
 (define (hopjs-process-timer %worker %this process)
    
    (define js-timer-prototype
-      (instantiate-JsObject))
+      (instantiateJsObject))
    
    (init-timer-prototype! %this js-timer-prototype)
    
@@ -65,7 +65,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-timer-construct! %worker %this::JsGlobalObject process js-timer-prototype)
    (lambda (_)
-      (let ((obj (instantiate-JsTimer
+      (let ((obj (instantiateJsTimer
 		    (__proto__ js-timer-prototype)
 		    (worker (js-current-worker)))))
 	 (with-access::JsTimer obj (timer)

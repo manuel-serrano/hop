@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/generator.scm           */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/generator.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri May 26 07:25:45 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:52:08 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -86,12 +86,12 @@
    (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype)
 
       (define js-gen-proto
-	 (instantiate-JsObject
+	 (instantiateJsObject
 	    (cmap (instantiate::JsConstructMap))
 	    (__proto__ js-function-prototype)))
       
       (define (js-generator-done)
-	 (instantiate-JsObject
+	 (instantiateJsObject
 	    (__proto__ __proto__)
 	    (cmap js-yield-cmap)
 	    (elements (vector (js-undefined) #t))))
@@ -108,7 +108,7 @@
       (define (js-generator-return this val exn)
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
-		(let ((done (instantiate-JsObject
+		(let ((done (instantiateJsObject
 			       (__proto__ __proto__)
 			       (cmap js-yield-cmap)
 			       (elements (vector val #t)))))
@@ -208,7 +208,7 @@
 (define (js-make-generator proc proto %this)
    (with-access::JsGlobalObject %this (js-generator-prototype)
       (with-access::JsObject js-generator-prototype (cmap elements)
-	 (instantiate-JsGenerator
+	 (instantiateJsGenerator
 	    (cmap cmap)
 	    (elements elements)
 	    (__proto__ proto)
@@ -258,7 +258,7 @@
    (with-access::JsGenerator gen (%next)
       (set! %next kont)
       (with-access::JsGlobalObject %this (__proto__)
-	 (instantiate-JsObject
+	 (instantiateJsObject
 	    (__proto__ __proto__)
 	    (cmap js-yield-cmap)
 	    (elements (vector val done))))))

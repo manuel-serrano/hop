@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 17 06:10:40 2014                          */
-;*    Last change :  Wed Oct 25 17:25:27 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:55:08 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    File system bindings                                             */
@@ -304,7 +304,7 @@
 	 fs-watcher-proto))
    
    (define (fs-watcher this)
-      (instantiate-JsHandle
+      (instantiateJsHandle
 	 (handle (nodejs-make-fs-poll %worker))
 	 (__proto__ (get-fs-watcher-proto process))))
    

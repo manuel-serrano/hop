@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Oct 25 17:29:15 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:56:13 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TTY bindings                                              */
@@ -132,7 +132,7 @@
    
    (define (tty-wrap hdl)
       (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (instantiate-JsHandle
+	 (let ((obj (instantiateJsHandle
 		       (handle hdl)
 		       (__proto__ (get-tty-proto)))))
 	    (js-bind! %this obj 'fd

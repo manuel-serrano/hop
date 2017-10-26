@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 23 08:47:08 2014                          */
-;*    Last change :  Wed Oct 25 17:16:00 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:54:58 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Crypto native bindings                                           */
@@ -569,7 +569,7 @@
 	 proto))
    
    (define (secure-context this . args)
-      (instantiate-JsSecureContext
+      (instantiateJsSecureContext
 	 (__proto__ secure-context-proto)))
 
    (define (info-callback this state)
@@ -603,7 +603,7 @@
 	 (letrec* ((hparser (instantiate::HelloParser
 			       (%worker %worker)
 			       (%this %this)))
-		   (conn (instantiate-JsSSLConnection
+		   (conn (instantiateJsSSLConnection
 			    (__proto__ connection-proto)
 			    (hparser hparser)
 			    (ssl (instantiate::ssl-connection
@@ -850,7 +850,7 @@
    
    (define (diffie-hellman this . args)
       (let* ((dh (instantiate::dh))
-	     (obj (instantiate-JsDH
+	     (obj (instantiateJsDH
 		     (__proto__ diffie-hellman-proto)
 		     (dh dh))))
 	 (cond
@@ -919,7 +919,7 @@
 	 proto))
 
    (define (hmac this type data)
-      (instantiate-JsHmac
+      (instantiateJsHmac
 	 (__proto__ hmac-proto)
 	 (hmac (instantiate::ssl-hmac))))
 
@@ -950,7 +950,7 @@
 	 proto))
 
    (define (hash this type)
-      (instantiate-JsHash
+      (instantiateJsHash
 	 (__proto__ hash-proto)
 	 (hash (instantiate::ssl-hash
 		  (type (js-jsstring->string type))))))
@@ -995,7 +995,7 @@
 	 proto))
 
    (define (sign this)
-      (instantiate-JsSign
+      (instantiateJsSign
 	 (__proto__ sign-proto)
 	 (sign (instantiate::ssl-sign))))
 
@@ -1043,7 +1043,7 @@
 	 proto))
 
    (define (verify this)
-      (instantiate-JsVerify
+      (instantiateJsVerify
 	 (__proto__ verify-proto)
 	 (verify (instantiate::ssl-verify))))
 
@@ -1141,12 +1141,12 @@
 	 proto))
 	    
    (define (cipher this)
-      (instantiate-JsCipher
+      (instantiateJsCipher
 	 (__proto__ cipher-proto)
 	 (cipher (instantiate::ssl-cipher))))
 
    (define (decipher this)
-      (instantiate-JsDecipher
+      (instantiateJsDecipher
 	 (__proto__ decipher-proto)
 	 (cipher (instantiate::ssl-cipher))))
 

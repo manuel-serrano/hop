@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Oct 25 14:52:11 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:44:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -105,14 +105,14 @@
 		(lastindex (instantiate::JsValueDescriptor
 			      (name 'lastIndex)
 			      (writable #t)
-			      (value 0)))
-		(proto (instantiate-JsRegExp
+			      (value 0))))
+	    (set! js-regexp-prototype
+	       (instantiateJsRegExp
 			  (lastindex lastindex)
 			  (global global)
 			  (rx (pregexp ""))
-			  (__proto__ __proto__))))
-	    (js-object-properties-set! proto (list lastindex global))
-	    (set! js-regexp-prototype proto))
+			  (__proto__ __proto__)
+			  (properties (list lastindex global)))))
 	 
 	 ;; create a HopScript regexp object constructor
 	 (set! js-regexp
@@ -489,20 +489,19 @@
 	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
 		  (multiple-value-bind (pat enc)
 		     (make-js-regexp-pattern %this pattern)
-		     (let ((nobj (instantiate-JsRegExp
-				    (__proto__ js-regexp-prototype)
-				    (rx (pregexp pat
-					   (when (fixnum? i) 'CASELESS)
-					   'JAVASCRIPT_COMPAT
-					   (if (eq? enc 'ascii)
-					       'JAVASCRIPT_COMPAT
-					       'UTF8)
-					   (when (fixnum? m) 'MULTILINE)))
-				    (lastindex lastindex)
-				    (global global))))
-			(js-object-properties-set! nobj
-			   (list lastindex global icase mline source))
-			nobj))))))))
+		     
+		     (instantiateJsRegExp
+			(__proto__ js-regexp-prototype)
+			(rx (pregexp pat
+			       (when (fixnum? i) 'CASELESS)
+			       'JAVASCRIPT_COMPAT
+			       (if (eq? enc 'ascii)
+				   'JAVASCRIPT_COMPAT
+				   'UTF8)
+			       (when (fixnum? m) 'MULTILINE)))
+			(lastindex lastindex)
+			(global global)
+			(properties (list lastindex global icase mline source))))))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-regexp-prototype! ...                               */

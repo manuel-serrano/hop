@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Wed Oct 25 15:57:03 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:48:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -337,7 +337,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arguments %this::JsGlobalObject vec::vector)
    (with-access::JsObject %this (__proto__)
-      (let ((obj (instantiate-JsArguments
+      (let ((obj (instantiateJsArguments
 		    (vec vec)
 		    (cmap (instantiate::JsConstructMap))
 		    (elements (make-vector 1))
@@ -375,7 +375,7 @@
 	    (loop (+fx i 1) (cdr lst))))
       ;; build the arguments object
       (with-access::JsObject %this (__proto__)
-	 (let ((obj (instantiate-JsArguments
+	 (let ((obj (instantiateJsArguments
 		       (vec vec)
 		       (elements (make-vector 1))
 		       (__proto__ __proto__))))

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/symbol.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/symbol.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 21 09:34:10 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:51:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -52,7 +52,7 @@
    (lambda (o %this)
       (let ((this (or %this (js-initial-global-object))))
 	 (with-access::JsGlobalObject this (js-symbol)
-	    (instantiate-JsSymbol
+	    (instantiateJsSymbol
 	       (val o)
 	       (__proto__ (js-get js-symbol 'prototype this)))))))
 
@@ -99,7 +99,7 @@
 	 
 	 ;; builtin prototype
 	 (define js-symbol-prototype
-	    (instantiate-JsSymbol
+	    (instantiateJsSymbol
 	       (val "")
 	       (__proto__ __proto__)))
 
@@ -117,12 +117,12 @@
 	 
 	 (define (%js-symbol %this)
 	    (lambda::JsSymbol (this . args)
-	       (instantiate-JsSymbol
+	       (instantiateJsSymbol
 		  (__proto__ js-symbol-prototype)
 		  (val (if (null? args) "" (js-tostring (car args) %this))))))
 
 	 (define (bind-sym! s)
-	    (let ((sym (instantiate-JsSymbol
+	    (let ((sym (instantiateJsSymbol
 			  (__proto__ js-symbol-prototype)
 			  (val (string-append "Symbol."
 				  (symbol->string! s))))))
@@ -140,7 +140,7 @@
 	    (let* ((stringkey (js-tostring key %this))
 		   (old (hashtable-get js-symbol-table stringkey)))
 	       (or old
-		   (let ((new (instantiate-JsSymbol
+		   (let ((new (instantiateJsSymbol
 				 (__proto__ js-symbol-prototype)
 				 (val stringkey))))
 		      (hashtable-put! js-symbol-table stringkey new)

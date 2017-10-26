@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/json.scm                */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/json.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Jul  9 18:02:44 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:48:58 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -52,7 +52,7 @@
 (define (js-init-json! %this)
    (with-access::JsGlobalObject %this (__proto__ js-json)
       (set! js-json
-	 (instantiate-JsJSON
+	 (instantiateJsJSON
 	    (__proto__ __proto__)))
       ;; parse
       (js-bind! %this js-json 'parse

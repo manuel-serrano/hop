@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Oct 25 17:28:38 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:55:54 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs TCP bindings                                              */
@@ -242,7 +242,7 @@
 
    (define (tcp-wrap hdl)
       (with-access::JsGlobalObject %this (js-object)
-	 (let ((obj (instantiate-JsHandle
+	 (let ((obj (instantiateJsHandle
 		       (handle hdl)
 		       (__proto__ (get-tcp-proto)))))
 	    (js-bind! %this obj 'fd

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Wed Oct 25 16:18:38 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:51:11 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -48,7 +48,7 @@
       (with-access::JsGlobalObject %this (js-arraybuffer)
 	 (with-access::JsArrayBuffer obj (data frozen)
 	    (let* ((ndata data)
-		   (nobj (instantiate-JsArrayBuffer
+		   (nobj (instantiateJsArrayBuffer
 			    (__proto__ (js-get js-arraybuffer 'prototype %this))
 			    (frozen frozen)
 			    (data ndata))))
@@ -90,7 +90,7 @@
 (define (javascript-buffer->arraybuffer name args %this)
    (with-access::JsGlobalObject %this (js-arraybuffer)
       (let* ((u8v (hexstring->u8vector (cadr args)))
-	     (buf (instantiate-JsArrayBuffer
+	     (buf (instantiateJsArrayBuffer
 		     (__proto__ (js-get js-arraybuffer 'prototype %this))
 		     (frozen (car args))
 		     (data u8v))))
@@ -146,7 +146,7 @@
 	 
 	 ;; builtin ArrayBuffer prototype
 	 (define js-arraybuffer-prototype
-	    (instantiate-JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 
 	 (define (%js-arraybuffer this . items)
@@ -163,7 +163,7 @@
 			     (apply js-arraybuffer-construct this items))))
 
 	 (define (js-arraybuffer-alloc constructor::JsFunction %this)
-	    (instantiate-JsArrayBuffer
+	    (instantiateJsArrayBuffer
 	       (cmap (js-not-a-cmap))
 	       (__proto__ (js-get constructor 'prototype %this))))
 

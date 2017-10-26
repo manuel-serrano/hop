@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Thu Oct 26 00:19:05 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:42:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -233,11 +233,11 @@
 (define (js-new-global-object)
    ;; before all, initialize the builtin object prototype
    ;; and then create the global object
-   (let* ((%prototype (instantiate-JsObject
+   (let* ((%prototype (instantiateJsObject
 			 (__proto__ (js-null))
 			 (elements (make-vector 20))
 			 (cmap (instantiate::JsConstructMap))))
-	  (%this (instantiate-JsGlobalObject
+	  (%this (instantiateJsGlobalObject
 		    (__proto__ %prototype)
 		    (cmap (instantiate::JsConstructMap)))))
       ;; init the builtin function class
@@ -495,7 +495,7 @@
 
 	    (define (string->xml-tilde body)
 	       (let ((expr (js-tostring body %this)))
-		  (instantiate-JsWrapper
+		  (instantiateJsWrapper
 		     (__proto__ %prototype)
 		     (data body)
 		     (obj (instantiate::xml-tilde

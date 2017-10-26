@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/error.scm               */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/error.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Aug  3 08:46:36 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:45:11 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -64,7 +64,7 @@
 		 (proc (js-string->jsstring (vector-ref o 3)))
 		 (location (vector-ref o 4)))
 	      (with-access::JsGlobalObject ctx (js-error)
-		 (instantiate-JsError
+		 (instantiateJsError
 		    (__proto__ (js-get js-error 'prototype ctx))
 		    (name (js-string->jsstring (vector-ref o 0)))
 		    (msg (js-string->jsstring (vector-ref o 1)))
@@ -149,13 +149,13 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 (define js-error-prototype
-	    (instantiate-JsError
+	    (instantiateJsError
 	       (__proto__ __proto__)
 	       (msg (js-ascii->jsstring ""))))
 	 
 	 (define (js-error-alloc constructor::JsFunction)
 	    (with-access::JsFunction constructor (name)
-	       (instantiate-JsError
+	       (instantiateJsError
 		  (name (js-string->jsstring name))
 		  (msg (js-ascii->jsstring ""))
 		  (__proto__ (js-get constructor 'prototype %this))
@@ -366,7 +366,7 @@
 	    (js-make-function %this (%js-syntax-error %this) 1
 	       'SyntaxError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate-JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -375,7 +375,7 @@
 	    (js-make-function %this (%js-type-error %this) 1
 	       'TypeError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate-JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -384,7 +384,7 @@
 	    (js-make-function %this (%js-uri-error %this) 1
 	       'URIError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate-JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -393,7 +393,7 @@
 	    (js-make-function %this (%js-eval-error %this) 1
 	       'EvalError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate-JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -402,7 +402,7 @@
 	    (js-make-function %this (%js-range-error %this) 1
 	       'RangeError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate-JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc
@@ -411,7 +411,7 @@
 	    (js-make-function %this (%js-reference-error %this) 1
 	       'ReferenceError
 	       :__proto__ js-function-prototype
-	       :prototype (instantiate-JsError 
+	       :prototype (instantiateJsError 
 			     (__proto__ js-error-prototype)
 			     (msg (js-ascii->jsstring "")))
 	       :alloc js-error-alloc

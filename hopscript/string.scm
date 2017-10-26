@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Wed Oct 25 14:50:13 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:43:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -54,7 +54,7 @@
    (lambda (o %this)
       (let ((this (or %this (js-initial-global-object))))
 	 (with-access::JsGlobalObject this (js-string)
-	    (instantiate-JsString
+	    (instantiateJsString
 	       (val (js-string->jsstring o))
 	       (__proto__ (js-get js-string 'prototype this)))))))
 
@@ -111,7 +111,7 @@
 	 
 	 ;; builtin prototype
 	 (define js-string-prototype
-	    (instantiate-JsString
+	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
 	       (__proto__ __proto__)))
 
@@ -158,7 +158,7 @@
 
 	 ;; string allocation
 	 (define (js-string-alloc::JsString constructor::JsFunction)
-	    (instantiate-JsString
+	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
 	       (__proto__ (js-get constructor 'prototype %this))))
 

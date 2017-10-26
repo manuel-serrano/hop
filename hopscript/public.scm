@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Oct 23 18:14:29 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:53:32 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -177,7 +177,7 @@
 	 (bigloo-c
 	  ($js-make-jsobject constrsize constrmap __proto__ mode))
 	 (else
-	  (instantiate-JsObject
+	  (instantiateJsObject
 	     (mode mode)
 	     (cmap constrmap)
 	     (elements (make-vector constrsize (js-undefined)))

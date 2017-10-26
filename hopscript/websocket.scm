@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/websocket.scm           */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/websocket.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon Jul 10 19:08:38 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:50:54 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -174,15 +174,15 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 (define js-websocket-prototype
-	    (instantiate-JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 	 
 	 (define js-websocket-server-prototype
-	    (instantiate-JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 	 
 	 (define js-websocket-client-prototype
-	    (instantiate-JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 
 	 (define (js-websocket-construct o url options)
@@ -219,7 +219,7 @@
 					     (lambda (e)
 						(exception-notify e))
 					     (wss-onbinary data queue worker))))))
-		      (obj (instantiate-JsWebSocket
+		      (obj (instantiateJsWebSocket
 			      (__proto__ js-websocket-prototype)
 			      (worker worker)
 			      (recvqueue queue)
@@ -256,7 +256,7 @@
 	    (lambda (resp)
 	       (with-access::http-response-websocket resp (request)
 		  (with-access::http-request request (socket)
-		     (let  ((ws (instantiate-JsWebSocketClient
+		     (let  ((ws (instantiateJsWebSocketClient
 				   (socket socket)
 				   (wss wss)
 				   (__proto__ js-websocket-client-prototype))))
@@ -368,7 +368,7 @@
 			      (let ((req (current-request)))
 				 (websocket-server-response req 0
 				    (wss-onconnect wss) proto))))
-		      (wss (instantiate-JsWebSocketServer
+		      (wss (instantiateJsWebSocketServer
 			      (state (js-websocket-state-open))
 			      (worker (js-current-worker))
 			      (__proto__ js-websocket-server-prototype)
@@ -680,7 +680,7 @@
 	    ((isa? val JsHopFrame)
 	     val)
 	    ((isa? val JsObject)
-	     (instantiate-JsHopFrame
+	     (instantiateJsHopFrame
 		(%this %this)
 		(args (map! cdr
 			 (js-jsobject->alist (js-get val 'args %this) %this)))
@@ -690,7 +690,7 @@
 		(path (string-append
 			 (hop-service-base) "/" (js-get val 'path %this)))))
 	    ((pair? val)
-	     (instantiate-JsHopFrame
+	     (instantiateJsHopFrame
 		(%this %this)
 		(args (cdr val))
 		(header '())

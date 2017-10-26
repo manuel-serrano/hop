@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Aug  7 06:23:37 2014                          */
-;*    Last change :  Wed Oct 25 17:17:53 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:55:26 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HTTP bindings                                                    */
@@ -187,7 +187,7 @@
    
    (define (http-parser this kind)
       (with-access::JsGlobalObject %this (js-object)
-	 (instantiate-JsHttpParser
+	 (instantiateJsHttpParser
 	    (__proto__ http-parser-proto)
 	    (state http-line-state))))
    

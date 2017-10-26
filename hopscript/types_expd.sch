@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Oct 25 23:54:24 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:53:51 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -17,11 +17,27 @@
 
       (define (def clazz)
 	 `(define (,(symbol-append 'js-instantiate- clazz '-expander) x e)
+
+	     (define builtins '((properties '())))
+	     (define (builtin? f) (assq (car f) builtins))
+	     
 	     (let* ((nobj (gensym 'nobj))
 		    (id (symbol-append 'instantiate:: ',clazz))
 		    (nx (list 'let
-			   (list (list nobj (cons id (cdr x))))
-			   (list 'js-object-properties-set! nobj ''())
+			   (list (list nobj
+				    (cons id (filter (lambda (f)
+							(not (builtin? f)))
+						(cdr x)))))
+			   (cons 'begin
+			      (map (lambda (f)
+				      (let ((c (assq (car f) (cdr x)))
+					    (set (symbol-append
+						    'js-object- (car f)
+						    '-set!)))
+					 (if (pair? c)
+					     (list set nobj (cadr c))
+					     (list set nobj (cadr f)))))
+				 builtins))
 			   nobj)))
 		(e nx e))))
 
@@ -33,7 +49,7 @@
 (define-expander define-instantiate
    (lambda (x e)
       (let* ((clazz (cadr x))
-	     (defe `(define-expander ,(symbol-append 'instantiate- clazz)
+	     (defe `(define-expander ,(symbol-append 'instantiate clazz)
 		       ,(symbol-append 'js-instantiate- clazz '-expander))))
 	 (eval `(define-instantiate-expander ,clazz))
 	 (e defe  e))))

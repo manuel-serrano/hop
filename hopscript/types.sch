@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Wed Oct 25 23:48:32 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:32:07 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Companion macros                                                 */
@@ -20,7 +20,7 @@
 (define-expander define-instantiate-sans
    (lambda (x e)
       (let* ((clazz (cadr x))
-	     (defe `(define-expander ,(symbol-append 'instantiate- clazz)
+	     (defe `(define-expander ,(symbol-append 'instantiate clazz)
 		       ,(symbol-append 'js-instantiate- clazz '-expander))))
 	 (e defe e))))
 

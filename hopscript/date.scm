@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/date.scm                */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/date.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 21 09:31:43 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:48:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript dates                        */
@@ -112,12 +112,12 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 
 	 (define js-date-prototype
-	    (instantiate-JsDate
+	    (instantiateJsDate
 	       (val (current-date))
 	       (__proto__ __proto__)))
 	 
 	 (define (js-date-alloc constructor::JsFunction)
-	    (instantiate-JsDate
+	    (instantiateJsDate
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 (define (parse-date-arguments args)
@@ -233,7 +233,7 @@
 		  this))
 	    
 	    (if (any (lambda (a) (eq? a (js-undefined))) args)
-		(instantiate-JsDate
+		(instantiateJsDate
 		   (__proto__ js-date-prototype))
 		(let ((d (parse-date-arguments args)))
 		   (cond

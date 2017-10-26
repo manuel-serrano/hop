@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Oct 26 00:16:19 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:50:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -86,7 +86,7 @@
    (lambda (o ctx)
       (if (and (vector? o) (=fx (vector-length o) 5))
 	  (with-access::JsGlobalObject ctx (js-hopframe-prototype)
-	     (instantiate-JsHopFrame
+	     (instantiateJsHopFrame
 		(__proto__ js-hopframe-prototype)
 		(%this ctx)
 		(srv (vector-ref o 0))
@@ -110,7 +110,7 @@
    (lambda (o ctx)
       (if (and (vector? o) (=fx (vector-length o) 6))
 	  (with-access::JsGlobalObject ctx (js-server-prototype)
-	     (let ((srv (instantiate-JsServer
+	     (let ((srv (instantiateJsServer
 			   (__proto__  js-server-prototype)
 			   (obj (instantiate::server
 				   (host (vector-ref o 0))
@@ -242,7 +242,7 @@
 	 
 	 ;; service prototype
 	 (set! js-service-prototype
-	    (instantiate-JsService
+	    (instantiateJsService
 	       (__proto__ js-function-prototype)
 	       (worker (class-nil WorkerHopThread))
 	       (name "service")
@@ -327,7 +327,7 @@
 	 
 	 ;; HopFrame prototype and constructor
 	 (set! js-hopframe-prototype
-	    (instantiate-JsObject
+	    (instantiateJsObject
 	       (__proto__ __proto__)))
 	 
 	 (js-bind! %this js-hopframe-prototype 'post
@@ -446,7 +446,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-make-hopframe %this::JsGlobalObject srv path args)
    (with-access::JsGlobalObject %this (js-hopframe-prototype js-object js-server)
-      (instantiate-JsHopFrame
+      (instantiateJsHopFrame
 	 (__proto__ js-hopframe-prototype)
 	 (%this %this)
 	 (srv srv)
@@ -993,41 +993,39 @@
       v)
    
    (with-access::JsGlobalObject %this (js-service-prototype)
-      (let ((nobj (instantiate-JsService
-		     (procedure proc)
-		     (method proc)
-		     (len arity)
-		     (arity arity)
-		     (worker worker)
-		     (prototype (with-access::JsGlobalObject %this (__proto__)
-				   __proto__))
-		     (__proto__ js-service-prototype)
-		     (name (if (symbol? name) (symbol->string! name) ""))
-		     (alloc (lambda (_)
-			       (js-raise-type-error %this
-				  "service not a constructor" #f)))
-		     (construct (lambda (_ arg)
-				   (js-raise-type-error %this
-				      "service not a constructor" arg)))
-		     (svc (or svc (default-service))))))
-	 (js-object-properties-set! nobj
-	    (list
-	       (instantiate::JsValueDescriptor
-		  (name 'length)
-		  (value 0))
-	       (instantiate::JsAccessorDescriptor
-		  (name 'path)
-		  (get (js-make-function %this get-path 1 'path))
-		  (set (js-make-function %this set-path 2 'path))
-		  (%get get-path)
-		  (%set set-path))
-	       (instantiate::JsAccessorDescriptor
-		  (name 'name)
-		  (get (js-make-function %this get-name 1 'name))
-		  (set (js-make-function %this set-name 2 'name))
-		  (%get get-name)
-		  (%set set-name))))
-	 nobj)))
+      (instantiateJsService
+	 (procedure proc)
+	 (method proc)
+	 (len arity)
+	 (arity arity)
+	 (worker worker)
+	 (prototype (with-access::JsGlobalObject %this (__proto__)
+		       __proto__))
+	 (__proto__ js-service-prototype)
+	 (name (if (symbol? name) (symbol->string! name) ""))
+	 (alloc (lambda (_)
+		   (js-raise-type-error %this
+		      "service not a constructor" #f)))
+	 (construct (lambda (_ arg)
+		       (js-raise-type-error %this
+			  "service not a constructor" arg)))
+	 (svc (or svc (default-service)))
+	 (properties (list
+			(instantiate::JsValueDescriptor
+			   (name 'length)
+			   (value 0))
+			(instantiate::JsAccessorDescriptor
+			   (name 'path)
+			   (get (js-make-function %this get-path 1 'path))
+			   (set (js-make-function %this set-path 2 'path))
+			   (%get get-path)
+			   (%set set-path))
+			(instantiate::JsAccessorDescriptor
+			   (name 'name)
+			   (get (js-make-function %this get-name 1 'name))
+			   (set (js-make-function %this set-name 2 'name))
+			   (%get get-name)
+			   (%set set-name)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    service? ::JsService ...                                         */

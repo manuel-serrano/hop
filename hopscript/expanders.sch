@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Wed Oct 25 18:04:48 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:53:24 2017 (serrano)                */
 ;*    Copyright   :  2006-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -75,87 +75,87 @@
    (eval `(define-expander js-jsstring-append
 	     ,js-jsstring-append-expander))
    
-   (eval `(define-expander instantiate-JsObject
+   (eval `(define-expander instantiateJsObject
 	     ,js-instantiate-JsObject-expander))
-   (eval `(define-expander instantiate-JsWrapper
+   (eval `(define-expander instantiateJsWrapper
 	     ,js-instantiate-JsWrapper-expander))
-   (eval `(define-expander instantiate-JsGlobalObject
+   (eval `(define-expander instantiateJsGlobalObject
 	     ,js-instantiate-JsGlobalObject-expander))
-   (eval `(define-expander instantiate-JsArray
+   (eval `(define-expander instantiateJsArray
 	     ,js-instantiate-JsArray-expander))
-   (eval `(define-expander instantiate-JsArrayBuffer
+   (eval `(define-expander instantiateJsArrayBuffer
 	     ,js-instantiate-JsArrayBuffer-expander))
-   (eval `(define-expander instantiate-JsArrayBufferView
+   (eval `(define-expander instantiateJsArrayBufferView
 	     ,js-instantiate-JsArrayBufferView-expander))
-   (eval `(define-expander instantiate-JsTypedArray
+   (eval `(define-expander instantiateJsTypedArray
 	     ,js-instantiate-JsTypedArray-expander))
-   (eval `(define-expander instantiate-JsInt8Array
+   (eval `(define-expander instantiateJsInt8Array
 	     ,js-instantiate-JsInt8Array-expander))
-   (eval `(define-expander instantiate-JsUint8Array
+   (eval `(define-expander instantiateJsUint8Array
 	     ,js-instantiate-JsUint8Array-expander))
-   (eval `(define-expander instantiate-JsInt16Array
+   (eval `(define-expander instantiateJsInt16Array
 	     ,js-instantiate-JsInt16Array-expander))
-   (eval `(define-expander instantiate-JsUint16Array
+   (eval `(define-expander instantiateJsUint16Array
 	     ,js-instantiate-JsUint16Array-expander))
-   (eval `(define-expander instantiate-JsInt32Array
+   (eval `(define-expander instantiateJsInt32Array
 	     ,js-instantiate-JsInt32Array-expander))
-   (eval `(define-expander instantiate-JsUint32Array
+   (eval `(define-expander instantiateJsUint32Array
 	     ,js-instantiate-JsUint32Array-expander))
-   (eval `(define-expander instantiate-JsFloat32Array
+   (eval `(define-expander instantiateJsFloat32Array
 	     ,js-instantiate-JsFloat32Array-expander))
-   (eval `(define-expander instantiate-JsFloat64Array
+   (eval `(define-expander instantiateJsFloat64Array
 	     ,js-instantiate-JsFloat64Array-expander))
-   (eval `(define-expander instantiate-JsDataView
+   (eval `(define-expander instantiateJsDataView
 	     ,js-instantiate-JsDataView-expander))
-   (eval `(define-expander instantiate-JsArguments
+   (eval `(define-expander instantiateJsArguments
 	     ,js-instantiate-JsArguments-expander))
-   (eval `(define-expander instantiate-JsString
+   (eval `(define-expander instantiateJsString
 	     ,js-instantiate-JsString-expander))
-   (eval `(define-expander instantiate-JsSymbol
+   (eval `(define-expander instantiateJsSymbol
 	     ,js-instantiate-JsSymbol-expander))
-   (eval `(define-expander instantiate-JsFunction
+   (eval `(define-expander instantiateJsFunction
 	     ,js-instantiate-JsFunction-expander))
-   (eval `(define-expander instantiate-JsService
+   (eval `(define-expander instantiateJsService
 	     ,js-instantiate-JsService-expander))
-   (eval `(define-expander instantiate-JsFunction1
+   (eval `(define-expander instantiateJsFunction1
 	     ,js-instantiate-JsFunction1-expander))
-   (eval `(define-expander instantiate-JsFunction2
+   (eval `(define-expander instantiateJsFunction2
 	     ,js-instantiate-JsFunction2-expander))
-   (eval `(define-expander instantiate-JsFunction3
+   (eval `(define-expander instantiateJsFunction3
 	     ,js-instantiate-JsFunction3-expander))
-   (eval `(define-expander instantiate-JsFunction4
+   (eval `(define-expander instantiateJsFunction4
 	     ,js-instantiate-JsFunction4-expander))
-   (eval `(define-expander instantiate-JsFunction5
+   (eval `(define-expander instantiateJsFunction5
 	     ,js-instantiate-JsFunction5-expander))
-   (eval `(define-expander instantiate-JsHopFrame
+   (eval `(define-expander instantiateJsHopFrame
 	     ,js-instantiate-JsHopFrame-expander))
-   (eval `(define-expander instantiate-JsServer
+   (eval `(define-expander instantiateJsServer
 	     ,js-instantiate-JsServer-expander))
-   (eval `(define-expander instantiate-JsNumber
+   (eval `(define-expander instantiateJsNumber
 	     ,js-instantiate-JsNumber-expander))
-   (eval `(define-expander instantiate-JsMath
+   (eval `(define-expander instantiateJsMath
 	     ,js-instantiate-JsMath-expander))
-   (eval `(define-expander instantiate-JsRegExp
+   (eval `(define-expander instantiateJsRegExp
 	     ,js-instantiate-JsRegExp-expander))
-   (eval `(define-expander instantiate-JsBoolean
+   (eval `(define-expander instantiateJsBoolean
 	     ,js-instantiate-JsBoolean-expander))
-   (eval `(define-expander instantiate-JsError
+   (eval `(define-expander instantiateJsError
 	     ,js-instantiate-JsError-expander))
-   (eval `(define-expander instantiate-JsDate
+   (eval `(define-expander instantiateJsDate
 	     ,js-instantiate-JsDate-expander))
-   (eval `(define-expander instantiate-JsJSON
+   (eval `(define-expander instantiateJsJSON
 	     ,js-instantiate-JsJSON-expander))
-   (eval `(define-expander instantiate-JsWorker
+   (eval `(define-expander instantiateJsWorker
 	     ,js-instantiate-JsWorker-expander))
-   (eval `(define-expander instantiate-JsPromise
+   (eval `(define-expander instantiateJsPromise
 	     ,js-instantiate-JsPromise-expander))
-   (eval `(define-expander instantiate-JsGenerator
+   (eval `(define-expander instantiateJsGenerator
 	     ,js-instantiate-JsGenerator-expander))
-   (eval `(define-expander instantiate-JsWebSocket
+   (eval `(define-expander instantiateJsWebSocket
 	     ,js-instantiate-JsWebSocket-expander))
-   (eval `(define-expander instantiate-JsWebSocketClient
+   (eval `(define-expander instantiateJsWebSocketClient
 	     ,js-instantiate-JsWebSocketClient-expander))
-   (eval `(define-expander instantiate-JsWebSocketServer
+   (eval `(define-expander instantiateJsWebSocketServer
 	     ,js-instantiate-JsWebSocketServer-expander))
-   (eval `(define-expander instantiate-JsWebSocketEvent
+   (eval `(define-expander instantiateJsWebSocketEvent
 	     ,js-instantiate-JsWebSocketEvent-expander)))

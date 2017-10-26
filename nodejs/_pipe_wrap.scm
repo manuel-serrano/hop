@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Wed Oct 25 17:21:20 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:55:32 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs PIPE bindings                                             */
@@ -182,7 +182,7 @@
    (define (pipe . val)
       (with-access::JsGlobalObject %this (js-object)
 	 (let* ((hdl (nodejs-new-pipe %worker (and (pair? val) (car val))))
-		(obj (instantiate-JsHandle
+		(obj (instantiateJsHandle
 			(handle hdl)
 			(__proto__ pipe-prototype))))
 	    ;; fd

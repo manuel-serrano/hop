@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Fri Oct  6 18:14:54 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:49:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -168,7 +168,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-literal->jsobject::JsObject elements::vector names::vector %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (instantiate-JsObject
+      (instantiateJsObject
 	 (cmap (js-names->cmap names))
 	 (elements elements)
 	 (__proto__ __proto__))))
@@ -188,7 +188,7 @@
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
 			       (names names))))
-		   (instantiate-JsObject
+		   (instantiateJsObject
 		      (cmap cmap)
 		      (elements elements)
 		      (__proto__ __proto__)))
@@ -217,7 +217,7 @@
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
 			       (names names))))
-		   (instantiate-JsObject
+		   (instantiateJsObject
 		      (cmap cmap)
 		      (elements elements)
 		      (__proto__ __proto__)))
@@ -322,7 +322,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-socket->jsobject obj %this)
    (with-access::JsGlobalObject %this (__proto__)
-      (let ((sock (instantiate-JsWrapper
+      (let ((sock (instantiateJsWrapper
 		     (__proto__ __proto__)
 		     (data #unspecified)
 		     (obj obj))))

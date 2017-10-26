@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Oct 25 16:06:55 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:39:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -123,7 +123,7 @@
 				       js-function)
       
       (set! js-function-prototype
-	 (instantiate-JsFunction
+	 (instantiateJsFunction
 	    (name "builtin")
 	    (src "[Function.__proto__@function.scm]")
 	    (len -1)
@@ -248,11 +248,11 @@
    `(case ,(cadr arity)
        ,@(map (lambda (n)
 		 `((,n)
-		   (,(string->symbol (format "instantiate-JsFunction~a" n))
+		   (,(string->symbol (format "instantiateJsFunction~a" n))
 		    ,arity ,@rest)))
 	  (iota 5 1))
        (else
-	(instantiate-JsFunction
+	(instantiateJsFunction
 	   ,arity ,@rest))))
 
 ;*---------------------------------------------------------------------*/
@@ -282,7 +282,7 @@
       (if js-get-source
 	  js-get-source
 	  (set! js-get-source
-	     (instantiate-JsFunction
+	     (instantiateJsFunction
 		(procedure source)
 		(method source)
 		(arity 0)
@@ -341,7 +341,7 @@
 		      props)))
 	       (construct
 		(with-access::JsObject %this ((js-object-prototype __proto__))
-		   (let ((prototype (instantiate-JsObject
+		   (let ((prototype (instantiateJsObject
 				       (cmap (instantiate::JsConstructMap))
 				       (__proto__ js-object-prototype))))
 		      (js-bind! %this prototype 'constructor

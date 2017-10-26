@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/number.scm              */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/number.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jun 28 08:54:42 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:43:24 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -119,23 +119,17 @@
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 (define js-number-prototype
-	    (instantiate-JsNumber
+	    (instantiateJsNumber
 	       (val 0)
 	       (__proto__ __proto__)))
 
 	 (define (js-number-constructor f value)
-	    (instantiate-JsNumber
+	    (instantiateJsNumber
 	       (__proto__ (js-get f 'prototype %this))
 	       (val (if (eq? value (js-null)) 0 (js-tonumber value %this)))))
 		
-;* 	 (define (js-number-construct this::JsNumber . arg)            */
-;* 	    (tprint "DEPRECATED, SHOULD NOT BE HERE...")               */
-;* 	    (with-access::JsNumber this (val)                          */
-;* 	       (set! val (if (pair? arg) (js-tonumber (car arg) %this) 0))) */
-;* 	    this)                                                      */
-
 	 (define (js-number-alloc constructor::JsFunction)
-	    (instantiate-JsNumber
+	    (instantiateJsNumber
 	       (__proto__ (js-get constructor 'prototype %this))))
 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1

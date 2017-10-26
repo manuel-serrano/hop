@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 27 19:12:38 2015                          */
-;*    Last change :  Wed Oct 25 17:30:18 2017 (serrano)                */
+;*    Last change :  Thu Oct 26 05:56:27 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Zlib bindings                                                    */
@@ -72,7 +72,7 @@
 	 proto))
    
    (define (zlib this)
-      (instantiate-JsZlib
+      (instantiateJsZlib
 	 (__proto__ zlib-proto)))
    
    (let* ((zlib (js-make-function %this zlib 0 "Zlib"
