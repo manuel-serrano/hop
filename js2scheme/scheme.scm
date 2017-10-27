@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Oct 26 14:37:57 2017 (serrano)                */
+;*    Last change :  Fri Oct 27 20:51:00 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -880,11 +880,11 @@
 	  ;; regexp are hybrid, the rx part is precompiled but the
 	  ;; JS object is dynamically allocated
  	  `(let ((rx (vector-ref-ur %cnsts ,index)))
-	      (with-access::JsRegExp rx (properties)
-		 (let ((nrx (duplicate::JsRegExp rx)))
-		    (js-object-properties-set! nrx
-		       (list-copy (js-object-properties rx)))
-		    nrx)))
+	      (let ((nrx (duplicate::JsRegExp rx)))
+		 (js-object-mode-set! nrx (js-object-default-mode))
+		 (js-object-properties-set! nrx
+		    (list-copy (js-object-properties rx)))
+		 nrx))
 	  `(vector-ref-ur %cnsts ,index))))
 
 ;*---------------------------------------------------------------------*/
