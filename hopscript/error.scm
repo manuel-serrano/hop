@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Oct 26 05:45:11 2017 (serrano)                */
+;*    Last change :  Fri Oct 27 04:22:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
@@ -36,6 +36,11 @@
 	      (fun::bstring read-only)))
    
    (export (js-init-error! ::JsGlobalObject)))
+
+;*---------------------------------------------------------------------*/
+;*    constructor                                                      */
+;*---------------------------------------------------------------------*/
+(define-instantiate JsFrame)
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -209,13 +214,12 @@
 	    
 	    (define (make-frame fun loc file line column)
 	       (with-access::JsGlobalObject %this (js-object)
-		  (let ((obj (instantiate::JsFrame
+		  (let ((obj (instantiateJsFrame
 				(__proto__ frame-proto)
 				(file file)
 				(line line)
 				(column column)
 				(fun fun))))
-		     (js-object-properties-set! obj '())
 		     (js-put! obj 'receiver (js-undefined) #f %this)
 		     (js-put! obj 'fun (js-string->jsstring fun) #f %this)
 		     (js-put! obj 'pos (js-string->jsstring loc) #f %this)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Thu Oct 26 05:50:28 2017 (serrano)                */
+;*    Last change :  Fri Oct 27 16:35:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -153,6 +153,7 @@
 	     (nobj (duplicate::JsService obj
 		      (procedure proc))))
 	 (js-object-properties-set! nobj '())
+	 (js-object-mode-set! nobj (js-object-mode obj))
 	 (js-for-in obj
 	    (lambda (k)
 	       (js-put! nobj k

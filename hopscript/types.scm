@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Oct 25 14:49:19 2017 (serrano)                */
+;*    Last change :  Fri Oct 27 16:52:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -110,8 +110,8 @@
 	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))
-	      (mode::byte (default (js-object-default-mode)))
-	      (_properties::pair-nil (default '()))
+;* 	      (_mode::byte (default (js-object-default-mode)))         */
+;* 	      (_properties::pair-nil (default '()))                    */
 	      (cmap::JsConstructMap (default (js-not-a-cmap)))
 	      (elements::vector (default '#())))
 	   
@@ -354,9 +354,13 @@
 	   (inline js-object?::bool ::obj)
 	   (inline js-function?::bool ::obj)
 
-	   ;;(inline js-object-cmap::JsConstructMap ::JsObject)
+	   (inline js-object-cmap ::JsObject)
+	   
 	   (inline js-object-properties ::JsObject)
 	   (inline js-object-properties-set! ::JsObject ::obj)
+	   
+	   (inline js-object-mode::byte ::JsObject)
+	   (inline js-object-mode-set! ::JsObject ::byte)
 	   
 	   (gencmapid::uint32))
    
@@ -393,74 +397,74 @@
 (define-macro (JS-OBJECT-MODE-INSTANCE) 64)
 
 (define-inline (js-object-mode-extensible? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-EXTENSIBLE) mode) (JS-OBJECT-MODE-EXTENSIBLE))))
+   (=fx (bit-and (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
+      (JS-OBJECT-MODE-EXTENSIBLE)))
 
 (define-inline (js-object-mode-extensible-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-EXTENSIBLE)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-EXTENSIBLE)))))))
+	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-EXTENSIBLE))
+	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-EXTENSIBLE))))))
 
 (define-inline (js-object-mode-frozen? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-FROZEN) mode) (JS-OBJECT-MODE-FROZEN))))
+   (=fx (bit-and (JS-OBJECT-MODE-FROZEN) (js-object-mode o))
+      (JS-OBJECT-MODE-FROZEN)))
 
 (define-inline (js-object-mode-frozen-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-FROZEN)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-FROZEN)))))))
+	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-FROZEN))
+	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-FROZEN))))))
 
 (define-inline (js-object-mode-sealed? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-SEALED) mode) (JS-OBJECT-MODE-SEALED))))
+   (=fx (bit-and (JS-OBJECT-MODE-SEALED) (js-object-mode o))
+      (JS-OBJECT-MODE-SEALED)))
 
 (define-inline (js-object-mode-sealed-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-SEALED)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-SEALED)))))))
+	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-SEALED))
+	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-SEALED))))))
 
 (define-inline (js-object-mode-inline? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-INLINE) mode) (JS-OBJECT-MODE-INLINE))))
+   (=fx (bit-and (JS-OBJECT-MODE-INLINE) (js-object-mode o))
+      (JS-OBJECT-MODE-INLINE)))
 
 (define-inline (js-object-mode-inline-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-INLINE)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-INLINE)))))))
+	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-INLINE))
+	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-INLINE))))))
 
 (define-inline (js-object-mode-getter? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-GETTER) mode) (JS-OBJECT-MODE-GETTER))))
+   (=fx (bit-and (JS-OBJECT-MODE-GETTER) (js-object-mode o))
+      (JS-OBJECT-MODE-GETTER)))
 
 (define-inline (js-object-mode-getter-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-GETTER)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-GETTER)))))))
+	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-GETTER))
+	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-GETTER))))))
 
 (define-inline (js-object-mode-packed? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-PACKED) mode) (JS-OBJECT-MODE-PACKED))))
+   (=fx (bit-and (JS-OBJECT-MODE-PACKED) (js-object-mode o))
+      (JS-OBJECT-MODE-PACKED)))
 
 (define-inline (js-object-mode-packed-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-PACKED)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-PACKED)))))))
+	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-PACKED))
+	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-PACKED))))))
 
 (define-inline (js-object-mode-instance? o)
-   (with-access::JsObject o (mode)
-      (=fx (bit-and (JS-OBJECT-MODE-INSTANCE) mode) (JS-OBJECT-MODE-INSTANCE))))
+   (=fx (bit-and (JS-OBJECT-MODE-INSTANCE) (js-object-mode o))
+      (JS-OBJECT-MODE-INSTANCE)))
 
 (define-inline (js-object-mode-instance-set! o flag)
-   (with-access::JsObject o (mode)
+   (js-object-mode-set! o
       (if flag
-	  (set! mode (bit-or mode (JS-OBJECT-MODE-INSTANCE)))
-	  (set! mode (bit-and mode (bit-not (JS-OBJECT-MODE-INSTANCE)))))))
+	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-INSTANCE))
+	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-INSTANCE))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */
@@ -582,7 +586,7 @@
 ;*    js-clone ::JsGlobalObject ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (js-clone obj::JsGlobalObject)
-   (with-access::JsObject obj (properties __proto__ cmap elements)
+   (with-access::JsObject obj (__proto__ cmap elements)
       (let ((nobj (duplicate::JsGlobalObject obj
 		     (__proto__ (js-clone __proto__))
 		     (cmap (js-clone cmap))
@@ -591,6 +595,7 @@
 		     )))
 	 (let ((properties (js-object-properties obj)))
 	    (js-object-properties-set! nobj (js-properties-clone properties))
+	    (js-object-mode-set! nobj (js-object-mode obj))
 	    nobj))))
 
 ;*---------------------------------------------------------------------*/
@@ -801,11 +806,27 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-properties o)
    (object-widening o))
-;*    (with-access::JsObject o (_properties) _properties))             */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-properties-set! ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-properties-set! o p)
    (object-widening-set! o p))
-;*    (with-access::JsObject o (_properties) (set! _properties p)))    */
+
+;*---------------------------------------------------------------------*/
+;*    js-object-mode ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-mode o)
+;*    (with-access::JsObject o (_mode)                                 */
+;*       _mode)                                                        */
+   (object-header-size o)
+   )
+
+;*---------------------------------------------------------------------*/
+;*    js-object-mode-set! ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-mode-set! o p)
+;*    (with-access::JsObject o (_mode)                                 */
+;*       (set! _mode p))                                               */
+   (object-header-size-set! o p)
+   )

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Thu Oct 26 05:51:55 2017 (serrano)                */
+;*    Last change :  Fri Oct 27 16:35:43 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -399,6 +399,7 @@
 			  (state 'pending)
 			  (%name "then-catch"))))
 		(js-object-properties-set! np '())
+		(js-object-mode-set! np (js-object-default-mode))
 		(js-promise-then-catch %this this onfullfilled onrejected np)))))
       
    ;; catch

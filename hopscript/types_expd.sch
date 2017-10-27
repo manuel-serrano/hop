@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu Oct 26 05:53:51 2017 (serrano)                */
+;*    Last change :  Fri Oct 27 16:40:27 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -18,8 +18,12 @@
       (define (def clazz)
 	 `(define (,(symbol-append 'js-instantiate- clazz '-expander) x e)
 
-	     (define builtins '((properties '())))
-	     (define (builtin? f) (assq (car f) builtins))
+	     (define builtins
+		'((properties '())
+		  (mode (js-object-default-mode))))
+	     
+	     (define (builtin? f)
+		(assq (car f) builtins))
 	     
 	     (let* ((nobj (gensym 'nobj))
 		    (id (symbol-append 'instantiate:: ',clazz))
@@ -99,17 +103,4 @@
 (define-instantiate-expander JsWebSocketClient)
 (define-instantiate-expander JsWebSocketServer)
 (define-instantiate-expander JsWebSocketEvent)
-
-;* (define-expander define-instantiate-expanderxs                                 */
-;*    (lambda (x e)                                                    */
-;*       (define (make-instantiator clazz)                             */
-;* 	 `(define-macro (,(symbol-append 'instantiate- clazz) . args)  */
-;* 	     (let ((nobj (gensym 'nobj)))                              */
-;* 		(list 'let                                             */
-;* 		   (list (list nobj                                    */
-;* 			    (cons (symbol-append 'instantiate:: ',clazz) args))) */
-;* 		   (list 'js-object-properties-set! nobj ''())         */
-;* 		   nobj))))                                            */
-;*                                                                     */
-;*       (e (make-instantiator (cadr x)) e)))                          */
 

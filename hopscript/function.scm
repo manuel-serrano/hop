@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Oct 26 05:39:15 2017 (serrano)                */
+;*    Last change :  Fri Oct 27 16:35:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -75,6 +75,7 @@
 			       ;;(properties '())
 			       )))
 		   (js-object-properties-set! nobj '())
+		   (js-object-mode-set! nobj (js-object-mode obj))
 		   nobj)
 		(js-undefined))))))
    

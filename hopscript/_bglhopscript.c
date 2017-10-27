@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sat Oct 21 14:01:40 2017 (serrano)                */
+/*    Last change :  Fri Oct 27 16:45:15 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -135,9 +135,10 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
    
    // fields init
    o->BgL___proto__z00 = __proto__;
-   o->BgL_modez00 = mode;
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
+   BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), mode );
+/*    o->BgL__modez00 = mode;                                          */
 /*    o->BgL__propertiesz00 = BNIL;                                    */
    
    // elements initialization
@@ -201,12 +202,13 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, cha
    
    // fields init
    o->BgL___proto__z00 = __proto__;
-   o->BgL_modez00 = mode; 
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    o->BgL_elementsz00 = empty_vector;
    o->BgL_lengthz00 = len;
    o->BgL_ilenz00 = 0;
+   BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), mode );
    BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
+/*    o->BgL__modez00 = mode;                                          */
 /*    o->BgL__propertiesz00 = BNIL;                                    */
   
    // vector initialization

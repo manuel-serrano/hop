@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/require.scm                */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/require.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Oct 20 17:54:24 2017 (serrano)                */
+;*    Last change :  Fri Oct 27 16:36:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -388,6 +388,7 @@
 	    (let ((this *resolve-this*))
 	       (with-access::JsGlobalObject this (js-object)
 		  (let ((m (js-new0 this js-object)))
+		     (tprint "M=" m)
 		     ;; module properties
 		     (js-put! m 'id (js-string->jsstring filename) #f this)
 		     ;; filename
@@ -541,6 +542,7 @@
 		   (__proto__ global)
 		   (elements '#()))))
       (js-object-properties-set! scope '())
+      (js-object-mode-set! scope (js-object-default-mode))
       (js-object-mode-packed-set! scope #t)
       (nodejs-import! global scope global)
       (hopscript-global-object-init! scope)
