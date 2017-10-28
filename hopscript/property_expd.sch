@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Oct 21 21:08:08 2017 (serrano)                */
+;*    Last change :  Sat Oct 28 10:50:35 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -149,19 +149,6 @@
       (else
        (map (lambda (x) (e x e)) x))))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-get-name-index/cache-expander ...                             *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (js-get-name-index/cache-expander x e)                      */
-;*    (match-case x                                                    */
-;*       ((?- (and (? symbol?) ?obj) ((kwote quote) ?name) ?idx ?cache (and (? symbol?) ?%this)) */
-;*        (e `(if (isa? ,obj JsObject)                                 */
-;* 	       (js-object-get-name-index/cache ,obj ',name ,idx ,cache ,%this) */
-;* 	       (js-get ,obj ',name ,%this))                            */
-;* 	  e))                                                          */
-;*       (else                                                         */
-;*        (map (lambda (x) (e x e)) x))))                              */
-
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-match-expander ...                      */
 ;*---------------------------------------------------------------------*/
@@ -265,21 +252,6 @@
    
    (js-object-get-name/cache-match-expander x e ref))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-object-get-name-index/cache-expander ...                      *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (js-object-get-name-index/cache-expander x e)               */
-;*    (match-case x                                                    */
-;*       ((?- (and (? symbol?) ?obj) ((kwote quote) ?name) ?cache ?%this) */
-;*        (e `(with-access::JsObject ,obj ((omap cmap) elements)       */
-;* 	      (with-access::JsPropertyCache ,cache (cmap index)        */
-;* 		 (if (eq? cmap omap)                                   */
-;* 		     (vector-ref elements index)                       */
-;* 		     (js-get-name/cache-miss ,obj ',name ,cache #f ,%this)))) */
-;* 	  e))                                                          */
-;*       (else                                                         */
-;*        (map (lambda (x) (e x e)) x))))                              */
-
 ;*---------------------------------------------------------------------*/
 ;*    js-global-object-get-name-expander ...                           */
 ;*---------------------------------------------------------------------*/
@@ -299,12 +271,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-global-object-get-name/cache-expander x e)
    (match-case x
-      ((?- (and (? symbol?) ?o) (and (? symbol?) ?name) ?cache ?throw ?%this)
+      ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-)) ?cache ?throw ?%this)
        (e `(with-access::JsObject ,o ((omap cmap) elements)
 	      (with-access::JsPropertyCache ,cache (cmap index)
 		 (if (eq? cmap omap)
 		     (vector-ref elements index)
-		     (js-get-lookup ,o ,name ,cache ,throw ,%this))))
+		     (js-get-lookup ,o ,prop ,cache ,throw ,%this))))
 	  e))
       (else
        (map (lambda (x) (e x e)) x))))

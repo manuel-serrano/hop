@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Oct 27 16:52:45 2017 (serrano)                */
+;*    Last change :  Sat Oct 28 10:54:36 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -110,8 +110,6 @@
 	   
 	   (class JsObject
 	      (__proto__ (default (js-null)))
-;* 	      (_mode::byte (default (js-object-default-mode)))         */
-;* 	      (_properties::pair-nil (default '()))                    */
 	      (cmap::JsConstructMap (default (js-not-a-cmap)))
 	      (elements::vector (default '#())))
 	   
