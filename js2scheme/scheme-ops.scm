@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Oct 24 02:06:24 2017 (serrano)                */
+;*    Last change :  Sun Oct 29 10:15:30 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -812,7 +812,7 @@
 	      (binop lhs rhs mode return conf hint type
 		 (lambda (left right)
 		    (retnum
-		       `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right))))))))
+		       `(,(fxop op) ,(fx->int32 left) ,right)))))))
 	 ((or (type-fixnum? tr) (eq? tr 'int32))
 	  (case op
 	     ((<< >> >>>)
@@ -827,15 +827,24 @@
 		 (lambda (left right)
 		    `(if (fixnum? ,left)
 			 ,(retnum
-			     `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right)))
+			     `(,(fxop op) ,(fx->int32 left) ,right))
 			 ,(js-binop loc op left right)))))))
 	 ((or (type-fixnum? tl) (eq? tl 'int32))
-	  (binop lhs rhs mode return conf hint type
-	     (lambda (left right)
-		`(if (fixnum? ,right)
-		     ,(retnum
-			 `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right)))
-		     ,(js-binop loc op left right)))))
+	  (case op
+	     ((<< >> >>>)
+	      (binop lhs rhs mode return conf hint type
+		 (lambda (left right)
+		    `(if (fixnum? ,right)
+			 ,(retnum
+			     `(,(fxop op) ,(fx->int32 left) ,right))
+			 ,(js-binop loc op left right)))))
+	     (else
+	      (binop lhs rhs mode return conf hint type
+		 (lambda (left right)
+		    `(if (fixnum? ,right)
+			 ,(retnum
+			     `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right)))
+			 ,(js-binop loc op left right)))))))
 	 ((memq op '(BIT_OR & ^))
 	  (binop lhs rhs mode return conf hint 'any
 	     (lambda (left right)
