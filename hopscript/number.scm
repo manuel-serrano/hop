@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Oct 26 05:43:24 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 06:46:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -152,8 +152,8 @@
 	       :__proto__ js-function-prototype
 	       :prototype js-number-prototype
 	       :constructor js-number-constructor
-;* 	       :construct js-number-construct                         */
-	       :alloc js-number-alloc))
+	       :alloc js-number-alloc
+	       :shared-cmap #f))
 	 
 	 ;; other properties of the Number constructor
 	 (js-bind! %this js-number 'POSITIVE_INFINITY

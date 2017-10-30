@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Fri Oct 27 16:35:26 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 11:22:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -33,13 +33,16 @@
 	   thrower-get
 	   thrower-set
 	   
+	   js-function-cmap-names
+	   js-function-strict-cmap-names
+
 	   (js-function-debug-name::bstring ::JsFunction)
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
 	      #!key
 	      __proto__ prototype constructor construct alloc
 	      (strict 'normal) arity (minlen -1) src rest
-	      (constrsize 3) (maxconstrsize 100) method)
+	      (constrsize 3) (maxconstrsize 100) method (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::obj ::int ::int ::symbol ::bool ::int)))
 
@@ -99,6 +102,14 @@
 
 (define length-properties '#())
 
+;*---------------------------------------------------------------------*/
+;*    js-function-cmap-names ...                                       */
+;*---------------------------------------------------------------------*/
+(define js-function-cmap-names
+   '#(prototype length name source arguments caller))
+(define js-function-strict-cmap-names
+   '#(prototype length name source))
+   
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -191,8 +202,7 @@
       ;; bind Function in the global object
       (js-bind! %this %this 'Function
 	 :value js-function
-	 :configurable #f :enumerable #f
-	 :hidden-class #f)
+	 :configurable #f :enumerable #f)
       ;; return the js-function object
       js-function))
 
@@ -265,7 +275,7 @@
 	   #!key __proto__ prototype
 	   constructor alloc construct (strict 'normal)
 	   arity (minlen -1) src rest
-	   (constrsize 3) (maxconstrsize 100) method)
+	   (constrsize 3) (maxconstrsize 100) method (shared-cmap #t))
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -297,10 +307,26 @@
    
    (with-access::JsGlobalObject %this (js-function js-object
 					 js-function-cmap
-					 js-function-prototype-cmap)
+					 js-function-strict-cmap)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 (let* ((constr (or construct list))
 		(fname (if (symbol? name) (symbol->string! name) name))
+		(els (if (eq? strict 'normal)
+			 ($create-vector 4)
+			 ($create-vector 6)))
+		(proto (cond
+			  ((isa? prototype JsObject)
+			   prototype)
+			  (construct
+			   (with-access::JsObject %this (__proto__)
+			      (instantiateJsObject
+				 (cmap (instantiate::JsConstructMap))
+				 (__proto__ __proto__))))
+			  (else
+			   (js-undefined))))
+		(cmap (if (eq? strict 'normal)
+				  js-function-strict-cmap
+				  js-function-cmap))
 		(fun (INSTANTIATE-JSFUNCTION
 			(arity (or arity (procedure-arity procedure)))
 			(procedure procedure)
@@ -317,81 +343,55 @@
 			(constrsize constrsize)
 			(maxconstrsize maxconstrsize)
 			(construct constr)
-			(prototype (if (isa? prototype JsObject)
-				       prototype
-				       (with-access::JsGlobalObject %this (__proto__)
-					  __proto__)))
-			(constructor constructor)))
-		(props '()))
-
-	    (cond
-	       (prototype
-		(when (isa? prototype JsObject)
-		   (js-bind! %this prototype 'constructor
-		      :value fun
-		      :configurable #t :writable #t :enumerable #f
-		      :hidden-class #t))
-		(set! props
-		   (cons
-		      (instantiate::JsValueDescriptor
-			 (name 'prototype)
-			 (enumerable #f)
-			 (configurable #f)
-			 (writable #f)
-			 (value prototype))
-		      props)))
-	       (construct
-		(with-access::JsObject %this ((js-object-prototype __proto__))
-		   (let ((prototype (instantiateJsObject
-				       (cmap (instantiate::JsConstructMap))
-				       (__proto__ js-object-prototype))))
-		      (js-bind! %this prototype 'constructor
-			 :value fun
-			 :configurable #t :writable #t :enumerable #f
-			 :hidden-class #t)
-		      (set! props
-			 (cons
-			    (instantiate::JsValueDescriptor
-			       (name 'prototype)
-			       (enumerable #f)
-			       (configurable #f)
-			       (writable #t)
-			       (value prototype))
-			    props))))))
-	    (set! props
-	       (cons
-		  (if (and (>=fx length 0)
-			   (<fx length (vector-length length-properties)))
-		      (vector-ref length-properties length)
-		      (instantiate::JsValueDescriptor
-			 (name 'length)
-			 (enumerable #f)
-			 (configurable #f)
-			 (writable #f)
-			 (value length)))
-		  props))
-	    (unless (eq? strict 'normal)
-	       (set! props
-		  (cons* strict-arguments-property strict-caller-property
-		     props)))
-	    (set! props
-	       (cons (instantiate::JsValueDescriptor
-			(name 'name)
-			(writable #f)
-			(enumerable #f)
-			(configurable #f)
-			(value (js-string->jsstring fname)))
-		  props))
+			(elements els)
+			(cmap (if shared-cmap
+				  cmap
+				  (duplicate::JsConstructMap cmap)))
+			(prototype proto)
+			(constructor constructor))))
+	    ;; prototype
+	    (unless (eq? proto (js-undefined))
+	       (js-bind! %this proto 'constructor
+		  :value fun
+		  :configurable #t :enumerable #f :writable #t
+		  :hidden-class #t))
+	    (vector-set! els 0
+	       (instantiate::JsValueDescriptor
+		  (name 'prototype)
+		  (enumerable #f)
+		  (configurable #f)
+		  (writable (not prototype))
+		  (value proto)))
+	    ;; length
+	    (vector-set! els 1
+	       (if (and (>=fx length 0)
+			(<fx length (vector-length length-properties)))
+		   (vector-ref length-properties length)
+		   (instantiate::JsValueDescriptor
+		      (name 'length)
+		      (enumerable #f)
+		      (configurable #f)
+		      (writable #f)
+		      (value length))))
+	    ;; name
+	    (vector-set! els 2
+	       (instantiate::JsValueDescriptor
+		  (name 'name)
+		  (writable #f)
+		  (enumerable #f)
+		  (configurable #f)
+		  (value (js-string->jsstring fname))))
 	    ;; source is an hop extension
-	    (set! props
-	       (cons (instantiate::JsValueDescriptor
-			(name 'source)
-			(writable #f)
-			(enumerable #f)
-			(configurable #f)
-			(value (get-source)))
-		  props))
-	    (js-object-properties-set! fun props)
+	    (vector-set! els 3
+	       (instantiate::JsValueDescriptor
+		  (name 'source)
+		  (writable #f)
+		  (enumerable #f)
+		  (configurable #f)
+		  (value (get-source))))
+	    (unless (eq? strict 'normal)
+	       (vector-set! els 4 strict-arguments-property)
+	       (vector-set! els 5 strict-caller-property))
 	    fun))))
 
 ;*---------------------------------------------------------------------*/

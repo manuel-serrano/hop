@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Oct 27 20:51:00 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 07:05:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -419,6 +419,7 @@
 		   (define %worker
 		      (js-init-main-worker! %this #f nodejs-new-global-object))
 		   (hopscript-install-expanders!)
+		   (bigloo-library-path-set! ',(bigloo-library-path))
 		   (js-worker-push-thunk! %worker "nodejs-toplevel"
 		      (lambda ()
 			 (define %scope (nodejs-new-scope-object %this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Oct 27 16:24:06 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 08:28:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1591,7 +1591,7 @@
 			     v)))
 		     ((not (js-object-mode-extensible? obj))
 		      ;; 8.12.9, step 3
-		      (reject "Sealed object"))
+		      (reject "sealed object"))
 		     ((not (isa? el-or-desc JsPropertyDescriptor))
 		      ;; 8.12.5, step 6
 		      (js-invalidate-pcaches-pmap! %this)
@@ -1660,7 +1660,7 @@
 			  v)))))
 	    ((not (js-object-mode-extensible? obj))
 	     ;; 8.12.9, step 3
-	     (reject "Sealed object"))
+	     (reject "sealed object"))
 	    (else
 	     (with-access::JsDataDescriptor desc (writable)
 		(if writable
@@ -1686,7 +1686,7 @@
 	    (cond
 	       ((not (js-object-mode-extensible? o))
 		;; 8.12.9. step 3
-		(reject "Sealed objet"))
+		(reject "sealed objet"))
 	       ((not extend)
 		;; 11.13.1
 		(js-raise-reference-error %this
@@ -1783,6 +1783,9 @@
 ;*    the library objects. This function always binds the value in the */
 ;*    mentionned object. It does not follow the prototype chain. It    */
 ;*    does not check the extensibility flags.                          */
+;*    -------------------------------------------------------------    */
+;*    When HIDDEN-CLASS is true, it is assumed that the object         */
+;*    CMAP is not shared by any other object.                          */
 ;*    -------------------------------------------------------------    */
 ;*    [[Put]]                                                          */
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.4    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Oct 27 16:35:33 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 06:44:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -38,6 +38,7 @@
 	   __hopscript_date
 	   __hopscript_error
 	   __hopscript_json
+	   __hopscript_function
 	   __hopscript_service
 	   __hopscript_property
 	   __hopscript_private
@@ -240,7 +241,18 @@
 			 (cmap (instantiate::JsConstructMap))))
 	  (%this (instantiateJsGlobalObject
 		    (__proto__ %prototype)
-		    (cmap (instantiate::JsConstructMap)))))
+		    (cmap (instantiate::JsConstructMap))
+		    (js-function-cmap (instantiate::JsConstructMap
+					 (methods (make-vector
+							    (vector-length
+							       js-function-cmap-names)))
+					 (names js-function-cmap-names)))
+		    (js-function-strict-cmap (instantiate::JsConstructMap
+						(methods (make-vector
+							    (vector-length
+							       js-function-strict-cmap-names)))
+						(names js-function-strict-cmap-names))))))
+		    
       ;; init the builtin function class
       (js-init-function! %this)
       ;; the object constructor
@@ -576,7 +588,8 @@
 	       :constrsize 3 :maxconstrsize 4
 	       :prototype %prototype
 	       :construct js-object-construct
-	       :constructor js-object-constructor)))
+	       :constructor js-object-constructor
+	       :shared-cmap #f)))
       
       ;; getPrototypeOf
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.2

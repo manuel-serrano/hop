@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/nodejs/hop.js                     */
+/*    serrano/prgm/project/hop/3.2.x/nodejs/hop.js                     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Fri Oct 20 08:16:15 2017 (serrano)                */
+/*    Last change :  Sun Oct 29 20:05:22 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
