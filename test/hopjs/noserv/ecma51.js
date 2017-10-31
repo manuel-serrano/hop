@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/ecma51.js       */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/ecma51.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Jun 28 17:49:49 2017 (serrano)                */
+/*    Last change :  Mon Oct 30 17:27:30 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -340,3 +340,11 @@ function protoLit( CNT, m ) {
 }
 
 assert.ok( protoLit( 20000, 1 ) === 12345, "literal with __proto__" );
+
+/*---------------------------------------------------------------------*/
+/*    Function properties                                              */
+/*---------------------------------------------------------------------*/
+var p1 = Object.getOwnPropertyDescriptor( ctor, "length" );
+var p2 = Object.getOwnPropertyDescriptor( ctor, "name" );
+
+assert.ok( !p2.writable && !p2.enumerable && !p2.configurable );

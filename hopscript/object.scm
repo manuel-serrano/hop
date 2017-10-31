@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Mon Oct 30 06:44:49 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 06:18:24 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -19,7 +19,7 @@
    
    (library hop hopwidget js2scheme)
    
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
 	   __hopscript_string
@@ -38,7 +38,6 @@
 	   __hopscript_date
 	   __hopscript_error
 	   __hopscript_json
-	   __hopscript_function
 	   __hopscript_service
 	   __hopscript_property
 	   __hopscript_private
@@ -244,14 +243,14 @@
 		    (cmap (instantiate::JsConstructMap))
 		    (js-function-cmap (instantiate::JsConstructMap
 					 (methods (make-vector
-							    (vector-length
-							       js-function-cmap-names)))
-					 (names js-function-cmap-names)))
+						     (vector-length
+							js-function-cmap-props)))
+					 (props js-function-cmap-props)))
 		    (js-function-strict-cmap (instantiate::JsConstructMap
 						(methods (make-vector
 							    (vector-length
-							       js-function-strict-cmap-names)))
-						(names js-function-strict-cmap-names))))))
+							       js-function-cmap-strict-props)))
+						(props js-function-cmap-strict-props))))))
 		    
       ;; init the builtin function class
       (js-init-function! %this)
@@ -776,8 +775,8 @@
 	    (with-access::JsObject o (cmap)
 	       (and
 		(or (eq? cmap (js-not-a-cmap))
-		    (with-access::JsConstructMap cmap (names)
-		       (=fx (vector-length names) 0)))
+		    (with-access::JsConstructMap cmap (props)
+		       (=fx (vector-length props) 0)))
 		;; 2
 		(every (lambda (desc::JsPropertyDescriptor)
 			  (with-access::JsPropertyDescriptor desc (configurable)
@@ -1047,12 +1046,12 @@
    
    (define (defineproperties/cmap cmap o props)
       (with-access::JsObject props (elements)
-	 (with-access::JsConstructMap cmap (names)
-	    (vfor-each (lambda (name::symbol i)
-			  (when (enumerable-mapped-property? props i)
+	 (with-access::JsConstructMap cmap (props)
+	    (vfor-each (lambda (d::struct i)
+			  (when (flags-enumerable? (prop-flags d))
 			     (let ((prop (vector-ref elements i)))
-				(define-own-property o name prop))))
-	       names))))
+				(define-own-property o (prop-name d) prop))))
+	       props))))
    
    (define (defineproperties/properties oprops o props)
       (for-each (lambda (prop)
@@ -1100,8 +1099,6 @@
       (tprint "TODO, why js-freeze need unmap?"))
    (js-object-unmap! obj)
    (for-each js-freeze-property! (js-object-properties o))
-;*       (with-access::JsObject o (extensible)                         */
-;* 	 (set! extensible #f))                                         */
    (js-object-mode-extensible-set! o #f)
    obj)
 

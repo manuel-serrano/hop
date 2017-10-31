@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Oct 30 11:22:49 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 18:31:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -18,7 +18,7 @@
    
    (library hop js2scheme)
    
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
 	   __hopscript_property
@@ -33,8 +33,10 @@
 	   thrower-get
 	   thrower-set
 	   
-	   js-function-cmap-names
-	   js-function-strict-cmap-names
+	   js-function-cmap-writable-props
+	   js-function-cmap-props
+	   js-function-cmap-strict-writable-props
+	   js-function-cmap-strict-props
 
 	   (js-function-debug-name::bstring ::JsFunction)
 	   (js-make-function::JsFunction ::JsGlobalObject
@@ -103,13 +105,36 @@
 (define length-properties '#())
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-cmap-names ...                                       */
+;*    js-function-cmap-props ...                                       */
 ;*---------------------------------------------------------------------*/
-(define js-function-cmap-names
-   '#(prototype length name source arguments caller))
-(define js-function-strict-cmap-names
-   '#(prototype length name source))
-   
+(define js-function-cmap-writable-props
+   `#(,(prop 'prototype (property-flags #t #f #f #f))
+      ,(prop 'length (property-flags #f #f #f #f))
+      ,(prop 'name (property-flags #f #f #f #f))
+      ,(prop 'source (property-flags #f #f #f #f))))
+
+(define js-function-cmap-props
+   `#(,(prop 'prototype (property-flags #f #f #f #f))
+      ,(prop 'length (property-flags #f #f #f #f))
+      ,(prop 'name (property-flags #f #f #f #f))
+      ,(prop 'source (property-flags #f #f #f #f))))
+
+(define js-function-cmap-strict-writable-props
+   `#(,(prop 'prototype (property-flags #t #f #f #f))
+      ,(prop 'length (property-flags #f #f #f #f))
+      ,(prop 'name (property-flags #f #f #f #f))
+      ,(prop 'source (property-flags #f #f #f #f))
+      ,(prop 'arguments (property-flags #f #f #f #f))
+      ,(prop 'caller (property-flags #f #f #f #f))))
+
+(define js-function-cmap-strict-props
+   `#(,(prop 'prototype (property-flags #f #f #f #f))
+      ,(prop 'length (property-flags #f #f #f #f))
+      ,(prop 'name (property-flags #f #f #f #f))
+      ,(prop 'source (property-flags #f #f #f #f))
+      ,(prop 'arguments (property-flags #f #f #f #f))
+      ,(prop 'caller (property-flags #f #f #f #f))))
+
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -325,8 +350,8 @@
 			  (else
 			   (js-undefined))))
 		(cmap (if (eq? strict 'normal)
-				  js-function-strict-cmap
-				  js-function-cmap))
+			  js-function-cmap
+			  js-function-strict-cmap))
 		(fun (INSTANTIATE-JSFUNCTION
 			(arity (or arity (procedure-arity procedure)))
 			(procedure procedure)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Oct 30 08:29:21 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 06:50:19 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -72,6 +72,8 @@
 	   (final-class JsAccessorDescriptor::JsPropertyDescriptor
 	      get set
 	      %get::procedure %set::procedure)
+	   (final-class JsWrapperDescriptor::JsPropertyDescriptor
+	      %get::procedure %set)
 	   
 	   (final-class JsPropertyCache
 	      (cmap::obj (default #f))
@@ -87,7 +89,7 @@
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))
-	      (names::vector (default '#()))
+	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))
 	      (ctor::obj (default #f))
@@ -604,9 +606,9 @@
 (define-method (js-clone obj::JsConstructMap)
    (if (eq? obj (js-not-a-cmap))
        obj
-       (with-access::JsConstructMap obj (names)
+       (with-access::JsConstructMap obj (props)
 	  (duplicate::JsConstructMap obj
-	     (names (vector-copy names))))))
+	     (props (vector-copy props))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ...                                                    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Oct 26 05:48:58 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 16:15:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -18,7 +18,7 @@
 
    (library web hop)
    
-   (include "types.sch" "stringliteral.sch")
+   (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -292,9 +292,10 @@
 	     (let loop ((o obj))
 		(with-access::JsObject o (cmap __proto__)
 		   (if (not (eq? cmap (js-not-a-cmap)))
-		       (with-access::JsConstructMap cmap (names)
+		       (with-access::JsConstructMap cmap (props)
 			  (vfor-each (lambda (n)
-					(when n (proc n))) names))
+					(when n (proc (prop-name n))))
+			     props))
 		       (for-each in-property (js-object-properties o))))))
 	    ((object? obj)
 	     (vfor-each (lambda (f) (proc (class-field-name f)))

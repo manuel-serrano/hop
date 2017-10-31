@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 26 09:36:15 2015                          */
-/*    Last change :  Fri Oct  6 09:37:05 2017 (serrano)                */
+/*    Last change :  Mon Oct 30 17:25:13 2017 (serrano)                */
 /*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing HopFrames                                                */
@@ -37,8 +37,15 @@ f.post( function( v ) {
 } );
    
 setTimeout( function() {
-   assert.ok( res === 2, "res" );
-   process.exit( res === 2 ? 0 : 1 );
+   if( hop.compilerDriver.pending > 0 ) {
+      hop.compilerDriver.addEventListener( "all", function( e ) {
+	 assert.ok( res === 2, "res" );
+	 process.exit( 0 );
+      } );
+   } else {
+      assert.ok( res === 2, "res" );
+      process.exit( res === 2 ? 0 : 1 );
+   }
 }, 1000 );
   
 

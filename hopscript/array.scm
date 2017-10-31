@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Oct 27 16:30:00 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 06:27:04 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -18,7 +18,8 @@
    
    (include "../nodejs/nodejs_debug.sch"
 	    "types.sch"
-	    "stringliteral.sch")
+	    "stringliteral.sch"
+	    "property.sch")
    
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::byte)
 	      "bgl_make_jsarray"))
@@ -1693,10 +1694,11 @@
 
 	 (define (vector-map o len::uint32 proc::JsFunction t i::uint32)
 	    (with-access::JsArray o (vec ilen length)
-	       (let ((v (make-vector (vector-length vec) (js-undefined))))
+	       (let ((v (make-vector (vector-length vec) (js-undefined)))
+		     (l length))
 		  (let loop ((i i))
 		     (cond
-			((>=u32 i ilen)
+			((or (>=u32 i ilen) (>=u32 i l))
 			 (let ((a (js-vector->jsarray v %this)))
 			    (if (=u32 i len)
 				(with-access::JsArray a (length ilen)
@@ -2547,8 +2549,8 @@
       (let loop ((o arr))
 	 (with-access::JsObject o (cmap __proto__)
 	    (append (if (not (eq? cmap (js-not-a-cmap)))
-			(with-access::JsConstructMap cmap (names)
-			   (vector->list names))
+			(with-access::JsConstructMap cmap (props)
+			   (map prop-name (vector->list props)))
 			(map (lambda (d)
 				(with-access::JsPropertyDescriptor d (name)
 				   name))

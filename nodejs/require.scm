@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Oct 30 07:00:51 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 18:37:02 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1444,23 +1444,6 @@
 (define (nodejs-resolve-extend-path! path)
    (set! nodejs-env-path (append nodejs-env-path path)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    nodejs-cache-module ...                                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (nodejs-cache-module name worker)                           */
-;*    (with-access::WorkerHopThread worker (module-table module-mutex) */
-;*       (synchronize module-mutex                                     */
-;* 	 (hashtable-get module-table name))))                          */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    nodejs-cache-module-put! ...                                     *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (nodejs-cache-module-put! name worker module)               */
-;*    (with-access::WorkerHopThread worker (module-table module-mutex) */
-;*       (synchronize module-mutex                                     */
-;* 	 (hashtable-put! module-table name module)                     */
-;* 	 module)))                                                     */
-
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-import! ...                                               */
 ;*    -------------------------------------------------------------    */
@@ -1478,7 +1461,7 @@
 		  (loop (+fx i 1))))))
       
       (define (in-mapped-property n)
-	 (when (symbol? n) (proc n)))
+	 (when (symbol? (property-name n)) (proc (property-name n))))
       
       (define (in-property p)
 	 (when (isa? p JsPropertyDescriptor)
@@ -1488,8 +1471,8 @@
       (let loop ((o obj))
 	 (with-access::JsObject o (cmap __proto__)
 	    (if (not (eq? cmap (js-not-a-cmap)))
-		(with-access::JsConstructMap cmap (names)
-		   (vfor-each in-mapped-property names))
+		(with-access::JsConstructMap cmap (props)
+		   (vfor-each in-mapped-property props))
 		(for-each in-property (js-object-properties o))))))
    
    ;; e start being undefined during the first steps of the rts boot

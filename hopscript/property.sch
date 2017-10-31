@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Oct  5 05:31:03 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 16:19:25 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -95,3 +95,42 @@
 	 (else
 	  (map (lambda (x) (e x e)) x)))))
 
+;*---------------------------------------------------------------------*/
+;*    descr ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-struct prop name flags)
+
+;*---------------------------------------------------------------------*/
+;*    flag ...                                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (flags-writable) 1)
+(define-inline (flags-enumerable) 2)
+(define-inline (flags-configurable) 4)
+(define-inline (flags-accessor) 8)
+
+(define (flags-writable? f)
+   (=fx (bit-and f (flags-writable)) (flags-writable)))
+
+(define (flags-enumerable? f)
+   (=fx (bit-and f (flags-enumerable)) (flags-enumerable)))
+
+(define (flags-configurable? f)
+   (=fx (bit-and f (flags-configurable)) (flags-configurable)))
+
+(define (flags-accessor? f)
+   (=fx (bit-and f (flags-accessor)) (flags-accessor)))
+
+;*---------------------------------------------------------------------*/
+;*    property-flags ...                                               */
+;*---------------------------------------------------------------------*/
+(define-macro (property-flags writable enumerable configurable accessor)
+   `(bit-or (if ,writable (flags-writable) 0)
+       (bit-or (if ,enumerable (flags-enumerable) 0)
+	  (bit-or (if ,configurable (flags-configurable) 0)
+	     (if ,accessor (flags-accessor) 0)))))
+
+;*---------------------------------------------------------------------*/
+;*    property-flags-default ...                                       */
+;*---------------------------------------------------------------------*/
+(define-macro (property-flags-default)
+   '(property-flags #t #t #t #f))

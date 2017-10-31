@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Oct 26 05:49:40 2017 (serrano)                */
+;*    Last change :  Mon Oct 30 16:48:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -16,7 +16,7 @@
 
    (library hop)
 
-   (include "types.sch")
+   (include "types.sch" "property.sch")
    
    (import __hopscript_types
 	   __hopscript_property
@@ -77,8 +77,8 @@
 				    (js-new1 %this js-regexp rx)))))
 			 ((2)
 			  ;; a literal cmap
-			  (let ((names (vector-ref-ur el 1)))
-			     (js-names->cmap names)))
+			  (let ((props (vector-ref-ur el 1)))
+			     (js-names->cmap props)))
 			 ((3)
 			  ;; an inlined regexp
 			  (with-access::JsGlobalObject %this (js-regexp)
@@ -182,12 +182,12 @@
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let* ((len (length alist))
 	     (elements ($create-vector len))
-	     (names ($create-vector len)))
+	     (props ($create-vector len)))
 	 (let loop ((i 0)
 		    (alist alist))
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
-			       (names names))))
+			       (props props))))
 		   (instantiateJsObject
 		      (cmap cmap)
 		      (elements elements)
@@ -200,7 +200,7 @@
 				(else
 				 (caar alist))))
 		       (val (js-obj->jsobject (cdar alist) %this)))
-		   (vector-set-ur! names i name)
+		   (vector-set-ur! props i (prop name (property-flags-default)))
 		   (vector-set-ur! elements i val)
 		   (loop (+fx i 1) (cdr alist))))))))
 
@@ -211,12 +211,12 @@
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let* ((len (/fx (length plist) 2))
 	     (elements ($create-vector len))
-	     (names ($create-vector len)))
+	     (props ($create-vector len)))
 	 (let loop ((i 0)
 		    (plist plist))
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
-			       (names names))))
+			       (props props))))
 		   (instantiateJsObject
 		      (cmap cmap)
 		      (elements elements)
@@ -229,7 +229,7 @@
 				(else
 				 (car plist))))
 		       (val (js-obj->jsobject (cadr plist) %this)))
-		   (vector-set-ur! names i name)
+		   (vector-set-ur! props i (prop name (property-flags-default)))
 		   (vector-set-ur! elements i val)
 		   (loop (+fx i 1) (cddr plist))))))))
 
