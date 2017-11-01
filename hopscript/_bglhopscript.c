@@ -3,16 +3,16 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Fri Oct 27 16:45:15 2017 (serrano)                */
+/*    Last change :  Wed Nov  1 13:54:33 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
 /*=====================================================================*/
+#include <stdio.h>
 #include <bigloo.h>
 #include "bglhopscript.h"
-
-#include <stdio.h>
+#include "bglhopscript_malloc.h"
 
 /*---------------------------------------------------------------------*/
 /*    JsObject imports                                                 */
@@ -138,8 +138,6 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
    BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), mode );
-/*    o->BgL__modez00 = mode;                                          */
-/*    o->BgL__propertiesz00 = BNIL;                                    */
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
@@ -208,8 +206,6 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, cha
    o->BgL_ilenz00 = 0;
    BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), mode );
    BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
-/*    o->BgL__modez00 = mode;                                          */
-/*    o->BgL__propertiesz00 = BNIL;                                    */
   
    // vector initialization
    vector = (obj_t)(&(o->BgL_vecz00) + 1);

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Nov  1 07:23:10 2017 (serrano)                */
+;*    Last change :  Wed Nov  1 14:56:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -141,6 +141,7 @@
 	      (js-number::JsFunction (default (class-nil JsFunction)))
 	      (js-function::JsFunction (default (class-nil JsFunction)))
 	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
+	      (js-function-strict-prototype::JsObject (default (class-nil JsObject)))
 	      (js-function-cmap::JsConstructMap read-only)
 	      (js-function-strict-cmap::JsConstructMap read-only)
 	      (js-function-writable-cmap::JsConstructMap read-only)

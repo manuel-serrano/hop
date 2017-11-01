@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Nov  1 07:27:32 2017 (serrano)                */
+;*    Last change :  Wed Nov  1 14:47:47 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -986,24 +986,20 @@
    
    (define (cmap->names cmap)
       (with-access::JsConstructMap cmap (props)
-	 (with-access::JsObject o (elements)
-	    (let loop ((i (-fx (vector-length props) 1))
-		       (acc '()))
-	       (cond
-		  ((=fx i -1)
-		   acc)
-		  ((vector-ref props i)
-		   =>
-		   (lambda (prop)
-		      (let ((p (vector-ref elements i)))
-			 (if (and enump (isa? p JsPropertyDescriptor))
-			     (with-access::JsPropertyDescriptor p (enumerable)
-				(if enumerable
-				    (loop (-fx i 1) (cons (prop-name prop) acc))
-				    (loop (-fx i 1) acc)))
-			     (loop (-fx i 1) (cons (prop-name prop) acc))))))
-		  (else
-		   (loop (-fx i 1) acc)))))))
+	 (let loop ((i (-fx (vector-length props) 1))
+		    (acc '()))
+	    (cond
+	       ((=fx i -1)
+		acc)
+	       ((vector-ref props i)
+		=>
+		(lambda (prop)
+		   (let ((p (vector-ref props i)))
+		      (if (or (not enump) (flags-enumerable? (prop-flags p)))
+			  (loop (-fx i 1) (cons (prop-name prop) acc))
+			  (loop (-fx i 1) acc)))))
+	       (else
+		(loop (-fx i 1) acc))))))
    
    (with-access::JsObject o (cmap)
       (cond
@@ -1210,7 +1206,7 @@
 ;*    to keep the base object (the actual receiver) available.         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject o::JsObject base p %this)
-   (add-cache-miss! 'get p)
+   (when (symbol? p) (add-cache-miss! 'get p))
    (let ((pval (js-get-property-value o base p %this)))
       (if (eq? pval (js-absent))
 	  (js-undefined)
@@ -1557,7 +1553,7 @@
       (with-trace 'prop "update-mapped-object"
 	 (trace-item "name=" name)
 	 (with-access::JsObject obj (cmap elements)
-	    (with-access::JsConstructMap cmap (nextmap methods)
+	    (with-access::JsConstructMap cmap (nextmap methods props)
 	       (let ((el-or-desc (vector-ref elements i)))
 		  (cond
 		     ((isa? el-or-desc JsAccessorDescriptor)
@@ -1566,7 +1562,8 @@
 			 ;; 8.12.5, step 5
 			 (update-from-descriptor! o obj i v el-or-desc)))
 		     ((eq? o obj)
-		      (if (isa? el-or-desc JsPropertyDescriptor)
+		      (cond
+			 ((isa? el-or-desc JsPropertyDescriptor)
 			  ;; 8.12.5, step 3
 			  (with-access::JsDataDescriptor el-or-desc (writable)
 			     (cond
@@ -1579,11 +1576,11 @@
 				    (set! value v)
 				    v))
 				((isa? el-or-desc JsWrapperDescriptor)
+				 ;; hopjs extension
 				 (with-access::JsWrapperDescriptor el-or-desc (%set value)
 				    (let ((nv (%set o v)))
 				       (set! value nv)
 				       v)))
-				;; hopjs extension
 				(else
 				 (when (invalidate-cache-method! v methods i)
 				    (reset-cmap-vtable! cmap)
@@ -1594,18 +1591,20 @@
 				    [assert (i) (<=fx i (vector-length elements))]
 				    (js-pcache-update-direct! pcache i o))
 				 (vector-set! elements i v)
-				 v)))
-			  (begin
-			     (when (invalidate-cache-method! v methods i)
-				(reset-cmap-vtable! cmap)
-				(set! cmap (duplicate::JsConstructMap cmap
-					      (vlen 0)
-					      (vtable '#()))))
-			     (when pcache
-				[assert (i) (<=fx i (vector-length elements))]
-				(js-pcache-update-direct! pcache i o))
-			     (vector-set! elements i v)
-			     v)))
+				 v))))
+			 ((flags-writable? (prop-flags (vector-ref props i)))
+			  (when (invalidate-cache-method! v methods i)
+			     (reset-cmap-vtable! cmap)
+			     (set! cmap (duplicate::JsConstructMap cmap
+					   (vlen 0)
+					   (vtable '#()))))
+			  (when pcache
+			     [assert (i) (<=fx i (vector-length elements))]
+			     (js-pcache-update-direct! pcache i o))
+			  (vector-set! elements i v)
+			  v)
+			 (else
+			  (reject "Read-only property"))))
 		     ((not (js-object-mode-extensible? obj))
 		      ;; 8.12.9, step 3
 		      (reject "sealed object"))
@@ -2023,12 +2022,15 @@
 (define-generic (js-delete! _o p throw %this)
    
    (define (configurable-mapped-property? obj i)
-      (with-access::JsObject obj (elements)
-	 (let ((el (vector-ref elements i)))
-	    (if (isa? el JsPropertyDescriptor)
-		(with-access::JsPropertyDescriptor el (configurable)
-		   configurable)
-		#t))))
+      (with-access::JsObject obj (cmap)
+	 (with-access::JsConstructMap cmap (props)
+	    (flags-configurable? (prop-flags (vector-ref props i))))))
+;*       (with-access::JsObject obj (elements)                         */
+;* 	 (let ((el (vector-ref elements i)))                           */
+;* 	    (if (isa? el JsPropertyDescriptor)                         */
+;* 		(with-access::JsPropertyDescriptor el (configurable)   */
+;* 		   configurable)                                       */
+;* 		#t))))                                                 */
    
    (define (delete-configurable o configurable proc)
       (cond
@@ -2160,13 +2162,19 @@
    
    (define (propagate-data-descriptor! current desc)
       (propagate-property-descriptor! current desc)
-      (with-access::JsValueDescriptor current (value writable)
+      (with-access::JsDataDescriptor current (writable)
 	 (with-access::JsDataDescriptor desc ((dwritable writable))
 	    (when (boolean? dwritable)
 	       (set! writable dwritable)))
 	 (when (isa? desc JsValueDescriptor)
 	    (with-access::JsValueDescriptor desc ((dvalue value))
-	       (set! value dvalue))))
+	       (cond
+		  ((isa? current JsValueDescriptor)
+		   (with-access::JsValueDescriptor current (value)
+		      (set! value dvalue)))
+		  ((isa? current JsWrapperDescriptor)
+		   (with-access::JsWrapperDescriptor current (%set)
+		      (%set o dvalue)))))))
       #t)
    
    (define (propagate-accessor-descriptor! current desc)
