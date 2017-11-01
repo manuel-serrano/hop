@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue Oct 31 21:58:39 2017 (serrano)                */
+;*    Last change :  Wed Nov  1 07:25:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -59,7 +59,6 @@
 
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 
-	   (js-object-alloc-slow ::JsFunction)
 	   (inline js-object-alloc ::JsFunction)
 	   (inline js-instance-alloc ::JsFunction)
 	   
@@ -353,28 +352,13 @@
        (js-raise-type-error %this "new: object is not a function ~s" ctor)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-alloc-slow ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-object-alloc-slow ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %this)
-      (with-access::JsGlobalObject %this (__proto__)
-	 (let* ((oproto (js-get ctor 'prototype %this))
-		(proto (if (isa? oproto JsObject) oproto __proto__)))
-	    (unless constrmap
-	       (set! constrmap (instantiate::JsConstructMap (ctor ctor))))
-	    (js-make-jsobject constrsize constrmap proto)))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-alloc ctor::JsFunction)
    (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (if %prototype
-	  (begin
-	     (unless constrmap
-		(set! constrmap (instantiate::JsConstructMap (ctor ctor))))
-	     (js-make-jsobject constrsize constrmap %prototype))
-	  (js-object-alloc-slow ctor))))
+      (unless constrmap
+	 (set! constrmap (instantiate::JsConstructMap (ctor ctor))))
+      (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instance-alloc ...                                            */

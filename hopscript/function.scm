@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Nov  1 06:46:41 2017 (serrano)                */
+;*    Last change :  Wed Nov  1 07:42:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -46,9 +46,7 @@
 	      (strict 'normal) arity (minlen -1) src rest
 	      (constrsize 3) (maxconstrsize 100) method (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
-	      ::int ::obj ::int ::int ::symbol ::bool ::int)
-
-	   (js-function-prototype-set! ::JsFunction ::obj ::JsGlobalObject)))
+	      ::int ::obj ::int ::int ::symbol ::bool ::int)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -165,7 +163,6 @@
 	 (instantiateJsFunction
 	    (name "builtin")
 	    (src "[Function.__proto__@function.scm]")
-	    (%this %this)
 	    (len -1)
 	    (procedure (lambda l (js-undefined)))
 	    (method (lambda l (js-undefined)))
@@ -322,7 +319,6 @@
 	  js-get-source
 	  (set! js-get-source
 	     (instantiateJsFunction
-		(%this %this)
 		(procedure source)
 		(method source)
 		(arity 0)
@@ -334,6 +330,30 @@
 		(%prototype (with-access::JsGlobalObject %this (__proto__)
 			       __proto__))))))
 
+   (define (prototype-set o::JsFunction v)
+      (with-access::JsFunction o (constrmap %prototype elements cmap)
+	 ;; as the prototype property is not configurable, we are sure
+	 ;; to find it in the object
+	 (let ((desc (if (eq? cmap (js-not-a-cmap))
+			 (find (lambda (d)
+				  (with-access::JsPropertyDescriptor d (name)
+				     (eq? name 'prototype)))
+			    (js-object-properties o))
+			 (vector-ref elements 0))))
+	    (with-access::JsDataDescriptor desc (writable)
+	       (when writable
+		  (cond
+		     ((isa? desc JsValueDescriptor)
+		      (with-access::JsValueDescriptor desc (value)
+			 (set! value v)))
+		     ((isa? desc JsWrapperDescriptor)
+		      (with-access::JsWrapperDescriptor desc (value)
+			 (set! value v))))
+		  (set! constrmap #f)
+		  (with-access::JsGlobalObject %this (__proto__)
+		     (set! %prototype (if (isa? v JsObject) v __proto__)))))))
+      v)
+   
    (with-access::JsGlobalObject %this (js-function js-object
 					 js-function-cmap
 					 js-function-strict-cmap
@@ -354,7 +374,8 @@
 				 (cmap (instantiate::JsConstructMap))
 				 (__proto__ __proto__))))
 			  (else
-			   #f)))
+			   (with-access::JsObject %this (__proto__)
+			      __proto__))))
 		(cmap (if (eq? strict 'normal)
 			  (if (isa? prototype JsObject)
 			      js-function-cmap
@@ -363,7 +384,6 @@
 			      js-function-strict-cmap
 			      js-function-writable-strict-cmap)))
 		(fun (INSTANTIATE-JSFUNCTION
-			(%this %this)
 			(arity (or arity (procedure-arity procedure)))
 			(procedure procedure)
 			(method (or method procedure))
@@ -388,24 +408,27 @@
 	    ;; prototype, the builtin %prototype field and the
 	    ;; prototype property are not aliases. when the property
 	    ;; is not an object, %prototype will the default prototype
-	    ;; while the property will retain the user value, see
-	    ;; the JS-FUNCTION-PROTOTYPE-SET!
-	    ;; for this to work, defineProperty is assumed to unmap
-	    ;; object. when defineProperty is optimized, defining
-	    ;; the prototype attribute must explicitly invalidate
-	    ;; %prototype.
+	    ;; while the property will retain the user value.
 	    (when proto
 	       (js-bind! %this proto 'constructor
 		  :value fun
 		  :configurable #t :enumerable #f :writable #t
 		  :hidden-class #t))
 	    (vector-set! els 0
-	       (instantiate::JsValueDescriptor
-		  (name 'prototype)
-		  (enumerable #f)
-		  (configurable #f)
-		  (writable (not prototype))
-		  (value (or proto (js-undefined)))))
+	       (if (isa? prototype JsObject)
+		   (instantiate::JsValueDescriptor
+		      (name 'prototype)
+		      (enumerable #f)
+		      (configurable #f)
+		      (writable #f)
+		      (value prototype))
+		   (instantiate::JsWrapperDescriptor
+		      (name 'prototype)
+		      (enumerable #f)
+		      (configurable #f)
+		      (writable #t)
+		      (value (if construct proto (js-undefined)))
+		      (%set prototype-set))))
 	    ;; length
 	    (vector-set! els 1
 	       (if (and (>=fx length 0)
@@ -618,32 +641,6 @@
       :enumerable #f :configurable #f
       :hidden-class #t))
 
-;*---------------------------------------------------------------------*/
-;*    js-put! ::JsFunction ...                                         */
-;*---------------------------------------------------------------------*/
-(define-method (js-put! o::JsFunction p v throw %this)
-   (let ((p (js-toname p %this)))
-      (with-access::JsFunction o (cmap)
-	 (if (or (eq? cmap (js-not-a-cmap)) (not (eq? p 'prototype)))
-	     (call-next-method)
-	     (js-function-prototype-set! o v %this)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-function-prototype-set! ...                                   */
-;*---------------------------------------------------------------------*/
-(define (js-function-prototype-set! o::JsFunction v %this::JsGlobalObject)
-   (with-access::JsFunction o (constrmap %prototype elements cmap)
-      (cond
-	 ((eq? cmap (js-not-a-cmap))
-	  (js-put! o 'prototype v #f %this))
-	 ((not (eq? v %prototype))
-	  (with-access::JsValueDescriptor (vector-ref elements 0) (writable value)
-	     (when writable
-		(set! value v)
-		(set! constrmap #f)
-		(with-access::JsGlobalObject %this (__proto__)
-		   (set! %prototype (if (isa? v JsObject) v __proto__)))))))))
-	  
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/

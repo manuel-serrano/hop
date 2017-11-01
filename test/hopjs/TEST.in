@@ -71,7 +71,7 @@ i=0
 
 mkdir -p $TMP
 
-echo "Logs in $TMP/TEST-HOPJS.out"
+echo "Logs in $TMP/TEST-HOPJS-ALL.out"
 echo ""
 
 run() {

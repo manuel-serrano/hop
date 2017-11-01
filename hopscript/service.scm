@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Wed Nov  1 06:47:07 2017 (serrano)                */
+;*    Last change :  Wed Nov  1 07:25:10 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -151,7 +151,6 @@
 			 (with-access::hop-service svc (path)
 			    (js-make-hopframe %this this path args)))))
 	     (nobj (duplicate::JsService obj
-		      (%this %this)
 		      (procedure proc))))
 	 (js-object-properties-set! nobj '())
 	 (js-object-mode-set! nobj (js-object-mode obj))
@@ -245,7 +244,6 @@
 	 ;; service prototype
 	 (set! js-service-prototype
 	    (instantiateJsService
-	       (%this %this)
 	       (__proto__ js-function-prototype)
 	       (worker (class-nil WorkerHopThread))
 	       (name "service")
@@ -997,7 +995,6 @@
    
    (with-access::JsGlobalObject %this (js-service-prototype)
       (instantiateJsService
-	 (%this %this)
 	 (procedure proc)
 	 (method proc)
 	 (len arity)

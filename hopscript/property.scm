@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct 31 17:13:13 2017 (serrano)                */
+;*    Last change :  Wed Nov  1 07:27:32 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -861,9 +861,9 @@
 		    (js-put! obj 'set set #f %this)))
 		((isa? desc JsWrapperDescriptor)
 		 ;; hop.js extension
-		 (with-access::JsWrapperDescriptor desc (%get %set)
-		    (js-put! obj 'value (%get owner) #f %this)
-		    (js-put! obj 'writable (procedure? %set) #f %this))))
+		 (with-access::JsWrapperDescriptor desc (value writable)
+		    (js-put! obj 'value value #f %this)
+		    (js-put! obj 'writable writable #f %this))))
 	     (with-access::JsPropertyDescriptor desc (enumerable configurable)
 		;; 5
 		(js-put! obj 'enumerable enumerable #f %this)
@@ -942,8 +942,8 @@
        (with-access::JsAccessorDescriptor desc (%get)
 	  (%get obj)))
       ((isa? desc JsWrapperDescriptor)
-       (with-access::JsWrapperDescriptor desc (%get)
-	  (%get obj)))
+       (with-access::JsWrapperDescriptor desc (value)
+	  value))
       (else
        (js-undefined))))
 
@@ -962,8 +962,10 @@
        (with-access::JsAccessorDescriptor desc (%set)
 	  (%set obj v)))
       ((isa? desc JsWrapperDescriptor)
-       (with-access::JsWrapperDescriptor desc (%set)
-	  (%set obj v)))
+       (with-access::JsWrapperDescriptor desc (%set value)
+	  (let ((v (%set obj v)))
+	     (set! value v)
+	     v)))
       (else
        (js-undefined))))
 
@@ -1208,6 +1210,7 @@
 ;*    to keep the base object (the actual receiver) available.         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject o::JsObject base p %this)
+   (add-cache-miss! 'get p)
    (let ((pval (js-get-property-value o base p %this)))
       (if (eq? pval (js-absent))
 	  (js-undefined)
@@ -1576,9 +1579,10 @@
 				    (set! value v)
 				    v))
 				((isa? el-or-desc JsWrapperDescriptor)
-				 (with-access::JsWrapperDescriptor el-or-desc (%set)
-				    (%set o v)
-				    v))
+				 (with-access::JsWrapperDescriptor el-or-desc (%set value)
+				    (let ((nv (%set o v)))
+				       (set! value nv)
+				       v)))
 				;; hopjs extension
 				(else
 				 (when (invalidate-cache-method! v methods i)
@@ -1712,14 +1716,12 @@
    
    (add-cache-miss! 'put name)
    
-   (if (and (eq? name 'prototype) (isa? o JsFunction))
-       (js-function-prototype-set! o v %this)
-       (let loop ((obj o))
-	  (jsobject-find obj name
-	     update-mapped-object!
-	     update-properties-object!
-	     extend-object!
-	     loop))))
+   (let loop ((obj o))
+      (jsobject-find obj name
+	 update-mapped-object!
+	 update-properties-object!
+	 extend-object!
+	 loop)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/debug! ...                                                */

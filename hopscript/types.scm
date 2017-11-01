@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Oct 31 21:57:40 2017 (serrano)                */
+;*    Last change :  Wed Nov  1 07:23:10 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -73,7 +73,8 @@
 	      get set
 	      %get::procedure %set::procedure)
 	   (final-class JsWrapperDescriptor::JsDataDescriptor
-	      %get::procedure %set)
+	      (value (default (js-undefined)))
+	      %set::procedure)
 	   
 	   (final-class JsPropertyCache
 	      (cmap::obj (default #f))
@@ -216,9 +217,8 @@
 	   
 	   (class JsFunction::JsObject
 	      (name::bstring read-only)
-	      (%this::JsGlobalObject read-only)
 	      (constructor::obj read-only (default #f))
-	      %prototype
+	      %prototype::JsObject
 	      alloc::procedure
 	      (construct::procedure read-only)
 	      (constrsize::long (default 3))
