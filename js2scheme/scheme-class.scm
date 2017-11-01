@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Wed Oct 25 05:51:24 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 09:09:14 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -145,7 +145,7 @@
 			       ,(symbol->string! cname)
 			       :src ,(when src (class-src loc this conf))
 			       :strict ',mode
-			       :alloc (lambda (o) (js-instance-alloc o %this))
+			       :alloc js-instance-alloc
 			       :construct ,ctor
 			       :prototype  ,proto
 			       :__proto__ ,(if (null? super)

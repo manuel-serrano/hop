@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Oct 26 05:53:32 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 21:58:39 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -58,10 +58,10 @@
 	   (js-new-sans-construct ::JsGlobalObject f)
 
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
-	   (inline js-new-fast::JsObject ::JsGlobalObject ::JsFunction __proto__)
 
-	   (js-object-alloc ::JsFunction ::JsGlobalObject)
-	   (js-instance-alloc ::JsFunction ::JsGlobalObject)
+	   (js-object-alloc-slow ::JsFunction)
+	   (inline js-object-alloc ::JsFunction)
+	   (inline js-instance-alloc ::JsFunction)
 	   
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
 	   (js-apply-service% ::procedure obj args::pair-nil ::int)
@@ -353,56 +353,34 @@
        (js-raise-type-error %this "new: object is not a function ~s" ctor)))
 
 ;*---------------------------------------------------------------------*/
-;*    get-prototypeof ...                                              */
+;*    js-object-alloc-slow ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (get-prototypeof proto %this)
-   (if (isa? proto JsObject)
-       proto
-       (with-access::JsGlobalObject %this (__proto__)
-	  __proto__)))
-
-;*---------------------------------------------------------------------*/
-;*    js-new-fast ...                                                  */
-;*---------------------------------------------------------------------*/
-(define-inline (js-new-fast %this ctor::JsFunction __proto__)
-   (with-access::JsFunction ctor (constrsize constrmap prototype)
-      ;; manually UPDATE-CTOR-CMAP! inline to avoid loading twice ctor fields
-      (cond
-	 ((and (not (eq? __proto__ prototype)) (isa? __proto__ JsObject))
-	  (set! prototype __proto__)
-	  (set! constrmap (instantiate::JsConstructMap (ctor ctor))))
-	 ((not constrmap)
-	  (set! constrmap (instantiate::JsConstructMap (ctor ctor)))))
-      (js-make-jsobject constrsize constrmap prototype)))
-
-;*---------------------------------------------------------------------*/
-;*    update-ctor-cmap! ...                                            */
-;*---------------------------------------------------------------------*/
-(define (update-ctor-cmap! ctor::JsFunction __proto__)
-   (with-access::JsFunction ctor (constrsize constrmap prototype name)
-      (cond
-	 ((and (not (eq? __proto__ prototype)) (isa? __proto__ JsObject))
-	  (set! prototype __proto__)
-	  (set! constrmap (instantiate::JsConstructMap (ctor ctor))))
-	 ((not constrmap)
-	  (set! constrmap (instantiate::JsConstructMap (ctor ctor)))))))
+(define (js-object-alloc-slow ctor::JsFunction)
+   (with-access::JsFunction ctor (constrsize constrmap %this)
+      (with-access::JsGlobalObject %this (__proto__)
+	 (let* ((oproto (js-get ctor 'prototype %this))
+		(proto (if (isa? oproto JsObject) oproto __proto__)))
+	    (unless constrmap
+	       (set! constrmap (instantiate::JsConstructMap (ctor ctor))))
+	    (js-make-jsobject constrsize constrmap proto)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-alloc ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-object-alloc ctor::JsFunction %this::JsGlobalObject)
-   (let ((__proto__ (get-prototypeof (js-get ctor 'prototype %this) %this)))
-      (update-ctor-cmap! ctor __proto__)
-      (with-access::JsFunction ctor (constrsize constrmap)
-	 (unless constrmap
-	    (set! constrmap (instantiate::JsConstructMap (ctor ctor))))
-	 (js-make-jsobject constrsize constrmap __proto__))))
+(define-inline (js-object-alloc ctor::JsFunction)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype)
+      (if %prototype
+	  (begin
+	     (unless constrmap
+		(set! constrmap (instantiate::JsConstructMap (ctor ctor))))
+	     (js-make-jsobject constrsize constrmap %prototype))
+	  (js-object-alloc-slow ctor))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-instance-alloc ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-instance-alloc ctor::JsFunction %this::JsGlobalObject)
-   (let ((obj (js-object-alloc ctor %this)))
+(define-inline (js-instance-alloc ctor::JsFunction)
+   (let ((obj (js-object-alloc ctor)))
       (js-object-mode-instance-set! obj #t)
       obj))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Oct 30 07:05:12 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 09:05:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -3195,7 +3195,7 @@
 		(proto `(js-object-get-name/cache ,fun 'prototype
 			   ,(js-pcache cache) %this))
 		(obj (gensym '%obj)))
-	    `(let ((,obj (js-new-fast %this ,fun ,proto)))
+	    `(let ((,obj (js-object-alloc ,fun)))
 		,(if (constructor-no-return? decl)
 		     `(begin
 			 (,fid ,obj ,@args)

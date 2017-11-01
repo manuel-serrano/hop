@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Oct 31 06:50:19 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 21:57:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -72,7 +72,7 @@
 	   (final-class JsAccessorDescriptor::JsPropertyDescriptor
 	      get set
 	      %get::procedure %set::procedure)
-	   (final-class JsWrapperDescriptor::JsPropertyDescriptor
+	   (final-class JsWrapperDescriptor::JsDataDescriptor
 	      %get::procedure %set)
 	   
 	   (final-class JsPropertyCache
@@ -142,6 +142,8 @@
 	      (js-function-prototype::JsFunction (default (class-nil JsFunction)))
 	      (js-function-cmap::JsConstructMap read-only)
 	      (js-function-strict-cmap::JsConstructMap read-only)
+	      (js-function-writable-cmap::JsConstructMap read-only)
+	      (js-function-writable-strict-cmap::JsConstructMap read-only)
 	      (js-math::JsMath (default (class-nil JsMath)))
 	      (js-regexp::JsFunction (default (class-nil JsFunction)))
 	      (js-regexp-prototype::JsRegExp (default (class-nil JsRegExp)))
@@ -214,8 +216,9 @@
 	   
 	   (class JsFunction::JsObject
 	      (name::bstring read-only)
+	      (%this::JsGlobalObject read-only)
 	      (constructor::obj read-only (default #f))
-	      prototype
+	      %prototype
 	      alloc::procedure
 	      (construct::procedure read-only)
 	      (constrsize::long (default 3))

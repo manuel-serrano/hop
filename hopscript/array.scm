@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Oct 31 06:27:04 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 20:57:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2500,7 +2500,11 @@
 ;*---------------------------------------------------------------------*/
 (define (string->uint32 n)
    (let ((n (string->number n)))
-      (when n (fixnum->uint32 n))))
+      (cond
+	 ((fixnum? n) (fixnum->uint32 n))
+	 ((bignum? n) (elong->uint32 (bignum->elong n)))
+	 ((elong? n) (elong->uint32 n))
+	 ((llong? n) (llong->uint32 n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expandable-array ...                                             */

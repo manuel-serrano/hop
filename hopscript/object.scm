@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Oct 31 06:18:24 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 09:37:00 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -229,6 +229,14 @@
    %this)
 
 ;*---------------------------------------------------------------------*/
+;*    make-cmap ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (make-cmap props)
+   (instantiate::JsConstructMap
+      (methods (make-vector (vector-length props)))
+      (props props)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-new-global-object ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-new-global-object)
@@ -240,18 +248,11 @@
 			 (cmap (instantiate::JsConstructMap))))
 	  (%this (instantiateJsGlobalObject
 		    (__proto__ %prototype)
-		    (cmap (instantiate::JsConstructMap))
-		    (js-function-cmap (instantiate::JsConstructMap
-					 (methods (make-vector
-						     (vector-length
-							js-function-cmap-props)))
-					 (props js-function-cmap-props)))
-		    (js-function-strict-cmap (instantiate::JsConstructMap
-						(methods (make-vector
-							    (vector-length
-							       js-function-cmap-strict-props)))
-						(props js-function-cmap-strict-props))))))
-		    
+		    (cmap (make-cmap '#()))
+		    (js-function-cmap (make-cmap js-function-cmap-props))
+		    (js-function-strict-cmap (make-cmap js-function-cmap-strict-props))
+		    (js-function-writable-cmap (make-cmap js-function-cmap-writable-props))
+		    (js-function-writable-strict-cmap (make-cmap js-function-cmap-writable-strict-props)))))
       ;; init the builtin function class
       (js-init-function! %this)
       ;; the object constructor

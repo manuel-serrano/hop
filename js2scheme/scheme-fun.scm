@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Oct 26 05:54:08 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 09:04:36 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -54,8 +54,7 @@
 		       :arity ,arity
 		       :minlen ,minlen
 		       :strict ',mode
-		       :alloc (lambda (o)
-				 (js-object-alloc o %this))
+		       :alloc js-object-alloc
 		       :prototype ,(j2s-fun-prototype val)
 		       :__proto__ ,(j2s-fun-__proto__ val)
 		       :construct ,fastid
@@ -68,7 +67,7 @@
 		       :arity ,arity
 		       :minlen ,minlen
 		       :strict ',mode
-		       :alloc (lambda (o) (js-object-alloc o %this))
+		       :alloc js-object-alloc
 		       :construct ,fastid
 		       :constrsize ,constrsize))
 		  ((eq? vararg 'arguments)
@@ -332,7 +331,7 @@
 		    :__proto__ ,__proto__
 		    :strict ',mode
 		    :minlen ,minlen
-		    :alloc (lambda (o) (js-object-alloc o %this))
+		    :alloc js-object-alloc
 		    :construct ,ctor
 		    :constrsize ,constrsize
 		    :method ,(when method

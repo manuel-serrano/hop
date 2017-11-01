@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Oct 31 06:51:32 2017 (serrano)                */
+;*    Last change :  Tue Oct 31 17:13:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1575,6 +1575,11 @@
 				 (with-access::JsValueDescriptor el-or-desc (value)
 				    (set! value v)
 				    v))
+				((isa? el-or-desc JsWrapperDescriptor)
+				 (with-access::JsWrapperDescriptor el-or-desc (%set)
+				    (%set o v)
+				    v))
+				;; hopjs extension
 				(else
 				 (when (invalidate-cache-method! v methods i)
 				    (reset-cmap-vtable! cmap)
@@ -1706,13 +1711,15 @@
 		(extend-properties-object!))))))
    
    (add-cache-miss! 'put name)
-
-   (let loop ((obj o))
-      (jsobject-find obj name
-	 update-mapped-object!
-	 update-properties-object!
-	 extend-object!
-	 loop)))
+   
+   (if (and (eq? name 'prototype) (isa? o JsFunction))
+       (js-function-prototype-set! o v %this)
+       (let loop ((obj o))
+	  (jsobject-find obj name
+	     update-mapped-object!
+	     update-properties-object!
+	     extend-object!
+	     loop))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put/debug! ...                                                */

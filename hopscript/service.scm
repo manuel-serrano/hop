@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Fri Oct 27 16:35:48 2017 (serrano)                */
+;*    Last change :  Wed Nov  1 06:47:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -151,6 +151,7 @@
 			 (with-access::hop-service svc (path)
 			    (js-make-hopframe %this this path args)))))
 	     (nobj (duplicate::JsService obj
+		      (%this %this)
 		      (procedure proc))))
 	 (js-object-properties-set! nobj '())
 	 (js-object-mode-set! nobj (js-object-mode obj))
@@ -244,6 +245,7 @@
 	 ;; service prototype
 	 (set! js-service-prototype
 	    (instantiateJsService
+	       (%this %this)
 	       (__proto__ js-function-prototype)
 	       (worker (class-nil WorkerHopThread))
 	       (name "service")
@@ -251,8 +253,8 @@
 	       (construct (lambda (constructor args)
 			     (js-raise-type-error %this "not a constructor ~s"
 				js-function-prototype)))
-	       (prototype (with-access::JsGlobalObject %this (__proto__)
-			     __proto__))
+	       (%prototype (with-access::JsGlobalObject %this (__proto__)
+			      __proto__))
 	       (len -1)
 	       (procedure list)
 	       (method list)
@@ -995,12 +997,13 @@
    
    (with-access::JsGlobalObject %this (js-service-prototype)
       (instantiateJsService
+	 (%this %this)
 	 (procedure proc)
 	 (method proc)
 	 (len arity)
 	 (arity arity)
 	 (worker worker)
-	 (prototype (with-access::JsGlobalObject %this (__proto__)
+	 (%prototype (with-access::JsGlobalObject %this (__proto__)
 		       __proto__))
 	 (__proto__ js-service-prototype)
 	 (name (if (symbol? name) (symbol->string! name) ""))
