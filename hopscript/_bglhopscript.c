@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Wed Nov  1 13:54:33 2017 (serrano)                */
+/*    Last change :  Thu Nov  2 07:31:13 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -126,7 +126,7 @@ bgl_make_pcache( obj_t obj, int len, obj_t template ) {
 obj_t
 bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode ) {
    long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ( (constrsize-1) * OBJ_SIZE );
-   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)GC_MALLOC( bsize );
+   BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC( bsize );
    obj_t vector;
    int i;
 
@@ -191,7 +191,7 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 obj_t
 bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, char mode ) {
    long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE );
-   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)GC_MALLOC( bsize );
+   BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC( bsize );
    obj_t vector;
    int i;
 

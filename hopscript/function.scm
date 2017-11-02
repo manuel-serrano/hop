@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Nov  1 14:54:53 2017 (serrano)                */
+;*    Last change :  Thu Nov  2 07:54:31 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -99,8 +99,6 @@
 
 (define strict-arguments-property #f)
 (define strict-caller-property #f)
-
-;* (define length-properties '#())                                     */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function-cmap-props ...                                       */
@@ -216,17 +214,6 @@
 	       (enumerable #f)
 	       (configurable #f))))
       
-      ;; length properties
-;*       (set! length-properties                                       */
-;* 	 (list->vector                                                 */
-;* 	    (map! (lambda (l)                                          */
-;* 		     (instantiate::JsValueDescriptor                   */
-;* 			(name 'length)                                 */
-;* 			(enumerable #f)                                */
-;* 			(configurable #f)                              */
-;* 			(writable #f)                                  */
-;* 			(value l)))                                    */
-;* 	       (iota 0 8))))                                           */
       ;; prototype properties
       (init-builtin-function-prototype! %this js-function js-function-prototype)
       ;; bind Function in the global object
@@ -418,9 +405,9 @@
 					(with-access::JsObject %this (__proto__)
 					   __proto__)))
 			(constructor constructor))))
-	    ;; prototype, the builtin %prototype field and the
-	    ;; prototype property are not aliases. when the property
-	    ;; is not an object, %prototype will be the default prototype
+	    ;; the builtin %prototype field and the prototype property
+	    ;; are not aliases. when the property is not an object,
+	    ;; %prototype will be the default prototype
 	    ;; while the property will retain the user value.
 	    (when proto
 	       (js-bind! %this proto 'constructor

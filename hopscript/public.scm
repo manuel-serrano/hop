@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Nov  1 07:25:17 2017 (serrano)                */
+;*    Last change :  Thu Nov  2 08:13:32 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -827,19 +827,24 @@
 ;*---------------------------------------------------------------------*/
 (define (js-instanceof? %this v f)
    (if (not (isa? f JsFunction))
-       (js-raise-type-error %this
-	  "instanceof: not a function ~s" f)
+       (js-raise-type-error %this "instanceof: not a function ~s" f)
        (when (isa? v JsObject)
-	  (let ((o (js-get f 'prototype %this)))
-	     (if (not (isa? o JsObject))
-		 (js-raise-type-error %this
-		    "instanceof: no prototype ~s" v)
-		 (let loop ((v v))
-		    (with-access::JsObject v ((v __proto__))
-		       (cond
-			  ((eq? o v) #t)
-			  ((eq? v (js-null)) #f)
-			  (else (loop v))))))))))
+	  (with-access::JsFunction f (cmap elements)
+	     ;; can't use %prototype here because instanceof require
+	     ;; to check the user prototype value
+	     (let ((o (if (eq? cmap (js-not-a-cmap))
+			  (js-get f 'prototype %this)
+			  (let ((d (vector-ref elements 0)))
+			     (with-access::JsWrapperDescriptor d (value)
+				value)))))
+		(if (not (isa? o JsObject))
+		    (js-raise-type-error %this "instanceof: no prototype ~s" v)
+		    (let loop ((v v))
+		       (with-access::JsObject v ((v __proto__))
+			  (cond
+			     ((eq? o v) #t)
+			     ((eq? v (js-null)) #f)
+			     (else (loop v)))))))))))
 
 (define (js-instanceof?/debug %this loc v f)
    (if (not (isa? f JsFunction))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Oct 31 09:05:27 2017 (serrano)                */
+;*    Last change :  Thu Nov  2 07:34:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -3359,28 +3359,26 @@
 		(let ((,cmap cmap))
 		   (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))
 		       ;; cache hit
-		       (with-access::JsConstructMap ,cmap (names)
-			  (let ((,i (vector-length names))
+		       (with-access::JsConstructMap ,cmap (props)
+			  (let ((,i (vector-length props))
 				(,elements elements))
 			     ,@(map (lambda (init offset)
 				       `(vector-set! ,elements (+fx ,i ,offset)
 					   ,(j2s-scheme (init-expr init)
 					       mode return conf hint totype)))
-				  
-				  
 				  nodes (iota (length nodes)))
 			     (with-access::JsObject ,%ref ((omap cmap))
 				(set! omap ,cmap1))))
 		       ;; cache miss
-		       (with-access::JsConstructMap ,cmap (names)
-			  (let ((len0 (vector-length names)))
+		       (with-access::JsConstructMap ,cmap (props)
+			  (let ((len0 (vector-length props)))
 			     ,@(map (lambda (n)
 				       (j2s-scheme n
 					  mode return conf hint totype))
 				  nodes)
-			     (with-access::JsConstructMap cmap (names)
+			     (with-access::JsConstructMap cmap (props)
 				(when (=fx (+fx len0 ,(length nodes))
-					 (vector-length names))
+					 (vector-length props))
 				   (set! ,cmap0 ,cmap)
 				   (set! ,cmap1 cmap))))))))))))
    

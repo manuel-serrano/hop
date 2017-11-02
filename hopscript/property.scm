@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Nov  1 14:47:47 2017 (serrano)                */
+;*    Last change :  Thu Nov  2 08:12:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1212,6 +1212,8 @@
 	  (js-undefined)
 	  pval)))
 
+(define cnt 0)
+
 ;*---------------------------------------------------------------------*/
 ;*    js-get/debug ...                                                 */
 ;*    -------------------------------------------------------------    */
@@ -2025,12 +2027,6 @@
       (with-access::JsObject obj (cmap)
 	 (with-access::JsConstructMap cmap (props)
 	    (flags-configurable? (prop-flags (vector-ref props i))))))
-;*       (with-access::JsObject obj (elements)                         */
-;* 	 (let ((el (vector-ref elements i)))                           */
-;* 	    (if (isa? el JsPropertyDescriptor)                         */
-;* 		(with-access::JsPropertyDescriptor el (configurable)   */
-;* 		   configurable)                                       */
-;* 		#t))))                                                 */
    
    (define (delete-configurable o configurable proc)
       (cond
