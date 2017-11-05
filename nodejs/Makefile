@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Sep 12 13:39:44 2017 (serrano)                */
+#*    Last change :  Sun Nov  5 19:20:10 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -57,7 +57,7 @@ BGL_ECLASSES = $(CLASS_EDIR)/make_lib.class
 
 SOURCES = $(_OBJECTS:%=%.scm) $(_JS_OBJECTS:%=%.js)
 
-INCLUDES = nodejs_debug.sch nodejs_async.sch uv.sch _crypto.sch
+INCLUDES = nodejs_debug.sch nodejs_async.sch uv.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */
@@ -123,11 +123,12 @@ getsources:
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */
 #*---------------------------------------------------------------------*/
-_crypto.scm: _crypto.sch
+o/_crypto.o: _crypto.sch
 
 _crypto.sch: $(BUILDETCDIR)/node_crypto_groups.h \
   $(BUILDETCDIR)/node_crypto_groups.c
-	$(CC) $(BUILDETCDIR)/node_crypto_groups.c && ./a.out > $@
+	$(HOSTCC) $(BUILDETCDIR)/node_crypto_groups.c && ./a.out > $@ \
+          || (rm -f _crypto.sch; exit 1) || exit 1
 	$(RM) a.out
 
 o/require.o: ../share/hop-boot.js
