@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Nov  5 19:24:10 2017 (serrano)                */
+#*    Last change :  Sun Nov  5 19:40:38 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the NODEJS library.                        */
 #*=====================================================================*/
@@ -107,7 +107,7 @@ ude:
 	@ $(MAKE) -f Makefile .afile .etags .jfile
 	@ $(MAKE) dep
 
-.afile: $(SOURCES)
+.afile: $(SOURCES) _crypto.sch
 	@ $(AFILE) -suffix hop -o .afile $(filter %.scm, $(SOURCES))
 
 .jfile: $(SOURCES)
