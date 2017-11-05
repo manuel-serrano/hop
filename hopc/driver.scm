@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Jun  9 11:43:45 2017 (serrano)                */
+;*    Last change :  Fri Oct 20 05:55:42 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -244,7 +244,8 @@
             (process-exit-status proc)))
 
       (define (compile-pipe in opts comp file)
-         (let* ((baseopts (cons "-fread-internal-src" (append (srfi-opts) opts)))
+         (let* ((baseopts (cons "-fread-internal-src"
+			     (append (srfi-opts) opts)))
                 (opts (if (string? file)
                           (cons* "-fread-internal-src-file-name" file baseopts)
                           baseopts))
@@ -272,10 +273,12 @@
       
       (define (compile-hop in opts file temp)
 	 (compile in
-	    (append `("-library" "hop"
+	    (append `("--force-cc-o"
+			"-library" "hop"
 			"-library" "hopscheme"
 			"-library" "hopwidget"
-			"-rpath" ,(make-file-path (hop-lib-directory) "hop" (hop-version)))
+			"-rpath" ,(make-file-path (hop-lib-directory)
+				     "hop" (hop-version)))
 	       opts)
 	    (lambda (out)
 	       (let loop ()
@@ -296,8 +299,9 @@
 			 (open-mmap fname :read #t :write #f))))
 	    (compile in
 	       (append (hopc-js-libraries)
-		  `("-rpath" ,(make-file-path (hop-lib-directory)
-				 "hop" (hop-version)))
+		  `("--force-cc-o"
+		      "-rpath" ,(make-file-path (hop-lib-directory)
+				   "hop" (hop-version)))
 		  opts)
 	       (lambda (out)
 		  ;; compile
