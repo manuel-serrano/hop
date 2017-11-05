@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Tue Sep  15 11:43:00 2015                         */
-/*    Last change :  Sat Apr  8 12:37:42 2017 (serrano)                */
+/*    Last change :  Fri Oct 20 13:18:42 2017 (serrano)                */
 /*    Copyright   :  2015-17 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    A generic launcher for stress test workers                       */
@@ -36,8 +36,19 @@ function runTest( args ) {
    // Set a timeout in case something goes wrong during test
    // configuration. Will be reset afterwards
    var configurationTimeout = setTimeout( function() {
-      console.log( 'cannot configure test: timeout', timeout );
-      onFailure();
+      if( hop.compilerDriver.pending > 0 ) {
+	 hop.compilerDriver.addEventListener( "all", function( e ) {
+	    if( checkCompletion() ) {
+	       process.exit( 0 );
+	    } else {
+	       console.log( 'cannot configure test: timeout', timeout );
+	       onFailure();
+	    }
+	 } );
+      } else {
+	 console.log( 'cannot configure test: timeout', timeout );
+	 onFailure();
+      }
    }, timeout );
    
    function checkReadiness() {
@@ -62,7 +73,10 @@ function runTest( args ) {
       if ( doneWithClients == numClients ) {
 	 console.log( 'All client tests passed. Checking server post flight assertions' );
 	 onSuccess();
-      };
+	 return true;
+      } else {
+	 return false;
+      }
    }
    
    // Create workers

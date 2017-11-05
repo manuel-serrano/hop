@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Oct  6 13:46:26 2017 (serrano)                */
+#*    Last change :  Sun Nov  5 19:20:35 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -21,6 +21,7 @@ jfile=bgljfile
 btags=bgltags
 bdepend=bgldepend
 cc=
+hostcc=cc
 flashcc=/usr/bin/mtasc
 fflags="-main -version 9 -cp /usr/share/mtasc/std -cp /usr/share/mtasc/std8 -swf"
 backend=native
@@ -250,6 +251,9 @@ while : ; do
     --cc=*)
       cc="`echo $1 | sed 's/^[^=]*=//'`";;
 
+    --hostcc=*)
+      hostcc="`echo $1 | sed 's/^[^=]*=//'`";;
+
     --bcflags=*)
       bcflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
@@ -433,6 +437,7 @@ while : ; do
       echo "   --gzip...................... the GNU zipper ($gzip)" >&2;
       echo "   --install................... the installer ($install)" >&2;
       echo "   --cc=cc..................... the C compiler" >&2;
+      echo "   --hostcc=cc................. default host C compiler" >&2;
       echo "   --bcflags=args.............. the Bigloo C compilation options" >&2;
       echo "   --bldflags=args............. the Bigloo C link options" >&2;
       echo "   --extra-bcflags=args........ additional Bigloo compilation options" >&2;
@@ -638,6 +643,23 @@ if [ ! -f $bigloolibdir/multimedia.heap ]; then
   echo "" >&2
   bglfail=true;
 fi
+
+#*---------------------------------------------------------------------*/
+#*    Check hostcc                                                     */
+#*---------------------------------------------------------------------*/
+cat > $tmp/hostcc-test.c <<EOF
+int main( int argc, char *argv[] ) {
+  return 0;
+}
+EOF
+
+$hostcc $tmp/hostcc-test.c -o $tmp/hostcc.out \
+  || (echo "*** ERROR: incorrect hostcc ($hostcc)"; exit 1) || exit 1
+
+$tmp/hostcc.out 1 \
+  || (echo "*** ERROR: incorrect hostcc compilation"; exit 1) || exit 1
+
+rm -f $tmp/hostcc.out $tmp/hostcc-test.c
 
 #*---------------------------------------------------------------------*/
 #*    SSL                                                              */
@@ -1090,6 +1112,7 @@ cat $mkmf.in \
           -e "s|@BTAGS@|$btags|" \
           -e "s|@BDEPEND@|$bdepend|" \
           -e "s|@CC@|$cc|" \
+          -e "s|@HOSTCC@|$hostcc|" \
           -e "s|@FLASHCC@|$flashcc|" \
           -e "s|@UNZIP@|$unzip|" \
           -e "s|@GZIP@|$gzip|" \

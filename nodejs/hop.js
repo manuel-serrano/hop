@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Mar 22 15:03:30 2014                          */
-/*    Last change :  Sun Jul  9 19:13:54 2017 (serrano)                */
+/*    Last change :  Fri Oct 20 08:16:15 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hopscript/Hop binding.                                           */
@@ -188,6 +188,11 @@ eventListenerMonitor.prototype.removeEventListener = function( evname, ltn ) {
 }
 
 exports.eventListenerMonitor = eventListenerMonitor;
+
+/*---------------------------------------------------------------------*/
+/*    compilerDriver                                                   */
+/*---------------------------------------------------------------------*/
+exports.compilerDriver = hop.compilerDriver;
 
 /*---------------------------------------------------------------------*/
 /*    Hop sub modules                                                  */

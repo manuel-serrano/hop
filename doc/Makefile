@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Jul 28 15:59:25 2017 (serrano)                */
+#*    Last change :  Sun Nov  5 19:04:28 2017 (serrano)                */
 #*    Copyright   :  2006-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -62,7 +62,7 @@ LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
-DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html
+DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html 20-cross.html
 
 ALL_TARGETS=index.html download.html nodejs.html \
   $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
