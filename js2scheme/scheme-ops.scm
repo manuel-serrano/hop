@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Oct 29 10:15:30 2017 (serrano)                */
+;*    Last change :  Fri Nov  3 17:52:58 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -599,6 +599,7 @@
 			((string=? val "string") 'js-jsstring?)
 			((string=? val "undefined") 'js-undefined?)
 			((string=? val "boolean") 'boolean?)
+			((string=? val "pair") 'pair?)
 			((string=? val "object") #f)
 			(else (tprint "TYPEOF PAS OPT " val) #f))))))))
 

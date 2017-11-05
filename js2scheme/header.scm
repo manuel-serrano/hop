@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/header.scm              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/header.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Tue May 16 14:50:13 2017 (serrano)                */
+;*    Last change :  Fri Nov  3 18:54:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -68,8 +68,11 @@
       (js-def-extern 'global #t #t '%this 'global)
       (js-def-extern 'GLOBAL #t #f '%this 'global)
       (js-def-extern 'module #t #t 
-	 '(begin
-	   (js-put! %scope 'module %module #f %this)
+	 `(begin
+	   ;;(js-put! %scope 'module %module #f %this)
+	   (js-bind! %this %scope 'module
+	      :value %module
+	      :writable #t :enumerable #t :configurable #t :hidden-class #f)
 	   %module))
       (js-def-extern 'exports #t #t '(js-get %module 'exports %scope))
       (js-def-extern 'require #t #f `(nodejs-require %worker %this %module ',(config-get conf :language 'hopscript)))

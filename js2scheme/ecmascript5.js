@@ -15,7 +15,7 @@ const hop = ((function() {
 	    if( n.done ) {
 	       return kont( n.value, false );
 	    } else {
-	       return gen.Yield( n.value, false, loop );
+	       return gen.Yield( n.value, loop );
 	    }
 	 }
 	 

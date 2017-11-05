@@ -454,12 +454,6 @@
 (define-walk-method (typing this::J2SExpr env::pair-nil fun fix::cell)
    (call-next-method))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    typing ::J2SThis ...                                             *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (typing this::J2SThis env::pair-nil fun fix::cell) */
-;*    (expr-type-set! this env fix 'any))                              */
-;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SNull ...                                             */
 ;*---------------------------------------------------------------------*/
@@ -588,23 +582,10 @@
 ;*    typing ::J2SRef ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SRef env::pair-nil fun fix::cell)
-   
-   (define (escape-fun val::J2SFun)
-      (with-access::J2SFun val (params)
-	 (for-each (lambda (p::J2SDecl)
-		      (with-access::J2SDecl p (itype vtype id)
-			 (unless (eq? vtype 'any)
-			    (set! vtype 'any)
-			    (unfix! fix "escape"))
-			 (unless (eq? itype 'any)
-			    (set! itype 'any)
-			    (unfix! fix "escape"))))
-	    params)))
-      
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (ronly id key)
 	 (when (isa? decl J2SDeclFun)
-	    (with-access::J2SDeclFun decl (val) (escape-fun val)))
+	    (with-access::J2SDeclFun decl (val) (escape-fun val fix)))
 	 (let ((etyp (env-lookup env decl)))
 	    (when (eq? etyp 'unknown)
 	       (with-access::J2SDecl decl (vtype)
@@ -661,7 +642,7 @@
 		  (set! utype 'object)
 		  (set! itype 'object)))))
       (multiple-value-bind (tyf env _)
-	 (typing val env fun fix)
+	 (typing-fun val (typing-fun-decl val env) fun fix)
 	 (return 'void (extend-env env this tyf) '()))))
 
 ;*---------------------------------------------------------------------*/
@@ -809,22 +790,43 @@
 	 (expr-type-set! this env fix 'function))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SFun ...                                              */
+;*    typing-fun-decl fun ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SFun env::pair-nil fun fix::cell)
-   (with-access::J2SFun this (body params rtype decl)
+(define (typing-fun-decl this::J2SFun env::pair-nil)
+   (with-access::J2SFun this (body rtype decl)
       (when (isa? decl J2SDecl)
 	 (with-access::J2SDecl decl (vtype utype itype)
 	    (set! vtype 'function)
 	    (set! itype 'function)
 	    (set! utype 'function)))
-      (let ((envc (filter-map (lambda (c)
-				 (let ((d (car c))
-				       (t (cdr c)))
-				    (with-access::J2SDecl d (ronly vtype)
-				       (if ronly c (cons d vtype)))))
-		     env)))
-	 (typing-fun this envc fun fix))))
+      (filter-map (lambda (c)
+		     (let ((d (car c))
+			   (t (cdr c)))
+			(with-access::J2SDecl d (ronly vtype)
+			   (if ronly c (cons d vtype)))))
+	 env)))
+
+;*---------------------------------------------------------------------*/
+;*    escape-fun ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (escape-fun val::J2SFun fix)
+   (with-access::J2SFun val (params)
+      (for-each (lambda (p::J2SDecl)
+		   (with-access::J2SDecl p (itype vtype id)
+		      (unless (eq? vtype 'any)
+			 (set! vtype 'any)
+			 (unfix! fix "escape"))
+		      (unless (eq? itype 'any)
+			 (set! itype 'any)
+			 (unfix! fix "escape"))))
+	 params)))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SFun ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SFun env::pair-nil fun fix::cell)
+   (escape-fun this fix)
+   (typing-fun this (typing-fun-decl this env) fun fix))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SMethod ...                                           */
@@ -1119,7 +1121,8 @@
 			    'integer)))
 		       (else
 			'any))))
-	    (return typ envr (append bkl bkr))))))
+	    (return typ (if (eq? op 'OR) (env-merge envl envr) envr)
+	       (append bkl bkr))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SBinary ...                                           */

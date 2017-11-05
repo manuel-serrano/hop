@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Thu Oct 26 05:50:54 2017 (serrano)                */
+;*    Last change :  Sun Nov  5 06:27:24 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
@@ -395,7 +395,8 @@
 		  (js-new %this js-websocket url options))
 	       2 'WebSocket
 	       :__proto__ js-function-prototype
-	       :construct js-websocket-construct))
+	       :construct js-websocket-construct
+	       :shared-cmap #f))
 	 
 	 (define js-websocket-server
 	    (js-make-function %this
@@ -403,7 +404,8 @@
 		  (js-new %this js-websocket-server path))
 	       1 'WebSocketServer
 	       :__proto__ js-function-prototype
-	       :construct js-websocket-server-construct))
+	       :construct js-websocket-server-construct
+	       :shared-cmap #f))
 	 
 	 (js-bind! %this %this 'WebSocket
 	    :configurable #f :enumerable #f :value js-websocket
@@ -415,19 +417,19 @@
 	 (js-bind! %this js-websocket 'CONNECTING
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-connecting)
-	    :hidden-class #t)
+	    :hidden-class #f)
 	 (js-bind! %this js-websocket 'OPEN
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-open)
-	    :hidden-class #t)
+	    :hidden-class #f)
 	 (js-bind! %this js-websocket 'CLOSING
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-closing)
-	    :hidden-class #t)
+	    :hidden-class #f)
 	 (js-bind! %this js-websocket 'CLOSED
 	    :configurable #f :enumerable #f
 	    :value (js-websocket-state-closed)
-	    :hidden-class #t)
+	    :hidden-class #f)
 
 	 (js-undefined))))
 

@@ -22,7 +22,7 @@ var formatRegExp = /%[sdj%]/g;
 exports.format = function(f) {
   if (typeof f !== 'string') {
     var objects = [];
-    for (var i = 0; i < arguments.length; i++) {
+     for (var i = 0; i < arguments.length; i++) {
       objects.push(inspect(arguments[i]));
     }
     return objects.join(' ');
@@ -201,15 +201,29 @@ function arrayToHash(array) {
   return hash;
 }
 
-
+var cnt = 0;
 function formatValue(ctx, value, recurseTimes) {
   // Provide a hook for user-specified inspect functions.
-  // Check that value is an object with an inspect function on it
+   // Check that value is an object with an inspect function on it
+   cnt++;
+   var t0 = (value && typeof value.inspect === 'function');
+   var test = (ctx.customInspect && t0 &&
+	       // Filter out the util module, it's inspect function is special
+	       value.inspect !== exports.inspect &&
+	       // Also filter out any prototype objects using the circular check.
+	       !(value.constructor && value.constructor.prototype === value));
+   if( cnt == 211 ) {
+#:tprint( "inspect.0 ", cnt, " ", #:typeof( value ), " ",  value && typeof value.inspect === 'function', " i=", value.inspect, " i.fd=", value.fd, " tof=", typeof value.inspect );
+#:tprint( "test=", test, " t0=", t0, " ",  typeof value.inspect === 'function');
+   }
   if (ctx.customInspect && value && typeof value.inspect === 'function' &&
       // Filter out the util module, it's inspect function is special
       value.inspect !== exports.inspect &&
       // Also filter out any prototype objects using the circular check.
-      !(value.constructor && value.constructor.prototype === value)) {
+      !(value.constructor && value.constructor.prototype === value) && test) {
+     if( cnt == 211 ) {
+#:tprint( "In string" );
+     }
     return String(value.inspect(recurseTimes));
   }
 
@@ -466,6 +480,7 @@ function objectToString(o) {
 
 exports.p = exports.deprecate(function() {
   for (var i = 0, len = arguments.length; i < len; ++i) {
+#:tprint( "inspect.2 ", #:typeof( exports ) );
     error(exports.inspect(arguments[i]));
   }
 }, 'util.p: Use console.error() instead.');

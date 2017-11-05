@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Tue Oct 31 09:37:00 2017 (serrano)                */
+;*    Last change :  Sun Nov  5 17:57:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -80,9 +80,7 @@
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((nobj (duplicate::JsObject obj
-			(__proto__ (js-get js-object 'prototype %this))
-;* 			(properties '())                               */
-			)))
+			(__proto__ (js-get js-object 'prototype %this)))))
 	    (js-object-properties-set! nobj '())
 	    (js-object-mode-set! nobj (js-object-mode obj))
 	    (js-for-in obj
@@ -526,7 +524,7 @@
 			 :construct (lambda (this body)
 				       (string->xml-tilde body)))
 	       :enumerable #f :writable #f :configurable #f :hidden-class #f)
-	    
+
 	    ;; return the newly created object
 	    %this))))
 
@@ -666,7 +664,7 @@
 	 (if (not (or (eq? o (js-null)) (isa? o JsObject)))
 	     (js-raise-type-error %this "create: bad object ~s" o)
 	     (let ((obj (js-new0 %this js-object)))
-		(with-access::JsObject obj (__proto__)
+		(with-access::JsObject obj (__proto__ elements)
 		   (set! __proto__ o)
 		   (unless (eq? properties (js-undefined))
 		      (object-defineproperties %this this obj properties)))
@@ -744,6 +742,13 @@
 	 :configurable #t
 	 :enumerable #f
 	 :hidden-class #f)
+
+      (define (vector-every proc v)
+	 (let loop ((i (-fx (vector-length v) 1)))
+	    (cond
+	       ((=fx i -1) #t)
+	       ((proc (vector-ref v i)) (loop (-fx i 1)))
+	       (else #f))))
       
       ;; isSealed
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.11
@@ -752,8 +757,12 @@
 	 (let ((o (js-cast-object o %this "isSealed")))
 	    (with-access::JsObject o (cmap)
 	       (and
-		(eq? cmap (js-not-a-cmap))
 		;; 2
+		(with-access::JsConstructMap cmap (props)
+		   (vector-every (lambda (p)
+				    (let ((flags (prop-flags p)))
+				       (not (flags-configurable? flags))))
+		      props))
 		(every (lambda (desc::JsPropertyDescriptor)
 			  (with-access::JsPropertyDescriptor desc (configurable)
 			     (not (eq? configurable #t))))
@@ -775,10 +784,13 @@
 	 (let ((o (js-cast-object o %this "isFrozen")))
 	    (with-access::JsObject o (cmap)
 	       (and
-		(or (eq? cmap (js-not-a-cmap))
-		    (with-access::JsConstructMap cmap (props)
-		       (=fx (vector-length props) 0)))
 		;; 2
+		(with-access::JsConstructMap cmap (props)
+		   (vector-every (lambda (p)
+				    (let ((flags (prop-flags p)))
+				       (and (not (flags-writable? flags))
+					    (not (flags-configurable? flags)))))
+			props))	     
 		(every (lambda (desc::JsPropertyDescriptor)
 			  (with-access::JsPropertyDescriptor desc (configurable)
 			     (and (not (eq? configurable #t))
@@ -1077,17 +1089,27 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.8     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-seal o::JsObject obj)
-   (when (>=fx (bigloo-debug) 3)
-      (tprint "TODO, why js-seal need unmap?"))
-   (js-object-unmap! obj)
-   ;; 2
+   
+   (define (prop-seal p)
+      (let ((flags (prop-flags p)))
+	 (prop (prop-name p)
+	    (property-flags
+	       (flags-writable? flags)
+	       (flags-enumerable? flags)
+	       #f
+	       (flags-accessor? flags)))))
+   
    (for-each (lambda (desc::JsPropertyDescriptor)
-		(with-access::JsPropertyDescriptor desc (name configurable)
+		(with-access::JsPropertyDescriptor desc (configurable)
 		   (set! configurable #f)))
       (js-object-properties o))
-   ;; 3
    (js-object-mode-extensible-set! o #f)
-   ;; 4
+   (with-access::JsObject o (cmap)
+      (unless (eq? cmap (js-not-a-cmap))
+	 (with-access::JsConstructMap cmap (props)
+	    (let ((ncmap (duplicate::JsConstructMap cmap
+			    (props (vector-map prop-seal props)))))
+	       (set! cmap ncmap)))))
    obj)
 
 ;*---------------------------------------------------------------------*/
@@ -1096,11 +1118,24 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.3.9     */
 ;*---------------------------------------------------------------------*/
 (define-method (js-freeze o::JsObject obj)
-   (when (>=fx (bigloo-debug) 3)
-      (tprint "TODO, why js-freeze need unmap?"))
-   (js-object-unmap! obj)
+   
+   (define (prop-freeze p)
+      (let ((flags (prop-flags p)))
+	 (prop (prop-name p)
+	    (property-flags
+	       #f
+	       (flags-enumerable? flags)
+	       #f
+	       (flags-accessor? flags)))))
+
    (for-each js-freeze-property! (js-object-properties o))
    (js-object-mode-extensible-set! o #f)
+   (with-access::JsObject o (cmap)
+      (unless (eq? cmap (js-not-a-cmap))
+	 (with-access::JsConstructMap cmap (props)
+	    (let ((ncmap (duplicate::JsConstructMap cmap
+			    (props (vector-map prop-freeze props)))))
+	       (set! cmap ncmap)))))
    obj)
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Thu Nov  2 07:54:31 2017 (serrano)                */
+;*    Last change :  Sun Nov  5 10:39:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -398,9 +398,10 @@
 			(maxconstrsize maxconstrsize)
 			(construct constr)
 			(elements els)
-			(cmap (if shared-cmap
+			(cmap (if (and shared-cmap (isa? prototype JsObject))
 				  cmap
-				  (duplicate::JsConstructMap cmap)))
+				  (duplicate::JsConstructMap cmap
+				     (%id (gencmapid)))))
 			(%prototype (or proto
 					(with-access::JsObject %this (__proto__)
 					   __proto__)))

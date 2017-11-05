@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/etc/Makefile.hopconfig.in         */
+#*    serrano/prgm/project/hop/3.2.x/etc/Makefile.hopconfig.in         */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Sep 17 14:27:28 2004                          */
-#*    Last change :  Fri Oct  6 13:34:55 2017 (serrano)                */
+#*    Last change :  Fri Nov  3 08:41:06 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The autconf Makefile skeleton for HOP.                           */
@@ -27,7 +27,7 @@ RELEASE		= @BIGLOOVERSION@
 HOP		= @HOP@
 HOPC		= @HOPC@
 BGLCPP		= @BGLCPP@
-HFLAGS		= --reset-bigloo-options --bigloo=$(BIGLOO) --bigloo-lib-dir=$(BIGLOOLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) --
+HFLAGS		= @HCFLAGS@ --reset-bigloo-options --bigloo=$(BIGLOO) --bigloo-lib-dir=$(BIGLOOLIBDIR) --share-dir $(BUILDSHAREDIR) $(EFLAGS) --
 BACKEND         = @BACKEND@
 LINK		= @LINK@
 BIGLOOLIBDIR	= @BIGLOOLIBDIR@

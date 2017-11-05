@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Nov  1 14:56:50 2017 (serrano)                */
+;*    Last change :  Sun Nov  5 07:31:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -94,6 +94,7 @@
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))
 	      (ctor::obj (default #f))
+	      (single::bool read-only (default #f))
 	      (vlen::long (default 0))
 	      (vtable::vector (default '#())))
 	   
@@ -596,9 +597,7 @@
       (let ((nobj (duplicate::JsGlobalObject obj
 		     (__proto__ (js-clone __proto__))
 		     (cmap (js-clone cmap))
-		     (elements (vector-map js-clone elements))
-		     ;;(properties (js-properties-clone properties))
-		     )))
+		     (elements (vector-map js-clone elements)))))
 	 (let ((properties (js-object-properties obj)))
 	    (js-object-properties-set! nobj (js-properties-clone properties))
 	    (js-object-mode-set! nobj (js-object-mode obj))

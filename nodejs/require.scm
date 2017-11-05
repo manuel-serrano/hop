@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Oct 30 18:37:02 2017 (serrano)                */
+;*    Last change :  Sun Nov  5 06:46:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -245,26 +245,27 @@
 
    (define (module-init! m)
       (with-access::JsGlobalObject %this (js-object)
-	 ;; id field
-	 (js-put! m 'id (js-string->jsstring id) #f %this)
-	 ;; exports
-	 (js-put! m 'exports (js-new0 %this js-object) #f %this)
-	 ;; filename
-	 (js-put! m 'filename (js-string->jsstring filename) #f %this)
-	 ;; loaded
-	 (js-put! m 'loaded #f #f %this)
-	 ;; parent
-	 (js-put! m 'parent (js-null) #f %this)
-	 ;; children
-	 (js-put! m 'children (js-vector->jsarray '#() %this) #f %this)
-	 ;; paths
-	 (js-put! m 'paths
-	    (js-vector->jsarray (nodejs-filename->paths filename) %this)
-	    #f %this)))
+	 (let ((expo (js-new0 %this js-object)))
+	    (with-access::JsObject expo (cmap)
+	       (set! cmap (instantiate::JsConstructMap (single #t))))
+	    ;; id field
+	    (js-put! m 'id (js-string->jsstring id) #f %this)
+	    ;; exports
+	    (js-put! m 'exports expo #f %this)
+	    ;; filename
+	    (js-put! m 'filename (js-string->jsstring filename) #f %this)
+	    ;; loaded
+	    (js-put! m 'loaded #f #f %this)
+	    ;; parent
+	    (js-put! m 'parent (js-null) #f %this)
+	    ;; children
+	    (js-put! m 'children (js-vector->jsarray '#() %this) #f %this)
+	    ;; paths
+	    (js-put! m 'paths
+	       (js-vector->jsarray (nodejs-filename->paths filename) %this)
+	       #f %this))))
 
-   (with-trace 'require "nodejs-module"
-      (trace-item "id=" id)
-      (trace-item "filename=" filename)
+   (with-trace 'require (format "nodejs-module ~a ~a" id filename)
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((m (js-new0 %this js-object)))
 	    ;; module properties
@@ -296,8 +297,7 @@
    (with-access::JsGlobalObject this (js-main js-object) 
       (js-bind! this require 'main
 	 :get (js-make-function this (lambda (this) js-main) 0 'main)
-	 :configurable #f
-	 :writable #f))
+	 :configurable #f :writable #f))
    
    ;; require.resolve
    (js-put! require 'resolve
@@ -388,7 +388,6 @@
 	    (let ((this *resolve-this*))
 	       (with-access::JsGlobalObject this (js-object)
 		  (let ((m (js-new0 this js-object)))
-		     (tprint "M=" m)
 		     ;; module properties
 		     (js-put! m 'id (js-string->jsstring filename) #f this)
 		     ;; filename
@@ -399,7 +398,9 @@
 			#f this)
 		     ;; the resolution
 		     (nodejs-resolve name this m 'body)))))))
-   (nodejs-v8-global-object-init! (js-new-global-object)))
+   (let ((obj (js-new-global-object)))
+      (nodejs-v8-global-object-init! obj)
+      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-v8-global-object-init! ...                                */
@@ -424,113 +425,85 @@
 		      (lambda (this req socket)
 			 (js-undefined))
 		      2 "DTRACE_HTTP_SERVER_REQUEST")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_HTTP_SERVER_RESPONSE
 	    :value (js-make-function %this
 		      (lambda (this req socket)
 			 (js-undefined))
 		      2 "DTRACE_HTTP_SERVER_RESPONSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_HTTP_SERVER_REQUEST
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_HTTP_SERVER_REQUEST")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_HTTP_SERVER_RESPONSE
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_HTTP_SERVER_RESPONSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_HTTP_CLIENT_RESPONSE
 	    :value (js-make-function %this
 		      (lambda (this req socket)
 			 (js-undefined))
 		      2 "DTRACE_HTTP_CLIENT_RESPONSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_HTTP_CLIENT_REQUEST
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_HTTP_CLIENT_REQUEST")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_HTTP_CLIENT_REQUEST
 	    :value (js-make-function %this
 		      (lambda (this req socket)
 			 (js-undefined))
 		      2 "DTRACE_HTTP_CLIENT_REQUEST")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_HTTP_CLIENT_RESPONSE
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_HTTP_CLIENT_RESPONSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_NET_STREAM_END
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "DTRACE_NET_STREAM_END")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_NET_SOCKET_READ
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "DTRACE_NET_SOCKET_READ")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_NET_SOCKET_WRITE
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "DTRACE_NET_SOCKET_WRITE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'DTRACE_NET_SERVER_CONNECTION
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "DTRACE_NET_SERVER_CONNECTION")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_NET_SERVER_CONNECTION")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this proto 'COUNTER_NET_SERVER_CONNECTION_CLOSE
 	    :value (js-make-function %this
 		      (lambda (this)
 			 (js-undefined))
 		      0 "COUNTER_NET_SERVER_CONNECTION_CLOSE")
-	    :enumerable #f
-	    :writable #f
-	    :configurable #f)))
+	    :enumerable #f :writable #f :configurable #f :hidden-class #f)))
    %this)
 
 ;*---------------------------------------------------------------------*/
@@ -932,8 +905,7 @@
 	 (when (file-exists? sopath) (delete-file sopath))
 	 (when (file-exists? sopathtmp) (delete-file sopathtmp))))
    
-   (with-trace 'sorequire "nodejs-socompile"
-      (trace-item "filename=" filename)
+   (with-trace 'sorequire (format "nodejs-socompile ~a" filename)
       (let loop ()
 	 (let ((tmp (synchronize socompile-mutex
 		       (cond
@@ -1144,8 +1116,7 @@
 	 (else
 	  (not-found filename))))
 
-   (with-trace 'require "nodejs-load"
-      (trace-item "filename=" filename)
+   (with-trace 'require (format "nodejs-load ~a" filename)
       (with-loading-file filename load-module)))
 
 ;*---------------------------------------------------------------------*/
@@ -1181,8 +1152,7 @@
 		   (js-put! mod 'parent %module #f %this)))
 	     mod))))
 
-   (with-trace 'require "nodejs-require-module"
-      (trace-item "name=" name)
+   (with-trace 'require (format "nodejs-require-module ~a" name)
       (with-access::WorkerHopThread worker (module-cache)
 	 (let* ((path (nodejs-resolve name %this %module 'body))
 		(mod (js-get-property-value module-cache module-cache path %this)))
@@ -1210,26 +1180,27 @@
 (define (nodejs-core-module name::bstring worker %this)
    
    (define (nodejs-init-core name worker %this)
-      (with-trace 'require "nodejs-init-core"
-	 (trace-item "name=" name)
+      (with-trace 'require (format "nodejs-init-core ~a" name)
+	 (trace-item "gencmapid=" (gencmapid))
 	 (with-access::JsGlobalObject %this (js-object)
 	    (let ((init (cdr (assoc name (core-module-table))))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
 		  (mod (nodejs-module name name worker %this)))
 	       ;; initialize the core module
-	       (init %this this scope mod)
+	       (with-trace 'require (format "nodejs-init-core.init ~a" name)
+		  (init %this this scope mod))
 	       ;; return the module
 	       (trace-item "mod=" (typeof mod))
+	       (trace-item "gencmapid=" (gencmapid))
 	       mod))))
    
-   (with-trace 'require "nodejs-core-module"
-      (trace-item "name=" name)
+   (with-trace 'require (format "nodejs-core-module ~a" name)
       (with-access::WorkerHopThread worker (module-cache)
-	 (let ((mod (js-get-property-value module-cache module-cache name %this)))
-	    (if (eq? mod (js-absent))
+	 (let ((m (js-get-property-value module-cache module-cache name %this)))
+	    (if (eq? m (js-absent))
 		(nodejs-init-core name worker %this)
-		mod)))))
+		m)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require-core ...                                          */
@@ -1238,9 +1209,12 @@
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-core name::bstring worker %this)
-   (with-trace 'require "nodejs-require-core"
-      (trace-item "name=" name)
-      (js-get (nodejs-core-module name worker %this) 'exports %this)))
+   (with-trace 'require (format "nodejs-require-core ~a" name)
+      (let ((e (js-get (nodejs-core-module name worker %this) 'exports %this)))
+	 (with-access::JsObject e (cmap)
+	    (with-access::JsConstructMap cmap (%id props)
+	       (trace-item name " cmap.id=" %id " cmap.props=" props)
+	       e)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-resolve ...                                               */
@@ -1481,13 +1455,18 @@
       (if (null? bindings)
 	  (for-in e
 	     (lambda (k)
-		(js-put! %scope k (js-get e k %this) #f %this)))
+		(js-bind! %this %scope k
+		   :value (js-get e k %this)
+		   :writable #t :enumerable #f :configurable #f
+		   :hidden-class #f)))
+		;;(js-put! %scope k  #f %this)
 	  (for-each (lambda (k)
 		       (js-bind! %this %scope k
 			  :get (js-make-function %this
 				  (lambda (o)
 				     (js-get e k %this))
-				  0 'get)))
+				  0 'get)
+			  :hidden-class #f))
 	     bindings))))
 
 ;*---------------------------------------------------------------------*/
@@ -1554,7 +1533,7 @@
 
    (js-bind! %this scope 'Function
       :value js-function
-      :configurable #f :enumerable #f))
+      :configurable #f :enumerable #f :hidden-class #f))
 
 
 ;*---------------------------------------------------------------------*/

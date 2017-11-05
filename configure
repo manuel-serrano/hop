@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Oct 25 17:03:09 2017 (serrano)                */
+#*    Last change :  Fri Nov  3 08:41:39 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -37,6 +37,7 @@ debug=no
 bcflags="-O2 -fsharing -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 bhflags=
 btflags="-gtrace"
+hcflags="-O2"
 
 bglpcre=required
 bglunistring=required
@@ -265,6 +266,9 @@ while : ; do
     --bhflags=*)
       bhflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
+    --hcflags=*)
+      hcflags="`echo $1 | sed 's/^[-a-z]*=//'`";;
+
     --bcflagsdev=*)
       bcflagsdev="`echo $1 | sed 's/^[-a-z]*=//'`";;
 
@@ -439,6 +443,7 @@ while : ; do
       echo "   --bcflagsdev=args........... the devel Bigloo options" >&2;
       echo "   --blflags=args.............. the link options" >&2;
       echo "   --bhflags=args.............. the heap options" >&2;
+      echo "   --hcflags=args.............. the hopc options" >&2;
       echo "   --ccflags=args.............. the C compilation options" >&2;
       echo "   --macosx.................... prepares the production of a MacOSX bundle" >&2;
       echo "   --android................... prepares the production of an Android apk" >&2;
@@ -1044,6 +1049,7 @@ for p in hopc.sh hop.sh; do
             -e "s|@DEBUG@|$debug|" \
             -e "s|@HOP@|$hop|" \
             -e "s|@HOPC@|$hopc|" \
+            -e "s|@HOPCFLAGS@|$hopcflags|" \
             -e "s|@BUILDDIR@|$PWD|" \
             -e "s|@BUILDLIBDIR@|$buildlibdir|" \
             -e "s|@BUILDETCDIR@|$PWD/etc|" \
@@ -1099,6 +1105,7 @@ cat $mkmf.in \
           -e "s|@BCFLAGS@|$bcflags|" \
           -e "s|@BLDFLAGS@|$bldflags|" \
           -e "s|@BHFLAGS@|$bhflags|" \
+          -e "s|@HCFLAGS@|$hcflags|" \
           -e "s|@BTFLAGS@|$btflags|" \
           -e "s|@BCFLAGSRTS@|$bcflagsrts|" \
           -e "s|@BSCM2JSFLAGS@|$bscm2jsflags|" \

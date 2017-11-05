@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Sep 29 18:13:14 2017 (serrano)                */
+;*    Last change :  Fri Nov  3 07:19:19 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -204,26 +204,23 @@
       (set! then (inline-method! then pmethods stack kfactor prgm verb))
       (set! else (inline-method! else pmethods stack kfactor prgm verb))
       (let ((node (inline-method! test pmethods stack kfactor prgm verb)))
-	 (let ((r (cond
-		     ((isa? node J2SExpr)
-		      (set! test node)
-		      this)
-		     ((>fx (node-return-count node 2) 1)
-		      (let ((t (J2SLetOpt '(ref set) (gensym 'test) (J2SBool #f))))
-			 (J2SLetRecBlock #f (list t)
-			    (unreturn! node
-			       (lambda (n::J2SReturn)
-				  (with-access::J2SReturn n (expr loc)
-				     (J2SAssig (J2SRef t) expr))))
-			    (J2SIf (J2SRef t) then else))))
-		     (else
-		      (unreturn! node
-			 (lambda (n::J2SReturn)
-			    (with-access::J2SReturn n (expr)
-			       (J2SIf expr then else))))))))
-	    (unless (isa? r J2SStmt)
-	       (tprint "r=" (typeof r)))
-	    r))))
+	 (cond
+	    ((isa? node J2SExpr)
+	     (set! test node)
+	     this)
+	    ((>fx (node-return-count node 2) 1)
+	     (let ((t (J2SLetOpt '(ref set) (gensym 'test) (J2SBool #f))))
+		(J2SLetRecBlock #f (list t)
+		   (unreturn! node
+		      (lambda (n::J2SReturn)
+			 (with-access::J2SReturn n (expr loc)
+			    (J2SAssig (J2SRef t) expr))))
+		   (J2SIf (J2SRef t) then else))))
+	    (else
+	     (unreturn! node
+		(lambda (n::J2SReturn)
+		   (with-access::J2SReturn n (expr)
+		      (J2SIf expr then else)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-method! ::J2SReturn ...                                   */

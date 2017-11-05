@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Nov  2 08:12:50 2017 (serrano)                */
+;*    Last change :  Sun Nov  5 14:12:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -423,10 +423,12 @@
 (define (js-pcache-update-descriptor! pcache::JsPropertyCache i o::JsObject obj)
    [assert (obj) (isa? obj JsObject)]   
    (with-access::JsObject o ((omap cmap))
-      (when (isa? omap JsConstructMap)
+      (unless (eq? omap (js-not-a-cmap))
 	 (with-access::JsPropertyCache pcache (cmap pmap index owner)
 	    (set! cmap #t)
 	    (set! owner obj)
+	    (if (eq? omap (js-not-a-cmap))
+		(error "js-pcache-update-descriptor...." 2 3))
 	    (set! pmap omap)
 	    (set! index (-fx (negfx i) 1))))))
 
@@ -452,9 +454,11 @@
    [assert (i) (>=fx i 0)]
    [assert (obj) (isa? obj JsObject)]
    (with-access::JsObject o ((omap cmap))
-      (when (isa? omap JsConstructMap)
+      (unless (eq? omap (js-not-a-cmap))
 	 (with-access::JsPropertyCache pcache (cmap pmap index owner)
 	    (set! cmap #t)
+	    (if (eq? omap (js-not-a-cmap))
+		(error "js-pcache-update-owner..." 2 2))
 	    (set! pmap omap)
 	    (set! owner obj)
 	    (set! index i)))))
@@ -467,9 +471,11 @@
 (define (js-pcache-next-direct! pcache::JsPropertyCache o::JsObject nextmap i)
    [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
-      (when (isa? omap JsConstructMap)
+      (unless (eq? omap (js-not-a-cmap))
 	 (with-access::JsPropertyCache pcache (pmap cmap index owner)
 	    [assert (pcache) (= (cmap-size nextmap) (+ 1 (cmap-size omap)))]
+	    (if (eq? omap (js-not-a-cmap))
+		(error "js-pcache-next-direct..." 2 2))
 	    (set! pmap omap)
 	    (set! cmap nextmap)
 	    (set! owner #f)
@@ -962,10 +968,9 @@
        (with-access::JsAccessorDescriptor desc (%set)
 	  (%set obj v)))
       ((isa? desc JsWrapperDescriptor)
-       (with-access::JsWrapperDescriptor desc (%set value)
-	  (let ((v (%set obj v)))
-	     (set! value v)
-	     v)))
+       (with-access::JsWrapperDescriptor desc (%set)
+	  (%set obj v)
+	  v))
       (else
        (js-undefined))))
 
@@ -1284,7 +1289,6 @@
 			    el-or-desc)))))))
 	 ;; property search
 	 (lambda (obj v)
-	    ;; cache the object access
 	    (with-access::JsPropertyCache cache (cmap pmap index owner)
 	       (with-access::JsObject o ((omap cmap))
 		  (js-property-value o v %this))))
@@ -1579,10 +1583,9 @@
 				    v))
 				((isa? el-or-desc JsWrapperDescriptor)
 				 ;; hopjs extension
-				 (with-access::JsWrapperDescriptor el-or-desc (%set value)
-				    (let ((nv (%set o v)))
-				       (set! value nv)
-				       v)))
+				 (when pcache
+				    (js-pcache-update-descriptor! pcache i o o))
+				 (js-property-value-set! o el-or-desc v %this))
 				(else
 				 (when (invalidate-cache-method! v methods i)
 				    (reset-cmap-vtable! cmap)
@@ -1590,7 +1593,7 @@
 						  (vlen 0)
 						  (vtable '#()))))
 				 (when pcache
-				    [assert (i) (<=fx i (vector-length elements))]
+				    [assert (i) (<fx i (vector-length elements))]
 				    (js-pcache-update-direct! pcache i o))
 				 (vector-set! elements i v)
 				 v))))
@@ -1601,7 +1604,7 @@
 					   (vlen 0)
 					   (vtable '#()))))
 			  (when pcache
-			     [assert (i) (<=fx i (vector-length elements))]
+			     [assert (i) (<fx i (vector-length elements))]
 			     (js-pcache-update-direct! pcache i o))
 			  (vector-set! elements i v)
 			  v)
@@ -1626,7 +1629,7 @@
       (with-trace 'prop "extend-mapped-object!"
 	 ;; 8.12.5, step 6
 	 (with-access::JsObject o (cmap elements)
-	    (with-access::JsConstructMap cmap (props)
+	    (with-access::JsConstructMap cmap (props single)
 	       (let* ((name (js-toname p %this))
 		      (flags (property-flags #t #t #t #f))
 		      (index (vector-length props)))
@@ -1638,18 +1641,27 @@
 			    ;; follow the next map
 			    (with-access::JsConstructMap nextmap (ctor)
 			       (when pcache
-				  [assert (index) (<=fx index (vector-length elements))]
+				  [assert (index p) (<=fx index (vector-length elements))]
 				  (js-pcache-next-direct! pcache o nextmap index))
 			       [assert (o) (isa? nextmap JsConstructMap)]
 			       (js-object-push/ctor! o index v ctor)
 			       (set! cmap nextmap)
 			       v)))
+			(single
+			 (extend-cmap! cmap name flags)
+			 (with-access::JsConstructMap cmap (methods)
+			    (validate-cache-method! v methods index))
+			 (with-access::JsConstructMap cmap (ctor)
+			    (when pcache
+			       (js-pcache-next-direct! pcache o cmap index))
+			    (js-object-push/ctor! o index v ctor))
+			 v)
 			(else
 			 ;; create a new map
 			 (let ((nextmap (extend-cmap cmap name flags)))
 			    (with-access::JsConstructMap nextmap (methods)
 			       (validate-cache-method! v methods index))
-			    (with-access::JsConstructMap cmap (ctor)
+			    (with-access::JsConstructMap cmap (ctor singlep)
 			       (when pcache
 				  (js-pcache-next-direct! pcache o nextmap index))
 			       (link-cmap! cmap nextmap name v flags)
@@ -1716,7 +1728,7 @@
 		(extend-properties-object!))))))
    
    (add-cache-miss! 'put name)
-   
+
    (let loop ((obj o))
       (jsobject-find obj name
 	 update-mapped-object!
@@ -1801,7 +1813,7 @@
 ;*    mentionned object. It does not follow the prototype chain. It    */
 ;*    does not check the extensibility flags.                          */
 ;*    -------------------------------------------------------------    */
-;*    When HIDDEN-CLASS is true, it is assumed that the object         */
+;*    When HIDDEN-CLASS is FALSE, it is assumed that the object        */
 ;*    CMAP is not shared by any other object.                          */
 ;*    -------------------------------------------------------------    */
 ;*    [[Put]]                                                          */
@@ -1876,14 +1888,15 @@
 
    (define (next-cmap o::JsObject name value flags)
       (with-access::JsObject o (cmap)
-	 (if hidden-class
-	     (let ((nextmap (extend-cmap cmap name flags)))
-		(link-cmap! cmap nextmap name value flags)
-		(set! cmap nextmap)
-		nextmap)
-	     (begin
-		(extend-cmap! cmap name flags)
-		cmap))))
+	 (with-access::JsConstructMap cmap (single)
+	    (if (and hidden-class (not single))
+		(let ((nextmap (extend-cmap cmap name flags)))
+		   (link-cmap! cmap nextmap name value flags)
+		   (set! cmap nextmap)
+		   nextmap)
+		(begin
+		   (extend-cmap! cmap name flags)
+		   cmap)))))
    
    (define (extend-mapped-object!)
       
@@ -2788,6 +2801,8 @@
 				  ((procedure? f)
 				   (with-access::JsPropertyCache ccache (pmap cmap index method)
 				      ;; correct arity, put in cache
+				      (if (eq? omap (js-not-a-cmap))
+					  (error "update procedure" 2 2))
 				      (set! pmap omap)
 				      (set! cmap #f)
 				      (set! index i)
@@ -2798,6 +2813,8 @@
 					 ((=fx (procedure-arity method) (+fx 1 (length args)))
 					  (with-access::JsPropertyCache ccache (pmap cmap index (cmethod method))
 					     ;; correct arity, put in cache
+					     (if (eq? omap (js-not-a-cmap))
+					  (error "update procedure.2" 2 2))
 					     (set! pmap omap)
 					     (set! cmap #f)
 					     (set! index i)
@@ -2807,6 +2824,8 @@
 					  (lambda (procedure)
 					     (with-access::JsPropertyCache ccache (pmap cmap index (cmethod method))
 						;; correct arity, put in cache
+						(if (eq? omap (js-not-a-cmap))
+					  (error "update procedure.3" 2 2))
 						(set! pmap omap)
 						(set! cmap #f)
 						(set! index i)

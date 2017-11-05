@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Oct 30 06:46:57 2017 (serrano)                */
+;*    Last change :  Fri Nov  3 07:39:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -158,56 +158,33 @@
 	 ;; other properties of the Number constructor
 	 (js-bind! %this js-number 'POSITIVE_INFINITY
 	    :value +inf.0
-	    :writable #f
-	    :enumerable #f
-	    :configurable #f
-	    :hidden-class #f)
+	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this js-number 'NEGATIVE_INFINITY
 	    :value -inf.0
-	    :writable #f
-	    :enumerable #f
-	    :configurable #f
-	    :hidden-class #f)
+	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this js-number 'MAX_VALUE
 	    :value (*fl 1.7976931348623157 (exptfl 10. 308.))
-	    :writable #f
-	    :enumerable #f
-	    :configurable #f
-	    :hidden-class #f)
+	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this js-number 'MAX_SAFE_INTEGER
 	    :value (-fl (exptfl 2. 53.) 1.)
-	    :writable #f
-	    :enumerable #f
-	    :configurable #f
-	    :hidden-class #f)
+	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this js-number 'MIN_VALUE
 	    :value 5e-324
-	    :writable #f
-	    :enumerable #f
-	    :configurable #f
-	    :hidden-class #f)
+	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this js-number 'MIN_SAFE_INTEGER
 	    :value (negfl (-fl (exptfl 2. 53.) 1.))
-	    :writable #f
-	    :enumerable #f
-	    :configurable #f
-	    :hidden-class #f)
+	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this js-number 'NaN
 	    :value +nan.0
-	    :writable #f
-	    :enumerable #f
-	    :configurable #f
-	    :hidden-class #f)
+	    :writable #f :enumerable #f :configurable #f :hidden-class #f)
 	 (js-bind! %this js-number 'isInteger
 	    :value (js-make-function %this is-integer? 1 'isInteger)
-	    :writable #f :configurable #f :enumerable #f
-	    :hidden-class #f)
+	    :writable #f :configurable #f :enumerable #f :hidden-class #f)
 	 ;; bind the builtin prototype properties
 	 (init-builtin-number-prototype! %this js-number js-number-prototype)
 	 ;; bind Number in the global object
 	 (js-bind! %this %this 'Number
-	    :configurable #f :enumerable #f :value js-number
-	    :hidden-class #f)
+	    :configurable #f :enumerable #f :value js-number :hidden-class #f)
 	 js-number)))
 
 ;*---------------------------------------------------------------------*/

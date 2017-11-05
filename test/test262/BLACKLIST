@@ -1,8 +1,6 @@
 ;; -*- mode: bee -*-
 
-(;; wrong test
- ;"6.2.2_a.js"
- ;; nodejs modules semantics incompliance
+(;; nodejs modules semantics incompliance
  "S8.6.2_A5_T[1-4].js"
  "S8.7.2_A3.js"
  "S10.4.1_A1_T[1-3].js"
