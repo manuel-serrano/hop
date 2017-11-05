@@ -37,6 +37,7 @@ runtime/configure_macosx.sch
 runtime/configure_noarch.sch
 
 nodejs/nodejs.sch
+nodejs/_crypto.sch
 
 test/nodejs/HOP.exe
 test/nodejs/log.*
