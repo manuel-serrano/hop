@@ -88,8 +88,6 @@ function parserOnHeadersComplete(info) {
   parser.incoming.httpVersion = info.versionMajor + '.' + info.versionMinor;
   parser.incoming.url = url;
 
-  parser.incoming.pasglop = parser.incoming._addHeaderLine;
-   
   var n = headers.length;
 
   // If parser.maxHeaderPairs <= 0 - assume that there're no limit
@@ -141,7 +139,6 @@ function parserOnBody(b, start, len) {
   // pretend this was the result of a stream._read call.
    if (len > 0 && !stream._dumped) {
     var slice = b.slice(start, start + len);
-     debug( "slice start=" + start + " end=" + (start+len) );
     var ret = stream.push(slice);
     if (!ret)
       readStop(socket);
@@ -424,7 +421,6 @@ IncomingMessage.prototype._addHeaderLine = function(field, value) {
 // Call this instead of resume() if we want to just
 // dump all the data to /dev/null
 IncomingMessage.prototype._dump = function() {
-   debug( "######### _dump" );
   if (!this._dumped) {
     this._dumped = true;
     if (this.socket.parser) this.socket.parser.incoming = null;
@@ -496,7 +492,6 @@ OutgoingMessage.prototype._send = function(data, encoding) {
   // This is a shameful hack to get the headers and first body chunk onto
   // the same packet. Future versions of Node are going to take care of
   // this at a lower level and in a more general way.
-   debug( "OutgoingMessage _send [" + data.toString( "ascii" ).length + "]" );
   if (!this._headerSent) {
     if (typeof data === 'string' &&
         encoding !== 'hex' &&
@@ -513,8 +508,6 @@ OutgoingMessage.prototype._send = function(data, encoding) {
 
 
 OutgoingMessage.prototype._writeRaw = function(data, encoding) {
-   debug( "OutgoingMessage _writeRaw "
-	  + data.toString( "ascii" ).length );
   if (data.length === 0) {
     return true;
   }
@@ -549,7 +542,6 @@ OutgoingMessage.prototype._writeRaw = function(data, encoding) {
 
 
 OutgoingMessage.prototype._buffer = function(data, encoding) {
-   debug( "OutgoingMessage _buffer [" + data.toString( "ascii" ).length + "]" );
   this.output.push(data);
   this.outputEncodings.push(encoding);
 
@@ -560,7 +552,6 @@ OutgoingMessage.prototype._buffer = function(data, encoding) {
 OutgoingMessage.prototype._storeHeader = function(firstLine, headers) {
   // firstLine in the case of request is: 'GET /index.html HTTP/1.1\r\n'
   // in the case of response it is: 'HTTP/1.1 200 OK\r\n'
-   debug( "OutgoingMessage _storeHeader[" + headers + "]" );
   var state = {
     sentConnectionHeader: false,
     sentContentLengthHeader: false,
@@ -658,7 +649,6 @@ OutgoingMessage.prototype._storeHeader = function(firstLine, headers) {
   // wait until the first body chunk, or close(), is sent to flush,
   // UNLESS we're sending Expect: 100-continue.
   if (state.sentExpect) {
-     debug( "send.1" );
      this._send('');
   }
 };
@@ -996,11 +986,9 @@ OutgoingMessage.prototype.end = function(data, encoding) {
 
   if (!hot) {
     if (this.chunkedEncoding) {
-   debug( "send.7" );
       ret = this._send('0\r\n' + this._trailer + '\r\n', 'ascii');
     } else {
       // Force a flush, HACK.
-   debug( "send.8" );
       ret = this._send('');
     }
   }
@@ -1421,7 +1409,6 @@ function ClientRequest(options, cb) {
     self._last = true;
     self.shouldKeepAlive = false;
     if (options.createConnection) {
-       debug( "createConnection options.createConnect path=",self.socketPath ); 
       self.onSocket(options.createConnection(self.socketPath));
     } else {
       self.onSocket(net.createConnection(self.socketPath));
@@ -1599,9 +1586,7 @@ function socketOnData(d, start, end) {
   var req = this._httpMessage;
   var parser = this.parser;
    
-   debug( ">>> socketOnData start=" + start + " end=" + end + " buffer.len=" + d.length + " constructor=" + d.constructor.name );
   var ret = parser.execute(d, start, end - start);
-   debug( "--- socketOnData -> ret=" + ret );
   if (ret instanceof Error) {
     debug('socketOnData parse error');
     freeParser(parser, req);
@@ -1646,7 +1631,6 @@ function socketOnData(d, start, end) {
     debug('socketOnData freeParser');
     freeParser(parser, req);
   }
-   debug( "<<< socketOnData -> ret=" + ret );
 }
 
 
@@ -1727,7 +1711,6 @@ function responseOnEnd() {
   var req = res.req;
   var socket = req.socket;
 
-   debug( "responseOnEnd: " + req.shouldKeepAlive );
   if (!req.shouldKeepAlive) {
     if (socket.writable) {
       debug('AGENT socket.destroySoon()');
@@ -1989,9 +1972,7 @@ function connectionListener(socket) {
 
   socket.ondata = function(d, start, end) {
     assert(!socket._paused);
-   debug( ">>> socketOnData start=" + start + " end=" + end + " buffer.len=" + d.length + " constructor=" + d.constructor.name );
     var ret = parser.execute(d, start, end - start);
-   debug( "--- socketOnData -> ret=" + ret );
     if (ret instanceof Error) {
       debug('parse error');
       socket.destroy(ret);
