@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Nov  2 07:34:14 2017 (serrano)                */
+;*    Last change :  Tue Nov  7 14:31:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -444,6 +444,12 @@
 		      (register-exit-function!
 			 (lambda (n)
 			    (show-functions)
+			    n)))
+		   (when (string-contains (or (getenv "HOPTRACE") "")
+			    "hopscript:alloc")
+		      (register-exit-function!
+			 (lambda (n)
+			    (show-allocs)
 			    n)))
 		   (thread-join! (thread-start-joinable! %worker)))))))
    

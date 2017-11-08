@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Nov  5 14:12:57 2017 (serrano)                */
+;*    Last change :  Wed Nov  8 06:42:10 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -38,6 +38,13 @@
 	      "bgl_make_pcache")
 	   ($js-invalidate-pcaches-pmap!::void (::obj)
 	      "bgl_invalidate_pcaches_pmap"))
+
+   (cond-expand
+      (profile
+       (extern (export js-profile-allocs "bgl_js_profile_allocs"))))
+   (cond-expand
+      (profile
+       (export js-profile-allocs::obj)))
    
    (export (js-debug-object ::obj #!optional (msg ""))
 	   (js-debug-pcache ::obj #!optional (msg ""))
@@ -206,7 +213,9 @@
 	   (show-cache-misses)
 	   (log-function! ::bool)
 	   (profile-function ::obj ::symbol)
-	   (show-functions)))
+	   (profile-cache-index ::long)
+	   (show-functions)
+	   (show-allocs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    vtable-threshold ...                                             */
@@ -267,6 +276,7 @@
 (define (js-object-add! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements cmap)
       (let ((nels (copy-vector elements (+fx 1 idx))))
+	 (cond-expand (profile (profile-cache-extension (+fx 1 idx))))
 	 (vector-set! nels idx value)
 	 (set! elements nels)
 	 obj)))
@@ -427,8 +437,6 @@
 	 (with-access::JsPropertyCache pcache (cmap pmap index owner)
 	    (set! cmap #t)
 	    (set! owner obj)
-	    (if (eq? omap (js-not-a-cmap))
-		(error "js-pcache-update-descriptor...." 2 3))
 	    (set! pmap omap)
 	    (set! index (-fx (negfx i) 1))))))
 
@@ -457,8 +465,6 @@
       (unless (eq? omap (js-not-a-cmap))
 	 (with-access::JsPropertyCache pcache (cmap pmap index owner)
 	    (set! cmap #t)
-	    (if (eq? omap (js-not-a-cmap))
-		(error "js-pcache-update-owner..." 2 2))
 	    (set! pmap omap)
 	    (set! owner obj)
 	    (set! index i)))))
@@ -474,8 +480,6 @@
       (unless (eq? omap (js-not-a-cmap))
 	 (with-access::JsPropertyCache pcache (pmap cmap index owner)
 	    [assert (pcache) (= (cmap-size nextmap) (+ 1 (cmap-size omap)))]
-	    (if (eq? omap (js-not-a-cmap))
-		(error "js-pcache-next-direct..." 2 2))
 	    (set! pmap omap)
 	    (set! cmap nextmap)
 	    (set! owner #f)
@@ -1379,10 +1383,18 @@
 ;*---------------------------------------------------------------------*/
 (define (js-global-object-get-name/cache o::JsObject name::symbol cache::JsPropertyCache throw %this)
    (with-access::JsObject o ((omap cmap) elements)
-      (with-access::JsPropertyCache cache (cmap index)
-         (if (eq? cmap omap)
-	     (vector-ref elements index)
-	     (js-get-name/cache-miss o name cache throw %this)))))
+      (with-access::JsPropertyCache cache (cmap pmap index owner)
+	 (cond
+	    ((eq? pmap omap)
+	     (with-access::JsObject owner (elements)
+		(if (>=fx index 0)
+		    (vector-ref elements index)
+		    (let ((desc (vector-ref elements (-fx (negfx index) 1))))
+		       (js-property-value o desc %this)))))
+	    ((eq? cmap omap)
+	     (vector-ref elements index))
+	    (else
+	     (js-get-name/cache-miss o name cache throw %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ...                                       */
@@ -1871,16 +1883,16 @@
 		   (%set (function1->proc set %this))
 		   (enumerable enumerable)
 		   (configurable configurable)))))
-	 ((or (not writable) (not enumerable) (not configurable))
-	  (with-access::JsObject o (elements)
-	     (vector-set! elements i
-		(instantiate::JsValueDescriptor
-		   (name name)
-		   (value value)
-		   (writable writable)
-		   (enumerable enumerable)
-		   (configurable configurable)))
-	     value))
+;* 	 ((or (not writable) (not enumerable) (not configurable))      */
+;* 	  (with-access::JsObject o (elements)                          */
+;* 	     (vector-set! elements i                                   */
+;* 		(instantiate::JsValueDescriptor                        */
+;* 		   (name name)                                         */
+;* 		   (value value)                                       */
+;* 		   (writable writable)                                 */
+;* 		   (enumerable enumerable)                             */
+;* 		   (configurable configurable)))                       */
+;* 	     value))                                                   */
 	 (else
 	  (with-access::JsObject o (elements)
 	     (vector-set! elements i value)
@@ -1940,13 +1952,13 @@
 		      ;; extending the elements vector is mandatory
 		      (js-object-push! o index newdesc)
 		      (js-undefined)))
-		  ((plain-data-property? flags)
-		   (let ((nextmap (next-cmap o name value flags)))
-		      (with-access::JsConstructMap nextmap (methods)
-			 (validate-cache-method! value methods index))
-		      ;; store in the obj
-		      (js-object-push! o index value)
-		      value))
+;* 		  ((or #t (plain-data-property? flags))                */
+;* 		   (let ((nextmap (next-cmap o name value flags)))     */
+;* 		      (with-access::JsConstructMap nextmap (methods)   */
+;* 			 (validate-cache-method! value methods index)) */
+;* 		      ;; store in the obj                              */
+;* 		      (js-object-push! o index value)                  */
+;* 		      value))                                          */
 		  (else
 		   ;; create a new map with a JsIndexDescriptor
 		   (let* ((newdesc (instantiate::JsValueDescriptor
@@ -2682,6 +2694,8 @@
 	   o::JsObject name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache args::pair-nil)
    (with-access::JsPropertyCache ccache (pmap vindex method)
+      (tprint "js-object-method-call/cache-miss name=" name
+	 " method=" method " pmap=" (typeof pmap))
       (when (and (procedure? method)
 		 (isa? pmap JsConstructMap)
 		 (=fx (procedure-arity method) (+fx 1 (length args))))
@@ -2785,6 +2799,7 @@
       (jsobject-find obj name
 	 ;; map search
 	 (lambda (obj i)
+	    (tprint "js-object-method-call/cache-miss name=" name " MAPPED")
 	    (with-access::JsObject o ((omap cmap) __proto__)
 	       (with-access::JsObject obj ((wmap cmap) elements)
 		  (with-access::JsConstructMap wmap (methods)
@@ -2801,8 +2816,6 @@
 				  ((procedure? f)
 				   (with-access::JsPropertyCache ccache (pmap cmap index method)
 				      ;; correct arity, put in cache
-				      (if (eq? omap (js-not-a-cmap))
-					  (error "update procedure" 2 2))
 				      (set! pmap omap)
 				      (set! cmap #f)
 				      (set! index i)
@@ -2813,8 +2826,6 @@
 					 ((=fx (procedure-arity method) (+fx 1 (length args)))
 					  (with-access::JsPropertyCache ccache (pmap cmap index (cmethod method))
 					     ;; correct arity, put in cache
-					     (if (eq? omap (js-not-a-cmap))
-					  (error "update procedure.2" 2 2))
 					     (set! pmap omap)
 					     (set! cmap #f)
 					     (set! index i)
@@ -2824,8 +2835,6 @@
 					  (lambda (procedure)
 					     (with-access::JsPropertyCache ccache (pmap cmap index (cmethod method))
 						;; correct arity, put in cache
-						(if (eq? omap (js-not-a-cmap))
-					  (error "update procedure.3" 2 2))
 						(set! pmap omap)
 						(set! cmap #f)
 						(set! index i)
@@ -2846,6 +2855,7 @@
 			       (jsapply (funval el-or-desc))))))))))
 	 ;; property search
 	 (lambda (obj v)
+	    (tprint "js-object-method-call/cache-miss name=" name " UNMAPPED")
 	    (with-access::JsPropertyCache ccache (cmap pmap)
 	       (set! pmap #t)
 	       (set! cmap #t)
@@ -3054,3 +3064,82 @@
 			(else (string<=? (car e1) (car e2)))))
 	       *functions*))
 	 (newline))))
+
+;*---------------------------------------------------------------------*/
+;*    profiling                                                        */
+;*---------------------------------------------------------------------*/
+(cond-expand
+   (profile (define js-profile-allocs (make-vector 32 (fixnum->llong 0)))))
+(cond-expand
+   (profile (define js-profile-accesses (make-vector 32 (fixnum->llong 0)))))
+(cond-expand
+   (profile (define js-profile-extensions (make-vector 32 (fixnum->llong 0)))))
+
+;*---------------------------------------------------------------------*/
+;*    show-allocs ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (show-allocs)
+   
+   (define (show-percentages vec)
+      (let ((len (vector-length vec)))
+	 (let loop ((i (-fx len 1))
+		    (sum (fixnum->llong 0)))
+	    (if (=fx i -1)
+		(let luup ((i 0)
+			   (cum (fixnum->llong 0)))
+		   (when (and (<fx i len) (<llong cum sum))
+		      (let* ((n0 (vector-ref vec i))
+			     (n (if (fixnum? n0) (fixnum->llong n0) n0))
+			     (c (+llong cum n))
+			     (p (/llong (*llong n (fixnum->llong 100)) sum))
+			     (pc (/llong (*llong c (fixnum->llong 100)) sum)))
+			 (printf "  ~a: ~10d (~2,0d%) -> ~d%\n"
+			    (if (=fx i (-fx len 1))
+				"rest"
+				(format "~4d" i))
+			    n p pc)
+			 (luup (+fx i 1) c))))
+		(let ((n (vector-ref vec i)))
+		   (loop (-fx i 1)
+		      (+llong sum (if (fixnum? n) (fixnum->llong n) n))))))))
+   
+   (with-output-to-port (current-error-port)
+      (lambda ()
+	 (let ((m (pregexp-match "hopscript:alloc([0-9]+)"
+		     (getenv "HOPTRACE"))))
+	    (cond-expand
+	       (profile 
+		(print  "\nALLOCS:\n" "========\n")
+		(show-percentages js-profile-allocs)
+		(print  "\nACCESS:\n" "=======\n")
+		(show-percentages js-profile-accesses)
+		(print  "\nEXTENSIONS:\n" "==========\n")
+		(show-percentages js-profile-extensions))
+	       (else
+		(print "re-configure hop in profiling mode")))))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-cache-index ...                                          */
+;*---------------------------------------------------------------------*/
+(define (profile-cache-index idx)
+   (cond-expand
+      (profile
+       (let* ((len (vector-length js-profile-accesses))
+	      (i (if (>=fx idx len) (-fx len 1) idx)))
+	  (vector-set! js-profile-accesses i
+	     (+llong (fixnum->llong 1) (vector-ref js-profile-accesses i)))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    profile-cache-extension ...                                      */
+;*---------------------------------------------------------------------*/
+(define (profile-cache-extension idx)
+   (cond-expand
+      (profile
+       (let* ((len (vector-length js-profile-extensions))
+	      (i (if (>=fx idx len) (-fx len 1) idx)))
+	  (vector-set! js-profile-extensions i
+	     (+llong (fixnum->llong 1) (vector-ref js-profile-extensions i)))))
+      (else
+       #f)))

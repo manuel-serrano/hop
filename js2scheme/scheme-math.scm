@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Oct 17 13:12:31 2017 (serrano)                */
+;*    Last change :  Tue Nov  7 12:10:40 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -46,6 +46,13 @@
 		(when (=fx (length args) 1)
 		   `(js-math-ceil
 		       ,(j2s-scheme (car args) mode return conf hint totype))))
+	       ((string=? val "round")
+		(when (=fx (length args) 1)
+		   `(js-math-round
+		       ,(j2s-scheme (car args) mode return conf hint totype))))
+	       ((string=? val "random")
+		(when (=fx (length args) 0)
+		   `(randomfl)))
 	       (else
 		#f))))))
 

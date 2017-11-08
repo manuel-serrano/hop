@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Nov  5 19:27:13 2017 (serrano)                */
+#*    Last change :  Tue Nov  7 09:15:14 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -49,7 +49,6 @@ bcflagsdbg2="-g -cg"
 bcflagspmem="-pmem -O2 -fno-user-inlining"
 bcflagspmem2="-pmem2 -fno-user-inlining"
 bcflagsopt="-unsafe -O3"
-bcflagsprofile="-O3 -pg -L \$(BUILDLIBDIR)"
 
 bcflagsrts="-unsafe -safee"
 bscm2jsflags="-unsafe"
@@ -292,6 +291,7 @@ while : ; do
       bcflagsrts=-g;
       bscm2jsflags=-g;
       bhopcflags=-g;
+      ccflagsdebug=-g;
       bcflags="$bcflags $bcflagsdbg -Wall -Wno-slot";;
 
     --debug2)
@@ -319,7 +319,8 @@ while : ; do
 
     --profile)
       bscm2jsflags=;
-      bcflags="$bcflagsprofile";;
+      ccflagsprofile="-DHOP_PROFILE=1";
+      bcflagsprofile="-srfi profile";;
 
     --enable-ssl)
       ssl=yes;;
@@ -1125,7 +1126,7 @@ cat $mkmf.in \
           -e "s|@INSTALL@|$install|" \
           -e "s|@JAR@|$jar|" \
           -e "s|@JAVAC@|$javac|" \
-          -e "s|@BCFLAGS@|$bcflags|" \
+          -e "s|@BCFLAGS@|$bcflags $bcflagsprofile|" \
           -e "s|@BLDFLAGS@|$bldflags|" \
           -e "s|@BHFLAGS@|$bhflags|" \
           -e "s|@HFLAGS@|$hflags|" \
@@ -1137,7 +1138,7 @@ cat $mkmf.in \
           -e "s|@FFLAGS@|$fflags|" \
           -e "s|@JVMZIPLIBS@|$jvmziplibs|" \
           -e "s|@JVMINITS@|$jvminits|" \
-          -e "s|@CCFLAGS@|$ccflags|" \
+          -e "s|@CCFLAGS@|$ccflags $ccflagsprofile $ccflagsdebug|" \
           -e "s|@BCFLAGSDEV@|$bcflagsdev|" \
           -e "s|@BUILDDIR@|$PWD|" \
           -e "s|@BUILDLIBDIR@|$buildlibdir|" \

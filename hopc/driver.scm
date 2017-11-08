@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Oct 22 14:36:43 2017 (serrano)                */
+;*    Last change :  Tue Nov  7 09:09:17 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -341,7 +341,9 @@
 		       (o '()))
 	       (cond
 		  ((null? opts)
-		   (let ((opts (append (hopc-bigloo-options) (reverse! o))))
+		   (let ((opts (append (hopc-bigloo-options)
+				  (hopc-bigloo-profile-options)
+				  (reverse! o))))
 		      (cond
 			 ((pair? (hopc-bigloo-safe-option))
 			  (append (hopc-bigloo-safe-option) opts))

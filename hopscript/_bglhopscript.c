@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Nov  2 07:31:13 2017 (serrano)                */
+/*    Last change :  Tue Nov  7 09:17:39 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -29,6 +29,8 @@ extern obj_t BGl_JsArrayz00zz__hopscript_typesz00;
    sizeof( struct BgL_jsarrayz00_bgl )
 #define JSARRAY_CLASS_INDEX \
    BGL_CLASS_INDEX( BGl_JsArrayz00zz__hopscript_typesz00 )
+
+extern obj_t bgl_js_profile_allocs;
 
 /*---------------------------------------------------------------------*/
 /*    type alias                                                       */
@@ -154,6 +156,16 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
       VECTOR_SET( vector, i, BUNSPEC );
    }
 
+#if( defined( HOP_PROFILE ) )
+   {
+      long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
+		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
+		 : constrsize );
+      long cnt = CINT( VECTOR_REF( bgl_js_profile_allocs, i ) );
+      VECTOR_SET( bgl_js_profile_allocs, i, BINT( cnt + 1 ) );
+   }
+#endif
+   
    return BOBJECT( o );
 }
 

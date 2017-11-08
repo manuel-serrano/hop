@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Oct 26 05:49:09 2017 (serrano)                */
+;*    Last change :  Tue Nov  7 12:11:01 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -15,9 +15,9 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_math
-
+   
    (library hop)
-
+   
    (include "types.sch")
    
    (import __hopscript_types
@@ -27,10 +27,11 @@
 	   __hopscript_public
 	   __hopscript_function
 	   __hopscript_error)
-
+   
    (export (js-init-math! ::JsObject)
 	   (js-math-ceil ::obj)
-	   (js-math-floor ::obj)))
+	   (js-math-floor ::obj)
+	   (js-math-round ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math ...                                                      */
@@ -335,16 +336,9 @@
       
       ;; round
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.15
-      (define (js-math-round this x)
-	 (cond
-	    ((not (flonum? x)) x)
-	    ((nanfl? x) x)
-	    ((=fl x +inf.0) x)
-	    ((=fl x -inf.0) x)
-	    (else (inexact->exact (floor (+ x 0.5))))))
-      
       (js-bind! %this js-math 'round
-	 :value (js-make-function %this js-math-round 1 'round)
+	 :value (js-make-function %this
+		   (lambda (this x) (js-math-round x)) 1 'round)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -429,7 +423,18 @@
 	  (else
 	   (flonum->fixnum (floor x)))))))
       
-
+;*---------------------------------------------------------------------*/
+;*    js-math-round ...                                                */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.15    */
+;*---------------------------------------------------------------------*/
+(define (js-math-round x)
+   (cond
+      ((not (flonum? x)) x)
+      ((nanfl? x) x)
+      ((=fl x +inf.0) x)
+      ((=fl x -inf.0) x)
+      (else (inexact->exact (floor (+ x 0.5))))))
 
 
 

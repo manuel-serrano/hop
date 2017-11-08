@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopc/hopc_param.scm               */
+;*    serrano/prgm/project/hop/3.2.x/hopc/hopc_param.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Oct  3 13:17:29 2017 (serrano)                */
+;*    Last change :  Tue Nov  7 09:06:34 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -26,6 +26,8 @@
 	    (hopc-bigloo-O-options::pair-nil)
 	    (hopc-bigloo-safe-option::obj)
 	    (hopc-bigloo-safe-option-set! ::obj)
+	    (hopc-bigloo-profile-options::pair-nil)
+	    (hopc-bigloo-profile-options-set! ::pair-nil)
 	    
 	    (hopc-pass::symbol)
 	    (hopc-pass-set! ::symbol)
@@ -147,6 +149,12 @@
 ;*    hopc-bigloo-safe-option ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-bigloo-safe-option
+   '())
+
+;*---------------------------------------------------------------------*/
+;*    hopc-bigloo-profile-options ...                                  */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-bigloo-profile-options
    '())
 
 ;*---------------------------------------------------------------------*/

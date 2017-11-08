@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Nov  5 09:43:22 2017 (serrano)                */
+;*    Last change :  Wed Nov  8 06:41:57 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -190,6 +190,7 @@
       `(let ((%omap omap))
 	  (if (eq? ,ccmap %omap)
 	      (with-access::JsObject ,o (elements)
+		 (cond-expand (profile (profile-cache-index ,cindex)))
 		 (vector-ref elements ,cindex))
 	      (js-object-get-name/cache-level2 ,@(cdr x)))))
    
@@ -239,8 +240,13 @@
 	  ((eq? ,cpmap %omap)
 	   (with-access::JsObject ,cowner (elements)
 	      (if (>=fx ,cindex 0)
-		  (vector-ref elements ,cindex)
+		  (begin
+		     (cond-expand
+			(profile (profile-cache-index ,cindex)))
+		     (vector-ref elements ,cindex))
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
+		     (cond-expand
+			(profile (profile-cache-index (-fx (negfx ,cindex) 1))))
 		     (js-property-value ,o desc ,%this)))))
 	  (else
 	   (with-access::JsConstructMap %omap (vlen vtable %id)
@@ -276,7 +282,8 @@
 	      (with-access::JsPropertyCache ,cache (cmap index)
 		 (if (eq? cmap omap)
 		     (vector-ref elements index)
-		     (js-get-lookup ,o ,prop ,cache ,throw ,%this))))
+		     ((@ js-global-object-get-name/cache __hopscript_property)
+		      ,o ,prop ,cache ,throw ,%this))))
 	  e))
       (else
        (map (lambda (x) (e x e)) x))))
@@ -375,6 +382,7 @@
       `(let ((%omap omap))
 	  (if (eq? ,ccmap %omap)
 	      (begin
+		 (cond-expand (profile (profile-cache-index ,cindx)))
 		 (vector-set! elements ,cindx ,tmp)
 		 ,tmp)
 	      (js-object-put-name/cache-level2! ,o ,prop
@@ -404,6 +412,7 @@
    
    (define (set o prop tmp throw cache %this cindx ccmap cpmap cowner vindx)
       `(begin
+	  (cond-expand (profile (profile-cache-index ,cindx)))
 	  (vector-set! elements ,cindx ,tmp)
 	  ,tmp))
    
@@ -426,12 +435,16 @@
 	       (begin
 		  (let ((%vec elements))
 		     (if (<fx ,cindx (vector-length %vec))
-			 (vector-set! %vec ,cindx ,tmp)
+			 (begin
+			    (cond-expand (profile (profile-cache-index ,cindx)))
+			    (vector-set! %vec ,cindx ,tmp))
 			 (js-object-add! ,o ,cindx ,tmp)))
 		  (with-access::JsObject ,o ((omap cmap))
 		     (set! omap (if (eq? ,ccmap #t) ,cpmap ,ccmap)))
 		  ,tmp)
 	       (with-access::JsObject ,cowner (elements)
+		  (cond-expand
+		     (profile (profile-cache-index (-fx (negfx ,cindx) 1))))
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindx) 1))))
 		     (js-property-value-set! ,o desc ,tmp %this)))))
 	  (else

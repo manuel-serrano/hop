@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Oct  3 13:19:17 2017 (serrano)                */
+;*    Last change :  Wed Nov  8 06:12:39 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -43,7 +43,7 @@
    (print "Shell Variables:")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:usage, j2s:key, j2s:loc")
-   (print "      nodejs:compile, hopscript:cache[num] (*), hopscript:function[num] (*)")
+   (print "      nodejs:compile, hopscript:cache[num], hopscript:function[num], hopscript:alloc[num] (*)")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (newline)
    (print "(*) runtime shell variable value")
@@ -283,6 +283,7 @@
 		(hopc-bigloo-options-set!
 		   (cons* "-srfi" "cache-level2" (hopc-bigloo-options)))))
 	    (("--profile" (help "Profiling mode"))
+	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))
 	    (section "Experimental features")
 	    (else
