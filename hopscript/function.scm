@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Nov  5 10:39:16 2017 (serrano)                */
+;*    Last change :  Wed Nov  8 07:49:23 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -29,15 +29,10 @@
 	   __hopscript_worker)
    
    (export (js-init-function! ::JsGlobalObject)
-	   
+
 	   thrower-get
 	   thrower-set
 	   
-	   js-function-cmap-props
-	   js-function-cmap-strict-props
-	   js-function-cmap-writable-props
-	   js-function-cmap-writable-strict-props
-
 	   (js-function-debug-name::bstring ::JsFunction)
 	   (js-make-function::JsFunction ::JsGlobalObject
 	      ::procedure ::int ::obj
@@ -101,36 +96,48 @@
 (define strict-caller-property #f)
 
 ;*---------------------------------------------------------------------*/
-;*    js-function-cmap-props ...                                       */
+;*    make-cmap ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define js-function-cmap-props
-   `#(,(prop 'prototype (property-flags #f #f #f #f))
-      ,(prop 'length (property-flags #f #f #f #f))
-      ,(prop 'name (property-flags #f #f #f #f))
-      ,(prop 'source (property-flags #f #f #f #f))))
+(define (make-cmap props)
+   (instantiate::JsConstructMap
+      (methods (make-vector (vector-length props)))
+      (props props)))
 
-(define js-function-cmap-strict-props
-   `#(,(prop 'prototype (property-flags #f #f #f #f))
-      ,(prop 'length (property-flags #f #f #f #f))
-      ,(prop 'name (property-flags #f #f #f #f))
-      ,(prop 'source (property-flags #f #f #f #f))
-      ,(prop 'arguments (property-flags #f #f #f #f))
-      ,(prop 'caller (property-flags #f #f #f #f))))
+;*---------------------------------------------------------------------*/
+;*    js-function-cmap ...                                             */
+;*---------------------------------------------------------------------*/
+(define js-function-cmap
+   (make-cmap
+      `#(,(prop 'prototype (property-flags #f #f #f #f))
+	 ,(prop 'length (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'source (property-flags #f #f #f #f)))))
 
-(define js-function-cmap-writable-props
-   `#(,(prop 'prototype (property-flags #t #f #f #f))
-      ,(prop 'length (property-flags #f #f #f #f))
-      ,(prop 'name (property-flags #f #f #f #f))
-      ,(prop 'source (property-flags #f #f #f #f))))
+(define js-function-strict-cmap
+   (make-cmap
+      `#(,(prop 'prototype (property-flags #f #f #f #f))
+	 ,(prop 'length (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'source (property-flags #f #f #f #f))
+	 ,(prop 'arguments (property-flags #f #f #f #f))
+	 ,(prop 'caller (property-flags #f #f #f #f)))))
 
-(define js-function-cmap-writable-strict-props
-   `#(,(prop 'prototype (property-flags #t #f #f #f))
-      ,(prop 'length (property-flags #f #f #f #f))
-      ,(prop 'name (property-flags #f #f #f #f))
-      ,(prop 'source (property-flags #f #f #f #f))
-      ,(prop 'arguments (property-flags #f #f #f #f))
-      ,(prop 'caller (property-flags #f #f #f #f))))
+(define js-function-writable-cmap
+   (make-cmap
+      `#(,(prop 'prototype (property-flags #t #f #f #f))
+	 ,(prop 'length (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'source (property-flags #f #f #f #f)))))
 
+(define js-function-writable-strict-cmap
+   (make-cmap
+      `#(,(prop 'prototype (property-flags #t #f #f #f))
+	 ,(prop 'length (property-flags #f #f #f #f))
+	 ,(prop 'name (property-flags #f #f #f #f))
+	 ,(prop 'source (property-flags #f #f #f #f))
+	 ,(prop 'arguments (property-flags #f #f #f #f))
+	 ,(prop 'caller (property-flags #f #f #f #f)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    current-loc ...                                                  */
 ;*---------------------------------------------------------------------*/
@@ -351,11 +358,7 @@
 		 js-function-prototype
 		 js-function-strict-prototype))))
    
-   (with-access::JsGlobalObject %this (js-function js-object
-					 js-function-cmap
-					 js-function-strict-cmap
-					 js-function-writable-cmap
-					 js-function-writable-strict-cmap)
+   (with-access::JsGlobalObject %this (js-function js-object)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 ;; MS CARE: replace js-function-prototype with
 	 ;; JsGlobalObject js-function-prototype!

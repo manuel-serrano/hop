@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Nov  5 17:57:53 2017 (serrano)                */
+;*    Last change :  Wed Nov  8 07:48:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -246,11 +246,7 @@
 			 (cmap (instantiate::JsConstructMap))))
 	  (%this (instantiateJsGlobalObject
 		    (__proto__ %prototype)
-		    (cmap (make-cmap '#()))
-		    (js-function-cmap (make-cmap js-function-cmap-props))
-		    (js-function-strict-cmap (make-cmap js-function-cmap-strict-props))
-		    (js-function-writable-cmap (make-cmap js-function-cmap-writable-props))
-		    (js-function-writable-strict-cmap (make-cmap js-function-cmap-writable-strict-props)))))
+		    (cmap (make-cmap '#())))))
       ;; init the builtin function class
       (js-init-function! %this)
       ;; the object constructor
