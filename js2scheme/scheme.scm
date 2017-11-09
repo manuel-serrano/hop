@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Nov  7 14:31:13 2017 (serrano)                */
+;*    Last change :  Thu Nov  9 18:03:38 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -346,7 +346,13 @@
    (define (%cnsts-debug cnsts)
       `(vector
 	  ,@(map (lambda (n)
-		    (j2s-scheme n mode return conf hint totype))
+		    (let ((s (j2s-scheme n mode return conf hint totype)))
+		       (if (isa? n J2SRegExp)
+			   (with-access::J2SRegExp n (loc val flags inline)
+			      (if inline
+				  `(with-access::JsRegExp ,s (rx) rx)
+				  s))
+			   s)))
 	       cnsts)))
    
    (define (%cnsts-intext cnsts)

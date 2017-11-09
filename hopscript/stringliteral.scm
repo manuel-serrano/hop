@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Oct 26 00:21:05 2017 (serrano)                */
+;*    Last change :  Thu Nov  9 18:01:47 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
