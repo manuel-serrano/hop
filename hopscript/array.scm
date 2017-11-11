@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Oct 31 20:57:35 2017 (serrano)                */
+;*    Last change :  Thu Nov  9 23:15:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -112,6 +112,12 @@
       (else
        ((@ js-toindex  __hopscript_public) ,p))))
        
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 4)
+(define %pcache (js-make-pcache 4))
+
 ;*---------------------------------------------------------------------*/
 ;*    global parameters                                                */
 ;*---------------------------------------------------------------------*/
@@ -2035,7 +2041,9 @@
    (with-access::JsGlobalObject %this (js-array js-array-prototype)
       (let ((proto (if (eq? constructor js-array)
 		       js-array-prototype
-		       (js-get constructor 'prototype %this))))
+		       (js-get-name/cache constructor 'prototype
+			  (js-pcache-ref %pcache 0)
+			  %this))))
 	 (instantiateJsArray
 	    (cmap (js-not-a-cmap))
 	    (__proto__ proto)))))
@@ -2924,7 +2932,11 @@
 (define (js-array-maybe-push this item %this)
    (if (isa? this JsArray)
        (js-array-push this item %this)
-       (js-call1 %this (js-get this 'push %this) this item)))
+       (js-call1 %this
+	  (js-get-name/cache this 'push
+	     (js-pcache-ref %pcache 1)
+	     %this)
+	  this item)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-pop ...                                                 */
@@ -2961,7 +2973,8 @@
 (define (js-array-maybe-pop this %this)
    (if (isa? this JsArray)
        (js-array-pop this %this)
-       (js-call0 %this (js-get this 'pop %this) this)))
+       (js-call0 %this
+	  (js-get-name/cache this 'pop (js-pcache-ref %pcache 2) %this) this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-fill ...                                                */
@@ -3012,7 +3025,9 @@
 (define (js-array-maybe-fill this value start end %this)
    (if (isa? this JsArray)
        (js-array-fill this value start end %this)
-       (js-call3 %this (js-get this 'fill %this) this value start end)))
+       (js-call3 %this
+	  (js-get-name/cache this 'fill (js-pcache-ref %pcache 3) %this)
+	  this value start end)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-comprehension ...                                       */

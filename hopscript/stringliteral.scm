@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Nov  9 18:01:47 2017 (serrano)                */
+;*    Last change :  Thu Nov  9 23:34:35 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -90,7 +90,9 @@
 	   (js-jsstring-maybe-trim ::obj ::JsGlobalObject)
 	   (js-jsstring-fromcharcode ::JsObject ::obj ::JsGlobalObject)
 	   (js-jsstring-escape ::obj)
-	   (js-jsstring-unescape ::obj ::JsGlobalObject))
+	   (js-jsstring-unescape ::obj ::JsGlobalObject)
+	   (js-jsstring-slice ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-maybe-slice ::obj ::obj ::obj ::JsGlobalObject))
 
    (cond-expand
       ((not bigloo4.3a)
@@ -99,8 +101,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
-(%define-pcache 4)
-(define %pcache (js-make-pcache 4))
+(%define-pcache 31)
+(define %pcache (js-make-pcache 31))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -963,7 +965,9 @@
 				  compare naturalCompare localeCompare trim))
 		     ;; (tprint "JS_GET_PROTO: " prop " " (typeof prop))
 		     (with-access::JsGlobalObject %this (js-string)
-			(let ((proto (js-get js-string 'prototype %this)))
+			(let ((proto (js-get-name/cache js-string 'prototype
+					(js-pcache-ref %pcache 0)
+					 %this)))
 			   (js-get proto prop %this))))
 		    (else
 		     ;; see js-get-jsobject@property.scm
@@ -1079,7 +1083,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-indexof this (js-tostring search %this) position %this))
 	 ((isa? this JsObject)
-	  (js-call2 %this (js-get this 'indexOf %this) this search position))
+	  (js-call2 %this
+	     (js-get-name/cache this 'indexOf (js-pcache-ref %pcache 1)  %this)
+	     this search position))
 	 (else
 	  (loop (js-toobject %this this))))))
    
@@ -1147,7 +1153,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-lastindexof this (js-tostring search %this) position %this))
 	 ((isa? this JsObject)
-	  (js-call2 %this (js-get this 'lastIndexOf %this) this search position))
+	  (js-call2 %this
+	     (js-get-name/cache this 'lastIndexOf (js-pcache-ref %pcache 2)  %this)
+	     this search position))
 	 (else
 	  (loop (js-toobject %this this))))))
    
@@ -1189,7 +1197,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-charcodeat this index %this))
 	 ((isa? this JsObject)
-	  (js-call1 %this (js-get this 'charCodeAt %this) this index))
+	  (js-call1 %this
+	     (js-get-name/cache this 'charCodeAt (js-pcache-ref %pcache 3) %this)
+	     this index))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -1254,7 +1264,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-charat this index %this))
 	 ((isa? this JsObject)
-	  (js-call1 %this (js-get this 'charAt %this) this index))
+	  (js-call1 %this
+	     (js-get-name/cache this 'charAt (js-pcache-ref %pcache 4) %this)
+	     this index))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -1296,7 +1308,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-substring this start end %this))
 	 ((isa? this JsObject)
-	  (js-call2 %this (js-get this 'substring %this) this start end))
+	  (js-call2 %this
+	     (js-get-name/cache this 'substring (js-pcache-ref %pcache 5) %this)
+	     this start end))
 	 (else
 	  (loop (js-toobject %this this))))))
    
@@ -1342,7 +1356,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-substr this start length %this))
 	 ((isa? this JsObject)
-	  (js-call2 %this (js-get this 'substr %this) this start length))
+	  (js-call2 %this
+	     (js-get-name/cache this 'substr (js-pcache-ref %pcache 6) %this)
+	     this start length))
 	 (else
 	  (loop (js-toobject %this this))))))
    
@@ -1372,7 +1388,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-tolowercase this))
 	 ((isa? this JsObject)
-	  (js-call0 %this (js-get this 'toLowerCase %this) this))
+	  (js-call0 %this
+	     (js-get-name/cache this 'toLowerCase (js-pcache-ref %pcache 7) %this)
+	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
    
@@ -1400,7 +1418,11 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-tolocalelowercase this))
 	 ((isa? this JsObject)
-	  (js-call0 %this (js-get this 'toLocaleLowerCase %this) this))
+	  (js-call0 %this
+	     (js-get-name/cache this 'toLocaleLowerCase
+		(js-pcache-ref %pcache 8)
+		%this)
+	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
    
@@ -1430,7 +1452,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-touppercase this))
 	 ((isa? this JsObject)
-	  (js-call0 %this (js-get this 'toUpperCase %this) this))
+	  (js-call0 %this
+	     (js-get-name/cache this 'toUpperCase (js-pcache-ref %pcache 9) %this)
+	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
    
@@ -1458,7 +1482,11 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-tolocaleuppercase this))
 	 ((isa? this JsObject)
-	  (js-call0 %this (js-get this 'toLocaleUpperCase %this) this))
+	  (js-call0 %this
+	     (js-get-name/cache this 'toLocaleUpperCase
+		(js-pcache-ref %pcache 10)
+		 %this)
+	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
    
@@ -1601,7 +1629,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-split this separator limit %this))
 	 ((isa? this JsObject)
-	  (js-call2 %this (js-get this 'split %this) this separator limit))
+	  (js-call2 %this
+	     (js-get-name/cache this 'split (js-pcache-ref %pcache 11)  %this)
+	     this separator limit))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -1799,7 +1829,7 @@
       (if (>=fx (vector-ref pos 0) 0)
 	  (js-substring s (vector-ref pos 0) (vector-ref pos 1))
 	  (js-ascii->jsstring "")))
-   
+
    (with-access::JsGlobalObject %this (js-regexp js-array)
       (let* ((s (js-jsstring->string this))
 	     (len (string-length s))
@@ -1895,12 +1925,16 @@
 			  (loop (+fx i 2) (+fx i 2)
 			     (cons (js-jsstring->string seg) segments))))
 		      ((#\`)
-		       (let* ((k (js-get match 'index %this))
+		       (let* ((k (js-get-name/cache match 'index
+				    (js-pcache-ref %pcache 12)
+				     %this))
 			      (portion (substring string 0 k)))
 			  (loop (+fx i 2) (+fx i 2)
 			     (cons portion segments))))
 		      ((#\')
-		       (let* ((k (js-get match 'index %this))
+		       (let* ((k (js-get-name/cache match 'index
+				    (js-pcache-ref %pcache 13)
+				     %this))
 			      (s (js-get match (js-toname 0 %this) %this))
 			      (l (js-jsstring-lengthfx s))
 			      (portion (substring string (+fx k l))))
@@ -1982,15 +2016,23 @@
 			  (cons (substring str 0 i)
 			     (table22 newstring a str
 				(substring str (+fx i (js-jsstring-lengthfx searchstr)))))))))))
-	    ((not (js-get searchvalue 'global %this))
-	     (let* ((exec (js-get (js-get js-regexp 'prototype %this)
-			     'exec %this))
+	    ((not (js-get-name/cache searchvalue 'global
+		     (js-pcache-ref %pcache 14)
+		      %this))
+	     (let* ((proto (js-get-name/cache js-regexp 'prototype
+			      (js-pcache-ref %pcache 15)
+			       %this))
+		    (exec (js-get-name/cache proto 'exec
+			     (js-pcache-ref %pcache 16)
+			      %this))
 		    (res (js-call1 %this exec searchvalue string)))
 		(cond
 		   ((eq? res (js-null))
 		    string)
 		   ((isa? replacevalue JsFunction)
-		    (let ((i (js-get res 'index %this))
+		    (let ((i (js-get-name/cache res 'index
+				(js-pcache-ref %pcache 17)
+				 %this))
 			  (str (js-jsstring->string string)))
 		       (js-stringlist->jsstring
 			  (list
@@ -2005,7 +2047,9 @@
 				(+fx i (js-jsstring-lengthfx (js-get res (js-toname 0 %this) %this))))))))
 		   (else
 		    (let ((newstring (js-tostring replacevalue %this))
-			  (i (js-get res 'index %this))
+			  (i (js-get-name/cache res 'index
+				(js-pcache-ref %pcache 18)
+				 %this))
 			  (str (js-jsstring->string string)))
 		       (js-stringlist->jsstring 
 			  (cons (substring str 0 i)
@@ -2015,9 +2059,13 @@
 	    (else
 	     (with-access::JsRegExp searchvalue (lastindex)
 		(with-access::JsValueDescriptor lastindex ((lastindex value))
-		   (let ((previousLastIndex 0)
-			 (exec (js-get (js-get js-regexp 'prototype %this)
-				  'exec %this)))
+		   (let* ((previousLastIndex 0)
+			  (proto (js-get-name/cache js-regexp 'prototype
+				    (js-pcache-ref %pcache 19)
+				     %this))
+			  (exec (js-get-name/cache proto 'exec
+				   (js-pcache-ref %pcache 20)
+				    %this)))
 		      (set! lastindex 0)
 		      (let loop ((n 0)
 				 (ms '()))
@@ -2033,7 +2081,9 @@
 				       (if (null? matches)
 					   res
 					   (let* ((m (car matches))
-						  (i (js-get m 'index %this))
+						  (i (js-get-name/cache m 'index
+							(js-pcache-ref %pcache 21)
+							 %this))
 						  (l (js-jsstring-lengthfx (js-get m (js-toname 0 %this) %this)))
 						  (v (js-tostring
 							(js-apply %this replacevalue
@@ -2059,7 +2109,9 @@
 					  (if (null? matches)
 					      res
 					      (let* ((m (car matches))
-						     (i (js-get m 'index %this))
+						     (i (js-get-name/cache m 'index
+							   (js-pcache-ref %pcache 22)
+							    %this))
 						     (l (js-jsstring-lengthfx (js-get m (js-toname 0 %this) %this)))
 						     (sres (js-jsstring->string res))
 						     (v (apply utf8-string-append* (table22 newstring m str ""))))
@@ -2095,7 +2147,11 @@
 			  res))))
 	      (js-jsstring-replace this searchvalue replacevalue %this)))
 	 ((isa? this JsObject)
-	  (js-call2 %this (js-get this 'replace %this) this
+	  (js-call2 %this
+	     (js-get-name/cache this 'replace
+		(js-pcache-ref %pcache 23)
+		 %this)
+	     this
 	     searchvalue replacevalue))
 	 (else
 	  (loop (js-toobject %this this))))))
@@ -2111,7 +2167,12 @@
 	     (rx (if (isa? regexp JsRegExp)
 		     regexp
 		     (js-new %this js-regexp regexp)))
-	     (exec (js-get (js-get js-regexp 'prototype %this) 'exec %this)))
+	     (proto (js-get-name/cache js-regexp 'prototype
+		       (js-pcache-ref %pcache 24)
+		        %this))
+	     (exec (js-get-name/cache proto 'exec
+		      (js-pcache-ref %pcache 25)
+		       %this)))
 	 (with-access::JsRegExp rx (lastindex global)
 	    (with-access::JsValueDescriptor global ((global value))
 	       (with-access::JsValueDescriptor lastindex ((lastindex value))
@@ -2154,7 +2215,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-match this regexp %this))
 	 ((isa? this JsObject)
-	  (js-call1 %this (js-get this 'match %this) this regexp))
+	  (js-call1 %this
+	     (js-get-name/cache this 'match (js-pcache-ref %pcache 26)  %this)
+	     this regexp))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -2175,7 +2238,11 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-naturalcompare this that %this))
 	 ((isa? this JsObject)
-	  (js-call1 %this (js-get this 'naturalCompare %this) this that))
+	  (js-call1 %this
+	     (js-get-name/cache this 'naturalCompare
+		(js-pcache-ref %pcache 27)
+		 %this)
+	     this that))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -2198,7 +2265,11 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-localecompare this that %this))
 	 ((isa? this JsObject)
-	  (js-call1 %this (js-get this 'localeCompare %this) this that))
+	  (js-call1 %this
+	     (js-get-name/cache this 'localeCompare
+		(js-pcache-ref %pcache 28)
+		 %this)
+	     this that))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -2220,7 +2291,9 @@
 	 ((js-jsstring? this)
 	  (js-jsstring-trim this))
 	 ((isa? this JsObject)
-	  (js-call0 %this (js-get this 'trim %this) this))
+	  (js-call0 %this
+	     (js-get-name/cache this 'trim (js-pcache-ref %pcache 29) %this)
+	     this))
 	 (else
 	  (loop (js-toobject %this this))))))
 
@@ -2432,3 +2505,34 @@
 	     (let ((l (-fx ol i)))
 		(blit-string! str i buf j l)
 		(loop ol (+fx j l))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-slice ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-slice jss::obj start end %this)
+   (let* ((len (uint32->fixnum (js-jsstring-length jss)))
+	  (intstart (js-tointeger start %this))
+	  (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
+	  (from (->fixnum
+		   (if (< intstart 0)
+		       (max (+ len intstart) 0)
+		       (min intstart len))))
+	  (to (->fixnum
+		 (if (< intend 0)
+		     (max (+ len intend) 0)
+		     (min intend len))))
+	  (span (maxfx (-fx to from) 0))
+	  (end (+ from span)))
+      (if (or (>fx from 0) (<fx end len))
+	  (js-jsstring-substring jss from end %this)
+	  jss)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-maybe-slice ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-maybe-slice this start end %this)
+   (if (js-jsstring? this)
+       (js-jsstring-slice this start end %this)
+       (let ((slice (js-get-name/cache this 'slice
+		       (js-pcache-ref %pcache 30) %this)))
+	  (js-call2 %this slice this start end))))

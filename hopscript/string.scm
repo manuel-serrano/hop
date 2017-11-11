@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov  4 08:59:12 2017 (serrano)                */
+;*    Last change :  Thu Nov  9 23:36:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -43,6 +43,12 @@
 ;*    JsStringLiteral begin                                            */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-begin!)
+
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 2)
+(define %pcache (js-make-pcache 2))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -158,9 +164,12 @@
 
 	 ;; string allocation
 	 (define (js-string-alloc::JsString constructor::JsFunction)
+	    (js-debug-object constructor)
 	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
-	       (__proto__ (js-get constructor 'prototype %this))))
+	       (__proto__ (js-get-name/cache constructor 'prototype
+			     (js-pcache-ref %pcache 0)
+			     %this))))
 
 	 ;; then, create a HopScript object
 	 (set! js-string
@@ -476,23 +485,8 @@
    ;; slice
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.13
    (define (slice this::obj start end)
-      (let* ((jss (js-cast-string %this this))
-	     (len (uint32->fixnum (js-jsstring-length jss)))
-	     (intstart (js-tointeger start %this))
-	     (intend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
-	     (from (->fixnum
-		      (if (< intstart 0)
-			  (max (+ len intstart) 0)
-			  (min intstart len))))
-	     (to (->fixnum
-		    (if (< intend 0)
-			(max (+ len intend) 0)
-			(min intend len))))
-	     (span (maxfx (-fx to from) 0))
-	     (end (+ from span)))
-	 (if (or (>fx from 0) (<fx end len))
-	     (js-jsstring-substring jss from end %this)
-	     jss)))
+      (let ((jss (js-cast-string %this this)))
+	 (js-jsstring-slice jss start end %this)))
    
    (js-bind! %this obj 'slice
       :value (js-make-function %this slice 2 'slice)

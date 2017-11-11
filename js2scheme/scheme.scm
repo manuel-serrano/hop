@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Nov  9 18:03:38 2017 (serrano)                */
+;*    Last change :  Thu Nov  9 23:36:10 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -84,6 +84,8 @@
 	("localeCompare" js-jsstring-maybe-localecompare any (any) %this)
 	("trim" js-jsstring-trim string () #f)
 	("trim" js-jsstring-maybe-trim any () %this)
+	("slice" js-jsstring-slice string (any any) %this)
+	("slice" js-jsstring-maybe-slice any (any any) %this)
 	;; array methods
 ;* 	("concat" js-array-concat array (any) %this)                   */
 ;* 	("concat" js-array-maybe-concat any (any) %this)               */

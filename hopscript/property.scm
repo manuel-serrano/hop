@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Nov  8 06:42:10 2017 (serrano)                */
+;*    Last change :  Sat Nov 11 06:35:06 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1220,8 +1220,6 @@
       (if (eq? pval (js-absent))
 	  (js-undefined)
 	  pval)))
-
-(define cnt 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get/debug ...                                                 */
@@ -2694,8 +2692,8 @@
 	   o::JsObject name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache args::pair-nil)
    (with-access::JsPropertyCache ccache (pmap vindex method)
-      (tprint "js-object-method-call/cache-miss name=" name
-	 " method=" method " pmap=" (typeof pmap))
+;*       (tprint "js-object-method-call/cache-miss name=" name         */
+;* 	 " method=" method " pmap=" (typeof pmap))                     */
       (when (and (procedure? method)
 		 (isa? pmap JsConstructMap)
 		 (=fx (procedure-arity method) (+fx 1 (length args))))
@@ -2799,7 +2797,7 @@
       (jsobject-find obj name
 	 ;; map search
 	 (lambda (obj i)
-	    (tprint "js-object-method-call/cache-miss name=" name " MAPPED")
+	    ;;(tprint "js-object-method-call/cache-miss name=" name " MAPPED")
 	    (with-access::JsObject o ((omap cmap) __proto__)
 	       (with-access::JsObject obj ((wmap cmap) elements)
 		  (with-access::JsConstructMap wmap (methods)
@@ -2855,7 +2853,7 @@
 			       (jsapply (funval el-or-desc))))))))))
 	 ;; property search
 	 (lambda (obj v)
-	    (tprint "js-object-method-call/cache-miss name=" name " UNMAPPED")
+;* 	    (tprint "js-object-method-call/cache-miss name=" name " UNMAPPED") */
 	    (with-access::JsPropertyCache ccache (cmap pmap)
 	       (set! pmap #t)
 	       (set! cmap #t)
