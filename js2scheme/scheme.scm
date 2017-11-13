@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme.scm              */
+;*    /tmp/HOP/3.2.x/js2scheme/scheme.scm                              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Nov  9 23:36:10 2017 (serrano)                */
+;*    Last change :  Mon Nov 13 16:49:06 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1083,15 +1083,6 @@
    (with-access::J2SDeclInit d (val usage id hint scope loc)
       (let ((ident (j2s-decl-scheme-id d)))
 	 (cond
-	    ((memq 'eval usage)
-	     `(begin
-		 (define ,ident
-		    ,(j2s-scheme val mode return conf hint 'any))
-		 (js-define %this ,scope ',id
-		    (lambda (%) ,ident)
-		    (lambda (% %v) (set! ,ident %v))
-		    %source
-		    ,(caddr loc))))
 	    ((or (not (isa? val J2SFun))
 		 (isa? val J2SSvc)
 		 (memq 'assig usage))
@@ -1102,7 +1093,15 @@
 		   (tmp (j2s-fast-id id)))
 		`(begin
 		    (define ,tmp ,fun)
-		    (define ,ident ,(j2sfun->scheme val tmp tmp mode return conf)))))
+		    (define ,ident
+		       ,(j2sfun->scheme val tmp tmp mode return conf))
+		    ,@(if (memq 'eval usage)
+			  `((js-define %this ,scope ',id
+			       (lambda (%) ,ident)
+			       (lambda (% %v) (set! ,ident %v))
+			       %source
+			       ,(caddr loc)))
+			  '()))))
 	    ((memq 'call usage)
 	     `(define ,(j2s-fast-id id)
 		 ,(jsfun->lambda val mode return conf
