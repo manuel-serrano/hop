@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-utils.scm        */
+;*    /tmp/HOP/3.2.x/js2scheme/scheme-utils.scm                        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Oct 17 18:07:00 2017 (serrano)                */
+;*    Last change :  Mon Nov 13 16:05:26 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -118,7 +118,7 @@
 (define (j2s-scheme-id id pref)
    (cond
       ((char=? (string-ref (symbol->string! id) 0) #\%) id)
-      ((memq id '(GLOBAL arguments)) id)
+      ((memq id '(GLOBAL global arguments)) id)
       (else (symbol-append pref id))))
 
 ;*---------------------------------------------------------------------*/
