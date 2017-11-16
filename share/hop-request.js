@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Dec 25 06:57:53 2004                          */
-/*    Last change :  Tue Jul  4 09:29:44 2017 (serrano)                */
+/*    Last change :  Thu Nov 16 13:45:35 2017 (serrano)                */
 /*    Copyright   :  2004-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    WITH-HOP implementation                                          */
@@ -506,7 +506,7 @@ function hop_request_onready( xhr, svc, succ, fail ) {
 	 fail = xhr_hop_failure_callback( fail );
 
 	 try {
-	    o = hop_url_encoded_to_obj( err );
+	    o = hop_request_unserialize( xhr, svc );
 	 } catch( e ) {
 	    console.log( "cannot unserialize response", svc );
 	    hop_callback_handler( e, xhr.precontext );
