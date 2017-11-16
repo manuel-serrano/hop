@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Thu Oct  5 18:31:48 2017 (serrano)                */
+#*    Last change :  Thu Nov 16 08:16:42 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -295,6 +295,7 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
 	echo >> $@
 	echo "\"use strict\";" >> $@
 	echo >> $@
+	echo "var hop_current_stack_context;" >> $@
 	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \
                | sed -e "s|//[^\"]*$$||g" \
                | sed -e "/^[ \t]*$$/D" \
