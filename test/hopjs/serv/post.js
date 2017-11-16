@@ -20,6 +20,7 @@ service serv1( o ) {
 
    assert.ok( x1 > 0 );
    assert.ok( y1 > x1 );
+   console.log( "serv1...test passed" );
    res++;
    
    return x1 + y1;
@@ -32,6 +33,7 @@ service upload( o ) {
 
    assert.ok( stats.isFile() && (Date.now() - stats.ctime.getTime() < 2000) );
    assert.equal( content, chars );
+   console.log( "upload...test passed" );
    res++;
    
    return 'OK' ;
@@ -109,7 +111,9 @@ function test() {
       console.log( "status=", result.statusCode );
       assert.ok( result.statusCode == 200, "statusCode" );
       result.on( 'data', function ( chunk ) {
-	 assert.ok( chunk.toString() == "OK" );
+	 var c = chunk.toString();
+	 console.log( "chunk=", c );
+	 assert.ok( c == "OK" );
       });
    } );
 
@@ -139,17 +143,28 @@ function test() {
 	 assert.ok( v.f32[ 0 ] > 0.9 );
 	 assert.ok( v.buf instanceof Buffer );
 	 assert.ok( v.el.id === "bar" );
+	 console.log( "serv3...test passed" );
 	 res++;
       } );
 }
 
-setTimeout( function() {
+function checkCompletion() {
    try {
-      assert.ok( res === 3 );
+      assert.ok( res === 3, "post incomplete" );
    } finally {
       process.exit( res === 3 ? 0 : 1 );
    }
-}, 500 );
+}
+
+setTimeout( function() {
+   if( hop.compilerDriver.pending > 0 ) {
+      hop.compilerDriver.addEventListener( "all", function( e ) {
+	 checkCompletion();
+      } );
+   } else {
+      checkCompletion();
+   }
+}, 1000 );
 
 test();
 

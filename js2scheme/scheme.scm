@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOP/3.2.x/js2scheme/scheme.scm                              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Nov 13 16:49:06 2017 (serrano)                */
+;*    Last change :  Thu Nov 16 12:34:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2685,15 +2685,18 @@
 		    ((memq (typeof-this obj conf) '(object this global))
 		     `(with-access::JsObject ,otmp (cmap)
 			 (let ((%omap cmap))
-			    (if (eq? (js-pcache-cmap ,(js-pcache cache)) cmap)
+			    (if (eq? (js-pcache-cmap ,(js-pcache cache)) %omap)
 				,(aput-assigop otmp pro prov op lhs rhs 1)
 				,(aput-assigop otmp pro prov op lhs rhs 2)))))
 		    (else
-		     `(if (and (isa? ,otmp JsObject)
-			       (with-access::JsObject ,otmp (cmap)
-				  (eq? (js-pcache-cmap ,(js-pcache cache)) cmap)))
-			  ,(aput-assigop otmp pro prov op lhs rhs 1)
-			  (let ((%omap (with-access::JsObject ,otmp (cmap) cmap)))
+		     `(if (isa? ,otmp JsObject)
+			  (with-access::JsObject ,otmp (cmap)
+			     (let ((%omap cmap))
+				(if (eq? (js-pcache-cmap ,(js-pcache cache))
+				       %omap)
+				    ,(aput-assigop otmp pro prov op lhs rhs 1)
+				    ,(aput-assigop otmp pro prov op lhs rhs 2))))
+			  (let ((%omap #unspecified))
 			     ,(aput-assigop otmp pro prov op lhs rhs 2)))))))))
    
    (with-access::J2SAssigOp this (loc lhs rhs op type)
