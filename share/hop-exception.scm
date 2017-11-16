@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Wed Mar 30 08:15:37 2016 (serrano)                */
-;*    Copyright   :  2009-16 Manuel Serrano                            */
+;*    Last change :  Thu Nov 16 07:58:35 2017 (serrano)                */
+;*    Copyright   :  2009-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */
@@ -337,7 +337,10 @@
 	    (<DIV> :data-hss-class "hop-exception-title" "Client Error")
 	    ;; error message
 	    (<TABLE> :data-hss-class "hop-exception-msg"
-	       (<TR> (<TH> exc.name))
+	       (<TR> (<TH> (if (and (js-instanceof? exc (@ Object js))
+				    (js-in? "name" exc))
+			       exc.name
+			       (typeof exc))))
 	       (<TR> (<TD> (get-exception-message exc)))
 	       (let ((name (if (and (js-instanceof? exc (@ Object js))
 				    (js-in? "scObject" exc))
