@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Nov  9 23:15:25 2017 (serrano)                */
+;*    Last change :  Sat Nov 18 07:45:42 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -47,18 +47,18 @@
 	   (inline js-array-vec::vector ::JsArray)
 	   (inline js-array-ilen::uint32 ::JsArray)
 	   
-	   (js-array-ref ::JsArray ::obj ::JsGlobalObject)
+	   (inline js-array-ref ::JsArray ::obj ::JsGlobalObject)
 	   (js-array-ref-ur ::JsArray ::long ::JsGlobalObject)
 	   (inline js-array-inl-ref ::JsArray ::obj
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
-	   (js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
+	   (inline js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
 	   (inline js-array-index-inl-ref ::JsArray ::uint32
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   (inline js-array-fixnum-ref ::JsArray ::long ::JsGlobalObject)
 	   (inline js-array-fixnum-inl-ref ::JsArray ::long
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   
-	   (js-array-set! ::JsArray idx ::obj ::bool ::JsGlobalObject)
+	   (inline js-array-set! ::JsArray idx ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-inl-set! ::JsArray ::obj ::obj
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (js-array-index-set! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
@@ -68,6 +68,7 @@
 	      ::bool ::JsGlobalObject)
 	   (inline js-array-fixnum-inl-set! ::JsArray ::long ::obj
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
+	   (js-array-put! ::JsArray p ::obj ::bool ::JsGlobalObject)
 	   
 	   (js-array-set-ur! ::JsArray ::long ::obj ::bool ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
@@ -538,7 +539,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-ref ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-array-ref arr::JsArray idx %this)
+(define-inline (js-array-ref arr::JsArray idx %this)
    (if (cond-expand
 	  ((or bint30 bint32)
 	   (and (fixnum? idx) (>=fx idx 0)))
@@ -562,7 +563,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-ref ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-array-index-ref arr::JsArray idx::uint32 %this)
+(define-inline (js-array-index-ref arr::JsArray idx::uint32 %this)
    (with-access::JsArray arr (vec ilen)
       (cond
 	 ((<u32 idx ilen)
@@ -631,7 +632,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-set! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (js-array-set! arr::JsArray idx val throw %this)
+(define-inline (js-array-set! arr::JsArray idx val throw %this)
    (if (and (fixnum? idx) (>=fx idx 0))
        (js-array-set-ur! arr idx val throw %this)
        (js-array-put! arr idx val throw %this)))
