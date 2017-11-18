@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Oct  3 07:07:39 2017 (serrano)                */
+;*    Last change :  Sat Nov 18 06:43:52 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -997,8 +997,11 @@
 		       (node-interval-set! this env fix
 			  (interval-div intl intr)))
 		      ((%)
-		       (node-interval-set! this env fix
-			  intl))
+		       (with-access::J2SExpr rhs (type)
+			  (if (and (eq? type 'integer)
+				   (> (interval-min intr) 0))
+			      (node-interval-set! this env fix intl)
+			      (return *infinity-intv* env))))
 		      ((<<)
 		       (node-interval-set! this env fix
 			  (interval-shiftl intl intr)))
