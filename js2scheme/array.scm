@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/array.scm               */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/array.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Jan 31 18:51:16 2017 (serrano)                */
+;*    Last change :  Sun Nov 19 07:25:33 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -132,12 +132,12 @@
 			     (init init)
 			     (incr incr)
 			     (test test)
-			     (body body))))
+			     (body (array! body env)))))
 		    (duplicate::J2SFor this
 		       (init init)
 		       (incr incr)
 		       (test test)
-		       (body body))))))))
+		       (body (array! body env)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    array! ::J2SWhile ...                                            */
@@ -248,7 +248,7 @@
 	  (lambda (arr)
 	     (duplicate::J2SAref this
 		(deps env)
-		(mark mdecl)
+		(amark mdecl)
 		(array (cadr arr))
 		(alen (caddr arr)))))
 	 (else

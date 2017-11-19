@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Nov  3 07:39:14 2017 (serrano)                */
+;*    Last change :  Sun Nov 19 09:55:19 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -679,7 +679,8 @@
 ;*    js/num ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (js/num lnum rnum)
-   (if (= rnum 0)
+   (cond
+      ((= rnum 0)
        (if (flonum? rnum)
 	   (cond
 	      ((and (flonum? lnum) (nanfl? lnum))
@@ -698,8 +699,9 @@
 	      ((and (flonum? lnum) (nanfl? lnum)) lnum)
 	      ((> lnum 0) +inf.0)
 	      ((< lnum 0) -inf.0)
-	      (else +nan.0)))
-       (/ lnum rnum)))
+	      (else +nan.0))))
+      (else
+       (/ lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js% ...                                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Nov 16 12:34:05 2017 (serrano)                */
+;*    Last change :  Sun Nov 19 07:14:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2237,7 +2237,7 @@
    (define (aset/cache lhs rhs)
       ;; an optimized array set in a loop (see array.scm)
       (with-access::J2SAccess lhs (obj field)
-	 (with-access::J2SAref obj (array alen mark deps)
+	 (with-access::J2SAref obj (array alen amark deps)
 	    (let ((scmarray (j2s-decl-scheme-id array))
 		  (scmalen (j2s-decl-scheme-id alen))
 		  (scmfield (j2s-scheme field mode return conf hint (j2s-type field)))
@@ -2247,11 +2247,11 @@
 	       (case tyfield
 		  ((index uint29 ufixnu)
 		   (let ((idx (j2s-scheme field mode return conf hint 'uint32)))
-		      (if mark
+		      (if amark
 			  `(JS-ARRAY-INDEX-MARK-SET! ,scmobj
 			      ,(uint32 tyfield idx) ,scmrhs
 			      ,scmarray ,scmalen
-			      ,(j2s-decl-scheme-id mark)
+			      ,(j2s-decl-scheme-id amark)
 			      ,(strict-mode? mode)
 			      %this)
 			  `(JS-ARRAY-INDEX-FAST-SET! ,scmobj
@@ -2261,10 +2261,10 @@
 			      ,(strict-mode? mode)
 			      %this))))
 		  ((fixnum)
-		   (if mark
+		   (if amark
 		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj ,scmfield ,scmrhs
 			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id mark)
+			   ,(j2s-decl-scheme-id amark)
 			   ,(strict-mode? mode)
 			   %this)
 		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj ,scmfield ,scmrhs
@@ -2273,10 +2273,10 @@
 			   ,(strict-mode? mode)
 			   %this)))
 		  (else
-		   (if mark
+		   (if amark
 		       `(JS-ARRAY-MARK-SET! ,scmobj ,scmfield ,scmrhs
 			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id mark)
+			   ,(j2s-decl-scheme-id amark)
 			   ,(strict-mode? mode)
 			   %this)
 		       `(JS-ARRAY-FAST-SET! ,scmobj ,scmfield ,scmrhs
@@ -2326,7 +2326,7 @@
 		    %this))
 	       (else
 		(case tyf
-		   ((index)
+		   ((index ufixnum uint29)
 		    `(js-array-index-set!
 			,(j2s-scheme obj mode return conf hint totype)
 			(fixnum->uint32
@@ -2334,7 +2334,7 @@
 			,(j2s-scheme rhs mode return conf hint totype)
 			,(strict-mode? mode)
 			%this))
-		   ((fixnum ufixnum uint29)
+		   ((fixnum)
 		    `(js-array-fixnum-set!
 			,(j2s-scheme obj mode return conf hint totype)
 			,(j2s-scheme field mode return conf hint totype)
@@ -2731,7 +2731,7 @@
    
    (define (aref/cache this::J2SAccess)
       (with-access::J2SAccess this (obj field)
-	 (with-access::J2SAref obj (array alen mark deps)
+	 (with-access::J2SAref obj (array alen amark deps)
 	    (let ((scmarray (j2s-decl-scheme-id array))
 		  (scmalen (j2s-decl-scheme-id alen))
 		  (scmfield (j2s-scheme field mode return conf hint (j2s-type field)))
@@ -2740,11 +2740,11 @@
 	       (case tyfield
 		  ((index uint29 ufixnum)
 		   (let ((idx (j2s-scheme field mode return conf hint 'uint32)))
-		      (if mark
+		      (if amark
 			  `(JS-ARRAY-INDEX-MARK-REF ,scmobj
 			      ,(uint32 tyfield idx)
 			      ,scmarray ,scmalen
-			      ,(j2s-decl-scheme-id mark)
+			      ,(j2s-decl-scheme-id amark)
 			      %this)
 			  `(JS-ARRAY-INDEX-FAST-REF ,scmobj
 			      ,(uint32 tyfield idx)
@@ -2752,20 +2752,20 @@
 			      ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			      %this))))
 		  ((fixnum)
-		   (if mark
+		   (if amark
 		       `(JS-ARRAY-FIXNUM-MARK-REF ,scmobj ,scmfield
 			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id mark)
+			   ,(j2s-decl-scheme-id amark)
 			   %this)
 		       `(JS-ARRAY-FIXNUM-FAST-REF ,scmobj ,scmfield
 			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id mark)
+			   ,(j2s-decl-scheme-id amark)
 			   %this)))
 		  (else
-		   (if mark
+		   (if amark
 		       `(JS-ARRAY-MARK-REF ,scmobj ,scmfield
 			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id mark)
+			   ,(j2s-decl-scheme-id amark)
 			   %this)
 		       `(JS-ARRAY-FAST-REF ,scmobj ,scmfield
 			   ,scmarray ,scmalen

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Oct 17 07:51:49 2017 (serrano)                */
+;*    Last change :  Sun Nov 19 07:13:09 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -229,7 +229,7 @@
 	   (final-class J2SAref::J2SRef
 	      (array::J2SDecl read-only)
 	      (alen::J2SDecl read-only)
-	      (mark::obj read-only)
+	      (amark::obj read-only)
 	      (deps::pair-nil read-only))
 	   
 	   (final-class J2SThis::J2SRef)
