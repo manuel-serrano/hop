@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Nov 19 09:55:19 2017 (serrano)                */
+;*    Last change :  Sun Nov 19 18:09:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -44,6 +44,7 @@
 	   (js*fx32::obj ::obj ::obj)
 	   (js*fx64::obj ::obj ::obj)
 	   (inline js/fx::obj ::long ::long)
+	   (inline js/pow2fx::long ::long ::long)
 	   (js-slow+ left right ::JsGlobalObject)
 	   (js- left right ::JsGlobalObject)
 	   (js-neg expr ::JsGlobalObject)
@@ -590,6 +591,18 @@
        (js/num left right)
        (/fx left right)))
 
+;*---------------------------------------------------------------------*/
+;*    js/pow2fx ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight (second edition), H. Warren J.r,            */
+;*    Chapter 10, section 10.1.                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js/pow2fx n::long k::long)
+   (let ((t (bit-rsh n (-fx k 1))))
+      (set! t (bit-ursh t (-fx 32 k)))
+      (set! t (+fx n t))
+      (bit-rsh t k)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-slow+ ...                                                     */
 ;*---------------------------------------------------------------------*/

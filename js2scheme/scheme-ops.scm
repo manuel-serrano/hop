@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Nov  3 17:52:58 2017 (serrano)                */
+;*    Last change :  Sun Nov 19 19:33:33 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -276,9 +276,7 @@
 	     `(,op ,left ,right))))
       
       ((/)
-       (binop lhs rhs mode return conf hint 'any
-	  (lambda (left right)
-	     (js-binop loc op left right))))
+       (j2s/ loc lhs rhs mode return conf hint totype))
       ((OR)
        (let ((lhsv (gensym 'lhs)))
 	  `(let ((,lhsv ,(j2s-scheme lhs mode return conf hint totype)))
@@ -372,6 +370,8 @@
        `(js* ,lhs ,rhs %this))
       ((/)
        `(js/ ,lhs ,rhs %this))
+      ((/num)
+       `(js/num ,lhs ,rhs))
       ((%)
        `(js% ,lhs ,rhs %this))
       ((<)
@@ -485,6 +485,60 @@
 	     `(let* ((,(utype-ident left (j2s-type lhs) conf #t) ,scmlhs)
 		     (,(utype-ident right (j2s-type rhs) conf #t) ,scmrhs))
 		 ,(gen left right)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s/ ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s/ loc lhs rhs mode return conf hint::pair-nil totype)
+   
+   (define (find-power2fx n)
+      (let loop ((k 1))
+	 (let ((m (bit-lsh 1 k)))
+	    (cond
+	       ((=fx m n) k)
+	       ((>fx m n) #f)
+	       (else (loop (+fx k 1)))))))
+
+   (define (find-power2fl n)
+      (when (and (integer? n) (=fl (/fl n 2.0) (roundfl (/fl n 2.0))))
+	 (let loop ((k 1))
+	    (let ((m (exptfl 2. (fixnum->flonum k))))
+	       (cond
+		  ((=fl m n) (when (<fx k 31) k))
+		  ((>fl m n) #f)
+		  (else (loop (+fx k 1))))))))
+   
+   (define (power2 rsh)
+      (when (isa? rsh J2SNumber)
+	 (with-access::J2SNumber rhs (val)
+	    (cond
+	       ((fixnum? val) (find-power2fx val))
+	       ((flonum? val) (find-power2fl val))))))
+   
+   (define (literal-value rhs)
+      (with-access::J2SNumber rhs (val)
+	 val))
+
+   (define (positive? n)
+      (memq (j2s-type n) '(index uint29 ufixnum)))
+   
+   (let ((k (power2 rhs)))
+      (cond
+	 (k
+	  (let ((n (gensym 'n)))
+	     `(let ((,n ,(j2s-scheme lhs mode return conf hint totype)))
+		 (if (and (fixnum? ,n) (=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0))
+		     ,(if (positive? lhs)
+			  `(bit-rsh ,n ,k)
+			  `(js/pow2fx ,n ,k))))))
+	 ((and (type-number? (j2s-type lhs)) (type-number? (j2s-type rhs)))
+	  (binop lhs rhs mode return conf hint 'any
+	     (lambda (left right)
+		(js-binop loc '/num left right))))
+	 (else
+	  (binop lhs rhs mode return conf hint 'any
+	     (lambda (left right)
+		(js-binop loc '/ left right)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-cmp ...                                                       */

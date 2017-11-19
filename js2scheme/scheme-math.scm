@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Nov  7 12:10:40 2017 (serrano)                */
+;*    Last change :  Sun Nov 19 18:33:20 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -40,8 +40,8 @@
 	    (cond
 	       ((string=? val "floor")
 		(when (=fx (length args) 1)
-		   `(js-math-floor
-		       ,(j2s-scheme (car args) mode return conf hint totype))))
+		   (j2s-math-inline-floor
+		      (car args) mode return conf hint totype)))
 	       ((string=? val "ceil")
 		(when (=fx (length args) 1)
 		   `(js-math-ceil
@@ -56,3 +56,42 @@
 	       (else
 		#f))))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-math-inline-floor ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-inline-floor arg mode return conf hint totype)
+   
+   (define (find-power2 n)
+      (let loop ((k 1))
+	 (let ((m (bit-lsh 1 k)))
+	 (cond
+	    ((=fx m n) k)
+	    ((>fx m n) #f)
+	    (else (loop (+fx k 1)))))))
+   
+   (define (divide-power2 arg)
+      ;; detect the pattern Math.floor( m / 2^n ) (see crypto-aes.js)
+      (when (isa? arg J2SBinary)
+	 (with-access::J2SBinary arg (op lhs rhs)
+	    (when (and (eq? op '/)
+		       (type-fixnum? (j2s-type lhs))
+		       (type-fixnum? (j2s-type rhs))
+		       (isa? rhs J2SNumber))
+	       (with-access::J2SNumber rhs (val)
+		  (when (>fx val 0)
+		     (let ((k (find-power2 val)))
+			(when k
+			   (values lhs k)))))))))
+   
+   (define (positive? n)
+      (memq (j2s-type n) '(index uint29 ufixnum)))
+   
+   (multiple-value-bind (n k)
+      (divide-power2 arg)
+      (cond
+	 ((not arg)
+	  `(js-math-floor ,(j2s-scheme arg mode return conf hint totype)))
+	 ((positive? n)
+	  `(bit-rsh ,(j2s-scheme n mode return conf hint totype) ,k))
+	 (else
+	  `(js/pow2fx ,(j2s-scheme n mode return conf hint totype) ,k)))))
