@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Nov 21 09:19:22 2017 (serrano)                */
+;*    Last change :  Tue Nov 21 13:48:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -728,10 +728,6 @@
 		((<u32 (fixnum->uint32 idx) ilen)
 		 (vector-set! vec idx val)
 		 val)
-		((js-array-full-inlined? arr)
-		 (set! ilen (fixnum->uint32 (+fx idx 1)))
-		 (set! length (fixnum->uint32 (+fx idx 1)))
-		 (vector-set! vec idx val))
 		(else
 		 (js-array-put! arr idx val throw %this)))))
 	 (else
