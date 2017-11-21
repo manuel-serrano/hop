@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Nov 19 18:33:20 2017 (serrano)                */
+;*    Last change :  Mon Nov 20 12:41:26 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -64,10 +64,10 @@
    (define (find-power2 n)
       (let loop ((k 1))
 	 (let ((m (bit-lsh 1 k)))
-	 (cond
-	    ((=fx m n) k)
-	    ((>fx m n) #f)
-	    (else (loop (+fx k 1)))))))
+	    (cond
+	       ((=fx m n) k)
+	       ((>fx m n) #f)
+	       (else (loop (+fx k 1)))))))
    
    (define (divide-power2 arg)
       ;; detect the pattern Math.floor( m / 2^n ) (see crypto-aes.js)
@@ -81,17 +81,18 @@
 		  (when (>fx val 0)
 		     (let ((k (find-power2 val)))
 			(when k
-			   (values lhs k)))))))))
+			   (cons lhs k)))))))))
    
    (define (positive? n)
       (memq (j2s-type n) '(index uint29 ufixnum)))
    
-   (multiple-value-bind (n k)
-      (divide-power2 arg)
+   (let ((p2 (divide-power2 arg)))
       (cond
-	 ((not arg)
+	 ((not p2)
 	  `(js-math-floor ,(j2s-scheme arg mode return conf hint totype)))
-	 ((positive? n)
-	  `(bit-rsh ,(j2s-scheme n mode return conf hint totype) ,k))
+	 ((positive? (car p2))
+	  `(bit-rsh ,(j2s-scheme (car p2) mode return conf hint totype)
+	      ,(cdr p2)))
 	 (else
-	  `(js/pow2fx ,(j2s-scheme n mode return conf hint totype) ,k)))))
+	  `(js/pow2fx ,(j2s-scheme (car p2) mode return conf hint totype)
+	      ,(cdr p2))))))

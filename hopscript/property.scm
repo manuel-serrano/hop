@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Nov 11 06:35:06 2017 (serrano)                */
+;*    Last change :  Mon Nov 20 12:53:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1094,6 +1094,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property o::JsObject p::obj %this::JsGlobalObject)
    ;; JsObject x obj x JsGlobalObject -> JsPropertyDescriptor | Undefined
+;*    (when (and (isa? o JsArray) (symbol? p))                         */
+;*       (tprint "MS: js-get-own-property " p " " (typeof p) " " (typeof o))) */
    (jsobject-find o (js-toname p %this)
       ;; cmap search
       (lambda (owner i)

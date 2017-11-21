@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Nov 19 18:09:49 2017 (serrano)                */
+;*    Last change :  Mon Nov 20 08:08:06 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -598,10 +598,11 @@
 ;*    Chapter 10, section 10.1.                                        */
 ;*---------------------------------------------------------------------*/
 (define-inline (js/pow2fx n::long k::long)
-   (let ((t (bit-rsh n (-fx k 1))))
-      (set! t (bit-ursh t (-fx 32 k)))
-      (set! t (+fx n t))
-      (bit-rsh t k)))
+   (/fx n (bit-lsh 1 k)))
+;*    (let ((t (bit-rsh n (-fx k 1))))                                 */
+;*       (set! t (bit-ursh t (-fx 32 k)))                              */
+;*       (set! t (+fx n t))                                            */
+;*       (bit-rsh t k)))                                               */
    
 ;*---------------------------------------------------------------------*/
 ;*    js-slow+ ...                                                     */

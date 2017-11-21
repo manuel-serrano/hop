@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Nov 19 19:33:33 2017 (serrano)                */
+;*    Last change :  Mon Nov 20 15:40:20 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -495,7 +495,7 @@
       (let loop ((k 1))
 	 (let ((m (bit-lsh 1 k)))
 	    (cond
-	       ((=fx m n) k)
+	       ((=fx m n) (when (<fx k 31) k))
 	       ((>fx m n) #f)
 	       (else (loop (+fx k 1)))))))
 
@@ -530,11 +530,19 @@
 		 (if (and (fixnum? ,n) (=fx (bit-and ,n ,(-fx (bit-lsh 1 k) 1)) 0))
 		     ,(if (positive? lhs)
 			  `(bit-rsh ,n ,k)
-			  `(js/pow2fx ,n ,k))))))
+			  `(js/pow2fx ,n ,k))
+		     (js/ ,n ,(bit-lsh 1 k) %this)))))
 	 ((and (type-number? (j2s-type lhs)) (type-number? (j2s-type rhs)))
 	  (binop lhs rhs mode return conf hint 'any
-	     (lambda (left right)
-		(js-binop loc '/num left right))))
+	     (if (type-integer? (j2s-type rhs))
+		 (lambda (left right)
+		    `(if (=fx ,right 0)
+			 (js/num ,left ,right)
+			 (/ ,left ,right)))
+		 (lambda (left right)
+		    `(if (= ,right 0)
+			 (js/num ,left ,right)
+			 (/ ,left ,right))))))
 	 (else
 	  (binop lhs rhs mode return conf hint 'any
 	     (lambda (left right)
@@ -972,7 +980,7 @@
 		     `(js-jsstring-append
 			 ,left
 			 ,(if (m64? conf)
-			      `(js-ascii->jssstring (fixnum->string ,right))
+			      `(js-ascii->jsstring (fixnum->string ,right))
 			      `(js-tojsstring
 				  (js-toprimitive ,right 'any %this) %this))))
 		    (else

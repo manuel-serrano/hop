@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Nov 19 07:56:32 2017 (serrano)                */
+;*    Last change :  Mon Nov 20 19:30:30 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1574,17 +1574,22 @@
 
       (define (vector-every o len::uint32 proc t i::uint32)
 	 (with-access::JsArray o (vec ilen)
-	    (let loop ((i i))
-	       (cond
-		  ((>=u32 i ilen)
-		   (or (js-array-full-inlined? o) (array-every o len proc t i)))
-		  (else
-		   (let ((v (u32vref vec i)))
-		      (cond
-			 ((test-val proc t v i o)
-			  (loop (+u32 i 1)))
-			 (else
-			  #f))))))))
+	    (let ((ilen0 ilen)
+		  (full0 (js-array-full-inlined? o)))
+	       (let loop ((i i))
+		  (cond
+		     ((>=u32 i ilen)
+		      (or (js-array-full-inlined? o)
+			  (array-every o len proc t i)))
+		     ((>=u32 i ilen0)
+		      (or full0 (array-every o len proc t i)))
+		     (else
+		      (let ((v (u32vref vec i)))
+			 (cond
+			    ((test-val proc t v i o)
+			     (loop (+u32 i 1)))
+			    (else
+			     #f)))))))))
 
       (define (array-every o len::uint32 proc t i::uint32)
 	 (let loop ((i i))
