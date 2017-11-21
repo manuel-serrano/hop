@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Nov  7 09:17:39 2017 (serrano)                */
+/*    Last change :  Tue Nov 21 09:30:18 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -161,8 +161,8 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
       long i = ( constrsize >= VECTOR_LENGTH( bgl_js_profile_allocs ) - 2
 		 ? VECTOR_LENGTH( bgl_js_profile_allocs ) -1
 		 : constrsize );
-      long cnt = CINT( VECTOR_REF( bgl_js_profile_allocs, i ) );
-      VECTOR_SET( bgl_js_profile_allocs, i, BINT( cnt + 1 ) );
+      long cnt = BLLONG_TO_LLONG( VECTOR_REF( bgl_js_profile_allocs, i ) );
+      VECTOR_SET( bgl_js_profile_allocs, i, LLONG_TO_BLLONG( cnt + 1 ) );
    }
 #endif
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Nov 20 12:53:53 2017 (serrano)                */
+;*    Last change :  Tue Nov 21 09:31:01 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -214,6 +214,7 @@
 	   (log-function! ::bool)
 	   (profile-function ::obj ::symbol)
 	   (profile-cache-index ::long)
+	   (profile-vector-extension ::long ::long)
 	   (show-functions)
 	   (show-allocs)))
 
@@ -3069,11 +3070,13 @@
 ;*    profiling                                                        */
 ;*---------------------------------------------------------------------*/
 (cond-expand
-   (profile (define js-profile-allocs (make-vector 32 (fixnum->llong 0)))))
+   (profile (define js-profile-allocs (make-vector 32 #l0))))
 (cond-expand
-   (profile (define js-profile-accesses (make-vector 32 (fixnum->llong 0)))))
+   (profile (define js-profile-accesses (make-vector 32 #l0))))
 (cond-expand
-   (profile (define js-profile-extensions (make-vector 32 (fixnum->llong 0)))))
+   (profile (define js-profile-extensions (make-vector 32 #l0))))
+(cond-expand
+   (profile (define js-profile-vectors (make-vector 32 #l0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    show-allocs ...                                                  */
@@ -3083,10 +3086,10 @@
    (define (show-percentages vec)
       (let ((len (vector-length vec)))
 	 (let loop ((i (-fx len 1))
-		    (sum (fixnum->llong 0)))
+		    (sum #l0))
 	    (if (=fx i -1)
 		(let luup ((i 0)
-			   (cum (fixnum->llong 0)))
+			   (cum #l0))
 		   (when (and (<fx i len) (<llong cum sum))
 		      (let* ((n0 (vector-ref vec i))
 			     (n (if (fixnum? n0) (fixnum->llong n0) n0))
@@ -3109,12 +3112,14 @@
 		     (getenv "HOPTRACE"))))
 	    (cond-expand
 	       (profile 
-		(print  "\nALLOCS:\n" "========\n")
+		(print  "\nOBJECT ALLOCS:\n" "==============\n")
 		(show-percentages js-profile-allocs)
 		(print  "\nACCESS:\n" "=======\n")
 		(show-percentages js-profile-accesses)
-		(print  "\nEXTENSIONS:\n" "==========\n")
-		(show-percentages js-profile-extensions))
+		(print  "\nEXTENSIONS:\n" "===========\n")
+		(show-percentages js-profile-extensions)
+		(print  "\nVECTOR EXTENSIONS:\n" "==================\n")
+		(show-percentages js-profile-vectors))
 	       (else
 		(print "re-configure hop in profiling mode")))))))
 
@@ -3143,3 +3148,17 @@
 	     (+llong (fixnum->llong 1) (vector-ref js-profile-extensions i)))))
       (else
        #f)))
+
+;*---------------------------------------------------------------------*/
+;*    profile-vector-extension ...                                     */
+;*---------------------------------------------------------------------*/
+(define (profile-vector-extension nlen olen)
+   (cond-expand
+      (profile
+       (let* ((len (vector-length js-profile-vectors))
+	      (i (if (>=fx olen len) (-fx len 1) olen)))
+	  (vector-set! js-profile-vectors i
+	     (+llong (fixnum->llong 1) (vector-ref js-profile-vectors i)))))
+      (else
+       #f)))
+   

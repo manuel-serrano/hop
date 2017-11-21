@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Nov 20 19:30:30 2017 (serrano)                */
+;*    Last change :  Tue Nov 21 09:19:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -61,7 +61,7 @@
 	   (inline js-array-set! ::JsArray idx ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-inl-set! ::JsArray ::obj ::obj
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
-	   (js-array-index-set! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
+	   (inline js-array-index-set! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-index-inl-set! ::JsArray ::uint32 ::obj
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (inline js-array-fixnum-set! ::JsArray ::long ::obj
@@ -626,6 +626,7 @@
 	  =>
 	  (lambda (len)
 	     (let ((nlen (uint32->fixnum len)))
+		(cond-expand (profile (profile-vector-extension nlen len)))
 		(set! vec (copy-vector-fill! vec nlen (js-undefined))))
 	     (js-get arr idx %this)))
 	 (else
@@ -659,7 +660,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-set! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-array-index-set! arr::JsArray idx::uint32 val throw %this)
+(define-inline (js-array-index-set! arr::JsArray idx::uint32 val throw %this)
    (with-access::JsArray arr (vec ilen)
       (cond
 	 ((<u32 idx ilen)
@@ -727,6 +728,10 @@
 		((<u32 (fixnum->uint32 idx) ilen)
 		 (vector-set! vec idx val)
 		 val)
+		((js-array-full-inlined? arr)
+		 (set! ilen (fixnum->uint32 (+fx idx 1)))
+		 (set! length (fixnum->uint32 (+fx idx 1)))
+		 (vector-set! vec idx val))
 		(else
 		 (js-array-put! arr idx val throw %this)))))
 	 (else
@@ -1320,6 +1325,8 @@
 		  ((>fx nlen len)
 		   ;; enlarge the vector if needed
 		   (let ((tmp (make-vector nlen)))
+		      (cond-expand
+			 (profile (profile-vector-extension nlen len)))
 		      (vector-copy! tmp 0 vec 0 actualstart)
 		      (vector-copy! tmp (-fx nlen (-fx len cstart))
 			 vec cstart len)
@@ -1405,6 +1412,11 @@
 			       (vector-set! nvec i el)
 			       (set! i (+fx i 1)))
 		     items)
+		  (cond-expand
+		     (profile
+		      (profile-vector-extension
+			 (uint32->fixnum nlen)
+			 (vector-length nvec))))
 		  (set! vec nvec)
 		  (js-put-length! arr (uint32->fixnum nlen) #f #f %this)
 		  (with-access::JsArray arr (length)
@@ -2454,8 +2466,9 @@
 	     ;; extend the inlined vector
 	     (with-access::JsArray o (length vec ilen)
 		;; use max when vector-length == 0
-		(let ((nlen (max (*fx (vector-length vec) 2)
-			       (+fx (uint32->fixnum idx) 1))))
+		(let* ((len (vector-length vec))
+		       (nlen (max (*fx len 2) (+fx (uint32->fixnum idx) 1))))
+		   (cond-expand (profile (profile-vector-extension nlen len)))
 		   (set! vec (copy-vector vec nlen)))
 		(vector-set! vec (uint32->fixnum idx) v)
 		(let ((nilen (+u32 ilen #u32:1)))
@@ -2807,6 +2820,9 @@
 					      (nlen (uint32->fixnum len)))
 					   ;; MS CARE
 ;* 					      (set! ilen len)          */
+					   (cond-expand
+					      (profile (profile-vector-extension
+							  nlen olen)))
 					   (set! vec (copy-vector-fill! vec nlen (js-undefined))))
 					(js-define-own-property-array
 					   a index desc #f)))

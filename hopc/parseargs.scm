@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Nov  8 06:12:39 2017 (serrano)                */
+;*    Last change :  Tue Nov 21 09:20:54 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -282,7 +282,7 @@
 	     (when (>=fx (string->integer level) 2)
 		(hopc-bigloo-options-set!
 		   (cons* "-srfi" "cache-level2" (hopc-bigloo-options)))))
-	    (("--profile" (help "Profiling mode"))
+	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))
 	    (section "Experimental features")
