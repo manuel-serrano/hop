@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Nov 22 09:15:38 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 16:27:33 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -283,6 +283,10 @@
 	     (when (>=fx (string->integer level) 2)
 		(hopc-bigloo-options-set!
 		   (cons* "-srfi" "cache-level2" (hopc-bigloo-options)))))
+	    (("-fvector" (help "Enable array-to-vector optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-vector #t (hopc-j2s-flags))))
+	    (("-fno-vector" (help "Disable array-to-vector optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-vector #f (hopc-j2s-flags))))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))

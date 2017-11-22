@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Nov 22 09:57:17 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 16:24:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -338,6 +338,8 @@
 			(set! o (cons* :optim-cast #t o)))
 		     (unless (memq :optim-ctor o)
 			(set! o (cons* :optim-ctor #t o)))
+		     (unless (memq :optim-vector o)
+			(set! o (cons* :optim-vector #t o)))
 ;* 		     (unless (memq :optim-cce o)                       */
 ;* 			(set! o (cons* :optim-cce #t o)))              */
 		     )

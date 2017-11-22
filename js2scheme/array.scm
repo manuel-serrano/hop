@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Nov 22 09:53:59 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 14:40:29 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -221,7 +221,6 @@
 	     (append (array-collect* obj env) fdaref)
 	     (with-access::J2SRef obj (type decl)
 		(if (and (eq? type 'array)
-			 (with-access::J2SDecl decl (ronly) #t)
 			 (memq decl env)
 			 (type-number? (j2s-type field)))
 		    (cons decl fdaref)

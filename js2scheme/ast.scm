@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Nov 22 10:25:05 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 15:12:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -264,7 +264,7 @@
 	      (itype::symbol (default 'unknown) (info '("notraverse")))
 	      (vtype::symbol (default 'unknown) (info '("notraverse")))
 	      (hint::pair-nil (default '()) (info '("notraverse")))
-	      (range::obj (default #unspecified) (info '("notraverse")))	      
+	      (range::obj (default #unspecified) (info '("notraverse")))
 	      (binder::symbol (default 'var) (info '("notraverse"))))
 	   
 	   (class J2SDeclInit::J2SDecl
@@ -357,7 +357,7 @@
 	      (clevel::long (default 100) (info '("notraverse")))
 	      (obj::J2SExpr (info '("ast")))
 	      (field::J2SExpr (info '("ast"))))
-	   
+
 	   (final-class J2SCacheCheck::J2SExpr
 	      (prop::symbol read-only)
 	      (cache read-only (info '("notraverse")))

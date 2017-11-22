@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov 22 10:10:18 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 16:22:11 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -31,7 +31,8 @@
 	   __js2scheme_scheme-class
 	   __js2scheme_scheme-string
 	   __js2scheme_scheme-math
-	   __js2scheme_scheme-date)
+	   __js2scheme_scheme-date
+	   __js2scheme_scheme-array)
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
@@ -2232,7 +2233,6 @@
       (if (eq? type 'uint32)
 	  expr
 	  `(fixnum->uint32 ,expr)))
-   
 
    (define (aset/cache lhs rhs)
       ;; an optimized array set in a loop (see array.scm)
@@ -2379,6 +2379,8 @@
 	     (with-access::J2SAccess lhs (obj field cache (loca loc))
 		(epairify loc
 		   (cond
+		      ((eq? (j2s-type obj) 'vector)
+		       (j2s-vector-set! this mode return conf hint totype))
 		      ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
 		       (array-set lhs rhs))
 		      ((is-number? field)
@@ -2836,6 +2838,8 @@
    (with-access::J2SAccess this (loc obj field cache clevel type)
       (epairify-deep loc 
 	 (cond
+	    ((eq? (j2s-type obj) 'vector)
+	     (j2s-vector-ref this mode return conf hint totype))
 	    ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
 	     (array-ref obj field))
 	    ((and (eq? (j2s-type obj) 'array) (j2s-field-length? field))
@@ -3166,29 +3170,6 @@
 	 (with-access::J2SUnresolvedRef clazz (id)
 	    (eq? id 'Array))))
 
-   (define (smaller-than? o k)
-      (when (isa? o J2SNumber)
-	 (with-access::J2SNumber o (val)
-	    (and (fixnum? val) (>=fx val 0) (<fx val k)))))
-
-   (define (j2s-new-array args)
-      (cond
-	 ((null? args)
-	  '(js-empty-vector->jsarray %this))
-	 ((and (is-integer? (car args)) (null? (cdr args)))
-	  (if (smaller-than? (car args) 16)
-	      `(js-array-construct-alloc-small %this 
-		  ,(j2s-scheme (car args) mode return conf hint totype))
-	      `(js-array-construct/length %this (js-array-alloc %this)
-		  ,(j2s-scheme (car args) mode return conf hint totype))))
-	 ((null? (cdr args))
-	  `(js-array-construct %this (js-array-alloc %this)
-	      (list ,@(j2s-scheme args mode return conf hint totype))))
-	 (else
-	  `(js-vector->jsarray
-	      (vector ,@(j2s-scheme args mode return conf hint totype))
-	      %this))))
-
    (define (constructor-no-return? decl)
       ;; does this constructor never returns something else than UNDEF?
       (let ((fun (cond
@@ -3222,7 +3203,7 @@
       (cond
 	 ((and (=fx (bigloo-debug) 0) (new-array? clazz))
 	  (epairify loc
-	     (j2s-new-array args)))
+	     (j2s-new-array this mode return conf hint totype)))
 	 ((and (=fx (bigloo-debug) 0) cache)
 	  (epairify loc
 	     (j2s-new-fast cache clazz args)))

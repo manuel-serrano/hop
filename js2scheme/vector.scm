@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Wed Nov 22 10:59:23 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 16:28:45 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping array to Scheme vectors                                  */
@@ -44,7 +44,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-vector! this args)
    (when (isa? this J2SProgram)
-      (when (>=fx (config-get args :optim 0) 6)
+      (when (and (= (bigloo-debug) 0) (config-get args :vector #f))
 	 (j2s-vector-program! this args))
       this))
 
@@ -57,6 +57,8 @@
       (for-each collect-ranges nodes)
       (for-each (lambda (n) (vector! n '())) decls)
       (for-each (lambda (n) (vector! n '())) nodes)
+      (for-each patch-vector decls)
+      (for-each patch-vector nodes)
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -84,10 +86,28 @@
 		  (unless (and (range? %info) (not (range-intervals %info)))
 		     (unless (range? %info) (set! %info (range '())))
 		     (with-access::J2SExpr field (range)
-			(if (interval? range)
-			    (range-intervals-set! %info
-			       (cons range (range-intervals %info)))
-			    (range-intervals-set! %info #f))))))))))
+			(unless (interval? range)
+			   ;; disable optimization for this array
+			   (range-intervals-set! %info #f))))))))))
+	 
+;*---------------------------------------------------------------------*/
+;*    collect-ranges ::J2SAssig ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-ranges this::J2SAssig)
+   (with-access::J2SAssig this (lhs rhs)
+      (when (isa? lhs J2SAccess)
+	 (with-access::J2SAccess lhs (obj field)
+	    (when (isa? obj J2SRef)
+	       (with-access::J2SRef obj (decl)
+		  (with-access::J2SDecl decl (vtype %info)
+		     (when (eq? vtype 'array)
+			(unless (and (range? %info) (not (range-intervals %info)))
+			   (unless (range? %info) (set! %info (range '())))
+			   (with-access::J2SExpr field (range)
+			      (if (interval? range)
+				  (range-intervals-set! %info
+				     (cons range (range-intervals %info)))
+				  (range-intervals-set! %info #f))))))))))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    vector! ::J2SNode ...                                            */
@@ -107,11 +127,24 @@
 ;*    vector! ::J2SDeclInit ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (vector! this::J2SDeclInit env::pair-nil)
-   (with-access::J2SDeclInit this (vtype usage id %info val)
-      (when (and (eq? vtype 'array) (only-usage? '(init get set) usage))
+   
+   (define (in-range? sz intv)
+      (and (>= (interval-min intv) 0) (< (interval-max intv) sz)))
+   
+   (with-access::J2SDeclInit this (vtype itype id %info val usage hint)
+      (when (and (eq? vtype 'array)
+		 (only-usage? '(init get set) usage)
+		 (range? %info)
+		 (pair? (range-intervals %info)))
 	 (let ((size (vector-init-size val)))
-	    (when size
-	       (tprint "GOT ONE " id " " %info " size=" size)))))
+	    (when (and size
+		       (every (lambda (i) (in-range? size i))
+			  (range-intervals %info)))
+	       (set! vtype 'vector)
+	       (set! itype 'vector)
+	       (set! hint size)
+	       (with-access::J2SExpr val (type)
+		  (set! type 'vector))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -137,4 +170,19 @@
 	    (with-access::J2SNumber (car args) (val)
 	       val)))))
 
-   
+;*---------------------------------------------------------------------*/
+;*    patch-vector ::J2SNode ...                                       */
+;*    -------------------------------------------------------------    */
+;*    Replace ARRAY type vith VECTOR type.                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patch-vector this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    patch-vector ::J2SRef ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (patch-vector this::J2SRef)
+   (with-access::J2SRef this (decl type)
+      (with-access::J2SDecl decl (vtype)
+	 (when (eq? vtype 'vector)
+	    (set! type 'vector)))))
