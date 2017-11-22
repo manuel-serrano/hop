@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Nov  9 23:06:36 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 09:57:17 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -37,6 +37,7 @@
 	   __js2scheme_range
 	   __js2scheme_cast
 	   __js2scheme_uint32
+	   __js2scheme_vector
 	   __js2scheme_array
 	   __js2scheme_letfusion
 	   __js2scheme_letopt
@@ -167,6 +168,7 @@
       j2s-ctor-stage
       j2s-uint32-stage
       j2s-cast-stage
+      j2s-vector-stage
       j2s-array-stage
       j2s-dead-stage
       j2s-constrsize-stage
@@ -246,6 +248,7 @@
       j2s-range-stage
       j2s-uint32-stage
       j2s-cast-stage
+      j2s-vector-stage
       j2s-array-stage
       j2s-dead-stage
       j2s-javascript-stage))

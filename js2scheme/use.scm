@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Nov 22 09:18:44 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 10:19:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -239,6 +239,16 @@
 	     (with-access::J2SDecl decl (usage)
 		(unless (memq 'delete usage)
 		   (set! usage (cons 'delete usage))))
+	     this))
+	 ((and (eq? op 'delete) (isa? expr J2SAccess))
+	  (with-access::J2SAccess expr (obj field)
+	     (if (isa? obj J2SRef)
+		 (with-access::J2SRef obj (decl)
+		    (with-access::J2SDecl decl (usage)
+		       (unless (memq 'delete usage)
+			  (set! usage (cons 'delete usage)))))
+		 (usage obj 'ref deval))
+	     (usage field 'ctx deval)
 	     this))
 	 ((and (eq? op 'delete) (isa? expr J2SGlobalRef))
 	  (with-access::J2SGlobalRef expr (decl)

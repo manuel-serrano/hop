@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Nov 19 07:25:33 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 09:53:59 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -40,7 +40,7 @@
       (proc j2s-array!)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-array! ::obj ...                                             */
+;*    j2s-array! ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-array! this args)
    (when (isa? this J2SProgram)

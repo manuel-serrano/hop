@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Nov 22 09:08:39 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 10:47:40 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -77,11 +77,6 @@
 (define *dump-stop* -1)
 (define *dump-env* '())
 (define *dump-unfix* #f)
-
-;*---------------------------------------------------------------------*/
-;*    interval ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-struct interval min max)
 
 ;*---------------------------------------------------------------------*/
 ;*    interval constructor ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov 22 09:22:39 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 10:10:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1087,7 +1087,7 @@
 		 (isa? val J2SSvc)
 		 (memq 'assig usage))
 	     `(define ,ident ,(j2s-scheme val mode return conf hint 'any)))
-	    ((any (lambda (u) (memq u usage)) '(ref get new set))
+	    ((usage? '(ref get new set) usage)
 	     (let ((fun (jsfun->lambda val mode return conf
 			   `(js-get ,ident 'prototype %this) #f))
 		   (tmp (j2s-fast-id id)))
@@ -1121,7 +1121,7 @@
 	    (cond
 	       ((or (not (isa? val J2SFun)) (isa? val J2SSvc) (memq 'assig usage))
 		(list `(,var ,(j2s-scheme val mode return conf hint utype))))
-	       ((any (lambda (u) (memq u usage)) '(ref get new set))
+	       ((usage? '(ref get new set) usage)
 		(let ((fun (jsfun->lambda val mode return conf
 			      `(js-get ,ident 'prototype %this) #f))
 		      (tmp (j2s-fast-id id)))

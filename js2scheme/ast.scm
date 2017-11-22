@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Nov 22 09:19:33 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 10:25:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -454,7 +454,11 @@
 	   (j2s-type ::obj)
 
 	   (j2s-expr-type-test ::J2SExpr)
-	   (class-of ::J2SExpr))
+	   (class-of ::J2SExpr)
+
+	   (usage?::bool ::pair-nil ::pair-nil)
+	   (only-usage?::bool ::pair-nil ::pair-nil)
+	   (strict-usage?::bool ::pair-nil ::pair-nil))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -1324,3 +1328,23 @@
       (else
        #f)))
 
+;*---------------------------------------------------------------------*/
+;*    usage? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (usage? keys usage)
+   (any (lambda (k) (memq k usage)) keys))
+
+;*---------------------------------------------------------------------*/
+;*    only-usage? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (only-usage? keys usage)
+   (every (lambda (u) (memq u keys)) usage))
+
+;*---------------------------------------------------------------------*/
+;*    strict-usage? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (strict-usage? keys usage)
+   (and (=fx (length keys) (length usage))
+	(only-usage? keys usage)))
+	
+	
