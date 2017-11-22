@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Oct 17 17:30:38 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 09:18:44 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -281,7 +281,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SAccess ctx deval)
    (with-access::J2SAccess this (obj field)
-      (usage obj 'get deval)
+      (usage obj (if (eq? ctx 'assig) 'set 'get) deval)
       (usage field 'ref deval))
    this)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Nov 22 09:08:48 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 09:16:34 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -133,7 +133,7 @@
 		       (with-access::J2SDecl this (range) range))
 		      (else
 		       '()))))
-	  (if range `(:range ,range) '()))
+	  (if (not (eq? range #unspecified)) `(:range ,range) '()))
        '()))
 
 ;*---------------------------------------------------------------------*/
