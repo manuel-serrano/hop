@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sat Oct 21 14:09:21 2017 (serrano)                */
+;*    Last change :  Wed Nov 22 09:08:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -118,6 +118,22 @@
 		      (else
 		       '()))))
 	  (if (pair? hint) `(:hint ,hint) '()))
+       '()))
+
+;*---------------------------------------------------------------------*/
+;*    dump-range ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (dump-range this::J2SNode)
+   (if (or (>= (bigloo-debug) 2)
+	   (string-contains (or (getenv "HOPTRACE") "") "j2s:range"))
+       (let ((range (cond
+		      ((isa? this J2SExpr)
+		       (with-access::J2SExpr this (range) range))
+		      ((isa? this J2SDecl)
+		       (with-access::J2SDecl this (range) range))
+		      (else
+		       '()))))
+	  (if range `(:range ,range) '()))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -339,7 +355,8 @@
 	     ,@(dump-key key)
 	     ,@(dump-type this)
 	     ,@(dump-info this)
-	     ,@(dump-hint this)))))
+	     ,@(dump-hint this)
+	     ,@(dump-range this)))))
  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SWithRef ...                                       */
@@ -646,6 +663,7 @@
 	  ,@(dump-type this)
 	  ,@(dump-info this)
 	  ,@(dump-hint this)
+	  ,@(dump-range this)
 	  ,@(dump-cache this)
 	  ,(j2s->list obj) ,(j2s->list field))))
 
@@ -705,6 +723,7 @@
 	,@(dump-access this)
 	,@(dump-itype this)
 	,@(dump-hint this)
+	,@(dump-range this)
 	,@(if _scmid `(:_scmid ,_scmid) '())
 	,@(dump-info this)
 	,@(dump-scope scope))))
