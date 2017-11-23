@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Nov  3 07:19:19 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 07:47:13 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -42,14 +42,14 @@
    (instantiate::J2SStageProc
       (name "imethod")
       (comment "Method inlining optimization")
-      (optional #t)
+      (optional :optim-imethod)
       (proc j2s-imethod!)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-imethod! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-imethod! this args)
-   (if (and (isa? this J2SProgram) (config-get args :optim-imethod #f))
+   (if (isa? this J2SProgram)
        (with-access::J2SProgram this (decls nodes)
 	  (let ((pms (ptable (append-map collect-proto-methods* nodes)))
 		(verb (config-get args :verbose 0)))

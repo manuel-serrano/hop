@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Oct 17 17:34:25 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 07:46:33 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization)                   */
@@ -31,7 +31,7 @@
       (name "globvar")
       (comment "Global variable initialization optimization")
       (proc (lambda (n args) (j2s-globvar! n args)))
-      (optional #t)))
+      (optional 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    globcnst ...                                                     */

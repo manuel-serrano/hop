@@ -3,10 +3,15 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Wed Nov 22 16:28:45 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 08:19:13 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    Mapping array to Scheme vectors                                  */
+;*    Mapping JS Arrays to Scheme vectors                              */
+;*    -------------------------------------------------------------    */
+;*    The transformation applies to arrays that satisfy:               */
+;*      1- they are only used in array indexed accesses                */
+;*      2- the accesses are correctly bound                            */
+;*      3- the allocation size is statically known                     */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -32,6 +37,7 @@
    (instantiate::J2SStageProc
       (name "vector")
       (comment "Array-to-Vector optimiziation")
+      (optional :optim-vector)
       (proc j2s-vector!)))
 
 ;*---------------------------------------------------------------------*/
@@ -44,8 +50,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-vector! this args)
    (when (isa? this J2SProgram)
-      (when (and (= (bigloo-debug) 0) (config-get args :vector #f))
-	 (j2s-vector-program! this args))
+      (j2s-vector-program! this args)
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -55,8 +60,14 @@
    (with-access::J2SProgram this (headers decls nodes)
       (for-each collect-ranges decls)
       (for-each collect-ranges nodes)
-      (for-each (lambda (n) (vector! n '())) decls)
-      (for-each (lambda (n) (vector! n '())) nodes)
+      (let ((verb (make-cell '())))
+	 (for-each (lambda (n) (vector! n verb)) decls)
+	 (for-each (lambda (n) (vector! n verb)) nodes)
+	 (when (and (>= (config-get args :verbose 0) 2) (pair? (cell-ref verb)))
+	    (fprintf (current-error-port)
+	       (format " [~a: ~(,)]"
+		  (cadr (car (cell-ref verb)))
+		  (map caddr (cell-ref verb))))))
       (for-each patch-vector decls)
       (for-each patch-vector nodes)
       this))
@@ -68,33 +79,30 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    collect-ranges ::J2SDeclFun ...                                  */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-ranges this::J2SDeclFun)
-   (with-access::J2SDeclFun this (val)
-      (collect-ranges val)))
-
-;*---------------------------------------------------------------------*/
 ;*    collect-ranges ::J2SAccess ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-ranges this::J2SAccess)
    (with-access::J2SAccess this (obj field)
-      (when (isa? obj J2SRef)
-	 (with-access::J2SRef obj (decl)
-	    (with-access::J2SDecl decl (vtype %info)
-	       (when (eq? vtype 'array)
-		  (unless (and (range? %info) (not (range-intervals %info)))
-		     (unless (range? %info) (set! %info (range '())))
-		     (with-access::J2SExpr field (range)
-			(unless (interval? range)
-			   ;; disable optimization for this array
-			   (range-intervals-set! %info #f))))))))))
+      (if (isa? obj J2SRef)
+	  (with-access::J2SRef obj (decl)
+	     (with-access::J2SDecl decl (vtype %info)
+		(when (eq? vtype 'array)
+		   (unless (and (range? %info) (not (range-intervals %info)))
+		      (unless (range? %info) (set! %info (range '())))
+		      (with-access::J2SExpr field (range)
+			 (unless (interval? range)
+			    ;; disable optimization for this array
+			    (range-intervals-set! %info #f)))))))
+	  (collect-ranges obj))
+      (collect-ranges field)))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    collect-ranges ::J2SAssig ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-ranges this::J2SAssig)
    (with-access::J2SAssig this (lhs rhs)
+      (collect-ranges rhs)
+      (collect-ranges lhs)
       (when (isa? lhs J2SAccess)
 	 (with-access::J2SAccess lhs (obj field)
 	    (when (isa? obj J2SRef)
@@ -112,7 +120,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    vector! ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (vector! this::J2SNode env::pair-nil)
+(define-walk-method (vector! this::J2SNode verb)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -126,16 +134,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    vector! ::J2SDeclInit ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (vector! this::J2SDeclInit env::pair-nil)
+(define-walk-method (vector! this::J2SDeclInit verb)
    
    (define (in-range? sz intv)
       (and (>= (interval-min intv) 0) (< (interval-max intv) sz)))
    
-   (with-access::J2SDeclInit this (vtype itype id %info val usage hint)
+   (with-access::J2SDeclInit this (vtype itype id %info val usage hint loc)
       (when (and (eq? vtype 'array)
 		 (only-usage? '(init get set) usage)
 		 (range? %info)
-		 (pair? (range-intervals %info)))
+		 (or (pair? (range-intervals %info))
+		     (null? (range-intervals %info))))
 	 (let ((size (vector-init-size val)))
 	    (when (and size
 		       (every (lambda (i) (in-range? size i))
@@ -143,6 +152,7 @@
 	       (set! vtype 'vector)
 	       (set! itype 'vector)
 	       (set! hint size)
+	       (cell-set! verb (cons loc (cell-ref verb)))
 	       (with-access::J2SExpr val (type)
 		  (set! type 'vector))))))
    this)
@@ -169,6 +179,13 @@
 	 (when (isa? (car args) J2SNumber)
 	    (with-access::J2SNumber (car args) (val)
 	       val)))))
+
+;*---------------------------------------------------------------------*/
+;*    vector-init-size ::J2SArray ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (vector-init-size this::J2SArray)
+   (with-access::J2SArray this (exprs)
+      (length exprs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    patch-vector ::J2SNode ...                                       */

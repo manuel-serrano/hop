@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov 22 16:22:11 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 08:26:55 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -957,32 +957,6 @@
       (epairify loc
 	 `(js-names->cmap ',val))))
 	 
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SArray ...                                        */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SArray mode return conf hint totype)
-
-   (define (unique? conf vec)
-      (let ((vectors (config-get conf :%vectors)))
-	 (unless (member vec vectors)
-	    (config-put! conf :%vectors (cons vec vectors))
-	    #t)))
-   
-   (with-access::J2SArray this (loc exprs)
-      (let ((sexprs (j2s-scheme exprs mode return conf hint totype)))
-	 (cond
-	    ((null? sexprs)
-	     `(js-empty-vector->jsarray %this))
-	    ((and (every (lambda (x)
-			    (or (number? x) (string? x) (boolean? x)))
-		     sexprs)
-		  (unique? conf sexprs))
-	     (epairify loc `(js-vector->jsarray ',(list->vector sexprs) %this)))
-	    ((any (lambda (x) (isa? x J2SArrayAbsent)) exprs)
-	     (epairify loc `(js-vector->sparse-jsarray (vector ,@sexprs) %this)))
-	    (else
-	     (epairify loc `(js-vector->jsarray (vector ,@sexprs) %this)))))))
-
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNull ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -3199,9 +3173,10 @@
 			 ,obj)
 		     `(js-new-return ,fun (,fid ,obj ,@args) ,obj))))))
    
-   (with-access::J2SNew this (loc cache clazz args)
+   (with-access::J2SNew this (loc cache clazz args type)
       (cond
-	 ((and (=fx (bigloo-debug) 0) (new-array? clazz))
+	 ((and (new-array? clazz)
+	       (or (=fx (bigloo-debug) 0) (eq? type 'vector)))
 	  (epairify loc
 	     (j2s-new-array this mode return conf hint totype)))
 	 ((and (=fx (bigloo-debug) 0) cache)

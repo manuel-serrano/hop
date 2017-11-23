@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Nov 22 16:24:20 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 08:08:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -14,7 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_compile
    
-   (import __js2scheme_ast
+   (import __js2scheme_utils
+	   __js2scheme_ast
 	   __js2scheme_stage
 	   __js2scheme_dump
 	   __js2scheme_parser
@@ -48,7 +49,6 @@
 	   __js2scheme_stage
 	   __js2scheme_ecmascript5
 	   __js2scheme_cps
-	   __js2scheme_utils
 	   __js2scheme_sweep
 	   __js2scheme_globvar
 	   __js2scheme_method
@@ -356,10 +356,10 @@
 	     '()
 	     (let loop ((ast ast)
 			(driver driver)
-			(count 0))
+			(count 1))
 		(if (null? driver)
 		    ast
-		    (loop (stage-exec (car driver) ast tmp count opts)
-		       (cdr driver)
-		       (+fx 1 count))))))))
+		    (multiple-value-bind (ast on)
+		       (stage-exec (car driver) ast tmp count opts)
+		       (loop ast (cdr driver) (+fx (if on 1 0) count) ))))))))
 

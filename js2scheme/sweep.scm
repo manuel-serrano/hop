@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Oct 17 17:31:41 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 07:46:22 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removable stage.                                       */
@@ -30,7 +30,7 @@
       (name "sweep")
       (comment "Remove unreachable definitions")
       (proc (lambda (n args) (j2s-sweep! n args)))
-      (optional #t)))
+      (optional 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-sweep! ::J2SProgram ...                                      */

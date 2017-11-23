@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Oct  3 16:03:19 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 07:47:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -34,7 +34,7 @@
       (name "constant")
       (comment "Pre-allocated constants")
       (proc j2s-constant)
-      (optional #t)))
+      (optional 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-constant ...                                                 */

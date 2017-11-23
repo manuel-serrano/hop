@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Mon Oct  9 18:35:29 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 07:45:51 2017 (serrano)                */
 ;*    Copyright   :  2015-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -47,7 +47,7 @@
       (name "letopt")
       (comment "Allocate let/const variables to registers")
       (proc j2s-letopt)
-      (optional #t)))
+      (optional 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letopt ...                                                   */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Oct  5 07:46:34 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 07:52:01 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -96,7 +96,7 @@
 				    (when (pair? dups)
 				       (when (>=fx j2s-verbose 2)
 					  (fprintf (current-error-port)
-					     (format "[~(,)]."
+					     (format " [~(,)]."
 						(map (lambda (d)
 							(with-access::J2SDecl d (id)
 							   id))

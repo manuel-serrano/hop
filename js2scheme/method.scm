@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Nov  5 11:48:52 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 07:46:43 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -31,7 +31,7 @@
       (name "method")
       (comment "Function->method transformation")
       (proc (lambda (n args) (j2s-method! n args)))
-      (optional #t)))
+      (optional 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-method! ::J2SProgram ...                                     */

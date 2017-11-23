@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Oct 17 07:40:38 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 07:47:43 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -30,7 +30,7 @@
       (name "property")
       (comment "Add a cache to each object property lookup")
       (proc j2s-property)
-      (optional #t)))
+      (optional 2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-property ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Nov 22 16:21:54 2017 (serrano)                */
+;*    Last change :  Thu Nov 23 08:30:10 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -30,6 +30,46 @@
    (export (j2s-new-array ::J2SNew mode return conf hint totype)
 	   (j2s-vector-ref ::J2SAccess mode return conf hint totype)
 	   (j2s-vector-set! ::J2SAssig mode return conf hint totype)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SArray ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SArray mode return conf hint totype)
+   
+   (define (unique? conf vec)
+      (let ((vectors (config-get conf :%vectors)))
+	 (unless (member vec vectors)
+	    (config-put! conf :%vectors (cons vec vectors))
+	    #t)))
+   
+   (with-access::J2SArray this (loc exprs type)
+      (let ((sexprs (j2s-scheme exprs mode return conf hint totype)))
+	 (cond
+	    ((null? sexprs)
+	     (if (eq? type 'vector)
+		 ''#()
+		 `(js-empty-vector->jsarray %this)))
+	    ((and (every (lambda (x)
+			    (or (number? x) (string? x) (boolean? x)))
+		     sexprs)
+		  (unique? conf sexprs))
+	     (let ((vec `',(list->vector sexprs)))
+		(epairify loc
+		   (if (eq? type 'vector)
+		       vec
+		       `(js-vector->jsarray ,vec %this)))))
+	    ((any (lambda (x) (isa? x J2SArrayAbsent)) exprs)
+	     (let ((vec `(vector ,@sexprs)))
+		(epairify loc
+		   (if (eq? type 'vector)
+		       vec
+		       `(js-vector->sparse-jsarray ,vec %this)))))
+	    (else
+	     (let ((vec `(vector ,@sexprs)))
+		(epairify loc
+		   (if (eq? type 'vector)
+		       vec
+		       `(js-vector->jsarray ,vec %this)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-new-array ...                                                */
@@ -76,19 +116,25 @@
 			(< (interval-max range) hint))
 		   `(vector-ref ,(j2s-scheme obj mode return conf hint totype)
 		       ,(j2s-scheme field mode return conf hint totype)))
-		  ((eq? (j2s-type field) 'index)
+		  ((or (eq? (j2s-type field) 'index)
+		       (eq? (j2s-type field) 'uint29)
+		       (>=fx (interval-min range) 0))
 		   (let ((i (gensym 'idx)))
-		      `(let ((,i ,(j2s-scheme field mode return conf hint totype)))
+		      `(let ((,i ,(j2s-scheme field
+				     mode return conf hint totype)))
 			  (if (<fx ,i ,hint)
 			      (vector-ref
-				 ,(j2s-scheme obj mode return conf hint totype) ,i)
+				 ,(j2s-scheme obj
+				     mode return conf hint totype) ,i)
 			      (js-undefined)))))
 		  (else
 		   (let ((i (gensym 'idx)))
-		      `(let ((,i ,(j2s-scheme field mode return conf hint totype)))
+		      `(let ((,i ,(j2s-scheme field
+				     mode return conf hint totype)))
 			  (if (and (<fx ,i ,hint) (>=fx ,i 0))
 			      (vector-ref
-				 ,(j2s-scheme obj mode return conf hint totype) ,i)
+				 ,(j2s-scheme obj
+				     mode return conf hint totype) ,i)
 			      (js-undefined)))))))))))
 
 ;*---------------------------------------------------------------------*/
