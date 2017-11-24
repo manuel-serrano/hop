@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Sep  9 03:37:06 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 10:25:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -13,17 +13,17 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_utils
-
+   
    (import __js2scheme_ast
 	   __js2scheme_dump)
-
+   
    (export (pass ::bstring)
 	   (error/loc proc obj msg loc)
 	   (illegal-node ::bstring ::J2SNode)
 	   (config-get ::pair-nil ::keyword #!optional def)
 	   (config-put! ::pair-nil ::keyword ::obj)
 	   (this?::bool ::J2SNode)
-
+	   
 	   (j2s-expression-src loc ::pair-nil ::bstring)
 	   
 	   (type-int32?::bool ::obj)
@@ -35,7 +35,10 @@
 	   (type-number?::bool ::obj)
 	   (type-name type conf)
 	   (minimal-type::symbol ::obj ::obj)
-	   (max-type::symbol ::obj ::obj)))
+	   (max-type::symbol ::obj ::obj)
+	   (js-uint32->jsnum expr conf)
+	   (js-uint32->fixnum expr conf)
+	   (js-fixnum->uint32 expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -266,3 +269,35 @@
 	  (else 'any)))
       (else
        'any)))
+
+;*---------------------------------------------------------------------*/
+;*    js-uint32->jsnum ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-uint32->jsnum expr conf)
+   (let ((lgsz (config-get conf :long-size 30)))
+      (cond
+	 ((and (uint32? expr) (<u32 expr (bit-lshu32 #u32:1 (-fx lgsz 1))))
+	  (uint32->fixnum expr))
+	 ((>fx lgsz 32)
+	  `(uint32->fixnum ,expr))
+	 (else
+	  `(js-uint32->jsnum ,expr)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-uint32->fixnum ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-uint32->fixnum expr conf)
+   (cond
+      ((uint32? expr)
+       (uint32->fixnum expr))
+      (else
+       `(uint32->fixnum ,expr))))
+
+;*---------------------------------------------------------------------*/
+;*    js-fixnum->uint32 ...                                            */
+;*---------------------------------------------------------------------*/
+(define (js-fixnum->uint32 expr)
+   (if (fixnum? expr)
+       (fixnum->uint32 expr)
+       `(fixnum->uint32 ,expr)))
+

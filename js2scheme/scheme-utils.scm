@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    /tmp/HOP/3.2.x/js2scheme/scheme-utils.scm                        */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-utils.scm        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Nov 13 16:05:26 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 10:34:28 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -58,11 +58,17 @@
 	   (is-string? expr::J2SExpr)
 
 	   (j2s-jsstring val loc)
-	   (j2s-unresolved name cache throw)
-	   
 	   (js-string->jsstring ::bstring)
+	   
+	   (j2s-unresolved name cache throw)
+	   (js-not expr)
+	   
 	   (js-pcache cache)
-	   (js-not expr)))
+	   (js-object-get-name/cache::symbol clevel::long)
+	   (js-object-put-name/cache!::symbol clevel::long)
+	   
+	   (j2s-get loc obj tyobj prop typrop cache #!optional (clevel 100))
+	   (j2s-put! loc obj tyobj prop val mode cache #!optional (clevel 100))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -403,6 +409,14 @@
 	   %this))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-not ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (js-not expr)
+   (match-case expr
+      (((kwote not) ?val) val)
+      (else `(not ,expr))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-string->jsstring ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-string->jsstring val::bstring)
@@ -419,9 +433,127 @@
    `(js-pcache-ref %pcache ,cache))
 
 ;*---------------------------------------------------------------------*/
-;*    js-not ...                                                       */
+;*    js-object-get-name/cache ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (js-not expr)
-   (match-case expr
-      (((kwote not) ?val) val)
-      (else `(not ,expr))))
+(define (js-object-get-name/cache::symbol clevel::long)
+   (case clevel
+      ((1) 'js-object-get-name/cache-level1)
+      ((2) 'js-object-get-name/cache-level2)
+      (else 'js-object-get-name/cache)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-put-name/cache! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-object-put-name/cache!::symbol clevel::long)
+   (case clevel
+      ((1) 'js-object-put-name/cache-level1!)
+      ((2) 'js-object-put-name/cache-level2!)
+      (else 'js-object-put-name/cache!)))
+   
+;*---------------------------------------------------------------------*/
+;*    j2s-get ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-get loc obj tyobj prop typrop cache #!optional (clevel 100))
+
+   (define (maybe-string? prop typrop)
+      (and (not (number? prop))
+	   (not (type-number? typrop))
+	   (not (eq? typrop 'array))))
+	 
+   (let ((prop (match-case prop
+		  ((js-utf8->jsstring ?str) str)
+		  ((js-ascii->jsstring ?str) str)
+		  ((js-string->jsstring ?str) str)
+		  (else prop))))
+      (cond
+	 ((> (bigloo-debug) 0)
+	  (if (string? prop)
+	      `(js-get/debug ,obj ',(string->symbol prop) %this ',loc)
+	      `(js-get/debug ,obj ,prop %this ',loc)))
+	 ((eq? tyobj 'array)
+	  (if (type-number? typrop)
+	      `(js-array-ref ,obj ,prop %this)
+	      `(js-get ,obj ,prop %this)))
+	 ((eq? tyobj 'string)
+	  (cond
+	     ((type-int32? typrop)
+	      (if (or (symbol? prop) (number? prop))
+		  `(if (>=fx ,prop 0)
+		       (js-jsstring-ref ,obj (fixnum->uint32 ,prop))
+		       (js-undefined))
+		  (let ((tmp (gensym '%tmp)))
+		     `(let ((,tmp ,prop))
+			 (if (>=fx ,tmp 0)
+			     (js-jsstring-ref ,obj (fixnum->uint32 ,tmp))
+			     (js-undefined))))))
+	     ((type-uint32? typrop)
+	      `(js-jsstring-ref ,obj ,prop))
+	     (else
+	      `(js-get-string ,obj ,prop %this))))
+	 (cache
+	  (cond
+	     ((string? prop)
+	      (if (string=? prop "length")
+		  `(js-get-length ,obj ,(js-pcache cache) %this)
+		  (case tyobj
+		     ((object this)
+		      `(,(js-object-get-name/cache clevel) ,obj
+			  ',(string->symbol prop) ,(js-pcache cache) %this))
+		     ((global)
+		      `(js-global-object-get-name/cache ,obj
+			  ',(string->symbol prop) ,(js-pcache cache) #f %this))
+		     (else
+		      `(js-get-name/cache ,obj
+			  ',(string->symbol prop) ,(js-pcache cache) %this)))))
+	     ((maybe-string? prop typrop)
+	      `(js-get/cache ,obj ,prop ,(js-pcache cache) %this))
+	     (else
+	      `(js-get ,obj ,prop %this))))
+	 ((string? prop)
+	  (if (string=? prop "length")
+	      `(js-get-length ,obj #f %this)
+	      `(js-get ,obj ',(string->symbol prop) %this)))
+	 (else
+	  `(js-get ,obj ,prop %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-put! ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-put! loc obj tyobj prop val mode cache #!optional (clevel 100))
+   (let ((prop (match-case prop
+		  ((js-utf8->jsstring ?str) str)
+		  ((js-ascii->jsstring ?str) str)
+		  ((js-string->jsstring ?str) str)
+		  (else prop))))
+      (cond
+	 ((> (bigloo-debug) 0)
+	  (if (string? prop)
+	      `(js-put/debug! ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
+	      `(js-put/debug! ,obj ,prop ,val ,mode %this ',loc)))
+	 ((eq? tyobj 'array)
+	  `(js-array-set! ,obj ,prop ,val ,(strict-mode? mode) %this))
+	 (cache
+	  (cond
+	     ((string? prop)
+	      (if (string=? prop "length")
+		  `(js-put-length! ,obj ,val ,mode ,(js-pcache cache) %this)
+		  (begin
+		     (case tyobj
+			((object global this)
+			 `(,(js-object-put-name/cache! clevel)
+			   ,obj
+			     ',(string->symbol prop) ,val ,mode ,(js-pcache cache) %this))
+			(else
+			 `(js-put-name/cache! ,obj
+			     ',(string->symbol prop) ,val ,mode ,(js-pcache cache) %this))))))
+	     ((or (number? prop) (>=fx clevel 10))
+	      `(js-put! ,obj ,prop ,val ,mode %this))
+	     (else
+	      `(js-put/cache! ,obj ,prop ,val ,mode ,(js-pcache cache) %this))))
+	 (else
+	  (cond
+	     ((string? prop)
+	      `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
+	     (else
+	      `(js-put! ,obj ,prop ,val ,mode %this)))))))
+

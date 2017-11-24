@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Nov 23 08:26:55 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 10:43:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -98,55 +98,6 @@
 ;* 	("slice" js-array-maybe-slice any () %this)                    */
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this)
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache ...                                     */
-;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache::symbol clevel::long)
-   (case clevel
-      ((1) 'js-object-get-name/cache-level1)
-      ((2) 'js-object-get-name/cache-level2)
-      (else 'js-object-get-name/cache)))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache! ...                                    */
-;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache!::symbol clevel::long)
-   (case clevel
-      ((1) 'js-object-put-name/cache-level1!)
-      ((2) 'js-object-put-name/cache-level2!)
-      (else 'js-object-put-name/cache!)))
-   
-;*---------------------------------------------------------------------*/
-;*    js-uint32->jsnum ...                                             */
-;*---------------------------------------------------------------------*/
-(define (js-uint32->jsnum expr conf)
-   (let ((lgsz (config-get conf :long-size 30)))
-      (cond
-	 ((and (uint32? expr) (<u32 expr (bit-lshu32 #u32:1 (-fx lgsz 1))))
-	  (uint32->fixnum expr))
-	 ((>fx lgsz 32)
-	  `(uint32->fixnum ,expr))
-	 (else
-	  `(js-uint32->jsnum ,expr)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-uint32->fixnum ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-uint32->fixnum expr conf)
-   (cond
-      ((uint32? expr)
-       (uint32->fixnum expr))
-      (else
-       `(uint32->fixnum ,expr))))
-
-;*---------------------------------------------------------------------*/
-;*    js-fixnum->uint32 ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-fixnum->uint32 expr)
-   (if (fixnum? expr)
-       (fixnum->uint32 expr)
-       `(fixnum->uint32 ,expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast ...                                                         */
@@ -2699,129 +2650,21 @@
 ;*    j2s-scheme ::J2SAccess ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAccess mode return conf hint totype)
-
-   (define (uint32 type expr)
-      (if (eq? type 'uint32)
-	  expr
-	  `(fixnum->uint32 ,expr)))
    
-   (define (aref/cache this::J2SAccess)
-      (with-access::J2SAccess this (obj field)
-	 (with-access::J2SAref obj (array alen amark deps)
-	    (let ((scmarray (j2s-decl-scheme-id array))
-		  (scmalen (j2s-decl-scheme-id alen))
-		  (scmfield (j2s-scheme field mode return conf hint (j2s-type field)))
-		  (scmobj (j2s-scheme obj mode return conf hint 'array))
-		  (tyfield (j2s-type field)))
-	       (case tyfield
-		  ((index uint29 ufixnum)
-		   (let ((idx (j2s-scheme field mode return conf hint 'uint32)))
-		      (if amark
-			  `(JS-ARRAY-INDEX-MARK-REF ,scmobj
-			      ,(uint32 tyfield idx)
-			      ,scmarray ,scmalen
-			      ,(j2s-decl-scheme-id amark)
-			      %this)
-			  `(JS-ARRAY-INDEX-FAST-REF ,scmobj
-			      ,(uint32 tyfield idx)
-			      ,scmarray ,scmalen 
-			      ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
-			      %this))))
-		  ((fixnum)
-		   (if amark
-		       `(JS-ARRAY-FIXNUM-MARK-REF ,scmobj ,scmfield
-			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
-			   %this)
-		       `(JS-ARRAY-FIXNUM-FAST-REF ,scmobj ,scmfield
-			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
-			   %this)))
-		  (else
-		   (if amark
-		       `(JS-ARRAY-MARK-REF ,scmobj ,scmfield
-			   ,scmarray ,scmalen
-			   ,(j2s-decl-scheme-id amark)
-			   %this)
-		       `(JS-ARRAY-FAST-REF ,scmobj ,scmfield
-			   ,scmarray ,scmalen
-			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
-			   %this))))))))
+   (define (get obj field cache clevel loc)
+      (let ((tyo (typeof-this obj conf)))
+	 (j2s-get loc (j2s-scheme obj mode return conf hint totype) tyo
+	    (j2s-property-scheme field mode return conf)
+	    (j2s-type field) cache clevel)))
    
-   (define (aref/w-cache this::J2SAccess)
-      (with-access::J2SAccess this (obj field)
-	 (case (j2s-type field)
-	    ((index)
-	     `(js-array-index-ref ,(j2s-scheme obj mode return conf hint 'array)
-		 ,(j2s-scheme field mode return conf hint 'uint32)
-		 %this))
-	    ((ufixnum uint29)
-	     `(js-array-index-ref ,(j2s-scheme obj mode return conf hint 'array)
-		 ,(js-fixnum->uint32 (j2s-scheme field mode return conf hint 'uint32))
-		 %this))
-	    ((fixnum)
-	     `(js-array-fixnum-ref ,(j2s-scheme obj mode return conf hint totype)
-		 ,(j2s-scheme field mode return conf hint totype)
-		 %this))
-	    (else
-	     `(js-array-ref ,(j2s-scheme obj mode return conf hint totype)
-		 ,(j2s-scheme field mode return conf hint totype)
-		 %this)))))
-   
-   (define (aref this::J2SAccess)
-      (if *j2s-array-cache*
-	  (aref/cache this)
-	  (aref/w-cache this)))
-   
-   (define (array-ref obj field)
-      (cond
-	 ((isa? obj J2SAref)
-	  (aref this))
-	 ((is-fixnum? field conf)
-	  (aref/w-cache this))
-	 ((eq? (j2s-type field) 'index)
-	  `(js-array-ref-ur ,(j2s-scheme obj mode return conf hint totype)
-	      ,(js-uint32->fixnum
-		  (j2s-scheme field mode return conf hint totype) conf)
-	      %this))
-	 (else
-	  `(js-array-ref ,(j2s-scheme obj mode return conf hint totype)
-	      ,(j2s-scheme field mode return conf hint totype)
-	      %this))))
-
-   (define (maybe-array-ref obj field cache clevel)
-      (with-access::J2SExpr obj (loc)
-	 (if (isa? obj J2SRef)
-	     `(if (isa? ,(j2s-scheme obj mode return conf hint totype) JsArray)
-		  ,(array-ref obj field)
-		  ,(let ((tyo (typeof-this obj conf)))
-		      (j2s-get loc
-			 (j2s-scheme obj mode return conf hint totype) tyo
-			 (j2s-property-scheme field mode return conf)
-			 (j2s-type field) cache clevel)))
-	     (let ((tmp (gensym 'tmp)))
-		`(let ((,tmp ,(j2s-scheme obj mode return conf hint totype)))
-		    (if (isa? ,tmp JsArray)
-			,(array-ref (J2SHopRef tmp) field)
-			,(let ((tyo (typeof-this obj conf)))
-			    (j2s-get loc
-			       tmp tyo
-			       (j2s-property-scheme field mode return conf)
-			       (j2s-type field) cache clevel))))))))
-
    (with-access::J2SAccess this (loc obj field cache clevel type)
       (epairify-deep loc 
 	 (cond
 	    ((eq? (j2s-type obj) 'vector)
 	     (j2s-vector-ref this mode return conf hint totype))
-	    ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
-	     (array-ref obj field))
-	    ((and (eq? (j2s-type obj) 'array) (j2s-field-length? field))
-	     (let ((x `(js-array-length
-			  ,(j2s-scheme obj mode return conf hint 'array))))
-		(if (memq type '(index uint32 length))
-		    x
-		    (js-uint32->jsnum x conf))))
+	    ((eq? (j2s-type obj) 'array)
+	     (or (j2s-array-ref this mode return conf hint totype)
+		 (get obj field cache clevel loc)))
 	    ((and (eq? (j2s-type obj) 'string) (j2s-field-length? field))
 	     (let ((x `(js-jsstring-codeunit-length
 			  ,(j2s-scheme obj mode return conf hint totype))))
@@ -2829,12 +2672,18 @@
 		    x
 		    (js-uint32->jsnum x conf))))
 	    ((is-number? field)
-	     (maybe-array-ref obj field cache clevel))
+	     (if (isa? obj J2SRef)
+		 `(if (isa? ,(j2s-scheme obj mode return conf hint totype) JsArray)
+		      ,(j2s-array-ref this mode return conf hint totype)
+		      ,(get obj field cache clevel loc))
+		 (let ((tmp (gensym 'tmp)))
+		    `(let ((,tmp ,(j2s-scheme obj mode return conf hint totype)))
+			(if (isa? ,tmp JsArray)
+			    ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
+				(j2s-array-ref access mode return conf hint totype))
+			    ,(get (J2SHopRef tmp) field cache clevel loc))))))
 	    (else
-	     (let ((tyo (typeof-this obj conf)))
-		(j2s-get loc (j2s-scheme obj mode return conf hint totype) tyo
-		   (j2s-property-scheme field mode return conf)
-		   (j2s-type field) cache clevel)))))))
+	     (get obj field cache clevel loc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCacheCheck ...                                   */
@@ -2869,113 +2718,6 @@
 			   #f mode return conf #t loc)
 		       (js-undefined)))))
 	  (call-next-method))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-get ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (j2s-get loc obj tyobj prop typrop cache #!optional (clevel 100))
-
-   (define (maybe-string? prop typrop)
-      (and (not (number? prop))
-	   (not (type-number? typrop))
-	   (not (eq? typrop 'array))))
-	 
-   (let ((prop (match-case prop
-		  ((js-utf8->jsstring ?str) str)
-		  ((js-ascii->jsstring ?str) str)
-		  ((js-string->jsstring ?str) str)
-		  (else prop))))
-      (cond
-	 ((> (bigloo-debug) 0)
-	  (if (string? prop)
-	      `(js-get/debug ,obj ',(string->symbol prop) %this ',loc)
-	      `(js-get/debug ,obj ,prop %this ',loc)))
-	 ((eq? tyobj 'array)
-	  (if (type-number? typrop)
-	      `(js-array-ref ,obj ,prop %this)
-	      `(js-get ,obj ,prop %this)))
-	 ((eq? tyobj 'string)
-	  (cond
-	     ((type-int32? typrop)
-	      (if (or (symbol? prop) (number? prop))
-		  `(if (>=fx ,prop 0)
-		       (js-jsstring-ref ,obj (fixnum->uint32 ,prop))
-		       (js-undefined))
-		  (let ((tmp (gensym '%tmp)))
-		     `(let ((,tmp ,prop))
-			 (if (>=fx ,tmp 0)
-			     (js-jsstring-ref ,obj (fixnum->uint32 ,tmp))
-			     (js-undefined))))))
-	     ((type-uint32? typrop)
-	      `(js-jsstring-ref ,obj ,prop))
-	     (else
-	      `(js-get-string ,obj ,prop %this))))
-	 (cache
-	  (cond
-	     ((string? prop)
-	      (if (string=? prop "length")
-		  `(js-get-length ,obj ,(js-pcache cache) %this)
-		  (case tyobj
-		     ((object this)
-		      `(,(js-object-get-name/cache clevel) ,obj
-			  ',(string->symbol prop) ,(js-pcache cache) %this))
-		     ((global)
-		      `(js-global-object-get-name/cache ,obj
-			  ',(string->symbol prop) ,(js-pcache cache) #f %this))
-		     (else
-		      `(js-get-name/cache ,obj
-			  ',(string->symbol prop) ,(js-pcache cache) %this)))))
-	     ((maybe-string? prop typrop)
-	      `(js-get/cache ,obj ,prop ,(js-pcache cache) %this))
-	     (else
-	      `(js-get ,obj ,prop %this))))
-	 ((string? prop)
-	  (if (string=? prop "length")
-	      `(js-get-length ,obj #f %this)
-	      `(js-get ,obj ',(string->symbol prop) %this)))
-	 (else
-	  `(js-get ,obj ,prop %this)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-put! ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj tyobj prop val mode cache #!optional (clevel 100))
-   (let ((prop (match-case prop
-		  ((js-utf8->jsstring ?str) str)
-		  ((js-ascii->jsstring ?str) str)
-		  ((js-string->jsstring ?str) str)
-		  (else prop))))
-      (cond
-	 ((> (bigloo-debug) 0)
-	  (if (string? prop)
-	      `(js-put/debug! ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
-	      `(js-put/debug! ,obj ,prop ,val ,mode %this ',loc)))
-	 ((eq? tyobj 'array)
-	  `(js-array-set! ,obj ,prop ,val ,(strict-mode? mode) %this))
-	 (cache
-	  (cond
-	     ((string? prop)
-	      (if (string=? prop "length")
-		  `(js-put-length! ,obj ,val ,mode ,(js-pcache cache) %this)
-		  (begin
-		     (case tyobj
-			((object global this)
-			 `(,(js-object-put-name/cache! clevel)
-			   ,obj
-			     ',(string->symbol prop) ,val ,mode ,(js-pcache cache) %this))
-			(else
-			 `(js-put-name/cache! ,obj
-			     ',(string->symbol prop) ,val ,mode ,(js-pcache cache) %this))))))
-	     ((or (number? prop) (>=fx clevel 10))
-	      `(js-put! ,obj ,prop ,val ,mode %this))
-	     (else
-	      `(js-put/cache! ,obj ,prop ,val ,mode ,(js-pcache cache) %this))))
-	 (else
-	  (cond
-	     ((string? prop)
-	      `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
-	     (else
-	      `(js-put! ,obj ,prop ,val ,mode %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SObjInit ...                                      */

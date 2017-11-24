@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Fri Nov 24 09:34:47 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 09:52:14 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
@@ -66,8 +66,13 @@
 	 (when (and (>= (config-get args :verbose 0) 2) (pair? (cell-ref verb)))
 	    (fprintf (current-error-port)
 	       (format " [~a: ~(,)]"
-		  (cadr (car (cell-ref verb)))
-		  (map caddr (cell-ref verb))))))
+		  (let ((fst (car (cell-ref verb))))
+		     (cadr (if (pair? fst) fst (cell-ref fst))))
+		  (map (lambda (c)
+			  (if (cell? c)
+			      (format "~a*" (caddr (cell-ref c)))
+			      (caddr c)))
+		     (cell-ref verb))))))
       (for-each patch-vector decls)
       (for-each patch-vector nodes)
       this))
@@ -219,10 +224,11 @@
 	       (set! vtype 'vector)
 	       (set! itype 'vector)
 	       (set! hint (list size))
-	       (cell-set! verb (cons loc (cell-ref verb)))
 	       (with-access::J2SExpr val (type)
 		  (set! type 'vector))
+	       (cell-set! verb (cons loc (cell-ref verb)))
 	       (when (and inloop hook scope (not (capture? scope this)))
+		  (set-car! (cell-ref verb) (make-cell (car (cell-ref verb))))
 		  ;; extra optimization: lift the allocation out of the loop
 		  (let ((decl (hook-alloc! hook size loc)))
 		     (set! val (init-array! val decl size))))))))
