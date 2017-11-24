@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Oct  5 07:52:22 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 14:32:49 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -348,7 +348,6 @@
       ((or (isa? this J2SObjInit)
 	   (isa? this J2SPragma)
 	   (isa? this J2SSequence)
-	   (isa? this J2SUnary)
 	   (isa? this J2SParen)
 	   (isa? this J2SCond)
 	   (isa? this J2SMethod)
@@ -365,6 +364,17 @@
        (tprint "TBD " (typeof this))
        (call-default-walker)
        this)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SUnary ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SUnary totype fun)
+   (with-access::J2SUnary this (op expr)
+      (if (eq? op 'typeof)
+	  (begin
+	     (set! expr (type-cast! expr 'any fun))
+	     (cast this totype))
+	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SCast ...                                         */
