@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Nov 22 10:47:40 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 14:03:52 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -658,6 +658,18 @@
    (interval-bitop ursh left right))
    
 ;*---------------------------------------------------------------------*/
+;*    interval-bitand ...                                              */
+;*---------------------------------------------------------------------*/
+(define (interval-bitand left right)
+   (when (and (interval? left) (interval? right))
+      (if (or (> (interval-max left) 0) (> (interval-max right) 0))
+	  (let* ((mi (min (interval-min left) (interval-min right)))
+		 (ma (min (interval-max left) (interval-max right)))
+		 (intr (interval mi ma)))
+	     (widening left right intr))
+	  *int32-intv*)))
+   
+;*---------------------------------------------------------------------*/
 ;*    node-interval-set! ...                                           */
 ;*    -------------------------------------------------------------    */
 ;*    Set the expression interval and if needed update the fix stamp.  */
@@ -1055,9 +1067,12 @@
 		      ((>>>)
 		       (node-interval-set! this env fix
 			  (interval-ushiftr intl intr)))
-		      ((^ & BIT_OR)
+		      ((^ BIT_OR)
 		       (node-interval-set! this env fix
 			  *int32-intv*))
+		      ((&)
+		       (node-interval-set! this env fix
+			  (interval-bitand intl intr)))
 		      (else
 		       (return *infinity-intv* env))))
 		(return range env))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Thu Nov  9 23:34:35 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 13:43:58 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -32,7 +32,10 @@
 	   (inline js-jsstring?::bool ::obj)
 	   (js-jsstring-character-ref ::obj ::uint32)
 	   (js-jsstring-ref ::obj ::uint32)
+	   (js-jsstring-ref-as-string ::obj ::uint32)
 	   (js-jsstring-length::uint32 ::obj)
+	   (js-string-ref ::obj ::obj ::JsGlobalObject)
+	   (js-string-ref-as-string ::obj ::obj ::JsGlobalObject)
 	   (inline js-jsstring-lengthfx::long ::obj)
 	   (js-jsstring-character-length::uint32 ::obj)
 	   (js-jsstring-codeunit-length::uint32 ::obj)
@@ -917,6 +920,44 @@
 	  (js-utf8-ref o val fxpos)))
 
    (string-dispatch string-ref o (uint32->fixnum index)))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-ref-as-string ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-ref-as-string o index::uint32)
+   
+   (define (ascii-string-ref val fxpos)
+      (if (>=fx fxpos (string-length val))
+	  "undefined"
+	  (vector-ref prealloc-strings
+	     (char->integer (string-ref-ur val fxpos)))))
+   
+   (define (utf8-string-ref val fxpos)
+      (if (>=fx fxpos (utf8-codeunit-length val))
+	  "undefined"
+	  (js-utf8-ref o val fxpos)))
+
+   (string-dispatch string-ref o (uint32->fixnum index)))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-ref ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-string-ref o prop %this)
+   (cond
+      ((fixnum? prop)
+       (js-jsstring-ref o (fixnum->uint32 prop)))
+      (else
+       (js-get o prop %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-string-ref-as-string ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-string-ref-as-string o prop %this)
+   (cond
+      ((fixnum? prop)
+       (js-jsstring-ref-as-string o (fixnum->uint32 prop)))
+      (else
+       (js-tojsstring (js-get o prop %this) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-character-ref ...                                    */

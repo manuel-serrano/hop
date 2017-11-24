@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Nov 24 10:43:18 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 14:04:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -106,6 +106,17 @@
    
    (define (err)
       (error "cast" (format "illegal cast ~a -> ~a" from to) expr))
+
+   (define (tostring expr)
+      (match-case expr
+	 ((js-jsstring-ref ?str ?idx)
+	  (set-car! expr 'js-jsstring-ref-as-string)
+	  expr)
+	 ((js-string-ref ?str ?idx ?this)
+	  (set-car! expr 'js-string-ref-as-string)
+	  expr)
+	 (else
+	  `(js-tojsstring ,expr %this))))
    
    (if (or (eq? from to) (eq? to '*))
        expr
@@ -137,6 +148,7 @@
 	  (else
 	   (case to
 	      ((index uint32 length) (js-fixnum->uint32 expr))
+	      ((string) (tostring expr))
 	      (else expr))))))
 	  
 ;*---------------------------------------------------------------------*/
@@ -2656,6 +2668,32 @@
 	 (j2s-get loc (j2s-scheme obj mode return conf hint totype) tyo
 	    (j2s-property-scheme field mode return conf)
 	    (j2s-type field) cache clevel)))
+
+   (define (index-ref obj field cache clevel loc)
+      (if (isa? obj J2SRef)
+	  (let ((tmp (j2s-scheme obj mode return conf hint totype)))
+	     `(cond
+		 ((isa? ,tmp JsArray)
+		  ,(or (j2s-array-ref this mode return conf hint totype)
+		       (get obj field cache clevel loc)))
+		 ((js-jsstring? ,tmp)
+		  ,(or (j2s-string-ref this mode return conf hint totype)
+		       (get obj field cache clevel loc)))
+		 (else
+		  ,(get obj field cache clevel loc))))
+	  (let ((tmp (gensym 'tmp)))
+	     `(let ((,tmp ,(j2s-scheme obj mode return conf hint totype)))
+		 (cond
+		    ((isa? ,tmp JsArray)
+		     ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
+			 (or (j2s-array-ref access mode return conf hint totype)
+			     (get obj field cache clevel loc))))
+		    ((js-jsstring? ,tmp)
+		     ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
+			 (or (j2s-string-ref access mode return conf hint totype)
+			     (get obj field cache clevel loc))))
+		    (else
+		     ,(get (J2SHopRef tmp) field cache clevel loc)))))))
    
    (with-access::J2SAccess this (loc obj field cache clevel type)
       (epairify-deep loc 
@@ -2665,23 +2703,11 @@
 	    ((eq? (j2s-type obj) 'array)
 	     (or (j2s-array-ref this mode return conf hint totype)
 		 (get obj field cache clevel loc)))
-	    ((and (eq? (j2s-type obj) 'string) (j2s-field-length? field))
-	     (let ((x `(js-jsstring-codeunit-length
-			  ,(j2s-scheme obj mode return conf hint totype))))
-		(if (memq type '(index uint32 length))
-		    x
-		    (js-uint32->jsnum x conf))))
+	    ((eq? (j2s-type obj) 'string)
+	     (or (j2s-string-ref this mode return conf hint totype)
+		 (get obj field cache clevel loc)))
 	    ((is-number? field)
-	     (if (isa? obj J2SRef)
-		 `(if (isa? ,(j2s-scheme obj mode return conf hint totype) JsArray)
-		      ,(j2s-array-ref this mode return conf hint totype)
-		      ,(get obj field cache clevel loc))
-		 (let ((tmp (gensym 'tmp)))
-		    `(let ((,tmp ,(j2s-scheme obj mode return conf hint totype)))
-			(if (isa? ,tmp JsArray)
-			    ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
-				(j2s-array-ref access mode return conf hint totype))
-			    ,(get (J2SHopRef tmp) field cache clevel loc))))))
+	     (index-ref obj field cache clevel loc))
 	    (else
 	     (get obj field cache clevel loc))))))
 

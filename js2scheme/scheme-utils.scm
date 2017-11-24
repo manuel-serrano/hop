@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Nov 24 10:34:28 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 13:55:25 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -476,6 +476,8 @@
 	      `(js-get ,obj ,prop %this)))
 	 ((eq? tyobj 'string)
 	  (cond
+	     ((type-uint32? typrop)
+	      `(js-jsstring-ref ,obj ,prop))
 	     ((type-int32? typrop)
 	      (if (or (symbol? prop) (number? prop))
 		  `(if (>=fx ,prop 0)
@@ -486,8 +488,6 @@
 			 (if (>=fx ,tmp 0)
 			     (js-jsstring-ref ,obj (fixnum->uint32 ,tmp))
 			     (js-undefined))))))
-	     ((type-uint32? typrop)
-	      `(js-jsstring-ref ,obj ,prop))
 	     (else
 	      `(js-get-string ,obj ,prop %this))))
 	 (cache
