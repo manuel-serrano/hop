@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Nov 22 09:16:34 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 08:59:24 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -758,7 +758,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SNew)
    (with-access::J2SNew this (clazz args)
-      `(,@(call-next-method) ,(j2s->list clazz) ,@(map j2s->list args))))
+      `(,@(call-next-method) ,@(dump-type this)
+	  ,(j2s->list clazz) ,@(map j2s->list args))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SYield ...                                         */

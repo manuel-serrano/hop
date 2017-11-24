@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Thu Nov 23 08:30:10 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 09:31:42 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -109,33 +109,35 @@
 (define (j2s-vector-ref this::J2SAccess mode return conf hint totype)
    (with-access::J2SAccess this (obj field)
       (with-access::J2SRef obj (decl)
-	 (with-access::J2SDecl decl (hint)
+	 (with-access::J2SDecl decl ((h hint))
 	    (with-access::J2SExpr field (range)
-	       (cond
-		  ((and (>= (interval-min range) hint)
-			(< (interval-max range) hint))
-		   `(vector-ref ,(j2s-scheme obj mode return conf hint totype)
-		       ,(j2s-scheme field mode return conf hint totype)))
-		  ((or (eq? (j2s-type field) 'index)
-		       (eq? (j2s-type field) 'uint29)
-		       (>=fx (interval-min range) 0))
-		   (let ((i (gensym 'idx)))
-		      `(let ((,i ,(j2s-scheme field
-				     mode return conf hint totype)))
-			  (if (<fx ,i ,hint)
-			      (vector-ref
-				 ,(j2s-scheme obj
-				     mode return conf hint totype) ,i)
-			      (js-undefined)))))
-		  (else
-		   (let ((i (gensym 'idx)))
-		      `(let ((,i ,(j2s-scheme field
-				     mode return conf hint totype)))
-			  (if (and (<fx ,i ,hint) (>=fx ,i 0))
-			      (vector-ref
-				 ,(j2s-scheme obj
-				     mode return conf hint totype) ,i)
-			      (js-undefined)))))))))))
+	       (let ((h (car h)))
+		  (cond
+		     ((and (>= (interval-min range) h)
+			   (< (interval-max range) h))
+		      `(vector-ref ,(j2s-scheme obj
+				       mode return conf hint totype)
+			  ,(j2s-scheme field mode return conf hint totype)))
+		     ((or (eq? (j2s-type field) 'index)
+			  (eq? (j2s-type field) 'uint29)
+			  (>=fx (interval-min range) 0))
+		      (let ((i (gensym 'idx)))
+			 `(let ((,i ,(j2s-scheme field
+					mode return conf hint totype)))
+			     (if (<fx ,i ,h)
+				 (vector-ref
+				    ,(j2s-scheme obj
+					mode return conf hint totype) ,i)
+				 (js-undefined)))))
+		     (else
+		      (let ((i (gensym 'idx)))
+			 `(let ((,i ,(j2s-scheme field
+					mode return conf hint totype)))
+			     (if (and (<fx ,i ,h) (>=fx ,i 0))
+				 (vector-ref
+				    ,(j2s-scheme obj
+					mode return conf hint totype) ,i)
+				 (js-undefined))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-vector-set! ...                                              */

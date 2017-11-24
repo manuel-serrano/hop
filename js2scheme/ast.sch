@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Wed Nov 22 10:47:38 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 09:00:13 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -43,9 +43,33 @@
        (loc loc)
        (val ,val)))
 
+(define-macro (J2SArray . exprs)
+   `(instantiate::J2SArray
+       (loc loc)
+       (len ,(length exprs))
+       (exprs ,(if (pair? exprs) `(list ,@exprs) ''()))))
+
+(define-macro (J2SArray* size exprs)
+   `(instantiate::J2SArray
+       (loc loc)
+       (len ,size)
+       (exprs ,exprs)))
+
 (define-macro (J2SNop)
    `(instantiate::J2SNop
        (loc loc)))
+
+(define-macro (J2SNew clazz . args)
+   `(instantiate::J2SNew
+       (loc loc)
+       (clazz ,clazz)
+       (args ,(if (pair? args) `(list ,@args) ''()))))
+
+(define-macro (J2SNew* clazz args)
+   `(instantiate::J2SNew
+       (loc loc)
+       (clazz ,clazz)
+       (args ,args)))
 
 (define-macro (J2SPragma expr)
    `(instantiate::J2SPragma
@@ -121,6 +145,13 @@
        (type ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
        (decl ,decl)))
 
+(define-macro (J2SGlobalRef id . opts)
+   `(instantiate::J2SGlobalRef
+       (loc loc)
+       (id ,id)
+       (type ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
+       (decl (J2SDecl '%scope '(ref set) id))))
+
 (define-macro (J2SUnresolvedRef id)
    `(instantiate::J2SUnresolvedRef
        (loc loc)
@@ -184,6 +215,13 @@
        (endloc loc)
        (decls ,decls)
        (nodes ,(if (pair? nodes) `(list ,@nodes) ''()))))
+
+(define-macro (J2SLetBlock* decls nodes)
+   `(instantiate::J2SLetBlock
+       (loc loc)
+       (endloc loc)
+       (decls ,decls)
+       (nodes ,nodes)))
 
 (define-macro (J2SLetRecBlock rec decls . nodes)
    `(instantiate::J2SLetBlock
