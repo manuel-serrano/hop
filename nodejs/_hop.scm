@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Nov  3 19:46:20 2017 (serrano)                */
+;*    Last change :  Fri Nov 24 18:13:08 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -409,7 +409,7 @@
 ;*    post-url ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (post-url frame::JsUrlFrame success opt %this force-sync)
-
+   
    (define (fail->handler fail)
       (lambda (obj)
 	 (if (isa? obj xml-http-request)
@@ -531,24 +531,25 @@
 	  (js-undefined))
 	 (else
 	  (with-access::JsGlobalObject %this (js-promise)
-	     (js-new %this js-promise
-		(js-make-function %this
-		   (lambda (this resolve reject)
-		      (thread-start!
-			 (instantiate::hopthread
-			    (name "post-url")
-			    (body (lambda ()
-				     (post
-					(lambda (x)
-					   (js-promise-async this
-					      (lambda ()
-						 (js-promise-resolve this
-						    (scheme->js x)))))
-					(lambda (x)
-					   (js-promise-async this
-					      (lambda ()
-						 (js-promise-reject this x))))))))))
-		   2 "executor")))))))
+	     (letrec ((p (js-new %this js-promise
+			    (js-make-function %this
+			       (lambda (_ resolve reject)
+				  (thread-start!
+				     (instantiate::hopthread
+					(name "post-url")
+					(body (lambda ()
+						 (post
+						    (lambda (x)
+						       (js-promise-async p
+							  (lambda ()
+							     (js-promise-resolve p
+								(scheme->js x)))))
+						    (lambda (x)
+						       (js-promise-async p
+							  (lambda ()
+							     (js-promise-reject p x))))))))))
+			       2 "executor"))))
+		p))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get/default ...                                                  */
