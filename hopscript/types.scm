@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Aug  3 08:44:44 2017 (serrano)                */
+;*    Last change :  Sat Nov 25 14:12:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -161,6 +161,7 @@
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
+	      (js-symbol-ctor::procedure (default list))
 	      (js-symbol-table read-only (default (js-symbol-table)))
 	      (js-symbol-iterator (default (js-undefined)))
 	      (js-symbol-species (default (js-undefined)))
@@ -208,6 +209,9 @@
 	      val::obj)
 	   
 	   (class JsSymbol::JsObject
+	      val::obj)
+
+	   (final-class JsSymbolLiteral
 	      val::bstring)
 	   
 	   (class JsFunction::JsObject
@@ -662,7 +666,7 @@
    (cond
       ((isa? obj JsFunction)
        js-string-function)
-      ((isa? obj JsSymbol)
+      ((isa? obj JsSymbolLiteral)
        js-string-symbol)
       ((isa? obj JsObject)
        js-string-object)

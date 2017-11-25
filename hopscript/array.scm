@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri May 26 10:08:26 2017 (serrano)                */
+;*    Last change :  Sat Nov 25 15:37:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2520,8 +2520,8 @@
       (cond
 	 ((symbol? n)
  	  (symbol->string! n))
-	 ((isa? n JsSymbol)
-	  (with-access::JsSymbol n (val) val))
+	 ((isa? n JsSymbolLiteral)
+	  (with-access::JsSymbolLiteral n (val) val))
 	 (else
 	  (error "js-define-own-property" "bad property" n))))
    

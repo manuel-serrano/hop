@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Sep 30 07:36:06 2017 (serrano)                */
+;*    Last change :  Sat Nov 25 15:54:09 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -672,6 +672,49 @@
       
       (js-bind! %this js-object 'defineProperty
 	 :value (js-make-function %this defineproperty 3 'defineProperty)
+	 :writable #t
+	 :configurable #t
+	 :enumerable #f
+	 :hidden-class #f)
+
+      ;; assign
+      ;; http://www.ecma-international.org/ecma-262/6.0/#sec-object.assign
+      ;; http://www.ecma-international.org/ecma-262/6.0/#sec-9.1.12
+      (define (assign this target . sources)
+	 
+	 (define (idx-cmp a b)
+	    (<=fx (string-natural-compare3
+		     (symbol->string! a)
+		     (symbol->string! b))
+	       0))
+
+	 (let ((to (js-cast-object target %this "assign")))
+	    (for-each (lambda (src)
+			 (unless (or (null? src) (eq? src (js-undefined)))
+			    (let* ((fro (js-cast-object src %this "assign"))
+				   (names (js-properties-names fro #f))
+				   (keys '())
+				   (idx '()))
+			       ;; keys have to be sorted as specified in
+			       ;; section 9.1.12
+			       (for-each (lambda (name)
+					    (if (js-isindex? (js-toindex name))
+						(set! idx (cons name idx))
+						(set! keys (cons name keys))))
+				  names)
+			       (for-each (lambda (k)
+					    (let ((val (js-get fro k %this)))
+					       (js-put! to k val #f %this)))
+				  (sort idx-cmp idx))
+			       (for-each (lambda (k)
+					    (let ((val (js-get fro k %this)))
+					       (js-put! to k val #f %this)))
+				  (reverse! keys)))))
+	       sources)
+	    to))
+
+      (js-bind! %this js-object 'assign
+	 :value (js-make-function %this assign 2 'assign)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f

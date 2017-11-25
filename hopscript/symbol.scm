@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 21 09:34:10 2017 (serrano)                */
+;*    Last change :  Sat Nov 25 14:52:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -51,23 +51,31 @@
 	 val))
    (lambda (o %this)
       (let ((this (or %this (js-initial-global-object))))
-	 (with-access::JsGlobalObject this (js-symbol)
-	    (instantiate::JsSymbol
-	       (val o)
-	       (__proto__ (js-get js-symbol 'prototype this)))))))
+	 (js-toobject this o))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsSymbol ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-donate obj::JsSymbol worker::WorkerHopThread %_this)
+(define-method (js-donate obj::JsObject worker::WorkerHopThread %_this)
    (with-access::WorkerHopThread worker (%this)
-      (with-access::JsGlobalObject %this (js-symbol)
-	 (let ((nobj (call-next-method)))
-	    (with-access::JsSymbol nobj (__proto__ val)
-	       (with-access::JsSymbol obj ((_val val))
-		  (set! __proto__ (js-get js-symbol 'prototype %this))
-		  (set! val (js-donate _val worker %_this))))
+      (with-access::JsGlobalObject %this (js-object)
+	 (let ((nobj (duplicate::JsSymbol obj
+			(__proto__ (js-get js-object 'prototype %this))
+			(properties '()))))
+	    (js-for-in obj
+	       (lambda (k)
+		  (js-put! nobj k
+		     (js-donate (js-get obj k %_this) worker %_this)
+		     #f %this))
+	       %this)
 	    nobj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring ::JsSymbolLiteral ...                                */
+;*---------------------------------------------------------------------*/
+(define-method (js-tostring obj::JsSymbolLiteral %this)
+   (with-access::JsSymbolLiteral obj (val)
+      (string-append "Symbol(" val ")")))
 
 ;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsSymbol ...                                   */
@@ -82,6 +90,58 @@
       (display "\")" op)))
 
 ;*---------------------------------------------------------------------*/
+;*    hop->javascript ::JsSymbol ...                                   */
+;*    -------------------------------------------------------------    */
+;*    See runtime/js_comp.scm in the Hop library for the definition    */
+;*    of the generic.                                                  */
+;*---------------------------------------------------------------------*/
+(define-method (hop->javascript o::JsSymbolLiteral op compile isexpr)
+   (with-access::JsSymbolLiteral o (val)
+      (display "Symbol(\"" op)
+      (display (string-for-read val) op)
+      (display "\")" op)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive ::JsSymbolLiteral ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (js-toprimitive o::JsSymbolLiteral preferredtype %this::JsGlobalObject)
+   (if (eq? preferredtype 'any)
+       (js-raise-type-error %this "Cannot convert a Symbol value to a string" o)
+       (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toprimitive ::JsSymbol ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (js-toprimitive o::JsSymbol preferredtype %this::JsGlobalObject)
+   (with-access::JsSymbol o (val)
+      val))
+
+;*---------------------------------------------------------------------*/
+;*    js-properties-name ::JsSymbolLiteral ...                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-properties-name o::JsSymbolLiteral enump::bool %this)
+   '#())
+
+;*---------------------------------------------------------------------*/
+;*    js-has-property ::JsSymbolLiteral ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-has-property o::JsSymbolLiteral name %this)
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    js-get-own-property ::JsSymbolLiteral ...                        */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-own-property o::JsSymbolLiteral p %this)
+   (js-undefined))
+
+;*---------------------------------------------------------------------*/
+;*    js-get ::JsSymbolLiteral ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-get o::JsSymbolLiteral prop %this)
+   (with-access::JsGlobalObject %this (js-symbol)
+      (js-get (js-get js-symbol 'prototype %this) prop %this)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-symbol-table ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-symbol-table)
@@ -91,7 +151,10 @@
 ;*    js-init-symbol! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-init-symbol! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-symbol js-function
+   (with-access::JsGlobalObject %this (__proto__
+					 js-function
+					 js-symbol
+					 js-symbol-ctor
 					 js-symbol-table
 					 js-symbol-iterator
 					 js-symbol-species)
@@ -100,30 +163,32 @@
 	 ;; builtin prototype
 	 (define js-symbol-prototype
 	    (instantiate::JsSymbol
-	       (val "")
+	       (val (instantiate::JsSymbolLiteral (val "")))
 	       (__proto__ __proto__)))
 
-	 ;; symbol allocation
-	 (define (js-symbol-alloc::JsSymbol constructor::JsFunction)
-	    (js-raise-type-error %this "Not a constructor" constructor))
-
-	 ;; then, create a HopScript object
-	 (set! js-symbol
-	    (js-make-function %this
-	       (%js-symbol %this) 1 'Symbol
-	       :__proto__ js-function-prototype
-	       :prototype js-symbol-prototype
-	       :alloc js-symbol-alloc))
-	 
-	 (define (%js-symbol %this)
-	    (lambda::JsSymbol (this . args)
+	 (set! js-symbol-ctor
+	    ;; this constructor is invoked when Object( symbol ) is called
+	    (lambda (this arg)
 	       (instantiate::JsSymbol
 		  (__proto__ js-symbol-prototype)
-		  (val (if (null? args) "" (js-tostring (car args) %this))))))
+		  (val arg))))
+	 
+	 ;; Symbol constructor function
+	 (set! js-symbol
+	    (js-make-function %this
+	       (lambda (this . args)
+		  (instantiate::JsSymbolLiteral
+		     (val (if (null? args) "" (js-tostring (car args) %this)))))
+	       1 'Symbol
+	       :__proto__ js-function-prototype
+	       :prototype js-symbol-prototype))
+	 
+	 (js-bind! %this %this 'Symbol
+	    :configurable #f :enumerable #f :value js-symbol
+	    :hidden-class #t)
 
-	 (define (bind-sym! s)
-	    (let ((sym (instantiate::JsSymbol
-			  (__proto__ js-symbol-prototype)
+	 (define (bind-symbol! s)
+	    (let ((sym (instantiate::JsSymbolLiteral
 			  (val (string-append "Symbol."
 				  (symbol->string! s))))))
 	       (js-bind! %this js-symbol s
@@ -131,17 +196,16 @@
 		  :writable #f
 		  :enumerable #f
 		  :configurable #f
-		  :hidden-class #t)
+		  :hidden-class #f)
 	       sym))
 	 
 	 ;; for
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.for
-	 (define (js-symbol-for::JsSymbol this key)
+	 (define (js-symbol-for this key)
 	    (let* ((stringkey (js-tostring key %this))
 		   (old (hashtable-get js-symbol-table stringkey)))
 	       (or old
-		   (let ((new (instantiate::JsSymbol
-				 (__proto__ js-symbol-prototype)
+		   (let ((new (instantiate::JsSymbolLiteral
 				 (val stringkey))))
 		      (hashtable-put! js-symbol-table stringkey new)
 		      new))))
@@ -152,13 +216,13 @@
 	    :enumerable #f
 	    :configurable #t
 	    :hidden-class #t)
-	 
+
 	 ;; keyFor
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.keyfor
 	 (define (js-symbol-keyfor::obj this sym)
-	    (if (isa? sym JsSymbol)
-		(with-access::JsSymbol sym (val)
-		   (if (hashtable-get js-symbol-table val) #t (js-undefined)))
+	    (if (isa? sym JsSymbolLiteral)
+		(with-access::JsSymbolLiteral sym (val)
+		   (if (hashtable-get js-symbol-table val) val (js-undefined)))
 		(js-raise-type-error %this "not a symbol" sym)))
 
 	 (js-bind! %this js-symbol 'keyFor
@@ -169,18 +233,13 @@
 	    :hidden-class #t)
 
 	 ;; global symbols
-	 (for-each bind-sym!
-	    '(hasInstance isConcatSpreadable match prototype
+	 (for-each bind-symbol!
+	    '(hasInstance isConcatSpreadable match
 	      replace search split toPrimitive toStringTag
 	      unscopables))
 
-	 (set! js-symbol-iterator (bind-sym! 'iterator))
-	 (set! js-symbol-species (bind-sym! 'species))
-	 
-	 ;; bind Symbol in the global object
-	 (js-bind! %this %this 'Symbol
-	    :configurable #f :enumerable #f :value js-symbol
-	    :hidden-class #t)
+	 (set! js-symbol-iterator (bind-symbol! 'iterator))
+	 (set! js-symbol-species (bind-symbol! 'species))
 
 	 ;; prototype properties
 	 (init-builtin-symbol-prototype! %this js-symbol js-symbol-prototype)
@@ -209,13 +268,15 @@
    
    ;; toString
    ;; http://www.ecma-international.org/ecma-262/6.0/#19.4.3.2
-   (define (tostring::JsStringLiteral this)
+   (define (tostring this)
       (cond
+	 ((isa? this JsSymbolLiteral)
+	  (js-tostring this %this))
 	 ((isa? this JsSymbol)
 	  (with-access::JsSymbol this (val)
-	     (js-stringlist->jsstring `("Symbol(" ,val ")"))))
+	     (js-tostring val %this)))
 	 ((isa? this JsObject)
-	  (js-raise-type-error %this "no internal slow" this))
+	  (js-raise-type-error %this "no internal slot" this))
 	 (else
 	  (js-raise-type-error %this "not a symbol" this))))
    
@@ -224,12 +285,15 @@
       :enumerable #f
       :hidden-class #t)
    
-   (define (valueof::JsSymbol this)
+   (define (valueof this)
       (cond
-	 ((isa? this JsSymbol)
+	 ((isa? this JsSymbolLiteral)
 	  this)
+	 ((isa? this JsSymbol)
+	  (with-access::JsSymbol this (val)
+	     val))
 	 ((isa? this JsObject)
-	  (js-raise-type-error %this "no internal slow" this))
+	  (js-raise-type-error %this "no internal slot" this))
 	 (else
 	  (js-raise-type-error %this "not a symbol" this))))
    
