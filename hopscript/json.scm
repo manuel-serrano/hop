@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Oct 30 16:15:15 2017 (serrano)                */
+;*    Last change :  Sat Nov 25 20:27:54 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -233,7 +233,7 @@
 		(loop (js-valueof space %this)))
 	       (else
 		""))))
-
+      
       (define rep
 	 (cond
 	    ((isa? replacer JsFunction) replacer)
@@ -272,38 +272,64 @@
 				   (display (proc i) op)
 				   (liip (+fx i 1)))))
 			 (set! gap mind)))))))
-
+      
       (define (for-in obj proc)
-	 
-	 (define (vfor-each proc vec)
+
+	 (define (vfor-each2 proc vec)
 	    (let ((len (vector-length vec)))
 	       (let loop ((i 0))
 		  (when (<fx i len)
 		     (proc (vector-ref-ur vec i))
 		     (loop (+fx i 1))))))
 	 
+	 (define (vfor-each3 proc vec vecname)
+	    (let ((len (vector-length vecname)))
+	       (let loop ((i 0))
+		  (when (<fx i len)
+		     (proc (vector-ref vec i) (vector-ref vecname i))
+		     (loop (+fx i 1))))))
+
+	 (define (in-mapped-property el-or-descr prop)
+	    (when (and (symbol? (prop-name prop))
+		       (flags-enumerable? (prop-flags prop)))
+	       (cond
+		  ((isa? el-or-descr JsPropertyDescriptor)
+		   (with-access::JsPropertyDescriptor el-or-descr (enumerable)
+		      (when (eq? enumerable #t)
+			 (proc (prop-name prop)))))
+		  (else
+		   (proc (prop-name prop))))))
+	 
 	 (define (in-property p)
 	    (when (isa? p JsPropertyDescriptor)
-	       (with-access::JsPropertyDescriptor p (name)
-		  (proc name))))
+	       (with-access::JsPropertyDescriptor p (name enumerable)
+		  (when (and (symbol? name) enumerable)
+		     (proc name)))))
 	 
 	 (cond
 	    ((isa? obj JsObject)
 	     (let loop ((o obj))
-		(with-access::JsObject o (cmap __proto__)
+		(with-access::JsObject o (elements cmap __proto__)
 		   (if (not (eq? cmap (js-not-a-cmap)))
 		       (with-access::JsConstructMap cmap (props)
-			  (vfor-each (lambda (n)
-					(when n (proc (prop-name n))))
-			     props))
+			  (vfor-each3 in-mapped-property elements props))
 		       (for-each in-property (js-object-properties o))))))
+;* 	    ((isa? obj JsObject)                                       */
+;* 	     (let loop ((o obj))                                       */
+;* 		(with-access::JsObject o (cmap properties __proto__)   */
+;* 		   (if (not (eq? cmap (js-not-a-cmap)))                */
+;* 		       (with-access::JsConstructMap cmap (names)       */
+;* 			  (vfor-each (lambda (n)                       */
+;* 					(when (and n (symbol? n)) (proc n))) */
+;* 			     names))                                   */
+;* 		       (for-each in-property properties)))))           */
 	    ((object? obj)
-	     (vfor-each (lambda (f) (proc (class-field-name f)))
+	     (vfor-each2 (lambda (f) (proc (class-field-name f)))
 		(class-all-fields (object-class obj))))
 	    (else
 	     '#())))
       
-      (define (str key holder stack)
+      (define (str key holder stack #!optional (symbol (js-undefined)))
 	 (let* ((value (js-get holder key %this))
 		(value (toJSON value key))
 		(value (if (isa? rep JsFunction)
@@ -327,8 +353,8 @@
 		(js-ascii->jsstring "false"))
 	       ((eq? value (js-undefined))
 		value)
-	       ((isa? value JsSymbol)
-		(js-ascii->jsstring "undefined"))
+	       ((isa? value JsSymbolLiteral)
+		symbol)
 	       (else
 		(set! gap (string-append gap indent))
 		(cond
@@ -337,7 +363,8 @@
 		   ((isa? value JsArray)
 		    (let ((res (lst holder value mind "[" "]"
 				  (lambda (i)
-				     (str i value stack)))))
+				     (str i value stack
+					(js-ascii->jsstring "null"))))))
 		       (set! gap mind)
 		       res))
 		   ((and (isa? rep JsObject) (not (isa? rep JsFunction)))
@@ -399,7 +426,7 @@
 				    (display mind op)
 				    (display "}" op)))
 				(set! gap mind)))))))))))
-
+      
       (with-access::JsGlobalObject %this (js-object)
 	 (let ((holder (js-new %this js-object)))
 	    (js-put! holder '|| value #f %this)

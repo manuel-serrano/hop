@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Nov 24 11:32:22 2017 (serrano)                */
+;*    Last change :  Sat Nov 25 20:28:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -73,6 +73,7 @@
 	   (js-object-add! obj::JsObject index::long value)
 	   (js-object-push! obj::JsObject index::long value)
 	   
+	   (js-properties-names ::JsObject ::bool)
 	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
 	   (generic js-properties-symbol::vector ::obj ::JsGlobalObject)
 	   
@@ -804,8 +805,6 @@
 	  (string->symbol p))
 	 ((js-jsstring? p)
 	  (string->symbol (js-jsstring->string p)))
-	 ((isa? p JsSymbol)
-	  p)
 	 ((fixnum? p)
 	  (fixnum->pname p))
 	 ((uint32? p)
@@ -820,6 +819,11 @@
 		  (string->symbol (llong->string (uint32->llong p)))))
 	     (else
 	      (fixnum->pname (uint32->fixnum p)))))
+	 ((isa? p JsSymbolLiteral)
+	  p)
+	 ((isa? p JsSymbol)
+	  (with-access::JsSymbol p (val)
+	     val))
 	 (else
 	  (loop (js-tostring p %this))))))
 
@@ -990,9 +994,9 @@
        (js-raise-type-error %this "[[PROP]]: not an object ~s" o)))
 
 ;*---------------------------------------------------------------------*/
-;*    properties-names ...                                             */
+;*    js-properties-names ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (properties-names o::JsObject enump::bool)
+(define (js-properties-names o::JsObject enump::bool)
    
    (define (cmap->names cmap)
       (with-access::JsConstructMap cmap (props)
@@ -1010,19 +1014,20 @@
 			  (loop (-fx i 1) acc)))))
 	       (else
 		(loop (-fx i 1) acc))))))
-   
+
    (with-access::JsObject o (cmap)
       (cond
 	 ((not (eq? cmap (js-not-a-cmap)))
 	  (cmap->names cmap))
 	 ((not enump)
-	  (map (lambda (p)
-		  (with-access::JsPropertyDescriptor p (name) name))
+	  (filter-map (lambda (p)
+			 (with-access::JsPropertyDescriptor p (name)
+			    (when (symbol? name) name)))
 	     (js-object-properties o)))
 	 (else
 	  (filter-map (lambda (p)
 			 (with-access::JsPropertyDescriptor p (enumerable name)
-			    (when enumerable name)))
+			    (when (and enumerable (symbol? name)) name)))
 	     (js-object-properties o))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1032,10 +1037,10 @@
    
    (define (symbol->jsstring n)
       (js-string->jsstring (symbol->string! n)))
-
+   
    (apply vector
       (filter-map (lambda (n) (when (symbol? n) (symbol->jsstring n)))
-	 (properties-names o enump))))
+	 (js-properties-names o enump))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-symbol ...                                         */
@@ -1050,8 +1055,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-symbol::vector o::JsObject %this::JsGlobalObject)
    (apply vector
-      (filter-map (lambda (n) (when (isa? n JsSymbol) n))
-	 (properties-names o #t))))
+      (filter-map (lambda (n) (when (isa? n JsSymbolLiteral) n))
+	 (js-properties-names o #t))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ...                                              */
@@ -2458,6 +2463,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-for-in ::JsObject ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.6.4       */
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in obj::JsObject proc %this)
    
@@ -2473,18 +2480,20 @@
    (define (in-mapped-property el-or-descr prop)
       (when (and prop (flags-enumerable? (prop-flags prop)))
 	 (let ((name (prop-name prop)))
-	    (unless (memq name env)
-	       (set! env (cons name env))
-	       (proc (js-string->jsstring (symbol->string! name)))))))
+	    (when (symbol? name)
+	       (unless (memq name env)
+		  (set! env (cons name env))
+		  (proc (js-string->jsstring (symbol->string! name))))))))
    
    (define (in-property p)
       (when (isa? p JsPropertyDescriptor)
 	 (with-access::JsPropertyDescriptor p (name enumerable)
-	    (unless (memq name env)
-	       (when (eq? enumerable #t)
-		  (set! env (cons name env))
-		  (proc (js-string->jsstring (symbol->string! name))))))))
-   
+	    (when (symbol? name)
+	       (unless (memq name env)
+		  (when (eq? enumerable #t)
+		     (set! env (cons name env))
+		     (proc (js-string->jsstring (symbol->string! name)))))))))
+
    (let loop ((o obj))
       (with-access::JsObject o (cmap __proto__ elements)
 	 (if (not (eq? cmap (js-not-a-cmap)))

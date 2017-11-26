@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Nov  9 22:50:40 2017 (serrano)                */
+;*    Last change :  Sat Nov 25 14:38:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1228,7 +1228,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.8          */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-tostring obj %this::JsGlobalObject)
+(define-generic (js-tostring::bstring obj %this::JsGlobalObject)
    (cond
       ((string? obj)
        obj)
@@ -1291,6 +1291,9 @@
       ((boolean? o)
        (with-access::JsGlobalObject %this (js-boolean)
 	  (js-new1 %this js-boolean o)))
+      ((isa? o JsSymbolLiteral)
+       (with-access::JsGlobalObject %this (js-symbol-ctor)
+	  (js-symbol-ctor (js-undefined) o)))
       ((isa? o JsObject)
        o)
       ((pair? o)
@@ -1393,9 +1396,17 @@
 	  (equality? x (js-tonumber y %this)))
 	 ((isa? x JsObject)
 	  (cond
-	     ((js-jsstring? y) (equality? (js-toprimitive x 'any %this) y))
-	     ((number? y) (equality? (js-toprimitive x 'any %this) y))
+	     ((js-jsstring? y)
+	      (equality? (js-toprimitive x 'any %this) y))
+	     ((number? y)
+	      (equality? (js-toprimitive x 'any %this) y))
+	     ((isa? y JsSymbolLiteral)
+	      (equality? (js-toprimitive x 'any %this) y))
 	     (else #f)))
+	 ((isa? x JsSymbolLiteral)
+	  (if (isa? y JsObject)
+	      (equality? x (js-toprimitive y 'any %this))
+	      #f))
 	 (else
 	  #f))))
 
