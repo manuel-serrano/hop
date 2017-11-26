@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sun Nov 26 10:19:07 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 19:57:32 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -247,6 +247,11 @@
 	  (%this (instantiateJsGlobalObject
 		    (__proto__ %prototype)
 		    (cmap (make-cmap '#())))))
+      ;; for bootstrap, first allocat hasInstance symbol
+      (with-access::JsGlobalObject %this (js-symbol-hasinstance)
+	 (set! js-symbol-hasinstance
+	    (instantiate::JsSymbolLiteral
+	       (val "hasInstance"))))
       ;; init the builtin function class
       (js-init-function! %this)
       ;; the object constructor

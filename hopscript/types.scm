@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sun Nov 26 08:48:00 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 19:39:00 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -168,6 +168,7 @@
 	      (js-symbol-table read-only (default (js-symbol-table)))
 	      (js-symbol-iterator (default (js-undefined)))
 	      (js-symbol-species (default (js-undefined)))
+	      (js-symbol-hasinstance (default (js-undefined)))
 	      (js-main (default (js-null)))
 	      (js-call (default #f))
 	      (js-apply (default #f))
@@ -315,8 +316,8 @@
 	   (inline js-object-mode-getter?::bool ::JsObject)
 	   (inline js-object-mode-getter-set! ::JsObject ::bool)
 	   
-	   (inline js-object-mode-packed?::bool ::JsObject)
-	   (inline js-object-mode-packed-set! ::JsObject ::bool)
+	   (inline js-object-mode-hasinstance?::bool ::JsObject)
+	   (inline js-object-mode-hasinstance-set! ::JsObject ::bool)
 	   
 	   (inline js-object-mode-instance?::bool ::JsObject)
 	   (inline js-object-mode-instance-set! ::JsObject ::bool)
@@ -326,7 +327,7 @@
 	   (inline JS-OBJECT-MODE-FROZEN::byte)
 	   (inline JS-OBJECT-MODE-INLINE::byte)
 	   (inline JS-OBJECT-MODE-GETTER::byte)
-	   (inline JS-OBJECT-MODE-PACKED::byte)
+	   (inline JS-OBJECT-MODE-HASINSTANCE::byte)
 	   (inline JS-OBJECT-MODE-INSTANCE::byte)
 	   
 	   (generic js-clone::obj ::obj)
@@ -393,7 +394,7 @@
 (define-inline (JS-OBJECT-MODE-FROZEN) 4)
 (define-inline (JS-OBJECT-MODE-INLINE) 8)
 (define-inline (JS-OBJECT-MODE-GETTER) 16)
-(define-inline (JS-OBJECT-MODE-PACKED) 32) ;; see _bglhopscript.c
+(define-inline (JS-OBJECT-MODE-HASINSTANCE) 32)
 (define-inline (JS-OBJECT-MODE-INSTANCE) 64)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) 1)
@@ -401,7 +402,7 @@
 (define-macro (JS-OBJECT-MODE-FROZEN) 4)
 (define-macro (JS-OBJECT-MODE-INLINE) 8)
 (define-macro (JS-OBJECT-MODE-GETTER) 16)
-(define-macro (JS-OBJECT-MODE-PACKED) 32) ;; see _bglhopscript.c
+(define-macro (JS-OBJECT-MODE-HASINSTANCE) 32)
 (define-macro (JS-OBJECT-MODE-INSTANCE) 64)
 
 (define-inline (js-object-mode-extensible? o)
@@ -454,15 +455,15 @@
 	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-GETTER))
 	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-GETTER))))))
 
-(define-inline (js-object-mode-packed? o)
-   (=fx (bit-and (JS-OBJECT-MODE-PACKED) (js-object-mode o))
-      (JS-OBJECT-MODE-PACKED)))
+(define-inline (js-object-mode-hasinstance? o)
+   (=fx (bit-and (JS-OBJECT-MODE-HASINSTANCE) (js-object-mode o))
+      (JS-OBJECT-MODE-HASINSTANCE)))
 
-(define-inline (js-object-mode-packed-set! o flag)
+(define-inline (js-object-mode-hasinstance-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-PACKED))
-	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-PACKED))))))
+	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-HASINSTANCE))
+	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-HASINSTANCE))))))
 
 (define-inline (js-object-mode-instance? o)
    (=fx (bit-and (JS-OBJECT-MODE-INSTANCE) (js-object-mode o))

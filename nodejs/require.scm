@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Nov  5 06:46:53 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 19:47:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -516,7 +516,6 @@
 		   (elements '#()))))
       (js-object-properties-set! scope '())
       (js-object-mode-set! scope (js-object-default-mode))
-      (js-object-mode-packed-set! scope #t)
       (nodejs-import! global scope global)
       (hopscript-global-object-init! scope)
       scope))

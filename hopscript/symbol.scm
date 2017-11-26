@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Nov 26 10:14:58 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 19:59:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -164,7 +164,8 @@
 					 js-symbol-ctor
 					 js-symbol-table
 					 js-symbol-iterator
-					 js-symbol-species)
+					 js-symbol-species
+					 js-symbol-hasinstance)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 ;; builtin prototype
@@ -242,12 +243,21 @@
 
 	 ;; global symbols
 	 (for-each bind-symbol!
-	    '(hasInstance isConcatSpreadable match
+	    '(isConcatSpreadable match
 	      replace search split toPrimitive toStringTag
 	      unscopables))
 
+	 ;; bind the known symbols
 	 (set! js-symbol-iterator (bind-symbol! 'iterator))
 	 (set! js-symbol-species (bind-symbol! 'species))
+
+	 ;; hasinstance has already been allocated
+	 (js-bind! %this js-symbol 'hasInstance
+	    :value js-symbol-hasinstance
+	    :writable #f
+	    :enumerable #f
+	    :configurable #f
+	    :hidden-class #f)
 
 	 ;; prototype properties
 	 (init-builtin-symbol-prototype! %this js-symbol js-symbol-prototype)

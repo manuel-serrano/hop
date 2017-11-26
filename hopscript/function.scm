@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Wed Nov  8 07:49:23 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 19:59:38 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -42,11 +42,6 @@
 	      (constrsize 3) (maxconstrsize 100) method (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::obj ::int ::int ::symbol ::bool ::int)))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsFunction ...                               */
@@ -150,6 +145,17 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js-literal o::JsFunction)
    (error "js" "Cannot compile function" o))
+
+;*---------------------------------------------------------------------*/
+;*    js-define-own-property ::JsFunction ...                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-define-own-property o::JsFunction p desc throw %this)
+   (with-access::JsGlobalObject %this (js-symbol-hasinstance)
+      (when (eq? p js-symbol-hasinstance)
+	 ;; we are defining the property @@hasInstance, mark that function
+	 ;; for slow instanceof path
+	 (js-object-mode-hasinstance-set! o #t)))
+   (call-next-method))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-function! ...                                            */
@@ -469,6 +475,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4       */
 ;*---------------------------------------------------------------------*/
 (define (init-builtin-function-prototype! %this::JsGlobalObject js-function obj)
+   
    ;; length
    (js-bind! %this obj 'length
       :value 0
@@ -517,6 +524,15 @@
 		:prototype (js-undefined))
       :enumerable #f :writable #t :configurable #t
       :hidden-class #t)
+
+   ;; @@hasInstance
+   (with-access::JsGlobalObject %this (js-symbol-hasinstance)
+      (js-bind! %this obj js-symbol-hasinstance
+	 :value (js-make-function %this
+		   (lambda (this o) (js-ordinary-instanceof? %this o this))
+		   1 "[Symbol.hasInstance]" :prototype (js-undefined))
+	 :enumerable #f :writable #f :configurable #f
+	 :hidden-class #t))
    
    ;; apply
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.3.4.3
@@ -624,9 +640,3 @@
       :set thrower-set
       :enumerable #f :configurable #f
       :hidden-class #t))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)
-
