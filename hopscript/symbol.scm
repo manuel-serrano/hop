@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov 25 20:29:09 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 10:14:58 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -78,6 +78,13 @@
       (string-append "Symbol(" val ")")))
 
 ;*---------------------------------------------------------------------*/
+;*    js-inspect ::JsSymbolLiteral ...                                 */
+;*---------------------------------------------------------------------*/
+(define-method (js-inspect obj::JsSymbolLiteral cnt)
+   (with-access::JsSymbolLiteral obj (val)
+      (string-append "Symbol(" val ")")))
+
+;*---------------------------------------------------------------------*/
 ;*    hop->javascript ::JsSymbol ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    See runtime/js_comp.scm in the Hop library for the definition    */
@@ -119,8 +126,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name ::JsSymbolLiteral ...                         */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name o::JsSymbolLiteral enump::bool %this)
-   '#())
+(define-method (js-properties-names o::JsSymbolLiteral enump::bool %this)
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsSymbolLiteral ...                            */
@@ -181,7 +188,8 @@
 		     (val (if (null? args) "" (js-tostring (car args) %this)))))
 	       1 'Symbol
 	       :__proto__ js-function-prototype
-	       :prototype js-symbol-prototype))
+	       :prototype js-symbol-prototype
+	       :shared-cmap #f))
 	 
 	 (js-bind! %this %this 'Symbol
 	    :configurable #f :enumerable #f :value js-symbol
@@ -215,7 +223,7 @@
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t
-	    :hidden-class #t)
+	    :hidden-class #f)
 
 	 ;; keyFor
 	 ;; http://www.ecma-international.org/ecma-262/6.0/#sec-symbol.keyfor
@@ -230,7 +238,7 @@
 	    :writable #t
 	    :enumerable #f
 	    :configurable #t
-	    :hidden-class #t)
+	    :hidden-class #f)
 
 	 ;; global symbols
 	 (for-each bind-symbol!

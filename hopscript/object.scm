@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Nov 25 15:54:09 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 10:19:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -703,8 +703,8 @@
 	 (let ((to (js-cast-object target %this "assign")))
 	    (for-each (lambda (src)
 			 (unless (or (null? src) (eq? src (js-undefined)))
-			    (let* ((fro (js-cast-object src %this "assign"))
-				   (names (js-properties-names fro #f))
+			    (let* ((fro (js-toobject %this src))
+				   (names (js-properties-names fro #t %this))
 				   (keys '())
 				   (idx '()))
 			       ;; keys have to be sorted as specified in
@@ -716,11 +716,11 @@
 				  names)
 			       (for-each (lambda (k)
 					    (let ((val (js-get fro k %this)))
-					       (js-put! to k val #f %this)))
+					       (js-put! to k val #t %this)))
 				  (sort idx-cmp idx))
 			       (for-each (lambda (k)
 					    (let ((val (js-get fro k %this)))
-					       (js-put! to k val #f %this)))
+					       (js-put! to k val #t %this)))
 				  (reverse! keys)))))
 	       sources)
 	    to))

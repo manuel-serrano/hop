@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Nov 25 14:12:05 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 08:48:00 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -360,6 +360,7 @@
 	   (inline js-number?::bool ::obj)
 	   (inline js-object?::bool ::obj)
 	   (inline js-function?::bool ::obj)
+	   (inline js-symbol?::bool ::obj)
 
 	   (inline js-object-cmap ::JsObject)
 	   
@@ -799,6 +800,12 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-function? o)
    (isa? o JsFunction))
+
+;*---------------------------------------------------------------------*/
+;*    js-symbol? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-symbol? o)
+   (isa? o JsSymbolLiteral))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-cmap ...                                               */

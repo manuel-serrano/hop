@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Nov 20 15:40:20 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 07:14:41 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -663,6 +663,7 @@
 			((string=? val "boolean") 'boolean?)
 			((string=? val "pair") 'pair?)
 			((string=? val "object") #f)
+			((string=? val "symbol") 'js-symbol?)
 			(else (tprint "TYPEOF PAS OPT " val) #f))))))))
 
    (define (typeof-expr expr mode return conf hint totype)

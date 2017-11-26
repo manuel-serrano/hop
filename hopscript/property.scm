@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Nov 25 20:28:21 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 10:06:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -61,6 +61,7 @@
 
 	   (js-object-unmap! ::JsObject)
 	   (js-toname::obj ::obj ::JsGlobalObject)
+	   (js-integer->name::obj ::long)
 	   
 	   (inline js-is-accessor-descriptor?::bool obj)
 	   (inline js-is-data-descriptor?::bool obj)
@@ -73,7 +74,7 @@
 	   (js-object-add! obj::JsObject index::long value)
 	   (js-object-push! obj::JsObject index::long value)
 	   
-	   (js-properties-names ::JsObject ::bool)
+	   (generic js-properties-names::pair-nil ::obj ::bool ::JsGlobalObject)
 	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
 	   (generic js-properties-symbol::vector ::obj ::JsGlobalObject)
 	   
@@ -828,6 +829,12 @@
 	  (loop (js-tostring p %this))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-integer->name ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-integer->name n)
+   (string->symbol (integer->string n)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-is-accessor-descriptor? ...                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.10.1       */
@@ -984,20 +991,14 @@
        (js-undefined))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ...                                           */
-;*    -------------------------------------------------------------    */
-;*    Returns a vector of the properties name.                         */
-;*---------------------------------------------------------------------*/
-(define-generic (js-properties-name::vector o enump::bool %this::JsGlobalObject)
-   (if (pair? o)
-       (js-properties-name-pair o %this)
-       (js-raise-type-error %this "[[PROP]]: not an object ~s" o)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-properties-names ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-properties-names o::JsObject enump::bool)
-   
+(define-generic (js-properties-names o::obj enump::bool %this))
+
+;*---------------------------------------------------------------------*/
+;*    js-properties-names ::JsObject ...                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-properties-names o::JsObject enump::bool %this)
    (define (cmap->names cmap)
       (with-access::JsConstructMap cmap (props)
 	 (let loop ((i (-fx (vector-length props) 1))
@@ -1022,25 +1023,33 @@
 	 ((not enump)
 	  (filter-map (lambda (p)
 			 (with-access::JsPropertyDescriptor p (name)
-			    (when (symbol? name) name)))
+			    name))
 	     (js-object-properties o)))
 	 (else
 	  (filter-map (lambda (p)
 			 (with-access::JsPropertyDescriptor p (enumerable name)
-			    (when (and enumerable (symbol? name)) name)))
+			    (when enumerable name)))
 	     (js-object-properties o))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-properties-name ...                                           */
+;*    -------------------------------------------------------------    */
+;*    Returns a vector of the properties name.                         */
+;*---------------------------------------------------------------------*/
+(define-generic (js-properties-name::vector o enump::bool %this::JsGlobalObject)
+   (if (pair? o)
+       (js-properties-name-pair o %this)
+       (js-raise-type-error %this "[[PROP]]: not an object ~s" o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-name ::JsObject ...                                */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-name::vector o::JsObject enump::bool %this::JsGlobalObject)
-   
-   (define (symbol->jsstring n)
-      (js-string->jsstring (symbol->string! n)))
-   
    (apply vector
-      (filter-map (lambda (n) (when (symbol? n) (symbol->jsstring n)))
-	 (js-properties-names o enump))))
+      (filter-map (lambda (n)
+		     (when (symbol? n)
+			(js-string->jsstring (symbol->string! n))))
+	 (js-properties-names o enump %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-properties-symbol ...                                         */
@@ -1055,8 +1064,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-symbol::vector o::JsObject %this::JsGlobalObject)
    (apply vector
-      (filter-map (lambda (n) (when (isa? n JsSymbolLiteral) n))
-	 (js-properties-names o #t))))
+      (filter-map (lambda (n)
+		     (when (isa? n JsSymbolLiteral)
+			n))
+	 (js-properties-names o #t %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ...                                              */
@@ -1901,6 +1912,9 @@
 ;* 	     value))                                                   */
 	 (else
 	  (with-access::JsObject o (elements)
+	     (when (>=fx i (vector-length elements))
+		(tprint "o=" (typeof o) " els=" (vector-length elements)
+		    " i=" i " name=" name))
 	     (vector-set! elements i value)
 	     value))))
 

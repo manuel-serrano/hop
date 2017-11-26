@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/obj.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/obj.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Tue Sep 12 13:38:44 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 09:35:02 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
@@ -62,12 +62,12 @@
    (js-string->jsstring (typeof obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::object ...                                  */
+;*    js-properties-names ::object ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name o::object enump::bool %this::JsGlobalObject)
-   (vector-map (lambda (f)
-		  (js-string->jsstring
-		     (symbol->string! (class-field-name f))))
+(define-method (js-properties-names o::object enump::bool %this::JsGlobalObject)
+   (map (lambda (f)
+	   (js-string->jsstring
+	      (symbol->string! (class-field-name f))))
       (class-all-fields (object-class o))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Oct 27 16:35:20 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 09:57:06 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -16,7 +16,7 @@
 
    (library hop)
 
-   (include "types.sch")
+   (include "types.sch" "stringliteral.sch")
    
    (import __hopscript_types
 	   __hopscript_object
@@ -649,12 +649,13 @@
 	 js-typedarray)))
 	 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::JsTypedArray ...                            */
+;*    js-properties-names ::JsTypedArray ...                           */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name::vector obj::JsTypedArray enump %this)
+(define-method (js-properties-names::vector obj::JsTypedArray enump %this)
    (with-access::JsTypedArray obj (length)
       (let ((len (uint32->fixnum length)))
-	 (vector-append (apply vector (iota len)) (call-next-method)))))
+	 (append! (map js-integer->name (iota len))
+	    (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsTypedArray ...                               */

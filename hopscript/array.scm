@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Nov 25 15:37:20 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 09:56:47 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2198,16 +2198,16 @@
 		   (vec vec))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::JsArray ...                                 */
+;*    js-properties-names ::JsArray ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name obj::JsArray enump %this)
+(define-method (js-properties-names obj::JsArray enump %this)
    (js-array-update-length-property! obj)
    (with-access::JsArray obj (vec ilen)
       (let loop ((i (-fx (uint32->fixnum ilen) 1))
 		 (acc '()))
 	 (if (=fx i -1)
-	     (vector-append (apply vector acc) (call-next-method))
-	     (loop (-fx i 1) (cons (js-integer->jsstring i) acc))))))
+	     (append! acc (call-next-method))
+	     (loop (-fx i 1) (cons (js-integer->name i) acc))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArray ...                                    */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Nov 25 14:38:48 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 10:02:51 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -835,8 +835,13 @@
 	     (let ((o (if (eq? cmap (js-not-a-cmap))
 			  (js-get f 'prototype %this)
 			  (let ((d (vector-ref elements 0)))
-			     (with-access::JsWrapperDescriptor d (value)
-				value)))))
+			     (cond
+				((isa? d JsValueDescriptor)
+				 (with-access::JsValueDescriptor d (value)
+				    value))
+				((isa? d JsWrapperDescriptor)
+				 (with-access::JsWrapperDescriptor d (value)
+				    value)))))))
 		(if (not (isa? o JsObject))
 		    (js-raise-type-error %this "instanceof: no prototype ~s" v)
 		    (let loop ((v v))

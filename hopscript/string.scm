@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sat Nov 11 07:05:20 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 09:55:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -624,16 +624,15 @@
       (js-tointeger val %this)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::JsString ...                                */
+;*    js-properties-names ::JsString ...                               */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name obj::JsString enump %this)
+(define-method (js-properties-names obj::JsString enump %this)
    (with-access::JsString obj (val)
-      (vector-append
-	 (apply vector
-	    (map! js-integer->jsstring
-	       (iota
-		  (uint32->fixnum
-		     (js-jsstring-character-length (js-cast-string %this val))))))
+      (append!
+	 (map! js-integer->name
+	    (iota
+	       (uint32->fixnum
+		  (js-jsstring-character-length val))))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/

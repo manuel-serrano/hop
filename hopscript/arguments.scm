@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Thu Oct 26 05:48:40 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 09:56:32 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -242,14 +242,14 @@
 	     #t))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::JsArray ...                                 */
+;*    js-properties-names ::JsArray ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name obj::JsArguments enump %this)
+(define-method (js-properties-names obj::JsArguments enump %this)
    (with-access::JsArguments obj (vec)
       (let ((len::uint32 (js-touint32 (js-get obj 'length %this) %this)))
-	 (vector-append
-	    (apply vector (map! js-integer->jsstring (iota (uint32->fixnum len))))
-	    (call-next-method))	 )))
+	 (append!
+	    (map! js-integer->name (iota (uint32->fixnum len)))
+	    (call-next-method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-has-property ::JsArguments ...                                */

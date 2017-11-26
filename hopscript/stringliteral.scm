@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Nov 24 13:43:58 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 10:29:05 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -944,7 +944,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-string-ref o prop %this)
    (cond
-      ((fixnum? prop)
+      ((and (fixnum? prop) (>=fx prop 0))
        (js-jsstring-ref o (fixnum->uint32 prop)))
       (else
        (js-get o prop %this))))

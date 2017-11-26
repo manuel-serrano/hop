@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Thu Oct 26 05:51:11 2017 (serrano)                */
+;*    Last change :  Sun Nov 26 09:56:59 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
@@ -239,11 +239,11 @@
 	 js-arraybuffer)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-properties-name ::JsArray ...                                 */
+;*    js-properties-names ::JsArray ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-properties-name obj::JsArrayBuffer enump %this)
+(define-method (js-properties-names obj::JsArrayBuffer enump %this)
    (let ((len (js-arraybuffer-length obj)))
-      (vector-append (apply vector (map js-integer->jsstring (iota len)))
+      (append! (map js-integer->name (iota len))
 	 (call-next-method))))
 
 ;*---------------------------------------------------------------------*/

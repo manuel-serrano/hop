@@ -42,8 +42,10 @@ exports.format = function(f) {
         return x;
     }
   });
-  for (var x = args[i]; i < len; x = args[++i]) {
-    if (x === null || typeof x !== 'object') {
+   for (var x = args[i]; i < len; x = args[++i]) {
+// MS: 2017-11-26, symbols support
+//    if (x === null || typeof x !== 'object') {
+    if (x === null || (typeof x !== 'object' && typeof x !== 'symbol')) {
       str += ' ' + x;
     } else {
       str += ' ' + inspect(x);
@@ -67,10 +69,8 @@ exports.deprecate = function(fn, msg) {
       if (process.throwDeprecation) {
         throw new Error(msg);
       } else if (process.traceDeprecation) {
-#:tprint( "trace: ", msg );
 //        console.trace(msg);
       } else {
-#:tprint( "error: ", msg );
 //        console.error(msg);
       }
       warned = true;
@@ -221,10 +221,13 @@ function formatValue(ctx, value, recurseTimes) {
 
   // Look up the keys of the object.
   var keys = Object.keys(value);
+// MS: 2017-11-26, symbols support
+  keys = keys.concat(Object.getOwnPropertySymbols(value));
   var visibleKeys = arrayToHash(keys);
-
-  if (ctx.showHidden) {
+   if (ctx.showHidden) {
     keys = Object.getOwnPropertyNames(value);
+// MS: 2017-11-26, symbols support
+    keys = keys.concat(getOwnPropertySymbols(value));
   }
 
   // Some type of object without properties can be shortcutted.
@@ -317,7 +320,11 @@ function formatPrimitive(ctx, value) {
       return ctx.stylize('' + value, 'number');
 
     case 'boolean':
-      return ctx.stylize('' + value, 'boolean');
+	return ctx.stylize('' + value, 'boolean');
+
+// MS: 2017-11-26, symbols support	
+     case 'symbol':
+	return ctx.stylize(value.toString(), 'symbol');
   }
   // For some reason typeof null is "object", so special case here.
   if (value === null) {
@@ -366,7 +373,9 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
     }
   }
   if (!hasOwnProperty(visibleKeys, key)) {
-    name = '[' + key + ']';
+    //name = '[' + key + ']';
+     // MS: 2017-11-26, symbols support
+    name = '[' + (((typeof key) == "symbol") ? key.toString() : "key") + ']';
   }
   if (!str) {
     if (ctx.seen.indexOf(desc.value) < 0) {
