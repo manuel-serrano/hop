@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  8 05:43:46 2004                          */
-;*    Last change :  Mon Jan 16 14:38:48 2017 (serrano)                */
+;*    Last change :  Mon Nov 27 08:43:44 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Simple XML producer/writer for HOP.                              */
@@ -930,6 +930,7 @@
 (define (parse-html ip clen)
    (html-parse ip
       :content-length clen
+      :eoi (lambda (o) (isa? o xml-markup))
       :procedure (lambda (tag attributes body)
 		    (let ((constr (string->symbol
 				     (string-append

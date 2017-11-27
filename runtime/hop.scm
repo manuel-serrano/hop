@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Wed Jul 12 07:04:11 2017 (serrano)                */
+;*    Last change :  Mon Nov 27 08:37:38 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -47,7 +47,7 @@
 		      fail
 		      (header '())
 		      (authorization #f)
-		      (connection 'keep-alive)
+		      (connection 'close)
 		      (timeout 0)
 		      (method 'GET)
 		      (json-parser (lambda (ip ctx) (javascript->obj ip)))
@@ -415,7 +415,7 @@
 		  (authorization #f)
 		  (timeout 0)
 		  (method 'GET)
-		  (connection 'keep-alive)
+		  (connection 'close)
 		  (json-parser (lambda (ip ctx) (javascript->obj ip)))
 		  (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
 		  (ctx #f)
