@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Thu Sep 28 14:48:52 2017 (serrano)                */
+;*    Last change :  Mon Nov 27 16:17:35 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
@@ -63,6 +63,14 @@
    (+fx 1 (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
+;*    node-size ::J2SReturn ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (node-size this::J2SReturn)
+   (with-access::J2SReturn this (expr)
+      ;; an extra weight as be counter when declarting the function
+      (node-size expr)))
+	 
+;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SLetBLock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SLetBlock)
@@ -103,7 +111,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SFun)
    (with-access::J2SFun this (params)
-      (+ (call-next-method) 1 (length params))))
+      ;; 3 = 1 (return) + 1 (frame) + 1 (sp)
+      (+ (call-next-method) 3 (length params))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SMethod ...                                        */
@@ -112,3 +121,10 @@
    (with-access::J2SMethod this (method)
       (node-size method)))
 
+;*---------------------------------------------------------------------*/
+;*    node-size ::J2SCall ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (node-size this::J2SCall)
+   (with-access::J2SCall this (fun args)
+      ;; (length args) for the potential spills
+      (+ (node-size fun) (length args) (apply + (map node-size args)))))
