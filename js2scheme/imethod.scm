@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Nov 27 16:40:18 2017 (serrano)                */
+;*    Last change :  Mon Nov 27 19:53:11 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -258,6 +258,16 @@
       (match-case loc
 	 ((at ?file ?pos) (format "[~a:~a]" file pos))
 	 (else (format "[~s]" loc))))
+
+   (define (LetBlock loc t body)
+      (cond
+	 ((pair? t)
+	  (J2SLetRecBlock #f t body))
+	 ((isa? body J2SBlock)
+	  body)
+	 (else
+	  (let ((endloc loc))
+	     (J2SBlock body)))))
    
    (define (inline-callee obj field callee)
       (with-access::J2SFun callee (body thisp params)
@@ -275,14 +285,14 @@
 			    (j2s-alpha body
 			       (cons thisp params) (cons d t)))))))
 	       ((ronly-variable? obj)
-		;; not need to rebind this
+		;; no need to rebind this
 		(let ((t (map (lambda (p a)
 				 (with-access::J2SDecl p (usage id)
 				    (J2SLetOpt usage id a)))
 			    params args)))
 		   (with-access::J2SRef obj (decl)
 		      (cache-check loc obj field 
-			 (J2SLetRecBlock #f t
+			 (LetBlock loc t
 			    (j2s-alpha body
 			       (cons thisp params) (cons decl t)))))))
 	       (else
@@ -294,7 +304,7 @@
 			    params args)))
 		   (J2SLetRecBlock #f (list d)
 		      (cache-check loc (J2SRef d) field
-			 (J2SLetRecBlock #f t
+			 (LetBlock loc t
 			    (j2s-alpha body
 			       (cons thisp params) (cons d t)))))))))))
    
@@ -358,13 +368,43 @@
 		  (filter (lambda (m::J2SFun)
 			     (same-arity? m arity))
 		     (or (hashtable-get pmethods val) '())))))))
-   
-   (with-access::J2SCall this (fun args)
+
+   (with-access::J2SCall this (fun args type)
       (let ((inls (inline-methods fun (length args))))
 	 (if (pair? inls)
 	     (cons (callinfo this inls ifctx loopctx) (call-default-walker))
 	     (call-default-walker)))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    inline-expr* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (inline-expr* exprs call stmt loc kont)
+   (let ((nodes (map (lambda (e) (inline-node! e call stmt)) exprs)))
+      (if (every (lambda (n) (isa? n J2SExpr)) nodes)
+	  (kont nodes)
+	  (let loop ((nodes nodes)
+		     (nexprs '()))
+	     (cond
+		((null? nodes)
+		 (kont (reverse! nexprs)))
+		((isa? (car nodes) J2SExpr)
+		 (let ((t (J2SLetOpt '(ref set) (gensym 'a) (car nodes))))
+		    (J2SLetBlock (list t)
+		       (loop (cdr nodes) (cons (J2SRef t) nexprs)))))
+		((>fx (node-return-count (car nodes) 2) 1)
+		 (let ((t (J2SLetOpt '(ref set) (gensym 'a) (J2SUndefined))))
+		    (J2SLetBlock (list t)
+		       (unreturn! (car nodes)
+			  (lambda (n::J2SReturn)
+			     (with-access::J2SReturn n (expr loc)
+				(J2SAssig (J2SRef t) expr))))
+		       (loop (cdr nodes) (cons (J2SRef t) nexprs)))))
+		(else
+		 (unreturn! (car nodes)
+		    (lambda (n::J2SReturn)
+		       (with-access::J2SReturn n (expr loc)
+			  (loop (cdr nodes) (cons expr nexprs)))))))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SNode ...                                       */
 ;*    -------------------------------------------------------------    */
@@ -380,7 +420,18 @@
 (define-walk-method (inline-node! this::J2SCall call stmt)
    (if (eq? this call)
        stmt
-       (call-default-walker)))
+       (with-access::J2SCall this (fun args loc)
+	  (let ((node (inline-node! fun call stmt)))
+	     (if (isa? node J2SExpr)
+		 (inline-expr* args call stmt loc
+		    (lambda (exprs)
+		       (J2SCall* node exprs)))
+		 (unreturn! node
+		    (lambda (n::J2SReturn)
+		       (with-access::J2SReturn n (expr)
+			  (inline-expr* args call stmt  loc
+			     (lambda (exprs)
+				(J2SCall* expr exprs)))))))))))
       
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SAccess ...                                     */
