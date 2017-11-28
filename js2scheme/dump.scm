@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Nov 24 08:59:24 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 11:38:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -139,11 +139,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    dump-cache ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (dump-cache this::J2SAccess)
+(define (dump-cache this::J2SExpr)
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:cache"))
-       (with-access::J2SAccess this (cache)
-	  `(:cache ,cache))
+       (cond
+	  ((isa? this J2SAccess)
+	   (with-access::J2SAccess this (cache)
+	      (if cache `(:cache ,cache) '())))
+	  ((isa? this J2SCall)
+	   (with-access::J2SCall this (cache)
+	      (if cache `(:cache ,cache) '())))
+	  (else
+	   '()))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -651,6 +658,7 @@
 	  ,@(dump-type this)
 	  ,@(dump-info this)
 	  ,(j2s->list fun)
+	  ,@(dump-cache this)
 	  :thisarg ,@(map j2s->list thisarg)
 	  ,@(map j2s->list args))))
 		  

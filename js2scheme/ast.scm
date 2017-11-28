@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Nov 24 07:59:49 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 12:35:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -155,7 +155,7 @@
 	      (vararg::obj (default #f) (info '("notraverse")))
 	      (name read-only (default '||) (info '("notraverse")))
 	      (generator::bool (default #f) (info '("notraverse")))
-	      (optimize read-only (default #t) (info '("notraverse")))
+	      (optimize (default #t) (info '("notraverse")))
 	      (thisp (default #f) (info '("notraverse")))
 	      (params::pair-nil (default '()))
 	      (constrsize::int (default 3) (info '("notraverse")))

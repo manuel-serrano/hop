@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Nov 23 07:46:43 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 12:34:52 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -74,10 +74,11 @@
       (duplicate::J2SDecl p
 	 (key (ast-decl-key))))
    
-   (with-access::J2SFun this (params thisp name body method)
+   (with-access::J2SFun this (params thisp name body method optimize)
       (let* ((nparams (map j2sdecl-duplicate params))
 	     (nthisp (j2sdecl-duplicate thisp))
 	     (nbody (j2s-alpha body (cons thisp params) (cons nthisp nparams))))
+	 (set! optimize #f)
 	 (with-access::J2SDecl thisp (itype vtype utype)
 	    (set! itype 'any)
 	    (set! vtype 'any)
@@ -87,6 +88,7 @@
 	    (set! vtype 'object)
 	    (set! utype 'object)
 	    (let ((m (duplicate::J2SFun this
+			(optimize #t)
 			(name (when (symbol? name) (symbol-append name '%%%)))
 			(params nparams)
 			(thisp nthisp)

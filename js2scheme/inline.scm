@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/js2scheme/imethod.scm             */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/inline.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Nov 28 09:44:06 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 12:42:23 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -51,6 +51,18 @@
 (define inline-default-global-expansion 2)
 (define inline-default-call-expansion 10)
 (define inline-max-targets 3)
+
+;*---------------------------------------------------------------------*/
+;*    dev                                                              */
+;*---------------------------------------------------------------------*/
+(define blacklist
+      (if (string? (getenv "BLACKLIST"))
+	  (call-with-input-string (getenv "BLACKLIST") port->string-list)
+	  '()))
+(define whitelist
+   (if (string? (getenv "WHITELIST"))
+       (call-with-input-string (getenv "WHITELIST") port->string-list)
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-inline! ...                                                  */
@@ -110,15 +122,6 @@
 	  (with-access::J2SMethod rhs (method) method)
 	  rhs))
 
-   (define blacklist
-      (if (string? (getenv "BLACKLIST"))
-	  (call-with-input-string (getenv "BLACKLIST") port->string-list)
-	  '()))
-   (define whitelist
-      (if (string? (getenv "WHITELIST"))
-	  (call-with-input-string (getenv "WHITELIST") port->string-list)
-	  '()))
-
    (with-access::J2SAssig this (lhs rhs)
       (if (and (isa? lhs J2SAccess) (or (isa? rhs J2SFun) (isa? rhs J2SMethod)))
 	  (with-access::J2SAccess lhs (obj (metname field))
@@ -174,8 +177,6 @@
 (define-walk-method (inline! this::J2SDeclFun stack::pair-nil
 		       pmethods prgm args)
    (with-access::J2SDeclFun this (val id)
-      (with-access::J2SFun val (body)
-	 (tprint "**** " id " sz=" (node-size val)))
       (inline! val (cons this stack) pmethods prgm args)
       this))
 
@@ -410,17 +411,22 @@
    
    (define (find-inline-methods fun arity)
       (with-access::J2SAccess fun (obj field)
-	 (when (isa? field J2SString)
-	    (with-access::J2SString field (val)
-	       (filter (lambda (m::J2SFun)
-			  (same-arity? m arity))
-		  (or (hashtable-get pmethods val) '()))))))
+	 (when (isa? obj J2SRef)
+	    (when (isa? field J2SString)
+	       (with-access::J2SString field (val)
+		  (filter (lambda (m::J2SFun)
+			     (same-arity? m arity))
+		     (or (hashtable-get pmethods val) '())))))))
 
    (define (find-inline-function fun arity)
       (with-access::J2SRef fun (decl)
 	 (when (isa? decl J2SDeclFun)
-	    (with-access::J2SDeclFun decl (val)
-	       (when (same-arity? val arity)
+	    (with-access::J2SDeclFun decl (val id)
+	       (when (and (same-arity? val arity)
+			  (or (null? blacklist)
+			      (not (member (symbol->string! id) blacklist)))
+			  (or (null? whitelist)
+			      (member (symbol->string! id) blacklist)))
 		  (list val))))))
    
    (define (find-inlines fun arity)
@@ -448,7 +454,8 @@
 		      (unreturn! node
 			 (lambda (n::J2SReturn)
 			    (with-access::J2SReturn n (expr loc)
-			       (J2SAssig (J2SRef t) expr)))))))))))
+			       (J2SStmtExpr
+				  (J2SAssig (J2SRef t) expr))))))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    inline-expr* ...                                                 */
@@ -472,7 +479,8 @@
 		       (unreturn! (car nodes)
 			  (lambda (n::J2SReturn)
 			     (with-access::J2SReturn n (expr loc)
-				(J2SAssig (J2SRef t) expr))))
+				(J2SStmtExpr
+				   (J2SAssig (J2SRef t) expr)))))
 		       (loop (cdr nodes) (cons (J2SRef t) nexprs)))))
 		(else
 		 (unreturn! (car nodes)
@@ -536,6 +544,33 @@
 			    (J2SNew* expr exprs))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    inline-node! ::J2SUnary ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (inline-node! this::J2SUnary call stmt)
+   (with-access::J2SUnary this (op type expr loc)
+      (inline-expr* (list expr) call stmt loc
+	 (lambda (stmtp exprs)
+	    (if stmtp
+		(J2SUnary/type op type (car exprs))
+		(begin
+		   (set! expr (car exprs))
+		   this))))))
+
+;*---------------------------------------------------------------------*/
+;*    inline-node! ::J2SBinary ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (inline-node! this::J2SBinary call stmt)
+   (with-access::J2SBinary this (op type rhs lhs loc)
+      (inline-expr* (list lhs rhs) call stmt loc
+	 (lambda (stmtp exprs)
+	    (if stmtp
+		(J2SBinary/type op type (car exprs) (cadr exprs))
+		(begin
+		   (set! lhs (car exprs))
+		   (set! rhs (cadr exprs))
+		   this))))))
+
+;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SAccess ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline-node! this::J2SAccess call stmt)
@@ -575,7 +610,8 @@
 		   (unreturn! node
 		      (lambda (n::J2SReturn)
 			 (with-access::J2SReturn n (expr loc)
-			    (J2SAssig (J2SRef t) expr))))
+			    (J2SStmtExpr
+			       (J2SAssig (J2SRef t) expr)))))
 		   (J2SIf (J2SRef t) then else))))
 	    (else
 	     (unreturn! node
