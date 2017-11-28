@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Nov 22 15:04:55 2017 (serrano)                */
+#*    Last change :  Tue Nov 28 09:45:45 2017 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -40,7 +40,7 @@ _OBJECTS = lexer header parser html ast dump utils \
   syntax return loopexit symbol ronly resolve this \
   use property bestpractice sourcemap debug stmtassign letopt \
   cps ecmascript5 narrow constant tyflow hint range cast vector \
-  array alpha letfusion uint32 constrsize ctor propcce sweep imethod \
+  array alpha letfusion uint32 constrsize ctor propcce sweep inline \
   scheme scheme-utils scheme-fun scheme-ops scheme-test scheme-class \
   scheme-string scheme-math scheme-date scheme-array
 

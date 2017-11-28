@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Nov 24 14:32:49 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 09:57:30 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -398,6 +398,14 @@
       (if (need-cast? type totype)
 	  (J2SCast totype this)
 	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SExprStmt ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SExprStmt totype fun)
+   (with-access::J2SExprStmt this (loc stmt)
+      (set! stmt (type-cast! stmt totype fun))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SSwitch ...                                       */

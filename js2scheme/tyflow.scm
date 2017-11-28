@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Nov 23 07:52:01 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 09:56:18 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -408,17 +408,18 @@
 ;*---------------------------------------------------------------------*/
 (define (typing-seq nodes::pair-nil env::pair-nil fun fix::cell)
    (let loop ((nodes nodes)
+	      (typ 'void)
 	      (env env)
 	      (bks '()))
       (if (null? nodes)
-	  (return 'void env bks)
-	  (multiple-value-bind (_ envn bk)
+	  (return typ env bks)
+	  (multiple-value-bind (typn envn bk)
 	     (typing (car nodes) env fun fix)
 	     (if (pair? bk)
-		 (multiple-value-bind (_ envr bkr)
+		 (multiple-value-bind (typr envr bkr)
 		    (typing-seq (cdr nodes) envn fun fix)
-		    (return 'void (env-merge envn envr) (append bk bk bks)))
-		 (loop (cdr nodes) envn (append bk bks)))))))
+		    (return typr (env-merge envn envr) (append bk bk bks)))
+		 (loop (cdr nodes) typn envn (append bk bks)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-breaks ...                                                */
@@ -595,6 +596,15 @@
 		     ((eq? vtype 'any)
 		      (set! etyp vtype)))))
 	    (expr-type-set! this env fix etyp)))))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SExprStmt ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SExprStmt env::pair-nil fun fix::cell)
+   (with-access::J2SExprStmt this (stmt)
+      (multiple-value-bind (typ env bk)
+	 (typing stmt env fun fix)
+	 (expr-type-set! this env fix typ))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDecl ...                                             */
@@ -1246,7 +1256,7 @@
    (with-access::J2SStmtExpr this (expr)
       (multiple-value-bind (typ env bk)
 	 (typing expr env fun fix)
-	 (return 'void env bk))))
+	 (return typ env bk))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SSeq ...                                              */
@@ -1272,12 +1282,12 @@
 		     decls)))
 	 (multiple-value-bind (_ denv bk)
 	    (typing-seq decls (append ienv env) fun fix)
-	    (multiple-value-bind (_ benv bks)
+	    (multiple-value-bind (typ benv bks)
 	       (typing-seq nodes denv fun fix)
 	       (let ((nenv (filter (lambda (d)
 				      (not (memq (car d) decls)))
 			      benv)))
-		  (return 'void nenv (append bk bks))))))))
+		  (return typ nenv (append bk bks))))))))
 	       
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SReturn ...                                           */
@@ -1344,7 +1354,8 @@
 	       (multiple-value-bind (tye enve bke)
 		  (typing else enve fun fix)
 		  (let ((bk (append bki bke bkt)))
-		     (return 'void (env-merge envt enve) bk))))))))
+		     (return (merge-types tyt tye)
+			(env-merge envt enve) bk))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SSwitch ...                                           */
@@ -1353,18 +1364,20 @@
    (with-access::J2SSwitch this (key cases)
       (multiple-value-bind (typk envk bk)
 	 (typing key env fun fix)
-	 (let ((bks '()))
+	 (let ((bks '())
+	       (typ #f))
 	    (let loop ((cases cases)
 		       (env envk))
 	       (when (pair? cases)
 		  (multiple-value-bind (t e b)
 		     (typing (car cases) env fun fix)
 		     (set! bks (append b bks))
+		     (set! typ (if (not typ) t (merge-types typ t)))
 		     (with-access::J2SCase (car cases) (cascade)
 			(if cascade
 			    (loop (cdr cases) e)
 			    (loop (cdr cases) envk))))))
-	    (return 'void '() bks)))))
+	    (return typ '() bks)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type ::J2SCase ...                                               */
@@ -1375,7 +1388,7 @@
 	 (typing expr env fun fix)
 	 (multiple-value-bind (typb envb bkb)
 	    (typing body envx fun fix)
-	    (return 'void envb (append bkb bk))))))
+	    (return typb envb (append bkb bk))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SBreak ...                                            */
@@ -1391,10 +1404,10 @@
       (let loop ((env env)
 		 (i 0))
 	 (let ((ofix (cell-ref fix)))
-	    (multiple-value-bind (_ envb bk)
+	    (multiple-value-bind (typ envb bk)
 	       (typing-seq (list test body) env fun fix)
 	       (if (=fx ofix (cell-ref fix))
-		   (return 'void envb (filter-breaks bk this))
+		   (return typ envb (filter-breaks bk this))
 		   (loop (env-merge env envb) (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1404,10 +1417,10 @@
    (with-access::J2SDo this (test body)
       (let loop ((env env))
 	 (let ((ofix (cell-ref fix)))
-	    (multiple-value-bind (_ envb bk)
+	    (multiple-value-bind (typ envb bk)
 	       (typing-seq (list body test) env fun fix)
 	       (if (=fx ofix (cell-ref fix))
-		   (return 'void envb (filter-breaks bk this))
+		   (return typ envb (filter-breaks bk this))
 		   (loop (env-merge env envb))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1417,10 +1430,10 @@
    (with-access::J2SFor this (init test incr body)
       (let loop ((env env))
 	 (let ((ofix (cell-ref fix)))
-	    (multiple-value-bind (_ envb bk)
+	    (multiple-value-bind (typ envb bk)
 	       (typing-seq (list init test body incr) env fun fix)
 	       (if (=fx ofix (cell-ref fix))
-		   (return 'void envb (filter-breaks bk this))
+		   (return typ envb (filter-breaks bk this))
 		   (loop (env-merge env envb))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1430,10 +1443,10 @@
    (with-access::J2SForIn this (lhs obj body)
       (let loop ((env env))
 	 (let ((ofix (cell-ref fix)))
-	    (multiple-value-bind (_ envb bk)
+	    (multiple-value-bind (typ envb bk)
 	       (typing-seq (list obj body) env fun fix)
 	       (if (=fx ofix (cell-ref fix))
-		   (return 'void envb (filter-breaks bk this))
+		   (return typ envb (filter-breaks bk this))
 		   (loop (env-merge env envb))))))))
 
 ;*---------------------------------------------------------------------*/
