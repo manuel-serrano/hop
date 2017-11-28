@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Nov 28 12:42:23 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 20:45:00 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -81,6 +81,7 @@
 ;*---------------------------------------------------------------------*/
 (define-struct inlinfo size obody)
 (define-struct callinfo call callees ifctx loopctx)
+(define-struct protoinfo assig method svar)
 
 ;*---------------------------------------------------------------------*/
 ;*    get-method-size! ...                                             */
@@ -136,7 +137,8 @@
 				      (tprint "black " val)
 				      '())
 				     ((or (null? whitelist) (member val whitelist))
-				      (list (cons val (method-of rhs))))
+				      (list (cons val
+					       (protoinfo this (method-of rhs) #f))))
 				     (else
 				      (tprint "not white " val)
 				      '())))
@@ -293,16 +295,14 @@
 	  (let ((endloc loc))
 	     (J2SBlock body)))))
    
-   (define (cache-check loc obj field kont inline::J2SStmt)
-      (let ((c (get-cache prgm)))
-	 (with-access::J2SCall this (cache)
-	    (set! cache c)
-	    (J2SIf (J2SCacheCheck 'proto-method c obj field)
-	       inline
-	       (kont)))))
+   (define (cache-check c loc obj field kont inline::J2SStmt)
+      (with-access::J2SCall this (cache)
+	 (J2SIf (J2SCacheCheck 'proto-method c obj field)
+	    inline
+	    (kont))))
    
-   (define (inline-method obj field callee args kont)
-      (with-access::J2SFun callee (body thisp params)
+   (define (inline-method obj field callee args cache kont)
+      (with-access::J2SFun (protoinfo-method callee) (body thisp params)
 	 (with-access::J2SDecl thisp (loc usage id)
 	    (cond
 	       ((not (isa? obj J2SRef))
@@ -312,7 +312,7 @@
 				    (J2SLetOpt usage id a)))
 			    params args)))
 		   (J2SLetRecBlock #f (list d)
-		      (cache-check loc (J2SRef d) field kont
+		      (cache-check cache loc (J2SRef d) field kont
 			 (J2SLetRecBlock #f t
 			    (j2s-alpha body
 			       (cons thisp params) (cons d t)))))))
@@ -323,7 +323,7 @@
 				    (J2SLetOpt usage id a)))
 			    params args)))
 		   (with-access::J2SRef obj (decl)
-		      (cache-check loc obj field kont
+		      (cache-check cache loc obj field kont
 			 (LetBlock loc t
 			    (j2s-alpha body
 			       (cons thisp params) (cons decl t)))))))
@@ -335,24 +335,58 @@
 				    (J2SLetOpt usage id a)))
 			    params args)))
 		   (J2SLetRecBlock #f (list d)
-		      (cache-check loc (J2SRef d) field kont
+		      (cache-check cache loc (J2SRef d) field kont
 			 (LetBlock loc t
 			    (j2s-alpha body
 			       (cons thisp params) (cons d t)))))))))))
 
+   (define (get-svar callee)
+      (if (protoinfo-svar callee)
+	  (protoinfo-svar callee)
+	  (let ((fun (gensym '%fun)))
+	     (protoinfo-svar-set! callee fun)
+	     (with-access::J2SProgram prgm (globals)
+		(set! globals (cons `(define ,fun #unspecified) globals))
+		(with-access::J2SAssig (protoinfo-assig callee) (rhs loc)
+		   (set! rhs
+		      (J2SSequence
+			 (J2SAssig (J2SHopRef fun) rhs)
+			 (J2SHopRef fun)))))
+	     fun)))
+   
    (define (inline-method-call this)
       (with-access::J2SCall this (fun loc args)
 	 (with-access::J2SAccess fun (obj field)
-	    (let loop ((callees callees))
+	    (let loop ((callees callees)
+		       (caches '()))
 	       (if (null? callees)
-		   (J2SReturn #f this)
-		   (inline-method obj field (car callees) args
-		      (lambda ()
-			 (loop (cdr callees)))))))))
+		   (let ((f (J2SLetOpt '(call) (gensym 'f) fun)))
+		      (J2SLetBlock (list f)
+			 (let loop ((caches caches))
+			    (if (null? caches)
+				(J2SNop)
+				(let ((v (get-svar (cdar caches))))
+				   (J2SIf
+				      (J2SBinary 'eq? (J2SRef f)
+					 (J2SHopRef v))
+				      (J2SStmtExpr
+					 (J2SCacheUpdate 'proto-method
+					    (caar caches) obj))
+				      (loop (cdr caches))))))
+			 (J2SReturn #f
+			    (begin
+			       (tprint (j2s->list
+					  (J2SMethodCall* (J2SRef f) (list obj) args)))
+			       (J2SMethodCall* (J2SRef f) (list obj) args)))))
+		   (let ((cache (get-cache prgm)))
+		      (inline-method obj field (car callees) args cache
+			 (lambda ()
+			    (loop (cdr callees)
+			       (cons (cons cache (car callees)) caches))))))))))
 
    (define (inline-function-call this)
       (with-access::J2SCall this (fun loc args)
-	 (with-access::J2SFun (car callees) (body thisp params loc)
+	 (with-access::J2SFun (protoinfo-method (car callees)) (body thisp params loc)
 	    (with-access::J2SDecl thisp (loc usage id)
 	       (let ((t (map (lambda (p a)
 				(with-access::J2SDecl p (usage id)
@@ -414,8 +448,8 @@
 	 (when (isa? obj J2SRef)
 	    (when (isa? field J2SString)
 	       (with-access::J2SString field (val)
-		  (filter (lambda (m::J2SFun)
-			     (same-arity? m arity))
+		  (filter (lambda (m::struct)
+			     (same-arity? (protoinfo-method m) arity))
 		     (or (hashtable-get pmethods val) '())))))))
 
    (define (find-inline-function fun arity)
@@ -427,7 +461,7 @@
 			      (not (member (symbol->string! id) blacklist)))
 			  (or (null? whitelist)
 			      (member (symbol->string! id) blacklist)))
-		  (list val))))))
+		  (list (protoinfo #f val #f)))))))
    
    (define (find-inlines fun arity)
       (cond

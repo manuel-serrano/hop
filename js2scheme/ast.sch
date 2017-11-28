@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Nov 28 10:40:28 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 20:44:45 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -91,7 +91,7 @@
 (define-macro (J2SBinary op lhs rhs)
    (let ((typ (match-case op
 		 (((kwote quote) ?op)
-		  (if (memq op '(=== == != !== < <= > >=))
+		  (if (memq op '(eq? === == != !== < <= > >=))
 		      'bool
 		      'unknown))
 		 (else
@@ -426,3 +426,10 @@
        (cache ,cache)
        (obj ,obj)
        (fields (list ,field))))
+
+(define-macro (J2SCacheUpdate prop cache obj)
+   `(instantiate::J2SCacheUpdate
+       (loc loc)
+       (prop ,prop)
+       (cache ,cache)
+       (obj ,obj)))

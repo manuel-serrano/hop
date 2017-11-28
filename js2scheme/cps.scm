@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/cps.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/cps.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Apr 10 16:01:07 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 17:59:39 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -370,7 +370,7 @@
       (let* ((arg (J2SParam '(call ref) (gensym '%arg)))
 	     (exn (J2SParam '(ref) (gensym '%exn) :type 'bool))
 	     (body (kcall k (J2SRef arg)))
-	     (cont (J2SIf (J2SBinary '=== (J2SRef exn) (J2SBool #t))
+	     (cont (J2SIf (J2SBinary 'eq? (J2SRef exn) (J2SBool #t))
 		      (J2SThrow (J2SRef arg))
 		      body)))
 	 (J2SKont arg exn (pack cont))))
@@ -1076,9 +1076,9 @@
    (define (SeqFinally loc finally paramt paramf)
       (J2SSeq
 	 finally
-	 (J2SIf (J2SBinary '=== (J2SRef paramt) (J2SNumber 0))
+	 (J2SIf (J2SBinary 'eq? (J2SRef paramt) (J2SNumber 0))
 	    (J2SNop)
-	    (J2SIf (J2SBinary '=== (J2SRef paramt) (J2SNumber 1))
+	    (J2SIf (J2SBinary 'eq? (J2SRef paramt) (J2SNumber 1))
 	       (J2SReturnYield (J2SRef paramf) (J2SUndefined) #f)
 	       (J2SThrow (J2SRef paramf))))))
 
@@ -1183,7 +1183,7 @@
 	 (if (isa? clause J2SDefault)
 	     body
 	     (J2SIf (J2SBinary 'OR
-		       (J2SRef tmp) (J2SBinary '=== (J2SRef key) expr))
+		       (J2SRef tmp) (J2SBinary 'eq? (J2SRef key) expr))
 		(J2SBlock/w-endloc
 		   (J2SStmtExpr (J2SAssig (J2SRef tmp) (J2SBool #t)))
 		   body)

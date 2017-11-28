@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Nov 24 14:29:01 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 20:46:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1954,7 +1954,7 @@
 			      (id tmp))
 			   args))))))))
    
-   (define (call-hop-function fun::J2SHopRef args)
+   (define (call-hop-function fun::J2SHopRef thisarg args)
       `(,(j2s-scheme fun mode return conf hint 'any)
 	,@(j2s-scheme args mode return conf hint 'any)))
 
@@ -2095,19 +2095,19 @@
 		  ,j2s-unresolved-call-workspace
 		  ',loc
 		  ,(j2s-scheme fun mode return conf hint totype)
-		  ,self
+		  ,@self
 		  ,@(j2s-scheme args mode return conf hint totype)))
 	       (cache
 		`(js-call/cache
 		    ,j2s-unresolved-call-workspace
 		    ,(j2s-scheme fun mode return conf hint totype)
 		    ,(js-pcache cache)
-		    ,self
+		    ,@self
 		    ,@(j2s-scheme args mode return conf hint totype)))
 	       (else
 		`(,call ,j2s-unresolved-call-workspace
 		    ,(j2s-scheme fun mode return conf hint totype)
-		    ,self
+		    ,@self
 		    ,@(j2s-scheme args mode return conf hint totype)))))))
 
    (define (call-eval-function fun args)
@@ -2123,10 +2123,10 @@
       (with-access::J2SUnresolvedRef fun (id)
 	 (eq? id 'eval)))
 
-   (define (call-unresolved-function fun args)
+   (define (call-unresolved-function fun thisarg args)
       (if (is-eval? fun)
 	  (call-eval-function fun args)
-	  (call-unknown-function fun '(js-undefined) args)))
+	  (call-unknown-function fun thisarg args)))
 
    (with-access::J2SCall this (loc fun thisarg args protocol cache)
       (let loop ((fun fun))
@@ -2139,7 +2139,7 @@
 		(with-access::J2SParen fun (expr)
 		   (loop expr)))
 	       ((isa? fun J2SHopRef)
-		(call-hop-function fun args))
+		(call-hop-function fun thisarg args))
 	       ((isa? fun J2SSuper)
 		(j2s-scheme-super this mode return conf hint totype))
 	       ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
@@ -2148,18 +2148,20 @@
 		   '()
 		   args))
 	       ((isa? fun J2SUnresolvedRef)
-		(call-unresolved-function fun args))
+		(call-unresolved-function fun thisarg args))
 	       ((isa? fun J2SWithRef)
 		(call-with-function fun args))
 	       ((isa? fun J2SPragma)
 		(call-pragma fun args))
 	       ((not (isa? fun J2SRef))
-		(call-unknown-function fun '(js-undefined) args))
+		(call-unknown-function fun
+		   (j2s-scheme thisarg mode return conf hint totype) args))
 	       ((read-only-function fun)
 		=>
 		(lambda (fun) (call-known-function protocol fun thisarg args)))
 	       (else
-		(call-unknown-function fun '(js-undefined) args)))))))
+		(call-unknown-function fun
+		   (j2s-scheme thisarg mode return conf hint totype) args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAssig ...                                        */
@@ -2344,6 +2346,10 @@
 		(epairify loc
 		   (j2s-unresolved-put! `',id
 		      (j2s-scheme rhs mode return conf hint totype) #f mode return))))
+	    ((isa? lhs J2SHopRef)
+	     (with-access::J2SHopRef lhs (id)
+		(epairify loc
+		   `(set! ,id ,(j2s-scheme rhs mode return conf hint totype)))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
 		(epairify loc
@@ -2722,6 +2728,20 @@
 	      (js-object-cmap ,(j2s-scheme obj mode return conf hint totype))))
 	 (else
 	  (error "j2s-scheme" "Illegal J2SCacheCheck property" prop)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SCacheUpdate ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SCacheUpdate mode return conf hint totype)
+   (with-access::J2SCacheUpdate this (cache obj prop)
+      (case prop
+	 ((proto-method)
+	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (pmap)
+	      (set! pmap
+		 (js-object-cmap
+		    ,(j2s-scheme obj mode return conf hint totype)))))
+	 (else
+	  (error "j2s-scheme" "Illegal J2SCacheUpdate property" prop)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    maybe-function? ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Nov 26 07:14:41 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 18:39:49 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -224,7 +224,7 @@
 	      (lambda (left right)
 		 (js-binop loc op left right)))
 	   (js-arithmetic loc op type lhs rhs mode return conf hint type)))
-      ((== === != !==)
+      ((== === != !== eq?)
        (if (=fx (config-get conf :optim 0) 0)
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
@@ -386,6 +386,8 @@
        `(js-equal? ,lhs ,rhs %this))
       ((!=)
        `(not (js-equal? ,lhs ,rhs %this)))
+      ((eq?)
+       `(eq? ,lhs ,rhs))
       ((===)
        `(js-strict-equal? ,lhs ,rhs))
       ((!==)
@@ -435,6 +437,8 @@
    (define (simple? expr)
       (cond
 	 ((isa? expr J2SRef)
+	  #t)
+	 ((isa? expr J2SHopRef)
 	  #t)
 	 ((isa? expr J2SLiteral)
 	  #t)
@@ -679,6 +683,10 @@
 	  (j2s-scheme expr mode return conf hint totype))))
 
    (cond
+      ((eq? op 'eq?)
+       (binop lhs rhs mode return conf '(bool) 'any
+	  (lambda (left right)
+	     `(eq? ,left ,right))))
       ((j2s-typeof-predicate lhs rhs)
        =>
        (lambda (pred)

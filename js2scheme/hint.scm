@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Oct 21 14:20:46 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 20:06:37 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -191,7 +191,7 @@
 	     (else
 	      (j2s-hint lhs (list numctx 'string) 'number)
 	      (j2s-hint rhs (list numctx 'string) 'number))))
-	 ((== === != !==)
+	 ((== === != !== eq?)
 	  (cond
 	     ((isa? lhs J2SNull)
 	      (j2s-hint rhs '(null) 'any))
@@ -495,7 +495,7 @@
 	       (when (isa? (unparen expr) J2SBinary)
 		  (with-access::J2SBinary (unparen expr) (op lhs rhs)
 		     (or (eq? op 'instanceof)
-			 (when (memq op '(== != === !==))
+			 (when (memq op '(== != === !== eq?))
 			    (or (typeof? lhs) (typeof? rhs)))))))))
 
       (define (block-check-node? node)
@@ -683,7 +683,7 @@
 		    (itype 'function)
 		    (rtype 'bool)
 		    (id (hint-type-predicate htype))))
-	    (thisarg (list (J2SUndefined)))
+	    (thisarg '())
 	    (args (list (instantiate::J2SRef
 			   (loc loc)
 			   (decl param)))))))

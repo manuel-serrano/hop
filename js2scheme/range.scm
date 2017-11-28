@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Nov 24 14:03:52 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 18:00:10 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -915,7 +915,7 @@
 			     (intro (interval-lt intl intr)))
 			  (values (make-env decl intrt)
 			     (make-env decl intro))))
-		      ((== ===)
+		      ((== === eq?)
 		       (let ((ieq (interval-eq intl intr)))
 			  (values (if (interval? ieq)
 				      (make-env decl ieq)
@@ -937,7 +937,7 @@
 	 ((<=) '>=)
 	 ((>) '<)
 	 ((>=) '<=)
-	 ((== ===) op)
+	 ((== === eq?) op)
 	 ((!= !==) op)
 	 (else op)))
 

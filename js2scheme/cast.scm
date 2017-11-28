@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Nov 28 09:57:30 2017 (serrano)                */
+;*    Last change :  Tue Nov 28 18:17:29 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -161,6 +161,16 @@
 	  this)))
 							   
 ;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SCacheUpdate ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SCacheUpdate totype fun)
+   (with-access::J2SCacheUpdate this (obj)
+      (set! obj (type-cast! obj 'any fun))
+      (if (need-cast? 'any totype)
+	  (cast this totype)
+	  this)))
+							   
+;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SAssig ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-cast! this::J2SAssig totype fun)
@@ -288,7 +298,7 @@
 		(set! rhs (type-cast! rhs tym fun))
 		(when (memq tym '(any number)) (set-hint! this tlhs trhs))
 		this))
-	    ((< <= > >= == === != !==)
+	    ((< <= > >= == === != !== eq?)
 	     (let ((tym (max-type tlhs trhs)))
 		(set! lhs (type-cast! lhs tym fun))
 		(set! rhs (type-cast! rhs tym fun))
