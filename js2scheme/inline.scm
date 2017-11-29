@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Nov 29 09:34:05 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 13:26:41 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -305,7 +305,16 @@
 	 (J2SIf (J2SCacheCheck 'proto-method c obj field)
 	    inline
 	    (kont))))
-   
+
+   (define (bind-exit-function fun body)
+      (with-access::J2SFun fun (need-bind-exit-return)
+	 (if need-bind-exit-return
+	     (with-access::J2SStmt body (loc)
+		(let ((lbl (gensym '%return)))
+		   (J2SBindExit lbl
+		      (bind-exit! body lbl))))
+	     body)))
+
    (define (inline-method-toberemoved obj field callee args cache kont)
       (with-access::J2SFun (protoinfo-method callee) (body thisp params)
 	 (with-access::J2SDecl thisp (loc usage id)
@@ -367,9 +376,10 @@
 		     params args)))
 	    (with-access::J2SRef obj (decl)
 	       (cache-check cache loc obj field kont
-		  (LetBlock loc t
-		     (j2s-alpha body
-			(cons thisp params) (cons decl t))))))))
+		  (bind-exit-function (protoinfo-method callee)
+		     (LetBlock loc t
+			(j2s-alpha body
+			   (cons thisp params) (cons decl t)))))))))
 
    (define (inline-object-method-call this obj)
       (with-access::J2SCall this (fun loc args)
@@ -390,7 +400,7 @@
 					 (J2SCacheUpdate 'proto-method
 					    (caar caches) obj))
 				      (loop (cdr caches))))))
-			 (J2SReturn #f
+			 (J2SReturn #t
 			    (J2SMethodCall* (J2SRef f) (list obj) args))))
 		   (let ((cache (get-cache prgm)))
 		      (inline-method obj field (car callees) args cache loc
@@ -401,19 +411,25 @@
    (define (inline-method-call this)
       (with-access::J2SCall this (fun args)
 	 (with-access::J2SAccess fun (obj field loc)
+	    ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
+	    ;; shape of the test that suits the tyflow analysis
 	    (cond
-	       ((not (eq? (j2s-type obj) 'object))
+	       ((and (not (eq? (j2s-type obj) 'object)) (not (isa? obj J2SRef)))
 		(let* ((id (gensym 'this))
 		       (d (J2SLetOpt '(get) id obj)))
 		   (LetBlock loc (list d)
-		      ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
-		      ;; shape of the test that suits the tyflow analysis
 		      (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
 				(J2SRef d))
 			 (inline-object-method-call this (J2SRef d))
 			 (J2SMeta 0 0
 			    (J2SStmtExpr
 			       (J2SCall* (J2SAccess (J2SRef d) field) args)))))))
+	       ((not (eq? (j2s-type obj) 'object))
+		(J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool) obj)
+		   (inline-object-method-call this obj)
+		   (J2SMeta 0 0
+		      (J2SStmtExpr
+			 (J2SCall* (J2SAccess obj field) args)))))
 	       ((not (isa? obj J2SRef))
 		(let* ((id (gensym 'this))
 		       (d (J2SLetOpt '(get) id obj)))
@@ -712,7 +728,28 @@
 ;*    unreturn! ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SReturn conv)
-   (conv this))
+   (with-access::J2SReturn this (tail exit expr loc)
+      (if (or tail exit)
+	  (conv this)
+	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    bind-exit! ::J2SNode ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Replace untail return (those of the inlined function) with       */
+;*    an exit.                                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (bind-exit! this::J2SNode l)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    bind-exit! ::J2SReturn ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (bind-exit! this::J2SReturn l)
+   (with-access::J2SReturn this (tail exit lbl)
+      (unless (or tail exit)
+	 (set! lbl l))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-return-count ...                                            */
@@ -735,3 +772,4 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (return-count this::J2SReturn cnt max)
    (cell-set! cnt (+fx 1 (cell-ref cnt))))
+

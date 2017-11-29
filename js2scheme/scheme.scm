@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov 29 06:58:39 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 12:54:03 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -938,7 +938,7 @@
 ;*    j2s-scheme ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SReturn mode return conf hint totype)
-   (with-access::J2SReturn this (loc expr tail exit)
+   (with-access::J2SReturn this (loc expr tail exit lbl)
       (cond
 	 (exit
 	  (epairify loc
@@ -947,7 +947,16 @@
 	  (j2s-scheme expr mode return conf hint totype))
 	 (else
 	  (epairify loc
-	     `(%return ,(j2s-scheme expr mode return conf hint totype)))))))
+	     `(,lbl ,(j2s-scheme expr mode return conf hint totype)))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SBindExit ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SBindExit mode return conf hint totype)
+   (with-access::J2SBindExit this (lbl body loc)
+      (epairify loc
+	 `(bind-exit (,lbl)
+	     ,(j2s-scheme body mode return conf hint totype)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SThrow ...                                        */

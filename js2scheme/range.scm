@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Nov 29 08:30:42 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 13:13:43 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1295,6 +1295,13 @@
 	    (node-range-seq nodes denv fix)
 	    (let ((nenv (filter (lambda (d) (not (memq (car d) decls))) benv)))
 	       (return #f nenv))))))
+
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SBindExit ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SBindExit env::pair-nil fix::struct)
+   (with-access::J2SBindExit this (body)
+      (node-range body env fix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SIf ...                                           */
