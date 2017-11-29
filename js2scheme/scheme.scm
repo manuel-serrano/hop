@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov 29 12:54:03 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 14:11:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -947,7 +947,8 @@
 	  (j2s-scheme expr mode return conf hint totype))
 	 (else
 	  (epairify loc
-	     `(,lbl ,(j2s-scheme expr mode return conf hint totype)))))))
+	     `(,(or lbl '%return)
+	       ,(j2s-scheme expr mode return conf hint totype)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SBindExit ...                                     */

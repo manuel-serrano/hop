@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Nov 29 09:11:40 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 14:15:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -484,11 +484,18 @@
 	:method ,(j2s->list method))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SBindExit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SBindExit)
+   (with-access::J2SBindExit this (lbl body)
+      `(,@(call-next-method) (,lbl) ,(j2s->list body))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SReturn)
-   (with-access::J2SReturn this (expr tail)
-      `(,@(call-next-method)
+   (with-access::J2SReturn this (expr tail lbl)
+      `(,@(call-next-method) :lbl ,lbl
 	  ,@(if (> (bigloo-debug) 2) `(:tail ,tail) '())
 	  ,(j2s->list expr))))
 

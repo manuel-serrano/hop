@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Nov 29 13:26:41 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 14:16:51 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -307,52 +307,13 @@
 	    (kont))))
 
    (define (bind-exit-function fun body)
-      (with-access::J2SFun fun (need-bind-exit-return)
+      (with-access::J2SFun fun (need-bind-exit-return name)
 	 (if need-bind-exit-return
 	     (with-access::J2SStmt body (loc)
 		(let ((lbl (gensym '%return)))
 		   (J2SBindExit lbl
 		      (bind-exit! body lbl))))
 	     body)))
-
-   (define (inline-method-toberemoved obj field callee args cache kont)
-      (with-access::J2SFun (protoinfo-method callee) (body thisp params)
-	 (with-access::J2SDecl thisp (loc usage id)
-	    (cond
-	       ((not (isa? obj J2SRef))
-		(let ((d (J2SLetOptUtype 'object usage id obj))
-		      (t (map (lambda (p a)
-				 (with-access::J2SDecl p (usage id)
-				    (J2SLetOpt usage id a)))
-			    params args)))
-		   (J2SLetRecBlock #f (list d)
-		      (cache-check cache loc (J2SRef d) field kont
-			 (J2SLetRecBlock #f t
-			    (j2s-alpha body
-			       (cons thisp params) (cons d t)))))))
-	       ((ronly-variable? obj)
-		;; no need to rebind this
-		(let ((t (map (lambda (p a)
-				 (with-access::J2SDecl p (usage id)
-				    (J2SLetOpt usage id a)))
-			    params args)))
-		   (with-access::J2SRef obj (decl)
-		      (cache-check cache loc obj field kont
-			 (LetBlock loc t
-			    (j2s-alpha body
-			       (cons thisp params) (cons decl t)))))))
-	       (else
-		;; create a temporary for this
-		(let ((d (J2SLetOptUtype 'object usage id obj))
-		      (t (map (lambda (p a)
-				 (with-access::J2SDecl p (usage id)
-				    (J2SLetOpt usage id a)))
-			    params args)))
-		   (J2SLetRecBlock #f (list d)
-		      (cache-check cache loc (J2SRef d) field kont
-			 (LetBlock loc t
-			    (j2s-alpha body
-			       (cons thisp params) (cons d t)))))))))))
 
    (define (get-svar callee)
       (if (protoinfo-svar callee)
@@ -447,8 +408,9 @@
 				   (J2SLetOpt usage id a)))
 			   params args)))
 		  (LetBlock loc t
-		     (j2s-alpha body
-			(cons thisp params) (cons (J2SUndefined) t))))))))
+		     (bind-exit-function (protoinfo-method (car callees))
+			(j2s-alpha body
+			   (cons thisp params) (cons (J2SUndefined) t)))))))))
    
    (with-access::J2SCall this (fun loc args)
       (if (isa? fun J2SAccess)
@@ -748,6 +710,7 @@
 (define-walk-method (bind-exit! this::J2SReturn l)
    (with-access::J2SReturn this (tail exit lbl)
       (unless (or tail exit)
+	 (tprint "SETTING LBL=" l)
 	 (set! lbl l))
       this))
 
