@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Nov 28 11:38:27 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 09:11:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -659,7 +659,7 @@
 	  ,@(dump-info this)
 	  ,(j2s->list fun)
 	  ,@(dump-cache this)
-	  :thisarg ,@(map j2s->list thisarg)
+	  ,@(if (pair? thisarg) `(:thisarg ,@(map j2s->list thisarg)) '())
 	  ,@(map j2s->list args))))
 		  
 ;*---------------------------------------------------------------------*/

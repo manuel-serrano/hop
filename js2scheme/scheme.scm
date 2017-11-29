@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Nov 28 20:46:16 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 06:58:39 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1836,7 +1836,7 @@
 	     `(js-array-push ,scmobj ,scmarg %this))))
 
    (define (call-super-method fun args)
-      (call-unknown-function fun 'this args))
+      (call-unknown-function fun '(this) args))
 
    (define (call-ref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
       (with-access::J2SAccess fun (loc field)
@@ -1892,11 +1892,11 @@
 				args)))))
 		(else
 		 (call-unknown-function fun
-		    (j2s-scheme obj mode return conf hint totype)
+		    (list (j2s-scheme obj mode return conf hint totype))
 		    args))))
 	    (else
 	     (call-unknown-function fun
-		(j2s-scheme obj mode return conf hint totype)
+		(list (j2s-scheme obj mode return conf hint totype))
 		args)))))
 
    (define (call-globalref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
@@ -2050,11 +2050,11 @@
       (with-access::J2SWithRef fun (id withs loc)
 	 (let loop ((withs withs))
 	    (if (null? withs)
-		(call-unknown-function fun '(js-undefined) args)
+		(call-unknown-function fun '((js-undefined)) args)
 		`(if ,(j2s-in? loc `',id (car withs))
 		     ,(call-unknown-function
 			 (j2s-get loc (car withs) 'object `',id 'string #f)
-			(car withs) args)
+			(list (car withs)) args)
 		     ,(loop (cdr withs)))))))
 
    (define (call-pragma fun::J2SPragma args)
@@ -2083,7 +2083,7 @@
 	 (else
 	  (error "js-scheme" "Should not be here" (j2s->list fun)))))
 
-   (define (call-unknown-function fun self args)
+   (define (call-unknown-function fun self::pair-nil args)
       (let* ((len (length args))
 	     (call (if (>=fx len 11)
 		       'js-calln
@@ -2126,7 +2126,8 @@
    (define (call-unresolved-function fun thisarg args)
       (if (is-eval? fun)
 	  (call-eval-function fun args)
-	  (call-unknown-function fun thisarg args)))
+	  (call-unknown-function fun
+	     (j2s-scheme thisarg mode return conf hint totype) args)))
 
    (with-access::J2SCall this (loc fun thisarg args protocol cache)
       (let loop ((fun fun))

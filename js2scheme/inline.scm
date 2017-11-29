@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Nov 28 20:45:00 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 09:34:05 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -193,30 +193,34 @@
 	 ((at ?file ?pos) (format "[~a:~a]" file pos))
 	 (else (format "[~s]" loc))))   
    
-   (define (verb-call call deltasz)
-      (with-access::J2SCall call (fun loc)
-	 (cond
-	    ((isa? fun J2SRef)
-	     (with-access::J2SRef fun (decl)
-		(with-access::J2SDecl decl (id)
-		   (display "\n      " (current-error-port))
-		   (display id (current-error-port)))))
-	    ((isa? fun J2SAccess)
-	     (with-access::J2SAccess fun (obj field)
-		(with-access::J2SString field (val)
-		   (display "\n      " (current-error-port))
-		   (when (isa? obj J2SRef)
-		      (with-access::J2SRef obj (decl)
-			 (with-access::J2SDecl decl (id)
-			    (display id (current-error-port)))))
-		   (display "." (current-error-port))
-		   (display val (current-error-port))))))
-	 (display "() ")
-	 (display (loc->string loc) (current-error-port))
-	 (display " (" (current-error-port))
-	 (when (>fx deltasz 0) (display "+" (current-error-port)))
-	 (display deltasz (current-error-port))
-	 (display ") ")))
+   (define (verb-call call deltasz callees)
+      (with-output-to-port (current-error-port)
+	 (lambda ()
+	    (with-access::J2SCall call (fun loc)
+	       (cond
+		  ((isa? fun J2SRef)
+		   (with-access::J2SRef fun (decl)
+		      (with-access::J2SDecl decl (id)
+			 (display "\n      ")
+			 (display id))))
+		  ((isa? fun J2SAccess)
+		   (with-access::J2SAccess fun (obj field)
+		      (with-access::J2SString field (val)
+			 (display "\n      ")
+			 (when (isa? obj J2SRef)
+			    (with-access::J2SRef obj (decl)
+			       (with-access::J2SDecl decl (id)
+				  (display id))))
+			 (display ".")
+			 (display val)))))
+	       (display "() ")
+	       (display (loc->string loc))
+	       (display " (")
+	       (when (>fx deltasz 0) (display "+"))
+	       (display deltasz)
+	       (display " x")
+	       (display (length callees))
+	       (display ") ")))))
    
    (define (highscore c1 c2)
       (let ((l1 (length (callinfo-callees c1)))
@@ -256,7 +260,8 @@
 	       (try-inline inlinables isize)
 	       (when stmt
 		  (when (>=fx (config-get args :verbose 0) 2)
-		     (verb-call call (-fx stmtsz (node-size call))))
+		     (verb-call call (-fx stmtsz (node-size call))
+			(callinfo-callees ci)))
 		  (set! body (inline-node! body call stmt))
 		  (let ((nisize (-fx isize (-fx stmtsz (node-size call))))
 			(ninlinables (filter (lambda (ci)
@@ -301,7 +306,7 @@
 	    inline
 	    (kont))))
    
-   (define (inline-method obj field callee args cache kont)
+   (define (inline-method-toberemoved obj field callee args cache kont)
       (with-access::J2SFun (protoinfo-method callee) (body thisp params)
 	 (with-access::J2SDecl thisp (loc usage id)
 	    (cond
@@ -354,9 +359,21 @@
 			 (J2SHopRef fun)))))
 	     fun)))
    
-   (define (inline-method-call this)
+   (define (inline-method obj::J2SRef field callee args cache loc kont)
+      (with-access::J2SFun (protoinfo-method callee) (body thisp params)
+	 (let ((t (map (lambda (p a)
+			  (with-access::J2SDecl p (usage id)
+			     (J2SLetOpt usage id a)))
+		     params args)))
+	    (with-access::J2SRef obj (decl)
+	       (cache-check cache loc obj field kont
+		  (LetBlock loc t
+		     (j2s-alpha body
+			(cons thisp params) (cons decl t))))))))
+
+   (define (inline-object-method-call this obj)
       (with-access::J2SCall this (fun loc args)
-	 (with-access::J2SAccess fun (obj field)
+	 (with-access::J2SAccess fun (field)
 	    (let loop ((callees callees)
 		       (caches '()))
 	       (if (null? callees)
@@ -374,15 +391,36 @@
 					    (caar caches) obj))
 				      (loop (cdr caches))))))
 			 (J2SReturn #f
-			    (begin
-			       (tprint (j2s->list
-					  (J2SMethodCall* (J2SRef f) (list obj) args)))
-			       (J2SMethodCall* (J2SRef f) (list obj) args)))))
+			    (J2SMethodCall* (J2SRef f) (list obj) args))))
 		   (let ((cache (get-cache prgm)))
-		      (inline-method obj field (car callees) args cache
+		      (inline-method obj field (car callees) args cache loc
 			 (lambda ()
 			    (loop (cdr callees)
 			       (cons (cons cache (car callees)) caches))))))))))
+   
+   (define (inline-method-call this)
+      (with-access::J2SCall this (fun args)
+	 (with-access::J2SAccess fun (obj field loc)
+	    (cond
+	       ((not (eq? (j2s-type obj) 'object))
+		(let* ((id (gensym 'this))
+		       (d (J2SLetOpt '(get) id obj)))
+		   (LetBlock loc (list d)
+		      ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
+		      ;; shape of the test that suits the tyflow analysis
+		      (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
+				(J2SRef d))
+			 (inline-object-method-call this (J2SRef d))
+			 (J2SMeta 0 0
+			    (J2SStmtExpr
+			       (J2SCall* (J2SAccess (J2SRef d) field) args)))))))
+	       ((not (isa? obj J2SRef))
+		(let* ((id (gensym 'this))
+		       (d (J2SLetOpt '(get) id obj)))
+		   (LetBlock loc (list d)
+		      (inline-object-method-call this (J2SRef d)))))
+	       (else
+		(inline-object-method-call this obj))))))
 
    (define (inline-function-call this)
       (with-access::J2SCall this (fun loc args)
@@ -433,6 +471,15 @@
    (with-access::J2SWhile this (test body)
       (append (collect-inlinables* test pmethods ifctx loopctx)
 	 (collect-inlinables* body pmethods ifctx (+fx 1 loopctx)))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-inlinables* ::J2SMeta ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-inlinables* this::J2SMeta pmethods ifctx loopctx)
+   (with-access::J2SMeta this (optim debug)
+      (if (or (=fx optim 0) (>fx debug 0))
+	  '()
+	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables* ::J2SCall ...                                */
@@ -490,38 +537,13 @@
 			    (with-access::J2SReturn n (expr loc)
 			       (J2SStmtExpr
 				  (J2SAssig (J2SRef t) expr))))))))))))
-   
-;*---------------------------------------------------------------------*/
-;*    inline-expr* ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (inline-expr* exprs call stmt loc kont)
-   (let ((nodes (map (lambda (e) (inline-node! e call stmt)) exprs)))
-      (if (every (lambda (n) (isa? n J2SExpr)) nodes)
-	  (kont #f nodes)
-	  (let loop ((nodes nodes)
-		     (nexprs '()))
-	     (cond
-		((null? nodes)
-		 (kont #t (reverse! nexprs)))
-		((isa? (car nodes) J2SExpr)
-		 (let ((t (J2SLetOpt '(ref set) (gensym 'a) (car nodes))))
-		    (J2SLetBlock (list t)
-		       (loop (cdr nodes) (cons (J2SRef t) nexprs)))))
-		((>fx (node-return-count (car nodes) 2) 1)
-		 (let ((t (J2SLetOpt '(ref set) (gensym 'a) (J2SUndefined))))
-		    (J2SLetBlock (list t)
-		       (unreturn! (car nodes)
-			  (lambda (n::J2SReturn)
-			     (with-access::J2SReturn n (expr loc)
-				(J2SStmtExpr
-				   (J2SAssig (J2SRef t) expr)))))
-		       (loop (cdr nodes) (cons (J2SRef t) nexprs)))))
-		(else
-		 (unreturn! (car nodes)
-		    (lambda (n::J2SReturn)
-		       (with-access::J2SReturn n (expr loc)
-			  (loop (cdr nodes) (cons expr nexprs)))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    inline-expr*! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (inline-expr*! exprs::pair-nil call stmt)
+   (map! (lambda (e) (inline-expr! e call stmt)) exprs))
+   
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SNode ...                                       */
 ;*    -------------------------------------------------------------    */
@@ -538,77 +560,51 @@
    (if (eq? this call)
        stmt
        (with-access::J2SCall this (fun args loc)
-	  (let ((node (inline-node! fun call stmt)))
-	     (if (isa? node J2SExpr)
-		 (inline-expr* args call stmt loc
-		    (lambda (stmtp exprs)
-		       (if stmtp
-			   (J2SCall* node exprs)
-			   (begin
-			      (set! fun node)
-			      (set! args exprs)
-			      this))))
-		 (unreturn! node
-		    (lambda (n::J2SReturn)
-		       (with-access::J2SReturn n (expr)
-			  (inline-expr* args call stmt  loc
-			     (lambda (stmtp exprs)
-				(J2SCall* expr exprs)))))))))))
+	  (set! fun (inline-expr! fun call stmt))
+	  (set! args (inline-expr*! args call stmt))
+	  this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SNew ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline-node! this::J2SNew call stmt)
    (with-access::J2SNew this (clazz args loc)
-      (let ((node (inline-node! clazz call stmt)))
-	 (if (isa? node J2SExpr)
-	     (inline-expr* args call stmt loc
-		(lambda (stmtp exprs)
-		   (if stmtp
-		       (J2SNew* node exprs)
-		       (begin
-			  (set! clazz node)
-			  (set! args exprs)
-			  this))))
-	     (unreturn! node
-		(lambda (n::J2SReturn)
-		   (with-access::J2SReturn n (expr)
-		      (inline-expr* args call stmt  loc
-			 (lambda (stmtp exprs)
-			    (J2SNew* expr exprs))))))))))
+      (set! clazz (inline-expr! clazz call stmt))
+      (set! args (inline-expr*! args call stmt))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    inline-mode! ::J2SParen ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (inline-node! this::J2SParen call stmt)
+   (with-access::J2SParen this (expr)
+      (set! expr (inline-node! expr call stmt))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SUnary ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline-node! this::J2SUnary call stmt)
-   (with-access::J2SUnary this (op type expr loc)
-      (inline-expr* (list expr) call stmt loc
-	 (lambda (stmtp exprs)
-	    (if stmtp
-		(J2SUnary/type op type (car exprs))
-		(begin
-		   (set! expr (car exprs))
-		   this))))))
+   (with-access::J2SUnary this (expr loc)
+      (set! expr (inline-expr! expr call stmt))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SBinary ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline-node! this::J2SBinary call stmt)
-   (with-access::J2SBinary this (op type rhs lhs loc)
-      (inline-expr* (list lhs rhs) call stmt loc
-	 (lambda (stmtp exprs)
-	    (if stmtp
-		(J2SBinary/type op type (car exprs) (cadr exprs))
-		(begin
-		   (set! lhs (car exprs))
-		   (set! rhs (cadr exprs))
-		   this))))))
+   (with-access::J2SBinary this (rhs lhs loc)
+      (set! lhs (inline-expr! lhs call stmt))
+      (set! rhs (inline-expr! rhs call stmt))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SAccess ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline-node! this::J2SAccess call stmt)
    (with-access::J2SAccess this (obj field)
+      (set! obj (inline-expr! obj call stmt))
+      (set! field (inline-expr! field call stmt))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -633,40 +629,16 @@
    (with-access::J2SIf this (test then else loc)
       (set! then (inline-node! then call stmt))
       (set! else (inline-node! else call stmt))
-      (let ((node (inline-node! test call stmt)))
-	 (cond
-	    ((isa? node J2SExpr)
-	     (set! test node)
-	     this)
-	    ((>fx (node-return-count node 2) 1)
-	     (let ((t (J2SLetOpt '(ref set) (gensym 'test) (J2SBool #f))))
-		(J2SLetRecBlock #f (list t)
-		   (unreturn! node
-		      (lambda (n::J2SReturn)
-			 (with-access::J2SReturn n (expr loc)
-			    (J2SStmtExpr
-			       (J2SAssig (J2SRef t) expr)))))
-		   (J2SIf (J2SRef t) then else))))
-	    (else
-	     (unreturn! node
-		(lambda (n::J2SReturn)
-		   (with-access::J2SReturn n (expr)
-		      (J2SIf expr then else)))))))))
+      (set! test (inline-expr! test call stmt))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SReturn ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline-node! this::J2SReturn call stmt)
    (with-access::J2SReturn this (expr tail)
-      (let ((node (inline-node! expr call stmt)))
-	 (if (isa? node J2SExpr)
-	     (begin
-		(set! expr node)
-		this)
-	     (unreturn! node
-		(lambda (n::J2SReturn)
-		   (with-access::J2SReturn n (expr loc)
-		      (J2SReturn tail expr))))))))
+      (set! expr (inline-expr! expr call stmt))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SAssig ...                                      */
@@ -674,6 +646,7 @@
 (define-walk-method (inline-node! this::J2SAssig call stmt)
    ;; for now, only the rhs part is considered for inlining
    (with-access::J2SAssig this (lhs rhs loc)
+      (set! rhs (inline-expr! rhs call stmt))
       (if (isa? lhs J2SRef)
 	  (let ((node (inline-node! rhs call stmt)))
 	     (if (isa? node J2SExpr)

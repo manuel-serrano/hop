@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Mon Nov 27 16:17:35 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 08:09:45 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
@@ -104,6 +104,12 @@
 ;*    node-size ::J2SExprStmt ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SExprStmt)
+   (call-next-method))
+
+;*---------------------------------------------------------------------*/
+;*    node-size ::J2SStmtExpr ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (node-size this::J2SStmtExpr)
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/

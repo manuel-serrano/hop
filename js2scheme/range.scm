@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Nov 28 18:00:10 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 08:30:42 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1031,7 +1031,7 @@
 ;*    range-binary ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (node-range-binary this op lhs rhs env::pair-nil fix::struct)
-   (with-access::J2SBinary this (range %%wstamp)
+   (with-access::J2SExpr this (range %%wstamp)
       (multiple-value-bind (intl envl)
 	 (node-range lhs env fix)
 	 (multiple-value-bind (intr envr)
