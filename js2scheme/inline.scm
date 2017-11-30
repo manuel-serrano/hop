@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 30 20:24:20 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 21:10:09 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -340,7 +340,7 @@
    (define (inline-args params args loc)
       (map (lambda (p a)
 	      (if (or (isa? a J2SLiteral)
-		      (and (isa? a J2SRef) (ronly-variable? p)))
+		      (and #f (isa? a J2SRef) (ronly-variable? p)))
 		  a
 		  (with-access::J2SDecl p (usage id)
 		     (J2SLetOpt usage id a))))
@@ -388,7 +388,8 @@
 	    ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
 	    ;; shape of the test that suits the tyflow analysis
 	    (let* ((vals (map (lambda (a)
-				 (if (or (isa? a J2SLiteral) (isa? a J2SRef))
+				 (if (or (isa? a J2SLiteral)
+					 (and #f (isa? a J2SRef)))
 				     a
 				     (let ((id (gensym 'a)))
 					(J2SLetOpt '(ref) id a))))
