@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 30 08:01:55 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 19:04:03 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -57,12 +57,31 @@
 ;*---------------------------------------------------------------------*/
 (define blacklist
       (if (string? (getenv "BLACKLIST"))
-	  (call-with-input-string (getenv "BLACKLIST") port->string-list)
+	  (map string->symbol
+	     (call-with-input-string (getenv "BLACKLIST") port->string-list))
 	  '()))
 (define whitelist
    (if (string? (getenv "WHITELIST"))
-       (call-with-input-string (getenv "WHITELIST") port->string-list)
+       (map string->symbol
+	  (call-with-input-string (getenv "WHITELIST") port->string-list))
        '()))
+
+(define checked '())
+
+(define (check-id id)
+   (cond
+      ((not (or (null? blacklist) (not (memq id blacklist))))
+       (unless (memq id checked)
+	  (set! checked (cons id checked))
+	  (tprint "black " id))
+       #f)
+      ((not (or (null? whitelist) (memq id whitelist)))
+       (unless (memq id checked)
+	  (set! checked (cons id checked))
+	  (tprint "not white " id))
+       #f)
+      (else
+       #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-inline! ...                                                  */
@@ -132,16 +151,10 @@
 			(with-access::J2SString field (val)
 			   (if (string=? val "prototype")
 			       (with-access::J2SString metname (val)
-				  (cond
-				     ((member val blacklist)
-				      (tprint "black " val)
-				      '())
-				     ((or (null? whitelist) (member val whitelist))
+				  (if (check-id (string->symbol val))
 				      (list (cons val
-					       (protoinfo this (method-of rhs) #f))))
-				     (else
-				      (tprint "not white " val)
-				      '())))
+					       (protoinfo this (method-of rhs) #f)))
+				      '()))
 			       '()))
 			'()))
 		 '()))
@@ -239,13 +252,13 @@
 	     (let* ((inl (car inlinables))
 		    (call (callinfo-call inl))
 		    (callees (callinfo-callees inl))
-		    (stmt (inline-call call callees prgm))
-		    (ssize (node-size stmt)))
-		(if (and (<=fx ssize isize)
-			 (<=fx ssize
+		    (expr (inline-call call callees prgm))
+		    (esize (node-size expr)))
+		(if (and (<=fx esize isize)
+			 (<=fx esize
 			    (* inline-default-call-expansion
 			       (node-size call))))
-		    (values call stmt ssize
+		    (values call expr esize
 		       (append ninlinables (cdr inlinables)) inl)
 		    (loop (cdr inlinables)
 		       (cons (car inlinables) ninlinables)))))))
@@ -256,17 +269,18 @@
 			      (config-get args :inline-factor
 				 inline-default-global-expansion)))
 		    (inlinables (collect-inlinables* body pmethods stack 0 0)))
-	    (multiple-value-bind (call stmt stmtsz inlinables ci)
+	    (multiple-value-bind (call inl inlsz inlinables ci)
 	       (try-inline inlinables isize)
-	       (when stmt
+	       (when inl
 		  (when (>=fx (config-get args :verbose 0) 2)
-		     (verb-call call (-fx stmtsz (node-size call))
+		     (verb-call call (-fx inlsz (node-size call))
 			(callinfo-callees ci)))
-		  (set! body (inline-node! body call stmt))
-		  (let ((nisize (-fx isize (-fx stmtsz (node-size call))))
+		  (set! body (inline-node! body call inl))
+		  (let ((nisize (-fx isize
+				   (maxfx 0 (-fx inlsz (node-size call)))))
 			(ninlinables (filter (lambda (ci)
 						(not (eq? (callinfo-call ci) call)))
-					(collect-inlinables* stmt pmethods stack
+					(collect-inlinables* inl pmethods stack
 					   (callinfo-ifctx ci)
 					   (callinfo-loopctx ci)))))
 		     (loop nisize
@@ -278,7 +292,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-call ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (inline-call::J2SStmt this::J2SCall callees::pair prgm::J2SProgram)
+(define (inline-call::J2SExpr this::J2SCall callees::pair prgm::J2SProgram)
    
    (define (ronly-variable? obj)
       (when (isa? obj J2SRef)
@@ -292,31 +306,17 @@
 	    (set! pcache-size (+fx pcache-size 1))
 	    n)))
    
-   (define (LetBlock loc t body)
-      (cond
-	 ((pair? t)
-	  (J2SLetRecBlock #f t body))
-	 ((isa? body J2SBlock)
-	  body)
-	 (else
-	  (let ((endloc loc))
-	     (J2SBlock body)))))
-   
    (define (cache-check c loc obj field kont inline::J2SStmt)
       (with-access::J2SCall this (cache)
 	 (J2SIf (J2SCacheCheck 'proto-method c obj field)
 	    inline
 	    (kont))))
-
-   (define (bind-exit-function fun body)
-      (with-access::J2SFun fun (need-bind-exit-return name)
-	 (if need-bind-exit-return
-	     (with-access::J2SStmt body (loc)
-		(let ((lbl (gensym '%return)))
-		   (J2SBindExit lbl
-		      (bind-exit! body lbl))))
-	     (bind-exit! body #f))))
-
+   
+   (define (LetBlock loc t body)
+      (if (pair? t)
+	  (J2SLetBlock t body)
+	  body))
+   
    (define (get-svar callee)
       (if (protoinfo-svar callee)
 	  (protoinfo-svar callee)
@@ -331,21 +331,26 @@
 			 (J2SHopRef fun)))))
 	     fun)))
    
+   (define (inline-args params args loc)
+      (map (lambda (p a)
+	      (if (or (isa? a J2SLiteral)
+		      (and (isa? a J2SRef) (ronly-variable? p)))
+		  a
+		  (with-access::J2SDecl p (usage id)
+		     (J2SLetOpt usage id a))))
+	 params args))
+   
    (define (inline-method obj::J2SRef field callee args cache loc kont)
       (with-access::J2SFun (protoinfo-method callee) (body thisp params)
-	 (let ((t (map (lambda (p a)
-			  (with-access::J2SDecl p (usage id)
-			     (J2SLetOpt usage id a)))
-		     params args)))
+	 (let ((vals (inline-args params args loc)))
 	    (with-access::J2SRef obj (decl)
 	       (cache-check cache loc obj field kont
-		  (bind-exit-function (protoinfo-method callee)
-		     (LetBlock loc t
-			(j2s-alpha body
-			   (cons thisp params) (cons decl t)))))))))
-
-   (define (inline-object-method-call this obj)
-      (with-access::J2SCall this (fun loc args)
+		  (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
+		     (j2s-alpha body
+			(cons thisp params) (cons decl vals))))))))
+   
+   (define (inline-object-method-call this obj args)
+      (with-access::J2SCall this (fun loc)
 	 (with-access::J2SAccess fun (field)
 	    (let loop ((callees callees)
 		       (caches '()))
@@ -376,48 +381,89 @@
 	 (with-access::J2SAccess fun (obj field loc)
 	    ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
 	    ;; shape of the test that suits the tyflow analysis
-	    (cond
-	       ((and (not (eq? (j2s-type obj) 'object)) (not (isa? obj J2SRef)))
-		(let* ((id (gensym 'this))
-		       (d (J2SLetOpt '(get) id obj)))
-		   (LetBlock loc (list d)
+	    (let* ((vals (map (lambda (a)
+				 (if (or (isa? a J2SLiteral) (isa? a J2SRef))
+				     a
+				     (let ((id (gensym 'a)))
+					(J2SLetOpt '(ref) id a))))
+			    args))
+		   (t (filter (lambda (b) (isa? b J2SDecl)) vals))
+		   (args (map (lambda (v)
+				 (if (isa? v J2SDecl)
+				     (with-access::J2SDecl v (loc)
+					(J2SRef v))
+				     v))
+			    vals)))
+	       (cond
+		  ((and (not (eq? (j2s-type obj) 'object))
+			(not (isa? obj J2SRef)))
+		   (let* ((id (gensym 'this))
+			  (d (J2SLetOpt '(get) id obj)))
+		      (LetBlock loc (cons d t)
+			 (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
+				   (J2SRef d))
+			    (inline-object-method-call this (J2SRef d) args)
+			    (J2SMeta 0 0
+			       (J2SStmtExpr
+				  (J2SCall* (J2SAccess (J2SRef d) field)
+				     args)))))))
+		  ((not (eq? (j2s-type obj) 'object))
+		   (LetBlock loc t 
 		      (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
-				(J2SRef d))
-			 (inline-object-method-call this (J2SRef d))
+				obj)
+			 (inline-object-method-call this obj args)
 			 (J2SMeta 0 0
 			    (J2SStmtExpr
-			       (J2SCall* (J2SAccess (J2SRef d) field) args)))))))
-	       ((not (eq? (j2s-type obj) 'object))
-		(J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool) obj)
-		   (inline-object-method-call this obj)
-		   (J2SMeta 0 0
-		      (J2SStmtExpr
-			 (J2SCall* (J2SAccess obj field) args)))))
-	       ((not (isa? obj J2SRef))
-		(let* ((id (gensym 'this))
-		       (d (J2SLetOpt '(get) id obj)))
-		   (LetBlock loc (list d)
-		      (inline-object-method-call this (J2SRef d)))))
-	       (else
-		(inline-object-method-call this obj))))))
-
+			       (J2SCall* (J2SAccess obj field) args))))))
+		  ((not (isa? obj J2SRef))
+		   (let* ((id (gensym 'this))
+			  (d (J2SLetOpt '(get) id obj)))
+		      (LetBlock loc (cons d t)
+			 (inline-object-method-call this (J2SRef d) args))))
+		  (else
+		   (inline-object-method-call this obj args)))))))
+   
    (define (inline-function-call this)
       (with-access::J2SCall this (fun loc args)
 	 (with-access::J2SFun (protoinfo-method (car callees)) (body thisp params loc)
-	    (with-access::J2SDecl thisp (loc usage id)
-	       (let ((t (map (lambda (p a)
-				(with-access::J2SDecl p (usage id)
-				   (J2SLetOpt usage id a)))
-			   params args)))
-		  (bind-exit-function (protoinfo-method (car callees))
-		     (LetBlock loc t
-			(j2s-alpha body
-			   (cons thisp params) (cons (J2SUndefined) t)))))))))
+	    (let ((vals (inline-args params args loc)))
+	       (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
+		  (j2s-alpha body
+		     (cons thisp params) (cons (J2SUndefined) vals)))))))
+
+   (define (stmt->expr node)
+      (cond
+	 ((isa? node J2SStmtExpr)
+	  (with-access::J2SStmtExpr node (expr)
+	     expr))
+	 ((isa? node J2SLetBlock)
+	  (with-access::J2SLetBlock node (loc decls nodes)
+	     (if (and (null? decls) (pair? nodes) (null? (cdr nodes)))
+		 (stmt->expr (cadr nodes))
+		 (J2SExprStmt node))))
+	 ((isa? node J2SBlock)
+	  (with-access::J2SBlock node (nodes loc)
+	     (cond
+		((null? nodes)
+		 (J2SUndefined))
+		((null? (cdr nodes))
+		 (stmt->expr (car nodes)))
+		(else
+		 (J2SExprStmt node)))))
+	 (else
+	  (with-access::J2SStmt node (loc)
+	     (J2SExprStmt node)))))
    
    (with-access::J2SCall this (fun loc args)
-      (if (isa? fun J2SAccess)
-	  (inline-method-call this)
-	  (inline-function-call this))))
+      (let ((body (if (isa? fun J2SAccess)
+		      (inline-method-call this)
+		      (inline-function-call this))))
+	 (let* ((lbl (gensym '%return))
+		(cell (make-cell #f))
+		(bd (bind-exit! body lbl cell)))
+	    (if (cell-ref cell)
+		(J2SBindExit lbl bd)
+		(stmt->expr bd))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables ...                                           */
@@ -475,7 +521,7 @@
    (define (same-arity? fun::J2SFun arity)
       (with-access::J2SFun fun (params)
 	 (=fx (length params) arity)))
-   
+
    (define (find-inline-methods fun arity)
       (with-access::J2SAccess fun (obj field)
 	 (when (isa? obj J2SRef)
@@ -489,17 +535,14 @@
       (with-access::J2SRef fun (decl)
 	 (when (and (isa? decl J2SDeclFun) (not (memq decl stk)))
 	    (with-access::J2SDeclFun decl (val id)
-	       (when (and (same-arity? val arity)
-			  (or (null? blacklist)
-			      (not (member (symbol->string! id) blacklist)))
-			  (or (null? whitelist)
-			      (member (symbol->string! id) blacklist)))
-		  (list (protoinfo #f val #f)))))))
+	       (when (same-arity? val arity)
+		  (when (check-id id)
+		     (list (protoinfo #f val #f))))))))
    
    (define (find-inlines fun arity)
       (cond
-	 ((isa? fun J2SAccess) (or (find-inline-methods fun arity)))
-	 ((isa? fun J2SRef) (or (find-inline-function fun arity)))))
+	 ((isa? fun J2SAccess) (find-inline-methods fun arity))
+	 ((isa? fun J2SRef) (find-inline-function fun arity))))
 
    (with-access::J2SCall this (fun args type)
       (let ((inls (find-inlines fun (length args))))
@@ -722,29 +765,35 @@
 ;*    Replace untail return (those of the inlined function) with       */
 ;*    an exit.                                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (bind-exit! this::J2SNode l)
+(define-walk-method (bind-exit! this::J2SNode l cell)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-exit! ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (bind-exit! this::J2SReturn l)
-   (with-access::J2SReturn this (tail exit lbl expr)
+(define-walk-method (bind-exit! this::J2SReturn l cell)
+   (with-access::J2SReturn this (tail exit lbl expr loc)
       (cond
-	 (tail expr)
-	 (exit this)
-	 (else (set! lbl l) this))))
+	 (exit
+	  (set! expr (bind-exit! expr l cell))
+	  this)
+	 (tail
+	  (J2SStmtExpr (bind-exit! expr l cell)))
+	 (else
+	  (set! lbl l)
+	  (cell-set! cell #t)
+	  this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-exit! ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (bind-exit! this::J2SFun l)
+(define-walk-method (bind-exit! this::J2SFun l cell)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-exit! ::J2SMethod ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (bind-exit! this::J2SMethod l)
+(define-walk-method (bind-exit! this::J2SMethod l cell)
    this)
 
 ;*---------------------------------------------------------------------*/
