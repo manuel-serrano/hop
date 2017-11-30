@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 30 21:10:09 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 21:24:06 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -339,7 +339,7 @@
    
    (define (inline-args params args loc)
       (map (lambda (p a)
-	      (if (or (isa? a J2SLiteral)
+	      (if (or (and (isa? a J2SLiteral) (ronly-variable? p))
 		      (and #f (isa? a J2SRef) (ronly-variable? p)))
 		  a
 		  (with-access::J2SDecl p (usage id)
