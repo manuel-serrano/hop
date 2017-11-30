@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Nov 29 17:23:33 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 20:18:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -276,8 +276,8 @@
 ;*    j2s->list ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SLetBlock)
-   (with-access::J2SLetBlock this (decls nodes loc endloc)
-      `(,(string->symbol (typeof this))
+   (with-access::J2SLetBlock this (decls nodes loc endloc rec)
+      `(,(string->symbol (typeof this)) :rec ,rec
 	,@(dump-loc loc)
 	,@(dump-loc endloc :endloc)
 	,@(dump-info this)

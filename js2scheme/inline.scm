@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 30 19:04:03 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 20:24:20 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -295,10 +295,16 @@
 (define (inline-call::J2SExpr this::J2SCall callees::pair prgm::J2SProgram)
    
    (define (ronly-variable? obj)
-      (when (isa? obj J2SRef)
-	 (with-access::J2SRef obj (decl)
-	    (with-access::J2SDecl decl (ronly)
-	       ronly))))
+      (cond
+	 ((isa? obj J2SRef)
+	  (with-access::J2SRef obj (decl)
+	     (with-access::J2SDecl decl (ronly)
+		ronly)))
+	 ((isa? obj J2SDecl)
+	  (with-access::J2SDecl obj (ronly)
+	     ronly))
+	 (else
+	  #f)))
    
    (define (get-cache prgm::J2SProgram)
       (with-access::J2SProgram prgm (pcache-size)
@@ -314,7 +320,7 @@
    
    (define (LetBlock loc t body)
       (if (pair? t)
-	  (J2SLetBlock t body)
+	  (J2SLetRecBlock #f t body)
 	  body))
    
    (define (get-svar callee)
@@ -356,7 +362,7 @@
 		       (caches '()))
 	       (if (null? callees)
 		   (let ((f (J2SLetOpt '(call) (gensym 'f) fun)))
-		      (J2SLetBlock (list f)
+		      (J2SLetRecBlock #f (list f)
 			 (let loop ((caches caches))
 			    (if (null? caches)
 				(J2SNop)
@@ -560,7 +566,7 @@
 	  (with-access::J2SExpr expr (loc)
 	     (let ((t (J2SLetOpt '(ref set) (gensym 'a) (J2SUndefined))))
 		(J2SExprStmt
-		   (J2SLetBlock (list t)
+		   (J2SLetRecBlock #f (list t)
 		      (unreturn! node
 			 (lambda (n::J2SReturn)
 			    (with-access::J2SReturn n (expr loc)
