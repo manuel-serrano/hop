@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Nov 30 06:58:54 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 07:31:40 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1654,10 +1654,8 @@
 	  (call-default-walker)
 	  (case op
 	     ((==)
-	      (tprint "===: " (j2s->list this))
 	      (J2SBool (eq? typ (j2s-type ref))))
 	     ((!=)
-	      (tprint "!==: " (j2s->list this))
 	      (J2SBool (not (eq? typ (j2s-type ref)))))
 	     (else
 	      (call-default-walker)))))))

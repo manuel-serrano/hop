@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Nov 30 06:14:30 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 07:31:52 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -41,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    this-occurrence-threshold ...                                    */
 ;*---------------------------------------------------------------------*/
-(define this-occurrence-threshold 3)
+(define this-occurrence-threshold 1)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-method! ::J2SProgram ...                                     */

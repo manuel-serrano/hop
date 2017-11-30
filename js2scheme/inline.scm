@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 30 06:40:42 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 08:01:55 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -315,7 +315,7 @@
 		(let ((lbl (gensym '%return)))
 		   (J2SBindExit lbl
 		      (bind-exit! body lbl))))
-	     body)))
+	     (bind-exit! body #f))))
 
    (define (get-svar callee)
       (if (protoinfo-svar callee)
@@ -409,8 +409,8 @@
 				(with-access::J2SDecl p (usage id)
 				   (J2SLetOpt usage id a)))
 			   params args)))
-		  (LetBlock loc t
-		     (bind-exit-function (protoinfo-method (car callees))
+		  (bind-exit-function (protoinfo-method (car callees))
+		     (LetBlock loc t
 			(j2s-alpha body
 			   (cons thisp params) (cons (J2SUndefined) t)))))))))
    
@@ -536,70 +536,70 @@
 ;*    -------------------------------------------------------------    */
 ;*    Replace expression CALL with statement STMT.                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SNode call::J2SCall stmt::J2SStmt)
+(define-walk-method (inline-node! this::J2SNode call::J2SCall inl::J2SNode)
    (call-default-walker)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SCall ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SCall call stmt)
+(define-walk-method (inline-node! this::J2SCall call inl)
    (if (eq? this call)
-       stmt
+       inl
        (with-access::J2SCall this (fun args loc)
-	  (set! fun (inline-expr! fun call stmt))
-	  (set! args (inline-expr*! args call stmt))
+	  (set! fun (inline-expr! fun call inl))
+	  (set! args (inline-expr*! args call inl))
 	  this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SNew ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SNew call stmt)
+(define-walk-method (inline-node! this::J2SNew call inl)
    (with-access::J2SNew this (clazz args loc)
-      (set! clazz (inline-expr! clazz call stmt))
-      (set! args (inline-expr*! args call stmt))
+      (set! clazz (inline-expr! clazz call inl))
+      (set! args (inline-expr*! args call inl))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-mode! ::J2SParen ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SParen call stmt)
+(define-walk-method (inline-node! this::J2SParen call inl)
    (with-access::J2SParen this (expr)
-      (set! expr (inline-node! expr call stmt))
+      (set! expr (inline-node! expr call inl))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SUnary ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SUnary call stmt)
+(define-walk-method (inline-node! this::J2SUnary call inl)
    (with-access::J2SUnary this (expr loc)
-      (set! expr (inline-expr! expr call stmt))
+      (set! expr (inline-expr! expr call inl))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SBinary ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SBinary call stmt)
+(define-walk-method (inline-node! this::J2SBinary call inl)
    (with-access::J2SBinary this (rhs lhs loc)
-      (set! lhs (inline-expr! lhs call stmt))
-      (set! rhs (inline-expr! rhs call stmt))
+      (set! lhs (inline-expr! lhs call inl))
+      (set! rhs (inline-expr! rhs call inl))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SAccess ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SAccess call stmt)
+(define-walk-method (inline-node! this::J2SAccess call inl)
    (with-access::J2SAccess this (obj field)
-      (set! obj (inline-expr! obj call stmt))
-      (set! field (inline-expr! field call stmt))
+      (set! obj (inline-expr! obj call inl))
+      (set! field (inline-expr! field call inl))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SStmtExpr ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SStmtExpr call stmt)
+(define-walk-method (inline-node! this::J2SStmtExpr call inl)
    (with-access::J2SStmtExpr this (expr loc)
-      (let ((node (inline-node! expr call stmt)))
+      (let ((node (inline-node! expr call inl)))
 	 (if (isa? node J2SExpr)
 	     (begin
 		(set! expr node)
@@ -612,30 +612,30 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SIf ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SIf call stmt)
+(define-walk-method (inline-node! this::J2SIf call inl)
    (with-access::J2SIf this (test then else loc)
-      (set! then (inline-node! then call stmt))
-      (set! else (inline-node! else call stmt))
-      (set! test (inline-expr! test call stmt))
+      (set! then (inline-node! then call inl))
+      (set! else (inline-node! else call inl))
+      (set! test (inline-expr! test call inl))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SReturn ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SReturn call stmt)
+(define-walk-method (inline-node! this::J2SReturn call inl)
    (with-access::J2SReturn this (expr tail)
-      (set! expr (inline-expr! expr call stmt))
+      (set! expr (inline-expr! expr call inl))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SAssig ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SAssig call stmt)
+(define-walk-method (inline-node! this::J2SAssig call inl)
    ;; for now, only the rhs part is considered for inlining
    (with-access::J2SAssig this (lhs rhs loc)
-      (set! rhs (inline-expr! rhs call stmt))
+      (set! rhs (inline-expr! rhs call inl))
       (if (isa? lhs J2SRef)
-	  (let ((node (inline-node! rhs call stmt)))
+	  (let ((node (inline-node! rhs call inl)))
 	     (if (isa? node J2SExpr)
 		 (begin
 		    (set! rhs node)
@@ -650,43 +650,43 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SLoop ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SLoop call stmt)
+(define-walk-method (inline-node! this::J2SLoop call inl)
    (with-access::J2SLoop this (body)
-      (set! body (inline-node! body call stmt))
+      (set! body (inline-node! body call inl))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SFor ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SFor call stmt)
+(define-walk-method (inline-node! this::J2SFor call inl)
    (with-access::J2SFor this (init test incr body)
-      (set! test (inline-expr! test call stmt))
-      (set! incr (inline-expr! incr call stmt))
+      (set! test (inline-expr! test call inl))
+      (set! incr (inline-expr! incr call inl))
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SWhile ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SWhile call stmt)
+(define-walk-method (inline-node! this::J2SWhile call inl)
    (with-access::J2SWhile this (test body)
-      (set! test (inline-expr! test call stmt))
+      (set! test (inline-expr! test call inl))
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SDeclInit ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SDeclInit call stmt)
+(define-walk-method (inline-node! this::J2SDeclInit call inl)
    (with-access::J2SDeclInit this (val)
-      (set! val (inline-expr! val call stmt))
+      (set! val (inline-expr! val call inl))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-node! ::J2SLetBlock ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (inline-node! this::J2SLetBlock call stmt)
+(define-walk-method (inline-node! this::J2SLetBlock call inl)
    (with-access::J2SLetBlock this (decls nodes)
-      (set! decls (map! (lambda (d) (inline-node! d call stmt)) decls))
-      (set! nodes (map! (lambda (n) (inline-node! n call stmt)) nodes))
+      (set! decls (map! (lambda (d) (inline-node! d call inl)) decls))
+      (set! nodes (map! (lambda (n) (inline-node! n call inl)) nodes))
       this))
    
 ;*---------------------------------------------------------------------*/
@@ -729,10 +729,11 @@
 ;*    bind-exit! ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (bind-exit! this::J2SReturn l)
-   (with-access::J2SReturn this (tail exit lbl loc)
-      (unless (or tail exit lbl)
-	 (set! lbl l))
-      this))
+   (with-access::J2SReturn this (tail exit lbl expr)
+      (cond
+	 (tail expr)
+	 (exit this)
+	 (else (set! lbl l) this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-exit! ::J2SFun ...                                          */
