@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov 29 14:11:28 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 17:57:11 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -683,7 +683,7 @@
    (with-access::J2SThis this (loc type decl)
       (let ((id (j2s-decl-scheme-id decl)))
 	 (if (and (j2s-let? decl) (not (j2s-let-opt? decl)))
-	     `(js-let-ref this ,id ',loc %this)
+	     `(js-let-ref ,id ,id ',loc %this)
 	     id))))
 
 ;*---------------------------------------------------------------------*/
@@ -954,10 +954,10 @@
 ;*    j2s-scheme ::J2SBindExit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SBindExit mode return conf hint totype)
-   (with-access::J2SBindExit this (lbl body loc)
+   (with-access::J2SBindExit this (lbl stmt loc)
       (epairify loc
 	 `(bind-exit (,lbl)
-	     ,(j2s-scheme body mode return conf hint totype)))))
+	     ,(j2s-scheme stmt mode return conf hint totype)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SThrow ...                                        */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Nov 29 13:11:42 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 06:58:54 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -602,6 +602,15 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SExprStmt env::pair-nil fun fix::cell)
    (with-access::J2SExprStmt this (stmt)
+      (multiple-value-bind (typ env bk)
+	 (typing stmt env fun fix)
+	 (expr-type-set! this env fix typ))))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SBindExit ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (typing this::J2SBindExit env::pair-nil fun fix::cell)
+   (with-access::J2SBindExit this (stmt)
       (multiple-value-bind (typ env bk)
 	 (typing stmt env fun fix)
 	 (expr-type-set! this env fix typ))))
@@ -1324,13 +1333,6 @@
 	 (values 'void enve (list this)))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing ::J2SBindExit ...                                         */
-;*---------------------------------------------------------------------*/
-(define-method (typing this::J2SBindExit env::pair-nil fun fix::cell)
-   (with-access::J2SBindExit this (body)
-      (typing body env fun fix)))
-
-;*---------------------------------------------------------------------*/
 ;*    typing ::J2SIf ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SIf env::pair-nil fun fix::cell)
@@ -1640,6 +1642,25 @@
 	     (set! then (resolve! then fix))
 	     (set! else (resolve! else fix))
 	     this)))))
+
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SCall ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SCall fix::cell)
+   (with-access::J2SCall this (loc)
+   (multiple-value-bind (op decl typ ref)
+      (j2s-expr-type-test this)
+      (if (or (not op) (not ref) (memq (j2s-type ref) '(any unknown)))
+	  (call-default-walker)
+	  (case op
+	     ((==)
+	      (tprint "===: " (j2s->list this))
+	      (J2SBool (eq? typ (j2s-type ref))))
+	     ((!=)
+	      (tprint "!==: " (j2s->list this))
+	      (J2SBool (not (eq? typ (j2s-type ref)))))
+	     (else
+	      (call-default-walker)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    force-type! ...                                                  */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Thu Sep 28 16:06:17 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 17:17:21 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -63,7 +63,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (alpha this::obj)
    (if (pair? this)
-       (map! alpha this)
+       (map alpha this)
        this))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Nov 29 14:16:51 2017 (serrano)                */
+;*    Last change :  Thu Nov 30 06:40:42 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -49,7 +49,7 @@
 ;*    inline-default-factor ...                                        */
 ;*---------------------------------------------------------------------*/
 (define inline-default-global-expansion 2)
-(define inline-default-call-expansion 10)
+(define inline-default-call-expansion 8)
 (define inline-max-targets 3)
 
 ;*---------------------------------------------------------------------*/
@@ -255,7 +255,7 @@
 	 (let loop ((isize (* (get-method-size! this)
 			      (config-get args :inline-factor
 				 inline-default-global-expansion)))
-		    (inlinables (collect-inlinables* body pmethods 0 0)))
+		    (inlinables (collect-inlinables* body pmethods stack 0 0)))
 	    (multiple-value-bind (call stmt stmtsz inlinables ci)
 	       (try-inline inlinables isize)
 	       (when stmt
@@ -266,11 +266,13 @@
 		  (let ((nisize (-fx isize (-fx stmtsz (node-size call))))
 			(ninlinables (filter (lambda (ci)
 						(not (eq? (callinfo-call ci) call)))
-					(collect-inlinables* stmt pmethods
+					(collect-inlinables* stmt pmethods stack
 					   (callinfo-ifctx ci)
 					   (callinfo-loopctx ci)))))
 		     (loop nisize
-			(append ninlinables inlinables)))))))
+			(append ninlinables inlinables))))))
+	 ;; inline all the subfunctions
+	 (call-default-walker))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -420,40 +422,46 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SNode pmethods ifctx loopctx)
+(define-walk-method (collect-inlinables* this::J2SNode pmethods stk ifctx loopctx)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-inlinables* ::J2SFun ...                                 */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-inlinables* this::J2SFun pmethods stk ifctx loopctx)
+   '())
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables* ::J2SIf ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SIf pmethods ifctx loopctx)
+(define-walk-method (collect-inlinables* this::J2SIf pmethods stk ifctx loopctx)
    (with-access::J2SIf this (test then else)
-      (append (collect-inlinables* test pmethods ifctx loopctx)
-	 (collect-inlinables* then pmethods (+fx 1 ifctx) loopctx)
-	 (collect-inlinables* else pmethods (+fx 1 ifctx) loopctx))))
+      (append (collect-inlinables* test pmethods stk ifctx loopctx)
+	 (collect-inlinables* then pmethods stk (+fx 1 ifctx) loopctx)
+	 (collect-inlinables* else pmethods stk (+fx 1 ifctx) loopctx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables* ::J2SFor ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SFor pmethods ifctx loopctx)
+(define-walk-method (collect-inlinables* this::J2SFor pmethods stk ifctx loopctx)
    (with-access::J2SFor this (init test incr body)
-      (append (collect-inlinables* init pmethods ifctx loopctx)
-	 (collect-inlinables* test pmethods ifctx (+fx 1 loopctx))
-	 (collect-inlinables* incr pmethods ifctx (+fx 1 loopctx))
-	 (collect-inlinables* body pmethods ifctx (+fx 1 loopctx)))))
+      (append (collect-inlinables* init pmethods stk ifctx loopctx)
+	 (collect-inlinables* test pmethods stk ifctx (+fx 1 loopctx))
+	 (collect-inlinables* incr pmethods stk ifctx (+fx 1 loopctx))
+	 (collect-inlinables* body pmethods stk ifctx (+fx 1 loopctx)))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables* ::J2SWhile ...                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SWhile pmethods ifctx loopctx)
+(define-walk-method (collect-inlinables* this::J2SWhile pmethods stk ifctx loopctx)
    (with-access::J2SWhile this (test body)
-      (append (collect-inlinables* test pmethods ifctx loopctx)
-	 (collect-inlinables* body pmethods ifctx (+fx 1 loopctx)))))
+      (append (collect-inlinables* test pmethods stk ifctx loopctx)
+	 (collect-inlinables* body pmethods stk ifctx (+fx 1 loopctx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables* ::J2SMeta ...                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SMeta pmethods ifctx loopctx)
+(define-walk-method (collect-inlinables* this::J2SMeta pmethods stk ifctx loopctx)
    (with-access::J2SMeta this (optim debug)
       (if (or (=fx optim 0) (>fx debug 0))
 	  '()
@@ -462,7 +470,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables* ::J2SCall ...                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SCall pmethods ifctx loopctx)
+(define-walk-method (collect-inlinables* this::J2SCall pmethods stk ifctx loopctx)
    
    (define (same-arity? fun::J2SFun arity)
       (with-access::J2SFun fun (params)
@@ -479,7 +487,7 @@
 
    (define (find-inline-function fun arity)
       (with-access::J2SRef fun (decl)
-	 (when (isa? decl J2SDeclFun)
+	 (when (and (isa? decl J2SDeclFun) (not (memq decl stk)))
 	    (with-access::J2SDeclFun decl (val id)
 	       (when (and (same-arity? val arity)
 			  (or (null? blacklist)
@@ -514,7 +522,8 @@
 			 (lambda (n::J2SReturn)
 			    (with-access::J2SReturn n (expr loc)
 			       (J2SStmtExpr
-				  (J2SAssig (J2SRef t) expr))))))))))))
+				  (J2SAssig (J2SRef t) expr)))))
+		      (J2SRef t))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-expr*! ...                                                */
@@ -696,6 +705,18 @@
 	  (call-default-walker))))
 
 ;*---------------------------------------------------------------------*/
+;*    unreturn! ::J2SFun ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unreturn! this::J2SFun conv)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    unreturn! ::J2SMethod ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unreturn! this::J2SMethod conv)
+   this)
+
+;*---------------------------------------------------------------------*/
 ;*    bind-exit! ::J2SNode ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    Replace untail return (those of the inlined function) with       */
@@ -708,11 +729,22 @@
 ;*    bind-exit! ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (bind-exit! this::J2SReturn l)
-   (with-access::J2SReturn this (tail exit lbl)
-      (unless (or tail exit)
-	 (tprint "SETTING LBL=" l)
+   (with-access::J2SReturn this (tail exit lbl loc)
+      (unless (or tail exit lbl)
 	 (set! lbl l))
       this))
+
+;*---------------------------------------------------------------------*/
+;*    bind-exit! ::J2SFun ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (bind-exit! this::J2SFun l)
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    bind-exit! ::J2SMethod ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (bind-exit! this::J2SMethod l)
+   this)
 
 ;*---------------------------------------------------------------------*/
 ;*    node-return-count ...                                            */

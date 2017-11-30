@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Nov 29 14:15:50 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 17:23:33 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -487,8 +487,8 @@
 ;*    j2s->list ::J2SBindExit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SBindExit)
-   (with-access::J2SBindExit this (lbl body)
-      `(,@(call-next-method) (,lbl) ,(j2s->list body))))
+   (with-access::J2SBindExit this (lbl stmt)
+      `(,@(call-next-method) (,lbl) ,(j2s->list stmt))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturn ...                                        */

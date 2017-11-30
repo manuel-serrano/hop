@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Nov 29 14:13:15 2017 (serrano)                */
+;*    Last change :  Wed Nov 29 17:22:08 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -123,14 +123,14 @@
 	   
 	   (final-class J2SDefault::J2SCase)
 	   
-	   (final-class J2SBindExit::J2SStmt
+	   (final-class J2SBindExit::J2SExpr
 	      (lbl::symbol read-only)
-	      (body::J2SStmt (info '("ast"))))
+	      (stmt::J2SStmt (info '("ast"))))
 
 	   (class J2SReturn::J2SStmt
 	      (exit::bool (default #f))
 	      (tail::bool (default #t))
-	      (lbl::symbol (default '%return))
+	      (lbl (default #f))
 	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SReturnYield::J2SStmt
@@ -879,7 +879,7 @@
 (gen-walks J2SMeta stmt)
 (gen-walks J2SSeq (nodes))
 (gen-walks J2SProgram (decls) (headers) (nodes))
-(gen-walks J2SBindExit body)
+(gen-walks J2SBindExit stmt)
 (gen-walks J2SReturn expr)
 (gen-walks J2SReturnYield expr kont)
 (gen-walks J2SWith obj block)
