@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Dec  1 12:22:52 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 12:38:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -124,26 +124,32 @@
 	  ((uint29)
 	   (case to
 	      ((uint32 index length) (fixnum->uint32 expr))
+	      ((bool) `(>u32 ,expr #u32:0))
 	      (else expr)))
 	  ((index uint32 length)
 	   (case to
 	      ((uint32 index length) expr)
+	      ((bool) `(> ,expr 0))
 	      (else expr)))
 	  ((int30)
 	   (case to
 	      ((index uint32 length) (fixnum->uint32 expr))
+	      ((bool) `(not (= ,expr 0)))
 	      (else expr)))
 	  ((int53)
 	   (case to
 	      ((index uint32 length) (err))
+	      ((bool) `(not (= ,expr 0)))
 	      (else expr)))
 	  ((fixnum)
 	   (case to
 	      ((index uint32 length) (js-fixnum->uint32 expr))
+	      ((bool) `(not (=fx ,expr 0)))
 	      (else expr)))
 	  ((integer number)
 	   (case to
 	      ((index uint32 length) (js-fixnum->uint32 expr))
+	      ((bool) `(not (= ,expr 0)))
 	      (else expr)))
 	  (else
 	   (case to
