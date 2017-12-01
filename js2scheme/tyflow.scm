@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Nov 30 07:31:40 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 09:48:38 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -194,7 +194,7 @@
 ;*    unfix! ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (unfix! fix reason)
-   (tprint "--- UNFIX reason=" reason)
+   (tprint "--- UNFIX (" (cell-ref fix) ") reason=" reason)
    (cell-set! fix (+fx 1 (cell-ref fix))))
 
 (define-macro (unfix! fix reason)

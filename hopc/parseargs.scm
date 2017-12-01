@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Nov 28 08:42:53 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 09:53:56 2017 (serrano)                */
 ;*    Copyright   :  2004-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -131,6 +131,8 @@
 	    (("-y" (help "Generate a shared library"))
 	     (hopc-js-module-main-set! #f)
 	     (hopc-pass-set! 'so))
+	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
+	     (hopc-pass-set! 'client-js))
 	    (section "Configuration and devkit")
 	    (("--safe" (help "Compile and link in safe mode"))
 	     (hopc-bigloo-safe-option-set! '("-unsafe" "-safel")))
@@ -144,8 +146,6 @@
 		(cons* "-lib-dir" dir (hopc-bigloo-options))))
 	    (("--reset-bigloo-options" (help "Reset all Bigloo options"))
 	     (hopc-bigloo-options-set! '()))
-	    ((("-j" "--client-js") (help "Generate a client-side JavaScript file"))
-	     (hopc-pass-set! 'client-js))
 	    ((("-a" "--afile") ?file (help "Set access file"))
 	     (hopc-access-file-set! file))
 	    (("--mkheap" (help "Build a js heap file"))
