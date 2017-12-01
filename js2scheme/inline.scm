@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Nov 30 21:24:06 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 09:48:26 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -49,8 +49,9 @@
 ;*    inline-default-factor ...                                        */
 ;*---------------------------------------------------------------------*/
 (define inline-default-global-expansion 2)
-(define inline-default-call-expansion 8)
+(define inline-default-call-expansion 16)
 (define inline-max-targets 3)
+(define inline-recursive #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    dev                                                              */
@@ -262,13 +263,16 @@
 		       (append ninlinables (cdr inlinables)) inl)
 		    (loop (cdr inlinables)
 		       (cons (car inlinables) ninlinables)))))))
-   
-   (with-access::J2SFun this (optimize body %info)
+
+   (with-access::J2SFun this (optimize body %info loc)
       (when optimize
 	 (let loop ((isize (* (get-method-size! this)
 			      (config-get args :inline-factor
 				 inline-default-global-expansion)))
-		    (inlinables (collect-inlinables* body pmethods stack 0 0)))
+		    (inlinables (collect-inlinables* body
+				   pmethods (list this) 0 0))
+		    (stack (list this))
+		    (cnt 1))
 	    (multiple-value-bind (call inl inlsz inlinables ci)
 	       (try-inline inlinables isize)
 	       (when inl
@@ -276,15 +280,20 @@
 		     (verb-call call (-fx inlsz (node-size call))
 			(callinfo-callees ci)))
 		  (set! body (inline-node! body call inl))
-		  (let ((nisize (-fx isize
-				   (maxfx 0 (-fx inlsz (node-size call)))))
-			(ninlinables (filter (lambda (ci)
-						(not (eq? (callinfo-call ci) call)))
-					(collect-inlinables* inl pmethods stack
-					   (callinfo-ifctx ci)
-					   (callinfo-loopctx ci)))))
+		  (let* ((nisize (-fx isize (-fx inlsz (node-size call))))
+			 (nstack (append (map protoinfo-method
+					    (callinfo-callees ci))
+				    stack))
+			 (ninlinables (filter (lambda (ci)
+						 (not (eq? (callinfo-call ci) call)))
+					 (collect-inlinables* inl pmethods
+					    nstack
+					    (callinfo-ifctx ci)
+					    (callinfo-loopctx ci)))))
 		     (loop nisize
-			(append ninlinables inlinables))))))
+			(append ninlinables inlinables)
+			nstack
+			(+fx cnt 1))))))
 	 ;; inline all the subfunctions
 	 (call-default-walker))
       this))
@@ -339,8 +348,7 @@
    
    (define (inline-args params args loc)
       (map (lambda (p a)
-	      (if (or (and (isa? a J2SLiteral) (ronly-variable? p))
-		      (and #f (isa? a J2SRef) (ronly-variable? p)))
+	      (if (and (ronly-variable? p) (isa? a J2SLiteral))
 		  a
 		  (with-access::J2SDecl p (usage id)
 		     (J2SLetOpt usage id a))))
@@ -388,8 +396,7 @@
 	    ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
 	    ;; shape of the test that suits the tyflow analysis
 	    (let* ((vals (map (lambda (a)
-				 (if (or (isa? a J2SLiteral)
-					 (and #f (isa? a J2SRef)))
+				 (if (isa? a J2SLiteral)
 				     a
 				     (let ((id (gensym 'a)))
 					(J2SLetOpt '(ref) id a))))
@@ -524,7 +531,7 @@
 ;*    collect-inlinables* ::J2SCall ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-inlinables* this::J2SCall pmethods stk ifctx loopctx)
-   
+
    (define (same-arity? fun::J2SFun arity)
       (with-access::J2SFun fun (params)
 	 (=fx (length params) arity)))
@@ -535,14 +542,18 @@
 	    (when (isa? field J2SString)
 	       (with-access::J2SString field (val)
 		  (filter (lambda (m::struct)
-			     (same-arity? (protoinfo-method m) arity))
+			     (and (same-arity? (protoinfo-method m) arity)
+				  (or inline-recursive
+				      (not (memq (protoinfo-method m) stk)))))
 		     (or (hashtable-get pmethods val) '())))))))
 
    (define (find-inline-function fun arity)
       (with-access::J2SRef fun (decl)
-	 (when (and (isa? decl J2SDeclFun) (not (memq decl stk)))
+	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val id)
-	       (when (same-arity? val arity)
+	       (when (and (same-arity? val arity)
+			  (or inline-recursive
+			      (not (memq val stk))))
 		  (when (check-id id)
 		     (list (protoinfo #f val #f))))))))
    
