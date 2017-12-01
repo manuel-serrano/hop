@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Dec  1 09:48:26 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 10:59:18 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -276,7 +276,7 @@
 	    (multiple-value-bind (call inl inlsz inlinables ci)
 	       (try-inline inlinables isize)
 	       (when inl
-		  (when (>=fx (config-get args :verbose 0) 2)
+		  (when (>=fx (config-get args :verbose 0) 3)
 		     (verb-call call (-fx inlsz (node-size call))
 			(callinfo-callees ci)))
 		  (set! body (inline-node! body call inl))

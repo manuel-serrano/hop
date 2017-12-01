@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Dec  1 09:48:38 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 10:59:32 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -94,7 +94,7 @@
 				    (fprintf (current-error-port) "hint"))
 				 (let ((dups (j2s-hint! this args)))
 				    (when (pair? dups)
-				       (when (>=fx j2s-verbose 2)
+				       (when (>=fx j2s-verbose 3)
 					  (fprintf (current-error-port)
 					     (format " [~(,)]."
 						(map (lambda (d)

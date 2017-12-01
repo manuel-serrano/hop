@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Nov 23 07:46:22 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 11:00:15 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removable stage.                                       */
@@ -64,7 +64,7 @@
 					  #f))))
 			(map! sweep! decls)))
 		  (for-each sweep! nodes)
-		  (when (>= (config-get args :verbose 0) 2)
+		  (when (>= (config-get args :verbose 0) 3)
 		     (when (pair? rems)
 			(fprintf (current-error-port) " (~(, ))" rems))))))))
    this)
