@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Nov 29 17:26:07 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 12:19:58 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -450,5 +450,25 @@
    (with-access::J2SForIn this (obj body)
       (set! obj (type-cast! obj 'any obj))
       (set! body (type-cast! body 'void fun))
+      this))
+      
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SIf ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SIf totype fun)
+   (with-access::J2SIf this (test then else)
+      (set! test (type-cast! test 'bool fun))
+      (set! then (type-cast! then totype fun))
+      (set! else (type-cast! else totype fun))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SCond ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SCond totype fun)
+   (with-access::J2SCond this (test then else)
+      (set! test (type-cast! test 'bool fun))
+      (set! then (type-cast! then totype fun))
+      (set! else (type-cast! else totype fun))
       this))
       

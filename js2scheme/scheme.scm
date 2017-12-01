@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Nov 29 17:57:11 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 12:22:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -149,6 +149,7 @@
 	   (case to
 	      ((index uint32 length) (js-fixnum->uint32 expr))
 	      ((string) (tostring expr))
+	      ((bool) `(js-totest ,expr))
 	      (else expr))))))
 	  
 ;*---------------------------------------------------------------------*/
