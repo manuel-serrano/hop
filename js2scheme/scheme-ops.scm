@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Dec  1 16:25:13 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 21:06:57 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -877,8 +877,9 @@
    (let ((tl (j2s-type lhs))
 	 (tr (j2s-type rhs)))
       (cond
-	 ((and (or (type-fixnum? tl) (eq? tl 'int32))
-	       (or (type-fixnum? tr) (eq? tr 'int32)))
+	 ((or (and (type-fixnum? tl) (type-fixnum? tr))
+	      (and (type-fixnum? tl) (and (eq? tr 'int32) (m64? conf)))
+	      (and (type-fixnum? tr) (and (eq? tl 'int32) (m64? conf))))
 	  (case op
 	     ((<< >>)
 	      (binop lhs rhs mode return conf hint type
@@ -895,7 +896,7 @@
 		 (lambda (left right)
 		    (retnum
 		       `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right))))))))
-	 ((or (type-fixnum? tr) (eq? tr 'int32))
+	 ((or (type-fixnum? tr) (and (eq? tr 'int32) (m64? conf)))
 	  (case op
 	     ((<< >>)
 	      (binop lhs rhs mode return conf hint type
@@ -918,7 +919,7 @@
 			 ,(retnum
 			     `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right)))
 			 ,(js-binop loc op left right)))))))
-	 ((or (type-fixnum? tl) (eq? tl 'int32))
+	 ((or (type-fixnum? tl) (and (eq? tl 'int32) (m64? conf)))
 	  (case op
 	     ((<< >>)
 	      (binop lhs rhs mode return conf hint type

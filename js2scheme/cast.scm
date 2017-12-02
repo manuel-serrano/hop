@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec  1 12:19:58 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 21:05:30 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -269,7 +269,8 @@
 ;*    type-cast! ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-cast! this::J2SFun totype fun)
-   (with-access::J2SFun this (body)
+   (with-access::J2SFun this (body rtype)
+      ;; (type-cast! body rtype this)
       (type-cast! body 'void this)
       this))
 
@@ -325,7 +326,7 @@
 ;*    type-cast! ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-cast! this::J2SDeclInit totype fun)
-   (with-access::J2SDeclInit this (val vtype)
+   (with-access::J2SDeclInit this (val vtype id)
       (set! val (cast (type-cast! val vtype fun) vtype))
       this))
 

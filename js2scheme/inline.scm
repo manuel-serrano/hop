@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Dec  1 10:59:18 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 07:25:08 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -351,7 +351,7 @@
 	      (if (and (ronly-variable? p) (isa? a J2SLiteral))
 		  a
 		  (with-access::J2SDecl p (usage id)
-		     (J2SLetOpt usage id a))))
+		     (J2SLetOpt usage (gensym id) a))))
 	 params args))
    
    (define (inline-method obj::J2SRef field callee args cache loc kont)
@@ -439,6 +439,9 @@
    
    (define (inline-function-call this)
       (with-access::J2SCall this (fun loc args)
+	 (with-access::J2SRef fun (decl)
+	    (with-access::J2SDecl decl (usecnt)
+	       (set! usecnt (-fx 1 usecnt))))
 	 (with-access::J2SFun (protoinfo-method (car callees)) (body thisp params loc)
 	    (let ((vals (inline-args params args loc)))
 	       (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)

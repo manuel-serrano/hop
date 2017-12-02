@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Nov 29 17:22:16 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 07:52:52 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -144,8 +144,8 @@
 		  (tprint "================================= " ostamp))
 	       (let ((env (empty-env)))
 		  (multiple-value-bind (_ env)
-		     (node-range* decls env fix)
-		     (node-range* nodes env fix)))
+		     (node-range* decls env #f fix)
+		     (node-range* nodes env #f fix)))
 	       (unless (or (=fx (fix-stamp fix) ostamp)
 			   (and (>fx *dump-stop* 0)
 				(>=fx (fix-stamp fix) *dump-stop*)))
@@ -604,16 +604,17 @@
 	 ((>llong n *max-int32*) *max-int32*)
 	 (else n)))
    
-   (when (and (interval? left) (interval? right))
-      (let ((u (int32
-		  (max (interval-max left)
-		     (bitop (interval-max left) (interval-max right)
-			*max-int32*))))
-	    (l (int32
-		  (min (interval-min left)
-		     (bitop (interval-min left) (interval-min right)
-			*min-int32*)))))
-	 (interval (min u l) (max u l)))))
+   (if (and (interval? left) (interval? right))
+       (let ((u (int32
+		   (max (interval-max left)
+		      (bitop (interval-max left) (interval-max right)
+			 *max-int32*))))
+	     (l (int32
+		   (min (interval-min left)
+		      (bitop (interval-min left) (interval-min right)
+			 *min-int32*)))))
+	  (interval (min u l) (max u l)))
+       *int32-intv*))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-shiftl ...                                              */
@@ -661,12 +662,18 @@
 ;*    interval-bitand ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (interval-bitand left right)
+
+   (define (shrink32 intv)
+      (interval
+	 (max (interval-min intv) *min-int32*)
+	 (min (interval-max intv) *max-int32*)))
+	 
    (when (and (interval? left) (interval? right))
       (if (or (> (interval-max left) 0) (> (interval-max right) 0))
 	  (let* ((mi (min (interval-min left) (interval-min right)))
 		 (ma (min (interval-max left) (interval-max right)))
 		 (intr (interval mi ma)))
-	     (widening left right intr))
+	     (shrink32 (widening left right intr)))
 	  *int32-intv*)))
    
 ;*---------------------------------------------------------------------*/
@@ -707,40 +714,6 @@
       (return (range-get this) env)))
 
 ;*---------------------------------------------------------------------*/
-;*    node-interval-set! ...                                           */
-;*    -------------------------------------------------------------    */
-;*    Set the expression interval and if needed update the fix stamp.  */
-;*---------------------------------------------------------------------*/
-;* (define (node-interval-set! this::J2SNode env::pair-nil fix::struct intv) */
-;*                                                                     */
-;*    (define (newrange range)                                         */
-;*       (cond                                                         */
-;* 	 ((not (interval? range))                                      */
-;* 	  (when (interval? intv)                                       */
-;* 	     (unfix! fix                                               */
-;* 		(format "node-interval-set.1! ~a -> ~a"                */
-;* 		   (j2s->list this) intv))                             */
-;* 	     intv))                                                    */
-;* 	 ((not (interval-in? intv range))                              */
-;* 	  (unfix! fix                                                  */
-;* 	     (format "node-interval-set.2! ~a -> ~a/~a => ~a"          */
-;* 		(j2s->list this) intv range (interval-merge intv range))) */
-;* 	  (interval-merge intv range))))                               */
-;*                                                                     */
-;*    (define (range-set! this r)                                      */
-;*       (cond                                                         */
-;* 	 ((isa? this J2SExpr)                                          */
-;* 	  (with-access::J2SExpr this (range) (set! range r)))          */
-;* 	 ((isa? this J2SDecl)                                          */
-;* 	  (with-access::J2SDecl this (range) (set! range r)))))        */
-;* 	                                                               */
-;*    (if (interval? intv)                                             */
-;*        (let ((r (newrange (range-get this))))                       */
-;* 	  (range-set! this r)                                          */
-;* 	  (return r env))                                              */
-;*        (return (range-get this) env)))                              */
-   
-;*---------------------------------------------------------------------*/
 ;*    dump-env ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (dump-env env . ids)
@@ -762,39 +735,40 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range* ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (node-range* nodes::pair-nil env::pair-nil fix::struct)
+(define (node-range* nodes::pair-nil env::pair-nil fun fix::struct)
    (let loop ((nodes nodes)
 	      (intv #f)
 	      (env env))
       (if (null? nodes)
 	  (return intv env)
 	  (multiple-value-bind (int env)
-	     (node-range (car nodes) env fix)
+	     (node-range (car nodes) env fun fix)
 	     (loop (cdr nodes) int env)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range-seq ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (node-range-seq nodes::pair-nil env::pair-nil fix::struct)
+(define (node-range-seq nodes::pair-nil env::pair-nil fun fix::struct)
    (let loop ((nodes nodes)
+	      (rng *infinity-intv*)
 	      (env env)
 	      (envr #f))
       (if (null? nodes)
-	  (return #f (or envr env))
-	  (multiple-value-bind (_ envn)
-	     (node-range (car nodes) env fix)
-	     (loop (cdr nodes) envn envr)))))
+	  (return rng (or envr env))
+	  (multiple-value-bind (ir envn)
+	     (node-range (car nodes) env fun fix)
+	     (loop (cdr nodes) rng envn envr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SNode env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SNode env::pair-nil fun fix::struct)
    (error "range" "not implemented" (typeof this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SMeta ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SMeta env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SMeta env::pair-nil fun fix::struct)
    (with-access::J2SMeta this (optim)
       (if (=fx optim 0)
 	  (return #f env)
@@ -803,28 +777,32 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SExpr ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SExpr env::pair-nil fix::struct)
-   (call-default-walker)
-   (return #f env))
+(define-walk-method (node-range this::J2SExpr env::pair-nil fun fix::struct)
+   (multiple-value-bind (ints envs)
+      (call-default-walker)
+      (with-access::J2SExpr this (type)
+	 (if (type-number? type)
+	     (return ints envs)
+	     (return #f envs)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SParen ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SParen env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SParen env::pair-nil fun fix::struct)
    (with-access::J2SParen this (expr)
-      (node-range expr env fix)))
+      (node-range expr env fun fix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDataPropertyInit ...                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SDataPropertyInit env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SDataPropertyInit env::pair-nil fun fix::struct)
    (with-access::J2SDataPropertyInit this (val)
-      (node-range val env fix)))
+      (node-range val env fun fix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SAccessorPropertyInit ...                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SAccessorPropertyInit env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SAccessorPropertyInit env::pair-nil fun fix::struct)
    (with-access::J2SDataPropertyInit this (get set)
       (call-default-walker)
       (return #f env)))
@@ -832,9 +810,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SStmt ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SStmt env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SStmt env::pair-nil fun fix::struct)
    (unless (or (isa? this J2SDecl)
-	       (isa? this J2SReturn)
 	       (isa? this J2SBreak)
 	       (isa? this J2SLabel)
 	       (isa? this J2SThrow))
@@ -843,18 +820,29 @@
    (return #f env))
 
 ;*---------------------------------------------------------------------*/
+;*    node-range ::J2SReturn ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SReturn env::pair-nil fun fix::struct)
+   (with-access::J2SReturn this (expr)
+      (multiple-value-bind (intv env)
+	 (node-range expr env fun fix)
+	 (when (isa? fun J2SFun)
+	    (node-interval-set! fun '() fix intv))
+	 (return intv env))))
+   
+;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDataPropertyInit ...                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SDataPropertyInit env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SDataPropertyInit env::pair-nil fun fix::struct)
    (with-access::J2SDataPropertyInit this (val)
       (multiple-value-bind (_ env)
-	 (node-range val env fix)
+	 (node-range val env fun fix)
 	 (return #f env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SNumber ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SNumber env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SNumber env::pair-nil fun fix::struct)
    (with-access::J2SNumber this (val type)
       (if (and (type-number? type) (fixnum? val))
 	  (let ((intv (interval (fixnum->llong val) (fixnum->llong val))))
@@ -864,7 +852,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SRef ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SRef env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SRef env::pair-nil fun fix::struct)
    (with-access::J2SRef this (decl type)
       (if (type-number? type)
 	  (with-access::J2SDecl decl (range ronly)
@@ -884,13 +872,13 @@
 ;*    Returns two new environments for the positive and negative       */
 ;*    values of the test.                                              */
 ;*---------------------------------------------------------------------*/
-(define (test-envs test::J2SExpr env fix::struct)
+(define (test-envs test::J2SExpr env fun fix::struct)
    
    (define (test-envs-ref left::J2SRef right op)
       (multiple-value-bind (intl envl)
-	 (node-range left env fix)
+	 (node-range left env fun fix)
 	 (multiple-value-bind (intr envr)
-	    (node-range right envl fix)
+	    (node-range right envl fun fix)
 	    (with-access::J2SRef left (decl)
 	       (if (or (not (interval? intl)) (not (interval? intr)))
 		   (values (empty-env) (empty-env))
@@ -960,11 +948,11 @@
 	  (cond
 	     ((eq? op '&&)
 	      (multiple-value-bind (lenvt lenvo)
-		 (test-envs lhs env fix)
+		 (test-envs lhs env fun fix)
 		 (multiple-value-bind (intl envl)
-		    (node-range lhs env fix)
+		    (node-range lhs env fun fix)
 		    (multiple-value-bind (renvt renvo)
-		       (test-envs rhs envl fix)
+		       (test-envs rhs envl fun fix)
 		       (values (append-env lenvt renvt)
 			  (append-env lenvo renvo))))))
 	     ((not (type-number? (j2s-type lhs)))
@@ -996,15 +984,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SUnary ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SUnary env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SUnary env::pair-nil fun fix::struct)
    (with-access::J2SUnary this (op expr type)
       (if (type-number? type)
 	  (case op
 	     ((+)
-	      (node-range expr env fix))
+	      (node-range expr env fun fix))
 	     ((-)
 	      (multiple-value-bind (intv env)
-		 (node-range expr env fix)
+		 (node-range expr env fun fix)
 		 (cond
 		    ((not (interval? intv))
 		     (return *infinity-intv* env))
@@ -1018,7 +1006,7 @@
 			   (- (interval-max intv)) (- (interval-min intv))))))))
 	     ((~)
 	      (multiple-value-bind (intv env)
-		 (node-range expr env fix)
+		 (node-range expr env fun fix)
 		 (node-interval-set! this env fix *int32-intv*)))
 	     (else
 	      (call-default-walker)
@@ -1030,12 +1018,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    range-binary ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (node-range-binary this op lhs rhs env::pair-nil fix::struct)
+(define (node-range-binary this op lhs rhs env::pair-nil fun fix::struct)
    (with-access::J2SExpr this (range %%wstamp)
       (multiple-value-bind (intl envl)
-	 (node-range lhs env fix)
+	 (node-range lhs env fun fix)
 	 (multiple-value-bind (intr envr)
-	    (node-range rhs envl fix)
+	    (node-range rhs envl fun fix)
 	    (if (< %%wstamp (fix-wstamp fix))
 		(begin
 		   (set! %%wstamp (fix-wstamp fix))
@@ -1067,7 +1055,7 @@
 		      ((>>>)
 		       (node-interval-set! this env fix
 			  (interval-ushiftr intl intr)))
-		      ((^ BIT_OR)
+		      ((^ BIT_OR ~)
 		       (node-interval-set! this env fix
 			  *int32-intv*))
 		      ((&)
@@ -1080,10 +1068,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SBinary ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SBinary env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SBinary env::pair-nil fun fix::struct)
    (with-access::J2SBinary this (op lhs rhs type range)
       (if (type-number? type)
-	  (node-range-binary this op lhs rhs env fix)
+	  (node-range-binary this op lhs rhs env fun fix)
 	  (begin
 	     (call-default-walker)
 	     (return #f env)))))
@@ -1091,23 +1079,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SAssig ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SAssig env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SAssig env::pair-nil fun fix::struct)
    (with-access::J2SAssig this (lhs rhs type)
       (if (type-number? type)
 	  (multiple-value-bind (_ env)
-	     (node-range lhs env fix)
+	     (node-range lhs env fun fix)
 	     (cond
 		((isa? lhs J2SRef)
 		 ;; a variable assignment
 		 (multiple-value-bind (ir env)
-		    (node-range rhs env fix)
+		    (node-range rhs env fun fix)
 		    (with-access::J2SRef lhs (decl)
 		       (let ((nenv (extend-env env decl ir)))
 			  (node-interval-set! this nenv fix ir)))))
 		(else
-		 ;; a non variable assinment
+		 ;; a non variable assignment
 		 (multiple-value-bind (intv nenv)
-		    (node-range rhs env fix)
+		    (node-range rhs env fun fix)
 		    (node-interval-set! this nenv fix intv)))))
 	  (begin
 	     (call-default-walker)
@@ -1116,11 +1104,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SAssigOp ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SAssigOp env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SAssigOp env::pair-nil fun fix::struct)
    (with-access::J2SAssigOp this (op lhs rhs type)
       (if (type-number? type)
 	  (multiple-value-bind (intv nenv)
-	     (node-range-binary this op lhs rhs env fix)
+	     (node-range-binary this op lhs rhs env fun fix)
 	     (cond
 		((isa? lhs J2SRef)
 		 ;; a variable assignment
@@ -1128,7 +1116,7 @@
 		    (let ((nenv (extend-env env decl intv)))
 		       (node-interval-set! lhs nenv fix intv))))
 		(else
-		 ;; a non variable assinment
+		 ;; a non variable assignment
 		 (node-interval-set! this nenv fix intv))))
 	  (begin
 	     (call-default-walker)
@@ -1137,7 +1125,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SPostfix ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SPostfix env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SPostfix env::pair-nil fun fix::struct)
    (with-access::J2SPostfix this (lhs range)
       (with-access::J2SExpr lhs ((linfo range))
 	 (let ((intv linfo))
@@ -1148,29 +1136,29 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SPrefix ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SPrefix env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SPrefix env::pair-nil fun fix::struct)
    (call-next-method))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SCond ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SCond env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SCond env::pair-nil fun fix::struct)
    (with-access::J2SCond this (test then else)
       (multiple-value-bind (_ env)
-	 (node-range test env fix)
+	 (node-range test env fun fix)
 	 (multiple-value-bind (envt envo)
-	    (test-envs test env fix)
+	    (test-envs test env fun fix)
 	    (multiple-value-bind (intvt envt)
-	       (node-range then (append-env envt env) fix)
+	       (node-range then (append-env envt env) fun fix)
 	       (multiple-value-bind (intvo envo)
-		  (node-range else (append-env envo env) fix)
+		  (node-range else (append-env envo env) fun fix)
 		  (return (interval-merge intvt intvo)
 		     (env-merge envt envo))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SFun env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SFun env::pair-nil fun fix::struct)
    (with-access::J2SFun this (body params rtype)
       (let ((envp (filter-map (lambda (p)
 				 (with-access::J2SDecl p (itype range)
@@ -1179,13 +1167,13 @@
 				       (cons p range))))
 		     params)))
 	 (multiple-value-bind (intv env)
-	    (node-range body envp fix)
-	    (node-interval-set! this env fix intv)))))
+	    (node-range body envp this fix)
+	    (return #f env)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SCall env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SCall env::pair-nil fun fix::struct)
    
    (define (node-range-fun callee args env)
       (with-access::J2SFun callee (rtype params range)
@@ -1215,7 +1203,9 @@
 		 (with-access::J2SDeclFun decl (ronly val)
 		    (if ronly
 			(node-range-fun val args env)
-			(return *infinity-intv* env)))))))
+			(return *infinity-intv* env))))
+		(else
+		 (return *infinity-intv* env)))))
 	 ((and (isa? callee J2SAccess) (eq? type 'integer))
 	  (with-access::J2SAccess callee (obj field)
 	     (let ((fn (j2s-field-name field)))
@@ -1237,7 +1227,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SAccess ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SAccess env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SAccess env::pair-nil fun fix::struct)
    (with-access::J2SAccess this (obj field type)
       (if (type-number? type)
 	  (with-access::J2SExpr obj (type)
@@ -1251,17 +1241,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SNop ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SNop env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SNop env::pair-nil fun fix::struct)
    (return #f env))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDeclInit ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SDeclInit env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SDeclInit env::pair-nil fun fix::struct)
    (with-access::J2SDeclInit this (val itype range)
       (if (type-number? itype)
 	  (multiple-value-bind (intv env)
-	     (node-range val env fix)
+	     (node-range val env fun fix)
 	     (node-interval-set! this env fix intv)
 	     (return #f (extend-env env this intv)))
 	  (begin
@@ -1271,57 +1261,57 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SStmtExpr ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SStmtExpr env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SStmtExpr env::pair-nil fun fix::struct)
    (with-access::J2SStmtExpr this (expr)
       (multiple-value-bind (intv env)
-	 (node-range expr env fix)
-	 (return #f env))))
+	 (node-range expr env fun fix)
+	 (return intv env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SSeq ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SSeq env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SSeq env::pair-nil fun fix::struct)
    (with-access::J2SSeq this (nodes)
-      (node-range-seq nodes env fix)))
+      (node-range-seq nodes env fun fix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SLetBlock ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SLetBlock env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SLetBlock env::pair-nil fun fix::struct)
    (with-access::J2SLetBlock this (decls nodes)
       (multiple-value-bind (_ denv)
-	 (node-range* decls env fix)
-	 (multiple-value-bind (_ benv)
-	    (node-range-seq nodes denv fix)
+	 (node-range* decls env fun fix)
+	 (multiple-value-bind (intv benv)
+	    (node-range-seq nodes denv fun fix)
 	    (let ((nenv (filter (lambda (d) (not (memq (car d) decls))) benv)))
-	       (return #f nenv))))))
+	       (return intv nenv))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SBindExit ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SBindExit env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SBindExit env::pair-nil fun fix::struct)
    (with-access::J2SBindExit this (stmt)
-      (node-range stmt env fix)))
+      (node-range stmt env fun fix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SIf ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SIf env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SIf env::pair-nil fun fix::struct)
    (with-access::J2SIf this (test then else)
       (multiple-value-bind (_ env)
-	 (node-range test env fix)
+	 (node-range test env fun fix)
 	 (multiple-value-bind (envt envo)
-	    (test-envs test env fix)
+	    (test-envs test env fun fix)
 	    (multiple-value-bind (_ nenvt)
-	       (node-range then (append-env envt env) fix)
+	       (node-range then (append-env envt env) fun fix)
 	       (multiple-value-bind (_ nenvo)
-		  (node-range else (append-env envo env) fix)
+		  (node-range else (append-env envo env) fun fix)
 		  (return #f (env-merge nenvt nenvo))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SFor ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SFor env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SFor env::pair-nil fun fix::struct)
    (with-access::J2SFor this (init test incr body)
       (let ((denv (dump-env env))
 	    (ffix (fix-stamp fix)))
@@ -1329,18 +1319,18 @@
 	    (tprint ">>> for [" ffix "] test=" (j2s->list test))
 	    (tprint ">>> env=" denv))
 	 (multiple-value-bind (initi inite)
-	    (node-range init env fix)
+	    (node-range init env fun fix)
 	    (let loop ((env inite))
 	       (let ((ostamp (fix-stamp fix)))
 		  (when (pair? denv)
 		     (tprint "--- for [" ffix "] / " ostamp))
 		  (multiple-value-bind (testi teste)
-		     (node-range test env fix)
+		     (node-range test env fun fix)
 		     (when (pair? denv)
 			(tprint "    [" ffix "] test=" (j2s->list test))
 			(tprint "    [" ffix "] teste=" (dump-env teste)))
 		     (multiple-value-bind (testet testef)
-			(test-envs test env fix)
+			(test-envs test env fun fix)
 			(when (pair? denv)
 			   (when (pair? (dump-env testet))
 			      (tprint "    [" ffix "] testet="
@@ -1348,7 +1338,8 @@
 			      (tprint "    [" ffix "] testef="
 				 (dump-env testef))))
 			(multiple-value-bind (bodyi bodye)
-			   (node-range-seq (list body incr) (append-env testet teste) fix)
+			   (node-range-seq (list body incr)
+			      (append-env testet teste) fun fix)
 			   (if (=fx ostamp (fix-stamp fix))
 			       (begin
 				  (when (pair? denv)
@@ -1360,20 +1351,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDo ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SDo env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SDo env::pair-nil fun fix::struct)
    (with-access::J2SDo this (body test)
       (let ((denv (dump-env env))
 	    (ffix (fix-stamp fix)))
 	 (multiple-value-bind (bodyi bodye)
-	    (node-range body env fix)
+	    (node-range body env fun fix)
 	    (let loop ((env env))
 	       (let ((ostamp (fix-stamp fix)))
 		  (multiple-value-bind (testi teste)
-		     (node-range test bodye fix)
+		     (node-range test bodye fun fix)
 		     (multiple-value-bind (testet testef)
-			(test-envs test bodye fix)
+			(test-envs test bodye fun fix)
 			(multiple-value-bind (bodyi bodye)
-			   (node-range body teste fix)
+			   (node-range body teste fun fix)
 			   (if (=fx ostamp (fix-stamp fix))
 			       (return #f (append-env testef bodye))
 			       (loop (env-merge bodye env))))))))))))
@@ -1381,7 +1372,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SWhile ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SWhile env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SWhile env::pair-nil fun fix::struct)
    (with-access::J2SWhile this (test body)
       (let ((denv (dump-env env))
 	    (ffix (fix-stamp fix)))
@@ -1393,12 +1384,12 @@
 	       (when (pair? denv)
 		  (tprint "--- while [" ffix "] / " ostamp))
 	       (multiple-value-bind (testi teste)
-		  (node-range test env fix)
+		  (node-range test env fun fix)
 		  (when (pair? denv)
 		     (tprint "    [" ffix "] test=" (j2s->list test))
 		     (tprint "    [" ffix "] teste=" (dump-env teste)))
 		  (multiple-value-bind (testet testef)
-		     (test-envs test env fix)
+		     (test-envs test env fun fix)
 		     (when (pair? denv)
 			(when (pair? (dump-env testet))
 			   (tprint "    [" ffix "] testet="
@@ -1406,7 +1397,7 @@
 			   (tprint "    [" ffix "] testef="
 			      (dump-env testef))))
 		     (multiple-value-bind (bodyi bodye)
-			(node-range  body (append-env testet teste) fix)
+			(node-range  body (append-env testet teste) fun fix)
 			(if (=fx ostamp (fix-stamp fix))
 			    (begin
 			       (when (pair? denv)
@@ -1418,37 +1409,37 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SSwitch ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SSwitch env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SSwitch env::pair-nil fun fix::struct)
    (with-access::J2SSwitch this (key cases)
       (multiple-value-bind (_ env)
-	 (node-range key env fix)
+	 (node-range key env fun fix)
 	 (let loop ((cases cases)
 		    (env env))
 	    (if (null? cases)
 		(return #f env)
 		(multiple-value-bind (_ envc)
-		   (node-range (car cases) env fix)
+		   (node-range (car cases) env fun fix)
 		   (loop (cdr cases) (env-merge envc env))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SCase ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SCase env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SCase env::pair-nil fun fix::struct)
    (with-access::J2SCase this (expr body)
       (multiple-value-bind (_ enve)
-	 (node-range expr env fix)
-	 (node-range body (env-merge enve env) fix))))
+	 (node-range expr env fun fix)
+	 (node-range body (env-merge enve env) fun fix))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SClass ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SClass env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SClass env::pair-nil fun fix::struct)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SClassElement ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (node-range this::J2SClassElement env::pair-nil fix::struct)
+(define-walk-method (node-range this::J2SClassElement env::pair-nil fun fix::struct)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -1492,6 +1483,16 @@
    (with-access::J2SExpr this (range type)
       (when (interval? range)
 	 (set! type (interval->type range))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    type-range! ::J2SFun ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-range! this::J2SFun)
+   (call-default-walker)
+   (with-access::J2SFun this (range rtype)
+      (when (interval? range)
+	 (set! rtype (interval->type range))))
    this)
 
 ;*---------------------------------------------------------------------*/

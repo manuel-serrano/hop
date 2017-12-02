@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Oct 11 19:08:36 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 06:32:13 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1508,12 +1508,24 @@
 		    (op (token-tag token))
 		    (loc (token-loc token))
 		    (expr expr))))))
-	 ((void typeof ~ ! + -)
+	 ((void typeof ~ !)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2SUnary
 		(loc (token-loc token))
 		(op (token-tag token))
 		(expr (unary)))))
+	 ((+ -)
+	  (let ((token (consume-any!))
+		(expr (unary)))
+	     (if (isa? expr J2SNumber)
+		 (with-access::J2SNumber expr (val)
+		    (duplicate::J2SNumber expr
+		       (loc (token-loc token))
+		       (val (if (eq? (token-tag token) '+) val (- val)))))
+		 (instantiate::J2SUnary
+		    (loc (token-loc token))
+		    (op (token-tag token))
+		    (expr expr)))))
 	 (else
 	  (postfix (token-loc (peek-token))))))
 

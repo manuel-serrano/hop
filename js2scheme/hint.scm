@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Nov 28 20:06:37 2017 (serrano)                */
+;*    Last change :  Fri Dec  1 20:05:08 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -898,6 +898,13 @@
 		   (with-access::J2SDeclFun hinted (val)
 		      (with-access::J2SFun val (generator)
 			 (cond
+			    ((not (=fx (length args) (length types)))
+			     (with-access::J2SFun val (idthis)
+				(duplicate::J2SCall this
+				   (thisarg thisarg)
+				   (fun (duplicate::J2SRef fun
+					   (type 'function)
+					   (decl unhinted))))))
 			    ((every (lambda (a t)
 				       (or (eq? t 'unknown)
 					   (eq? (j2s-type a) t)

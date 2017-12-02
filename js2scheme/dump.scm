@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Nov 30 20:18:15 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 07:46:03 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -445,6 +445,7 @@
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
 		 :optimize ,optimize
 		 :mode ,mode
+		 ,@(dump-range this)
 		 :thisp ,(j2s->list thisp)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
@@ -459,6 +460,7 @@
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
 		 :optimize ,optimize
 		 :mode ,mode
+		 ,@(dump-range this)
 		 :thisp ,(j2s->list thisp)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 (else
@@ -471,6 +473,7 @@
 		    `(:need-bind-exit-return ,need-bind-exit-return) '())
 	      :optimize ,optimize
 	      :mode ,mode
+	      ,@(dump-range this)
 	      :thisp ,(j2s->list thisp)
 	      ,(map j2s->list params) ,(j2s->list body))))))
 
@@ -545,6 +548,7 @@
       `(,@(call-next-method) ,op
 	  ,@(dump-type this)
 	  ,@(dump-info this)
+	  ,@(dump-range this)
 	  ,(j2s->list lhs) ,(j2s->list rhs))))
       
 ;*---------------------------------------------------------------------*/
@@ -664,6 +668,7 @@
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
+	  ,@(dump-range this)
 	  ,(j2s->list fun)
 	  ,@(dump-cache this)
 	  ,@(if (pair? thisarg) `(:thisarg ,@(map j2s->list thisarg)) '())
@@ -703,7 +708,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SExprStmt)
    (with-access::J2SExprStmt this (stmt)
-      `(,@(call-next-method) ,(j2s->list stmt))))
+      `(,@(call-next-method)
+	  ,@(dump-type this)
+	  ,@(dump-info this)
+	  ,@(dump-hint this)
+	  ,@(dump-range this)
+	  ,(j2s->list stmt))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */
