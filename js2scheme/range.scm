@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Dec  2 07:52:52 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 11:41:10 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -470,6 +470,9 @@
 	     ((> oi *min-int30*)
 	      (let ((min *min-int30*))
 		 (interval min (max oa min))))
+	     ((> oi *min-int32*)
+	      (let ((min *min-int32*))
+		 (interval min (max oa min))))
 	     ((> oi *min-integer*)
 	      (let ((min *min-integer*))
 		 (interval min (max oa min))))
@@ -496,6 +499,9 @@
 		     (interval (min oi max) max)))
 		 ((<= oa *max-integer*)
 		  (let ((max *max-integer*))
+		     (interval (min oi max) max)))
+		 ((<= oa *max-int32*)
+		  (let ((max *max-int32*))
 		     (interval (min oi max) max)))
 		 (else
 		  (interval oi *+inf.0*))))
@@ -843,9 +849,13 @@
 ;*    node-range ::J2SNumber ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SNumber env::pair-nil fun fix::struct)
+
+   (define (integer->llong num)
+      (if (fixnum? num) (fixnum->llong num) (flonum->llong num)))
+	  
    (with-access::J2SNumber this (val type)
-      (if (and (type-number? type) (fixnum? val))
-	  (let ((intv (interval (fixnum->llong val) (fixnum->llong val))))
+      (if (and (type-number? type) (integer? val))
+	  (let ((intv (interval (integer->llong val) (integer->llong val))))
 	     (node-interval-set! this env fix intv))
 	  (return #f env))))
 
@@ -1188,7 +1198,7 @@
 			       (unfix! fix "j2scall")
 			       (set! range ni)))))
 		   (loop (cdr params) (cdr args)))
-		(return range env)))))
+		(node-interval-set! this env fix range)))))
    
    (call-default-walker)
    
@@ -1200,7 +1210,7 @@
 	  (with-access::J2SRef callee (decl)
 	     (cond
 		((isa? decl J2SDeclFun)
-		 (with-access::J2SDeclFun decl (ronly val)
+		 (with-access::J2SDeclFun decl (ronly val id)
 		    (if ronly
 			(node-range-fun val args env)
 			(return *infinity-intv* env))))

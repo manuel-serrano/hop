@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Dec  1 10:59:32 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 09:01:12 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -480,11 +480,10 @@
    (with-access::J2SNumber this (val type)
       (expr-type-set! this env fix
 	 (cond
-	    ((or (not (integer? val)) (flonum? val)) 'number)
 	    ((and (> val 0) (< val (bit-lsh 1 28))) 'index)
 	    ((= val 0) 'index)
-	    ((flonum? val) 'number)
-	    (else 'integer)))))
+	    ((integer? val) 'integer)
+	    (else 'number)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SBool ...                                             */
