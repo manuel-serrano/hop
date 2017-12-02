@@ -227,7 +227,7 @@ function formatValue(ctx, value, recurseTimes) {
    if (ctx.showHidden) {
     keys = Object.getOwnPropertyNames(value);
 // MS: 2017-11-26, symbols support
-    keys = keys.concat(getOwnPropertySymbols(value));
+    keys = keys.concat(Object.getOwnPropertySymbols(value));
   }
 
   // Some type of object without properties can be shortcutted.
@@ -375,7 +375,7 @@ function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
   if (!hasOwnProperty(visibleKeys, key)) {
     //name = '[' + key + ']';
      // MS: 2017-11-26, symbols support
-    name = '[' + (((typeof key) == "symbol") ? key.toString() : "key") + ']';
+    name = '[' + (((typeof key) == "symbol") ? key.toString() : key) + ']';
   }
   if (!str) {
     if (ctx.seen.indexOf(desc.value) < 0) {

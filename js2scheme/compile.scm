@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Nov 29 08:32:01 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 13:59:09 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -38,6 +38,7 @@
 	   __js2scheme_range
 	   __js2scheme_cast
 	   __js2scheme_uint32
+	   __js2scheme_int32
 	   __js2scheme_vector
 	   __js2scheme_array
 	   __js2scheme_letfusion
@@ -167,6 +168,7 @@
       j2s-range-stage
       j2s-ctor-stage
       j2s-uint32-stage
+      j2s-int32-stage
       j2s-cast-stage
       j2s-vector-stage
       j2s-array-stage
@@ -247,6 +249,7 @@
       j2s-tyflow-stage
       j2s-range-stage
       j2s-uint32-stage
+      j2s-int32-stage
       j2s-cast-stage
       j2s-vector-stage
       j2s-array-stage
@@ -338,6 +341,8 @@
 			(set! o (cons* :optim-cast #t o)))
 		     (unless (memq :optim-ctor o)
 			(set! o (cons* :optim-ctor #t o)))
+		     (unless (memq :optim-vector o)
+			(set! o (cons* :optim-vector #t o)))
 		     (unless (memq :optim-vector o)
 			(set! o (cons* :optim-vector #t o)))
 ;* 		     (unless (memq :optim-cce o)                       */
