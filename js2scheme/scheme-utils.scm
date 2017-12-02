@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Nov 24 13:55:25 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 19:06:06 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -45,6 +45,7 @@
 	   (typeof-this obj conf)
 	   (maybe-number? expr::J2SNode)
 	   (utype-ident ident utype conf #!optional compound)
+	   (type-ident ident type)
 	   (j2s-number val conf)
 	   (j2s-error proc msg obj #!optional str)
 	   (is-fixnum? expr::J2SExpr conf)
@@ -259,6 +260,16 @@
        (symbol-append ident '|::| (type-name utype conf)))
       (else
        ident)))
+
+;*---------------------------------------------------------------------*/
+;*    type-ident ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (type-ident ident type)
+   (cond
+      ((memq type '(int32 uint32)) (symbol-append ident '|::| type))
+      ((memq type '(uint29)) (symbol-append ident '|::uint32|))
+      ((memq type '(index length)) (symbol-append ident '|::uint32|))
+      (else ident)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-number ...                                                   */

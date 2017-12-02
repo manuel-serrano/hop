@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sat Dec  2 13:59:09 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 17:53:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -167,7 +167,7 @@
       j2s-propcce-stage
       j2s-range-stage
       j2s-ctor-stage
-      j2s-uint32-stage
+;*       j2s-uint32-stage                                              */
       j2s-int32-stage
       j2s-cast-stage
       j2s-vector-stage
@@ -248,7 +248,7 @@
       j2s-use-stage
       j2s-tyflow-stage
       j2s-range-stage
-      j2s-uint32-stage
+;*       j2s-uint32-stage                                              */
       j2s-int32-stage
       j2s-cast-stage
       j2s-vector-stage

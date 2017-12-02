@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Dec  1 12:38:27 2017 (serrano)                */
+;*    Last change :  Sat Dec  2 19:03:56 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -106,7 +106,7 @@
    
    (define (err)
       (error "cast" (format "illegal cast ~a -> ~a" from to) expr))
-
+   
    (define (tostring expr)
       (match-case expr
 	 ((js-jsstring-ref ?str ?idx)
@@ -118,45 +118,62 @@
 	 (else
 	  `(js-tojsstring ,expr %this))))
    
-   (if (or (eq? from to) (eq? to '*))
-       expr
-       (case from
-	  ((uint29)
-	   (case to
-	      ((uint32 index length) (fixnum->uint32 expr))
-	      ((bool) `(>u32 ,expr #u32:0))
-	      (else expr)))
-	  ((index uint32 length)
-	   (case to
-	      ((uint32 index length) expr)
-	      ((bool) `(> ,expr 0))
-	      (else expr)))
-	  ((int30)
-	   (case to
-	      ((index uint32 length) (fixnum->uint32 expr))
-	      ((bool) `(not (= ,expr 0)))
-	      (else expr)))
-	  ((int53)
-	   (case to
-	      ((index uint32 length) (err))
-	      ((bool) `(not (= ,expr 0)))
-	      (else expr)))
-	  ((fixnum)
-	   (case to
-	      ((index uint32 length) (js-fixnum->uint32 expr))
-	      ((bool) `(not (=fx ,expr 0)))
-	      (else expr)))
-	  ((integer number)
-	   (case to
-	      ((index uint32 length) (js-fixnum->uint32 expr))
-	      ((bool) `(not (= ,expr 0)))
-	      (else expr)))
-	  (else
-	   (case to
-	      ((index uint32 length) (js-fixnum->uint32 expr))
-	      ((string) (tostring expr))
-	      ((bool) `(js-totest ,expr))
-	      (else expr))))))
+   (define (default)
+      (if (or (eq? from to) (eq? to '*))
+	  expr
+	  (case from
+	     ((uint29)
+	      (case to
+		 ((uint32 index length) (fixnum->uint32 expr))
+		 ((bool) `(>u32 ,expr #u32:0))
+		 (else expr)))
+	     ((index uint32 length)
+	      (case to
+		 ((uint32 index length) expr)
+		 ((bool) `(> ,expr 0))
+		 (else expr)))
+	     ((int30)
+	      (case to
+		 ((index uint32 length) (fixnum->uint32 expr))
+		 ((bool) `(not (= ,expr 0)))
+		 (else expr)))
+	     ((int53)
+	      (case to
+		 ((index uint32 length) (err))
+		 ((bool) `(not (= ,expr 0)))
+		 (else expr)))
+	     ((fixnum)
+	      (case to
+		 ((index uint32 length) (js-fixnum->uint32 expr))
+		 ((bool) `(not (=fx ,expr 0)))
+		 (else expr)))
+	     ((integer number)
+	      (case to
+		 ((index uint32 length) (js-fixnum->uint32 expr))
+		 ((bool) `(not (= ,expr 0)))
+		 (else expr)))
+	     (else
+	      (case to
+		 ((index uint32 length) (js-fixnum->uint32 expr))
+		 ((string) (tostring expr))
+		 ((bool) `(js-totest ,expr))
+		 (else expr))))))
+
+   (define table
+      '(
+	;; converting to int32
+	(int32
+	   ((uint29 uint32->int32)
+	    (uint32 uint32->int32)
+	    (index uint32->int32)))))
+   
+   (let ((fen (assq to table)))
+      (if (pair? fen)
+	  (let ((ten (assq from (cadr fen))))
+	     (if (pair? ten)
+		 `(,(cadr ten) ,expr)
+		 (default)))
+	  (default))))
 	  
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
@@ -796,49 +813,30 @@
 	 (else val))))
 
 ;*---------------------------------------------------------------------*/
+;*    *int29* ...                                                      */
+;*---------------------------------------------------------------------*/
+(define *+ints29* (-s32 (bit-lshs32 #s32:1 29) #s32:1))
+(define *-ints29* (-s32 #s32:0 (bit-lshs32 #s32:1 29)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNumber ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SNumber mode return conf hint totype)
    (with-access::J2SNumber this (val type)
       (cond
-	 ;;((memq type '(uint29 index length))
-	 ((memq type '(index length))
+	 ((memq type '(index length uint32 uint29 ufixnum))
+	  (if (flonum? val)
+	      (flonum->uint32 val)
+	      (fixnum->uint32 val)))
+	 ((eq? type '(int29 int32 fixnum))
+	  (if (flonum? val) (flonum->int32 val) (fixnum->int32 val)))
+	 ((fixnum? val)
 	  (cond
-	     ((u32? conf)
-	      (cond
-		 ((uint32? val) val)
-		 ((fixnum? val) (fixnum->uint32 val))
-		 ((elong? val) (elong->uint32 val))
-		 ((flonum? val) (flonum->uint32 val))
-		 (else (error "j2s-scheme" "wrong number" (j2s->list this)))))
-	     ((fixnum? val)
-	      (cond
-		 ((=fx (config-get conf :long-size 0) 64)
-		  val)
-		 ((<fx val (-fx (bit-lsh 1 29) 1))
-		  val)
-		 (else
-		  (fixnum->flonum val))))
-	     ((elong? val)
-	      (cond
-		 ((=fx (config-get conf :long-size 0) 64)
-		  val)
-		 ((<fx val (bit-lshelong #e1 29))
-		  (elong->fixnum val))
-		 (else
-		  (elong->flonum val))))
-	     (else
-	      (flonum->uint32 (exact->inexact val)))))
-	 ((eq? type 'fixnum)
-	  (cond
-	     ((fixnum? val) val)
-	     ((elong? val) `(elong->fixnum ,val))
-	     ((uint32? val) (uint32->fixnum val))
-	     ((flonum? val) `(flonum->fixnum ,val))
-	     ((bignum? val) `(flonum->fixnum ,(bignum->flonum val)))
-	     (else (error "j2s-scheme" "wrong number" (j2s->list this)))))
+	     ((m64? conf) val)
+	     ((and (>= val *+ints29*) (<= val *-ints29*)) val)
+	     (else (fixnum->flonum val))))
 	 (else
-	  (j2s-number val conf)))))
+	  val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-property-scheme ...                                          */
@@ -1070,9 +1068,9 @@
 (define-method (j2s-scheme this::J2SLetBlock mode return conf hint totype)
    
    (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return conf singledecl)
-      (with-access::J2SDeclInit d (val usage id utype ronly)
+      (with-access::J2SDeclInit d (val usage id vtype ronly utype)
 	 (let* ((ident (j2s-decl-scheme-id d))
-		(var (utype-ident ident utype conf singledecl)))
+		(var (type-ident ident vtype)))
 	    (cond
 	       ((or (not (isa? val J2SFun)) (isa? val J2SSvc) (memq 'assig usage))
 		(list `(,var ,(j2s-scheme val mode return conf hint utype))))
