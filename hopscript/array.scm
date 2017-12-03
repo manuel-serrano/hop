@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Nov 26 09:56:47 2017 (serrano)                */
+;*    Last change :  Sun Dec  3 18:05:09 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -440,7 +440,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-length o::JsArray cache %this)
    (with-access::JsArray o (length)
-      (uint32->integer length)))
+      (js-uint32-tointeger length)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-inlined? ...                                            */
@@ -488,7 +488,7 @@
    (define (add-length-property! arr::JsArray)
       (let ((prop (instantiate::JsValueDescriptor
 		     (name 'length)
-		     (value (uint32->integer (js-array-length arr)))
+		     (value (js-uint32-tointeger (js-array-length arr)))
 		     (configurable #f)
 		     (writable #t))))
 	 (js-object-properties-set! arr (cons prop (js-object-properties arr)))
@@ -497,7 +497,7 @@
    (let ((desc (js-array-find-length-property arr)))
       (if desc
 	  (with-access::JsValueDescriptor desc (value name)
-	     (set! value (uint32->integer (js-array-length arr)))
+	     (set! value (js-uint32-tointeger (js-array-length arr)))
 	     desc)
 	  (add-length-property! arr))))
 
@@ -569,7 +569,7 @@
 	 ((<u32 idx ilen)
 	  (vector-ref vec (uint32->fixnum idx)))
 	 (else
-	  (js-get arr (uint32->integer idx) %this)))))
+	  (js-get arr (js-uint32-tointeger idx) %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-inl-ref ...                                       */
@@ -590,7 +590,7 @@
 	 ((<u32 (fixnum->uint32 idx) ilen)
 	  (vector-ref vec idx))
 	 (else
-	  (js-get arr (uint32->integer idx) %this)))))
+	  (js-get arr (js-uint32-tointeger idx) %this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-fixnum-inl-ref ...                                      */
@@ -903,9 +903,9 @@
 	     (js-undefined))
 	    (else
 	     (let* ((indx (-u32 len #u32:1))
-		    (el (js-get o (uint32->integer indx) %this)))
+		    (el (js-get o (js-uint32-tointeger indx) %this)))
 		(js-delete! o indx #t %this)
-		(js-put-length! o (uint32->integer indx) #f #f %this)
+		(js-put-length! o (js-uint32-tointeger indx) #f #f %this)
 		el)))))
    
    (js-bind! %this js-array-prototype 'pop
@@ -919,7 +919,7 @@
    (define (array-prototype-push this::obj . items)
       (if (not (isa? this JsArray))
 	  (let ((o (js-toobject %this this)))
-	     (let ((n (uint32->integer
+	     (let ((n (js-uint32-tointeger
 			 (js-touint32 (js-get-length o #f %this) %this))))
 		(for-each (lambda (item)
 			     (js-put! o n item #f %this)
@@ -937,7 +937,7 @@
 				   "Illegal length: ~s"
 				   (js-tostring #l4294967295 %this))))
 		   items)
-		(uint32->integer n)))))
+		(js-uint32-tointeger n)))))
    
    (js-bind! %this js-array-prototype 'push
       :value (js-make-function %this array-prototype-push 1 'push
@@ -970,7 +970,7 @@
 		     ((js-has-property o (js-toname i %this) %this)
 		      (let* ((t (js-get o (uint32->fixnum i) %this))
 			     (ni (+u32 i (fixnum->uint32 1)))
-			     (rni (uint32->integer (-u32 len ni))))
+			     (rni (js-uint32-tointeger (-u32 len ni))))
 			 (if (js-has-property o (js-toname rni %this) %this)
 			     (begin
 				(js-put! o (uint32->fixnum i)
@@ -982,7 +982,7 @@
 			 (loop ni)))
 		     (else
 		      (let* ((ni (+u32 i (fixnum->uint32 1)))
-			     (rni (uint32->integer (-u32 len ni))))
+			     (rni (js-uint32-tointeger (-u32 len ni))))
 			 (if (js-has-property o (js-toname rni %this) %this)
 			     (begin
 				(js-put! o (uint32->fixnum i)
@@ -1131,7 +1131,7 @@
 	    (array-copy! o 0 arr k final)))
       
       (let* ((o (js-toobject %this this))
-	     (len (uint32->integer (js-touint32 (js-get-length o #f %this) %this)))
+	     (len (js-uint32-tointeger (js-touint32 (js-get-length o #f %this) %this)))
 	     (relstart (js-tointeger start %this))
 	     (k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
 	     (relend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
@@ -1267,7 +1267,7 @@
 		  (quicksort arr cmp (+ pivotnewindex 1) right)))))
 
       (define (array-sort arr cmp)
-	 (let ((len (uint32->integer
+	 (let ((len (js-uint32-tointeger
 		       (js-touint32 (js-get-length arr #f %this) %this))))
 	    (unless (< len 2)
 	       (quicksort arr cmp 0 (- len 1)))
@@ -1371,7 +1371,7 @@
 
       (let* ((o (js-toobject %this this))
 	     (relstart (js-tointeger start %this))
-	     (len (uint32->integer (js-touint32 (js-get-length o #f %this) %this)))
+	     (len (js-uint32-tointeger (js-touint32 (js-get-length o #f %this) %this)))
 	     (actualstart (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
 	     (actualdeletecount (min (max (js-tointeger deletecount %this) 0)
 				   (- len actualstart))))
@@ -1420,7 +1420,7 @@
 		  (uint32->fixnum nlen)))))
       
       (define (array-unshift arr len::uint32)
-	 (let ((rest (array-get-elements arr 0 (uint32->integer len) %this))
+	 (let ((rest (array-get-elements arr 0 (js-uint32-tointeger len) %this))
 	       (i 0))
 	    ;; add all the new elements
 	    (for-each (lambda (el)
@@ -1440,14 +1440,14 @@
 	     (with-access::JsArray this (length)
 		(cond
 		   ((null? items)
-		    (uint32->integer length))
+		    (js-uint32-tointeger length))
 		   ((js-array-full-inlined? this)
 		    (vector-unshift this))
 		   (else
 		    (array-unshift this length))))
 	     (let ((len::uint32 (js-touint32 (js-get-length o #f %this) %this)))
 		(if (null? items)
-		    (let ((nlen (uint32->integer len)))
+		    (let ((nlen (js-uint32-tointeger len)))
 		       ;; override the length as the conversion touin32
 		       ;; might have changed it
 		       (js-put-length! o nlen #f #f %this)
@@ -1475,8 +1475,8 @@
 		(loop (+fx k 1))))))
 
       (define (array-indexof::int arr k::uint32 len::uint32)
-	 (let ((k (uint32->integer k))
-	       (len (uint32->integer len)))
+	 (let ((k (js-uint32-tointeger k))
+	       (len (js-uint32-tointeger len)))
 	    (let loop ((k k))
 	       (cond
 		  ((>= k len)
@@ -1535,7 +1535,7 @@
 	       ((let ((name (js-toname k %this)))
 		   (and (js-has-property arr name %this)
 			(js-strict-equal? (js-get arr name %this) el)))
-		(uint32->integer k))
+		(js-uint32-tointeger k))
 	       ((=u32 k #u32:0)
 		-1)
 	       (else
@@ -1557,7 +1557,7 @@
 	     -1
 	     (let ((n (if (pair? indx)
 			  (js-tointeger (car indx) %this)
-			  (uint32->integer (-u32 len #u32:1)))))
+			  (js-uint32-tointeger (-u32 len #u32:1)))))
 		(if (< n 0)
 		    (let ((absn (abs n)))
 		       (if (>uint32 len absn)
@@ -1578,7 +1578,7 @@
    (define (array-prototype-every this::obj proc t)
 
       (define (test-val proc t v i::uint32 o)
-	 (js-totest (js-call3 %this proc t v (uint32->integer i) o)))
+	 (js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o)))
 
       (define (vector-every o len::uint32 proc t i::uint32)
 	 (with-access::JsArray o (vec ilen)
@@ -1626,7 +1626,7 @@
    (define (array-prototype-some this::obj proc t)
 
       (define (test-val proc t v i::uint32 o)
-	 (js-totest (js-call3 %this proc t v (uint32->integer i) o)))
+	 (js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o)))
 
       (define (vector-some o len::uint32 proc t i::uint32)
 	 (with-access::JsArray o (vec ilen)
@@ -1681,7 +1681,7 @@
 		       (array-foreach o len proc t i))
 		      (else
 		       (let ((v (vector-ref vec (uint32->fixnum i))))
-			  (js-call3 %this proc t v (uint32->integer i) o)
+			  (js-call3 %this proc t v (js-uint32-tointeger i) o)
 			  (loop (+u32 i 1)))))))
 	     (array-foreach o len proc t i)))
 
@@ -1714,7 +1714,7 @@
 		   (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
 		      (unless (js-absent? pv)
 			 (js-put! a i
-			    (js-call3 %this proc t pv (uint32->integer i) o)
+			    (js-call3 %this proc t pv (js-uint32-tointeger i) o)
 			    #f %this))
 		      (loop (+u32 i 1)))
 		   a)))
@@ -1738,12 +1738,12 @@
 			 (let ((val (vector-ref vec (uint32->fixnum i))))
 			    (vector-set! v (uint32->fixnum i)
 			       (js-call3 %this proc t val
-				  (uint32->integer i) o))
+				  (js-uint32-tointeger i) o))
 			    (loop (+u32 i 1)))))))))
 
 	 (define (array-map o len proc t i::uint32)
 	    (let ((a (js-array-construct/length %this (js-array-alloc %this)
-			(uint32->integer len))))
+			(js-uint32-tointeger len))))
 	       (array-map/array o len proc t i a)))
 
 	 (array-prototype-iterator %this this proc t array-map vector-map)))
@@ -1769,7 +1769,7 @@
 		       (let ((v pv)
 			     (nj (js-toname j %this)))
 			  (if (js-totest (js-call3 %this proc t v
-					    (uint32->integer i) o))
+					    (js-uint32-tointeger i) o))
 			      (let ((newdesc (instantiate::JsValueDescriptor
 						(name nj)
 						(value v)
@@ -1802,7 +1802,7 @@
 			  (let ((val (vector-ref vec (uint32->fixnum i))))
 			     (cond
 				((js-totest (js-call3 %this proc t val
-					       (uint32->integer i) o))
+					       (js-uint32-tointeger i) o))
 				 (vector-set! v (uint32->fixnum j) val)
 				 (loop (+u32 i 1) (+u32 j 1)))
 				(else
@@ -1837,7 +1837,7 @@
 		  (else
 		   (let ((v (vector-ref vec (uint32->fixnum i))))
 		      (cond
-			 ((js-totest (js-call3 %this proc t v (uint32->integer i) o))
+			 ((js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o))
 			  v)
 			 (else
 			  (loop (+u32 i 1))))))))))
@@ -1848,7 +1848,7 @@
 		(js-undefined)
 		(let* ((pv (js-get-property-value o o (js-toname i %this) %this))
 		       (v (if (js-absent? pv) (js-undefined) pv)))
-		   (if (js-totest (js-call3 %this proc t v (uint32->integer i) o))
+		   (if (js-totest (js-call3 %this proc t v (js-uint32-tointeger i) o))
 		       v
 		       (loop (+u32 i 1)))))))
 
@@ -1875,7 +1875,7 @@
 		       (let ((v pv))
 			  (loop (+u32 i #u32:1)
 			     (js-call4 %this proc (js-undefined) acc v
-				(uint32->integer i) o)))))
+				(js-uint32-tointeger i) o)))))
 		acc)))
       
       (let* ((o (js-toobject %this this))
@@ -1914,7 +1914,7 @@
 		       (loop (-u32 i #u32:1) acc)
 		       (let* ((v pv)
 			      (acc (js-call4 %this proc (js-undefined) acc v
-				      (uint32->integer i) o)))
+				      (js-uint32-tointeger i) o)))
 			  (loop (-u32 i #u32:1) acc)))
 		   acc))))
       
@@ -2262,7 +2262,7 @@
 	    ;; MS: 23 feb 2017
 	    ((not (js-isindex? i))
 	     (if (eq? p 'length)
-		 (uint32->integer length)
+		 (js-uint32-tointeger length)
 		 (call-next-method)))
 	    (else
 	     (call-next-method))))))
@@ -2279,7 +2279,7 @@
 	    ;; MS: 23 feb 2017
 	    ((not (js-isindex? i))
 	     (if (eq? p 'length)
-		 (uint32->integer length)
+		 (js-uint32-tointeger length)
 		 (call-next-method)))
 	    (else
 	     (call-next-method))))))
@@ -2296,7 +2296,7 @@
 	    ;; MS: 23 feb 2017
 	    ((not (js-isindex? i))
 	     (if (eq? p 'length)
-		 (uint32->integer length)
+		 (js-uint32-tointeger length)
 		 (call-next-method)))
 	    (else
 	     (call-next-method))))))
@@ -2645,7 +2645,7 @@
 				      ;; 3.l.iii
 				      (with-access::JsValueDescriptor newlendesc (value writable)
 					 ;; 3.l.iii.1
-					 (set! value (uint32->integer (+u32 num #u32:1)))
+					 (set! value (js-uint32-tointeger (+u32 num #u32:1)))
 					 ;; 3.l.iii.2
 					 (set! writable newwritable)
 					 ;; 3.l.iii.3
@@ -2692,7 +2692,7 @@
 			    "Illegal length: ~s" (js-tostring value %this)))
 		      (with-access::JsValueDescriptor newlendesc (value)
 			 ;; 3.e
-			 (set! value (uint32->integer newlen)))
+			 (set! value (js-uint32-tointeger newlen)))
 		      (if (>=uint32 newlen oldlen)
 			  ;; 3.f
 			  (js-define-own-length% a newlendesc throw %this)
@@ -2934,7 +2934,7 @@
 		(set! length idx)
 		;; ms: 22 feb 2017
 		;; (js-array-update-length! o (+fx (uint32->fixnum n) 1))
-		(uint32->integer idx)))
+		(js-uint32-tointeger idx)))
 	    ((=fx (vector-length vec) 0)
 	     (set! vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-undefined)))
 	     (set! ilen #u32:1)
@@ -2949,7 +2949,7 @@
 		 (js-raise-range-error %this
 		    "Illegal length: ~s"
 		    (js-tostring #l4294967296 %this))
-		 (uint32->integer (+u32 #u32:1 n))))))))
+		 (js-uint32-tointeger (+u32 #u32:1 n))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-maybe-push ...                                          */
@@ -2983,13 +2983,13 @@
 		(set! length idx)
 		(set! ilen idx)
 		;; ms: 22 feb 2017
-		;;(js-put-length! o (uint32->integer idx) #f #f %this)
+		;;(js-put-length! o (js-uint32-tointeger idx) #f #f %this)
 		el))
 	    (else
 	     (let* ((idx (-u32 len #u32:1))
-		    (el (js-get o (uint32->integer idx) %this)))
+		    (el (js-get o (js-uint32-tointeger idx) %this)))
 		(js-delete! o idx #t %this)
-		(js-put-length! o (uint32->integer idx) #f #f %this)
+		(js-put-length! o (js-uint32-tointeger idx) #f #f %this)
 		el))))))
 
 ;*---------------------------------------------------------------------*/
@@ -3041,7 +3041,7 @@
 			   (js-put! this i value #f %this))
 		       (loop (+u32 i #u32:1)))
 		    (when (>u32 i length)
-		       (js-put-length! this (uint32->integer i) #f #f %this)))))
+		       (js-put-length! this (js-uint32-tointeger i) #f #f %this)))))
 	 this)))
    
 ;*---------------------------------------------------------------------*/

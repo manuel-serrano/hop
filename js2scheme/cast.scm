@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Dec  2 18:43:37 2017 (serrano)                */
+;*    Last change :  Sun Dec  3 22:40:30 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -17,8 +17,8 @@
 ;*    denote compiler types!                                           */
 ;*                                                                     */
 ;*    The CAST stage uses these informations to produce a well typed   */
-;*    AST. After this stage, the AST is well typed and no implicit     */
-;*    coercions is needed.                                             */
+;*    AST. After this stage, the AST is well typed and the only        */
+;*    implicit coercions left are in ++ and += operators.              */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -84,6 +84,7 @@
       ((eq? type totype) #f)
       ((eq? totype 'any) (fx? type))
       ((fx? type) #t)
+      ((fx? totype) #t)
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -187,9 +188,6 @@
       (with-access::J2SExpr expr (loc type)
 	 (if fun
 	     (with-access::J2SFun fun (rtype)
-		(unless (eq? rtype totype)
-		   (error "J2SReturn" "missmatch between rtype and totype"
-		      (cons totype rtype)))
 		(set! expr (type-cast! expr rtype fun)))
 	     (set! expr (type-cast! expr 'any fun)))
 	 this)))
@@ -210,10 +208,85 @@
       (type-cast! rhs (j2s-type lhs) fun)
       (type-cast! lhs (j2s-type lhs) fun)
       (cast this totype)))
-   
-;* {*---------------------------------------------------------------------*} */
-;* {*    type-cast! ::J2SBinary ...                                       *} */
-;* {*---------------------------------------------------------------------*} */
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SAccess ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SAccess totype fun)
+   (with-access::J2SAccess this (obj field)
+      (type-cast! obj (j2s-type obj) fun)
+      (type-cast! field (j2s-type field) fun)
+      (cast this totype)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SBinary ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SBinary totype fun)
+(define t #f)
+   (with-access::J2SBinary this (op lhs rhs type hint)
+      (case op
+	 ((>> <<)
+	  (when (eq? (j2s-type lhs) 'int53)
+	     (set! t #t)
+	     (tprint ">>> " (j2s->list this)))
+	  (set! lhs (type-cast! lhs 'int32 fun))
+	  (set! rhs (type-cast! rhs 'uint32 fun))
+	  (set! type 'int32)
+	  (when t (tprint "<<< " (j2s->list this)))
+	  this)
+	 ((>>>)
+	  (set! lhs (type-cast! lhs 'uint32 fun))
+	  (set! rhs (type-cast! rhs 'uint32 fun))
+	  (set! type 'int32)
+	  this)
+	 ((^ & BIT_OR)
+	  (set! lhs (type-cast! lhs 'int32 fun))
+	  (set! rhs (type-cast! rhs 'int32 fun))
+	  (cast this 'int32))
+	 (else
+	  (set! lhs (type-cast! lhs (j2s-type lhs) fun))
+	  (set! rhs (type-cast! rhs (j2s-type rhs) fun))
+	  this))))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SStmtExpr ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SStmtExpr totype fun)
+   (with-access::J2SStmtExpr this (expr)
+      (type-cast! expr (j2s-type expr) fun)
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SIf totype fun)
+   (with-access::J2SIf this (test then else)
+      (set! this (type-cast! test (j2s-type test) fun))
+      (set! then (type-cast! then totype fun))
+      (set! else (type-cast! else totype fun))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SLoop ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SLoop totype fun)
+   (with-access::J2SLoop this (body)
+      (set! body (type-cast! body totype fun))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SFor ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-cast! this::J2SFor totype fun)
+   (with-access::J2SFor this (init test incr body)
+      (set! init (type-cast! init 'any fun))
+      (set! test (type-cast! test (j2s-type test) fun))
+      (set! incr (type-cast! test (j2s-type test) fun))
+      (call-next-method)))
+      
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SBinary ...                                       */
+;*---------------------------------------------------------------------*/
 ;* (define-walk-method (type-cast! this::J2SBinary totype fun)         */
 ;*                                                                     */
 ;*    (define (set-hint! this tlhs trhs)                               */
@@ -225,8 +298,8 @@
 ;* 	     (set! hint '(string)))                                    */
 ;* 	    (else                                                      */
 ;* 	     (set! hint '())))))                                       */
-;*                                                                     */
-;*    (with-access::J2SBinary this (op lhs rhs type hint)              */
+;* 	                                                               */
+;* 	                                                               */
 ;*       (let ((tlhs (j2s-type lhs))                                   */
 ;* 	    (trhs (j2s-type rhs)))                                     */
 ;* 	 (case op                                                      */
@@ -246,7 +319,7 @@
 ;* 	     (set! lhs (type-cast! lhs 'any fun))                      */
 ;* 	     (set! rhs (type-cast! rhs 'any fun))                      */
 ;* 	     this)))))                                                 */
-;*                                                                     */
+
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    type-cast! ::J2SStmtExpr ...                                     *} */
 ;* {*---------------------------------------------------------------------*} */

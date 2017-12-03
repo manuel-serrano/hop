@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Nov  8 06:41:57 2017 (serrano)                */
+;*    Last change :  Sun Dec  3 18:06:45 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -295,14 +295,14 @@
    (match-case x
       ((?- (and (? symbol?) ?o) ?cache ?%this)
        (e `(if (isa? ,o JsArray)
-	       (uint32->integer (js-array-length ,o))
+	       (js-uint32-tointeger (js-array-length ,o))
 	       ((@ js-get-length __hopscript_property) ,@(cdr x)))
 	  e))
       ((?- ?o ?cache ?%this)
        (let ((tmp (gensym)))
 	  (e `(let ((,tmp ,o))
 		 (if (isa? ,tmp JsArray)
-		     (uint32->integer (js-array-length ,tmp))
+		     (js-uint32-tointeger (js-array-length ,tmp))
 		     ((@ js-get-length __hopscript_property) ,tmp ,@(cddr x))))
 	     e)))
       (else

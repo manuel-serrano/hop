@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Nov 26 19:50:30 2017 (serrano)                */
+;*    Last change :  Sun Dec  3 21:31:31 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -120,8 +120,10 @@
 	   (js-touint32::uint32 ::obj ::JsGlobalObject)
 	   (js-toint32::int32 ::obj ::JsGlobalObject)
 
-	   (inline uint32->integer::obj ::uint32)
-	   (inline int32->integer::obj ::int32)
+	   (inline js-int29-tointeger::bint ::int32)
+	   (inline js-uint29-tointeger::bint ::uint32)
+	   (inline js-int32-tointeger::obj ::int32)
+	   (inline js-uint32-tointeger::obj ::uint32)
 	   
 	   (js-toindex::uint32 ::obj)
 	   (inline js-isindex?::bool ::uint32)
@@ -1151,21 +1153,21 @@
        (js-toint32 (js-tonumber obj %this) %this))))
 
 ;*---------------------------------------------------------------------*/
-;*    uint32->integer ...                                              */
+;*    js-uint29-tointeger ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-inline (uint32->integer u::uint32)
-   (cond-expand
-      (bint30
-       (if (<u32 u (bit-lshu32 #u32:1 29))
-	   (uint32->fixnum u)
-	   (uint32->flonum u)))
-      (else
-       (uint32->fixnum u))))
+(define-inline (js-int29-tointeger::bint i::int32)
+   (int32->fixnum i))
 
 ;*---------------------------------------------------------------------*/
-;*    int32->integer ...                                               */
+;*    js-int29-tointeger ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-inline (int32->integer i::int32)
+(define-inline (js-uint29-tointeger::bint i::uint32)
+   (uint32->fixnum i))
+
+;*---------------------------------------------------------------------*/
+;*    js-int32-tointeger ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-int32-tointeger::obj i::int32)
    (cond-expand
       (bint30
        (if (and (<s32 i (fixnum->int32 (bit-lsh 1 28)))
@@ -1179,6 +1181,18 @@
 	   (elong->flonum (uint32->elong i))))
       (else
        (int32->fixnum i))))
+
+;*---------------------------------------------------------------------*/
+;*    js-uint32-tointeger ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-uint32-tointeger::obj u::uint32)
+   (cond-expand
+      (bint30
+       (if (<u32 u (bit-lshu32 #u32:1 29))
+	   (uint32->fixnum u)
+	   (uint32->flonum u)))
+      (else
+       (uint32->fixnum u))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toindex ...                                                   */

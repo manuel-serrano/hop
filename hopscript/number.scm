@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Dec  1 18:37:08 2017 (serrano)                */
+;*    Last change :  Sun Dec  3 18:03:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -786,7 +786,7 @@
    (let* ((lnum (js-toint32 left %this))
 	  (rnum (js-touint32 right %this))
 	  (shiftcount (bit-andu32 rnum #u32:31)))
-      (int32->integer (bit-lshu32 lnum (uint32->fixnum shiftcount)))))
+      (js-int32-tointeger (bit-lshu32 lnum (uint32->fixnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitrsh ...                                                    */
@@ -797,7 +797,7 @@
    (let* ((lnum (js-toint32 left %this))
 	  (rnum (js-touint32 right %this))
 	  (shiftcount (bit-andu32 rnum #u32:31)))
-      (int32->integer (bit-rshs32 lnum (uint32->fixnum shiftcount)))))
+      (js-int32-tointeger (bit-rshs32 lnum (uint32->fixnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitursh ...                                                   */
@@ -808,7 +808,7 @@
    (let* ((lnum (js-touint32 left %this))
 	  (rnum (js-touint32 right %this))
 	  (shiftcount (bit-andu32 rnum #u32:31)))
-      (uint32->integer (bit-urshu32 lnum (uint32->fixnum shiftcount)))))
+      (js-uint32-tointeger (bit-urshu32 lnum (uint32->fixnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js<                                                              */
@@ -882,7 +882,7 @@
 (define (js-bitand left right %this)
    (let* ((lnum (int32->elong (js-toint32 left %this)))
 	  (rnum (int32->elong (js-toint32 right %this))))
-      (int32->integer (elong->int32 (bit-andelong lnum rnum)))))
+      (js-int32-tointeger (elong->int32 (bit-andelong lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitor ...                                                     */
@@ -892,7 +892,7 @@
 (define (js-bitor left right %this)
    (let* ((lnum (int32->elong (js-toint32 left %this)))
 	  (rnum (int32->elong (js-toint32 right %this))))
-      (int32->integer (elong->int32 (bit-orelong lnum rnum)))))
+      (js-int32-tointeger (elong->int32 (bit-orelong lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitxor ...                                                    */
@@ -902,7 +902,7 @@
 (define (js-bitxor left right %this)
    (let* ((lnum (int32->elong (js-toint32 left %this)))
 	  (rnum (int32->elong (js-toint32 right %this))))
-      (int32->integer (elong->int32 (bit-xorelong lnum rnum)))))
+      (js-int32-tointeger (elong->int32 (bit-xorelong lnum rnum)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitnot ...                                                    */
@@ -911,7 +911,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-bitnot expr %this)
    (let ((num (int32->elong (js-toint32 expr %this))))
-      (int32->integer (elong->int32 (bit-notelong num)))))
+      (js-int32-tointeger (elong->int32 (bit-notelong num)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsnumber-tostring ...                                         */

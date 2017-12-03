@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Dec  2 11:41:10 2017 (serrano)                */
+;*    Last change :  Sun Dec  3 21:33:25 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1477,7 +1477,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl)
    (call-default-walker)
-   (with-access::J2SDecl this (range itype vtype)
+   (with-access::J2SDecl this (range itype vtype id)
       (when (interval? range)
 	 (let ((ty (interval->type range)))
 	    (when ty
@@ -1521,7 +1521,7 @@
 (define-walk-method (type-range! this::J2SRef)
    (call-next-method)
    (with-access::J2SRef this (decl type)
-      (with-access::J2SDecl decl (vtype)
+      (with-access::J2SDecl decl (vtype id)
 	 (set! vtype (minimal-type vtype type))))
    this)
 
@@ -1544,32 +1544,27 @@
 ;*    opt-range! ::J2SBinary ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (opt-range! this::J2SBinary args)
-
-   (define (fixnum? e::J2SExpr)
+   
+   (define (integer? e::J2SExpr)
       (with-access::J2SExpr e (type)
-	 (type-fixnum? type)))
-      
-   (define (int53? e::J2SExpr)
-      (with-access::J2SExpr e (type)
-	 (type-int53? type)))
-      
-   (define (positive-fixnum? e::J2SExpr)
-      (when (fixnum? e)
+	 (type-integer? type)))
+   
+   (define (positive-integer? e::J2SExpr)
+      (when (integer? e)
 	 (with-access::J2SExpr e (range)
 	    (and (interval? range) (> (interval-min range) 0)))))
    
-   (define (m64? conf)
-      (=fx (config-get conf :long-size 0) 64))
-
    (with-access::J2SBinary this (op lhs rhs)
-      (case op
-	 ((%)
-	  (cond
-	     ((and (fixnum? lhs) (positive-fixnum? rhs))
-	      (set! op 'remainderfx))
-	     ((and (int53? lhs) (positive-fixnum? rhs))
-	      (if (m64? args)
-		  (set! op 'remainderfx)
-		  (set! op 'remainder)))))))
+      (when (and (eq? op '%) (positive-integer? rhs))
+	 (with-access::J2SExpr this (range)
+	    (with-access::J2SExpr rhs ((rr range))
+	       (with-access::J2SExpr lhs ((lr range))
+		  (set! op 'remainder)
+		  (let ((nrange (if (positive-integer? lhs)
+				    rr
+				    (interval
+				       (- (interval-max rr))
+				       (interval-max rr)))))
+		     (set! range nrange)))))))
    
    (call-default-walker))

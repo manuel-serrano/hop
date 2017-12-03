@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Dec  2 19:03:56 2017 (serrano)                */
+;*    Last change :  Sun Dec  3 22:45:02 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -100,6 +100,59 @@
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this))))
 
 ;*---------------------------------------------------------------------*/
+;*    cast-table ...                                                   */
+;*---------------------------------------------------------------------*/
+(define cast-table
+   ;; from x to -> conv
+   `((int29
+	(number js-uint29-tointeger)
+	(any js-uint29-tointeger))
+     (uint29
+	((int32 ,js-uint32->int32)
+	 (uint32 ,js-id)
+	 (number js-uint29-tointeger)
+	 (any js-uint29-tointeger)))
+     (uint32
+	((uint29 ,js-id)
+	 (int32 ,js-uint32->int32)
+	 (number js-uint32-tointeger)
+	 (any js-uint32-tointeger)))
+     (index
+	((uint29 ,js-id)
+	 (int32 ,js-uint32->int32)
+	 (number js-uint32-tointeger)
+	 (any js-uint32-tointeger)))
+     (int30
+	((int32 ,js-id)
+	 (number js-int32-tointeger)
+	 (any js-int32-tointeger)))
+     (int32
+	((int30 ,js-id)
+	 (uint32 ,js-int32->uint32)
+	 (number js-int32-tointeger)
+	 (any js-int32-tointeger)))
+     (int53
+	((int30 ,js-id)
+	 (uint32 ,js-int53->uint32)
+	 (int32 ,js-int53->uint32)
+	 (number js-int53-tointeger)
+	 (any js-int53-tointeger)))))
+
+;; cast ancillary functions
+(define (js-id v)
+   v)
+(define (js-uint32->int32 v)
+   (if (uint32? v) (uint32->int32 v) `(uint32->int32 ,v)))
+(define (js-int32->uint32 v)
+   (if (int32? v) (int32->uint32 v) `(int32->uint32 ,v)))
+(define (js-int53->int32 v)
+   (tprint "TODO")
+   (if (number? v) (number->int32 v) `(number->int32 ,v)))
+(define (js-int53->uint32 v)
+   (tprint "TODO")
+   (if (number? v) (number->uint32 v) `(number->uint32 ,v)))
+
+;*---------------------------------------------------------------------*/
 ;*    cast ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (cast expr conf from to)
@@ -119,6 +172,7 @@
 	  `(js-tojsstring ,expr %this))))
    
    (define (default)
+      ;;(tprint "cast expr=" expr " from=" from " to=" to)
       (if (or (eq? from to) (eq? to '*))
 	  expr
 	  (case from
@@ -159,19 +213,13 @@
 		 ((bool) `(js-totest ,expr))
 		 (else expr))))))
 
-   (define table
-      '(
-	;; converting to int32
-	(int32
-	   ((uint29 uint32->int32)
-	    (uint32 uint32->int32)
-	    (index uint32->int32)))))
-   
-   (let ((fen (assq to table)))
+   (let ((fen (assq from cast-table)))
       (if (pair? fen)
-	  (let ((ten (assq from (cadr fen))))
+	  (let ((ten (assq to (cadr fen))))
 	     (if (pair? ten)
-		 `(,(cadr ten) ,expr)
+		 (if (symbol? (cadr ten))
+		     `(,(cadr ten) ,expr)
+		     ((cadr ten) expr))
 		 (default)))
 	  (default))))
 	  
@@ -808,8 +856,7 @@
 (define-method (j2s-scheme this::J2SLiteralValue mode return conf hint totype)
    (with-access::J2SLiteralValue this (val type)
       (cond
-	 ((and (flonum? val) (nanfl? val)) "NaN")
-	 ((eq? type 'number) val)
+	 ((number? val) (error "j2s-scheme" "should not find a number here" val))
 	 (else val))))
 
 ;*---------------------------------------------------------------------*/
@@ -828,13 +875,15 @@
 	  (if (flonum? val)
 	      (flonum->uint32 val)
 	      (fixnum->uint32 val)))
-	 ((eq? type '(int29 int32 fixnum))
+	 ((memq type '(int29 int30 int32 fixnum))
 	  (if (flonum? val) (flonum->int32 val) (fixnum->int32 val)))
 	 ((fixnum? val)
 	  (cond
 	     ((m64? conf) val)
 	     ((and (>= val *+ints29*) (<= val *-ints29*)) val)
 	     (else (fixnum->flonum val))))
+	 ((nanfl? val)
+	  "NaN")
 	 (else
 	  val))))
 
@@ -1027,7 +1076,8 @@
 	     (loop (cdr exprs)))
 	    (else
 	     (epairify loc
-		(flatten-begin (j2s-scheme exprs mode return conf hint totype))))))))
+		(flatten-begin
+		   (j2s-scheme exprs mode return conf hint totype))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-let-decl-toplevel ...                                        */
@@ -1168,23 +1218,23 @@
       (cond
 	 ((isa? stmt J2SStmtExpr)
 	  (with-access::J2SStmtExpr stmt (expr)
-	     (isa? expr J2SUndefined)
-	     (and (isa? expr J2SLiteral) (not (isa? expr J2SArray)))))
+	     (or (isa? expr J2SUndefined)
+		 (and (isa? expr J2SLiteral) (not (isa? expr J2SArray))))))
 	 ((isa? stmt J2SNop)
 	  #t)))
    
    (let loop ((nodes nodes))
       (cond
 	 ((null? nodes)
-	  (epairify loc
-	     (return '(js-undefined))))
+	  '())
 	 ((not (pair? (cdr nodes)))
 	  (j2s-scheme (car nodes) mode return conf hint totype))
 	 ((undefined? (car nodes))
 	  (loop (cdr nodes)))
 	 (else
 	  (epairify loc
-	     (flatten-begin (j2s-scheme nodes mode return conf hint totype)))))))
+	     (flatten-begin
+		(j2s-scheme nodes mode return conf hint totype)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SMeta ...                                         */
@@ -1255,9 +1305,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SStmtExpr mode return conf hint totype)
    (with-access::J2SStmtExpr this (expr)
-      (if (isa? expr J2SIf)
-	  (j2s-scheme expr mode return conf hint totype)
-	  (return (j2s-scheme expr mode return conf hint totype)))))
+      (let ((exprs (j2s-scheme expr mode return conf hint totype)))
+	 (match-case exprs
+	    ((begin ?expr (js-undefined))
+	     expr)
+	    ((begin ?expr (? symbol?))
+	     expr)
+	    ((begin (and ?l ??-) (js-undefined))
+	     `(begin ,@l))
+	    (else
+	     exprs)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SExprStmt ...                                     */
@@ -2416,35 +2473,57 @@
 	 `(let ((,tmp ,(j2s-scheme lhs mode return conf hint totype)))
 	     ,(var++ (lambda (x) `(,op ,x 1)) lhs tmp loc))))
    
-   (define (ref-inc op lhs inc type loc)
-      (cond
-	 ((and (type-uint32? type) (is-uint32? lhs))
-	  (var++/suf op lhs 'uint32 'u32 loc))
-	 ((and (type-int53? type) (is-uint53? lhs) (m64? conf))
-	  (var++/suf op lhs 'int53 'fx loc))
-	 ((and (type-fixnum? type) (is-fx? lhs))
-	  (var++/suf op lhs 'fixnum 'fx loc))
-	 ((and (type-int30? type) (is-int30? lhs))
-	  (var++/suf op lhs 'int30 'fx loc))
-	 ((and (memq type '(fixnum)) (memq (j2s-type lhs) '(fixnum)))
-	  (var++/suf op lhs 'fixnum 'fx loc))
-	 ((memq (j2s-type lhs) '(integer number uint29 ufixnum fixnum index))
-	  (let ((tmp (gensym 'tmp)))
-	     `(let ((,tmp ,(j2s-scheme lhs mode return conf hint totype)))
-		 ,(var++ (lambda (x)
-			    (j2s-num-op (if (eq? op '++) '+ '-) x 1 lhs lhs conf))
-		     lhs tmp loc))))
-	 (else
-	  (let ((tmp (gensym 'tmp)))
-	     `(let ((,tmp ,(j2s-scheme lhs mode return conf hint totype)))
-		 (if (fixnum? ,tmp)
-		     ,(var++ (lambda (x)
-				(j2s-+fx x (if (eq? op '++) 1 -1) conf))
-			 lhs tmp loc)
-		     (let ((,tmp (js-tonumber ,tmp %this)))
-			,(var++ (lambda (x)
-				   `(js+ ,x ,(if (eq? op '++) 1 -1) %this))
-			    lhs tmp loc))))))))
+   (define (ref-inc op lhs::J2SRef inc type loc)
+      (let* ((typ (j2s-type lhs))
+	     (num (J2SNumber/type typ inc))
+	     (inc (j2s-scheme
+		     (if (type-number? typ)
+			 (J2SBinary/type '+ typ lhs num)
+			 (J2SBinary/type '+ typ (J2SCast 'number lhs) num))
+		     mode return conf hint totype)))
+	 (cond
+	    ((eq? totype 'void)
+	     ;; no need return the assignment value
+	     (j2s-scheme-set! lhs inc #f mode return conf #f loc))
+	    ((type-number? type)
+	     `(begin
+		 ,(j2s-scheme-set! lhs inc #f mode return conf #f loc)
+		 ,(j2s-scheme lhs mode return conf hint totype)))
+	    (else
+	     (let ((tmp (gensym 'tmp)))
+		`(let ((,tmp ,inc))
+		    ,(j2s-scheme-set! lhs inc #f mode return conf #f loc)
+		    ,tmp))))))
+;* 	                                                               */
+;* 	                                                               */
+;*       (cond                                                         */
+;* 	 ((and (type-uint32? type) (is-uint32? lhs))                   */
+;* 	  (var++/suf op lhs 'uint32 'u32 loc))                         */
+;* 	 ((and (type-int53? type) (is-uint53? lhs) (m64? conf))        */
+;* 	  (var++/suf op lhs 'int53 'fx loc))                           */
+;* 	 ((and (type-fixnum? type) (is-fx? lhs))                       */
+;* 	  (var++/suf op lhs 'fixnum 'fx loc))                          */
+;* 	 ((and (type-int30? type) (is-int30? lhs))                     */
+;* 	  (var++/suf op lhs 'int30 'fx loc))                           */
+;* 	 ((and (memq type '(fixnum)) (memq (j2s-type lhs) '(fixnum)))  */
+;* 	  (var++/suf op lhs 'fixnum 'fx loc))                          */
+;* 	 ((memq (j2s-type lhs) '(integer number uint29 ufixnum fixnum index)) */
+;* 	  (let ((tmp (gensym 'tmp)))                                   */
+;* 	     `(let ((,tmp ,(j2s-scheme lhs mode return conf hint totype))) */
+;* 		 ,(var++ (lambda (x)                                   */
+;* 			    (j2s-num-op (if (eq? op '++) '+ '-) x 1 lhs lhs conf)) */
+;* 		     lhs tmp loc))))                                   */
+;* 	 (else                                                         */
+;* 	  (let ((tmp (gensym 'tmp)))                                   */
+;* 	     `(let ((,tmp ,(j2s-scheme lhs mode return conf hint totype))) */
+;* 		 (if (fixnum? ,tmp)                                    */
+;* 		     ,(var++ (lambda (x)                               */
+;* 				(j2s-+fx x (if (eq? op '++) 1 -1) conf)) */
+;* 			 lhs tmp loc)                                  */
+;* 		     (let ((,tmp (js-tonumber ,tmp %this)))            */
+;* 			,(var++ (lambda (x)                            */
+;* 				   `(js+ ,x ,(if (eq? op '++) 1 -1) %this)) */
+;* 			    lhs tmp loc))))))))                        */
    
    (define (unresolved-inc op lhs inc)
       (with-access::J2SUnresolvedRef lhs (id cache loc)

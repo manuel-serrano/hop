@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Nov 24 10:25:35 2017 (serrano)                */
+;*    Last change :  Sun Dec  3 09:33:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -191,10 +191,11 @@
       (=fx (config-get conf :long-size 0) 64))
    
    (case type
-      ((int32 int53) (if (m64? conf) 'long 'obj))
+      ((int30 int32) 'int32)
+      ((index uint29 uint32 length) 'uint32)
+      ((int53) (if (m64? conf) 'long 'obj))
       ((unknown any number) 'obj)
-      ((index uint32 length) 'uint32)
-      ((uint29 int30 fixnum ufixnum) 'long)
+      ((int30 fixnum ufixnum) 'long)
       ((integer) 'obj)
       ((object this) 'JsObject)
       ((undefined) 'unspecified)
@@ -225,9 +226,10 @@
 	  ((uint32)
 	   (if (memq t2 '(uint29 index length)) t1 t2))
 	  ((int30 fixnum ufixnum)
-	   (if (memq t2 '(uint29))
-	       t1
-	       (if (type-integer? t2) 'integer 'number)))
+	   (cond
+	      ((eq? t2 'uint29) t1)
+	      ((eq? t2 'int32) t2)
+	      (else (if (type-integer? t2) 'integer 'number))))
 	  ((integer)
 	   (if (type-integer? t2) 'integer 'number))
 	  ((number)
