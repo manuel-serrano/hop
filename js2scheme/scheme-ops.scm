@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec  4 16:30:56 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 18:00:59 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -588,7 +588,7 @@
 		(if (m64? conf)
 		    `(if (fixnum? ,left)
 			 (,(fxop op) ,left (uint32->fixnum ,right))
-			 (,(jsop op) ,left ,right))
+			 (,(jsop op) ,left ,right %this))
 		    `(if (fixnum? ,left)
 			 (or (<fx ,left 0)
 			     (,(u32op op) (fixnum->uint32 ,left) ,right))
@@ -1133,6 +1133,12 @@
 	       ((and (eq? (j2s-type-ref lhs) 'int53)
 		     (eq? (j2s-type-ref rhs) 'int53))
 		`(js+fx64 ,left ,right))
+	       ((and (eq? (j2s-type-ref lhs) 'integer)
+		     (eq? (j2s-type-ref rhs) 'int32))
+		`(if (fixnum? ,left)
+		     (js+fx64 ,left (int32->fixnum ,right))
+		     (js+ ,left (int32->fixnum ,right) %this)))
+		     
 	       (else
 		(js-arithmetic loc '+ type lhs rhs mode return conf hint totype))))))
 
@@ -1158,6 +1164,20 @@
 	  (binop lhs rhs mode return conf hint 'int53
 	     (lambda (left right)
 		(cond
+		   ((and (eq? (j2s-type-ref lhs) 'index)
+			 (eq? (j2s-type-ref rhs) 'uint29))
+		    (if (m64? conf)
+			`(uint32->fixnum (+u32 ,left ,right))
+			`(+u32/safe ,left ,right)))
+		   ((and (eq? (j2s-type-ref lhs) 'number)
+			 (eq? (j2s-type-ref rhs) 'uint29))
+		    (if (m64? conf)
+			`(if (fixnum? ,left)
+			     (+fx ,left (uint32->fixnum ,right))
+			     (js+ ,left (uint32->fixnum ,right) %this))
+			`(if (fixnum? ,left)
+			     (js+fx32 ,left (uint32->fixnum ,right))
+			     (js+ ,left (uint32->fixnum ,right) %this))))
 		   ((and (eq? (j2s-type-ref lhs) 'int32)
 			 (eq? (j2s-type-ref rhs) 'int32))
 		    (if (m64? conf)

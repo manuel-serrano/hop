@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Dec  4 16:37:40 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 18:06:11 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -77,9 +77,13 @@
 
    (define (fx? type)
       (memq type '(int32 uint32 uint29 length index)))
+
+   (define (propname? type)
+      (or (type-integer? type) (eq? type 'string)))
    
    (cond
       ((eq? totype '*) #f)
+      ((eq? totype 'propname) (not (propname? type)))
       ((eq? type totype) #f)
       ((eq? totype 'any) (fx? type))
       ((fx? type) #t)
@@ -270,6 +274,15 @@
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SAccess ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SAccess totype)
+   (with-access::J2SAccess this (obj field)
+      (type-cast! obj '*)
+      (type-cast! field 'propname)
+      (cast this totype)))
+
+;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SBinary ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SBinary totype)
@@ -279,17 +292,15 @@
 	 ((>> <<)
 	  (set! lhs (type-cast! lhs 'int32))
 	  (set! rhs (type-cast! rhs 'uint32))
-	  (set! type 'int32)
 	  this)
 	 ((>>>)
 	  (set! lhs (type-cast! lhs 'uint32))
 	  (set! rhs (type-cast! rhs 'uint32))
-	  (set! type 'int32)
 	  this)
 	 ((^ & BIT_OR)
 	  (set! lhs (type-cast! lhs 'int32))
 	  (set! rhs (type-cast! rhs 'int32))
-	  (cast this 'int32))
+	  this)
 	 (else
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs '*))
