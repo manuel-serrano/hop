@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Dec  1 20:05:08 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 13:05:06 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -557,6 +557,7 @@
 		   (callt (call-hinted ft idthis newparams htypes))
 		   (callu (call-hinted fu idthis newparams itypes))
 		   (disp (dispatch-body body pred callt callu)))
+	       (tprint "DISP=" (j2s->list disp))
 	       (set! params newparams)
 	       (set! body disp)
 	       (when (config-get conf :profile)
@@ -831,6 +832,8 @@
 			    (utype 'function)
 			    (vtype 'function)
 			    (val newfun))))
+	    (when (eq? id 'core_md5)
+	       (tprint "DUP=" (j2s->list newfun)))
 	    (use-count nbody +1)
 	    (with-access::J2SFun newfun (decl)
 	       (set! decl newdecl))
@@ -847,17 +850,20 @@
 ;*    j2sdecl-duplicate ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (j2sdecl-duplicate p::J2SDecl type::symbol)
-   (if (isa? p J2SDeclInit)
-       (duplicate::J2SDeclInit p
-	  (key (ast-decl-key))
-	  (hint '())
-	  (utype type)
-	  (itype type))
-       (duplicate::J2SDecl p
-	  (key (ast-decl-key))
-	  (hint '())
-	  (utype type)
-	  (itype type))))
+   (with-access::J2SDecl p (vtype ronly)
+      (if (isa? p J2SDeclInit)
+	  (duplicate::J2SDeclInit p
+	     (key (ast-decl-key))
+	     (hint '())
+	     (vtype (if ronly type vtype))
+	     (utype type)
+	     (itype type))
+	  (duplicate::J2SDecl p
+	     (key (ast-decl-key))
+	     (hint '())
+	     (vtype (if ronly type vtype))
+	     (utype type)
+	     (itype type)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    call-hint! ::J2SNode ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Oct 30 16:48:05 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 08:41:54 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -19,6 +19,7 @@
    (include "types.sch" "property.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_property
 	   __hopscript_object
 	   __hopscript_function

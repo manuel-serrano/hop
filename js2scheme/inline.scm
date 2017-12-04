@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Dec  2 07:25:08 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 09:11:29 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -447,7 +447,7 @@
 	       (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
 		  (j2s-alpha body
 		     (cons thisp params) (cons (J2SUndefined) vals)))))))
-
+   
    (define (stmt->expr node)
       (cond
 	 ((isa? node J2SStmtExpr)
@@ -455,9 +455,8 @@
 	     expr))
 	 ((isa? node J2SLetBlock)
 	  (with-access::J2SLetBlock node (loc decls nodes)
-	     (if (and (null? decls) (pair? nodes) (null? (cdr nodes)))
-		 (stmt->expr (cadr nodes))
-		 (J2SExprStmt node))))
+	     (when (and (null? decls) (pair? nodes) (null? (cdr nodes)))
+		(stmt->expr (cadr nodes)))))
 	 ((isa? node J2SBlock)
 	  (with-access::J2SBlock node (nodes loc)
 	     (cond
@@ -466,10 +465,9 @@
 		((null? (cdr nodes))
 		 (stmt->expr (car nodes)))
 		(else
-		 (J2SExprStmt node)))))
+		 #f))))
 	 (else
-	  (with-access::J2SStmt node (loc)
-	     (J2SExprStmt node)))))
+	  #f)))
    
    (with-access::J2SCall this (fun loc args)
       (let ((body (if (isa? fun J2SAccess)
@@ -478,9 +476,17 @@
 	 (let* ((lbl (gensym '%return))
 		(cell (make-cell #f))
 		(bd (bind-exit! body lbl cell)))
-	    (if (cell-ref cell)
-		(J2SBindExit lbl bd)
-		(stmt->expr bd))))))
+	    (cond
+	       (cell
+		(let ((be (J2SBindExit lbl bd)))
+		   (with-access::J2SBindExit be (need-bind-exit-return)
+		      (set! need-bind-exit-return #t)
+		      be)))
+	       ((stmt->expr bd)
+		=>
+		(lambda (expr) expr))
+	       (else
+		(J2SBindExit lbl bd)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables ...                                           */
@@ -575,19 +581,7 @@
 ;*    inline-expr! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (inline-expr!::J2SExpr expr::J2SExpr call stmt)
-   (let ((node (inline-node! expr call stmt)))
-      (if (isa? node J2SExpr)
-	  node
-	  (with-access::J2SExpr expr (loc)
-	     (let ((t (J2SLetOpt '(ref set) (gensym 'a) (J2SUndefined))))
-		(J2SExprStmt
-		   (J2SLetRecBlock #f (list t)
-		      (unreturn! node
-			 (lambda (n::J2SReturn)
-			    (with-access::J2SReturn n (expr loc)
-			       (J2SStmtExpr
-				  (J2SAssig (J2SRef t) expr)))))
-		      (J2SRef t))))))))
+   (inline-node! expr call stmt))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-expr*! ...                                                */
@@ -793,7 +787,7 @@
 ;*    bind-exit! ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (bind-exit! this::J2SReturn l cell)
-   (with-access::J2SReturn this (tail exit lbl expr loc)
+   (with-access::J2SReturn this (tail exit from expr loc)
       (cond
 	 (exit
 	  (set! expr (bind-exit! expr l cell))
@@ -801,7 +795,7 @@
 	 (tail
 	  (J2SStmtExpr (bind-exit! expr l cell)))
 	 (else
-	  (set! lbl l)
+	  (set! from l)
 	  (cell-set! cell #t)
 	  this))))
 

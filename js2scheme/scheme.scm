@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Dec  3 22:45:02 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 13:18:23 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -110,12 +110,15 @@
      (uint29
 	((int32 ,js-uint32->int32)
 	 (uint32 ,js-id)
+	 (int53 uint32->fixnum)
 	 (number js-uint29-tointeger)
+	 (bool ,js-uint32->bool)
 	 (any js-uint29-tointeger)))
      (uint32
 	((uint29 ,js-id)
 	 (int32 ,js-uint32->int32)
 	 (number js-uint32-tointeger)
+	 (bool ,js-uint32->bool)
 	 (any js-uint32-tointeger)))
      (index
 	((uint29 ,js-id)
@@ -130,27 +133,47 @@
 	((int30 ,js-id)
 	 (uint32 ,js-int32->uint32)
 	 (number js-int32-tointeger)
+	 (bool ,js-int32->bool)
 	 (any js-int32-tointeger)))
      (int53
 	((int30 ,js-id)
-	 (uint32 ,js-int53->uint32)
-	 (int32 ,js-int53->uint32)
+	 (uint32 js-int53->uint32)
+	 (int32 js-int53-touint32)
 	 (number js-int53-tointeger)
-	 (any js-int53-tointeger)))))
+	 (any js-int53-tointeger)))
+     (integer
+	((int32 ,js->int32)
+	 (uint32 ,js->uint32)))
+     (number
+	((int32 ,js->int32)
+	 (uint32 ,js->uint32)))
+     (any
+	((int32 ,js->int32)
+	 (uint32 ,js->uint32)
+	 (number ,js->number)))))
+	 
 
 ;; cast ancillary functions
 (define (js-id v)
    v)
+
 (define (js-uint32->int32 v)
    (if (uint32? v) (uint32->int32 v) `(uint32->int32 ,v)))
 (define (js-int32->uint32 v)
    (if (int32? v) (int32->uint32 v) `(int32->uint32 ,v)))
-(define (js-int53->int32 v)
-   (tprint "TODO")
-   (if (number? v) (number->int32 v) `(number->int32 ,v)))
-(define (js-int53->uint32 v)
-   (tprint "TODO")
-   (if (number? v) (number->uint32 v) `(number->uint32 ,v)))
+
+(define (js-uint32->bool v)
+   `(>=u32 ,v #u32:0))
+(define (js-int32->bool v)
+   `(not (=s32 ,v #s32:0)))
+
+(define (js->int32 v)
+   `(js-toint32 ,v %this))
+(define (js->uint32 v)
+   `(js-touint32 ,v %this))
+
+(define (js->number v)
+   `(js-tonumber ,v %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast ...                                                         */
@@ -172,7 +195,7 @@
 	  `(js-tojsstring ,expr %this))))
    
    (define (default)
-      ;;(tprint "cast expr=" expr " from=" from " to=" to)
+      (tprint "cast expr=" expr " from=" from " to=" to)
       (if (or (eq? from to) (eq? to '*))
 	  expr
 	  (case from
@@ -647,7 +670,7 @@
 		 (cond
 		    ((and (memq scope '(global %scope)) (in-eval? return))
 		     `(begin
-			 ,(j2s-put! loc '%scope (j2s-type lhs) `',id
+			 ,(j2s-put! loc '%scope (j2s-type-ref lhs) `',id
 			     val (strict-mode? mode) #f)
 			 ,result))
 		    (result
@@ -992,17 +1015,22 @@
 ;*    j2s-scheme ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SReturn mode return conf hint totype)
-   (with-access::J2SReturn this (loc expr tail exit lbl)
+   (with-access::J2SReturn this (loc expr tail exit from)
       (cond
 	 (exit
 	  (epairify loc
 	     `(%jsexit ,(j2s-scheme expr mode return conf hint totype))))
 	 (tail
 	  (j2s-scheme expr mode return conf hint totype))
+	 ((isa? from J2SBindExit)
+	  (with-access::J2SBindExit from (lbl)
+	     (epairify loc
+		`(,lbl
+		    ,(j2s-scheme expr mode return conf hint totype)))))
 	 (else
 	  (epairify loc
-	     `(,(or lbl '%return)
-	       ,(j2s-scheme expr mode return conf hint totype)))))))
+	     `(%return
+		 ,(j2s-scheme expr mode return conf hint totype)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SBindExit ...                                     */
@@ -1222,19 +1250,21 @@
 		 (and (isa? expr J2SLiteral) (not (isa? expr J2SArray))))))
 	 ((isa? stmt J2SNop)
 	  #t)))
-   
-   (let loop ((nodes nodes))
-      (cond
-	 ((null? nodes)
-	  '())
-	 ((not (pair? (cdr nodes)))
-	  (j2s-scheme (car nodes) mode return conf hint totype))
-	 ((undefined? (car nodes))
-	  (loop (cdr nodes)))
-	 (else
-	  (epairify loc
-	     (flatten-begin
-		(j2s-scheme nodes mode return conf hint totype)))))))
+
+   (if (null? nodes)
+       (epairify loc '(js-undefined))
+       (let loop ((nodes nodes))
+	  (cond
+	     ((null? nodes)
+	      '())
+	     ((not (pair? (cdr nodes)))
+	      (j2s-scheme (car nodes) mode return conf hint totype))
+	     ((undefined? (car nodes))
+	      (loop (cdr nodes)))
+	     (else
+	      (epairify loc
+		 (flatten-begin
+		    (j2s-scheme nodes mode return conf hint totype))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SMeta ...                                         */
@@ -1304,24 +1334,27 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.4         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SStmtExpr mode return conf hint totype)
-   (with-access::J2SStmtExpr this (expr)
+   (with-access::J2SStmtExpr this (expr loc)
       (let ((exprs (j2s-scheme expr mode return conf hint totype)))
-	 (match-case exprs
-	    ((begin ?expr (js-undefined))
-	     expr)
-	    ((begin ?expr (? symbol?))
-	     expr)
-	    ((begin (and ?l ??-) (js-undefined))
-	     `(begin ,@l))
-	    (else
-	     exprs)))))
+	 (epairify loc
+	    (match-case exprs
+	       (()
+		'(js-undefined))
+	       ((begin ?expr (js-undefined))
+		expr)
+	       ((begin ?expr (? symbol?))
+		expr)
+	       ((begin (and ?l (?- ??-)) (js-undefined))
+		`(begin ,@l))
+	       (else
+		exprs))))))
 
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SExprStmt ...                                     */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SExprStmt mode return conf hint totype)
-   (with-access::J2SExprStmt this (stmt)
-      (j2s-scheme stmt mode return conf hint totype)))
+;* {*---------------------------------------------------------------------*} */
+;* {*    j2s-scheme ::J2SExprStmt ...                                     *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (j2s-scheme this::J2SExprStmt mode return conf hint totype) */
+;*    (with-access::J2SExprStmt this (stmt)                            */
+;*       (j2s-scheme stmt mode return conf hint totype)))              */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SIf ...                                           */
@@ -1663,7 +1696,7 @@
 	 (with-access::J2SCase case (loc expr)
 	    (if (isa? case J2SDefault)
 		(epairify loc `(else ,body))
-		(let* ((op (test-switch tleft (j2s-type expr)))
+		(let* ((op (test-switch tleft (j2s-type-ref expr)))
 		       (test `(,op ,tmp ,(j2s-scheme expr mode return conf hint totype))))
 		   (epairify loc `(,test ,body))))))
 
@@ -1742,7 +1775,7 @@
       (define (comp-switch-cond key cases)
 	 (let ((tmp (gensym 'tmp))
 	       (funs (map (lambda (c) (gensym)) cases))
-	       (tleft (j2s-type key)))
+	       (tleft (j2s-type-ref key)))
 	    (multiple-value-bind (bindings bodies)
 	       (comp-switch-clause-bodies cases funs)
 	       `(let* ((,tmp ,(j2s-scheme key mode return conf hint totype))
@@ -1754,7 +1787,7 @@
 
       (define (comp-switch-case key cases)
 	 (let ((funs (map (lambda (c) (gensym)) cases))
-	       (tleft (j2s-type key)))
+	       (tleft (j2s-type-ref key)))
 	    (multiple-value-bind (bindings bodies)
 	       (comp-switch-clause-bodies cases funs)
 	       `(let* ,bindings
@@ -1764,7 +1797,7 @@
 			 cases bodies))))))
       
       (define (scheme-case? key cases)
-	 (let ((t (j2s-type key)))
+	 (let ((t (j2s-type-ref key)))
 	    (when (or (memq t '(integer index ufixnum uint32 uint29))
 		      (and (eq? t 'int53) (m64? conf)))
 	       (every (lambda (c)
@@ -1859,7 +1892,7 @@
 				 ((null? formals)
 				  #f)
 				 (else
-				  (let ((tya (j2s-type (car args)))
+				  (let ((tya (j2s-type-ref (car args)))
 					(tyf (if (pair? (car formals))
 						 (caar formals)
 						 (car formals))))
@@ -1915,7 +1948,7 @@
 	 (cond
 	    ((isa? self J2SSuper)
 	     (call-super-method fun args))
-	    ((j2s-inline-method field args self (j2s-type obj))
+	    ((j2s-inline-method field args self (j2s-type-ref obj))
 	     =>
 	     (lambda (m)
 		(let* ((met (inline-method-met m))
@@ -1949,7 +1982,7 @@
 	    ((and ccache (= (bigloo-debug) 0))
 	     (cond
 		((isa? field J2SString)
-		 (let ((call (if (eq? (j2s-type obj) 'object)
+		 (let ((call (if (eq? (j2s-type-ref obj) 'object)
 				 'js-object-method-call-name/cache
 				 'js-method-call-name/cache)))
 		    (with-access::J2SString field (val)
@@ -2021,7 +2054,7 @@
 				      (loc loc)
 				      (expr tmp))))
 			   (instantiate::J2SHopRef
-			      (type (j2s-type obj))
+			      (type (j2s-type-ref obj))
 			      (loc loc)
 			      (id tmp))
 			   args))))))))
@@ -2252,10 +2285,10 @@
 	 (with-access::J2SAref obj (array alen amark deps)
 	    (let ((scmarray (j2s-decl-scheme-id array))
 		  (scmalen (j2s-decl-scheme-id alen))
-		  (scmfield (j2s-scheme field mode return conf hint (j2s-type field)))
+		  (scmfield (j2s-scheme field mode return conf hint (j2s-type-ref field)))
 		  (scmobj (j2s-scheme obj mode return conf hint 'array))
 		  (scmrhs (j2s-scheme rhs mode return conf hint 'any))
-		  (tyfield (j2s-type field)))
+		  (tyfield (j2s-type-ref field)))
 	       (case tyfield
 		  ((index uint29 ufixnu)
 		   (let ((idx (j2s-scheme field mode return conf hint 'uint32)))
@@ -2301,7 +2334,7 @@
       ;; an optimized array set in a loop (see array.scm)
       (with-access::J2SAccess lhs (obj field)
 	 (with-access::J2SAref obj (array alen)
-	    (case (j2s-type field)
+	    (case (j2s-type-ref field)
 	       ((index)
 		`(js-array-index-set! ,(j2s-scheme obj mode return conf hint totype)
 		    (fixnum->uint32 ,(j2s-scheme field mode return conf hint totype))
@@ -2323,7 +2356,7 @@
    
    (define (array-set lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache (loca loc))
-	 (let ((tyf (j2s-type field)))
+	 (let ((tyf (j2s-type-ref field)))
 	    (cond
 	       ((isa? obj J2SAref)
 		(if *j2s-array-cache*
@@ -2391,9 +2424,9 @@
 	     (with-access::J2SAccess lhs (obj field cache (loca loc))
 		(epairify loc
 		   (cond
-		      ((eq? (j2s-type obj) 'vector)
+		      ((eq? (j2s-type-ref obj) 'vector)
 		       (j2s-vector-set! this mode return conf hint totype))
-		      ((and (eq? (j2s-type obj) 'array) (maybe-number? field))
+		      ((and (eq? (j2s-type-ref obj) 'array) (maybe-number? field))
 		       (array-set lhs rhs))
 		      ((is-number? field)
 		       (maybe-array-set lhs rhs))
@@ -2474,7 +2507,7 @@
 	     ,(var++ (lambda (x) `(,op ,x 1)) lhs tmp loc))))
    
    (define (ref-inc op lhs::J2SRef inc type loc)
-      (let* ((typ (j2s-type lhs))
+      (let* ((typ (j2s-type-ref lhs))
 	     (num (J2SNumber/type typ inc))
 	     (inc (j2s-scheme
 		     (if (type-number? typ)
@@ -2505,9 +2538,9 @@
 ;* 	  (var++/suf op lhs 'fixnum 'fx loc))                          */
 ;* 	 ((and (type-int30? type) (is-int30? lhs))                     */
 ;* 	  (var++/suf op lhs 'int30 'fx loc))                           */
-;* 	 ((and (memq type '(fixnum)) (memq (j2s-type lhs) '(fixnum)))  */
+;* 	 ((and (memq type '(fixnum)) (memq (j2s-type-ref lhs) '(fixnum)))  */
 ;* 	  (var++/suf op lhs 'fixnum 'fx loc))                          */
-;* 	 ((memq (j2s-type lhs) '(integer number uint29 ufixnum fixnum index)) */
+;* 	 ((memq (j2s-type-ref lhs) '(integer number uint29 ufixnum fixnum index)) */
 ;* 	  (let ((tmp (gensym 'tmp)))                                   */
 ;* 	     `(let ((,tmp ,(j2s-scheme lhs mode return conf hint totype))) */
 ;* 		 ,(var++ (lambda (x)                                   */
@@ -2768,7 +2801,7 @@
       (let ((tyo (typeof-this obj conf)))
 	 (j2s-get loc (j2s-scheme obj mode return conf hint totype) tyo
 	    (j2s-property-scheme field mode return conf)
-	    (j2s-type field) cache clevel)))
+	    (j2s-type-ref field) cache clevel)))
 
    (define (index-ref obj field cache clevel loc)
       (if (isa? obj J2SRef)
@@ -2788,23 +2821,23 @@
 		    ((isa? ,tmp JsArray)
 		     ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
 			 (or (j2s-array-ref access mode return conf hint totype)
-			     (get obj field cache clevel loc))))
+			     (get (J2SHopRef tmp) field cache clevel loc))))
 		    ((js-jsstring? ,tmp)
 		     ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
 			 (or (j2s-string-ref access mode return conf hint totype)
-			     (get obj field cache clevel loc))))
+			     (get (J2SHopRef tmp) field cache clevel loc))))
 		    (else
 		     ,(get (J2SHopRef tmp) field cache clevel loc)))))))
    
    (with-access::J2SAccess this (loc obj field cache clevel type)
       (epairify-deep loc 
 	 (cond
-	    ((eq? (j2s-type obj) 'vector)
+	    ((eq? (j2s-type-ref obj) 'vector)
 	     (j2s-vector-ref this mode return conf hint totype))
-	    ((eq? (j2s-type obj) 'array)
+	    ((eq? (j2s-type-ref obj) 'array)
 	     (or (j2s-array-ref this mode return conf hint totype)
 		 (get obj field cache clevel loc)))
-	    ((eq? (j2s-type obj) 'string)
+	    ((eq? (j2s-type-ref obj) 'string)
 	     (or (j2s-string-ref this mode return conf hint totype)
 		 (get obj field cache clevel loc)))
 	    ((is-number? field)
@@ -2842,7 +2875,7 @@
 ;*    maybe-function? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (maybe-function? expr::J2SNode)
-   (memq (j2s-type expr) '(function any)))
+   (memq (j2s-type-ref expr) '(function any)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SInit ...                                         */

@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/pair.scm                */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/pair.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Thu Apr  6 16:23:45 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 08:42:32 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -19,6 +19,7 @@
    (include "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_object
 	   __hopscript_error
 	   __hopscript_private

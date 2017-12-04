@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sun Nov 26 19:59:38 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 11:07:01 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -21,6 +21,7 @@
    (include "types.sch" "stringliteral.sch" "property.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_property
 	   __hopscript_object
 	   __hopscript_error

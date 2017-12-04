@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Dec  2 06:32:13 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 11:19:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1017,12 +1017,8 @@
 	 (let ((body (instantiate::J2SBlock
 			(loc loc)
 			(endloc loc)
-			(nodes (list
-				  (instantiate::J2SStmtExpr
-				     (loc loc)
-				     (expr (instantiate::J2SPragma
-					      (loc loc)
-					      (expr "(current-request)"))))))))
+			(nodes (list (instantiate::J2SNop
+					(loc loc))))))
 	       (init (instantiate::J2SNop
 			(loc loc))))
 	    (with-this 'this loc

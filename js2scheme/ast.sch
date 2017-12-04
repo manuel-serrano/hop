@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Sun Dec  3 07:10:45 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 09:02:43 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -301,10 +301,10 @@
        (loc loc)
        (expr ,expr)))
 
-(define-macro (J2SExprStmt stmt)
-   `(instantiate::J2SExprStmt
-       (loc loc)
-       (stmt ,stmt)))
+;* (define-macro (J2SExprStmt stmt)                                    */
+;*    `(instantiate::J2SExprStmt                                       */
+;*        (loc loc)                                                    */
+;*        (stmt ,stmt)))                                               */
 
 (define-macro (J2SDecl binder usage id)
    `(instantiate::J2SDecl

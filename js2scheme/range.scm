@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Dec  3 21:33:25 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 13:18:08 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -473,6 +473,9 @@
 	     ((> oi *min-int32*)
 	      (let ((min *min-int32*))
 		 (interval min (max oa min))))
+	     ((> oi *min-int53*)
+	      (let ((min *min-integer*))
+		 (interval min (max oa min))))
 	     ((> oi *min-integer*)
 	      (let ((min *min-integer*))
 		 (interval min (max oa min))))
@@ -502,6 +505,9 @@
 		     (interval (min oi max) max)))
 		 ((<= oa *max-int32*)
 		  (let ((max *max-int32*))
+		     (interval (min oi max) max)))
+		 ((<= oa *max-int53*)
+		  (let ((max *max-int53*))
 		     (interval (min oi max) max)))
 		 (else
 		  (interval oi *+inf.0*))))
@@ -965,11 +971,11 @@
 		       (test-envs rhs envl fun fix)
 		       (values (append-env lenvt renvt)
 			  (append-env lenvo renvo))))))
-	     ((not (type-number? (j2s-type lhs)))
+	     ((not (type-number? (j2s-type-ref lhs)))
 	      (values (empty-env) (empty-env)))
-	     ((not (type-number? (j2s-type rhs)))
+	     ((not (type-number? (j2s-type-ref rhs)))
 	      (values (empty-env) (empty-env)))
-	     ((not (eq? (j2s-type test) 'bool))
+	     ((not (eq? (j2s-type-ref test) 'bool))
 	      (values (empty-env) (empty-env)))
 	     ((isa? lhs J2SRef)
 	      (if (isa? rhs J2SRef)
@@ -1220,7 +1226,7 @@
 	  (with-access::J2SAccess callee (obj field)
 	     (let ((fn (j2s-field-name field)))
 		(if (string? fn)
-		    (case (j2s-type obj)
+		    (case (j2s-type-ref obj)
 		       ((string)
 			(let ((intv (string-method-range fn)))
 			   (with-access::J2SCall this (range)

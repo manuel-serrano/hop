@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec  3 18:28:48 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 12:39:46 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -78,6 +78,16 @@
       (if (or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 	  `(:type ,type)
+	  '())))
+      
+;*---------------------------------------------------------------------*/
+;*    dump-vtype ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (dump-vtype this::J2SDecl)
+   (with-access::J2SDecl this (vtype)
+      (if (or (>= (bigloo-debug) 2)
+	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
+	  `(:vtype ,vtype)
 	  '())))
       
 ;*---------------------------------------------------------------------*/
@@ -361,6 +371,7 @@
 	     ,@(dump-loc loc)
 	     ,@(dump-key key)
 	     ,@(dump-type this)
+	     ,@(dump-vtype decl)
 	     ,@(dump-info this)
 	     ,@(dump-hint this)
 	     ,@(dump-range this)))))
@@ -497,8 +508,12 @@
 ;*    j2s->list ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SReturn)
-   (with-access::J2SReturn this (expr tail lbl)
-      `(,@(call-next-method) :lbl ,lbl
+   (with-access::J2SReturn this (expr tail from)
+      `(,@(call-next-method)
+	  ,@(if (isa? from J2SBindExit)
+		(with-access::J2SBindExit from (lbl)
+		   (list :from lbl))
+		'())
 	  ,@(if (> (bigloo-debug) 2) `(:tail ,tail) '())
 	  ,(j2s->list expr))))
 
@@ -703,17 +718,17 @@
    (with-access::J2SStmtExpr this (expr)
       `(,@(call-next-method) ,(j2s->list expr))))
    
-;*---------------------------------------------------------------------*/
-;*    j2s->list ::J2SExprStmt ...                                      */
-;*---------------------------------------------------------------------*/
-(define-method (j2s->list this::J2SExprStmt)
-   (with-access::J2SExprStmt this (stmt)
-      `(,@(call-next-method)
-	  ,@(dump-type this)
-	  ,@(dump-info this)
-	  ,@(dump-hint this)
-	  ,@(dump-range this)
-	  ,(j2s->list stmt))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    j2s->list ::J2SExprStmt ...                                      *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (j2s->list this::J2SExprStmt)                        */
+;*    (with-access::J2SExprStmt this (stmt)                            */
+;*       `(,@(call-next-method)                                        */
+;* 	  ,@(dump-type this)                                           */
+;* 	  ,@(dump-info this)                                           */
+;* 	  ,@(dump-hint this)                                           */
+;* 	  ,@(dump-range this)                                          */
+;* 	  ,(j2s->list stmt))))                                         */
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */

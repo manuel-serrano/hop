@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/return.scm              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/return.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Sat Jun 10 08:37:21 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 08:50:54 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -103,6 +103,7 @@
 	 (let ((ret (instantiate::J2SReturn
 		       (loc loc)
 		       (tail #t)
+		       (from target)
 		       (expr (instantiate::J2SUndefined
 				(loc loc))))))
 	    (if (null? nodes)
@@ -199,15 +200,16 @@
 ;*    unreturn! ::J2SReturn ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SReturn target tail? in-handler args)
-   (with-access::J2SReturn this (tail loc expr exit)
-      (unless target
-	 (if (config-get args :return-as-exit)
-	     (begin
-		(set! exit #t)
-		(set! tail #t)
-		(set! tail? #t)
-		(set! expr (walk! expr target #f in-handler args)))
-	     (syntax-error this "Illegal \"return\" statement")))
+   (with-access::J2SReturn this (tail from loc expr exit)
+      (if target
+	  (set! from target)
+	  (if (config-get args :return-as-exit)
+	      (begin
+		 (set! exit #t)
+		 (set! tail #t)
+		 (set! tail? #t)
+		 (set! expr (walk! expr target #f in-handler args)))
+	      (syntax-error this "Illegal \"return\" statement")))
       (unless tail?
 	 ;; mark the return as non-tail
 	 (set! tail #f)

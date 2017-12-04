@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/make_lib.scm            */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/make_lib.scm            */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Wed Aug 23 17:22:46 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 08:04:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
@@ -17,6 +17,7 @@
    (library hop)
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_property
 	   __hopscript_public
 	   __hopscript_lib

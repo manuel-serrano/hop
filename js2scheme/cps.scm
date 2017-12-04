@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Nov 28 17:59:39 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 09:05:01 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -673,21 +673,40 @@
 	  (kcall k this)))))
 
 ;*---------------------------------------------------------------------*/
-;*    cps ::J2SExprStmt ...                                            */
+;*    cps ::J2SBindExit ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (cps this::J2SExprStmt k pack kbreaks kcontinues ktry)
+(define-method (cps this::J2SBindExit k pack kbreaks kcontinues ktry) */
    (assert-kont k KontExpr this)
-   (with-access::J2SExprStmt this (stmt)
-      (if (yield-expr? stmt kbreaks kcontinues)
-	  (cps stmt
-	     (KontStmt (lambda (kstmt::J2SStmt)
-			  (set! stmt kstmt)
-			  (kcall k this))
-		this k)
-	     pack kbreaks kcontinues ktry)
-	  (begin
-	     (set! stmt (cps-fun! stmt))
-	     (kcall k this)))))
+   (with-access::J2SBindExit this (stmt need-bind-exit-return)
+      (if need-bind-exit-return
+	  (error "cps" "illegal JSBindExit" (j2s->list this))
+	  (if (yield-expr? stmt kbreaks kcontinues)
+	      (cps stmt
+		 (KontStmt (lambda (kstmt::J2SStmt)
+			      (set! stmt kstmt)
+			      (kcall k this))
+		    this k)
+		 pack kbreaks kcontinues ktry)
+	      (begin
+		 (set! stmt (cps-fun! stmt))
+		 (kcall k this))))))
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    cps ::J2SExprStmt ...                                            *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (cps this::J2SExprStmt k pack kbreaks kcontinues ktry) */
+;*    (assert-kont k KontExpr this)                                    */
+;*    (with-access::J2SExprStmt this (stmt)                            */
+;*       (if (yield-expr? stmt kbreaks kcontinues)                     */
+;* 	  (cps stmt                                                    */
+;* 	     (KontStmt (lambda (kstmt::J2SStmt)                        */
+;* 			  (set! stmt kstmt)                            */
+;* 			  (kcall k this))                              */
+;* 		this k)                                                */
+;* 	     pack kbreaks kcontinues ktry)                             */
+;* 	  (begin                                                       */
+;* 	     (set! stmt (cps-fun! stmt))                               */
+;* 	     (kcall k this)))))                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SFor ...                                                 */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Dec  3 21:31:31 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 11:04:46 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -24,6 +24,7 @@
    (library hop js2scheme)
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_lib
 	   __hopscript_object
 	   __hopscript_function
@@ -117,13 +118,6 @@
 	   (generic js-tonumber ::obj ::JsGlobalObject)
 	   (generic js-tointeger ::obj ::JsGlobalObject)
 	   (js-touint16::uint16 ::obj ::JsGlobalObject)
-	   (js-touint32::uint32 ::obj ::JsGlobalObject)
-	   (js-toint32::int32 ::obj ::JsGlobalObject)
-
-	   (inline js-int29-tointeger::bint ::int32)
-	   (inline js-uint29-tointeger::bint ::uint32)
-	   (inline js-int32-tointeger::obj ::int32)
-	   (inline js-uint32-tointeger::obj ::uint32)
 	   
 	   (js-toindex::uint32 ::obj)
 	   (inline js-isindex?::bool ::uint32)
@@ -1032,167 +1026,6 @@
       ((fixnum? obj) (modulofx obj (bit-lsh 1 16)))
       ((flonum? obj) (double->uint16 obj))
       (else (js-touint16 (js-tointeger obj %this) %this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-touint32 ::obj ...                                            */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
-;*---------------------------------------------------------------------*/
-(define (js-touint32::uint32 obj %this)
-   
-   (define 2^32 (exptfl 2. 32.))
-   
-   (define (positive-double->uint32::uint32 obj::double)
-      (if (<fl obj 2^32)
-	  (flonum->uint32 obj)
-	  (flonum->uint32 (remainderfl obj 2^32))))
-
-   (define (double->uint32::uint32 obj::double)
-      (cond
-	 ((or (= obj +inf.0) (= obj -inf.0) (not (= obj obj)))
-	   #u32:0)
-	 ((<fl obj 0.)
-	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floor (abs obj))))))
-	 (else
-	  (positive-double->uint32 obj))))
-   
-   (cond
-      ((fixnum? obj)
-       (cond-expand
-	  (bint30
-	   (fixnum->uint32 obj))
-	  (bint32
-	   (int32->uint32 (fixnum->int32 obj)))
-	  (else
-	   (if (<=fx obj (-fx (bit-lsh 1 32) 1))
-	       (fixnum->uint32 obj)
-	       (let* ((^31 (bit-lsh 1 31))
-		      (^32 (bit-lsh 1 32))
-		      (posint (if (<fx obj 0) (+fx ^32 obj) obj))
-		      (int32bit (modulofx posint ^32)))
-		  (fixnum->uint32 int32bit))))))
-      ((uint32? obj)
-       (let ((r::uint32 obj)) r))
-      ((int32? obj)
-       (int32->uint32 obj))
-      ((flonum? obj)
-       (double->uint32 obj))
-      (else
-       (js-touint32 (js-tointeger obj %this) %this))))
-		  
-;*---------------------------------------------------------------------*/
-;*    js-toint32 ::obj ...                                             */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
-;*---------------------------------------------------------------------*/
-(define (js-toint32::int32 obj %this)
-
-   (define (int64->int32::int32 obj::int64)
-      (cond-expand
-	 ((or bint30 bint32)
-	  (let* ((i::llong (int64->llong obj))
-		 (^31 (*llong #l8 (fixnum->llong (bit-lsh 1 28))))
-		 (^32 (*llong #l2 ^31))
-		 (posint (if (<llong i #l0) (+llong ^32 i) i))
-		 (int32bit (modulollong posint ^32))
-		 (n (if (>=llong int32bit ^31)
-			(-llong int32bit ^32)
-			int32bit)))
-	     (llong->int32 n)))
-	 (else
-	  (let* ((i::elong (int64->elong obj))
-		 (^31 (fixnum->elong (bit-lsh 1 31)))
-		 (^32 (fixnum->elong (bit-lsh 1 32)))
-		 (posint (if (<elong i #e0) (+elong ^32 i) i))
-		 (int32bit (moduloelong posint ^32))
-		 (n (if (>=elong int32bit ^31)
-			(-elong int32bit ^32)
-			int32bit)))
-	     (elong->int32 n)))))
-
-   (cond
-      ((int32? obj)
-       obj)
-      ((uint32? obj)
-       (uint32->int32 obj))
-      ((fixnum? obj)
-       (cond-expand
-	  ((or bint30 bint32)
-	   (fixnum->int32 obj))
-	  (bint61
-	   (if (and (<=fx obj (-fx (bit-lsh 1 31) 1))
-		    (>=fx obj (negfx (bit-lsh 1 31))))
-	       (fixnum->int32 obj)
-	       (let* ((^31 (bit-lsh 1 31))
-		      (^32 (bit-lsh 1 32))
-		      (posint (if (<fx obj 0) (+fx ^32 obj) obj))
-		      (int32bit (modulofx posint ^32))
-		      (n (if (>=fx int32bit ^31)
-			     (-fx int32bit ^32)
-			     int32bit)))
-		  (fixnum->int32 n))))
-	  (else
-	   (int64->int32 (fixnum->int64 obj)))))
-      ((flonum? obj)
-       (cond
-	  ((or (= obj +inf.0) (= obj -inf.0) (nanfl? obj))
-	   (fixnum->int32 0))
-	  ((<fl obj 0.)
-	   (let ((i (*fl -1. (floor (abs obj)))))
-	      (if (>=fl i (negfl (exptfl 2. 31.)))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))
-	  (else
-	   (let ((i (floor obj)))
-	      (if (<=fl i (-fl (exptfl 2. 31.) 1.))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))))
-      ((elong? obj)
-       (error "js-toint32" "unexpected elong" obj))
-      (else
-       (js-toint32 (js-tonumber obj %this) %this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-uint29-tointeger ...                                          */
-;*---------------------------------------------------------------------*/
-(define-inline (js-int29-tointeger::bint i::int32)
-   (int32->fixnum i))
-
-;*---------------------------------------------------------------------*/
-;*    js-int29-tointeger ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (js-uint29-tointeger::bint i::uint32)
-   (uint32->fixnum i))
-
-;*---------------------------------------------------------------------*/
-;*    js-int32-tointeger ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (js-int32-tointeger::obj i::int32)
-   (cond-expand
-      (bint30
-       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 28)))
-		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 28)))))
-	   (int32->fixnum i)
-	   (elong->flonum (uint32->elong i))))
-      (bint32
-       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 30)))
-		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 30)))))
-	   (int32->fixnum i)
-	   (elong->flonum (uint32->elong i))))
-      (else
-       (int32->fixnum i))))
-
-;*---------------------------------------------------------------------*/
-;*    js-uint32-tointeger ...                                          */
-;*---------------------------------------------------------------------*/
-(define-inline (js-uint32-tointeger::obj u::uint32)
-   (cond-expand
-      (bint30
-       (if (<u32 u (bit-lshu32 #u32:1 29))
-	   (uint32->fixnum u)
-	   (uint32->flonum u)))
-      (else
-       (uint32->fixnum u))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toindex ...                                                   */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Nov 26 10:29:05 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 11:07:56 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -19,6 +19,7 @@
    (include "types.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_public
 	   __hopscript_private
 	   __hopscript_property)

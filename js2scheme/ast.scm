@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Dec  2 16:01:43 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 13:17:52 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -61,9 +61,9 @@
 	   (final-class J2SStmtExpr::J2SStmt
 	      (expr::J2SExpr (info '("ast"))))
 	   
-	   (final-class J2SExprStmt::J2SExpr
-	      (stmt::J2SStmt (info '("ast"))))
-	   
+;* 	   (final-class J2SExprStmt::J2SExpr                           */
+;* 	      (stmt::J2SStmt (info '("ast"))))                         */
+;* 	                                                               */
 	   (class J2SIf::J2SStmt
 	      (test::J2SExpr (info '("ast")))
 	      (then::J2SStmt (info '("ast")))
@@ -124,13 +124,14 @@
 	   (final-class J2SDefault::J2SCase)
 	   
 	   (final-class J2SBindExit::J2SExpr
+	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
 	      (lbl::symbol read-only)
 	      (stmt::J2SStmt (info '("ast"))))
 
 	   (class J2SReturn::J2SStmt
 	      (exit::bool (default #f))
 	      (tail::bool (default #t))
-	      (lbl (default #f))
+	      (from (default #unspecified) (info '("notraverse")))
 	      (expr::J2SExpr (info '("ast"))))
 	   
 	   (class J2SReturnYield::J2SStmt
@@ -462,6 +463,7 @@
 	   (inline j2s-field-length?::bool ::J2SNode)
 
 	   (j2s-type ::obj)
+	   (j2s-type-ref ::obj)
 
 	   (j2s-expr-type-test ::J2SExpr)
 	   (class-of ::J2SExpr)
@@ -887,7 +889,7 @@
 (gen-walks J2STry body catch finally)
 (gen-walks J2SCatch body)
 (gen-walks J2SStmtExpr expr)
-(gen-walks J2SExprStmt stmt)
+;* (gen-walks J2SExprStmt stmt)                                        */
 (gen-walks J2SSequence (exprs))
 (gen-walks J2SVarDecls (decls))
 (gen-walks J2SLetBlock (decls) (nodes))
@@ -1199,6 +1201,21 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-type node)
    (cond
+      ((isa? node J2SExpr)
+       (with-access::J2SExpr node (type)
+	  type))
+      (else
+       'void)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-type-ref ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-type-ref node)
+   (cond
+      ((isa? node J2SRef)
+       (with-access::J2SRef node (decl)
+	  (with-access::J2SDecl decl (vtype)
+	     vtype)))
       ((isa? node J2SExpr)
        (with-access::J2SExpr node (type)
 	  type))

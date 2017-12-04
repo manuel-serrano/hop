@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Dec  3 22:07:32 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 12:27:11 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -882,8 +882,8 @@
    (define (mask32 sexpr expr::J2SExpr)
       (with-access::J2SExpr expr (range)
 	 (if (and (interval? range)
-		  (>=fx (interval-min range) 0)
-		  (<fx (interval-max range) 32))
+		  (>= (interval-min range) #l0)
+		  (< (interval-max range) #l32))
 	     sexpr
 	     `(bit-andu32 ,sexpr #u32:31))))
    
@@ -1095,9 +1095,25 @@
 (define (js-arithmetic-add loc type lhs::J2SExpr rhs::J2SExpr
 	   mode return conf hint::pair-nil totype)
 
+   (define (add-number32 loc type lhs rhs mode return conf hint totype)
+      (js-arithmetic loc '+ type lhs rhs mode return conf hint totype))
+
+   (define (add-number64 loc type lhs rhs mode return conf hint totype)
+      (binop lhs rhs mode return conf hint 'int53
+	 (lambda (left right)
+	    (cond
+	       ((and (eq? (j2s-type lhs) 'int53)
+		     (memq (j2s-type rhs) '(uint29 uint32)))
+		`(js+fx64 ,left (uint32->fixnum ,right)))
+	       ((and (eq? (j2s-type lhs) 'int53)
+		     (eq? (j2s-type rhs) 'int53))
+		`(js+fx64 ,left ,right))
+	       (else
+		(js-arithmetic loc '+ type lhs rhs mode return conf hint totype))))))
+   
    (define (add-number loc type lhs rhs mode return conf hint totype)
       (case type
-	 ((uint29 uint32)
+	 ((uint29 index length uint32)
 	  (binop lhs rhs mode return conf hint 'uint32
 	     (lambda (left right)
 		`(+u32 ,left ,right))))
@@ -1105,8 +1121,42 @@
 	  (binop lhs rhs mode return conf hint 'int32
 	     (lambda (left right)
 		`(+s32 ,left ,right))))
+	 ((int53)
+	  (binop lhs rhs mode return conf hint 'int53
+	     (lambda (left right)
+		(cond
+		   ((and (eq? (j2s-type lhs) 'int32)
+			 (eq? (j2s-type rhs) 'int32))
+		    (if (m64? conf)
+			`(+fx (int32->fixnum ,left) (int32->fixnum ,right))
+			`(+s32/safe ,left ,right)))
+		   ((and (memq (j2s-type lhs) '(uint29 index uint32))
+			 (memq (j2s-type rhs) '(uint29 index uint32)))
+		    (if (m64? conf)
+			`(+fx (uint32->fixnum ,left) (uint32->fixnum ,right))
+			`(+u32/safe ,left ,right)))
+		   ((and (eq? (j2s-type lhs) 'int32)
+			 (eq? (j2s-type rhs) 'uint29))
+		    (if (m64? conf)
+			`(+fx (int32->fixnum ,left) (uint32->fixnum ,right))
+			`(+s32/safe (fixnum->int32 ,left) ,(uint32->fixnum right))))
+		   ((and (eq? (j2s-type lhs) 'int32)
+			 (memq (j2s-type rhs) '(index uint32)))
+		    (if (m64? conf)
+			`(+fx (int32->fixnum ,left) (uint32->fixnum ,right))
+			`(+u32/safe ,left ,right)))
+		   ((and (eq? (j2s-type lhs) 'int53)
+			 (eq? (j2s-type rhs) 'int32))
+		    (if (m64? conf)
+			`(js+fx64 ,left (int32->fixnum ,right))
+			`(js+ ,left ,right %this)))
+		   (else
+		    (tprint "TODO: " (j2s-type lhs) " " (j2s-type rhs))
+		    "TODO-+.1")))))
 	 (else
-	  (js-arithmetic loc '+ type lhs rhs mode return conf hint totype))))
+	  (if (m64? conf)
+	      (add-number64 loc type lhs rhs mode return conf hint totype)
+	      (add-number32 loc type lhs rhs mode return conf hint totype)))))
 
    (define (add-string loc type lhs rhs mode return conf hint totype)
       (binop lhs rhs mode return conf hint type

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Dec  3 18:03:50 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 12:21:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -25,7 +25,8 @@
 	   __hopscript_error
 	   __hopscript_property
 	   __hopscript_private
-	   __hopscript_public)
+	   __hopscript_public
+	   __hopscript_arithmetic)
    
    (export (js-init-number! ::JsGlobalObject)
 	   (js-number->jsnumber ::obj ::JsGlobalObject)
@@ -35,8 +36,6 @@
 	   
 	   (js+ left right ::JsGlobalObject)
 	   (inline js+fx::obj ::long ::long)
-	   (inline js+fx32::obj ::obj ::obj)
-	   (inline js+fx64::obj ::long ::long)
 	   (inline js-fx::obj ::long ::long)
 	   (inline js-fx32::obj ::obj ::obj)
 	   (inline js-fx64::obj ::long ::long)
@@ -438,35 +437,6 @@
 	  (fixnum->flonum tmp)
 	  tmp)))
 
-;*---------------------------------------------------------------------*/
-;*    js+fx32 ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    Fixnum addition on 32 bits machines (two tagging bits).          */
-;*    -------------------------------------------------------------    */
-;*    See Hacker's Delight, second edition, page 29.                   */
-;*    -------------------------------------------------------------    */
-;*    This is the generic portable C implementation. Compilers and     */
-;*    platforms that supporting inlined assembly, this definition is   */
-;*    overriden the macro found in the include file arithmetic.sch     */
-;*---------------------------------------------------------------------*/
-(define-inline (js+fx32::obj x::obj y::obj)
-   ;; requires x and y to be tagged
-   (let ((z::long (pragma::long "(~((long)$1 ^ (long)$2)) & 0x80000000" x y)))
-      (if (pragma::bool "$1 & (~((((long)$2 ^ (long)$1) + ((long)$3)) ^ ((long) $3)))" z x y)
-          (fixnum->flonum (+fx x y))
-          (pragma::obj "(obj_t)((long)$1 + (long)$2 - TAG_INT)" x y))))
-
-;*---------------------------------------------------------------------*/
-;*    js+fx64 ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    Fixnum addition on 64 bits machines (three tagging bits).        */
-;*---------------------------------------------------------------------*/
-(define-inline (js+fx64 x::long y::long)
-   (let ((r::long (+fx x y)))
-      (if (bit-and r (bit-lsh 1 52))
-	  r
-	  (fixnum->flonum r))))
-   
 ;*---------------------------------------------------------------------*/
 ;*    js-fx32 ...                                                      */
 ;*    -------------------------------------------------------------    */

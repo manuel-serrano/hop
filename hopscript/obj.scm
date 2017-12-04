@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul  9 17:41:45 2017                          */
-;*    Last change :  Sun Nov 26 09:35:02 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 08:42:42 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ScmObject binding                                                */
@@ -19,6 +19,7 @@
    (include "stringliteral.sch")
    
    (import __hopscript_types
+	   __hopscript_arithmetic
 	   __hopscript_string
 	   __hopscript_stringliteral
 	   __hopscript_symbol
