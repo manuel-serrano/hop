@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Nov 24 12:53:30 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 14:09:55 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -37,7 +37,7 @@
 (define (j2s-string-ref this::J2SAccess mode return conf hint totype)
    (with-access::J2SAccess this (obj field type)
       (cond
-	 ((memq (j2s-type field) '(uint29 index ufixnum fixnum))
+	 ((memq (j2s-type-ref field) '(uint29 index ufixnum fixnum))
 	  `(js-jsstring-ref ,(j2s-scheme obj mode return conf hint totype)
 	      (fixnum->uint32 ,(j2s-scheme field mode return conf hint totype))))
 	 ((maybe-number? field)

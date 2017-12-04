@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Dec  4 13:12:57 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 15:46:22 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -280,9 +280,6 @@
 		  (subtype? ty vtype)
 		  (eq? vtype 'any))
 	 (unfix! fix (format "J2SDecl(~a) vtype=~a/~a" id vtype ty))
-	 (when (eq? id 'xxx)
-	    (tprint "declv-type-set " (j2s->list decl)
-	       " vtype=" vtype "ty=" ty " -> " (merge-types vtype ty)))
 	 (set! vtype (merge-types vtype ty)))))
 
 ;*---------------------------------------------------------------------*/
@@ -835,8 +832,6 @@
       (for-each (lambda (p::J2SDecl)
 		   (with-access::J2SDecl p (itype vtype id)
 		      (unless (eq? vtype 'any)
-			 (when (eq? id 'xxx)
-			    (tprint "ESCAPE FUN " (j2s->list p)))
 			 (set! vtype 'any)
 			 (unfix! fix "escape"))
 		      (unless (eq? itype 'any)
@@ -893,10 +888,6 @@
 		     (else
 		      (set! itype (merge-types itype (j2s-type (car args))))
 		      (set! vtype (merge-types vtype (j2s-type (car args))))
-		      (when (eq? id 'xxx)
-			 (tprint "CALL " (j2s->list (car params))
-			    " a=" (j2s-type (car args))
-			    " -> " (merge-types vtype (j2s-type (car args)))))
 		      (loop (cdr params) (cdr args)))))))))
    
    (define (type-inline-call callee args env bk)
@@ -1734,8 +1725,6 @@
 (define-walk-method (reset-type! this::J2SDecl)
    (call-default-walker)
    (with-access::J2SDecl this (itype vtype utype ronly id)
-      (when (eq? id 'xxx)
-	 (tprint "reset-type " (j2s->list this) " vtype=" vtype " utype=" utype))
       (set! itype 'unknown)
       (set! vtype utype))
    this)

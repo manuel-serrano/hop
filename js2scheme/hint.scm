@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Mon Dec  4 13:05:06 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 13:33:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -557,7 +557,6 @@
 		   (callt (call-hinted ft idthis newparams htypes))
 		   (callu (call-hinted fu idthis newparams itypes))
 		   (disp (dispatch-body body pred callt callu)))
-	       (tprint "DISP=" (j2s->list disp))
 	       (set! params newparams)
 	       (set! body disp)
 	       (when (config-get conf :profile)
@@ -832,8 +831,6 @@
 			    (utype 'function)
 			    (vtype 'function)
 			    (val newfun))))
-	    (when (eq? id 'core_md5)
-	       (tprint "DUP=" (j2s->list newfun)))
 	    (use-count nbody +1)
 	    (with-access::J2SFun newfun (decl)
 	       (set! decl newdecl))

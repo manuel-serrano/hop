@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Nov 24 12:04:09 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 14:12:32 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -111,7 +111,7 @@
 (define (j2s-array-index-ref this::J2SAccess mode return conf hint totype)
 
    (define (uint32 type expr)
-      (if (eq? type 'uint32)
+      (if (memq type '(uint29 uint32 index))
 	  expr
 	  `(fixnum->uint32 ,expr)))
    
@@ -120,9 +120,9 @@
 	 (with-access::J2SAref obj (array alen amark deps)
 	    (let ((scmarray (j2s-decl-scheme-id array))
 		  (scmalen (j2s-decl-scheme-id alen))
-		  (scmfield (j2s-scheme field mode return conf hint (j2s-type field)))
+		  (scmfield (j2s-scheme field mode return conf hint (j2s-type-ref field)))
 		  (scmobj (j2s-scheme obj mode return conf hint 'array))
-		  (tyfield (j2s-type field)))
+		  (tyfield (j2s-type-ref field)))
 	       (case tyfield
 		  ((index uint29 ufixnum)
 		   (let ((idx (j2s-scheme field mode return conf hint 'uint32)))
@@ -160,7 +160,7 @@
 
    (define (aref/w-cache this::J2SAccess)
       (with-access::J2SAccess this (obj field)
-	 (case (j2s-type field)
+	 (case (j2s-type-ref field)
 	    ((index)
 	     `(js-array-index-ref ,(j2s-scheme obj mode return conf hint 'array)
 		 ,(j2s-scheme field mode return conf hint 'uint32)
@@ -189,7 +189,7 @@
 	  (aref this))
 	 ((is-fixnum? field conf)
 	  (aref/w-cache this))
-	 ((eq? (j2s-type field) 'index)
+	 ((eq? (j2s-type-ref field) 'index)
 	  `(js-array-ref-ur ,(j2s-scheme obj mode return conf hint totype)
 	      ,(js-uint32->fixnum
 		  (j2s-scheme field mode return conf hint totype) conf)
@@ -231,8 +231,8 @@
 		      `(vector-ref ,(j2s-scheme obj
 				       mode return conf hint totype)
 			  ,(j2s-scheme field mode return conf hint totype)))
-		     ((or (eq? (j2s-type field) 'index)
-			  (eq? (j2s-type field) 'uint29)
+		     ((or (eq? (j2s-type-ref field) 'index)
+			  (eq? (j2s-type-ref field) 'uint29)
 			  (>=fx (interval-min range) 0))
 		      (let ((i (gensym 'idx)))
 			 `(let ((,i ,(j2s-scheme field

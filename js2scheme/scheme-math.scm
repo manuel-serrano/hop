@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Dec  3 06:43:41 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 14:09:35 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -74,8 +74,8 @@
       (when (isa? arg J2SBinary)
 	 (with-access::J2SBinary arg (op lhs rhs)
 	    (when (and (eq? op '/)
-		       (type-fixnum? (j2s-type lhs))
-		       (type-fixnum? (j2s-type rhs))
+		       (type-fixnum? (j2s-type-ref lhs))
+		       (type-fixnum? (j2s-type-ref rhs))
 		       (isa? rhs J2SNumber))
 	       (with-access::J2SNumber rhs (val)
 		  (when (>fx val 0)
@@ -84,7 +84,7 @@
 			   (cons lhs k)))))))))
    
    (define (positive? n)
-      (memq (j2s-type n) '(index uint29 ufixnum)))
+      (memq (j2s-type-ref n) '(index uint29 ufixnum)))
    
    (let ((p2 (divide-power2 arg)))
       (cond

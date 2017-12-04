@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Dec  4 13:18:23 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 16:02:18 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -105,15 +105,15 @@
 (define cast-table
    ;; from x to -> conv
    `((int29
-	(number js-uint29-tointeger)
-	(any js-uint29-tointeger))
+	(number uint32->fixnum)
+	(any uint32->fixnum))
      (uint29
 	((int32 ,js-uint32->int32)
 	 (uint32 ,js-id)
 	 (int53 uint32->fixnum)
-	 (number js-uint29-tointeger)
+	 (number uint32->fixnum)
 	 (bool ,js-uint32->bool)
-	 (any js-uint29-tointeger)))
+	 (any uint32->fixnum)))
      (uint32
 	((uint29 ,js-id)
 	 (int32 ,js-uint32->int32)
@@ -137,21 +137,24 @@
 	 (any js-int32-tointeger)))
      (int53
 	((int30 ,js-id)
-	 (uint32 js-int53->uint32)
-	 (int32 js-int53-touint32)
+	 (int32 js-int53-toint32)
+	 (uint32 js-int53-touint32)
 	 (number js-int53-tointeger)
 	 (any js-int53-tointeger)))
      (integer
 	((int32 ,js->int32)
-	 (uint32 ,js->uint32)))
+	 (uint32 ,js->uint32)
+	 (number ,js-id)))
      (number
 	((int32 ,js->int32)
 	 (uint32 ,js->uint32)))
      (any
 	((int32 ,js->int32)
 	 (uint32 ,js->uint32)
-	 (number ,js->number)))))
-	 
+	 (number ,js->number)))
+     (bool
+	((int32 ,js->int32)
+	 (uint32 ,js->uint32)))))
 
 ;; cast ancillary functions
 (define (js-id v)
@@ -236,15 +239,17 @@
 		 ((bool) `(js-totest ,expr))
 		 (else expr))))))
 
-   (let ((fen (assq from cast-table)))
-      (if (pair? fen)
-	  (let ((ten (assq to (cadr fen))))
-	     (if (pair? ten)
-		 (if (symbol? (cadr ten))
-		     `(,(cadr ten) ,expr)
-		     ((cadr ten) expr))
-		 (default)))
-	  (default))))
+   (if (eq? from to)
+       expr
+       (let ((fen (assq from cast-table)))
+	  (if (pair? fen)
+	      (let ((ten (assq to (cadr fen))))
+		 (if (pair? ten)
+		     (if (symbol? (cadr ten))
+			 `(,(cadr ten) ,expr)
+			 ((cadr ten) expr))
+		     (default)))
+	      (default)))))
 	  
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-stage ...                                             */
@@ -887,6 +892,8 @@
 ;*---------------------------------------------------------------------*/
 (define *+ints29* (-s32 (bit-lshs32 #s32:1 29) #s32:1))
 (define *-ints29* (-s32 #s32:0 (bit-lshs32 #s32:1 29)))
+(define *+intf29* (fixnum->flonum (int32->fixnum *+ints29*)))
+(define *-intf29* (fixnum->flonum (int32->fixnum *-ints29*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNumber ...                                       */
@@ -895,16 +902,19 @@
    (with-access::J2SNumber this (val type)
       (cond
 	 ((memq type '(index length uint32 uint29 ufixnum))
-	  (if (flonum? val)
-	      (flonum->uint32 val)
-	      (fixnum->uint32 val)))
+	  (if (flonum? val) (flonum->uint32 val) (fixnum->uint32 val)))
 	 ((memq type '(int29 int30 int32 fixnum))
 	  (if (flonum? val) (flonum->int32 val) (fixnum->int32 val)))
 	 ((fixnum? val)
 	  (cond
 	     ((m64? conf) val)
-	     ((and (>= val *+ints29*) (<= val *-ints29*)) val)
+	     ((and (>= val *-ints29*) (<= val *+ints29*)) val)
 	     (else (fixnum->flonum val))))
+	 ((integer? val)
+	  (cond
+	     ((m64? conf) (flonum->fixnum val))
+	     ((and (>= val *-intf29*) (<= val *+intf29*)) (flonum->fixnum val))
+	     (else val)))
 	 ((nanfl? val)
 	  "NaN")
 	 (else

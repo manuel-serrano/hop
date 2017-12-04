@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec  4 12:27:11 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 16:30:56 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -132,7 +132,7 @@
 	 ((-)
 	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
 	  (let ((expr (j2s-scheme expr mode return conf hint totype))
-		(typ (j2s-type expr)))
+		(typ (j2s-type-ref expr)))
 	     (cond
 		((eqv? expr 0)
 		 -0.0)
@@ -178,7 +178,7 @@
 (define (scm-fixnum? sexp node::J2SNode)
    (cond
       ((fixnum? sexp) #t)
-      ((type-int30? (j2s-type node)) #t)
+      ((type-int30? (j2s-type-ref node)) #t)
       ((symbol? sexp) `(fixnum? ,sexp))
       (else #f)))
 
@@ -260,7 +260,7 @@
 		 (if (and (number? right) (= right 0))
 		     +nan.0
 		     `(js-%u32 ,left ,right)))))
-	  ((and (eq? (j2s-type lhs) 'integer) (eq? (j2s-type rhs) 'integer))
+	  ((and (eq? (j2s-type-ref lhs) 'integer) (eq? (j2s-type-ref rhs) 'integer))
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
 		 (if (and (number? right) (= right 0))
@@ -286,13 +286,13 @@
       ((OR)
        (let ((lhsv (gensym 'lhs)))
 	  `(let ((,lhsv ,(j2s-scheme lhs mode return conf hint totype)))
-	      (if ,(if (eq? (j2s-type lhs) 'bool) lhsv `(js-totest ,lhsv))
+	      (if ,(if (eq? (j2s-type-ref lhs) 'bool) lhsv `(js-totest ,lhsv))
 		  ,lhsv
 		  ,(j2s-scheme rhs mode return conf hint totype)))))
       ((&&)
        (let ((lhsv (gensym 'lhs)))
 	  `(let ((,lhsv ,(j2s-scheme lhs mode return conf hint totype)))
-	      (if ,(if (eq? (j2s-type lhs) 'bool) lhsv `(js-totest ,lhsv))
+	      (if ,(if (eq? (j2s-type-ref lhs) 'bool) lhsv `(js-totest ,lhsv))
 		  ,(j2s-scheme rhs mode return conf hint totype)
 		  ,lhsv))))
       (else
@@ -483,17 +483,17 @@
 	  (gen scmlhs scmrhs))
 	 (testl
 	  (let ((right (gensym 'right)))
-	     `(let ((,(utype-ident right (j2s-type rhs) conf #t) ,scmrhs))
+	     `(let ((,(utype-ident right (j2s-type-ref rhs) conf #t) ,scmrhs))
 		 ,(gen scmlhs right))))
 	 (testr
 	  (let ((left (gensym 'left)))
-	     `(let ((,(utype-ident left (j2s-type lhs) conf #t) ,scmlhs))
+	     `(let ((,(utype-ident left (j2s-type-ref lhs) conf #t) ,scmlhs))
 		 ,(gen left scmrhs))))
 	 (else
 	  (let ((left (gensym 'left))
 		(right (gensym 'right)))
-	     `(let* ((,(utype-ident left (j2s-type lhs) conf #t) ,scmlhs)
-		     (,(utype-ident right (j2s-type rhs) conf #t) ,scmrhs))
+	     `(let* ((,(utype-ident left (j2s-type-ref lhs) conf #t) ,scmlhs)
+		     (,(utype-ident right (j2s-type-ref rhs) conf #t) ,scmrhs))
 		 ,(gen left right)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -530,7 +530,7 @@
 	 val))
 
    (define (positive? n)
-      (memq (j2s-type n) '(index uint29 ufixnum)))
+      (memq (j2s-type-ref n) '(index uint29 ufixnum)))
    
    (let ((k (power2 rhs)))
       (cond
@@ -542,9 +542,9 @@
 			  `(bit-rsh ,n ,k)
 			  `(js/pow2fx ,n ,k))
 		     (js/ ,n ,(bit-lsh 1 k) %this)))))
-	 ((and (type-number? (j2s-type lhs)) (type-number? (j2s-type rhs)))
+	 ((and (type-number? (j2s-type-ref lhs)) (type-number? (j2s-type-ref rhs)))
 	  (binop lhs rhs mode return conf hint 'any
-	     (if (type-integer? (j2s-type rhs))
+	     (if (type-integer? (j2s-type-ref rhs))
 		 (lambda (left right)
 		    `(if (=fx ,right 0)
 			 (js/num ,left ,right)
@@ -571,8 +571,8 @@
    (define (jsop op) (symbol-append 'js op))
    (define (strop op) (symbol-append 'js-jsstring op '?))
 
-   (let ((lt (j2s-type lhs))
-	 (rt (j2s-type rhs)))
+   (let ((lt (j2s-type-ref lhs))
+	 (rt (j2s-type-ref rhs)))
       (cond
 	 ;; uint32
 	 ((and (memq lt '(uint29 uint32 index length))
@@ -581,15 +581,40 @@
 	     (lambda (left right)
 		`(,(u32op op) ,left ,right))))
 	 ((and (memq op '(< <=))
-	       (eq? lt 'integer) (eq? rt '(uint29 index length uint32)))
+	       (memq lt '(integer number))
+	       (memq rt '(uint29 index length uint32)))
 	  (binop lhs rhs mode return conf hint 'uint32
 	     (lambda (left right)
 		(if (m64? conf)
 		    `(if (fixnum? ,left)
-			 (,(fxop op) ,left (uint32->fixnum ,rt))
+			 (,(fxop op) ,left (uint32->fixnum ,right))
 			 (,(jsop op) ,left ,right))
-		    `(or (fixnum? ,left)
-			 (,(jsop op) ,left ,right))))))
+		    `(if (fixnum? ,left)
+			 (or (<fx ,left 0)
+			     (,(u32op op) (fixnum->uint32 ,left) ,right))
+			 (,(jsop op) ,left ,right %this))))))
+	 ((and (memq op '(< <=))
+	       (memq lt '(any))
+	       (memq rt '(uint29 index length uint32)))
+	  (binop lhs rhs mode return conf hint 'uint32
+	     (lambda (left right)
+		`(if (fixnum? ,left)
+		     ,(if (m64? conf)
+			  `(,(fxop op) ,left (uint32->fixnum ,right))
+			  `(or (<fx ,left 0)
+			       (,(u32op op) (fixnum->uint32 ,left) ,right)))
+		     (,(jsop op) (js-tonumber ,left %this) ,right %this)))))
+	 ((and (memq op '(> >=))
+	       (memq lt '(any))
+	       (memq rt '(uint29 index length uint32)))
+	  (binop lhs rhs mode return conf hint 'uint32
+	     (lambda (left right)
+		`(if (fixnum? ,left)
+		     ,(if (m64? conf)
+			  `(,(fxop op) ,left (uint32->fixnum ,right))
+			  `(or (>=fx ,left 0)
+			       (,(u32op op) (fixnum->uint32 ,left) ,right)))
+		     (,(jsop op) (js-tonumber ,left %this) ,right %this)))))
 	 ((and (is-uint32? lhs) (is-uint32? rhs) (u32? conf))
 	  (binop lhs rhs mode return conf hint 'uint32
 	     (lambda (left right)
@@ -628,13 +653,13 @@
 		(scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
 		   `(,(fxop op) ,left ,right)
 		   (js-binop loc op left right)))))
-	 ((or (eq? (j2s-type lhs) 'number) (eq? (j2s-type rhs) 'number))
+	 ((or (eq? (j2s-type-ref lhs) 'number) (eq? (j2s-type-ref rhs) 'number))
 	  (binop lhs rhs mode return conf hint 'integer
 	     (lambda (left right)
 		(scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
 		   `(,(fxop op) ,left ,right)
 		   (js-binop loc op left right)))))
-	 ((or (eq? (j2s-type lhs) 'any) (eq? (j2s-type rhs) 'any))
+	 ((or (eq? (j2s-type-ref lhs) 'any) (eq? (j2s-type-ref rhs) 'any))
 	  (if (and (maybe-number? lhs) (maybe-number? rhs))
 	      (binop lhs rhs mode return conf hint 'integer
 		 (lambda (left right)
@@ -805,26 +830,26 @@
 	      (if (memq op '(!= !==))
 		  (js-not res)
 		  res)))))
-      ((and (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))
+      ((and (eq? (j2s-type-ref lhs) 'string) (eq? (j2s-type-ref rhs) 'string))
        (binop lhs rhs mode return conf '(string) 'any
 	  (lambda (left right)
 	     (js-binop loc op left right))))
-      ((and (eq? (j2s-type lhs) 'bool) (eq? (j2s-type rhs) 'bool))
+      ((and (eq? (j2s-type-ref lhs) 'bool) (eq? (j2s-type-ref rhs) 'bool))
        (binop lhs rhs mode return conf '(bool) 'any
 	  (lambda (left right)
 	     (if (memq op '(!= !==))
 		 `(not (eq? ,left ,right))
 		 `(eq? ,left ,right)))))
       ((and (memq op '(== !=))
-	    (or (memq (j2s-type lhs) '(bool string object array))
-		(memq (j2s-type rhs) '(bool string object array))))
+	    (or (memq (j2s-type-ref lhs) '(bool string object array))
+		(memq (j2s-type-ref rhs) '(bool string object array))))
        (binop lhs rhs mode return conf '(bool) 'any
 	  (lambda (left right)
 	     (if (eq? op '!=)
 		 `(not (js-equal-sans-flonum? ,left ,right %this))
 		 `(js-equal-sans-flonum? ,left ,right %this)))))
-      ((or (memq (j2s-type lhs) '(undefined null))
-	   (memq (j2s-type rhs) '(undefined null)))
+      ((or (memq (j2s-type-ref lhs) '(undefined null))
+	   (memq (j2s-type-ref rhs) '(undefined null)))
        (binop lhs rhs mode return conf '(bool) 'any
 	  (lambda (left right)
 	     (case op
@@ -833,17 +858,17 @@
 		((===)
 		 `(eq? ,left ,right))
 		((==)
-		 (if (memq (j2s-type lhs) '(undefined null))
+		 (if (memq (j2s-type-ref lhs) '(undefined null))
 		     `(or (eq? (js-undefined) ,right) (eq? (js-null) ,right))
 		     `(or (eq? ,left (js-undefined)) (eq? ,left (js-null)))))
 		((!=)
-		 (if (memq (j2s-type lhs) '(undefined null))
+		 (if (memq (j2s-type-ref lhs) '(undefined null))
 		     `(not (or (eq? (js-undefined) ,right) (eq? (js-null) ,right)))
 		     `(not (or (eq? ,left (js-undefined)) (eq? ,left (js-null))))))
 		(else
 		 (js-binop loc op left right))))))
       ((and (or (eq? op '===) (eq? op '!==))
-	    (or (eq? (j2s-type lhs) 'bool) (eq? (j2s-type rhs) 'bool)))
+	    (or (eq? (j2s-type-ref lhs) 'bool) (eq? (j2s-type-ref rhs) 'bool)))
        (binop lhs rhs mode return conf '(bool) 'any
 	  (lambda (left right)
 	     (if (eq? op '!==)
@@ -917,8 +942,8 @@
 ;* 	  `(int32->fixnum ,expr)                                       */
 ;* 	  `(int32->integer ,expr)))                                    */
 ;*                                                                     */
-;*    (let ((tl (j2s-type lhs))                                        */
-;* 	 (tr (j2s-type rhs)))                                          */
+;*    (let ((tl (j2s-type-ref lhs))                                        */
+;* 	 (tr (j2s-type-ref rhs)))                                          */
 ;*       (cond                                                         */
 ;* 	 ((or (and (type-fixnum? tl) (type-fixnum? tr))                */
 ;* 	      (and (type-fixnum? tl) (and (eq? tr 'int32) (m64? conf))) */
@@ -1042,14 +1067,14 @@
 	      (lambda (left right)
 		 (js-binopfx op left right conf)))))
       ((and (eq? op '+) 
-	    (or (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string)))
+	    (or (eq? (j2s-type-ref lhs) 'string) (eq? (j2s-type-ref rhs) 'string)))
        (binop lhs rhs mode return conf hint type
 	  (lambda (left right)
 	     (cond
-		((and (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))
+		((and (eq? (j2s-type-ref lhs) 'string) (eq? (j2s-type-ref rhs) 'string))
 		 `(js-jsstring-append ,left ,right))
-		((eq? (j2s-type lhs) 'string)
-		 (case (j2s-type rhs)
+		((eq? (j2s-type-ref lhs) 'string)
+		 (case (j2s-type-ref rhs)
 		    ((uint29)
 		     `(js-jsstring-append ,left
 			 (js-ascii->jsstring (fixnum->string ,right))))
@@ -1102,21 +1127,29 @@
       (binop lhs rhs mode return conf hint 'int53
 	 (lambda (left right)
 	    (cond
-	       ((and (eq? (j2s-type lhs) 'int53)
-		     (memq (j2s-type rhs) '(uint29 uint32)))
+	       ((and (eq? (j2s-type-ref lhs) 'int53)
+		     (memq (j2s-type-ref rhs) '(uint29 index length uint32)))
 		`(js+fx64 ,left (uint32->fixnum ,right)))
-	       ((and (eq? (j2s-type lhs) 'int53)
-		     (eq? (j2s-type rhs) 'int53))
+	       ((and (eq? (j2s-type-ref lhs) 'int53)
+		     (eq? (j2s-type-ref rhs) 'int53))
 		`(js+fx64 ,left ,right))
 	       (else
 		(js-arithmetic loc '+ type lhs rhs mode return conf hint totype))))))
-   
+
+   (define (touint32 expr type)
+      (cond
+	 ((memq type '(uint29 index length uint32))
+	  expr)
+	 (else
+	  `(fixnum->uint32 ,expr))))
+	  
    (define (add-number loc type lhs rhs mode return conf hint totype)
       (case type
 	 ((uint29 index length uint32)
 	  (binop lhs rhs mode return conf hint 'uint32
 	     (lambda (left right)
-		`(+u32 ,left ,right))))
+		`(+u32 ,(touint32 left (j2s-type-ref lhs))
+		    ,(touint32 right (j2s-type-ref rhs))))))
 	 ((int32)
 	  (binop lhs rhs mode return conf hint 'int32
 	     (lambda (left right)
@@ -1125,33 +1158,38 @@
 	  (binop lhs rhs mode return conf hint 'int53
 	     (lambda (left right)
 		(cond
-		   ((and (eq? (j2s-type lhs) 'int32)
-			 (eq? (j2s-type rhs) 'int32))
+		   ((and (eq? (j2s-type-ref lhs) 'int32)
+			 (eq? (j2s-type-ref rhs) 'int32))
 		    (if (m64? conf)
 			`(+fx (int32->fixnum ,left) (int32->fixnum ,right))
 			`(+s32/safe ,left ,right)))
-		   ((and (memq (j2s-type lhs) '(uint29 index uint32))
-			 (memq (j2s-type rhs) '(uint29 index uint32)))
+		   ((and (memq (j2s-type-ref lhs) '(uint29 index length uint32))
+			 (memq (j2s-type-ref rhs) '(uint29 index length uint32)))
 		    (if (m64? conf)
 			`(+fx (uint32->fixnum ,left) (uint32->fixnum ,right))
 			`(+u32/safe ,left ,right)))
-		   ((and (eq? (j2s-type lhs) 'int32)
-			 (eq? (j2s-type rhs) 'uint29))
+		   ((and (eq? (j2s-type-ref lhs) 'int32)
+			 (eq? (j2s-type-ref rhs) 'uint29))
 		    (if (m64? conf)
 			`(+fx (int32->fixnum ,left) (uint32->fixnum ,right))
-			`(+s32/safe (fixnum->int32 ,left) ,(uint32->fixnum right))))
-		   ((and (eq? (j2s-type lhs) 'int32)
-			 (memq (j2s-type rhs) '(index uint32)))
+			`(+s32/safe ,left ,(uint32->fixnum right))))
+		   ((and (eq? (j2s-type-ref lhs) 'int32)
+			 (memq (j2s-type-ref rhs) '(index uint32)))
 		    (if (m64? conf)
 			`(+fx (int32->fixnum ,left) (uint32->fixnum ,right))
 			`(+u32/safe ,left ,right)))
-		   ((and (eq? (j2s-type lhs) 'int53)
-			 (eq? (j2s-type rhs) 'int32))
+		   ((and (eq? (j2s-type-ref lhs) 'int53)
+			 (eq? (j2s-type-ref rhs) 'int32))
 		    (if (m64? conf)
 			`(js+fx64 ,left (int32->fixnum ,right))
-			`(js+ ,left ,right %this)))
+			`(if (fixnum? ,left)
+			     (+s32/safe (fixnum->int32 ,left) ,right)
+			     (js+ ,left ,right %this))))
+		   ((and (eq? (j2s-type-ref lhs) 'number)
+			 (eq? (j2s-type-ref rhs) 'uint29))
+		    `(js+ ,left (uint32->fixnum ,right) %this))
 		   (else
-		    (tprint "TODO: " (j2s-type lhs) " " (j2s-type rhs))
+		    (tprint "TODO: " (j2s-type-ref lhs) " " (j2s-type-ref rhs) " " type)
 		    "TODO-+.1")))))
 	 (else
 	  (if (m64? conf)
@@ -1162,11 +1200,11 @@
       (binop lhs rhs mode return conf hint type
 	 (lambda (left right)
 	    (cond
-	       ((and (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))
+	       ((and (eq? (j2s-type-ref lhs) 'string) (eq? (j2s-type-ref rhs) 'string))
 		`(js-jsstring-append ,left ,right))
-	       ((eq? (j2s-type lhs) 'string)
-		(case (j2s-type rhs)
-		   ((uint29 uint32)
+	       ((eq? (j2s-type-ref lhs) 'string)
+		(case (j2s-type-ref rhs)
+		   ((uint29 index length uint32)
 		    `(js-jsstring-append ,left
 			(js-ascii->jsstring
 			   (fixnum->string (uint32->fixnum ,right)))))
@@ -1197,7 +1235,7 @@
       ((type-number? type)
        (add-number loc type lhs rhs mode return conf hint totype))
       ((or (eq? type 'string)
-	   (eq? (j2s-type lhs) 'string) (eq? (j2s-type rhs) 'string))
+	   (eq? (j2s-type-ref lhs) 'string) (eq? (j2s-type-ref rhs) 'string))
        (add-string loc type lhs rhs mode return conf hint totype))
       (else
        (add-generic loc type lhs rhs mode return conf hint totype))))
@@ -1210,16 +1248,16 @@
 
    (define (submul-number loc type lhs rhs mode return conf hint totype)
       (case type
-	 ((uint29 uint32)
+	 ((uint29 index length uint32)
 	  (binop lhs rhs mode return conf hint 'uint32
 	     (lambda (left right)
-		`(-u32 ,left ,right))))
+		`(,(symbol-append op 'u32) ,left ,right))))
 	 ((int32)
 	  (binop lhs rhs mode return conf hint 'int32
 	     (lambda (left right)
-		`(-s32 ,left ,right))))
+		`(,(symbol-append op 's32) ,left ,right))))
 	 (else
-	  (js-arithmetic loc '- type lhs rhs mode return conf hint totype))))
+	  (js-arithmetic loc op type lhs rhs mode return conf hint totype))))
 
    (cond
       ((type-number? type)

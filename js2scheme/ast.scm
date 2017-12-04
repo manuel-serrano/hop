@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Dec  4 13:17:52 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 14:28:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -1216,6 +1216,9 @@
        (with-access::J2SRef node (decl)
 	  (with-access::J2SDecl decl (vtype)
 	     vtype)))
+      ((isa? node J2SParen)
+       (with-access::J2SParen node (expr)
+	  (j2s-type-ref expr)))
       ((isa? node J2SExpr)
        (with-access::J2SExpr node (type)
 	  type))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Dec  4 11:04:46 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 15:43:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -955,7 +955,13 @@
    (let loop ((obj obj))
       (cond
 	 ((number? obj)
-	  obj)
+	  (cond
+	     ((uint32? obj)
+	      (uint32->flonum obj))
+	     ((int32? obj)
+	      (int32->flonum obj))
+	     (else
+	      obj)))
 	 ((eq? obj (js-undefined))
 	  +nan.0)
 	 ((eq? obj (js-null))

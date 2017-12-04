@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Dec  2 19:06:06 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 14:10:07 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -227,7 +227,7 @@
 ;*    typeof-this ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (typeof-this obj conf)
-   (let ((ty (j2s-type obj)))
+   (let ((ty (j2s-type-ref obj)))
       (if (eq? ty 'object)
 	  (if (and (isa? obj J2SThis)
 		   (with-access::J2SThis obj (decl)
@@ -241,7 +241,7 @@
 ;*    maybe-number? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (maybe-number? expr::J2SNode)
-   (memq (j2s-type expr)
+   (memq (j2s-type-ref expr)
       '(index uint29 int30 fixnum int53 ufixnum integer number any)))
 
 ;*---------------------------------------------------------------------*/
@@ -341,59 +341,59 @@
 ;*    is-number? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-number? expr::J2SExpr)
-   (type-number? (j2s-type expr)))
+   (type-number? (j2s-type-ref expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-integer? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (is-integer? expr::J2SExpr)
-   (type-integer? (j2s-type expr)))
+   (type-integer? (j2s-type-ref expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-int30? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (is-int30? expr::J2SExpr)
-   (type-int30? (j2s-type expr)))
+   (type-int30? (j2s-type-ref expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-int53? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (is-int53? expr::J2SExpr)
-   (let ((ty (j2s-type expr)))
+   (let ((ty (j2s-type-ref expr)))
       (or (type-int53? ty) (eq? ty 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-fx? ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (is-fx? expr::J2SExpr)
-   (type-fixnum? (j2s-type expr)))
+   (type-fixnum? (j2s-type-ref expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-fixnum? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-fixnum? expr::J2SExpr conf)
    (if (m64? conf)
-       (or (type-integer? (j2s-type expr)) (type-int53? (j2s-type expr)))
-       (or (type-int30? (j2s-type expr)) (eq? (j2s-type expr) 'ufixnum))))
+       (or (type-integer? (j2s-type-ref expr)) (type-int53? (j2s-type-ref expr)))
+       (or (type-int30? (j2s-type-ref expr)) (eq? (j2s-type-ref expr) 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-uint32? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-uint32? expr::J2SExpr)
-   (type-uint32? (j2s-type expr)))
+   (type-uint32? (j2s-type-ref expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-uint53? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-uint53? expr::J2SExpr)
-   (let ((ty (j2s-type expr)))
+   (let ((ty (j2s-type-ref expr)))
       (or (type-int53? ty) (eq? ty 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-string? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-string? expr::J2SExpr)
-   (eq? (j2s-type expr) 'string))
+   (eq? (j2s-type-ref expr) 'string))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */

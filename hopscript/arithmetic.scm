@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Mon Dec  4 12:23:43 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 14:00:05 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS mostly machine dependent arithmetic operations.               */
@@ -340,13 +340,13 @@
    ;; requires x and y to be tagged
    (cond-expand
       ((and bigloo-c (config have-overflow #t))
-       (let ((res::int32 #s32:0))
+       (let ((res::long 0))
 	  (cond
-	     ((pragma::bool "__builtin_saddl_overflow( (int32_t)$1, (int32_t)$2, &$3 )"
+	     ((pragma::bool "__builtin_saddl_overflow( (long)$1, (long)$2, &$3 )"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL( ((double)($1) + ((double)($2))) )"
 		 x y))
-	     ((bit-ands32 res (bit-lsh #s32:3 30))
+	     ((=s32 res (bit-ands32 res (bit-lshs32 #s32:3 30)))
 	      (pragma::real "DOUBLE_TO_REAL( ((double)($1) + ((double)($2))) )"
 		 x y))
 	     (else
@@ -364,13 +364,13 @@
    ;; requires x and y to be tagged
    (cond-expand
       ((and bigloo-c (config have-overflow #t))
-       (let ((res::uint32 #u32:0))
+       (let ((res::ulong (pragma::ulong "(ulong)($1)" #u32:0)))
 	  (cond
-	     ((pragma::bool "__builtin_saddl_overflow( (uint32_t)$1, (uint32_t)$2, &$3 )"
+	     ((pragma::bool "__builtin_uaddl_overflow( (ulong)$1, (ulong)$2, &$3 )"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL( ((double)($1) + ((double)($2))) )"
 		 x y))
-	     ((bit-andu32 res (bit-lsh #u32:3 30))
+	     ((=u32 res (bit-andu32 res (bit-lshu32 #u32:3 30)))
 	      (pragma::real "DOUBLE_TO_REAL( ((double)($1) + ((double)($2))) )"
 		 x y))
 	     (else

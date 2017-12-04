@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Dec  4 13:18:15 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 16:37:40 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -52,9 +52,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-cast! this args)
    (when (isa? this J2SProgram)
-      (when (config-get args :optim-cast #f)
-	 ;; same optim condition as the RANGE stage
-	 (j2s-cast-program! this args))
+      (j2s-cast-program! this args)
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -178,6 +176,17 @@
    (with-access::J2SCast this (expr)
       (cast expr totype)))
 
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SNumber ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SNumber totype)
+   (with-access::J2SNumber this (type)
+      (if (memq totype '(uint29 int30 uint30 int32 uint32 integer number))
+	  (begin
+	     (set! type totype)
+	     this)
+	  (call-next-method))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -311,7 +320,7 @@
    (with-access::J2SFor this (init test incr body)
       (set! init (type-cast! init '*))
       (set! test (type-cast! test 'bool))
-      (set! incr (type-cast! test '*))
+      (set! incr (type-cast! incr '*))
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
