@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Dec  4 18:06:11 2017 (serrano)                */
+;*    Last change :  Mon Dec  4 20:26:21 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -270,7 +270,7 @@
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs)
       (type-cast! lhs '*)
-      (type-cast! rhs (j2s-type-ref lhs))
+      (type-cast! rhs (if (isa? lhs J2SRef) (j2s-type-ref lhs) 'any))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
