@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec  5 05:48:32 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 16:38:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -179,7 +179,7 @@
 	   (class J2SArrow::J2SFun)
 
 	   (class J2SMethod::J2SExpr
-	      function::J2SFun
+	      (function::J2SFun (info '("ast")))
 	      (method::J2SFun (info '("ast"))))
 
 	   (class J2SClass::J2SExpr

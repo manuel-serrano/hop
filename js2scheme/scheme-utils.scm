@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Dec  4 14:10:07 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 09:55:55 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -250,8 +250,8 @@
 (define (utype-ident ident utype conf #!optional compound)
 
    (define (atomic-type? typ)
-      (memq typ '(uint29 index uint32 length number integer
-		  int30 int53 fixnum undefined bool null)))
+      (memq typ '(int32 uint32 number integer bint
+		  int53 fixnum undefined bool null)))
 
    (cond
       ((or (eq? utype 'any) (eq? utype 'unknown))
@@ -267,8 +267,8 @@
 (define (type-ident ident type)
    (cond
       ((memq type '(int32 uint32)) (symbol-append ident '|::| type))
-      ((memq type '(uint29)) (symbol-append ident '|::uint32|))
-      ((memq type '(index length)) (symbol-append ident '|::uint32|))
+      ((memq type '(bint)) (symbol-append ident '|::bint|))
+      ((eq? type 'any) (symbol-append ident '|::obj|))
       (else ident)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Dec  5 05:52:10 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 14:49:35 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -60,18 +60,19 @@
 	       (lambda (ip)
 		  (set! *dump-stop* (read ip)))))))
    (when (isa? this J2SProgram)
-      (when (config-get args :optim-cast #f)
-	 ;; compute the integer value ranges, same condition as the CAST stage
-	 (j2s-range-program! this args)
-	 ;; allocate precise types according to the ranges
-	 (when (config-get args :optim-range #f)
-	    (j2s-range-type-program! this args))
-	 ;; optimize operators according to ranges
-	 (when (>=fx (config-get args :optim 0) 2)
-	    (j2s-range-opt-program! this args))
+      (let ((tymap (if (=fx (config-get args :long-size 0) 64)
+		       typemap64 typemap32)))
+	 (when (config-get args :optim-cast #f)
+	    ;; compute the integer value ranges,
+	    (j2s-range-program! this args)
+	    ;; optimize operators according to ranges
+	    (when (>=fx (config-get args :optim 0) 2)
+	       (j2s-range-opt-program! this args))
+	    ;; allocate precise types according to the ranges
+	    (when (config-get args :optim-range #f)
+	       (j2s-range-type-program! this tymap)))
 	 ;; map number types to target types
-	 (map-types this 
-	    (if (=fx (config-get args :long-size 0) 64) typemap64 typemap32)))
+	 (map-types this tymap))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -159,10 +160,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-range-type-program! ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-range-type-program! this::J2SProgram args)
+(define (j2s-range-type-program! this::J2SProgram tymap)
    (with-access::J2SProgram this (decls nodes)
-      (for-each (lambda (n) (type-range! n)) decls)
-      (for-each (lambda (n) (type-range! n)) nodes)
+      (for-each (lambda (n) (type-range! n tymap)) decls)
+      (for-each (lambda (n) (type-range! n tymap)) nodes)
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -682,6 +683,8 @@
       (interval
 	 (max (interval-min intv) *min-int32*)
 	 (min (interval-max intv) *max-int32*)))
+
+   (tprint "interval-bitand...")
 	 
    (when (and (interval? left) (interval? right))
       (if (or (> (interval-max left) 0) (> (interval-max right) 0))
@@ -724,7 +727,8 @@
 	    ((not (interval-in? intv range))
 	     (unfix! fix
 		(format "node-interval-set.2! ~a -> ~a/~a => ~a"
-		   (j2s->list this) intv range (interval-merge intv range)))
+		   (j2s->list this) intv range
+		   (interval-merge intv range)))
 	     (range-set! this (interval-merge intv range)))))
       (return (range-get this) env)))
 
@@ -872,9 +876,9 @@
 ;*    node-range ::J2SRef ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SRef env::pair-nil fun fix::struct)
-   (with-access::J2SRef this (decl type)
+   (with-access::J2SRef this (decl type loc)
       (if (type-number? type)
-	  (with-access::J2SDecl decl (range ronly)
+	  (with-access::J2SDecl decl (range ronly key)
 	     (let ((intv (env-lookup env decl)))
 		(when ronly
 		   (with-access::J2SDecl decl (id range)
@@ -1133,7 +1137,7 @@
 		 ;; a variable assignment
 		 (with-access::J2SRef lhs (decl)
 		    (let ((nenv (extend-env env decl intv)))
-		       (node-interval-set! lhs nenv fix intv))))
+		       (node-interval-set! this nenv fix intv))))
 		(else
 		 ;; a non variable assignment
 		 (node-interval-set! this nenv fix intv))))
@@ -1350,12 +1354,6 @@
 			(tprint "    [" ffix "] teste=" (dump-env teste)))
 		     (multiple-value-bind (testet testef)
 			(test-envs test env fun fix)
-			(when (pair? denv)
-			   (when (pair? (dump-env testet))
-			      (tprint "    [" ffix "] testet="
-				 (dump-env testet))
-			      (tprint "    [" ffix "] testef="
-				 (dump-env testef))))
 			(multiple-value-bind (bodyi bodye)
 			   (node-range-seq (list body incr)
 			      (append-env testet teste) fun fix)
@@ -1363,8 +1361,8 @@
 			       (begin
 				  (when (pair? denv)
 				     (tprint "<<< for [" ffix "] "
-					(dump-env (append-env testef bodye)))
-				     (return #f (append-env testef bodye))))
+					(dump-env (append-env testef bodye))))
+				  (return #f (append-env testef bodye)))
 			       (loop (env-merge bodye env))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1464,31 +1462,31 @@
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SNode ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (type-range! this::J2SNode)
+(define-walk-method (type-range! this::J2SNode tymap)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval->type ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (interval->type intv::struct)
+(define (interval->type intv::struct tymap)
    (cond
-      ((interval-in? intv *uint29-intv*) 'uint29)
-      ((interval-in? intv *int30-intv*) 'int30)
-      ((interval-in? intv *index-intv*) 'index)
-      ((interval-in? intv *length-intv*) 'length)
+      ((interval-in? intv *uint29-intv*) 'uint32)
+      ((interval-in? intv *int30-intv*) 'int32)
+      ((interval-in? intv *index-intv*) 'uint32)
+      ((interval-in? intv *length-intv*) 'uint32)
       ((interval-in? intv *int32-intv*) 'int32)
-      ((interval-in? intv *int53-intv*) 'int53)
-      ((interval-in? intv *integer*) 'integer)
+      ((interval-in? intv *int53-intv*) (map-type 'int53 tymap))
+      ;;((interval-in? intv *integer*) 'integer)
       (else 'number)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SDecl ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (type-range! this::J2SDecl)
+(define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
    (with-access::J2SDecl this (range itype vtype id)
       (when (interval? range)
-	 (let ((ty (interval->type range)))
+	 (let ((ty (interval->type range tymap)))
 	    (when ty
 	       (set! itype ty)
 	       (set! vtype ty)))))
@@ -1497,27 +1495,27 @@
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SExpr ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (type-range! this::J2SExpr)
+(define-walk-method (type-range! this::J2SExpr tymap)
    (call-default-walker)
    (with-access::J2SExpr this (range type)
       (when (interval? range)
-	 (set! type (interval->type range))))
+	 (set! type (interval->type range tymap))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (type-range! this::J2SFun)
+(define-walk-method (type-range! this::J2SFun tymap)
    (call-default-walker)
    (with-access::J2SFun this (range rtype)
       (when (interval? range)
-	 (set! rtype (interval->type range))))
+	 (set! rtype (interval->type range tymap))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SParen ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (type-range! this::J2SParen)
+(define-walk-method (type-range! this::J2SParen tymap)
    (call-default-walker)
    (with-access::J2SParen this (expr type)
       (with-access::J2SExpr expr ((etype type))
@@ -1527,11 +1525,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SRef ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (type-range! this::J2SRef)
+(define-walk-method (type-range! this::J2SRef tymap)
    (call-next-method)
-   (with-access::J2SRef this (decl type)
-      (with-access::J2SDecl decl (vtype id)
-	 (set! vtype (minimal-type vtype type))))
+   (with-access::J2SRef this (decl type range)
+      (when (interval? range)
+	 (let ((type (minimal-type type (interval->type range tymap))))
+	    (with-access::J2SDecl decl (vtype id key)
+	       (set! vtype (minimal-type vtype type))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1563,12 +1563,13 @@
 	 (with-access::J2SExpr e (range)
 	    (and (interval? range) (> (interval-min range) 0)))))
    
-   (with-access::J2SBinary this (op lhs rhs)
+   (with-access::J2SBinary this (op lhs rhs type)
       (when (and (eq? op '%) (positive-integer? rhs))
 	 (with-access::J2SExpr this (range)
 	    (with-access::J2SExpr rhs ((rr range))
 	       (with-access::J2SExpr lhs ((lr range))
 		  (set! op 'remainder)
+		  (set! type 'integer)
 		  (let ((nrange (if (positive-integer? lhs)
 				    rr
 				    (interval
@@ -1585,22 +1586,23 @@
    '((uint29 uint32)
      (index uint32)
      (length uint32)
-     (integer obj)
-     (number obj)))
+     (int53 number)
+     (integer number)
+     (number number)))
 
 (define typemap64
    '((uint29 uint32)
      (index uint32)
      (length uint32)
-     (integer bint)
-     (number obj)))
+     (integer number)
+     (number number)))
 
 ;*---------------------------------------------------------------------*/
 ;*    map-type ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (map-type type typemap)
    (let ((c (assq type typemap)))
-      (if (pair? c) (cdr c) type)))
+      (if (pair? c) (cadr c) type)))
 
 ;*---------------------------------------------------------------------*/
 ;*    map-types  ...                                                   */
@@ -1640,12 +1642,9 @@
 ;*    map-types ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SDecl tmap)
-   (with-access::J2SDecl this (utype vtype itype)
+   (with-access::J2SDecl this (utype vtype itype id)
       (set! itype (map-type itype tmap))
       (set! vtype (map-type vtype tmap))
       (set! utype (map-type utype tmap)))
    (call-default-walker))
-
-      
-      
 	 

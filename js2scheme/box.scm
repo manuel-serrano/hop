@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Tue Dec  5 05:47:37 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 09:35:43 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Box/unbox (respec. tag/untag) numerical values of escaping       */
@@ -99,3 +99,12 @@
    (with-access::J2SFun this (body)
       (box! body bint))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    box! ::J2SBinary ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (box! this::J2SBinary bint)
+   (with-access::J2SBinary this (op type)
+      (when (memq op '(>> >>> << ^ & BIT_OR))
+	 (set! type 'int32)))
+   (call-default-walker))

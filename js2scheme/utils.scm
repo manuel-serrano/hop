@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Dec  3 09:33:25 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 13:08:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -192,8 +192,9 @@
    
    (case type
       ((int30 int32) 'int32)
-      ((index uint29 uint32 length) 'uint32)
+      ((uint32) 'uint32)
       ((int53) (if (m64? conf) 'long 'obj))
+      ((bint) 'bint)
       ((unknown any number) 'obj)
       ((int30 fixnum ufixnum) 'long)
       ((integer) 'obj)
@@ -230,6 +231,11 @@
 	      ((eq? t2 'uint29) t1)
 	      ((eq? t2 'int32) t2)
 	      (else (if (type-integer? t2) 'integer 'number))))
+	  ((int53)
+	   (cond
+	      ((memq t2 '(uint29 uint32 int32)) t1)
+	      ((memq t2 '(integer number)) t2)
+	      (else 'any)))
 	  ((integer)
 	   (if (type-integer? t2) 'integer 'number))
 	  ((number)

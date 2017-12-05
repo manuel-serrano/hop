@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue Dec  5 05:54:32 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 14:24:47 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -29,7 +29,9 @@
 
    (cond-expand
       ((or bint30 bint32)
-       (export (+int53/32::obj ::obj ::obj)))))
+       (export
+	  (+int53/32::obj ::obj ::obj)
+	  ))))
 
 ;*---------------------------------------------------------------------*/
 ;*    +s32/overflow ...                                                */
@@ -84,3 +86,4 @@
 		 (+s32/overflow l32 r32)
 		 (+fl (tofl x) (tofl y))))
 	  (+fl (tofl x) (tofl y)))))
+

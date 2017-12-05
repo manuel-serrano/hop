@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Dec  4 12:21:49 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 15:27:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -30,7 +30,7 @@
    
    (export (js-init-number! ::JsGlobalObject)
 	   (js-number->jsnumber ::obj ::JsGlobalObject)
-
+	   
 	   (inline fixnums?::bool ::obj ::obj)
 	   (inline js-uint32->jsnum::obj ::uint32)
 	   
@@ -57,18 +57,27 @@
 	   (js-bitlsh::obj left right ::JsGlobalObject)
 	   (js-bitrsh::obj left right ::JsGlobalObject)
 	   (js-bitursh::obj left right ::JsGlobalObject)
-	   (js<::bool left right ::JsGlobalObject)
-	   (js>::bool left right ::JsGlobalObject)
-	   (js<=::bool left right ::JsGlobalObject)
-	   (js>=::bool left right ::JsGlobalObject)
+	   
+	   (<js::bool left right ::JsGlobalObject)
+	   (>js::bool left right ::JsGlobalObject)
+	   (<=js::bool left right ::JsGlobalObject)
+	   (>=js::bool left right ::JsGlobalObject)
 	   
 	   (js-bitand left right ::JsGlobalObject)
 	   (js-bitor left right ::JsGlobalObject)
 	   (js-bitxor left right ::JsGlobalObject)
 	   (js-bitnot expr ::JsGlobalObject)
-
+	   
 	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
-	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)))
+	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject))
+   
+   ;; to be removed
+   (export 
+      (js<::bool left right ::JsGlobalObject)
+      (js>::bool left right ::JsGlobalObject)
+      (js<=::bool left right ::JsGlobalObject)
+      (js>=::bool left right ::JsGlobalObject)))
+	   
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -781,11 +790,11 @@
       (js-uint32-tointeger (bit-urshu32 lnum (uint32->fixnum shiftcount)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js<                                                              */
+;*    <js                                                              */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.1       */
 ;*---------------------------------------------------------------------*/
-(define (js< left right %this::JsGlobalObject)
+(define (<js left right %this::JsGlobalObject)
    (if (and (number? left) (number? right))
        (< left right)
        (let* ((px (js-toprimitive left 'number %this))
@@ -797,11 +806,11 @@
 		 (< nx ny))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js>                                                              */
+;*    >js                                                              */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.2       */
 ;*---------------------------------------------------------------------*/
-(define (js> left right %this::JsGlobalObject)
+(define (>js left right %this::JsGlobalObject)
    (if (and (number? left) (number? right))
        (> left right)
        (let* ((px (js-toprimitive left 'number %this))
@@ -813,11 +822,11 @@
 		 (> nx ny))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js<=                                                             */
+;*    <=js                                                             */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.3       */
 ;*---------------------------------------------------------------------*/
-(define (js<= left right %this::JsGlobalObject)
+(define (<=js left right %this::JsGlobalObject)
    (if (and (number? left) (number? right))
        (<= left right)
        (let* ((px (js-toprimitive left 'number %this))
@@ -829,11 +838,11 @@
 		 (<= nx ny))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js>=                                                             */
+;*    >=js                                                             */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.4       */
 ;*---------------------------------------------------------------------*/
-(define (js>= left right %this::JsGlobalObject)
+(define (>=js left right %this::JsGlobalObject)
    (if (and (number? left) (number? right))
        (>= left right)
        (let* ((px (js-toprimitive left 'number %this))
@@ -880,6 +889,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8       */
 ;*---------------------------------------------------------------------*/
 (define (js-bitnot expr %this)
+   (tprint "JS-BITNOT expr=" expr " " (typeof expr))
    (let ((num (int32->elong (js-toint32 expr %this))))
       (js-int32-tointeger (elong->int32 (bit-notelong num)))))
 
@@ -921,3 +931,19 @@
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-end!)
+
+
+;*---------------------------------------------------------------------*/
+;*    TO BE REMOVED                                                    */
+;*---------------------------------------------------------------------*/
+(define (js< left right %this::JsGlobalObject)
+   (<js left right %this))
+
+(define (js> left right %this::JsGlobalObject)
+   (>js left right %this))
+
+(define (js<= left right %this::JsGlobalObject)
+   (<=js left right %this))
+
+(define (js>= left right %this::JsGlobalObject)
+   (>=js left right %this))

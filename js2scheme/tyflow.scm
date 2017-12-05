@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Dec  4 15:46:22 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 09:50:54 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -106,8 +106,6 @@
 				       (loop (+fx i 1)))))
 			      (loop (+fx i 1)))))
 		   (loop (+fx i 1))))))
-      (unless (config-get args :optim-cast)
-	 (force-type! this 'index 'integer))
       (unless (config-get args :optim-range)
 	 (force-unary-type! this))
       ;; cleanup the ast use count and remove obviously useless definitions
@@ -1693,7 +1691,7 @@
 ;*    force-type! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SFun from to)
-   (with-access::J2SFun this (rtype params)
+   (with-access::J2SFun this (rtype)
       (when (eq? rtype from) (set! rtype to)))
    (call-default-walker))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Dec  4 20:26:21 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 16:39:20 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -185,7 +185,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SNumber totype)
    (with-access::J2SNumber this (type)
-      (if (memq totype '(uint29 int30 uint30 int32 uint32 integer number))
+      (if (memq totype '(uint29 int30 uint30 int32 uint32 integer number any))
 	  (begin
 	     (set! type totype)
 	     this)
@@ -228,6 +228,7 @@
    (with-access::J2SCall this (fun)
       (cond
 	 ((isa? fun J2SFun)
+	  (set! fun (type-cast! fun '*))
 	  (known-fun this fun))
 	 ((isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
@@ -239,6 +240,14 @@
 		 (unknown-fun this)))))
 	 (else
 	  (unknown-fun this)))))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SNew ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SNew totype)
+   (with-access::J2SNew this (args)
+      (set! args (map! (lambda (a) (type-cast! a 'any)) args))
+      (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SReturn ...                                       */
@@ -253,7 +262,9 @@
 	     (set! expr (type-cast! expr '*)))
 	    ((isa? from J2SExpr)
 	     (with-access::J2SExpr from (type)
-		(set! expr (type-cast! expr type)))))
+		(set! expr (type-cast! expr type))))
+	    (else
+	     (set! expr (type-cast! expr '*))))
 	 this)))
 
 ;*---------------------------------------------------------------------*/
@@ -286,7 +297,6 @@
 ;*    type-cast! ::J2SBinary ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SBinary totype)
-(define t #f)
    (with-access::J2SBinary this (op lhs rhs type hint)
       (case op
 	 ((>> <<)

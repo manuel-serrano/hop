@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Dec  4 16:02:18 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 16:03:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -117,6 +117,7 @@
      (uint32
 	((uint29 ,js-id)
 	 (int32 ,js-uint32->int32)
+	 (int53 uint32->fixnum)
 	 (number js-uint32-tointeger)
 	 (bool ,js-uint32->bool)
 	 (any js-uint32-tointeger)))
@@ -141,10 +142,9 @@
 	 (uint32 js-int53-touint32)
 	 (number js-int53-tointeger)
 	 (any js-int53-tointeger)))
-     (integer
-	((int32 ,js->int32)
-	 (uint32 ,js->uint32)
-	 (number ,js-id)))
+     (bint
+	((int32 fixnum->int32)
+	 (uint32 fixnum->uint32)))
      (number
 	((int32 ,js->int32)
 	 (uint32 ,js->uint32)))
@@ -1165,7 +1165,7 @@
 	       ((usage? '(ref get new set) usage)
 		(let ((fun (jsfun->lambda val mode return conf
 			      `(js-get ,ident 'prototype %this) #f))
-		      (tmp (j2s-fast-id id)))
+		      (tmp (type-ident (j2s-fast-id id) vtype)))
 		   `((,tmp ,fun)
 		     (,var ,(j2sfun->scheme val tmp tmp mode return conf)))))
 	       ((memq 'call usage)
@@ -2599,7 +2599,7 @@
 		   (rhs (instantiate::J2SNumber
 			   (loc loc)
 			   (val inc)
-			   (type 'int30)))
+			   (type 'int32)))
 		   (field (if pro (J2SHopRef pro) field))
 		   (scmlhs (j2s-scheme oacc mode return conf hint totype)))
 	       (cond
