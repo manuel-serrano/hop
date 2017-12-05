@@ -3,22 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Dec  4 19:54:18 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 05:54:32 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
-;*    -------------------------------------------------------------    */
-;*    On 32bit platforms the JS types are mapped to SCM types          */
-;*    as follows:                                                      */
-;*      int29   -> int32                                               */
-;*      uint29  -> uint32                                              */
-;*      int32   -> int32                                               */
-;*      uint32  -> uint32                                              */
-;*      index   -> uint32                                              */
-;*      length  -> uint32                                              */
-;*      int53   -> obj                                                 */
-;*      integer ->                                                     */
-;*      number  -> obj                                                 */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -68,6 +56,10 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    +int53/32 ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    This function is the compiler fallback used when it finds no     */
+;*    specialized addition function. In practice it should hardly      */
+;*    be called.                                                       */
 ;*---------------------------------------------------------------------*/
 (define (+int53/32 x y)
    
@@ -85,12 +77,10 @@
 	 ((uint32? x) (uint32->flonum x))
 	 (else x)))
    
-   (let ((l32 (toint32 left)))
+   (let ((l32 (toint32 x)))
       (if l32
-	  (let ((r32 (toint32 right)))
+	  (let ((r32 (toint32 y)))
 	     (if r32
-		 (+s32/overflor l32 r32)
-		 (+fl (tofl left) (tofl right))))
-	  (+fl (tofl left) (tofl right))))
-   
-   (+fx (tofx x) (tofx y)))   
+		 (+s32/overflow l32 r32)
+		 (+fl (tofl x) (tofl y))))
+	  (+fl (tofl x) (tofl y)))))

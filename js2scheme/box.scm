@@ -3,13 +3,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sun Dec  3 06:09:57 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 05:47:37 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    Box/unbox (respec. tag/untag) numerical values.                  */
-;*    -------------------------------------------------------------    */
-;*    This stage replaces on 32 bit platforms INT32 function           */
-;*    arguments and return values of escaping functions with INTEGER.  */
+;*    Box/unbox (respec. tag/untag) numerical values of escaping       */
+;*    functions.                                                       */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -43,73 +41,61 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-box! this args)
    (when (isa? this J2SProgram)
-      (unless (or (config-get args :int64 #f)
-		  (=fx (config-get args :long-size 0) 64))
-	 ;; no boxing for 32bit integers on 64bit platforms
-	 (j2s-box-program! this args))
+      (let ((bint (if (=fx (config-get args :long-size 0) 64) 'bint 'obj)))
+	 (j2s-box-program! this bint))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-box-program! ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (j2s-box-program! this::J2SProgram args)
+(define (j2s-box-program! this::J2SProgram bint)
    (with-access::J2SProgram this (decls nodes)
-      (for-each box! decls)
-      (for-each box! nodes)
+      (for-each (lambda (d) (box! d bint)) decls)
+      (for-each (lambda (d) (box! d bint)) nodes)
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    box! ::J2SNode ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (box! this::J2SNode)
+(define-walk-method (box! this::J2SNode bint)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    box ...                                                          */
 ;*---------------------------------------------------------------------*/
-(define (box type)
-   (if (memq type '(int32 uint32)) 'integer type))
+(define (box type bint)
+   (if (memq type '(int32 uint32)) bint type))
 
 ;*---------------------------------------------------------------------*/
 ;*    box-function! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (box-function! this::J2SFun)
+(define (box-function! this::J2SFun bint)
    (with-access::J2SFun this (params rtype)
-      (set! rtype (box rtype))
+      (set! rtype (box rtype bint))
       (for-each (lambda (arg)
 		   (with-access::J2SDecl arg (utype vtype itype)
-		      (set! utype (box utype))
-		      (set! itype (box itype))
-		      (set! vtype (box vtype))))
+		      (set! utype (box utype bint))
+		      (set! itype (box itype bint))
+		      (set! vtype (box vtype bint))))
 	 params)
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    box! ::J2SDeclFun ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (box! this::J2SDeclFun)
+(define-walk-method (box! this::J2SDeclFun bint)
    (with-access::J2SDeclFun this (usage val id)
       (unless (only-usage? '(init call) usage)
-	 (box-function! val))
+	 (box-function! val bint))
       (with-access::J2SFun val (body)
-	 (box! body))
+	 (box! body bint))
       this))
 	  
 ;*---------------------------------------------------------------------*/
 ;*    box! ::J2SFun ...                                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (box! this::J2SFun)
-   (box-function! this)
+(define-walk-method (box! this::J2SFun bint)
+   (box-function! this bint)
    (with-access::J2SFun this (body)
-      (box! body))
+      (box! body bint))
    this)
-
-;*---------------------------------------------------------------------*/
-;*    box! ::J2SAssig ...                                              */
-;*---------------------------------------------------------------------*/
-(define-walk-method (box! this::J2SAssig)
-   (with-access::J2SAssig this (lhs rhs type)
-      (set! rhs (box! rhs))
-      (unless (isa? lhs J2SRef)
-	 (set! type (box type)))
-      this))

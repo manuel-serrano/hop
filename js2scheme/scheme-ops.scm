@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec  4 20:30:43 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 05:53:46 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1155,26 +1155,25 @@
 	    `(+int53/32 ,left ,right))))
 
    (define (add-int53/64 loc type lhs rhs mode return conf hint totype)
-      (binop lhs rhs mode return conf hint 'integer
+      (binop lhs rhs mode return conf hint '*
 	 (lambda (left right)
 	    (let ((tl (j2s-type-ref lhs))
 		  (tr (j2s-type-ref rhs)))
 	       (cond
-		  ((and (memq tl '(uint29 index length uint32))
-			(memq tr '(uint29 index length uint32)))
+		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
 		   `(uint32->fixnum (+u32 ,left ,right)))
-		  ((and (eq? tl 'number) (eq? tr 'uint29))
+		  ((and (eq? tl 'number) (eq? tr 'uint32))
 		   `(if (fixnum? ,left)
 			(+fx ,left (uint32->fixnum ,right))
 			(js+ ,left (uint32->fixnum ,right) %this)))
 		  ((and (eq? tl 'int32) (eq? tr 'int32))
 		   `(+fx (int32->fixnum ,left) (int32->fixnum ,right)))
-		  ((and (eq? tl 'int32) (eq? tr 'uint29))
-		   `(+fx (int32->fixnum ,left) (uint32->fixnum ,right)))
-		  ((and (eq? tl 'int32) (memq tr '(index uint32)))
+		  ((and (eq? tl 'int32) (eq? tr 'uint32))
 		   `(+fx (int32->fixnum ,left) (uint32->fixnum ,right)))
 		  ((and (eq? tl 'int53) (eq? tr 'int32))
 		   `(js+fx64 ,left (int32->fixnum ,right)))
+		  ((and (eq? tl 'int53) (eq? tr 'int53))
+		   `(js+fx64 ,left ,right))
 		  (else
 		   `(+int53/64 ,left ,right)))))))
       

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Dec  4 14:28:53 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 05:48:32 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -227,8 +227,8 @@
 
 	   (class J2SHopRef::J2SExpr
 	      (id::symbol read-only)
-	      (itype::symbol read-only (default 'any))
-	      (rtype::symbol read-only (default 'any))
+	      (itype::symbol (default 'any))
+	      (rtype::symbol (default 'any))
 	      (module read-only (default #f)))
 
 	   (class J2SLetRef::J2SRef)

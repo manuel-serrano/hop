@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Dec  4 13:18:08 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 05:52:10 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -68,7 +68,10 @@
 	    (j2s-range-type-program! this args))
 	 ;; optimize operators according to ranges
 	 (when (>=fx (config-get args :optim 0) 2)
-	    (j2s-range-opt-program! this args)))
+	    (j2s-range-opt-program! this args))
+	 ;; map number types to target types
+	 (map-types this 
+	    (if (=fx (config-get args :long-size 0) 64) typemap64 typemap32)))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -1574,3 +1577,75 @@
 		     (set! range nrange)))))))
    
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    typemapXX ...                                                    */
+;*---------------------------------------------------------------------*/
+(define typemap32
+   '((uint29 uint32)
+     (index uint32)
+     (length uint32)
+     (integer obj)
+     (number obj)))
+
+(define typemap64
+   '((uint29 uint32)
+     (index uint32)
+     (length uint32)
+     (integer bint)
+     (number obj)))
+
+;*---------------------------------------------------------------------*/
+;*    map-type ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (map-type type typemap)
+   (let ((c (assq type typemap)))
+      (if (pair? c) (cdr c) type)))
+
+;*---------------------------------------------------------------------*/
+;*    map-types  ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    Map compiler types to actual target types (i.e., maps uint29     */
+;*    to uint32, length to uint32, intege to bint, etc...).            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SNode tmap)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SExpr ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SExpr tmap)
+   (with-access::J2SExpr this (type)
+      (set! type (map-type type tmap)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SFun ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SFun tmap)
+   (with-access::J2SFun this (rtype)
+      (set! rtype (map-type rtype tmap)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SHopRef ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SHopRef tmap)
+   (with-access::J2SHopRef this (itype rtype)
+      (set! itype (map-type itype tmap))
+      (set! rtype (map-type rtype tmap)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SDecl ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SDecl tmap)
+   (with-access::J2SDecl this (utype vtype itype)
+      (set! itype (map-type itype tmap))
+      (set! vtype (map-type vtype tmap))
+      (set! utype (map-type utype tmap)))
+   (call-default-walker))
+
+      
+      
+	 

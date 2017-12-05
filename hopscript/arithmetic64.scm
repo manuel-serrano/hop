@@ -3,28 +3,16 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Dec  4 19:54:37 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 05:54:41 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
-;*    -------------------------------------------------------------    */
-;*    On 32bit platforms the JS types are mapped to SCM types          */
-;*    as follows:                                                      */
-;*      int29   -> int32                                               */
-;*      uint29  -> uint32                                              */
-;*      int32   -> int32                                               */
-;*      uint32  -> uint32                                              */
-;*      index   -> uint32                                              */
-;*      length  -> uint32                                              */
-;*      int53   -> bint                                                */
-;*      integer ->                                                     */
-;*      number  -> obj                                                 */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hopscript_arithmetic32
+(module __hopscript_arithmetic64
 
    (library hop)
 
@@ -45,6 +33,10 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    +int53/64 ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    This function is the compiler fallback used when it finds no     */
+;*    specialized addition function. In practice it should hardly      */
+;*    be called.                                                       */
 ;*---------------------------------------------------------------------*/
 (define (+int53/64 x y)
    
