@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Dec  5 09:55:55 2017 (serrano)                */
+;*    Last change :  Wed Dec  6 19:29:31 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -19,7 +19,8 @@
 	   __js2scheme_js
 	   __js2scheme_stmtassign
 	   __js2scheme_compile
-	   __js2scheme_stage)
+	   __js2scheme_stage
+	   __js2scheme_scheme-cast)
    
    (export j2s-unresolved-put-workspace
            j2s-unresolved-del-workspace
@@ -68,8 +69,8 @@
 	   (js-object-get-name/cache::symbol clevel::long)
 	   (js-object-put-name/cache!::symbol clevel::long)
 	   
-	   (j2s-get loc obj tyobj prop typrop cache #!optional (clevel 100))
-	   (j2s-put! loc obj tyobj prop val mode cache #!optional (clevel 100))))
+	   (j2s-get loc obj tyobj prop typrop tyval cache #!optional (clevel 100))
+	   (j2s-put! loc obj tyobj prop typrop val tyval mode cache #!optional (clevel 100))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -464,7 +465,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-get loc obj tyobj prop typrop cache #!optional (clevel 100))
+(define (j2s-get loc obj tyobj prop typrop tyval cache #!optional (clevel 100))
 
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
@@ -477,14 +478,16 @@
 		  ((js-string->jsstring ?str) str)
 		  (else prop))))
       (cond
-	 ((> (bigloo-debug) 0)
+	 ((and (> (bigloo-debug) 0) (not (eq? tyval 'uint32)))
 	  (if (string? prop)
 	      `(js-get/debug ,obj ',(string->symbol prop) %this ',loc)
 	      `(js-get/debug ,obj ,prop %this ',loc)))
 	 ((eq? tyobj 'array)
-	  (if (type-number? typrop)
-	      `(js-array-ref ,obj ,prop %this)
-	      `(js-get ,obj ,prop %this)))
+	  (case typrop
+	     ((uint32)
+	      `(js-array-index-ref ,obj ,prop %this))
+	     (else
+	      `(js-array-ref ,obj ,prop %this))))
 	 ((eq? tyobj 'string)
 	  (cond
 	     ((type-uint32? typrop)
@@ -499,13 +502,17 @@
 			 (if (>=fx ,tmp 0)
 			     (js-jsstring-ref ,obj (fixnum->uint32 ,tmp))
 			     (js-undefined))))))
+	     ((and (string=? prop "length") (eq? tyval 'uint32))
+	      `(js-jsstring-length ,obj))
 	     (else
 	      `(js-get-string ,obj ,prop %this))))
 	 (cache
 	  (cond
 	     ((string? prop)
 	      (if (string=? prop "length")
-		  `(js-get-length ,obj ,(js-pcache cache) %this)
+		  (if (eq? tyval 'uint32)
+		      `(js-get-lengthu32 ,obj ,(js-pcache cache) %this)
+		      `(js-get-length ,obj ,(js-pcache cache) %this))
 		  (case tyobj
 		     ((object this)
 		      `(,(js-object-get-name/cache clevel) ,obj
@@ -522,7 +529,9 @@
 	      `(js-get ,obj ,prop %this))))
 	 ((string? prop)
 	  (if (string=? prop "length")
-	      `(js-get-length ,obj #f %this)
+	      (if (eq? tyval 'uint32)
+		  `(js-get-length ,obj #f %this)
+		  `(js-get-lengthu32 ,obj #f %this))
 	      `(js-get ,obj ',(string->symbol prop) %this)))
 	 (else
 	  `(js-get ,obj ,prop %this)))))
@@ -530,7 +539,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj tyobj prop val mode cache #!optional (clevel 100))
+(define (j2s-put! loc obj tyobj prop typrop val tyval mode cache #!optional (clevel 100))
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)
@@ -542,21 +551,30 @@
 	      `(js-put/debug! ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
 	      `(js-put/debug! ,obj ,prop ,val ,mode %this ',loc)))
 	 ((eq? tyobj 'array)
-	  `(js-array-set! ,obj ,prop ,val ,(strict-mode? mode) %this))
+	  (case typrop
+	     ((uint32)
+	      `(js-array-index-set! ,obj ,prop ,val ,(strict-mode? mode) %this))
+	     (else
+	      `(js-array-set! ,obj ,prop ,val ,(strict-mode? mode) %this))))
 	 (cache
 	  (cond
 	     ((string? prop)
 	      (if (string=? prop "length")
-		  `(js-put-length! ,obj ,val ,mode ,(js-pcache cache) %this)
+		  `(js-put-length! ,obj ,val
+		      ,mode ,(js-pcache cache) %this)
 		  (begin
 		     (case tyobj
 			((object global this)
 			 `(,(js-object-put-name/cache! clevel)
 			   ,obj
-			     ',(string->symbol prop) ,val ,mode ,(js-pcache cache) %this))
+			   ',(string->symbol prop)
+			   ,val
+			   ,mode ,(js-pcache cache) %this))
 			(else
 			 `(js-put-name/cache! ,obj
-			     ',(string->symbol prop) ,val ,mode ,(js-pcache cache) %this))))))
+			     ',(string->symbol prop)
+			     ,val
+			     ,mode ,(js-pcache cache) %this))))))
 	     ((or (number? prop) (>=fx clevel 10))
 	      `(js-put! ,obj ,prop ,val ,mode %this))
 	     (else
@@ -566,5 +584,5 @@
 	     ((string? prop)
 	      `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
 	     (else
-	      `(js-put! ,obj ,prop ,val ,mode %this)))))))
+	      `(js-put! ,obj ,prop ,prop ,mode %this)))))))
 

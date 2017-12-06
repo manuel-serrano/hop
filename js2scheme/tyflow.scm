@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Dec  5 09:50:54 2017 (serrano)                */
+;*    Last change :  Wed Dec  6 07:06:19 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1062,7 +1062,8 @@
 	 (typing expr env fix)
 	 (let ((tye (case op
 		       ((+) (if (non-zero-integer? ty expr) 'integer 'number))
-		       ((~ -) (if (non-zero-integer? ty expr) 'integer 'number))
+		       ((-) (if (non-zero-integer? ty expr) 'integer 'number))
+		       ((~) 'integer)
 		       ((!) 'bool)
 		       ((typeof) 'string)
 		       (else 'any))))

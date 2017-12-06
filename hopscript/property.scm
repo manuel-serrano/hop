@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Nov 26 10:06:15 2017 (serrano)                */
+;*    Last change :  Wed Dec  6 16:41:09 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -89,6 +89,7 @@
 	   (js-get-notfound ::obj ::obj ::JsGlobalObject)
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
 	   (generic js-get-length ::obj ::obj ::JsGlobalObject)
+	   (generic js-get-lengthu32 ::obj ::obj ::JsGlobalObject)
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
@@ -820,6 +821,16 @@
 		  (string->symbol (llong->string (uint32->llong p)))))
 	     (else
 	      (fixnum->pname (uint32->fixnum p)))))
+	 ((int32? p)
+	  (cond-expand
+	     (bint30
+	      (if (and (>s32 p 0) (<s32 p (fixnum->int32 (bit-lsh 1 29))))
+		  (fixnum->pname (int32->fixnum p))
+		  (string->symbol (llong->string (int32->llong p)))))
+	     (bint32
+	      (string->symbol (fixnum->string (int32->fixnum p))))
+	     (else
+	      (fixnum->pname (int32->fixnum p)))))
 	 ((isa? p JsSymbolLiteral)
 	  p)
 	 ((isa? p JsSymbol)
@@ -1326,6 +1337,17 @@
    (if cache
        (js-get-name/cache o 'length cache %this)
        (js-get o 'length %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-lengthu32::uint32 ::obj ...                               */
+;*---------------------------------------------------------------------*/
+(define-generic (js-get-lengthu32 o::obj cache %this::JsGlobalObject)
+   (let ((l (if cache
+		(js-get-name/cache o 'length cache %this)
+		(js-get o 'length %this))))
+      (if (fixnum? l)
+	  (fixnum->uint32 l)
+	  (flonum->uint32 l))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get/cache ...                                                 */

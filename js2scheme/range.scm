@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Dec  5 14:49:35 2017 (serrano)                */
+;*    Last change :  Wed Dec  6 21:20:39 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -684,8 +684,6 @@
 	 (max (interval-min intv) *min-int32*)
 	 (min (interval-max intv) *max-int32*)))
 
-   (tprint "interval-bitand...")
-	 
    (when (and (interval? left) (interval? right))
       (if (or (> (interval-max left) 0) (> (interval-max right) 0))
 	  (let* ((mi (min (interval-min left) (interval-min right)))
@@ -808,8 +806,10 @@
 ;*    node-range ::J2SParen ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SParen env::pair-nil fun fix::struct)
-   (with-access::J2SParen this (expr)
-      (node-range expr env fun fix)))
+   (with-access::J2SParen this (expr range)
+      (multiple-value-bind (intv env)
+	 (node-range expr env fun fix)
+	 (node-interval-set! this env fix intv))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDataPropertyInit ...                             */
@@ -1078,7 +1078,7 @@
 		      ((>>>)
 		       (node-interval-set! this env fix
 			  (interval-ushiftr intl intr)))
-		      ((^ BIT_OR ~)
+		      ((^ BIT_OR)
 		       (node-interval-set! this env fix
 			  *int32-intv*))
 		      ((&)
@@ -1583,7 +1583,8 @@
 ;*    typemapXX ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define typemap32
-   '((uint29 uint32)
+   '((int29 int32)
+     (uint29 uint32)
      (index uint32)
      (length uint32)
      (int53 number)
@@ -1591,7 +1592,8 @@
      (number number)))
 
 (define typemap64
-   '((uint29 uint32)
+   '((int29 int32)
+     (uint29 uint32)
      (index uint32)
      (length uint32)
      (integer number)
@@ -1648,3 +1650,20 @@
       (set! utype (map-type utype tmap)))
    (call-default-walker))
 	 
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SBinary ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SBinary tmap)
+   (with-access::J2SBinary this (op type)
+      (when (memq op '(>> >>> << BIT_OT ^ &))
+	 (set! type 'int32)))
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    map-types ::J2SUnary ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SUnary tmap)
+   (with-access::J2SUnary this (op type)
+      (when (eq? op '~)
+	 (set! type 'int32)))
+   (call-default-walker))

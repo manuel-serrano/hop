@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Dec  5 15:27:16 2017 (serrano)                */
+;*    Last change :  Wed Dec  6 05:37:27 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -54,19 +54,10 @@
 	   (js-%$$NN left right)
 	   (js-%$$NZ left right)
 	   (inline js-%u32 ::uint32 ::uint32)
-	   (js-bitlsh::obj left right ::JsGlobalObject)
-	   (js-bitrsh::obj left right ::JsGlobalObject)
-	   (js-bitursh::obj left right ::JsGlobalObject)
-	   
 	   (<js::bool left right ::JsGlobalObject)
 	   (>js::bool left right ::JsGlobalObject)
 	   (<=js::bool left right ::JsGlobalObject)
 	   (>=js::bool left right ::JsGlobalObject)
-	   
-	   (js-bitand left right ::JsGlobalObject)
-	   (js-bitor left right ::JsGlobalObject)
-	   (js-bitxor left right ::JsGlobalObject)
-	   (js-bitnot expr ::JsGlobalObject)
 	   
 	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
 	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject))
@@ -757,39 +748,6 @@
        (remainderu32 lnum rnum)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-bitlsh ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.1       */
-;*---------------------------------------------------------------------*/
-(define (js-bitlsh left right %this)
-   (let* ((lnum (js-toint32 left %this))
-	  (rnum (js-touint32 right %this))
-	  (shiftcount (bit-andu32 rnum #u32:31)))
-      (js-int32-tointeger (bit-lshu32 lnum (uint32->fixnum shiftcount)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-bitrsh ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.2       */
-;*---------------------------------------------------------------------*/
-(define (js-bitrsh left right %this)
-   (let* ((lnum (js-toint32 left %this))
-	  (rnum (js-touint32 right %this))
-	  (shiftcount (bit-andu32 rnum #u32:31)))
-      (js-int32-tointeger (bit-rshs32 lnum (uint32->fixnum shiftcount)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-bitursh ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.3       */
-;*---------------------------------------------------------------------*/
-(define (js-bitursh left right %this)
-   (let* ((lnum (js-touint32 left %this))
-	  (rnum (js-touint32 right %this))
-	  (shiftcount (bit-andu32 rnum #u32:31)))
-      (js-uint32-tointeger (bit-urshu32 lnum (uint32->fixnum shiftcount)))))
-
-;*---------------------------------------------------------------------*/
 ;*    <js                                                              */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.1       */
@@ -852,46 +810,6 @@
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (>= nx ny))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-bitand ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
-;*---------------------------------------------------------------------*/
-(define (js-bitand left right %this)
-   (let* ((lnum (int32->elong (js-toint32 left %this)))
-	  (rnum (int32->elong (js-toint32 right %this))))
-      (js-int32-tointeger (elong->int32 (bit-andelong lnum rnum)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-bitor ...                                                     */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
-;*---------------------------------------------------------------------*/
-(define (js-bitor left right %this)
-   (let* ((lnum (int32->elong (js-toint32 left %this)))
-	  (rnum (int32->elong (js-toint32 right %this))))
-      (js-int32-tointeger (elong->int32 (bit-orelong lnum rnum)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-bitxor ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
-;*---------------------------------------------------------------------*/
-(define (js-bitxor left right %this)
-   (let* ((lnum (int32->elong (js-toint32 left %this)))
-	  (rnum (int32->elong (js-toint32 right %this))))
-      (js-int32-tointeger (elong->int32 (bit-xorelong lnum rnum)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-bitnot ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8       */
-;*---------------------------------------------------------------------*/
-(define (js-bitnot expr %this)
-   (tprint "JS-BITNOT expr=" expr " " (typeof expr))
-   (let ((num (int32->elong (js-toint32 expr %this))))
-      (js-int32-tointeger (elong->int32 (bit-notelong num)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsnumber-tostring ...                                         */

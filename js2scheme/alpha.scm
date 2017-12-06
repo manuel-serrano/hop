@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Fri Dec  1 09:12:47 2017 (serrano)                */
+;*    Last change :  Wed Dec  6 21:28:09 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -237,6 +237,11 @@
 (define-method (alpha this::J2SLetBlock)
    (with-access::J2SLetBlock this (decls nodes)
       (let ((ndecls (map j2sdecl-duplicate decls)))
+	 (for-each (lambda (d)
+		      (when (isa? d J2SDeclInit)
+			 (with-access::J2SDeclInit d (val)
+			    (set! val (j2s-alpha val decls ndecls)))))
+	    ndecls)
 	 (duplicate::J2SLetBlock this
 	    (decls ndecls)
 	    (nodes (map (lambda (n) (j2s-alpha n decls ndecls)) nodes))))))
@@ -281,7 +286,6 @@
    (if (isa? p J2SDeclInit)
        (with-access::J2SDeclInit p (val)
 	  (duplicate::J2SDeclInit p
-	     (val (alpha val))
 	     (key (ast-decl-key))))
        (duplicate::J2SDecl p
 	  (key (ast-decl-key)))))

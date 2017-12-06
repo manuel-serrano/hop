@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Dec  4 15:43:22 2017 (serrano)                */
+;*    Last change :  Wed Dec  6 16:38:05 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1081,6 +1081,8 @@
 	   false))
       ((uint32? p)
        p)
+      ((int32? p)
+       (int32->uint32 p))
       ((isa? p JsNumber)
        (with-access::JsNumber p (val) (js-toindex val)))
       ((js-jsstring? p)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Dec  4 11:07:56 2017 (serrano)                */
+;*    Last change :  Tue Dec  5 18:48:54 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -1027,10 +1027,22 @@
    (uint32->fixnum (js-jsstring-codeunit-length o)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-get-length ::JsStringLiteral ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-lengthu32 o::JsStringLiteral cache %this)
+   (js-jsstring-codeunit-length o))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsStringLiteralASCII ...                         */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-length o::JsStringLiteralASCII cache %this)
    (js-jsstring-lengthfx o))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-lengthu32 ::JsStringLiteralASCII ...                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-lengthu32 o::JsStringLiteralASCII cache %this)
+   (js-string-literal-length o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put-string! ...                                               */

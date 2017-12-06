@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Tue Dec  5 14:43:49 2017 (serrano)                */
+;*    Last change :  Wed Dec  6 20:47:54 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    JS mostly machine dependent arithmetic operations.               */
+;*    JS arithmetic operations (see 32 and 64 implementations).        */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -25,19 +25,40 @@
 	   __hopscript_error
 	   __hopscript_property
 	   __hopscript_private
-	   __hopscript_public)
+	   __hopscript_public
+	   __hopscript_arithmetic32
+	   __hopscript_arithmetic64)
 
-   (export (inline js-int29-tointeger::bint ::int32)
-	   (inline js-uint29-tointeger::bint ::uint32)
+   (from   __hopscript_arithmetic32 __hopscript_arithmetic64)
+
+   (export (+js::obj ::obj ::obj ::JsGlobalObject)
+	   (-js::obj ::obj ::obj ::JsGlobalObject)
+	   (*js::obj ::obj ::obj ::JsGlobalObject)
+	   (/js::obj ::obj ::obj ::JsGlobalObject)
+
+	   (inline /pow2s32::int32 x::int32 y::long)
+	   (inline /pow2fx::long n::long k::long)
+
+	   (js-toint32::int32 ::obj ::JsGlobalObject)
+	   (js-touint32::uint32 ::obj ::JsGlobalObject)
+
+;* 	   (bit-lshjs::obj ::obj ::obj ::JsGlobalObject)               */
+;* 	   (bit-rshjs::obj ::obj ::obj ::JsGlobalObject)               */
+;* 	   (bit-urshjs::obj ::obj ::obj ::JsGlobalObject)              */
+;* 	                                                               */
+;*                                                                     */
+;* 	   (bit-andjs::obj ::obj ::obj ::JsGlobalObject)               */
+;* 	   (bit-orjs::obj ::obj ::obj ::JsGlobalObject)                */
+;* 	   (bit-xorjs::obj ::obj ::obj ::JsGlobalObject)               */
+;* 	   (bit-notjs::obj ::obj ::JsGlobalObject)                     */
 	   
-	   (inline js-int32-tointeger::obj ::int32)
-	   (inline js-uint32-tointeger::obj ::uint32)
+	   )
 	   
-	   (js-int53-toint32::int32 ::obj)
+   
+   (export (js-int53-toint32::int32 ::obj)
 	   (js-int53-touint32::uint32 ::obj)
 	   
-	   (js-toint32::int32 ::obj ::JsGlobalObject)
-	   (js-touint32::uint32 obj %this))
+	   )
 
    (cond-expand
       ((or bint30 bint32)
@@ -52,46 +73,174 @@
        (error "arithmetic" "unknown integer format" #f))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-uint29-tointeger ...                                          */
+;*    toflonum ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-int29-tointeger::bint i::int32)
-   (int32->fixnum i))
+(define (toflonum r)
+   (cond
+      ((flonum? r) r)
+      ((fixnum? r) (fixnum->flonum r))
+      ((uint32? r) (uint32->flonum r))
+      ((int32? r) (int32->flonum r))
+      (else (error "toflonum" (format "Illegal number (~a)" (typeof r)) r))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-int29-tointeger ...                                           */
+;*    +js ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6       */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-uint29-tointeger::bint i::uint32)
-   (uint32->fixnum i))
+(define (+js x::obj y::obj %this)
+   (+/overflow
+      (if (number? x) x (js-tonumber y %this))
+      (if (number? y) y (js-tonumber y %this))))
+   
+;*---------------------------------------------------------------------*/
+;*    -js ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7       */
+;*---------------------------------------------------------------------*/
+(define (-js x::obj y::obj %this)
+   (-/overflow
+      (if (number? x) x (js-tonumber y %this))
+      (if (number? y) y (js-tonumber y %this))))
+   
+;*---------------------------------------------------------------------*/
+;*    *js ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
+;*---------------------------------------------------------------------*/
+(define (*js x::obj y::obj %this)
+   (*/overflow
+      (if (number? x) x (js-tonumber y %this))
+      (if (number? y) y (js-tonumber y %this))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-int32-tointeger ...                                           */
+;*    /js ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-int32-tointeger::obj i::int32)
-   (cond-expand
-      (bint30
-       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 28)))
-		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 28)))))
-	   (int32->fixnum i)
-	   (elong->flonum (uint32->elong i))))
-      (bint32
-       (if (and (<s32 i (fixnum->int32 (bit-lsh 1 30)))
-		(>=s32 i (fixnum->int32 (negfx (bit-lsh 1 30)))))
-	   (int32->fixnum i)
-	   (elong->flonum (uint32->elong i))))
-      (else
-       (int32->fixnum i))))
+(define (/js x::obj y::obj %this)
+   (let ((n1 (toflonum  (js-tonumber x %this)))
+	 (n2 (toflonum  (js-tonumber y %this))))
+      (/fl n1 n2)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-uint32-tointeger ...                                          */
+;*    /pow2s32 ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight (second edition), H. Warren J.r,            */
+;*    Chapter 10, section 10.1.                                        */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-uint32-tointeger::obj u::uint32)
-   (cond-expand
-      (bint30
-       (if (<u32 u (bit-lshu32 #u32:1 29))
-	   (uint32->fixnum u)
-	   (uint32->flonum u)))
-      (else
-       (uint32->fixnum u))))
+(define-inline (/pow2s32::int32 n::int32 k::long)
+   (/s32 n (bit-lsh 1 k)))
+
+;*---------------------------------------------------------------------*/
+;*    /pow2fx ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight (second edition), H. Warren J.r,            */
+;*    Chapter 10, section 10.1.                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (/pow2fx::long n::long k::long)
+   (/fx n (bit-lsh 1 k)))
+ 
+;*---------------------------------------------------------------------*/
+;*    js-toint32 ::obj ...                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
+;*---------------------------------------------------------------------*/
+(define (js-toint32::int32 obj %this)
+   (if (int32? obj) (tprint "PAS BONI ICI..."))
+   (if (number? obj)
+       (js-number-toint32 obj)
+       (js-number-toint32 (js-tonumber obj %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-touint32 ::obj ...                                            */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
+;*---------------------------------------------------------------------*/
+(define (js-touint32::uint32 obj %this)
+   (if (number? obj)
+       (js-number-touint32 obj)
+       (js-number-touint32 (js-tointeger obj %this))))
+
+
+
+
+
+
+
+
+;*---------------------------------------------------------------------*/
+;*    bit-lshjs ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.1       */
+;*---------------------------------------------------------------------*/
+(define (bit-lshjs x y %this)
+   (let* ((lnum (js-toint32 x %this))
+	  (rnum (js-touint32 y %this))
+	  (shiftcount (bit-andu32 rnum #u32:31)))
+      (js-int32-tointeger (bit-lshu32 lnum (uint32->fixnum shiftcount)))))
+
+;*---------------------------------------------------------------------*/
+;*    bit-rshjs ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.2       */
+;*---------------------------------------------------------------------*/
+(define (bit-rshjs x y %this)
+   (let* ((lnum (js-toint32 x %this))
+	  (rnum (js-touint32 y %this))
+	  (shiftcount (bit-andu32 rnum #u32:31)))
+      (js-int32-tointeger (bit-rshs32 lnum (uint32->fixnum shiftcount)))))
+
+;*---------------------------------------------------------------------*/
+;*    bit-urshjs ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.3       */
+;*---------------------------------------------------------------------*/
+(define (bit-urshjs x y %this)
+   (let* ((lnum (js-touint32 x %this))
+	  (rnum (js-touint32 y %this))
+	  (shiftcount (bit-andu32 rnum #u32:31)))
+      (js-uint32-tointeger (bit-urshu32 lnum (uint32->fixnum shiftcount)))))
+
+;*---------------------------------------------------------------------*/
+;*    bit-andjs ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
+;*---------------------------------------------------------------------*/
+(define (bit-andjs x y %this)
+   (let* ((lnum (int32->elong (js-toint32 x %this)))
+	  (rnum (int32->elong (js-toint32 y %this))))
+      (js-int32-tointeger (elong->int32 (bit-andelong lnum rnum)))))
+
+;*---------------------------------------------------------------------*/
+;*    bit-orjs ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
+;*---------------------------------------------------------------------*/
+(define (bit-orjs x y %this)
+   (let* ((lnum (int32->elong (js-toint32 x %this)))
+	  (rnum (int32->elong (js-toint32 y %this))))
+      (js-int32-tointeger (elong->int32 (bit-orelong lnum rnum)))))
+
+;*---------------------------------------------------------------------*/
+;*    bit-xorjs ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
+;*---------------------------------------------------------------------*/
+(define (bit-xorjs x y %this)
+   (let* ((lnum (int32->elong (js-toint32 x %this)))
+	  (rnum (int32->elong (js-toint32 y %this))))
+      (js-int32-tointeger (elong->int32 (bit-xorelong lnum rnum)))))
+
+;*---------------------------------------------------------------------*/
+;*    bit-notjs ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8       */
+;*---------------------------------------------------------------------*/
+(define (bit-notjs expr %this)
+   (tprint "JS-BITNOT expr=" expr " " (typeof expr))
+   (let ((num (int32->elong (js-toint32 expr %this))))
+      (js-int32-tointeger (elong->int32 (bit-notelong num)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-int53-tointeger ...                                           */
@@ -216,123 +365,6 @@
       (else
        (error "js-int53-toint32" "Illegal value" i))))
 
-;*---------------------------------------------------------------------*/
-;*    js-toint32 ::obj ...                                             */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
-;*---------------------------------------------------------------------*/
-(define (js-toint32::int32 obj %this)
-
-   (define (int64->int32::int32 obj::int64)
-      (cond-expand
-	 ((or bint30 bint32)
-	  (let* ((i::llong (int64->llong obj))
-		 (^31 (*llong #l8 (fixnum->llong (bit-lsh 1 28))))
-		 (^32 (*llong #l2 ^31))
-		 (posint (if (<llong i #l0) (+llong ^32 i) i))
-		 (int32bit (modulollong posint ^32))
-		 (n (if (>=llong int32bit ^31)
-			(-llong int32bit ^32)
-			int32bit)))
-	     (llong->int32 n)))
-	 (else
-	  (let* ((i::elong (int64->elong obj))
-		 (^31 (fixnum->elong (bit-lsh 1 31)))
-		 (^32 (fixnum->elong (bit-lsh 1 32)))
-		 (posint (if (<elong i #e0) (+elong ^32 i) i))
-		 (int32bit (moduloelong posint ^32))
-		 (n (if (>=elong int32bit ^31)
-			(-elong int32bit ^32)
-			int32bit)))
-	     (elong->int32 n)))))
-
-   (cond
-      ((int32? obj)
-       obj)
-      ((uint32? obj)
-       (uint32->int32 obj))
-      ((fixnum? obj)
-       (cond-expand
-	  ((or bint30 bint32)
-	   (fixnum->int32 obj))
-	  (bint61
-	   (if (and (<=fx obj (-fx (bit-lsh 1 31) 1))
-		    (>=fx obj (negfx (bit-lsh 1 31))))
-	       (fixnum->int32 obj)
-	       (let* ((^31 (bit-lsh 1 31))
-		      (^32 (bit-lsh 1 32))
-		      (posint (if (<fx obj 0) (+fx ^32 obj) obj))
-		      (int32bit (modulofx posint ^32))
-		      (n (if (>=fx int32bit ^31)
-			     (-fx int32bit ^32)
-			     int32bit)))
-		  (fixnum->int32 n))))
-	  (else
-	   (int64->int32 (fixnum->int64 obj)))))
-      ((flonum? obj)
-       (cond
-	  ((or (= obj +inf.0) (= obj -inf.0) (nanfl? obj))
-	   (fixnum->int32 0))
-	  ((<fl obj 0.)
-	   (let ((i (*fl -1. (floor (abs obj)))))
-	      (if (>=fl i (negfl (exptfl 2. 31.)))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))
-	  (else
-	   (let ((i (floor obj)))
-	      (if (<=fl i (-fl (exptfl 2. 31.) 1.))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))))
-      (else
-       (js-toint32 (js-tonumber obj %this) %this))))
-
-;*---------------------------------------------------------------------*/
-;*    js-touint32 ::obj ...                                            */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
-;*---------------------------------------------------------------------*/
-(define (js-touint32::uint32 obj %this)
-   
-   (define 2^32 (exptfl 2. 32.))
-   
-   (define (positive-double->uint32::uint32 obj::double)
-      (if (<fl obj 2^32)
-	  (flonum->uint32 obj)
-	  (flonum->uint32 (remainderfl obj 2^32))))
-
-   (define (double->uint32::uint32 obj::double)
-      (cond
-	 ((or (= obj +inf.0) (= obj -inf.0) (not (= obj obj)))
-	   #u32:0)
-	 ((<fl obj 0.)
-	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floor (abs obj))))))
-	 (else
-	  (positive-double->uint32 obj))))
-   
-   (cond
-      ((fixnum? obj)
-       (cond-expand
-	  (bint30
-	   (fixnum->uint32 obj))
-	  (bint32
-	   (int32->uint32 (fixnum->int32 obj)))
-	  (else
-	   (if (<=fx obj (-fx (bit-lsh 1 32) 1))
-	       (fixnum->uint32 obj)
-	       (let* ((^31 (bit-lsh 1 31))
-		      (^32 (bit-lsh 1 32))
-		      (posint (if (<fx obj 0) (+fx ^32 obj) obj))
-		      (int32bit (modulofx posint ^32)))
-		  (fixnum->uint32 int32bit))))))
-      ((uint32? obj)
-       (let ((r::uint32 obj)) r))
-      ((int32? obj)
-       (int32->uint32 obj))
-      ((flonum? obj)
-       (double->uint32 obj))
-      (else
-       (js-touint32 (js-tointeger obj %this) %this))))
-		  
 ;*---------------------------------------------------------------------*/
 ;*    +s32/safe ...                                                    */
 ;*---------------------------------------------------------------------*/
