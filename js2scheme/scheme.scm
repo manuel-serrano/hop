@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Dec  7 10:03:24 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 21:25:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -579,7 +579,8 @@
 (define-method (j2s-scheme this::J2SCast mode return conf hint totype)
    (with-access::J2SCast this (expr (to type))
       (with-access::J2SExpr expr ((from type))
-	 (j2s-cast (j2s-scheme expr mode return conf hint totype) from to))))
+	 (j2s-cast (j2s-scheme expr mode return conf hint totype)
+	    from (j2s-type-ref expr) to))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRef ...                                          */
@@ -2489,7 +2490,9 @@
 		   (lhs (duplicate::J2SAccess lhs
 			   (clevel (min cl clevel))
 			   (obj oref)
-			   (field (if pro (J2SHopRef pro) field)))))
+			   (field (if pro
+				      (J2SHopRef/type pro (j2s-type-ref field))
+				      field)))))
 	       (j2s-put! loc otmp (typeof-this obj conf)
 		  (or pro prov)
 		  (j2s-type-ref field)

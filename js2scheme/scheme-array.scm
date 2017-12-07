@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Dec  6 16:29:49 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 21:04:32 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -133,6 +133,18 @@
 			      ,scmarray ,scmalen 
 			      ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			      %this))))
+		  ((int32)
+		   (if amark
+		       `(JS-ARRAY-FIXNUM-MARK-REF ,scmobj
+			   (int32->fixnum ,scmfield)
+			   ,scmarray ,scmalen
+			   ,(j2s-decl-scheme-id amark)
+			   %this)
+		       `(JS-ARRAY-FIXNUM-FAST-REF ,scmobj
+			   (int32->fixnum ,scmfield)
+			   ,scmarray ,scmalen
+			   ,(j2s-decl-scheme-id amark)
+			   %this)))
 		  ((fixnum)
 		   (if amark
 		       `(JS-ARRAY-FIXNUM-MARK-REF ,scmobj ,scmfield
@@ -161,6 +173,11 @@
 	     `(js-array-index-ref ,(j2s-scheme obj mode return conf hint 'array)
 		 ,(j2s-scheme field mode return conf hint 'uint32)
 		 %this))
+	    ((int32)
+	     `(js-array-fixnum-ref ,(j2s-scheme obj mode return conf hint 'array)
+		 (int32->fixnum
+		    ,(j2s-scheme field mode return conf hint 'uint32))
+		 %this))
 	    ((fixnum)
 	     `(js-array-fixnum-ref ,(j2s-scheme obj mode return conf hint totype)
 		 ,(j2s-scheme field mode return conf hint totype)
@@ -181,9 +198,13 @@
 	  (aref this))
 	 ((is-fixnum? field conf)
 	  (aref/w-cache this))
-	 ((eq? (j2s-type-ref field) 'uin32)
+	 ((eq? (j2s-type-ref field) 'uint32)
 	  `(js-array-ref-ur ,(j2s-scheme obj mode return conf hint totype)
 	      ,(j2s-scheme field mode return conf hint totype)
+	      %this))
+	 ((eq? (j2s-type-ref field) 'int32)
+	  `(js-array-ref ,(j2s-scheme obj mode return conf hint totype)
+	      (int32->fixnum (j2s-scheme field mode return conf hint totype))
 	      %this))
 	 (else
 	  `(js-array-ref ,(j2s-scheme obj mode return conf hint totype)
@@ -238,6 +259,20 @@
 			      ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
 			      ,(strict-mode? mode)
 			      %this))))
+		  ((int32)
+		   (if amark
+		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj
+			   (int32->fixnum ,scmfield) ,scmrhs
+			   ,scmarray ,scmalen
+			   ,(j2s-decl-scheme-id amark)
+			   ,(strict-mode? mode)
+			   %this)
+		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj
+			   (int32->fixnum ,scmfield) ,scmrhs
+			   ,scmarray ,scmalen
+			   ,(map (lambda (d) (map j2s-decl-scheme-id d)) deps)
+			   ,(strict-mode? mode)
+			   %this)))
 		  ((int53)
 		   (if amark
 		       `(JS-ARRAY-FIXNUM-MARK-SET! ,scmobj ,scmfield ,scmrhs
@@ -271,6 +306,13 @@
 	       ((uint32)
 		`(js-array-index-set! ,(j2s-scheme obj mode return conf hint totype)
 		    ,(j2s-scheme field mode return conf hint totype)
+		    ,(j2s-scheme rhs mode return conf hint totype)
+		    ,(strict-mode? mode)
+		    %this))
+	       ((int32)
+		`(js-array-fixnum-set! ,(j2s-scheme obj mode return conf hint totype)
+		    (int32->fixnum
+		       ,(j2s-scheme field mode return conf hint totype))
 		    ,(j2s-scheme rhs mode return conf hint totype)
 		    ,(strict-mode? mode)
 		    %this))
@@ -309,7 +351,16 @@
 		    ,(j2s-scheme rhs mode return conf hint totype)
 		    ,(strict-mode? mode)
 		    %this))
+	       ((eq? tyf 'int32)
+		`(js-array-fixnum-set!
+		    ,(j2s-scheme obj mode return conf hint totype)
+		    (int32->fixnum
+		       ,(j2s-scheme field mode return conf hint totype))
+		    ,(j2s-scheme rhs mode return conf hint totype)
+		    ,(strict-mode? mode)
+		    %this))
 	       (else
+		(tprint "FIELD=" (j2s->list field) " " tyf)
 		`(js-array-set!
 		    ,(j2s-scheme obj mode return conf hint totype)
 		    ,(j2s-scheme field mode return conf hint totype)

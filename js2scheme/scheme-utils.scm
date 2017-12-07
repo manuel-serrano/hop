@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Dec  6 19:29:31 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 19:00:21 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -270,6 +270,9 @@
       ((memq type '(int32 uint32)) (symbol-append ident '|::| type))
       ((memq type '(bint)) (symbol-append ident '|::bint|))
       ((eq? type 'any) (symbol-append ident '|::obj|))
+      ((type-name type '())
+       =>
+       (lambda (tname) (symbol-append ident '|::| tname)))
       (else ident)))
 
 ;*---------------------------------------------------------------------*/
@@ -486,6 +489,8 @@
 	  (case typrop
 	     ((uint32)
 	      `(js-array-index-ref ,obj ,prop %this))
+	     ((int32)
+	      `(js-array-fixnum-ref ,obj (int32->fixnum ,prop) %this))
 	     (else
 	      `(js-array-ref ,obj ,prop %this))))
 	 ((eq? tyobj 'string)
@@ -554,6 +559,9 @@
 	  (case typrop
 	     ((uint32)
 	      `(js-array-index-set! ,obj ,prop ,val ,(strict-mode? mode) %this))
+	     ((int32)
+	      `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
+		  ,val ,(strict-mode? mode) %this))
 	     (else
 	      `(js-array-set! ,obj ,prop ,val ,(strict-mode? mode) %this))))
 	 (cache

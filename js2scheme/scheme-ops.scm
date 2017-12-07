@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec  7 08:49:37 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 21:10:58 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -24,6 +24,7 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_scheme
+	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-test)
 
@@ -670,11 +671,15 @@
 	       (,(opjs o) ,left ,right %this)))
 	 ((eq? tl 'uint32)
 	  `(if (fixnum? ,right)
-	       (,(opu32 o) ,left (fixnum->uint32 ,right))
+	       (if (>=fx ,right 0)
+		   (,(opu32 o) ,left (fixnum->uint32 ,right))
+		   #f)
 	       (,(opjs o) ,left ,right %this)))
 	 ((eq? tr 'uint32)
 	  `(if (fixnum? ,left)
-	       (,(opu32 o) (fixnum->uint32 ,left) ,right)
+	       (if (>=fx ,left 0)
+		   (,(opu32 o) (fixnum->uint32 ,left) ,right)
+		   #t)
 	       (,(opjs o) ,left ,right %this)))
 	 (else
 	  `(if (fixnums? ,left ,right)
@@ -951,11 +956,17 @@
 	    (epairify loc
 	       (case op
 		  ((>> <<)
-		   `(,(bitop op) ,(toint32 left tl) ,(mask32 right rhs)))
+		   (j2s-cast
+		      `(,(bitop op) ,(toint32 left tl) ,(mask32 right rhs))
+		      'int32 'int32 type))
 		  ((>>>)
-		   `(,(bitop op) ,(touint32 left tl) ,(mask32 right rhs)))
+		   (j2s-cast
+		      `(,(bitop op) ,(touint32 left tl) ,(mask32 right rhs))
+		      'uint23 'uint32 type))
 		  (else
-		   `(,(bitop op) ,(toint32 left tl) ,(toint32 right tr)))))))))
+		   (j2s-cast
+		      `(,(bitop op) ,(toint32 left tl) ,(toint32 right tr))
+		      'int32 'int32 type))))))))
 ;*                                                                     */
 ;*    (define (fx->int32 val)                                          */
 ;*       (if (fixnum? val)                                             */
@@ -1216,7 +1227,9 @@
       (cond
 	 ((inrange-int32? lhs)
 	  (if (inrange-int32? rhs)
-	      `(,(ops32 op) ,(toint32/32 left tl) ,(toint32/32 right tr))
+	      `(overflow29
+		  (int32->fixnum
+		     (,(ops32 op) ,(toint32/32 left tl) ,(toint32/32 right tr))))
 	      `(if (fixnum? ,right)
 		   (,(opfx/overflow op) ,(tofx/32 left tl) ,right)
 		   (,(opjs op) ,left ,right %this))))

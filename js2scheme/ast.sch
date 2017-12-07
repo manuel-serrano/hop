@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Mon Dec  4 09:02:43 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 18:56:16 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -162,6 +162,13 @@
    `(instantiate::J2SHopRef
        (loc loc)
        (id ,id)
+       (module ,(when (pair? module) (car module)))))
+
+(define-macro (J2SHopRef/type id type . module)
+   `(instantiate::J2SHopRef
+       (loc loc)
+       (id ,id)
+       (type ,type)
        (module ,(when (pair? module) (car module)))))
 
 (define-macro (J2SHopRef/rtype id rtype . module)

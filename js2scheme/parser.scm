@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Mon Dec  4 11:19:14 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 19:24:58 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1673,7 +1673,10 @@
 		 (loop (instantiate::J2SCall
 			  (loc loc)
 			  (fun expr)
-			  (thisarg (list (J2SUndefined)))
+			  (thisarg (if (isa? expr J2SAccess)
+				       (with-access::J2SAccess expr (obj)
+					  (list obj))
+				       (list (J2SUndefined))))
 			  (args (arguments))))
 		 expr))
 	    ((TSTRING TEMPLATE)

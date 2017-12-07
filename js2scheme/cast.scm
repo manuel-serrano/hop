@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Dec  7 10:04:05 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 21:22:51 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -171,6 +171,12 @@
    (cast (call-next-method) totype))
 
 ;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SRef ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SRef totype)
+   (cast this totype))
+
+;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SFun totype)
@@ -286,7 +292,7 @@
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs)
       (set! lhs (type-cast! lhs '*))
-      (set! rhs (type-cast! rhs (j2s-type-ref lhs)))
+      (set! rhs (type-cast! rhs (if (isa? lhs J2SRef) '* (j2s-type-ref lhs))))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -295,7 +301,7 @@
 (define-method (type-cast! this::J2SAssigOp totype)
    (with-access::J2SAssig this (lhs rhs)
       (set! lhs (type-cast! lhs '*))
-      (set! rhs (type-cast! rhs '*))
+      (set! rhs (type-cast! rhs (if (isa? lhs J2SRef) '* (j2s-type-ref lhs))))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -304,7 +310,8 @@
 (define-method (type-cast! this::J2SAccess totype)
    (with-access::J2SAccess this (obj field)
       (set! obj (type-cast! obj '*))
-      (set! field (type-cast! field 'propname))
+;*       (set! field (type-cast! field 'propname))                     */
+      (set! field (type-cast! field '*))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -330,7 +337,7 @@
 	 ((>>>)
 	  (set! lhs (type-cast! lhs 'uint32))
 	  (set! rhs (type-cast! rhs 'integer))
-	  (set! type 'int32)
+	  (set! type 'uint32)
 	  (cast this totype))
 	 ((^ & BIT_OR)
 	  (set! lhs (type-cast! lhs 'int32))
