@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Dec  6 19:27:00 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 05:56:43 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -579,6 +579,8 @@
 (define-method (j2s-scheme this::J2SCast mode return conf hint totype)
    (with-access::J2SCast this (expr (to type))
       (with-access::J2SExpr expr ((from type))
+	 (tprint "PAS BON, il faut utiliser from et aussi j2s-type-ref...")
+
 	 (j2s-cast (j2s-scheme expr mode return conf hint totype) from to))))
 
 ;*---------------------------------------------------------------------*/
@@ -876,6 +878,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SReturn mode return conf hint totype)
    (with-access::J2SReturn this (loc expr tail exit from)
+      (when (and tail (isa? expr J2SCall))
+	 (tprint "#### RET=" (j2s->list this))
+	 (tprint "      -->" (j2s-scheme expr mode return conf hint totype)))
       (cond
 	 (exit
 	  (epairify loc
