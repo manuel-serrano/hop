@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Dec  7 05:36:35 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 10:07:32 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -156,15 +156,6 @@
 		  (fix-wstamp-set! fix (+fx 1 (fix-wstamp fix)))
 		  (loop (+fx i 1)))))
 	 this)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-range-type-program! ...                                      */
-;*---------------------------------------------------------------------*/
-(define (j2s-range-type-program! this::J2SProgram tymap)
-   (with-access::J2SProgram this (decls nodes)
-      (for-each (lambda (n) (type-range! n tymap)) decls)
-      (for-each (lambda (n) (type-range! n tymap)) nodes)
-      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    unfix! ...                                                       */
@@ -1498,6 +1489,15 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SClassElement env::pair-nil args fix::struct)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-range-type-program! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-range-type-program! this::J2SProgram tymap)
+   (with-access::J2SProgram this (decls nodes)
+      (for-each (lambda (n) (type-range! n tymap)) decls)
+      (for-each (lambda (n) (type-range! n tymap)) nodes)
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SNode ...                                        */

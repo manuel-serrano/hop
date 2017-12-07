@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Dec  6 20:54:32 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 10:01:15 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -17,7 +17,8 @@
    (import __js2scheme_ast
 	   __js2scheme_utils)
    
-   (export (j2s-cast expr::obj ::symbol ::symbol)))
+   (export (j2s-cast expr::obj ::symbol ::symbol)
+	   (j2s-box expr::obj ::symbol ::symbol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-table ...                                                   */
@@ -196,4 +197,72 @@
 		     (default)))
 	      (default)))))
 	  
+;*---------------------------------------------------------------------*/
+;*    box-table ...                                                    */
+;*---------------------------------------------------------------------*/
+(define box-table
+   ;; from x to -> conv
+   `((integer
+	((int32 fixnum->int32)
+	 (uint32 fixnum->uint32)
+	 (int53 nop)))
+     (int32
+	((uint32 int32->uint32)
+	 (integer int32->fixnum)
+	 (number int32->fixnum)
+	 (any int32->fixnum)))
+     (uint32
+	((int32 uint32->int32)
+	 (integer uint32->fixnum)
+	 (number uint32->fixnum)
+	 (any uint32->fixnum)))
+     (function
+	((any nop)))
+     (object
+	((any nop)))
+     (array
+	((any nop)))
+     (any
+	((int32 fixnum->int32)
+	 (uint32 fixnum->uint32)
+	 (int53 nop)
+	 (integer nop)
+	 (number nop)
+	 (function nop)
+	 (array nop)
+	 (object nop)))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-box ...                                                      */
+;*    -------------------------------------------------------------    */
+;*    This function introduces the type conversions that might be      */
+;*    needed to box/unbox variable values on read.                     */
+;*    -------------------------------------------------------------    */
+;*    No type checking is never needed here as the boxing/unboxing     */
+;*    are explicitly introduced by the compile and they are safe.      */
+;*---------------------------------------------------------------------*/
+(define (j2s-box expr from to)
+      
+   (define (default)
+      (error "j2s-box"
+	 (format "Cannot convert from \"~a\" to \"~a\"" from to) expr))
+
+   (if (eq? from to)
+       expr
+       (let ((fen (assq from box-table)))
+	  (if (pair? fen)
+	      (let ((ten (assq to (cadr fen))))
+		 (if (pair? ten)
+		     (if (symbol? (cadr ten))
+			 (if (eq? (cadr ten) 'nop)
+			     expr
+			     `(,(cadr ten) ,expr))
+			 ((cadr ten) expr))
+		     (default)))
+	      (default)))))
+
+
+
+
+	  
+	     

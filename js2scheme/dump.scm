@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Dec  4 12:39:46 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 10:09:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -307,6 +307,10 @@
    (with-access::J2SAssig this (lhs rhs loc)
       `(,@(call-next-method) 
 	  ,@(dump-type this)
+	  ,@(if (isa? lhs J2SRef)
+		(with-access::J2SRef lhs (decl)
+		   (dump-vtype decl))
+		'())
 	  ,@(dump-info this)
 	  ,(j2s->list lhs)
 	  ,(j2s->list rhs))))

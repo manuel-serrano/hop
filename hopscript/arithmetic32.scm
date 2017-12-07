@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Wed Dec  6 19:50:20 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 08:02:59 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -43,6 +43,7 @@
 	  (inline -fx/overflow::obj ::long ::long)
 	  
 	  (-/overflow::obj ::obj ::obj)
+	  
 	  (inline *fx/overflow::obj ::long ::long)
 	  (*/overflow::obj ::obj ::obj)
 	  ))))

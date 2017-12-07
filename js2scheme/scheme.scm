@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Dec  7 05:56:43 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 10:03:24 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -579,23 +579,23 @@
 (define-method (j2s-scheme this::J2SCast mode return conf hint totype)
    (with-access::J2SCast this (expr (to type))
       (with-access::J2SExpr expr ((from type))
-	 (tprint "PAS BON, il faut utiliser from et aussi j2s-type-ref...")
-
 	 (j2s-cast (j2s-scheme expr mode return conf hint totype) from to))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRef ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SRef mode return conf hint totype)
-   (with-access::J2SRef this (decl loc)
-      (with-access::J2SDecl decl (scope id utype)
+   (with-access::J2SRef this (decl loc type)
+      (with-access::J2SDecl decl (scope id vtype)
 	 (cond
 	    ((j2s-let-opt? decl)
 	     (j2s-decl-scheme-id decl))
 	    ((j2s-let? decl)
-	     `(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this))
+	     (epairify loc
+		`(js-let-ref ,(j2s-decl-scheme-id decl) ',id ',loc %this)))
 	    ((and (memq scope '(global %scope)) (in-eval? return))
-	     `(js-global-object-get-name %scope ',id #f %this))
+	     (epairify loc
+		`(js-global-object-get-name %scope ',id #f %this)))
 	    (else
 	     (j2s-decl-scheme-id decl))))))
 
@@ -878,9 +878,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SReturn mode return conf hint totype)
    (with-access::J2SReturn this (loc expr tail exit from)
-      (when (and tail (isa? expr J2SCall))
-	 (tprint "#### RET=" (j2s->list this))
-	 (tprint "      -->" (j2s-scheme expr mode return conf hint totype)))
       (cond
 	 (exit
 	  (epairify loc

@@ -106,7 +106,8 @@ EventEmitter.prototype.emit = function emit(type) {
     }
   } else if (typeof handler === 'object') {
     len = arguments.length;
-    args = new Array(len - 1);
+     args = new Array(len - 1);
+     console.log( 123456 );
     for (i = 1; i < len; i++)
       args[i - 1] = arguments[i];
 

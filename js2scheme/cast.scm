@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Dec  6 21:35:27 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 10:04:05 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -74,21 +74,26 @@
 ;*    need-cast? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (need-cast? type totype)
+   (not (or (eq? type totype) (eq? totype '*))))
 
-   (define (fx? type)
-      (memq type '(int32 uint32)))
-
-   (define (propname? type)
-      (or (type-integer? type) (eq? type 'string)))
-   
-   (cond
-      ((eq? totype '*) #f)
-      ((eq? totype 'propname) (not (propname? type)))
-      ((eq? type totype) #f)
-      ((eq? totype 'any) (fx? type))
-      ((fx? type) #t)
-      ((fx? totype) #t)
-      (else #f)))
+;* (define (need-cast? type totype)                                    */
+;*                                                                     */
+;*    (define (fx? type)                                               */
+;*       (memq type '(int32 uint32)))                                  */
+;*                                                                     */
+;*    (define (propname? type)                                         */
+;*       (or (type-integer? type) (eq? type 'string)))                 */
+;*                                                                     */
+;*    (cond                                                            */
+;*       ((eq? totype '*) #f)                                          */
+;*       ((eq? totype 'propname) (not (propname? type)))               */
+;*       ((eq? type totype) #f)                                        */
+;*       ((eq? totype 'any) (fx? type))                                */
+;*       ((fx? type) #t)                                               */
+;*       ((fx? totype) #t)                                             */
+;*       (else #f)))                                                   */
+;*                                                                     */
+;*    (not (or (eq? type totype) (eq? totype '*))))                    */
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */
@@ -180,16 +185,16 @@
    (with-access::J2SCast this (expr)
       (cast expr totype)))
 
-;*---------------------------------------------------------------------*/
-;*    type-cast! ::J2SNumber ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (type-cast! this::J2SNumber totype)
-   (with-access::J2SNumber this (type)
-      (if (memq totype '(uint29 int30 uint30 int32 uint32 integer number any))
-	  (begin
-	     (set! type totype)
-	     this)
-	  (call-next-method))))
+;* {*---------------------------------------------------------------------*} */
+;* {*    type-cast! ::J2SNumber ...                                       *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (type-cast! this::J2SNumber totype)                  */
+;*    (with-access::J2SNumber this (type)                              */
+;*       (if (memq totype '(uint29 int30 uint30 int32 uint32 integer number any)) */
+;* 	  (begin                                                       */
+;* 	     (set! type totype)                                        */
+;* 	     this)                                                     */
+;* 	  (call-next-method))))                                        */
       
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SCall ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Wed Dec  6 07:09:51 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 09:28:51 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Box/unbox (respec. tag/untag) numerical values of escaping       */
@@ -41,7 +41,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-box! this args)
    (when (isa? this J2SProgram)
-      (let ((bint (if (=fx (config-get args :long-size 0) 64) 'bint 'obj)))
+      (let ((bint (if (=fx (config-get args :long-size 0) 64) 'integer 'obj)))
 	 (j2s-box-program! this bint))
       this))
 

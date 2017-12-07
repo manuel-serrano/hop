@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Tue Oct 17 17:40:04 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 08:47:30 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -242,6 +242,9 @@
 			  (collect* body)))
 		(arguments (instantiate::J2SDeclArguments
 			      (id 'arguments)
+			      (itype 'arguments)
+			      (utype 'arguments)
+			      (vtype (if (eq? fmode 'normal) 'any 'arguments))
 			      (loc loc)))
 		(envl (append decls params))
 		(env1 (append envl env0))

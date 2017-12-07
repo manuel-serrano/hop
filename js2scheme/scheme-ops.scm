@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Dec  6 20:56:10 2017 (serrano)                */
+;*    Last change :  Thu Dec  7 08:49:37 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1261,7 +1261,7 @@
 	  (addsub-int32/32 op lhs tl left rhs tr right))
 	 ((uint32)
 	  (addsub-uint32/32 op lhs tl left rhs tr right))
-	 ((integer number bint obj any object)
+	 ((integer number obj any object)
 	  (addsub-generic/32 op type lhs tl left rhs tr right))
 	 (else
 	  (error "addsub/32" "illegal integer type" type))))
@@ -1328,7 +1328,7 @@
 	  (addsub-uint32/64 op lhs tl left rhs tr right))
 	 ((int53)
 	  (addsub-int53/64 op lhs tl left rhs tr right))
-	 ((bint number)
+	 ((integer number)
 	  (addsub-number/64 op type lhs tl left rhs tr right))
 	 ((obj any object)
 	  (addsub-generic/64 op type lhs tl left rhs tr right))
