@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec  7 21:10:58 2017 (serrano)                */
+;*    Last change :  Fri Dec  8 08:22:23 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -958,115 +958,15 @@
 		  ((>> <<)
 		   (j2s-cast
 		      `(,(bitop op) ,(toint32 left tl) ,(mask32 right rhs))
-		      'int32 'int32 type))
+		      #f 'int32 type conf))
 		  ((>>>)
 		   (j2s-cast
 		      `(,(bitop op) ,(touint32 left tl) ,(mask32 right rhs))
-		      'uint23 'uint32 type))
+		      #f 'uint32 type conf))
 		  (else
 		   (j2s-cast
 		      `(,(bitop op) ,(toint32 left tl) ,(toint32 right tr))
-		      'int32 'int32 type))))))))
-;*                                                                     */
-;*    (define (fx->int32 val)                                          */
-;*       (if (fixnum? val)                                             */
-;* 	  (fixnum->int32 val)                                          */
-;* 	  `(fixnum->int32 ,val)))                                      */
-;*                                                                     */
-;*    (define (fx->uint32 val)                                         */
-;*       (if (fixnum? val)                                             */
-;* 	  (fixnum->uint32 val)                                         */
-;* 	  `(fixnum->uint32 ,val)))                                     */
-;*                                                                     */
-;*    (define (bit-andfx val num)                                      */
-;*       (if (fixnum? val)                                             */
-;* 	  (bit-and val 31)                                             */
-;* 	  `(bit-and ,val 31)))                                         */
-;*                                                                     */
-;*    (define (retnum expr)                                            */
-;*       (if (type-fixnum? type)                                       */
-;* 	  `(int32->fixnum ,expr)                                       */
-;* 	  `(int32->integer ,expr)))                                    */
-;*                                                                     */
-;*    (let ((tl (j2s-type-ref lhs))                                        */
-;* 	 (tr (j2s-type-ref rhs)))                                          */
-;*       (cond                                                         */
-;* 	 ((or (and (type-fixnum? tl) (type-fixnum? tr))                */
-;* 	      (and (type-fixnum? tl) (and (eq? tr 'int32) (m64? conf))) */
-;* 	      (and (type-fixnum? tr) (and (eq? tl 'int32) (m64? conf)))) */
-;* 	  (case op                                                     */
-;* 	     ((<< >>)                                                  */
-;* 	      (binop lhs rhs mode return conf hint type                */
-;* 		 (lambda (left right)                                  */
-;* 		    (retnum                                            */
-;* 		       `(,(fxop op) ,(fx->int32 left) ,(bit-andfx right 31)))))) */
-;* 	     ((>>>)                                                    */
-;* 	      (binop lhs rhs mode return conf hint type                */
-;* 		 (lambda (left right)                                  */
-;* 		    (retnum                                            */
-;* 		       `(,(fxop op) ,(fx->uint32 left) ,(bit-andfx right 31)))))) */
-;* 	     (else                                                     */
-;* 	      (binop lhs rhs mode return conf hint type                */
-;* 		 (lambda (left right)                                  */
-;* 		    (retnum                                            */
-;* 		       `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right)))))))) */
-;* 	 ((or (type-fixnum? tr) (and (eq? tr 'int32) (m64? conf)))     */
-;* 	  (case op                                                     */
-;* 	     ((<< >>)                                                  */
-;* 	      (binop lhs rhs mode return conf hint type                */
-;* 		 (lambda (left right)                                  */
-;* 		    `(if (fixnum? ,left)                               */
-;* 			 ,(retnum                                      */
-;* 			     `(,(fxop op) ,(fx->int32 left) ,(bit-andfx right 31))) */
-;* 			 ,(js-binop loc op left right)))))             */
-;* 	     ((>>>)                                                    */
-;* 	      (binop lhs rhs mode return conf hint type                */
-;* 		 (lambda (left right)                                  */
-;* 		    `(if (fixnum? ,left)                               */
-;* 			 ,(retnum                                      */
-;* 			     `(,(fxop op) ,(fx->uint32 left) ,(bit-andfx right 31))) */
-;* 			 ,(js-binop loc op left right)))))             */
-;* 	     (else                                                     */
-;* 	      (binop lhs rhs mode return conf hint type                */
-;* 		 (lambda (left right)                                  */
-;* 		    `(if (fixnum? ,left)                               */
-;* 			 ,(retnum                                      */
-;* 			     `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right))) */
-;* 			 ,(js-binop loc op left right)))))))           */
-;* 	 ((or (type-fixnum? tl) (and (eq? tl 'int32) (m64? conf)))     */
-;* 	  (case op                                                     */
-;* 	     ((<< >>)                                                  */
-;* 	      (binop lhs rhs mode return conf hint type                */
-;* 		 (lambda (left right)                                  */
-;* 		    `(if (fixnum? ,right)                              */
-;* 			 ,(retnum                                      */
-;* 			     `(,(fxop op) ,(fx->int32 left) ,right))   */
-;* 			 ,(js-binop loc op left right)))))             */
-;* 	     ((>>>)                                                    */
-;* 	      (binop lhs rhs mode return conf hint type                */
-;* 		 (lambda (left right)                                  */
-;* 		    `(if (fixnum? ,right)                              */
-;* 			 ,(retnum                                      */
-;* 			     `(,(fxop op) ,(fx->uint32 left) ,right))  */
-;* 			 ,(js-binop loc op left right)))))             */
-;* 	     (else                                                     */
-;* 	      (binop lhs rhs mode return conf hint type                */
-;* 		 (lambda (left right)                                  */
-;* 		    `(if (fixnum? ,right)                              */
-;* 			 ,(retnum                                      */
-;* 			     `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right))) */
-;* 			 ,(js-binop loc op left right)))))))           */
-;* 	 ((memq op '(BIT_OR & ^))                                      */
-;* 	  (binop lhs rhs mode return conf hint 'any                    */
-;* 	     (lambda (left right)                                      */
-;* 		(scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs)) */
-;* 		   (retnum                                             */
-;* 		       `(,(fxop op) ,(fx->int32 left) ,(fx->int32 right))) */
-;* 		   (js-binop loc op left right)))))                    */
-;* 	 (else                                                         */
-;* 	  (binop lhs rhs mode return conf hint 'any                    */
-;* 	     (lambda (left right)                                      */
-;* 		(js-binop loc op left right)))))))                     */
+		      #f 'int32 type conf))))))))
 ;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    js-arithmetic ...                                                */
@@ -1502,6 +1402,7 @@
 	  `(remainder ,(todouble left tl) ,(todouble right tr)))))
    
    (define (remainders32 left right tl tr)
+	  (tprint "##### REMAINDERs32 tl=" tl " tr=" tr)
       (cond
 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	  `(uint32->int32 (remainderu32 ,left ,right)))
@@ -1511,6 +1412,8 @@
 	  `(remainders32 (uint32->int32 ,left) ,right))
 	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(remainders32 ,left (uint32->int32 ,right)))
+	 ((and (eq? tl 'int53) (eq? tr 'uint32))
+	  `(remainderfx ,left ,(uint32->fixnum right)))
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (fixnum->int32 (remainderfx ,left (uint32->fixnum ,right)))
@@ -1643,30 +1546,3 @@
       ((uint32) `(uint32->flonum ,val))
       (else `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))))
    
-;*---------------------------------------------------------------------*/
-;*    inrange-32? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (inrange-32? expr)
-   (with-access::J2SExpr expr (range)
-      (and (interval? range)
-	   (>= (interval-min range) #l0)
-	   (< (interval-max range) #l32))))
-
-;*---------------------------------------------------------------------*/
-;*    inrange-int32? ...                                               */
-;*---------------------------------------------------------------------*/
-(define (inrange-int32? expr)
-   (with-access::J2SExpr expr (range)
-      (when (interval? range)
-	 (and (>=llong (interval-min range) (- (bit-lshllong #l1 31)))
-	      (<=llong (interval-max range) (- (bit-lshllong #l1 31) 1))))))
-
-;*---------------------------------------------------------------------*/
-;*    inrange-uint32? ...                                              */
-;*---------------------------------------------------------------------*/
-(define (inrange-uint32? expr)
-   (with-access::J2SExpr expr (range)
-      (when (interval? range)
-	 (and (>=llong (interval-min range) #l0)
-	      (<=llong (interval-max range) (- (bit-lshllong #l1 32) 1))))))
-

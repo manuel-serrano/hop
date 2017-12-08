@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Thu Dec  7 19:00:21 2017 (serrano)                */
+;*    Last change :  Fri Dec  8 11:41:19 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -29,8 +29,6 @@
 	   
 	   (epairify loc expr)
 	   (epairify-deep loc expr)
-	   (m64? conf)
-	   (u32? conf)
 	   (strict-mode? mode)
 	   (j2s-fast-id id)
 	   (j2s-scheme-id id pref)
@@ -70,7 +68,12 @@
 	   (js-object-put-name/cache!::symbol clevel::long)
 	   
 	   (j2s-get loc obj tyobj prop typrop tyval cache #!optional (clevel 100))
-	   (j2s-put! loc obj tyobj prop typrop val tyval mode cache #!optional (clevel 100))))
+	   (j2s-put! loc obj tyobj prop typrop val mode cache #!optional (clevel 100))
+
+	   (inrange-32?::bool ::J2SExpr)
+	   (inrange-int30?::bool ::J2SExpr)
+	   (inrange-int32?::bool ::J2SExpr)
+	   (inrange-uint32?::bool ::J2SExpr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -95,18 +98,6 @@
        (econs (epairify-deep loc (car expr))
 	  (epairify-deep loc (cdr expr))
 	  loc)))
-
-;*---------------------------------------------------------------------*/
-;*    m64? ...                                                         */
-;*---------------------------------------------------------------------*/
-(define (m64? conf)
-   (=fx (config-get conf :long-size 0) 64))
-
-;*---------------------------------------------------------------------*/
-;*    u32? ...                                                         */
-;*---------------------------------------------------------------------*/
-(define (u32? conf)
-   (>=fx (config-get conf :optim 0) 4))
 
 ;*---------------------------------------------------------------------*/
 ;*    strict-mode? ...                                                 */
@@ -544,7 +535,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj tyobj prop typrop val tyval mode cache #!optional (clevel 100))
+(define (j2s-put! loc obj tyobj prop typrop val mode cache #!optional (clevel 100))
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)
@@ -553,12 +544,15 @@
       (cond
 	 ((> (bigloo-debug) 0)
 	  (if (string? prop)
-	      `(js-put/debug! ,obj ',(string->symbol prop) ,val ,mode %this ',loc)
-	      `(js-put/debug! ,obj ,prop ,val ,mode %this ',loc)))
+	      `(js-put/debug! ,obj ',(string->symbol prop)
+		  ,val ,mode %this ',loc)
+	      `(js-put/debug! ,obj ,prop
+		  ,val ,mode %this ',loc)))
 	 ((eq? tyobj 'array)
 	  (case typrop
 	     ((uint32)
-	      `(js-array-index-set! ,obj ,prop ,val ,(strict-mode? mode) %this))
+	      `(js-array-index-set! ,obj
+		  ,prop ,val ,(strict-mode? mode) %this))
 	     ((int32)
 	      `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
 		  ,val ,(strict-mode? mode) %this))
@@ -586,11 +580,48 @@
 	     ((or (number? prop) (>=fx clevel 10))
 	      `(js-put! ,obj ,prop ,val ,mode %this))
 	     (else
-	      `(js-put/cache! ,obj ,prop ,val ,mode ,(js-pcache cache) %this))))
+	      `(js-put/cache! ,obj , prop
+		  ,val ,mode ,(js-pcache cache) %this))))
 	 (else
 	  (cond
 	     ((string? prop)
 	      `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
 	     (else
 	      `(js-put! ,obj ,prop ,prop ,mode %this)))))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-32? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (inrange-32? expr)
+   (with-access::J2SExpr expr (range)
+      (and (interval? range)
+	   (>= (interval-min range) #l0)
+	   (< (interval-max range) #l32))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-int30? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (inrange-int30? expr)
+   (with-access::J2SExpr expr (range)
+      (when (interval? range)
+	 (and (>=llong (interval-min range) (- (bit-lshllong #l1 30)))
+	      (<llong (interval-max range) (bit-lshllong #l1 30))))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-int32? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (inrange-int32? expr)
+   (with-access::J2SExpr expr (range)
+      (when (interval? range)
+	 (and (>=llong (interval-min range) (- (bit-lshllong #l1 31)))
+	      (<llong (interval-max range) (bit-lshllong #l1 31))))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-uint32? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (inrange-uint32? expr)
+   (with-access::J2SExpr expr (range)
+      (when (interval? range)
+	 (and (>=llong (interval-min range) #l0)
+	      (<llong (interval-max range) (bit-lshllong #l1 32))))))
 

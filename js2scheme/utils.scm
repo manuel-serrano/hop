@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Dec  5 13:08:35 2017 (serrano)                */
+;*    Last change :  Fri Dec  8 08:09:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -26,6 +26,9 @@
 	   
 	   (j2s-expression-src loc ::pair-nil ::bstring)
 	   
+	   (m64? conf)
+	   (u32? conf)
+	   
 	   (type-int32?::bool ::obj)
 	   (type-uint32?::bool ::obj)
 	   (type-int30?::bool ::obj)
@@ -36,9 +39,7 @@
 	   (type-name type conf)
 	   (minimal-type::symbol ::obj ::obj)
 	   (max-type::symbol ::obj ::obj)
-	   (js-uint32->jsnum expr conf)
-	   (js-uint32->fixnum expr conf)
-	   (js-fixnum->uint32 expr)))
+	   (js-uint32->jsnum expr conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -137,6 +138,18 @@
 	     (else
 	      default))
 	  default)))
+
+;*---------------------------------------------------------------------*/
+;*    m64? ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (m64? conf)
+   (=fx (config-get conf :long-size 0) 64))
+
+;*---------------------------------------------------------------------*/
+;*    u32? ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (u32? conf)
+   (>=fx (config-get conf :optim 0) 4))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-uint32? ...                                                 */
@@ -290,22 +303,4 @@
 	  `(uint32->fixnum ,expr))
 	 (else
 	  `(js-uint32->jsnum ,expr)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-uint32->fixnum ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-uint32->fixnum expr conf)
-   (cond
-      ((uint32? expr)
-       (uint32->fixnum expr))
-      (else
-       `(uint32->fixnum ,expr))))
-
-;*---------------------------------------------------------------------*/
-;*    js-fixnum->uint32 ...                                            */
-;*---------------------------------------------------------------------*/
-(define (js-fixnum->uint32 expr)
-   (if (fixnum? expr)
-       (fixnum->uint32 expr)
-       `(fixnum->uint32 ,expr)))
 

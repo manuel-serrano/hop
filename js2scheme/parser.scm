@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Dec  7 19:24:58 2017 (serrano)                */
+;*    Last change :  Fri Dec  8 12:32:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -52,6 +52,7 @@
    (define _this
       (instantiate::J2SDecl
 	 (loc `(at ,(input-port-name input-port) 0))
+	 (vtype 'object)
 	 (id '%this)
 	 (_scmid '%this)))
 

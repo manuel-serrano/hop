@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Thu Dec  7 21:04:32 2017 (serrano)                */
+;*    Last change :  Fri Dec  8 12:18:45 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -360,7 +360,6 @@
 		    ,(strict-mode? mode)
 		    %this))
 	       (else
-		(tprint "FIELD=" (j2s->list field) " " tyf)
 		`(js-array-set!
 		    ,(j2s-scheme obj mode return conf hint totype)
 		    ,(j2s-scheme field mode return conf hint totype)

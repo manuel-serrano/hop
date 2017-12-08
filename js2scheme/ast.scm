@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Dec  5 16:38:50 2017 (serrano)                */
+;*    Last change :  Fri Dec  8 11:14:20 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -339,20 +339,19 @@
 	      (lhs::J2SExpr (info '("ast")))
 	      (rhs::J2SExpr (info '("ast"))))
 	   
-	   (final-class J2SPrefix::J2SAssig
-	      op::symbol)
-	   (final-class J2SPostfix::J2SAssig
-	      op::symbol)
-	   
 	   (class J2SInit::J2SAssig)
-	   
-	   (final-class J2SAssigOp::J2SAssig
-	      op::symbol)
 	   
 	   (final-class J2SVAssig::J2SAssig)
 	   (final-class J2SCAssig::J2SAssig)
 
 	   (final-class J2SFunBinding::J2SInit)
+	   
+	   (final-class J2SPrefix::J2SAssig
+	      op::symbol)
+	   (final-class J2SPostfix::J2SAssig
+	      op::symbol)
+	   (final-class J2SAssigOp::J2SAssig
+	      op::symbol)
 	   
 	   (final-class J2SObjInit::J2SExpr
 	      (inits::pair-nil (info '("ast")))

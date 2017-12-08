@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Dec  2 17:46:29 2017 (serrano)                */
+;*    Last change :  Fri Dec  8 12:17:01 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -327,8 +327,8 @@
 	 (epairify-deep loc
 	    (cond
 	       ((or src prototype __proto__ method)
-		`(js-make-function %this
-		    ,tmp ,len ,(symbol->string! (or name (j2s-decl-scheme-id id)))
+		`(js-make-function %this ,tmp ,len
+		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
 		    :src ,src
 		    :rest ,(eq? vararg 'rest)
 		    :arity ,arity
@@ -342,16 +342,15 @@
 		    :method ,(when method
 				(jsfun->lambda method mode return conf #f #f))))
 	       ((eq? vararg 'arguments)
-		`(js-make-function %this ,tmp
-		    ,len ,(symbol->string! (or name (j2s-decl-scheme-id id)))
+		`(js-make-function %this ,tmp ,len
+		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
 		    :rest ,(eq? vararg 'rest)
 		    :arity ,arity ,
 		    :minlen minlen
 		    :strict ',mode
 		    :constrsize ,constrsize))
 	       (else
-		`(js-make-function-simple %this
-		    ,tmp ,len
+		`(js-make-function-simple %this ,tmp ,len
 		    ,(symbol->string! (or name (j2s-decl-scheme-id id)))
 		    ,arity ,minlen ',mode ,(eq? vararg 'rest) ,constrsize)))))))
 

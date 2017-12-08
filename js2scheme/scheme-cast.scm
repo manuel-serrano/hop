@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Thu Dec  7 20:16:59 2017 (serrano)                */
+;*    Last change :  Fri Dec  8 12:33:48 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -15,9 +15,11 @@
 (module __js2scheme_scheme-cast
 
    (import __js2scheme_ast
-	   __js2scheme_utils)
+	   __js2scheme_dump
+	   __js2scheme_utils
+	   __js2scheme_scheme-utils)
    
-   (export (j2s-cast expr::obj ::symbol ::symbol ::symbol)))
+   (export (j2s-cast expr::obj ::obj ::symbol ::symbol ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-table ...                                                   */
@@ -27,15 +29,16 @@
    `((int32
 	((int30 nop)
 	 (uint32 ,js-int32->uint32)
-	 (integer js-int32-tointeger)
-	 (number js-int32-tointeger)
+	 (int53 int32->fixnum)
+	 (integer ,js-int32->integer)
+	 (number ,js-int32->integer)
 	 (propname ,js-int32->propname)
 	 (bool ,js-int32->bool)
-	 (any js-int32-tointeger)))
+	 (any ,js-int32->integer)))
      (uint32
 	((uint29 nop)
 	 (int32 ,js-uint32->int32)
-	 (int53 uint32->fixnum)
+	 (int53 ,js-uint32->fixnum)
 	 (integer ,js-uint32->integer)
 	 (number ,js-uint32->integer)
 	 (propname ,js-uint32->propname)
@@ -47,13 +50,13 @@
 	 (uint32 js-int53-touint32)
 	 (number js-int53-tointeger)
 	 (any js-int53-tointeger)))
-     (bint
-	((int32 fixnum->int32)
-	 (uint32 fixnum->uint32)))
      (integer
-	((int32 ,js-number->int32)
+	((int32 ,js-fixnum->int32)
+	 (uint32 ,js-fixnum->uint32)
+	 (int53 nop)
 	 (propname nop)
-	 (number nop)))
+	 (number nop)
+	 (any nop)))
      (number
 	((bool js-totest)
 	 (int32 ,js->int32)
@@ -69,7 +72,16 @@
 	((any nop)))
      (bool
 	((int32 ,js->int32)
-	 (uint32 ,js->uint32)))
+	 (uint32 ,js->uint32)
+	 (any nop)))
+     (null
+	((any nop)))
+     (undefined
+	((any nop)))
+     (regexp
+	((any nop)))
+     (array
+	((any nop)))
      (any
 	((propname nop)
 	 (bool js-totest)
@@ -77,39 +89,79 @@
 	 (uint32 ,js->uint32)
 	 (number ,js->number)))))
 
-;; cast ancillary functions
-(define (js-uint32->integer v etype)
-   (if (and (uint32? v) (<u32 v (-u32 (bit-lshu32 #u32:1 29) #u32:1)))
-       (uint32->fixnum v)
-       `(js-uint32-tointeger ,v)))
-
-(define (js-uint32->int32 v etype)
-   (if (uint32? v) (uint32->int32 v) `(uint32->int32 ,v)))
-(define (js-int32->uint32 v etype)
+;*---------------------------------------------------------------------*/
+;*    cast ancially functions                                          */
+;*---------------------------------------------------------------------*/
+;; int32
+(define (js-int32->uint32 v expr conf)
    (if (int32? v) (int32->uint32 v) `(int32->uint32 ,v)))
 
-(define (js-uint32->bool v etype)
+(define (js-int32->integer v expr conf)
+   (cond
+      ((and (int32? v)
+	    (or (and (<s32 v (-s32 (bit-lshu32 #s32:1 29) #s32:1))
+		     (>=s32 v (- (-s32 (bit-lshu32 #s32:1 29) #s32:1))))
+		(m64? conf)))
+       (int32->fixnum v))
+      ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
+       `(int32->fixnum ,v))
+      (else
+       `(js-int32-tointeger ,v))))
+
+;; uint32
+(define (js-uint32->integer v expr conf)
+   (cond
+      ((and (uint32? v)
+	    (or (<u32 v (-u32 (bit-lshu32 #u32:1 29) #u32:1))
+		(m64? conf)))
+       (uint32->fixnum v))
+      ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
+       `(uint32->fixnum ,v))
+      (else
+       `(js-uint32-tointeger ,v))))
+
+(define (js-uint32->fixnum v expr conf)
+   (if (uint32? v) (uint32->fixnum v) `(uint32->fixnum ,v)))
+
+(define (js-uint32->int32 v expr conf)
+   (if (uint32? v) (uint32->int32 v) `(uint32->int32 ,v)))
+
+;; fixnum
+(define (js-fixnum->int32 v expr conf)
+   (if (fixnum? v) (fixnum->int32 v) `(fixnum->uint32 ,v)))
+
+(define (js-fixnum->uint32 v expr conf)
+   (if (fixnum? v) (fixnum->uint32 v) `(fixnum->uint32 ,v)))
+
+
+
+
+
+
+
+
+(define (js-uint32->bool v expr conf)
    `(>=u32 ,v #u32:0))
-(define (js-int32->bool v etype)
+(define (js-int32->bool v expr conf)
    `(not (=s32 ,v #s32:0)))
 
-(define (js-uint32->propname v etype)
+(define (js-uint32->propname v expr conf)
    (if (and (uint32? v) (<u32 v (-u32 (bit-lshu32 #u32:1 29) #u32:1)))
        (uint32->fixnum v)
        v))
 
-(define (js-int32->propname v etype)
+(define (js-int32->propname v expr conf)
    (if (and (int32? v)
 	    (<s32 v (-s32 (bit-lshs32 #s32:1 29) #s32:1)) (>=s32 v #s32:0))
        (int32->fixnum v)
        v))
 
-(define (js->int32 v etype)
+(define (js->int32 v expr conf)
    `(js-toint32 ,v %this))
-(define (js->uint32 v etype)
+(define (js->uint32 v expr conf)
    `(js-touint32 ,v %this))
 
-(define (js-number->int32 v etype)
+(define (js-number->int32 v expr conf)
    (cond
       ((int32? v)
        v)
@@ -119,7 +171,7 @@
        (tprint "COMMENT TO BE CHECKED AND REMOVED (2017-12-06)...")
        `(js-number-toint32 ,v))))
 
-(define (js-number->uint32 v etype)
+(define (js-number->uint32 v expr conf)
    (cond
       ((uint32? v)
        v)
@@ -128,13 +180,13 @@
       (else
        `(js-number-touint32 ,v))))
 
-(define (js->number v etype)
+(define (js->number v expr conf)
    `(js-tonumber ,v %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cast ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-cast sexp etype from to)
+(define (j2s-cast sexp expr from to conf)
    
    (define (err)
       (error "cast" (format "illegal cast ~a -> ~a" from to) sexp))
@@ -151,7 +203,8 @@
 	  `(js-tojsstring ,sexp %this))))
    
    (define (default)
-      (tprint "cast sexp=" sexp " from=" from " etype=" etype " to=" to)
+      (tprint "cast sexp=" sexp " from=" from " to=" to)
+      (tprint "cast expr=" (j2s->list expr))
       (if (or (eq? from to) (eq? to '*))
 	  sexp
 	  (case from
@@ -177,17 +230,17 @@
 		 (else sexp)))
 	     ((fixnum)
 	      (case to
-		 ((index uint32 length) (js-fixnum->uint32 sexp))
+		 ((index uint32 length) (js-fixnum->uint32 sexp expr conf))
 		 ((bool) `(not (=fx ,sexp 0)))
 		 (else sexp)))
 	     ((integer number)
 	      (case to
-		 ((index uint32 length) (js-fixnum->uint32 sexp))
+		 ((index uint32 length) (js-fixnum->uint32 sexp expr conf))
 		 ((bool) `(not (= ,sexp 0)))
 		 (else sexp)))
 	     (else
 	      (case to
-		 ((index uint32 length) (js-fixnum->uint32 sexp))
+		 ((index uint32 length) (js-fixnum->uint32 sexp expr conf))
 		 ((string) (tostring sexp))
 		 ((bool) `(js-totest ,sexp))
 		 (else sexp))))))
@@ -202,76 +255,6 @@
 			 (if (eq? (cadr ten) 'nop)
 			     sexp
 			     `(,(cadr ten) ,sexp))
-			 ((cadr ten) sexp etype))
+			 ((cadr ten) sexp expr conf))
 		     (default)))
 	      (default)))))
-	  
-;*---------------------------------------------------------------------*/
-;*    box-table ...                                                    */
-;*---------------------------------------------------------------------*/
-(define box-table
-   ;; from x to -> conv
-   `((integer
-	((int32 fixnum->int32)
-	 (uint32 fixnum->uint32)
-	 (int53 nop)))
-     (int32
-	((uint32 int32->uint32)
-	 (integer int32->fixnum)
-	 (number int32->fixnum)
-	 (any int32->fixnum)))
-     (uint32
-	((int32 uint32->int32)
-	 (integer uint32->fixnum)
-	 (number uint32->fixnum)
-	 (any uint32->fixnum)))
-     (function
-	((any nop)))
-     (object
-	((any nop)))
-     (array
-	((any nop)))
-     (any
-	((int32 fixnum->int32)
-	 (uint32 fixnum->uint32)
-	 (int53 nop)
-	 (integer nop)
-	 (number nop)
-	 (function nop)
-	 (array nop)
-	 (object nop)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-box ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    This function introduces the type conversions that might be      */
-;*    needed to box/unbox variable values on read.                     */
-;*    -------------------------------------------------------------    */
-;*    No type checking is never needed here as the boxing/unboxing     */
-;*    are explicitly introduced by the compile and they are safe.      */
-;*---------------------------------------------------------------------*/
-(define (j2s-box expr from to)
-      
-   (define (default)
-      (error "j2s-box"
-	 (format "Cannot convert from \"~a\" to \"~a\"" from to) expr))
-
-   (if (eq? from to)
-       expr
-       (let ((fen (assq from box-table)))
-	  (if (pair? fen)
-	      (let ((ten (assq to (cadr fen))))
-		 (if (pair? ten)
-		     (if (symbol? (cadr ten))
-			 (if (eq? (cadr ten) 'nop)
-			     expr
-			     `(,(cadr ten) ,expr))
-			 ((cadr ten) expr))
-		     (default)))
-	      (default)))))
-
-
-
-
-	  
-	     

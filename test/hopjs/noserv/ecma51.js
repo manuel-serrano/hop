@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon Oct 30 17:27:30 2017 (serrano)                */
+/*    Last change :  Fri Dec  8 08:57:49 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -323,6 +323,17 @@ var a = [1,2,3,4,5];
 a[ x++ ] += 3;;
 
 assert.ok( x === 1, "increment in assignment" );
+
+var y = "foo";
+y++;
+
+assert.ok( isNaN( y ) );
+
+var y = "foo";
+y += 1;
+
+assert.equal( y, "foo1" );
+
 
 /*---------------------------------------------------------------------*/
 /*    literal with prototype                                           */
