@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Dec 10 10:37:00 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 12:58:29 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -811,10 +811,18 @@
 (define-walk-method (node-range this::J2SExpr env::pair-nil args fix::struct)
    (multiple-value-bind (ints envs)
       (call-default-walker)
+      (unless (or (null? envs) (pair? envs))
+	 (tprint "PAS BON: " (j2s->list this)))
       (with-access::J2SExpr this (type)
 	 (if (type-number? type)
 	     (return ints envs)
 	     (return #f envs)))))
+
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SPragma ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SPragma env::pair-nil args fix::struct)
+   (return #f env))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SParen ...                                        */

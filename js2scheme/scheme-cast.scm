@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Dec 10 12:08:31 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 12:50:48 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -91,7 +91,8 @@
 	 (string nop)
 	 (int32 ,js->int32)
 	 (uint32 ,js->uint32)
-	 (number ,js->number)))))
+	 (number ,js->number)
+	 (object ,js->object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast ancially functions                                          */
@@ -136,10 +137,11 @@
 (define (js-fixnum->uint32 v expr conf)
    (if (fixnum? v) (fixnum->uint32 v) `(fixnum->uint32 ,v)))
 
-
-
-
-
+;; any
+(define (js->object v expr conf)
+   (if (eq? (j2s-type expr) 'object)
+       v
+       `(js-toobject ,v %this)))
 
 
 
@@ -207,7 +209,9 @@
    
    (define (default)
       (tprint "cast sexp=" sexp " from=" from " to=" to)
-      (tprint "cast expr=" (j2s->list expr))
+      (when (isa? expr J2SExpr)
+	 (with-access::J2SExpr expr (loc)
+	    (tprint "cast expr=" (j2s->list expr) " loc=" loc)))
       (if (or (eq? from to) (eq? to '*))
 	  sexp
 	  (case from

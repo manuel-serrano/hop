@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/this.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/this.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Apr 19 08:55:50 2016 (serrano)                */
-;*    Copyright   :  2013-16 Manuel Serrano                            */
+;*    Last change :  Sun Dec 10 13:47:21 2017 (serrano)                */
+;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
 ;*=====================================================================*/
@@ -63,6 +63,7 @@
    (define (init-this loc)
       (let ((prag (instantiate::J2SPragma
 		     (loc loc)
+		     (type 'any)
 		     (expr `(cond
 			       ((or (eq? this (js-undefined))
 				    (eq? this (js-null)))
@@ -76,10 +77,12 @@
 	 (loc loc)
 	 (expr prag))))
    
-   (with-access::J2SFun this (mode body params id loc)
+   (with-access::J2SFun this (mode body params id loc thisp)
       (when (eq? mode 'normal)
 	 (let ((nbody (this! body)))
 	    (when (this? nbody)
+	       (with-access::J2SDecl thisp (vtype)
+		  (set! vtype 'any))
 	       (set! body
 		  (with-access::J2SBlock body (endloc)
 		     (instantiate::J2SBlock
