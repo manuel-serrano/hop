@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Dec  7 18:24:48 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 12:12:12 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -45,6 +45,7 @@
 	  (-/overflow::obj ::obj ::obj)
 	  
 	  (inline *fx/overflow::obj ::long ::long)
+	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow::obj ::obj ::obj)
 	  ))))
 
@@ -121,10 +122,17 @@
 ;*    overflow29 ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    2^53-1 overflow                                                  */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight (second edition), H. Warren J.r,            */
+;*    Chapter 4, section 4.1, page 68                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (overflow29 v::long)
-   (if (=fx (bit-rsh v 29) 0) v (fixnum->flonum v)))
-
+   (let* ((a (-fx 0 (bit-lsh 1 29)))
+	  (b (-fx (bit-lsh 1 29) 1))
+	  (b-a (-fx b a)))
+      (if (<=u32 (fixnum->uint32 (-fx v a)) (fixnum->uint32 b-a))
+	  v
+	  (fixnum->flonum v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-int32-tointeger ...                                           */
@@ -132,7 +140,7 @@
 (define-inline (js-int32-tointeger::obj i::int32)
    (cond-expand
       (bint30
-       (if (and (<s32 i (-s32 (bit-lshs32 #s32:1 29) 1))
+       (if (and (<s32 i (bit-lshs32 #s32:1 29))
 		(>=s32 i (negs32 (bit-lshs32 #s32:1 29))))
 	   (int32->fixnum i)
 	   (int32->flonum i)))
@@ -274,7 +282,7 @@
    (cond-expand
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
-	  (if (pragma::bool "__builtin_ssubl_overflow($1, $2, &$3)"
+	  (if (pragma::bool "__builtin_smull_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
 		 x y)
@@ -284,6 +292,31 @@
 	  (if (pragma::bool "$1 & ((($2 ^ (long)$1) - ($3)) ^ ($3))" z x y)
 	      (fixnum->flonum (*fx x y))
 	      (overflow29 (*fx x y)))))))
+
+;*---------------------------------------------------------------------*/
+;*    *u32/overflow ...                                                */
+;*    -------------------------------------------------------------    */
+;*    The argument are 30bit integers encoded into long values.        */
+;*---------------------------------------------------------------------*/
+(define-inline (*u32/overflow x::uint32 y::uint32)
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  (if (pragma::bool "__builtin_umull_overflow($1, $2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
+		 x y)
+	      (if (<u32 res (bit-lshu32 #u32:1 29))
+		  (uint32->fixnum res)
+		  (uint32->flonum res)))))
+      (else
+       (let ((z::long (pragma::uint32 "($1 ^ $2) & 0x80000000" x y)))
+	  (if (pragma::bool "$1 & ((($2 ^ (uint32)$1) - ($3)) ^ ($3))" z x y)
+	      (fixnum->flonum (*u32 x y))
+	      (let ((res (*u32 x y)))
+		 (if (<u32 res (bit-lshu32 #u32:1 29))
+		     (uint32->fixnum res)
+		     (uint32->flonum res))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    */overflow ...                                                   */

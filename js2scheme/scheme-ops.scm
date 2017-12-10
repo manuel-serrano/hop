@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Dec  8 08:22:23 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 12:21:58 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -29,7 +29,6 @@
 	   __js2scheme_scheme-test)
 
    (export (j2s-in? loc id obj)
-	   (j2s-num-op op left right lhs::J2SNode rhs::J2SNode conf)
 	   (js-binop2 loc op::symbol type lhs::J2SNode rhs::J2SNode
 	      mode return conf hint::pair-nil totype)))
 
@@ -106,6 +105,13 @@
 	     (typeof->scheme expr)))
 	 (else
 	  `(js-typeof ,(j2s-scheme expr mode return conf hint totype)))))
+
+   (define (bitnot loc expr)
+      ;; optimize the pattern ~~expr that is sometime used to cast
+      ;; an expression into a number
+      (match-case expr
+	 ((bit-nots32 ?expr) expr)
+	 (else (epairify loc `(bit-nots32 ,expr)))))
    
    (with-access::J2SUnary this (loc expr op type)
       (case op
@@ -156,9 +162,7 @@
 	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
 	  (unless (eq? type 'int32)
 	     (error "j2scheme" "expected int32 type for ~" type))
-	  (epairify loc
-	     `(bit-nots32
-		 ,(j2s-scheme expr mode return conf hint totype))))
+	  (bitnot loc (j2s-scheme expr mode return conf hint totype)))
 	 (else
 	  (epairify loc
 	     `(,op ,(j2s-scheme expr mode return conf hint totype)))))))
@@ -221,28 +225,30 @@
        (if (=fx (config-get conf :optim 0) 0)
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
-		 (js-binop loc op left right)))
+		 (js-binop loc op left lhs right rhs conf)))
 	   (js-binop2-add loc type lhs rhs mode return conf hint totype)))
       ((-)
        (if (=fx (config-get conf :optim 0) 0)
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
-		 (js-binop loc op left right)))
+		 (js-binop loc op left lhs right rhs conf)))
 	   (js-arithmetic-addsub loc op type lhs rhs mode return conf hint totype)))
       ((*)
        (if (=fx (config-get conf :optim 0) 0)
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
-		 (js-binop loc op left right)))
+		 (js-binop loc op left lhs right rhs conf)))
 	   (js-arithmetic-mul loc type lhs rhs mode return conf hint totype)))
       ((/)
        (if (=fx (config-get conf :optim 0) 0)
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
-		 (js-binop loc op left right)))
+		 (js-binop loc op left lhs right rhs conf)))
 	   (js-arithmetic-div loc type lhs rhs mode return conf hint totype)))
       ((remainder)
        (js-arithmetic-remainder loc type lhs rhs mode return conf hint totype))
+      ((%)
+       (js-arithmetic-% loc type lhs rhs mode return conf hint totype))
       ((eq?)
        (binop lhs rhs mode return conf hint 'any
 	  (lambda (left right)
@@ -251,48 +257,20 @@
        (if (=fx (config-get conf :optim 0) 0)
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
-		 (js-binop loc op left right)))
+		 (js-binop loc op left lhs right rhs conf)))
 	   (js-equality loc op type lhs rhs mode return conf hint totype)))
       ((< <= > >=)
        (if (=fx (config-get conf :optim 0) 0)
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
-		 (js-binop loc op left right)))
+		 (js-binop loc op left lhs right rhs conf)))
 	   (js-cmp loc op lhs rhs mode return conf hint totype)))
       ((& ^ BIT_OR >> >>> <<)
        (if (=fx (config-get conf :optim 0) 0)
 	   (binop lhs rhs mode return conf hint 'any
 	      (lambda (left right)
-		 (js-binop loc op left right)))
+		 (js-binop loc op left lhs right rhs conf)))
 	   (js-bitop loc op type lhs rhs mode return conf hint type)))
-      ((%)
-       (cond
-	  ((=fx (config-get conf :optim 0) 0)
-	   (binop lhs rhs mode return conf hint 'any
-	      (lambda (left right)
-		 (js-binop loc op left right))))
-	  ((and (is-uint32? lhs) (is-uint32? rhs) (type-uint32? type) (u32? conf))
-	   (binop lhs rhs mode return conf hint 'any
-	      (lambda (left right)
-		 (if (and (number? right) (= right 0))
-		     +nan.0
-		     `(js-%u32 ,left ,right)))))
-	  ((and (eq? (j2s-type-ref lhs) 'integer) (eq? (j2s-type-ref rhs) 'integer))
-	   (binop lhs rhs mode return conf hint 'any
-	      (lambda (left right)
-		 (if (and (number? right) (= right 0))
-		     +nan.0
-		     `(js-%$$NN ,left ,right)))))
-	  ((and (is-number? lhs) (is-number? rhs))
-	   (binop lhs rhs mode return conf hint 'any
-	      (lambda (left right)
-		 (if (and (number? right) (not (= right 0)))
-		     `(js-%$$NZ ,left ,right)
-		     `(js-%$$NN ,left ,right)))))
-	  (else
-	   (binop lhs rhs mode return conf hint 'any
-	      (lambda (left right)
-		 (js-binop loc op left right))))))
       ((remainderfx remainder)
        (binop lhs rhs mode return conf hint 'any
 	  (lambda (left right)
@@ -313,7 +291,7 @@
       (else
        (binop lhs rhs mode return conf hint 'any
 	  (lambda (left right)
-	     (js-binop loc op left right))))))
+	     (js-binop loc op left lhs right rhs conf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-in? ...                                                      */
@@ -324,131 +302,88 @@
        `(js-in? %this ,id ,obj)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-num-op ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    This function is called with left and right being either         */
-;*    atoms or variable references. Hence it does not generate         */
-;*    bindings.                                                        */
-;*    -------------------------------------------------------------    */
-;*    WARNING ! The LHS and RHS arguments can only be used for         */
-;*    there types.                                                     */
-;*---------------------------------------------------------------------*/
-(define (j2s-num-op op left right lhs::J2SNode rhs::J2SNode conf)
-   
-   (define (fx op)
-      (case op
-	 ((+ -)
-	  (case (config-get conf :long-size 0)
-	     ((32)
-	      (symbol-append 'js op 'fx32))
-	     ((64)
-	      (symbol-append 'js op 'fx64))
-	     (else
-	      (symbol-append 'js op 'fx))))
-	 ((/)
-	  (symbol-append 'js op 'fx))
-	 (else
-	  (symbol-append op 'fx))))
-   
-   (cond
-      ((fixnum? left)
-       (cond
-	  ((fixnum? right)
-	   `(,(fx op) ,left ,right))
-	  ((number? right)
-	   `(,op ,left ,right))
-	  (else
-	   `(if (fixnum? ,right)
-		(,(fx op) ,left ,right)
-		(,op ,left ,right)))))
-      ((number? left)
-       `(,op ,left ,right))
-      ((fixnum? right)
-       `(if (fixnum? ,left)
-	    (,(fx op) ,left ,right)
-	    (,op ,left ,right)))
-      ((number? right)
-       `(,op ,left ,right))
-      (else
-       (scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
-	  `(,(fx op) ,left ,right)
-	  `(,op ,left ,right)))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-binop ...                                                     */
 ;*    -------------------------------------------------------------    */
 ;*    This function is called with left and right being either         */
 ;*    atoms or variable references. Hence it does not generate         */
 ;*    bindings.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-binop loc op lhs rhs)
-   (case op
-      ((+)
-       `(js+ ,lhs ,rhs %this))
-      ((-)
-       `(js- ,lhs ,rhs %this))
-      ((*)
-       `(js* ,lhs ,rhs %this))
-      ((/)
-       `(js/ ,lhs ,rhs %this))
-      ((/num)
-       `(js/num ,lhs ,rhs))
-      ((%)
-       `(js% ,lhs ,rhs %this))
-      ((<)
-       `(js< ,lhs ,rhs %this))
-      ((<=)
-       `(js<= ,lhs ,rhs %this))
-      ((>)
-       `(js> ,lhs ,rhs %this))
-      ((>=)
-       `(js>= ,lhs ,rhs %this))
-      ((==)
-       `(js-equal? ,lhs ,rhs %this))
-      ((!=)
-       `(not (js-equal? ,lhs ,rhs %this)))
-      ((eq?)
-       `(eq? ,lhs ,rhs))
-      ((===)
-       `(js-strict-equal? ,lhs ,rhs))
-      ((!==)
-       `(not (js-strict-equal? ,lhs ,rhs)))
-      ((eq?)
-       `(eq? ,lhs ,rhs))
-      ((!eq?)
-       `(not (eq? ,lhs ,rhs)))
-      ((eqil?)
-       `(js-eqil? ,lhs ,rhs))
-      ((eqir?)
-       `(js-eqir? ,lhs ,rhs))
-      ((!eqil?)
-       `(not (js-eqil? ,lhs ,rhs)))
-      ((!eqir?)
-       `(not (js-eqir? ,lhs ,rhs)))
-      ((<-)
-       `(js<- ,lhs ,rhs %this))
-      ((instanceof)
-       (if (> (bigloo-debug) 0)
-	   `(js-instanceof?/debug %this ',loc ,lhs ,rhs)
-	   `(js-instanceof? %this ,lhs ,rhs)))
-      ((in)
-       (j2s-in? loc lhs rhs))
-      ((&)
-       `(js-bitand ,lhs ,rhs %this))
-      ((BIT_OR)
-       `(js-bitor ,lhs ,rhs %this))
-      ((^)
-       `(js-bitxor ,lhs ,rhs %this))
-      ((>>)
-       `(js-bitrsh ,lhs ,rhs %this))
-      ((>>>)
-       `(js-bitursh ,lhs ,rhs %this))
-      ((<<)
-       `(js-bitlsh ,lhs ,rhs %this))
-      ((OR &&)
-       (error "binop" "should not be here" op))
-      (else
-       `(,op ,lhs ,rhs %this))))
+(define (js-binop loc op left lhs right rhs conf)
+   (let (lhs rhs)
+      (if (m64? conf)
+	  (begin
+	     (set! lhs (tonumber64 left (j2s-type-ref lhs)))
+	     (set! rhs (tonumber64 left (j2s-type-ref rhs))))
+	  (begin
+	     (set! lhs (tonumber32 left (j2s-type-ref lhs)))
+	     (set! rhs (tonumber32 left (j2s-type-ref rhs)))))
+      (case op
+	 ((+)
+	  `(js+ ,lhs ,rhs %this))
+	 ((-)
+	  `(js- ,lhs ,rhs %this))
+	 ((*)
+	  `(js* ,lhs ,rhs %this))
+	 ((/)
+	  `(js/ ,lhs ,rhs %this))
+	 ((/num)
+	  `(js/num ,lhs ,rhs))
+	 ((%)
+	  `(js% ,lhs ,rhs %this))
+	 ((<)
+	  `(js< ,lhs ,rhs %this))
+	 ((<=)
+	  `(js<= ,lhs ,rhs %this))
+	 ((>)
+	  `(js> ,lhs ,rhs %this))
+	 ((>=)
+	  `(js>= ,lhs ,rhs %this))
+	 ((==)
+	  `(js-equal? ,lhs ,rhs %this))
+	 ((!=)
+	  `(not (js-equal? ,lhs ,rhs %this)))
+	 ((eq?)
+	  `(eq? ,lhs ,rhs))
+	 ((===)
+	  `(js-strict-equal? ,lhs ,rhs))
+	 ((!==)
+	  `(not (js-strict-equal? ,lhs ,rhs)))
+	 ((eq?)
+	  `(eq? ,lhs ,rhs))
+	 ((!eq?)
+	  `(not (eq? ,lhs ,rhs)))
+	 ((eqil?)
+	  `(js-eqil? ,lhs ,rhs))
+	 ((eqir?)
+	  `(js-eqir? ,lhs ,rhs))
+	 ((!eqil?)
+	  `(not (js-eqil? ,lhs ,rhs)))
+	 ((!eqir?)
+	  `(not (js-eqir? ,lhs ,rhs)))
+	 ((<-)
+	  `(js<- ,lhs ,rhs %this))
+	 ((instanceof)
+	  (if (> (bigloo-debug) 0)
+	      `(js-instanceof?/debug %this ',loc ,lhs ,rhs)
+	      `(js-instanceof? %this ,lhs ,rhs)))
+	 ((in)
+	  (j2s-in? loc lhs rhs))
+	 ((&)
+	  `(js-bitand ,lhs ,rhs %this))
+	 ((BIT_OR)
+	  `(js-bitor ,lhs ,rhs %this))
+	 ((^)
+	  `(js-bitxor ,lhs ,rhs %this))
+	 ((>>)
+	  `(js-bitrsh ,lhs ,rhs %this))
+	 ((>>>)
+	  `(js-bitursh ,lhs ,rhs %this))
+	 ((<<)
+	  `(js-bitlsh ,lhs ,rhs %this))
+	 ((OR &&)
+	  (error "binop" "should not be here" op))
+	 (else
+	  `(,op ,lhs ,rhs %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop ...                                                        */
@@ -516,128 +451,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    The compilation of the comparison functions.                     */
 ;*---------------------------------------------------------------------*/
-(define (js-cmp-old loc op::symbol lhs::J2SExpr rhs::J2SExpr
-	   mode return conf hint::pair-nil totype)
-
-   (define (u32op op) (symbol-append op 'u32))
-   (define (fxop op) (symbol-append op 'fx))
-   (define (jsop op) (symbol-append 'js op))
-   (define (strop op) (symbol-append 'js-jsstring op '?))
-
-   (let ((lt (j2s-type-ref lhs))
-	 (rt (j2s-type-ref rhs)))
-      (cond
-	 ;; uint32
-	 ((and (memq lt '(uint29 uint32 index length))
-	       (memq rt '(uint29 uint32 index length)))
-	  (binop lhs rhs mode return conf hint 'uint32
-	     (lambda (left right)
-		`(,(u32op op) ,left ,right))))
-	 ((and (memq op '(< <=))
-	       (memq lt '(integer number))
-	       (memq rt '(uint29 index length uint32)))
-	  (binop lhs rhs mode return conf hint 'uint32
-	     (lambda (left right)
-		(if (m64? conf)
-		    `(if (fixnum? ,left)
-			 (,(fxop op) ,left (uint32->fixnum ,right))
-			 (,(jsop op) ,left ,right %this))
-		    `(if (fixnum? ,left)
-			 (or (<fx ,left 0)
-			     (,(u32op op) (fixnum->uint32 ,left) ,right))
-			 (,(jsop op) ,left ,right %this))))))
-	 ((and (memq op '(< <=))
-	       (memq lt '(any))
-	       (memq rt '(uint29 index length uint32)))
-	  (binop lhs rhs mode return conf hint 'uint32
-	     (lambda (left right)
-		`(if (fixnum? ,left)
-		     ,(if (m64? conf)
-			  `(,(fxop op) ,left (uint32->fixnum ,right))
-			  `(or (<fx ,left 0)
-			       (,(u32op op) (fixnum->uint32 ,left) ,right)))
-		     (,(jsop op) (js-tonumber ,left %this) ,right %this)))))
-	 ((and (memq op '(> >=))
-	       (memq lt '(any))
-	       (memq rt '(uint29 index length uint32)))
-	  (binop lhs rhs mode return conf hint 'uint32
-	     (lambda (left right)
-		`(if (fixnum? ,left)
-		     ,(if (m64? conf)
-			  `(,(fxop op) ,left (uint32->fixnum ,right))
-			  `(or (>=fx ,left 0)
-			       (,(u32op op) (fixnum->uint32 ,left) ,right)))
-		     (,(jsop op) (js-tonumber ,left %this) ,right %this)))))
-	 ((and (is-uint32? lhs) (is-uint32? rhs) (u32? conf))
-	  (binop lhs rhs mode return conf hint 'uint32
-	     (lambda (left right)
-		`(,(u32op op) ,left ,right))))
-	 ((and (is-int30? lhs) (is-int30? rhs))
-	  (binop lhs rhs mode return conf hint 'int30
-	     (lambda (left right)
-		`(,(fxop op) ,left ,right))))
-	 ((and (is-int53? lhs) (is-int53? rhs) (m64? conf))
-	  (binop lhs rhs mode return conf hint 'int53
-	     (lambda (left right)
-		`(,(fxop op) ,left ,right))))
-	 ((and (is-integer? lhs) (is-integer? rhs))
-	  (cond
-	     ((m64? conf)
-	      (binop lhs rhs mode return conf hint 'int53
-		 (lambda (left right)
-		    `(,(fxop op) ,left ,right))))
-	     ((and (maybe-number? lhs) (maybe-number? rhs))
-	      (binop lhs rhs mode return conf hint 'integer
-		 (lambda (left right)
-		    (scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
-		       `(,(fxop op) ,left ,right)
-		       `(,op ,left ,right)))))
-	     (else
-	      (binop lhs rhs mode return conf '(fixnum) 'integer
-		 (lambda (left right)
-		    `(,op ,left ,right))))))
-	 ((and (is-string? lhs) (is-string? rhs))
-	  (binop lhs rhs mode return conf '(string) 'string
-	     (lambda (left right)
-		`(,(strop op) ,left ,right))))
-	 ((memq 'integer hint)
-	  (binop lhs rhs mode return conf hint 'integer
-	     (lambda (left right)
-		(scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
-		   `(,(fxop op) ,left ,right)
-		   (js-binop loc op left right)))))
-	 ((or (eq? (j2s-type-ref lhs) 'number) (eq? (j2s-type-ref rhs) 'number))
-	  (binop lhs rhs mode return conf hint 'integer
-	     (lambda (left right)
-		(scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
-		   `(,(fxop op) ,left ,right)
-		   (js-binop loc op left right)))))
-	 ((or (eq? (j2s-type-ref lhs) 'any) (eq? (j2s-type-ref rhs) 'any))
-	  (if (and (maybe-number? lhs) (maybe-number? rhs))
-	      (binop lhs rhs mode return conf hint 'integer
-		 (lambda (left right)
-		    (scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
-		       `(,(fxop op) ,left ,right)
-		       (js-binop loc op left right))))
-	      (binop lhs rhs mode return conf '(number) 'any
-		 (lambda (left right)
-		    (js-binop loc op left right)))))
-	 (else
-	  (binop lhs rhs mode return conf '(number) 'any
-	     (lambda (left right)
-		(js-binop loc op left right)))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-cmp ...                                                       */
-;*    -------------------------------------------------------------    */
-;*    The compilation of the comparison functions.                     */
-;*---------------------------------------------------------------------*/
 (define (js-cmp loc o::symbol lhs::J2SExpr rhs::J2SExpr
 	   mode return conf hint::pair-nil totype)
 
    (define (op o base)
       (case o
-	 ((== === != !==) (if (eq? base 'js) '= (symbol-append '= base)))
+	 ((== === != !==) (symbol-append '= base))
 	 (else (symbol-append o base))))
       
    (define (opfx o) (op o 'fx))
@@ -652,7 +471,12 @@
 	     (((kwote not) ?val) val)
 	     (else `(not ,expr)))
 	  expr))
-  
+
+   (define (cmp/32js o lhs tl left rhs tr right)
+      (if (memq o '(== === != !==))
+	  `(= ,(tonumber32 left tl) ,(tonumber32 right tr))
+	  `(,(opjs o) ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))
+   
    (define (cmp/32 o lhs tl left rhs tr right)
       (cond
 	 ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -660,32 +484,37 @@
 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	  `(,(opu32 o) ,left ,right))
 	 ((and (memq tl '(int32 uint32)) (memq tr '(int32 uint32)))
-	  `(,(opfx o) ,(tolong/64 left tl) ,(tolong/64 right tr)))
+	  `(,(opfx o) ,(tolong32 left tl) ,(tolong32 right tr)))
 	 ((eq? tl 'int32)
 	  `(if (fixnum? ,right)
 	       (,(ops32 o) ,left (fixnum->int32 ,right))
-	       (,(opjs o) ,left ,right %this)))
+	       ,(cmp/32js o lhs tl left rhs tr right)))
 	 ((eq? tr 'int32)
 	  `(if (fixnum? ,left)
 	       (,(ops32 o) (fixnum->int32 ,left) ,right)
-	       (,(opjs o) ,left ,right %this)))
+	       ,(cmp/32js o lhs tl left rhs tr right)))
 	 ((eq? tl 'uint32)
 	  `(if (fixnum? ,right)
 	       (if (>=fx ,right 0)
 		   (,(opu32 o) ,left (fixnum->uint32 ,right))
 		   #f)
-	       (,(opjs o) ,left ,right %this)))
+	       ,(cmp/32js o lhs tl left rhs tr right)))
 	 ((eq? tr 'uint32)
 	  `(if (fixnum? ,left)
-	       (if (>=fx ,left 0)
-		   (,(opu32 o) (fixnum->uint32 ,left) ,right)
-		   #t)
-	       (,(opjs o) ,left ,right %this)))
+	       ,(if (range-positive? lhs)
+		    `(,(opu32 o) (fixnum->uint32 ,left) ,right)
+		    `(if (>=fx ,left 0)
+			 (,(opu32 o) (fixnum->uint32 ,left) ,right)
+			 #t))
+	       ,(cmp/32js o lhs tl left rhs tr right)))
 	 (else
 	  `(if (fixnums? ,left ,right)
 	       (,(opfx o) ,left ,right)
-	       (,(opjs o) ,left ,right %this)))))
+	       ,(cmp/32js o lhs tl left rhs tr right)))))
 
+   (define (cmp/64js o lhs tl left rhs tr right)
+      `(,(opjs o) ,(tonumber64 left tl) ,(tonumber64 right tr) %this))
+   
    (define (cmp/64 o lhs tl left rhs tr right)
       (cond
 	 ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -693,19 +522,19 @@
 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	  `(,(opu32 o) ,left ,right))
 	 ((and (memq tl '(int32 uint32 int53)) (memq tr '(int32 uint32 int53)))
-	  `(,(opfx o) ,(tolong/64 left tl) ,(tolong/64 right tr)))
+	  `(,(opfx o) ,(tolong64 left tl) ,(tolong64 right tr)))
 	 ((memq tl '(int32 uint32 int53))
 	  `(if (fixnum? ,right)
-	       (,(opfx o) ,(tolong/64 left tl) ,right)
-	       (,(opjs o) ,left ,right %this)))
+	       (,(opfx o) ,(tolong64 left tl) ,right)
+	       ,(cmp/64js o lhs tl left right tr right)))
 	 ((memq tr '(int32 uint32 int53))
 	  `(if (fixnum? ,left)
-	       (,(opfx o) ,left ,(tolong/64 right tr))
-	       (,(opjs o) ,left ,right %this)))
+	       (,(opfx o) ,left ,(tolong64 right tr))
+	       ,(cmp/64js o lhs tl left right tr right)))
 	 (else
 	  `(if (fixnums? ,left ,right)
 	       (,(opfx o) ,left ,right)
-	       (,(opjs o) ,left ,right %this)))))
+	       ,(cmp/64js o lhs tl left right tr right)))))
 
    (binop lhs rhs mode return conf hint '*
       (lambda (left right)
@@ -858,7 +687,7 @@
       ((and (eq? (j2s-type-ref lhs) 'string) (eq? (j2s-type-ref rhs) 'string))
        (binop lhs rhs mode return conf '(string) 'any
 	  (lambda (left right)
-	     (js-binop loc op left right))))
+	     (js-binop loc op left lhs right rhs conf))))
       ((and (eq? (j2s-type-ref lhs) 'bool) (eq? (j2s-type-ref rhs) 'bool))
        (binop lhs rhs mode return conf '(bool) 'any
 	  (lambda (left right)
@@ -891,7 +720,7 @@
 		     `(not (or (eq? (js-undefined) ,right) (eq? (js-null) ,right)))
 		     `(not (or (eq? ,left (js-undefined)) (eq? ,left (js-null))))))
 		(else
-		 (js-binop loc op left right))))))
+		 (js-binop loc op left lhs right rhs conf))))))
       ((and (or (eq? op '===) (eq? op '!==))
 	    (or (eq? (j2s-type-ref lhs) 'bool) (eq? (j2s-type-ref rhs) 'bool)))
        (binop lhs rhs mode return conf '(bool) 'any
@@ -911,7 +740,7 @@
 			   (if (memq op '(== ===)) 'eqir? '!eqir?))
 			  (else
 			   op))))
-		(js-binop loc op left right)))))))
+		(js-binop loc op left lhs right rhs conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bitop ...                                                     */
@@ -991,6 +820,12 @@
 	 (else
 	  `(,(jsopfx op) ,x ,y))))
 
+   (define (tonumber sexp expr)
+      (let ((etype (j2s-type-ref expr)))
+	 (if (m64? conf)
+	     (tonumber64 sexp etype)
+	     (tonumber32 sexp etype))))
+   
    (cond
       ((and (is-uint32? lhs) (is-uint32? rhs) (type-uint32? type) (u32? conf))
        (binop lhs rhs mode return conf hint 'uint32
@@ -1044,21 +879,21 @@
 	  (lambda (left right)
 	     (scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
 		(js-binopfx op left right conf)
-		(js-binop loc op left right)))))
+		(js-binop loc op left lhs right rhs conf)))))
       ((and (is-number? lhs) (is-number? rhs))
        (binop lhs rhs mode return conf hint 'integer
 	  (lambda (left right)
 	     (scm-if (scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
 		(js-binopfx op left right conf)
-		`(,(jsop op) ,left ,right %this)))))
+		`(,(jsop op) ,(tonumber left lhs) ,(tonumber right rhs) %this)))))
       (else
        (binop lhs rhs mode return conf hint 'integer
 	  (lambda (left right)
 	     (if (and (maybe-number? lhs) (maybe-number? rhs))
 		 `(if ,(scm-and (scm-fixnum? left lhs) (scm-fixnum? right rhs))
 		      ,(js-binopfx op left right conf)
-		      (,(jsop op) ,left ,right %this))
-		 `(,(jsop op) ,left ,right %this)))))))
+		      (,(jsop op) ,(tonumber left lhs) ,(tonumber right rhs) %this))
+		 `(,(jsop op) ,(tonumber left lhs) ,(tonumber right rhs) %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-binop2-add ...                                                */
@@ -1131,16 +966,16 @@
 		  (int32->fixnum
 		     (,(ops32 op) ,(toint32/32 left tl) ,(toint32/32 right tr))))
 	      `(if (fixnum? ,right)
-		   (,(opfx/overflow op) ,(tofx/32 left tl) ,right)
-		   (,(opjs op) ,left ,right %this))))
+		   (,(opfx/overflow op) ,(tolong32 left tl) ,right)
+		   (,(opjs op) ,(tonumber32 left tl) ,(tonumber32 right tr) %this))))
 	 ((inrange-int32? rhs)
 	  `(if (fixnum? ,left)
-	       (,(opfx/overflow op) ,left ,(tofx/32 right tr))
-	       (,(opjs op) ,left ,right %this)))
+	       (,(opfx/overflow op) ,left ,(tolong32 right tr))
+	       (,(opjs op) ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))
 	 (else
 	  `(if (fixnums? ,left ,right)
 	       (,(opfx/overflow op) ,left ,right)
-	       (,(opjs op) ,left ,right %this)))))
+	       (,(opjs op) ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))))
 
    (define (addsub-int32/32 op lhs tl left rhs tr right)
       (cond
@@ -1187,7 +1022,7 @@
    (define (addsub-number/64 op type lhs tl left rhs tr right)
       (cond
 	 ((and (memq tl '(int32 uint32)) (memq tr '(int32 uint32)))
-	  `(,(opfx/overflow op) ,(tolong/64 left tl) ,(tolong/64 right tr)))
+	  `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr)))
 	 ((and (eq? tl 'uint32) (eq? tr 'int32))
 	  `(,(opfx/overflow op) (uint32->fixnum ,left) (int32->fixnum ,right)))
 	 (else
@@ -1196,7 +1031,7 @@
 	       (,(op/overflow op) ,left ,right)))))
 
    (define (addsub-long/64 op lhs tl left rhs tr right)
-      `(,(opfx op) ,(tolong/64 left tl) ,(tolong/64 right tr)))
+      `(,(opfx op) ,(tolong64 left tl) ,(tolong64 right tr)))
 
    (define (addsub-int32/64 op lhs tl left rh<s tr right)
       (cond
@@ -1227,7 +1062,7 @@
 	 ((and (eq? tl 'int32) (eq? tr 'int32))
 	  `(,(opfx op) (int32->fixnum ,left) (int32->fixnum ,right)))
 	 ((and (memq tl '(int32 uint32 int53)) (memq tr '(int32 uint32 int53)))
-	  `(,(opfx op) ,(tolong/64 left tl) ,(tolong/64 right tr)))
+	  `(,(opfx op) ,(tolong64 left tl) ,(tolong64 right tr)))
 	 ((and (eq? tl 'bint) (eq? tr 'bint))
 	  `(,(opfx/overflow op) ,left ,right))
 	 (else
@@ -1264,14 +1099,79 @@
 	   mode return conf hint::pair-nil totype)
 
    (define (mul/32 type lhs tl left rhs tr right)
-      (if (and (memq tl '(int32 uint32)) (memq tr '(int32 uint32)))
-	  `(*/overflow ,left ,right)
-	  `(*js ,(tonumber/32 left tl) ,(tonumber/32 right tr) %this)))
+      (case type
+	 ((int32)
+	  (cond
+	     ((and (eq? tl 'int32) (eq? tr 'int32))
+	      `(*s32 ,left ,right))
+	     ((and (eq? tl 'uint32) (eq? tr 'uint32))
+	      `(uint32->int32 (*u32 ,left ,right)))
+	     (else
+	      `(fixnum->int32
+		  `(*js ,(tonumber64 left tl)
+		      ,(tonumber64 right tr) %this)))))
+	 ((uint32)
+	  (cond
+	     ((and (eq? tl 'int32) (eq? tr 'int32))
+	      `(int32->uint32 (*s32 ,left ,right)))
+	     ((and (eq? tl 'uint32) (eq? tr 'uint32))
+	      `(uint32->int32 (*u32 ,left ,right)))
+	     (else
+	      `(fixnum->int32
+		  `(*js ,(tonumber64 left tl)
+		      ,(tonumber64 right tr) %this)))))
+	 ((integer)
+	  (cond
+	     ((and (eq? tl 'int32) (eq? tr 'int32))
+	      `(int32->fixnum (*s32 ,left ,right)))
+	     ((and (eq? tl 'uint32) (eq? tr 'uint32))
+	      `(uint32->fixnum (*u32 ,left ,right)))
+	     (else
+	      `(*js ,(tonumber64 left tl)
+		  ,(tonumber64 right tr) %this))))
+	 ((number obj any object)
+	  (cond
+	     ((and (eq? tl 'int32) (eq? tr 'int32))
+	      `(*/overflow (int32->fixnum ,left) (int32->fixnum ,right)))
+	     ((and (eq? tl 'uint32) (eq? tr 'uint32))
+	      `(*u32/overflow ,left ,right))
+	     (else
+	      `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this))))
+	 (else
+	  (error "mul/32" "illegal integer type" type))))
    
    (define (mul/64 type lhs tl left rhs tr right)
-      (if (and (memq tl '(int32 uint32 int53)) (memq tr '(int32 uint32 int53)))
-	  `(*/overflow ,left ,right)
-	  `(*js ,(tonumber/64 left tl) ,(tonumber/64 right tr) %this)))
+      (case type
+	 ((int32)
+	  (cond
+	     ((and (memq tl '(int32 uint32 int53))
+		   (memq tr '(int32 uint32 int53)))
+	      `(fixnum->int32
+		  (*fx ,(tolong64 left tl) ,(tolong64 right tr))))
+	     (else
+	      `(fixnum->int32
+		  `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))))
+	 ((uint32)
+	  (cond
+	     ((and (memq tl '(int32 uint32 int53))
+		   (memq tr '(int32 uint32 int53)))
+	      `(fixnum->uint32
+		  (*fx ,(tolong64 left tl) ,(tolong64 right tr))))
+	     (else
+	      `(fixnum->uint32
+		  `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))))
+	 ((int53)
+	  (if (and (memq tl '(int32 uint32 int53))
+		   (memq tr '(int32 uint32 int53)))
+	      `(*fx ,(tolong64 left tl) ,(tolong64 right tr))
+	      `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))
+	 ((number obj any object)
+	  (if (and (memq tl '(int32 uint32 int53))
+		   (memq tr '(int32 uint32 int53)))
+	      `(*/overflow ,(tolong64 left tl) ,(tolong64 right tr))
+	      `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))
+	 (else
+	  (error "mul/64" "illegal integer type" type))))
    
    (binop lhs rhs mode return conf hint '*
       (lambda (left right)
@@ -1346,6 +1246,48 @@
 			  `(bit-rsh ,n ,k)
 			  `(/pow2fx ,n ,k))
 		     (/js ,n ,(bit-lsh 1 k) %this)))))))
+
+   (define (divs32 left right tl tr)
+      (cond
+	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
+	  `(uint32->int32 (/u32 ,left ,right)))
+	 ((and (eq? tl 'int32) (eq? tr 'int32))
+	  `(/s32 ,left ,right))
+	 (else
+	  `(if (fixnums? ,left ,right)
+	       (fixnum->int32 (/fx ,left ,right))
+	       (js-toint32 (/js ,left ,right %this) %this)))))
+
+   (define (divu32 left right tl tr)
+      (cond
+	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
+	  `(/u32 ,left ,right))
+	 ((and (eq? tl 'int32) (eq? tr 'int32))
+	  `(int32->uint32 (/s32 ,left ,right)))
+	 (else
+	  `(if (fixnums? ,left ,right)
+	       (fixnum->uint32 (/fx ,left ,right))
+	       (js-touint32 (/js ,left ,right %this) %this)))))
+
+   (define (divjs left right tl tr)
+      (cond
+	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
+	  `(if (=u32 (remainderu32 ,left ,right) #u32:0)
+	       (js-uint32-tointeger (/u32 ,left ,right))
+	       (/fl (uint32->flonum ,left)
+		  (uint32->flonum ,right))))
+	 ((and (eq? tl 'int32) (eq? tr 'int32))
+	  `(if (=s32 (remainders32 ,left ,right) #s32:0)
+	       (js-int32-tointeger (/s32 ,left ,right))
+	       (/fl (int32->flonum ,left)
+		  (int32->flonum ,right))))
+	 (else
+	  `(if (fixnums? ,left ,right)
+	       (if (=fx (remainderfx ,left ,right) 0)
+		   (/fx ,left ,right)
+		   (/fl (fixnum->flonum ,left)
+		      (fixnum->flonum ,right)))
+	       (/js ,left ,right %this)))))
    
    (let ((k (power2 rhs)))
       (if k
@@ -1355,24 +1297,10 @@
 		(let ((tl (j2s-type-ref lhs))
 		      (tr (j2s-type-ref rhs)))
 		   (epairify loc
-		      (cond
-			 ((and (eq? tl 'uint32) (eq? tr 'uint32))
-			  `(if (=u32 (remainderu32 ,left ,right) #u32:0)
-			       (/u32 ,left ,right)
-			       (/fl (uint32->flonum ,left)
-				  (uint32->flonum ,right))))
-			 ((and (eq? tl 'int32) (eq? tr 'int32))
-			  `(if (=s32 (remainders32 ,left ,right) #s32:0)
-			       (/s32 ,left ,right)
-			       (/fl (int32->flonum ,left)
-				  (int32->flonum ,right))))
-			 (else
-			  `(if (fixnums? ,left ,right)
-			       (if (=fx (remainderfx ,left ,right) 0)
-				   (/fx ,left ,right)
-				   (/fl (fixnum->flonum ,left)
-				      (fixnum->flonum ,right)))
-			       (/js ,left ,right %this)))))))))))
+		      (case type
+			 ((int32) (divs32 left right tl tr))
+			 ((uint32) (divu32 left right tl tr))
+			 (else (divjs left right tl tr))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arithmetic-remainder ...                                      */
@@ -1402,7 +1330,6 @@
 	  `(remainder ,(todouble left tl) ,(todouble right tr)))))
    
    (define (remainders32 left right tl tr)
-	  (tprint "##### REMAINDERs32 tl=" tl " tr=" tr)
       (cond
 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	  `(uint32->int32 (remainderu32 ,left ,right)))
@@ -1463,18 +1390,80 @@
 		  (else (remainderjs left right tl tr))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    tonumber/32 ...                                                  */
+;*    js-arithmetic-% ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (tonumber/32 val type::symbol)
+(define (js-arithmetic-% loc type lhs rhs
+	   mode return conf hint::pair-nil totype)
+   (binop lhs rhs mode return conf hint '*
+      (lambda (left right)
+	 (let ((tl (j2s-type-ref lhs))
+	       (tr (j2s-type-ref rhs)))
+	    (epairify loc
+	       (cond
+		  ((and (eq? tl 'int32) (eq? tr 'int32))
+		   `(if (=s32 ,right #s32:0)
+			+nan.0
+			(js-int32-tointeger (remainders32 ,left ,right))))
+		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
+		   `(if (=u32 ,right #u32:0)
+			+nan.0
+			(js-uint32-tointeger (remainders32 ,left ,right))))
+		  ((and (eq? tl 'integer) (eq? tr 'integer))
+		   (binop lhs rhs mode return conf hint 'any
+		      (lambda (left right)
+			 (if (and (number? right) (= right 0))
+			     +nan.0
+			     `(js-%$$NN ,left ,right)))))
+		  (else
+		   (if (m64? conf)
+		       (if (and (number? right) (not (= right 0)))
+			   `(js-%$$NZ ,(tonumber64 left tl)
+			       ,(tonumber64 right tr))
+			   `(js-%$$NN ,(tonumber64 left tl)
+			       ,(tonumber64 right tr)))
+		       (if (and (number? right) (not (= right 0)))
+			   `(js-%$$NZ ,(tonumber32 left tl)
+			       ,(tonumber32 right tr))
+			   `(js-%$$NN ,(tonumber32 left tl)
+			       ,(tonumber32 right tr)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    overflow29 ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    2^53-1 overflow                                                  */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight (second edition), H. Warren J.r,            */
+;*    Chapter 4, section 4.1, page 68                                  */
+;*---------------------------------------------------------------------*/
+(define (overflow29 v::long)
+   (let* ((a (-fx 0 (bit-lsh 1 29)))
+	  (b (-fx (bit-lsh 1 29) 1))
+	  (b-a (-fx b a)))
+      (if (<=u32 (fixnum->uint32 (-fx v a)) (fixnum->uint32 b-a))
+	  v
+	  (fixnum->flonum v))))
+
+;*---------------------------------------------------------------------*/
+;*    tonumber32 ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (tonumber32 val type::symbol)
    (case type
       ((int32)
-       `(if (overflow29 (int32->fixnum ,val))
-	    (int32->flonum ,val)
-	    (int32->fixnum ,val)))
+       (if (int32? val)
+	   (if (overflow29 (int32->fixnum val))
+	       (int32->flonum val)
+	       (int32->fixnum val))
+	   `(if (overflow29 (int32->fixnum ,val))
+		(int32->flonum ,val)
+		(int32->fixnum ,val))))
       ((uint32)
-       `(if (<u32 ,val (-u32 (bit-lshu32 #u32:1 29) #u32:1))
-	    (uint32->fixnum ,val)
-	    (uint32->flonum ,val)))
+       (if (uint32? val)
+	   (if (<u32 val (bit-lshu32 #u32:1 29))
+	       (uint32->fixnum val)
+	       (uint32->flonum val))
+	   `(if (<u32 ,val ,(bit-lshu32 #u32:1 29))
+		(uint32->fixnum ,val)
+		(uint32->flonum ,val))))
       (else val)))
 
 ;*---------------------------------------------------------------------*/
@@ -1511,27 +1500,27 @@
       (else `(fixnum->int32 ,val))))
 
 ;*---------------------------------------------------------------------*/
-;*    tofx/32 ...                                                      */
+;*    tolong32 ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (tofx/32 val type::symbol)
+(define (tolong32 val type::symbol)
    (case type
       ((int32) `(int32->fixnum ,val))
       ((uint32) `(uint32->fixnum ,val))
       (else val)))
 
 ;*---------------------------------------------------------------------*/
-;*    tolong/64 ...                                                    */
+;*    tolong64 ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (tolong/64 val type::symbol)
+(define (tolong64 val type::symbol)
    (case type
       ((int32) `(int32->fixnum ,val))
       ((uint32) `(uint32->fixnum ,val))
       (else val)))
 
 ;*---------------------------------------------------------------------*/
-;*    tonumber/64 ...                                                  */
+;*    tonumber64 ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (tonumber/64 val type::symbol)
+(define (tonumber64 val type::symbol)
    (case type
       ((int32) `(int32->fixnum ,val))
       ((uint32) `(uint32->fixnum ,val))

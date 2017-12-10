@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Dec  7 08:40:42 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 09:20:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -107,7 +107,8 @@
 			      (loop (+fx i 1)))))
 		   (loop (+fx i 1))))))
       (unless (config-get args :optim-range)
-	 (force-unary-type! this))
+	 (force-type! this 'integer 'number))
+	 ;;(force-unary-type! this))
       ;; cleanup the ast use count and remove obviously useless definitions
       (force-type! this 'unknown 'any)
       (program-cleanup! this))
@@ -288,7 +289,8 @@
 (define (expr-type-set! this::J2SExpr env::pair-nil fix::cell ty::symbol
 	   #!optional (bk '()))
    (with-access::J2SExpr this (type)
-      (unless (or (eq? ty 'unknown) (eq? type ty) (eq? type 'any))
+;*       (unless (or (eq? ty 'unknown) (eq? type ty) (eq? type 'any))  */
+      (unless (or (eq? ty 'unknown) (eq? type ty))
 	 (let ((ntype (merge-types type ty)))
 	    (unless (eq? ntype type)
 	       (unfix! fix
@@ -587,21 +589,15 @@
 	 (let ((etyp (env-lookup env decl)))
 	    (when (eq? etyp 'unknown)
 	       (with-access::J2SDecl decl (vtype)
-		  (cond
-		     ((and ronly (isa? decl J2SDeclInit))
-		      (set! etyp vtype))
-		     ((eq? vtype 'any)
-		      (set! etyp vtype)))))
+		  (set! etyp vtype)))
+;* 		  (cond                                                */
+;* 		     ((and ronly (isa? decl J2SDeclInit))              */
+;* 		      (set! etyp vtype))                               */
+;* 		     ((isa? decl J2SDeclInit))                         */
+;* 		      (set! etyp vtype))                               */
+;* 		     ((eq? vtype 'any)                                 */
+;* 		      (set! etyp vtype)))))                            */
 	    (expr-type-set! this env fix etyp)))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    typing ::J2SExprStmt ...                                         *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (typing this::J2SExprStmt env::pair-nil fix::cell) */
-;*    (with-access::J2SExprStmt this (stmt)                            */
-;*       (multiple-value-bind (typ env bk)                             */
-;* 	 (typing stmt env fun fix)                                     */
-;* 	 (expr-type-set! this env fix typ))))                          */
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SBindExit ...                                         */
@@ -626,14 +622,14 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SDeclInit env::pair-nil fix::cell)
    (with-access::J2SDeclInit this (val itype)
-      (multiple-value-bind (typ env bk)
+      (multiple-value-bind (typv env bk)
 	 (typing val env fix)
-	 (if (or (eq? typ 'unknown) (not typ))
+	 (if (or (eq? typv 'unknown) (not typv))
 	     (return 'void env bk)
 	     (begin
-		(decl-vtype-set! this typ fix)
-		(set! itype (merge-types itype typ))
-		(return 'void (extend-env env this typ) bk))))))
+		(decl-vtype-set! this typv fix)
+		(set! itype (merge-types itype typv))
+		(return 'void (extend-env env this typv) bk))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDeclFun ...                                          */
@@ -927,11 +923,19 @@
 	    (else
 	     (type-unknown-call callee env bk)))))
 
-   (define (String? obj)
-      (when (isa? obj J2SUnresolvedRef)
-	 (with-access::J2SUnresolvedRef obj (id)
-	    (eq? id 'String))))
+   (define (is-global? obj ident)
+      (when (isa? obj J2SGlobalRef)
+	 (with-access::J2SGlobalRef obj (id decl)
+	    (when (eq? id ident)
+	       (with-access::J2SDecl decl (ronly)
+		  ronly)))))
    
+   (define (String? obj)
+      (is-global? obj 'String))
+
+   (define (Array? obj)
+      (is-global? obj 'Array))
+
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
       (multiple-value-bind (_ env bk)
@@ -960,6 +964,13 @@
       ;; hop calls have no effect on the typing env
       (with-access::J2SHopRef callee (rtype)
 	 (expr-type-set! this env fix rtype bk)))
+
+   (define (type-global-call callee args env bk)
+      (cond
+	 ((Array? callee)
+	  (expr-type-set! this (unknown-call-env env) fix 'array bk))
+	 (else
+	  (type-unknown-call callee env bk))))
    
    (define (type-unknown-call callee env bk)
       ;; type a unknown function call: expr( ... )
@@ -976,6 +987,7 @@
 	    ((isa? callee J2SRef) (type-ref-call callee args env bk))
 	    ((isa? callee J2SHopRef) (type-hop-call callee args env bk))
 	    ((isa? callee J2SAccess) (type-method-call callee args env bk))
+	    ((isa? callee J2SGlobalRef) (type-global-call callee args env bk))
 	    (else (type-unknown-call callee env bk))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1545,60 +1557,115 @@
 	  (and (eq? typ 'number) (memq type '(integer index)))
 	  (and (eq? typ 'boolean) (eq? type 'bool))))
    
-   (with-access::J2SBinary this (loc)
-      (multiple-value-bind (op decl typ ref)
-	 (j2s-expr-type-test this)
-	 (case op
-	    ((== === eq?)
-	     (with-access::J2SExpr ref (type)
-		(cond
-		   ((eq-typeof? type typ)
-		    (unfix! fix "resolve.J2SBinary")
-		    (J2SBool #t))
-		   ((memq type '(unknown any))
-		    (call-default-walker))
-		   ((and (eq? type 'number) (memq typ '(integer index)))
-		    (call-default-walker))
-		   (else
-		    (unfix! fix "resolve.J2SBinary")
-		    (J2SBool #f)))))
-	    ((!= !==)
-	     (with-access::J2SExpr ref (type)
-		(cond
-		   ((eq-typeof? type typ)
-		    (unfix! fix "resolve.J2SBinary")
-		    (J2SBool #f))
-		   ((memq type '(unknown any))
-		    (call-default-walker))
-		   ((and (eq? type 'number) (memq typ '(integer index)))
-		    (call-default-walker))
-		   (else
-		    (unfix! fix "resolve.J2SBinary")
-		    (J2SBool #t)))))
-	    ((instanceof)
-	     (with-access::J2SExpr ref (type)
-		(cond
-		   ((or (memq type '(unknown any object)) (eq? typ 'object))
-		    (call-default-walker))
-		   ((eq? type typ)
-		    (unfix! fix "resolve.J2SBinary")
-		    (J2SBool #t))
-		   (else
-		    (unfix! fix "resolve.J2SBinary")
-		    (J2SBool #f)))))
-	    ((!instanceof)
-	     (with-access::J2SExpr ref (type)
-		(cond
-		   ((or (memq type '(unknown any object)) (eq? typ 'object))
-		    (call-default-walker))
-		   ((eq? type typ)
-		    (unfix! fix "resolve.J2SBinary")
-		    (J2SBool #f))
-		   (else
-		    (unfix! fix "resolve.J2SBinary")
-		    (J2SBool #t)))))
-	    (else
-	     (call-default-walker))))))
+   (with-access::J2SBinary this (loc op)
+      (case op
+	 ((&&)
+	  (with-access::J2SBinary this (lhs rhs loc)
+	     (set! lhs (resolve! lhs fix))
+	     (set! rhs (resolve! rhs fix))
+	     (cond
+		((and (isa? lhs J2SBool) (isa? rhs J2SBool))
+		 (with-access::J2SBool lhs ((lval val))
+		    (with-access::J2SBool rhs ((rval val))
+		       (J2SBool (and lval rval)))))
+		((isa? lhs J2SBool)
+		 (with-access::J2SBool lhs (val)
+		    (if val rhs (J2SBool #f))))
+		((isa? rhs J2SBool)
+		 (with-access::J2SBool rhs (val)
+		    (if val lhs (J2SBool #f))))
+		(else
+		 this))))
+	 ((OR)
+	  (with-access::J2SBinary this (lhs rhs loc)
+	     (set! lhs (resolve! lhs fix))
+	     (set! rhs (resolve! rhs fix))
+	     (cond
+		((and (isa? lhs J2SBool) (isa? rhs J2SBool))
+		 (with-access::J2SBool lhs ((lval val))
+		    (with-access::J2SBool rhs ((rval val))
+		       (J2SBool (or lval rval)))))
+		((isa? lhs J2SBool)
+		 (with-access::J2SBool lhs (val)
+		    (if val (J2SBool #t) rhs)))
+		((isa? rhs J2SBool)
+		 (with-access::J2SBool rhs (val)
+		    (if val (J2SBool #t) lhs)))
+		(else
+		 this))))
+	 (else
+	  (multiple-value-bind (op decl typ ref)
+	     (j2s-expr-type-test this)
+	     (case op
+		((== === eq?)
+		 (with-access::J2SExpr ref (type)
+		    (cond
+		       ((eq-typeof? type typ)
+			(unfix! fix "resolve.J2SBinary")
+			(J2SBool #t))
+		       ((memq type '(unknown any))
+			(call-default-walker))
+		       ((and (eq? type 'number) (memq typ '(integer index)))
+			(call-default-walker))
+		       (else
+			(unfix! fix "resolve.J2SBinary")
+			(J2SBool #f)))))
+		((!= !==)
+		 (with-access::J2SExpr ref (type)
+		    (cond
+		       ((eq-typeof? type typ)
+			(unfix! fix "resolve.J2SBinary")
+			(J2SBool #f))
+		       ((memq type '(unknown any))
+			(call-default-walker))
+		       ((and (eq? type 'number) (memq typ '(integer index)))
+			(call-default-walker))
+		       (else
+			(unfix! fix "resolve.J2SBinary")
+			(J2SBool #t)))))
+		((instanceof)
+		 (with-access::J2SExpr ref (type)
+		    (cond
+		       ((or (memq type '(unknown any object)) (eq? typ 'object))
+			(call-default-walker))
+		       ((eq? type typ)
+			(unfix! fix "resolve.J2SBinary")
+			(J2SBool #t))
+		       (else
+			(unfix! fix "resolve.J2SBinary")
+			(J2SBool #f)))))
+		((!instanceof)
+		 (with-access::J2SExpr ref (type)
+		    (cond
+		       ((or (memq type '(unknown any object)) (eq? typ 'object))
+			(call-default-walker))
+		       ((eq? type typ)
+			(unfix! fix "resolve.J2SBinary")
+			(J2SBool #f))
+		       (else
+			(unfix! fix "resolve.J2SBinary")
+			(J2SBool #t)))))
+		((&&)
+		 (with-access::J2SBinary this (lhs rhs loc)
+		    (tprint "AND lhs=" (j2s->list lhs) " rhs=" (j2s->list rhs))
+		    (set! lhs (resolve! lhs fix))
+		    (set! rhs (resolve! rhs fix))
+		    (if (and (isa? lhs J2SBool) (isa? rhs J2SBool))
+			(with-access::J2SBool lhs ((lval val))
+			   (with-access::J2SBool rhs ((rval val))
+			      (J2SBool (and lval rval))))
+			this)))
+		((or)
+		 (with-access::J2SBinary this (lhs rhs loc)
+		    (set! lhs (resolve! lhs fix))
+		    (set! rhs (resolve! rhs fix))
+		    (if (and (isa? lhs J2SBool) (isa? rhs J2SBool))
+			(with-access::J2SBool lhs ((lval val))
+			   (with-access::J2SBool rhs ((rval val))
+			      (J2SBool (or lval rval))))
+			this)))
+		(else
+		 (call-default-walker))))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SIf ...                                             */
@@ -1693,7 +1760,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SFun from to)
    (with-access::J2SFun this (rtype thisp)
-      (force-type! thisp from to)
+      (when (isa? thisp J2SNode) (force-type! thisp from to))
       (when (eq? rtype from) (set! rtype to)))
    (call-default-walker))
 

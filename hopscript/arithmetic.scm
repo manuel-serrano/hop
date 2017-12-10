@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Wed Dec  6 20:47:54 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 11:47:34 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -147,7 +147,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
 ;*---------------------------------------------------------------------*/
 (define (js-toint32::int32 obj %this)
-   (if (int32? obj) (tprint "PAS BONI ICI..."))
+   (if (int32? obj) (tprint "PAS BONI ICI..." obj))
    (if (number? obj)
        (js-number-toint32 obj)
        (js-number-toint32 (js-tonumber obj %this))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Dec  8 11:41:19 2017 (serrano)                */
+;*    Last change :  Sat Dec  9 10:03:13 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -70,6 +70,7 @@
 	   (j2s-get loc obj tyobj prop typrop tyval cache #!optional (clevel 100))
 	   (j2s-put! loc obj tyobj prop typrop val mode cache #!optional (clevel 100))
 
+	   (range-positive?::bool ::J2SExpr)
 	   (inrange-32?::bool ::J2SExpr)
 	   (inrange-int30?::bool ::J2SExpr)
 	   (inrange-int32?::bool ::J2SExpr)
@@ -590,6 +591,14 @@
 	      `(js-put! ,obj ,prop ,prop ,mode %this)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    range-positive? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (range-positive? expr)
+   (with-access::J2SExpr expr (range)
+      (and (interval? range)
+	   (>= (interval-min range) #l0))))
+	   
+;*---------------------------------------------------------------------*/
 ;*    inrange-32? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (inrange-32? expr)
@@ -611,10 +620,22 @@
 ;*    inrange-int32? ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (inrange-int32? expr)
-   (with-access::J2SExpr expr (range)
-      (when (interval? range)
-	 (and (>=llong (interval-min range) (- (bit-lshllong #l1 31)))
-	      (<llong (interval-max range) (bit-lshllong #l1 31))))))
+   (if (isa? expr J2SNumber)
+       (with-access::J2SNumber expr (val)
+	  (cond
+	     ((uint32? val)
+	      (<u32 val (bit-lshu32 #u32:1 29)))
+	     ((int32? val)
+	      (and (>=s32 val (negs32 (bit-lshs32 #u32:1 29)))
+		   (<s32 val (bit-lshs32 #s32:1 29))))
+	     ((fixnum? val)
+	      (and (>=fx val (negfx (bit-lsh 1 29)))
+		   (<fx val (bit-lsh 1 29))))
+	     (else #f)))
+       (with-access::J2SExpr expr (range)
+	  (when (interval? range)
+	     (and (>=llong (interval-min range) (- (bit-lshllong #l1 31)))
+		  (<llong (interval-max range) (bit-lshllong #l1 31)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-uint32? ...                                              */

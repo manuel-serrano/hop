@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Dec  1 10:59:42 2017 (serrano)                */
+;*    Last change :  Fri Dec  8 18:43:58 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -24,7 +24,8 @@
 	   __js2scheme_compile
 	   __js2scheme_stage
 	   __js2scheme_utils
-	   __js2scheme_alpha)
+	   __js2scheme_alpha
+	   __js2scheme_node-size)
 
    (export j2s-method-stage))
 
@@ -42,6 +43,7 @@
 ;*    this-occurrence-threshold ...                                    */
 ;*---------------------------------------------------------------------*/
 (define this-occurrence-threshold 1)
+(define body-size-threashold 100)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-method! ::J2SProgram ...                                     */
@@ -65,12 +67,13 @@
 (define-walk-method (method! this::J2SAssig)
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? rhs J2SFun)
-	 (with-access::J2SFun rhs (thisp loc)
+	 (with-access::J2SFun rhs (thisp loc body)
 	    (when thisp
 	       (with-access::J2SDecl thisp (usecnt)
-		  (when (>=fx usecnt this-occurrence-threshold)
+		  (when (and (>=fx usecnt this-occurrence-threshold)
+			     (<fx (node-size body) body-size-threashold))
 		     (set! rhs
-			(instantiate::J2SMethod
+			(instantiate::J2SMethod 
 			   (loc loc)
 			   (function rhs)
 			   (method (function->method rhs)))))))))

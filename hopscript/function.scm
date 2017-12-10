@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Mon Dec  4 11:07:01 2017 (serrano)                */
+;*    Last change :  Sat Dec  9 08:32:59 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
@@ -574,15 +574,14 @@
 			   %this))))
 	     ;; assumes here a fixnum length as an iteration over the range
 	     ;; 1..2^32-1 is not computable with 2014 computer's performance
-	     (with-access::JsArray argarray (vec)
-		(let loop ((i 0)
-			   (acc '()))
-		   (if (=fx i len)
-		       ;; fast path
-		       (js-apply %this this thisarg (reverse! acc))
-		       ;; slow path
-		       (loop (+fx i 1)
-			  (cons (js-get argarray i %this) acc)))))))))
+	     (let loop ((i 0)
+			(acc '()))
+		(if (=fx i len)
+		    ;; fast path
+		    (js-apply %this this thisarg (reverse! acc))
+		    ;; slow path
+		    (loop (+fx i 1)
+		       (cons (js-get argarray i %this) acc))))))))
    
    (js-bind! %this obj 'apply
       :value (js-make-function %this prototype-apply 2 "apply"

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec  8 08:48:00 2017 (serrano)                */
+;*    Last change :  Sat Dec  9 09:33:54 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -74,7 +74,9 @@
 ;*    need-cast? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (need-cast? type totype)
-   (not (or (eq? type totype) (eq? totype '*))))
+   (not (or (eq? type totype)
+	    (eq? totype '*)
+	    (and (eq? totype 'any) (eq? type 'function)))))
 
 ;* (define (need-cast? type totype)                                    */
 ;*                                                                     */
@@ -232,7 +234,7 @@
    
    (define (unknown-fun this)
       (with-access::J2SCall this (args fun)
-	 (set! fun (type-cast! fun 'any))
+	 (set! fun (type-cast! fun '*))
 	 (set! args (map! (lambda (a) (type-cast! a 'any)) args))
 	 (cast-expr this 'any totype)))
    
@@ -292,7 +294,7 @@
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs)
       (set! lhs (type-cast! lhs '*))
-      (set! rhs (type-cast! rhs (if (isa? lhs J2SRef) '* (j2s-type-ref lhs))))
+      (set! rhs (type-cast! rhs (j2s-type-ref lhs)))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -303,11 +305,11 @@
       (case op
 	 ((>> <<)
 	  (set! lhs (type-cast! lhs 'int32))
-	  (set! rhs (type-cast! rhs 'int32))
+	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((>>>)
 	  (set! lhs (type-cast! lhs 'uint32))
-	  (set! rhs (type-cast! rhs 'int32))
+	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((^ & BIT_OR)
 	  (set! lhs (type-cast! lhs 'int32))
@@ -344,12 +346,12 @@
       (case op
 	 ((>> <<)
 	  (set! lhs (type-cast! lhs 'int32))
-	  (set! rhs (type-cast! rhs 'int32))
+	  (set! rhs (type-cast! rhs 'uint32))
 	  (set! type 'int32)
 	  (cast this totype))
 	 ((>>>)
 	  (set! lhs (type-cast! lhs 'uint32))
-	  (set! rhs (type-cast! rhs 'int32))
+	  (set! rhs (type-cast! rhs 'uint32))
 	  (set! type 'uint32)
 	  (cast this totype))
 	 ((^ & BIT_OR)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Dec  7 10:07:32 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 10:37:00 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -65,7 +65,7 @@
 	 (when (config-get args :optim-cast #f)
 	    ;; compute the integer value ranges,
 	    (j2s-range-program! this args)
-	    ;; optimize operators according to ranges
+	    ;; optimize operators (moodulo) according to ranges
 	    (when (>=fx (config-get args :optim 0) 2)
 	       (j2s-range-opt-program! this args))
 	    ;; allocate precise types according to the ranges
@@ -233,14 +233,20 @@
 ;*    extend-env ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (extend-env::pair-nil env::pair-nil decl::J2SDecl intv)
-   (cond
-      ((not intv)
-       (filter (lambda (c) (not (eq? (car c) decl))) env))
-      ((=fx (bigloo-debug) 0)
-       (cons (cons decl intv) env))
-      (else
-       (cons (cons decl intv)
-	  (filter (lambda (c) (not (eq? (car c) decl))) env)))))
+   (with-access::J2SDecl decl (scope range)
+      (cond
+	 ((eq? scope '%scope)
+	  (if (interval? range)
+	      (set! range (interval-merge range intv))
+	      (set! range intv))
+	  env)
+	 ((not intv)
+	  (filter (lambda (c) (not (eq? (car c) decl))) env))
+	 ((=fx (bigloo-debug) 0)
+	  (cons (cons decl intv) env))
+	 (else
+	  (cons (cons decl intv)
+	     (filter (lambda (c) (not (eq? (car c) decl))) env))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    append-env ...                                                   */
@@ -270,9 +276,12 @@
 ;*    env-lookup ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (env-lookup::obj env::pair-nil decl::J2SDecl)
-   (let ((c (assq decl env)))
-      (when (pair? c)
-	 (cdr c))))
+   (with-access::J2SDecl decl (scope range)
+      (if (eq? scope '%scope)
+	  range
+	  (let ((c (assq decl env)))
+	     (when (pair? c)
+		(cdr c))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    interval-equal? ...                                              */
@@ -546,7 +555,7 @@
 	      (interval *-inf.0* oa))))
 	 (else
 	  o))))
-   
+
 ;*---------------------------------------------------------------------*/
 ;*    interval-add ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -1171,9 +1180,9 @@
 ;*    node-range ::J2SPostfix ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SPostfix env::pair-nil args fix::struct)
-   (with-access::J2SPostfix this (lhs range)
-      (with-access::J2SExpr lhs ((linfo range))
-	 (let ((intv linfo))
+   (with-access::J2SPostfix this (lhs rhs range)
+      (with-access::J2SExpr lhs ((lrange range))
+	 (let ((intv lrange))
 	    (multiple-value-bind (_ nenv)
 	       (call-next-method)
 	       (return intv nenv))))))
@@ -1491,6 +1500,20 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
+;*    interval->type ...                                               */
+;*---------------------------------------------------------------------*/
+(define (interval->type intv::struct tymap)
+   (cond
+      ((interval-in? intv *uint29-intv*) 'uint32)
+      ((interval-in? intv *int30-intv*) 'int32)
+      ((interval-in? intv *index-intv*) 'uint32)
+      ((interval-in? intv *length-intv*) 'uint32)
+      ((interval-in? intv *int32-intv*) 'int32)
+      ((interval-in? intv *int53-intv*) (map-type 'int53 tymap))
+      ;;((interval-in? intv *integer*) 'integer)
+      (else 'number)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-range-type-program! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-range-type-program! this::J2SProgram tymap)
@@ -1506,30 +1529,23 @@
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    interval->type ...                                               */
-;*---------------------------------------------------------------------*/
-(define (interval->type intv::struct tymap)
-   (cond
-      ((interval-in? intv *uint29-intv*) 'uint32)
-      ((interval-in? intv *int30-intv*) 'int32)
-      ((interval-in? intv *index-intv*) 'uint32)
-      ((interval-in? intv *length-intv*) 'uint32)
-      ((interval-in? intv *int32-intv*) 'int32)
-      ((interval-in? intv *int53-intv*) (map-type 'int53 tymap))
-      ;;((interval-in? intv *integer*) 'integer)
-      (else 'number)))
-
-;*---------------------------------------------------------------------*/
 ;*    type-range! ::J2SDecl ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
-   (with-access::J2SDecl this (range itype vtype id)
-      (when (interval? range)
-	 (let ((ty (interval->type range tymap)))
-	    (when ty
-	       (set! itype ty)
-	       (set! vtype ty)))))
+   (with-access::J2SDecl this (range itype vtype id scope)
+      (cond
+	 ((eq? scope '%scope)
+	  (let ((ty (if (interval? range)
+			(minimal-type (interval->type range tymap) vtype)
+			(minimal-type 'number vtype))))
+	     (set! itype ty)
+	     (set! vtype ty)))
+	 ((interval? range)
+	  (let ((ty (interval->type range tymap)))
+	     (when ty
+		(set! itype ty)
+		(set! vtype ty))))))
    this)
 
 ;*---------------------------------------------------------------------*/

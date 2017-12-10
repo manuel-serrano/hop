@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Dec  7 08:47:30 2017 (serrano)                */
+;*    Last change :  Sat Dec  9 06:16:11 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -554,6 +554,7 @@
 		   (decl decl))))
 	    (else
 	     (let ((decl (instantiate::J2SDecl
+			    (ronly #t)
 			    (loc loc)
 			    (id id))))
 		(set-cdr! (last-pair genv) (list decl))

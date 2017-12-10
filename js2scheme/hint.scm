@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Dec  8 07:42:27 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 09:30:02 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -302,7 +302,8 @@
 	     (cond
 		((string=? val "length")
 		 (with-access::J2SRef obj (decl)
-		    (j2s-add-hint! decl hints inc)))
+		    (j2s-add-hint! decl '(array string) (+fx 1 inc))
+		    (j2s-add-hint! decl '(object) inc)))
 		((member val j2s-string-methods)
 		 (with-access::J2SRef obj (decl)
 		    (j2s-add-hint! decl '(string) inc)))
@@ -321,7 +322,8 @@
 		 (with-access::J2SString val (val)
 		    (if (string=? val "length")
 			(with-access::J2SRef obj (decl)
-			   (j2s-add-hint! decl hints inc))
+			   (j2s-add-hint! decl '(array string) (+fx 1 inc))
+			   (j2s-add-hint! decl '(object) inc))
 			(j2s-hint obj hints numctx inc)))
 		 (j2s-hint obj hints numctx inc))))
 	 (else
@@ -334,11 +336,11 @@
 (define-walk-method (j2s-hint this::J2SAccess types numctx inc)
    (cond
       ((and (pair? types) (member (car types) '(index integer number)))
-       (j2s-hint-access this types '(object) 'number inc))
+       (j2s-hint-access this types '(object string array) 'number inc))
       ((and (pair? types) (member (car types) '(string)))
-       (j2s-hint-access this types '(object) 'number inc))
+       (j2s-hint-access this types '(object string array) 'number inc))
       (else
-       (j2s-hint-access this types '(object) 'number inc))))
+       (j2s-hint-access this types '(object string array) 'number inc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-hint ::J2SAssig ...                                          */
@@ -583,6 +585,9 @@
 			       params))
 		    (fu (fun-duplicate-untyped this conf))
 		    (ft (fun-duplicate-typed this htypes fu conf)))
+		(when (eq? id 'md5_ff)
+		   (tprint "HTYPE=" htypes
+		      (map j2s->list params)))
 		(fun-dispatch! this htypes ft itypes fu)
 		(list ft fu)))))
       ((typed? this)

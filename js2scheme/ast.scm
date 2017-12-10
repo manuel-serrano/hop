@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Dec  8 11:14:20 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 08:53:10 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -464,7 +464,6 @@
 	   (j2s-type ::obj)
 	   (j2s-type-ref ::obj)
 
-	   (j2s-expr-type-test ::J2SExpr)
 	   (class-of ::J2SExpr)
 
 	   (usage?::bool ::pair-nil ::pair-nil)
@@ -1241,123 +1240,6 @@
 	    ((Function) 'function)
 	    ((Promise) 'promise)
 	    (else 'unknown)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-expr-type-test ...                                           */
-;*    -------------------------------------------------------------    */
-;*    Is an expression a type test. If it is returns                   */
-;*       <op, decl, type, ref>                                         */
-;*    Otherwise, returns #f                                            */
-;*    Tested patterns are:                                             */
-;*       pat ::= (typeof X == STRING)                                  */
-;*           | !pat                                                    */
-;*           | (pat)                                                   */
-;*---------------------------------------------------------------------*/
-(define (j2s-expr-type-test expr::J2SExpr)
-   
-   (define (normalize-op op)
-      (case op
-	 ((===) '==)
-	 ((!==) '!=)
-	 (else op)))
-   
-   (define (not-op op)
-      (case op
-	 ((==) '!=)
-	 ((===) '!==)
-	 ((!=) '=)
-	 ((!==) '==)
-	 ((instanceof) '!instanceof)
-	 (else (error "j2s-expr-type-test" "Unknown op" op))))
-   
-   (define (typeof op expr str)
-      (when (isa? expr J2SUnary)
-	 (with-access::J2SUnary expr ((bop op) expr)
-	    (let loop ((expr expr))
-	       (cond
-		  ((isa? expr J2SParen)
-		   (with-access::J2SParen expr (expr)
-		      (loop expr)))
-		  ((and (eq? bop 'typeof) (isa? expr J2SRef))
-		   (with-access::J2SRef expr (decl)
-		      (with-access::J2SString str (val)
-			 (values op decl (string->symbol val) expr)))))))))
-   
-   (define (binary-type-test expr)
-      (with-access::J2SBinary expr (op lhs rhs)
-	 (case op
-	    ((== === != !==)
-	     (cond
-		((isa? lhs J2SString)
-		 (typeof op rhs lhs))
-		((isa? rhs J2SString)
-		 (typeof op lhs rhs))
-		(else
-		 #f)))
-	    ((instanceof)
-	     (when (isa? lhs J2SRef)
-		(let ((typ (class-of rhs)))
-		   (when typ
-		      (with-access::J2SRef lhs (decl)
-			 (values 'instanceof decl typ lhs))))))
-	    (else
-	     #f))))
-   
-   (define (unary-type-test expr)
-      (with-access::J2SUnary expr (op expr)
-	 (when (eq? op '!)
-	    (multiple-value-bind (op decl type expr)
-	       (j2s-expr-type-test expr)
-	       (when op
-		  (values (not-op op) decl type expr))))))
-   
-   (define (paren-type-test expr)
-      (with-access::J2SParen expr (expr)
-	 (j2s-expr-type-test expr)))
-   
-   (define (is-native-test test)
-      ;; if test === (js-index? (ref decl) ) return decl
-      ;; see __js2scheme_range
-      (when (isa? test J2SCall)
-         (with-access::J2SCall test (fun args)
-            (when (isa? fun J2SHopRef)
-	       (when (and (pair? args) (null? (cdr args)))
-		  (when (isa? (car args) J2SRef)
-		     (car args)))))))
-   
-   (define (native-type-test test)
-      (with-access::J2SCall test (fun)
-	 (with-access::J2SHopRef fun (id)
-	    id)))
-   
-   (cond
-      ((isa? expr J2SBinary)
-       (binary-type-test expr))
-      ((isa? expr J2SUnary)
-       (unary-type-test expr))
-      ((isa? expr J2SParen)
-       (paren-type-test expr))
-      ((is-native-test expr)
-       =>
-       (lambda (ref)
-	  (let ((typ (case (native-type-test expr)
-			((js-index?) 'index)
-			((fixnum?) 'fixnum)
-			((number?) 'number)
-			((js-jsstring?) 'string)
-			((js-array?) 'array)
-			((js-object?) 'object)
-			((js-function?) 'function)
-			((boolean?) 'bool)
-			((js-undefined?) 'undefined)
-			((js-null?) 'null)
-			(else #f))))
-	     (if typ
-		 (with-access::J2SRef ref (decl)
-		    (values '== decl typ ref))
-		 #f))))
-      (else
-       #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    usage? ...                                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Wed Oct 11 19:14:38 2017 (serrano)                */
+;*    Last change :  Sat Dec  9 06:19:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -97,20 +97,28 @@
 ;*    ronly! ::J2SAssig ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ronly! this::J2SAssig mode::symbol)
+
+   (define (assig decl loc)
+      (when (j2s-const? decl)
+	 (with-access::J2SDecl decl (id)
+	    (raise
+	       (instantiate::&io-error
+		  (proc "ronly")
+		  (msg "Const variables cannot be assigned")
+		  (obj id)
+		  (fname (cadr loc))
+		  (location (caddr loc))))))
+      (with-access::J2SDecl decl (ronly)
+	 (set! ronly #f)))
+   
    (with-access::J2SAssig this (lhs rhs loc)
-      (when (isa? lhs J2SRef)
-	 (with-access::J2SRef lhs (decl)
-	    (when (j2s-const? decl)
-	       (with-access::J2SDecl decl (id)
-		  (raise
-		     (instantiate::&io-error
-			(proc "ronly")
-			(msg "Const variables cannot be assigned")
-			(obj id)
-			(fname (cadr loc))
-			(location (caddr loc))))))
-	    (with-access::J2SDecl decl (ronly id)
-	       (set! ronly #f))))
+      (cond
+	 ((isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (assig decl loc)))
+	 ((isa? lhs J2SGlobalRef)
+	  (with-access::J2SGlobalRef lhs (decl)
+	     (assig decl loc))))
       (ronly! rhs mode))
    this)
 

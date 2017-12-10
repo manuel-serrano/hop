@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Fri Dec  8 12:33:48 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 12:08:31 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -82,9 +82,13 @@
 	((any nop)))
      (array
 	((any nop)))
+     (arguments
+	((any nop)))
      (any
 	((propname nop)
 	 (bool js-totest)
+	 (array nop)
+	 (string nop)
 	 (int32 ,js->int32)
 	 (uint32 ,js->uint32)
 	 (number ,js->number)))))
@@ -112,8 +116,7 @@
 (define (js-uint32->integer v expr conf)
    (cond
       ((and (uint32? v)
-	    (or (<u32 v (-u32 (bit-lshu32 #u32:1 29) #u32:1))
-		(m64? conf)))
+	    (or (<u32 v (bit-lshu32 #u32:1 29)) (m64? conf)))
        (uint32->fixnum v))
       ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
        `(uint32->fixnum ,v))
@@ -141,7 +144,7 @@
 
 
 (define (js-uint32->bool v expr conf)
-   `(>=u32 ,v #u32:0))
+   `(>u32 ,v #u32:0))
 (define (js-int32->bool v expr conf)
    `(not (=s32 ,v #s32:0)))
 
