@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Dec 10 15:50:09 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 09:46:46 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -513,7 +513,9 @@
 	       ,(cmp/32js o lhs tl left rhs tr right)))))
 
    (define (cmp/64js o lhs tl left rhs tr right)
-      `(,(opjs o) ,(tonumber64 left tl) ,(tonumber64 right tr) %this))
+      (if (memq o '(== === != !==))
+	  `(= ,(tonumber64 left tl) ,(tonumber64 right tr))
+	  `(,(opjs o) ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))
    
    (define (cmp/64 o lhs tl left rhs tr right)
       (cond
@@ -952,7 +954,9 @@
 	   mode return conf hint::pair-nil totype)
 
    (define (opu32 op) (symbol-append op 'u32))
+   (define (opu32/overflow op) (symbol-append op 'u32/overflow))
    (define (ops32 op) (symbol-append op 's32))
+   (define (ops32/overflow op) (symbol-append op 's32/overflow))
    (define (opfx op) (symbol-append op 'fx))
    (define (opfx/overflow op) (symbol-append op 'fx/overflow))
    (define (op/overflow op) (symbol-append op '/overflow))
@@ -962,9 +966,7 @@
       (cond
 	 ((inrange-int32? lhs)
 	  (if (inrange-int32? rhs)
-	      `(overflow29
-		  (int32->fixnum
-		     (,(ops32 op) ,(toint32/32 left tl) ,(toint32/32 right tr))))
+	      `(,(ops32/overflow op) ,(toint32/32 left tl) ,(toint32/32 right tr))
 	      `(if (fixnum? ,right)
 		   (,(opfx/overflow op) ,(tolong32 left tl) ,right)
 		   (,(opjs op) ,(tonumber32 left tl) ,(tonumber32 right tr) %this))))
@@ -974,7 +976,7 @@
 	       (,(opjs op) ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))
 	 (else
 	  `(if (fixnums? ,left ,right)
-	       (,(opfx/overflow op) ,left ,right)
+	       (,(opfx/overflow op) ,(tolong32 left tl) ,(tolong32 right tr))
 	       (,(opjs op) ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))))
 
    (define (addsub-int32/32 op lhs tl left rhs tr right)
@@ -988,7 +990,7 @@
 	 (else
 	  (let ((n (gensym)))
 	     `(let ((,n ,(addsub-generic/32 op type lhs tl left rhs tr right)))
-		 (if (fixnum? ,n) (fixnum->uint32 ,n) (flonum->uint32 ,n)))))))
+		 (if (fixnum? ,n) (fixnum->int32 ,n) (flonum->int32 ,n)))))))
    
    (define (addsub-uint32/32 op lhs tl left rhs tr right)
       (cond
@@ -1015,9 +1017,23 @@
 	  (error "addsub/32" "illegal integer type" type))))
    
    (define (addsub-generic/64 op type lhs tl left rhs tr right)
-      `(if (fixnums? ,left ,right)
-	   (,(opfx/overflow op) ,left ,right)
-	   (,(opjs op) ,left ,right %this)))
+      (cond
+	 ((and (inrange-int32? lhs) (inrange-int32? rhs))
+	  `(,(opfx op) ,(tolong64 left tl) ,(tolong64 right tr)))
+	 ((inrange-int53? lhs)
+	  (if (inrange-int53? rhs)
+	      `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr))
+	      `(if (fixnum? ,right)
+		   (,(opfx op) ,(tolong64 left tl) ,right)
+		   (,(opjs op) ,(tonumber64 left tl) ,(tonumber64 right tr) %this))))
+	 ((inrange-int53? rhs)
+	  `(if (fixnum? ,left)
+	       (,(opfx/overflow op) ,left ,(tolong64 right tr))
+	       (,(opjs op) ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))
+	 (else
+	  `(if (fixnums? ,left ,right)
+	       (,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr))
+	       (,(opjs op) ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))))
 
    (define (addsub-number/64 op type lhs tl left rhs tr right)
       (cond
@@ -1025,8 +1041,10 @@
 	  `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr)))
 	 ((and (eq? tl 'uint32) (eq? tr 'int32))
 	  `(,(opfx/overflow op) (uint32->fixnum ,left) (int32->fixnum ,right)))
+	 ((and (eq? tl 'integer) (eq? tr 'integer))
+	  `(,(opfx/overflow op) ,left ,right))
 	 (else
-	  `(if (fixnums? ,left ,right)
+	  `(if ,(fixnums? left tl right tr)
 	       (,(opfx/overflow op) ,left ,right)
 	       (,(op/overflow op) ,left ,right)))))
 
@@ -1053,7 +1071,7 @@
 	      ,(addsub-long/64 op lhs tl left rhs tr right)))
 	 (else
 	  `(fixnum->uint32
-	      (addsub-generic/64 op type lhs tl left rhs tr right)))))
+	      ,(addsub-generic/64 op type lhs tl left rhs tr right)))))
       
    (define (addsub-int53/64 op lhs tl left rhs tr right)
       (cond
@@ -1063,7 +1081,7 @@
 	  `(,(opfx op) (int32->fixnum ,left) (int32->fixnum ,right)))
 	 ((and (memq tl '(int32 uint32 int53)) (memq tr '(int32 uint32 int53)))
 	  `(,(opfx op) ,(tolong64 left tl) ,(tolong64 right tr)))
-	 ((and (eq? tl 'bint) (eq? tr 'bint))
+	 ((and (eq? tl 'integer) (eq? tr 'integer))
 	  `(,(opfx/overflow op) ,left ,right))
 	 (else
 	  (addsub-generic/64 op type lhs tl left rhs tr right))))
@@ -1159,7 +1177,7 @@
 		  (*fx ,(tolong64 left tl) ,(tolong64 right tr))))
 	     (else
 	      `(fixnum->uint32
-		  `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))))
+		  (*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))))
 	 ((int53)
 	  (if (and (memq tl '(int32 uint32 int53))
 		   (memq tr '(int32 uint32 int53)))
@@ -1471,12 +1489,9 @@
 ;*---------------------------------------------------------------------*/
 (define (toint32 val type)
    (case type
-      ((int32)
-       val)
-      ((uint32)
-       `(uint32->int32 ,val))
-      (else
-       `(if (fixnum? ,val) (fixnum->int32 ,val) (js-toint32 ,val %this)))))
+      ((int32) val)
+      ((uint32) `(uint32->int32 ,val))
+      (else `(if (fixnum? ,val) (fixnum->int32 ,val) (js-toint32 ,val %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    touint32 ...                                                     */
@@ -1512,18 +1527,15 @@
 ;*    tolong64 ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (tolong64 val type::symbol)
-   (case type
-      ((int32) `(int32->fixnum ,val))
-      ((uint32) `(uint32->fixnum ,val))
-      (else val)))
+   (tonumber64 val type))
 
 ;*---------------------------------------------------------------------*/
 ;*    tonumber64 ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (tonumber64 val type::symbol)
    (case type
-      ((int32) `(int32->fixnum ,val))
-      ((uint32) `(uint32->fixnum ,val))
+      ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
+      ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
       (else val)))
 
 ;*---------------------------------------------------------------------*/
@@ -1531,7 +1543,20 @@
 ;*---------------------------------------------------------------------*/
 (define (todouble val type::symbol)
    (case type
-      ((int32) `(int32->flonum ,val))
-      ((uint32) `(uint32->flonum ,val))
-      (else `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))))
-   
+      ((int32)
+       (if (int32? val) (int32->flonum val) `(int32->flonum ,val)))
+      ((uint32)
+       (if (uint32? val) (uint32->flonum val) `(uint32->flonum ,val)))
+      (else
+       (if (fixnum? val)
+	   (fixnum->flonum val)
+	   `(if (fixnum? ,val) (fixnum->flonum ,val) ,val)))))
+
+;*---------------------------------------------------------------------*/
+;*    fixnums? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (fixnums? left tl right tr)
+   (cond
+      ((eq? tl 'integer) `(fixnum? ,right))
+      ((eq? tr 'integer) `(fixnum? ,left))
+      (else `(fixnums? ,left ,right))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Dec  9 10:03:13 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 08:04:05 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -74,7 +74,8 @@
 	   (inrange-32?::bool ::J2SExpr)
 	   (inrange-int30?::bool ::J2SExpr)
 	   (inrange-int32?::bool ::J2SExpr)
-	   (inrange-uint32?::bool ::J2SExpr)))
+	   (inrange-uint32?::bool ::J2SExpr)
+	   (inrange-int53?::bool ::J2SExpr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -645,4 +646,26 @@
       (when (interval? range)
 	 (and (>=llong (interval-min range) #l0)
 	      (<llong (interval-max range) (bit-lshllong #l1 32))))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-int53? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (inrange-int53? expr)
+   (if (isa? expr J2SNumber)
+       (with-access::J2SNumber expr (val)
+	  (cond
+	     ((uint32? val) #t)
+	     ((int32? val) #t)
+	     ((fixnum? val)
+	      (or (and (>=fx val (negfx (bit-lsh 1 29)))
+		       (<fx val (bit-lsh 1 29)))
+		  (let ((lval (fixnum->llong val)))
+		     (and (>=llong lval (negllong (bit-lshllong #l1 53)))
+			  (<llong lval (bit-lshllong #l1 53))))))
+	     (else #f)))
+       (with-access::J2SExpr expr (range)
+	  (when (interval? range)
+	     (and (>=llong (interval-min range) (- (bit-lshllong #l1 53)))
+		  (<llong (interval-max range) (bit-lshllong #l1 53)))))))
+
 

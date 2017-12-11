@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Mon Dec  4 15:18:16 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 09:51:48 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
@@ -32,12 +32,16 @@
 ;*    j2s-test ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-test test::J2SExpr mode return conf)
-   (let ((ty (j2s-type test)))
+   (let ((ty (j2s-type-ref test)))
       (cond
 	 ((eq? ty 'bool)
 	  (j2s-bool-test test mode return conf))
 	 ((eq? ty 'object)
 	  #t)
+	 ((eq? ty 'int32)
+	  `(not (=s32 ,(j2s-scheme test mode return conf '(bool) 'int32) #s32:0)))
+	 ((eq? ty 'uint32)
+	  `(not (=u32 ,(j2s-scheme test mode return conf '(bool) 'uint32) #u32:0)))
 	 ((is-fixnum? test conf)
 	  `(not (=fx ,(j2s-scheme test mode return conf '(bool) 'any) 0)))
 	 ((type-number? ty)

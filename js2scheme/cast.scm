@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Dec  9 09:33:54 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 09:45:11 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -334,8 +334,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SUnary totype)
    (with-access::J2SUnary this (op expr)
-      (when (eq? op '~)
-	 (set! expr (type-cast! expr 'int32)))
+      (if (eq? op '~)
+	  (set! expr (type-cast! expr 'int32))
+	  (set! expr (type-cast! expr '*)))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/

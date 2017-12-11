@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Dec 10 12:50:48 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 09:43:58 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -104,8 +104,8 @@
 (define (js-int32->integer v expr conf)
    (cond
       ((and (int32? v)
-	    (or (and (<s32 v (-s32 (bit-lshu32 #s32:1 29) #s32:1))
-		     (>=s32 v (- (-s32 (bit-lshu32 #s32:1 29) #s32:1))))
+	    (or (and (<s32 v (-s32 (bit-lshs32 #s32:1 29) #s32:1))
+		     (>=s32 v (-s32 #s32:0 (bit-lshs32 #s32:1 29))))
 		(m64? conf)))
        (int32->fixnum v))
       ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
@@ -142,6 +142,10 @@
    (if (eq? (j2s-type expr) 'object)
        v
        `(js-toobject ,v %this)))
+
+(define (js->number v expr conf)
+   `(js-tonumber ,v %this))
+
 
 
 
@@ -184,9 +188,6 @@
        (fixnum->uint32 v))
       (else
        `(js-number-touint32 ,v))))
-
-(define (js->number v expr conf)
-   `(js-tonumber ,v %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cast ...                                                     */

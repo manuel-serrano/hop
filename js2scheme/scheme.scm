@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Dec 10 11:22:52 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 08:53:59 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1031,7 +1031,8 @@
 	      typed)
       (with-access::J2SDeclInit d (val usage id vtype ronly utype)
 	 (let* ((ident (j2s-decl-scheme-id d))
-		(var (if typed (type-ident ident vtype) ident)))
+		(var (type-ident ident vtype)))
+;* 		(var (type-ident ident (if typed vtype 'obj))))        */
 	    (cond
 	       ((or (not (isa? val J2SFun)) (isa? val J2SSvc) (memq 'assig usage))
 		(list `(,var ,(j2s-scheme val mode return conf hint utype))))
@@ -2261,19 +2262,21 @@
 	     `(let ((,aux ,val))
 		 ,(comp aux aux)))
 	  (comp val tmp)))
-   
-   (define (var++ inc lhs tmp loc)
-      (if (eq? totype 'void)
-	  (j2s-scheme-set! lhs (inc tmp) 'any #f mode return conf #f loc)
-	  (new-or-old tmp (inc tmp)
-	     (lambda (val tmp)
-		(j2s-scheme-set! lhs val tmp 'any mode return conf #f loc)))))
-   
-   (define (var++/suf op lhs type typesuf loc)
-      (let ((tmp (gensym 'tmp))
-	    (op (symbol-append (if (eq? op '++) '+ '-) typesuf)))
-	 `(let ((,tmp ,(j2s-scheme lhs mode return conf hint totype)))
-	     ,(var++ (lambda (x) `(,op ,x 1)) lhs tmp loc))))
+
+   (define (var++ var num loc)
+      `(if (fixnum? ,var)
+	   ,(J2SBinary/type '+ 'number
+	       (J2SHopRef/type var 'integer) num)
+	   ,(J2SBinary/type '+ 'number
+	       (J2SCast 'number (J2SHopRef/type var 'any)) num)))
+      
+   (define (ref++ lhs::J2SRef num loc mode return conf hint totype)
+      (let ((var (j2s-scheme lhs mode return conf hint totype)))
+	 (if (symbol? var)
+	     (var++ var num loc)
+	     (let ((tmp (gensym 'tmp)))
+		`(let ((,tmp ,var))
+		    ,(var++ tmp num loc))))))
    
    (define (ref-inc op lhs::J2SRef inc::int type loc)
       (let* ((typ (j2s-type-ref lhs))
@@ -2281,7 +2284,7 @@
 	     (rhse (j2s-scheme
 		      (if (type-number? typ)
 			  (J2SBinary/type '+ typ lhs num)
-			  (J2SBinary/type '+ typ (J2SCast 'number lhs) num))
+			  (ref++ lhs num loc mode return conf hint totype))
 		      mode return conf hint totype))
 	     (lhse (j2s-scheme lhs mode return conf hint totype)))
 	 (if (eq? retval 'old)

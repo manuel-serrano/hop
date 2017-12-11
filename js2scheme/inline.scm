@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Dec  4 09:11:29 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 10:00:48 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -474,11 +474,16 @@
 		      (inline-method-call this)
 		      (inline-function-call this))))
 	 (let* ((lbl (gensym '%return))
-		(cell (make-cell #f))
+		(cell (make-cell '()))
 		(bd (bind-exit! body lbl cell)))
 	    (cond
-	       (cell
+	       ((pair? (cell-ref cell))
 		(let ((be (J2SBindExit lbl bd)))
+		   ;; patch all returns
+		   (for-each (lambda (ret::J2SReturn)
+				(with-access::J2SReturn ret (from)
+				   (set! from be)))
+		      (cell-ref cell))
 		   (with-access::J2SBindExit be (need-bind-exit-return)
 		      (set! need-bind-exit-return #t)
 		      be)))
@@ -795,8 +800,7 @@
 	 (tail
 	  (J2SStmtExpr (bind-exit! expr l cell)))
 	 (else
-	  (set! from l)
-	  (cell-set! cell #t)
+	  (cell-set! cell (cons this (cell-ref cell)))
 	  this))))
 
 ;*---------------------------------------------------------------------*/

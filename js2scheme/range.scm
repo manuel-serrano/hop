@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Dec 10 12:58:29 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 09:45:41 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -698,13 +698,14 @@
 	 (max (interval-min intv) *min-int32*)
 	 (min (interval-max intv) *max-int32*)))
 
-   (when (and (interval? left) (interval? right))
-      (if (or (> (interval-max left) 0) (> (interval-max right) 0))
-	  (let* ((mi (min (interval-min left) (interval-min right)))
-		 (ma (min (interval-max left) (interval-max right)))
-		 (intr (interval mi ma)))
-	     (shrink32 (widening left right intr)))
-	  *int32-intv*)))
+   (if (and (interval? left) (interval? right))
+       (if (or (> (interval-max left) 0) (> (interval-max right) 0))
+	   (let* ((mi (min (interval-min left) (interval-min right)))
+		  (ma (min (interval-max left) (interval-max right)))
+		  (intr (interval mi ma)))
+	      (shrink32 (widening left right intr)))
+	   *int32-intv*)
+       *int32-intv*))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-interval-set! ...                                           */

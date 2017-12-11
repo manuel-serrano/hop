@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Dec 10 12:42:10 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 08:14:25 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -39,9 +39,13 @@
 	  (inline js-uint32-tointeger::obj ::uint32)
 	  
 	  (inline +fx/overflow::obj ::long ::long)
+	  (inline +s32/overflow::obj ::int32 ::int32)
+	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
-	  (inline -fx/overflow::obj ::long ::long)
 	  
+	  (inline -fx/overflow::obj ::long ::long)
+	  (inline -s32/overflow::obj ::int32 ::int32)
+	  (inline -u32/overflow::obj ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
 	  
 	  (inline *fx/overflow::obj ::long ::long)
@@ -214,13 +218,37 @@
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))+((double)($2)))"
 		 x y)
-	      res)))
+	      (overflow29 res))))
       (else
        (let ((z::long (pragma::long "(~($1 ^ $2)) & 0x80000000" x y)))
 	  (if (pragma::bool "$1 & (~((($2 ^ $1) + ($3)) ^ ($3)))" z x y)
 	      (fixnum->flonum (+fx x y))
-	      (+fx x y))))))
-   
+	      (overflow29 (+fx x y)))))))
+
+;*---------------------------------------------------------------------*/
+;*    +s32/overflow ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (+s32/overflow x::int32 y::int32)
+   (+fx32/overflow (int32->fixnum x) (int32->fixnum y)))
+
+;*---------------------------------------------------------------------*/
+;*    +u32/overflow ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (+u32/overflow x::uint32 y::uint32)
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  (if (pragma::bool "__builtin_uaddl_overflow($1, $2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))+((double)($2)))"
+		 x y)
+	      (overflow29 res))))
+      (else
+       (let ((z::long (pragma::long "(~($1 ^ $2)) & 0x80000000" x y)))
+	  (if (pragma::bool "$1 & (~((($2 ^ $1) + ($3)) ^ ($3)))" z x y)
+	      (fixnum->flonum (+fx x y))
+	      (overflow29 (+fx x y)))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    +/overflow ...                                                   */
 ;*    -------------------------------------------------------------    */
@@ -265,6 +293,30 @@
 	      (fixnum->flonum (-fx x y))
 	      (-fx x y))))))
    
+;*---------------------------------------------------------------------*/
+;*    -s32/overflow ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (-s32/overflow x::int32 y::int32)
+   (-fx32/overflow (int32->fixnum x) (int32->fixnum y)))
+
+;*---------------------------------------------------------------------*/
+;*    -u32/overflow ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (-u32/overflow x::uint32 y::uint32)
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  (if (pragma::bool "__builtin_usubl_overflow($1, $2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))+((double)($2)))"
+		 x y)
+	      (overflow29 res))))
+      (else
+       (let ((z::long (pragma::long "(~($1 ^ $2)) & 0x80000000" x y)))
+	  (if (pragma::bool "$1 & ((($2 ^ (long)$1) - ($3)) ^ ($3))" z x y)
+	      (fixnum->flonum (+fx x y))
+	      (overflow29 (+fx x y)))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    -/overflow ...                                                   */
 ;*    -------------------------------------------------------------    */
