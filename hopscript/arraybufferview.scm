@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Mon Dec  4 11:07:38 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 14:46:19 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -749,6 +749,15 @@
       (if (or (not *optimize-length*) (=u32 length #u32:0))
 	  (call-next-method)
 	  (uint32->fixnum length))))
+
+;*---------------------------------------------------------------------*/
+;*    js-get-lengthu32 ::JsTypedArray ...                              */
+;*---------------------------------------------------------------------*/
+(define-method (js-get-lengthu32 o::JsTypedArray cache %this)
+   (with-access::JsTypedArray o (length)
+      (if (or (not *optimize-length*) (=u32 length #u32:0))
+	  (call-next-method)
+	  length)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ::JsTypedArray ...                        */

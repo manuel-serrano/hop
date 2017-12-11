@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Dec 11 10:01:55 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 15:26:24 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -480,10 +480,10 @@
    (with-access::J2SNumber this (val type)
       (expr-type-set! this env fix
 	 (cond
+	    ((not (integer? val)) 'number)
 	    ((and (> val 0) (< val (bit-lsh 1 28))) 'index)
 	    ((= val 0) 'index)
-	    ((integer? val) 'integer)
-	    (else 'number)))))
+	    (else 'integer)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SBool ...                                             */
@@ -676,7 +676,7 @@
 	    ;; this assignment
 	    ((isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
-		(with-access::J2SDecl decl (writable utype)
+		(with-access::J2SDecl decl (writable utype id)
 		   (multiple-value-bind (tyr env rbk)
 		      (typing rhs envl fix)
 		      (cond
@@ -1177,7 +1177,8 @@
 	       (typing field envo fix)
 	       (cond
 		  ((and (memq tyo '(array string)) (j2s-field-length? field))
-		   (expr-type-set! this envf fix 'index (append bko bkf)))
+		   (with-access::J2SString field (val)
+		      (expr-type-set! this envf fix 'index (append bko bkf))))
 		  ((eq? tyo 'string)
 		   (let* ((fn (j2s-field-name field))
 			  (ty (if (eq? (string-method-type fn) 'any)
@@ -1472,13 +1473,18 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SForIn env::pair-nil fix::cell)
    (with-access::J2SForIn this (lhs obj body)
-      (let loop ((env env))
-	 (let ((ofix (cell-ref fix)))
-	    (multiple-value-bind (typ envb bk)
-	       (typing-seq (list obj body) env fix)
-	       (if (=fx ofix (cell-ref fix))
-		   (return typ envb (filter-breaks bk this))
-		   (loop (env-merge env envb))))))))
+      (with-access::J2SRef lhs (decl)
+	 (with-access::J2SDecl decl (utype vtype itype)
+	    (set! utype 'any)
+	    (set! itype 'any)
+	    (set! vtype 'any))
+	 (let loop ((env (extend-env env decl 'any)))
+	    (let ((ofix (cell-ref fix)))
+	       (multiple-value-bind (typ envb bk)
+		  (typing-seq (list obj body) env fix)
+		  (if (=fx ofix (cell-ref fix))
+		      (return typ envb (filter-breaks bk this))
+		      (loop (env-merge env envb)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2STry ...                                              */

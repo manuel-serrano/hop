@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Dec 11 08:04:05 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 14:55:25 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -528,8 +528,8 @@
 	 ((string? prop)
 	  (if (string=? prop "length")
 	      (if (eq? tyval 'uint32)
-		  `(js-get-length ,obj #f %this)
-		  `(js-get-lengthu32 ,obj #f %this))
+		  `(js-get-lengthu32 ,obj #f %this)
+		  `(js-get-length ,obj #f %this))
 	      `(js-get ,obj ',(string->symbol prop) %this)))
 	 (else
 	  `(js-get ,obj ,prop %this)))))
@@ -553,8 +553,8 @@
 	 ((eq? tyobj 'array)
 	  (case typrop
 	     ((uint32)
-	      `(js-array-index-set! ,obj
-		  ,prop ,val ,(strict-mode? mode) %this))
+	      `(js-array-index-set! ,obj ,prop
+		  ,val ,(strict-mode? mode) %this))
 	     ((int32)
 	      `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
 		  ,val ,(strict-mode? mode) %this))
@@ -575,8 +575,7 @@
 			   ,val
 			   ,mode ,(js-pcache cache) %this))
 			(else
-			 `(js-put-name/cache! ,obj
-			     ',(string->symbol prop)
+			 `(js-put-name/cache! ,obj ',(string->symbol prop)
 			     ,val
 			     ,mode ,(js-pcache cache) %this))))))
 	     ((or (number? prop) (>=fx clevel 10))
@@ -589,7 +588,7 @@
 	     ((string? prop)
 	      `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
 	     (else
-	      `(js-put! ,obj ,prop ,prop ,mode %this)))))))
+	      `(js-put! ,obj ,prop ,val ,mode %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    range-positive? ...                                              */

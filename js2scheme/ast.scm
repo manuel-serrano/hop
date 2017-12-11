@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun Dec 10 08:53:10 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 14:35:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -251,7 +251,7 @@
 
 	   (class J2SComprehension::J2SExpr
 	      (decls::pair (info '("ast")))
-	      iterables::pair
+	      (iterables::pair (info '("ast")))
 	      (test::J2SExpr (info '("ast")))
 	      (expr::J2SExpr (info '("ast"))))
 	   

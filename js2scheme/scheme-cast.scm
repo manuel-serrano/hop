@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Mon Dec 11 09:43:58 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 15:47:20 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -71,8 +71,8 @@
      (object
 	((any nop)))
      (bool
-	((int32 ,js->int32)
-	 (uint32 ,js->uint32)
+	((int32 ,js-bool->int32)
+	 (uint32 ,js-bool->uint32)
 	 (any nop)))
      (null
 	((any nop)))
@@ -83,6 +83,10 @@
      (array
 	((any nop)))
      (arguments
+	((any nop)))
+     (tilde
+	((any nop)))
+     (scmstring
 	((any nop)))
      (any
 	((propname nop)
@@ -146,8 +150,12 @@
 (define (js->number v expr conf)
    `(js-tonumber ,v %this))
 
+;; bool
+(define (js-bool->int32 v expr conf)
+   (if (number? v) (not (= v 0)) `(not (= ,v 0))))
 
-
+(define (js-bool->uint32 v expr conf)
+   (if (number? v) (not (= v 0)) `(not (= ,v 0))))
 
 (define (js-uint32->bool v expr conf)
    `(>u32 ,v #u32:0))

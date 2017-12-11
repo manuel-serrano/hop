@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec 11 09:46:46 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 15:46:27 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -308,15 +308,15 @@
 ;*    atoms or variable references. Hence it does not generate         */
 ;*    bindings.                                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-binop loc op left lhs right rhs conf)
+(define (js-binop loc op left l right r conf)
    (let (lhs rhs)
       (if (m64? conf)
 	  (begin
-	     (set! lhs (tonumber64 left (j2s-type-ref lhs)))
-	     (set! rhs (tonumber64 right (j2s-type-ref rhs))))
+	     (set! lhs (tonumber64 left (j2s-type-ref l)))
+	     (set! rhs (tonumber64 right (j2s-type-ref r))))
 	  (begin
-	     (set! lhs (tonumber32 left (j2s-type-ref lhs)))
-	     (set! rhs (tonumber32 right (j2s-type-ref rhs)))))
+	     (set! lhs (tonumber32 left (j2s-type-ref l)))
+	     (set! rhs (tonumber32 right (j2s-type-ref r)))))
       (case op
 	 ((+)
 	  `(js+ ,lhs ,rhs %this))
@@ -369,17 +369,17 @@
 	 ((in)
 	  (j2s-in? loc lhs rhs))
 	 ((&)
-	  `(js-bitand ,lhs ,rhs %this))
+	  `(bit-andjs ,lhs ,rhs %this))
 	 ((BIT_OR)
-	  `(js-bitor ,lhs ,rhs %this))
+	  `(bit-orjs ,lhs ,rhs %this))
 	 ((^)
-	  `(js-bitxor ,lhs ,rhs %this))
+	  `(bit-xorjs ,lhs ,rhs %this))
 	 ((>>)
-	  `(js-bitrsh ,lhs ,rhs %this))
+	  `(bit-rshjs ,lhs ,rhs %this))
 	 ((>>>)
-	  `(js-bitursh ,lhs ,rhs %this))
+	  `(bit-urshjs ,lhs ,rhs %this))
 	 ((<<)
-	  `(js-bitlsh ,lhs ,rhs %this))
+	  `(bit-lshjs ,lhs ,rhs %this))
 	 ((OR &&)
 	  (error "binop" "should not be here" op))
 	 (else
@@ -1041,12 +1041,16 @@
 	  `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr)))
 	 ((and (eq? tl 'uint32) (eq? tr 'int32))
 	  `(,(opfx/overflow op) (uint32->fixnum ,left) (int32->fixnum ,right)))
+	 ((and (eq? tl 'number) (eq? tr 'int32))
+	  `(,(opfx/overflow op) ,left (int32->fixnum ,right)))
+	 ((and (eq? tl 'number) (eq? tr 'uint32))
+	  `(,(opfx/overflow op) ,left (uint32->fixnum ,right)))
 	 ((and (eq? tl 'integer) (eq? tr 'integer))
 	  `(,(opfx/overflow op) ,left ,right))
 	 (else
 	  `(if ,(fixnums? left tl right tr)
 	       (,(opfx/overflow op) ,left ,right)
-	       (,(op/overflow op) ,left ,right)))))
+	       (,(op/overflow op) ,(tonumber64 left tl) ,(tonumber64 right tr))))))
 
    (define (addsub-long/64 op lhs tl left rhs tr right)
       `(,(opfx op) ,(tolong64 left tl) ,(tolong64 right tr)))

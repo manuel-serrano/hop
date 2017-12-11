@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Dec  4 14:09:55 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 14:52:38 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -46,7 +46,7 @@
 	 ((j2s-field-length? field)
 	  (let ((x `(js-jsstring-codeunit-length
 		       ,(j2s-scheme obj mode return conf hint totype))))
-	     (if (memq type '(index uint32 length))
+	     (if (eq? type 'uint32)
 		 x
 		 (js-uint32->jsnum x conf))))
 	 (else

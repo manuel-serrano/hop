@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Dec  6 16:41:09 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 15:38:55 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -32,7 +32,8 @@
 	   __hopscript_pair
 	   __hopscript_obj
 	   __hopscript_function
-	   __hopscript_lib)
+	   __hopscript_lib
+	   __hopscript_arithmetic)
    
    (extern ($js-make-pcache::obj (::obj ::int ::JsPropertyCache)
 	      "bgl_make_pcache")
@@ -88,8 +89,8 @@
 	   
 	   (js-get-notfound ::obj ::obj ::JsGlobalObject)
 	   (generic js-get ::obj ::obj ::JsGlobalObject)
-	   (generic js-get-length ::obj ::obj ::JsGlobalObject)
-	   (generic js-get-lengthu32 ::obj ::obj ::JsGlobalObject)
+	   (generic js-get-length::obj ::obj ::obj ::JsGlobalObject)
+	   (generic js-get-lengthu32::uint32 ::obj ::obj ::JsGlobalObject)
 	   (js-get/debug ::obj ::obj ::JsGlobalObject loc)
 	   (js-get/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
 	   (js-get-name/cache ::obj ::obj ::JsPropertyCache ::JsGlobalObject)
@@ -1341,13 +1342,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32::uint32 ::obj ...                               */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-lengthu32 o::obj cache %this::JsGlobalObject)
-   (let ((l (if cache
-		(js-get-name/cache o 'length cache %this)
-		(js-get o 'length %this))))
-      (if (fixnum? l)
-	  (fixnum->uint32 l)
-	  (flonum->uint32 l))))
+(define-generic (js-get-lengthu32::uint32 o::obj cache %this::JsGlobalObject)
+   (js-uint32-tointeger
+      (if cache
+	  (js-get-name/cache o 'length cache %this)
+	  (js-get o 'length %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get/cache ...                                                 */

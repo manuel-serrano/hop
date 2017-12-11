@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Dec 11 09:45:11 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 14:03:46 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -360,6 +360,10 @@
 	  (set! rhs (type-cast! rhs 'int32))
 	  (set! type 'int32)
 	  (cast this totype))
+	 ((OR &&)
+	  (set! lhs (type-cast! lhs totype))
+	  (set! rhs (type-cast! rhs totype))
+	  this)
 	 (else
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs '*))
