@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec 11 15:46:27 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 20:44:04 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -503,9 +503,11 @@
 	  `(if (fixnum? ,left)
 	       ,(if (range-positive? lhs)
 		    `(,(opu32 o) (fixnum->uint32 ,left) ,right)
-		    `(if (>=fx ,left 0)
-			 (,(opu32 o) (fixnum->uint32 ,left) ,right)
-			 #t))
+		    (if (inrange-int30? rhs)
+			`(,(opfx o) ,left ,(uint32->fixnum right))
+			`(if (>=fx ,left 0)
+			     (,(opu32 o) (fixnum->uint32 ,left) ,right)
+			     #t)))
 	       ,(cmp/32js o lhs tl left rhs tr right)))
 	 (else
 	  `(if (fixnums? ,left ,right)
@@ -964,6 +966,8 @@
 
    (define (addsub-generic/32 op type lhs tl left rhs tr right)
       (cond
+	 ((and (eq? tl 'bint) (eq? tr 'bint))
+	  `(,(opfx/overflow op) ,left ,right))
 	 ((inrange-int32? lhs)
 	  (if (inrange-int32? rhs)
 	      `(,(ops32/overflow op) ,(toint32/32 left tl) ,(toint32/32 right tr))
@@ -1018,6 +1022,8 @@
    
    (define (addsub-generic/64 op type lhs tl left rhs tr right)
       (cond
+	 ((and (eq? tl 'bint) (eq? tr 'bint))
+	  `(,(opfx/overflow op) ,left ,right))
 	 ((and (inrange-int32? lhs) (inrange-int32? rhs))
 	  `(,(opfx op) ,(tolong64 left tl) ,(tolong64 right tr)))
 	 ((inrange-int53? lhs)
@@ -1522,9 +1528,23 @@
 ;*    tolong32 ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (tolong32 val type::symbol)
+   
+   (define (int32-29? val)
+      (and (>=s32 val (negs32 (bit-lshs32 #u32:1 29)))
+	   (<s32 val (bit-lshs32 #s32:1 29))))
+
+   (define (uint32-29? val)
+      (<u32 val (bit-lshu32 #u32:1 29)))
+   
    (case type
-      ((int32) `(int32->fixnum ,val))
-      ((uint32) `(uint32->fixnum ,val))
+      ((int32)
+       (if (and (int32? val) (int32-29? val))
+	   (int32->fixnum val)
+	   `(int32->fixnum ,val)))
+      ((uint32)
+       (if (and (uint32? val) (uint32-29? val))
+	   (uint32->fixnum val)
+	   `(uint32->fixnum ,val)))
       (else val)))
 
 ;*---------------------------------------------------------------------*/

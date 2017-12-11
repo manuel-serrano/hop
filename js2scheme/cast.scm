@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Dec 11 14:03:46 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 21:03:20 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -77,25 +77,6 @@
    (not (or (eq? type totype)
 	    (eq? totype '*)
 	    (and (eq? totype 'any) (eq? type 'function)))))
-
-;* (define (need-cast? type totype)                                    */
-;*                                                                     */
-;*    (define (fx? type)                                               */
-;*       (memq type '(int32 uint32)))                                  */
-;*                                                                     */
-;*    (define (propname? type)                                         */
-;*       (or (type-integer? type) (eq? type 'string)))                 */
-;*                                                                     */
-;*    (cond                                                            */
-;*       ((eq? totype '*) #f)                                          */
-;*       ((eq? totype 'propname) (not (propname? type)))               */
-;*       ((eq? type totype) #f)                                        */
-;*       ((eq? totype 'any) (fx? type))                                */
-;*       ((fx? type) #t)                                               */
-;*       ((fx? totype) #t)                                             */
-;*       (else #f)))                                                   */
-;*                                                                     */
-;*    (not (or (eq? type totype) (eq? totype '*))))                    */
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */
@@ -179,11 +160,27 @@
    (cast this totype))
 
 ;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SParen ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SParen totype)
+   (with-access::J2SParen this (expr type)
+      (set! expr (type-cast! expr type))
+      (cast this totype)))
+
+;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SFun totype)
    (with-access::J2SFun this (body rtype)
       (set! body (type-cast! body rtype))
+      (cast this totype)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SArray ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SArray totype)
+   (with-access::J2SArray this (exprs)
+      (set! exprs (map! (lambda (e) (type-cast! e 'any)) exprs))
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
@@ -271,12 +268,12 @@
 	 (cond
 	    ((isa? from J2SFun)
 	     (with-access::J2SFun from (rtype)
-		(set! expr (type-cast! expr rtype)))
-	     (set! expr (type-cast! expr '*)))
+		(set! expr (type-cast! expr rtype))))
 	    ((isa? from J2SExpr)
 	     (with-access::J2SExpr from (type)
 		(set! expr (type-cast! expr type))))
 	    (else
+	     (tprint "PAS FROM: " (j2s->list this))
 	     (set! expr (type-cast! expr '*))))
 	 this)))
 
@@ -292,7 +289,7 @@
 ;*    type-cast! ::J2SAssig ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAssig totype)
-   (with-access::J2SAssig this (lhs rhs)
+   (with-access::J2SAssig this (lhs rhs type)
       (set! lhs (type-cast! lhs '*))
       (set! rhs (type-cast! rhs (j2s-type-ref lhs)))
       (cast this totype)))

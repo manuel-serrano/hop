@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Dec 11 08:53:59 2017 (serrano)                */
+;*    Last change :  Mon Dec 11 20:43:35 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2265,10 +2265,10 @@
 
    (define (var++ var num loc)
       `(if (fixnum? ,var)
-	   ,(J2SBinary/type '+ 'number
-	       (J2SHopRef/type var 'integer) num)
-	   ,(J2SBinary/type '+ 'number
-	       (J2SCast 'number (J2SHopRef/type var 'any)) num)))
+           ,(J2SBinary/type '+ 'integer
+               (J2SHopRef/type var 'bint) num)
+           ,(J2SBinary/type '+ 'number
+               (J2SCast 'number (J2SHopRef/type var 'any)) num)))
       
    (define (ref++ lhs::J2SRef num loc mode return conf hint totype)
       (let ((var (j2s-scheme lhs mode return conf hint totype)))
@@ -2280,7 +2280,7 @@
    
    (define (ref-inc op lhs::J2SRef inc::int type loc)
       (let* ((typ (j2s-type-ref lhs))
-	     (num (J2SNumber/type 'integer inc))
+	     (num (J2SNumber/type 'bint inc))
 	     (rhse (j2s-scheme
 		      (if (type-number? typ)
 			  (J2SBinary/type '+ typ lhs num)
