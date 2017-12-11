@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Dec 10 12:21:58 2017 (serrano)                */
+;*    Last change :  Sun Dec 10 15:50:09 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -313,10 +313,10 @@
       (if (m64? conf)
 	  (begin
 	     (set! lhs (tonumber64 left (j2s-type-ref lhs)))
-	     (set! rhs (tonumber64 left (j2s-type-ref rhs))))
+	     (set! rhs (tonumber64 right (j2s-type-ref rhs))))
 	  (begin
 	     (set! lhs (tonumber32 left (j2s-type-ref lhs)))
-	     (set! rhs (tonumber32 left (j2s-type-ref rhs)))))
+	     (set! rhs (tonumber32 right (j2s-type-ref rhs)))))
       (case op
 	 ((+)
 	  `(js+ ,lhs ,rhs %this))

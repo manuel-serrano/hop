@@ -140,6 +140,7 @@ assert.deepEqual = function deepEqual(actual, expected, message) {
 };
 
 function _deepEqual(actual, expected) {
+#:tprint("ICI.2..", actual, " ", expected, actual === expected );
   // 7.1. All identical values are equivalent, as determined by ===.
   if (actual === expected) {
     return true;
@@ -215,6 +216,7 @@ function objEquiv(a, b) {
   } catch (e) {//happens when one is a string literal and the other isn't
     return false;
   }
+#:tprint( "ka=", ka.length, " ", kb.length );   
   // having the same number of owned properties (keys incorporates
   // hasOwnProperty)
   if (ka.length != kb.length)
@@ -222,8 +224,10 @@ function objEquiv(a, b) {
   //the same set of keys (although not necessarily the same order),
   ka.sort();
   kb.sort();
-  //~~~cheap key test
+   //~~~cheap key test
+#:tprint( "KA.1" );   
   for (i = ka.length - 1; i >= 0; i--) {
+#:tprint( "KA.in ", i );   
     if (ka[i] != kb[i])
       return false;
   }
