@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue Dec 12 12:08:45 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 18:56:08 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -346,14 +346,28 @@
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_smull_overflow($1, $2, &$3)"
 		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
 		 x y)
 	      (overflow29 res))))
       (else
-       (let ((z::long (pragma::long "($1 ^ $2) & 0x80000000" x y)))
-	  (if (pragma::bool "$1 & ((($2 ^ (long)$1) - ($3)) ^ ($3))" z x y)
-	      (fixnum->flonum (*fx x y))
-	      (overflow29 (*fx x y)))))))
+       (define (neg? o)
+	  (if (flonum? o)
+	      (not (=fx (signbitfl o) 0))
+	      (<fx o 0)))
+       
+       (let ((r (* x y)))
+	  (cond
+	     ((fixnum? r)
+	      (if (=fx r 0)
+		  (if (or (and (neg? x) (not (neg? y)))
+			  (and (not (neg? x)) (neg? y)))
+		      -0.0
+		      r)
+		  r))
+	     ((bignum? r)
+	      (bignum->flonum r))
+	     (else
+	      r))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *u32/overflow ...                                                */
@@ -366,19 +380,16 @@
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_umull_overflow($1, $2, &$3)"
 		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
 		 x y)
 	      (if (<u32 res (bit-lshu32 #u32:1 29))
 		  (uint32->fixnum res)
 		  (uint32->flonum res)))))
       (else
-       (let ((z::long (pragma::uint32 "($1 ^ $2) & 0x80000000" x y)))
-	  (if (pragma::bool "$1 & ((($2 ^ (uint32)$1) - ($3)) ^ ($3))" z x y)
-	      (fixnum->flonum (*u32 x y))
-	      (let ((res (*u32 x y)))
-		 (if (<u32 res (bit-lshu32 #u32:1 29))
-		     (uint32->fixnum res)
-		     (uint32->flonum res))))))))
+       (let ((r (*fl (uint32->flonum x) (uint32->flonum y))))
+	  (if (integer? r)
+	      (overflow29 (flonum->fixnum r))
+	      r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    */overflow ...                                                   */
