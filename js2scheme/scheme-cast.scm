@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Mon Dec 11 18:12:06 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 12:14:15 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -221,10 +221,11 @@
 	  `(js-tojsstring ,sexp %this))))
    
    (define (default)
-      (tprint "cast sexp=" sexp " from=" from " to=" to)
-      (when (isa? expr J2SExpr)
-	 (with-access::J2SExpr expr (loc)
-	    (tprint "cast expr=" (j2s->list expr) " loc=" loc)))
+      (when (config-get conf :optim-cast #f)
+	 (tprint "cast sexp=" sexp " from=" from " to=" to)
+	 (when (isa? expr J2SExpr)
+	    (with-access::J2SExpr expr (loc)
+	       (tprint "cast expr=" (j2s->list expr) " loc=" loc))))
       (if (or (eq? from to) (eq? to '*))
 	  sexp
 	  (case from
