@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec 11 20:44:04 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 05:54:19 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -968,6 +968,10 @@
       (cond
 	 ((and (eq? tl 'bint) (eq? tr 'bint))
 	  `(,(opfx/overflow op) ,left ,right))
+	 ((and (eq? tl 'bint) (eq? tr 'int32))
+	  (if (inrange-int30? rhs)
+	      `(,(opfx/overflow op) ,left ,(tolong32 right tr))
+	      `(,(ops32/overflow op) ,(toint32/32 left tl) ,right)))
 	 ((inrange-int32? lhs)
 	  (if (inrange-int32? rhs)
 	      `(,(ops32/overflow op) ,(toint32/32 left tl) ,(toint32/32 right tr))
@@ -1001,9 +1005,9 @@
 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	  `(,(opu32 op) ,left ,right))
 	 ((and (eq? tl 'uint32) (eq? tr 'int32) (inrange-uint32? rhs))
-	  `(,(opu32 op) ,left (int32->uint32 ,right)))
+	  `(,(opu32 op) ,left ,(touint32/w-overflow right tr)))
 	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-uint32? lhs))
-	  `(,(opu32 op) (int32->uint32 ,left) ,right))
+	  `(,(opu32 op) ,(touint32/w-overflow left tl) ,right))
 	 (else
 	  (let ((n (gensym)))
 	     `(let ((,n ,(addsub-generic/32 op type lhs tl left rhs tr right)))
@@ -1024,6 +1028,10 @@
       (cond
 	 ((and (eq? tl 'bint) (eq? tr 'bint))
 	  `(,(opfx/overflow op) ,left ,right))
+	 ((and (eq? tl 'bint) (eq? tr 'int32))
+	  (if (inrange-int30? rhs)
+	      `(,(opfx op) ,left ,(tolong32 right tr))
+	      `(,(ops32 op) ,(toint32/32 left tl) ,right)))
 	 ((and (inrange-int32? lhs) (inrange-int32? rhs))
 	  `(,(opfx op) ,(tolong64 left tl) ,(tolong64 right tr)))
 	 ((inrange-int53? lhs)
@@ -1514,6 +1522,23 @@
        val)
       (else
        `(if (fixnum? ,val) (fixnum->uint32 ,val) (js-touint32 ,val %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    touint32/w-overflow ...                                          */
+;*---------------------------------------------------------------------*/
+(define (touint32/w-overflow val type)
+   (cond
+      ((int32? val)
+       (int32->uint32 val))
+      ((uint32? val)
+       val)
+      ((fixnum? val)
+       (fixnum->uint32 val))
+      (else
+       (case type
+	  ((uint32) `(int32->uint32 ,val))
+	  ((uint32) val)
+	  (else (fixnum->uint32 val))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    toint32/32 ...                                                   */

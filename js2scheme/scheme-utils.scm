@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Dec 11 18:30:00 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 05:48:42 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -653,10 +653,20 @@
 ;*    inrange-uint32? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (inrange-uint32? expr)
-   (with-access::J2SExpr expr (range)
-      (when (interval? range)
-	 (and (>=llong (interval-min range) #l0)
-	      (<llong (interval-max range) (bit-lshllong #l1 32))))))
+   (if (isa? expr J2SNumber)
+       (with-access::J2SNumber expr (val)
+	  (cond
+	     ((uint32? val)
+	      #t)
+	     ((int32? val)
+	      (>=s32 val #s32:0))
+	     ((fixnum? val)
+	      (>fx val 0))
+	     (else #f)))
+       (with-access::J2SExpr expr (range)
+	  (when (interval? range)
+	     (and (>=llong (interval-min range) #l0)
+		  (<llong (interval-max range) (bit-lshllong #l1 32)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-int53? ...                                               */

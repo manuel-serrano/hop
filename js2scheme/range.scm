@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Dec 11 21:10:23 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 05:36:31 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -65,7 +65,7 @@
 	 (when (config-get args :optim-cast #f)
 	    ;; compute the integer value ranges,
 	    (j2s-range-program! this args)
-	    ;; optimize operators (moodulo) according to ranges
+	    ;; optimize operators (modulo) according to ranges
 	    (when (>=fx (config-get args :optim 0) 2)
 	       (j2s-range-opt-program! this args))
 	    ;; allocate precise types according to the ranges
@@ -233,12 +233,13 @@
 ;*    extend-env ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (extend-env::pair-nil env::pair-nil decl::J2SDecl intv)
-   (with-access::J2SDecl decl (scope range)
+   (with-access::J2SDecl decl (scope range vtype)
       (cond
 	 ((eq? scope '%scope)
-	  (if (interval? range)
-	      (set! range (interval-merge range intv))
-	      (set! range intv))
+	  (when (memq vtype '(index integer number))
+	     (if (interval? range)
+		 (set! range (interval-merge range intv))
+		 (set! range intv)))
 	  env)
 	 ((not intv)
 	  (filter (lambda (c) (not (eq? (car c) decl))) env))
@@ -255,6 +256,13 @@
    (if (>=fx (bigloo-debug) 1)
        (append left (filter (lambda (c) (not (assq (car c) left))) right))
        (append left right)))
+
+;*---------------------------------------------------------------------*/
+;*    delete-env ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (delete-env env::pair-nil decl::J2SDecl)
+   (with-access::J2SDecl decl (scope range)
+      (filter (lambda (c) (not (eq? (car c) decl))) env)))
 
 ;*---------------------------------------------------------------------*/
 ;*    env-merge ...                                                    */
@@ -1144,7 +1152,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SAssig env::pair-nil args fix::struct)
    (with-access::J2SAssig this (lhs rhs type)
-      (if (type-number? type)
+      (cond
+	 ((type-number? type)
 	  (multiple-value-bind (_ env)
 	     (node-range lhs env args fix)
 	     (cond
@@ -1159,10 +1168,15 @@
 		 ;; a non variable assignment
 		 (multiple-value-bind (intv nenv)
 		    (node-range rhs env args fix)
-		    (node-interval-set! this nenv fix intv)))))
-	  (begin
-	     (call-default-walker)
-	     (return #f env)))))
+		    (node-interval-set! this nenv fix intv))))))
+	 ((isa? lhs J2SRef)
+	  ;; a variable assignment
+	  (call-default-walker)
+	  (with-access::J2SRef lhs (decl)
+	     (return #f (delete-env env decl))))
+	 (else
+	  (call-default-walker)
+	  (return #f env)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SAssigOp ...                                      */
@@ -1550,7 +1564,7 @@
 			(minimal-type 'number vtype))))
 	     (set! itype ty)
 	     (set! vtype ty)))
-	 ((interval? range)
+	 ((and (interval? range) (memq vtype '(index integer number)))
 	  (let ((ty (interval->type range tymap)))
 	     (when ty
 		(set! itype ty)

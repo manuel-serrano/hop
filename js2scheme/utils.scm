@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Dec 10 08:52:58 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 05:16:42 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -245,16 +245,15 @@
 	   (cond
 	      ((eq? t2 'uint29) t1)
 	      ((eq? t2 'int32) t2)
-	      (else (if (type-integer? t2) 'integer 'number))))
+	      ((memq t2 '(integer number)) t2)
+	      (else 'any)))
 	  ((int53)
 	   (cond
 	      ((memq t2 '(uint29 uint32 int32)) t1)
 	      ((memq t2 '(integer number)) t2)
 	      (else 'any)))
-	  ((integer)
-	   (if (type-integer? t2) 'integer 'number))
-	  ((number)
-	   (if (type-number? t2) 'number 'any))
+	  ((number integer)
+	   (if (memq t2 '(integer number)) t2 'any))
 	  (else 'any))))
 
 ;*---------------------------------------------------------------------*/

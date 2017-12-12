@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Dec 11 20:43:35 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 05:46:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2280,13 +2280,19 @@
    
    (define (ref-inc op lhs::J2SRef inc::int type loc)
       (let* ((typ (j2s-type-ref lhs))
-	     (num (J2SNumber/type 'bint inc))
+	     (num (J2SNumber/type 'int32 inc))
 	     (rhse (j2s-scheme
 		      (if (type-number? typ)
 			  (J2SBinary/type '+ typ lhs num)
 			  (ref++ lhs num loc mode return conf hint totype))
 		      mode return conf hint totype))
 	     (lhse (j2s-scheme lhs mode return conf hint totype)))
+	 (tprint "RHSE="
+	    (j2s->list
+	       (if (type-number? typ)
+		   (J2SBinary/type '+ typ lhs num)
+		   (ref++ lhs num loc mode return conf hint totype))))
+	 (tprint "     " rhse)
 	 (if (eq? retval 'old)
 	     (let ((res (gensym 'prev)))
 		`(let ((,res ,lhse))
