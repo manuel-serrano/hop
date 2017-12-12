@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Dec 12 05:46:40 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 12:07:33 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1034,7 +1034,9 @@
 		(var (type-ident ident vtype)))
 ;* 		(var (type-ident ident (if typed vtype 'obj))))        */
 	    (cond
-	       ((or (not (isa? val J2SFun)) (isa? val J2SSvc) (memq 'assig usage))
+	       ((or (not (isa? val J2SFun))
+		    (isa? val J2SSvc)
+		    (memq 'assig usage))
 		(list `(,var ,(j2s-scheme val mode return conf hint utype))))
 	       ((usage? '(ref get new set) usage)
 		(let ((fun (jsfun->lambda val mode return conf
@@ -1575,14 +1577,20 @@
 	     '=
 	     'js-strict-equal?))
       
-      (define (comp-switch-cond-clause case tmp body tleft)
+      (define (comp-switch-cond-clause case tmp ttmp body tleft)
 	 (with-access::J2SCase case (loc expr)
 	    (if (isa? case J2SDefault)
 		(epairify loc `(else ,body))
-		(let* ((op (test-switch tleft (j2s-type-ref expr)))
-		       (test `(,op ,tmp ,(j2s-scheme expr mode return conf hint totype))))
-		   (epairify loc `(,test ,body))))))
-
+		(epairify loc
+		   `(,(js-binop2 loc '=== 'bool
+			 (instantiate::J2SHopRef
+			    (loc loc)
+			    (id tmp)
+			    (type ttmp))
+			 expr
+			 mode return conf hint totype)
+		     ,body)))))
+;*                                                                     */
       (define (comp-switch-case-clause case body tleft)
 	 (with-access::J2SCase case (loc expr)
 	    (if (isa? case J2SDefault)
@@ -1657,6 +1665,7 @@
 		
       (define (comp-switch-cond key cases)
 	 (let ((tmp (gensym 'tmp))
+	       (ttmp (j2s-type-ref key))
 	       (funs (map (lambda (c) (gensym)) cases))
 	       (tleft (j2s-type-ref key)))
 	    (multiple-value-bind (bindings bodies)
@@ -1665,7 +1674,7 @@
 		       ,@bindings)
 		   (cond
 		      ,@(mapc (lambda (c body)
-				 (comp-switch-cond-clause c tmp body tleft))
+				 (comp-switch-cond-clause c tmp ttmp body tleft))
 			 cases bodies))))))
 
       (define (comp-switch-case key cases)
@@ -2263,36 +2272,31 @@
 		 ,(comp aux aux)))
 	  (comp val tmp)))
 
-   (define (var++ var num loc)
+   (define (var++ op var num loc)
       `(if (fixnum? ,var)
-           ,(J2SBinary/type '+ 'integer
+           ,(J2SBinary/type op 'number
                (J2SHopRef/type var 'bint) num)
-           ,(J2SBinary/type '+ 'number
+           ,(J2SBinary/type op 'number
                (J2SCast 'number (J2SHopRef/type var 'any)) num)))
       
-   (define (ref++ lhs::J2SRef num loc mode return conf hint totype)
+   (define (ref++ op lhs::J2SRef num loc mode return conf hint totype)
       (let ((var (j2s-scheme lhs mode return conf hint totype)))
 	 (if (symbol? var)
-	     (var++ var num loc)
+	     (var++ op var num loc)
 	     (let ((tmp (gensym 'tmp)))
 		`(let ((,tmp ,var))
-		    ,(var++ tmp num loc))))))
+		    ,(var++ op tmp num loc))))))
    
    (define (ref-inc op lhs::J2SRef inc::int type loc)
       (let* ((typ (j2s-type-ref lhs))
-	     (num (J2SNumber/type 'int32 inc))
+	     (num (J2SNumber/type 'uint32 1))
+	     (op (if (=fx inc 1) '+ '-))
 	     (rhse (j2s-scheme
 		      (if (type-number? typ)
-			  (J2SBinary/type '+ typ lhs num)
-			  (ref++ lhs num loc mode return conf hint totype))
+			  (J2SBinary/type op typ lhs num)
+			  (ref++ op lhs num loc mode return conf hint totype))
 		      mode return conf hint totype))
 	     (lhse (j2s-scheme lhs mode return conf hint totype)))
-	 (tprint "RHSE="
-	    (j2s->list
-	       (if (type-number? typ)
-		   (J2SBinary/type '+ typ lhs num)
-		   (ref++ lhs num loc mode return conf hint totype))))
-	 (tprint "     " rhse)
 	 (if (eq? retval 'old)
 	     (let ((res (gensym 'prev)))
 		`(let ((,res ,lhse))
@@ -2394,10 +2398,13 @@
 					      ,tmp2)))))))))))))
 
    (define (rhs-cache rhs)
-      (with-access::J2SBinary rhs (lhs)
-	 (when (isa? lhs J2SAccess)
-	    (with-access::J2SAccess lhs (cache)
-	       cache))))
+      (if (isa? rhs J2SCast)
+	  (with-access::J2SCast rhs (expr)
+	     (rhs-cache expr))
+	  (with-access::J2SBinary rhs (lhs)
+	     (when (isa? lhs J2SAccess)
+		(with-access::J2SAccess lhs (cache)
+		   cache)))))
    
    (define (access-inc op lhs rhs inc)
       (with-access::J2SAccess lhs (obj field clevel cache (loca loc))

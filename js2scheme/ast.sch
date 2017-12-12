@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Thu Dec  7 18:56:16 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 10:35:24 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -326,6 +326,8 @@
        (binder 'param)
        (usage ,usage)
        (utype ,(let ((c (memq :type opts))) (if (pair? c) (cadr c) ''unknown)))
+       (vtype ,(let ((c (memq :vtype opts))) (if (pair? c) (cadr c) ''unknown)))
+       (itype ,(let ((c (memq :vtype opts))) (if (pair? c) (cadr c) ''unknown)))
        (id ,id)))
 
 (define-macro (J2SDeclInit usage id val)
@@ -357,10 +359,11 @@
        (val ,val)
        (id ,id)))
 
-(define-macro (%J2STail expr)
+(define-macro (%J2STail expr . from)
    `(instantiate::%J2STail
        (loc loc)
-       (expr ,expr)))
+       (expr ,expr)
+       (from ,(if (pair? from) (car from) #f))))
 
 (define-macro (J2SIf test then else)
    `(instantiate::J2SIf
@@ -384,11 +387,12 @@
        (then ,then)
        (else ,else)))
 
-(define-macro (J2SReturn tail expr)
+(define-macro (J2SReturn tail expr . from)
    `(instantiate::J2SReturn
        (loc loc)
        (tail ,tail)
-       (expr ,expr)))
+       (expr ,expr)
+       (from ,(if (pair? from) (car from) #f))))
 
 (define-macro (J2SBindExit lbl stmt)
    `(instantiate::J2SBindExit

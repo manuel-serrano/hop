@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Dec 11 21:03:20 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 10:52:11 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -187,8 +187,16 @@
 ;*    type-cast! ::J2SCast ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SCast totype)
-   (with-access::J2SCast this (expr)
-      (cast expr totype)))
+   
+   (define (optimize-cast? totype type)
+      (or (and (eq? totype 'bool) (memq type '(int32 uint32 integer number)))))
+
+   (with-access::J2SCast this (expr type)
+      (if (optimize-cast? totype type)
+	  (begin
+	     (set! type totype)
+	     this)
+	  (cast expr totype))))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    type-cast! ::J2SNumber ...                                       *} */
@@ -208,7 +216,7 @@
    
    (define (known-fun this fun)
       (with-access::J2SCall this (args)
-	 (with-access::J2SFun fun (rtype params)
+	 (with-access::J2SFun fun (rtype params vararg)
 	    (let loop ((params params)
 		       (vals args)
 		       (nvals '()))
@@ -225,9 +233,14 @@
 			 nvals)))
 		  (else
 		   (with-access::J2SDecl (car params) (vtype)
-		      (loop (cdr params) (cdr vals)
-			 (cons (type-cast! (car vals) vtype)
-			    nvals)))))))))
+		      (let ((ptype (if (and (eq? vtype 'array)
+					    (null? (cdr params))
+					    vararg)
+				       'any
+				       vtype)))
+			 (loop (cdr params) (cdr vals)
+			    (cons (type-cast! (car vals) ptype)
+			       nvals))))))))))
    
    (define (unknown-fun this)
       (with-access::J2SCall this (args fun)
@@ -276,6 +289,15 @@
 	     (tprint "PAS FROM: " (j2s->list this))
 	     (set! expr (type-cast! expr '*))))
 	 this)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SReturnYield ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SReturnYield totype)
+   (with-access::J2SReturnYield this (expr kont)
+      (set! kont (type-cast! kont '*))
+      (set! expr (type-cast! expr 'any))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SDeclInit ...                                     */
@@ -420,4 +442,12 @@
       (set! test (type-cast! test 'bool))
       (set! then (type-cast! then totype))
       (set! else (type-cast! else totype))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SDataPropertyInit ...                             */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SDataPropertyInit totype)
+   (with-access::J2SDataPropertyInit this (val)
+      (set! val (type-cast! val 'any))
       this))

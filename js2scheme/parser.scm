@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec  8 12:32:14 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 08:07:49 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2231,7 +2231,7 @@
 				(val val)))))
 		    (let* ((ignore (consume! ':))
 			   (val (assig-expr #f)))
-		       (with-access::J2SLiteral tokname (loc)
+		       (with-access::J2SExpr tokname (loc)
 			  (instantiate::J2SDataPropertyInit
 			     (loc loc)
 			     (name tokname)

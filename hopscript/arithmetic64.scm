@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Dec 10 12:41:19 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 12:06:46 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -51,9 +51,17 @@
 ;*    overflow53 ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    2^53-1 overflow                                                  */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight (second edition), H. Warren J.r,            */
+;*    Chapter 4, section 4.1, page 68                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (overflow53 v::long)
-   (if (=fx (bit-rsh v 52) 0) v (fixnum->flonum v)))
+   (let* ((a (-fx 0 (bit-lsh 1 53)))
+	  (b (-fx (bit-lsh 1 53) 1))
+	  (b-a (-fx b a)))
+      (if (<=u64 (fixnum->uint64 (-fx v a)) (fixnum->uint64 b-a))
+	  v
+	  (fixnum->flonum v))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number-toint32 ::obj ...                                      */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Dec 11 18:03:38 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 12:08:45 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -135,7 +135,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    overflow29 ...                                                   */
 ;*    -------------------------------------------------------------    */
-;*    2^53-1 overflow                                                  */
+;*    2^29-1 overflow                                                  */
 ;*    -------------------------------------------------------------    */
 ;*    See Hacker's Delight (second edition), H. Warren J.r,            */
 ;*    Chapter 4, section 4.1, page 68                                  */

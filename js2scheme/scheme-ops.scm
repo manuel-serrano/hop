@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Dec 12 05:54:19 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 08:54:30 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -278,16 +278,24 @@
       
       ((OR)
        (let ((lhsv (gensym 'lhs)))
-	  `(let ((,lhsv ,(j2s-scheme lhs mode return conf hint totype)))
-	      (if ,(if (eq? (j2s-type-ref lhs) 'bool) lhsv `(js-totest ,lhsv))
-		  ,lhsv
-		  ,(j2s-scheme rhs mode return conf hint totype)))))
+	  `(let ((,(type-ident lhsv (j2s-type-ref lhs))
+		  ,(j2s-scheme lhs mode return conf hint totype)))
+	      (if ,(if (eq? (j2s-type-ref lhs) 'bool)
+		       lhsv
+		       (j2s-cast lhsv lhs (j2s-type-ref lhs) 'bool conf))
+		  ,(j2s-cast lhsv lhs (j2s-type-ref lhs) type conf)
+		  ,(j2s-cast (j2s-scheme rhs mode return conf hint totype) rhs
+		      (j2s-type-ref rhs) type conf)))))
       ((&&)
        (let ((lhsv (gensym 'lhs)))
-	  `(let ((,lhsv ,(j2s-scheme lhs mode return conf hint totype)))
-	      (if ,(if (eq? (j2s-type-ref lhs) 'bool) lhsv `(js-totest ,lhsv))
-		  ,(j2s-scheme rhs mode return conf hint totype)
-		  ,lhsv))))
+	  `(let ((,(type-ident lhsv (j2s-type-ref lhs))
+		  ,(j2s-scheme lhs mode return conf hint totype)))
+	      (if ,(if (eq? (j2s-type-ref lhs) 'bool)
+		       lhsv
+		       (j2s-cast lhsv lhs (j2s-type-ref lhs) 'bool conf))
+		  ,(j2s-cast (j2s-scheme rhs mode return conf hint totype) rhs
+		      (j2s-type-ref rhs) type conf)
+		  ,(j2s-cast lhsv lhs (j2s-type-ref lhs) type conf)))))
       (else
        (binop lhs rhs mode return conf hint 'any
 	  (lambda (left right)
@@ -433,17 +441,17 @@
 	  (gen scmlhs scmrhs))
 	 (testl
 	  (let ((right (gensym 'rhs)))
-	     `(let ((,(utype-ident right (j2s-type-ref rhs) conf #t) ,scmrhs))
+	     `(let ((,(type-ident right (j2s-type-ref rhs)) ,scmrhs))
 		 ,(gen scmlhs right))))
 	 (testr
 	  (let ((left (gensym 'lhs)))
-	     `(let ((,(utype-ident left (j2s-type-ref lhs) conf #t) ,scmlhs))
+	     `(let ((,(type-ident left (j2s-type-ref lhs)) ,scmlhs))
 		 ,(gen left scmrhs))))
 	 (else
 	  (let ((left (gensym 'lhs))
 		(right (gensym 'rhs)))
-	     `(let* ((,(utype-ident left (j2s-type-ref lhs) conf #t) ,scmlhs)
-		     (,(utype-ident right (j2s-type-ref rhs) conf #t) ,scmrhs))
+	     `(let* ((,(type-ident left (j2s-type-ref lhs)) ,scmlhs)
+		     (,(type-ident right (j2s-type-ref rhs)) ,scmrhs))
 		 ,(gen left right)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1029,9 +1037,9 @@
 	 ((and (eq? tl 'bint) (eq? tr 'bint))
 	  `(,(opfx/overflow op) ,left ,right))
 	 ((and (eq? tl 'bint) (eq? tr 'int32))
-	  (if (inrange-int30? rhs)
-	      `(,(opfx op) ,left ,(tolong32 right tr))
-	      `(,(ops32 op) ,(toint32/32 left tl) ,right)))
+	  `(,(opfx op) ,left ,(tolong64 right tr)))
+	 ((and (eq? tl 'bint) (eq? tr 'uint32))
+	  `(,(opfx/overflow op) ,left ,(tolong64 right tr)))
 	 ((and (inrange-int32? lhs) (inrange-int32? rhs))
 	  `(,(opfx op) ,(tolong64 left tl) ,(tolong64 right tr)))
 	 ((inrange-int53? lhs)
@@ -1055,12 +1063,18 @@
 	  `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr)))
 	 ((and (eq? tl 'uint32) (eq? tr 'int32))
 	  `(,(opfx/overflow op) (uint32->fixnum ,left) (int32->fixnum ,right)))
-	 ((and (eq? tl 'number) (eq? tr 'int32))
-	  `(,(opfx/overflow op) ,left (int32->fixnum ,right)))
-	 ((and (eq? tl 'number) (eq? tr 'uint32))
-	  `(,(opfx/overflow op) ,left (uint32->fixnum ,right)))
+	 ((and (eq? tl 'number) (memq tr '(int32 uint32)))
+	  `(if (fixnum? ,left)
+	       (,(opfx/overflow op) ,left ,(tolong64 right tr))
+	       (,(op/overflow op) ,(tonumber64 left tl) ,(tolong64 right tr))))
 	 ((and (eq? tl 'integer) (eq? tr 'integer))
 	  `(,(opfx/overflow op) ,left ,right))
+	 ((and (eq? tl 'bint) (eq? tr 'bint))
+	  `(,(opfx/overflow op) ,left ,right))
+	 ((and (eq? tl 'bint) (eq? tr 'int32))
+	  `(,(opfx op) ,left ,(tolong64 right tr)))
+	 ((and (eq? tl 'bint) (eq? tr 'uint32))
+	  `(,(opfx/overflow op) ,left ,(tolong64 right tr)))
 	 (else
 	  `(if ,(fixnums? left tl right tr)
 	       (,(opfx/overflow op) ,left ,right)

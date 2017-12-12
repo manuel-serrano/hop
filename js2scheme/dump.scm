@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Dec  7 10:09:57 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 10:18:11 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -363,7 +363,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCast)
    (with-access::J2SCast this (expr type)
-      `(,@(call-next-method) ,type ,(j2s->list expr))))
+      `(,@(call-next-method) ,type :from ,(j2s-type expr) ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SRef ...                                           */
@@ -451,6 +451,7 @@
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
 		 ,@(dump-key key)
+		 ,@(dump-type this)
 		 ,@(dump-rtype this)
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:idthis ,idthis) '())
@@ -468,6 +469,7 @@
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
 		 ,@(dump-key key)
+		 ,@(dump-type this)
 		 ,@(dump-rtype this)
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:idthis ,idthis) '())
@@ -481,6 +483,7 @@
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name
+	      ,@(dump-type this)
 	      ,@(dump-rtype this)
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:idthis ,idthis) '())

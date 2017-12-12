@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/number.js       */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/number.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Sun Apr 16 20:58:37 2017 (serrano)                */
+/*    Last change :  Tue Dec 12 11:23:42 2017 (serrano)                */
 /*    Copyright   :  2014-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -109,3 +109,22 @@ assert.equal( Math.pow(2, 32), 4294967296, "Math.pow(2" );
 assert.equal( Math.pow(2, 32) + 123, 4294967419, "Math.pow(2" );
 assert.equal( Math.pow(2, 33), 8589934592, "Math.pow(2" );
 assert.equal( ((1<<29) + 123) << 2, -2147483156, "((1<<29) + 123) << 2" );
+
+/*---------------------------------------------------------------------*/
+/*    switch                                                           */
+/*---------------------------------------------------------------------*/
+function testS( a ) {
+   switch( a ) {
+      case 0: return 28;
+      case 1: return "un";
+      case 2: return false;
+      default: return true;
+   }
+}
+
+assert.equal( testS( 0 ), 28 );
+assert.equal( testS( 1 ), "un" );
+assert.equal( testS( 2 ), false );
+assert.equal( testS( 3 ), true );
+assert.equal( testS( 4 ), true );
+

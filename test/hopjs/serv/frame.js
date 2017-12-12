@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Nov 26 09:36:15 2015                          */
-/*    Last change :  Mon Oct 30 17:25:13 2017 (serrano)                */
+/*    Last change :  Tue Dec 12 09:19:04 2017 (serrano)                */
 /*    Copyright   :  2015-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing HopFrames                                                */
@@ -20,7 +20,6 @@ service foo( o ) {
 
 var o = { a: 1, b: 2 };
 
-// testing frame arguments evaluation time
 var f = foo.call( srv, o );
 
 f.post( function( v ) {

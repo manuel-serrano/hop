@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Dec 11 15:26:24 2017 (serrano)                */
+;*    Last change :  Tue Dec 12 10:46:53 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -134,9 +134,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark-capture this::J2SRef env::pair-nil)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (scope ronly %info)
+      (with-access::J2SDecl decl (scope ronly %info vtype)
 	 (when (and (not ronly) (eq? scope 'local))
 	    (unless (memq decl env)
+	       (set! vtype 'any)
 	       (set! %info 'capture))))))
 
 ;*---------------------------------------------------------------------*/
@@ -150,6 +151,17 @@
 	 params)
       (mark-capture body params)))
 
+;*---------------------------------------------------------------------*/
+;*    mark-capture ::J2SKont ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-capture this::J2SKont env::pair-nil)
+   (with-access::J2SKont this (param exn body)
+      (with-access::J2SDecl param (%info)
+	 (set! %info 'nocapture))
+      (with-access::J2SDecl exn (%info)
+	 (set! %info 'nocapture))
+      (mark-capture body (list param exn))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    mark-capture ::J2SLetBlock ...                                   */
 ;*---------------------------------------------------------------------*/
@@ -647,7 +659,9 @@
       (decl-vtype-set! this 'function fix)
       (when (constructor-only? this)
 	 ;; a mere constructor
-	 (with-access::J2SFun val (thisp)
+	 (with-access::J2SFun val (thisp generator rtype)
+	    (when generator
+	       (set! rtype 'any))
 	    (when (isa? thisp J2SDecl)
 	       (with-access::J2SDecl thisp (vtype utype itype)
 		  (set! vtype 'object)
@@ -802,7 +816,7 @@
 	 (expr-type-set! this env fix 'function))))
 
 ;*---------------------------------------------------------------------*/
-;*    typing-fun-decl fun ...                                          */
+;*    typing-fun-decl ::J2SFun ...                                     */
 ;*---------------------------------------------------------------------*/
 (define (typing-fun-decl this::J2SFun env::pair-nil)
    (with-access::J2SFun this (body rtype decl)
@@ -1341,10 +1355,19 @@
 ;*    typing ::J2SReturnYield ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SReturnYield env::pair-nil fix::cell)
-   (with-access::J2SReturnYield this (expr)
+   (with-access::J2SReturnYield this (expr kont)
+      (typing kont env fix)
       (multiple-value-bind (tye enve bke)
 	 (typing expr env fix)
 	 (values 'void enve (list this)))))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SKont ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SKont env::pair-nil fix::cell)
+   (with-access::J2SKont this (body)
+      (typing body env fix)
+      (expr-type-set! this env fix 'procedure)))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SIf ...                                               */
@@ -1653,7 +1676,6 @@
 			(J2SBool #t)))))
 		((&&)
 		 (with-access::J2SBinary this (lhs rhs loc)
-		    (tprint "AND lhs=" (j2s->list lhs) " rhs=" (j2s->list rhs))
 		    (set! lhs (resolve! lhs fix))
 		    (set! rhs (resolve! rhs fix))
 		    (if (and (isa? lhs J2SBool) (isa? rhs J2SBool))
