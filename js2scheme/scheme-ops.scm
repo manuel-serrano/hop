@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec 14 19:15:40 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 20:37:29 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -333,7 +333,7 @@
 	 ((memq tr '(integer int53))
 	  `(and (>=fx ,rhs 0) (=u32 ,lhs (fixnum->uint32 ,rhs))))
 	 ((eq? tr 'real)
-	  `(js-strict-equal? (uint32->flonum ,lhs) ,rhs))
+	  `(=fl (uint32->flonum ,lhs) ,rhs))
 	 (else
 	  `(js-strict-equal? (uint32->flonum ,lhs) ,rhs))))
 
@@ -346,7 +346,7 @@
 	 ((memq tr '(integer int53))
 	  `(=s32 (int32->fixnum ,lhs) ,rhs))
 	 ((eq? tr 'real)
-	  `(js-strict-equal? (int32->flonum ,lhs) ,rhs))
+	  `(=fl (int32->flonum ,lhs) ,rhs))
 	 (else
 	  `(js-strict-equal? (int32->flonum ,lhs) ,rhs))))
       
@@ -358,6 +358,20 @@
 	    ((eq? tr 'uint32) (strict-equal-uint32 rhs lhs tl))
 	    ((eq? tr 'int32) (strict-equal-int32 rhs lhs tl))
 	    (else `(js-strict-equal? ,lhs ,rhs)))))
+
+   (define (tonumber sexp expr)
+      (let ((ty (j2s-type-ref expr)))
+	 (case (j2s-type expr)
+	    ((uint32)
+	     (if (m64? conf)
+		 `(uint32->fixnum ,sexp)
+		 `(uint32->flonum ,sexp)))
+	    ((int32)
+	     (if (m64? conf)
+		 `(int32->fixnum ,sexp)
+		 `(int32->flonum ,sexp)))
+	    (else
+	     sexp))))
 
    (case op
       ((==)
@@ -391,7 +405,7 @@
       ((in)
        (j2s-in? loc lhs rhs))
       ((+)
-       `(js+ ,lhs ,rhs %this))
+       `(js+ ,(tonumber lhs l) ,(tonumber rhs r) %this))
       ((<)
        `(<js ,lhs ,rhs %this))
       ((<=)

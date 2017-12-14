@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Dec 13 07:59:15 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 19:36:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -257,9 +257,15 @@
 	      (rest (string->bignum
 		       (if (char=? (string-ref s (+fx i 1)) #\+)
 			   (substring s (+fx i 2))
-			   (substring s (+fx i 1))))))
+			   (substring s (+fx i 1)))))
+	      (flo (bignum->flonum (*bx base (exptbx #z10 rest)))))
 	  (token 'NUMBER
-	     (bignum->flonum (*bx base (exptbx #z10 rest)))
+	     (if (and (integer? flo)
+		      (<fl flo (fixnum->flonum (-fx (bit-lsh 1 29) 1)))
+		      (>=fl flo (negfx (fixnum->flonum (bit-lsh 1 29)))))
+		 ;; could be more precise
+		 (flonum->fixnum flo)
+		 flo)
 	     (the-length))))
       ((: (uncase "0x") (+ xdigit))
        (token 'NUMBER (js-string->number (the-substring 2 (the-length)) 16)
