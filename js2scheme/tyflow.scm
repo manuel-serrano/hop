@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Dec 14 11:15:34 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 19:23:27 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -796,10 +796,12 @@
 ;*    typing-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (typing-fun this::J2SFun env::pair-nil fix::cell)
-   (with-access::J2SFun this (body params rtype thisp %info)
+   (with-access::J2SFun this (body params rtype thisp %info vararg)
       (let* ((envp (filter-map (lambda (p::J2SDecl)
 				  (with-access::J2SDecl p (itype utype usage)
 				     (cond
+					(vararg
+					 (cons p 'any))
 					((eq? usage 'rest)
 					 (cons p 'array))
 					((not (eq? itype 'unknown))
@@ -883,12 +885,15 @@
 	 env))
    
    (define (type-known-call-args callee args env bk)
-      (with-access::J2SFun callee (rtype params)
+      (with-access::J2SFun callee (rtype params vararg)
 	 (let loop ((params params)
 		    (args args))
 	    (when (pair? params)
 	       (with-access::J2SDecl (car params) (itype vtype usage id)
 		  (cond
+		     (vararg
+		      (set! itype (merge-types itype 'any))
+		      (set! vtype (merge-types vtype 'any)))
 		     ((and (null? (cdr params)) (memq 'rest usage))
 		      (set! itype (merge-types itype 'array))
 		      (set! vtype (merge-types vtype 'array)))

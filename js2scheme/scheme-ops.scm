@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec 14 18:15:53 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 19:15:40 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1635,7 +1635,14 @@
 	   `(if (<u32 ,val ,(bit-lshu32 #u32:1 29))
 		(uint32->fixnum ,val)
 		(uint32->flonum ,val))))
-      (else val)))
+      ((integer)
+       (if (fixnum? val)
+	   (overflow29 val)
+	   `(overflow29 ,val)))
+      ((real number)
+       val)
+      (else
+       `(js-tonumber ,val %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    toint32 ...                                                      */

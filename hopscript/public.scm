@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Dec 14 10:25:29 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 19:06:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -957,9 +957,19 @@
 	 ((number? obj)
 	  (cond
 	     ((uint32? obj)
-	      (uint32->flonum obj))
+	      (cond-expand
+		 ((or bint30 bint32)
+		  (if (<u32 obj (bit-lshu32 #u32:1 29))
+		      (uint32->fixnum obj)
+		      (uint32->flonum obj)))
+		 (else
+		  (uint32->fixnum obj))))
 	     ((int32? obj)
-	      (int32->flonum obj))
+	      (cond-expand
+		 ((or bint30 bint32)
+		  (overflow29 (int32->fixnum obj)))
+		 (else
+		  (int32->fixnum obj))))
 	     (else
 	      obj)))
 	 ((eq? obj (js-undefined))
