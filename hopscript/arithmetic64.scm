@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Dec 14 09:28:05 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 16:33:54 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -113,7 +113,7 @@
 		  (fixnum->int32 (flonum->fixnum i))
 		  (int64->int32 (flonum->int64 i)))))))
       ((uint32? obj)
-       (uint32->int32 obj))
+       (js-number-toint32 (uint32->fixnum obj)))
       ((int32? obj)
        obj)
       (else
@@ -152,9 +152,9 @@
       ((flonum? obj)
        (double->uint32 obj))
       ((int32? obj)
-       obj)
+       (js-number-touint32 (int32->fixnum obj)))
       ((uint32? obj)
-       (uint32->int32 obj))
+       obj)
       (else
        (error "js-number-touint32" "bad number type" obj))))
 

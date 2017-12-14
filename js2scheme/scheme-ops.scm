@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec 14 15:48:56 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 18:04:02 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -323,6 +323,43 @@
 ;*    bindings.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-binop loc op lhs l rhs r conf)
+
+   (define (strict-equal-uint32 lhs rhs tr)
+      (cond
+	 ((eq? tr 'uint32)
+	  `(=u32 ,lhs ,rhs))
+	 ((eq? tr 'int32)
+	  `(and (>=s32 ,rhs 0) (=u32 ,lhs (int32->uint32 ,rhs))))
+	 ((memq tr '(integer int53))
+	  `(and (>=fx ,rhs 0) (=u32 ,lhs (fixnum->uint32 ,rhs))))
+	 ((eq? tr 'real)
+	  `(js-strict-equal? (uint32->flonum ,lhs) ,rhs))
+	 (else
+	  `(js-strict-equal? (uint32->flonum ,lhs) ,rhs))))
+
+   (define (strict-equal-int32 lhs rhs tr)
+      (cond
+	 ((eq? tr 'uint32)
+	  `(and (>=s32 ,lhs 0) (=u32 (int32->uint32 ,lhs) ,rhs)))
+	 ((eq? tr 'int32)
+	  `(=s32 ,lhs ,rhs))
+	 ((memq tr '(integer int53))
+	  `(=s32 (int32->fixnum ,lhs) ,rhs))
+	 ((eq? tr 'real)
+	  `(js-strict-equal? (int32->flonum ,lhs) ,rhs))
+	 (else
+	  `(js-strict-equal? (int32->flonum ,lhs) ,rhs))))
+      
+   (define (strict-equal lhs rhs)
+      (let ((tl (j2s-type l))
+	    (tr (j2s-type r)))
+	 (cond
+	    ((eq? tl 'uint32) (strict-equal-uint32 lhs rhs tr))
+	    ((eq? tr 'uint32) (strict-equal-uint32 rhs lhs tl))
+	    ((eq? tl 'int32) (strict-equal-int32 lhs rhs tr))
+	    ((eq? tr 'int32) (strict-equal-int32 rhs lhs tl))
+	    (else `(js-strict-equal? ,lhs ,rhs)))))
+
    (case op
       ((==)
        `(js-equal? ,lhs ,rhs %this))
@@ -331,9 +368,9 @@
       ((eq?)
        `(eq? ,lhs ,rhs))
       ((===)
-       `(js-strict-equal? ,lhs ,rhs))
+       (strict-equal lhs rhs))
       ((!==)
-       `(not (js-strict-equal? ,lhs ,rhs)))
+       `(not ,(strict-equal lhs rhs)))
       ((eq?)
        `(eq? ,lhs ,rhs))
       ((!eq?)
@@ -562,7 +599,6 @@
 	      (js-binop loc o left tl right tr conf)))))
    
    (define (cmp/64js o lhs tl left rhs tr right)
-      (tprint `(= ,left ,right) " tl=" tl " tr=" tr)
       (if (memq o '(== === != !==))
 	  `(= ,(tonumber64 left tl) ,(tonumber64 right tr))
 	  `(,(opjs o) ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))
