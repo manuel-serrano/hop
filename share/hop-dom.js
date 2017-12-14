@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Mar 21 18:12:23 2017 (serrano)                */
+/*    Last change :  Wed Dec 13 13:34:33 2017 (serrano)                */
 /*    Copyright   :  2006-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
@@ -339,7 +339,7 @@ function hop_dom_create( tag, args ) {
    function valstr( val, k ) {
       try {
 	 if( (val instanceof String) || (typeof val == "string") ) {
-	    return el[ attr ] = val;
+	    k( val );
 	 } if( typeof( val ) === "function" ) {
 	    return hop.reactAttribute( function() { k( val() ) } );
 	 } else {
@@ -373,6 +373,7 @@ function hop_dom_create( tag, args ) {
       for( var attr in args[ 0 ] ) {
 	 var val = args[ 0 ][ attr ];
 	 
+	 console.log( "attr=", attr,  (attr === "class"), " val=", val );
 	 if( attr === "class" ) {
 	    valstr( val, function( v ) { el.className = v } );
 	 } else if( attr === "style" ) {
