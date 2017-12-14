@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec 14 18:04:02 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 18:15:53 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -351,12 +351,11 @@
 	  `(js-strict-equal? (int32->flonum ,lhs) ,rhs))))
       
    (define (strict-equal lhs rhs)
-      (let ((tl (j2s-type l))
-	    (tr (j2s-type r)))
+      (let ((tl (j2s-type-ref l))
+	    (tr (j2s-type-ref r)))
 	 (cond
 	    ((eq? tl 'uint32) (strict-equal-uint32 lhs rhs tr))
 	    ((eq? tr 'uint32) (strict-equal-uint32 rhs lhs tl))
-	    ((eq? tl 'int32) (strict-equal-int32 lhs rhs tr))
 	    ((eq? tr 'int32) (strict-equal-int32 rhs lhs tl))
 	    (else `(js-strict-equal? ,lhs ,rhs)))))
 
