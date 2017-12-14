@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Dec 14 12:18:16 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 15:19:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1124,25 +1124,24 @@
       (cond
 	 ((isa? stmt J2SStmtExpr)
 	  (with-access::J2SStmtExpr stmt (expr)
-	     (or (isa? expr J2SUndefined)
-		 (and (isa? expr J2SLiteral) (not (isa? expr J2SArray))))))
+	     (isa? expr J2SUndefined)
+	     (and (isa? expr J2SLiteral) (not (isa? expr J2SArray)))))
 	 ((isa? stmt J2SNop)
 	  #t)))
-
-   (if (null? nodes)
-       (epairify loc '(js-undefined))
-       (let loop ((nodes nodes))
-	  (cond
-	     ((null? nodes)
-	      '())
-	     ((not (pair? (cdr nodes)))
-	      (j2s-scheme (car nodes) mode return conf hint totype))
-	     ((undefined? (car nodes))
-	      (loop (cdr nodes)))
-	     (else
-	      (epairify loc
-		 (flatten-begin
-		    (j2s-scheme nodes mode return conf hint totype))))))))
+   
+   (let loop ((nodes nodes))
+      (cond
+	 ((null? nodes)
+	  (epairify loc
+	     (return '(js-undefined))))
+	 ((not (pair? (cdr nodes)))
+	  (j2s-scheme (car nodes) mode return conf hint totype))
+	 ((undefined? (car nodes))
+	  (loop (cdr nodes)))
+	 (else
+	  (epairify loc
+	     (flatten-begin
+		(j2s-scheme nodes mode return conf hint totype)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SMeta ...                                         */
@@ -1212,17 +1211,10 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.4         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SStmtExpr mode return conf hint totype)
-   (with-access::J2SStmtExpr this (expr loc)
-      (let ((exprs (j2s-scheme expr mode return conf hint totype)))
-	 (match-case exprs
-	    (()
-	     (epairify loc '(js-undefined)))
-	    ((begin ?- (js-undefined))
-	     exprs)
-	    ((begin ?expr (? symbol?))
-	     expr)
-	    (else
-	     exprs)))))
+   (with-access::J2SStmtExpr this (expr)
+      (if (isa? expr J2SIf)
+	  (j2s-scheme expr mode return conf hint totype)
+	  (return (j2s-scheme expr mode return conf hint totype)))))
 
 ;* {*---------------------------------------------------------------------*} */
 ;* {*    j2s-scheme ::J2SExprStmt ...                                     *} */
@@ -2233,7 +2225,6 @@
 			       ,(j2s-put! loc (car withs) 'object
 				   (symbol->string id) 'propname
 				   (j2s-scheme rhs mode return conf hint totype)
-				   (j2s-type-ref rhs)
 				   #f #f)
 			       ,(liip (cdr withs))))))))
 	    ((isa? lhs J2SUndefined)

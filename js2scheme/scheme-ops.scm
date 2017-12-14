@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec 14 10:51:49 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 15:48:56 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -377,6 +377,7 @@
 ;*    bindings.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-binop-arithmetic loc op left l right r conf)
+   (tprint "CORRIGER ICI les to number entre * et <...")
    (let (lhs rhs)
       (if (m64? conf)
 	  (begin
@@ -554,7 +555,7 @@
 	       (memq tl '(int32 uint32 integer real number)))
 	  (if-fixnums? left tl right tr
 	     `(,(opfx o) ,left ,right)
-	     (cmp/32 o lhs tl left right tr right)))
+	     (cmp/32js o lhs tl left right tr right)))
 	 (else
 	  (if-fixnums? left tl right tr
 	      `(,(opfx o) ,left ,right)

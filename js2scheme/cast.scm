@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Dec 14 13:19:43 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 14:18:29 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -395,8 +395,8 @@
 ;*    type-cast! ::J2SUnary ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SUnary totype)
-   (with-access::J2SUnary this (op expr)
-      (if (eq? op '~)
+   (with-access::J2SUnary this (op expr type)
+      (if (and (eq? op '~) (eq? type 'int32))
 	  (set! expr (type-cast! expr 'int32))
 	  (set! expr (type-cast! expr '*)))
       (cast this totype)))
@@ -442,16 +442,6 @@
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs '*))
 	  (cast this totype)))))
-
-;*---------------------------------------------------------------------*/
-;*    type-cast! ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-method (type-cast! this::J2SIf totype)
-   (with-access::J2SIf this (test then else)
-      (set! test (type-cast! test 'bool))
-      (set! then (type-cast! then totype))
-      (set! else (type-cast! else totype))
-      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SLoop ...                                         */

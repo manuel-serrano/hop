@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Dec 14 08:09:17 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 15:49:22 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -348,8 +348,7 @@
 	     ((pragma::bool "__builtin_smull_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
-		 x y)
-	      (overflow29 res))
+		 x y))
 	     ((=fx res 0)
 	      (if (or (and (<fx x 0) (>=fx y 0))
 		      (and (>=fx x 0) (<fx y 0)))
