@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Dec 12 10:18:11 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 13:18:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -15,6 +15,7 @@
 (module __js2scheme_dump
    
    (import __js2scheme_ast
+	   __js2scheme_utils
 	   __js2scheme_stage)
 
    (export j2s-dump-stage
@@ -509,7 +510,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SBindExit)
    (with-access::J2SBindExit this (lbl stmt)
-      `(,@(call-next-method) (,lbl) ,(j2s->list stmt))))
+      `(,@(call-next-method)
+	  ,@(dump-type this)
+	  (,lbl) ,(j2s->list stmt))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SReturn ...                                        */
@@ -619,7 +622,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCond)
    (with-access::J2SCond this (test then else)
-      `(,@(call-next-method) ,(j2s->list test)
+      `(,@(call-next-method) ,@(dump-type this) ,(j2s->list test)
 	  ,(j2s->list then)
 	  ,(j2s->list else) )))
 
@@ -798,7 +801,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SSequence)
    (with-access::J2SSequence this (exprs)
-      `(,@(call-next-method) ,@(map j2s->list exprs))))
+      `(,@(call-next-method) ,@(dump-type this) ,@(map j2s->list exprs))))
 		  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SNew ...                                           */

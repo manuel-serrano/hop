@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Dec 12 05:36:31 2017 (serrano)                */
+;*    Last change :  Wed Dec 13 13:13:18 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1090,7 +1090,7 @@
 ;*    range-binary ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (node-range-binary this op lhs rhs env::pair-nil args fix::struct)
-   (with-access::J2SExpr this (range %%wstamp)
+   (with-access::J2SExpr this (range %%wstamp type)
       (multiple-value-bind (intl envl)
 	 (node-range lhs env args fix)
 	 (multiple-value-bind (intr envr)
@@ -1118,20 +1118,25 @@
 			      (node-interval-set! this env fix intl)
 			      (return *infinity-intv* env))))
 		      ((<<)
-		       (node-interval-set! this env fix
-			  (interval-shiftl intl intr)))
+		       (when (memq type '(integer index number))
+			  (node-interval-set! this env fix
+			     (interval-shiftl intl intr))))
 		      ((>>)
-		       (node-interval-set! this env fix
-			  (interval-shiftr intl intr)))
+		       (when (memq type '(integer index number))
+			  (node-interval-set! this env fix
+			     (interval-shiftr intl intr))))
 		      ((>>>)
-		       (node-interval-set! this env fix
-			  (interval-ushiftr intl intr)))
+		       (when (memq type '(integer index number))
+			  (node-interval-set! this env fix
+			     (interval-ushiftr intl intr))))
 		      ((^ BIT_OR)
-		       (node-interval-set! this env fix
-			  *int32-intv*))
+		       (when (memq type '(integer index number))
+			  (node-interval-set! this env fix
+			     *int32-intv*)))
 		      ((&)
-		       (node-interval-set! this env fix
-			  (interval-bitand intl intr)))
+		       (when (memq type '(integer index number))
+			  (node-interval-set! this env fix
+			     (interval-bitand intl intr))))
 		      (else
 		       (return *infinity-intv* env))))
 		(return range env))))))
@@ -1734,8 +1739,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SBinary tmap)
    (with-access::J2SBinary this (op type)
-      (when (memq op '(>> >>> << BIT_OT ^ &))
-	 (set! type 'int32)))
+      (when (memq type '(index integer number))
+	 (case op
+	    ((>> << BIT_OT ^ &)
+	     (set! type 'int32))
+	    ((>>>)
+	     (set! type 'uint32)))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -1744,5 +1753,6 @@
 (define-walk-method (map-types this::J2SUnary tmap)
    (with-access::J2SUnary this (op type)
       (when (eq? op '~)
-	 (set! type 'int32)))
+	 (when (memq type '(integer index number))
+	    (set! type 'int32))))
    (call-default-walker))

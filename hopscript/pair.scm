@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat May 24 07:51:25 2014                          */
-;*    Last change :  Mon Dec  4 08:42:32 2017 (serrano)                */
+;*    Last change :  Wed Dec 13 20:10:53 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript JS/Hop pair binding                                    */
@@ -32,9 +32,9 @@
    (export  (js-properties-name-pair::vector ::pair ::JsGlobalObject)
 	    (js-get-own-property-pair ::pair ::obj ::JsGlobalObject)
 	    (js-get-property-value-pair ::pair ::pair ::obj ::JsGlobalObject)
-	    (js-get-pair ::pair ::symbol ::JsGlobalObject)
-	    (js-get-null ::nil ::symbol ::JsGlobalObject)
-	    (js-put-pair! ::pair ::symbol v throw::bool ::JsGlobalObject)))
+	    (js-get-pair ::pair ::obj ::JsGlobalObject)
+	    (js-get-null ::nil ::obj ::JsGlobalObject)
+	    (js-put-pair! ::pair ::obj v throw::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -195,7 +195,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-put-pair! ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (js-put-pair! o::pair prop::symbol v throw::bool %this::JsGlobalObject)
+(define (js-put-pair! o::pair prop::obj v throw::bool %this::JsGlobalObject)
    (case prop
       ((car)
        (set-car! o v)

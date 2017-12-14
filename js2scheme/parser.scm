@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Dec 12 08:07:49 2017 (serrano)                */
+;*    Last change :  Wed Dec 13 07:59:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1518,7 +1518,9 @@
 		 (with-access::J2SNumber expr (val)
 		    (duplicate::J2SNumber expr
 		       (loc (token-loc token))
-		       (val (if (eq? (token-tag token) '+) val (- val)))))
+		       (val (if (eq? (token-tag token) '+)
+				(if (= val 0) 0.0 val)
+				(if (= val 0) -0.0 (- val))))))
 		 (instantiate::J2SUnary
 		    (loc (token-loc token))
 		    (op (token-tag token))

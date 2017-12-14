@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Dec 12 10:35:24 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 12:09:52 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -308,11 +308,6 @@
        (loc loc)
        (expr ,expr)))
 
-;* (define-macro (J2SExprStmt stmt)                                    */
-;*    `(instantiate::J2SExprStmt                                       */
-;*        (loc loc)                                                    */
-;*        (stmt ,stmt)))                                               */
-
 (define-macro (J2SDecl binder usage id)
    `(instantiate::J2SDecl
        (loc loc)
@@ -342,6 +337,17 @@
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable #f)
+       (usecnt 1)
+       (binder 'let-opt)
+       (usage ,usage)
+       (val ,val)
+       (id ,id)))
+
+(define-macro (J2SLetOpt/vtype typ usage id val)
+   `(instantiate::J2SDeclInit
+       (loc loc)
+       (writable #f)
+       (vtype ,typ)
        (usecnt 1)
        (binder 'let-opt)
        (usage ,usage)
@@ -398,6 +404,13 @@
    `(instantiate::J2SBindExit
        (loc loc)
        (lbl ,lbl)
+       (stmt ,stmt)))
+
+(define-macro (J2SBindExit/type typ lbl stmt)
+   `(instantiate::J2SBindExit
+       (loc loc)
+       (lbl ,lbl)
+       (type ,typ)
        (stmt ,stmt)))
 
 (define-macro (J2SAssig lhs rhs)

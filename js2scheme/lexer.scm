@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sat Oct  7 18:58:59 2017 (serrano)                */
+;*    Last change :  Wed Dec 13 07:59:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -258,8 +258,9 @@
 		       (if (char=? (string-ref s (+fx i 1)) #\+)
 			   (substring s (+fx i 2))
 			   (substring s (+fx i 1))))))
-	  (token 'NUMBER (+ 0 (*bx base (exptbx #z10 rest))) (the-length))))
-       
+	  (token 'NUMBER
+	     (bignum->flonum (*bx base (exptbx #z10 rest)))
+	     (the-length))))
       ((: (uncase "0x") (+ xdigit))
        (token 'NUMBER (js-string->number (the-substring 2 (the-length)) 16)
 	  (the-length)))

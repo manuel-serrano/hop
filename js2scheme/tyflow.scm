@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Dec 12 10:46:53 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 11:15:34 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -492,7 +492,7 @@
    (with-access::J2SNumber this (val type)
       (expr-type-set! this env fix
 	 (cond
-	    ((not (integer? val)) 'number)
+	    ((flonum? val) 'real)
 	    ((and (> val 0) (< val (bit-lsh 1 28))) 'index)
 	    ((= val 0) 'index)
 	    (else 'integer)))))
@@ -556,7 +556,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SSequence env::pair-nil fix::cell)
    (with-access::J2SSequence this (exprs)
-      (typing* exprs env fix)))
+      (multiple-value-bind (tye env bk)
+	 (typing* exprs env fix)
+	 (expr-type-set! this env fix tye bk))))
       
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SLiteralCnst ...                                      */
@@ -615,10 +617,11 @@
 ;*    typing ::J2SBindExit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (typing this::J2SBindExit env::pair-nil fix::cell)
-   (with-access::J2SBindExit this (stmt)
+   (with-access::J2SBindExit this (stmt type)
       (multiple-value-bind (typ env bk)
 	 (typing stmt env fix)
-	 (expr-type-set! this env fix typ))))
+	 (return type env '()))))
+	 ;;(expr-type-set! this env fix typ))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDecl ...                                             */
@@ -687,7 +690,7 @@
       (multiple-value-bind (tyv envl lbk)
 	 (typing lhs env fix)
 	 (cond
-	    ;; this assignment
+	    ;; variable assignment
 	    ((isa? lhs J2SRef)
 	     (with-access::J2SRef lhs (decl)
 		(with-access::J2SDecl decl (writable utype id)
@@ -1089,7 +1092,7 @@
 	 (let ((tye (case op
 		       ((+) (if (non-zero-integer? ty expr) 'integer 'number))
 		       ((-) (if (non-zero-integer? ty expr) 'integer 'number))
-		       ((~) 'integer)
+		       ((~) (if (type-integer? ty) 'integer 'unknown))
 		       ((!) 'bool)
 		       ((typeof) 'string)
 		       (else 'any))))
@@ -1155,7 +1158,9 @@
 			    'unknown
 			    (merge-types typr typl)))
 		       ((<< >> >>> ^ & BIT_OR)
-			'integer)
+			(if (and (type-integer? typl) (type-integer? typr))
+			    'integer
+			    'unknown))
 		       (else
 			'any))))
 	    (return typ (if (eq? op 'OR) (env-merge envl envr) envr)
@@ -1496,7 +1501,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SForIn env::pair-nil fix::cell)
    (with-access::J2SForIn this (lhs obj body)
-      (with-access::J2SRef lhs (decl)
+      (let ((decl (if (isa? lhs J2SRef)
+		      (with-access::J2SRef lhs (decl) decl)
+		      (with-access::J2SGlobalRef lhs (decl) decl))))
 	 (with-access::J2SDecl decl (utype vtype itype)
 	    (set! utype 'any)
 	    (set! itype 'any)
@@ -1601,8 +1608,10 @@
 		 (with-access::J2SBool lhs (val)
 		    (if val rhs (J2SBool #f))))
 		((isa? rhs J2SBool)
+		 ;; no reduction can be applied if val is false, see
+		 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.3
 		 (with-access::J2SBool rhs (val)
-		    (if val lhs (J2SBool #f))))
+		    (if val lhs this)))
 		(else
 		 this))))
 	 ((OR)
@@ -1618,8 +1627,10 @@
 		 (with-access::J2SBool lhs (val)
 		    (if val (J2SBool #t) rhs)))
 		((isa? rhs J2SBool)
+		 ;; no reduction can be applied if val is true, see
+		 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.3
 		 (with-access::J2SBool rhs (val)
-		    (if val (J2SBool #t) lhs)))
+		    (if val this lhs)))
 		(else
 		 this))))
 	 (else
@@ -1674,24 +1685,6 @@
 		       (else
 			(unfix! fix "resolve.J2SBinary")
 			(J2SBool #t)))))
-		((&&)
-		 (with-access::J2SBinary this (lhs rhs loc)
-		    (set! lhs (resolve! lhs fix))
-		    (set! rhs (resolve! rhs fix))
-		    (if (and (isa? lhs J2SBool) (isa? rhs J2SBool))
-			(with-access::J2SBool lhs ((lval val))
-			   (with-access::J2SBool rhs ((rval val))
-			      (J2SBool (and lval rval))))
-			this)))
-		((or)
-		 (with-access::J2SBinary this (lhs rhs loc)
-		    (set! lhs (resolve! lhs fix))
-		    (set! rhs (resolve! rhs fix))
-		    (if (and (isa? lhs J2SBool) (isa? rhs J2SBool))
-			(with-access::J2SBool lhs ((lval val))
-			   (with-access::J2SBool rhs ((rval val))
-			      (J2SBool (or lval rval))))
-			this)))
 		(else
 		 (call-default-walker))))))))
    

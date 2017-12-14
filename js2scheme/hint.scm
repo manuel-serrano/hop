@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Dec 10 09:30:02 2017 (serrano)                */
+;*    Last change :  Wed Dec 13 12:24:40 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -585,9 +585,6 @@
 			       params))
 		    (fu (fun-duplicate-untyped this conf))
 		    (ft (fun-duplicate-typed this htypes fu conf)))
-		(when (eq? id 'md5_ff)
-		   (tprint "HTYPE=" htypes
-		      (map j2s->list params)))
 		(fun-dispatch! this htypes ft itypes fu)
 		(list ft fu)))))
       ((typed? this)

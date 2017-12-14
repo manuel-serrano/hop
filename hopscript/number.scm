@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Dec  6 05:37:27 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 10:54:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -31,7 +31,6 @@
    (export (js-init-number! ::JsGlobalObject)
 	   (js-number->jsnumber ::obj ::JsGlobalObject)
 	   
-	   (inline fixnums?::bool ::obj ::obj)
 	   (inline js-uint32->jsnum::obj ::uint32)
 	   
 	   (js+ left right ::JsGlobalObject)
@@ -45,30 +44,15 @@
 	   (inline js/fx::obj ::long ::long)
 	   (inline js/pow2fx::long ::long ::long)
 	   (js-slow+ left right ::JsGlobalObject)
-	   (js- left right ::JsGlobalObject)
-	   (js-neg expr ::JsGlobalObject)
-	   (js* left right ::JsGlobalObject)
 	   (js/ left right ::JsGlobalObject)
 	   (js/num left right)
 	   (js% left right ::JsGlobalObject)
 	   (js-%$$NN left right)
 	   (js-%$$NZ left right)
 	   (inline js-%u32 ::uint32 ::uint32)
-	   (<js::bool left right ::JsGlobalObject)
-	   (>js::bool left right ::JsGlobalObject)
-	   (<=js::bool left right ::JsGlobalObject)
-	   (>=js::bool left right ::JsGlobalObject)
 	   
 	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
-	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject))
-   
-   ;; to be removed
-   (export 
-      (js<::bool left right ::JsGlobalObject)
-      (js>::bool left right ::JsGlobalObject)
-      (js<=::bool left right ::JsGlobalObject)
-      (js>=::bool left right ::JsGlobalObject)))
-	   
+	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -370,17 +354,6 @@
       (js-new1 %this js-number val)))
 
 ;*---------------------------------------------------------------------*/
-;*    fixnums? ...                                                     */
-;*---------------------------------------------------------------------*/
-(define-inline (fixnums? x y)
-   (cond-expand
-;*       ((and bigloo-c (or bint29 bint30 bint32))                     */
-;*        (pragma::bool "(((long)($1) & TAG_MASK) + ((long)($2) & TAG_MASK)) == (TAG_INT<<1)" x y)) */
-      (bigloo-c-NOT_USED
-       (pragma::bool "INTEGERP( $1 ) && INTEGERP( $2 )" x y))
-      (else (and (fixnum? x) (fixnum? y)))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-uint32->jsnum ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-uint32->jsnum n::uint32)
@@ -404,16 +377,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (js+ left right %this::JsGlobalObject)
-   (cond
-      ((and (fixnum? left) (fixnum? right))
-       (let ((r (+fx left right)))
-	  (if (or (>=fx r (bit-lsh 1 29)) (<fx r (negfx (bit-lsh 1 29))))
-	      (fixnum->flonum r)
-	      r)))
-      ((and (number? left) (number? right))
-       (+ left right))
-      (else
-       (js-slow+ left right %this))))
+   (if (and (number? left) (number? right))
+       (+js left right %this)
+       (js-slow+ left right %this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js+fx ...                                                        */
@@ -593,63 +559,6 @@
 		 (+ left right)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js- ...                                                          */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
-;*---------------------------------------------------------------------*/
-(define (js- left right %this)
-   (if (and (number? left) (number? right))
-       (- left right)
-       (let* ((lnum (js-tonumber left %this))
-	      (rnum (js-tonumber right %this)))
-	  (- lnum rnum))))
-
-;*---------------------------------------------------------------------*/
-;*    js-neg ...                                                       */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7       */
-;*---------------------------------------------------------------------*/
-(define (js-neg expr %this)
-   (let loop ((expr expr))
-      (cond
-	 ((and (number? expr) (= expr 0))
-	  (if (flonum? expr)
-	      (if (=fx (signbitfl expr) 0) -0.0 +0.0)
-	      -0.0))
-	 ((number? expr)
-	  (- expr))
-	 (else
-	  (loop (js-tonumber expr %this))))))
-       
-;*---------------------------------------------------------------------*/
-;*    js* ...                                                          */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
-;*---------------------------------------------------------------------*/
-(define (js* left right %this)
-   
-   (define (neg? o)
-      (if (flonum? o)
-	  (not (=fx (signbitfl o) 0))
-	  (<fx o 0)))
-   
-   (let* ((lnum (if (number? left) left (js-tonumber left %this)))
-	  (rnum (if (number? right) right (js-tonumber right %this)))
-	  (r (* lnum rnum)))
-      (cond
-	 ((fixnum? r)
-	  (if (=fx r 0)
-	      (if (or (and (neg? lnum) (not (neg? rnum)))
-		      (and (not (neg? lnum)) (neg? rnum)))
-		  -0.0
-		  r)
-	      r))
-	 ((bignum? r)
-	  (bignum->flonum r))
-	 (else
-	  r))))
-
-;*---------------------------------------------------------------------*/
 ;*    js/ ...                                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
@@ -748,70 +657,6 @@
        (remainderu32 lnum rnum)))
 
 ;*---------------------------------------------------------------------*/
-;*    <js                                                              */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.1       */
-;*---------------------------------------------------------------------*/
-(define (<js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
-       (< left right)
-       (let* ((px (js-toprimitive left 'number %this))
-	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-jsstring? px) (js-jsstring? py))
-	      (js-jsstring<? px py)
-	      (let ((nx (js-tonumber px %this))
-		    (ny (js-tonumber py %this)))
-		 (< nx ny))))))
-
-;*---------------------------------------------------------------------*/
-;*    >js                                                              */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.2       */
-;*---------------------------------------------------------------------*/
-(define (>js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
-       (> left right)
-       (let* ((px (js-toprimitive left 'number %this))
-	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-jsstring? px) (js-jsstring? py))
-	      (js-jsstring>? px py)
-	      (let ((nx (js-tonumber px %this))
-		    (ny (js-tonumber py %this)))
-		 (> nx ny))))))
-
-;*---------------------------------------------------------------------*/
-;*    <=js                                                             */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.3       */
-;*---------------------------------------------------------------------*/
-(define (<=js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
-       (<= left right)
-       (let* ((px (js-toprimitive left 'number %this))
-	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-jsstring? px) (js-jsstring? py))
-	      (js-jsstring<=? px py)
-	      (let ((nx (js-tonumber px %this))
-		    (ny (js-tonumber py %this)))
-		 (<= nx ny))))))
-
-;*---------------------------------------------------------------------*/
-;*    >=js                                                             */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.4       */
-;*---------------------------------------------------------------------*/
-(define (>=js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
-       (>= left right)
-       (let* ((px (js-toprimitive left 'number %this))
-	      (py (js-toprimitive right 'number %this)))
-	  (if (and (js-jsstring? px) (js-jsstring? py))
-	      (js-jsstring>=? px py)
-	      (let ((nx (js-tonumber px %this))
-		    (ny (js-tonumber py %this)))
-		 (>= nx ny))))))
-
-;*---------------------------------------------------------------------*/
 ;*    js-jsnumber-tostring ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-jsnumber-tostring val radix %this)
@@ -849,19 +694,3 @@
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-end!)
-
-
-;*---------------------------------------------------------------------*/
-;*    TO BE REMOVED                                                    */
-;*---------------------------------------------------------------------*/
-(define (js< left right %this::JsGlobalObject)
-   (<js left right %this))
-
-(define (js> left right %this::JsGlobalObject)
-   (>js left right %this))
-
-(define (js<= left right %this::JsGlobalObject)
-   (<=js left right %this))
-
-(define (js>= left right %this::JsGlobalObject)
-   (>=js left right %this))

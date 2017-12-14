@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Dec 11 10:00:48 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 12:04:46 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -475,7 +475,7 @@
 		      (inline-function-call this))))
 	 (let* ((lbl (gensym '%return))
 		(cell (make-cell '()))
-		(bd (bind-exit! body lbl cell)))
+		(bd (bind-exit! body lbl cell '())))
 	    (cond
 	       ((pair? (cell-ref cell))
 		(let ((be (J2SBindExit lbl bd)))
@@ -484,14 +484,12 @@
 				(with-access::J2SReturn ret (from)
 				   (set! from be)))
 		      (cell-ref cell))
-		   (with-access::J2SBindExit be (need-bind-exit-return)
-		      (set! need-bind-exit-return #t)
-		      be)))
+		   be))
 	       ((stmt->expr bd)
 		=>
 		(lambda (expr) expr))
 	       (else
-		(J2SBindExit lbl bd)))))))
+		(J2SBindExit #f bd)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-inlinables ...                                           */
@@ -785,34 +783,39 @@
 ;*    Replace untail return (those of the inlined function) with       */
 ;*    an exit.                                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (bind-exit! this::J2SNode l cell)
+(define-walk-method (bind-exit! this::J2SNode l cell env)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-exit! ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (bind-exit! this::J2SReturn l cell)
-   (with-access::J2SReturn this (tail exit from expr loc)
-      (cond
-	 (exit
-	  (set! expr (bind-exit! expr l cell))
-	  this)
-	 (tail
-	  (J2SStmtExpr (bind-exit! expr l cell)))
-	 (else
-	  (cell-set! cell (cons this (cell-ref cell)))
-	  this))))
+(define-walk-method (bind-exit! this::J2SReturn l cell env)
+   (with-access::J2SReturn this (tail exit from expr loc from)
+      (set! expr (bind-exit! expr l cell env))
+      (when (and (not exit) (not (memq from env)))
+	 (unless exit
+	    (set! tail #f)
+	    (cell-set! cell (cons this (cell-ref cell)))))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    bind-exit! ::J2SBindExit ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (bind-exit! this::J2SBindExit l cell env)
+   (with-access::J2SBindExit this (stmt)
+      (set! stmt (bind-exit! stmt l cell (cons this env)))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-exit! ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (bind-exit! this::J2SFun l cell)
+(define-walk-method (bind-exit! this::J2SFun l cell env)
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    bind-exit! ::J2SMethod ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (bind-exit! this::J2SMethod l cell)
+(define-walk-method (bind-exit! this::J2SMethod l cell env)
    this)
 
 ;*---------------------------------------------------------------------*/

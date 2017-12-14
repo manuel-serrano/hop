@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Dec 12 11:11:41 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 12:01:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -674,10 +674,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SBindExit ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-method (cps this::J2SBindExit k pack kbreaks kcontinues ktry fun) */
+(define-method (cps this::J2SBindExit k pack kbreaks kcontinues ktry fun)
    (assert-kont k KontExpr this)
-   (with-access::J2SBindExit this (stmt need-bind-exit-return)
-      (if need-bind-exit-return
+   (with-access::J2SBindExit this (stmt lbl)
+      (if lbl
 	  (error "cps" "illegal JSBindExit" (j2s->list this))
 	  (if (yield-expr? stmt kbreaks kcontinues)
 	      (cps stmt

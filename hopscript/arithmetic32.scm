@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue Dec 12 18:56:08 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 08:09:17 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -50,7 +50,7 @@
 	  (inline -u32/overflow::obj ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
 	  
-	  (inline *fx/overflow::obj ::long ::long)
+	  (*fx/overflow::obj ::long ::long)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow::obj ::obj ::obj)
 	  ))))
@@ -340,32 +340,46 @@
 ;*    -------------------------------------------------------------    */
 ;*    The argument are 30bit integers encoded into long values.        */
 ;*---------------------------------------------------------------------*/
-(define-inline (*fx/overflow x::long y::long)
+(define (*fx/overflow x::long y::long)
    (cond-expand
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
-	  (if (pragma::bool "__builtin_smull_overflow($1, $2, &$3)"
+	  (cond
+	     ((pragma::bool "__builtin_smull_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
 		 x y)
-	      (overflow29 res))))
+	      (overflow29 res))
+	     ((=fx res 0)
+	      (if (or (and (<fx x 0) (>=fx y 0))
+		      (and (>=fx x 0) (<fx y 0)))
+		  -0.0
+		  (overflow29 res)))
+	     (else
+	      (overflow29 res)))))
+      
       (else
        (define (neg? o)
 	  (if (flonum? o)
 	      (not (=fx (signbitfl o) 0))
 	      (<fx o 0)))
-       
-       (let ((r (* x y)))
+       (let ((rnum (if (number? right) right (js-tonumber right %this)))
+	     (r (* x y)))
 	  (cond
 	     ((fixnum? r)
 	      (if (=fx r 0)
-		  (if (or (and (neg? x) (not (neg? y)))
-			  (and (not (neg? x)) (neg? y)))
-		      -0.0
-		      r)
-		  r))
+		  (if (or (and (neg? lnum) (not (neg? rnum)))
+			  (and (not (neg? lnum)) (neg? rnum)))
+		      -0.0)
+		  (oveflow53 r)))
+	     ((flonum? r)
+	      r)
 	     ((bignum? r)
 	      (bignum->flonum r))
+	     ((elong? r)
+	      (elong->flonum r))
+	     ((llong? r)
+	      (llong->flonum r))
 	     (else
 	      r))))))
 

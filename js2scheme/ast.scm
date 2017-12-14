@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon Dec 11 21:11:26 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 11:59:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -61,9 +61,6 @@
 	   (final-class J2SStmtExpr::J2SStmt
 	      (expr::J2SExpr (info '("ast"))))
 	   
-;* 	   (final-class J2SExprStmt::J2SExpr                           */
-;* 	      (stmt::J2SStmt (info '("ast"))))                         */
-;* 	                                                               */
 	   (class J2SIf::J2SStmt
 	      (test::J2SExpr (info '("ast")))
 	      (then::J2SStmt (info '("ast")))
@@ -124,8 +121,7 @@
 	   (final-class J2SDefault::J2SCase)
 	   
 	   (final-class J2SBindExit::J2SExpr
-	      (need-bind-exit-return::bool (default #f) (info '("notraverse")))
-	      (lbl::symbol read-only)
+	      (lbl read-only)
 	      (stmt::J2SStmt (info '("ast"))))
 
 	   (class J2SReturn::J2SStmt
@@ -459,16 +455,7 @@
 	   (j2s-let-opt?::bool ::J2SDecl)
 
 	   (j2s-field-name::obj ::J2SNode)
-	   (inline j2s-field-length?::bool ::J2SNode)
-
-	   (j2s-type ::obj)
-	   (j2s-type-ref ::obj)
-
-	   (class-of ::J2SExpr)
-
-	   (usage?::bool ::pair-nil ::pair-nil)
-	   (only-usage?::bool ::pair-nil ::pair-nil)
-	   (strict-usage?::bool ::pair-nil ::pair-nil))
+	   (inline j2s-field-length?::bool ::J2SNode))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -1193,74 +1180,3 @@
    (with-access::J2SPragma node (expr)
       (set! expr (call-with-input-string expr read))
       node))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-type ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (j2s-type node)
-   (cond
-      ((isa? node J2SExpr)
-       (with-access::J2SExpr node (type)
-	  type))
-      (else
-       'void)))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-type-ref ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (j2s-type-ref node)
-   (cond
-      ((isa? node J2SRef)
-       (with-access::J2SRef node (decl)
-	  (with-access::J2SDecl decl (vtype)
-	     vtype)))
-      ((isa? node J2SAssig)
-       (with-access::J2SAssig node (lhs)
-	  (j2s-type-ref lhs)))
-      ((isa? node J2SParen)
-       (with-access::J2SParen node (expr)
-	  (j2s-type-ref expr)))
-      ((isa? node J2SExpr)
-       (with-access::J2SExpr node (type)
-	  type))
-      (else
-       'void)))
-
-;*---------------------------------------------------------------------*/
-;*    class-of ...                                                     */
-;*    -------------------------------------------------------------    */
-;*    Used to find the class of an X instanceof Y expression.          */
-;*---------------------------------------------------------------------*/
-(define (class-of rhs::J2SExpr)
-   (when (isa? rhs J2SUnresolvedRef)
-      (with-access::J2SUnresolvedRef rhs (id)
-	 (case id
-	    ((Array) 'array)
-	    ((Argument) 'argument)
-	    ((Date) 'date)
-	    ((RegExp) 'regexp)
-	    ((Object) 'object)
-	    ((Function) 'function)
-	    ((Promise) 'promise)
-	    (else 'unknown)))))
-
-;*---------------------------------------------------------------------*/
-;*    usage? ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (usage? keys usage)
-   (any (lambda (k) (memq k usage)) keys))
-
-;*---------------------------------------------------------------------*/
-;*    only-usage? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (only-usage? keys usage)
-   (every (lambda (u) (memq u keys)) usage))
-
-;*---------------------------------------------------------------------*/
-;*    strict-usage? ...                                                */
-;*---------------------------------------------------------------------*/
-(define (strict-usage? keys usage)
-   (and (=fx (length keys) (length usage))
-	(only-usage? keys usage)))
-	
-	

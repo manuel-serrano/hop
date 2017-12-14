@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Dec 11 20:57:12 2017 (serrano)                */
+;*    Last change :  Wed Dec 13 14:53:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -104,9 +104,13 @@
 (define-macro (js-toindex p)
    (cond-expand
       (bint30
-       `(if (and (fixnum? ,p) (>=fx ,p 0))
-	    (fixnum->uint32 ,p)
-	    ((@ js-toindex  __hopscript_public) ,p)))
+       `(cond
+	   ((and (fixnum? ,p) (>=fx ,p 0))
+	    (fixnum->uint32 ,p))
+	   ((uint32? ,p)
+	    ,p)
+	   (else
+	    ((@ js-toindex  __hopscript_public) ,p))))
       ((or bint61 64)
        `(if (and (fixnum? ,p) (>=fx ,p 0) (<fx ,p (-fx (bit-lsh 1 32) 1)))
 	    (fixnum->uint32 ,p)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue Dec 12 12:06:46 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 09:28:05 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -243,11 +243,18 @@
    (cond-expand
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
-	  (if (pragma::bool "__builtin_smull_overflow((long)$1, (long)$2, &$3)"
+	  (cond
+	     ((pragma::bool "__builtin_smull_overflow((long)$1, (long)$2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1)) * ((double)($2)))"
-		 x y)
-	      (overflow53 res))))
+		 x y))
+	     ((=fx res 0)
+	      (if (or (and (<fx x 0) (>=fx y 0))
+		      (and (>=fx x 0) (<fx y 0)))
+		  -0.0
+		  (overflow53 res)))
+	     (else
+	      (overflow53 res)))))
       (else
        (define (neg? o)
 	  (if (flonum? o)

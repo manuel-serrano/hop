@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Tue Dec 12 05:16:42 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 12:35:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -41,7 +41,16 @@
 	   (max-type::symbol ::obj ::obj)
 	   (js-uint32->jsnum expr conf)
 
-	   (j2s-expr-type-test ::J2SExpr)))
+	   (j2s-expr-type-test ::J2SExpr)
+
+	   (j2s-type ::obj)
+	   (j2s-type-ref ::obj)
+	   
+	   (class-of ::J2SExpr)
+
+	   (usage?::bool ::pair-nil ::pair-nil)
+	   (only-usage?::bool ::pair-nil ::pair-nil)
+	   (strict-usage?::bool ::pair-nil ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -212,6 +221,7 @@
       ((bint) 'bint)
       ((unknown any number) 'obj)
       ((int30 fixnum ufixnum) 'long)
+      ((boolean) 'bool)
       ((integer) 'obj)
       ((object this) 'JsObject)
       ((undefined) 'unspecified)
@@ -224,6 +234,7 @@
       ((String) 'JsString)
       ((Promise) 'JsPromise)
       ((class) 'JsFunction)
+      ((arguments) 'JsArguments)
       (else type)))
    
 ;*---------------------------------------------------------------------*/
@@ -422,3 +433,74 @@
       (else
        #f)))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-type ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-type node)
+   (cond
+      ((isa? node J2SExpr)
+       (with-access::J2SExpr node (type)
+	  type))
+      (else
+       'void)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-type-ref ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-type-ref node)
+   (cond
+      ((isa? node J2SRef)
+       (with-access::J2SRef node (decl)
+	  (with-access::J2SDecl decl (vtype)
+	     vtype)))
+      ((isa? node J2SGlobalRef)
+       (with-access::J2SGlobalRef node (decl)
+	  (with-access::J2SDecl decl (vtype)
+	     vtype)))
+      ((isa? node J2SParen)
+       (with-access::J2SParen node (expr)
+	  (j2s-type-ref expr)))
+      ((isa? node J2SExpr)
+       (with-access::J2SExpr node (type)
+	  type))
+      (else
+       'void)))
+
+;*---------------------------------------------------------------------*/
+;*    class-of ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    Used to find the class of an X instanceof Y expression.          */
+;*---------------------------------------------------------------------*/
+(define (class-of rhs::J2SExpr)
+   (when (isa? rhs J2SUnresolvedRef)
+      (with-access::J2SUnresolvedRef rhs (id)
+	 (case id
+	    ((Array) 'array)
+	    ((Argument) 'argument)
+	    ((Date) 'date)
+	    ((RegExp) 'regexp)
+	    ((Object) 'object)
+	    ((Function) 'function)
+	    ((Promise) 'promise)
+	    (else 'unknown)))))
+
+;*---------------------------------------------------------------------*/
+;*    usage? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (usage? keys usage)
+   (any (lambda (k) (memq k usage)) keys))
+
+;*---------------------------------------------------------------------*/
+;*    only-usage? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (only-usage? keys usage)
+   (every (lambda (u) (memq u keys)) usage))
+
+;*---------------------------------------------------------------------*/
+;*    strict-usage? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (strict-usage? keys usage)
+   (and (=fx (length keys) (length usage))
+	(only-usage? keys usage)))
+	
+	

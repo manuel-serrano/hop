@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Dec 10 15:38:29 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 10:25:29 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -986,6 +986,10 @@
    (cond
       ((fixnum? obj)
        obj)
+      ((int32? obj)
+       (js-int32-tointeger obj))
+      ((uint32? obj)
+       (js-uint32-tointeger obj))
       ((flonum? obj)
        (cond
 	  ((nanfl? obj) 0)

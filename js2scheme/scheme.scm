@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Dec 12 12:07:33 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 12:18:16 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -504,7 +504,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-set! ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-scheme-set! lhs val tyval::symbol result mode return conf init? loc)
+(define (j2s-scheme-set! lhs::J2SRef val tyval::symbol result mode return conf init? loc)
    
    (define (set decl hint utype loc)
       (cond
@@ -514,52 +514,42 @@
 	  `(set! ,(j2s-decl-scheme-id decl) ,val))
 	 (else
 	  `(js-let-set! ,(j2s-decl-scheme-id decl) ,val ',loc %this))))
-   
+
    (with-access::J2SRef lhs (decl)
-      (cond
-	 ((isa? lhs J2SRef)
-	  (with-access::J2SDecl decl (writable immutable scope id hint utype)
+      (with-access::J2SDecl decl (writable immutable scope id hint utype)
+	 (cond
+	    ((or writable (and (isa? decl J2SDeclInit) (not immutable)))
 	     (cond
-		((or writable (and (isa? decl J2SDeclInit) (not immutable)))
-		 (cond
-		    ((and (memq scope '(global %scope)) (in-eval? return))
-		     `(begin
-			 ,(j2s-put! loc '%scope (j2s-type-ref lhs)
-			     `',id 'propname
-			     val (strict-mode? mode) #f)
-			 ,result))
-		    (result
-		     `(begin
-			 ,(set decl hint utype loc)
-			 ,result))
-		    (else
-		     (set decl hint utype loc))))
-		((and immutable (memq mode '(strict hopscript)))
-		 `(with-access::JsGlobalObject %this (js-type-error)
-		     ,(match-case loc
-			 ((at ?fname ?pos)
-			  `(js-raise
-			      (js-new %this js-type-error
-				 ,(j2s-jsstring
-				     "Assignment to constant variable."
-				     loc)
-				 ,fname ,pos)))
-			 (else
-			  `(js-raise
-			      (js-new %this js-type-error
-				 ,(j2s-jsstring
-				     "Assignment to constant variable."
-				     loc)))))))
+		((and (memq scope '(global %scope)) (in-eval? return))
+		 `(begin
+		     ,(j2s-put! loc '%scope (j2s-type-ref lhs)
+			 `',id 'propname
+			 val (strict-mode? mode) #f)
+		     ,result))
+		(result
+		 `(begin
+		     ,(set decl hint utype loc)
+		     ,result))
 		(else
-		 val))))
-	 ((not result)
-	  (with-access::J2SDecl decl (loc)
-	     (set decl '() 'any loc)))
-	 (else
-	  (with-access::J2SDecl decl (loc)
-	     `(begin
-		 ,(set decl '() 'any loc)
-		 ,result))))))
+		 (set decl hint utype loc))))
+	    ((and immutable (memq mode '(strict hopscript)))
+	     `(with-access::JsGlobalObject %this (js-type-error)
+		 ,(match-case loc
+		     ((at ?fname ?pos)
+		      `(js-raise
+			  (js-new %this js-type-error
+			     ,(j2s-jsstring
+				 "Assignment to constant variable."
+				 loc)
+			     ,fname ,pos)))
+		     (else
+		      `(js-raise
+			  (js-new %this js-type-error
+			     ,(j2s-jsstring
+				 "Assignment to constant variable."
+				 loc)))))))
+	    (else
+	     val)))))
 	      
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclExtern ...                                   */
@@ -919,9 +909,11 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SBindExit mode return conf hint totype)
    (with-access::J2SBindExit this (lbl stmt loc)
-      (epairify loc
-	 `(bind-exit (,lbl)
-	     ,(j2s-scheme stmt mode return conf hint totype)))))
+      (if lbl
+	  (epairify loc
+	     `(bind-exit (,lbl)
+		 ,(j2s-scheme stmt mode return conf hint totype)))
+	  (j2s-scheme stmt mode return conf hint totype))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SThrow ...                                        */
@@ -1032,7 +1024,6 @@
       (with-access::J2SDeclInit d (val usage id vtype ronly utype)
 	 (let* ((ident (j2s-decl-scheme-id d))
 		(var (type-ident ident vtype)))
-;* 		(var (type-ident ident (if typed vtype 'obj))))        */
 	    (cond
 	       ((or (not (isa? val J2SFun))
 		    (isa? val J2SSvc)
@@ -1226,12 +1217,10 @@
 	 (match-case exprs
 	    (()
 	     (epairify loc '(js-undefined)))
-	    ((begin ?expr (js-undefined))
-	     expr)
+	    ((begin ?- (js-undefined))
+	     exprs)
 	    ((begin ?expr (? symbol?))
 	     expr)
-	    ((begin (and ?l (?- ??-)) (js-undefined))
-	     (epairify loc `(begin ,@l)))
 	    (else
 	     exprs)))))
 
@@ -1497,7 +1486,8 @@
       (let loop ((lhs lhs))
 	 (cond
 	    ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
-	     (epairify loc (j2s-scheme-set! lhs name 'any #f mode return conf #f loc)))
+	     (epairify loc
+		(j2s-scheme-set! lhs name 'any #f mode return conf #f loc)))
 	    ((isa? lhs J2SUnresolvedRef)
 	     (with-access::J2SUnresolvedRef lhs (id)
 		(epairify loc
@@ -2191,7 +2181,7 @@
 			    (j2s-scheme rhs mode return conf hint totype)
 			    (strict-mode? mode)
 			    cache)))))))
-   
+
    (with-access::J2SAssig this (loc lhs rhs)
       (let loop ((lhs lhs))
 	 (cond
@@ -2214,8 +2204,8 @@
 			  (strict-mode? mode)
 			  cache))))))
 	    ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
-	     (with-access::J2SRef lhs (decl loc)
-		(with-access::J2SDecl decl (hint)
+	     (with-access::J2SRef lhs (decl loc type)
+		(with-access::J2SDecl decl (hint vtype)
 		   (let ((assig (j2s-scheme-set! lhs
 				   (j2s-scheme rhs mode return conf hint totype)
 				   (j2s-type-ref rhs)
@@ -2255,7 +2245,7 @@
 	     (j2s-error "assignment" "Illegal assignment" this))))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-scheme-postref ...                                           */
+;*    j2s-scheme-postpref ...                                          */
 ;*    -------------------------------------------------------------    */
 ;*    Generic generator for prefix and postfix operations.             */
 ;*    -------------------------------------------------------------    */
@@ -2272,33 +2262,39 @@
 		 ,(comp aux aux)))
 	  (comp val tmp)))
 
-   (define (var++ op var num loc)
+   (define (var++ op var num prev loc)
       `(if (fixnum? ,var)
            ,(J2SBinary/type op 'number
                (J2SHopRef/type var 'bint) num)
-           ,(J2SBinary/type op 'number
-               (J2SCast 'number (J2SHopRef/type var 'any)) num)))
+	   ,(if prev
+		`(begin
+		    (set! ,prev ,(J2SCast 'number (J2SHopRef/type var 'any)))
+		    ,(J2SBinary/type op 'number
+			(J2SHopRef/type prev 'number) num))
+		(J2SBinary/type op 'number
+		   (J2SCast 'number (J2SHopRef/type var 'any)) num))))
       
-   (define (ref++ op lhs::J2SRef num loc mode return conf hint totype)
+   (define (ref++ op lhs::J2SRef num prev loc mode return conf hint totype)
       (let ((var (j2s-scheme lhs mode return conf hint totype)))
 	 (if (symbol? var)
-	     (var++ op var num loc)
+	     (var++ op var num prev loc)
 	     (let ((tmp (gensym 'tmp)))
 		`(let ((,tmp ,var))
-		    ,(var++ op tmp num loc))))))
+		    ,(var++ op tmp num prev loc))))))
    
    (define (ref-inc op lhs::J2SRef inc::int type loc)
       (let* ((typ (j2s-type-ref lhs))
 	     (num (J2SNumber/type 'uint32 1))
 	     (op (if (=fx inc 1) '+ '-))
+	     (prev (when (eq? retval 'old) (gensym 'prev)))
 	     (rhse (j2s-scheme
 		      (if (type-number? typ)
 			  (J2SBinary/type op typ lhs num)
-			  (ref++ op lhs num loc mode return conf hint totype))
+			  (ref++ op lhs num prev loc mode return conf hint totype))
 		      mode return conf hint totype))
 	     (lhse (j2s-scheme lhs mode return conf hint totype)))
 	 (if (eq? retval 'old)
-	     (let ((res (gensym 'prev)))
+	     (let ((res prev))
 		`(let ((,res ,lhse))
 		    ,(j2s-scheme-set! lhs rhse typ res mode return conf #f loc)))
 	     (j2s-scheme-set! lhs rhse typ lhse mode return conf #f loc))))
@@ -2406,7 +2402,7 @@
 		(with-access::J2SAccess lhs (cache)
 		   cache)))))
    
-   (define (access-inc op lhs rhs inc)
+   (define (access-inc op lhs::J2SAccess rhs::J2SExpr inc::int)
       (with-access::J2SAccess lhs (obj field clevel cache (loca loc))
 	 (let* ((tmp (gensym 'tmp))
 		(otmp (gensym 'obj))
@@ -2446,6 +2442,9 @@
 		(unresolved-inc op lhs (if (eq? op '++) 1 -1)))
 	       ((isa? lhs J2SParen)
 		(with-access::J2SParen lhs (expr)
+		   (loop expr)))
+	       ((isa? lhs J2SCast)
+		(with-access::J2SCast lhs (expr)
 		   (loop expr)))
 	       (else
 		(j2s-error "j2sscheme"

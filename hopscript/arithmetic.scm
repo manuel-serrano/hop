@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Mon Dec 11 14:41:26 2017 (serrano)                */
+;*    Last change :  Thu Dec 14 08:43:29 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -31,10 +31,12 @@
 
    (from   __hopscript_arithmetic32 __hopscript_arithmetic64)
 
-   (export (+js::obj ::obj ::obj ::JsGlobalObject)
+   (export (js-toflonum::double ::obj)
+	   (+js::obj ::obj ::obj ::JsGlobalObject)
 	   (-js::obj ::obj ::obj ::JsGlobalObject)
 	   (*js::obj ::obj ::obj ::JsGlobalObject)
 	   (/js::obj ::obj ::obj ::JsGlobalObject)
+	   (negjs ::obj ::JsGlobalObject)
 
 	   (inline /pow2s32::int32 x::int32 y::long)
 	   (inline /pow2fx::long n::long k::long)
@@ -49,12 +51,16 @@
 	   (bit-andjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-orjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-xorjs::obj ::obj ::obj ::JsGlobalObject)
-	   (bit-notjs::obj ::obj ::JsGlobalObject))
-	   
+	   (bit-notjs::obj ::obj ::JsGlobalObject)
+
+	   (<js::bool left right ::JsGlobalObject)
+	   (>js::bool left right ::JsGlobalObject)
+	   (<=js::bool left right ::JsGlobalObject)
+	   (>=js::bool left right ::JsGlobalObject)
+	   )
    
    (export (js-int53-toint32::int32 ::obj)
 	   (js-int53-touint32::uint32 ::obj)
-	   
 	   )
 
    (cond-expand
@@ -70,35 +76,35 @@
        (error "arithmetic" "unknown integer format" #f))))
 
 ;*---------------------------------------------------------------------*/
-;*    toflonum ...                                                     */
+;*    js-toflonum ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (toflonum r)
+(define (js-toflonum r)
    (cond
       ((flonum? r) r)
       ((fixnum? r) (fixnum->flonum r))
       ((uint32? r) (uint32->flonum r))
       ((int32? r) (int32->flonum r))
-      (else (error "toflonum" (format "Illegal number (~a)" (typeof r)) r))))
+      (else (error "js-toflonum" (format "Illegal number (~a)" (typeof r)) r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    +js ...                                                          */
 ;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6       */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (+js x::obj y::obj %this)
-   (+/overflow
-      (if (number? x) x (js-tonumber y %this))
-      (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (number? x) x (js-tonumber x %this)))
+	  (ny (if (number? y) y (js-tonumber y %this))))
+      (+/overflow nx ny)))
    
 ;*---------------------------------------------------------------------*/
 ;*    -js ...                                                          */
 ;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7       */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
 ;*---------------------------------------------------------------------*/
 (define (-js x::obj y::obj %this)
-   (-/overflow
-      (if (number? x) x (js-tonumber y %this))
-      (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (number? x) x (js-tonumber x %this)))
+	  (ny (if (number? y) y (js-tonumber y %this))))
+      (-/overflow nx ny)))
    
 ;*---------------------------------------------------------------------*/
 ;*    *js ...                                                          */
@@ -106,9 +112,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
 (define (*js x::obj y::obj %this)
-   (*/overflow
-      (if (number? x) x (js-tonumber y %this))
-      (if (number? y) y (js-tonumber y %this))))
+   (let* ((nx (if (number? x) x (js-tonumber x %this)))
+	  (ny (if (number? y) y (js-tonumber y %this))))
+      (*/overflow nx ny)))
 
 ;*---------------------------------------------------------------------*/
 ;*    /js ...                                                          */
@@ -116,9 +122,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
 ;*---------------------------------------------------------------------*/
 (define (/js x::obj y::obj %this)
-   (let ((n1 (toflonum  (js-tonumber x %this)))
-	 (n2 (toflonum  (js-tonumber y %this))))
-      (/fl n1 n2)))
+   (let* ((nx (js-toflonum (js-tonumber x %this)))
+	  (ny (js-toflonum (js-tonumber y %this))))
+      (/fl nx ny)))
 
 ;*---------------------------------------------------------------------*/
 ;*    /pow2s32 ...                                                     */
@@ -138,6 +144,23 @@
 (define-inline (/pow2fx::long n::long k::long)
    (/fx n (bit-lsh 1 k)))
  
+;*---------------------------------------------------------------------*/
+;*    negjs ...                                                        */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7       */
+;*---------------------------------------------------------------------*/
+(define (negjs expr %this)
+   (let loop ((expr expr))
+      (cond
+	 ((and (number? expr) (= expr 0))
+	  (if (flonum? expr)
+	      (if (=fx (signbitfl expr) 0) -0.0 +0.0)
+	      -0.0))
+	 ((number? expr)
+	  (- expr))
+	 (else
+	  (loop (js-tonumber expr %this))))))
+       
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */
 ;*    -------------------------------------------------------------    */
@@ -433,4 +456,68 @@
 	  r
 	  (fixnum->flonum r))))
    
+;*---------------------------------------------------------------------*/
+;*    <js                                                              */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.1       */
+;*---------------------------------------------------------------------*/
+(define (<js left right %this::JsGlobalObject)
+   (if (and (number? left) (number? right))
+       (< left right)
+       (let* ((px (js-toprimitive left 'number %this))
+	      (py (js-toprimitive right 'number %this)))
+	  (if (and (js-jsstring? px) (js-jsstring? py))
+	      (js-jsstring<? px py)
+	      (let ((nx (js-tonumber px %this))
+		    (ny (js-tonumber py %this)))
+		 (< nx ny))))))
+
+;*---------------------------------------------------------------------*/
+;*    >js                                                              */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.2       */
+;*---------------------------------------------------------------------*/
+(define (>js left right %this::JsGlobalObject)
+   (if (and (number? left) (number? right))
+       (> left right)
+       (let* ((px (js-toprimitive left 'number %this))
+	      (py (js-toprimitive right 'number %this)))
+	  (if (and (js-jsstring? px) (js-jsstring? py))
+	      (js-jsstring>? px py)
+	      (let ((nx (js-tonumber px %this))
+		    (ny (js-tonumber py %this)))
+		 (> nx ny))))))
+
+;*---------------------------------------------------------------------*/
+;*    <=js                                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.3       */
+;*---------------------------------------------------------------------*/
+(define (<=js left right %this::JsGlobalObject)
+   (if (and (number? left) (number? right))
+       (<= left right)
+       (let* ((px (js-toprimitive left 'number %this))
+	      (py (js-toprimitive right 'number %this)))
+	  (if (and (js-jsstring? px) (js-jsstring? py))
+	      (js-jsstring<=? px py)
+	      (let ((nx (js-tonumber px %this))
+		    (ny (js-tonumber py %this)))
+		 (<= nx ny))))))
+
+;*---------------------------------------------------------------------*/
+;*    >=js                                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.4       */
+;*---------------------------------------------------------------------*/
+(define (>=js left right %this::JsGlobalObject)
+   (if (and (number? left) (number? right))
+       (>= left right)
+       (let* ((px (js-toprimitive left 'number %this))
+	      (py (js-toprimitive right 'number %this)))
+	  (if (and (js-jsstring? px) (js-jsstring? py))
+	      (js-jsstring>=? px py)
+	      (let ((nx (js-tonumber px %this))
+		    (ny (js-tonumber py %this)))
+		 (>= nx ny))))))
+
 

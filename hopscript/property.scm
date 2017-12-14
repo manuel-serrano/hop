@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Dec 11 19:30:14 2017 (serrano)                */
+;*    Last change :  Wed Dec 13 13:50:51 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1266,7 +1266,10 @@
        (js-get-null _o (js-toname prop %this) %this))
       (else
        (let ((o (js-toobject/debug %this loc _o)))
-	  (js-get o prop %this)))))
+	  ;; must still use _o object
+	  ;; see https://bugs.ecmascript.org/show_bug.cgi?id=333
+	  ;; or test262 10.4.3-1-106.js
+	  (js-get _o prop %this)))))
 
 (define (cmap-%id o)
    (when (isa? o JsConstructMap)
