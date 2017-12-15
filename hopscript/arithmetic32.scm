@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Dec 14 15:49:22 2017 (serrano)                */
+;*    Last change :  Fri Dec 15 05:04:36 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -154,7 +154,7 @@
 (define-inline (js-int32-tointeger::obj i::int32)
    (cond-expand
       (bint30
-       (if (and (<s32 i (bit-lshs32 #s32:1 29))
+       (if (and (<s32 i (-s32 (bit-lshs32 #s32:1 29) #s32:1))
 		(>=s32 i (negs32 (bit-lshs32 #s32:1 29))))
 	   (int32->fixnum i)
 	   (int32->flonum i)))
@@ -170,11 +170,11 @@
 (define-inline (js-uint32-tointeger::obj i::uint32)
    (cond-expand
       (bint30
-       (if (<u32 i (-u32 (bit-lshu32 #u32:1 30) #u32:1))
+       (if (<u32 i (bit-lshu32 #u32:1 29))
 	   (uint32->fixnum i)
 	   (uint32->flonum i)))
       (bint32
-       (if (<u32 i (-u32 (bit-lshu32 #u32:1 31) #u32:1))
+       (if (<u32 i (-u32 (bit-lshu32 #u32:1 30) #u32:1))
 	   (uint32->fixnum i)
 	   (uint32->flonum i)))))
 
@@ -185,8 +185,7 @@
    (cond
       ((fixnum? x) x)
       ((int32? x) (int32->fixnum x))
-      ((and (uint32? x) (<u32 x (-u32 (bit-lshu32 #u32:1 30) #u32:1)))
-       (uint32->fixnum x))
+      ((and (uint32? x) (<u32 x (bit-lshu32 #u32:1 29))) (uint32->fixnum x))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
