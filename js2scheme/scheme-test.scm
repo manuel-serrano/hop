@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Fri Dec 15 08:05:24 2017 (serrano)                */
+;*    Last change :  Fri Dec 15 13:12:10 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
@@ -90,7 +90,10 @@
    (with-access::J2SUnary this (op expr loc)
       (case op
 	 ((!)
-	  (epairify loc (js-not (j2s-bool-test expr mode return conf))))
+	  (let ((sexp (js-not (j2s-bool-test expr mode return conf))))
+	     (if (pair? sexp)
+		 (epairify loc sexp)
+		 sexp)))
 	 (else
 	  (call-next-method)))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec 15 09:44:02 2017 (serrano)                */
+;*    Last change :  Fri Dec 15 15:43:34 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -310,11 +310,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs type loc)
-      (if (eq? (j2s-type-ref lhs) type)
-	  (begin
-	     (set! lhs (type-cast! lhs '*))
-	     (set! rhs (type-cast! rhs type))
-	     (cast this totype))
+      (cond
+	 ((not (isa? lhs J2SRef))
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs 'any))
+	  (cast this totype))
+	 ((eq? (j2s-type-ref lhs) type)
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs type))
+	  (cast this totype))
+	 (else
 	  (let* ((id (gensym 'a))
 		 (tr (j2s-type rhs))
 		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs tr))))
@@ -323,7 +328,7 @@
 		(J2SBindExit/type tyb #f 
 		   (J2SLetRecBlock #f  (list d)
 		      (J2SStmtExpr this)
-		      (type-cast! (J2SRef d :type tr) tyb))))))))
+		      (type-cast! (J2SRef d :type tr) tyb)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SPrefix ...                                       */
