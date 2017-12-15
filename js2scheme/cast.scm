@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec 15 15:43:34 2017 (serrano)                */
+;*    Last change :  Fri Dec 15 17:51:14 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -177,6 +177,22 @@
       (cast this totype)))
 
 ;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SSequence ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SSequence totype)
+   (with-access::J2SSequence this (exprs type)
+      (let loop ((exprs exprs))
+	 (cond
+	    ((null? exprs)
+	     (cast this totype))
+	    ((null? (cdr exprs))
+	     (set-car! exprs (type-cast! (car exprs) type))
+	     (cast this totype))
+	    (else
+	     (set-car! exprs (type-cast! (car exprs) '*))
+	     (loop (cdr exprs)))))))
+	     
+;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SFun totype)
@@ -310,25 +326,20 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs type loc)
-      (cond
-	 ((not (isa? lhs J2SRef))
-	  (set! lhs (type-cast! lhs '*))
-	  (set! rhs (type-cast! rhs 'any))
-	  (cast this totype))
-	 ((eq? (j2s-type-ref lhs) type)
-	  (set! lhs (type-cast! lhs '*))
-	  (set! rhs (type-cast! rhs type))
-	  (cast this totype))
-	 (else
+      (if (eq? (j2s-type-ref lhs) type)
+	  (begin
+	     (set! lhs (type-cast! lhs '*))
+	     (set! rhs (type-cast! rhs type))
+	     (cast this totype))
 	  (let* ((id (gensym 'a))
 		 (tr (j2s-type rhs))
-		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs tr))))
+		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs '*))))
 	     (set! rhs (type-cast! (J2SRef d :type tr) (j2s-type-ref lhs)))
 	     (let ((tyb (if (eq? totype '*) type totype)))
 		(J2SBindExit/type tyb #f 
 		   (J2SLetRecBlock #f  (list d)
 		      (J2SStmtExpr this)
-		      (type-cast! (J2SRef d :type tr) tyb)))))))))
+		      (type-cast! (J2SRef d :type tr) tyb))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SPrefix ...                                       */
@@ -380,10 +391,6 @@
 	      (begin
 		 (set! lhs (type-cast! lhs '*))
 		 (set! rhs (type-cast! rhs '*))))
-	  (when (eq? op '&)
-	     (tprint "*** CAST this=" (j2s->list this) " totype=" totype
-		" lhs=" (j2s->list lhs) " " (j2s-type-ref lhs))
-	     (tprint " -> " (j2s->list (cast this totype))))
 	  (cast this totype))
 	 (else
 	  (set! lhs (type-cast! lhs '*))
