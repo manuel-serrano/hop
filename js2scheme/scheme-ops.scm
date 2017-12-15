@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Dec 15 05:52:40 2017 (serrano)                */
+;*    Last change :  Fri Dec 15 08:13:26 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -116,8 +116,10 @@
    (with-access::J2SUnary this (loc expr op type)
       (case op
 	 ((!)
-	  (epairify loc
-	     `(if ,(j2s-test expr mode return conf) #f #t)))
+	  (if (eq? type 'bool)
+	      (j2s-test this mode return conf)
+	      (epairify loc
+		 `(if ,(j2s-test expr mode return conf) #f #t))))
 	 ((typeof)
 	  (epairify loc
 	     (typeof->scheme expr)))

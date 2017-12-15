@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Dec 13 13:13:18 2017 (serrano)                */
+;*    Last change :  Fri Dec 15 07:49:31 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1241,7 +1241,7 @@
 ;*    node-range ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SFun env::pair-nil args fix::struct)
-   (with-access::J2SFun this (body params rtype)
+   (with-access::J2SFun this (body params)
       ;; use the formals type, when one is provided
       (let ((envp (filter-map (lambda (p)
 				 (with-access::J2SDecl p (itype range ronly vtype)
@@ -1267,7 +1267,7 @@
 (define-walk-method (node-range this::J2SCall env::pair-nil args fix::struct)
    
    (define (node-range-fun callee args env)
-      (with-access::J2SFun callee (rtype params range)
+      (with-access::J2SFun callee (params range)
 	 (let loop ((params params)
 		    (args args))
 	    (if (and (pair? params) (pair? args))
@@ -1592,7 +1592,7 @@
 (define-walk-method (type-range! this::J2SFun tymap)
    (call-default-walker)
    (with-access::J2SFun this (range rtype)
-      (when (interval? range)
+      (when (and (interval? range) (memq rtype '(integer index)))
 	 (set! rtype (interval->type range tymap))))
    this)
 

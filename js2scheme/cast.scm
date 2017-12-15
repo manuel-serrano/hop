@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Dec 14 14:18:29 2017 (serrano)                */
+;*    Last change :  Fri Dec 15 09:44:02 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -76,7 +76,10 @@
 (define (need-cast? type totype)
    (not (or (eq? type totype)
 	    (eq? totype '*)
-	    (and (eq? totype 'any) (eq? type 'function)))))
+	    (and (eq? totype 'any) (memq type *any-types*)))))
+
+(define *any-types*
+   '(undefined null bool integer number object function string real))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-expr ...                                                    */
@@ -310,7 +313,7 @@
       (if (eq? (j2s-type-ref lhs) type)
 	  (begin
 	     (set! lhs (type-cast! lhs '*))
-	     (set! rhs (type-cast! rhs totype))
+	     (set! rhs (type-cast! rhs type))
 	     (cast this totype))
 	  (let* ((id (gensym 'a))
 		 (tr (j2s-type rhs))

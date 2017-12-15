@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Thu Dec 14 19:36:12 2017 (serrano)                */
+;*    Last change :  Fri Dec 15 07:29:46 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -262,7 +262,7 @@
 	  (token 'NUMBER
 	     (if (and (integer? flo)
 		      (<fl flo (fixnum->flonum (-fx (bit-lsh 1 29) 1)))
-		      (>=fl flo (negfx (fixnum->flonum (bit-lsh 1 29)))))
+		      (>=fl flo (negfl (fixnum->flonum (bit-lsh 1 29)))))
 		 ;; could be more precise
 		 (flonum->fixnum flo)
 		 flo)
