@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Dec 14 10:54:29 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 06:00:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -31,33 +31,14 @@
    (export (js-init-number! ::JsGlobalObject)
 	   (js-number->jsnumber ::obj ::JsGlobalObject)
 	   
-	   (inline js-uint32->jsnum::obj ::uint32)
+	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
+	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)
 	   
 	   (js+ left right ::JsGlobalObject)
 	   (inline js+fx::obj ::long ::long)
-	   (inline js-fx::obj ::long ::long)
-	   (inline js-fx32::obj ::obj ::obj)
-	   (inline js-fx64::obj ::long ::long)
-	   (inline js*fx::obj ::long ::long)
-	   (js*fx32::obj ::obj ::obj)
-	   (js*fx64::obj ::obj ::obj)
-	   (inline js/fx::obj ::long ::long)
-	   (inline js/pow2fx::long ::long ::long)
 	   (js-slow+ left right ::JsGlobalObject)
 	   (js/ left right ::JsGlobalObject)
-	   (js/num left right)
-	   (js% left right ::JsGlobalObject)
-	   (js-%$$NN left right)
-	   (js-%$$NZ left right)
-	   (inline js-%u32 ::uint32 ::uint32)
-	   
-	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
-	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral begin                                            */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-begin!)
+	   (js/num left right)))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsNumber ...                                 */
@@ -354,23 +335,39 @@
       (js-new1 %this js-number val)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-uint32->jsnum ...                                             */
+;*    js-jsnumber-tostring ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-uint32->jsnum n::uint32)
-   
-   (define-macro (intszu32)
-      (minfx (-fx (bigloo-config 'int-size) 1) 53))
-   
-   (define-macro (shiftu32)
-      (bit-lsh 1 (intszu32)))
-   
-   (define-macro (maxintu32)
-      (fixnum->uint32 (-fx (shiftu32) 1)))
+(define (js-jsnumber-tostring val radix %this)
+   (let ((r (if (eq? radix (js-undefined))
+		10
+		(js-tointeger radix %this))))
+      (cond
+	 ((or (< r 2) (> r 36))
+	  (js-raise-range-error %this "Radix out of range: ~a" r))
+	 ((and (flonum? val) (nanfl? val))
+	  (js-string->jsstring "NaN"))
+	 ((= val +inf.0)
+	  (js-string->jsstring "Infinity"))
+	 ((= val -inf.0)
+	  (js-string->jsstring "-Infinity"))
+	 ((or (= r 10) (= r 0))
+	  (js-tojsstring val %this))
+	 (else
+	  (js-string->jsstring (number->string val r))))))
 
-   (if (>u32 n (maxintu32))
-       (uint32->flonum n)
-       (uint32->fixnum n)))
-   
+;*---------------------------------------------------------------------*/
+;*    js-jsnumber-maybe-tostring ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-jsnumber-maybe-tostring this radix %this)
+   (let loop ((this this))
+      (cond
+	 ((number? this)
+	  (js-jsnumber-tostring this radix %this))
+	 ((isa? this JsObject)
+	  (js-call1 %this (js-get this 'toString %this) this radix))
+	 (else
+	  (loop (js-toobject %this this))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js+ ...                                                          */
 ;*    -------------------------------------------------------------    */
@@ -403,143 +400,6 @@
 	  (fixnum->flonum tmp)
 	  tmp)))
 
-;*---------------------------------------------------------------------*/
-;*    js-fx32 ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    Fixnum substraction on 32 bits machines (two tagging bits).      */
-;*    -------------------------------------------------------------    */
-;*    See Hacker's Delight, second edition, page 29.                   */
-;*---------------------------------------------------------------------*/
-(define-inline (js-fx32::obj x::obj y::obj)
-   ;; requires x and y to be tagged
-   (let ((z::long (pragma::long "((long)$1 ^ (long)$2) & 0x80000000" x y)))
-      (if (pragma::bool "$1 & ((((long)$2 ^ (long)$1) - ((long)$3)) ^ ((long) $3))" z x y)
-	  (fixnum->flonum (-fx x y))
-	  (pragma::obj "(obj_t)(((long)$1 - (long)$2) + TAG_INT)" x y))))
-
-;*---------------------------------------------------------------------*/
-;*    js-fx64 ...                                                      */
-;*---------------------------------------------------------------------*/
-(define-inline (js-fx64 x::long y::long)
-   (let ((r::long (-fx x y)))
-      (if (bit-and r (bit-lsh 1 52))
-	  r
-	  (fixnum->flonum r))))
-   
-;*---------------------------------------------------------------------*/
-;*    js*fx ...                                                        */
-;*---------------------------------------------------------------------*/
-(define-inline (js*fx::obj left::long right::long)
-   (js*fx32 left right))
-
-;*---------------------------------------------------------------------*/
-;*    js*fx32 ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (js*fx32 x::obj y::obj)
-   
-   (define (neg? o)
-      (if (flonum? o)
-	  (not (=fx (signbitfl o) 0))
-	  (<fx o 0)))
-   
-   (let ((r (* x y)))
-      (cond
-	 ((fixnum? r)
-	  (if (=fx r 0)
-	      (if (or (and (neg? x) (not (neg? y)))
-		      (and (not (neg? x)) (neg? y)))
-		  -0.0
-		  r)
-	      r))
-	 ((bignum? r)
-	  (bignum->flonum r))
-	 (else
-	  r))))
-
-;*---------------------------------------------------------------------*/
-;*    js*fx64 ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (js*fx64 x::obj y::obj)
-   
-   (define (neg? o)
-      (if (flonum? o)
-	  (not (=fx (signbitfl o) 0))
-	  (<fx o 0)))
-   
-   (let ((r (* x y)))
-      (cond
-	 ((fixnum? r)
-	  (cond-expand
-	     ((or bint30 bint32)
-	      (cond
-		 ((=fx r 0)
-		  (if (or (and (neg? x) (not (neg? y)))
-			  (and (not (neg? x)) (neg? y)))
-		      -0.0
-		      r))
-		 (else
-		  r)))
-	     (else
-	      (cond
-		 ((=fx r 0)
-		  (if (or (and (neg? x) (not (neg? y)))
-			  (and (not (neg? x)) (neg? y)))
-		      -0.0
-		      r))
-		 ((>fx r (bit-lsh 1 53))
-		  (fixnum->flonum r))
-		 ((<fx r (negfx (bit-lsh 1 53)))
-		  (fixnum->flonum r))
-		 (else
-		  r)))))
-	 ((bignum? r)
-	  (bignum->flonum r))
-	 (else
-	  r))))
-
-;*---------------------------------------------------------------------*/
-;*    js-fx ...                                                        */
-;*---------------------------------------------------------------------*/
-(define-inline (js-fx left::long right::long)
-   
-   (define-macro (intsz-)
-      (minfx (-fx (bigloo-config 'int-size) 1) 53))
-   
-   (define-macro (shift-)
-      (bit-lsh 1 (intsz-)))
-   
-   (define-macro (maxint-)
-      (-fx (bit-lsh 1 (intsz-)) 1))
-   
-   (define-macro (minint-)
-      (-fx 0 (bit-lsh 1 (intsz-))))
-   
-   (let ((tmp (-fx left right)))
-      (if (or (>fx tmp (maxint-)) (<fx tmp (minint-)))
-	  (fixnum->flonum tmp)
-	  tmp)))
-
-;*---------------------------------------------------------------------*/
-;*    js/fx ...                                                        */
-;*---------------------------------------------------------------------*/
-(define-inline (js/fx left::long right::long)
-   (if (=fx right 0)
-       (js/num left right)
-       (/fx left right)))
-
-;*---------------------------------------------------------------------*/
-;*    js/pow2fx ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    See Hacker's Delight (second edition), H. Warren J.r,            */
-;*    Chapter 10, section 10.1.                                        */
-;*---------------------------------------------------------------------*/
-(define-inline (js/pow2fx n::long k::long)
-   (/fx n (bit-lsh 1 k)))
-;*    (let ((t (bit-rsh n (-fx k 1))))                                 */
-;*       (set! t (bit-ursh t (-fx 32 k)))                              */
-;*       (set! t (+fx n t))                                            */
-;*       (bit-rsh t k)))                                               */
-   
 ;*---------------------------------------------------------------------*/
 ;*    js-slow+ ...                                                     */
 ;*---------------------------------------------------------------------*/
@@ -596,101 +456,3 @@
       (else
        (/ lnum rnum))))
 
-;*---------------------------------------------------------------------*/
-;*    js% ...                                                          */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.3       */
-;*---------------------------------------------------------------------*/
-(define (js% left right %this)
-   (let* ((lnum (js-tonumber left %this))
-	  (rnum (js-tonumber right %this)))
-      (js-%$$NN lnum rnum)))
-
-;*---------------------------------------------------------------------*/
-;*    js-%$$NN ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (js-%$$NN lnum rnum)
-   (if (= rnum 0)
-       +nan.0
-       (js-%$$NZ lnum rnum)))
-
-;*---------------------------------------------------------------------*/
-;*    js-%$$NZ ...                                                     */
-;*---------------------------------------------------------------------*/
-(define (js-%$$NZ lnum rnum)
-   (cond
-      ((and (flonum? lnum) (or (=fl lnum +inf.0) (=fl lnum -inf.0)))
-       +nan.0)
-      ((and (flonum? rnum) (or (=fl rnum +inf.0) (=fl rnum -inf.0)))
-       lnum)
-      ((or (and (flonum? rnum) (nanfl? rnum))
-           (and (flonum? lnum) (nanfl? lnum)))
-       +nan.0)
-      (else
-       (let ((alnum (abs lnum))
-             (arnum (abs rnum)))
-          (if (or (flonum? alnum) (flonum? arnum))
-              (begin
-                 (unless (flonum? alnum)
-                    (set! alnum (exact->inexact alnum)))
-                 (unless (flonum? arnum)
-                    (set! arnum (exact->inexact arnum)))
-                 (let ((m (remainderfl alnum arnum)))
-                    (if (or (< lnum 0)
-                            (and (flonum? lnum) (=fl lnum 0.0)
-                                 (not (=fx (signbitfl lnum) 0))))
-                        (if (= m 0) -0.0 (- m))
-                        (if (= m 0) +0.0 m))))
-              (let ((m (remainder alnum arnum)))
-                 (if (< lnum 0)
-                     (if (= m 0) -0.0 (- m))
-		     ;; MS: CARE 21 dec 2016, why returning a flonum?
-                     ;; (if (= m 0) 0.0 m)
-		     m)))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-%u32 ...                                                      */
-;*---------------------------------------------------------------------*/
-(define-inline (js-%u32 lnum rnum)
-   (if (=u32 rnum #u32:0)
-       +nan.0
-       (remainderu32 lnum rnum)))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsnumber-tostring ...                                         */
-;*---------------------------------------------------------------------*/
-(define (js-jsnumber-tostring val radix %this)
-   (let ((r (if (eq? radix (js-undefined))
-		10
-		(js-tointeger radix %this))))
-      (cond
-	 ((or (< r 2) (> r 36))
-	  (js-raise-range-error %this "Radix out of range: ~a" r))
-	 ((and (flonum? val) (nanfl? val))
-	  (js-string->jsstring "NaN"))
-	 ((= val +inf.0)
-	  (js-string->jsstring "Infinity"))
-	 ((= val -inf.0)
-	  (js-string->jsstring "-Infinity"))
-	 ((or (= r 10) (= r 0))
-	  (js-tojsstring val %this))
-	 (else
-	  (js-string->jsstring (number->string val r))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-jsnumber-maybe-tostring ...                                   */
-;*---------------------------------------------------------------------*/
-(define (js-jsnumber-maybe-tostring this radix %this)
-   (let loop ((this this))
-      (cond
-	 ((number? this)
-	  (js-jsnumber-tostring this radix %this))
-	 ((isa? this JsObject)
-	  (js-call1 %this (js-get this 'toString %this) this radix))
-	 (else
-	  (loop (js-toobject %this this))))))
-
-;*---------------------------------------------------------------------*/
-;*    JsStringLiteral end                                              */
-;*---------------------------------------------------------------------*/
-(%js-jsstringliteral-end!)

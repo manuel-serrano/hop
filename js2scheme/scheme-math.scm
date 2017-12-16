@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Dec  4 14:09:35 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 06:17:13 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -28,12 +28,12 @@
 	   __js2scheme_scheme-fun)
 
    (export (j2s-math-inline-method fun::J2SAccess args
-	      mode return::procedure conf hint totype::symbol)))
+	      mode return::procedure conf hint)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-method ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (j2s-math-inline-method fun::J2SAccess args mode return conf hint totype)
+(define (j2s-math-inline-method fun::J2SAccess args mode return conf hint)
    (with-access::J2SAccess fun (obj field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
@@ -41,15 +41,15 @@
 	       ((string=? val "floor")
 		(when (=fx (length args) 1)
 		   (j2s-math-inline-floor
-		      (car args) mode return conf hint totype)))
+		      (car args) mode return conf hint)))
 	       ((string=? val "ceil")
 		(when (=fx (length args) 1)
 		   `(js-math-ceil
-		       ,(j2s-scheme (car args) mode return conf hint totype))))
+		       ,(j2s-scheme (car args) mode return conf hint))))
 	       ((string=? val "round")
 		(when (=fx (length args) 1)
 		   `(js-math-round
-		       ,(j2s-scheme (car args) mode return conf hint totype))))
+		       ,(j2s-scheme (car args) mode return conf hint))))
 	       ((string=? val "random")
 		(when (=fx (length args) 0)
 		   `(randomfl)))
@@ -59,7 +59,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-floor ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (j2s-math-inline-floor arg mode return conf hint totype)
+(define (j2s-math-inline-floor arg mode return conf hint)
    
    (define (find-power2 n)
       (let loop ((k 1))
@@ -89,10 +89,10 @@
    (let ((p2 (divide-power2 arg)))
       (cond
 	 ((not p2)
-	  `(js-math-floor ,(j2s-scheme arg mode return conf hint totype)))
+	  `(js-math-floor ,(j2s-scheme arg mode return conf hint)))
 	 ((positive? (car p2))
-	  `(bit-rsh ,(j2s-scheme (car p2) mode return conf hint totype)
+	  `(bit-rsh ,(j2s-scheme (car p2) mode return conf hint)
 	      ,(cdr p2)))
 	 (else
-	  `(js/pow2fx ,(j2s-scheme (car p2) mode return conf hint totype)
+	  `(/pow2fx ,(j2s-scheme (car p2) mode return conf hint)
 	      ,(cdr p2))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Thu Dec 14 15:50:16 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 06:07:47 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -41,6 +41,9 @@
 	   (inline /pow2s32::int32 x::int32 y::long)
 	   (inline /pow2fx::long n::long k::long)
 
+	   (%$$NN ::obj ::obj)
+	   (%$$NZ ::obj ::obj)
+
 	   (js-toint32::int32 ::obj ::JsGlobalObject)
 	   (js-touint32::uint32 ::obj ::JsGlobalObject)
 
@@ -53,14 +56,15 @@
 	   (bit-xorjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-notjs::obj ::obj ::JsGlobalObject)
 
-	   (<js::bool left right ::JsGlobalObject)
-	   (>js::bool left right ::JsGlobalObject)
-	   (<=js::bool left right ::JsGlobalObject)
-	   (>=js::bool left right ::JsGlobalObject)
+	   (<js::bool ::obj ::obj ::JsGlobalObject)
+	   (>js::bool ::obj ::obj ::JsGlobalObject)
+	   (<=js::bool ::obj ::obj ::JsGlobalObject)
+	   (>=js::bool ::obj ::obj ::JsGlobalObject)
 	   )
    
    (export (js-int53-toint32::int32 ::obj)
 	   (js-int53-touint32::uint32 ::obj)
+	   (inline js-uint32->jsnum::obj ::uint32)
 	   )
 
    (cond-expand
@@ -160,7 +164,50 @@
 	  (- expr))
 	 (else
 	  (loop (js-tonumber expr %this))))))
-       
+
+
+;*---------------------------------------------------------------------*/
+;*    %$$NN ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$NN lnum rnum)
+   (if (= rnum 0)
+       +nan.0
+       (%$$NZ lnum rnum)))
+
+;*---------------------------------------------------------------------*/
+;*    %$$NZ ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (%$$NZ lnum rnum)
+   (cond
+      ((and (flonum? lnum) (or (=fl lnum +inf.0) (=fl lnum -inf.0)))
+       +nan.0)
+      ((and (flonum? rnum) (or (=fl rnum +inf.0) (=fl rnum -inf.0)))
+       lnum)
+      ((or (and (flonum? rnum) (nanfl? rnum))
+           (and (flonum? lnum) (nanfl? lnum)))
+       +nan.0)
+      (else
+       (let ((alnum (abs lnum))
+             (arnum (abs rnum)))
+          (if (or (flonum? alnum) (flonum? arnum))
+              (begin
+                 (unless (flonum? alnum)
+                    (set! alnum (exact->inexact alnum)))
+                 (unless (flonum? arnum)
+                    (set! arnum (exact->inexact arnum)))
+                 (let ((m (remainderfl alnum arnum)))
+                    (if (or (< lnum 0)
+                            (and (flonum? lnum) (=fl lnum 0.0)
+                                 (not (=fx (signbitfl lnum) 0))))
+                        (if (= m 0) -0.0 (- m))
+                        (if (= m 0) +0.0 m))))
+              (let ((m (remainder alnum arnum)))
+                 (if (< lnum 0)
+                     (if (= m 0) -0.0 (- m))
+		     ;; MS: CARE 21 dec 2016, why returning a flonum?
+                     ;; (if (= m 0) 0.0 m)
+		     m)))))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */
 ;*    -------------------------------------------------------------    */
@@ -382,6 +429,24 @@
       (else
        (error "js-int53-toint32" "Illegal value" i))))
 
+;*---------------------------------------------------------------------*/
+;*    js-uint32->jsnum ...                                             */
+;*---------------------------------------------------------------------*/
+(define-inline (js-uint32->jsnum n::uint32)
+   
+   (define-macro (intszu32)
+      (minfx (-fx (bigloo-config 'int-size) 1) 53))
+   
+   (define-macro (shiftu32)
+      (bit-lsh 1 (intszu32)))
+   
+   (define-macro (maxintu32)
+      (fixnum->uint32 (-fx (shiftu32) 1)))
+
+   (if (>u32 n (maxintu32))
+       (uint32->flonum n)
+       (uint32->fixnum n)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    +s32/safe ...                                                    */
 ;*---------------------------------------------------------------------*/

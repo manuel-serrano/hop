@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Oct 17 13:25:55 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 06:17:30 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Date functions.             */
@@ -28,13 +28,12 @@
 	   __js2scheme_scheme-fun)
    
    (export (j2s-date-new-method fun::J2SNew field args
-	      mode return::procedure conf hint totype::symbol)))
+	      mode return::procedure conf hint)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-date-new-method ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (j2s-date-new-method clazz field args
-	   mode return::procedure conf hint totype::symbol)
+(define (j2s-date-new-method clazz field args mode return::procedure conf hint)
    (when (isa? field J2SString)
       (with-access::J2SString field (val)
 	 (cond

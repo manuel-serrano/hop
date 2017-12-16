@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec 15 17:51:14 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 05:28:33 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -333,8 +333,13 @@
 	     (cast this totype))
 	  (let* ((id (gensym 'a))
 		 (tr (j2s-type rhs))
-		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs '*))))
-	     (set! rhs (type-cast! (J2SRef d :type tr) (j2s-type-ref lhs)))
+		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs tr))))
+	     (set! rhs
+		(type-cast! (J2SRef d :type tr)
+		   (if (or (isa? lhs J2SRef)
+			   (isa? lhs J2SUnresolvedRef))
+		       (j2s-type-ref lhs)
+		       'any)))
 	     (let ((tyb (if (eq? totype '*) type totype)))
 		(J2SBindExit/type tyb #f 
 		   (J2SLetRecBlock #f  (list d)

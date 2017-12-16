@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Tue Oct 31 09:09:14 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 06:16:43 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -27,18 +27,18 @@
 	   __js2scheme_scheme-fun
 	   __js2scheme_scheme-utils)
 
-   (export (j2s-scheme-super ::J2SCall mode return conf hint totype)))
+   (export (j2s-scheme-super ::J2SCall mode return conf hint)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclClass ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SDeclClass mode return conf hint totype)
+(define-method (j2s-scheme this::J2SDeclClass mode return conf hint)
    "declclass not implemented yet")
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SClass ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SClass mode return conf hint totype)
+(define-method (j2s-scheme this::J2SClass mode return conf hint)
    
    (define (constructor? prop::J2SDataPropertyInit)
       (with-access::J2SDataPropertyInit prop (name)
@@ -66,16 +66,16 @@
 	  (with-access::J2SNumber name (val)
 	     (if (fixnum? val)
 		 `(quote ,(string->symbol (number->string val)))
-		 `(js-toname ,(j2s-scheme val mode return conf hint totype) %this))))
+		 `(js-toname ,(j2s-scheme val mode return conf hint) %this))))
 	 ((isa? name J2SPragma)
-	  `(js-toname ,(j2s-scheme name mode return conf hint totype) %this))
+	  `(js-toname ,(j2s-scheme name mode return conf hint) %this))
 	 ((isa? name J2SLiteralCnst)
-	  `(js-toname ,(j2s-scheme name mode return conf hint totype) %this))
+	  `(js-toname ,(j2s-scheme name mode return conf hint) %this))
 	 ((isa? name J2SLiteralValue)
 	  (with-access::J2SLiteralValue name (val)
-	     `(js-toname ,(j2s-scheme val mode return conf hint totype) %this)))
+	     `(js-toname ,(j2s-scheme val mode return conf hint) %this)))
 	 (else
-	  `(js-toname ,(j2s-scheme name mode return conf hint totype) %this))))
+	  `(js-toname ,(j2s-scheme name mode return conf hint) %this))))
    
    (define (bind-class-method obj prop)
       (cond
@@ -83,15 +83,15 @@
 	  (with-access::J2SDataPropertyInit prop (name val)
 	     (unless (constructor? prop)
 		`(js-bind! %this ,obj ,(j2s-propname name)
-		    :value ,(j2s-scheme val mode return conf hint totype)
+		    :value ,(j2s-scheme val mode return conf hint)
 		    :writable #t :enumerable #f :configurable #t))))
 	 ((isa? prop J2SAccessorPropertyInit)
 	  (with-access::J2SAccessorPropertyInit prop (name get set)
 	     `(js-bind! %this ,obj ,(j2s-propname name)
 		 :get ,(when get
-			  (j2s-scheme get mode return conf hint totype))
+			  (j2s-scheme get mode return conf hint))
 		 :set ,(when set
-			  (j2s-scheme set mode return conf hint totype))
+			  (j2s-scheme set mode return conf hint))
 		 :writable #t :enumerable #f :configurable #t)))
 	 (else
 	  #f)))
@@ -114,7 +114,7 @@
 	  (proc '()))
 	 (else
 	  (let ((superid (gensym 'super)))
-	     `(let* ((,superid ,(j2s-scheme super mode return conf hint totype))
+	     `(let* ((,superid ,(j2s-scheme super mode return conf hint))
 		     (%super (js-get ,superid 'prototype %this))
 ;* 		     (%superctor (js-get %super 'constructor %this))   */
 		     (%superctor ,superid)
@@ -265,7 +265,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-super ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (j2s-scheme-super this::J2SCall mode return conf hint totype)
+(define (j2s-scheme-super this::J2SCall mode return conf hint)
    (with-access::J2SCall this (loc fun this args protocol cache)
       (let* ((len (length args))
 	     (call (if (>=fx len 11)
@@ -277,7 +277,7 @@
 	     (let ((,tmp (,call ,j2s-unresolved-call-workspace
 			    %superctor
 			    %nothis
-			    ,@(j2s-scheme args mode return conf hint totype))))
+			    ,@(j2s-scheme args mode return conf hint))))
 		(set! this %nothis)
 		,tmp)))))
    

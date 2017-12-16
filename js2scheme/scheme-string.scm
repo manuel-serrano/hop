@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Dec 11 14:52:38 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 06:16:02 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -27,25 +27,25 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
 
-   (export (j2s-string-ref ::J2SAccess mode return conf hint totype)
-	   (j2s-jsstring-replace-regexp obj args mode return conf hint totype)
-	   (j2s-jsstring-replace obj args mode return conf hint totype)))
+   (export (j2s-string-ref ::J2SAccess mode return conf hint)
+	   (j2s-jsstring-replace-regexp obj args mode return conf hint)
+	   (j2s-jsstring-replace obj args mode return conf hint)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-ref ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (j2s-string-ref this::J2SAccess mode return conf hint totype)
+(define (j2s-string-ref this::J2SAccess mode return conf hint)
    (with-access::J2SAccess this (obj field type)
       (cond
 	 ((memq (j2s-type-ref field) '(uint29 index ufixnum fixnum))
-	  `(js-jsstring-ref ,(j2s-scheme obj mode return conf hint totype)
-	      (fixnum->uint32 ,(j2s-scheme field mode return conf hint totype))))
+	  `(js-jsstring-ref ,(j2s-scheme obj mode return conf hint)
+	      (fixnum->uint32 ,(j2s-scheme field mode return conf hint))))
 	 ((maybe-number? field)
-	  `(js-string-ref ,(j2s-scheme obj mode return conf hint totype)
-	      ,(j2s-scheme field mode return conf hint totype) %this))
+	  `(js-string-ref ,(j2s-scheme obj mode return conf hint)
+	      ,(j2s-scheme field mode return conf hint) %this))
 	 ((j2s-field-length? field)
 	  (let ((x `(js-jsstring-codeunit-length
-		       ,(j2s-scheme obj mode return conf hint totype))))
+		       ,(j2s-scheme obj mode return conf hint))))
 	     (if (eq? type 'uint32)
 		 x
 		 (js-uint32->jsnum x conf))))
@@ -55,7 +55,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace-regexp ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-replace-regexp obj args mode return conf hint totype)
+(define (j2s-jsstring-replace-regexp obj args mode return conf hint)
    
    (define (literal-regexp obj)
       (when (isa? obj J2SLiteralCnst)
@@ -70,9 +70,9 @@
    
    (define (tmp obj kont)
       (if (isa? obj J2SRef)
-	  (kont (j2s-scheme obj mode return conf hint totype))
+	  (kont (j2s-scheme obj mode return conf hint))
 	  (let ((tmp (gensym 'obj)))
-	     `(let ((,tmp ,(j2s-scheme obj mode return conf hint totype)))
+	     `(let ((,tmp ,(j2s-scheme obj mode return conf hint)))
 		 ,(kont tmp)))))
    
    (define (fun1? obj)
@@ -90,16 +90,16 @@
 		 ,(jsfun->lambda replacevalue mode return conf #f #f)
 		 ,@(map (lambda (arg)
 			   (j2s-scheme arg
-			      mode return conf hint totype))
+			      mode return conf hint))
 		      (cddr args))))
 	    (else
 	     `(js-jsstring-replace-regexp ,tmp
 		 ,rx 0 ,global
 		 ,(j2s-scheme replacevalue
-		     mode return conf hint totype)
+		     mode return conf hint)
 		 ,@(map (lambda (arg)
 			   (j2s-scheme arg
-			      mode return conf hint totype))
+			      mode return conf hint))
 		      (cddr args)))))))
 
    (if (literal-regexp (car args))
@@ -111,7 +111,7 @@
 		(tmp obj
 		   (lambda (tmp)
 		      (replace tmp `(vector-ref-ur %cnsts ,index) 0 global))))))
-       (let ((regexp (j2s-scheme (car args) mode return conf hint totype)))
+       (let ((regexp (j2s-scheme (car args) mode return conf hint)))
 	  (tmp obj
 	     (lambda (tmp)
 		`(with-access::JsRegExp ,regexp (rx lastindex global)
@@ -122,11 +122,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (j2s-jsstring-replace obj args mode return conf hint totype)
+(define (j2s-jsstring-replace obj args mode return conf hint)
    `(js-jsstring-replace
-       ,(j2s-scheme obj mode return conf hint totype)
+       ,(j2s-scheme obj mode return conf hint)
        ,@(map (lambda (arg)
-		 (j2s-scheme arg mode return conf hint totype))
+		 (j2s-scheme arg mode return conf hint))
 	    args)))
 	   
 

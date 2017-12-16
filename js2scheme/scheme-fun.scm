@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Dec  8 12:17:01 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 06:24:08 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -33,7 +33,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclFun ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SDeclFun mode return conf hint totype)
+(define-method (j2s-scheme this::J2SDeclFun mode return conf hint)
    
    (define (make-function this::J2SDeclFun)
       (with-access::J2SDeclFun this (loc id scope val usage ronly)
@@ -150,7 +150,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDeclSvc ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SDeclSvc mode return conf hint totype)
+(define-method (j2s-scheme this::J2SDeclSvc mode return conf hint)
    (with-access::J2SDeclSvc this (loc id val scope)
       (let ((scmid (j2s-decl-scheme-id this))
 	    (fastid (j2s-fast-id id)))
@@ -189,7 +189,7 @@
 	     `(,(type-ident 'lambda rtype) ,gtargs ,body))))
 
    (define (j2s-type-scheme p)
-      (let ((a (j2s-scheme p mode return conf '() 'any)))
+      (let ((a (j2s-scheme p mode return conf '())))
 	 (with-access::J2SDecl p (vtype)
 	    (type-ident a vtype))))
 		    
@@ -200,7 +200,7 @@
    
    (define (rest-lambda fun id body)
       (with-access::J2SFun fun (idgen idthis params rtype)
-	 (let ((args (j2s-scheme params mode return conf '() 'any)))
+	 (let ((args (j2s-scheme params mode return conf '())))
 	    (lambda-or-labels rtype idgen idthis id args body))))
    
    (define (normal-vararg-lambda fun id body)
@@ -229,11 +229,11 @@
       (if (and thisp (config-get conf optim-this: #f))
 	  (cond
 	     ((or (not (j2s-this-cache? thisp)) (not ctor-only))
-	      (flatten-stmt (j2s-scheme body mode return conf '() 'any)))
+	      (flatten-stmt (j2s-scheme body mode return conf '())))
 	     ((eq? (with-access::J2SDecl thisp (vtype) vtype) 'object)
 	      (with-access::J2SDecl thisp (vtype)
 		 (set! vtype 'this))
-	      (let ((stmt (j2s-scheme body mode return conf '() 'any)))
+	      (let ((stmt (j2s-scheme body mode return conf '())))
 		 `(with-access::JsObject this (cmap elements)
 		     (let ((%thismap cmap)
 			   (%thiselements elements))
@@ -241,14 +241,14 @@
 	     (else
 	      (with-access::J2SDecl thisp (vtype)
 		 (set! vtype 'this))
-	      (let ((stmt (j2s-scheme body mode return conf '() 'any)))
+	      (let ((stmt (j2s-scheme body mode return conf '())))
 		 `(let (%thismap %thiselements)
 		     (unless (eq? this (js-undefined))
 			(with-access::JsObject this (cmap elements)
 			   (set! %thismap cmap)
 			   (set! %thiselements elements)))
 		     ,(flatten-stmt stmt)))))
-	  (flatten-stmt (j2s-scheme body mode return conf '() 'any))))
+	  (flatten-stmt (j2s-scheme body mode return conf '()))))
 
    (with-access::J2SFun this (loc body need-bind-exit-return vararg mode params generator thisp)
       (let* ((id (j2sfun-id this))
@@ -357,7 +357,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SFun mode return conf hint totype)
+(define-method (j2s-scheme this::J2SFun mode return conf hint)
    (with-access::J2SFun this (loc name params mode vararg generator method)
       (let* ((id (j2sfun-id this))
 	     (tmp (gensym id))
@@ -383,9 +383,9 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SMethod ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SMethod mode return conf hint totype)
+(define-method (j2s-scheme this::J2SMethod mode return conf hint)
    (with-access::J2SMethod this (function)
-      (j2s-scheme function mode return conf hint totype)))
+      (j2s-scheme function mode return conf hint)))
 
 ;*---------------------------------------------------------------------*/
 ;*    jssvc->scheme ::J2SSvc ...                                       */
@@ -409,9 +409,9 @@
 		(with-access::J2SNode body (loc)
 		   (epairify loc
 		      (return-body
-			 (j2s-scheme body mode return conf '() 'any))))
+			 (j2s-scheme body mode return conf '()))))
 		(flatten-stmt
-		   (j2s-scheme body mode return conf '() 'any)))))
+		   (j2s-scheme body mode return conf '())))))
 
       (define (service-fix-proc->scheme this args)
 	 (with-access::J2SSvc this (name loc vararg)
@@ -511,11 +511,11 @@
       (with-access::J2SDataPropertyInit init (name val)
 	 (with-access::J2SString name ((name val))
 	    (list (string->symbol name)
-	       (j2s-scheme val mode return conf '() 'any)))))
+	       (j2s-scheme val mode return conf '())))))
    
    (define (svc-proc-entry this)
       (with-access::J2SSvc this (name params loc path mode)
-	 (let ((params (j2s-scheme params mode return conf '() 'any))
+	 (let ((params (j2s-scheme params mode return conf '()))
 	       (tmpp (gensym 'servicep))
 	       (tmps (gensym 'services)))
 	    `(letrec* ((,tmpp (lambda (this . args)
@@ -535,7 +535,7 @@
 
    (define (svc->scheme this)
       (with-access::J2SSvc this (name params loc path mode register import)
-	 (let ((args (j2s-scheme params mode return conf '() 'any))
+	 (let ((args (j2s-scheme params mode return conf '()))
 	       (lam (jsfun->lambda this mode return conf
 		       (j2s-fun-prototype this) #f))
 	       (conf (cons* :force-location #t conf)))
@@ -562,7 +562,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SSvc ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SSvc mode return conf hint totype)
+(define-method (j2s-scheme this::J2SSvc mode return conf hint)
    (with-access::J2SSvc this (loc)
       (epairify loc
 	 (jssvc->scheme this #f #f mode return conf))))
