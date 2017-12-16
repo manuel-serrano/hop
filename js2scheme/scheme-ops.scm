@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Dec 16 06:20:54 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 10:29:35 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1099,7 +1099,6 @@
    (define (opfx op) (symbol-append op 'fx))
    (define (opfx/overflow op) (symbol-append op 'fx/overflow))
    (define (op/overflow op) (symbol-append op '/overflow))
-   (define (opjs op) (symbol-append op 'js))
 
    (define (addsub-generic/32 op type lhs tl left rhs tr right)
       (cond
@@ -1407,7 +1406,7 @@
 		 (if (=u32 (bit-andu32
 			      ,n ,(fixnum->uint32 (-fx (bit-lsh 1 k) 1)))
 			#u32:0)
-		     (bit-rsh ,n ,k)
+		     (bit-rshu32 ,n ,k)
 		     (/js ,n ,(bit-lsh 1 k) %this))))
 	    ((int32)
 	     `(let ((,n ,(j2s-scheme lhs mode return conf hint)))
@@ -1415,7 +1414,7 @@
 			      ,n ,(fixnum->int32 (-fx (bit-lsh 1 k) 1)))
 			#s32:0)
 		     ,(if (positive? lhs)
-			  `(bit-rsh ,n ,k)
+			  `(bit-rshs32 ,n ,k)
 			  `(/pow2s32 ,n ,k))
 		     (/js ,n ,(bit-lsh 1 k) %this))))
 	    (else
@@ -1648,9 +1647,7 @@
    (case type
       ((int32)
        (if (int32? val)
-	   (if (overflow29 (int32->fixnum val))
-	       (int32->flonum val)
-	       (int32->fixnum val))
+	   (overflow29 (int32->fixnum val))
 	   `(if (overflow29 (int32->fixnum ,val))
 		(int32->flonum ,val)
 		(int32->fixnum ,val))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sat Dec 16 06:07:47 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 10:23:51 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -96,6 +96,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (+js x::obj y::obj %this)
+   (unless (and (number? x) (number? y))
+       (tprint "+js pas bon x=" (typeof x) " y=" (typeof y)))
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
 	  (ny (if (number? y) y (js-tonumber y %this))))
       (+/overflow nx ny)))
@@ -106,6 +108,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
 ;*---------------------------------------------------------------------*/
 (define (-js x::obj y::obj %this)
+   (unless (and (number? x) (number? y))
+      (tprint "-js pas bon x=" (typeof x) " y=" (typeof y)))
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
 	  (ny (if (number? y) y (js-tonumber y %this))))
       (-/overflow nx ny)))
@@ -116,6 +120,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
 (define (*js x::obj y::obj %this)
+   (unless (and (number? x) (number? y))
+      (tprint "*js pas bon x=" (typeof x) " y=" (typeof y)))
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
 	  (ny (if (number? y) y (js-tonumber y %this))))
       (*/overflow nx ny)))
@@ -126,6 +132,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
 ;*---------------------------------------------------------------------*/
 (define (/js x::obj y::obj %this)
+   (unless (and (number? x) (number? y))
+      (tprint "/js pas bon x=" (typeof x) " y=" (typeof y)))
    (let* ((nx (js-toflonum (js-tonumber x %this)))
 	  (ny (js-toflonum (js-tonumber y %this))))
       (/fl nx ny)))
@@ -154,6 +162,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7       */
 ;*---------------------------------------------------------------------*/
 (define (negjs expr %this)
+   (unless (number? expr)
+      (tprint "neg/js x=" (typeof expr)))
    (let loop ((expr expr))
       (cond
 	 ((and (number? expr) (= expr 0))

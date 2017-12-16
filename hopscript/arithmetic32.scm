@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Dec 15 05:04:36 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 10:27:23 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -184,8 +184,10 @@
 (define (tolong x)
    (cond
       ((fixnum? x) x)
-      ((int32? x) (int32->fixnum x))
-      ((and (uint32? x) (<u32 x (bit-lshu32 #u32:1 29))) (uint32->fixnum x))
+      ((int32? x)
+       (tprint "SHOULD NOT int32") (int32->fixnum x))
+      ((and (uint32? x) (<u32 x (bit-lshu32 #u32:1 29)))
+       (tprint "SHOULD NOT int32") (uint32->fixnum x))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
