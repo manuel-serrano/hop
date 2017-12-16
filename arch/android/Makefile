@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/arch/android/Makefile             */
+#*    serrano/prgm/project/hop/3.2.x/arch/android/Makefile             */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Mar  1 16:41:12 2017 (serrano)                */
+#*    Last change :  Sat Dec 16 07:02:44 2017 (serrano)                */
 #*    Copyright   :  2010-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -451,7 +451,7 @@ apk.bigloo.configure:
          ./configure --os-android \
             --android-adb=adb \
             --cc=$(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc \
-            --cflags="-pie -DBGL_GC_ROOTS" \
+            --cflags="-pie -fPIE -DBGL_GC_ROOTS" \
             --lflags=-pie \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --stack-check=no \

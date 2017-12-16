@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Dec 16 06:18:40 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 09:33:22 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -37,7 +37,11 @@
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
-	   (generic j2s-scheme ::obj ::symbol ::procedure ::obj ::obj)))
+	   (generic j2s-scheme ::obj ::symbol ::procedure ::obj ::obj))
+
+   (static (class J2SSexp::J2SExpr
+	      (proc::procedure read-only (info '("notraverse")))
+	      (args::pair read-only (info '("notraverse"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-method ...                                                */
@@ -3001,14 +3005,30 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SOPTInitSeq ...                                   */
+;*    -------------------------------------------------------------    */
+;*    Optimized constructor initialization sequence.                   */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SOPTInitSeq mode return conf hint)
    
-   (define (init-expr node)
+   (define (init-expr node k)
       ;; see ctor.scm
-      (with-access::J2SStmtExpr node (expr)
-	 (with-access::J2SAssig expr (rhs)
-	    rhs)))
+      (let loop ((stmt node))
+	 (with-access::J2SStmtExpr stmt (expr)
+	    (cond
+	       ((isa? expr J2SAssig)
+		(with-access::J2SAssig expr (rhs)
+		   (k rhs)))
+	       ((isa? expr J2SBindExit)
+		(with-access::J2SBindExit expr (stmt)
+		   (if (isa? stmt J2SLetBlock)
+		       (with-access::J2SLetBlock stmt (nodes)
+			  (duplicate::J2SLetBlock stmt
+			     (nodes (cons (loop (car nodes)) (cdr nodes)))))
+		       (error "j2s-scheme" "wrong init expr"
+			  (j2s->list node)))))
+	       (else
+		(error "j2s-scheme" "wrong init expr"
+		   (j2s->list node)))))))
    
    (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1)
       (let ((%ref (gensym '%ref))
@@ -3024,9 +3044,16 @@
 			  (let ((,i (vector-length props))
 				(,elements elements))
 			     ,@(map (lambda (init offset)
-				       `(vector-set! ,elements (+fx ,i ,offset)
-					   ,(j2s-scheme (init-expr init)
-					       mode return conf hint)))
+				       (j2s-scheme 
+					  (init-expr init
+					     (lambda (e)
+						(with-access::J2SExpr e (loc)
+						   (instantiate::J2SSexp
+						      (loc loc)
+						      (proc (lambda (v)
+							       `(vector-set! ,elements (+fx ,i ,offset) ,v)))
+						      (args (list e))))))
+					  mode return conf hint))
 				  nodes (iota (length nodes)))
 			     (with-access::JsObject ,%ref ((omap cmap))
 				(set! omap ,cmap1))))
@@ -3034,8 +3061,7 @@
 		       (with-access::JsConstructMap ,cmap (props)
 			  (let ((len0 (vector-length props)))
 			     ,@(map (lambda (n)
-				       (j2s-scheme n
-					  mode return conf hint))
+				       (j2s-scheme n mode return conf hint))
 				  nodes)
 			     (with-access::JsConstructMap cmap (props)
 				(when (=fx (+fx len0 ,(length nodes))
@@ -3044,3 +3070,11 @@
 				   (set! ,cmap1 cmap))))))))))))
    
    
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SSexp ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SSexp mode return conf hint)
+   (with-access::J2SSexp this (proc args)
+      (apply proc
+	 (map (lambda (a) (j2s-scheme a mode return conf hint)) args))))
+		

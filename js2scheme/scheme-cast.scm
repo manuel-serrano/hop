@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Dec 13 08:40:20 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 07:22:45 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -96,6 +96,7 @@
 	 (bool js-totest)
 	 (array nop)
 	 (string nop)
+	 (null nop)
 	 (int32 ,js->int32)
 	 (uint32 ,js->uint32)
 	 (number ,js->number)

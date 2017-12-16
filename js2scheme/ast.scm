@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Dec 14 11:59:57 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 09:05:26 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -260,6 +260,7 @@
 	      (ronly (default #f) (info '("notraverse")))
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
+	      (useinloop::bool (default #f) (info '("notraverse")))
 	      ;; usage: init, new, ref, assig, get, set, call
 	      (usage::pair-nil (default '()) (info '("notraverse")))
 	      (utype::symbol (default 'unknown) (info '("notraverse")))

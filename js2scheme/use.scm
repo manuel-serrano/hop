@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Nov 22 10:19:13 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 09:10:57 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -23,7 +23,7 @@
    (export j2s-use-stage
 	   j2s-dead-stage
 	   (generic reset-use-count ::J2SNode)
-	   (generic use-count ::J2SNode inc::int)
+	   (generic use-count ::J2SNode inc::int inloop::bool)
 	   (filter-dead-declarations::pair-nil ::pair-nil)))
 
 ;*---------------------------------------------------------------------*/
@@ -55,7 +55,7 @@
    
    (define (use-nodes nodes)
       (for-each (lambda (o)
-		   (use-count o +1)
+		   (use-count o +1 #f)
 		   (usage o 'ref deval))
 	 nodes))
    
@@ -113,7 +113,7 @@
 				    (set! keep #t)
 				    (when (isa? d J2SDeclInit)
 				       (with-access::J2SDeclInit d (val)
-					  (use-count val -1)))
+					  (use-count val -1 #f)))
 				    #f))))
 		  decls))
 	    (loop)))
@@ -122,43 +122,63 @@
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SNode ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SNode inc)
+(define-walk-method (use-count this::J2SNode inc inloop)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SFun inc)
+(define-walk-method (use-count this::J2SFun inc inloop)
    (with-access::J2SFun this (params body decl)
-      (use-count body inc))
+      (use-count body inc #f))
    this)
    
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SSvc ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SSvc inc)
+(define-walk-method (use-count this::J2SSvc inc inloop)
    (with-access::J2SSvc this (params body decl)
-      (use-count body inc))
+      (use-count body inc #f))
    this)
    
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SRef ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SRef inc)
+(define-walk-method (use-count this::J2SRef inc inloop)
    (with-access::J2SRef this (decl)
-      (with-access::J2SDecl decl (usecnt)
+      (with-access::J2SDecl decl (usecnt useinloop)
+	 (when inloop (set! useinloop #t))
 	 (set! usecnt (+fx inc usecnt))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    use-count ::J2SGlobalRef ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (use-count this::J2SGlobalRef inc)
+(define-walk-method (use-count this::J2SGlobalRef inc inloop)
    (with-access::J2SGlobalRef this (decl)
-      (with-access::J2SDecl decl (usecnt)
+      (with-access::J2SDecl decl (usecnt useinloop)
+	 (when inloop (set! useinloop #t))
 	 (set! usecnt (+fx inc usecnt))))
    this)
 
+;*---------------------------------------------------------------------*/
+;*    use-count ::J2SFor ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (use-count this::J2SFor inc inloop)
+   (with-access::J2SFor this (init test incr body)
+      (use-count init inc #f)
+      (use-count test inc #t)
+      (use-count incr inc #t)
+      (use-count body inc #t)))
+
+;*---------------------------------------------------------------------*/
+;*    use-count ::J2SWhile ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (use-count this::J2SWhile inc inloop)
+   (with-access::J2SWhile this (test body)
+      (use-count test inc #t)
+      (use-count body inc #t)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    reset-use-count ::J2SNode ...                                    */
 ;*---------------------------------------------------------------------*/

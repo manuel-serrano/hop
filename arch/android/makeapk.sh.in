@@ -1,11 +1,11 @@
 #!/bin/sh
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/arch/android/makeapk.sh.in        */
+#*    serrano/prgm/project/hop/3.2.x/arch/android/makeapk.sh.in        */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Mon Sep 27 11:21:42 2010                          */
-#*    Last change :  Tue May 24 15:33:58 2016 (serrano)                */
-#*    Copyright   :  2010-16 Manuel Serrano                            */
+#*    Last change :  Sat Dec 16 07:03:05 2017 (serrano)                */
+#*    Copyright   :  2010-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The shell script to build the .apk for Hop on Android            */
 #*=====================================================================*/
@@ -219,7 +219,7 @@ if [ "$CC " = " " ]; then
 fi
 
 if [ "$CFLAGS " = " " ]; then
-  CFLAGS=-pie
+  CFLAGS="-pie -fPIE"
 fi
 
 #*---------------------------------------------------------------------*/

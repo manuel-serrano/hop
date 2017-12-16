@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Dec 13 12:24:40 2017 (serrano)                */
+;*    Last change :  Sat Dec 16 09:34:59 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -463,7 +463,7 @@
 				(decl p))))
 		     params types)))))
    
-   (define (dispatch-body body pred callt callu)
+   (define (dispatch-body body pred callt callu fun::J2SFun)
       (with-access::J2SBlock body (loc endloc)
 	 (instantiate::J2SBlock
 	    (loc loc)
@@ -472,9 +472,11 @@
 			    (loc loc)
 			    (test pred)
 			    (then (instantiate::J2SReturn
+				     (from fun)
 				     (loc loc)
 				     (expr callt)))
 			    (else (instantiate::J2SReturn
+				     (from fun)
 				     (loc loc)
 				     (expr callu)))))))))
 
@@ -524,8 +526,9 @@
 		 (not (isa? val J2SSvc))
 		 (pair? params)
 		 (any (lambda (p::J2SDecl)
-			 (with-access::J2SDecl p (hint usecnt itype ronly)
-			    (when (>=fx usecnt 1)
+			 (with-access::J2SDecl p (hint usecnt useinloop itype)
+			    (when (or (>=fx usecnt 3)
+				      (and (>=fx usecnt 1) useinloop))
 			       (let ((bt (best-hint-type p #f)))
 				  (unless (eq? bt 'unknown)
 				     (or (eq? itype 'unknown)
@@ -558,7 +561,7 @@
 		   (pred (test-hint-decls newparams htypes loc))
 		   (callt (call-hinted ft idthis newparams htypes))
 		   (callu (call-hinted fu idthis newparams itypes))
-		   (disp (dispatch-body body pred callt callu)))
+		   (disp (dispatch-body body pred callt callu val)))
 	       (set! params newparams)
 	       (set! body disp)
 	       (when (config-get conf :profile)
@@ -833,7 +836,7 @@
 			    (utype 'function)
 			    (vtype 'function)
 			    (val newfun))))
-	    (use-count nbody +1)
+	    (use-count nbody +1 #f)
 	    (with-access::J2SFun newfun (decl)
 	       (set! decl newdecl))
 	    (when (config-get conf :profile)
