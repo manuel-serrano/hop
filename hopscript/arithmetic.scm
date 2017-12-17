@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sat Dec 16 10:23:51 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 09:23:53 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -226,8 +226,8 @@
 (define (js-toint32::int32 obj %this)
    (cond
       ((or (fixnum? obj) (flonum? obj)) (js-number-toint32 obj))
-      ((uint32? obj) (uint32->int32 obj))
-      ((int32? obj) obj)
+      ((uint32? obj) (tprint "should not be here") (uint32->int32 obj))
+      ((int32? obj) (tprint "should not be here") obj)
       (else (js-number-toint32 (js-tonumber obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -238,8 +238,8 @@
 (define (js-touint32::uint32 obj %this)
    (cond
       ((or (fixnum? obj) (flonum? obj)) (js-number-touint32 obj))
-      ((int32? obj) (int32->uint32 obj))
-      ((uint32? obj) obj)
+      ((int32? obj) (tprint "should not be here") (int32->uint32 obj))
+      ((uint32? obj) (tprint "should not be here") obj)
       (else (js-number-touint32 (js-tointeger obj %this)))))
 
 ;*---------------------------------------------------------------------*/
