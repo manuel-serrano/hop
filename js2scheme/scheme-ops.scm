@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Dec 17 17:27:46 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 20:05:44 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1059,7 +1059,7 @@
    (define (add-string loc type left tl lhs right tr rhs
 	      mode return conf hint flip)
       (cond
-	 ((eq? tr 'string)
+	 ((or (eq? tr 'string) (eq? (j2s-type right) 'string))
 	  (str-append flip left right))
 	 ((eq? tr 'int32)
 	  (str-append flip

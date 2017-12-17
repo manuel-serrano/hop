@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Dec 17 10:07:21 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 19:12:06 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -31,7 +31,12 @@
       ((or bint30 bint32)
        (export
 	  (inline overflow29 ::long)
-
+	  
+	  (inline js-toint32::int32 ::obj ::JsGlobalObject)
+	  (js-toint32-slow::int32 ::obj ::JsGlobalObject)
+	  (inline js-touint32::uint32 ::obj ::JsGlobalObject)
+	  (js-touint32-slow::uint32 obj %this)
+	  
 	  (js-number-toint32::int32 ::obj)
 	  (js-number-touint32::uint32 ::obj)
 	  
@@ -54,6 +59,48 @@
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow::obj ::obj ::obj)
 	  ))))
+
+;*---------------------------------------------------------------------*/
+;*    js-toint32 ::obj ...                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-toint32::int32 obj %this)
+   (if (fixnum? obj)
+       (fixnum->int32 obj)
+       (js-toint32-slow obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-toint32-slow ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-toint32-slow::int32 obj %this)
+   (cond
+      ((flonum? obj) (js-number-toint32 obj))
+      ((uint32? obj) (tprint "should not be here.uint32 " obj) (uint32->int32 obj))
+      ((int32? obj) (tprint "should not be here.int32 " obj) (tprint (/s32 #s32:1 (car (list #s32:0)))) obj)
+      ((fixnum? obj) (fixnum->int32 obj))
+      (else (js-number-toint32 (js-tonumber obj %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-touint32 ::obj ...                                            */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-touint32::uint32 obj %this)
+   (if (fixnum? obj)
+       (fixnum->uint32 obj)
+       (js-touint32-slow obj %this)))
+
+;*---------------------------------------------------------------------*/
+;*    js-touint32-slow ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-touint32-slow::uint32 obj %this)
+   (cond
+      ((fixnum? obj) (fixnum->uint32 obj))
+      ((flonum? obj) (js-number-touint32 obj))
+      ((int32? obj) (tprint "should not be here.int32") (int32->uint32 obj))
+      ((uint32? obj) (tprint "should not be here.uint32") obj)
+      (else (js-number-touint32 (js-tointeger obj %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-number-toint32 ::obj ...                                      */

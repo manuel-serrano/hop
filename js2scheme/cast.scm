@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Dec 17 17:02:41 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 19:24:24 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -405,7 +405,9 @@
 	  (cast this totype))
 	 (else
 	  (set! lhs (type-cast! lhs '*))
-	  (set! rhs (type-cast! rhs '*))
+	  (if (eq? (j2s-type lhs) 'string)
+	      (set! rhs (type-cast! rhs 'string))
+	      (set! rhs (type-cast! rhs '*)))
 	  (cast this totype)))))
 
 ;*---------------------------------------------------------------------*/

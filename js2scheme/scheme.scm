@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Dec 17 17:32:50 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 18:51:07 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2610,12 +2610,12 @@
    (with-access::J2SAccess this (loc obj field cache clevel type)
       (epairify-deep loc 
 	 (cond
-	    ((eq? (j2s-type-ref obj) 'vector)
+	    ((eq? (j2s-type obj) 'vector)
 	     (j2s-vector-ref this mode return conf hint))
-	    ((eq? (j2s-type-ref obj) 'array)
+	    ((eq? (j2s-type obj) 'array)
 	     (or (j2s-array-ref this mode return conf hint)
 		 (get obj field cache clevel loc)))
-	    ((eq? (j2s-type-ref obj) 'string)
+	    ((eq? (j2s-type obj) 'string)
 	     (or (j2s-string-ref this mode return conf hint)
 		 (get obj field cache clevel loc)))
 	    ((is-number? field)

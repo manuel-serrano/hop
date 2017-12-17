@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Dec 17 17:37:42 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 19:29:24 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -539,7 +539,7 @@
 		  `(js-get-length ,obj #f %this))
 	      `(js-get ,obj ',(string->symbol prop) %this)))
 	 ((memq typrop '(int32 uint32))
-	  `(js-gets32 ,obj ,(box prop typrop conf) %this))
+	  `(js-get ,obj ,(box prop typrop conf) %this))
 	 (else
 	  `(js-get ,obj ,prop %this)))))
 

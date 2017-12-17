@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Dec 16 06:16:02 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 18:55:06 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -35,14 +35,24 @@
 ;*    j2s-string-ref ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (j2s-string-ref this::J2SAccess mode return conf hint)
+
+   (define (jsstring-ref type obj index)
+      (tprint "jsstring-ref type=" type " " (j2s->list this))
+      (if (eq? type 'string)
+	  `(js-jsstring-ref-as-string ,obj ,index)
+	  `(js-jsstring-ref ,obj ,index)))
+   
    (with-access::J2SAccess this (obj field type)
       (cond
-	 ((memq (j2s-type-ref field) '(uint29 index ufixnum fixnum))
-	  `(js-jsstring-ref ,(j2s-scheme obj mode return conf hint)
-	      (fixnum->uint32 ,(j2s-scheme field mode return conf hint))))
-	 ((maybe-number? field)
-	  `(js-string-ref ,(j2s-scheme obj mode return conf hint)
-	      ,(j2s-scheme field mode return conf hint) %this))
+	 ((eq? (j2s-type-ref field) 'uint32)
+	  (jsstring-ref type (j2s-scheme obj mode return conf hint)
+	     (j2s-scheme field mode return conf hint)))
+	 ((eq? (j2s-type-ref field) 'int32)
+	  (jsstring-ref type (j2s-scheme obj mode return conf hint)
+	     `(int32->uint32 ,(j2s-scheme field mode return conf hint))))
+	 ((memq (j2s-type-ref field) '(integer bint))
+	  (jsstring-ref type (j2s-scheme obj mode return conf hint)
+	     `(fixnum->uint32 ,(j2s-scheme field mode return conf hint))))
 	 ((j2s-field-length? field)
 	  (let ((x `(js-jsstring-codeunit-length
 		       ,(j2s-scheme obj mode return conf hint))))

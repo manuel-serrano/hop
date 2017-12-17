@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Dec 14 16:33:54 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 19:06:45 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -13,11 +13,11 @@
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
 (module __hopscript_arithmetic64
-
+   
    (library hop)
-
+   
    (include "types.sch" "stringliteral.sch")
-
+   
    (import __hopscript_types
 	   __hopscript_object
 	   __hopscript_function
@@ -26,11 +26,14 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_public)
-
+   
    (cond-expand
       ((or bint61 bint64)
        (export
 	  (inline overflow53::obj ::long)
+	  
+	  (js-toint32::int32 ::obj ::JsGlobalObject)
+	  (js-touint32::uint32 ::obj ::JsGlobalObject)
 	  
 	  (js-number-toint32::int32 ::obj)
 	  (js-number-touint32::uint32 ::obj)
@@ -46,6 +49,30 @@
 	  
 	  (*fx/overflow ::long ::long)
 	  (*/overflow ::obj ::obj)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-toint32 ::obj ...                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
+;*---------------------------------------------------------------------*/
+(define (js-toint32::int32 obj %this)
+   (cond
+      ((or (fixnum? obj) (flonum? obj)) (js-number-toint32 obj))
+      ((uint32? obj) (tprint "should not be here.uint32 " obj) (uint32->int32 obj))
+      ((int32? obj) (tprint "should not be here.int32 " obj) (tprint (/s32 #s32:1 (car (list #s32:0)))) obj)
+      (else (js-number-toint32 (js-tonumber obj %this)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-touint32 ::obj ...                                            */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
+;*---------------------------------------------------------------------*/
+(define (js-touint32::uint32 obj %this)
+   (cond
+      ((or (fixnum? obj) (flonum? obj)) (js-number-touint32 obj))
+      ((int32? obj) (tprint "should not be here.int32") (int32->uint32 obj))
+      ((uint32? obj) (tprint "should not be here.uint32") obj)
+      (else (js-number-touint32 (js-tointeger obj %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    overflow53 ...                                                   */

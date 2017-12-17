@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat Dec 16 09:39:14 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 20:13:13 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -34,6 +34,7 @@
 	 (number ,js-int32->integer)
 	 (propname ,js-int32->propname)
 	 (bool ,js-int32->bool)
+	 (string ,js-int32->string)
 	 (any ,js-int32->integer)))
      (uint32
 	((uint29 nop)
@@ -43,6 +44,7 @@
 	 (number ,js-uint32->integer)
 	 (propname ,js-uint32->propname)
 	 (bool ,js-uint32->bool)
+	 (string ,js-uint32->string)
 	 (any ,js-uint32->integer)))
      (int53
 	((int30 nop)
@@ -53,6 +55,7 @@
      (integer
 	((int32 ,js-fixnum->int32)
 	 (uint32 ,js-fixnum->uint32)
+	 (string ,js-fixnum->string)
 	 (int53 nop)
 	 (propname nop)
 	 (number nop)
@@ -61,6 +64,7 @@
 	((bool js-totest)
 	 (int32 ,js->int32)
 	 (uint32 ,js-number->uint32)
+	 (string ,js-number->string)
 	 (propname nop)
 	 (any nop)))
      (string
@@ -95,7 +99,7 @@
 	((propname nop)
 	 (bool js-totest)
 	 (array nop)
-	 (string nop)
+	 (string ,js->string)
 	 (null nop)
 	 (int32 ,js->int32)
 	 (uint32 ,js->uint32)
@@ -124,6 +128,11 @@
 (define (js-int32->bool v expr conf)
    (if (int32? v) (not (=s32 v #s32:0)) `(not (=s32 ,v #s32:0))))
 
+(define (js-int32->string v expr conf)
+   (if (int32? v)
+       (fixnum->string (int32->fixnum v))
+       `(js-ascii->jssstring (int32->string ,v))))
+
 ;; uint32
 (define (js-uint32->integer v expr conf)
    (cond
@@ -144,12 +153,32 @@
 (define (js-uint32->bool v expr conf)
    (if (uint32? v) (>u32 v #u32:0) `(>u32 ,v #u32:0)))
 
+(define (js-uint32->string v expr conf)
+   (cond
+      ((uint32? v)
+       (llong->string (uint32->llong v)))
+      ((inrange-int32? expr)
+       `(js-ascii->jssstring (uint32->fixnum ,v)))
+      ((m64? conf)
+       `(js-ascii->jssstring (uint32->string ,v)))
+      (else
+       `(js-ascii->jssstring (llong->string (uint32->llong ,v))))))
+
 ;; fixnum
 (define (js-fixnum->int32 v expr conf)
    (if (fixnum? v) (fixnum->int32 v) `(fixnum->uint32 ,v)))
 
 (define (js-fixnum->uint32 v expr conf)
    (if (fixnum? v) (fixnum->uint32 v) `(fixnum->uint32 ,v)))
+
+(define (js-fixnum->string v expr conf)
+   (if (fixnum? v)
+       (integer->string v)
+       `(js-ascii->jssstring ,v)))
+
+;; number
+(define (js-number->string v expr conf)
+   `(js-ascii->jsstring (js-number->string ,v)))
 
 ;; any
 (define (js->object v expr conf)
@@ -160,13 +189,23 @@
 (define (js->number v expr conf)
    `(js-tonumber ,v %this))
 
+(define (js->string v expr conf)
+   (match-case v
+      ((js-jsstring-ref ?str ?idx)
+       (set-car! v 'js-jsstring-ref-as-string)
+       v)
+      ((js-string-ref ?str ?idx ?this)
+       (set-car! v 'js-string-ref-as-string)
+       v)
+      (else
+       `(js-tojsstring ,v %this))))
+
 ;; bool
 (define (js-bool->int32 v expr conf)
    (if (boolean? v) (if v #s32:1 #s32:0) `(if ,v #s32:1 #s32:0)))
 
 (define (js-bool->uint32 v expr conf)
    (if (boolean? v) (if v #u32:1 #u32:0) `(if ,v #u32:1 #u32:0)))
-
 
 
 

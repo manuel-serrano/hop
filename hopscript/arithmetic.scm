@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sun Dec 17 16:52:39 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 19:06:40 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -43,9 +43,6 @@
 
 	   (%$$NN ::obj ::obj)
 	   (%$$NZ ::obj ::obj)
-
-	   (js-toint32::int32 ::obj ::JsGlobalObject)
-	   (js-touint32::uint32 ::obj ::JsGlobalObject)
 
 	   (bit-lshjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-rshjs::obj ::obj ::obj ::JsGlobalObject)
@@ -217,30 +214,6 @@
 		     ;; MS: CARE 21 dec 2016, why returning a flonum?
                      ;; (if (= m 0) 0.0 m)
 		     m)))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-toint32 ::obj ...                                             */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
-;*---------------------------------------------------------------------*/
-(define (js-toint32::int32 obj %this)
-   (cond
-      ((or (fixnum? obj) (flonum? obj)) (js-number-toint32 obj))
-      ((uint32? obj) (tprint "should not be here.uint32 " obj) (uint32->int32 obj))
-      ((int32? obj) (tprint "should not be here.int32 " obj) (tprint (/s32 #s32:1 (car (list #s32:0)))) obj)
-      (else (js-number-toint32 (js-tonumber obj %this)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-touint32 ::obj ...                                            */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
-;*---------------------------------------------------------------------*/
-(define (js-touint32::uint32 obj %this)
-   (cond
-      ((or (fixnum? obj) (flonum? obj)) (js-number-touint32 obj))
-      ((int32? obj) (tprint "should not be here.int32") (int32->uint32 obj))
-      ((uint32? obj) (tprint "should not be here.uint32") obj)
-      (else (js-number-touint32 (js-tointeger obj %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bit-lshjs ...                                                    */
