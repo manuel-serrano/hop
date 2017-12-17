@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Dec 16 09:34:59 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 14:32:45 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -516,6 +516,19 @@
 	       (((? check-node?)) #t)
 	       (else #f)))))
 
+   (define (param-hint-count p::J2SDecl)
+      (with-access::J2SDecl p (hint usecnt useinloop itype)
+	 (let ((bt (best-hint-type p #f)))
+	    (cond
+	       ((eq? bt 'unknown)
+		0)
+	       ((or (eq? itype 'unknown)
+		    (eq? itype 'any)
+		    (and (eq? itype 'number) (or (assq 'integer hint))))
+		(if useinloop (*fx 2 usecnt) usecnt))
+	       (else
+		0)))))
+      
    (define (duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
       (with-access::J2SDeclFun this (val id %info)
@@ -525,18 +538,7 @@
 		 (not vararg)
 		 (not (isa? val J2SSvc))
 		 (pair? params)
-		 (any (lambda (p::J2SDecl)
-			 (with-access::J2SDecl p (hint usecnt useinloop itype)
-			    (when (or (>=fx usecnt 3)
-				      (and (>=fx usecnt 1) useinloop))
-			       (let ((bt (best-hint-type p #f)))
-				  (unless (eq? bt 'unknown)
-				     (or (eq? itype 'unknown)
-					 (eq? itype 'any)
-					 (and (eq? itype 'number)
-					      (or (assq 'integer hint)
-						  (assq 'index hint)))))))))
-		    params)
+		 (>=fx (apply + (map param-hint-count params)) 3)
 		 (not (type-checker? val))))))
    
    (define (typed? decl::J2SDeclFun)
@@ -577,7 +579,7 @@
    
    (cond
       ((duplicable? this)
-       (with-access::J2SDeclFun this (val id)
+       (with-access::J2SDeclFun this (val id rtype)
 	  (with-access::J2SFun val (params body)
 	     (let* ((htypes (map (lambda (p)
 				    (best-hint-type p #t))
@@ -778,6 +780,12 @@
 				(params params)
 				(body (duplicate::J2SBlock body
 					 (nodes (list body)))))))))
+	    (with-access::J2SDeclFun nfun ((nval val))
+	       (with-access::J2SFun nval (body)
+		  ;; force a copy of the three to avoid sharing with the
+		  ;; typed version
+		  (set! body
+		     (return-patch! (j2s-alpha body '() '()) val nval))))
 	    (when (config-get conf :profile)
 	       (profile-fun! nfun id 'nohint))
 	    nfun))))
@@ -798,7 +806,7 @@
 	 (else (string-ref (symbol->string t) 0))))
    
    (with-access::J2SDeclFun fun (val id %info)
-      (with-access::J2SFun val (params body idthis generator thisp)
+      (with-access::J2SFun val (params body idthis generator thisp rtype)
 	 (let* ((newparams (map j2sdecl-duplicate params types))
 		(newthisp (when thisp
 			     (with-access::J2SDecl thisp (itype)
@@ -817,7 +825,6 @@
 			   (generator #f)
 			   (idgen generator)
 			   (%info #unspecified)
-			   (rtype 'unknown)
 			   (idthis (if (this? body) idthis #f))
 			   (thisp newthisp)
 			   (params newparams)
@@ -836,6 +843,8 @@
 			    (utype 'function)
 			    (vtype 'function)
 			    (val newfun))))
+	    (with-access::J2SFun newfun (body)
+	       (set! body (return-patch! body val newfun)))
 	    (use-count nbody +1 #f)
 	    (with-access::J2SFun newfun (decl)
 	       (set! decl newdecl))
@@ -1063,3 +1072,22 @@
 				    (set! body
 				       (duplicate::J2SBlock body
 					  (nodes (list mbody))))))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    return-patch! ::J2SNode ...                                      */
+;*    -------------------------------------------------------------    */
+;*    After duplicating functions' body, the return nodes must         */
+;*    be adjusted so that the FROM fields point to the new function.   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (return-patch! this::J2SNode old new)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    return-patch! ::J2SReturn ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (return-patch! this::J2SReturn old new)
+   (with-access::J2SReturn this (from)
+      (when (eq? from old)
+	 (set! from new)))
+   this)
+      

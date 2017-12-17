@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Dec 14 13:18:37 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 12:30:58 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -79,6 +79,16 @@
       (if (or (>= (bigloo-debug) 2)
 	      (string-contains (or (getenv "HOPTRACE") "") "j2s:type"))
 	  `(:type ,type)
+	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    dump-rtype ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (dump-rtype this)
+   (with-access::J2SFun this (rtype)
+      (if (or (>= (bigloo-debug) 2)
+	      (string-contains  (or (getenv "HOPTRACE") "") "j2s:type"))
+	  `(:rtype ,rtype)
 	  '())))
       
 ;*---------------------------------------------------------------------*/
@@ -435,15 +445,6 @@
 ;*    j2s->list ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
-
-   (define (dump-rtype this)
-      (with-access::J2SFun this (rtype)
-	 (if (or (>= (bigloo-debug) 2)
-		 (string-contains  (or (getenv "HOPTRACE") "")
-		    "j2s:type"))
-	     `(:rtype ,rtype)
-	     '())))
-      
    (with-access::J2SFun this (name thisp params body decl mode rtype optimize
 				need-bind-exit-return idthis generator)
       (cond
@@ -520,6 +521,9 @@
 (define-method (j2s->list this::J2SReturn)
    (with-access::J2SReturn this (expr tail from)
       `(,@(call-next-method)
+	  ,@(if (isa? from J2SFun)
+		(dump-rtype from)
+		'())
 	  ,@(if (isa? from J2SBindExit)
 		(with-access::J2SBindExit from (lbl)
 		   (list :from lbl))

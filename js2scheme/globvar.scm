@@ -3,10 +3,11 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Nov 23 07:46:33 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 11:46:29 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    Global variables optimization (initialization)                   */
+;*    Global variables optimization (initialization and constant       */
+;*    propagation).                                                    */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -72,6 +73,27 @@
 ;*    globvar! ::J2SRef ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (globvar! this::J2SRef closures::cell exec)
+   
+   (define (constant? expr::J2SExpr)
+      (cond
+	 ((or (isa? expr J2SLiteralCnst)
+	      (isa? expr J2SNativeString)
+	      (isa? expr J2SString)
+	      (isa? expr J2SNumber))
+	  #t)
+	 ((isa? expr J2SRef)
+	  (with-access::J2SRef expr (decl)
+	     (with-access::J2SDecl decl (ronly writable)
+		(or ronly (not writable)))))
+	 ((isa? expr J2SUnary)
+	  (with-access::J2SUnary expr (expr)
+	     (constant? expr)))
+	 ((isa? expr J2SBinary)
+	  (with-access::J2SBinary expr (lhs rhs)
+	     (and (constant? lhs) (constant? rhs))))
+	 (else
+	  #f)))
+   
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (scope %info id)
 	 (when (isa? decl J2SDeclFun)
@@ -84,19 +106,9 @@
 	     (call-default-walker))
 	    (else
 	     (let ((expr (globcnst-expr %info)))
-		(cond
-		   ((or (isa? expr J2SLiteralCnst)
-			(isa? expr J2SNativeString)
-			(isa? expr J2SString)
-			(isa? expr J2SNumber))
-		    (j2s-alpha expr '() '()))
-		   ((when (isa? expr J2SRef)
-		       (with-access::J2SRef expr (decl)
-			  (with-access::J2SDecl decl (ronly writable)
-			     (or ronly (not writable)))))
-		    (j2s-alpha expr '() '()))
-		   (else
-		    (call-default-walker)))))))))
+		(if (constant? expr)
+		    (j2s-alpha expr '() '())
+		    (call-default-walker))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    globvar! ::J2SCall ...                                           */

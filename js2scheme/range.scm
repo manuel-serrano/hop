@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec 15 07:49:31 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 16:50:29 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -212,7 +212,7 @@
 ;*---------------------------------------------------------------------*/
 (define (string-method-range name)
    (case (string->symbol name)
-      ((charCodeAt) *uint29-intv*)
+;*       ((charCodeAt) *uint29-intv*)                                  */
       ((indexOf lastIndexOf) *indexof-intv*)
       ((naturalCompare) *int30-intv*)
       ((localeCompare) *int30-intv*)))
@@ -828,6 +828,12 @@
 	     (return #f envs)))))
 
 ;*---------------------------------------------------------------------*/
+;*    node-range ::J2SLiteral ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SLiteral env::pair-nil args fix::struct)
+   (return #f env))
+
+;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SPragma ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SPragma env::pair-nil args fix::struct)
@@ -1301,7 +1307,7 @@
 	  (with-access::J2SAccess callee (obj field)
 	     (let ((fn (j2s-field-name field)))
 		(if (string? fn)
-		    (case (j2s-type-ref obj)
+		    (case (j2s-type obj)
 		       ((string)
 			(let ((intv (string-method-range fn)))
 			   (with-access::J2SCall this (range)

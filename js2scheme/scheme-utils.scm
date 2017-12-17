@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Dec 17 08:15:55 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 17:37:42 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -67,15 +67,20 @@
 	   (js-object-get-name/cache::symbol clevel::long)
 	   (js-object-put-name/cache!::symbol clevel::long)
 	   
-	   (j2s-get loc obj tyobj prop typrop tyval cache #!optional (clevel 100))
-	   (j2s-put! loc obj tyobj prop typrop val mode cache #!optional (clevel 100))
+	   (j2s-get loc obj tyobj prop typrop tyval conf cache #!optional (clevel 100))
+	   (j2s-put! loc obj tyobj prop typrop val mode conf cache #!optional (clevel 100))
 
 	   (inrange-positive?::bool ::J2SExpr)
 	   (inrange-32?::bool ::J2SExpr)
 	   (inrange-int30?::bool ::J2SExpr)
 	   (inrange-int32?::bool ::J2SExpr)
 	   (inrange-uint32?::bool ::J2SExpr)
-	   (inrange-int53?::bool ::J2SExpr)))
+	   (inrange-int53?::bool ::J2SExpr)
+
+	   (overflow29 ::long)
+	   (box ::obj ::symbol ::pair-nil #!optional proc::obj)
+	   (box32 ::obj ::symbol #!optional proc::obj)
+	   (box64 ::obj ::symbol #!optional proc::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -461,7 +466,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-get loc obj tyobj prop typrop tyval cache #!optional (clevel 100))
+(define (j2s-get loc obj tyobj prop typrop tyval conf cache #!optional (clevel 100))
 
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
@@ -474,10 +479,10 @@
 		  ((js-string->jsstring ?str) str)
 		  (else prop))))
       (cond
-	 ((and (> (bigloo-debug) 0) (not (eq? tyval 'uint32)))
+	 ((> (bigloo-debug) 0)
 	  (if (string? prop)
 	      `(js-get/debug ,obj ',(string->symbol prop) %this ',loc)
-	      `(js-get/debug ,obj ,prop %this ',loc)))
+	      `(js-get/debug ,obj ,(box prop typrop conf) %this ',loc)))
 	 ((eq? tyobj 'array)
 	  (case typrop
 	     ((uint32)
@@ -521,6 +526,8 @@
 		     (else
 		      `(js-get-name/cache ,obj
 			  ',(string->symbol prop) ,(js-pcache cache) %this)))))
+	     ((memq typrop '(int32 uint32))
+	      `(js-get ,obj ,(box prop typrop conf) %this))
 	     ((maybe-string? prop typrop)
 	      `(js-get/cache ,obj ,prop ,(js-pcache cache) %this))
 	     (else
@@ -531,13 +538,15 @@
 		  `(js-get-lengthu32 ,obj #f %this)
 		  `(js-get-length ,obj #f %this))
 	      `(js-get ,obj ',(string->symbol prop) %this)))
+	 ((memq typrop '(int32 uint32))
+	  `(js-gets32 ,obj ,(box prop typrop conf) %this))
 	 (else
 	  `(js-get ,obj ,prop %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj tyobj prop typrop val mode cache #!optional (clevel 100))
+(define (j2s-put! loc obj tyobj prop typrop val mode conf cache #!optional (clevel 100))
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)
@@ -548,7 +557,7 @@
 	  (if (string? prop)
 	      `(js-put/debug! ,obj ',(string->symbol prop)
 		  ,val ,mode %this ',loc)
-	      `(js-put/debug! ,obj ,prop
+	      `(js-put/debug! ,obj ,(box prop typrop conf)
 		  ,val ,mode %this ',loc)))
 	 ((eq? tyobj 'array)
 	  (case typrop
@@ -578,6 +587,8 @@
 			 `(js-put-name/cache! ,obj ',(string->symbol prop)
 			     ,val
 			     ,mode ,(js-pcache cache) %this))))))
+	     ((memq typrop '(int32 uint32))
+	      `(js-put! ,obj ,(box prop typrop conf) ,val ,mode %this))
 	     ((or (number? prop) (>=fx clevel 10))
 	      `(js-put! ,obj ,prop ,val ,mode %this))
 	     (else
@@ -587,6 +598,8 @@
 	  (cond
 	     ((string? prop)
 	      `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
+	     ((memq typrop '(int32 uint32))
+	      `(js-put! ,obj ,(box prop typrop conf) ,val ,mode %this))
 	     (else
 	      `(js-put! ,obj ,prop ,val ,mode %this)))))))
 
@@ -694,5 +707,66 @@
 	  (when (interval? range)
 	     (and (>=llong (interval-min range) (- (bit-lshllong #l1 53)))
 		  (<llong (interval-max range) (bit-lshllong #l1 53)))))))
+
+;*---------------------------------------------------------------------*/
+;*    overflow29 ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    2^53-1 overflow                                                  */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight (second edition), H. Warren J.r,            */
+;*    Chapter 4, section 4.1, page 68                                  */
+;*---------------------------------------------------------------------*/
+(define (overflow29 v::long)
+   (let* ((a (negfx (bit-lsh 1 29)))
+	  (b (-fx (bit-lsh 1 29) 1))
+	  (b-a (-fx b a)))
+      (if (<=u32 (fixnum->uint32 (-fx v a)) (fixnum->uint32 b-a))
+	  v
+	  (fixnum->flonum v))))
+
+;*---------------------------------------------------------------------*/
+;*    box ...                                                          */
+;*---------------------------------------------------------------------*/
+(define (box val type conf #!optional proc::obj)
+   (if (m64? conf)
+       (box64 val type proc)
+       (box32 val type proc)))
+
+;*---------------------------------------------------------------------*/
+;*    box32 ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (box32 val type::symbol #!optional proc::obj)
+   (case type
+      ((int32)
+       (if (int32? val)
+	   (overflow29 (int32->fixnum val))
+	   `(overflow29 (int32->fixnum ,val))))
+      ((uint32)
+       (if (uint32? val)
+	   (if (<u32 val (bit-lshu32 #u32:1 29))
+	       (uint32->fixnum val)
+	       (uint32->flonum val))
+	   `(if (<u32 ,val ,(bit-lshu32 #u32:1 29))
+		(uint32->fixnum ,val)
+		(uint32->flonum ,val))))
+      ((integer)
+       (if (fixnum? val)
+	   (overflow29 val)
+	   `(overflow29 ,val)))
+      ((real number)
+       val)
+      (else
+       (if (not proc) val (proc val)))))
+
+;*---------------------------------------------------------------------*/
+;*    box64 ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (box64 val type::symbol #!optional proc::obj)
+   (case type
+      ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
+      ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
+      ((integer real number) val)
+      (else (if (not proc) val (proc val)))))
+
 
 

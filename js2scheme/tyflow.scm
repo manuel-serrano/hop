@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Dec 16 09:06:50 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 16:48:40 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -967,15 +967,20 @@
 	    (let* ((fn (j2s-field-name field))
 		   (ty (if (string? fn)
 			   (case (j2s-type obj)
-			      ((string) (string-method-type fn))
-			      ((regexp) (regexp-method-type fn))
-			      ((number integer index) (number-method-type fn))
-			      ((array) (array-method-type fn))
-			      (else (cond
-				       ((String? obj)
-					(string-static-method-type fn))
-				       (else
-					'any))))
+			      ((string)
+			       (string-method-type fn))
+			      ((regexp)
+			       (regexp-method-type fn))
+			      ((number integer index)
+			       (number-method-type fn))
+			      ((array)
+			       (array-method-type fn))
+			      ((unknown)
+			       'unknown)
+			      (else
+			       (cond
+				  ((String? obj) (string-static-method-type fn))
+				  (else 'any))))
 			   'any)))
 	       (if (eq? ty 'any)
 		   ;; the method is unknown, filter out the typing env
@@ -1160,13 +1165,21 @@
 			      (set! env (extend-env env decl 'function))))
 			'bool)
 		       ((&& OR)
-			(if (or (eq? typr 'unknown) (eq? typl 'unknown) )
-			    'unknown
-			    (merge-types typr typl)))
+			(cond
+			   ((or (eq? typr 'any) (eq? typl 'any) )
+			    'any)
+			   ((or (eq? typr 'unknown) (eq? typl 'unknown) )
+			    'unknown)
+			   (else
+			    (merge-types typr typl))))
 		       ((<< >> >>> ^ & BIT_OR)
-			(if (and (type-integer? typl) (type-integer? typr))
-			    'integer
-			    'unknown))
+			(cond
+			   ((and (type-integer? typl) (type-integer? typr))
+			    'integer)
+			   ((or (eq? typl 'any) (eq? typr 'any))
+			    'any)
+			   (else
+			    'unknown)))
 		       (else
 			'any))))
 	    (return typ (if (eq? op 'OR) (env-merge envl envr) envr)

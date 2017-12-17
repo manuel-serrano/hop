@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sun Dec 17 09:23:53 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 16:52:39 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -226,8 +226,8 @@
 (define (js-toint32::int32 obj %this)
    (cond
       ((or (fixnum? obj) (flonum? obj)) (js-number-toint32 obj))
-      ((uint32? obj) (tprint "should not be here") (uint32->int32 obj))
-      ((int32? obj) (tprint "should not be here") obj)
+      ((uint32? obj) (tprint "should not be here.uint32 " obj) (uint32->int32 obj))
+      ((int32? obj) (tprint "should not be here.int32 " obj) (tprint (/s32 #s32:1 (car (list #s32:0)))) obj)
       (else (js-number-toint32 (js-tonumber obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -238,8 +238,8 @@
 (define (js-touint32::uint32 obj %this)
    (cond
       ((or (fixnum? obj) (flonum? obj)) (js-number-touint32 obj))
-      ((int32? obj) (tprint "should not be here") (int32->uint32 obj))
-      ((uint32? obj) (tprint "should not be here") obj)
+      ((int32? obj) (tprint "should not be here.int32") (int32->uint32 obj))
+      ((uint32? obj) (tprint "should not be here.uint32") obj)
       (else (js-number-touint32 (js-tointeger obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -281,9 +281,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
 ;*---------------------------------------------------------------------*/
 (define (bit-andjs x y %this)
-   (let* ((lnum (int32->elong (js-toint32 x %this)))
-	  (rnum (int32->elong (js-toint32 y %this))))
-      (js-int32-tointeger (elong->int32 (bit-andelong lnum rnum)))))
+   (let* ((lnum (js-toint32 x %this))
+	  (rnum (js-toint32 y %this)))
+      (js-int32-tointeger (bit-ands32 lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bit-orjs ...                                                     */
@@ -291,9 +291,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
 ;*---------------------------------------------------------------------*/
 (define (bit-orjs x y %this)
-   (let* ((lnum (int32->elong (js-toint32 x %this)))
-	  (rnum (int32->elong (js-toint32 y %this))))
-      (js-int32-tointeger (elong->int32 (bit-orelong lnum rnum)))))
+   (let* ((lnum (js-toint32 x %this))
+	  (rnum (js-toint32 y %this)))
+      (js-int32-tointeger (bit-ors32 lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bit-xorjs ...                                                    */
@@ -301,9 +301,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.10        */
 ;*---------------------------------------------------------------------*/
 (define (bit-xorjs x y %this)
-   (let* ((lnum (int32->elong (js-toint32 x %this)))
-	  (rnum (int32->elong (js-toint32 y %this))))
-      (js-int32-tointeger (elong->int32 (bit-xorelong lnum rnum)))))
+   (let* ((lnum (js-toint32 x %this))
+	  (rnum (js-toint32 y %this)))
+      (js-int32-tointeger (bit-xors32 lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    bit-notjs ...                                                    */
@@ -311,10 +311,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8       */
 ;*---------------------------------------------------------------------*/
 (define (bit-notjs expr %this)
-   (let ((num (int32->elong (js-toint32 expr %this))))
-      (js-int32-tointeger (elong->int32 (bit-notelong num)))))
-
-
+   (let ((num (js-toint32 expr %this)))
+      (js-int32-tointeger (bit-nots32 num))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-int53-tointeger ...                                           */

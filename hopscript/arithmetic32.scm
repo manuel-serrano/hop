@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Dec 17 09:24:44 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 10:07:21 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -39,18 +39,18 @@
 	  (inline js-uint32-tointeger::obj ::uint32)
 	  
 	  (inline +fx/overflow::obj ::long ::long)
-	  (+fx32/overflow::obj ::long ::long)
+	  (inline +fx32/overflow::obj ::long ::long)
 	  (inline +s32/overflow::obj ::int32 ::int32)
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
 	  (+/overflow::obj ::obj ::obj)
 	  
 	  (inline -fx/overflow::obj ::long ::long)
-	  (-fx32/overflow::obj ::long ::long)
+	  (inline -fx32/overflow::obj ::long ::long)
 	  (inline -s32/overflow::obj ::int32 ::int32)
 	  (inline -u32/overflow::obj ::uint32 ::uint32)
 	  (-/overflow::obj ::obj ::obj)
 	  
-	  (*fx/overflow::obj ::long ::long)
+	  (inline *fx/overflow::obj ::long ::long)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow::obj ::obj ::obj)
 	  ))))
@@ -156,17 +156,7 @@
 ;*    js-int32-tointeger ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-int32-tointeger::obj i::int32)
-   (cond-expand
-      (bint30
-       (if (and (<s32 i (-s32 (bit-lshs32 #s32:1 29) #s32:1))
-		(>=s32 i (negs32 (bit-lshs32 #s32:1 29))))
-	   (int32->fixnum i)
-	   (int32->flonum i)))
-      (bint32
-       (if (and (<s32 i (-s32 (bit-lshs32 #s32:1 31) #s32:1))
-		(>=s32 i (negs32 (bit-lshs32 #s32:1 31))))
-	   (int32->fixnum i)
-	   (int32->flonum i)))))
+   (overflow29 (int32->fixnum i)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-uint32-tointeger ...                                          */
@@ -217,7 +207,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    X and Y are true 32bit values.                                   */
 ;*---------------------------------------------------------------------*/
-(define (+fx32/overflow x::long y::long)
+(define-inline (+fx32/overflow x::long y::long)
    (cond-expand
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
@@ -285,7 +275,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    X and Y are true 32bit values.                                   */
 ;*---------------------------------------------------------------------*/
-(define (-fx32/overflow x::long y::long)
+(define-inline (-fx32/overflow x::long y::long)
    (cond-expand
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
@@ -345,7 +335,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    The argument are 30bit integers encoded into long values.        */
 ;*---------------------------------------------------------------------*/
-(define (*fx/overflow x::long y::long)
+(define-inline (*fx/overflow x::long y::long)
    (cond-expand
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))

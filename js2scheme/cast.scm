@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Dec 16 05:28:33 2017 (serrano)                */
+;*    Last change :  Sun Dec 17 17:02:41 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -371,31 +371,37 @@
    (with-access::J2SAssigOp this (op lhs rhs)
       (case op
 	 ((>> <<)
-	  (if (memq (j2s-type-ref rhs) '(int32 uint32))
-	      (begin
-		 (set! lhs (type-cast! lhs 'int32))
-		 (set! rhs (type-cast! rhs 'uint32)))
-	      (begin
-		 (set! lhs (type-cast! lhs '*))
-		 (set! rhs (type-cast! rhs '*))))
+;* 	  (if (memq (j2s-type-ref rhs) '(int32 uint32))                */
+;* 	      (begin                                                   */
+;* 		 (set! lhs (type-cast! lhs 'int32))                    */
+;* 		 (set! rhs (type-cast! rhs 'uint32)))                  */
+;* 	      (begin                                                   */
+;* 		 (set! lhs (type-cast! lhs '*))                        */
+;* 		 (set! rhs (type-cast! rhs '*))))                      */
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((>>>)
-	  (if (memq (j2s-type-ref rhs) '(int32 uint32))
-	      (begin
-		 (set! lhs (type-cast! lhs 'uint32))
-		 (set! rhs (type-cast! rhs 'uint32))
-	      (begin
-		 (set! lhs (type-cast! lhs '*))
-		 (set! rhs (type-cast! rhs '*)))))
+;* 	  (if (memq (j2s-type-ref rhs) '(int32 uint32))                */
+;* 	      (begin                                                   */
+;* 		 (set! lhs (type-cast! lhs 'uint32))                   */
+;* 		 (set! rhs (type-cast! rhs 'uint32))                   */
+;* 	      (begin                                                   */
+;* 		 (set! lhs (type-cast! lhs '*))                        */
+;* 		 (set! rhs (type-cast! rhs '*)))))                     */
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((^ & BIT_OR)
-	  (if (memq (j2s-type-ref rhs) '(int32 uint32))
-	      (begin
-		 (set! lhs (type-cast! lhs 'int32))
-		 (set! rhs (type-cast! rhs 'int32)))
-	      (begin
-		 (set! lhs (type-cast! lhs '*))
-		 (set! rhs (type-cast! rhs '*))))
+;* 	  (if (memq (j2s-type-ref rhs) '(int32 uint32))                */
+;* 	      (begin                                                   */
+;* 		 (set! lhs (type-cast! lhs 'int32))                    */
+;* 		 (set! rhs (type-cast! rhs 'int32)))                   */
+;* 	      (begin                                                   */
+;* 		 (set! lhs (type-cast! lhs '*))                        */
+;* 		 (set! rhs (type-cast! rhs '*))))                      */
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs 'int32))
 	  (cast this totype))
 	 (else
 	  (set! lhs (type-cast! lhs '*))
