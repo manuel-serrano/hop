@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec 18 11:34:04 2017 (serrano)                */
+;*    Last change :  Mon Dec 18 11:58:49 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1508,8 +1508,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-arithmetic-mul loc type lhs::J2SExpr rhs::J2SExpr
 	   mode return conf hint::pair-nil)
-
-   (define (mul-int32/32 lhs tl left rhs tr right)
+   
+   (define (mul-int32 lhs tl left rhs tr right tonumber)
       (case tr
 	 ((int32)
 	  `(*s32/overflow ,left ,right))
@@ -1526,9 +1526,9 @@
 	 ((real)
 	  `(* ,(asreal left tl) ,right))
 	 (else
-	  `(* ,(asfixnum left tl) ,(tonumber32 right tr)))))
-
-   (define (mul-uint32/32 lhs tl left rhs tr right)
+	  `(* ,(asfixnum left tl) ,(tonumber right tr)))))
+   
+   (define (mul-uint32 lhs tl left rhs tr right tonumber)
       (case tr
 	 ((int32)
 	  (cond
@@ -1550,10 +1550,10 @@
 	  (if (inrange-int32? lhs)
 	      `(if (fixnum? ,right)
 		   (*fx/overflow ,(asfixnum left tl) ,right)
-		   (* ,(asfixnum left tl) ,(tonumber32 right tr)))
-	      `(* ,(asreal left tl) ,(tonumber32 right tr))))))
-
-   (define (mul-integer/32 lhs tl left rhs tr right)
+		   (* ,(asfixnum left tl) ,(tonumber right tr)))
+	      `(* ,(asreal left tl) ,(tonumber right tr))))))
+   
+   (define (mul-integer lhs tl left rhs tr right tonumber)
       (case tr
 	 ((int32)
 	  `(*fx/overflow ,left ,(int32->fixnum right)))
@@ -1570,19 +1570,18 @@
 	 ((real)
 	  `(* ,(asreal left tl) ,right))
 	 (else
-	  `(* ,(asfixnum left tl) ,(tonumber32 right tr)))))
-
-   (define (mul-real/32 lhs tl left rhs tr right)
+	  `(* ,(asfixnum left tl) ,(tonumber right tr)))))
+   
+   (define (mul-real lhs tl left rhs tr right tonumber)
       (case tr
 	 ((int32 uint32 integer)
 	  `(*fl ,left ,(asreal right tr)))
 	 ((real)
 	  `(*fl ,left ,right))
 	 (else
-	  `(*fl ,left ,(tonumber32 right tr)))))
+	  `(*fl ,left ,(tonumber right tr)))))
    
-	 
-   (define (mul/32 type lhs tl left rhs tr right)
+   (define (mul type lhs tl left rhs tr right tonumber)
       (case type
 	 ((int32)
 	  (cond
@@ -1592,7 +1591,7 @@
 	      `(uint32->int32 (*u32 ,left ,right)))
 	     (else
 	      `(fixnum->int32
-		  `(*js ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))))
+		  `(*js ,(tonumber left tl) ,(tonumber right tr) %this)))))
 	 ((uint32)
 	  (cond
 	     ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -1601,7 +1600,7 @@
 	      `(*u32 ,left ,right))
 	     (else
 	      `(fixnum->uint32
-		  `(*js ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))))
+		  `(*js ,(tonumber left tl) ,(tonumber right tr) %this)))))
 	 ((integer)
 	  (cond
 	     ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -1609,62 +1608,29 @@
 	     ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	      `(uint32->fixnum (*u32 ,left ,right)))
 	     (else
-	      `(*js ,(tonumber32 left tl) ,(tonumber32 right tr) %this))))
+	      `(*js ,(tonumber left tl) ,(tonumber right tr) %this))))
 	 ((number obj any object)
 	  (cond
 	     ((eq? tl 'int32)
-	      (mul-int32/32 lhs tl left rhs tr right))
+	      (mul-int32 lhs tl left rhs tr right tonumber))
 	     ((eq? tr 'int32)
-	      (mul-int32/32 rhs tr right lhs tl left))
+	      (mul-int32 rhs tr right lhs tl left tonumber))
 	     ((eq? tl 'uint32)
-	      (mul-uint32/32 lhs tl left rhs tr right))
+	      (mul-uint32 lhs tl left rhs tr right tonumber))
 	     ((eq? tr 'uint32)
-	      (mul-uint32/32 rhs tr right lhs tl left))
+	      (mul-uint32 rhs tr right lhs tl left tonumber))
 	     ((eq? tl 'integer)
-	      (mul-integer/32 lhs tl left rhs tr right))
+	      (mul-integer lhs tl left rhs tr right tonumber))
 	     ((eq? tr 'integer)
-	      (mul-integer/32 rhs tr right lhs tl left))
+	      (mul-integer rhs tr right lhs tl left tonumber))
 	     ((eq? tl 'real)
-	      (mul-real/32 lhs tl left rhs tr right))
+	      (mul-real lhs tl left rhs tr right tonumber))
 	     ((eq? tr 'real)
-	      (mul-real/32 rhs tr right lhs tl left))
+	      (mul-real rhs tr right lhs tl left tonumber))
 	     (else
-	      `(*js ,(tonumber32 left tl) ,(tonumber32 right tr) %this))))
+	      `(*js ,(tonumber left tl) ,(tonumber right tr) %this))))
 	 (else
-	  (error "mul/32" "illegal integer type" type))))
-   
-   (define (mul/64 type lhs tl left rhs tr right)
-      (case type
-	 ((int32)
-	  (cond
-	     ((and (memq tl '(int32 uint32 int53))
-		   (memq tr '(int32 uint32 int53)))
-	      `(fixnum->int32
-		  (*fx ,(tolong64 left tl) ,(tolong64 right tr))))
-	     (else
-	      `(fixnum->int32
-		  `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))))
-	 ((uint32)
-	  (cond
-	     ((and (memq tl '(int32 uint32 int53))
-		   (memq tr '(int32 uint32 int53)))
-	      `(fixnum->uint32
-		  (*fx ,(tolong64 left tl) ,(tolong64 right tr))))
-	     (else
-	      `(fixnum->uint32
-		  (*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))))
-	 ((int53 integer)
-	  (if (and (memq tl '(int32 uint32 int53))
-		   (memq tr '(int32 uint32 int53)))
-	      `(*fx ,(tolong64 left tl) ,(tolong64 right tr))
-	      `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))
-	 ((number obj any object)
-	  (if (and (memq tl '(int32 uint32 int53))
-		   (memq tr '(int32 uint32 int53)))
-	      `(*/overflow ,(tolong64 left tl) ,(tolong64 right tr))
-	      `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))
-	 (else
-	  (error "mul/64" "illegal integer type" type))))
+	  (error "mul" "illegal integer type" type))))
    
    (with-tmp lhs rhs mode return conf hint '*
       (lambda (left right)
@@ -1672,8 +1638,8 @@
 	       (tr (j2s-type-ref rhs)))
 	    (epairify loc
 	       (if (m64? conf)
-		   (mul/64 type lhs tl left rhs tr right)
-		   (mul/32 type lhs tl left rhs tr right)))))))
+		   (mul type lhs tl left rhs tr right tonumber64)
+		   (mul type lhs tl left rhs tr right tonumber32)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-arithmetic-div ...                                            */
@@ -1853,7 +1819,7 @@
 	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(remainders32 ,left (uint32->int32 ,right)))
 	 ((and (eq? tl 'int53) (eq? tr 'uint32))
-	  `(remainderfx ,left ,(uint32->fixnum right)))
+	  `(remainderfx ,left (uint32->fixnum ,right)))
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (fixnum->int32 (remainderfx ,left (uint32->fixnum ,right)))
