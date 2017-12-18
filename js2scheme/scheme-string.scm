@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Dec 17 18:55:06 2017 (serrano)                */
+;*    Last change :  Mon Dec 18 08:26:29 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -37,7 +37,6 @@
 (define (j2s-string-ref this::J2SAccess mode return conf hint)
 
    (define (jsstring-ref type obj index)
-      (tprint "jsstring-ref type=" type " " (j2s->list this))
       (if (eq? type 'string)
 	  `(js-jsstring-ref-as-string ,obj ,index)
 	  `(js-jsstring-ref ,obj ,index)))

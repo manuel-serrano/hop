@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Dec 17 20:05:44 2017 (serrano)                */
+;*    Last change :  Mon Dec 18 11:34:04 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1244,6 +1244,7 @@
    (define (opfx op) (symbol-append op 'fx))
    (define (opfx/overflow op) (symbol-append op 'fx/overflow))
    (define (op/overflow op) (symbol-append op '/overflow))
+   (define (opfl op) (symbol-append op 'fl))
 
    (define (addsub-generic/32 op type lhs tl left rhs tr right)
       (cond
@@ -1330,33 +1331,120 @@
 	     `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr))
 	     `(,op ,(tonumber64 left tl) ,(tonumber64 right tr))))))
 
+   (define (addsub-number-int32/64 op type lhs tl left rhs tr right flip::bool)
+      (cond
+	 ((eq? tr 'int32)
+	  (if flip
+	      `(int32->fixnum (,(ops32 op) ,right ,left))
+	      `(int32->fixnum (,(ops32 op) ,left ,right))))
+	 ((memq tr '(uint32 int53 integer))
+	  (if flip 
+	      `(,(opfx/overflow op) ,(tolong64 right tr) ,(tolong64 left tl))
+	      `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr))))
+	 ((eq? tr 'integer)
+	  (if flip
+	      `(,(opfx/overflow op) ,(tolong64 right tr) ,(tolong64 left tl))
+	      `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr))))
+	 ((eq? tr 'real)
+	  (if flip
+	      `(,(opfl op) ,right ,(toflonum left tl))
+	      `(,(opfl op) ,(toflonum left tl) ,right)))
+	 (else
+	  `(if (fixnum? ,right)
+	       (,(opfx/overflow op) ,(asfixnum left tl) ,right)
+	       ,(if flip
+		    `(,(op/overflow op)
+		      ,(box right tr conf) ,(box left tl conf))
+		    `(,(op/overflow op)
+		      ,(box left tl conf) ,(box right tr conf)))))))
+
+   (define (addsub-number-uint32/64 op type lhs tl left rhs tr right flip::bool)
+      (cond
+	 ((eq? tr 'uint32)
+	  (if flip
+	      `(uint32->fixnum (,(opu32 op) ,right ,left))
+	      `(uint32->fixnum (,(opu32 op) ,left ,right))))
+	 ((memq tr '(int32 int53 integer))
+	  (if flip
+	      `(,(opfx/overflow op) ,(tolong64 right tr) ,(tolong64 left tl))
+	      `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr))))
+	 ((eq? tr 'real)
+	  (if flip
+	      `(,(opfl op) ,right ,(toflonum left tl))
+	      `(,(opfl op) ,(toflonum left tl) ,right)))
+	 (else
+	  `(if (fixnum? ,right)
+	       (,(opfx/overflow op) ,(asfixnum left tl) ,right)
+	       ,(if flip
+		    `(,(op/overflow op)
+		      ,(box right tr conf) ,(box left tl conf))
+		    `(,(op/overflow op)
+		      ,(box left tl conf) ,(box right tr conf)))))))
+
+   (define (addsub-number-int53/64 op type lhs tl left rhs tr right flip::bool)
+      (cond
+	 ((memq tr '(int32 uint32 int53 integer))
+	  (if flip
+	      `(,(opfx/overflow op) ,(tolong64 right tr) ,(tolong64 left tl))
+	      `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr))))
+	 ((eq? tr 'real)
+	  (if flip
+	      `(,(opfl op) ,right ,(toflonum left tl))
+	      `(,(opfl op) ,(toflonum left tl) ,right)))
+	 (else
+	  `(if (fixnum? ,right)
+	       (,(opfx/overflow op) ,(asfixnum left tl) ,right)
+	       ,(if flip
+		    `(,(op/overflow op)
+		      ,(box right tr conf) ,(box left tl conf))
+		    `(,(op/overflow op)
+		      ,(box left tl conf) ,(box right tr conf)))))))
+
+   (define (addsub-number-real/64 op type lhs tl left rhs tr right flip::bool)
+      (cond
+	 ((memq tr '(int32 uint32 int53 integer))
+	  (if flip
+	      `(,(opfl op) ,(toflonum right tr) ,left)
+	      `(,(opfl op) ,left ,(toflonum right tr))))
+	 ((eq? tr 'real)
+	  (if flip
+	      `(,(opfl op) ,right ,left)
+	      `(,(opfl op) ,left ,right)))
+	 (else
+	  (if flip
+	      `(,(op/overflow op)
+		,(box right tr conf) ,(box left tl conf))
+	      `(,(op/overflow op)
+		,(box left tl conf) ,(box right tr conf))))))
+   
    (define (addsub-number/64 op type lhs tl left rhs tr right)
       (cond
-	 ((and (memq tl '(int32 uint32)) (memq tr '(int32 uint32)))
-	  `(,(opfx/overflow op) ,(tolong64 left tl) ,(tolong64 right tr)))
-	 ((and (eq? tl 'uint32) (eq? tr 'int32))
-	  `(,(opfx/overflow op) (uint32->fixnum ,left) (int32->fixnum ,right)))
-	 ((and (eq? tl 'number) (memq tr '(int32 uint32)))
-	  `(if (fixnum? ,left)
-	       (,(opfx/overflow op) ,left ,(tolong64 right tr))
-	       (,(op/overflow op) ,(tonumber64 left tl) ,(tolong64 right tr))))
-	 ((and (eq? tl 'integer) (eq? tr 'integer))
-	  `(,(opfx/overflow op) ,left ,right))
-	 ((and (eq? tl 'bint) (eq? tr 'bint))
-	  `(,(opfx/overflow op) ,left ,right))
-	 ((and (eq? tl 'bint) (eq? tr 'int32))
-	  `(,(opfx op) ,left ,(tolong64 right tr)))
-	 ((and (eq? tl 'bint) (eq? tr 'uint32))
-	  `(,(opfx/overflow op) ,left ,(tolong64 right tr)))
+	 ((eq? tl 'int32)
+	  (addsub-number-int32/64 op type lhs tl left rhs tr right #f))
+	 ((eq? tr 'int32)
+	  (addsub-number-int32/64 op type rhs tr right lhs tl left #t))
+	 ((eq? tl 'uint32)
+	  (addsub-number-uint32/64 op type lhs tl left rhs tr right #f))
+	 ((eq? tr 'uint32)
+	  (addsub-number-uint32/64 op type rhs tr right  lhs tl left #t))
+	 ((memq tl '(int53 integer bint))
+	  (addsub-number-int53/64 op type lhs tl left rhs tr right #f))
+	 ((memq tr '(int53 integer bint))
+	  (addsub-number-int53/64 op type rhs tr right  lhs tl left #t))
+	 ((eq? tl 'real)
+	  (addsub-number-real/64 op type lhs tl left rhs tr right #f))
+	 ((eq? tr 'real)
+	  (addsub-number-real/64 op type rhs tr right lhs tl left #t))
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(,(opfx/overflow op) ,left ,right)
-	     `(,(op/overflow op) ,(tonumber64 left tl) ,(tonumber64 right tr))))))
+	     `(,(op/overflow op)
+	       ,(tonumber64 left tl) ,(tonumber64 right tr))))))
 
    (define (addsub-long/64 op lhs tl left rhs tr right)
       `(,(opfx op) ,(tolong64 left tl) ,(tolong64 right tr)))
 
-   (define (addsub-int32/64 op lhs tl left rh<s tr right)
+   (define (addsub-int32/64 op lhs tl left rhs tr right)
       (cond
 	 ((and (eq? tl 'int32) (eq? tr 'int32))
 	  `(,(ops32 op) ,left ,right))
@@ -1421,6 +1509,79 @@
 (define (js-arithmetic-mul loc type lhs::J2SExpr rhs::J2SExpr
 	   mode return conf hint::pair-nil)
 
+   (define (mul-int32/32 lhs tl left rhs tr right)
+      (case tr
+	 ((int32)
+	  `(*s32/overflow ,left ,right))
+	 ((uint32)
+	  (cond
+	     ((inrange-int32? rhs)
+	      `(*s32/overflow ,left ,(asint32 right tr)))
+	     ((inrange-uint32? lhs)
+	      `(*u32/overflow ,(asuint32 left tl) ,right))
+	     (else
+	      `(* ,(asfixnum left tl) ,(asreal right tr)))))
+	 ((integer)
+	  `(*fx/overflow ,(asfixnum left tl) ,(asfixnum right tr)))
+	 ((real)
+	  `(* ,(asreal left tl) ,right))
+	 (else
+	  `(* ,(asfixnum left tl) ,(tonumber32 right tr)))))
+
+   (define (mul-uint32/32 lhs tl left rhs tr right)
+      (case tr
+	 ((int32)
+	  (cond
+	     ((inrange-int32? lhs)
+	      `(*s32/overflow ,(asint32 left tl) ,right))
+	     ((inrange-uint32? rhs)
+	      `(*u32/overflow ,left ,(asint32 right tr)))
+	     (else
+	      `(* ,(asreal left tl) ,(asfixnum right tr)))))
+	 ((uint32)
+	  `(*u32/overflow ,left ,right))
+	 ((integer)
+	  (if (inrange-int32? lhs)
+	      `(*fx/overflow ,(asfixnum left tl) ,(asfixnum right tr))
+	      `(* ,(asreal left tl) ,(asfixnum right tr))))
+	 ((real)
+	  `(* ,(asreal left tl) ,right))
+	 (else
+	  (if (inrange-int32? lhs)
+	      `(if (fixnum? ,right)
+		   (*fx/overflow ,(asfixnum left tl) ,right)
+		   (* ,(asfixnum left tl) ,(tonumber32 right tr)))
+	      `(* ,(asreal left tl) ,(tonumber32 right tr))))))
+
+   (define (mul-integer/32 lhs tl left rhs tr right)
+      (case tr
+	 ((int32)
+	  `(*fx/overflow ,left ,(int32->fixnum right)))
+	 ((uint32)
+	  (cond
+	     ((inrange-int32? rhs)
+	      `(*s32/overflow ,left ,(asfixnum right tr)))
+	     ((inrange-uint32? lhs)
+	      `(*u32/overflow ,(asuint32 left tl) ,right))
+	     (else
+	      `(* ,(asfixnum left tl) ,(asreal right tr)))))
+	 ((integer)
+	  `(*fx/overflow ,(asfixnum left tl) ,(asfixnum right tr)))
+	 ((real)
+	  `(* ,(asreal left tl) ,right))
+	 (else
+	  `(* ,(asfixnum left tl) ,(tonumber32 right tr)))))
+
+   (define (mul-real/32 lhs tl left rhs tr right)
+      (case tr
+	 ((int32 uint32 integer)
+	  `(*fl ,left ,(asreal right tr)))
+	 ((real)
+	  `(*fl ,left ,right))
+	 (else
+	  `(*fl ,left ,(tonumber32 right tr)))))
+   
+	 
    (define (mul/32 type lhs tl left rhs tr right)
       (case type
 	 ((int32)
@@ -1431,18 +1592,16 @@
 	      `(uint32->int32 (*u32 ,left ,right)))
 	     (else
 	      `(fixnum->int32
-		  `(*js ,(tonumber64 left tl)
-		      ,(tonumber64 right tr) %this)))))
+		  `(*js ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))))
 	 ((uint32)
 	  (cond
 	     ((and (eq? tl 'int32) (eq? tr 'int32))
 	      `(int32->uint32 (*s32 ,left ,right)))
 	     ((and (eq? tl 'uint32) (eq? tr 'uint32))
-	      `(uint32->int32 (*u32 ,left ,right)))
+	      `(*u32 ,left ,right))
 	     (else
-	      `(fixnum->int32
-		  `(*js ,(tonumber64 left tl)
-		      ,(tonumber64 right tr) %this)))))
+	      `(fixnum->uint32
+		  `(*js ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))))
 	 ((integer)
 	  (cond
 	     ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -1450,16 +1609,27 @@
 	     ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	      `(uint32->fixnum (*u32 ,left ,right)))
 	     (else
-	      `(*js ,(tonumber64 left tl)
-		  ,(tonumber64 right tr) %this))))
+	      `(*js ,(tonumber32 left tl) ,(tonumber32 right tr) %this))))
 	 ((number obj any object)
 	  (cond
-	     ((and (eq? tl 'int32) (eq? tr 'int32))
-	      `(*/overflow (int32->fixnum ,left) (int32->fixnum ,right)))
-	     ((and (eq? tl 'uint32) (eq? tr 'uint32))
-	      `(*u32/overflow ,left ,right))
+	     ((eq? tl 'int32)
+	      (mul-int32/32 lhs tl left rhs tr right))
+	     ((eq? tr 'int32)
+	      (mul-int32/32 rhs tr right lhs tl left))
+	     ((eq? tl 'uint32)
+	      (mul-uint32/32 lhs tl left rhs tr right))
+	     ((eq? tr 'uint32)
+	      (mul-uint32/32 rhs tr right lhs tl left))
+	     ((eq? tl 'integer)
+	      (mul-integer/32 lhs tl left rhs tr right))
+	     ((eq? tr 'integer)
+	      (mul-integer/32 rhs tr right lhs tl left))
+	     ((eq? tl 'real)
+	      (mul-real/32 lhs tl left rhs tr right))
+	     ((eq? tr 'real)
+	      (mul-real/32 rhs tr right lhs tl left))
 	     (else
-	      `(*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this))))
+	      `(*js ,(tonumber32 left tl) ,(tonumber32 right tr) %this))))
 	 (else
 	  (error "mul/32" "illegal integer type" type))))
    
@@ -1483,7 +1653,7 @@
 	     (else
 	      `(fixnum->uint32
 		  (*js ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))))
-	 ((int53)
+	 ((int53 integer)
 	  (if (and (memq tl '(int32 uint32 int53))
 		   (memq tr '(int32 uint32 int53)))
 	      `(*fx ,(tolong64 left tl) ,(tolong64 right tr))
@@ -1785,6 +1955,17 @@
       (else (error "asint32" "Cannot convert type" type))))
 
 ;*---------------------------------------------------------------------*/
+;*    asuint32 ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (asuint32 val type::symbol)
+   (case type
+      ((int32) (if (int32? val) (int32->uint32 val) `(int32->uint32 ,val)))
+      ((uint32) val)
+      ((int53) (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
+      ((integer) (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
+      (else (error "asuint32" "Cannot convert type" type))))
+
+;*---------------------------------------------------------------------*/
 ;*    asfixnum ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (asfixnum val type::symbol)
@@ -1805,6 +1986,28 @@
       ((real) val)
       (else (error "asreal" "Cannot convert type" type))))
 
+;*---------------------------------------------------------------------*/
+;*    toflonum ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (toflonum val type::symbol)
+   (cond
+      ((fixnum? val)
+       (fixnum->flonum val))
+      ((int32? val)
+       (int32->flonum val))
+      ((uint32? val)
+       (uint32->flonum val))
+      ((real? val)
+       val)
+      (else
+       (case type
+	  ((int32) `(int32->flonum ,val))
+	  ((uint32) `(uint32->flonum ,val))
+	  ((integer int53) `(fixnum->flonum ,val))
+	  ((real) val)
+	  ((number) `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))
+	  (else (error "toflonum" "Cannot convert type" type))))))
+       
 ;*---------------------------------------------------------------------*/
 ;*    tonumber32 ...                                                   */
 ;*---------------------------------------------------------------------*/

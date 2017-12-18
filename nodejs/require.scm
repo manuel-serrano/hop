@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Nov 26 19:47:28 2017 (serrano)                */
+;*    Last change :  Mon Dec 18 09:45:04 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -916,7 +916,8 @@
 			      socompile-condv socompile-mutex)
 			   'loop)
 			  (else
-			   (set! socompile-files (cons filename socompile-files))
+			   (set! socompile-files
+			      (cons filename socompile-files))
 			   'compile)))))
 	    (trace-item "tmp=" tmp)
 	    (cond
@@ -930,10 +931,27 @@
 			  (sopathtmp (make-file-name
 					(dirname sopath)
 					(string-append "#" (basename sopath))))
-			  (cmd (format "~a ~a -y -v3 --js-no-module-main -o ~a ~a"
-				  (hop-hopc)
-				  filename sopathtmp
-				  (hop-hopc-flags)))
+			  (cmd (format "~a --bigloo=~a ~a ~a -y --js-no-module-main -o '~a' ~a ~a ~a"
+				  (hop-hopc) (hop-bigloo)
+				  (if (= (hop-verbose) 0)
+				      (if (eq? nodejs-debug-compile 'yes)
+					  "-v4"
+					  "")
+				      (format "-v~a" (hop-verbose)))
+				  filename
+				  sopathtmp
+				  (hop-hopc-flags)
+				  (if (eq? nodejs-debug-compile 'yes)
+				      (string-append " -t "
+					 (make-file-name "/tmp/HOP"
+					    (string-append
+					       (prefix (basename filename) )
+					       ".scm")))
+				      "")
+				  (if (or (>= (hop-verbose) 4)
+					  (eq? nodejs-debug-compile 'yes))
+				      " -- -v2"
+				      "")))
 			  (ksucc (make-ksucc sopath sopathtmp))
 			  (kfail (make-kfail sopath sopathtmp)))
 		      (make-directories (dirname sopath))

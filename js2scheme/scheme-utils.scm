@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Dec 17 19:29:24 2017 (serrano)                */
+;*    Last change :  Mon Dec 18 11:30:48 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -660,7 +660,7 @@
 	     ((int32? val)
 	      #t)
 	     ((fixnum? val)
-	      (and (>=fx val (bit-lsh 1 31))
+	      (and (>=fx val (negfx (bit-lsh 1 31)))
 		   (<fx val (-fx (bit-lsh 1 31) 1))))
 	     (else #f)))
        (with-access::J2SExpr expr (range)
