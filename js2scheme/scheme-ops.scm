@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec 18 11:58:49 2017 (serrano)                */
+;*    Last change :  Mon Dec 18 18:57:57 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1090,8 +1090,8 @@
 	      `(+s32/overflow ,left (uint32->int32 ,right))
 	      (if (m64? conf)
 		  `(+/overflow
-		      ,(tonumber64 left tl)
-		      ,(tonumber64 right tl))
+		      ,(tonumber32 left tl)
+		      ,(tonumber32 right tl))
 		  `(+/overflow
 		      ,(tonumber32 left tl)
 		      ,(tonumber32 right tl)))))
@@ -1100,8 +1100,8 @@
 	      `(+fx/overflow (int32->fixnum ,left) ,right)
 	      (if (m64? conf)
 		  `(+/overflow
-		      ,(tonumber64 left tl)
-		      ,(tonumber64 right tl))
+		      ,(tonumber32 left tl)
+		      ,(tonumber32 right tl))
 		  `(+/overflow
 		      ,(tonumber32 left tl)
 		      ,(tonumber32 right tl)))))
@@ -1124,8 +1124,8 @@
 	      `(+s32/overflow (uint32->int32 ,left) ,right)
 	      (if (m64? conf)
 		  `(+/overflow
-		      ,(tonumber64 left tl)
-		      ,(tonumber64 right tl))
+		      ,(tonumber32 left tl)
+		      ,(tonumber32 right tl))
 		  `(+/overrflow
 		      ,(tonumber32 left tl)
 		      ,(tonumber32 right tl)))))
@@ -1134,8 +1134,8 @@
 	      `(+fx/overflow (uint32->fixnum ,left) ,right)
 	      (if (m64? conf)
 		  `(+/overflow
-		      ,(tonumber64 left tl)
-		      ,(tonumber64 right tl))
+		      ,(tonumber32 left tl)
+		      ,(tonumber32 right tl))
 		  `(+/overflow
 		      ,(tonumber32 left tl)
 		      ,(tonumber32 right tl)))))
@@ -1162,8 +1162,8 @@
 	      `(+fx/overflow ,left (uint32->fixnum ,right))
 	      (if (m64? conf)
 		  `(+/overflow
-		      ,(tonumber64 left tl)
-		      ,(tonumber64 right tl))
+		      ,(tonumber32 left tl)
+		      ,(tonumber32 right tl))
 		  `(+/overflow
 		      ,(tonumber32 left tl)
 		      ,(tonumber32 right tl)))))
@@ -1591,7 +1591,7 @@
 	      `(uint32->int32 (*u32 ,left ,right)))
 	     (else
 	      `(fixnum->int32
-		  `(*js ,(tonumber left tl) ,(tonumber right tr) %this)))))
+		  (*js ,(tonumber left tl) ,(tonumber right tr) %this)))))
 	 ((uint32)
 	  (cond
 	     ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -1600,7 +1600,7 @@
 	      `(*u32 ,left ,right))
 	     (else
 	      `(fixnum->uint32
-		  `(*js ,(tonumber left tl) ,(tonumber right tr) %this)))))
+		  (*js ,(tonumber left tl) ,(tonumber right tr) %this)))))
 	 ((integer)
 	  (cond
 	     ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -1687,7 +1687,7 @@
 		 (if (=u32 (bit-andu32
 			      ,n ,(fixnum->uint32 (-fx (bit-lsh 1 k) 1)))
 			#u32:0)
-		     (bit-rshu32 ,n ,k)
+		     (uint32->fixnum(bit-rshu32 ,n ,k))
 		     (/js ,n ,(bit-lsh 1 k) %this))))
 	    ((int32)
 	     `(let ((,n ,(j2s-scheme lhs mode return conf hint)))
@@ -1695,8 +1695,8 @@
 			      ,n ,(fixnum->int32 (-fx (bit-lsh 1 k) 1)))
 			#s32:0)
 		     ,(if (positive? lhs)
-			  `(bit-rshs32 ,n ,k)
-			  `(/pow2s32 ,n ,k))
+			  `(int32->fixnum (bit-rshs32 ,n ,k))
+			  `(int32->fixnum (/pow2s32 ,n ,k)))
 		     (/js ,n ,(bit-lsh 1 k) %this))))
 	    (else
 	     `(let ((,n ,(j2s-scheme lhs mode return conf hint)))
@@ -1769,7 +1769,7 @@
 	     `(/js ,left ,right %this)))))
    
    (let ((k (power2 rhs)))
-      (if k
+      (if (and k (not (memq type '(int32 uint32))))
 	  (div-power2 k)
 	  (with-tmp lhs rhs mode return conf hint '*
 	     (lambda (left right)

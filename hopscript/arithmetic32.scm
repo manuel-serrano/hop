@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Dec 18 11:38:02 2017 (serrano)                */
+;*    Last change :  Mon Dec 18 18:41:45 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -71,14 +71,17 @@
        (fixnum->int32 obj)
        (js-toint32-slow obj %this)))
 
+(define (forcefail)
+   (tprint (/s32 #s32:1 (car (list #s32:0)))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32-slow ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-toint32-slow::int32 obj %this)
    (cond
       ((flonum? obj) (js-number-toint32 obj))
-      ((uint32? obj) (tprint "should not be here.uint32 " obj) (uint32->int32 obj))
-      ((int32? obj) (tprint "should not be here.int32 " obj) (tprint (/s32 #s32:1 (car (list #s32:0)))) obj)
+      ((uint32? obj) (tprint "should not be here.uint32 " obj) (forcefail) (uint32->int32 obj))
+      ((int32? obj) (tprint "should not be here.int32 " obj) (forcefail) (tprint (/s32 #s32:1 (car (list #s32:0)))) obj)
       ((fixnum? obj) (fixnum->int32 obj))
       (else (js-number-toint32 (js-tonumber obj %this)))))
 
@@ -99,8 +102,8 @@
    (cond
       ((fixnum? obj) (fixnum->uint32 obj))
       ((flonum? obj) (js-number-touint32 obj))
-      ((int32? obj) (tprint "should not be here.int32") (int32->uint32 obj))
-      ((uint32? obj) (tprint "should not be here.uint32") obj)
+      ((int32? obj) (tprint "should not be here.int32") (forcefail) (int32->uint32 obj))
+      ((uint32? obj) (tprint "should not be here.uint32") (forcefail) obj)
       (else (js-number-touint32 (js-tointeger obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -227,9 +230,9 @@
    (cond
       ((fixnum? x) x)
       ((int32? x)
-       (tprint "SHOULD NOT int32") (int32->fixnum x))
+       (tprint "SHOULD NOT int32") (forcefail) (int32->fixnum x))
       ((and (uint32? x) (<u32 x (bit-lshu32 #u32:1 29)))
-       (tprint "SHOULD NOT int32") (uint32->fixnum x))
+       (tprint "SHOULD NOT int32") (forcefail) (uint32->fixnum x))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/

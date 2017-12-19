@@ -1440,6 +1440,23 @@
 			       (loop (env-merge bodye env))))))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    node-range ::J2SForIn ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SForIn env::pair-nil args fix::struct)
+   (with-access::J2SForIn this (lhs obj body)
+      (let ((denv (dump-env env))
+	    (ffix (fix-stamp fix)))
+	 (multiple-value-bind (obji obje)
+	    (node-range obj env args fix)
+	    (let loop ((env env))
+	       (let ((ostamp (fix-stamp fix)))
+		  (multiple-value-bind (bodyi bodye)
+		     (node-range body env args fix)
+		     (if (=fx ostamp (fix-stamp fix))
+			 (return #f bodye)
+			 (loop (env-merge bodye env))))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDo ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SDo env::pair-nil args fix::struct)

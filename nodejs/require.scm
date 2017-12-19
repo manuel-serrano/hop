@@ -931,7 +931,7 @@
 			  (sopathtmp (make-file-name
 					(dirname sopath)
 					(string-append "#" (basename sopath))))
-			  (cmd (format "~a --bigloo=~a ~a ~a -y --js-no-module-main -o '~a' ~a ~a ~a"
+			  (cmd (format "~a --bigloo=~a ~a ~a -y --js-no-module-main -o ~a ~a ~a ~a"
 				  (hop-hopc) (hop-bigloo)
 				  (if (= (hop-verbose) 0)
 				      (if (eq? nodejs-debug-compile 'yes)

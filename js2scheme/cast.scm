@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Dec 17 19:24:24 2017 (serrano)                */
+;*    Last change :  Mon Dec 18 18:55:13 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -85,10 +85,21 @@
 ;*    cast-expr ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (cast-expr expr::J2SExpr type::symbol totype::symbol)
-   (if (need-cast? type totype)
+   (cond
+      ((not (need-cast? type totype))
+       expr)
+      ((isa? expr J2SBinary)
+       (with-access::J2SBinary expr (op type)
+	  (if (and (memq totype '(int32 uint32 int53 integer))
+		   (memq op '(+ * - / << >> >>> & ^ BIT_OR)))
+	      (begin
+		 (set! type totype)
+		 expr)
+	      (with-access::J2SExpr expr (loc)
+		 (J2SCast totype expr)))))
+      (else
        (with-access::J2SExpr expr (loc)
-	  (J2SCast totype expr))
-       expr))
+	  (J2SCast totype expr)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    cast ...                                                         */

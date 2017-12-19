@@ -88,6 +88,8 @@
 	((any nop)))
      (arguments
 	((any nop)))
+     (date
+	((any nop)))
      (tilde
 	((any nop)))
      (scmstring
