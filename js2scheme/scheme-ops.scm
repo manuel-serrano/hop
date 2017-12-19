@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Dec 18 18:57:57 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 12:15:00 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -29,6 +29,8 @@
 	   __js2scheme_scheme-test)
 
    (export (j2s-in? loc id obj)
+	   (j2s-scheme-binary-as ::J2SBinary mode return conf hint type)
+	   (j2s-scheme-unary-as ::J2SUnary mode return conf hint type)
 	   (js-binop2 loc op::symbol type lhs::J2SNode rhs::J2SNode
 	      mode return conf hint::pair-nil)))
 
@@ -36,25 +38,111 @@
 ;*    j2s-scheme ::J2SUnary ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SUnary mode return conf hint)
+   (with-access::J2SUnary this (loc op type expr)
+      (js-unop loc op type expr mode return conf hint)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-unary-as ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-unary-as this::J2SUnary mode return conf hint type)
+   (with-access::J2SUnary this (loc expr op)
+      (cond
+	 ((and (eq? op '-) (memq type '(int32 uint32 int53 integer number)))
+	  (js-unop loc op type expr mode return conf hint))
+	 ((and (eq? op '!) (eq? type 'bool))
+	  (js-unop loc op type expr mode return conf hint))
+	 ((and (eq? op '~) (eq? type 'int32))
+	  (js-unop loc op type expr mode return conf hint))
+	 (else
+	  #f))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SBinary ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SBinary mode return conf hint)
+   (with-access::J2SBinary this (loc op lhs rhs type hint)
+      (epairify-deep loc
+	 (js-binop2 loc op type lhs rhs mode return conf hint))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-binary-as ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-binary-as this::J2SBinary mode return conf hint type)
+   (with-access::J2SBinary this (loc op lhs rhs type hint)
+      (cond
+	 ((and (eq? op '+)
+	       (memq type '(int32 uint32 int53 integer number string)))
+	  (epairify-deep loc
+	     (js-binop2 loc op type lhs rhs mode return conf hint)))
+	 ((and (memq op '(* - / >> << >>> & BIT_OR ^))
+	       (memq type '(int32 uint32)))
+	  (epairify-deep loc
+	     (js-binop2 loc op type lhs rhs mode return conf hint)))
+	 (else
+	  #f))))
+
+;*---------------------------------------------------------------------*/
+;*    scm-fixnum? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (scm-fixnum? sexp node::J2SNode)
+   (cond
+      ((fixnum? sexp) #t)
+      ((type-int30? (j2s-type-ref node)) #t)
+      ((symbol? sexp) `(fixnum? ,sexp))
+      (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    scm-and ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (scm-and left right)
+
+   (define (fixnum-test e)
+      (match-case e
+	 ((fixnum? ?e) e)
+	 (else #f)))
+
+   (cond
+      ((eq? left #t)
+       (if (eq? right #t) #t right))
+      ((eq? right #t)
+       left)
+      ((and (fixnum-test left) (fixnum-test right))
+       `(and (fixnum? ,(fixnum-test left)) (fixnum? ,(fixnum-test right))))
+      ((and left right)
+       `(and ,left ,right))
+      (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    scm-if ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (scm-if test then otherwise)
+   (cond
+      ((eq? test #t) then)
+      ((> (bigloo-debug) 0) otherwise)
+      (else `(if ,test ,then ,otherwise))))
+
+;*---------------------------------------------------------------------*/
+;*    js-unop ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (js-unop loc op type expr mode return conf hint)
    
    (define (err id)
-      (with-access::J2SUnary this (loc)
-	 (match-case loc
-	    ((at ?fname ?loc)
-	     `(with-access::JsGlobalObject %this (js-syntax-error)
-		 (js-raise
-		    (js-new %this js-syntax-error
-		       ,(j2s-jsstring
-			   (format "Delete of an unqualified identifier in strict mode: \"~a\"" id)
-			   loc)
-		       ,fname ,loc))))
-	    (else
-	     `(with-access::JsGlobalObject %this (js-syntax-error)
-		 (js-raise
-		    (js-new %this js-syntax-error
-		       ,(j2s-jsstring
-			   (format "Delete of an unqualified identifier in strict mode: \"~a\"" id)
-			   loc))))))))
+      (match-case loc
+	 ((at ?fname ?loc)
+	  `(with-access::JsGlobalObject %this (js-syntax-error)
+	      (js-raise
+		 (js-new %this js-syntax-error
+		    ,(j2s-jsstring
+			(format "Delete of an unqualified identifier in strict mode: \"~a\"" id)
+			loc)
+		    ,fname ,loc))))
+	 (else
+	  `(with-access::JsGlobalObject %this (js-syntax-error)
+	      (js-raise
+		 (js-new %this js-syntax-error
+		    ,(j2s-jsstring
+			(format "Delete of an unqualified identifier in strict mode: \"~a\"" id)
+			loc)))))))
    
    (define (delete->scheme expr)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.7
@@ -113,115 +201,69 @@
 	 ((bit-nots32 ?expr) expr)
 	 (else (epairify loc `(bit-nots32 ,expr)))))
    
-   (with-access::J2SUnary this (loc expr op type)
-      (case op
-	 ((!)
-	  (if (eq? type 'bool)
-	      (j2s-test this mode return conf)
-	      (epairify loc
-		 `(if ,(j2s-test expr mode return conf) #f #t))))
-	 ((typeof)
-	  (epairify loc
-	     (typeof->scheme expr)))
-	 ((void)
-	  (epairify loc
-	     `(begin
-		 ,(j2s-scheme expr mode return conf hint)
-		 (js-undefined))))
-	 ((delete)
-	  (epairify loc
-	     (delete->scheme expr)))
-	 ((+)
-	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
-	  (let ((expr (j2s-scheme expr mode return conf hint))
-		(typ (j2s-type-ref expr)))
-	     (cond
-		((eqv? expr 0) +0.0)
-		((memq typ '(int32 uint32 int53 integer number)) expr)
-		(else (epairify loc `(js-tonumber ,expr %this))))))
-	 ((-)
-	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
-	  (let ((expr (j2s-scheme expr mode return conf hint))
-		(typ (j2s-type-ref expr)))
-	     (case type
-		((int32)
-		 (cond
-		    ((int32? expr)
-		     (if (=s32 expr #s32:0) -0.0 (negs32 expr)))
-		    ((eq? typ 'int32)
-		     (epairify loc `(negs32js ,expr)))
-		    (else
-		     (epairify loc `(js-toint32 (negjs ,expr %this))))))
-		((uint32)
-		 (cond
-		    ((eq? typ 'int32)
-		     (epairify loc `(negs32 ,expr)))
-		    (else
-		     (epairify loc `(js-touint32 (negjs ,expr %this))))))
-		((eqv? expr 0)
-		 -0.0)
-		((integer)
-		 (if (fixnum? expr)
-		     (negfx expr)
-		     (epairify loc `(negfx ,expr))))
-		(else
-		 (epairify loc `(negjs ,expr %this))))))
-	 ((~)
-	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
-	  (if (eq? type 'int32)
-	      (bitnot loc (j2s-scheme expr mode return conf hint))
-	      `(bit-notjs ,(j2s-scheme expr mode return conf hint) %this)))
-	 (else
-	  (epairify loc
-	     `(,op ,(j2s-scheme expr mode return conf hint)))))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SBinary ...                                       */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SBinary mode return conf hint)
-   (with-access::J2SBinary this (loc op lhs rhs type hint)
-      (epairify-deep loc
-	 (js-binop2 loc op type lhs rhs mode return conf hint))))
-
-;*---------------------------------------------------------------------*/
-;*    scm-fixnum? ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (scm-fixnum? sexp node::J2SNode)
-   (cond
-      ((fixnum? sexp) #t)
-      ((type-int30? (j2s-type-ref node)) #t)
-      ((symbol? sexp) `(fixnum? ,sexp))
-      (else #f)))
-
-;*---------------------------------------------------------------------*/
-;*    scm-and ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (scm-and left right)
-
-   (define (fixnum-test e)
-      (match-case e
-	 ((fixnum? ?e) e)
-	 (else #f)))
-
-   (cond
-      ((eq? left #t)
-       (if (eq? right #t) #t right))
-      ((eq? right #t)
-       left)
-      ((and (fixnum-test left) (fixnum-test right))
-       `(and (fixnum? ,(fixnum-test left)) (fixnum? ,(fixnum-test right))))
-      ((and left right)
-       `(and ,left ,right))
-      (else #f)))
-
-;*---------------------------------------------------------------------*/
-;*    scm-if ...                                                       */
-;*---------------------------------------------------------------------*/
-(define (scm-if test then otherwise)
-   (cond
-      ((eq? test #t) then)
-      ((> (bigloo-debug) 0) otherwise)
-      (else `(if ,test ,then ,otherwise))))
+   (case op
+      ((!)
+       (if (eq? type 'bool)
+	   (let ((sexp (j2s-test-not expr mode return conf)))
+	      (if (pair? sexp)
+		  (epairify loc sexp)
+		  sexp))
+	   (epairify loc
+	      `(if ,(j2s-test expr mode return conf) #f #t))))
+      ((typeof)
+       (epairify loc
+	  (typeof->scheme expr)))
+      ((void)
+       (epairify loc
+	  `(begin
+	      ,(j2s-scheme expr mode return conf hint)
+	      (js-undefined))))
+      ((delete)
+       (epairify loc
+	  (delete->scheme expr)))
+      ((+)
+       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
+       (let ((expr (j2s-scheme expr mode return conf hint))
+	     (typ (j2s-type-ref expr)))
+	  (cond
+	     ((eqv? expr 0) +0.0)
+	     ((memq typ '(int32 uint32 int53 integer number)) expr)
+	     (else (epairify loc `(js-tonumber ,expr %this))))))
+      ((-)
+       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
+       (let ((expr (j2s-scheme expr mode return conf hint))
+	     (typ (j2s-type-ref expr)))
+	  (case type
+	     ((int32)
+	      (cond
+		 ((int32? expr)
+		  (if (=s32 expr #s32:0) -0.0 (negs32 expr)))
+		 ((eq? typ 'int32)
+		  (epairify loc `(negs32js ,expr)))
+		 (else
+		  (epairify loc `(js-toint32 (negjs ,expr %this))))))
+	     ((uint32)
+	      (cond
+		 ((eq? typ 'int32)
+		  (epairify loc `(negs32 ,expr)))
+		 (else
+		  (epairify loc `(js-touint32 (negjs ,expr %this))))))
+	     ((eqv? expr 0)
+	      -0.0)
+	     ((integer)
+	      (if (fixnum? expr)
+		  (negfx expr)
+		  (epairify loc `(negfx ,expr))))
+	     (else
+	      (epairify loc `(negjs ,expr %this))))))
+      ((~)
+       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.8
+       (if (eq? type 'int32)
+	   (bitnot loc (j2s-scheme expr mode return conf hint))
+	   `(bit-notjs ,(j2s-scheme expr mode return conf hint) %this)))
+      (else
+       (epairify loc
+	  `(,op ,(j2s-scheme expr mode return conf hint))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-binop2 ...                                                    */
@@ -590,6 +632,10 @@
 	  `(,(ops32 o) ,left ,right))
 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	  `(,(opu32 o) ,left ,right))
+	 ((and (memq tl '(bint integer)) (eq? tr '(bint integer)))
+	  `(,(opfx o) ,left ,right))
+	 ((and (eq? tr 'real) (eq? tl 'real))
+	  `(,(opfl o) ,left ,right))
 	 ((and (memq tl '(int32 uint32)) (memq tr '(int32 uint32)))
 	  `(,(opfx o) ,(tolong32 left tl) ,(tolong32 right tr)))
 	 ((eq? tl 'int32)
@@ -641,23 +687,20 @@
 	  `(,(ops32 o) ,left ,right))
 	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	  `(,(opu32 o) ,left ,right))
+	 ((and (memq tl '(bint integer)) (eq? tr '(bint integer)))
+	  `(,(opfx o) ,left ,right))
+	 ((and (eq? tr 'real) (eq? tl 'real))
+	  `(,(opfl o) ,left ,right))
 	 ((and (memq tl '(int32 uint32 int53)) (memq tr '(int32 uint32 int53)))
 	  `(,(opfx o) ,(tolong64 left tl) ,(tolong64 right tr)))
-	 ((and (memq tl '(int32 uint32 int53))
-	       (memq tr '(int32 uint32 int53 integer real number)))
+	 ((memq tl '(int32 uint32 int53))
 	  `(if (fixnum? ,right)
 	       (,(opfx o) ,(tolong64 left tl) ,right)
 	       ,(cmp/64js o lhs tl left right tr right)))
-	 ((and (memq tr '(int32 uint32 int53))
-	       (memq tl '(int32 uint32 int53 integer real number)))
+	 ((memq tr '(int32 uint32 int53))
 	  `(if (fixnum? ,left)
 	       (,(opfx o) ,left ,(tolong64 right tr))
 	       ,(cmp/64js o lhs tl left right tr right)))
-	 ((and (memq tl '(int32 uint32 int53 integer real number))
-	       (memq tr '(int32 uint32 int53 integer real number)))
-	  (if-fixnums? left tl right tr
-	     `(,(opfx o) ,left ,right)
-	     (cmp/64js o lhs tl left right tr right)))
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(,(opfx o) ,left ,right)
@@ -1016,7 +1059,7 @@
 	       (tr (j2s-type-ref rhs)))
 	    (epairify loc
 	       (cond
-		  ((memq type '(int32 uint32 integer number))
+		  ((memq type '(int32 uint32))
 		   (case op
 		      ((>> <<)
 		       `(,(bitop op) ,(toint32 left tl) ,(mask32 right rhs)))
@@ -1024,7 +1067,8 @@
 		       `(,(bitop op) ,(touint32 left tl) ,(mask32 right rhs)))
 		      (else
 		       `(,(bitop op) ,(toint32 left tl) ,(toint32 right tr)))))
-		  ((memq tr '(int32 uint32 integer number))
+		  ((and (memq tl '(int32 uint32 integer))
+			(memq tr '(int32 uint32 integer)))
 		      (case op
 			 ((>> <<)
 			  (j2s-cast
@@ -1351,7 +1395,9 @@
 	      `(,(opfl op) ,(toflonum left tl) ,right)))
 	 (else
 	  `(if (fixnum? ,right)
-	       (,(opfx/overflow op) ,(asfixnum left tl) ,right)
+	       ,(if flip 
+		    `(,(opfx/overflow op) ,right ,(asfixnum left tl))
+		    `(,(opfx/overflow op) ,(asfixnum left tl) ,right))
 	       ,(if flip
 		    `(,(op/overflow op)
 		      ,(box right tr conf) ,(box left tl conf))
@@ -1374,7 +1420,9 @@
 	      `(,(opfl op) ,(toflonum left tl) ,right)))
 	 (else
 	  `(if (fixnum? ,right)
-	       (,(opfx/overflow op) ,(asfixnum left tl) ,right)
+	       ,(if flip 
+		    `(,(opfx/overflow op) ,right ,(asfixnum left tl))
+		    `(,(opfx/overflow op) ,(asfixnum left tl) ,right))
 	       ,(if flip
 		    `(,(op/overflow op)
 		      ,(box right tr conf) ,(box left tl conf))
@@ -1393,7 +1441,9 @@
 	      `(,(opfl op) ,(toflonum left tl) ,right)))
 	 (else
 	  `(if (fixnum? ,right)
-	       (,(opfx/overflow op) ,(asfixnum left tl) ,right)
+	       ,(if flip 
+		    `(,(opfx/overflow op) ,right ,(asfixnum left tl))
+		    `(,(opfx/overflow op) ,(asfixnum left tl) ,right))
 	       ,(if flip
 		    `(,(op/overflow op)
 		      ,(box right tr conf) ,(box left tl conf))
@@ -2063,7 +2113,10 @@
 ;*    tolong64 ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (tolong64 val type::symbol)
-   (tonumber64 val type))
+   (case type
+      ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
+      ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
+      (else val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    tonumber64 ...                                                   */

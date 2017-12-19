@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Mon Dec 18 11:30:48 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 13:06:33 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -68,7 +68,7 @@
 	   (js-object-put-name/cache!::symbol clevel::long)
 	   
 	   (j2s-get loc obj tyobj prop typrop tyval conf cache #!optional (clevel 100))
-	   (j2s-put! loc obj tyobj prop typrop val mode conf cache #!optional (clevel 100))
+	   (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (clevel 100))
 
 	   (inrange-positive?::bool ::J2SExpr)
 	   (inrange-32?::bool ::J2SExpr)
@@ -546,7 +546,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj tyobj prop typrop val mode conf cache #!optional (clevel 100))
+(define (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (clevel 100))
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)
@@ -556,19 +556,20 @@
 	 ((> (bigloo-debug) 0)
 	  (if (string? prop)
 	      `(js-put/debug! ,obj ',(string->symbol prop)
-		  ,val ,mode %this ',loc)
+		  ,(box val tyval conf) ,mode %this ',loc)
 	      `(js-put/debug! ,obj ,(box prop typrop conf)
-		  ,val ,mode %this ',loc)))
+		  ,(box val tyval conf) ,mode %this ',loc)))
 	 ((eq? tyobj 'array)
 	  (case typrop
 	     ((uint32)
 	      `(js-array-index-set! ,obj ,prop
-		  ,val ,(strict-mode? mode) %this))
+		  ,(box val tyval conf) ,(strict-mode? mode) %this))
 	     ((int32)
 	      `(js-array-fixnum-set! ,obj (int32->fixnum ,prop)
-		  ,val ,(strict-mode? mode) %this))
+		  ,(box val tyval conf) ,(strict-mode? mode) %this))
 	     (else
-	      `(js-array-set! ,obj ,prop ,val ,(strict-mode? mode) %this))))
+	      `(js-array-set! ,obj ,prop ,(box val tyval conf)
+		  ,(strict-mode? mode) %this))))
 	 (cache
 	  (cond
 	     ((string? prop)
@@ -581,27 +582,31 @@
 			 `(,(js-object-put-name/cache! clevel)
 			   ,obj
 			   ',(string->symbol prop)
-			   ,val
+			   ,(box val tyval conf)
 			   ,mode ,(js-pcache cache) %this))
 			(else
 			 `(js-put-name/cache! ,obj ',(string->symbol prop)
-			     ,val
+			     ,(box val tyval conf)
 			     ,mode ,(js-pcache cache) %this))))))
 	     ((memq typrop '(int32 uint32))
-	      `(js-put! ,obj ,(box prop typrop conf) ,val ,mode %this))
+	      `(js-put! ,obj ,(box prop typrop conf)
+		  ,(box val tyval conf) ,mode %this))
 	     ((or (number? prop) (>=fx clevel 10))
-	      `(js-put! ,obj ,prop ,val ,mode %this))
+	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))
 	     (else
 	      `(js-put/cache! ,obj , prop
-		  ,val ,mode ,(js-pcache cache) %this))))
+		  ,(box val tyval conf) ,mode ,(js-pcache cache) %this))))
 	 (else
 	  (cond
 	     ((string? prop)
-	      `(js-put! ,obj ',(string->symbol prop) ,val ,mode %this))
+	      `(js-put! ,obj ',(string->symbol prop)
+		  ,(box val tyval conf) ,mode %this))
 	     ((memq typrop '(int32 uint32))
-	      `(js-put! ,obj ,(box prop typrop conf) ,val ,mode %this))
+	      `(js-put! ,obj ,(box prop typrop conf)
+		  ,(box val tyval conf) ,mode %this))
 	     (else
-	      `(js-put! ,obj ,prop ,val ,mode %this)))))))
+	      `(js-put! ,obj ,(box prop typrop conf)
+		  ,(box val tyval conf) ,mode %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-positive? ...                                            */

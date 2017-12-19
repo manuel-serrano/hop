@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Dec 18 10:48:45 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 11:46:22 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -48,7 +48,9 @@
 	  (inline -fx/overflow::obj ::long ::long)
 	  (-/overflow::obj ::obj ::obj)
 	  
-	  (*fx/overflow ::long ::long)
+	  (inline *fx/overflow::obj ::long ::long)
+	  (inline *s32/overflow::obj ::int32 ::int32)
+	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow ::obj ::obj)))))
 
 ;*---------------------------------------------------------------------*/
@@ -286,7 +288,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    *fx/overflow ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (*fx/overflow x::long y::long)
+(define-inline (*fx/overflow x::long y::long)
    (cond-expand
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
@@ -327,6 +329,32 @@
 	      (llong->flonum r))
 	     (else
 	      r))))))
+
+;*---------------------------------------------------------------------*/
+;*    *s32/overflow ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (*s32/overflow x::int32 y::int32)
+   (*fx/overflow (int32->fixnum x) (int32->fixnum y)))
+
+;*---------------------------------------------------------------------*/
+;*    *u32/overflow ...                                                */
+;*---------------------------------------------------------------------*/
+(define-inline (*u32/overflow x::uint32 y::uint32)
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  (if (pragma::bool "__builtin_umull_overflow($1, $2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
+		 x y)
+	      (if (<fx (uint32->fixnum res) (bit-lsh 1 53))
+		  (uint32->fixnum res)
+		  (uint32->flonum res)))))
+      (else
+       (let ((r (*fl (uint32->flonum x) (uint32->flonum y))))
+	  (if (integer? r)
+	      (overflow53 (flonum->fixnum r))
+	      r)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    */overflow ...                                                   */

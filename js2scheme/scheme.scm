@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Dec 17 18:51:07 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 13:02:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -526,7 +526,7 @@
 		 `(begin
 		     ,(j2s-put! loc '%scope (j2s-type-ref lhs)
 			 `',id 'propname
-			 val (strict-mode? mode) conf #f)
+			 val tyval (strict-mode? mode) conf #f)
 		     ,result))
 		(result
 		 `(begin
@@ -570,8 +570,18 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCast mode return conf hint)
    (with-access::J2SCast this (expr (to type))
-      (j2s-cast (j2s-scheme expr mode return conf hint)
-	 expr (j2s-type-ref expr) to conf)))
+      (cond
+	 ((isa? expr J2SBinary)
+	  (or (j2s-scheme-binary-as expr mode return conf hint to)
+	      (j2s-cast (j2s-scheme expr mode return conf hint)
+		 expr (j2s-type-ref expr) to conf)))
+	 ((isa? expr J2SUnary)
+	  (or (j2s-scheme-unary-as expr mode return conf hint to)
+	      (j2s-cast (j2s-scheme expr mode return conf hint)
+		 expr (j2s-type-ref expr) to conf)))
+	 (else
+	  (j2s-cast (j2s-scheme expr mode return conf hint)
+	     expr (j2s-type-ref expr) to conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRef ...                                          */
@@ -1493,7 +1503,7 @@
 		      (typeof-this obj conf)
 		      (j2s-scheme field mode return conf hint)
 		      (j2s-type-ref field)
-		      name (strict-mode? mode) conf #f))))
+		      name 'any (strict-mode? mode) conf #f))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
 		(epairify loc
@@ -1504,7 +1514,7 @@
 			       ,(j2s-put! loc (car withs)
 				   'object
 				   (symbol->string id) 'propname
-				   name #f conf #f)
+				   name 'any #f conf #f)
 			       ,(liip (cdr withs))))))))
 	    (else
 	     (j2s-error "j2sscheme" "Illegal lhs" this)))))
@@ -2161,6 +2171,7 @@
 		      (j2s-scheme field mode return conf hint)
 		      (j2s-type-ref field)
 		      (j2s-scheme rhs mode return conf hint)
+		      (j2s-type-ref rhs)
 		      (strict-mode? mode)
 		      conf
 		      cache))
@@ -2174,6 +2185,7 @@
 			    (j2s-scheme field mode return conf hint)
 			    (j2s-type-ref field)
 			    (j2s-scheme rhs mode return conf hint)
+			    (j2s-type-ref rhs)
 			    (strict-mode? mode)
 			    conf
 			    cache)))))))
@@ -2197,6 +2209,7 @@
 			  (j2s-scheme field mode return conf hint)
 			  (j2s-type-ref field)
 			  (j2s-scheme rhs mode return conf hint)
+			  (j2s-type-ref rhs)
 			  (strict-mode? mode)
 			  conf
 			  cache))))))
@@ -2230,6 +2243,7 @@
 			       ,(j2s-put! loc (car withs) 'object
 				   (symbol->string id) 'propname
 				   (j2s-scheme rhs mode return conf hint)
+				   (j2s-type-ref rhs)
 				   #f conf #f)
 			       ,(liip (cdr withs))))))))
 	    ((isa? lhs J2SUndefined)
@@ -2344,7 +2358,7 @@
 					 (or force-type (typeof-this obj conf))
 					 (or pro prov)
 					 (j2s-type-ref field)
-					 val
+					 val 'number
 					 (strict-mode? mode) conf
 					 cache (min cl clevel))
 				     ,tmp))))))
@@ -2364,7 +2378,7 @@
 					     (or force-type (typeof-this obj conf))
 					     (or pro prov)
 					     (j2s-type-ref field)
-					     val
+					     val 'number
 					     (strict-mode? mode) conf
 					     cache (min cl clevel))
 					 ,tmp))))
@@ -2383,7 +2397,7 @@
 						  (or force-type (typeof-this obj conf))
 						  (or pro prov)
 						  (j2s-type-ref field)
-						  val
+						  val 'number
 						  (strict-mode? mode) conf
 						  cache (min cl clevel))
 					      ,tmp2)))))))))))))
@@ -2493,7 +2507,7 @@
 			      lhs rhs mode return conf hint)))
 		      ,(j2s-put! loc otmp (typeof-this obj conf)
 			  (or pro prov) (j2s-type-ref field)
-			  (j2s-cast vtmp #f typea typel conf)
+			  (j2s-cast vtmp #f typea typel conf) typel
 			  (strict-mode? mode) conf
 			  cache (if (is-number? field) 100 (min cl clevel)))
 		      ,vtmp))))))
@@ -2788,6 +2802,7 @@
 				     (j2s-put! loc tmp 'obj
 					"__proto__" 'propname
 					(j2s-scheme val mode return conf hint)
+					(j2s-type-ref val)
 					(strict-mode? mode) conf #f)
 				     (epairify loc
 					`(js-bind! %this ,tmp

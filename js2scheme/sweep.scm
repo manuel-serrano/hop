@@ -3,10 +3,10 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Dec  1 11:00:15 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 11:09:45 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    Dead code removable stage.                                       */
+;*    Dead code removal                                                */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
@@ -14,6 +14,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_sweep
 
+   (include "ast.sch")
+   
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
@@ -54,20 +56,29 @@
 	       decls)
 	    (unless (cell-ref deval)
 	       (set! direct-eval #f)
-	       (let ((rems '()))
-		  (set! decls
-		     (filter (lambda (d)
-				(with-access::J2SDecl d (%info id)
-				   (or (eq? %info 'sweep)
-				       (begin
-					  (set! rems (cons id rems))
-					  #f))))
-			(map! sweep! decls)))
-		  (for-each sweep! nodes)
+	       (let ((rems (make-cell '())))
+		  (set! decls (filter-map (lambda (d)
+					     (let ((n (sweep! d rems)))
+						(when (isa? n J2SDecl)
+						   n)))
+				 decls))
+		  (for-each (lambda (n) (sweep! n rems)) nodes)
 		  (when (>= (config-get args :verbose 0) 3)
-		     (when (pair? rems)
-			(fprintf (current-error-port) " (~(, ))" rems))))))))
+		     (when (pair? (cell-ref rems))
+			(fprintf (current-error-port) " (~(, ))"
+			   (cell-ref rems)))))))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    mark-decl! ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (mark-decl! this::J2SDecl deval)
+   (with-access::J2SDecl this (%info)
+      (unless (eq? %info 'sweep)
+	 (set! %info 'sweep)
+	 (when (isa? this J2SDeclInit)
+	    (with-access::J2SDeclInit this (val)
+	       (mark val deval))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark ::J2SNode ...                                               */
@@ -79,6 +90,12 @@
 ;*    mark ::J2SDecl ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (mark this::J2SDecl deval)
+   (mark-decl! this deval))
+
+;*---------------------------------------------------------------------*/
+;*    mark ::J2SDeclInit ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark this::J2SDeclInit deval)
    (mark-decl! this deval))
 
 ;*---------------------------------------------------------------------*/
@@ -137,33 +154,33 @@
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
 	    (with-access::J2SDecl decl (usecnt)
-	       (and (=fx usecnt 1)
+	       (and (=fx usecnt 0)
 		    (dead-expr? rhs)))))))
-
-;*---------------------------------------------------------------------*/
-;*    mark-decl! ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (mark-decl! this::J2SDecl deval)
-   (with-access::J2SDecl this (%info)
-      (unless (eq? %info 'sweep)
-	 (set! %info 'sweep)
-	 (when (isa? this J2SDeclInit)
-	    (with-access::J2SDeclInit this (val)
-	       (mark val deval))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SNode ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (sweep! this::J2SNode)
+(define-walk-method (sweep! this::J2SNode rems)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    sweep! ::J2SDeclInit ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (sweep! this::J2SDeclInit rems)
+   (with-access::J2SDeclInit this (%info loc id)
+      (if (eq? %info 'sweep)
+	  (call-default-walker)
+	  (begin
+	     (cell-set! rems (cons id (cell-ref rems)))
+	     (J2SNop)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SLeBlock ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (sweep! this::J2SLetBlock)
+(define-walk-method (sweep! this::J2SLetBlock rems)
    (with-access::J2SLetBlock this (decls)
       (set! decls (filter (lambda (d)
-			     (with-access::J2SDecl d (%info)
+			     (with-access::J2SDecl d (%info id)
 				(eq? %info 'sweep)))
 		     decls))
       (call-default-walker)))
@@ -171,7 +188,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    sweep! ::J2SInit ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (sweep! this::J2SInit)
+(define-walk-method (sweep! this::J2SInit rems)
    (if (dead-init? this)
        (with-access::J2SNode this (loc)
 	  (instantiate::J2SUndefined (loc loc)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Sat Dec 16 06:33:42 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 08:23:09 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
@@ -26,7 +26,8 @@
 	   __js2scheme_scheme
 	   __js2scheme_scheme-utils)
 
-   (export (j2s-test test::J2SExpr mode return conf)))
+   (export (j2s-test ::J2SExpr mode return conf)
+	   (j2s-test-not ::J2SExpr mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-test ...                                                     */
@@ -88,14 +89,15 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-bool-test this::J2SUnary mode return conf)
    (with-access::J2SUnary this (op expr loc)
-      (case op
-	 ((!)
-	  (let ((sexp (js-not (j2s-bool-test expr mode return conf))))
-	     (if (pair? sexp)
-		 (epairify loc sexp)
-		 sexp)))
-	 (else
-	  (call-next-method)))))
+      (if (eq? op '!)
+	  (j2s-test-not expr mode return conf)
+	  (call-next-method))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-test-not ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-test-not this::J2SExpr mode return conf)
+   (js-not (j2s-bool-test this mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    notbool-expr? ...                                                */

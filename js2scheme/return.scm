@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Mon Dec  4 08:50:54 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 11:42:56 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
@@ -114,6 +114,20 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    unreturn! ::J2SNop ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (unreturn! this::J2SNop target tail? in-handler args)
+   (if (and target tail?)
+       (with-access::J2SNop this (loc)
+	  (instantiate::J2SReturn
+	     (loc loc)
+	     (tail #t)
+	     (from target)
+	     (expr (instantiate::J2SUndefined
+		      (loc loc)))))
+       this))
+
+;*---------------------------------------------------------------------*/
 ;*    unreturn! ::J2SLetBlock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SLetBlock target tail? in-handler args)
@@ -158,7 +172,8 @@
 (define-walk-method (unreturn! this::J2STry target tail? in-handler args)
    (with-access::J2STry this (body catch finally)
       (set! body (walk! body target tail? in-handler args))
-      (set! catch (walk! catch target tail? in-handler args))
+      (unless (isa? catch J2SNop)
+	 (set! catch (walk! catch target tail? in-handler args)))
       (set! finally (walk! finally target #f in-handler args)))
    this)
    
@@ -298,7 +313,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    untail-return! ::J2SReturn ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (untail-return! this::J2SReturn target)
+(define-walk-method (untail-return! this::J2SReturn target)
    (with-access::J2SReturn this (tail)
       (with-access::J2SFun target (need-bind-exit-return)
 	 (set! need-bind-exit-return #t))
@@ -308,7 +323,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    untail-return! ::J2SFun ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (untail-return! this::J2SFun target)
+(define-walk-method (untail-return! this::J2SFun target)
    this)
 
 ;*---------------------------------------------------------------------*/

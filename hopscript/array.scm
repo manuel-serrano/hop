@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Dec 13 14:53:12 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 12:51:32 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -77,7 +77,8 @@
 	   
 	   (js-array-alloc::JsArray ::JsGlobalObject)
 	   (js-array-construct::JsArray ::JsGlobalObject ::JsArray ::obj)
-	   (inline js-array-construct-alloc-small::JsArray ::JsGlobalObject ::long)
+	   (inline js-array-construct-alloc-small::JsArray ::JsGlobalObject ::uint32)
+	   (js-array-construct/lengthu32::JsArray ::JsGlobalObject ::JsArray ::uint32)
 	   (js-array-construct/length::JsArray ::JsGlobalObject ::JsArray ::obj)
 	   (jsarray->list::pair-nil ::JsArray ::JsGlobalObject)
 	   (jsarray->vector::vector ::JsArray ::JsGlobalObject)
@@ -2086,11 +2087,11 @@
 ;*    Specialised version of js-array-construct and js-array-alloc     */
 ;*    for small arrays.                                                */
 ;*---------------------------------------------------------------------*/
-(define-inline (js-array-construct-alloc-small %this::JsGlobalObject len)
+(define-inline (js-array-construct-alloc-small %this::JsGlobalObject len::uint32)
    (cond-expand
       (bigloo-c
        (with-access::JsGlobalObject %this (js-array-prototype)
-	  ($js-make-jsarray len (fixnum->uint32 len)
+	  ($js-make-jsarray (uint32->fixnum len) len
 	     (js-not-a-cmap) js-array-prototype
 	     (js-object-default-mode))))
       (else
@@ -2102,8 +2103,32 @@
 	  this)
        
        (let* ((this (js-array-alloc %this))
-	      (vec (make-vector len (js-undefined))))
-	  (array-set! this vec #u32:0 (fixnum->uint32 len))))))
+	      (vec (make-vector (uint32->fixnum len) (js-undefined))))
+	  (array-set! this vec #u32:0 len)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-array-construct/lengthu32 ...                                 */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.2.1     */
+;*---------------------------------------------------------------------*/
+(define (js-array-construct/lengthu32 %this::JsGlobalObject this::JsArray len::uint32)
+   
+   (define (array-set! v::vector iln::uint32 ulen::uint32)
+      (with-access::JsArray this (vec ilen length)
+	 (set! length ulen)
+	 (set! ilen iln)
+	 (set! vec v))
+      this)
+   
+   (cond
+      ((<=u32 len (bit-lshu32 #u32:1 16))
+       ;; MS CARE: the max boundary for a concrete vector
+       ;; is pure heuristic. This should be confirmed by
+       ;; actual tests
+       (let ((vec (make-vector (uint32->fixnum len) (js-undefined))))
+	  (array-set! vec #u32:0 len)))
+      (else
+       (array-set! (make-vector 10 (js-undefined)) #u32:0 len))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-construct ...                                           */
@@ -2119,19 +2144,10 @@
 	 (set! vec v))
       this)
    
-   (cond
-      ((not (=uint32 (js-touint32 len %this) len))
-       (js-raise-range-error %this "index out of range ~a" len))
-      ((<= len (bit-lsh 1 16))
-       ;; MS CARE: the max boundary for a concrete vector
-       ;; is pure heuristic. This should be confirmed by
-       ;; actual tests
-       (let* ((len (->fixnum len))
-	      (vec (make-vector len (js-undefined))))
-	  (array-set! vec #u32:0 (fixnum->uint32 len))))
-      (else
-       (array-set! (make-vector 10 (js-undefined)) #u32:0
-	  (if (fixnum? len) (fixnum->uint32 len) (flonum->uint32 len))))))
+   (let ((l32 (js-touint32 len %this)))
+      (if (not (=uint32 l32 len))
+	  (js-raise-range-error %this "index out of range ~a" len)
+	  (js-array-construct/lengthu32 %this this l32))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-construct ...                                           */

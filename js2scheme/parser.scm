@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Dec 13 07:59:37 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 11:09:00 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1676,10 +1676,10 @@
 		 (loop (instantiate::J2SCall
 			  (loc loc)
 			  (fun expr)
-			  (thisarg (if (isa? expr J2SAccess)
-				       (with-access::J2SAccess expr (obj)
-					  (list obj))
-				       (list (J2SUndefined))))
+			  ;; don't explicit thisarg as the code generator
+			  ;; this check the lhs access to find the proper
+			  ;; receiver
+			  (thisarg (list (J2SUndefined)))
 			  (args (arguments))))
 		 expr))
 	    ((TSTRING TEMPLATE)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Dec 16 06:22:16 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 12:48:39 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -78,33 +78,60 @@
 ;*    j2s-new-array ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-new-array this::J2SNew mode return conf hint)
-
+   
    (define (smaller-than? o k)
-      (when (isa? o J2SNumber)
-	 (with-access::J2SNumber o (val)
-	    (and (fixnum? val) (>=fx val 0) (<fx val k)))))
-
+      (if (isa? o J2SNumber)
+	  (with-access::J2SNumber o (val)
+	     (cond
+		((fixnum? val) (>=fx val 0) (<fx val k))
+		((int32? val) (>=s32 val #s32:0) (<s32 val (fixnum->int32 k)))
+		((uint32? val) (<u32 val (fixnum->uint32 k)))
+		(else #f)))
+	  (with-access::J2SExpr o (range)
+	     (when range
+		(and (>=llong (interval-min range) 0)
+		     (<=llong (interval-max range) (fixnum->llong k)))))))
+   
+   (define (alloc-length arg k)
+      (if (smaller-than? arg 16)
+	  `(js-array-construct-alloc-small %this 
+	      ,(k (j2s-scheme arg mode return conf hint)))
+	  
+	  `(js-array-construct/lengthu32 %this
+	      (js-array-alloc %this)
+	      ,(k (j2s-scheme arg mode return conf hint)))))
+   
    (with-access::J2SNew this (loc cache clazz args type)
       (cond
 	 ((null? args)
 	  '(js-empty-vector->jsarray %this))
+	 ((pair? (cdr args))
+	  `(js-vector->jsarray
+	      (vector ,@(j2s-scheme args mode return conf hint))
+	      %this))
 	 ((eq? type 'vector)
 	  `(make-vector
 	      ,(j2s-scheme (car args) mode return conf hint)
 	      (js-undefined)))
-	 ((and (is-integer? (car args)) (null? (cdr args)))
-	  (if (smaller-than? (car args) 16)
-	      `(js-array-construct-alloc-small %this 
-		  ,(j2s-scheme (car args) mode return conf hint))
-	      `(js-array-construct/length %this (js-array-alloc %this)
-		  ,(j2s-scheme (car args) mode return conf hint))))
-	 ((null? (cdr args))
-	  `(js-array-construct %this (js-array-alloc %this)
-	      (list ,@(j2s-scheme args mode return conf hint))))
 	 (else
-	  `(js-vector->jsarray
-	      (vector ,@(j2s-scheme args mode return conf hint))
-	      %this)))))
+	  (let loop ((arg (car args)))
+	     (let ((t (j2s-type arg)))
+		(cond
+		   ((eq? t 'int32)
+		    (alloc-length arg (lambda (v) `(int32->uint32 ,v))))
+		   ((eq? t 'uint32)
+		    (alloc-length arg (lambda (v) v)))
+		   ((memq t '(integer bint int53))
+		    (alloc-length arg (lambda (v) `(fixnum->uint32 ,v))))
+		   ((isa? arg J2SCast)
+		    (with-access::J2SCast arg (type expr)
+		       (if (eq? type 'any)
+			   (loop expr)
+			   `(js-array-construct %this (js-array-alloc %this)
+			       (list ,(j2s-scheme arg mode return conf hint))))))
+		   (else
+		    `(js-array-construct %this (js-array-alloc %this)
+			(list ,(j2s-scheme arg mode return conf hint)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-array-index-ref ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Dec 17 16:48:40 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 11:29:57 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -589,7 +589,7 @@
 	 (else
 	  (let ((cla (class-of this)))
 	     (if (eq? cla 'unknown)
-		 (return 'unknown env '())
+		 (return 'any env '())
 		 (expr-type-set! this env fix 'object)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -796,7 +796,7 @@
 ;*    typing-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (typing-fun this::J2SFun env::pair-nil fix::cell)
-   (with-access::J2SFun this (body params rtype thisp %info vararg)
+   (with-access::J2SFun this (body params rtype thisp %info vararg type)
       (let* ((envp (filter-map (lambda (p::J2SDecl)
 				  (with-access::J2SDecl p (itype utype usage)
 				     (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Dec 17 12:30:58 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 10:50:21 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -446,7 +446,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFun)
    (with-access::J2SFun this (name thisp params body decl mode rtype optimize
-				need-bind-exit-return idthis generator)
+				need-bind-exit-return idthis generator loc)
       (cond
 	 ((isa? decl J2SDeclFun)
 	  (with-access::J2SDecl decl (key usage)
@@ -487,6 +487,7 @@
 	      :name ,name
 	      ,@(dump-type this)
 	      ,@(dump-rtype this)
+	      ,@(dump-loc loc)
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 3)
