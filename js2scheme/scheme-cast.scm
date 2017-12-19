@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Dec 17 20:13:13 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 16:31:57 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -105,6 +105,7 @@
 	 (null nop)
 	 (int32 ,js->int32)
 	 (uint32 ,js->uint32)
+	 (int53 nop)
 	 (number ,js->number)
 	 (object ,js->object)))))
 

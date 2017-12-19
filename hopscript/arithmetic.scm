@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Tue Dec 19 12:23:08 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 15:15:00 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -96,8 +96,8 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (+js x::obj y::obj %this)
-   (unless (and (number? x) (number? y))
-      (tprint "+js pas bon x=" (typeof x) " y=" (typeof y))
+   (when (or (int32? x) (uint32? x) (int32? y) (uint32? y))
+      (tprint "+js pas bonxx x=" (typeof x) " y=" (typeof y))
       (forcefail))
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
 	  (ny (if (number? y) y (js-tonumber y %this))))
@@ -109,7 +109,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
 ;*---------------------------------------------------------------------*/
 (define (-js x::obj y::obj %this)
-   (unless (and (number? x) (number? y))
+   (when (or (int32? x) (uint32? x) (int32? y) (uint32? y))
       (tprint "-js pas bon x=" (typeof x) " y=" (typeof y))
       (forcefail))
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
@@ -122,7 +122,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
 (define (*js x::obj y::obj %this)
-   (unless (and (number? x) (number? y))
+   (when (or (int32? x) (uint32? x) (int32? y) (uint32? y))
       (tprint "*js pas bon x=" (typeof x) " y=" (typeof y))
       (forcefail))
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
@@ -135,7 +135,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
 ;*---------------------------------------------------------------------*/
 (define (/js x::obj y::obj %this)
-   (unless (and (number? x) (number? y))
+   (when (or (int32? x) (uint32? x) (int32? y) (uint32? y))
       (tprint "/js pas bon x=" (typeof x) " y=" (typeof y))
       (forcefail))
    (let* ((nx (js-toflonum (js-tonumber x %this)))

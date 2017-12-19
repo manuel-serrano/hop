@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Dec 19 12:51:32 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 15:20:09 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -851,7 +851,8 @@
 			     len)
 			    ((isa? (car l) JsArray)
 			     (loop (cdr l)
-				(js+ len (js-get-length (car l) #f %this) %this)))
+				(+fx/overflow len
+				   (js-get-length (car l) #f %this))))
 			    (else
 			     (loop (cdr l) (+ 1 len))))))
 	     (arr (with-access::JsGlobalObject %this (js-array)

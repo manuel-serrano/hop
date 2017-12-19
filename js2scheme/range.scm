@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Dec 17 16:50:29 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 16:28:51 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -821,7 +821,7 @@
    (multiple-value-bind (ints envs)
       (call-default-walker)
       (unless (or (null? envs) (pair? envs))
-	 (tprint "PAS BON: " (j2s->list this)))
+	 (tprint "PAS BON ENV=" (j2s->list this)))
       (with-access::J2SExpr this (type)
 	 (if (type-number? type)
 	     (return ints envs)
@@ -925,6 +925,12 @@
 		    (node-interval-set! this env fix intv)
 		    (return range env))))
 	  (return #f env))))
+
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SUnresolvedRef ...                                */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SUnresolvedRef env::pair-nil args fix::struct)
+   (return #f env))
 
 ;*---------------------------------------------------------------------*/
 ;*    test-envs ...                                                    */
@@ -1634,10 +1640,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SRef tymap)
    (call-next-method)
-   (with-access::J2SRef this (decl type range)
-      (when (interval? range)
-	 (let ((type (minimal-type type (interval->type range tymap))))
-	    (with-access::J2SDecl decl (vtype id key)
+   (with-access::J2SRef this (decl type (rng range))
+      (when (interval? rng)
+	 (with-access::J2SDecl decl (vtype id key range)
+	    (set! range (interval-merge range rng))
+	    (let ((type (minimal-type vtype (interval->type range tymap))))
 	       (set! vtype (minimal-type vtype type))))))
    this)
 

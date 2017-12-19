@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Dec 19 12:15:00 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 16:30:47 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -241,13 +241,13 @@
 		 ((eq? typ 'int32)
 		  (epairify loc `(negs32js ,expr)))
 		 (else
-		  (epairify loc `(js-toint32 (negjs ,expr %this))))))
+		  (epairify loc `(js-toint32 (negjs ,expr %this) %this)))))
 	     ((uint32)
 	      (cond
 		 ((eq? typ 'int32)
 		  (epairify loc `(negs32 ,expr)))
 		 (else
-		  (epairify loc `(js-touint32 (negjs ,expr %this))))))
+		  (epairify loc `(js-touint32 (negjs ,expr %this) %this)))))
 	     ((eqv? expr 0)
 	      -0.0)
 	     ((integer)
@@ -459,75 +459,35 @@
 ;*    bindings.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-binop-arithmetic loc op left l right r conf)
-   (case op
-      ((-)
-       `(-js ,left ,right %this))
-      ((*)
-       `(*js ,left ,right %this))
-      ((/)
-       `(/js ,left ,right %this))
-      ((<)
-       `(<js ,left ,right %this))
-      ((<=)
-       `(<=js ,left ,right %this))
-      ((>)
-       `(>js ,left ,right %this))
-      ((>=)
-       `(>=js ,left ,right %this))
-      ((&)
-       `(bit-andjs ,left ,right %this))
-      ((BIT_OR)
-       `(bit-orjs ,left ,right %this))
-      ((^)
-       `(bit-xorjs ,left ,right %this))
-      ((>>)
-       `(bit-rshjs ,left ,right %this))
-      ((>>>)
-       `(bit-urshjs ,left ,right %this))
-      ((<<)
-       `(bit-lshjs ,left ,right %this))
-      (else
-       (error "js-binop-arihmetic" "should not be here" op))))
-
-(define (js-binop-arithmetic-old loc op left l right r conf)
-   (tprint "CORRIGER ICI les to number entre * et <...")
-   (let (lhs rhs)
-      (if (m64? conf)
-	  (begin
-	     (set! lhs (tonumber64 left (j2s-type-ref l)))
-	     (set! rhs (tonumber64 right (j2s-type-ref r))))
-	  (begin
-	     (set! lhs (tonumber32 left (j2s-type-ref l)))
-	     (set! rhs (tonumber32 right (j2s-type-ref r)))))
+   (let ((tl (j2s-type-ref l))
+	 (tr (j2s-type-ref r)))
       (case op
 	 ((-)
-	  `(-js ,lhs ,rhs %this))
+	  `(-js ,(box left tl conf) ,(box right tr conf) %this))
 	 ((*)
-	  `(*js ,lhs ,rhs %this))
-	 ((%)
-	  `(js% ,lhs ,rhs %this))
-	 ((<)
-	  `(<js ,lhs ,rhs %this))
-	 ((<=)
-	  `(<=js ,lhs ,rhs %this))
-	 ((>)
-	  `(>js ,lhs ,rhs %this))
-	 ((>=)
-	  `(>=js ,lhs ,rhs %this))
-	 ((&)
-	  `(bit-andjs ,lhs ,rhs %this))
-	 ((BIT_OR)
-	  `(bit-orjs ,lhs ,rhs %this))
-	 ((^)
-	  `(bit-xorjs ,lhs ,rhs %this))
-	 ((>>)
-	  `(bit-rshjs ,lhs ,rhs %this))
-	 ((>>>)
-	  `(bit-urshjs ,lhs ,rhs %this))
-	 ((<<)
-	  `(bit-lshjs ,lhs ,rhs %this))
+	  `(*js ,(box left tl conf) ,(box right tr conf) %this))
 	 ((/)
-	  `(js/ ,lhs ,rhs %this))
+	  `(/js ,(box left tl conf) ,(box right tr conf) %this))
+	 ((<)
+	  `(<js ,(box left tl conf) ,(box right tr conf) %this))
+	 ((<=)
+	  `(<=js ,(box left tl conf) ,(box right tr conf) %this))
+	 ((>)
+	  `(>js ,(box left tl conf) ,(box right tr conf) %this))
+	 ((>=)
+	  `(>=js ,(box left tl conf) ,(box right tr conf) %this))
+	 ((&)
+	  `(bit-andjs ,(box left tl conf) ,(box right tr conf) %this))
+	 ((BIT_OR)
+	  `(bit-orjs ,(box left tl conf) ,(box right tr conf) %this))
+	 ((^)
+	  `(bit-xorjs ,(box left tl conf) ,(box right tr conf) %this))
+	 ((>>)
+	  `(bit-rshjs ,(box left tl conf) ,(box right tr conf) %this))
+	 ((>>>)
+	  `(bit-urshjs ,(box left tl conf) ,(box right tr conf) %this))
+	 ((<<)
+	  `(bit-lshjs ,(box left tl conf) ,(box right tr conf) %this))
 	 (else
 	  (error "js-binop-arihmetic" "should not be here" op)))))
 
@@ -1576,7 +1536,9 @@
 	 ((real)
 	  `(* ,(asreal left tl) ,right))
 	 (else
-	  `(* ,(asfixnum left tl) ,(tonumber right tr)))))
+	  `(if (fixnum? ,right)
+	       (*fx/overflow ,(asfixnum left tl) ,(tonumber right tr))
+	       (* ,(asfixnum left tl) ,(tonumber right tr))))))
    
    (define (mul-uint32 lhs tl left rhs tr right tonumber)
       (case tr
@@ -1630,7 +1592,7 @@
 	  `(*fl ,left ,right))
 	 (else
 	  `(*fl ,left ,(tonumber right tr)))))
-   
+
    (define (mul type lhs tl left rhs tr right tonumber)
       (case type
 	 ((int32)
@@ -1641,7 +1603,7 @@
 	      `(uint32->int32 (*u32 ,left ,right)))
 	     (else
 	      `(fixnum->int32
-		  (*js ,(tonumber left tl) ,(tonumber right tr) %this)))))
+		  (*js ,left ,right %this)))))
 	 ((uint32)
 	  (cond
 	     ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -1650,7 +1612,7 @@
 	      `(*u32 ,left ,right))
 	     (else
 	      `(fixnum->uint32
-		  (*js ,(tonumber left tl) ,(tonumber right tr) %this)))))
+		  (*js ,left ,right %this)))))
 	 ((integer)
 	  (cond
 	     ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -1658,7 +1620,7 @@
 	     ((and (eq? tl 'uint32) (eq? tr 'uint32))
 	      `(uint32->fixnum (*u32 ,left ,right)))
 	     (else
-	      `(*js ,(tonumber left tl) ,(tonumber right tr) %this))))
+	      `(*js ,left ,right %this))))
 	 ((number obj any object)
 	  (cond
 	     ((eq? tl 'int32)
@@ -1677,8 +1639,11 @@
 	      (mul-real lhs tl left rhs tr right tonumber))
 	     ((eq? tr 'real)
 	      (mul-real rhs tr right lhs tl left tonumber))
+	     ((eq? type 'number)
+	      `(*/overflow ,(box left (j2s-type-ref lhs) conf)
+		 ,(box right (j2s-type-ref rhs) conf)))
 	     (else
-	      `(*js ,(tonumber left tl) ,(tonumber right tr) %this))))
+	      `(*js ,left ,right %this))))
 	 (else
 	  (error "mul" "illegal integer type" type))))
    
