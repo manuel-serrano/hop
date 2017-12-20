@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Tue Dec 19 10:18:57 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 17:32:32 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -344,6 +344,9 @@
        (id ,id)))
 
 (define-macro (J2SLetOpt/vtype typ usage id val)
+   `(J2SLetOptVtype ,typ ,usage ,id ,val))
+
+(define-macro (J2SLetOptVtype typ usage id val)
    `(instantiate::J2SDeclInit
        (loc loc)
        (writable #f)

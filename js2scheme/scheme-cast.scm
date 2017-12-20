@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Dec 20 12:03:24 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 17:10:09 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -20,6 +20,13 @@
 	   __js2scheme_scheme-utils)
    
    (export (j2s-cast expr::obj ::obj ::symbol ::symbol ::pair-nil)))
+
+;*---------------------------------------------------------------------*/
+;*    method-as-int32-table ...                                        */
+;*---------------------------------------------------------------------*/
+(define method-as-int32-table
+   '(js-jsstring-charcodeatu32
+     js-jsstring-charcodeat))
 
 ;*---------------------------------------------------------------------*/
 ;*    cast-table ...                                                   */
@@ -242,7 +249,15 @@
 	   (uint32->int32 v)
 	   `(js-toint32 ,(uint32->flonum v) %this)))
       (else
-       `(js-toint32 ,v %this))))
+       (match-case v
+	  (((and ?fun (? symbol?)) . ?args)
+	   (if (memq fun method-as-int32-table)
+	       (begin
+		  (set-car! v (symbol-append fun '-as-int32))
+		  v)
+	       `(js-toint32 ,v %this)))
+	  (else
+	   `(js-toint32 ,v %this))))))
 
 (define (js->uint32 v expr conf)
    (cond
@@ -296,7 +311,7 @@
 	  sexp)
 	 (else
 	  `(js-tojsstring ,sexp %this))))
-   
+
    (define (default)
       (if (or (eq? from to) (eq? to '*))
 	  sexp
@@ -306,32 +321,17 @@
 	     ((eq? to 'uint32)
 	      (js->uint32 sexp expr conf))
 	     (else
-	      (tprint "DEFAULT...")
+	      (tprint "CAST DEFAULT... " from " -> " to)
 	      (case from
-		 ((uint29)
-		  (case to
-		     ((uint32 index length) (fixnum->uint32 sexp))
-		     ((bool) `(>u32 ,sexp #u32:0))
-		     (else sexp)))
 		 ((index uint32 length)
 		  (case to
 		     ((uint32 index length) sexp)
 		     ((bool) `(> ,sexp 0))
 		     (else sexp)))
-		 ((int30)
-		  (case to
-		     ((index uint32 length) (fixnum->uint32 sexp))
-		     ((bool) `(not (= ,sexp 0)))
-		     (else sexp)))
 		 ((int53)
 		  (case to
 		     ((index uint32 length) (err))
 		     ((bool) `(not (= ,sexp 0)))
-		     (else sexp)))
-		 ((fixnum)
-		  (case to
-		     ((index uint32 length) (js-fixnum->uint32 sexp expr conf))
-		     ((bool) `(not (=fx ,sexp 0)))
 		     (else sexp)))
 		 ((integer number)
 		  (case to
@@ -340,12 +340,11 @@
 		     (else sexp)))
 		 (else
 		  (case to
-		     ((index uint32 length) (js-fixnum->uint32 sexp expr conf))
 		     ((string) (tostring sexp))
+		     ((index uint32 length) (js-fixnum->uint32 sexp expr conf))
 		     ((bool) `(js-totest ,sexp))
 		     (else sexp))))))))
 
-   (tprint "CAST from=" from " to=" to)
    (if (eq? from to)
        sexp
        (let ((fen (assq from cast-table)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Dec 20 11:08:17 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 18:18:22 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -25,6 +25,7 @@
 	   __js2scheme_stage
 	   __js2scheme_array
 	   __js2scheme_scheme
+	   __js2scheme_scheme-cast
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
 
@@ -226,12 +227,12 @@
 	 ((is-fixnum? field conf)
 	  (aref/w-cache this))
 	 ((eq? (j2s-type-ref field) 'uint32)
-	  `(js-array-ref-ur ,(j2s-scheme obj mode return conf hint)
+	  `(js-array-index-ref ,(j2s-scheme obj mode return conf hint)
 	      ,(j2s-scheme field mode return conf hint)
 	      %this))
 	 ((eq? (j2s-type-ref field) 'int32)
 	  `(js-array-ref ,(j2s-scheme obj mode return conf hint)
-	      (int32->fixnum (j2s-scheme field mode return conf hint))
+	      (int32->fixnum ,(j2s-scheme field mode return conf hint))
 	      %this))
 	 (else
 	  `(js-array-ref ,(j2s-scheme obj mode return conf hint)
@@ -404,29 +405,36 @@
 	    (with-access::J2SExpr field (range)
 	       (let ((h (car h)))
 		  (cond
+		     ((eq? (j2s-type-ref field) 'uint32)
+		      (let ((i (gensym 'idx)))
+			 `(let ((,i ,(j2s-scheme field mode return conf hint)))
+			     (if (<u32 ,i ,(fixnum->uint32 h))
+				 (vector-ref
+				    ,(j2s-scheme obj mode return conf hint)
+				    (uint32->fixnum ,i))
+				 (js-undefined)))))
 		     ((and (>= (interval-min range) h)
 			   (< (interval-max range) h))
-		      `(vector-ref ,(j2s-scheme obj
-				       mode return conf hint)
-			  ,(j2s-scheme field mode return conf hint)))
-		     ((or (eq? (j2s-type-ref field) 'uint32)
-			  (>=fx (interval-min range) 0))
+		      `(vector-ref ,(j2s-scheme obj mode return conf hint)
+			  (uint32->fixum
+			     ,(j2s-scheme-as-uint32 field mode return conf hint))))
+		     ((>=fx (interval-min range) 0)
 		      (let ((i (gensym 'idx)))
-			 `(let ((,i ,(j2s-scheme field
-					mode return conf hint)))
-			     (if (<fx ,i ,h)
+			 `(let ((,i ,(j2s-scheme-as-uint32 field mode
+					return conf hint)))
+			     (if (<u32 ,i ,(fixnum->uint32 h))
 				 (vector-ref
 				    ,(j2s-scheme obj
-					mode return conf hint) ,i)
+					mode return conf hint)
+				    (uint32->fixnum ,i))
 				 (js-undefined)))))
 		     (else
 		      (let ((i (gensym 'idx)))
-			 `(let ((,i ,(j2s-scheme field
+			 `(let ((,i ,(j2s-scheme-as-integer field
 					mode return conf hint)))
 			     (if (and (<fx ,i ,h) (>=fx ,i 0))
 				 (vector-ref
-				    ,(j2s-scheme obj
-					mode return conf hint) ,i)
+				    ,(j2s-scheme obj mode return conf hint) ,i)
 				 (js-undefined))))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -436,6 +444,27 @@
    (with-access::J2SAssig this (lhs rhs)
       (with-access::J2SAccess lhs (obj field)
 	 `(vector-set! ,(j2s-scheme obj mode return conf hint)
-	     ,(j2s-scheme field mode return conf hint)
+	     (uint32->fixnum
+		,(j2s-scheme-as-uint32 field mode return conf hint))
 	     ,(j2s-scheme rhs mode return conf hint)))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-as-uint32 ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-as-uint32 field mode return conf hint)
+   (j2s-cast
+      (j2s-scheme field mode return conf hint)
+      field
+      (j2s-type-ref field) 'uint32 conf))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme-as-integer ...                                        */
+;*---------------------------------------------------------------------*/
+(define (j2s-scheme-as-integer field mode return conf hint)
+   (j2s-cast
+      (j2s-scheme field mode return conf hint)
+      field
+      (j2s-type-ref field) 'integer conf))
+
+      
 	     

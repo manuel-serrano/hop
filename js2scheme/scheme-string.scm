@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Mon Dec 18 08:26:29 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 16:09:37 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -29,7 +29,8 @@
 
    (export (j2s-string-ref ::J2SAccess mode return conf hint)
 	   (j2s-jsstring-replace-regexp obj args mode return conf hint)
-	   (j2s-jsstring-replace obj args mode return conf hint)))
+	   (j2s-jsstring-replace obj args mode return conf hint)
+	   (j2s-jsstring-charcodeat obj args mode return conf hint)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-string-ref ...                                               */
@@ -139,3 +140,24 @@
 	    args)))
 	   
 
+;*---------------------------------------------------------------------*/
+;*    j2s-jsstring-charcodeat ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-charcodeat obj args mode return conf hint)
+   (match-case args
+      (((and ?pos (? expr-asuint32)) ?%this)
+       (let* ((expr (expr-asuint32 pos))
+	      (sexp (j2s-scheme expr mode return conf hint)))
+	  `(js-jsstring-charcodeatu32
+	      ,(j2s-scheme obj mode return conf hint)
+	      ,(if (eq? (j2s-type-ref expr) 'uint32)
+		   sexp
+		   `(fixnum->uint32 ,sexp))
+	      ,(j2s-scheme %this mode return conf hint))))
+      (else
+       `(js-jsstring-charcodeat
+	   ,(j2s-scheme obj mode return conf hint)
+	   ,@(map (lambda (arg)
+		     (j2s-scheme arg mode return conf hint))
+		args)))))
+       

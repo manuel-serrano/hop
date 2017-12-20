@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Dec 14 12:35:21 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 18:42:45 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -190,7 +190,7 @@
 ;*    type-fixnum? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (type-fixnum? type)
-   (memq type '(uint29 int30 fixnum ufixnum)))
+   (memq type '(int32 uint32 integer bint)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-integer? ...                                                */

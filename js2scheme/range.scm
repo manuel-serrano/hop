@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Dec 20 10:34:31 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 16:26:40 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -954,6 +954,7 @@
 		   (values (empty-env) (empty-env))
 		   (case op
 		      ((<)
+		       
 		       (let ((intrt (interval-lt intl intr))
 			     (intro (interval-gte intl intr)))
 			  (values (make-env decl intrt)
@@ -1443,6 +1444,8 @@
 			(tprint "    [" ffix "] teste=" (dump-env teste)))
 		     (multiple-value-bind (testet testef)
 			(test-envs test env args fix)
+			(when (pair? denv)
+			   (tprint "    [" ffix "] inloope=" (dump-env testet)))
 			(multiple-value-bind (bodyi bodye)
 			   (node-range-seq (list body incr)
 			      (append-env testet teste) args fix)
@@ -1603,11 +1606,14 @@
    (with-access::J2SDecl this (range itype vtype id scope)
       (cond
 	 ((eq? scope '%scope)
-	  (let ((ty (if (interval? range)
-			(minimal-type (interval->type range tymap) vtype)
-			(minimal-type 'number vtype))))
-	     (set! itype ty)
-	     (set! vtype ty)))
+	  (when (memq vtype '(index integer unknown))
+	     (let ((ty (cond
+			  ((interval? range)
+			   (minimal-type (interval->type range tymap) vtype))
+			  (else
+			   (minimal-type 'number vtype)))))
+		(set! itype ty)
+		(set! vtype ty))))
 	 ((and (interval? range) (memq vtype '(index integer number)))
 	  (let ((ty (interval->type range tymap)))
 	     (when ty

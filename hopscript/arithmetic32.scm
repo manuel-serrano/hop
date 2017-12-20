@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Wed Dec 20 06:52:14 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 13:07:36 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -197,12 +197,9 @@
 ;*    Chapter 4, section 4.1, page 68                                  */
 ;*---------------------------------------------------------------------*/
 (define-inline (overflow29 v::long)
-   (let* ((a (-fx 0 (bit-lsh 1 29)))
-	  (b (-fx (bit-lsh 1 29) 1))
-	  (b-a (-fx b a)))
-      (if (<=u32 (fixnum->uint32 (-fx v a)) (fixnum->uint32 b-a))
-	  v
-	  (fixnum->flonum v))))
+   (if (or (>=fx v (bit-lsh 1 29)) (<fx v (negfx (bit-lsh 1 29))))
+       (fixnum->flonum v)
+       v))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-int32-tointeger ...                                           */

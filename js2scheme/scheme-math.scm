@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Dec 16 06:17:13 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 18:50:57 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -84,15 +84,36 @@
 			   (cons lhs k)))))))))
    
    (define (positive? n)
-      (memq (j2s-type-ref n) '(index uint29 ufixnum)))
+      (memq (j2s-type-ref n) '(index uint32)))
    
    (let ((p2 (divide-power2 arg)))
       (cond
 	 ((not p2)
 	  `(js-math-floor ,(j2s-scheme arg mode return conf hint)))
 	 ((positive? (car p2))
-	  `(bit-rsh ,(j2s-scheme (car p2) mode return conf hint)
-	      ,(cdr p2)))
+	  (case (j2s-type-ref (car p2))
+	     ((int32)
+	      `(js-int32-tointeger
+		  (bit-rshs32 ,(j2s-scheme (car p2) mode return conf hint)
+		     ,(cdr p2))))
+	     ((uint32)
+	      `(js-uint32-tointeger
+		  (bit-rshu32 ,(j2s-scheme (car p2) mode return conf hint)
+		     ,(cdr p2))))
+	     (else
+	      `(bit-rsh ,(j2s-scheme (car p2) mode return conf hint)
+		 ,(cdr p2)))))
+	 
 	 (else
-	  `(/pow2fx ,(j2s-scheme (car p2) mode return conf hint)
-	      ,(cdr p2))))))
+	  (case (j2s-type-ref (car p2))
+	     ((int32)
+	      `(js-int32->tointeger
+		  (/pow2s32 ,(j2s-scheme (car p2) mode return conf hint)
+		     ,(cdr p2))))
+	     ((uint32)
+	      `(js-uint32-tointeger
+		  (/pow2u32 ,(j2s-scheme (car p2) mode return conf hint)
+		     ,(cdr p2))))
+	     (else
+	      `(/pow2fx ,(j2s-scheme (car p2) mode return conf hint)
+		  ,(cdr p2))))))))

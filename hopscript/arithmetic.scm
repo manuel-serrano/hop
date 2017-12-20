@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Tue Dec 19 15:15:00 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 18:47:48 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -39,6 +39,7 @@
 	   (negjs ::obj ::JsGlobalObject)
 
 	   (inline /pow2s32::int32 x::int32 y::long)
+	   (inline /pow2u32::uint32 x::uint32 y::long)
 	   (inline /pow2fx::long n::long k::long)
 
 	   (%$$NN ::obj ::obj)
@@ -150,6 +151,15 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (/pow2s32::int32 n::int32 k::long)
    (/s32 n (bit-lsh 1 k)))
+
+;*---------------------------------------------------------------------*/
+;*    /pow2u32 ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    See Hacker's Delight (second edition), H. Warren J.r,            */
+;*    Chapter 10, section 10.1.                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (/pow2u32::uint32 n::uint32 k::long)
+   (/u32 n (bit-lsh 1 k)))
 
 ;*---------------------------------------------------------------------*/
 ;*    /pow2fx ...                                                      */

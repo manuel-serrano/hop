@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Dec 20 11:45:55 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 16:04:43 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -81,7 +81,9 @@
 	   (overflow29 ::long)
 	   (box ::obj ::symbol ::pair-nil #!optional proc::obj)
 	   (box32 ::obj ::symbol #!optional proc::obj)
-	   (box64 ::obj ::symbol #!optional proc::obj)))
+	   (box64 ::obj ::symbol #!optional proc::obj)
+
+	   (expr-asuint32 expr::J2SExpr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -795,5 +797,22 @@
       ((integer real number) val)
       (else (if (not proc) val (proc val)))))
 
-
-
+;*---------------------------------------------------------------------*/
+;*    expr-asuint32 ...                                                */
+;*    -------------------------------------------------------------    */
+;*    If an expression can be interpreted as an uint32 without         */
+;*    cast, return that subexpression.                                 */
+;*---------------------------------------------------------------------*/
+(define (expr-asuint32 expr::J2SExpr)
+   (cond
+      ((eq? (j2s-type-ref expr) 'uint32)
+       expr)
+      ((eq? (j2s-type expr) 'uint32)
+       expr)
+      ((isa? expr J2SCast)
+       (with-access::J2SCast expr (expr)
+	  (expr-asuint32 expr)))
+      ((inrange-uint32? expr)
+       expr)
+      (else
+       #f)))

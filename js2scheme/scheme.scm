@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Dec 20 12:00:01 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 17:10:55 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -59,7 +59,7 @@
 	("fromCharCode" js-jsstring-fromcharcode String (any) %this)
 	("charAt" js-jsstring-charat string (any) %this)
 	("charAt" js-jsstring-maybe-charat any (any) %this)
-	("charCodeAt" js-jsstring-charcodeat string (any) %this)
+	("charCodeAt" ,j2s-jsstring-charcodeat string (any) %this)
 	("charCodeAt" js-jsstring-maybe-charcodeat any (any) %this)
 	("indexOf" js-jsstring-indexof string (string (any 0)) %this)
 	("indexOf" js-jsstring-maybe-indexof any (any (any 0)) %this)
@@ -157,18 +157,6 @@
 ;*---------------------------------------------------------------------*/
 (define-macro (eval-return type value target)
    `(if return ,value ,value))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-+fx ...                                                      */
-;*---------------------------------------------------------------------*/
-(define (j2s-+fx x y conf)
-   (case (config-get conf :long-size 0)
-      ((32)
-       `(js+fx32 ,x ,y))
-      ((64)
-       `(js+fx64 ,x ,y))
-      (else
-       `(js+fx ,x ,y))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-new ...                                                      */
@@ -571,14 +559,14 @@
 (define-method (j2s-scheme this::J2SCast mode return conf hint)
    (with-access::J2SCast this (expr type)
       (cond
-;* 	 ((isa? expr J2SBinary)                                        */
-;* 	  (or (j2s-scheme-binary-as expr mode return conf hint type)   */
-;* 	      (j2s-cast (j2s-scheme expr mode return conf hint)        */
-;* 		 expr (j2s-type-ref expr) type conf)))                 */
-;* 	 ((isa? expr J2SUnary)                                         */
-;* 	  (or (j2s-scheme-unary-as expr mode return conf hint type)    */
-;* 	      (j2s-cast (j2s-scheme expr mode return conf hint)        */
-;* 		 expr (j2s-type-ref expr) type conf)))                 */
+	 ((isa? expr J2SBinary)
+	  (or (j2s-scheme-binary-as expr mode return conf hint type)
+	      (j2s-cast (j2s-scheme expr mode return conf hint)
+		 expr (j2s-type-ref expr) type conf)))
+	 ((isa? expr J2SUnary)
+	  (or (j2s-scheme-unary-as expr mode return conf hint type)
+	      (j2s-cast (j2s-scheme expr mode return conf hint)
+		 expr (j2s-type-ref expr) type conf)))
 	 (else
 	  (j2s-cast (j2s-scheme expr mode return conf hint)
 	     expr (j2s-type-ref expr) type conf)))))
@@ -2313,7 +2301,7 @@
 	 (let ((tmp (gensym 'tmp)))
 	    `(let ((,tmp ,(j2s-unresolved id cache loc)))
 		(if (fixnum? ,tmp)
-		    ,(new-or-old tmp (j2s-+fx tmp inc conf)
+		    ,(new-or-old tmp `(+fx/overflow ,tmp ,inc)
 		       (lambda (val tmp)
 			  `(begin
 			      ,(j2s-unresolved-put! `',id val #t mode return)
@@ -2471,7 +2459,7 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SPrefix ...                                       */
-;*    -------------------------------------------------------------    */
+;*    -----------------------<--------------------------------------    */
 ;*    www.ecma-international.org/ecma-262/5.1/#sec-11.3.1prefix        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SPrefix mode return conf hint)
@@ -2565,10 +2553,6 @@
 		  ((isa? lhs J2SAccess)
 		   (access-assigop op tl lhs rhs))
 		  ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
-		   (tprint "ASSIG op=" op)
-		   (tprint " rhs=" (j2s->list rhs))
-		   (tprint " BIN="
-		      (js-binop2 loc op tl lhs rhs mode return conf hint))
 		   (with-access::J2SRef lhs (decl)
 		      (with-access::J2SDecl decl (hint utype)
 			 (j2s-scheme-set! lhs

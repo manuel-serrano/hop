@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/array.sch               */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/array.sch               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Wed Mar 22 07:54:36 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 16:51:30 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
@@ -86,7 +86,7 @@
 		(<u32 (fixnum->uint32 ,i) ,alen)
 		(eq? ,mark (js-array-mark)))
 	   (vector-set-ur! ,avec ,i ,v)
-	   (js-array-set-ur! ,arr ,i ,v ,throw ,%this)))
+	   (js-array-set-ur! ,arr (fixnum->uint32 ,i) ,v ,throw ,%this)))
 
    (%make-set idx val set))
 
@@ -98,7 +98,7 @@
 		   (>=fx ,i 0)
 		   (<u32 (fixnum->uint32 ,i) ,alen))
 	      (vector-ref-ur ,avec ,i)
-	      (let ((,tmp (js-array-ref-ur ,arr ,i ,%this)))
+	      (let ((,tmp (js-array-ref-ur ,arr (fixnum->uint32 ,i) ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
    
@@ -112,7 +112,8 @@
 		   (>=fx ,i 0)
 		   (<u32 (fixnum->uint32 ,i) ,alen))
 	      (vector-set-ur! ,avec ,i ,v)
-	      (let ((,tmp (js-array-set-ur! ,arr ,i ,v ,throw ,%this)))
+	      (let ((,tmp (js-array-set-ur! ,arr (fixnum->uint32 ,i)
+			     ,v ,throw ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
 
@@ -139,7 +140,7 @@
 		(<u32 (fixnum->uint32 ,i) ,alen)
 		(eq? ,mark (js-array-mark)))
 	   (vector-set-ur! ,avec ,i ,v)
-	   (js-array-set-ur! ,arr ,i ,v ,throw ,%this)))
+	   (js-array-set-ur! ,arr (fixnum->uint32 ,i) ,v ,throw ,%this)))
 
    (%make-set idx val set))
 
@@ -149,7 +150,7 @@
       (let ((tmp (gensym 'tmp)))
 	 `(if (and (>=fx ,i 0) (<u32 (fixnum->uint32 ,i) ,alen))
 	      (vector-ref-ur ,avec ,i)
-	      (let ((,tmp (js-array-ref-ur ,arr ,i ,%this)))
+	      (let ((,tmp (js-array-ref-ur ,arr (fixnum->uint32 ,i) ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
    
@@ -161,7 +162,8 @@
       (let ((tmp (gensym 'tmp)))
 	 `(if (and (>=fx ,i 0) (<u32 (fixnum->uint32 ,i) ,alen))
 	      (vector-set-ur! ,avec ,i ,v)
-	      (let ((,tmp (js-array-set-ur! ,arr ,i ,v ,throw ,%this)))
+	      (let ((,tmp (js-array-set-ur! ,arr (fixnum->uint32 ,i)
+			     ,v ,throw ,%this)))
 		 ,@(%update-deps deps)
 		 ,tmp))))
    

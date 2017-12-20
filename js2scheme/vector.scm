@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Nov 22 09:52:17 2017                          */
-;*    Last change :  Fri Nov 24 09:52:14 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 17:49:39 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Mapping JS Arrays to Scheme vectors                              */
@@ -253,9 +253,16 @@
       
    (with-access::J2SNew this (clazz args)
       (when (and (is-array? clazz) (pair? args) (null? (cdr args)))
-	 (when (isa? (car args) J2SNumber)
-	    (with-access::J2SNumber (car args) (val)
-	       val)))))
+	 (let loop ((expr (car args)))
+	    (cond
+	       ((isa? expr J2SNumber)
+		(with-access::J2SNumber expr (val)
+		   val))
+	       ((isa? expr J2SCast)
+		(with-access::J2SCast expr (expr)
+		   (loop expr)))
+	       (else
+		#f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    vector-init-size ::J2SArray ...                                  */

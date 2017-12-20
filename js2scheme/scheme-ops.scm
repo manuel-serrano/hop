@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Dec 20 11:48:42 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 18:29:43 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1021,24 +1021,30 @@
 		       `(,(bitop op) ,(touint32 left tl) ,(mask32 right rhs)))
 		      (else
 		       `(,(bitop op) ,(toint32 left tl) ,(toint32 right tr)))))
-		  ((and (memq tl '(int32 uint32 integer))
-			(memq tr '(int32 uint32 integer)))
-		      (case op
-			 ((>> <<)
-			  (j2s-cast
-			     `(,(bitop op)
-			       ,(toint32 left tl) ,(mask32 right rhs))
-			     #f 'int32 type conf))
-			 ((>>>)
-			  (j2s-cast
-			     `(,(bitop op)
-			       ,(touint32 left tl) ,(mask32 right rhs))
-			     #f 'uint32 type conf))
-			 (else
-			  (j2s-cast
-			     `(,(bitop op)
-			       ,(toint32 left tl) ,(toint32 right tr))
-			     #f 'int32 type conf))))
+		  ((memq tr '(int32 uint32 integer))
+		   (case op
+		      ((>> <<)
+		       (j2s-cast
+			  `(,(bitop op)
+			    ,(toint32 left tl) ,(mask32 right rhs))
+			  #f 'int32 type conf))
+		      ((>>>)
+		       (j2s-cast
+			  `(,(bitop op)
+			    ,(touint32 left tl) ,(mask32 right rhs))
+			  #f 'uint32 type conf))
+		      (else
+		       (j2s-cast
+			  `(,(bitop op)
+			    ,(toint32 left tl) ,(toint32 right tr))
+			  #f 'int32 type conf))))
+		  ((memq op '(& ^ BIT_OR))
+		   `(if (and (fixnum? ,left) (fixnum? ,right))
+			(js-int32-tointeger
+			   (,(bitop op)
+			    (fixnum->int32 ,left) (fixnum->int32 ,right)))
+			(,(bitopjs op)
+			 ,(box left tl conf) ,(box right tr conf) %this)))
 		  (else
 		   `(,(bitopjs op)
 		     ,(box left tl conf) ,(box right tr conf) %this))))))))
@@ -1134,8 +1140,6 @@
       (lambda (left right)
 	 (let ((tl (j2s-type-ref lhs))
 	       (tr (j2s-type-ref rhs)))
-	    (when (eq? tl 'bint)
-	       (tprint `(,op ,(j2s->list lhs) ,(j2s->list rhs))))
 	    (epairify loc
 	       (cond
 		  ((eq? tl 'int32)
@@ -1145,8 +1149,6 @@
 		  ((eq? tl 'uint32)
 		   (binop-uint32-xxx op type lhs tl left rhs tr right conf #f))
 		  ((eq? tr 'uint32)
-		   (when (eq? tl 'bint)
-		      (tprint "YEP " `(,op ,(j2s->list lhs) ,(j2s->list rhs))))
 		   (binop-uint32-xxx op type rhs tr right lhs tl left conf #t))
 		  ((eq? tl 'integer)
 		   (binop-integer-xxx op type lhs tl left rhs tr right conf #f))
@@ -1609,7 +1611,7 @@
       ((uint32) (if (uint32? val) (uint32->int32 val) `(uint32->int32 ,val)))
       ((int53) (if (fixnum? val) (fixnum->int32 val) `(fixnum->int32 ,val)))
       ((integer) (if (fixnum? val) (fixnum->int32 val) `(fixnum->int32 ,val)))
-      (else (error "asint32" "Cannot convert type" type))))
+      (else `(js-toint32 ,val %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    asuint32 ...                                                     */
@@ -1620,7 +1622,7 @@
       ((uint32) val)
       ((int53) (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
       ((integer) (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
-      (else (error "asuint32" "Cannot convert type" type))))
+      (else `(js-touint32 ,val %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    asfixnum ...                                                     */
@@ -1629,8 +1631,7 @@
    (case type
       ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
       ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
-      ((int53 integer number) val)
-      (else (error "asfixnum" "Cannot convert type" type))))
+      (else val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    asreal ...                                                       */
@@ -1640,8 +1641,7 @@
       ((int32) (if (int32? val) (int32->flonum val) `(int32->flonum ,val)))
       ((uint32) (if (uint32? val) (uint32->flonum val) `(uint32->flonum ,val)))
       ((int53 integer) (fixnum->flonum val))
-      ((real) val)
-      (else (error "asreal" "Cannot convert type" type))))
+      (else val)))
 
 ;*---------------------------------------------------------------------*/
 ;*    toflonum ...                                                     */
@@ -2039,7 +2039,7 @@
 (define (binop-any-any op type left right flip)
    (if (memq type '(integer number))
        (let ((op (symbol-append op 'js)))
-	  (if flip `(,op ,right ,left) `(,op ,left ,right)))
+	  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))
        (let ((op (symbol-append 'js op)))
 	  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))))
    

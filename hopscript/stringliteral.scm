@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Dec 17 20:07:49 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 16:16:52 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -63,6 +63,9 @@
 	   (js-jsstring-lastindexof ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-lastindexof ::obj ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-charcodeat ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-charcodeat-as-int32::int32 ::obj ::obj ::JsGlobalObject)
+	   (js-jsstring-charcodeatu32 ::obj ::uint32 ::JsGlobalObject)
+	   (js-jsstring-charcodeatu32-as-int32::int32 ::obj ::uint32 ::JsGlobalObject)
 	   (js-jsstring-maybe-charcodeat ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-charat ::obj ::obj ::JsGlobalObject)
 	   (js-jsstring-maybe-charat ::obj ::obj ::JsGlobalObject)
@@ -1239,6 +1242,82 @@
 	  (utf8-codeunit-ref this val position)
 	  (let ((pos (js-tointeger position %this)))
 	     (utf8-codeunit-ref this val (->fixnum pos)))))
+
+   (string-dispatch charcodeat this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-charcodeat-as-int32 ...                              */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.5     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-charcodeat-as-int32::int32 this position %this)
+   
+   (define (ascii-charcodeat val::bstring)
+      (if (fixnum? position)
+	  (cond
+	     ((<fx position 0)
+	      #s32:0)
+	     ((>=fx position (string-length val))
+	      #s32:0)
+	     (else
+	      (fixnum->int32
+		 (char->integer (string-ref-ur val position)))))
+	  (let ((pos (js-tointeger position %this)))
+	     (if (or (< pos 0) (>= pos (string-length val)))
+		 #s32:0
+		 (fixnum->int32
+		    (char->integer (string-ref val (->fixnum pos))))))))
+
+   (define (utf8-charcodeat val::bstring)
+      (let ((r (if (fixnum? position)
+		   (utf8-codeunit-ref this val position)
+		   (let ((pos (js-tointeger position %this)))
+		      (utf8-codeunit-ref this val (->fixnum pos))))))
+	 (if (fixnum? r)
+	     (fixnum->int32 r)
+	     #s32:0)))
+
+   (string-dispatch charcodeat this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-charcodeatu32 ...                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.5     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-charcodeatu32 this position::uint32 %this)
+   
+   (define (ascii-charcodeat val::bstring)
+      (if (>=u32 position (fixnum->uint32 (string-length val)))
+	  +nan.0
+	  (char->integer (string-ref-ur val (uint32->fixnum position)))))
+
+   (define (utf8-charcodeat val::bstring)
+      (if (>=u32 position (fixnum->uint32 (string-length val)))
+	  +nan.0
+	  (utf8-codeunit-ref this val (uint32->fixnum position))))
+
+   (string-dispatch charcodeat this))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-charcodeatu32-as-int32 ...                           */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.5     */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-charcodeatu32-as-int32::int32 this position::uint32 %this)
+   
+   (define (ascii-charcodeat val::bstring)
+      (if (>=u32 position (fixnum->uint32 (string-length val)))
+	  #s32:0
+	  (fixnum->int32
+	     (char->integer (string-ref-ur val (uint32->fixnum position))))))
+
+   (define (utf8-charcodeat val::bstring)
+      (if (>=u32 position (fixnum->uint32 (string-length val)))
+	  #s32:0
+	  (let ((r (utf8-codeunit-ref this val (uint32->fixnum position))))
+	     (if (fixnum? r)
+		 (fixnum->int32 r)
+		 #s32:0))))
 
    (string-dispatch charcodeat this))
 

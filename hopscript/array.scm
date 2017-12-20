@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Dec 19 15:20:09 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 16:51:36 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -49,7 +49,7 @@
 	   (inline js-array-ilen::uint32 ::JsArray)
 	   
 	   (inline js-array-ref ::JsArray ::obj ::JsGlobalObject)
-	   (js-array-ref-ur ::JsArray ::long ::JsGlobalObject)
+	   (js-array-ref-ur ::JsArray ::uint32 ::JsGlobalObject)
 	   (inline js-array-inl-ref ::JsArray ::obj
 	      ::vector ::uint32 ::obj ::JsGlobalObject)
 	   (inline js-array-index-ref ::JsArray ::uint32 ::JsGlobalObject)
@@ -71,7 +71,7 @@
 	      ::vector ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (js-array-put! ::JsArray p ::obj ::bool ::JsGlobalObject)
 	   
-	   (js-array-set-ur! ::JsArray ::long ::obj ::bool ::JsGlobalObject)
+	   (js-array-set-ur! ::JsArray ::uint32 ::obj ::bool ::JsGlobalObject)
 	   (js-vector->jsarray::JsArray ::vector ::JsGlobalObject)
 	   (js-vector->sparse-jsarray::JsArray ::vector ::JsGlobalObject)
 	   
@@ -619,31 +619,29 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-ref-ur ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-array-ref-ur arr::JsArray idx::long %this)
-   [assert (idx) (>=fx idx 0)]
+(define (js-array-ref-ur arr::JsArray idx::uint32 %this)
    (with-access::JsArray arr (vec ilen)
       (cond
-;* 	 ((and (>=fx idx 0) (<u32 (fixnum->uint32 idx) ilen))          */
-	 ((<u32 (fixnum->uint32 idx) ilen)
-	  (vector-ref vec idx))
-	 ((<fx idx (vector-length vec))
-	  (js-get arr idx %this))
+	 ((<u32 idx ilen)
+	  (vector-ref vec (uint32->fixnum idx)))
+	 ((<u32 idx (fixnum->uint32 (vector-length vec)))
+	  (js-get arr (uint32->fixnum idx) %this))
 	 ((cond-expand
 	     ((or bint30 bint32)
-	      (expandable-array arr (fixnum->uint32 idx)
+	      (expandable-array arr idx
 		 (fixnum->uint32 (vector-length vec))))
 	     (else
-	      (and (<fx idx (-fx (bit-lsh 1 32) 1))
-		   (expandable-array arr (fixnum->uint32 idx)
+	      (and (<u32 idx (bit-lshu32 #u32:1 31))
+		   (expandable-array arr idx
 		      (fixnum->uint32 (vector-length vec))))))
 	  =>
 	  (lambda (len)
 	     (let ((nlen (uint32->fixnum len)))
 		(cond-expand (profile (profile-vector-extension nlen len)))
 		(set! vec (copy-vector-fill! vec nlen (js-undefined))))
-	     (js-get arr idx %this)))
+	     (js-get arr (js-uint32-tointeger idx) %this)))
 	 (else
-	  (js-get arr idx %this)))))
+	  (js-get arr (js-uint32-tointeger idx) %this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-set! ...                                                */
@@ -654,7 +652,7 @@
 	  (if ;; (and (>=fx idx 0) (<u32 (fixnum->uint32 idx) ilen))
 	      (<u32 (fixnum->uint32 idx) ilen)
 	      (vector-set! vec idx val)
-	      (js-array-set-ur! arr idx val throw %this))
+	      (js-array-set-ur! arr (fixnum->uint32 idx) val throw %this))
 	  (js-array-put! arr idx val throw %this))))
 
 ;*---------------------------------------------------------------------*/
@@ -680,7 +678,7 @@
 	  (vector-set! vec (uint32->fixnum idx) val)
 	  val)
 	 (else
-	  (js-array-set-ur! arr (uint32->fixnum idx) val throw %this)))))
+	  (js-array-set-ur! arr idx val throw %this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-fixnum-set! ...                                         */
@@ -693,7 +691,7 @@
 	  (vector-set! vec idx val)
 	  val)
 	 (else
-	  (js-array-set-ur! arr idx val throw %this)))))
+	  (js-array-set-ur! arr (fixnum->uint32 idx) val throw %this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-index-inl-set! ...                                      */
@@ -719,10 +717,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-array-set-ur! ...                                             */
 ;*---------------------------------------------------------------------*/
-(define (js-array-set-ur! arr::JsArray idx::long val throw::bool %this)
+(define (js-array-set-ur! arr::JsArray idx::uint32 val throw::bool %this)
    (with-access::JsArray arr (vec ilen length)
       (cond
-	 ((<fx idx (vector-length vec))
+	 ((<u32 idx (fixnum->uint32 (vector-length vec)))
 	  (with-access::JsArray arr (length)
 	     (cond
 		((not (array-extensible? arr))
@@ -730,21 +728,20 @@
 		     (js-raise-type-error %this
 			"Can't add property ~a, object not extensible" idx)
 		     val))
-		((and (=u32 (fixnum->uint32 idx) ilen)
-		      (js-array-full-inlined? arr))
-		 (vector-set! vec idx val)
+		((and (=u32 idx ilen) (js-array-full-inlined? arr))
+		 (vector-set! vec (uint32->fixnum idx) val)
 		 (let ((nilen (+u32 ilen #u32:1)))
 		    (set! ilen nilen)
-		    (when (>=u32 (fixnum->uint32 idx) length)
+		    (when (>=u32 idx length)
 		       (set! length nilen)))
 		 val)
-		((<u32 (fixnum->uint32 idx) ilen)
-		 (vector-set! vec idx val)
+		((<u32 idx ilen)
+		 (vector-set! vec (uint32->fixnum idx) val)
 		 val)
 		(else
-		 (js-array-put! arr idx val throw %this)))))
+		 (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
 	 (else
-	  (js-array-put! arr idx val throw %this)))))
+	  (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    init-builtin-array-prototype! ...                                */

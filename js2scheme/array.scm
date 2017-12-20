@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Nov 22 14:40:29 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 17:31:40 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -86,7 +86,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl->adecl::J2SDeclInit decl::J2SDecl)
    (with-access::J2SDecl decl (id loc)
-      (J2SLetOptUtype 'vector '(read write)
+      (J2SLetOptVtype 'vector '(read write)
 	 (symbol-append '%A id)
 	 (J2SCall (J2SHopRef 'js-array-vec) (J2SRef decl)))))
 
@@ -95,7 +95,7 @@
 ;*---------------------------------------------------------------------*/
 (define (decl->ldecl::J2SDeclInit adecl::J2SDecl decl::J2SDecl)
    (with-access::J2SDecl decl (id loc)
-      (J2SLetOptUtype 'uint32 '(read write)
+      (J2SLetOptVtype 'uint32 '(read write)
 	 (symbol-append '%L id)
 	 (J2SCall (J2SHopRef 'js-array-ilen) (J2SRef decl)))))
 
@@ -103,7 +103,7 @@
 ;*    mark-decl ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (mark-decl::J2SDeclInit loc)
-   (J2SLetOptUtype 'fixnum '(read write)
+   (J2SLetOptVtype 'integer '(read write)
       (gensym '%Marray-mark)
       (J2SCall (J2SHopRef 'js-array-mark))))
 

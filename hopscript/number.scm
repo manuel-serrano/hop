@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Dec 20 09:44:48 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 13:05:34 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -404,7 +404,9 @@
 (define (js- left right %this::JsGlobalObject)
    (if (and (number? left) (number? right))
        (-/overflow left right)
-       (-/overflow (js-tonumber left %this) (js-tonumber right %this))))
+       (let* ((lnum (js-tonumber left %this))
+	      (rnum (js-tonumber right %this)))
+	  (-/overflow lnum rnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js/ ...                                                          */
