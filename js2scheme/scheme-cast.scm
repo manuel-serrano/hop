@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Dec 19 16:31:57 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 19:49:10 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -181,7 +181,15 @@
 
 ;; number
 (define (js-number->string v expr conf)
-   `(js-ascii->jsstring (js-number->string ,v)))
+   (cond
+      ((fixnum? v)
+       `(js-ascii->jsstring ,(integer->string v)))
+      ((int32? v)
+       `(js-ascii->jsstring ,(integer->string (int32->fixnum v))))
+      ((uint32? v)
+       `(js-ascii->jsstring ,(llong->string (uint32->llong v))))
+      (else
+       `(js-ascii->jsstring (to-tonumber ,v %this)))))
 
 ;; any
 (define (js->object v expr conf)
@@ -224,9 +232,32 @@
        v))
 
 (define (js->int32 v expr conf)
-   `(js-toint32 ,v %this))
+   (cond
+      ((fixnum? v)
+       (fixnum->int32 v))
+      ((int32? v)
+       v)
+      ((uint32? v)
+       (if (<u32 v (-u32 (bit-lshu32 #u32:1 31) #u32:1))
+	   (uint32->int32 v)
+	   `(js-toint32 ,(uint32->flonum v) %this)))
+      (else
+       `(js-toint32 ,v %this))))
+
 (define (js->uint32 v expr conf)
-   `(js-touint32 ,v %this))
+   (cond
+      ((fixnum? v)
+       (if (>=fx v 0)
+	   (fixnum->uint32 v)
+	   `(fixnum->uint32 ,v)))
+      ((int32? v)
+       (if (>=s32 v #s32:0)
+	   (int32->uint32 v)
+	   `(int->uint32 ,v)))
+      ((uint32? v)
+       v)
+      (else
+       `(js-touint32 ,v %this))))
 
 (define (js-number->int32 v expr conf)
    (cond

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Dec 19 16:28:51 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 18:27:39 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -62,17 +62,19 @@
    (when (isa? this J2SProgram)
       (let ((tymap (if (=fx (config-get args :long-size 0) 64)
 		       typemap64 typemap32)))
-	 (when (config-get args :optim-cast #f)
-	    ;; compute the integer value ranges,
-	    (j2s-range-program! this args)
-	    ;; optimize operators (modulo) according to ranges
-	    (when (>=fx (config-get args :optim 0) 2)
-	       (j2s-range-opt-program! this args))
-	    ;; allocate precise types according to the ranges
-	    (when (config-get args :optim-range #f)
-	       (j2s-range-type-program! this tymap)))
-	 ;; map number types to target types
-	 (map-types this tymap))
+	 (if (config-get args :optim-cast #f)
+	     (begin
+		;; compute the integer value ranges,
+		(j2s-range-program! this args)
+		;; optimize operators (modulo) according to ranges
+		(when (>=fx (config-get args :optim 0) 2)
+		   (j2s-range-opt-program! this args))
+		;; allocate precise types according to the ranges
+		(when (config-get args :optim-range #f)
+		   (j2s-range-type-program! this tymap))
+		;; map number types to target types
+		(map-types this tymap))
+	     (map-types this defmap)))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -1072,7 +1074,9 @@
       (if (type-number? type)
 	  (case op
 	     ((+)
-	      (node-range expr env args fix))
+	      (multiple-value-bind (intv env)
+		 (node-range expr env args fix)
+		 (node-interval-set! this env fix intv)))
 	     ((-)
 	      (multiple-value-bind (intv env)
 		 (node-range expr env args fix)
@@ -1611,8 +1615,9 @@
 (define-walk-method (type-range! this::J2SExpr tymap)
    (call-default-walker)
    (with-access::J2SExpr this (range type)
-      (when (interval? range)
-	 (set! type (interval->type range tymap))))
+      (if (interval? range)
+	  (set! type (interval->type range tymap))
+	  (set! type (map-type type defmap))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1641,11 +1646,12 @@
 (define-walk-method (type-range! this::J2SRef tymap)
    (call-next-method)
    (with-access::J2SRef this (decl type (rng range))
-      (when (interval? rng)
-	 (with-access::J2SDecl decl (vtype id key range)
-	    (set! range (interval-merge range rng))
-	    (let ((type (minimal-type vtype (interval->type range tymap))))
-	       (set! vtype (minimal-type vtype type))))))
+      (if (interval? rng)
+	  (with-access::J2SDecl decl (vtype id key range)
+	     (set! range (interval-merge range rng))
+	     (let ((type (minimal-type vtype (interval->type range tymap))))
+		(set! vtype (minimal-type vtype type)))
+	     (set! vtype (map-type vtype defmap)))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1711,6 +1717,15 @@
      (index uint32)
      (length uint32)
      (integer int53)
+     (number number)))
+
+(define defmap
+   '((int29 integer)
+     (int29 integer)
+     (uint29 integer)
+     (index number)
+     (length integer)
+     (integer integer)
      (number number)))
 
 ;*---------------------------------------------------------------------*/

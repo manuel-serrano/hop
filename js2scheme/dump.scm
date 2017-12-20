@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Dec 19 10:50:21 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 18:07:55 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -627,7 +627,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCond)
    (with-access::J2SCond this (test then else)
-      `(,@(call-next-method) ,@(dump-type this) ,(j2s->list test)
+      `(,@(call-next-method) ,@(dump-type this) ,@(dump-range this)
+	  ,(j2s->list test)
 	  ,(j2s->list then)
 	  ,(j2s->list else) )))
 

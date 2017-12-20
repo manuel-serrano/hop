@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Dec 19 13:06:33 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 06:06:06 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -505,7 +505,7 @@
 			 (if (>=fx ,tmp 0)
 			     (js-jsstring-ref ,obj (fixnum->uint32 ,tmp))
 			     (js-undefined))))))
-	     ((and (string=? prop "length") (eq? tyval 'uint32))
+	     ((and (string? prop) (string=? prop "length") (eq? tyval 'uint32))
 	      `(js-jsstring-length ,obj))
 	     (else
 	      `(js-get-string ,obj ,prop %this))))
@@ -609,6 +609,16 @@
 		  ,(box val tyval conf) ,mode %this)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    ranges                                                           */
+;*---------------------------------------------------------------------*/
+(define-macro (max-int32)
+   '(int32->fixnum
+     (uint32->int32 (-u32 (bit-lshu32 #u32:1 31) #u32:1))))
+(define-macro (min-int32)
+   '(int32->fixnum
+     (-s32 (negs32 (uint32->int32 (-u32 (bit-lshu32 #u32:1 31) #u32:1))) #s32:1)))
+
+;*---------------------------------------------------------------------*/
 ;*    inrange-positive? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (inrange-positive? expr)
@@ -665,8 +675,7 @@
 	     ((int32? val)
 	      #t)
 	     ((fixnum? val)
-	      (and (>=fx val (negfx (bit-lsh 1 31)))
-		   (<fx val (-fx (bit-lsh 1 31) 1))))
+	      (and (>=fx val (min-int32)) (<=fx val (max-int32))))
 	     (else #f)))
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)
@@ -680,12 +689,9 @@
    (if (isa? expr J2SNumber)
        (with-access::J2SNumber expr (val)
 	  (cond
-	     ((uint32? val)
-	      #t)
-	     ((int32? val)
-	      (>=s32 val #s32:0))
-	     ((fixnum? val)
-	      (>fx val 0))
+	     ((uint32? val) #t)
+	     ((int32? val) (>=s32 val #s32:0))
+	     ((fixnum? val) (>=fx val 0))
 	     (else #f)))
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)

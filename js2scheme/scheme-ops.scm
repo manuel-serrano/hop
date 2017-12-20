@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Dec 19 16:30:47 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 06:08:44 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -68,7 +68,7 @@
 ;*    j2s-scheme-binary-as ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (j2s-scheme-binary-as this::J2SBinary mode return conf hint type)
-   (with-access::J2SBinary this (loc op lhs rhs type hint)
+   (with-access::J2SBinary this (loc op lhs rhs hint)
       (cond
 	 ((and (eq? op '+)
 	       (memq type '(int32 uint32 int53 integer number string)))
@@ -1266,7 +1266,7 @@
 		   (,op ,(tonumber32 left tl) ,(tonumber32 right tr)))))
 	 ((inrange-int32? rhs)
 	  `(if (fixnum? ,left)
-	       (,(opfx/overflow op) ,left ,(tolong32 right tr))
+	       (,(opfx/overflow op) ,(tonumber32 left tl) ,(tolong32 right tr))
 	       (,op ,(tonumber32 left tl) ,(tonumber32 right tr))))
 	 (else
 	  (if-fixnums? left tl right tr
@@ -1591,7 +1591,7 @@
 	 ((real)
 	  `(*fl ,left ,right))
 	 (else
-	  `(*fl ,left ,(tonumber right tr)))))
+	  `(* ,left ,(tonumber right tr)))))
 
    (define (mul type lhs tl left rhs tr right tonumber)
       (case type
@@ -1640,8 +1640,8 @@
 	     ((eq? tr 'real)
 	      (mul-real rhs tr right lhs tl left tonumber))
 	     ((eq? type 'number)
-	      `(*/overflow ,(box left (j2s-type-ref lhs) conf)
-		 ,(box right (j2s-type-ref rhs) conf)))
+	      `(*/overflow ,(tonumber left (j2s-type-ref lhs))
+		 ,(tonumber right (j2s-type-ref rhs))))
 	     (else
 	      `(*js ,left ,right %this))))
 	 (else

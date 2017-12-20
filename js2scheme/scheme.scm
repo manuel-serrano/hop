@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Dec 19 13:02:21 2017 (serrano)                */
+;*    Last change :  Tue Dec 19 20:08:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -569,19 +569,19 @@
 ;*    j2s-scheme ::J2SCast ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCast mode return conf hint)
-   (with-access::J2SCast this (expr (to type))
+   (with-access::J2SCast this (expr type)
       (cond
 	 ((isa? expr J2SBinary)
-	  (or (j2s-scheme-binary-as expr mode return conf hint to)
+	  (or (j2s-scheme-binary-as expr mode return conf hint type)
 	      (j2s-cast (j2s-scheme expr mode return conf hint)
-		 expr (j2s-type-ref expr) to conf)))
+		 expr (j2s-type-ref expr) type conf)))
 	 ((isa? expr J2SUnary)
-	  (or (j2s-scheme-unary-as expr mode return conf hint to)
+	  (or (j2s-scheme-unary-as expr mode return conf hint type)
 	      (j2s-cast (j2s-scheme expr mode return conf hint)
-		 expr (j2s-type-ref expr) to conf)))
+		 expr (j2s-type-ref expr) type conf)))
 	 (else
 	  (j2s-cast (j2s-scheme expr mode return conf hint)
-	     expr (j2s-type-ref expr) to conf)))))
+	     expr (j2s-type-ref expr) type conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRef ...                                          */
