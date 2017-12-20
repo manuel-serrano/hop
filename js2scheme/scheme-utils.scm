@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Dec 20 06:06:06 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 11:45:55 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -71,6 +71,7 @@
 	   (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (clevel 100))
 
 	   (inrange-positive?::bool ::J2SExpr)
+	   (inrange-one?::bool ::J2SExpr)
 	   (inrange-32?::bool ::J2SExpr)
 	   (inrange-int30?::bool ::J2SExpr)
 	   (inrange-int32?::bool ::J2SExpr)
@@ -240,8 +241,7 @@
 ;*    maybe-number? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (maybe-number? expr::J2SNode)
-   (memq (j2s-type-ref expr)
-      '(index uint29 int30 fixnum int53 ufixnum integer number any)))
+   (memq (j2s-type-ref expr) '(any int32 uint32 integer number real)))
 
 ;*---------------------------------------------------------------------*/
 ;*    utype-ident ...                                                  */
@@ -632,6 +632,22 @@
        (with-access::J2SExpr expr (range)
 	  (when (interval? range)
 	     (>=llong (interval-min range) #l0)))))
+
+;*---------------------------------------------------------------------*/
+;*    inrange-one? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (inrange-one? expr)
+   (if (isa? expr J2SNumber)
+       (with-access::J2SNumber expr (val)
+	  (cond
+	     ((uint32? val) (<=u32 val #u32:1))
+	     ((int32? val) (and (>=s32 val #s32:-1) (>=s32 val #s32:1)))
+	     ((fixnum? val) (and (>=fx val -1) (<=fx val 1)))
+	     (else #f)))
+       (with-access::J2SExpr expr (range)
+	  (when (interval? range)
+	     (and (>=llong (interval-min range) #l-1)
+		  (<=llong (interval-max range) #l1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-32? ...                                                  */

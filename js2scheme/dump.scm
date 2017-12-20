@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Dec 19 18:07:55 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 11:31:50 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -836,7 +836,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SHopRef)
    (with-access::J2SHopRef this (id module)
-      `(,@(call-next-method) ,id ,@(if module (list module) '()))))
+      `(,@(call-next-method) ,id ,@(dump-type this)
+	  ,@(if module (list module) '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2Stilde ...                                         */

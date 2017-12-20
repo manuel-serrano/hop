@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Dec 19 18:27:39 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 10:34:31 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -130,6 +130,7 @@
 (define (j2s-range-program! this::J2SProgram args)
    (set! *uint29-intv* (interval #l0 *max-uint29*))
    (set! *index-intv* (interval #l0 *max-index*))
+   (set! *index30-intv* (interval #l0 *max-uint29*))
    (set! *indexof-intv* (interval #l-1 *max-index*))
    (set! *length-intv* (interval #l0 *max-length*))
    (set! *int30-intv* (interval *min-int30* *max-int30*))
@@ -184,6 +185,7 @@
 
 (define *uint29-intv* #f)
 (define *index-intv* #f)
+(define *index30-intv* #f)
 (define *indexof-intv* #f)
 (define *length-intv* #f)
 (define *int30-intv* #f)
@@ -1058,7 +1060,9 @@
       ((is-js-index test)
        =>
        (lambda (decl)
-	  (values (make-env decl *index-intv*) (empty-env))))
+	  (if (m64? args)
+	      (values (make-env decl *index-intv*) (empty-env))
+	      (values (make-env decl *index30-intv*) (empty-env)))))
       ((is-fixnum test)
        =>
        (lambda (decl)
@@ -1258,7 +1262,6 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SFun env::pair-nil args fix::struct)
    (with-access::J2SFun this (body params)
-      ;; use the formals type, when one is provided
       (let ((envp (filter-map (lambda (p)
 				 (with-access::J2SDecl p (itype range ronly vtype)
 				    (cond
@@ -1267,11 +1270,13 @@
 					(cons p range))
 				       ((not ronly)
 					#f)
-				       ((type->range vtype args)
-					=>
-					(lambda (rng)
-					   (set! range rng)
-					   (cons p rng))))))
+				       (else
+					#f))))
+;* 				       ((type->range vtype args)       */
+;* 					=>                             */
+;* 					(lambda (rng)                  */
+;* 					   (set! range rng)            */
+;* 					   (cons p rng))))))           */
 		     params)))
 	 (multiple-value-bind (intv env)
 	    (node-range body envp args fix)
@@ -1568,6 +1573,7 @@
       ((interval-in? intv *uint29-intv*) 'uint32)
       ((interval-in? intv *int30-intv*) 'int32)
       ((interval-in? intv *index-intv*) 'uint32)
+      ((interval-in? intv *index30-intv*) 'uint32)
       ((interval-in? intv *length-intv*) 'uint32)
       ((interval-in? intv *int32-intv*) 'int32)
       ((interval-in? intv *int53-intv*) (map-type 'int53 tymap))

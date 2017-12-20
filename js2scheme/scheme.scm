@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Dec 19 20:08:37 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 12:00:01 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -571,14 +571,14 @@
 (define-method (j2s-scheme this::J2SCast mode return conf hint)
    (with-access::J2SCast this (expr type)
       (cond
-	 ((isa? expr J2SBinary)
-	  (or (j2s-scheme-binary-as expr mode return conf hint type)
-	      (j2s-cast (j2s-scheme expr mode return conf hint)
-		 expr (j2s-type-ref expr) type conf)))
-	 ((isa? expr J2SUnary)
-	  (or (j2s-scheme-unary-as expr mode return conf hint type)
-	      (j2s-cast (j2s-scheme expr mode return conf hint)
-		 expr (j2s-type-ref expr) type conf)))
+;* 	 ((isa? expr J2SBinary)                                        */
+;* 	  (or (j2s-scheme-binary-as expr mode return conf hint type)   */
+;* 	      (j2s-cast (j2s-scheme expr mode return conf hint)        */
+;* 		 expr (j2s-type-ref expr) type conf)))                 */
+;* 	 ((isa? expr J2SUnary)                                         */
+;* 	  (or (j2s-scheme-unary-as expr mode return conf hint type)    */
+;* 	      (j2s-cast (j2s-scheme expr mode return conf hint)        */
+;* 		 expr (j2s-type-ref expr) type conf)))                 */
 	 (else
 	  (j2s-cast (j2s-scheme expr mode return conf hint)
 	     expr (j2s-type-ref expr) type conf)))))
@@ -2565,6 +2565,10 @@
 		  ((isa? lhs J2SAccess)
 		   (access-assigop op tl lhs rhs))
 		  ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
+		   (tprint "ASSIG op=" op)
+		   (tprint " rhs=" (j2s->list rhs))
+		   (tprint " BIN="
+		      (js-binop2 loc op tl lhs rhs mode return conf hint))
 		   (with-access::J2SRef lhs (decl)
 		      (with-access::J2SDecl decl (hint utype)
 			 (j2s-scheme-set! lhs

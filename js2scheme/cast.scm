@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Dec 19 07:59:25 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 11:41:20 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -322,16 +322,33 @@
       this))
 
 ;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SStmtExpr ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SStmtExpr totype)
+   (with-access::J2SStmtExpr this (expr)
+      (set! expr (type-cast! expr '*))
+      this))
+   
+;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SAssig ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs type loc)
-      (if (eq? (j2s-type-ref lhs) type)
-	  (begin
-	     (set! lhs (type-cast! lhs '*))
-	     (set! rhs (type-cast! rhs type))
-	     (cast this totype))
-	  (let* ((id (gensym 'a))
+      (cond
+	 ((eq? (j2s-type-ref lhs) type)
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs (type-cast! rhs type))
+	  (cast this totype))
+	 ((eq? totype '*)
+	  (set! lhs (type-cast! lhs '*))
+	  (set! rhs
+	     (type-cast! rhs
+		(if (or (isa? lhs J2SRef) (isa? lhs J2SUnresolvedRef))
+		    (j2s-type-ref lhs)
+		    'any)))
+	  this)
+	 (else
+	  (let* ((id (gensym 'assig))
 		 (tr (j2s-type rhs))
 		 (d (J2SLetOpt/vtype tr '(get) id (type-cast! rhs tr))))
 	     (set! rhs
@@ -344,7 +361,7 @@
 		(J2SBindExit/type tyb #f 
 		   (J2SLetRecBlock #f  (list d)
 		      (J2SStmtExpr this)
-		      (type-cast! (J2SRef d :type tr) tyb))))))))
+		      (type-cast! (J2SRef d :type tr) tyb)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SPrefix ...                                       */

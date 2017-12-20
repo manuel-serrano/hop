@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Thu Nov 23 08:06:01 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 07:08:36 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -78,6 +78,7 @@
 			  (call-with-output-file file
 			     
 			     (lambda (p)
+				(fprint p ";; -*-bee-*-")
 				(fprint p ";; " comment)
 				(pp (j2s->list nast) p))))
 			 ((file-exists? file)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue Dec 19 20:09:36 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 06:52:14 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -82,7 +82,7 @@
       ((flonum? obj) (js-number-toint32 obj))
       ((uint32? obj) (tprint "should not be here.uint32 " obj) (forcefail) (uint32->int32 obj))
       ((int32? obj) (tprint "should not be here.int32 " obj) (forcefail) (tprint (/s32 #s32:1 (car (list #s32:0)))) obj)
-      ((elong? obj) (tprint "should not be here.elong " obj) (forcefail) (tprint (/s32 #s32:1 (car (list #s32:0)))) obj)
+      ((elong? obj) (tprint "should not be here.elong " obj) (forcefail) (tprint (/s32 #s32:1 (car (list #s32:0)))) (uint32->int32 obj))
       ((fixnum? obj) (fixnum->int32 obj))
       (else (js-number-toint32 (js-tonumber obj %this)))))
 

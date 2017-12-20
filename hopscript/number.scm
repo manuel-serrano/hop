@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Dec 16 06:00:26 2017 (serrano)                */
+;*    Last change :  Wed Dec 20 09:44:48 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -34,10 +34,10 @@
 	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
 	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)
 	   
-	   (js+ left right ::JsGlobalObject)
-	   (inline js+fx::obj ::long ::long)
-	   (js-slow+ left right ::JsGlobalObject)
-	   (js/ left right ::JsGlobalObject)
+	   (js+ ::obj ::obj ::JsGlobalObject)
+	   (js-slow+ ::obj ::obj ::JsGlobalObject)
+	   (js- ::obj ::obj ::JsGlobalObject)
+	   (js/ ::obj ::obj ::JsGlobalObject)
 	   (js/num left right)))
 
 ;*---------------------------------------------------------------------*/
@@ -379,28 +379,6 @@
        (js-slow+ left right %this)))
 
 ;*---------------------------------------------------------------------*/
-;*    js+fx ...                                                        */
-;*---------------------------------------------------------------------*/
-(define-inline (js+fx::obj left::long right::long)
-
-   (define-macro (intsz+)
-      (minfx (-fx (bigloo-config 'int-size) 1) 53))
-   
-   (define-macro (shift+)
-      (bit-lsh 1 (intsz+)))
-   
-   (define-macro (maxint+)
-      (-fx (shift+) 1))
-   
-   (define-macro (minint+)
-      (-fx 0 (shift+)))
-   
-   (let ((tmp (+fx left right)))
-      (if (or (>fx tmp (maxint+)) (<fx tmp (minint+)))
-	  (fixnum->flonum tmp)
-	  tmp)))
-
-;*---------------------------------------------------------------------*/
 ;*    js-slow+ ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js-slow+ left right %this)
@@ -417,6 +395,16 @@
 	     (if (or (not (= left left)) (not (= right right)))
 		 +nan.0
 		 (+ left right)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js- ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
+;*---------------------------------------------------------------------*/
+(define (js- left right %this::JsGlobalObject)
+   (if (and (number? left) (number? right))
+       (-/overflow left right)
+       (-/overflow (js-tonumber left %this) (js-tonumber right %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js/ ...                                                          */
