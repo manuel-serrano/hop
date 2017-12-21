@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Dec 21 15:29:02 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 18:40:02 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2266,6 +2266,7 @@
 	  (comp val tmp)))
 
    (define (var++ op var num prev loc)
+      (tprint "ICI CE N'EST NI NUMBER NI ANY, c,a depend du type de la var cf seive, doit")
       `(if (fixnum? ,var)
            ,(J2SBinary/type op 'number
                (J2SHopRef/type var 'bint) num)
