@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Dec 20 16:16:52 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 08:04:06 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -778,8 +778,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->bool ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (js-jsstring->bool::bool s)
-   (>fx (string-length (js-jsstring->string s)) 0))
+(define (js-jsstring->bool::bool js)
+   (let loop ((js js))
+      (cond
+	 ((string? js)
+	  (>fx (string-length js) 0))
+	 ((not js)
+	  #f)
+	 (else
+	  (with-access::JsStringLiteral js (weight right)
+	     (or (>u32 weight 0) (loop right)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-append ...                                           */

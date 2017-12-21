@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Dec 14 12:04:46 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 15:33:00 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -52,6 +52,7 @@
 (define inline-default-call-expansion 16)
 (define inline-max-targets 3)
 (define inline-recursive #f)
+(define inline-max-size 30)
 
 ;*---------------------------------------------------------------------*/
 ;*    dev                                                              */
@@ -256,6 +257,7 @@
 		    (expr (inline-call call callees prgm))
 		    (esize (node-size expr)))
 		(if (and (<=fx esize isize)
+			 (<=fx esize inline-max-size)
 			 (<=fx esize
 			    (* inline-default-call-expansion
 			       (node-size call))))

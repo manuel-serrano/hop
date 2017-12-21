@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Dec 20 16:09:37 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 15:31:04 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -112,8 +112,14 @@
 			      mode return conf hint))
 		      (cddr args)))))))
 
-   (if (literal-regexp (car args))
-       (with-access::J2SLiteralCnst (car args) (val index)
+   (define (uncast expr)
+      (if (isa? expr J2SCast)
+	  (with-access::J2SCast expr (expr)
+	     (uncast expr))
+	  expr))
+
+   (if (literal-regexp (uncast (car args)))
+       (with-access::J2SLiteralCnst (uncast (car args)) (val index)
 	  (with-access::J2SRegExp val (inline flags)
 	     (set! inline #t)
 	     (let ((global (when (string? flags)
@@ -121,7 +127,7 @@
 		(tmp obj
 		   (lambda (tmp)
 		      (replace tmp `(vector-ref-ur %cnsts ,index) 0 global))))))
-       (let ((regexp (j2s-scheme (car args) mode return conf hint)))
+       (let ((regexp (j2s-scheme (uncast (car args)) mode return conf hint)))
 	  (tmp obj
 	     (lambda (tmp)
 		`(with-access::JsRegExp ,regexp (rx lastindex global)

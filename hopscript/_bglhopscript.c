@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Nov 21 09:30:18 2017 (serrano)                */
+/*    Last change :  Thu Dec 21 17:56:17 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -236,3 +236,36 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, cha
 
    return BOBJECT( o );
 }
+
+/*---------------------------------------------------------------------*/
+/*    obj_t                                                            */
+/*    bgl_init_vector ...                                              */
+/*---------------------------------------------------------------------*/
+obj_t
+bgl_init_vector( obj_t vector, long len, obj_t init ) {
+#if(  VECTOR_SIZE_TAG_NB_BIT != 0 )  
+   if( len & ~(VECTOR_LENGTH_MASK) ) { 
+      C_FAILURE( "create_vector", "vector too large", BINT( len ) );
+      return BUNSPEC;
+   } else
+#endif
+   {
+#if( !defined( TAG_VECTOR ) )
+      vector->vector_t.header = MAKE_HEADER( VECTOR_TYPE, 0 );
+#endif		
+      vector->vector_t.length = len;
+
+      bgl_fill_vector( BVECTOR( vector ), 0, len, init );
+      return BVECTOR( vector );
+   }
+}
+
+/*---------------------------------------------------------------------*/
+/*    long                                                             */
+/*    bgl_vector_bytesize ...                                          */
+/*---------------------------------------------------------------------*/
+long
+bgl_vector_bytesize( long len ) {
+   return VECTOR_SIZE + ( (len-1) * OBJ_SIZE );
+}
+

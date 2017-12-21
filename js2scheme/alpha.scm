@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Sun Dec 17 13:01:29 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 17:29:59 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -168,12 +168,37 @@
    (alpha/targetinfo this))
 
 ;*---------------------------------------------------------------------*/
+;*    alpha ::J2SBindExit ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SBindExit)
+   (let ((new (duplicate::J2SBindExit this)))
+      (with-access::J2SBindExit this (%info)
+	 (set! %info
+	    (instantiate::AlphaInfo
+	       (new new)
+	       (%oinfo %info)))
+	 (with-access::J2SBindExit new (stmt)
+	    (set! stmt (alpha stmt))
+	    (with-access::AlphaInfo %info (%oinfo)
+	       (set! %info %oinfo))
+	    new))))
+
+;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SReturn ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (alpha this::J2SReturn)
-   (with-access::J2SReturn this (expr)
-      (duplicate::J2SReturn this
-	 (expr (alpha expr)))))
+   (with-access::J2SReturn this (expr from)
+      (if (isa? from J2SExpr)
+	  (with-access::J2SExpr from (%info)
+	     (if (isa? %info AlphaInfo)
+		 (with-access::AlphaInfo %info (new)
+		    (duplicate::J2SReturn this
+		       (expr (alpha expr))
+		       (from new)))
+		 (duplicate::J2SReturn this
+		    (expr (alpha expr)))))
+	  (duplicate::J2SReturn this
+	     (expr (alpha expr))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SBreak ...                                             */

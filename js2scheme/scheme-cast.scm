@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed Dec 20 17:10:09 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 07:46:52 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -76,6 +76,7 @@
 	 (any nop)))
      (string
 	((propname nop)
+	 (bool ,js-string->bool)
 	 (any nop)))
      (function
 	((any nop)))
@@ -197,6 +198,12 @@
        `(js-ascii->jsstring ,(llong->string (uint32->llong v))))
       (else
        `(js-ascii->jsstring (to-tonumber ,v %this)))))
+
+;; string
+(define (js-string->bool v expr conf)
+   (if (string? v)
+       (>fx (string-length v) 0)
+       `(js-jsstring->bool ,v)))
 
 ;; any
 (define (js->object v expr conf)
@@ -321,7 +328,10 @@
 	     ((eq? to 'uint32)
 	      (js->uint32 sexp expr conf))
 	     (else
-	      (tprint "CAST DEFAULT... " from " -> " to)
+	      (tprint "CAST DEFAULT... " from " -> " to
+		 " " (when (isa? expr J2SExpr)
+			(with-access::J2SExpr expr (loc) loc))
+		 " " (j2s->list expr))
 	      (case from
 		 ((index uint32 length)
 		  (case to

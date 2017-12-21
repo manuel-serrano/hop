@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Dec 20 17:10:55 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 15:29:02 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1752,6 +1752,12 @@
 	  (with-access::J2SUnresolvedRef self (id)
 	     (eq? ty id)))))
 
+   (define (j2s-type-sans-cast expr)
+      (if (isa? expr J2SCast)
+	  (with-access::J2SCast expr (expr)
+	     (j2s-type-sans-cast expr))
+	  (j2s-type-ref expr)))
+
    (when (isa? field J2SString)
       (with-access::J2SString field (val)
 	 (find (lambda (method)
@@ -1766,7 +1772,7 @@
 				 ((null? formals)
 				  #f)
 				 (else
-				  (let ((tya (j2s-type-ref (car args)))
+				  (let ((tya (j2s-type-sans-cast (car args)))
 					(tyf (if (pair? (car formals))
 						 (caar formals)
 						 (car formals))))
@@ -2315,7 +2321,7 @@
    (define (aput-inc otmp pro prov op lhs cache inc cl #!optional force-type)
       (with-access::J2SAccess lhs (loc obj field clevel (loca loc))
 	 (with-access::J2SExpr obj (type loc)
-	    (let* ((tmp (gensym 'tmp))
+	    (let* ((tmp (gensym 'aput))
 		   (oref (instantiate::J2SHopRef
 			    (loc loc)
 			    (id otmp)
@@ -2351,6 +2357,7 @@
 					 cache (min cl clevel))
 				     ,tmp))))))
 		  (else
+		   
 		   `(let ((,tmp ,scmlhs))
 		       (if (fixnum? ,tmp)
 			   ,(let ((tref (instantiate::J2SHopRef

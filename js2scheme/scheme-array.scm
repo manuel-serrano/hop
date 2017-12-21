@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Dec 20 18:18:22 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 17:32:14 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -111,7 +111,7 @@
 	      (vector ,@(j2s-scheme args mode return conf hint))
 	      %this))
 	 ((eq? type 'vector)
-	  `(make-vector
+	  `(js-make-vector
 	      ,(j2s-scheme (car args) mode return conf hint)
 	      (js-undefined)))
 	 (else

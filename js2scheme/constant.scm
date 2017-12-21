@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Nov 23 07:47:27 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 15:49:19 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -23,8 +23,7 @@
 	    __js2scheme_stage
 	    __js2scheme_utils)
 
-   (export  j2s-constant-stage
-	    (generic j2s-constant ::obj ::obj)))
+   (export  j2s-constant-stage))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-constant-stage ...                                           */
@@ -39,22 +38,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-constant ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (j2s-constant this args)
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    j2s-constant ::J2SProgram ...                                    */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-constant this::J2SProgram args)
-   (with-access::J2SProgram this (nodes headers decls loc pcache-size cnsts)
-      (let ((env (env 0 '() (create-hashtable)
-		    (create-hashtable :eqtest equal?)
-		    '())))
-	 (for-each (lambda (n) (constant! n env 0)) headers)
-	 (for-each (lambda (n) (constant! n env 0)) decls)
-	 (for-each (lambda (n) (constant! n env 0)) nodes)
-	 (set! cnsts (reverse! (env-list env)))
-	 (set! decls (append decls (env-vars env)))))
+(define (j2s-constant this args)
+   (when (isa? this J2SProgram)
+      (with-access::J2SProgram this (nodes headers decls loc pcache-size cnsts)
+	 (let ((env (env 0 '() (create-hashtable)
+		       (create-hashtable :eqtest equal?)
+		       '())))
+	    (for-each (lambda (n) (constant! n env 0)) headers)
+	    (for-each (lambda (n) (constant! n env 0)) decls)
+	    (for-each (lambda (n) (constant! n env 0)) nodes)
+	    (set! cnsts (reverse! (env-list env)))
+	    (set! decls (append decls (env-vars env))))))
    this)
 
 ;*---------------------------------------------------------------------*/

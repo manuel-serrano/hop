@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Dec 20 16:51:36 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 17:57:59 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -22,7 +22,13 @@
 	    "property.sch")
    
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::byte)
-	      "bgl_make_jsarray"))
+	      "bgl_make_jsarray")
+	   ($js-init-vector::vector (::void* ::long ::obj)
+	      "bgl_init_vector")
+	   ($js-vector-bytesize::long (::long)
+	      "bgl_vector_bytesize")
+	   ($alloca::void* (::long)
+	      "alloca"))
    
    (import __hopscript_types
 	   __hopscript_arithmetic
@@ -39,6 +45,7 @@
 	   __hopscript_generator)
    
    (export (js-init-array! ::JsGlobalObject)
+	   (inline js-make-vector ::long ::obj)
 	   (inline js-array-mark::long)
 	   *JS-ARRAY-MARK*
 	   (inline js-array?::bool ::obj)
@@ -416,6 +423,17 @@
 	    :hidden-class #t)
 
 	 js-array)))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-vector ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This function is overriden by a macro in array.sch. The          */
+;*    overriden macro allocates the vector in the stack as the         */
+;*    hopc compiler generates JS-MAKE-VECTOR only for vectors that     */
+;*    never escapes their dynamic scope.                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-vector len init)
+   (make-vector len init))
 
 ;*---------------------------------------------------------------------*/
 ;*    *JS-ARRAY-MARK* ...                                              */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue Dec 12 12:13:46 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 15:46:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -50,6 +50,7 @@
 	   __js2scheme_cps
 	   __js2scheme_sweep
 	   __js2scheme_globvar
+	   __js2scheme_varpreinit
 	   __js2scheme_method
 	   __js2scheme_inline)
 
@@ -160,6 +161,7 @@
       j2s-inline-stage
       j2s-cps-stage
       j2s-constant-stage
+      j2s-varpreinit-stage
       j2s-tyflow-stage
       j2s-property-stage
       j2s-propcce-stage
@@ -242,6 +244,7 @@
       j2s-letfusion-stage
       j2s-letopt-stage
       j2s-use-stage
+      j2s-varpreinit-stage
       j2s-tyflow-stage
       j2s-range-stage
       j2s-cast-stage

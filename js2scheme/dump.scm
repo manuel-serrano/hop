@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Dec 20 11:31:50 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 17:20:00 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -526,8 +526,8 @@
 		(dump-rtype from)
 		'())
 	  ,@(if (isa? from J2SBindExit)
-		(with-access::J2SBindExit from (lbl)
-		   (list :from lbl))
+		(with-access::J2SBindExit from (lbl type)
+		   (list :from lbl :type type))
 		'())
 	  ,@(if (> (bigloo-debug) 2) `(:tail ,tail) '())
 	  ,(j2s->list expr))))

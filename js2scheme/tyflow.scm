@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Dec 19 11:29:57 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 17:22:10 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -589,7 +589,7 @@
 	 (else
 	  (let ((cla (class-of this)))
 	     (if (eq? cla 'unknown)
-		 (return 'any env '())
+		 (expr-type-set! this env fix 'any)
 		 (expr-type-set! this env fix 'object)))))))
 
 ;*---------------------------------------------------------------------*/

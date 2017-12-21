@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Wed Dec 20 16:51:30 2017 (serrano)                */
+;*    Last change :  Thu Dec 21 17:55:48 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
@@ -49,16 +49,6 @@
 	      deps)))
    #unspecified)
 
-;* (define-macro (define-%update-deps)                                 */
-;*    (eval '(define (%update-deps deps)                               */
-;* 	   (append-map (lambda (dep)                                   */
-;* 			  (let ((arr (car dep))                        */
-;* 				(vec (cadr dep))                       */
-;* 				(ilen (caddr dep)))                    */
-;* 			     `((set! ,ilen #u32:0))))                  */
-;* 	      deps)))                                                  */
-;*    #unspecified)                                                    */
-   
 (define-%make-ref)
 (define-%make-set)
 (define-%update-deps)
@@ -213,3 +203,9 @@
 		 ,tmp))))
 
    (%make-set idx val set))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-vector ...                                               */
+;*---------------------------------------------------------------------*/
+(define-macro (js-make-vector len init)
+   `($js-init-vector ($alloca ($js-vector-bytesize ,len)) ,len ,init))
