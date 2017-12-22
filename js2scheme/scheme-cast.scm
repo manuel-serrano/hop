@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Thu Dec 21 07:46:52 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 16:38:31 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -147,8 +147,7 @@
 ;; uint32
 (define (js-uint32->integer v expr conf)
    (cond
-      ((and (uint32? v)
-	    (or (<u32 v (bit-lshu32 #u32:1 29)) (m64? conf)))
+      ((and (uint32? v) (or (<u32 v (bit-lshu32 #u32:1 29)) (m64? conf)))
        (uint32->fixnum v))
       ((or (and (isa? expr J2SExpr) (inrange-int30? expr)) (m64? conf))
        `(uint32->fixnum ,v))
@@ -197,7 +196,7 @@
       ((uint32? v)
        `(js-ascii->jsstring ,(llong->string (uint32->llong v))))
       (else
-       `(js-ascii->jsstring (to-tonumber ,v %this)))))
+       `(js-ascii->jsstring (js-tonumber ,v %this)))))
 
 ;; string
 (define (js-string->bool v expr conf)
@@ -212,7 +211,9 @@
        `(js-toobject ,v %this)))
 
 (define (js->number v expr conf)
-   `(js-tonumber ,v %this))
+   (if (memq (j2s-type expr) '(uint32 int32 integer bint number))
+       v
+       `(js-tonumber ,v %this)))
 
 (define (js->string v expr conf)
    (match-case v
@@ -278,6 +279,8 @@
 	   `(int->uint32 ,v)))
       ((uint32? v)
        v)
+      ((eq? (j2s-type expr) 'uint32)
+       `(fixnum->uint32 ,v))
       (else
        `(js-touint32 ,v %this))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Dec 20 16:26:40 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 15:28:47 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -289,7 +289,7 @@
 ;*---------------------------------------------------------------------*/
 (define (env-lookup::obj env::pair-nil decl::J2SDecl)
    (with-access::J2SDecl decl (scope range)
-      (if (eq? scope '%scope)
+      (if (memq scope '(%scope global))
 	  range
 	  (let ((c (assq decl env)))
 	     (when (pair? c)
@@ -919,7 +919,7 @@
 (define-walk-method (node-range this::J2SRef env::pair-nil args fix::struct)
    (with-access::J2SRef this (decl type loc)
       (if (type-number? type)
-	  (with-access::J2SDecl decl (range ronly key)
+	  (with-access::J2SDecl decl (range ronly key id scope)
 	     (let ((intv (env-lookup env decl)))
 		(when ronly
 		   (with-access::J2SDecl decl (id range)
@@ -944,51 +944,50 @@
 ;*---------------------------------------------------------------------*/
 (define (test-envs test::J2SExpr env args::pair-nil fix::struct)
    
-   (define (test-envs-ref left::J2SRef right op)
+   (define (test-envs-ref decl::J2SDecl left right op)
       (multiple-value-bind (intl envl)
 	 (node-range left env args fix)
 	 (multiple-value-bind (intr envr)
 	    (node-range right envl args fix)
-	    (with-access::J2SRef left (decl)
-	       (if (or (not (interval? intl)) (not (interval? intr)))
-		   (values (empty-env) (empty-env))
-		   (case op
-		      ((<)
-		       
-		       (let ((intrt (interval-lt intl intr))
-			     (intro (interval-gte intl intr)))
-			  (values (make-env decl intrt)
-			     (make-env decl intro))))
-		      ((<=)
-		       (let ((intrt (interval-lte intl intr))
-			     (intro (interval-gt intl intr)))
-			  (values (make-env decl intrt)
-			     (make-env decl intro))))
-		      ((>)
-		       (let ((intrt (interval-gt intl intr))
-			     (intro (interval-lte intl intr)))
-			  (values (make-env decl intrt)
-			     (make-env decl intro))))
-		      ((>=)
-		       (let ((intrt (interval-gte intl intr))
-			     (intro (interval-lt intl intr)))
-			  (values (make-env decl intrt)
-			     (make-env decl intro))))
-		      ((== === eq?)
-		       (let ((ieq (interval-eq intl intr)))
-			  (values (if (interval? ieq)
-				      (make-env decl ieq)
-				      (empty-env))
-			     (empty-env))))
-		      ((!= !==)
-		       (let ((ieq (interval-eq intl intr)))
-			  (values ;;(make-env decl (interval-neq intl intr))
-			     (empty-env)
-			     (if (interval? ieq)
-				 (make-env decl ieq)
-				 (empty-env)))))
-		      (else
-		       (values (empty-env) (empty-env)))))))))
+	    (if (or (not (interval? intl)) (not (interval? intr)))
+		(values (empty-env) (empty-env))
+		(case op
+		   ((<)
+		    
+		    (let ((intrt (interval-lt intl intr))
+			  (intro (interval-gte intl intr)))
+		       (values (make-env decl intrt)
+			  (make-env decl intro))))
+		   ((<=)
+		    (let ((intrt (interval-lte intl intr))
+			  (intro (interval-gt intl intr)))
+		       (values (make-env decl intrt)
+			  (make-env decl intro))))
+		   ((>)
+		    (let ((intrt (interval-gt intl intr))
+			  (intro (interval-lte intl intr)))
+		       (values (make-env decl intrt)
+			  (make-env decl intro))))
+		   ((>=)
+		    (let ((intrt (interval-gte intl intr))
+			  (intro (interval-lt intl intr)))
+		       (values (make-env decl intrt)
+			  (make-env decl intro))))
+		   ((== === eq?)
+		    (let ((ieq (interval-eq intl intr)))
+		       (values (if (interval? ieq)
+				   (make-env decl ieq)
+				   (empty-env))
+			  (empty-env))))
+		   ((!= !==)
+		    (let ((ieq (interval-eq intl intr)))
+		       (values ;;(make-env decl (interval-neq intl intr))
+			  (empty-env)
+			  (if (interval? ieq)
+			      (make-env decl ieq)
+			      (empty-env)))))
+		   (else
+		    (values (empty-env) (empty-env))))))))
    
    (define (inv-op op)
       (case op
@@ -1039,23 +1038,46 @@
 		       (test-envs rhs envl args fix)
 		       (values (append-env lenvt renvt)
 			  (append-env lenvo renvo))))))
-	     ((not (type-number? (j2s-type-ref lhs)))
+	     ((not (type-number? (j2s-vtype lhs)))
 	      (values (empty-env) (empty-env)))
-	     ((not (type-number? (j2s-type-ref rhs)))
+	     ((not (type-number? (j2s-vtype rhs)))
 	      (values (empty-env) (empty-env)))
-	     ((not (eq? (j2s-type-ref test) 'bool))
+	     ((not (eq? (j2s-vtype test) 'bool))
 	      (values (empty-env) (empty-env)))
 	     ((isa? lhs J2SRef)
-	      (if (isa? rhs J2SRef)
-		  (multiple-value-bind (lenvt lenvo)
-		     (test-envs-ref lhs rhs op)
-		     (multiple-value-bind (renvt renvo)
-			(test-envs-ref rhs lhs (inv-op op))
-			(values (append-env lenvt renvt)
-			   (append-env lenvo renvo))))
-		  (test-envs-ref lhs rhs op)))
+	      (with-access::J2SRef lhs (decl)
+		 (if (isa? rhs J2SRef)
+		     (with-access::J2SRef rhs ((rdecl decl))
+			(multiple-value-bind (lenvt lenvo)
+			   (test-envs-ref decl lhs rhs op)
+			   (multiple-value-bind (renvt renvo)
+			      (test-envs-ref rdecl rhs lhs (inv-op op))
+			      (values (append-env lenvt renvt)
+				 (append-env lenvo renvo)))))
+		     (test-envs-ref decl lhs rhs op))))
 	     ((isa? rhs J2SRef)
-	      (test-envs-ref rhs lhs (inv-op op)))
+	      (with-access::J2SRef rhs (decl)
+		 (test-envs-ref decl rhs lhs (inv-op op))))
+	     ((isa? lhs J2SAssig)
+	      (with-access::J2SAssig lhs ((left lhs))
+		 (if (isa? left J2SRef)
+		     (with-access::J2SRef left (decl)
+			(if (isa? rhs J2SRef)
+			    (with-access::J2SRef rhs ((rdecl decl))
+			       (multiple-value-bind (lenvt lenvo)
+				  (test-envs-ref decl lhs rhs op)
+				  (multiple-value-bind (renvt renvo)
+				     (test-envs-ref rdecl rhs lhs (inv-op op))
+				     (values (append-env lenvt renvt)
+					(append-env lenvo renvo)))))
+			    (test-envs-ref decl lhs rhs op)))
+		     (values (empty-env) (empty-env)))))
+	     ((isa? rhs J2SAssig)
+	      (with-access::J2SAssig rhs ((right rhs))
+		 (if (isa? right J2SRef)
+		     (with-access::J2SRef right (decl)
+			(test-envs-ref decl rhs lhs (inv-op op)))
+		     (values (empty-env) (empty-env)))))
 	     (else
 	      (values (empty-env) (empty-env))))))
       ((is-js-index test)
@@ -1103,9 +1125,9 @@
 	     (else
 	      (call-default-walker)
 	      (return *infinity-intv* env)))
-	  (begin
-	     (call-default-walker)
-	     (return #f env)))))
+	  (multiple-value-bind (_ nenv)
+	     (node-range expr env args fix)
+	     (return #f nenv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    range-binary ...                                                 */
@@ -1169,9 +1191,11 @@
    (with-access::J2SBinary this (op lhs rhs type range)
       (if (type-number? type)
 	  (node-range-binary this op lhs rhs env args fix)
-	  (begin
-	     (call-default-walker)
-	     (return #f env)))))
+	  (multiple-value-bind (_ lenv)
+	     (node-range lhs env args fix)
+	     (multiple-value-bind (_ renv)
+		(node-range rhs lenv args fix)
+		(return #f renv))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SAssig ...                                        */
@@ -1229,12 +1253,12 @@
 ;*    node-range ::J2SPostfix ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SPostfix env::pair-nil args fix::struct)
-   (with-access::J2SPostfix this (lhs rhs range)
+   (with-access::J2SPostfix this (lhs rhs range type)
       (with-access::J2SExpr lhs ((lrange range))
 	 (let ((intv lrange))
 	    (multiple-value-bind (_ nenv)
 	       (call-next-method)
-	       (return intv nenv))))))
+	       (node-interval-set! this nenv fix intv))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SPrefix ...                                       */
@@ -1413,8 +1437,10 @@
    (with-access::J2SIf this (test then else)
       (multiple-value-bind (_ env)
 	 (node-range test env args fix)
+	 ;; (tprint "J2SIf>>> " (j2s->list test) " env=" (dump-env env))
 	 (multiple-value-bind (envt envo)
 	    (test-envs test env args fix)
+	    ;; (tprint "J2SIf<<< envt=" (dump-env envt))
 	    (multiple-value-bind (_ nenvt)
 	       (node-range then (append-env envt env) args fix)
 	       (multiple-value-bind (_ nenvo)
@@ -1523,7 +1549,7 @@
 			   (tprint "    [" ffix "] testef="
 			      (dump-env testef))))
 		     (multiple-value-bind (bodyi bodye)
-			(node-range  body (append-env testet teste) args fix)
+			(node-range body (append-env testet teste) args fix)
 			(if (=fx ostamp (fix-stamp fix))
 			    (begin
 			       (when (pair? denv)
@@ -1584,6 +1610,14 @@
       (else 'number)))
 
 ;*---------------------------------------------------------------------*/
+;*    type->boxed-type ...                                             */
+;*---------------------------------------------------------------------*/
+(define (type->boxed-type ty)
+   (case ty
+      ((int32 uint32) 'integer)
+      (else ty)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-range-type-program! ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-range-type-program! this::J2SProgram tymap)
@@ -1603,22 +1637,24 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
-   (with-access::J2SDecl this (range itype vtype id scope)
+   (with-access::J2SDecl this (range itype vtype id scope useinfun)
       (cond
-	 ((eq? scope '%scope)
+	 ((memq scope '(%scope global))
 	  (when (memq vtype '(index integer unknown))
 	     (let ((ty (cond
 			  ((interval? range)
-			   (minimal-type (interval->type range tymap) vtype))
+			   (min-type (interval->type range tymap) vtype))
 			  (else
-			   (minimal-type 'number vtype)))))
+			   (min-type 'number vtype)))))
 		(set! itype ty)
 		(set! vtype ty))))
 	 ((and (interval? range) (memq vtype '(index integer number)))
 	  (let ((ty (interval->type range tymap)))
 	     (when ty
-		(set! itype ty)
-		(set! vtype ty))))))
+		(let* ((tym (min-type ty vtype))
+		       (tyb (if useinfun (type->boxed-type tym) tym)))
+		   (set! itype ty)
+		   (set! vtype tyb)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
@@ -1657,12 +1693,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SRef tymap)
    (call-next-method)
-   (with-access::J2SRef this (decl type (rng range))
-      (if (interval? rng)
-	  (with-access::J2SDecl decl (vtype id key range)
-	     (set! range (interval-merge range rng))
-	     (let ((type (minimal-type vtype (interval->type range tymap))))
-		(set! vtype (minimal-type vtype type)))
+   (with-access::J2SRef this (decl type (rng range) loc)
+      (with-access::J2SDecl decl (vtype id key range)
+	 (if (interval? rng)
+	     (begin
+		(set! range (interval-merge range rng))
+		(set! vtype (max-type (interval->type range tymap) vtype)))
 	     (set! vtype (map-type vtype defmap)))))
    this)
 
@@ -1798,10 +1834,8 @@
    (with-access::J2SBinary this (op type)
       (when (memq type '(index integer number))
 	 (case op
-	    ((>> << BIT_OT ^ &)
-	     (set! type 'int32))
-	    ((>>>)
-	     (set! type 'uint32)))))
+	    ((>> << BIT_OT ^ &) (set! type 'int32))
+	    ((>>>) (set! type 'uint32)))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Thu Dec 21 17:32:14 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 10:11:35 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
@@ -146,7 +146,7 @@
 		  (scmalen (j2s-decl-scheme-id alen))
 		  (scmfield (j2s-scheme field mode return conf hint))
 		  (scmobj (j2s-scheme obj mode return conf hint))
-		  (tyfield (j2s-type-ref field)))
+		  (tyfield (j2s-vtype field)))
 	       (case tyfield
 		  ((uint32)
 		   (let ((idx (j2s-scheme field mode return conf hint)))
@@ -196,7 +196,7 @@
 
    (define (aref/w-cache this::J2SAccess)
       (with-access::J2SAccess this (obj field)
-	 (case (j2s-type-ref field)
+	 (case (j2s-vtype field)
 	    ((uint32)
 	     `(js-array-index-ref ,(j2s-scheme obj mode return conf hint)
 		 ,(j2s-scheme field mode return conf hint)
@@ -226,11 +226,11 @@
 	  (aref this))
 	 ((is-fixnum? field conf)
 	  (aref/w-cache this))
-	 ((eq? (j2s-type-ref field) 'uint32)
+	 ((eq? (j2s-vtype field) 'uint32)
 	  `(js-array-index-ref ,(j2s-scheme obj mode return conf hint)
 	      ,(j2s-scheme field mode return conf hint)
 	      %this))
-	 ((eq? (j2s-type-ref field) 'int32)
+	 ((eq? (j2s-vtype field) 'int32)
 	  `(js-array-ref ,(j2s-scheme obj mode return conf hint)
 	      (int32->fixnum ,(j2s-scheme field mode return conf hint))
 	      %this))
@@ -270,7 +270,7 @@
 		  (scmfield (j2s-scheme field mode return conf hint))
 		  (scmobj (j2s-scheme obj mode return conf hint))
 		  (scmrhs (j2s-scheme rhs mode return conf hint))
-		  (tyfield (j2s-type-ref field)))
+		  (tyfield (j2s-vtype field)))
 	       (case tyfield
 		  ((uint32)
 		   (let ((idx (j2s-scheme field mode return conf hint)))
@@ -330,7 +330,7 @@
       ;; an optimized array set in a loop (see array.scm)
       (with-access::J2SAccess lhs (obj field)
 	 (with-access::J2SAref obj (array alen)
-	    (case (j2s-type-ref field)
+	    (case (j2s-vtype field)
 	       ((uint32)
 		`(js-array-index-set! ,(j2s-scheme obj mode return conf hint)
 		    ,(j2s-scheme field mode return conf hint)
@@ -359,7 +359,7 @@
    
    (with-access::J2SAssig this (lhs rhs)
       (with-access::J2SAccess lhs (obj field cache (loca loc))
-	 (let ((tyf (j2s-type-ref field)))
+	 (let ((tyf (j2s-vtype field)))
 	    (cond
 	       ((isa? obj J2SAref)
 		(if *j2s-array-cache*
@@ -405,7 +405,7 @@
 	    (with-access::J2SExpr field (range)
 	       (let ((h (car h)))
 		  (cond
-		     ((eq? (j2s-type-ref field) 'uint32)
+		     ((eq? (j2s-vtype field) 'uint32)
 		      (let ((i (gensym 'idx)))
 			 `(let ((,i ,(j2s-scheme field mode return conf hint)))
 			     (if (<u32 ,i ,(fixnum->uint32 h))
@@ -455,7 +455,7 @@
    (j2s-cast
       (j2s-scheme field mode return conf hint)
       field
-      (j2s-type-ref field) 'uint32 conf))
+      (j2s-vtype field) 'uint32 conf))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-as-integer ...                                        */
@@ -464,7 +464,7 @@
    (j2s-cast
       (j2s-scheme field mode return conf hint)
       field
-      (j2s-type-ref field) 'integer conf))
+      (j2s-vtype field) 'integer conf))
 
       
 	     

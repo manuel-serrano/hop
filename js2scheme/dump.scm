@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Dec 21 17:20:00 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 13:34:53 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -181,9 +181,11 @@
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:access")
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:usage"))
-       (with-access::J2SDecl this (usecnt usage ronly)
+       (with-access::J2SDecl this (usecnt useinloop useinfun usage ronly)
 	  `((:ronly ,ronly)
 	    (:usecnt ,usecnt)
+	    (:useinloop ,useinloop)
+	    (:useinfun ,useinfun)
 	    (:usage ,usage)))
        '()))
 
@@ -318,6 +320,7 @@
    (with-access::J2SAssig this (lhs rhs loc)
       `(,@(call-next-method) 
 	  ,@(dump-type this)
+	  ,@(dump-range this)
 	  ,@(if (isa? lhs J2SRef)
 		(with-access::J2SRef lhs (decl)
 		   (dump-vtype decl))
@@ -331,26 +334,21 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SAssigOp)
    (with-access::J2SAssigOp this (lhs rhs loc op)
-      `(,(string->symbol (typeof this))
-	,@(dump-type this)
-	,@(dump-info this)
-	,(j2s->list lhs)
-	,(j2s->list rhs)
-	,op)))
+      `(,@(call-next-method) ,op)))
   
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPrefix ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPrefix)
    (with-access::J2SPrefix this (lhs rhs loc op)
-      `(,@(call-next-method) ,op ,@(dump-type this))))
+      `(,@(call-next-method) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SPostfix ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPostfix)
    (with-access::J2SPostfix this (lhs rhs loc op)
-      `(,@(call-next-method) ,op ,@(dump-type this))))
+      `(,@(call-next-method) ,op)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SUnresolvedRef ...                                 */
@@ -456,8 +454,6 @@
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
 		 ,@(if (>= (bigloo-debug) 3)
-		       `(:idthis ,idthis) '())
-		 ,@(if (>= (bigloo-debug) 3)
 		       `(:usage ,usage) '())
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
@@ -474,8 +470,6 @@
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
 		 ,@(if (>= (bigloo-debug) 3)
-		       `(:idthis ,idthis) '())
-		 ,@(if (>= (bigloo-debug) 3)
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
 		 :optimize ,optimize
 		 :mode ,mode
@@ -488,8 +482,6 @@
 	      ,@(dump-type this)
 	      ,@(dump-rtype this)
 	      ,@(dump-loc loc)
-	      ,@(if (>= (bigloo-debug) 3)
-		    `(:idthis ,idthis) '())
 	      ,@(if (>= (bigloo-debug) 3)
 		    `(:need-bind-exit-return ,need-bind-exit-return) '())
 	      :optimize ,optimize
@@ -772,7 +764,7 @@
 ;*    j2s->list ::J2SDecl ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDecl)
-   (with-access::J2SDecl this (id key binder _scmid usecnt usage ronly scope cache)
+   (with-access::J2SDecl this (id key binder _scmid usage ronly scope cache)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
 	,@(dump-key key)

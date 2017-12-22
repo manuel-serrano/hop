@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Dec  8 18:43:58 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 12:50:54 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -25,6 +25,7 @@
 	   __js2scheme_stage
 	   __js2scheme_utils
 	   __js2scheme_alpha
+	   __js2scheme_use
 	   __js2scheme_node-size)
 
    (export j2s-method-stage))
@@ -106,6 +107,7 @@
 	     (nthisp (j2sdecl-duplicate thisp))
 	     (nbody (j2s-alpha body (cons thisp params) (cons nthisp nparams))))
 	 (set! optimize #f)
+	 (use-count nbody +1 #f)
 	 (with-access::J2SDecl thisp (itype vtype utype)
 	    (set! itype 'any)
 	    (set! vtype 'any)

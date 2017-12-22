@@ -68,6 +68,7 @@ done
 success=0
 failure=0
 i=0
+lbl=
 
 mkdir -p $TMP
 
@@ -80,8 +81,8 @@ run() {
   if [ $? != 0 ]; then
     i=`expr $i + 1`
 
-    echo -n "$i. $path ... "
-    echo "$i. $path ... " >> $TMP/TEST-HOPJS-ALL.out
+    echo -n "$i. $path $lbl... "
+    echo "$i. $path $lbl... " >> $TMP/TEST-HOPJS-ALL.out
     
     if [ "$verb " != " " ]; then
       echo ""
@@ -116,10 +117,14 @@ touch $TMP/TEST-HOPJS-ALL.out
 for path in noserv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
+      lbl=""
       run $path $gflags --no-server --rc-file $path.rc.js
+      lbl="(opt) "
       run $path --no-server --rc-file $path.rc.js
     else
+      lbl=""
       run $path $gflags -q --no-server
+      lbl="(opt) "
       run $path -q --no-server
     fi
   fi
@@ -129,18 +134,26 @@ for path in serv/*.js; do
   if [ "$test " = " " -o "$test " = "$path " ]; then
     if [ -f $path.rc.js ]; then
 	if [ -f $path.args ]; then
+	    lbl=""
 	    run $path $gflags -p 0 `cat $path.args` --rc-file $path.rc.js
+            lbl="(opt) "
 	    run $path -p 0 `cat $path.args` --rc-file $path.rc.js
 	else
+	    lbl=""
 	    run $path $gflags -p 0 --rc-file $path.rc.js
+            lbl="(opt) "
 	    run $path -p 0 --rc-file $path.rc.js
 	fi
     else       
 	if [ -f $path.args ]; then
+	    lbl=""
 	    run $path $gflags -p 0 `cat $path.args` --rc-file passwd.hop
+            lbl="(opt) "
 	    run $path -p 0 `cat $path.args` --rc-file passwd.hop
 	else
+	    lbl=""
 	    run $path $gflags -p 0 --rc-file passwd.hop
+            lbl="(opt) "
 	    run $path -p 0 --rc-file passwd.hop
 	fi
     fi

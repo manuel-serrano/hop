@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Thu Dec 21 17:07:06 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 17:01:06 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization consists in "pre-initializating" variables     */
@@ -56,6 +56,11 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    preinit ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-struct preinit type)
+
+;*---------------------------------------------------------------------*/
 ;*    invalidate-decl! ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (invalidate-decl! decl::J2SDecl)
@@ -68,7 +73,6 @@
 (define (invalidated-decl? decl::J2SDecl)
    (with-access::J2SDecl decl (%info)
       (eq? %info 'no-preinit)))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    merge-env ...                                                    */
@@ -91,10 +95,10 @@
       (cond
 	 ((null? l)
 	  (when (pair? a)
-	     (for-each (lambda (d) (invalidate-decl! (car d))) r))
+	     (for-each invalidate-decl! r))
 	  (reverse! a))
 	 ((null? r)
-	  (for-each (lambda (d) (invalidate-decl! (car d))) l)
+	  (for-each invalidate-decl! l)
 	  (reverse! a))
 	 ((decl=? (car l) (car r))
 	  (loop (cdr l) (cdr r) (cons (car l) a)))
@@ -108,22 +112,61 @@
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SNode ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (preinit* this::J2SNode env)
-   (call-default-walker))
+(define-generic (preinit* this::obj env::pair-nil)
+   (if (pair? this)
+       (let loop ((this this)
+		  (env env))
+	  (if (null? this)
+	      env
+	      (loop (cdr this) (preinit* (car this) env))))
+       env))
+
+;*---------------------------------------------------------------------*/
+;*    preinit* ::J2SNode ...                                           */
+;*---------------------------------------------------------------------*/
+(define-method (preinit* this::J2SNode env::pair-nil)
+   (let* ((clazz (object-class this))
+	  (fields (class-all-fields clazz)))
+      (let loop ((i (-fx (vector-length fields) 1))
+		 (env env))
+	 (if (=fx i -1)
+	     env
+	     (let* ((f (vector-ref-ur fields i))
+		    (info (class-field-info f)))
+		(if (and (pair? info) (member "ast" info))
+		    (let ((v ((class-field-accessor f) this)))
+		       (loop (-fx i 1) (preinit* v env)))
+		    (loop (-fx i 1) env)))))))
+
+;*---------------------------------------------------------------------*/
+;*    preinit* ::J2SLetBlock ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (preinit* this::J2SLetBlock env::pair-nil)
+   (with-access::J2SLetBlock this (decls nodes)
+      (preinit* nodes (preinit* decls env))))
 
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SRef ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (preinit* this::J2SRef env)
-   (with-access::J2SRef this (decl)
-      (unless (memq decl env)
-	 (invalidate-decl! decl)))
-   env)
+(define-method (preinit* this::J2SRef env::pair-nil)
+   (with-access::J2SRef this (decl loc)
+      (if (isa? decl J2SDeclInit)
+	  env
+	  (if (memq decl env)
+	      (with-access::J2SDecl decl (%info useinfun)
+		 (if (and (preinit? %info) (not useinfun))
+		     env
+		     (begin
+			(invalidate-decl! decl)
+			(remq! decl env))))
+	      (begin
+		 (invalidate-decl! decl)
+		 (remq! decl env))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SInit ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (preinit* this::J2SInit env)
+(define-method (preinit* this::J2SInit env::pair-nil)
    
    (define (init->type init::J2SExpr)
       (cond
@@ -143,25 +186,26 @@
 		    (with-access::J2SDecl decl (binder %info id)
 		       (if (eq? binder 'var)
 			   (let ((typ (init->type rhs)))
-			      (if typ
-				  (match-case %info
-				     ((preinit ?t)
-				      (unless (eq? t typ)
+			      (cond
+				 ((not typ)
+				  (invalidate-decl! decl)
+				  (remq! decl env))
+				 ((preinit? %info)
+				  (if (eq? (preinit-type %info) typ)
+				      env
+				      (begin
 					 (invalidate-decl! decl)
-					 (remq! decl env)))
-				     (else
-				      (set! %info (cons 'preinit typ))
-				      (cons decl env)))
-				  (begin
-				     (invalidate-decl! decl)
-				     (remq! decl env))))
+					 (remq! decl env))))
+				 (else
+				  (set! %info (preinit typ))
+				  (cons decl env))))
 			   env))))
 	     (preinit* lhs env)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SIf ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (preinit* this::J2SIf env)
+(define-method (preinit* this::J2SIf env::pair-nil)
    (with-access::J2SIf this (test then else)
       (let* ((nenv (preinit* test env))
 	     (tenv (preinit* then nenv))
@@ -171,7 +215,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    preinit* ::J2SCond ...                                           */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (preinit* this::J2SCond env)
+(define-method (preinit* this::J2SCond env::pair-nil)
    (with-access::J2SCond this (test then else)
       (let* ((nenv (preinit* test env))
 	     (tenv (preinit* then nenv))
@@ -179,17 +223,51 @@
 	 (merge-env tenv eenv))))
 
 ;*---------------------------------------------------------------------*/
-;*    preinit* ::J2SSeq ...                                            */
+;*    preinit* ::J2SSwitch ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (preinit* this::J2SSeq env)
-   (with-access::J2SSeq this (nodes)
-      (let loop ((nodes nodes)
-		 (env env))
-	 (if (null? nodes)
-	     env
-	     (loop (cdr nodes) (preinit* (car nodes) env))))))
+(define-method (preinit* this::J2SSwitch env::pair-nil)
+   (with-access::J2SSwitch this (key cases)
+      (let ((env0 (preinit* key env)))
+	 (if (null? cases)
+	     env0
+	     (let loop ((cases cases)
+			(env (preinit* (car cases) env0)))
+		(if (null? cases)
+		    env
+		    (let ((cenv (preinit* (car cases) env0)))
+		       (loop (cdr cases) (merge-env env cenv)))))))))
+	    
+;*---------------------------------------------------------------------*/
+;*    preinit* ::J2SFor ...                                            */
+;*---------------------------------------------------------------------*/
+(define-method (preinit* this::J2SFor env::pair-nil)
+   (with-access::J2SFor this (init test incr body loc)
+      (let* ((ienv (preinit* init env))
+	     (tenv (preinit* test ienv))
+	     (benv (preinit* body tenv)))
+	 (preinit* incr benv))))
 	 
-      
+;*---------------------------------------------------------------------*/
+;*    preinit* ::J2SForIn ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (preinit* this::J2SForIn env::pair-nil)
+   (with-access::J2SForIn this (lhs obj body)
+      (preinit* body (preinit* obj env))))
+	 
+;*---------------------------------------------------------------------*/
+;*    preinit* ::J2SWhile ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (preinit* this::J2SWhile env::pair-nil)
+   (with-access::J2SWhile this (test body)
+      (preinit* body (preinit* test env))))
+	 
+;*---------------------------------------------------------------------*/
+;*    preinit* ::J2SDo ...                                             */
+;*---------------------------------------------------------------------*/
+(define-method (preinit* this::J2SDo env::pair-nil)
+   (with-access::J2SDo this (test body)
+      (preinit* test (preinit* body env))))
+	 
 ;*---------------------------------------------------------------------*/
 ;*    patchinit! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
@@ -221,16 +299,17 @@
 			    (with-access::J2SDeclInit o (val)
 			       (set! val (patchinit! val args))
 			       o))
-			   ((and (pair? %info) (eq? (car %info) 'preinit))
+			   ((preinit? %info)
 			    (when (>=fx (config-get args :verbose 0) 3)
 			       (fprintf (current-error-port)
-				  " [~a/~a:~a]" id (cdr %info)
+				  " [~a/~a:~a]" id (preinit-type %info)
 				  (match-case loc
 				     ((at ?file ?pos) pos)
 				     (else ""))))
 			    (let ((n (duplicate::J2SDeclInit o
 					(binder 'let-opt)
-					(val (type->val loc (cdr %info))))))
+					(val (type->val loc
+						(preinit-type %info))))))
 			       (set! olds (cons o olds))
 			       (set! news (cons n news))
 			       n))

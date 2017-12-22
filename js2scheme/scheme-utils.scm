@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Dec 20 16:04:43 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 16:24:59 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -83,7 +83,8 @@
 	   (box32 ::obj ::symbol #!optional proc::obj)
 	   (box64 ::obj ::symbol #!optional proc::obj)
 
-	   (expr-asuint32 expr::J2SExpr)))
+	   (expr-asuint32 expr::J2SExpr)
+	   (uncast::J2SExpr ::J2SExpr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-workspaces ...                                    */
@@ -229,7 +230,7 @@
 ;*    typeof-this ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (typeof-this obj conf)
-   (let ((ty (j2s-type-ref obj)))
+   (let ((ty (j2s-vtype obj)))
       (if (eq? ty 'object)
 	  (if (and (isa? obj J2SThis)
 		   (with-access::J2SThis obj (decl)
@@ -243,7 +244,7 @@
 ;*    maybe-number? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (maybe-number? expr::J2SNode)
-   (memq (j2s-type-ref expr) '(any int32 uint32 integer number real)))
+   (memq (j2s-vtype expr) '(any int32 uint32 integer number real)))
 
 ;*---------------------------------------------------------------------*/
 ;*    utype-ident ...                                                  */
@@ -345,59 +346,59 @@
 ;*    is-number? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-number? expr::J2SExpr)
-   (type-number? (j2s-type-ref expr)))
+   (type-number? (j2s-type expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-integer? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (is-integer? expr::J2SExpr)
-   (type-integer? (j2s-type-ref expr)))
+   (type-integer? (j2s-vtype expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-int30? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (is-int30? expr::J2SExpr)
-   (type-int30? (j2s-type-ref expr)))
+   (type-int30? (j2s-vtype expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-int53? ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (is-int53? expr::J2SExpr)
-   (let ((ty (j2s-type-ref expr)))
+   (let ((ty (j2s-vtype expr)))
       (or (type-int53? ty) (eq? ty 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-fx? ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (is-fx? expr::J2SExpr)
-   (type-fixnum? (j2s-type-ref expr)))
+   (type-fixnum? (j2s-vtype expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-fixnum? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-fixnum? expr::J2SExpr conf)
    (if (m64? conf)
-       (or (type-integer? (j2s-type-ref expr)) (type-int53? (j2s-type-ref expr)))
-       (or (type-int30? (j2s-type-ref expr)) (eq? (j2s-type-ref expr) 'ufixnum))))
+       (or (type-integer? (j2s-vtype expr)) (type-int53? (j2s-vtype expr)))
+       (or (type-int30? (j2s-vtype expr)) (eq? (j2s-vtype expr) 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-uint32? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-uint32? expr::J2SExpr)
-   (type-uint32? (j2s-type-ref expr)))
+   (type-uint32? (j2s-vtype expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-uint53? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-uint53? expr::J2SExpr)
-   (let ((ty (j2s-type-ref expr)))
+   (let ((ty (j2s-vtype expr)))
       (or (type-int53? ty) (eq? ty 'ufixnum))))
 
 ;*---------------------------------------------------------------------*/
 ;*    is-string? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (is-string? expr::J2SExpr)
-   (eq? (j2s-type-ref expr) 'string))
+   (eq? (j2s-vtype expr) 'string))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring ...                                                 */
@@ -631,9 +632,10 @@
 	     ((int32? val) (>=s32 val #s32:0))
 	     ((fixnum? val) (>fx val 0))
 	     (else #f)))
-       (with-access::J2SExpr expr (range)
-	  (when (interval? range)
-	     (>=llong (interval-min range) #l0)))))
+       (with-access::J2SExpr expr (range type)
+	  (if (interval? range)
+	      (>=llong (interval-min range) #l0)
+	      (eq? type 'uint32)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-one? ...                                                 */
@@ -695,10 +697,11 @@
 	     ((fixnum? val)
 	      (and (>=fx val (min-int32)) (<=fx val (max-int32))))
 	     (else #f)))
-       (with-access::J2SExpr expr (range)
-	  (when (interval? range)
-	     (and (>=llong (interval-min range) (- (bit-lshllong #l1 31)))
-		  (<llong (interval-max range) (bit-lshllong #l1 31)))))))
+       (with-access::J2SExpr expr (range type)
+	  (if (interval? range)
+	      (and (>=llong (interval-min range) (- (bit-lshllong #l1 31)))
+		   (<llong (interval-max range) (bit-lshllong #l1 31)))
+	      (eq? type 'int32)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-uint32? ...                                              */
@@ -711,10 +714,11 @@
 	     ((int32? val) (>=s32 val #s32:0))
 	     ((fixnum? val) (>=fx val 0))
 	     (else #f)))
-       (with-access::J2SExpr expr (range)
-	  (when (interval? range)
-	     (and (>=llong (interval-min range) #l0)
-		  (<llong (interval-max range) (bit-lshllong #l1 32)))))))
+       (with-access::J2SExpr expr (range type)
+	  (if (interval? range)
+	      (and (>=llong (interval-min range) #l0)
+		   (<llong (interval-max range) (bit-lshllong #l1 32)))
+	      (eq? type 'uint32)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inrange-int53? ...                                               */
@@ -732,10 +736,11 @@
 		     (and (>=llong lval (negllong (bit-lshllong #l1 53)))
 			  (<llong lval (bit-lshllong #l1 53))))))
 	     (else #f)))
-       (with-access::J2SExpr expr (range)
-	  (when (interval? range)
-	     (and (>=llong (interval-min range) (- (bit-lshllong #l1 53)))
-		  (<llong (interval-max range) (bit-lshllong #l1 53)))))))
+       (with-access::J2SExpr expr (range type)
+	  (if (interval? range)
+	      (and (>=llong (interval-min range) (- (bit-lshllong #l1 53)))
+		   (<llong (interval-max range) (bit-lshllong #l1 53)))
+	      (memq type '(int32 uint32 integer bint))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    overflow29 ...                                                   */
@@ -805,7 +810,7 @@
 ;*---------------------------------------------------------------------*/
 (define (expr-asuint32 expr::J2SExpr)
    (cond
-      ((eq? (j2s-type-ref expr) 'uint32)
+      ((eq? (j2s-vtype expr) 'uint32)
        expr)
       ((eq? (j2s-type expr) 'uint32)
        expr)
@@ -816,3 +821,12 @@
        expr)
       (else
        #f)))
+
+;*---------------------------------------------------------------------*/
+;*    uncast ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (uncast::J2SExpr expr::J2SExpr)
+   (if (isa? expr J2SCast)
+       (with-access::J2SCast expr (expr)
+	  (uncast expr))
+       expr))

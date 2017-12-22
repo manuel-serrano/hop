@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Thu Dec 21 17:55:48 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 16:49:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
@@ -64,7 +64,7 @@
 		(<u32 (fixnum->uint32 ,i) ,alen)
 		(eq? ,mark (js-array-mark)))
 	   (vector-ref-ur ,avec ,i)
-	   (js-array-ref-ur ,arr ,i ,%this)))
+	   (js-array-ref ,arr ,i ,%this)))
    
    (%make-ref idx ref))
 
@@ -76,7 +76,7 @@
 		(<u32 (fixnum->uint32 ,i) ,alen)
 		(eq? ,mark (js-array-mark)))
 	   (vector-set-ur! ,avec ,i ,v)
-	   (js-array-set-ur! ,arr (fixnum->uint32 ,i) ,v ,throw ,%this)))
+	   (js-array-set! ,arr ,i ,v ,throw ,%this)))
 
    (%make-set idx val set))
 

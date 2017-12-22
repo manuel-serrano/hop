@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Dec 21 18:59:24 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 15:39:46 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -87,7 +87,7 @@
 (define (scm-fixnum? sexp node::J2SNode)
    (cond
       ((fixnum? sexp) #t)
-      ((type-int30? (j2s-type-ref node)) #t)
+      ((type-int30? (j2s-vtype node)) #t)
       ((symbol? sexp) `(fixnum? ,sexp))
       (else #f)))
 
@@ -224,7 +224,7 @@
       ((+)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.6
        (let ((expr (j2s-scheme expr mode return conf hint))
-	     (typ (j2s-type-ref expr)))
+	     (typ (j2s-vtype expr)))
 	  (cond
 	     ((eqv? expr 0) +0.0)
 	     ((memq typ '(int32 uint32 int53 integer number)) expr)
@@ -232,7 +232,7 @@
       ((-)
        ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.7
        (let ((expr (j2s-scheme expr mode return conf hint))
-	     (typ (j2s-type-ref expr)))
+	     (typ (j2s-vtype expr)))
 	  (case type
 	     ((int32)
 	      (cond
@@ -240,12 +240,14 @@
 		  (if (=s32 expr #s32:0) -0.0 (negs32 expr)))
 		 ((eq? typ 'int32)
 		  (epairify loc `(negs32js ,expr)))
+		 ((eq? typ 'uint32)
+		  (epairify loc `(negs32 (uint32->int32 ,expr))))
 		 (else
 		  (epairify loc `(js-toint32 (negjs ,expr %this) %this)))))
 	     ((uint32)
 	      (cond
 		 ((eq? typ 'int32)
-		  (epairify loc `(negs32 ,expr)))
+		  (epairify loc `(int32->uint32 (negs32 ,expr))))
 		 (else
 		  (epairify loc `(js-touint32 (negjs ,expr %this) %this)))))
 	     ((eqv? expr 0)
@@ -328,24 +330,24 @@
       
       ((OR)
        (let ((lhsv (gensym 'lhs)))
-	  `(let ((,(type-ident lhsv (j2s-type-ref lhs))
+	  `(let ((,(type-ident lhsv (j2s-vtype lhs))
 		  ,(j2s-scheme lhs mode return conf hint)))
-	      (if ,(if (eq? (j2s-type-ref lhs) 'bool)
+	      (if ,(if (eq? (j2s-vtype lhs) 'bool)
 		       lhsv
-		       (j2s-cast lhsv lhs (j2s-type-ref lhs) 'bool conf))
-		  ,(j2s-cast lhsv lhs (j2s-type-ref lhs) type conf)
+		       (j2s-cast lhsv lhs (j2s-vtype lhs) 'bool conf))
+		  ,(j2s-cast lhsv lhs (j2s-vtype lhs) type conf)
 		  ,(j2s-cast (j2s-scheme rhs mode return conf hint) rhs
-		      (j2s-type-ref rhs) type conf)))))
+		      (j2s-vtype rhs) type conf)))))
       ((&&)
        (let ((lhsv (gensym 'lhs)))
-	  `(let ((,(type-ident lhsv (j2s-type-ref lhs))
+	  `(let ((,(type-ident lhsv (j2s-vtype lhs))
 		  ,(j2s-scheme lhs mode return conf hint)))
-	      (if ,(if (eq? (j2s-type-ref lhs) 'bool)
+	      (if ,(if (eq? (j2s-vtype lhs) 'bool)
 		       lhsv
-		       (j2s-cast lhsv lhs (j2s-type-ref lhs) 'bool conf))
+		       (j2s-cast lhsv lhs (j2s-vtype lhs) 'bool conf))
 		  ,(j2s-cast (j2s-scheme rhs mode return conf hint) rhs
-		      (j2s-type-ref rhs) type conf)
-		  ,(j2s-cast lhsv lhs (j2s-type-ref lhs) type conf)))))
+		      (j2s-vtype rhs) type conf)
+		  ,(j2s-cast lhsv lhs (j2s-vtype lhs) type conf)))))
       (else
        (with-tmp lhs rhs mode return conf hint 'any
 	  (lambda (left right)
@@ -395,8 +397,8 @@
 	  `(js-strict-equal? (int32->flonum ,lhs) ,rhs))))
       
    (define (strict-equal lhs rhs)
-      (let ((tl (j2s-type-ref l))
-	    (tr (j2s-type-ref r)))
+      (let ((tl (j2s-vtype l))
+	    (tr (j2s-vtype r)))
 	 (cond
 	    ((eq? tl 'uint32) (strict-equal-uint32 lhs rhs tr))
 	    ((eq? tr 'uint32) (strict-equal-uint32 rhs lhs tl))
@@ -435,8 +437,8 @@
       ((in)
        (j2s-in? loc lhs rhs))
       ((+)
-       `(js+ ,(box lhs (j2s-type-ref l) conf)
-	   ,(box rhs (j2s-type-ref r) conf)
+       `(js+ ,(box lhs (j2s-vtype l) conf)
+	   ,(box rhs (j2s-vtype r) conf)
 	   %this))
       ((<)
        `(<js ,lhs ,rhs %this))
@@ -459,8 +461,8 @@
 ;*    bindings.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-binop-arithmetic loc op left l right r conf)
-   (let ((tl (j2s-type-ref l))
-	 (tr (j2s-type-ref r)))
+   (let ((tl (j2s-vtype l))
+	 (tr (j2s-vtype r)))
       (case op
 	 ((-)
 	  `(-js ,(box left tl conf) ,(box right tr conf) %this))
@@ -539,17 +541,17 @@
 	  (gen scmlhs scmrhs))
 	 (testl
 	  (let ((right (gensym 'rhs)))
-	     `(let ((,(type-ident right (j2s-type-ref rhs)) ,scmrhs))
+	     `(let ((,(type-ident right (j2s-vtype rhs)) ,scmrhs))
 		 ,(gen scmlhs right))))
 	 (testr
 	  (let ((left (gensym 'lhs)))
-	     `(let ((,(type-ident left (j2s-type-ref lhs)) ,scmlhs))
+	     `(let ((,(type-ident left (j2s-vtype lhs)) ,scmlhs))
 		 ,(gen left scmrhs))))
 	 (else
 	  (let ((left (gensym 'lhs))
 		(right (gensym 'rhs)))
-	     `(let* ((,(type-ident left (j2s-type-ref lhs)) ,scmlhs)
-		     (,(type-ident right (j2s-type-ref rhs)) ,scmrhs))
+	     `(let* ((,(type-ident left (j2s-vtype lhs)) ,scmlhs)
+		     (,(type-ident right (j2s-vtype rhs)) ,scmrhs))
 		 ,(gen left right)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -569,8 +571,8 @@
    
    (with-tmp lhs rhs mode return conf hint '*
       (lambda (left right)
-	 (let ((tl (j2s-type-ref lhs))
-	       (tr (j2s-type-ref rhs))
+	 (let ((tl (j2s-vtype lhs))
+	       (tr (j2s-vtype rhs))
 	       (op (case o
 		      ((!=) '==)
 		      ((!==) '===)
@@ -740,8 +742,8 @@
 
    (with-tmp lhs rhs mode return conf hint '*
       (lambda (left right)
-	 (let ((tl (j2s-type-ref lhs))
-	       (tr (j2s-type-ref rhs)))
+	 (let ((tl (j2s-vtype lhs))
+	       (tr (j2s-vtype rhs)))
 	    (epairify loc
 	       (notify o
 		  (if (m64? conf)
@@ -886,8 +888,8 @@
 	 (else
 	  (j2s-scheme expr mode return conf hint))))
 
-   (let ((tl (j2s-type-ref lhs))
-	 (tr (j2s-type-ref rhs)))
+   (let ((tl (j2s-vtype lhs))
+	 (tr (j2s-vtype rhs)))
       (cond
 	 ((j2s-typeof-predicate lhs rhs)
 	  =>
@@ -1003,11 +1005,11 @@
 		   ((===)
 		    `(eq? ,left ,right))
 		   ((==)
-		    (if (memq (j2s-type-ref lhs) '(undefined null))
+		    (if (memq (j2s-vtype lhs) '(undefined null))
 			`(or (eq? (js-undefined) ,right) (eq? (js-null) ,right))
 			`(or (eq? ,left (js-undefined)) (eq? ,left (js-null)))))
 		   ((!=)
-		    (if (memq (j2s-type-ref lhs) '(undefined null))
+		    (if (memq (j2s-vtype lhs) '(undefined null))
 			`(not (or (eq? (js-undefined) ,right) (eq? (js-null) ,right)))
 			`(not (or (eq? ,left (js-undefined)) (eq? ,left (js-null))))))
 		   (else
@@ -1068,12 +1070,12 @@
 	 ((int32? sexpr)
 	  (int32->fixnum (bit-ands32 sexpr #s32:31)))
 	 ((inrange-32? expr)
-	  (case (j2s-type-ref expr)
+	  (case (j2s-vtype expr)
 	     ((int32) `(int32->fixnum ,sexpr))
 	     ((uint32) `(uint32->fixnum ,sexpr))
 	     (else sexpr)))
 	 (else
-	  (case (j2s-type-ref expr)
+	  (case (j2s-vtype expr)
 	     ((int32) `(int32->fixnum ,sexpr))
 	     ((uint32) `(uint32->fixnum ,sexpr))
 	     ((integer) sexpr)
@@ -1081,8 +1083,8 @@
    
    (with-tmp lhs rhs mode return conf hint '*
       (lambda (left right)
-	 (let ((tl (j2s-type-ref lhs))
-	       (tr (j2s-type-ref rhs)))
+	 (let ((tl (j2s-vtype lhs))
+	       (tr (j2s-vtype rhs)))
 	    (epairify loc
 	       (cond
 		  ((memq type '(int32 uint32))
@@ -1159,8 +1161,8 @@
    (define (add loc type lhs rhs mode return conf hint)
       (with-tmp lhs rhs mode return conf hint type
 	 (lambda (left right)
-	    (let ((tl (j2s-type-ref lhs))
-		  (tr (j2s-type-ref rhs)))
+	    (let ((tl (j2s-vtype lhs))
+		  (tr (j2s-vtype rhs)))
 	       (cond
 		  ((eq? tl 'int32)
 		   (binop-int32-xxx '+ type lhs tl left rhs tr right conf #f))
@@ -1210,8 +1212,8 @@
 	   mode return conf hint::pair-nil)
    (with-tmp lhs rhs mode return conf hint '*
       (lambda (left right)
-	 (let ((tl (j2s-type-ref lhs))
-	       (tr (j2s-type-ref rhs)))
+	 (let ((tl (j2s-vtype lhs))
+	       (tr (j2s-vtype rhs)))
 	    (epairify loc
 	       (cond
 		  ((eq? tl 'int32)
@@ -1390,8 +1392,8 @@
 	     ((eq? tr 'real)
 	      (mul-real rhs tr right lhs tl left tonumber))
 	     ((eq? type 'number)
-	      `(*/overflow ,(tonumber left (j2s-type-ref lhs))
-		 ,(tonumber right (j2s-type-ref rhs))))
+	      `(*/overflow ,(tonumber left (j2s-vtype lhs))
+		 ,(tonumber right (j2s-vtype rhs))))
 	     (else
 	      `(*js ,left ,right %this))))
 	 (else
@@ -1399,8 +1401,8 @@
    
    (with-tmp lhs rhs mode return conf hint '*
       (lambda (left right)
-	 (let ((tl (j2s-type-ref lhs))
-	       (tr (j2s-type-ref rhs)))
+	 (let ((tl (j2s-vtype lhs))
+	       (tr (j2s-vtype rhs)))
 	    (epairify loc
 	       (if (m64? conf)
 		   (mul type lhs tl left rhs tr right tonumber64)
@@ -1446,7 +1448,7 @@
 	    (and (interval? range) (>= (interval-min range) #l0))))
       
       (let ((n (gensym 'n)))
-	 (case (j2s-type-ref lhs)
+	 (case (j2s-vtype lhs)
 	    ((uint32)
 	     `(let ((,n ,(j2s-scheme lhs mode return conf hint)))
 		 (if (=u32 (bit-andu32
@@ -1538,8 +1540,8 @@
 	  (div-power2 k)
 	  (with-tmp lhs rhs mode return conf hint '*
 	     (lambda (left right)
-		(let ((tl (j2s-type-ref lhs))
-		      (tr (j2s-type-ref rhs)))
+		(let ((tl (j2s-vtype lhs))
+		      (tr (j2s-vtype rhs)))
 		   (epairify loc
 		      (case type
 			 ((int32) (divs32 left right tl tr))
@@ -1625,8 +1627,8 @@
    
    (with-tmp lhs rhs mode return conf hint '*
       (lambda (left right)
-	 (let ((tl (j2s-type-ref lhs))
-	       (tr (j2s-type-ref rhs)))
+	 (let ((tl (j2s-vtype lhs))
+	       (tr (j2s-vtype rhs)))
 	    (epairify loc
 	       (case type
 		  ((int32) (remainders32 left right tl tr))
@@ -1639,8 +1641,8 @@
 (define (js-arithmetic-% loc type lhs rhs mode return conf hint::pair-nil)
    (with-tmp lhs rhs mode return conf hint '*
       (lambda (left right)
-	 (let ((tl (j2s-type-ref lhs))
-	       (tr (j2s-type-ref rhs)))
+	 (let ((tl (j2s-vtype lhs))
+	       (tr (j2s-vtype rhs)))
 	    (epairify loc
 	       (cond
 		  ((and (eq? tl 'int32) (eq? tr 'int32))
@@ -1920,22 +1922,35 @@
        (binop-flonum-flonum op type
 	  (asreal left tl) right flip))
       (else
-       (when (memq (j2s-type rhs) '(int32 uint32 bint integer))
-	      (tprint "SHOULD BE IMPROVED..."))
-       `(if (fixnum? ,right)
-	    ,(binop-fixnum-fixnum op type
-		(asfixnum left tl) right flip)
-	    ,(if (memq type '(int32 uint32 integer bint real number))
-		 (binop-number-number op type
-		    (box left tl conf) (box right tr conf) flip)
-		 (binop-any-any op type
-		    (box left tl conf) (box right tr conf) flip))))))
+       (cond
+	  ((inrange-int32? rhs)
+	   (binop-int32-int32 op type
+	      left (asint32 right tr) flip))
+	  ((and (inrange-uint32? rhs) (inrange-uint32? lhs))
+	   (binop-uint32-uint32 op type
+	      (asuint32 left tl) (asuint32 right tr) flip))
+	  ((and (inrange-uint32? rhs) (m64? conf))
+	   (binop-fixnum-fixnum op type
+	      (asfixnum left tl) (asfixnum right tr) flip))
+	  ((eq? (j2s-type rhs) 'bint)
+	   (binop-fixnum-fixnum op type
+	      (asfixnum left tl) right flip))
+	  (else
+	   (when (memq (j2s-type rhs) '(int32 uint32 bint integer))
+	      (tprint "SHOULD BE IMPROVED int32-xxx..." (j2s-type rhs)))
+	   `(if (fixnum? ,right)
+		,(binop-fixnum-fixnum op type
+		    (asfixnum left tl) right flip)
+		,(if (memq type '(int32 uint32 integer bint real number))
+		     (binop-number-number op type
+			(box left tl conf) (box right tr conf) flip)
+		     (binop-any-any op type
+			(box left tl conf) (box right tr conf) flip))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-uint32-xxx ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (binop-uint32-xxx op type lhs tl left rhs tr right conf flip)
-   (tprint "BINOP uint32-xxx -> " type " " left " " right " tr=" tr)
    (case tr
       ((int32)
        (cond
@@ -1981,9 +1996,23 @@
 	  ((and (inrange-int32? rhs) (inrange-int32? lhs))
 	   (binop-int32-int32 op type
 	      (asint32 left tl) (asint32 right tr) flip))
+	  ((and (inrange-int32? rhs) (m64? conf))
+	   (binop-fixnum-fixnum op type
+	      (asfixnum left tl) (asfixnum right tr) flip))
+	  ((eq? (j2s-type rhs) 'bint)
+	   (binop-fixnum-fixnum op type
+	      (asfixnum left tl) right flip))
+	  ((and (eq? (j2s-type rhs) 'int32) (memq op '(> >=)))
+	   (if flip
+	       `(and (>=s32 ,right #s32:0)
+		     ,(binop-uint32-uint32 op type
+			 left (asuint32 right tr) flip))
+	       `(or (<s32 ,right #s32:0)
+		    ,(binop-uint32-uint32 op type
+			left (asuint32 right tr) flip))))
 	  (else
 	   (when (memq (j2s-type rhs) '(int32 uint32 bint integer))
-	      (tprint "SHOULD BE IMPROVED..."))
+	      (tprint "SHOULD BE IMPROVED uint32-xxx..." (j2s-type rhs) " " op))
 	   `(if (fixnum? ,right)
 		,(binop-fixnum-fixnum op type
 		    (asfixnum left tl) right flip)
@@ -2022,16 +2051,30 @@
        (binop-flonum-flonum op type 
 	  (asreal left tl) right flip))
       (else
-       (when (memq (j2s-type rhs) '(int32 uint32 bint integer))
-	  (tprint "SHOULD BE IMPROVED..."))
-       `(if (fixnum? ,right)
-	    ,(binop-fixnum-fixnum op type
-		left right flip)
-	    ,(if (memq type '(int32 uint32 integer bint real number))
-		 (binop-number-number op type
-		    left (box right tr conf) flip)
-		 (binop-any-any op type
-		    left (box right tr conf) flip))))))
+       (cond
+	  ((and (inrange-int32? rhs) (inrange-int32? lhs))
+	   (binop-int32-int32 op type
+	      (asint32 left tl) (asint32 right tr) flip))
+	  ((and (inrange-uint32? rhs) (inrange-uint32? lhs))
+	   (binop-uint32-uint32 op type
+	      (asuint32 left tr) (asuint32 right tr) flip))
+	  ((and (inrange-uint32? lhs) (inrange-int32? rhs) (m64? conf))
+	   (binop-fixnum-fixnum op type
+	      (asfixnum left tl) (asfixnum right tr) flip))
+	  ((and (inrange-int32? lhs) (inrange-uint32? rhs) (m64? conf))
+	   (binop-fixnum-fixnum op type
+	      (asfixnum left tl) (asfixnum right tr) flip))
+	  (else
+	   (when (memq (j2s-type rhs) '(int32 uint32 bint integer))
+	      (tprint "SHOULD BE IMPROVED integer-xxx..." (j2s-type rhs)))
+	   `(if (fixnum? ,right)
+		,(binop-fixnum-fixnum op type
+		    left right flip)
+		,(if (memq type '(int32 uint32 integer bint real number))
+		     (binop-number-number op type
+			left (box right tr conf) flip)
+		     (binop-any-any op type
+			left (box right tr conf) flip))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    binop-real-xxx ...                                               */
@@ -2122,10 +2165,13 @@
 	  (binop-flip (symbol-append op '/overflow) left right flip))))
    
 (define (binop-any-any op type left right flip)
-   (let ((op (cond 
-		((eq? op '==) 'js-equal?)
-		((eq? op '===) 'js-strict-equal?)
-		((memq type '(integer number bool)) (symbol-append op 'js))
-		(else (symbol-append 'js op)))))
-      (if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+   (if (eq? op '===)
+       (if flip
+	   `(js-strict-equal? ,right ,left)
+	   `(js-strict-equal? ,left ,right))
+       (let ((op (cond 
+		    ((eq? op '==) 'js-equal?)
+		    ((memq type '(integer number bool)) (symbol-append op 'js))
+		    (else (symbol-append 'js op)))))
+	  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))))
    

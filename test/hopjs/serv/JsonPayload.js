@@ -15,8 +15,9 @@ refData[ largeFile ] = fs.readFileSync( largeFile );
 
 
 service getPayload( filename ) {
-   console.log( "getPayload ", filename ); 
-   return hop.HTTPResponseJson( { filename: filename, payloadType: 'Buffer', payload: refData[ filename ] } );
+   console.log( "getPayload ", filename );
+   var x = { filename: filename, payloadType: 'Buffer', payload: refData[ filename ] }
+   return hop.HTTPResponseJson( x );
 }
 
 service getPayloadWebService( o ) {

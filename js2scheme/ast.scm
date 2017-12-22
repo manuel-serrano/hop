@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Dec 16 09:05:26 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 13:27:40 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -149,7 +149,7 @@
 	   
 	   (class J2SFun::J2SExpr
 	      (rtype::symbol (default 'unknown) (info '("notraverse")))
-	      (idthis read-only (default 'this) (info '("notraverse")))
+	      (idthis (default 'this) (info '("notraverse")))
 	      (idgen read-only (default #f) (info '("notraverse")))
 	      (mode::symbol (default 'normal) (info '("notraverse")))
 	      (decl (default #f) (info '("notraverse")))
@@ -225,6 +225,7 @@
 	      (id::symbol read-only)
 	      (itype::symbol (default 'any))
 	      (rtype::symbol (default 'any))
+	      (vtype::symbol (default 'any))
 	      (module read-only (default #f)))
 
 	   (class J2SLetRef::J2SRef)
@@ -261,6 +262,7 @@
 	      (scope::symbol (default 'local) (info '("notraverse")))
 	      (usecnt::int (default 0) (info '("notraverse")))
 	      (useinloop::bool (default #f) (info '("notraverse")))
+	      (useinfun::bool (default #f) (info '("notraverse")))
 	      ;; usage: init, new, ref, assig, get, set, call
 	      (usage::pair-nil (default '()) (info '("notraverse")))
 	      (utype::symbol (default 'unknown) (info '("notraverse")))

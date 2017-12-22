@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Tue Dec 19 08:23:09 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 10:11:52 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
@@ -33,7 +33,7 @@
 ;*    j2s-test ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-test test::J2SExpr mode return conf)
-   (let ((ty (j2s-type-ref test)))
+   (let ((ty (j2s-vtype test)))
       (cond
 	 ((eq? ty 'bool)
 	  (j2s-bool-test test mode return conf))

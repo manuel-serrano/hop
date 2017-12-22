@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Dec 21 15:33:00 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 16:02:02 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -31,6 +31,7 @@
 	   __js2scheme_utils
 	   __js2scheme_type-hint
 	   __js2scheme_alpha
+	   __js2scheme_use
 	   __js2scheme_node-size)
 
    (export j2s-inline-stage))
@@ -94,6 +95,10 @@
 	  (let ((pms (ptable (append-map collect-proto-methods* nodes))))
 	     (inline!* decls pms this args)
 	     (inline!* nodes pms this args)
+	     (for-each reset-use-count decls)
+	     (for-each reset-use-count nodes)
+	     (for-each (lambda (n) (use-count n +1 #f)) decls)
+	     (for-each (lambda (n) (use-count n +1 #f)) nodes)
 	     this))
        this))
 
@@ -441,9 +446,6 @@
    
    (define (inline-function-call this)
       (with-access::J2SCall this (fun loc args)
-	 (with-access::J2SRef fun (decl)
-	    (with-access::J2SDecl decl (usecnt)
-	       (set! usecnt (-fx 1 usecnt))))
 	 (with-access::J2SFun (protoinfo-method (car callees)) (body thisp params loc)
 	    (let ((vals (inline-args params args loc)))
 	       (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)

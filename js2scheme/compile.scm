@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Dec 21 15:46:14 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 09:14:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -52,7 +52,8 @@
 	   __js2scheme_globvar
 	   __js2scheme_varpreinit
 	   __js2scheme_method
-	   __js2scheme_inline)
+	   __js2scheme_inline
+	   __js2scheme_unthis)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -172,6 +173,7 @@
       j2s-array-stage
       j2s-dead-stage
       j2s-constrsize-stage
+      j2s-unthis-stage
       j2s-scheme-stage))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Thu Dec 21 15:31:04 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 15:34:13 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -44,13 +44,13 @@
    
    (with-access::J2SAccess this (obj field type)
       (cond
-	 ((eq? (j2s-type-ref field) 'uint32)
+	 ((eq? (j2s-vtype field) 'uint32)
 	  (jsstring-ref type (j2s-scheme obj mode return conf hint)
 	     (j2s-scheme field mode return conf hint)))
-	 ((eq? (j2s-type-ref field) 'int32)
+	 ((eq? (j2s-vtype field) 'int32)
 	  (jsstring-ref type (j2s-scheme obj mode return conf hint)
 	     `(int32->uint32 ,(j2s-scheme field mode return conf hint))))
-	 ((memq (j2s-type-ref field) '(integer bint))
+	 ((memq (j2s-vtype field) '(integer bint))
 	  (jsstring-ref type (j2s-scheme obj mode return conf hint)
 	     `(fixnum->uint32 ,(j2s-scheme field mode return conf hint))))
 	 ((j2s-field-length? field)
@@ -112,12 +112,6 @@
 			      mode return conf hint))
 		      (cddr args)))))))
 
-   (define (uncast expr)
-      (if (isa? expr J2SCast)
-	  (with-access::J2SCast expr (expr)
-	     (uncast expr))
-	  expr))
-
    (if (literal-regexp (uncast (car args)))
        (with-access::J2SLiteralCnst (uncast (car args)) (val index)
 	  (with-access::J2SRegExp val (inline flags)
@@ -156,7 +150,7 @@
 	      (sexp (j2s-scheme expr mode return conf hint)))
 	  `(js-jsstring-charcodeatu32
 	      ,(j2s-scheme obj mode return conf hint)
-	      ,(if (eq? (j2s-type-ref expr) 'uint32)
+	      ,(if (eq? (j2s-vtype expr) 'uint32)
 		   sexp
 		   `(fixnum->uint32 ,sexp))
 	      ,(j2s-scheme %this mode return conf hint))))

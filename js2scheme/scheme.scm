@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Dec 21 18:40:02 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 16:32:41 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -38,10 +38,11 @@
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
 	   (generic j2s-scheme ::obj ::symbol ::procedure ::obj ::obj))
+   )
 
-   (static (class J2SSexp::J2SExpr
-	      (proc::procedure read-only (info '("notraverse")))
-	      (args::pair read-only (info '("notraverse"))))))
+;*    (static (class J2SSexp::J2SExpr                                  */
+;* 	      (proc::procedure read-only (info '("notraverse")))       */
+;* 	      (args::pair read-only (info '("notraverse"))))))         */
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-method ...                                                */
@@ -512,7 +513,7 @@
 	     (cond
 		((and (memq scope '(global %scope)) (in-eval? return))
 		 `(begin
-		     ,(j2s-put! loc '%scope (j2s-type-ref lhs)
+		     ,(j2s-put! loc '%scope (j2s-vtype lhs)
 			 `',id 'propname
 			 val tyval (strict-mode? mode) conf #f)
 		     ,result))
@@ -562,14 +563,14 @@
 	 ((isa? expr J2SBinary)
 	  (or (j2s-scheme-binary-as expr mode return conf hint type)
 	      (j2s-cast (j2s-scheme expr mode return conf hint)
-		 expr (j2s-type-ref expr) type conf)))
+		 expr (j2s-vtype expr) type conf)))
 	 ((isa? expr J2SUnary)
 	  (or (j2s-scheme-unary-as expr mode return conf hint type)
 	      (j2s-cast (j2s-scheme expr mode return conf hint)
-		 expr (j2s-type-ref expr) type conf)))
+		 expr (j2s-vtype expr) type conf)))
 	 (else
 	  (j2s-cast (j2s-scheme expr mode return conf hint)
-	     expr (j2s-type-ref expr) type conf)))))
+	     expr (j2s-vtype expr) type conf)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SRef ...                                          */
@@ -1490,7 +1491,7 @@
 		   (j2s-put! loc (j2s-scheme obj mode return conf hint)
 		      (typeof-this obj conf)
 		      (j2s-scheme field mode return conf hint)
-		      (j2s-type-ref field)
+		      (j2s-vtype field)
 		      name 'any (strict-mode? mode) conf #f))))
 	    ((isa? lhs J2SWithRef)
 	     (with-access::J2SWithRef lhs (id withs expr loc)
@@ -1647,9 +1648,9 @@
 		
       (define (comp-switch-cond key cases)
 	 (let ((tmp (gensym 'tmp))
-	       (ttmp (j2s-type-ref key))
+	       (ttmp (j2s-vtype key))
 	       (funs (map (lambda (c) (gensym)) cases))
-	       (tleft (j2s-type-ref key)))
+	       (tleft (j2s-vtype key)))
 	    (multiple-value-bind (bindings bodies)
 	       (comp-switch-clause-bodies cases funs)
 	       `(let* ((,tmp ,(j2s-scheme key mode return conf hint))
@@ -1661,7 +1662,7 @@
 
       (define (comp-switch-case key cases)
 	 (let ((funs (map (lambda (c) (gensym)) cases))
-	       (tleft (j2s-type-ref key)))
+	       (tleft (j2s-vtype key)))
 	    (multiple-value-bind (bindings bodies)
 	       (comp-switch-clause-bodies cases funs)
 	       `(let* ,bindings
@@ -1671,7 +1672,7 @@
 			 cases bodies))))))
       
       (define (scheme-case? key cases)
-	 (let ((t (j2s-type-ref key)))
+	 (let ((t (j2s-vtype key)))
 	    (when (or (memq t '(integer index ufixnum uint32 uint29))
 		      (and (eq? t 'int53) (m64? conf)))
 	       (every (lambda (c)
@@ -1756,7 +1757,7 @@
       (if (isa? expr J2SCast)
 	  (with-access::J2SCast expr (expr)
 	     (j2s-type-sans-cast expr))
-	  (j2s-type-ref expr)))
+	  (j2s-vtype expr)))
 
    (when (isa? field J2SString)
       (with-access::J2SString field (val)
@@ -1862,7 +1863,7 @@
 	    ((and ccache (= (bigloo-debug) 0))
 	     (cond
 		((isa? field J2SString)
-		 (let ((call (if (eq? (j2s-type-ref obj) 'object)
+		 (let ((call (if (eq? (j2s-vtype obj) 'object)
 				 'js-object-method-call-name/cache
 				 'js-method-call-name/cache)))
 		    (with-access::J2SString field (val)
@@ -1934,7 +1935,7 @@
 				      (loc loc)
 				      (expr tmp))))
 			   (instantiate::J2SHopRef
-			      (type (j2s-type-ref obj))
+			      (type (j2s-vtype obj))
 			      (loc loc)
 			      (id tmp))
 			   args))))))))
@@ -1970,13 +1971,14 @@
 
    (define (call-fix-function fun::J2SFun thisarg::pair-nil f %gen args)
       ;; call a function that accepts a fix number of arguments
-      (with-access::J2SFun fun (params vararg)
+      (with-access::J2SFun fun (params vararg thisp)
 	 (let ((lenf (length params))
 	       (lena (length args)))
 	    (cond
 	       ((=fx lenf lena)
 		;; matching arity
-		`(,f ,@%gen ,@(j2s-self thisarg)
+		`(,f ,@%gen
+		    ,@(j2s-self thisarg)
 		    ,@(map (lambda (a p)
 			      (with-access::J2SDecl p (utype)
 				 (j2s-scheme a mode return conf hint)))
@@ -2056,7 +2058,7 @@
    (define (call-known-function protocol fun::J2SDecl thisarg::pair-nil args)
       (cond
 	 ((isa? fun J2SDeclFun)
-	  (with-access::J2SDeclFun fun (id val)
+	  (with-access::J2SDeclFun fun (id val usage)
 	     (check-hopscript-fun-arity val id args)
 	     (let ((%gen (if (typed-generator? fun) '(%gen) '())))
 		(call-fun-function val thisarg protocol
@@ -2163,9 +2165,9 @@
 		  ,(j2s-put! loc (j2s-scheme obj mode return conf hint)
 		      (typeof-this obj conf)
 		      (j2s-scheme field mode return conf hint)
-		      (j2s-type-ref field)
+		      (j2s-vtype field)
 		      (j2s-scheme rhs mode return conf hint)
-		      (j2s-type-ref rhs)
+		      (j2s-vtype rhs)
 		      (strict-mode? mode)
 		      conf
 		      cache))
@@ -2177,9 +2179,9 @@
 			,(j2s-put! loc tmp
 			    (typeof-this obj conf)
 			    (j2s-scheme field mode return conf hint)
-			    (j2s-type-ref field)
+			    (j2s-vtype field)
 			    (j2s-scheme rhs mode return conf hint)
-			    (j2s-type-ref rhs)
+			    (j2s-vtype rhs)
 			    (strict-mode? mode)
 			    conf
 			    cache)))))))
@@ -2191,9 +2193,9 @@
 	     (with-access::J2SAccess lhs (obj field cache (loca loc))
 		(epairify loc
 		   (cond
-		      ((eq? (j2s-type-ref obj) 'vector)
+		      ((eq? (j2s-vtype obj) 'vector)
 		       (j2s-vector-set! this mode return conf hint))
-		      ((and (eq? (j2s-type-ref obj) 'array) (maybe-number? field))
+		      ((and (eq? (j2s-vtype obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return conf hint))
 		      ((is-number? field)
 		       (maybe-array-set lhs rhs))
@@ -2201,9 +2203,9 @@
 		       (j2s-put! loca (j2s-scheme obj mode return conf hint)
 			  (typeof-this obj conf)
 			  (j2s-scheme field mode return conf hint)
-			  (j2s-type-ref field)
+			  (j2s-vtype field)
 			  (j2s-scheme rhs mode return conf hint)
-			  (j2s-type-ref rhs)
+			  (j2s-vtype rhs)
 			  (strict-mode? mode)
 			  conf
 			  cache))))))
@@ -2212,7 +2214,7 @@
 		(with-access::J2SDecl decl (hint vtype)
 		   (let ((assig (j2s-scheme-set! lhs
 				   (j2s-scheme rhs mode return conf hint)
-				   (j2s-type-ref rhs)
+				   (j2s-vtype rhs)
 				   (j2s-scheme lhs mode return conf hint)
 				   mode return conf #f loc)))
 		      (if (pair? assig)
@@ -2237,7 +2239,7 @@
 			       ,(j2s-put! loc (car withs) 'object
 				   (symbol->string id) 'propname
 				   (j2s-scheme rhs mode return conf hint)
-				   (j2s-type-ref rhs)
+				   (j2s-vtype rhs)
 				   #f conf #f)
 			       ,(liip (cdr withs))))))))
 	    ((isa? lhs J2SUndefined)
@@ -2265,43 +2267,47 @@
 		 ,(comp aux aux)))
 	  (comp val tmp)))
 
-   (define (var++ op var num prev loc)
-      (tprint "ICI CE N'EST NI NUMBER NI ANY, c,a depend du type de la var cf seive, doit")
-      `(if (fixnum? ,var)
-           ,(J2SBinary/type op 'number
-               (J2SHopRef/type var 'bint) num)
-	   ,(if prev
-		`(begin
-		    (set! ,prev ,(J2SCast 'number (J2SHopRef/type var 'any)))
-		    ,(J2SBinary/type op 'number
-			(J2SHopRef/type prev 'number) num))
-		(J2SBinary/type op 'number
-		   (J2SCast 'number (J2SHopRef/type var 'any)) num))))
+   (define (var++ op var tyv typ num prev loc)
+      (if (type-number? typ)
+	  (J2SBinary/type op tyv (J2SHopRef/type var tyv typ) num)
+	  `(if (fixnum? ,var)
+	       ,(J2SBinary/type op 'integer (J2SHopRef/type var 'any 'bint) num)
+	       ,(if prev
+		    `(begin
+			(set! ,prev
+			   ,(J2SCast 'number (J2SHopRef/type var 'any 'any)))
+			,(J2SBinary/type op 'number
+			    (J2SHopRef/type prev 'any 'number) num))
+		    (J2SBinary/type op 'number
+		       (J2SCast 'number (J2SHopRef/type var 'any 'any))
+		       num)))))
       
    (define (ref++ op lhs::J2SRef num prev loc mode return conf hint)
-      (let ((var (j2s-scheme lhs mode return conf hint)))
+      (let ((var (j2s-scheme lhs mode return conf hint))
+	    (vty (j2s-vtype lhs))
+	    (ty (j2s-type lhs)))
 	 (if (symbol? var)
-	     (var++ op var num prev loc)
+	     (var++ op var vty ty num prev loc)
 	     (let ((tmp (gensym 'tmp)))
 		`(let ((,tmp ,var))
-		    ,(var++ op tmp num prev loc))))))
+		    ,(var++ op tmp vty ty num prev loc))))))
    
    (define (ref-inc op lhs::J2SRef inc::int type loc)
-      (let* ((typ (j2s-type-ref lhs))
+      (let* ((vty (j2s-vtype lhs))
 	     (num (J2SNumber/type 'uint32 1))
 	     (op (if (=fx inc 1) '+ '-))
 	     (prev (when (eq? retval 'old) (gensym 'prev)))
 	     (rhse (j2s-scheme
-		      (if (type-number? typ)
-			  (J2SBinary/type op typ lhs num)
+		      (if (type-number? vty)
+			  (J2SBinary/type op vty lhs num)
 			  (ref++ op lhs num prev loc mode return conf hint))
 		      mode return conf hint))
 	     (lhse (j2s-scheme lhs mode return conf hint)))
 	 (if (eq? retval 'old)
 	     (let ((res prev))
 		`(let ((,res ,lhse))
-		    ,(j2s-scheme-set! lhs rhse typ res mode return conf #f loc)))
-	     (j2s-scheme-set! lhs rhse typ lhse mode return conf #f loc))))
+		    ,(j2s-scheme-set! lhs rhse vty res mode return conf #f loc)))
+	     (j2s-scheme-set! lhs rhse vty lhse mode return conf #f loc))))
    
    (define (unresolved-inc op lhs inc)
       (with-access::J2SUnresolvedRef lhs (id cache loc)
@@ -2352,7 +2358,7 @@
 				     ,(j2s-put! loc otmp
 					 (or force-type (typeof-this obj conf))
 					 (or pro prov)
-					 (j2s-type-ref field)
+					 (j2s-vtype field)
 					 val 'number
 					 (strict-mode? mode) conf
 					 cache (min cl clevel))
@@ -2373,7 +2379,7 @@
 					 ,(j2s-put! loc otmp
 					     (or force-type (typeof-this obj conf))
 					     (or pro prov)
-					     (j2s-type-ref field)
+					     (j2s-vtype field)
 					     val 'number
 					     (strict-mode? mode) conf
 					     cache (min cl clevel))
@@ -2392,7 +2398,7 @@
 					      ,(j2s-put! loc otmp
 						  (or force-type (typeof-this obj conf))
 						  (or pro prov)
-						  (j2s-type-ref field)
+						  (j2s-vtype field)
 						  val 'number
 						  (strict-mode? mode) conf
 						  cache (min cl clevel))
@@ -2495,14 +2501,15 @@
 				 (obj oref)
 				 (field (if pro
 					    (J2SHopRef/type pro
-					       (j2s-type-ref field))
+					       (j2s-vtype field)
+					       (j2s-type field))
 					    field)))))
 		      (vtmp (gensym 'tmp)))
 		  `(let ((,(type-ident vtmp typea)
 			  ,(js-binop2 loc op typea
 			      lhs rhs mode return conf hint)))
 		      ,(j2s-put! loc otmp (typeof-this obj conf)
-			  (or pro prov) (j2s-type-ref field)
+			  (or pro prov) (j2s-vtype field)
 			  (j2s-cast vtmp #f typea typel conf) typel
 			  (strict-mode? mode) conf
 			  cache (if (is-number? field) 100 (min cl clevel)))
@@ -2555,7 +2562,7 @@
       
    (with-access::J2SAssigOp this (loc lhs rhs op type)
       (epairify-deep loc
-	 (let ((tl (j2s-type-ref lhs)))
+	 (let ((tl (j2s-vtype lhs)))
 	    (let loop ((lhs lhs))
 	       (cond
 		  ((isa? lhs J2SAccess)
@@ -2589,7 +2596,7 @@
       (let ((tyo (typeof-this obj conf)))
 	 (j2s-get loc (j2s-scheme obj mode return conf hint) tyo
 	    (j2s-property-scheme field mode return conf)
-	    (j2s-type-ref field) (j2s-type-ref this) conf cache clevel)))
+	    (j2s-vtype field) (j2s-vtype this) conf cache clevel)))
 
    (define (index-ref obj field cache clevel loc)
       (if (isa? obj J2SRef)
@@ -2663,7 +2670,7 @@
 ;*    maybe-function? ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (maybe-function? expr::J2SNode)
-   (memq (j2s-type-ref expr) '(function any)))
+   (memq (j2s-vtype expr) '(function any)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SInit ...                                         */
@@ -2677,7 +2684,7 @@
 		   `(begin
 		       ,(j2s-scheme-set! lhs
 			   (j2s-scheme rhs mode return conf hint)
-			   (j2s-type-ref rhs)
+			   (j2s-vtype rhs)
 			   #f mode return conf #t loc)
 		       (js-undefined)))))
 	  (call-next-method))))
@@ -2769,7 +2776,7 @@
 		     inits)))
 	 (if (any (lambda (i)
 		     (with-access::J2SDataPropertyInit i (val)
-			(maybe-function? val)))
+			(maybe-function? (uncast val))))
 		inits)
 	     `(with-access::JsGlobalObject %this (__proto__)
 		 (js-object-literal-init!
@@ -2798,7 +2805,7 @@
 				     (j2s-put! loc tmp 'obj
 					"__proto__" 'propname
 					(j2s-scheme val mode return conf hint)
-					(j2s-type-ref val)
+					(j2s-vtype val)
 					(strict-mode? mode) conf #f)
 				     (epairify loc
 					`(js-bind! %this ,tmp
@@ -3062,11 +3069,12 @@
 					  (init-expr init
 					     (lambda (e)
 						(with-access::J2SExpr e (loc)
-						   (instantiate::J2SSexp
-						      (loc loc)
-						      (proc (lambda (v)
-							       `(vector-set! ,elements (+fx ,i ,offset) ,v)))
-						      (args (list e))))))
+						   `(vector-set! ,elements (+fx ,i ,offset) ,e))))
+;* 						   (instantiate::J2SSexp */
+;* 						      (loc loc)        */
+;* 						      (proc (lambda (v) */
+;* 							       `(vector-set! ,elements (+fx ,i ,offset) ,v))) */
+;* 						      (args (list e)))))) */
 					  mode return conf hint))
 				  nodes (iota (length nodes)))
 			     (with-access::JsObject ,%ref ((omap cmap))
@@ -3083,12 +3091,11 @@
 				   (set! ,cmap0 ,cmap)
 				   (set! ,cmap1 cmap))))))))))))
    
-   
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SSexp ...                                         */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SSexp mode return conf hint)
-   (with-access::J2SSexp this (proc args)
-      (apply proc
-	 (map (lambda (a) (j2s-scheme a mode return conf hint)) args))))
-		
+;* {*---------------------------------------------------------------------*} */
+;* {*    j2s-scheme ::J2SSexp ...                                         *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-method (j2s-scheme this::J2SSexp mode return conf hint)     */
+;*    (with-access::J2SSexp this (proc args)                           */
+;*       (apply proc                                                   */
+;* 	 (map (lambda (a) (j2s-scheme a mode return conf hint)) args)))) */
+;* 		                                                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed Dec 20 18:42:45 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 15:26:28 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -37,14 +37,14 @@
 	   (type-integer?::bool ::obj)
 	   (type-number?::bool ::obj)
 	   (type-name type conf)
-	   (minimal-type::symbol ::obj ::obj)
+	   (min-type::symbol ::obj ::obj)
 	   (max-type::symbol ::obj ::obj)
 	   (js-uint32->jsnum expr conf)
 
 	   (j2s-expr-type-test ::J2SExpr)
 
 	   (j2s-type ::obj)
-	   (j2s-type-ref ::obj)
+	   (j2s-vtype ::obj)
 	   
 	   (class-of ::J2SExpr)
 
@@ -238,33 +238,21 @@
       (else type)))
    
 ;*---------------------------------------------------------------------*/
-;*    minimal-type ...                                                 */
+;*    min-type ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    Return the smallest type that can represent both types.          */
 ;*---------------------------------------------------------------------*/
-(define (minimal-type t1 t2)
+(define (min-type t1 t2)
    (if (eq? t1 t2)
        t1
        (case t1
-	  ((uint29)
-	   t2)
-	  ((index)
-	   (if (memq t2 '(uint29)) t1 t2))
-	  ((length)
-	   (if (memq t2 '(uint29 index)) t1 t2))
-	  ((uint32)
-	   (if (memq t2 '(uint29 index length)) t1 t2))
-	  ((int30 fixnum ufixnum)
-	   (cond
-	      ((eq? t2 'uint29) t1)
-	      ((eq? t2 'int32) t2)
-	      ((memq t2 '(integer number)) t2)
-	      (else 'any)))
-	  ((int53)
-	   (cond
-	      ((memq t2 '(uint29 uint32 int32)) t1)
-	      ((memq t2 '(integer number)) t2)
-	      (else 'any)))
-	  ((number integer)
-	   (if (memq t2 '(integer number)) t2 'any))
+	  ((index) t1)
+	  ((length) (if (eq? t2 'index) 'index t1))
+	  ((int32) t1)
+	  ((uint32) (if (memq t2 '(index length)) t2 t1))
+	  ((int53) (if (eq? t2 'int32) t2 t2))
+	  ((integer) (if (memq t2 '(int32 uint32)) t2 t1))
+	  ((number integer) t1)
 	  (else 'any))))
 
 ;*---------------------------------------------------------------------*/
@@ -272,36 +260,33 @@
 ;*    -------------------------------------------------------------    */
 ;*    Return the biggest type that can represent both types.           */
 ;*---------------------------------------------------------------------*/
-(define (max-type left right)
-   (cond
-      ((eq? left right)
-       left)
-      ((eq? left 'uint29)
-       (case right
-	  ((int30 index length integer number) right)
-	  (else 'any)))
-      ((eq? left 'int30)
-       (case right
-	  ((uint29) left)
-	  ((index length integer number) right)
-	  (else 'any)))
-      ((eq? left 'index)
-       (case right
-	  ((uint29) left)
-	  ((length integer number) right)
-	  (else 'any)))
-      ((eq? left 'length)
-       (case right
-	  ((uint29 index) left)
-	  ((integer number) right)
-	  (else 'any)))
-      ((or (eq? left 'integer) (eq? left 'int53))
-       (case right
-	  ((uint29 index int30 int53) left)
-	  ((number) right)
-	  (else 'any)))
-      (else
-       'any)))
+(define (max-type t1 t2)
+   (if (eq? t1 t2)
+       t1
+       (case t1
+	  ((index)
+	   t2)
+	  ((length)
+	   (if (eq? t2 'index) t1 t2))
+	  ((int32)
+	   (if (memq t2 '(index length)) 'integer t2))
+	  ((uint32)
+	   (cond
+	      ((memq t2 '(index length)) t1)
+	      ((memq t2 '(integer number)) 'number)
+	      (else 'any)))
+	  ((int53)
+	   (cond
+	      ((memq t2 '(index length int32 uint32)) t1)
+	      ((memq t2 '(integer number)) 'number)
+	      (else 'any)))
+	  ((integer)
+	   (cond
+	      ((memq t2 '(index length int32 uint32)) t1)
+	      ((eq? t2 'number) 'number)
+	      (else 'any)))
+	  (else
+	   'any))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-uint32->jsnum ...                                             */
@@ -445,9 +430,9 @@
        'void)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-type-ref ...                                                 */
+;*    j2s-vtype ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-type-ref node)
+(define (j2s-vtype node)
    (cond
       ((isa? node J2SRef)
        (with-access::J2SRef node (decl)
@@ -457,9 +442,15 @@
        (with-access::J2SGlobalRef node (decl)
 	  (with-access::J2SDecl decl (vtype)
 	     vtype)))
+      ((isa? node J2SHopRef)
+       (with-access::J2SHopRef node (vtype)
+	  vtype))
       ((isa? node J2SParen)
        (with-access::J2SParen node (expr)
-	  (j2s-type-ref expr)))
+	  (j2s-vtype expr)))
+      ((isa? node J2SAssig)
+       (with-access::J2SAssig node (lhs)
+	  (j2s-vtype lhs)))
       ((isa? node J2SExpr)
        (with-access::J2SExpr node (type)
 	  type))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Dec 20 18:50:57 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 10:13:18 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -74,8 +74,8 @@
       (when (isa? arg J2SBinary)
 	 (with-access::J2SBinary arg (op lhs rhs)
 	    (when (and (eq? op '/)
-		       (type-fixnum? (j2s-type-ref lhs))
-		       (type-fixnum? (j2s-type-ref rhs))
+		       (type-fixnum? (j2s-vtype lhs))
+		       (type-fixnum? (j2s-vtype rhs))
 		       (isa? rhs J2SNumber))
 	       (with-access::J2SNumber rhs (val)
 		  (when (>fx val 0)
@@ -84,14 +84,14 @@
 			   (cons lhs k)))))))))
    
    (define (positive? n)
-      (memq (j2s-type-ref n) '(index uint32)))
+      (memq (j2s-vtype n) '(index uint32)))
    
    (let ((p2 (divide-power2 arg)))
       (cond
 	 ((not p2)
 	  `(js-math-floor ,(j2s-scheme arg mode return conf hint)))
 	 ((positive? (car p2))
-	  (case (j2s-type-ref (car p2))
+	  (case (j2s-vtype (car p2))
 	     ((int32)
 	      `(js-int32-tointeger
 		  (bit-rshs32 ,(j2s-scheme (car p2) mode return conf hint)
@@ -105,7 +105,7 @@
 		 ,(cdr p2)))))
 	 
 	 (else
-	  (case (j2s-type-ref (car p2))
+	  (case (j2s-vtype (car p2))
 	     ((int32)
 	      `(js-int32->tointeger
 		  (/pow2s32 ,(j2s-scheme (car p2) mode return conf hint)

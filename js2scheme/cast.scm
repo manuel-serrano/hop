@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Dec 20 11:41:20 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 10:11:25 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -94,7 +94,7 @@
 ;*    cast ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (cast expr::J2SExpr totype::symbol)
-   (cast-expr expr (j2s-type-ref expr) totype))
+   (cast-expr expr (j2s-vtype expr) totype))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SNode ...                                         */
@@ -335,7 +335,7 @@
 (define-method (type-cast! this::J2SAssig totype)
    (with-access::J2SAssig this (lhs rhs type loc)
       (cond
-	 ((eq? (j2s-type-ref lhs) type)
+	 ((eq? (j2s-vtype lhs) type)
 	  (set! lhs (type-cast! lhs '*))
 	  (set! rhs (type-cast! rhs type))
 	  (cast this totype))
@@ -344,7 +344,7 @@
 	  (set! rhs
 	     (type-cast! rhs
 		(if (or (isa? lhs J2SRef) (isa? lhs J2SUnresolvedRef))
-		    (j2s-type-ref lhs)
+		    (j2s-vtype lhs)
 		    'any)))
 	  this)
 	 (else
@@ -355,7 +355,7 @@
 		(type-cast! (J2SRef d :type tr)
 		   (if (or (isa? lhs J2SRef)
 			   (isa? lhs J2SUnresolvedRef))
-		       (j2s-type-ref lhs)
+		       (j2s-vtype lhs)
 		       'any)))
 	     (let ((tyb (if (eq? totype '*) type totype)))
 		(J2SBindExit/type tyb #f 
@@ -388,7 +388,7 @@
    (with-access::J2SAssigOp this (op lhs rhs)
       (case op
 	 ((>> <<)
-;* 	  (if (memq (j2s-type-ref rhs) '(int32 uint32))                */
+;* 	  (if (memq (j2s-vtype rhs) '(int32 uint32))                */
 ;* 	      (begin                                                   */
 ;* 		 (set! lhs (type-cast! lhs 'int32))                    */
 ;* 		 (set! rhs (type-cast! rhs 'uint32)))                  */
@@ -399,7 +399,7 @@
 	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((>>>)
-;* 	  (if (memq (j2s-type-ref rhs) '(int32 uint32))                */
+;* 	  (if (memq (j2s-vtype rhs) '(int32 uint32))                */
 ;* 	      (begin                                                   */
 ;* 		 (set! lhs (type-cast! lhs 'uint32))                   */
 ;* 		 (set! rhs (type-cast! rhs 'uint32))                   */
@@ -410,7 +410,7 @@
 	  (set! rhs (type-cast! rhs 'uint32))
 	  (cast this totype))
 	 ((^ & BIT_OR)
-;* 	  (if (memq (j2s-type-ref rhs) '(int32 uint32))                */
+;* 	  (if (memq (j2s-vtype rhs) '(int32 uint32))                */
 ;* 	      (begin                                                   */
 ;* 		 (set! lhs (type-cast! lhs 'int32))                    */
 ;* 		 (set! rhs (type-cast! rhs 'int32)))                   */
