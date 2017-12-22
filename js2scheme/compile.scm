@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Dec 22 09:14:25 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 19:48:15 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -53,7 +53,8 @@
 	   __js2scheme_varpreinit
 	   __js2scheme_method
 	   __js2scheme_inline
-	   __js2scheme_unthis)
+	   __js2scheme_unthis
+	   __js2scheme_any)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -190,6 +191,7 @@
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
+      j2s-any-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-constant-stage
@@ -210,6 +212,7 @@
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
+      j2s-any-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-scheme-stage))
@@ -228,6 +231,7 @@
       j2s-this-stage
       j2s-use-stage
       j2s-ronly-stage
+      j2s-any-stage
       j2s-return-stage
       j2s-cps-stage
       j2s-constant-stage

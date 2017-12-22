@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec 22 15:28:47 2017 (serrano)                */
+;*    Last change :  Fri Dec 22 20:01:07 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1804,9 +1804,11 @@
 ;*    map-types ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SFun tmap)
-   (with-access::J2SFun this (rtype)
+   (with-access::J2SFun this (rtype thisp)
+      (when (isa? thisp J2SDecl) (map-types thisp tmap))
       (set! rtype (map-type rtype tmap)))
-   (call-default-walker))
+   (call-default-walker)
+   (call-next-method))
 
 ;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SHopRef ...                                        */
@@ -1828,14 +1830,24 @@
    (call-default-walker))
 	 
 ;*---------------------------------------------------------------------*/
+;*    any-types ::J2SDeclInit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (map-types this::J2SDeclInit tmap)
+   (call-next-method)
+   (with-access::J2SDeclInit this (val)
+      (map-types val tmap)))
+
+;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SBinary tmap)
    (with-access::J2SBinary this (op type)
-      (when (memq type '(index integer number))
-	 (case op
-	    ((>> << BIT_OT ^ &) (set! type 'int32))
-	    ((>>>) (set! type 'uint32)))))
+      (if (memq type '(index integer number))
+	  (case op
+	     ((>> << BIT_OT ^ &) (set! type 'int32))
+	     ((>>>) (set! type 'uint32))
+	     (else (set! type (map-type type tmap))))
+	  (set! type (map-type type tmap))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -1843,7 +1855,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (map-types this::J2SUnary tmap)
    (with-access::J2SUnary this (op type)
-      (when (eq? op '~)
-	 (when (memq type '(integer index number))
-	    (set! type 'int32))))
+      (if (and (eq? op '~) (memq type '(integer index number)))
+	  (set! type 'int32)
+	  (set! type (map-type type tmap))))
    (call-default-walker))
