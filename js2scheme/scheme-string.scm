@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Dec 22 15:34:13 2017 (serrano)                */
+;*    Last change :  Tue Dec 26 07:08:29 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -29,6 +29,7 @@
 
    (export (j2s-string-ref ::J2SAccess mode return conf hint)
 	   (j2s-jsstring-replace-regexp obj args mode return conf hint)
+	   (j2s-jsstring-replace-string obj args mode return conf hint)
 	   (j2s-jsstring-replace obj args mode return conf hint)
 	   (j2s-jsstring-charcodeat obj args mode return conf hint)))
 
@@ -102,6 +103,14 @@
 			   (j2s-scheme arg
 			      mode return conf hint))
 		      (cddr args))))
+	    ((eq? (j2s-type replacevalue) 'string)
+	     `(js-jsstring-replace-regexp-string ,tmp
+		 ,rx 0 ,global
+		 ,(jsfun->lambda replacevalue mode return conf #f #f)
+		 ,@(map (lambda (arg)
+			   (j2s-scheme arg
+			      mode return conf hint))
+		      (cddr args))))
 	    (else
 	     `(js-jsstring-replace-regexp ,tmp
 		 ,rx 0 ,global
@@ -130,6 +139,32 @@
 			  ,(replace tmp 'rx 'lastindex 'global)))))))))
 	   
 ;*---------------------------------------------------------------------*/
+;*    j2s-string-replace-string ...                                    */
+;*---------------------------------------------------------------------*/
+(define (j2s-jsstring-replace-string obj args mode return conf hint)
+   
+   (define (need22::bool arg)
+      (cond
+	 ((isa? arg J2SLiteralValue)
+	  (with-access::J2SLiteralValue (car args) (val)
+	     (cond
+		((not (string? val)) #f)
+		((string-index val #\$) #t)
+		(else #f))))
+	 ((isa? (car args) J2SLiteralCnst)
+	  (with-access::J2SLiteralCnst (car args) (val)
+	     (need22 val)))
+	 (else
+	  #t)))
+   
+   `(js-jsstring-replace-string
+       ,(j2s-scheme obj mode return conf hint)
+       ,(need22 (cadr args))
+       ,@(map (lambda (arg)
+		 (j2s-scheme arg mode return conf hint))
+	    args)))
+	   
+;*---------------------------------------------------------------------*/
 ;*    j2s-string-replace ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-jsstring-replace obj args mode return conf hint)
@@ -139,7 +174,6 @@
 		 (j2s-scheme arg mode return conf hint))
 	    args)))
 	   
-
 ;*---------------------------------------------------------------------*/
 ;*    j2s-jsstring-charcodeat ...                                      */
 ;*---------------------------------------------------------------------*/

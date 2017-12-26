@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Dec  4 08:40:53 2017 (serrano)                */
+;*    Last change :  Tue Dec 26 09:46:42 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -32,7 +32,9 @@
 
    (export (js-init-regexp! ::JsGlobalObject)
 	   (inline js-regexp?::bool ::obj)
-	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)))
+	   (js-regexp->jsregexp ::regexp ::JsGlobalObject)
+	   (js-regexp-literal-test::bool ::JsRegExp ::obj ::JsGlobalObject)
+	   (js-regexp-literal-test-string::bool ::JsRegExp ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    property caches ...                                              */
@@ -490,7 +492,6 @@
 	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)
 		  (multiple-value-bind (pat enc)
 		     (make-js-regexp-pattern %this pattern)
-		     
 		     (instantiateJsRegExp
 			(__proto__ js-regexp-prototype)
 			(rx (pregexp pat
@@ -680,7 +681,43 @@
 (define (make-regexp-prototype-test %this::JsGlobalObject)
    (lambda (this string::obj)
       (not (eq? (regexp-prototype-exec %this this string) (js-null)))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    literal-test-pos ...                                             */
+;*---------------------------------------------------------------------*/
+(define literal-test-pos (vector -1 -1))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-literal-test-string ...                                */
+;*    -------------------------------------------------------------    */
+;*    This function is used when the REGEXP is given as a literal.     */
+;*    In that particular, there is no need to store all the            */
+;*    EXEC variables.                                                  */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-literal-test-string::bool this::JsRegExp str::obj)
+   (with-access::JsRegExp this (rx lastindex global)
+      (with-access::JsValueDescriptor lastindex ((lastindex value))
+	 (let* ((s (js-jsstring->string str))
+		(i (cond
+		      ((not global)
+		       0)
+		      ((or (<fx lastindex 0) (>fx lastindex (string-length s)))
+		       0)
+		      (else
+		       lastindex))))
+	    (pregexp-match-n-positions! rx s literal-test-pos i 1)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-regexp-literal-test ...                                       */
+;*    -------------------------------------------------------------    */
+;*    This function is used when the REGEXP is given as a literal.     */
+;*    In that particular, there is no need to store all the            */
+;*    EXEC variables.                                                  */
+;*---------------------------------------------------------------------*/
+(define (js-regexp-literal-test::bool this::JsRegExp string::obj %this::JsGlobalObject)
+   (let ((jss (js-tojsstring string %this)))
+      (js-regexp-literal-test-string this jss)))
+
 ;*---------------------------------------------------------------------*/
 ;*    regexp-prototype-compile ...                                     */
 ;*---------------------------------------------------------------------*/

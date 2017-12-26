@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Dec 22 10:13:18 2017 (serrano)                */
+;*    Last change :  Tue Dec 26 06:14:13 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -27,13 +27,13 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
 
-   (export (j2s-math-inline-method fun::J2SAccess args
+   (export (j2s-math-builtin-method fun::J2SAccess args
 	      mode return::procedure conf hint)))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-math-inline-method ...                                       */
+;*    j2s-math-builtin-method ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-math-inline-method fun::J2SAccess args mode return conf hint)
+(define (j2s-math-builtin-method fun::J2SAccess args mode return conf hint)
    (with-access::J2SAccess fun (obj field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
@@ -89,7 +89,16 @@
    (let ((p2 (divide-power2 arg)))
       (cond
 	 ((not p2)
-	  `(js-math-floor ,(j2s-scheme arg mode return conf hint)))
+	  (let ((sexp (j2s-scheme arg mode return conf hint)))
+	     (if (eq? (j2s-type arg) 'real)
+		 `(js-math-floorfl ,sexp)
+		 (match-case sexp
+		    ((/fl . ?-)
+		     `(js-math-floorfl ,sexp))
+		    ((let ?bindings (/fl . ?-))
+		     `(js-math-floorfl ,sexp))
+		    (else
+		     `(js-math-floor ,sexp))))))
 	 ((positive? (car p2))
 	  (case (j2s-vtype (car p2))
 	     ((int32)

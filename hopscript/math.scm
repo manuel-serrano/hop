@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Nov  7 12:11:01 2017 (serrano)                */
+;*    Last change :  Mon Dec 25 08:14:25 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -31,6 +31,7 @@
    (export (js-init-math! ::JsObject)
 	   (js-math-ceil ::obj)
 	   (js-math-floor ::obj)
+	   (js-math-floorfl ::double)
 	   (js-math-round ::obj)))
 
 ;*---------------------------------------------------------------------*/
@@ -405,8 +406,15 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9     */
 ;*---------------------------------------------------------------------*/
 (define (js-math-floor x)
+   (if (not (flonum? x))
+       x
+       (js-math-floorfl x)))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-floorfl ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-math-floorfl x::double)
    (cond
-      ((not (flonum? x)) x)
       ((nanfl? x) x)
       ((=fl x +inf.0) x)
       ((=fl x -inf.0) x)
@@ -414,9 +422,9 @@
        (cond-expand
 	  ((or bint30 bint32)
 	   (cond
-	      ((> x (bit-lsh 1 29))
+	      ((>fl x (fixnum->flonum (bit-lsh 1 29)))
 	       (floor x))
-	      ((< x (- (bit-lsh 1 29)))
+	      ((<fl x (- (fixnum->flonum (bit-lsh 1 29))))
 	       (floor x))
 	      (else
 	       (flonum->fixnum (floor x)))))

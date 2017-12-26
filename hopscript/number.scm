@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Dec 20 13:05:34 2017 (serrano)                */
+;*    Last change :  Mon Dec 25 06:11:08 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -249,8 +249,8 @@
       
       (define (signed val s)
 	 (if (>= val 0)
-	     (js-string->jsstring s)
-	     (js-string->jsstring (string-append "-" s))))
+	     (js-ascii->jsstring s)
+	     (js-ascii->jsstring (string-append "-" s))))
       
       (let ((val (js-cast-number this #f)))
 	 (let ((f (if (eq? fractiondigits (js-undefined))
@@ -260,7 +260,7 @@
 		(js-raise-range-error %this
 		   "Fraction digits out of range: ~a" f)
 		(if (and (flonum? val) (nanfl? val))
-		    (js-string->jsstring "NaN")
+		    (js-ascii->jsstring "NaN")
 		    (let ((x (abs val))
 			  (f (->fixnum f)))
 		       (if (>= x (exptfl 10. 21.))
@@ -345,15 +345,15 @@
 	 ((or (< r 2) (> r 36))
 	  (js-raise-range-error %this "Radix out of range: ~a" r))
 	 ((and (flonum? val) (nanfl? val))
-	  (js-string->jsstring "NaN"))
+	  (js-ascii->jsstring "NaN"))
 	 ((= val +inf.0)
-	  (js-string->jsstring "Infinity"))
+	  (js-ascii->jsstring "Infinity"))
 	 ((= val -inf.0)
-	  (js-string->jsstring "-Infinity"))
+	  (js-ascii->jsstring "-Infinity"))
 	 ((or (= r 10) (= r 0))
 	  (js-tojsstring val %this))
 	 (else
-	  (js-string->jsstring (number->string val r))))))
+	  (js-ascii->jsstring (number->string val r))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsnumber-maybe-tostring ...                                   */

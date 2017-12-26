@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Wed Dec 20 18:47:48 2017 (serrano)                */
+;*    Last change :  Mon Dec 25 17:25:37 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -523,15 +523,36 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.1       */
 ;*---------------------------------------------------------------------*/
 (define (<js left right %this::JsGlobalObject)
-   (if (and (number? left) (number? right))
-       (< left right)
+   (cond
+      ((flonum? left)
+       (cond
+	  ((flonum? right)
+	   (<fl left right))
+	  ((fixnum? right)
+	   (<fl left (fixnum->flonum right)))
+	  (else
+	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (< left ny)))))
+      ((fixnum? left)
+       (cond
+	  ((fixnum? right)
+	   (<fx left right))
+	  ((flonum? right)
+	   (<fl (fixnum->flonum left) right))
+	  (else
+	   (let* ((ny (js-tonumber (js-toprimitive right 'number %this) %this)))
+	      (< left ny)))))
+      ((or (fixnum? right) (flonum? right))
+       (let* ((nx (js-tonumber (js-toprimitive left 'number %this) %this)))
+	  (< nx right)))
+      (else
        (let* ((px (js-toprimitive left 'number %this))
 	      (py (js-toprimitive right 'number %this)))
 	  (if (and (js-jsstring? px) (js-jsstring? py))
 	      (js-jsstring<? px py)
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
-		 (< nx ny))))))
+		 (< nx ny)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    >js                                                              */

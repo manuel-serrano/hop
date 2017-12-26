@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Dec 14 19:06:25 2017 (serrano)                */
+;*    Last change :  Tue Dec 26 12:03:14 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -36,7 +36,8 @@
 	   __hopscript_property
 	   __hopscript_private
 	   __hopscript_worker
-	   __hopscript_array)
+	   __hopscript_array
+	   __hopscript_json)
 
    (with   __hopscript_stringliteral
            __hopscript_expanders)
@@ -996,10 +997,6 @@
    (cond
       ((fixnum? obj)
        obj)
-      ((int32? obj)
-       (js-int32-tointeger obj))
-      ((uint32? obj)
-       (js-uint32-tointeger obj))
       ((flonum? obj)
        (cond
 	  ((nanfl? obj) 0)
@@ -1013,6 +1010,10 @@
        (js-tointeger (js-tonumber obj %this) %this))
       ((eq? obj #t)
        1)
+      ((int32? obj)
+       (js-int32-tointeger obj))
+      ((uint32? obj)
+       (js-uint32-tointeger obj))
       (else 0)))
 
 ;*---------------------------------------------------------------------*/
@@ -1393,16 +1394,63 @@
 ;*    tests:                                                           */
 ;*      ch11/11.13/11.13.2/S11.13.2_A1_T1.js                           */
 ;*---------------------------------------------------------------------*/
-(define (%js-direct-eval s strict %this this scope)
+(define (%js-direct-eval s strict %this::JsGlobalObject this scope)
+
+   (define (open-string s)
+      (with-access::JsGlobalObject %this (js-input-port)
+	 (if js-input-port
+	     (reopen-input-c-string js-input-port s)
+	     (let ((port (open-input-string s)))
+		(set! js-input-port port)
+		port))))
+   
+   (define (%eval s)
+      (if strict
+	  (let ((ip (open-string "'use strict';\n")))
+	     (%js-eval ip 'eval %this (js-undefined) scope)
+	     (reopen-input-c-string ip s)
+	     (unwind-protect
+		(%js-eval ip 'eval %this (js-undefined) scope)
+		(close-input-port ip)))
+	  (let ((ip (open-string s)))
+	     (unwind-protect
+		(%js-eval ip 'eval %this this scope)
+		(close-input-port ip)))))
+   
+   (define (%json s)
+      (let ((ip (open-string s)))
+	 (with-handler
+	    %eval
+	    (let ((e (js-json-parser ip #f #t #t %this)))
+	       (close-input-port ip)
+	       e))))
+
+   (define (%json-expr s)
+      (let ((ip (open-string s)))
+	 (read-char ip)
+	 (with-handler
+	    %eval
+	    (let ((e (js-json-parser ip #f #t #t %this)))
+	       (if (char=? (read-char ip) #\))
+		   (begin
+		      (close-input-port ip)
+		      e)
+		   (begin
+		      (close-input-port ip)
+		      (%eval s)))))))
+      
    (if (not (js-jsstring? s))
        s
-       (let* ((s (js-jsstring->string s))
-	      (evals (if strict (string-append "'use strict';\n" s) s)))
-	  (call-with-input-string evals
-	     (lambda (ip)
-		(%js-eval ip 'eval %this
-		   (if strict (js-undefined) this)
-		   scope))))))
+       (let ((s (js-jsstring->string s)))
+	  (if (=fx (string-length s) 0)
+	      (js-undefined))
+	      (case (string-ref s 0)
+		 ((#\[ #\{ #\" #\')
+		  (%json s))
+		 ((#\()
+		  (%json-expr s))
+		 (else
+		  (%eval s))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    %js-eval ...                                                     */

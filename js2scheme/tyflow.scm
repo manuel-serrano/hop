@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Dec 22 12:25:21 2017 (serrano)                */
+;*    Last change :  Mon Dec 25 17:07:17 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -249,6 +249,30 @@
 (define (string-static-method-type name)
    (builtin-method-type name
       '(("fromCharCode" . string))))
+   
+;*---------------------------------------------------------------------*/
+;*    math-static-method-type ...                                      */
+;*---------------------------------------------------------------------*/
+(define (math-static-method-type name)
+   (builtin-method-type name
+      '(("abs" . number)
+	("acos" . number)
+	("asin" . number)
+	("atan" . number)
+	("atan2" . number)
+	("ceil" . number)
+	("cos" . number)
+	("exp" . number)
+	("floor" . number)
+	("log" . number)
+	("max" . number)
+	("min" . number)
+	("pow" . number)
+	("random" . number)
+	("round" . number)
+	("sin" . number)
+	("sqrt" . number)
+	("tan" . number))))
    
 ;*---------------------------------------------------------------------*/
 ;*    regexp-method-type ...                                           */
@@ -966,6 +990,9 @@
    (define (Array? obj)
       (is-global? obj 'Array))
 
+   (define (Math? obj)
+      (is-global? obj 'Math))
+
    (define (type-method-call callee args env bk)
       ;; type a method call: O.m( ... )
       (multiple-value-bind (_ env bk)
@@ -987,6 +1014,7 @@
 			      (else
 			       (cond
 				  ((String? obj) (string-static-method-type fn))
+				  ((Math? obj) (math-static-method-type fn))
 				  (else 'any))))
 			   'any)))
 	       (if (eq? ty 'any)
@@ -1143,22 +1171,23 @@
 			(cond
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'integer)
-			   ((or (eq? typl 'any) (eq? typr 'any))
-			    'any)
-			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
-			    'unknown)
+;* 			   ((or (eq? typl 'any) (eq? typr 'any))       */
+;* 			    'any)                                      */
+;* 			   ((or (eq? typl 'unknown) (eq? typr 'unknown)) */
+;* 			    'unknown)                                  */
 			   (else
 			    'number)))
 		       ((% /)
-			(cond
-			   ((and (type-integer? typl) (type-integer? typr))
-			    'number)
-			   ((or (eq? typl 'any) (eq? typr 'any))
-			    'any)
-			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
-			    'unknown)
-			   (else
-			    'number)))
+			'number)
+;* 			(cond                                          */
+;* 			   ((and (type-integer? typl) (type-integer? typr)) */
+;* 			    'number)                                   */
+;* 			   ((or (eq? typl 'any) (eq? typr 'any))       */
+;* 			    'any)                                      */
+;* 			   ((or (eq? typl 'unknown) (eq? typr 'unknown)) */
+;* 			    'unknown)                                  */
+;* 			   (else                                       */
+;* 			    'number)))                                 */
 		       ((== === != !== < <= > >= eq?)
 			'bool)
 		       ((in)
