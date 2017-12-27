@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Thu Dec 21 09:00:14 2017 (serrano)                */
+;*    Last change :  Wed Dec 27 17:26:07 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -338,15 +338,14 @@
 	      (not (=fx (signbitfl o) 0))
 	      (<fx o 0)))
        
-       (let ((rnum (if (number? right) right (js-tonumber right %this)))
-	     (r (* x y)))
+       (let ((r (* x y)))
 	  (cond
 	     ((fixnum? r)
 	      (if (=fx r 0)
-		  (if (or (and (neg? lnum) (not (neg? rnum)))
-			  (and (not (neg? lnum)) (neg? rnum)))
+		  (if (or (and (neg? x) (not (neg? y)))
+			  (and (not (neg? x)) (neg? y)))
 		      -0.0)
-		  (oveflow53 r)))
+		  (overflow53 r)))
 	     ((flonum? r)
 	      r)
 	     ((bignum? r)
