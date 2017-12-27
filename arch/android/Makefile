@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Sat Dec 16 07:02:44 2017 (serrano)                */
+#*    Last change :  Wed Dec 27 12:08:00 2017 (serrano)                */
 #*    Copyright   :  2010-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -452,11 +452,12 @@ apk.bigloo.configure:
             --android-adb=adb \
             --cc=$(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc \
             --cflags="-pie -fPIE -DBGL_GC_ROOTS" \
-            --lflags=-pie \
+            --lflags=-fPIE \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
+            --disable-pcre --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
 
 $(ANDROIDBUILDDIR)/bigloo$(RELEASE): $(REPOSITORY)/bigloo$(RELEASE).tar.gz
@@ -479,6 +480,7 @@ apk.hop.configure:
             --hop=$(HOPBINDIR)/hop \
             --prefix=$(ANDROIDHOPPREFIX) \
             --libdir=$(ANDROIDHOPPREFIX)/lib \
+            --bigloo-pcre=no --bigloo-unistring=no \
             $(HOPCONFIGUREOPT))
 
 $(ANDROIDBUILDDIR)/$(HOPFULLNAME): $(REPOSITORY)/$(HOPFULLNAME).tar.gz
