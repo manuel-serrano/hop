@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Fri Dec 22 14:45:51 2017 (serrano)                */
+;*    Last change :  Wed Dec 27 16:47:07 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -292,8 +292,8 @@
       (else
        (let ((z::long (pragma::long "(~($1 ^ $2)) & 0x80000000" x y)))
 	  (if (pragma::bool "$1 & (~((($2 ^ $1) + ($3)) ^ ($3)))" z x y)
-	      (fixnum->flonum (+fx x y))
-	      (overflow29 (+fx x y)))))))
+	      (uint32->flonum (+u32 x y))
+	      (overflow29 (uint32->fixnum (+u32 x y))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    +/overflow ...                                                   */
@@ -355,8 +355,8 @@
       (else
        (let ((z::long (pragma::long "(~($1 ^ $2)) & 0x80000000" x y)))
 	  (if (pragma::bool "$1 & ((($2 ^ (long)$1) - ($3)) ^ ($3))" z x y)
-	      (fixnum->flonum (+fx x y))
-	      (overflow29 (+fx x y)))))))
+	      (uint32->flonum (-u32 x y))
+	      (overflow29 (int32->fixnum  (uint32->fixnum (-u32 x y)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    -/overflow ...                                                   */
@@ -401,15 +401,14 @@
 	  (if (flonum? o)
 	      (not (=fx (signbitfl o) 0))
 	      (<fx o 0)))
-       (let ((rnum (if (number? right) right (js-tonumber right %this)))
-	     (r (* x y)))
+       (let ((r (* x y)))
 	  (cond
 	     ((fixnum? r)
 	      (if (=fx r 0)
-		  (if (or (and (neg? lnum) (not (neg? rnum)))
-			  (and (not (neg? lnum)) (neg? rnum)))
+		  (if (or (and (neg? x) (not (neg? y)))
+			  (and (not (neg? x)) (neg? y)))
 		      -0.0)
-		  (oveflow53 r)))
+		  (overflow29 r)))
 	     ((flonum? r)
 	      r)
 	     ((bignum? r)
