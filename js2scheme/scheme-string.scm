@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Dec 26 07:08:29 2017 (serrano)                */
+;*    Last change :  Wed Dec 27 14:28:46 2017 (serrano)                */
 ;*    Copyright   :  2017 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -106,7 +106,7 @@
 	    ((eq? (j2s-type replacevalue) 'string)
 	     `(js-jsstring-replace-regexp-string ,tmp
 		 ,rx 0 ,global
-		 ,(jsfun->lambda replacevalue mode return conf #f #f)
+		 ,(j2s-scheme replacevalue mode return conf hint)
 		 ,@(map (lambda (arg)
 			   (j2s-scheme arg
 			      mode return conf hint))
@@ -114,8 +114,7 @@
 	    (else
 	     `(js-jsstring-replace-regexp ,tmp
 		 ,rx 0 ,global
-		 ,(j2s-scheme replacevalue
-		     mode return conf hint)
+		 ,(j2s-scheme replacevalue mode return conf hint)
 		 ,@(map (lambda (arg)
 			   (j2s-scheme arg
 			      mode return conf hint))
