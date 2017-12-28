@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec 22 20:01:07 2017 (serrano)                */
+;*    Last change :  Thu Dec 28 09:32:19 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1807,8 +1807,7 @@
    (with-access::J2SFun this (rtype thisp)
       (when (isa? thisp J2SDecl) (map-types thisp tmap))
       (set! rtype (map-type rtype tmap)))
-   (call-default-walker)
-   (call-next-method))
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    map-types ::J2SHopRef ...                                        */

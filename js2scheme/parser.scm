@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Dec 22 07:51:40 2017 (serrano)                */
+;*    Last change :  Thu Dec 28 07:23:38 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -215,7 +215,9 @@
 	     token))))
 
    (define (source-element-mode! node::J2SNode)
-      (let ((mode (javascript-mode node)))
+      (let ((mode (if (eq? (config-get conf :parser #f) 'eval-strict)
+		      'strict
+		      (javascript-mode node))))
 	 (when mode (set! current-mode mode))))
 
    (define (source-elements::J2SBlock)
@@ -2291,10 +2293,10 @@
 	       (mode mode)
 	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
    
-   (define (eval)
+   (define (eval mode)
       (set! tilde-level 0)
       (with-access::J2SBlock (source-elements) (loc endloc nodes)
-	 (let ((mode (nodes-mode nodes)))
+	 (let ((mode (or mode (nodes-mode nodes))))
 	    (instantiate::J2SProgram
 	       (loc loc)
 	       (endloc endloc)
@@ -2302,6 +2304,10 @@
 	       (name (config-get conf :module-name #f))
 	       (mode mode)
 	       (nodes (map! (lambda (n) (dialect n mode conf)) nodes))))))
+
+   (define (eval-strict)
+      (set! current-mode 'strict)
+      (eval 'strict))
 
    (define (repl)
       (let ((el (repl-element)))
@@ -2321,7 +2327,8 @@
       ((dollar-expression) (dollar-expression))
       ((module) (program #f))
       ((repl) (repl))
-      ((eval) (eval))
+      ((eval) (eval #f))
+      ((eval-strict) (eval-strict))
       ((client-program) (program #t))
       (else (program #f))))
 
