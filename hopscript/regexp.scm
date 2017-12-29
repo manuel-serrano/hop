@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Dec 26 09:46:42 2017 (serrano)                */
+;*    Last change :  Fri Dec 29 10:00:24 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -690,6 +690,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-literal-test-string ...                                */
 ;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.3    */
+;*    -------------------------------------------------------------    */
 ;*    This function is used when the REGEXP is given as a literal.     */
 ;*    In that particular, there is no need to store all the            */
 ;*    EXEC variables.                                                  */
@@ -705,11 +707,16 @@
 		       0)
 		      (else
 		       lastindex))))
-	    (pregexp-match-n-positions! rx s literal-test-pos i 1)))))
+	    (=fx (pregexp-match-n-positions! rx
+		    s literal-test-pos i (string-length s))
+	       1)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-regexp-literal-test ...                                       */
 ;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.3    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.6.3    */
 ;*    This function is used when the REGEXP is given as a literal.     */
 ;*    In that particular, there is no need to store all the            */
 ;*    EXEC variables.                                                  */

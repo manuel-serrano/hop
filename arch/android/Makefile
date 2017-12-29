@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Wed Dec 27 12:08:00 2017 (serrano)                */
+#*    Last change :  Fri Dec 29 06:36:22 2017 (serrano)                */
 #*    Copyright   :  2010-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -451,6 +451,7 @@ apk.bigloo.configure:
          ./configure --os-android \
             --android-adb=adb \
             --cc=$(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc \
+            --cpicflags=no \
             --cflags="-pie -fPIE -DBGL_GC_ROOTS" \
             --lflags=-fPIE \
             --libuvconfigureopt="--host=arm-linux-androideabi" \

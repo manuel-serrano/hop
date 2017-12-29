@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Tue Dec 26 10:14:10 2017 (serrano)                */
+;*    Last change :  Fri Dec 29 09:34:55 2017 (serrano)                */
 ;*    Copyright   :  2014-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2425,6 +2425,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-maybe-replace ...                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.5.4.11    */
 ;*---------------------------------------------------------------------*/
 (define (js-jsstring-maybe-replace this searchvalue replacevalue %this)
 
@@ -2464,15 +2466,13 @@
 	      (js-jsstring-replace-string this #t searchvalue replacevalue %this))
 	     (else
 	      (js-jsstring-replace this searchvalue replacevalue %this))))
+	 ((isa? this JsString)
+	  (with-access::JsString this (val)
+	     (loop val)))
 	 ((isa? this JsObject)
-	  (js-call2 %this
-	     (js-get-name/cache this 'replace
-		(js-pcache-ref %pcache 23)
-		 %this)
-	     this
-	     searchvalue replacevalue))
+	  (loop (js-tojsstring this %this)))
 	 (else
-	  (loop (js-toobject %this this))))))
+	  (loop (js-tojsstring (js-toobject %this this) %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring-match ...                                            */

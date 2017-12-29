@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sat Nov 18 09:09:05 2017 (serrano)                */
+#*    Last change :  Fri Dec 29 06:38:03 2017 (serrano)                */
 #*    Copyright   :  2004-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -394,8 +394,10 @@ while : ; do
       ;;
 
     -*)
-      echo "*** Configure error, unknown option $1" >&2;
-      echo >&2;
+      if [ "$1" != "--help" ]; then
+        echo "*** Configure error, unknown option $1" >&2;
+        echo >&2;
+      fi
       echo "Usage: configure [options]" >&2;
       echo "" >&2;
       echo "Path:" >&2;
