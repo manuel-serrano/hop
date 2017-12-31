@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Dec 27 14:29:34 2017 (serrano)                */
+;*    Last change :  Sun Dec 31 11:29:37 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -137,7 +137,11 @@
 ;*    comp-return ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (comp-return x)
-   x)
+   (match-case x
+      ((begin . ?rest)
+       `(begin ,@(filter pair? rest)))
+      (else
+       x)))
 
 ;*---------------------------------------------------------------------*/
 ;*    acc-return ...                                                   */
@@ -1216,13 +1220,6 @@
       (if (isa? expr J2SIf)
 	  (j2s-scheme expr mode return conf hint)
 	  (return (j2s-scheme expr mode return conf hint)))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    j2s-scheme ::J2SExprStmt ...                                     *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (j2s-scheme this::J2SExprStmt mode return conf hint) */
-;*    (with-access::J2SExprStmt this (stmt)                            */
-;*       (j2s-scheme stmt mode return conf hint)))              */
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SIf ...                                           */

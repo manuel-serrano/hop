@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Dec 28 09:32:19 2017 (serrano)                */
+;*    Last change :  Sun Dec 31 11:33:18 2017 (serrano)                */
 ;*    Copyright   :  2016-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -76,6 +76,12 @@
 		(map-types this tymap))
 	     (map-types this defmap)))
       this))
+
+;*---------------------------------------------------------------------*/
+;*    range-type? ...                                                */
+;*---------------------------------------------------------------------*/
+(define (range-type? ty)
+   (memq ty '(index integer number int32 uint32)))
 
 ;*---------------------------------------------------------------------*/
 ;*    debug control                                                    */
@@ -1637,10 +1643,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
-   (with-access::J2SDecl this (range itype vtype id scope useinfun)
+   (with-access::J2SDecl this (range itype vtype id key scope useinfun)
       (cond
 	 ((memq scope '(%scope global))
-	  (when (memq vtype '(index integer unknown))
+	  (when (or (range-type? vtype) (eq? vtype 'unknown))
 	     (let ((ty (cond
 			  ((interval? range)
 			   (min-type (interval->type range tymap) vtype))
@@ -1648,7 +1654,7 @@
 			   (min-type 'number vtype)))))
 		(set! itype ty)
 		(set! vtype ty))))
-	 ((and (interval? range) (memq vtype '(index integer number)))
+	 ((and (interval? range) (range-type? vtype))
 	  (let ((ty (interval->type range tymap)))
 	     (when ty
 		(let* ((tym (min-type ty vtype))
@@ -1695,10 +1701,10 @@
    (call-next-method)
    (with-access::J2SRef this (decl type (rng range) loc)
       (with-access::J2SDecl decl (vtype id key range)
-	 (if (interval? rng)
+	 (if (and (interval? rng) (range-type? vtype))
 	     (begin
 		(set! range (interval-merge range rng))
-		(set! vtype (max-type (interval->type range tymap) vtype)))
+		(set! vtype (interval->type range tymap)))
 	     (set! vtype (map-type vtype defmap)))))
    this)
 

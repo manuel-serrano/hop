@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Tue Oct 12 11:53:03 2010                          */
-#*    Last change :  Fri Dec 29 06:36:22 2017 (serrano)                */
+#*    Last change :  Sat Dec 30 09:50:27 2017 (serrano)                */
 #*    Copyright   :  2010-17 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Android port                                                     */
@@ -401,7 +401,8 @@ $(HOPTMPDIR)/antandroid.sh:
 #*---------------------------------------------------------------------*/
 #*    apk                                                              */
 #*---------------------------------------------------------------------*/
-.PHONY: apk install.apk click.apk apk.bigloo apk.hop apk.hop.android apk.lib
+.PHONY: apk install.apk click.apk uninstall.apk \
+  apk.bigloo apk.hop apk.hop.android apk.lib
 
 apk: apk.bigloo
 	$(MAKE) apk-sans-bigloo
@@ -419,6 +420,9 @@ install.apk:
 
 click.apk:
 	adb $(ANDROIDHOST) shell monkey -p fr.inria.hop 1
+
+uninstall.apk:
+	adb $(ANDROIDHOST) uninstall fr.inria.hop
 
 apk.common: $(ANDROIDBUILDDIR)/local.properties \
   $(ANDROIDBUILDDIR)/ant.properties \
@@ -451,14 +455,14 @@ apk.bigloo.configure:
          ./configure --os-android \
             --android-adb=adb \
             --cc=$(ANDROIDTOOLCHAIN)/bin/arm-linux-androideabi-gcc \
-            --cpicflags=no \
+            --cpicflags=-pie \
             --cflags="-pie -fPIE -DBGL_GC_ROOTS" \
             --lflags=-fPIE \
             --libuvconfigureopt="--host=arm-linux-androideabi" \
             --stack-check=no \
             --prefix=$(ANDROIDHOPPREFIX) \
             --build-bindir=$(HOPBINDIR) \
-            --disable-pcre --disable-unistring --disable-gmp \
+            --disable-doc --disable-pcre --disable-unistring --disable-gmp \
             $(BIGLOOCONFIGUREOPT))
 
 $(ANDROIDBUILDDIR)/bigloo$(RELEASE): $(REPOSITORY)/bigloo$(RELEASE).tar.gz
