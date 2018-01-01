@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Dec 26 11:53:17 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Mon Jan  1 07:55:35 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
 ;*=====================================================================*/
@@ -1156,14 +1156,14 @@
 	 ((eq? tr 'real)
 	  (str-append flip
 	     left
-	     `(js-ascii->jsstring (real->string ,right))))
+	     `(js-ascii->jsstring (js-real->string ,right))))
 	 ((eq? tr 'number)
 	  (str-append flip
 	     left
 	     `(js-ascii->jsstring
 		 (if (fixnum? ,right)
 		     (fixnum->string ,right)
-		     (real->string ,right)))))
+		     (js-real->string ,right)))))
 	 (else
 	  (str-append flip
 	     left

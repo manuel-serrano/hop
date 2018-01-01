@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Dec 25 06:11:08 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Mon Jan  1 07:59:37 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
 ;*=====================================================================*/
@@ -31,6 +31,7 @@
    (export (js-init-number! ::JsGlobalObject)
 	   (js-number->jsnumber ::obj ::JsGlobalObject)
 	   
+	   (js-real->string ::double)
 	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
 	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)
 	   
@@ -333,6 +334,98 @@
 (define (js-number->jsnumber val %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-number)
       (js-new1 %this js-number val)))
+
+;*---------------------------------------------------------------------*/
+;*    js-real->string ...                                              */
+;*    -------------------------------------------------------------    */
+;*    MS 1 jan 2018: This should be improved not to use bignums!       */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.8.1        */
+;*---------------------------------------------------------------------*/
+(define (js-real->string obj)
+
+   (define (js-bignum->string m)
+      (if (=bx m #z0)
+	  "0"
+	  (let loop ((p 0)
+		     (s m))
+	     (if (=bx (modulobx s #z10) #z0)
+		 (loop (+ p 1) (/bx s #z10))
+		 (let liip ((k 1)
+			    (t #z10))
+		    (if (>bx t s)
+			(let ((n (+ p k)))
+			   (cond
+			      ((and (>= n k) (<= n 21))
+			       ;; 6
+			       (format "~a~a" (bignum->string s)
+				  (make-string (- n k) #\0)))
+			      ((and (< 0 n) (<= n 21))
+			       ;; 7
+			       (let ((s (bignum->string s)))
+				  (format "~a.~a"
+				     (substring s 0 n)
+				     (substring s n))))
+			      ((and (< -6 n) (<= n 0))
+			       ;; 8
+			       (format "0.~a~a"
+				  (make-string (- n) #\0)
+				  (substring (bignum->string s) n k)))
+			      ((= k 1)
+			       ;; 9
+			       (format "~ae~a~a"
+				  s
+				  (if (>= n 1) "+" "-")
+				  (number->string (abs (- n 1)))))
+			      (else
+			       ;; 10
+			       (let ((s (bignum->string s)))
+				  (format "~a.~ae~a~a"
+				     (substring s 0 1)
+				     (substring s 1)
+				     (if (>= n 1) "+" "-")
+				     (number->string (abs (- n 1))))))))
+			(liip (+ k 1) (*bx t #z10))))))))
+
+   (define (match->bignum::bignum m::pair)
+      (let ((exp (string->integer (cadddr m)))) 
+	 (+bx
+	    (*bx (string->bignum (cadr m))
+	       (exptbx #z10 (fixnum->bignum exp)))
+	    (*bx (string->bignum (caddr m))
+	       (exptbx #z10
+		  (fixnum->bignum (-fx exp (string-length (caddr m)))))))))
+
+   (define (js-real->string m)
+      (if (=fl m 0.0)
+	  "0"
+	  (let ((s (real->string m)))
+	     (cond
+		((pregexp-match "^([-]?[0-9]+)[eE]([0-9]+)$" s)
+		 =>
+		 (lambda (m)
+		    (js-bignum->string
+		       (*bx (string->bignum (cadr m))
+			  (exptbx #z10 (string->bignum (caddr m)))))))
+		((pregexp-match "^([0-9]+).([0-9]+)[eE]([0-9]+)$" s)
+		 =>
+		 (lambda (m) (js-bignum->string (match->bignum m))))
+		((pregexp-match "^-([0-9]+).([0-9]+)[eE]([0-9]+)$" s)
+		 =>
+		 (lambda (m)
+		    (js-bignum->string (negbx (match->bignum m)))))
+		((pregexp-match "^([-]?[.0-9]+)[.]0+$" s)
+		 =>
+		 cadr)
+		(else
+		 (js-ascii->jsstring s))))))
+
+   (js-ascii->jsstring
+      (cond
+	 ((not (= obj obj)) "NaN")
+	 ((= obj +inf.0) "Infinity")
+	 ((= obj -inf.0) "-Infinity")
+	 (else (js-real->string obj)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsnumber-tostring ...                                         */

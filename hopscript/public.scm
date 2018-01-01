@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Dec 31 11:48:11 2017 (serrano)                */
+;*    Last change :  Sun Dec 31 13:09:12 2017 (serrano)                */
 ;*    Copyright   :  2013-17 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1464,7 +1464,7 @@
 		 ((#\[ #\" #\')
 		  (%json s))
 		 ((#\{)
-		  (if (pregexp-match "{[\t\n ]*/" s)
+		  (if (pregexp-match "{[\t\n ]*}" s)
 		      (js-undefined)
 		      (%json s)))
 		 ((#\()
