@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Dec 25 17:07:17 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Tue Jan  2 11:34:40 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
 ;*    -------------------------------------------------------------    */
@@ -353,7 +353,7 @@
 ;*    typnum? ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (typnum? typ)
-   (memq typ '(integer number)))
+   (memq typ '(integer number index)))
 
 ;*---------------------------------------------------------------------*/
 ;*    env? ...                                                         */
@@ -1162,6 +1162,7 @@
 			   ((or (eq? typl 'string) (eq? typr 'string))
 			    'string)
 			   ((or (eq? typl 'any) (eq? typr 'any))
+			    
 			    'any)
 			   ((or (eq? typl 'unknown) (eq? typr 'unknown))
 			    'unknown)

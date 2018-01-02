@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Jan  1 07:55:35 2018 (serrano)                */
+;*    Last change :  Tue Jan  2 11:38:41 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -630,125 +630,6 @@
 			    (box left tl conf)
 			    (box right tr conf)
 			    #f))))))))))
-
-(define (js-cmp-old loc o::symbol lhs::J2SExpr rhs::J2SExpr
-	   mode return conf hint::pair-nil)
-
-   (define (op o base)
-      (case o
-	 ((== === != !==)
-	  (when (eq? base 'js)
-	     (error "js-cmp" (format "should not be here (~ajs)" o) loc))
-	  (symbol-append '= base))
-	 (else (symbol-append o base))))
-      
-   (define (opfx o) (op o 'fx))
-   (define (opfl o) (op o 'fl))
-   (define (ops32 o) (op o 's32))
-   (define (opu32 o) (op o 'u32))
-   (define (opjs o) (op o 'js))
-
-   (define (notify o expr)
-      (if (memq o '(!= !==))
-	  (match-case expr
-	     (((kwote not) ?val) val)
-	     (else `(not ,expr)))
-	  expr))
-
-   (define (cmp/32js o lhs tl left rhs tr right)
-      (if (memq o '(== === != !==))
-	  `(= ,(tonumber32 left tl) ,(tonumber32 right tr))
-	  `(,(opjs o) ,(tonumber32 left tl) ,(tonumber32 right tr) %this)))
-   
-   (define (cmp/32 o lhs tl left rhs tr right)
-      (cond
-	 ((and (eq? tl 'int32) (eq? tr 'int32))
-	  `(,(ops32 o) ,left ,right))
-	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
-	  `(,(opu32 o) ,left ,right))
-	 ((and (memq tl '(bint integer)) (eq? tr '(bint integer)))
-	  `(,(opfx o) ,left ,right))
-	 ((and (eq? tr 'real) (eq? tl 'real))
-	  `(,(opfl o) ,left ,right))
-	 ((and (memq tl '(int32 uint32)) (memq tr '(int32 uint32)))
-	  `(,(opfx o) ,(tolong32 left tl) ,(tolong32 right tr)))
-	 ((eq? tl 'int32)
-	  `(if (fixnum? ,right)
-	       (,(ops32 o) ,left (fixnum->int32 ,right))
-	       ,(cmp/32js o lhs tl left rhs tr right)))
-	 ((eq? tr 'int32)
-	  `(if (fixnum? ,left)
-	       (,(ops32 o) (fixnum->int32 ,left) ,right)
-	       ,(cmp/32js o lhs tl left rhs tr right)))
-	 ((eq? tl 'uint32)
-	  `(if (fixnum? ,right)
-	       (if (>=fx ,right 0)
-		   (,(opu32 o) ,left (fixnum->uint32 ,right))
-		   #f)
-	       ,(if (memq tr '(int32 uint32 int53 integer real number))
-		    (cmp/32js o lhs tl left rhs tr right)
-		    `(,(opjs o) ,(box left tl conf) ,(box right tr conf) %this))))
-	 ((eq? tr 'uint32)
-	  `(if (fixnum? ,left)
-	       ,(if (inrange-positive? lhs)
-		    `(,(opu32 o) (fixnum->uint32 ,left) ,right)
-		    (if (inrange-int30? rhs)
-			`(,(opfx o) ,left ,(uint32->fixnum right))
-			`(if (>=fx ,left 0)
-			     (,(opu32 o) (fixnum->uint32 ,left) ,right)
-			     #t)))
-	       ,(if (memq tl '(int32 uint32 int53 integer real number))
-		    (cmp/32js o lhs tl left rhs tr right)
-		    `(,(opjs o) ,(box left tl conf) ,(box right tr conf) %this))))
-	 ((and (memq tr '(int32 uint32 integer real number))
-	       (memq tl '(int32 uint32 integer real number)))
-	  (if-fixnums? left tl right tr
-	     `(,(opfx o) ,left ,right)
-	     (cmp/32js o lhs tl left right tr right)))
-	 (else
-	  (if-fixnums? left tl right tr
-	     `(,(opfx o) ,left ,right)
-	     `(,(opjs o) ,(box left tl conf)  ,(box right tr conf) %this )))))
-   
-   (define (cmp/64js o lhs tl left rhs tr right)
-      (if (memq o '(== === != !==))
-	  `(= ,(tonumber64 left tl) ,(tonumber64 right tr))
-	  `(,(opjs o) ,(tonumber64 left tl) ,(tonumber64 right tr) %this)))
-   
-   (define (cmp/64 o lhs tl left rhs tr right)
-      (cond
-	 ((and (eq? tl 'int32) (eq? tr 'int32))
-	  `(,(ops32 o) ,left ,right))
-	 ((and (eq? tl 'uint32) (eq? tr 'uint32))
-	  `(,(opu32 o) ,left ,right))
-	 ((and (memq tl '(bint integer)) (eq? tr '(bint integer)))
-	  `(,(opfx o) ,left ,right))
-	 ((and (eq? tr 'real) (eq? tl 'real))
-	  `(,(opfl o) ,left ,right))
-	 ((and (memq tl '(int32 uint32 int53)) (memq tr '(int32 uint32 int53)))
-	  `(,(opfx o) ,(tolong64 left tl) ,(tolong64 right tr)))
-	 ((memq tl '(int32 uint32 int53))
-	  `(if (fixnum? ,right)
-	       (,(opfx o) ,(tolong64 left tl) ,right)
-	       ,(cmp/64js o lhs tl left right tr right)))
-	 ((memq tr '(int32 uint32 int53))
-	  `(if (fixnum? ,left)
-	       (,(opfx o) ,left ,(tolong64 right tr))
-	       ,(cmp/64js o lhs tl left right tr right)))
-	 (else
-	  (if-fixnums? left tl right tr
-	     `(,(opfx o) ,left ,right)
-	     `(,(opjs o) ,(box left tl conf) ,(box right tr conf) %this)))))
-
-   (with-tmp lhs rhs mode return conf hint '*
-      (lambda (left right)
-	 (let ((tl (j2s-vtype lhs))
-	       (tr (j2s-vtype rhs)))
-	    (epairify loc
-	       (notify o
-		  (if (m64? conf)
-		      (cmp/64 o lhs tl left rhs tr right)
-		      (cmp/32 o lhs tl left rhs tr right))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality ...                                                  */

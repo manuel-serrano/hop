@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Dec 31 11:33:18 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Mon Jan  1 10:46:10 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
 ;*=====================================================================*/
@@ -78,7 +78,7 @@
       this))
 
 ;*---------------------------------------------------------------------*/
-;*    range-type? ...                                                */
+;*    range-type? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (range-type? ty)
    (memq ty '(index integer number int32 uint32)))
