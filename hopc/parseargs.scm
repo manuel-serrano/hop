@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Dec 18 08:53:44 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Wed Jan  3 06:35:54 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -242,6 +242,14 @@
 	     #unspecified)
 	    (("-p" ?port (help "Hop compatibility, ignored"))
 	     #unspecified)
+	    (("-ftyflow" (help "Enable tyflow typing (-O)"))
+	     (hopc-j2s-flags-set! (cons* :optim-tyflow #t (hopc-j2s-flags))))
+	    (("-fno-tyflow" (help "Disable tyflow typing"))
+	     (hopc-j2s-flags-set! (cons* :optim-tyflow #f (hopc-j2s-flags))))
+	    (("-ftyflow-resolve" (help "Enable tyflow-resolve typing (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-tyflow-resolve #t (hopc-j2s-flags))))
+	    (("-fno-tyflow-resolve" (help "Disable tyflow-resolve typing"))
+	     (hopc-j2s-flags-set! (cons* :optim-tyflow-resolve #f (hopc-j2s-flags))))
 	    (("-fccall" (help "Enable call caches (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
 	    (("-fno-ccall" (help "Disable call caches"))
@@ -250,10 +258,14 @@
 	     (hopc-j2s-flags-set! (cons* :optim-hint #t (hopc-j2s-flags))))
 	    (("-fno-hint" (help "Disable hint typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hint #f (hopc-j2s-flags))))
-	    (("-fcast" (help "Enable cast optimization (-Ox)"))
-	     (hopc-j2s-flags-set! (cons* :optim-cast #t (hopc-j2s-flags))))
-	    (("-fno-cast" (help "Disable cast optimization"))
-	     (hopc-j2s-flags-set! (cons* :optim-cast #f (hopc-j2s-flags))))
+	    (("-frange" (help "Enable range optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-range #t (hopc-j2s-flags))))
+	    (("-fno-range" (help "Disable range optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-range #f (hopc-j2s-flags))))
+	    (("-finteger" (help "Enable integer optimization (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-integer #t (hopc-j2s-flags))))
+	    (("-fno-integer" (help "Disable integer optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-integer #f (hopc-j2s-flags))))
 	    (("-finline" (help "Enable method inlining (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-inline #t (hopc-j2s-flags))))
 	    (("-fno-inline" (help "Disable method inlining"))

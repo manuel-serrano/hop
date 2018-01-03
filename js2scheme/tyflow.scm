@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Jan  2 11:34:40 2018 (serrano)                */
+;*    Last change :  Wed Jan  3 06:41:33 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -74,40 +74,41 @@
       ;; mark local captured variables
       (program-capture! this)
       ;; main fix point
-      (let ((fix (make-cell 0)))
-	 (let loop ((i 1))
-	    (when (>=fx j2s-verbose 4)
-	       (fprintf (current-error-port) "~a." i)
-	       (flush-output-port (current-error-port)))
-	    (let ((ofix (cell-ref fix)))
-	       ;; type all the nodes
-	       (typing-seq (append headers decls nodes) '() fix)
-	       (if (=fx (cell-ref fix) ofix)
-		   (if (>=fx (config-get args :optim 0) 2)
-		       ;; type check resolution
-		       (begin
-			  (j2s-resolve! this args fix)
-			  (if (=fx (cell-ref fix) ofix)
-			      (when (config-get args :optim-hint #f)
-				 ;; hint typing optimization
-				 (when (>=fx j2s-verbose 4)
-				    (fprintf (current-error-port) "hint"))
-				 (let ((dups (j2s-hint! this args)))
-				    (when (pair? dups)
-				       (when (>=fx j2s-verbose 3)
-					  (fprintf (current-error-port)
-					     (format " [~(,)]."
-						(map (lambda (d)
-							(with-access::J2SDecl d (id)
-							   id))
-						   dups))))
-				       (for-each reset-type! decls)
-				       (for-each reset-type! nodes)
-				       (loop (+fx i 1)))))
-			      (loop (+fx i 1)))))
-		   (loop (+fx i 1))))))
-      (unless (config-get args :optim-range)
-	 (force-type! this 'integer 'number))
+      (when (config-get args :optim-tyflow #f)
+	 (let ((fix (make-cell 0)))
+	    (let loop ((i 1))
+	       (when (>=fx j2s-verbose 4)
+		  (fprintf (current-error-port) "~a." i)
+		  (flush-output-port (current-error-port)))
+	       (let ((ofix (cell-ref fix)))
+		  ;; type all the nodes
+		  (typing-seq (append headers decls nodes) '() fix)
+		  (if (=fx (cell-ref fix) ofix)
+		      (if (config-get args :optim-tyflow-resolve #f)
+			  ;; type check resolution
+			  (begin
+			     (j2s-resolve! this args fix)
+			     (if (=fx (cell-ref fix) ofix)
+				 (when (config-get args :optim-hint #f)
+				    ;; hint typing optimization
+				    (when (>=fx j2s-verbose 4)
+				       (fprintf (current-error-port) "hint"))
+				    (let ((dups (j2s-hint! this args)))
+				       (when (pair? dups)
+					  (when (>=fx j2s-verbose 3)
+					     (fprintf (current-error-port)
+						(format " [~(,)]."
+						   (map (lambda (d)
+							   (with-access::J2SDecl d (id)
+							      id))
+						      dups))))
+					  (for-each reset-type! decls)
+					  (for-each reset-type! nodes)
+					  (loop (+fx i 1)))))
+				 (loop (+fx i 1)))))
+		      (loop (+fx i 1))))))
+	 (unless (config-get args :optim-integer)
+	    (force-type! this 'integer 'number)))
 	 ;;(force-unary-type! this))
       ;; cleanup the ast use count and remove obviously useless definitions
       (force-type! this 'unknown 'any)
@@ -135,7 +136,7 @@
 (define-walk-method (mark-capture this::J2SRef env::pair-nil)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (scope ronly %info vtype)
-	 (when (and (not ronly) (eq? scope 'local))
+	 (when (not ronly)
 	    (unless (memq decl env)
 	       (set! vtype 'any)
 	       (set! %info 'capture))))))
@@ -1836,7 +1837,8 @@
 ;*    force-type! ::J2SFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (force-type! this::J2SFun from to)
-   (with-access::J2SFun this (rtype thisp)
+   (with-access::J2SFun this (rtype thisp type)
+      (set! type 'function)
       (when (isa? thisp J2SNode) (force-type! thisp from to))
       (when (eq? rtype from) (set! rtype to)))
    (call-default-walker))

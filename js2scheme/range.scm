@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Jan  1 10:46:10 2018 (serrano)                */
+;*    Last change :  Wed Jan  3 06:36:39 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -62,7 +62,7 @@
    (when (isa? this J2SProgram)
       (let ((tymap (if (=fx (config-get args :long-size 0) 64)
 		       typemap64 typemap32)))
-	 (if (config-get args :optim-cast #f)
+	 (if (config-get args :optim-range #f)
 	     (begin
 		;; compute the integer value ranges,
 		(j2s-range-program! this args)
@@ -70,7 +70,7 @@
 		(when (>=fx (config-get args :optim 0) 2)
 		   (j2s-range-opt-program! this args))
 		;; allocate precise types according to the ranges
-		(when (config-get args :optim-range #f)
+		(when (config-get args :optim-integer #f)
 		   (j2s-range-type-program! this tymap))
 		;; map number types to target types
 		(map-types this tymap))
@@ -245,7 +245,7 @@
 (define (extend-env::pair-nil env::pair-nil decl::J2SDecl intv)
    (with-access::J2SDecl decl (scope range vtype)
       (cond
-	 ((eq? scope '%scope)
+	 ((memq scope '(%scope global))
 	  (when (memq vtype '(index integer number))
 	     (if (interval? range)
 		 (set! range (interval-merge range intv))

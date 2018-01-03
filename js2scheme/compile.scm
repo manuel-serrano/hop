@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Dec 22 19:48:15 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Jan  3 06:36:29 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
 ;*=====================================================================*/
@@ -331,8 +331,8 @@
 	 (opts (let ((o (append args (j2s-compile-options)))
 		     (l (config-get args :optim 0)))
 		  (when (>=fx l 900)
-		     (unless (memq :optim-range o)
-			(set! o (cons* :optim-range #t o)))
+		     (unless (memq :optim-integer o)
+			(set! o (cons* :optim-integer #t o)))
 		     (unless (memq :optim-inline o)
 			(set! o (cons* :optim-inline #t o)))
 		     (unless (memq :optim-hint o)
@@ -340,17 +340,23 @@
 		     (unless (memq :optim-literals o)
 			(set! o (cons* :optim-literals #t o))))
 		  (when (>=fx l 4)
-		     (unless (memq :optim-cast o)
-			(set! o (cons* :optim-cast #t o)))
+		     (unless (memq :optim-range o)
+			(set! o (cons* :optim-range #t o)))
 		     (unless (memq :optim-ctor o)
 			(set! o (cons* :optim-ctor #t o)))
 		     (unless (memq :optim-vector o)
 			(set! o (cons* :optim-vector #t o)))
 		     (unless (memq :optim-vector o)
-			(set! o (cons* :optim-vector #t o)))
+			(set! o (cons* :optim-vector #t o))))
+		  (when (>=fx l 2)
+		     (unless (memq :optim-tyflow-resolve o)
+			(set! o (cons* :optim-tyflow-resolve #t o))))
+		  (when (>=fx l 1)
+		     (unless (memq :optim-tyflow o)
+			(set! o (cons* :optim-tyflow #t o))))
+		  
 ;* 		     (unless (memq :optim-cce o)                       */
 ;* 			(set! o (cons* :optim-cce #t o)))              */
-		     )
 		  o)))
       (let ((v (or (getenv "HOPCFLAGS") "")))
 	 (cond

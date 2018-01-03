@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Dec 22 10:11:25 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Wed Jan  3 06:39:06 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
 ;*    -------------------------------------------------------------    */
@@ -228,7 +228,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (type-cast! this::J2SCall totype)
    
-   (define (known-fun this fun)
+   (define (known-fun this fun::J2SFun)
       (with-access::J2SCall this (args)
 	 (with-access::J2SFun fun (rtype params vararg)
 	    (let loop ((params params)
