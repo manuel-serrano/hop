@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Dec 22 15:26:28 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Thu Jan  4 07:44:13 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
 ;*=====================================================================*/
@@ -351,6 +351,22 @@
 		 (typeof op rhs lhs))
 		((isa? rhs J2SString)
 		 (typeof op lhs rhs))
+		((isa? rhs J2SNull)
+		 (when (isa? lhs J2SRef)
+		    (with-access::J2SRef lhs (decl)
+		       (values '== decl 'null lhs))))
+		((isa? rhs J2SUndefined)
+		 (when (isa? lhs J2SRef)
+		    (with-access::J2SRef lhs (decl)
+		       (values '== decl 'undefined lhs))))
+		((isa? lhs J2SNull)
+		 (when (isa? rhs J2SRef)
+		    (with-access::J2SRef rhs (decl)
+		       (values '== decl 'null rhs))))
+		((isa? lhs J2SUndefined)
+		 (when (isa? rhs J2SRef)
+		    (with-access::J2SRef rhs (decl)
+		       (values '== decl 'undefined rhs))))
 		(else
 		 #f)))
 	    ((instanceof)
