@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Jan  2 11:38:41 2018 (serrano)                */
+;*    Last change :  Wed Jan  3 19:19:29 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1153,6 +1153,44 @@
 ;*    js-arithmetic-mul ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (js-arithmetic-mul loc type lhs::J2SExpr rhs::J2SExpr
+	   mode return conf hint::pair-nil)
+   (with-tmp lhs rhs mode return conf hint '*
+      (lambda (left right)
+	 (let ((tl (j2s-vtype lhs))
+	       (tr (j2s-vtype rhs)))
+	    (cond
+	       ((eq? tl 'int32)
+		(binop-int32-xxx '* type lhs tl left rhs tr right conf #f))
+	       ((eq? tr 'int32)
+		(binop-int32-xxx '* type rhs tr right lhs tl left conf #t))
+	       ((eq? tl 'uint32)
+		(binop-uint32-xxx '* type lhs tl left rhs tr right conf #f))
+	       ((eq? tr 'uint32)
+		(binop-uint32-xxx '* type rhs tr right lhs tl left conf #t))
+	       ((eq? tl 'integer)
+		(binop-integer-xxx '* type lhs tl left rhs tr right conf #f))
+	       ((eq? tr 'integer)
+		(binop-integer-xxx '* type rhs tr right lhs tl left conf #t))
+	       ((eq? tl 'bint)
+		(binop-bint-xxx '* type lhs tl left rhs tr right conf #f))
+	       ((eq? tr 'bint)
+		(binop-bint-xxx '* type rhs tr right lhs tl left conf #t))
+	       ((eq? tl 'real)
+		(binop-real-xxx '* type lhs tl left rhs tr right conf #f))
+	       ((eq? tr 'real)
+		(binop-real-xxx '+ type rhs tr right lhs tl left conf #t))
+	       (else
+		(if-fixnums? left tl right tr
+		   (binop-fixnum-fixnum '* type
+		      (asfixnum left tl)
+		      (asfixnum right tr)
+		      #f)
+		   (binop-any-any '* type
+		      (box left tl conf)
+		      (box right tr conf)
+		      #f))))))))
+
+(define (js-arithmetic-mul-old loc type lhs::J2SExpr rhs::J2SExpr
 	   mode return conf hint::pair-nil)
    
    (define (mul-int32 lhs tl left rhs tr right tonumber)

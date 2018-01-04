@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Jan  2 11:15:39 2018 (serrano)                */
+;*    Last change :  Thu Jan  4 06:56:05 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -69,7 +69,7 @@
 	 (any nop)))
      (number
 	((bool js-totest)
-	 (int32 ,js->int32)
+	 (int32 ,js-number->int32)
 	 (uint32 ,js-number->uint32)
 	 (string ,js-number->string)
 	 (propname nop)
@@ -290,8 +290,11 @@
        v)
       ((and (fixnum? v) (=fx (int32->fixnum (fixnum->int32 v)) v))
        (fixnum->int32 v))
+      ((inrange-int30? expr)
+       `(fixnum->int32 ,v))
+      ((and (inrange-int32? expr) (m64? conf))
+       `(fixnum->int32 ,v))
       (else
-       (tprint "COMMENT TO BE CHECKED AND REMOVED (2017-12-06)...")
        `(js-number-toint32 ,v))))
 
 (define (js-number->uint32 v expr conf)
@@ -300,6 +303,10 @@
        v)
       ((and (fixnum? v) (=fx (uint32->fixnum (fixnum->uint32 v)) v))
        (fixnum->uint32 v))
+      ((inrange-int30? expr)
+       `(fixnum->uint32 ,v))
+      ((and (inrange-int32? expr) (m64? conf))
+       `(fixnum->uint32 ,v))
       (else
        `(js-number-touint32 ,v))))
 

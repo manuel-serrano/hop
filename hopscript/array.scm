@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Dec 31 15:15:34 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Jan  3 17:59:32 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -495,7 +495,7 @@
 	  `(let ((,v ,o)
 		 (%loc ,loc))
 	      (assert (%loc o)
-		 (with-access::JsArray o (vec length ilen)
+		 (with-access::JsArray ,v (vec length ilen)
 		    (and (<=u32 ilen (fixnum->uint32 (vector-length vec)))
 			 (<=u32 ilen length))))
 	      ,v))
@@ -852,6 +852,9 @@
 			      (slen (js-get-length src #f %this))
 			      (alen (minfx slen lsrc)))
 			  ;; fast vector-copy
+			  (when (>fx (+fx i alen) (vector-length vdst))
+			     (set! vdst
+				(copy-vector vdst (*fx (+fx i alen) 2))))
 			  (vector-copy! vdst i vsrc 0 alen)
 			  (set! ilen (fixnum->uint32 (+fx i alen)))
 			  (if (> slen lsrc)
@@ -860,7 +863,7 @@
 		       ;; slow copy
 		       (copy-array-slow dst i src 0 (js-get-length src #f %this)))))
 	     (copy-array-slow dst i src 0 (js-get-length src #f %this))))
-      
+
       (let* ((l (cons (js-toobject %this this) l))
 	     (new-len (let loop ((l l)
 				 (len 0))
@@ -874,8 +877,8 @@
 			    (else
 			     (loop (cdr l) (+ 1 len))))))
 	     (arr (with-access::JsGlobalObject %this (js-array)
-		     (js-array-construct/length %this
-			(js-array-alloc %this) new-len))))
+		     (js-array-construct/lengthu32 %this
+			(js-array-alloc %this) (fixnum->uint32 new-len)))))
 	 ;; fill the vector
 	 (let loop ((l l)
 		    (i 0))
@@ -1725,6 +1728,7 @@
 		     (js-call3 %this proc t pv (uint32->fixnum i) o))
 		  (loop (+u32 i 1))))))
 
+      
       (array-prototype-iterator %this this proc t array-foreach vector-foreach)
       (js-undefined))
 

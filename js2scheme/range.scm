@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Jan  3 06:36:39 2018 (serrano)                */
+;*    Last change :  Thu Jan  4 06:51:24 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -710,20 +710,26 @@
 ;*    interval-bitand ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (interval-bitand left right)
-
+   
    (define (shrink32 intv)
       (interval
 	 (max (interval-min intv) *min-int32*)
 	 (min (interval-max intv) *max-int32*)))
-
-   (if (and (interval? left) (interval? right))
-       (if (or (> (interval-max left) 0) (> (interval-max right) 0))
-	   (let* ((mi (min (interval-min left) (interval-min right)))
-		  (ma (min (interval-max left) (interval-max right)))
-		  (intr (interval mi ma)))
-	      (shrink32 (widening left right intr)))
-	   *int32-intv*)
-       *int32-intv*))
+   
+   (cond
+      ((and (not (interval? left)) (not (interval? right)))
+       *int32-intv*)
+      ((not (interval? right))
+       (shrink32 left))
+      ((not (interval? left))
+       (shrink32 right))
+      ((or (>= (interval-max left) 0) (>= (interval-max right) 0))
+       (let* ((mi (min (interval-min left) (interval-min right)))
+	      (ma (min (interval-max left) (interval-max right)))
+	      (intr (interval mi ma)))
+	  (shrink32 intr)))
+      (else
+       *int32-intv*)))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-interval-set! ...                                           */
@@ -959,7 +965,6 @@
 		(values (empty-env) (empty-env))
 		(case op
 		   ((<)
-		    
 		    (let ((intrt (interval-lt intl intr))
 			  (intro (interval-gte intl intr)))
 		       (values (make-env decl intrt)
@@ -1540,7 +1545,8 @@
 	 (let loop ((env env))
 	    (let ((ostamp (fix-stamp fix)))
 	       (when (pair? denv)
-		  (tprint "--- while [" ffix "] / " ostamp))
+		  (tprint "--- while [" ffix "] / " ostamp)
+		  (tprint "     env=" (dump-env env)))
 	       (multiple-value-bind (testi teste)
 		  (node-range test env args fix)
 		  (when (pair? denv)
@@ -1549,7 +1555,8 @@
 		  (multiple-value-bind (testet testef)
 		     (test-envs test env args fix)
 		     (when (pair? denv)
-			(when (pair? (dump-env testet))
+			(when (or (pair? (dump-env testet))
+				  (pair? (dump-env testef)))
 			   (tprint "    [" ffix "] testet="
 			      (dump-env testet))
 			   (tprint "    [" ffix "] testef="
@@ -1557,11 +1564,12 @@
 		     (multiple-value-bind (bodyi bodye)
 			(node-range body (append-env testet teste) args fix)
 			(if (=fx ostamp (fix-stamp fix))
-			    (begin
+			    (let ((wenv (append-env testef
+					   (env-merge bodye env))))
 			       (when (pair? denv)
 				  (tprint "<<< while [" ffix "] "
-				     (dump-env (append-env testef bodye)))
-				  (return #f (append-env testef bodye))))
+				     (dump-env wenv)))
+			       (return #f wenv))
 			    (loop (env-merge bodye env)))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1643,13 +1651,17 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (type-range! this::J2SDecl tymap)
    (call-default-walker)
-   (with-access::J2SDecl this (range itype vtype id key scope useinfun)
+   (with-access::J2SDecl this (range itype vtype id key scope useinfun usage)
       (cond
 	 ((memq scope '(%scope global))
 	  (when (or (range-type? vtype) (eq? vtype 'unknown))
 	     (let ((ty (cond
 			  ((interval? range)
-			   (min-type (interval->type range tymap) vtype))
+			   (let ((ty (min-type
+					(interval->type range tymap) vtype)))
+			      (if (usage? '(assig) usage)
+				  (type->boxed-type ty)
+				  ty)))
 			  (else
 			   (min-type 'number vtype)))))
 		(set! itype ty)
@@ -1680,7 +1692,7 @@
 (define-walk-method (type-range! this::J2SFun tymap)
    (call-default-walker)
    (with-access::J2SFun this (range rtype)
-      (when (and (interval? range) (memq rtype '(integer index)))
+      (when (and (interval? range) (range-type? rtype))
 	 (set! rtype (interval->type range tymap))))
    this)
 

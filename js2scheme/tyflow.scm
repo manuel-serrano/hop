@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Jan  3 06:41:33 2018 (serrano)                */
+;*    Last change :  Wed Jan  3 20:36:48 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -138,7 +138,8 @@
       (with-access::J2SDecl decl (scope ronly %info vtype)
 	 (when (not ronly)
 	    (unless (memq decl env)
-	       (set! vtype 'any)
+;* 	       (when (memq vtype '(integer index))                     */
+;* 		  (set! vtype 'number))                                */
 	       (set! %info 'capture))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1214,6 +1215,8 @@
 			(cond
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'integer)
+			   ((and (type-number? typl) (type-number? typr))
+			    'number)
 			   ((or (eq? typl 'any) (eq? typr 'any))
 			    'any)
 			   (else
