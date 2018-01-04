@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Jan  4 07:26:43 2018 (serrano)                */
+;*    Last change :  Thu Jan  4 14:53:53 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2075,23 +2075,23 @@
        (case tr
 	  ((int32)
 	   `(if (fixnum? ,left)
-		(binop-fixnum-fixnum op type
+		,(binop-fixnum-fixnum op type
 		   left (asfixnum right tr) flip)
-		(binop-number-number op type
+		,(binop-number-number op type
 		   left (box right tr conf) flip)))
 	  ((uint32)
 	   (cond
 	      ((inrange-int32? rhs)
 	       `(if (fixnum? ,left)
-		    (binop-int32-int32 op type
+		    ,(binop-int32-int32 op type
 		       (asint32 left tl) (asfixnum right tr) flip)
-		    (binop-number-number op type
+		    ,(binop-number-number op type
 		       left (box right tr conf) flip)))
 	      ((inrange-uint32? lhs)
 	       `(if (fixnum? ,left)
-		    (binop-uint32-uint32 op type
+		    ,(binop-uint32-uint32 op type
 		       (asuint32 left tl) right flip)
-		    (binop-number-number op type
+		    ,(binop-number-number op type
 		       left (box right tr conf) flip)))
 	      (else
 	       (binop-number-number op type
@@ -2104,9 +2104,9 @@
 		   left right flip)))
 	  ((integer)
 	   `(if (and (fixnum? ,left) (fixnum? ,right))
-		(binop-fixnum-fixnum op type
+		,(binop-fixnum-fixnum op type
 		   left right flip)
-		(binop-number-number op type
+		,(binop-number-number op type
 		   left right flip)))
 	  ((real)
 	   (binop-flonum-flonum op type 

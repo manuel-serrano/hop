@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Mon Dec 25 17:25:37 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Thu Jan  4 09:03:20 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
 ;*=====================================================================*/
@@ -88,18 +88,12 @@
       ((int32? r) (int32->flonum r))
       (else (error "js-toflonum" (format "Illegal number (~a)" (typeof r)) r))))
 
-(define (forcefail)
-   (tprint (/s32 #s32:1 (car (list #s32:0)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    +js ...                                                          */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.1       */
 ;*---------------------------------------------------------------------*/
 (define (+js x::obj y::obj %this)
-   (when (or (int32? x) (uint32? x) (int32? y) (uint32? y))
-      (tprint "+js pas bonxx x=" (typeof x) " y=" (typeof y))
-      (forcefail))
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
 	  (ny (if (number? y) y (js-tonumber y %this))))
       (+/overflow nx ny)))
@@ -110,9 +104,6 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.6.2       */
 ;*---------------------------------------------------------------------*/
 (define (-js x::obj y::obj %this)
-   (when (or (int32? x) (uint32? x) (int32? y) (uint32? y))
-      (tprint "-js pas bon x=" (typeof x) " y=" (typeof y))
-      (forcefail))
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
 	  (ny (if (number? y) y (js-tonumber y %this))))
       (-/overflow nx ny)))
@@ -123,9 +114,6 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
 ;*---------------------------------------------------------------------*/
 (define (*js x::obj y::obj %this)
-   (when (or (int32? x) (uint32? x) (int32? y) (uint32? y))
-      (tprint "*js pas bon x=" (typeof x) " y=" (typeof y))
-      (forcefail))
    (let* ((nx (if (number? x) x (js-tonumber x %this)))
 	  (ny (if (number? y) y (js-tonumber y %this))))
       (*/overflow nx ny)))
@@ -136,9 +124,6 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.2       */
 ;*---------------------------------------------------------------------*/
 (define (/js x::obj y::obj %this)
-   (when (or (int32? x) (uint32? x) (int32? y) (uint32? y))
-      (tprint "/js pas bon x=" (typeof x) " y=" (typeof y))
-      (forcefail))
    (let* ((nx (js-toflonum (js-tonumber x %this)))
 	  (ny (js-toflonum (js-tonumber y %this))))
       (/fl nx ny)))

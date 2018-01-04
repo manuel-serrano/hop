@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Jan  4 07:44:13 2018 (serrano)                */
+;*    Last change :  Thu Jan  4 10:28:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -314,12 +314,6 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-expr-type-test expr::J2SExpr)
    
-   (define (normalize-op op)
-      (case op
-	 ((===) '==)
-	 ((!==) '!=)
-	 (else op)))
-   
    (define (not-op op)
       (case op
 	 ((==) '!=)
@@ -354,19 +348,19 @@
 		((isa? rhs J2SNull)
 		 (when (isa? lhs J2SRef)
 		    (with-access::J2SRef lhs (decl)
-		       (values '== decl 'null lhs))))
+		       (values op decl 'null lhs))))
 		((isa? rhs J2SUndefined)
 		 (when (isa? lhs J2SRef)
 		    (with-access::J2SRef lhs (decl)
-		       (values '== decl 'undefined lhs))))
+		       (values op decl 'undefined lhs))))
 		((isa? lhs J2SNull)
 		 (when (isa? rhs J2SRef)
 		    (with-access::J2SRef rhs (decl)
-		       (values '== decl 'null rhs))))
+		       (values op decl 'null rhs))))
 		((isa? lhs J2SUndefined)
 		 (when (isa? rhs J2SRef)
 		    (with-access::J2SRef rhs (decl)
-		       (values '== decl 'undefined rhs))))
+		       (values op decl 'undefined rhs))))
 		(else
 		 #f)))
 	    ((instanceof)

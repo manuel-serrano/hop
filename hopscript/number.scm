@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jan  1 07:59:37 2018 (serrano)                */
+;*    Last change :  Thu Jan  4 09:02:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -38,6 +38,7 @@
 	   (js+ ::obj ::obj ::JsGlobalObject)
 	   (js-slow+ ::obj ::obj ::JsGlobalObject)
 	   (js- ::obj ::obj ::JsGlobalObject)
+	   (js* ::obj ::obj ::JsGlobalObject)
 	   (js/ ::obj ::obj ::JsGlobalObject)
 	   (js/num left right)))
 
@@ -500,6 +501,34 @@
        (let* ((lnum (js-tonumber left %this))
 	      (rnum (js-tonumber right %this)))
 	  (-/overflow lnum rnum))))
+
+;*---------------------------------------------------------------------*/
+;*    js* ...                                                          */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.5.1       */
+;*---------------------------------------------------------------------*/
+(define (js* left right %this)
+   
+   (define (neg? o)
+      (if (flonum? o)
+	  (not (=fx (signbitfl o) 0))
+	  (<fx o 0)))
+   
+   (let* ((lnum (if (number? left) left (js-tonumber left %this)))
+	  (rnum (if (number? right) right (js-tonumber right %this)))
+	  (r (* lnum rnum)))
+      (cond
+	 ((fixnum? r)
+	  (if (=fx r 0)
+	      (if (or (and (neg? lnum) (not (neg? rnum)))
+		      (and (not (neg? lnum)) (neg? rnum)))
+		  -0.0
+		  r)
+	      r))
+	 ((bignum? r)
+	  (bignum->flonum r))
+	 (else
+	  r))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js/ ...                                                          */

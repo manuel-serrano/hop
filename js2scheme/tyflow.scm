@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Jan  3 20:36:48 2018 (serrano)                */
+;*    Last change :  Thu Jan  4 10:28:15 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1115,9 +1115,15 @@
 (define-walk-method (typing this::J2SObjInit env::pair-nil fix::cell)
    (with-access::J2SObjInit this (inits)
       (let ((args (filter-map (lambda (init)
-				 (when (isa? init J2SDataPropertyInit)
-				    (with-access::J2SDataPropertyInit init (val)
-				       val)))
+				 (cond
+				    ((isa? init J2SDataPropertyInit)
+				     (with-access::J2SDataPropertyInit init (val)
+					val))
+				    ((isa? init J2SAccessorPropertyInit)
+				     (with-access::J2SAccessorPropertyInit init (get set)
+					(typing get env fix)
+					(typing set env fix))
+				     #f)))
 		     inits)))
 	 (multiple-value-bind (env bk)
 	    (typing-args args env fix)
@@ -1540,7 +1546,7 @@
 	    (multiple-value-bind (typ envb bk)
 	       (typing-seq (list body test) env fix)
 	       (if (=fx ofix (cell-ref fix))
-		   (return typ envb (filter-breaks bk this))
+		   (return typ (env-merge env envb) (filter-breaks bk this))
 		   (loop (env-merge env envb))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1553,7 +1559,7 @@
 	    (multiple-value-bind (typ envb bk)
 	       (typing-seq (list init test body incr) env fix)
 	       (if (=fx ofix (cell-ref fix))
-		   (return typ envb (filter-breaks bk this))
+		   (return typ (env-merge env envb) (filter-breaks bk this))
 		   (loop (env-merge env envb))))))))
 
 ;*---------------------------------------------------------------------*/

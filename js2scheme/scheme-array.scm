@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Fri Dec 22 10:11:35 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Thu Jan  4 14:56:57 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Array functions.            */
 ;*=====================================================================*/
@@ -89,7 +89,7 @@
 		((uint32? val) (<u32 val (fixnum->uint32 k)))
 		(else #f)))
 	  (with-access::J2SExpr o (range)
-	     (when range
+	     (when (interval? range)
 		(and (>=llong (interval-min range) 0)
 		     (<=llong (interval-max range) (fixnum->llong k)))))))
    
@@ -413,12 +413,13 @@
 				    ,(j2s-scheme obj mode return conf hint)
 				    (uint32->fixnum ,i))
 				 (js-undefined)))))
-		     ((and (>= (interval-min range) h)
+		     ((and (interval? range)
+			   (>= (interval-min range) h)
 			   (< (interval-max range) h))
 		      `(vector-ref ,(j2s-scheme obj mode return conf hint)
 			  (uint32->fixum
 			     ,(j2s-scheme-as-uint32 field mode return conf hint))))
-		     ((>=fx (interval-min range) 0)
+		     ((and (interval? range) (>=fx (interval-min range) 0))
 		      (let ((i (gensym 'idx)))
 			 `(let ((,i ,(j2s-scheme-as-uint32 field mode
 					return conf hint)))
