@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Jan  4 14:53:53 2018 (serrano)                */
+;*    Last change :  Fri Jan  5 07:21:02 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -998,8 +998,7 @@
 			(js-int32-tointeger
 			   (,(bitop op)
 			    (fixnum->int32 ,left) (fixnum->int32 ,right)))
-			(,(bitopjs op)
-			 ,(box left tl conf) ,(box right tr conf) %this)))
+			(,(bitopjs op) ,left ,right %this)))
 		  (else
 		   `(,(bitopjs op)
 		     ,(box left tl conf) ,(box right tr conf) %this))))))))
@@ -1452,8 +1451,8 @@
 	      `(if (and (not (=fx ,right 0))
 			(=fx (remainderfx ,left ,right) 0))
 		   (/fx ,left ,right)
-		   (/fl ,(asreal left tl) ,(asreal right tr)))
-	      `(/fl ,(asreal left tl) ,(todouble right tr) %this)))
+		   (/fl ,(todouble left tl) ,(todouble right tr)))
+	      `(/fl ,(todouble left tl) ,(todouble right tr))))
 	 ((eq? tr 'integer)
 	  `(/js ,(todouble left tl) ,(asreal right tr)))
 	 (else

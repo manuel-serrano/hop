@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Dec 17 14:32:45 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan  5 07:31:39 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
 ;*=====================================================================*/
@@ -539,7 +539,8 @@
 		 (not (isa? val J2SSvc))
 		 (pair? params)
 		 (>=fx (apply + (map param-hint-count params)) 3)
-		 (not (type-checker? val))))))
+		 (not (type-checker? val))
+		 (not (self-recursive? this))))))
    
    (define (typed? decl::J2SDeclFun)
       ;; return #t iff the function's arguments are all typed
@@ -1090,4 +1091,30 @@
       (when (eq? from old)
 	 (set! from new)))
    this)
-      
+
+;*---------------------------------------------------------------------*/
+;*    self-recursive? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (self-recursive? this::J2SDeclFun)
+   (with-access::J2SDeclFun this (val)
+      (let ((cell (make-cell #f)))
+	 (self-recursive val this cell)
+	 (cell-ref cell))))
+
+;*---------------------------------------------------------------------*/
+;*    self-recursive ::J2SNode ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (self-recursive this::J2SNode self::J2SDecl cell)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    self-recursive ::J2SCall ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (self-recursive this::J2SCall self::J2SDecl cell)
+   (call-default-walker)
+   (with-access::J2SCall this (fun)
+      (when (isa? fun J2SRef)
+	 (with-access::J2SRef fun (decl)
+	    (when (eq? decl self)
+	       (cell-set! cell #t))))))
+   
