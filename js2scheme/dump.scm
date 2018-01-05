@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Jan  4 08:14:53 2018 (serrano)                */
+;*    Last change :  Fri Jan  5 09:52:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -128,16 +128,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    dump-hint ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (dump-hint this::J2SNode)
+(define (dump-hint this::J2SDecl)
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:hint"))
-       (let ((hint (cond
-		      ((isa? this J2SExpr)
-		       (with-access::J2SExpr this (hint) hint))
-		      ((isa? this J2SDecl)
-		       (with-access::J2SDecl this (hint) hint))
-		      (else
-		       '()))))
+       (with-access::J2SDecl this (hint)
 	  (if (pair? hint) `(:hint ,hint) '()))
        '()))
 
@@ -386,7 +380,6 @@
 	     ,@(dump-type this)
 	     ,@(dump-vtype decl)
 	     ,@(dump-info this)
-	     ,@(dump-hint this)
 	     ,@(dump-range this)))))
  
 ;*---------------------------------------------------------------------*/
@@ -705,7 +698,6 @@
       `(,@(call-next-method)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
-	  ,@(dump-hint this)
 	  ,@(dump-range this)
 	  ,@(dump-cache this)
 	  ,(j2s->list obj) ,(j2s->list field))))
@@ -725,18 +717,6 @@
 (define-method (j2s->list this::J2SStmtExpr)
    (with-access::J2SStmtExpr this (expr)
       `(,@(call-next-method) ,(j2s->list expr))))
-   
-;* {*---------------------------------------------------------------------*} */
-;* {*    j2s->list ::J2SExprStmt ...                                      *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (j2s->list this::J2SExprStmt)                        */
-;*    (with-access::J2SExprStmt this (stmt)                            */
-;*       `(,@(call-next-method)                                        */
-;* 	  ,@(dump-type this)                                           */
-;* 	  ,@(dump-info this)                                           */
-;* 	  ,@(dump-hint this)                                           */
-;* 	  ,@(dump-range this)                                          */
-;* 	  ,(j2s->list stmt))))                                         */
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */

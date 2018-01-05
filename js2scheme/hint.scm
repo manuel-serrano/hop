@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Jan  5 07:31:39 2018 (serrano)                */
+;*    Last change :  Fri Jan  5 10:40:43 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -31,6 +31,7 @@
 	      types::pair-nil))
 
    (export (j2s-hint!::pair-nil ::J2SProgram ::obj)
+	   (generic j2s-call-hint!::J2SNode ::J2SNode ::bool)
 	   (j2s-hint-meta-noopt! ::J2SDecl)))
 
 ;*---------------------------------------------------------------------*/
@@ -56,8 +57,8 @@
 					 (>fx usecnt 0)))
 			      dups)
 		      decls)))
-	     (for-each call-hint! decls)
-	     (for-each call-hint! nodes)
+	     (for-each (lambda (n) (j2s-call-hint! n #f)) decls)
+	     (for-each (lambda (n) (j2s-call-hint! n #f)) nodes)
 	     dups)
 	  '())))
 
@@ -452,9 +453,9 @@
 		    (decl orig)
 		    (loc loc)))
 	    (thisarg (list (instantiate::J2SHopRef
-			       (loc loc)
-			       (itype 'any)
-			       (id idthis))))
+			      (loc loc)
+			      (itype 'any)
+			      (id idthis))))
 	    (args (map (lambda (p::J2SDecl type::symbol)
 			  (with-access::J2SDecl p (hint)
 			     (instantiate::J2SRef
@@ -479,7 +480,7 @@
 				     (from fun)
 				     (loc loc)
 				     (expr callu)))))))))
-
+   
    (define (unparen expr::J2SExpr)
       (if (isa? expr J2SParen)
 	  (with-access::J2SParen expr (expr)
@@ -492,7 +493,7 @@
 	    (eq? op 'typeof))))
    
    (define (type-checker? fun::J2SFun)
-
+      
       (define (check-node? node)
 	 (when (isa? node J2SReturn)
 	    (with-access::J2SReturn node (expr)
@@ -501,21 +502,21 @@
 		     (or (eq? op 'instanceof)
 			 (when (memq op '(== != === !== eq?))
 			    (or (typeof? lhs) (typeof? rhs)))))))))
-
+      
       (define (block-check-node? node)
 	 (when (isa? node J2SBlock)
 	    (with-access::J2SBlock node (nodes)
 	       (match-case nodes
 		  (((? check-node?)) #t)
 		  (else #f)))))
-
+      
       (with-access::J2SFun fun (body)
 	 (with-access::J2SBlock body (nodes)
 	    (match-case nodes
 	       (((? profile-node?) (? block-check-node?)) #t)
 	       (((? check-node?)) #t)
 	       (else #f)))))
-
+   
    (define (param-hint-count p::J2SDecl)
       (with-access::J2SDecl p (hint usecnt useinloop itype)
 	 (let ((bt (best-hint-type p #f)))
@@ -528,26 +529,25 @@
 		(if useinloop (*fx 2 usecnt) usecnt))
 	       (else
 		0)))))
-      
+   
    (define (duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
-      (with-access::J2SDeclFun this (val id %info)
+      (with-access::J2SDeclFun this (val id %info hintinfo)
 	 (with-access::J2SFun val (params vararg body)
 	    (and (not (isa? %info J2SDecl))
-		 (not (isa? %info FunHintInfo))
+		 (not (isa? hintinfo FunHintInfo))
 		 (not vararg)
 		 (not (isa? val J2SSvc))
 		 (pair? params)
 		 (>=fx (apply + (map param-hint-count params)) 3)
-		 (not (type-checker? val))
-		 (not (self-recursive? this))))))
+		 (not (type-checker? val))))))
    
    (define (typed? decl::J2SDeclFun)
       ;; return #t iff the function's arguments are all typed
-      (with-access::J2SDeclFun this (val id %info)
+      (with-access::J2SDeclFun this (val id %info hintinfo)
 	 (with-access::J2SFun val (params vararg)
 	    (and (not (isa? %info J2SDecl))
-		 (not (isa? %info FunHintInfo))
+		 (not (isa? hintinfo FunHintInfo))
 		 (not vararg)
 		 (not (isa? val J2SSvc))
 		 (pair? params)
@@ -573,40 +573,46 @@
    (define (duplicated? fun::J2SDecl)
       (with-access::J2SDeclFun fun (val %info)
 	 (when (isa? %info J2SDeclFun)
-	    (with-access::J2SDeclFun %info (%info)
-	       (when (isa? %info FunHintInfo)
-		  (with-access::FunHintInfo %info (unhinted hinted)
+	    (with-access::J2SDeclFun %info (hintinfo)
+	       (when (isa? hintinfo FunHintInfo)
+		  (with-access::FunHintInfo hintinfo (unhinted hinted)
 		     (or (eq? hinted fun) (eq? unhinted fun))))))))
    
-   (cond
-      ((duplicable? this)
-       (with-access::J2SDeclFun this (val id rtype)
-	  (with-access::J2SFun val (params body)
-	     (let* ((htypes (map (lambda (p)
-				    (best-hint-type p #t))
-			       params))
-		    (itypes (map (lambda (p::J2SDecl)
-				    (with-access::J2SDecl p (itype)
-				       itype))
-			       params))
-		    (fu (fun-duplicate-untyped this conf))
-		    (ft (fun-duplicate-typed this htypes fu conf)))
-		(fun-dispatch! this htypes ft itypes fu)
-		(list ft fu)))))
-      ((typed? this)
-       (when (config-get conf :profile #f)
-	  (unless (profile-fun? this)
-	     (with-access::J2SDeclFun this (id)
-		(profile-fun! this id 'type))))
-       '())
-      ((not (duplicated? this))
-       (when (config-get conf :profile #f)
-	  (unless (profile-fun? this)
-	     (with-access::J2SDeclFun this (id)
-		(profile-fun! this id 'notype))))
-       '())
-      (else
-       '())))
+   (let  loop ((dup (duplicable? this)))
+      (cond
+	 (dup
+	  (with-access::J2SDeclFun this (val id rtype)
+	     (with-access::J2SFun val (params body)
+		(let* ((htypes (map (lambda (p)
+				       (best-hint-type p #t))
+				  params))
+		       (itypes (map (lambda (p::J2SDecl)
+				       (with-access::J2SDecl p (itype)
+					  itype))
+				  params))
+		       (fu (fun-duplicate-untyped this conf))
+		       (ft (fun-duplicate-typed this htypes fu conf)))
+		   (if (or (not (memq 'object htypes))
+			   (not (self-recursive? this)))
+		       ;; only hints non-recursive or non-object functions
+		       (begin
+			  (fun-dispatch! this htypes ft itypes fu)
+			  (list ft fu))
+		       (loop #f))))))
+	 ((typed? this)
+	  (when (config-get conf :profile #f)
+	     (unless (profile-fun? this)
+		(with-access::J2SDeclFun this (id)
+		   (profile-fun! this id 'type))))
+	  '())
+	 ((not (duplicated? this))
+	  (when (config-get conf :profile #f)
+	     (unless (profile-fun? this)
+		(with-access::J2SDeclFun this (id)
+		   (profile-fun! this id 'notype))))
+	  '())
+	 (else
+	  '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    best-hint-type ...                                               */
@@ -806,7 +812,7 @@
 	 ((unknown) #\X)
 	 (else (string-ref (symbol->string t) 0))))
    
-   (with-access::J2SDeclFun fun (val id %info)
+   (with-access::J2SDeclFun fun (val id hintinfo)
       (with-access::J2SFun val (params body idthis generator thisp rtype)
 	 (let* ((newparams (map j2sdecl-duplicate params types))
 		(newthisp (when thisp
@@ -851,7 +857,7 @@
 	       (set! decl newdecl))
 	    (when (config-get conf :profile)
 	       (profile-fun! newdecl id 'hint))
-	    (set! %info
+	    (set! hintinfo
 	       (instantiate::FunHintInfo
 		  (hinted newdecl)
 		  (unhinted unhinted)
@@ -878,41 +884,50 @@
 	     (itype type)))))
 
 ;*---------------------------------------------------------------------*/
-;*    call-hint! ::J2SNode ...                                         */
+;*    j2s-call-hint! ::J2SNode ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (call-hint! this::J2SNode)
+(define-walk-method (j2s-call-hint! this::J2SNode concrete-type::bool)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    call-hint! ::J2SCall ...                                         */
+;*    j2s-call-hint! ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (call-hint! this::J2SCall)
+(define-walk-method (j2s-call-hint! this::J2SCall concrete-type)
+
+   (define (type-number? t)
+      (memq t '(index integer uint32 int32 bint real number)))
    
    (define (normalize-type t)
-      (case t
-	 ((integer index) 'number)
-	 (else t)))
-   
-   (define (normalize-expr-type e)
-      (normalize-type (j2s-type e)))
+      (if concrete-type
+	  (case t
+	     ((index) 'uint32)
+	     (else t))
+	  t))
+
+;*    (define (normalize-type t)                                       */
+;*       (if concrete-type                                             */
+;* 	  t                                                            */
+;* 	  (case t                                                      */
+;* 	     ((integer index) 'number)                                 */
+;* 	     (else t))))                                               */
    
    (define (fun-hint-info fun)
       (when (isa? fun J2SRef)
 	 (with-access::J2SRef fun (decl)
 	    (when (isa? decl J2SDeclFun)
-	       (with-access::J2SDeclFun decl (val %info)
+	       (with-access::J2SDeclFun decl (val hintinfo)
 		  (with-access::J2SFun val (generator)
 		     (unless generator
-			(when (isa? %info FunHintInfo)
-			   %info))))))))
+			(when (isa? hintinfo FunHintInfo)
+			   hintinfo))))))))
    
    (with-access::J2SCall this (fun args thisarg)
-      (set! args (map! call-hint! args))
-      (set! fun (call-hint! fun))
-      (let ((%info (fun-hint-info fun)))
-	 (if %info
+      (set! args (map! (lambda (n) (j2s-call-hint! n concrete-type)) args))
+      (set! fun (j2s-call-hint! fun concrete-type))
+      (let ((hinfo (fun-hint-info fun)))
+	 (if hinfo
 	     (with-access::J2SRef fun (decl)
-		(with-access::FunHintInfo %info (hinted unhinted types)
+		(with-access::FunHintInfo hinfo (hinted unhinted types)
 		   (with-access::J2SDeclFun hinted (val)
 		      (with-access::J2SFun val (generator)
 			 (cond
@@ -925,8 +940,11 @@
 					   (decl unhinted))))))
 			    ((every (lambda (a t)
 				       (or (eq? t 'unknown)
-					   (eq? (j2s-type a) t)
-					   (eq? (normalize-expr-type a) t)))
+					   (let ((tya (j2s-type a)))
+					      (or (and (eq? t 'number)
+						       (type-number? tya))
+						  (eq? (normalize-type tya)
+						     (normalize-type t))))))
 				args types)
 			     (with-access::J2SFun val (idthis)
 				;; adjust the usecnt count
@@ -944,8 +962,8 @@
 					   (let ((tya (j2s-type a)))
 					      (or (memq tya '(any unknown))
 						  (eq? tya t)
-						  (or (and (memq tya '(number integer))
-							   (eq? t 'index)))))))
+						  (and (type-number? tya)
+						       (eq? t 'index))))))
 				args types)
 			     this)
 			    (else
@@ -1058,9 +1076,9 @@
    (when (and (isa? d J2SDeclFun) #f)
       (with-access::J2SDeclFun d (%info id)
 	 (when (isa? %info J2SDeclFun)
-	    (with-access::J2SDeclFun %info (%info)
-	       (when (isa? %info FunHintInfo)
-		  (with-access::FunHintInfo %info (unhinted hinted)
+	    (with-access::J2SDeclFun %info (hintinfo)
+	       (when (isa? hintinfo FunHintInfo)
+		  (with-access::FunHintInfo hintinfo (unhinted hinted)
 		     (when (and unhinted (eq? hinted d))
 			;; the two hinted and unhinted function are used
 			(with-access::J2SDeclFun unhinted (val)

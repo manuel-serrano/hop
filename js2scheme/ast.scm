@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Dec 22 13:27:40 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan  5 09:55:09 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
 ;*=====================================================================*/
@@ -52,7 +52,7 @@
 
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown) (info '("notraverse")))
-	      (hint::pair-nil (default '()) (info '("notraverse")))
+	      ;;(hint::pair-nil (default '()) (info '("notraverse")))
 	      (range::obj (default #unspecified) (info '("notraverse"))))
 
 	   (class J2SCast::J2SExpr
@@ -277,7 +277,8 @@
 
 	   (class J2SDeclFun::J2SDeclInit
 	      (parent read-only (default #f))
-	      (expression::bool (default #f)))
+	      (expression::bool (default #f))
+	      (hintinfo::obj (default #f) (info '("notraverse"))))
 
 	   (class J2SDeclFunType::J2SDeclFun)
 

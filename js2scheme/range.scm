@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Thu Jan  4 06:51:24 2018 (serrano)                */
+;*    Last change :  Fri Jan  5 10:29:54 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -75,6 +75,11 @@
 		;; map number types to target types
 		(map-types this tymap))
 	     (map-types this defmap)))
+      (with-access::J2SProgram this (decls nodes)
+	 ;; the range has improved type precision that might have created
+	 ;; new hint call opportunities
+	 (for-each (lambda (n) (j2s-call-hint! n #t)) decls)
+	 (for-each (lambda (n) (j2s-call-hint! n #t)) nodes))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -895,7 +900,7 @@
 ;*    node-range ::J2SReturn ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SReturn env::pair-nil args fix::struct)
-   (with-access::J2SReturn this (expr from)
+   (with-access::J2SReturn this (expr from loc)
       (multiple-value-bind (intv env)
 	 (node-range expr env args fix)
 	 (when (isa? from J2SFun)
@@ -1324,10 +1329,11 @@
 (define-walk-method (node-range this::J2SCall env::pair-nil args fix::struct)
    
    (define (node-range-fun callee args env)
-      (with-access::J2SFun callee (params range)
+      (with-access::J2SFun callee (params range rtype)
 	 (let loop ((params params)
 		    (args args))
-	    (if (and (pair? params) (pair? args))
+	    (cond
+	       ((and (pair? params) (pair? args))
 		(with-access::J2SDecl (car params) (itype range)
 		   (when (type-number? itype)
 		      (with-access::J2SExpr (car args) ((ainfo range))
@@ -1335,8 +1341,11 @@
 			    (unless (equal? ni range)
 			       (unfix! fix "j2scall")
 			       (set! range ni)))))
-		   (loop (cdr params) (cdr args)))
-		(node-interval-set! this env fix range)))))
+		   (loop (cdr params) (cdr args))))
+	       ((eq? rtype 'any)
+		(node-interval-set! this env fix *infinity-intv*))
+	       (else
+		(node-interval-set! this env fix range))))))
    
    (call-default-walker)
    
