@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Jan  5 10:29:54 2018 (serrano)                */
+;*    Last change :  Fri Jan  5 16:12:48 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -66,14 +66,15 @@
 	     (begin
 		;; compute the integer value ranges,
 		(j2s-range-program! this args)
-		;; optimize operators (modulo) according to ranges
-		(when (>=fx (config-get args :optim 0) 2)
-		   (j2s-range-opt-program! this args))
 		;; allocate precise types according to the ranges
-		(when (config-get args :optim-integer #f)
-		   (j2s-range-type-program! this tymap))
-		;; map number types to target types
-		(map-types this tymap))
+		(if (config-get args :optim-integer #f)
+		    (begin
+		       ;; optimize operators (modulo) according to ranges
+		       (when (>=fx (config-get args :optim 0) 2)
+			  (j2s-range-opt-program! this args))
+		       (j2s-range-type-program! this tymap)
+		       (map-types this tymap))
+		    (map-types this defmap)))
 	     (map-types this defmap)))
       (with-access::J2SProgram this (decls nodes)
 	 ;; the range has improved type precision that might have created
