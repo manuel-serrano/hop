@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Fri Jan  5 10:40:43 2018 (serrano)                */
+;*    Last change :  Sun Jan  7 09:48:26 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -904,13 +904,6 @@
 	     (else t))
 	  t))
 
-;*    (define (normalize-type t)                                       */
-;*       (if concrete-type                                             */
-;* 	  t                                                            */
-;* 	  (case t                                                      */
-;* 	     ((integer index) 'number)                                 */
-;* 	     (else t))))                                               */
-   
    (define (fun-hint-info fun)
       (when (isa? fun J2SRef)
 	 (with-access::J2SRef fun (decl)
@@ -963,7 +956,7 @@
 					      (or (memq tya '(any unknown))
 						  (eq? tya t)
 						  (and (type-number? tya)
-						       (eq? t 'index))))))
+						       (type-number? t))))))
 				args types)
 			     this)
 			    (else

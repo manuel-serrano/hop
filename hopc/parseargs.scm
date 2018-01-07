@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jan  3 06:35:54 2018 (serrano)                */
+;*    Last change :  Sun Jan  7 06:21:20 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -44,9 +44,11 @@
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:range, j2s:usage, j2s:key,")
    (print "      j2s:loc,")
-   (print "      hopscript:cache[num], hopscript:function[num], hopscript:alloc[num],")
+   (print "      hopscript:cache[num] (*), hopscript:function[num] (*), hopscript:alloc[num] (*),")
    (print "      nodejs:compile")
    (print "   - HOPCFLAGS: hopc compilation flags")
+   (print " (*) Need both compile and runtime variable and need to be compiled")
+   (print " in profile mode: --profile")
    (newline))
 
 ;*---------------------------------------------------------------------*/

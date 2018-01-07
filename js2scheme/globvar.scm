@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Dec 17 11:46:29 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Sat Jan  6 10:10:08 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
 ;*    propagation).                                                    */
@@ -97,7 +97,9 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (scope %info id)
 	 (when (isa? decl J2SDeclFun)
-	    (cell-set! closures (cons decl (cell-ref closures))))
+	    (cell-set! closures (cons decl (cell-ref closures)))
+	    (with-access::J2SDeclFun decl (val)
+	       (globvar! val closures exec)))
 	 (cond
 	    ((not (or (eq? scope 'global) (eq? scope '%scope)))
 	     (call-default-walker))
@@ -115,13 +117,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (globvar! this::J2SCall closures::cell exec)
    
-   (define (flush-function! this)
+   (define (flush-function! this exec)
       (with-access::J2SFun this (%info body)
 	 (if (eq? %info 'globvar-fun)
 	     this
 	     (begin
 		(set! %info 'globvar-fun)
-		(globvar! body closures #f)))))
+		(set! body (globvar! body closures exec))))))
    
    (define (flush-closures! closures)
       (let loop ()
@@ -131,21 +133,22 @@
 	       (for-each (lambda (c)
 			    (cond
 			       ((isa? c J2SFun)
-				(flush-function! c))
+				(flush-function! c #f))
 			       ((isa? c J2SDeclFun)
 				(with-access::J2SDeclFun c (val)
-				   (flush-function! val)))))
+				   (flush-function! val #f)))))
 		  cs)
 	       (loop)))))
-   
+
    (with-access::J2SCall this (fun args)
       ;; follow static functions
       (if (isa? fun J2SRef)
 	  (with-access::J2SRef fun (decl)
 	     (if (isa? decl J2SDeclFun)
-		 (with-access::J2SDeclFun decl (val)
-		    (globvar! val closures exec))
-		 (flush-closures! closures)))
+		 (with-access::J2SDeclFun decl (val id)
+		    (flush-function! val #t))
+		 (with-access::J2SDecl decl (id)
+		    (flush-closures! closures))))
 	  (flush-closures! closures))
       (set! args (map! (lambda (a) (globvar! a closures #f)) args))
       this))
@@ -185,9 +188,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (globvar! this::J2SCond closures::cell exec)
    (with-access::J2SCond this (test then else)
-      (globvar! test closures exec)
-      (globvar! then closures #f)
-      (globvar! else closures #f)
+      (set! test (globvar! test closures exec))
+      (set! then (globvar! then closures #f))
+      (set! else (globvar! else closures #f))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -195,9 +198,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (globvar! this::J2SIf closures::cell exec)
    (with-access::J2SIf this (test then else)
-      (globvar! test closures exec)
-      (globvar! then closures #f)
-      (globvar! else closures #f)
+      (set! test (globvar! test closures exec))
+      (set! then (globvar! then closures #f))
+      (set! else (globvar! else closures #f))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -205,8 +208,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (globvar! this::J2SSwitch closures::cell exec)
    (with-access::J2SSwitch this (key cases)
-      (globvar! key closures exec)
-      (for-each (lambda (c) (globvar! c closures #f)) cases)
+      (set! key (globvar! key closures exec))
+      (set! cases (map! (lambda (c) (globvar! c closures #f)) cases))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -214,10 +217,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (globvar! this::J2SFor closures::cell exec)
    (with-access::J2SFor this (init test incr body)
-      (globvar! init closures exec)
-      (globvar! test closures exec)
-      (globvar! incr closures #f)
-      (globvar! body closures #f)
+      (set! init (globvar! init closures exec))
+      (set! test (globvar! test closures exec))
+      (set! incr (globvar! incr closures #f))
+      (set! body (globvar! body closures #f))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -225,9 +228,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (globvar! this::J2SForIn closures::cell exec)
    (with-access::J2SForIn this (lhs obj body)
-      (globvar! lhs closures exec)
-      (globvar! obj closures exec)
-      (globvar! body closures #f)
+      (set! lhs (globvar! lhs closures exec))
+      (set! obj (globvar! obj closures exec))
+      (set! body (globvar! body closures #f))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -235,7 +238,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (globvar! this::J2SWhile closures::cell exec)
    (with-access::J2SWhile this (test body)
-      (globvar! test closures exec)
-      (globvar! body closures #f)
+      (set! test (globvar! test closures exec))
+      (set! body (globvar! body closures #f))
       this))
 

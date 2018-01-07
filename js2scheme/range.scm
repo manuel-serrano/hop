@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Fri Jan  5 16:12:48 2018 (serrano)                */
+;*    Last change :  Sat Jan  6 09:42:49 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -72,6 +72,7 @@
 		       ;; optimize operators (modulo) according to ranges
 		       (when (>=fx (config-get args :optim 0) 2)
 			  (j2s-range-opt-program! this args))
+		       ;; allocate precise variable types
 		       (j2s-range-type-program! this tymap)
 		       (map-types this tymap))
 		    (map-types this defmap)))
