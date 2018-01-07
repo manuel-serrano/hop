@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/share/hop-dom.js                  */
+/*    serrano/prgm/project/hop/3.2.x/share/hop-dom.js                  */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Tue Mar 21 18:12:23 2017 (serrano)                */
-/*    Copyright   :  2006-17 Manuel Serrano                            */
+/*    Last change :  Sun Jan  7 14:52:24 2018 (serrano)                */
+/*    Copyright   :  2006-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -1901,8 +1901,8 @@ function hop_bounding_box( e, m ) {
    if( "getBoundingClientRect" in n ) {
       var rect = n.getBoundingClientRect();
 
-      return { 'left': rect.left - m + document.body.scrollLeft,
-	       'top': rect.top - m + document.body.scrollTop,
+      return { 'left': rect.left - m + (document.body.scrollLeft || window.scrollX),
+	       'top': rect.top - m + (document.body.scrollTop || window.scrollY),
 	       'width': rect.width + (2 * m),
 	       'height': rect.height + (2 * m) };
    } else {
