@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Thu Dec 14 12:01:12 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 12 19:30:42 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
 ;*    -------------------------------------------------------------    */
@@ -1092,7 +1092,8 @@
 	    (cps this k (lambda (n)
 			   (J2STry (J2SBlock/w-endloc (pack n))
 			      (Catch loc declc param)))
-	       kbreaks kcontinues declc fun))))
+	       kbreaks kcontinues #f fun))))
+	       ;;kbreaks kcontinues declc fun))))
 
    (define (SeqFinally loc finally paramt paramf)
       (J2SSeq
@@ -1129,7 +1130,7 @@
 				     (cps body
 					k pack kbreaks kcontinues ktry fun)))))
 		     (declc (J2SLetOpt '(call) cname catch))
-		     (eparam (J2SParam '(ref)  (gensym '%exc) :vtype 'any)))
+		     (eparam (J2SParam '(ref) (gensym '%exc) :vtype 'any)))
 		 (J2SLetBlock (list declc)
 		    (J2STry
 		       (cps-try-body body

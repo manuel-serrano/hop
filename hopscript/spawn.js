@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/hopscript/spawn.js                */
+/*    serrano/prgm/project/hop/3.2.x/hopscript/spawn.js                */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct  6 07:39:47 2016                          */
-/*    Last change :  Fri Oct  7 10:30:26 2016 (serrano)                */
-/*    Copyright   :  2016 Manuel Serrano                               */
+/*    Last change :  Fri Jan 12 18:37:48 2018 (serrano)                */
+/*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Spawn implementation as defined in                               */
 /*      https://tc39.github.io/ecmascript-asyncawait                   */
@@ -20,7 +20,7 @@ const promise = Promise;
 /*---------------------------------------------------------------------*/
 /*    spawn ...                                                        */
 /*    -------------------------------------------------------------    */
-/*    See generator.scm for the initiailization.                       */
+/*    See generator.scm for the initialization.                        */
 /*---------------------------------------------------------------------*/
 function spawn( genF /* ::object */, self /* ::object */ ) {
    return new promise( function( resolve, reject ) {

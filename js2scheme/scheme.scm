@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Jan  2 11:06:49 2018 (serrano)                */
+;*    Last change :  Mon Jan  8 21:35:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1378,7 +1378,7 @@
 			      `(bind-exit (,(escape-name '%continue id))
 				  ,(j2s-scheme body mode return conf hint)))
 			   (j2s-scheme body mode return conf hint))
-		      ,(j2s-scheme incr mode return conf 'void)
+		      ,(j2s-scheme incr mode return conf '(void))
 		      (,loop))
 		   (js-undefined))))
 
@@ -1391,7 +1391,7 @@
 			      `(bind-exit (,(escape-name '%continue id))
 				  ,(j2s-scheme body mode acc-return conf hint)))
 			   (j2s-scheme body mode acc-return conf hint))
-		      ,(j2s-scheme incr mode return conf 'void)
+		      ,(j2s-scheme incr mode return conf '(void))
 		      (,loop %acc))
 		   %acc)))
 
