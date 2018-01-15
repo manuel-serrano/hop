@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Jan  3 06:36:29 2018 (serrano)                */
+;*    Last change :  Thu Jan 11 08:04:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -65,6 +65,7 @@
 	      #!rest args)
 
 	   (j2s-make-driver ::pair-nil)
+	   (j2s-builtin-drivers-list::pair)
 	   (j2s-driver-add-after ::pair-nil ::bstring ::J2SStage)
 	   (j2s-optim-driver)
 	   (j2s-plain-driver)
@@ -76,10 +77,23 @@
 	   (j2s-javascript-debug-driver)))
 
 ;*---------------------------------------------------------------------*/
+;*    *builtin-drivers* ...                                            */
+;*---------------------------------------------------------------------*/
+(define *builtin-drivers*
+   `(("j2s-optim-driver" ,j2s-optim-driver)
+     ("j2s-plain-driver" ,j2s-plain-driver)
+     ("j2s-debug-driver" ,j2s-debug-driver)
+     ("j2s-eval-driver" ,j2s-eval-driver)
+     ("j2s-javascript-driver" ,j2s-javascript-driver)
+     ("j2s-javascript-optim-driver" ,j2s-javascript-optim-driver)
+     ("j2s-ecmascript5-driver" ,j2s-ecmascript5-driver)
+     ("j2s-javascript-debug-driver" ,j2s-javascript-debug-driver)))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-make-driver ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-make-driver names)
-
+   
    (define (make-driver-stage name-or-proc)
       (cond
 	 ((procedure? name-or-proc)
@@ -113,19 +127,20 @@
 	  (lambda (x) x))
 	 (else
 	  (error "j2s-make-driver" "Cannot find builtin stage" name-or-proc))))
-
+   
    (if (and (pair? names) (null? (cdr names)))
-       (case (string->symbol (car names))
-	  ((j2s-optim-driver) (j2s-optim-driver))
-	  ((j2s-plain-driver) (j2s-plain-driver))
-	  ((j2s-debug-driver) (j2s-debug-driver))
-	  ((j2s-eval-driver) (j2s-eval-driver))
-	  ((j2s-javascript-driver) (j2s-javascript-driver))
-	  ((j2s-javascript-optim-driver) (j2s-javascript-optim-driver))
-	  ((j2s-ecmascript5-driver) (j2s-ecmascript5-driver))
-	  ((j2s-javascript-debug-driver) (j2s-javascript-debug-driver))
-	  (else (error "j2s-make-driver" "Cannot find builtin driver" (car names))))
+       (let ((driver (assoc (car names) *builtin-drivers*)))
+	  (if (pair? driver)
+	      ((cadr driver))
+	      (error "j2s-make-driver" "Cannot find builtin driver"
+		 (car names))))
        (map make-driver-stage names)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-builtin-drivers-list ...                                     */
+;*---------------------------------------------------------------------*/
+(define (j2s-builtin-drivers-list)
+   (map car *builtin-drivers*))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-driver-add-after ...                                         */

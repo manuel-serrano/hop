@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Jan  7 06:21:20 2018 (serrano)                */
+;*    Last change :  Thu Jan 11 08:02:59 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -157,8 +157,6 @@
 	     (hopc-long-size-set! 32))
 	    (("-m64" (help "Generate 64-bit code"))
 	     (hopc-long-size-set! 64))
-	    (("-muint32" (help "Generate uint32 variables and constants"))
-	     (hopc-uint32-set! #t))
 	    (("--source-map" (help "Enable source-map table generation"))
 	     (hopc-clientc-source-map-set! #t))
 	    (("--no-source-map" (help "Disable source-map table generation"))
@@ -213,6 +211,9 @@
 	     (hopc-js-driver-set! driver))
 	    (("--js-show-driver" (help "Set j2s compiler driver"))
 	     (print (js-driver->string))
+	     (exit 0))
+	    (("--js-drivers-list" (help "Show j2s builtin compiler drivers"))
+	     (for-each print (js-drivers-list))
 	     (exit 0))
 	    (("--js-target-es5" (help "Generate a client-side JavaScript 1.5 file"))
 	     (hopc-js-target-set! 'es5)

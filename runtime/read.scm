@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/read.scm                  */
+;*    serrano/prgm/project/hop/3.2.x/runtime/read.scm                  */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Fri Oct  6 21:32:52 2017 (serrano)                */
-;*    Copyright   :  2005-17 Manuel Serrano                            */
+;*    Last change :  Thu Jan 11 15:01:44 2018 (serrano)                */
+;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
 ;*    js-expressions. Js-expressions starts with { and ends with }.    */
@@ -955,12 +955,12 @@
    
    (define (more-recent? sopath)
       (when (file-exists? sopath)
-	 (>elong (file-modification-time sopath)
+	 (>=elong (file-modification-time sopath)
 	    (file-modification-time path))))
    
    (define (errfile file)
       (string-append file ".err"))
-   
+
    ;; check the path directory first
    (when (hop-sofile-enable)
       (let* ((dir (dirname path))

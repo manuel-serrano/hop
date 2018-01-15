@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Dec  5 13:43:16 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Thu Jan 11 08:01:57 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -23,6 +23,7 @@
 
    (export  (jsheap::int)
 	    (js-driver->string)
+	    (js-drivers-list)
 	    (hopc-read p)
 	    (setup-client-compiler!)
 	    (compile-sources::int)))
@@ -97,6 +98,12 @@
        (j2s-optim-driver))
       (else
        (j2s-plain-driver))))
+
+;*---------------------------------------------------------------------*/
+;*    js-drivers-list ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-drivers-list)
+   (j2s-builtin-drivers-list))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-driver->string ...                                            */
@@ -180,7 +187,6 @@
 		  :optim (hopc-optim-level)
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
-		  :uint32 (hopc-uint32)
 		  :debug (bigloo-debug)
 		  (hopc-j2s-flags)))))
       
@@ -207,7 +213,6 @@
 		  :optim (hopc-optim-level)
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
-		  :uint32 (hopc-uint32)
 		  :debug (bigloo-debug)
 		  (hopc-j2s-flags)))))
       
@@ -329,7 +334,6 @@
 			:optim (hopc-optim-level)
 			:verbose (hop-verbose)
 			:long-size (hopc-long-size)
-			:uint32 (hopc-uint32)
 			:debug (bigloo-debug)
 			(hopc-j2s-flags))))
 	       file

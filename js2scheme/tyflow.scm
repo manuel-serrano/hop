@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Jan  4 10:28:15 2018 (serrano)                */
+;*    Last change :  Thu Jan 11 08:21:42 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1589,9 +1589,6 @@
    (with-access::J2STry this (body catch finally)
       (multiple-value-bind (_ envb bkb)
 	 (typing body env fix)
-	 (when (isa? catch J2SCatch)
-	    (with-access::J2SCatch catch (param)
-	       (decl-vtype-set! param 'any fix)))
 	 (multiple-value-bind (_ envc bkh)
 	    (typing catch env fix)
 	    (multiple-value-bind (_ envf bkf)
@@ -1602,7 +1599,8 @@
 ;*    typing ::J2SCatch ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SCatch env::pair-nil fix::cell)
-   (with-access::J2SCatch this (body)
+   (with-access::J2SCatch this (body param)
+      (decl-vtype-set! param 'any fix)
       (typing body env fix)))
 
 ;*---------------------------------------------------------------------*/
@@ -1861,6 +1859,14 @@
       (when (eq? vtype from) (set! vtype to)))
    (call-default-walker))
 
+;*---------------------------------------------------------------------*/
+;*    force-type! ::J2SCatch ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (force-type! this::J2SCatch from to)
+   (with-access::J2SCatch this (param)
+      (force-type! param from to)
+      (call-default-walker)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    reset-type! ::J2SNode ...                                        */
 ;*---------------------------------------------------------------------*/

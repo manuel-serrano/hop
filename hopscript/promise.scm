@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Mon Dec  4 08:43:24 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 12 13:47:56 2018 (serrano)                */
+;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
 ;*    -------------------------------------------------------------    */
@@ -197,7 +197,8 @@
 		(with-handler
 		   (lambda (e)
 		      ;; promise .10.a
-		      (exception-notify e)
+		      (when (>=fx (bigloo-debug) 1)
+			 (exception-notify e))
 		      (js-call1 %this reject (js-undefined) e)
 		      o)
 		   (begin
