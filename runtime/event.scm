@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/event.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/runtime/event.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 27 05:45:08 2005                          */
-;*    Last change :  Mon Sep 18 17:32:16 2017 (serrano)                */
-;*    Copyright   :  2005-17 Manuel Serrano                            */
+;*    Last change :  Sun Jan 14 17:48:38 2018 (serrano)                */
+;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The implementation of server events                              */
 ;*=====================================================================*/
@@ -150,9 +150,9 @@
 ;*    envelope-re ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define envelope-re
-   (pregexp "^<([rsxifj]) name='([^']+)'>((?:.|[\n])*)</[rsxifj]>$" ))
+   (pregexp "^<([rsxifj]) name='([^']+)'>(.*)</[rsxifj]>$" 'MULTILINE))
 (define cdata-re
-   (pregexp "^<!\\[CDATA\\[((?:.|[\n])*)\\]\\]>$"))
+   (pregexp "^<!\\[CDATA\\[(.*)\\]\\]>$" 'MULTILINE))
 
 ;*---------------------------------------------------------------------*/
 ;*    server-init! ...                                                 */

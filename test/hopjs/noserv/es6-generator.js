@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.1.x/test/hopjs/noserv/es6-generator.js         */
+/*    .../project/hop/3.2.x/test/hopjs/noserv/es6-generator.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Oct 30 17:54:07 2015                          */
-/*    Last change :  Sat Feb  4 09:23:31 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Fri Jan 12 18:52:08 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 1.6 generators                                */
 /*=====================================================================*/
@@ -1410,6 +1410,16 @@ function* tryk( o ) {
       o.x += 20;
    }
 }
+
+var lerr = false;
+
+function* tryl() {
+   try {
+      ;
+   } catch( e ) {
+      lerr = true;
+   }
+}
    
 console.log( "try..." );
 
@@ -1502,6 +1512,12 @@ g = tryk( o );
 
 assert.ok( equal( g.next(), { value: undefined, done: true } ) );
 assert.ok( o, { x: 21 } );
+
+console.log( "   tryl()" );
+g = tryl();
+g.next();
+g.next();
+assert.ok( !lerr, "tryl" );
 
 /*---------------------------------------------------------------------*/
 /*    switch                                                           */

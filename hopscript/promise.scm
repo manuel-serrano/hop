@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 19 08:19:19 2015                          */
-;*    Last change :  Fri Jan 12 13:47:56 2018 (serrano)                */
+;*    Last change :  Fri Jan 12 18:27:00 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript promises                     */
@@ -244,12 +244,13 @@
 			      (vector-set! it i result)
 			      (set! count (-fx count 1))
 			      (if (=fx count 0)
-				  (js-vector->jsarray it %this)
+				  (promise-resolve promise
+				     (js-vector->jsarray it %this))
 				  js-unresolved))
 			   1 "onfullfilled")
 			(js-make-function %this
 			   (lambda (this reason)
-			      reason)
+			      (promise-reject promise reason))
 			   1 "onrejected")
 			promise)
 		     (loop (-fx i 1)))
@@ -272,11 +273,11 @@
 		     (js-promise-then-catch %this (vector-ref it i)
 			(js-make-function %this
 			   (lambda (this result)
-			      result)
+			      (promise-resolve promise result))
 			   1 "onfullfilled")
 			(js-make-function %this
 			   (lambda (this reason)
-			      reason)
+			      (promise-reject promise reason))
 			   1 "onrejected")
 			promise)
 		     (loop (+fx i 1)))
