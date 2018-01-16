@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jan  3 09:13:16 2018 (serrano)                */
+;*    Last change :  Mon Jan 15 18:10:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1937,9 +1937,6 @@
 ;* 	     value))                                                   */
 	 (else
 	  (with-access::JsObject o (elements)
-	     (when (>=fx i (vector-length elements))
-		(tprint "o=" (typeof o) " els=" (vector-length elements)
-		    " i=" i " name=" name))
 	     (vector-set! elements i value)
 	     value))))
 
