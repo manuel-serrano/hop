@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec  4 08:41:28 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Tue Jan 16 08:59:05 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
 ;*    -------------------------------------------------------------    */
@@ -315,15 +315,6 @@
 		       (with-access::JsConstructMap cmap (props)
 			  (vfor-each3 in-mapped-property elements props))
 		       (for-each in-property (js-object-properties o))))))
-;* 	    ((isa? obj JsObject)                                       */
-;* 	     (let loop ((o obj))                                       */
-;* 		(with-access::JsObject o (cmap properties __proto__)   */
-;* 		   (if (not (eq? cmap (js-not-a-cmap)))                */
-;* 		       (with-access::JsConstructMap cmap (names)       */
-;* 			  (vfor-each (lambda (n)                       */
-;* 					(when (and n (symbol? n)) (proc n))) */
-;* 			     names))                                   */
-;* 		       (for-each in-property properties)))))           */
 	    ((object? obj)
 	     (vfor-each2 (lambda (f) (proc (class-field-name f)))
 		(class-all-fields (object-class obj))))

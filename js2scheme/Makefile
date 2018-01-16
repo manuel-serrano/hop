@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Dec 25 17:51:08 2017 (serrano)                */
+#*    Last change :  Tue Jan 16 08:52:58 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -71,6 +71,9 @@ build: $(BACKEND)
 
 native: o heap-c lib-c
 jvm: heap-jvm lib-jvm
+
+heap-c: .afile
+lib-c: .afile
 
 #*---------------------------------------------------------------------*/
 #*    ude                                                              */
