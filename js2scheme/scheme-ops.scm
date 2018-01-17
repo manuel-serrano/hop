@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Fri Jan  5 09:51:56 2018 (serrano)                */
+;*    Last change :  Wed Jan 17 15:01:30 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1570,36 +1570,43 @@
 (define (js-arithmetic-% loc type lhs rhs mode return conf hint::pair-nil)
    (with-tmp lhs rhs mode return conf hint '*
       (lambda (left right)
-	 (let ((tl (j2s-vtype lhs))
-	       (tr (j2s-vtype rhs)))
+	 (let ((tlv (j2s-vtype lhs))
+	       (trv (j2s-vtype rhs))
+	       (tl (j2s-type lhs))
+	       (tr (j2s-type rhs)))
 	    (epairify loc
 	       (cond
-		  ((and (eq? tl 'int32) (eq? tr 'int32))
+		  ((and (eq? tlv 'int32) (eq? trv 'int32))
 		   `(if (=s32 ,right #s32:0)
 			+nan.0
 			(js-int32-tointeger (remainders32 ,left ,right))))
-		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
+		  ((and (eq? tlv 'uint32) (eq? trv 'uint32))
 		   `(if (=u32 ,right #u32:0)
 			+nan.0
 			(js-uint32-tointeger (remainders32 ,left ,right))))
-		  ((and (eq? tl 'integer) (eq? tr 'integer))
+		  ((and (eq? tlv 'integer) (eq? trv 'integer))
 		   (with-tmp lhs rhs mode return conf hint 'any
 		      (lambda (left right)
 			 (if (and (number? right) (= right 0))
 			     +nan.0
 			     `(%$$NN ,left ,right)))))
+		  ((and (eq? tl 'uint32) (eq? tr 'uint32))
+		   `(if (=u32 ,(asuint32 right trv) #u32:0)
+			+nan.0
+			(js-uint32-tointeger
+			   (remainderu32 ,(asuint32 left tlv) ,(asuint32 right trv)))))
 		  (else
 		   (if (m64? conf)
 		       (if (and (number? right) (not (= right 0)))
-			   `(%$$NZ ,(tonumber64 left tl)
-			       ,(tonumber64 right tr))
-			   `(%$$NN ,(tonumber64 left tl)
-			       ,(tonumber64 right tr)))
+			   `(%$$NZ ,(tonumber64 left tlv)
+			       ,(tonumber64 right trv))
+			   `(%$$NN ,(tonumber64 left tlv)
+			       ,(tonumber64 right trv)))
 		       (if (and (number? right) (not (= right 0)))
-			   `(%$$NZ ,(tonumber32 left tl)
-			       ,(tonumber32 right tr))
-			   `(%$$NN ,(tonumber32 left tl)
-			       ,(tonumber32 right tr)))))))))))
+			   `(%$$NZ ,(tonumber32 left tlv)
+			       ,(tonumber32 right trv))
+			   `(%$$NN ,(tonumber32 left tlv)
+			       ,(tonumber32 right trv)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    asint32 ...                                                      */

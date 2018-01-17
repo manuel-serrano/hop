@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Dec 22 16:02:02 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Wed Jan 17 14:29:12 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
 ;*    -------------------------------------------------------------    */
@@ -53,7 +53,7 @@
 (define inline-default-call-expansion 16)
 (define inline-max-targets 3)
 (define inline-recursive #f)
-(define inline-max-size 30)
+(define inline-max-size 40)
 
 ;*---------------------------------------------------------------------*/
 ;*    dev                                                              */
@@ -261,6 +261,15 @@
 		    (callees (callinfo-callees inl))
 		    (expr (inline-call call callees prgm))
 		    (esize (node-size expr)))
+		(unless (and (<=fx esize isize)
+			     (<=fx esize inline-max-size)
+			     (<=fx esize
+				(* inline-default-call-expansion
+				   (node-size call))))
+		   (tprint "call=" (j2s->list call) " inl=" (j2s->list expr)
+		      " esize=" esize " isize=" isize " msize=" inline-max-size
+		      " xsize=" (* inline-default-call-expansion
+				   (node-size call))))
 		(if (and (<=fx esize isize)
 			 (<=fx esize inline-max-size)
 			 (<=fx esize
