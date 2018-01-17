@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Jan 17 11:36:32 2018 (serrano)                */
+;*    Last change :  Wed Jan 17 18:39:39 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -135,14 +135,14 @@
 (define (js-get-name/cache-expander x e)
    (match-case x
       ((?- (and (? symbol?) ?obj) ((kwote quote) ?name) ?cache (and (? symbol?) ?%this))
-       (e `(if (isa? ,obj JsObject)
+       (e `(if (js-object? ,obj)
 	       (js-object-get-name/cache ,obj ',name ,cache ,%this)
 	       (js-get ,obj ',name ,%this))
 	  e))
       ((?- ?obj ((kwote quote) ?name) ?cache (and (? symbol?) ?%this))
        (let ((tmp (gensym 'obj)))
 	  (e `(let ((,tmp ,obj))
-		 (if (isa? ,tmp JsObject)
+		 (if (js-object? ,tmp)
 		     (js-object-get-name/cache ,tmp ',name ,cache ,%this)
 		     (js-get ,tmp ',name ,%this)))
 	     e)))
@@ -346,14 +346,14 @@
       ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-))
 	  (and (or (? symbol?) (? number?)) ?v)
 	  ?throw ?cache (and (? symbol?) ?%this))
-       (e `(if (isa? ,o JsObject)
+       (e `(if (js-object? ,o)
 	       (js-object-put-name/cache! ,o ,prop ,v ,throw ,cache ,%this)
 	       (js-put! ,o ,prop ,v ,throw ,%this))
 	  e))
       ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-)) ?v ?throw ?cache (and (? symbol?) ?%this))
        (let ((tmp (gensym 'tmp)))
 	  (e `(let ((,tmp ,v))
-		 (if (isa? ,o JsObject)
+		 (if (js-object? ,o)
 		     (js-object-put-name/cache! ,o ,prop ,tmp ,throw ,cache ,%this)
 		     (js-put! ,o ,prop ,tmp ,throw ,%this)))
 	     e)))
@@ -559,7 +559,7 @@
       (else
        (match-case x
 	  ((?- ?%this (and (? symbol?) ?obj) ?prop ?ccache ?ocache . ?args)
-	   (e `(if (isa? ,obj JsObject)
+	   (e `(if (js-object? ,obj)
 		   (js-object-method-call-name/cache ,%this
 		      ,obj ,prop ,ccache ,ocache ,@args)
 		   (js-non-object-method-call-name %this ,obj ,prop ,@args))
@@ -567,7 +567,7 @@
 	  ((?- ?%this ?obj ?prop ?ccache ?ocache . ?args)
 	   (let ((o (gensym '%obj)))
 	      (e `(let ((,o ,obj))
-		     (if (isa? ,o JsObject)
+		     (if (js-object? ,o)
 			 (js-object-method-call-name/cache ,%this
 			    ,o ,prop ,ccache ,ocache ,@args)
 			 (js-non-object-method-call-name %this ,o ,prop ,@args)))

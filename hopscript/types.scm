@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Tue Dec 26 11:58:56 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Jan 17 18:53:00 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
 ;*    -------------------------------------------------------------    */
@@ -300,7 +300,7 @@
 	   (class JsGenerator::JsObject
 	      %next)
 	   
-	   (inline js-object-default-mode::byte)
+	   (inline js-object-default-mode::ubyte)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
@@ -323,13 +323,14 @@
 	   (inline js-object-mode-instance?::bool ::JsObject)
 	   (inline js-object-mode-instance-set! ::JsObject ::bool)
 	   
-	   (inline JS-OBJECT-MODE-EXTENSIBLE::byte)
-	   (inline JS-OBJECT-MODE-SEALED::byte)
-	   (inline JS-OBJECT-MODE-FROZEN::byte)
-	   (inline JS-OBJECT-MODE-INLINE::byte)
-	   (inline JS-OBJECT-MODE-GETTER::byte)
-	   (inline JS-OBJECT-MODE-HASINSTANCE::byte)
-	   (inline JS-OBJECT-MODE-INSTANCE::byte)
+	   (inline JS-OBJECT-MODE-EXTENSIBLE::ubyte)
+	   (inline JS-OBJECT-MODE-SEALED::ubyte)
+	   (inline JS-OBJECT-MODE-FROZEN::ubyte)
+	   (inline JS-OBJECT-MODE-INLINE::ubyte)
+	   (inline JS-OBJECT-MODE-GETTER::ubyte)
+	   (inline JS-OBJECT-MODE-HASINSTANCE::ubyte)
+	   (inline JS-OBJECT-MODE-INSTANCE::ubyte)
+	   (inline JS-OBJECT-MODE-JSOBJECTTAG::ubyte)
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
@@ -369,8 +370,8 @@
 	   (inline js-object-properties ::JsObject)
 	   (inline js-object-properties-set! ::JsObject ::obj)
 	   
-	   (inline js-object-mode::byte ::JsObject)
-	   (inline js-object-mode-set! ::JsObject ::byte)
+	   (inline js-object-mode::ubyte ::JsObject)
+	   (inline js-object-mode-set! ::JsObject ::ubyte)
 	   
 	   (gencmapid::uint32))
    
@@ -388,7 +389,8 @@
 ;*    js-object-default-mode ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-default-mode)
-   (bit-or (JS-OBJECT-MODE-EXTENSIBLE) (JS-OBJECT-MODE-INLINE)))
+   (bit-or (JS-OBJECT-MODE-EXTENSIBLE)
+      (bit-or (JS-OBJECT-MODE-INLINE) (JS-OBJECT-MODE-JSOBJECTTAG))))
 
 (define-inline (JS-OBJECT-MODE-EXTENSIBLE) 1)
 (define-inline (JS-OBJECT-MODE-SEALED) 2)
@@ -397,6 +399,7 @@
 (define-inline (JS-OBJECT-MODE-GETTER) 16)
 (define-inline (JS-OBJECT-MODE-HASINSTANCE) 32)
 (define-inline (JS-OBJECT-MODE-INSTANCE) 64)
+(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) 128)
 
 (define-macro (JS-OBJECT-MODE-EXTENSIBLE) 1)
 (define-macro (JS-OBJECT-MODE-SEALED) 2)
@@ -405,6 +408,7 @@
 (define-macro (JS-OBJECT-MODE-GETTER) 16)
 (define-macro (JS-OBJECT-MODE-HASINSTANCE) 32)
 (define-macro (JS-OBJECT-MODE-INSTANCE) 64)
+(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) 128)
 
 (define-inline (js-object-mode-extensible? o)
    (=fx (bit-and (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
@@ -795,7 +799,8 @@
 ;*    js-object? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object? o)
-   (isa? o JsObject))
+   (and (%object? o) (>fx (js-object-mode o) 0)))
+;*    (isa? o JsObject))                                               */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function? ...                                                 */
@@ -831,16 +836,10 @@
 ;*    js-object-mode ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-mode o)
-;*    (with-access::JsObject o (_mode)                                 */
-;*       _mode)                                                        */
-   (object-header-size o)
-   )
+   (object-header-size o))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-mode-set! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-mode-set! o p)
-;*    (with-access::JsObject o (_mode)                                 */
-;*       (set! _mode p))                                               */
-   (object-header-size-set! o p)
-   )
+   (object-header-size-set! o p))
