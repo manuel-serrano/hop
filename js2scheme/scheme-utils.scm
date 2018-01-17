@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Dec 24 06:44:16 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Wed Jan 17 07:13:32 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
 ;*=====================================================================*/
@@ -454,6 +454,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-get-name/cache::symbol clevel::long)
    (case clevel
+      ((0) 'js-object-get-name/cache-level0)
       ((1) 'js-object-get-name/cache-level1)
       ((2) 'js-object-get-name/cache-level2)
       (else 'js-object-get-name/cache)))

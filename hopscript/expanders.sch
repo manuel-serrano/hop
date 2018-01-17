@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Thu Oct 26 14:36:31 2017 (serrano)                */
-;*    Copyright   :  2006-17 Manuel Serrano                            */
+;*    Last change :  Wed Jan 17 09:06:39 2018 (serrano)                */
+;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
 ;*=====================================================================*/
@@ -37,6 +37,8 @@
    
    (eval `(define-expander js-object-get-name/cache
 	     ,js-object-get-name/cache-expander))
+   (eval `(define-expander js-object-get-name/cache-level0
+	     ,js-object-get-name/cache-level0-expander))
    (eval `(define-expander js-object-get-name/cache-level1
 	     ,js-object-get-name/cache-level1-expander))
    (eval `(define-expander js-object-get-name/cache-level2

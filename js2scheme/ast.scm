@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jan  5 09:55:09 2018 (serrano)                */
+;*    Last change :  Wed Jan 17 07:30:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -359,7 +359,7 @@
 	   
 	   (final-class J2SAccess::J2SExpr
 	      (cache (default #f) (info '("notraverse")))
-	      (clevel::long (default 100) (info '("notraverse")))
+	      (clevel (default 100) (info '("notraverse")))
 	      (obj::J2SExpr (info '("ast")))
 	      (field::J2SExpr (info '("ast"))))
 
@@ -376,7 +376,7 @@
 
 	   (final-class J2SCall::J2SExpr
 	      (cache (default #f) (info '("notraverse")))
-	      (clevel::long (default 100) (info '("notraverse")))
+	      (clevel (default 100) (info '("notraverse")))
 	      (fun::J2SExpr (info '("ast")))
 	      (protocol (default 'direct) (info '("notraverse")))
 	      (thisarg::pair-nil (info '("ast")))

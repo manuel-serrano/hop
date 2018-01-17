@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Mon Dec  4 20:19:59 2017 (serrano)                */
+#*    Last change :  Wed Jan 17 07:37:57 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -100,12 +100,6 @@ ude:
 
 getsources:
 	@ echo $(SOURCES)
-
-#*---------------------------------------------------------------------*/
-#*    The implicit rules                                               */
-#*---------------------------------------------------------------------*/
-%.scm: %.js
-	@ $(call compile3,$(HOPC),$(HFLAGS),$(BCFLAGS),$(BLFLAGS) $(EFLAGS) $(BHOPCFLAGS),-s --js-module-name __hopscript_$* --js-module-path $* --js-no-module-main --js-type-annotations --js-no-header ,$< -o $@)
 
 #*---------------------------------------------------------------------*/
 #*    bglhopscript.h                                                   */

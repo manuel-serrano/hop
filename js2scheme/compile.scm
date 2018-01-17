@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Jan 11 08:04:52 2018 (serrano)                */
+;*    Last change :  Wed Jan 17 13:47:34 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -33,6 +33,7 @@
 	   __js2scheme_constrsize
 	   __js2scheme_ctor
 	   __js2scheme_propcce
+	   __js2scheme_clevel
 	   __js2scheme_constant
 	   __js2scheme_tyflow
 	   __js2scheme_range
@@ -173,6 +174,7 @@
       j2s-sweep-stage
       j2s-ronly-stage
       j2s-globvar-stage
+      j2s-clevel-stage
       j2s-method-stage
       j2s-return-stage
       j2s-inline-stage
@@ -343,42 +345,7 @@
 		     (if (string=? (input-port-name in) "[string]")
 			 "stdin"
 			 (input-port-name in)))))
-	 (opts (let ((o (append args (j2s-compile-options)))
-		     (l (config-get args :optim 0)))
-		  (when (>=fx l 900)
-		     (unless (memq :optim-integer o)
-			(set! o (cons* :optim-integer #t o)))
-		     (unless (memq :optim-inline o)
-			(set! o (cons* :optim-inline #t o)))
-		     (unless (memq :optim-hint o)
-			(set! o (cons* :optim-hint #t o)))
-		     (unless (memq :optim-literals o)
-			(set! o (cons* :optim-literals #t o))))
-		  (when (>=fx l 4)
-		     (unless (memq :optim-range o)
-			(set! o (cons* :optim-range #t o)))
-		     (unless (memq :optim-ctor o)
-			(set! o (cons* :optim-ctor #t o)))
-		     (unless (memq :optim-vector o)
-			(set! o (cons* :optim-vector #t o)))
-		     (unless (memq :optim-vector o)
-			(set! o (cons* :optim-vector #t o))))
-		  (when (>=fx l 2)
-		     (unless (memq :optim-tyflow-resolve o)
-			(set! o (cons* :optim-tyflow-resolve #t o))))
-		  (when (>=fx l 1)
-		     (unless (memq :optim-tyflow o)
-			(set! o (cons* :optim-tyflow #t o))))
-		  
-;* 		     (unless (memq :optim-cce o)                       */
-;* 			(set! o (cons* :optim-cce #t o)))              */
-		  o)))
-      (let ((v (or (getenv "HOPCFLAGS") "")))
-	 (cond
-	    ((string-contains v "j2s:this")
-	     (set! opts (cons* :optim-this #t opts)))
-	    ((string-contains v "j2s:ccall")
-	     (set! opts (cons* :optim-ccall #t opts)))))
+	 (opts (compile-opts args)))
       (when (>=fx (bigloo-debug) 1) (make-directories tmp))
       (let ((ast (j2s-parser in opts)))
 	 (if (eof-object? ast)
@@ -390,5 +357,48 @@
 		    ast
 		    (multiple-value-bind (ast on)
 		       (stage-exec (car driver) ast tmp count opts)
-		       (loop ast (cdr driver) (+fx (if on 1 0) count) ))))))))
+		       (loop ast (cdr driver) (+fx (if on 1 0) count)))))))))
 
+;*---------------------------------------------------------------------*/
+;*    compile-opts ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (compile-opts args)
+   (let ((o (append args (j2s-compile-options)))
+	 (l (config-get args :optim 0)))
+      (when (>=fx l 900)
+	 (unless (memq :optim-integer o)
+	    (set! o (cons* :optim-integer #t o)))
+	 (unless (memq :optim-inline o)
+	    (set! o (cons* :optim-inline #t o)))
+	 (unless (memq :optim-hint o)
+	    (set! o (cons* :optim-hint #t o)))
+	 (unless (memq :optim-literals o)
+	    (set! o (cons* :optim-literals #t o))))
+      (when (>=fx l 4)
+	 (unless (memq :optim-range o)
+	    (set! o (cons* :optim-range #t o)))
+	 (unless (memq :optim-ctor o)
+	    (set! o (cons* :optim-ctor #t o)))
+	 (unless (memq :optim-vector o)
+	    (set! o (cons* :optim-vector #t o)))
+	 (unless (memq :optim-vector o)
+	    (set! o (cons* :optim-vector #t o))))
+      (when (>=fx l 2)
+	 (unless (memq :optim-tyflow-resolve o)
+	    (set! o (cons* :optim-tyflow-resolve #t o))))
+      (when (>=fx l 1)
+	 (unless (memq :optim-tyflow o)
+	    (set! o (cons* :optim-tyflow #t o))))
+      (when (and #f (>=fx l 2))
+	 (unless (memq :optim-clevel o)
+	    (set! o (cons* :optim-clevel #t o))))
+;* 		     (unless (memq :optim-cce o)                       */
+;* 			(set! o (cons* :optim-cce #t o)))              */
+      (let ((v (getenv "HOPCFLAGS")))
+	 (when (string? v)
+	    (cond
+	       ((string-contains v "j2s:this")
+		(set! o (cons* :optim-this #t o)))
+	       ((string-contains v "j2s:ccall")
+		(set! o (cons* :optim-ccall #t o))))))
+      o))

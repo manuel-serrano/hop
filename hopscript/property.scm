@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jan 15 18:10:47 2018 (serrano)                */
+;*    Last change :  Wed Jan 17 11:36:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -204,8 +204,6 @@
 	      . ::pair-nil)
 	   
 	   (js-object-method-call/cache-miss ::JsGlobalObject ::JsObject ::obj
-	      ::JsPropertyCache ::JsPropertyCache ::pair-nil)
-	   (js-object-method-call/cache-fill ::JsGlobalObject ::JsObject ::obj
 	      ::JsPropertyCache ::JsPropertyCache ::pair-nil)
 	   
 	   (js-call/cache ::JsGlobalObject obj ::JsPropertyCache this . args)
@@ -2840,7 +2838,7 @@
 	  #f)))
 
    (add-cache-miss! 'call name)
-
+   
    (let loop ((obj o))
       (jsobject-find obj name
 	 ;; map search
@@ -2953,6 +2951,9 @@
 ;*    show-cache-misses ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (show-cache-misses)
+   
+   (define (true-miss m) (memq (car m) '(get put call)))
+   
    (let ((m (pregexp-match "hopscript:cache=([0-9]+)" (getenv "HOPTRACE"))))
       (when m
 	 (set! *log-miss-threshold* (string->integer (cadr m)))))
@@ -2987,6 +2988,8 @@
 		*misses*)
 	     (print "  },")
 	     (print "  \"total-cache-misses\": "
+		(apply + (map cadr (filter true-miss *misses*))) ", ")
+	     (print "  \"total-cache-level0-misses\": "
 		(apply + (map cadr *misses*)) ", ")
 	     (print "  \"hidden-class-number\": "
 		(gencmapid) ",")
@@ -3018,13 +3021,20 @@
 		       (newline (current-error-port))))
 	  *misses*)
        (fprint (current-error-port)
-	  "total cache misses: " (apply + (map cadr *misses*)))
+	  "total cache misses       : "
+	  (apply + (map cadr (filter true-miss *misses*))))
        (fprint (current-error-port)
-	  "hidden classes num: " (gencmapid))
+	  "total cache level0 misses: "
+	  (apply + (map cadr *misses*)))
        (fprint (current-error-port)
-	  "pmap invalidations: " *pmap-invalidations*)
+	  "hidden classes num       : "
+	  (gencmapid))
        (fprint (current-error-port)
-	  "vtables           : " *vtables* " (" *vtables-mem* "b)"))))
+	  "pmap invalidations       : "
+	  *pmap-invalidations*)
+       (fprint (current-error-port)
+	  "vtables                  : "
+	  *vtables* " (" *vtables-mem* "b)"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *functions* ...                                                  */

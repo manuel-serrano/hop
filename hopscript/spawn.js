@@ -3,8 +3,11 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Oct  6 07:39:47 2016                          */
-/*    Last change :  Fri Jan 12 18:37:48 2018 (serrano)                */
+/*    Last change :  Wed Jan 17 07:38:54 2018 (serrano)                */
 /*    Copyright   :  2016-18 Manuel Serrano                            */
+/*    -------------------------------------------------------------    */
+/*    WARNING: This file is not used to buid the hopscript library.    */
+/*    It just illustrates the implementation of spawn.scm.             */
 /*    -------------------------------------------------------------    */
 /*    Spawn implementation as defined in                               */
 /*      https://tc39.github.io/ecmascript-asyncawait                   */

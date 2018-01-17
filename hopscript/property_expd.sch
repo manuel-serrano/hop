@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Dec  3 18:06:45 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Wed Jan 17 11:36:32 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -211,6 +211,29 @@
 	  (js-object-get-name/cache-match-expander x e1 ref)))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-get-name/cache-level0-expander ...                     */
+;*    -------------------------------------------------------------    */
+;*    Simiar to JS-OBJECT-GET-NAME/CACHE-EXPANDER but cache level2     */
+;*    is not inlined in the expanded call.                             */
+;*---------------------------------------------------------------------*/
+(define (js-object-get-name/cache-level0-expander x e)
+   
+   (define (ref o prop cache %this cindex ccmap cpmap cowner vindx)
+      `(let ((%omap omap))
+	  (if (eq? ,ccmap %omap)
+	      (with-access::JsObject ,o (elements)
+		 (cond-expand (profile (profile-cache-index ,cindex)))
+		 (vector-ref elements ,cindex))
+	      ((@ js-object-get-name/cache-level2 __hopscript_property)
+	       ,@(cdr x)))))
+   
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-get)
+       (map (lambda (x) (e x e)) x))
+      (else
+       (js-object-get-name/cache-match-expander x e ref))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-level1-expander ...                     */
 ;*---------------------------------------------------------------------*/
 (define (js-object-get-name/cache-level1-expander x e)
@@ -242,9 +265,13 @@
 	      (if (>=fx ,cindex 0)
 		  (begin
 		     (cond-expand
+			(profile (add-cache-miss! 'get-prototype ,prop)))
+		     (cond-expand
 			(profile (profile-cache-index ,cindex)))
 		     (vector-ref elements ,cindex))
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
+		     (cond-expand
+			(profile (add-cache-miss! 'get-accessor ,prop)))
 		     (cond-expand
 			(profile (profile-cache-index (-fx (negfx ,cindex) 1))))
 		     (js-property-value ,o desc ,%this)))))
@@ -253,7 +280,10 @@
 	      (if (and (cond-expand (no-vtable-cache #f) (else #t))
 		       (<fx ,vindx vlen)
 		       (fixnum? (vector-ref vtable ,vindx)))
-		  (vector-ref elements (vector-ref vtable ,vindx))
+		  (begin
+		     (cond-expand
+			(profile (add-cache-miss! 'get-vtable ,prop)))
+		     (vector-ref elements (vector-ref vtable ,vindx)))
 		  (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))))
    
    (js-object-get-name/cache-match-expander x e ref))
@@ -436,13 +466,21 @@
 		  (let ((%vec elements))
 		     (if (<fx ,cindx (vector-length %vec))
 			 (begin
-			    (cond-expand (profile (profile-cache-index ,cindx)))
+			    (cond-expand
+			       (profile (add-cache-miss! 'put-prototype ,prop)))
+			    (cond-expand
+			       (profile (profile-cache-index ,cindx)))
 			    (vector-set! %vec ,cindx ,tmp))
-			 (js-object-add! ,o ,cindx ,tmp)))
+			 (begin
+			    (cond-expand
+			       (profile (add-cache-miss! 'put-extend ,prop)))
+			    (js-object-add! ,o ,cindx ,tmp))))
 		  (with-access::JsObject ,o ((omap cmap))
 		     (set! omap (if (eq? ,ccmap #t) ,cpmap ,ccmap)))
 		  ,tmp)
 	       (with-access::JsObject ,cowner (elements)
+		  (cond-expand
+		     (profile (add-cache-miss! 'put-accessor ,prop)))
 		  (cond-expand
 		     (profile (profile-cache-index (-fx (negfx ,cindx) 1))))
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindx) 1))))
@@ -454,6 +492,8 @@
 		       (pair? (vector-ref vtable ,vindx)))
 		  (let ((indx (car (vector-ref vtable ,vindx)))
 			(cmap (cdr (vector-ref vtable ,vindx))))
+		     (cond-expand
+			(profile (add-cache-miss! 'put-vtable ,prop)))
 		     (js-object-push! ,o indx ,tmp)
 		     (with-access::JsObject ,o ((omap cmap))
 			(set! omap cmap))
@@ -585,12 +625,16 @@
 	     ((and (cond-expand (no-vtable-cache #f) (else #t))
 		   (<fx ,vindex vlen)
 		   (procedure? (vector-ref vtable ,vindex)))
+	      (cond-expand
+		 (profile (add-cache-miss! 'call-vtable ',name)))
 	      ;; polymorphic call
 	      ((vector-ref vtable ,vindex) ,obj ,@args))
 	     ((eq? ,cmap #t)
 	      ;; uncachable call
 	      (let ((f ((@ js-object-get-name/cache __hopscript_property)
 			,obj ',name ,ocache %this)))
+		 (cond-expand
+		    (profile (add-cache-miss! 'call-uncachable ',name)))
 		 ,(calln 'f obj args)))
 	     (else
 	      ;; pure cache miss
