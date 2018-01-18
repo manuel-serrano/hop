@@ -1,0 +1,264 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/scheme-program.scm      */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
+;*    Last change :  Thu Jan 18 08:55:01 2018 (serrano)                */
+;*    Copyright   :  2018 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    Program node compilation                                         */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module __js2scheme_scheme-program
+
+   (include "ast.sch")
+   
+   (import __js2scheme_ast
+	   __js2scheme_dump
+	   __js2scheme_utils
+	   __js2scheme_js
+	   __js2scheme_stmtassign
+	   __js2scheme_compile
+	   __js2scheme_stage
+	   __js2scheme_scheme
+	   __js2scheme_scheme-utils))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SProgram ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SProgram mode return conf hint)
+   
+   
+   
+   
+   
+   (define (j2s-module module scmcnsts body)
+      (with-access::J2SProgram this (mode pcache-size globals)
+	 (list
+	    module
+	    (define-pcache pcache-size)
+	    `(define %pcache (js-make-pcache ,pcache-size))
+	    '(define %source (or (the-loading-file) "/"))
+	    '(define %resource (dirname %source))
+	    `(define (hopscript %this this %scope %module)
+		(define %worker (js-current-worker))
+		(define %cnsts ,scmcnsts)
+		,@globals
+		,@(exit-body body conf))
+	    ;; for dynamic loading
+	    'hopscript)))
+   
+   (define (j2s-main-worker-module name scmcnsts body)
+      (let ((module `(module ,(string->symbol name)
+			(eval (library hop)
+			   (library hopscript)
+			   (library nodejs))
+			(library hop hopscript nodejs)
+			(cond-expand (enable-libuv (library libuv)))
+			(main main))))
+	 (with-access::J2SProgram this (mode pcache-size %this path globals)
+	    (list
+	       module
+	       (define-pcache pcache-size)
+	       '(hop-sofile-compile-policy-set! 'static)
+	       `(define %pcache (js-make-pcache ,pcache-size))
+	       '(hopjs-standalone-set! #t)
+	       `(define %this (nodejs-new-global-object))
+	       `(define %source ,path)
+	       '(define %resource (dirname %source))
+	       `(define (main args)
+		   (define %worker
+		      (js-init-main-worker! %this #f nodejs-new-global-object))
+		   (hopscript-install-expanders!)
+		   (bigloo-library-path-set! ',(bigloo-library-path))
+		   (js-worker-push-thunk! %worker "nodejs-toplevel"
+		      (lambda ()
+			 (define %scope (nodejs-new-scope-object %this))
+			 (define this
+			    (with-access::JsGlobalObject %this (js-object)
+			       (js-new0 %this js-object)))
+			 (define %module
+			    (nodejs-module ,(basename path) ,path %worker %this))
+			 (define %cnsts ,scmcnsts)
+			 ,@globals
+			 ,@(exit-body body conf)))
+		   (when (string-contains (or (getenv "HOPTRACE") "")
+			    "hopscript:cache")
+		      (log-cache-miss!)
+		      (register-exit-function!
+			 (lambda (n)
+			    (show-cache-misses)
+			    n)))
+		   (when (string-contains (or (getenv "HOPTRACE") "")
+			    "hopscript:function")
+		      (log-function! ,(config-get conf :profile #f))
+		      (register-exit-function!
+			 (lambda (n)
+			    (show-functions)
+			    n)))
+		   (when (string-contains (or (getenv "HOPTRACE") "")
+			    "hopscript:alloc")
+		      (register-exit-function!
+			 (lambda (n)
+			    (show-allocs)
+			    n)))
+		   (thread-join! (thread-start-joinable! %worker)))))))
+
+   
+   
+   (with-access::J2SProgram this (module main nodes headers decls
+					 mode name pcache-size cnsts globals)
+      (let ((scmheaders (j2s-scheme headers mode return conf hint))
+	    (scmdecls (j2s-scheme decls mode return conf hint))
+	    (scmnodes (j2s-scheme nodes mode return conf hint))
+	    (scmcnsts (%cnsts cnsts mode return conf hint)))
+      (if (and main (not (config-get conf :enable-worker #t)))
+	  (j2s-main-sans-worker-module this name
+	     scmcnsts
+	     (flatten-nodes (append scmheaders scmdecls))
+	     (flatten-nodes scmnodes)
+	     conf)
+	  (let ((body (flatten-nodes (append scmheaders scmdecls scmnodes))))
+	     (cond
+		(module
+		 ;; a module whose declaration is in the source
+		 (j2s-module module scmcnsts body))
+		((not name)
+		 ;; a mere expression
+		 `(lambda (%this this %scope %module)
+		     ,(define-pcache pcache-size)	       
+		     (define %pcache (js-make-pcache ,pcache-size))
+		     (define %worker (js-current-worker))
+		     (define %source (or (the-loading-file) "/"))
+		     (define %resource (dirname %source))
+		     (define %cnsts ,scmcnsts)
+		     ,@globals
+		     ,@(exit-body body conf)))
+		(main
+		 ;; generate a main hopscript module
+		 (j2s-main-worker-module name scmcnsts body))
+		(else
+		 ;; generate the module clause
+		 (let ((module `(module ,(string->symbol name)
+				   (library hop hopscript js2scheme nodejs)
+				   (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
+		    (j2s-module module scmcnsts body)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-main-sans-worker-module ...                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-main-sans-worker-module this name scmcnsts toplevel body conf)
+   (let ((module `(module ,(string->symbol name)
+		     (eval (library hop)
+			(library hopscript)
+			(library nodejs))
+		     (library hop hopscript nodejs)
+		     (cond-expand (enable-libuv (library libuv)))
+		     (main main))))
+      (with-access::J2SProgram this (mode pcache-size %this path globals)
+	 `(,module
+		,(define-pcache pcache-size)
+	     (define %pcache (js-make-pcache ,pcache-size))
+	     (hop-sofile-compile-policy-set! 'static)
+	     (hopjs-standalone-set! #t)
+	     (define %this (nodejs-new-global-object))
+	     (define %source ,path)
+	     (define %resource (dirname %source))
+	     (define %scope (nodejs-new-scope-object %this))
+	     (define this
+		(with-access::JsGlobalObject %this (js-object)
+		   (js-new0 %this js-object)))
+	     (define %worker
+		(js-init-main-worker! %this #f nodejs-new-global-object))
+	     (define %module
+		(nodejs-module ,(basename path) ,path %worker %this))
+	     (define %cnsts ,scmcnsts)
+	     ,@globals
+	     ,@toplevel
+	     (define (main args)
+		(hopscript-install-expanders!)
+		(bigloo-library-path-set! ',(bigloo-library-path))
+		(set! !process (nodejs-process %worker %this))
+		,@(exit-body body conf)
+		(when (string-contains (or (getenv "HOPTRACE") "")
+			 "hopscript:cache")
+		   (log-cache-miss!)
+		   (register-exit-function!
+		      (lambda (n)
+			 (show-cache-misses)
+			 n)))
+		(when (string-contains (or (getenv "HOPTRACE") "")
+			 "hopscript:function")
+		   (log-function! ,(config-get conf :profile #f))
+		   (register-exit-function!
+		      (lambda (n)
+			 (show-functions)
+			 n)))
+		(when (string-contains (or (getenv "HOPTRACE") "")
+			 "hopscript:alloc")
+		   (register-exit-function!
+		      (lambda (n)
+			 (show-allocs)
+			 n))))))))
+
+;*---------------------------------------------------------------------*/
+;*    exit-body ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (exit-body body conf)
+   (if (config-get conf :return-as-exit)
+       `((bind-exit (%jsexit) ,@body))
+       body))
+
+;*---------------------------------------------------------------------*/
+;*    define-pcache ...                                                */
+;*---------------------------------------------------------------------*/
+(define (define-pcache pcache-size)
+   `(%define-pcache ,pcache-size))
+
+;*---------------------------------------------------------------------*/
+;*    %cnsts ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (%cnsts cnsts mode return conf hint)
+   
+   (define (%cnsts-debug cnsts)
+      `(vector
+	  ,@(map (lambda (n)
+		    (let ((s (j2s-scheme n mode return conf hint)))
+		       (if (isa? n J2SRegExp)
+			   (with-access::J2SRegExp n (loc val flags inline)
+			      (if inline
+				  `(with-access::JsRegExp ,s (rx) rx)
+				  s))
+			   s)))
+	       cnsts)))
+   
+   (define (%cnsts-intext cnsts)
+      
+      (define %this
+	 '(js-new-global-object))
+      
+      (define (j2s-constant this::J2SLiteralValue)
+	 (cond
+	    ((isa? this J2SString)
+	     (with-access::J2SString this (val)
+		(vector 0 val)))
+	    ((isa? this J2SRegExp)
+	     (with-access::J2SRegExp this (loc val flags inline)
+		(vector (if inline 3 1) val flags)))
+	    ((isa? this J2SCmap)
+	     (with-access::J2SCmap this (val)
+		(vector 2 val)))
+	    (else
+	     (error "j2s-constant" "wrong literal" this))))
+      
+      `(js-constant-init
+	  ,(obj->string (list->vector (map j2s-constant cnsts))) %this))
+   
+   ;; this must be executed after the code is compiled as this
+   ;; compilation might change or add new constants.
+   (if (>fx (bigloo-debug) 0)
+       (%cnsts-debug cnsts)
+       (%cnsts-intext cnsts)))

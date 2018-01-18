@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Wed Oct 25 17:28:01 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Thu Jan 18 09:17:44 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
 ;*=====================================================================*/
@@ -379,6 +379,15 @@
 		     (loop))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-worker-init! ::WorkerHopThread ...                            */
+;*---------------------------------------------------------------------*/
+(define-method (js-worker-init! th::WorkerHopThread)
+   (with-access::WorkerHopThread th (%loop tqueue)
+      (set! %loop
+	 (instantiate::JsLoop
+	    (actions tqueue)))))
+   
+;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ::WorkerHopThread ...                             */
 ;*    -------------------------------------------------------------    */
 ;*    Overrides the generic functions defined in hopscript/worker      */
@@ -388,8 +397,7 @@
    (with-access::WorkerHopThread th (mutex condv tqueue
 				       %process %this keep-alive services
 				       call %retval prerun %loop)
-      (letrec* ((loop (instantiate::JsLoop
-			 (actions tqueue)))
+      (letrec* ((loop %loop)
 		(async (instantiate::UvAsync
 			  (loop loop)
 			  (cb (lambda (a)
@@ -402,7 +410,6 @@
 				       (when (js-totest (js-get %process '_exiting %this))
 					  (uv-stop loop)))))))))
 	 (synchronize mutex
-	    (set! %loop loop)
 	    (nodejs-process th %this)
 	    (with-access::JsLoop loop (actions)
 	       (set! actions tqueue))
@@ -483,13 +490,20 @@
 ;*    js-worker-push-thunk! ::WorkerHopThread ...                      */
 ;*---------------------------------------------------------------------*/
 (define-method (js-worker-push-thunk! th::WorkerHopThread name::bstring thunk::procedure)
+   
+   (define (worker-started? th)
+      (with-access::WorkerHopThread th (%loop mutex tqueue)
+	 (when %loop
+	    (with-access::JsLoop %loop (async)
+	       async))))
+   
    (with-trace 'nodejs-async "nodejs-async-push"
       (trace-item "name=" name)
       (trace-item "th=" th)
       (with-access::WorkerHopThread th (%loop mutex tqueue)
 	 (synchronize mutex
 	    (let ((act (cons name thunk)))
-	       (if %loop
+	       (if (worker-started? th)
 		   (with-access::JsLoop %loop (actions async exiting)
 		      (unless (pair? actions)
 			 (uv-ref async)
@@ -499,7 +513,8 @@
 		   ;; the loop is not started yet (this might happend when
 		   ;; a master send a message (js-worker-post-master-message)
 		   ;; before the slave is fully initialized
-		   (set! tqueue (append (cons act tqueue)))))))))
+		   (with-access::WorkerHopThread th (tqueue)
+		      (set! tqueue (append (cons act tqueue))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-exec ...                                               */

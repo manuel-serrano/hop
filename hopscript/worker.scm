@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Mon Dec  4 08:41:38 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Thu Jan 18 09:08:29 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
 ;*    -------------------------------------------------------------    */
@@ -42,6 +42,7 @@
 	   (js-worker-load::procedure)
 	   (js-worker-load-set! ::procedure)
 
+	   (generic js-worker-init! ::object)
 	   (generic js-worker-loop ::object)
 	   (generic js-worker-tick ::object)
 	   (generic js-worker-exception-handler ::object ::obj ::int)
@@ -471,7 +472,8 @@
 	       (onexit #f)
 	       (keep-alive keep-alive)
 	       (module-cache (js-new0 %this js-object))
-	       (body (lambda () (js-worker-loop %worker)))))))
+	       (body (lambda () (js-worker-loop %worker))))))
+      (js-worker-init! %worker))
    %worker)
 
 ;*---------------------------------------------------------------------*/
@@ -530,7 +532,13 @@
 	       (with-trace 'hopscript-worker (car nthunk)
 		  (call (cdr nthunk)))
 	       (loop))))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    js-worker-init! ...                                              */
+;*---------------------------------------------------------------------*/
+(define-generic (js-worker-init! th::object)
+   #unspecified)
+
 ;*---------------------------------------------------------------------*/
 ;*    js-worker-loop ...                                               */
 ;*    -------------------------------------------------------------    */
