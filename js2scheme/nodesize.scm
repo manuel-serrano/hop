@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Fri Dec  8 18:38:37 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Sat Jan 20 07:48:17 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
 ;*=====================================================================*/
@@ -22,6 +22,12 @@
 	   __js2scheme_utils)
 
    (export (generic node-size::long ::obj)))
+
+;*---------------------------------------------------------------------*/
+;*    Constants                                                        */
+;*---------------------------------------------------------------------*/
+(define CALL-TAX 3)
+(define LOOP-TAX 30)
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::obj ...                                              */
@@ -48,6 +54,13 @@
 		       (+fx (node-size ((class-field-accessor f) this)) s))
 		    (loop (-fx i 1)
 		       s)))))))
+
+;*---------------------------------------------------------------------*/
+;*    node-size ::J2SProgram ...                                       */
+;*---------------------------------------------------------------------*/
+(define-method (node-size this::J2SProgram)
+   (with-access::J2SProgram this (decls nodes)
+      (apply + (append (map node-size decls) (map node-size nodes)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SSeq ...                                           */
@@ -127,4 +140,11 @@
 (define-method (node-size this::J2SCall)
    (with-access::J2SCall this (fun args)
       ;; (length args) for the potential spills
-      (+ (node-size fun) (length args) (apply + (map node-size args)))))
+      (+ CALL-TAX (node-size fun) (length args)
+	 (apply + (map node-size args)))))
+
+;*---------------------------------------------------------------------*/
+;*    node-size ::J2SLoop ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (node-size this::J2SLoop)
+   (+ LOOP-TAX (call-next-method)))

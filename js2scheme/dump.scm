@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Fri Jan  5 09:52:52 2018 (serrano)                */
+;*    Last change :  Fri Jan 19 09:38:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -444,6 +444,7 @@
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
 		 ,@(dump-key key)
+		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
 		 ,@(if (>= (bigloo-debug) 3)
@@ -460,6 +461,7 @@
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
 		 ,@(dump-key key)
+		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
 		 ,@(if (>= (bigloo-debug) 3)
@@ -472,6 +474,7 @@
 	 (else
 	  `(,@(call-next-method) ,@(if generator '(*) '())
 	      :name ,name
+	      ,@(dump-info this)
 	      ,@(dump-type this)
 	      ,@(dump-rtype this)
 	      ,@(dump-loc loc)

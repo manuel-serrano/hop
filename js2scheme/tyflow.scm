@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Thu Jan 11 08:21:42 2018 (serrano)                */
+;*    Last change :  Sat Jan 20 12:31:29 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -644,7 +644,11 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SThis env::pair-nil fix::cell)
    (with-access::J2SThis this (decl)
-      (expr-type-set! this env fix 'any)))
+      (let ((etyp (env-lookup env decl)))
+	 (when (eq? etyp 'unknown)
+	    (with-access::J2SDecl decl (vtype)
+	       (set! etyp 'any)))
+	 (expr-type-set! this env fix etyp))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SBindExit ...                                         */

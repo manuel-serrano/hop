@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Thu Jan 18 09:08:29 2018 (serrano)                */
+;*    Last change :  Sat Jan 20 10:00:43 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -197,6 +197,9 @@
 			      (cleanup (lambda (thread)
 					  (when (isa? parent WorkerHopThread)
 					     (remove-subworker! parent thread)))))))
+
+	    ;; prepare the worker loop
+	    (js-worker-init! thread)
 
 	    ;; add the worker to the parent list
 	    (when (isa? parent WorkerHopThread)
