@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Jan 20 12:23:52 2018 (serrano)                */
+;*    Last change :  Tue Jan 23 11:38:47 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -34,6 +34,9 @@
 	   __js2scheme_use
 	   __js2scheme_node-size)
 
+   (static (class J2SMetaInl::J2SMeta
+	      (inlstack::pair-nil (info '("notraverse")))))
+
    (export j2s-inline-stage))
 
 ;*---------------------------------------------------------------------*/
@@ -45,6 +48,17 @@
       (comment "Method inlining optimization")
       (optional :optim-inline)
       (proc j2s-inline!)))
+
+;*---------------------------------------------------------------------*/
+;*    J2SMetaInl ...                                                   */
+;*---------------------------------------------------------------------*/
+(define-macro (J2SMetaInl stack optim stmt)
+   `(instantiate::J2SMetaInl
+       (loc loc)
+       (inlstack ,stack)
+       (debug 0)
+       (optim ,optim)
+       (stmt ,stmt)))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-default-factor ...                                        */
@@ -106,6 +120,8 @@
 	     (for-each (lambda (n) (use-count n +1 #f)) decls)
 	     (for-each (lambda (n) (use-count n +1 #f)) nodes)
 	     (set! decls (filter used-decl? decls))
+	     ;; cleanup metainl
+	     (unmetainl! this)
 	     this))
        this))
 
@@ -119,8 +135,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    iinfo                                                            */
 ;*---------------------------------------------------------------------*/
-(define-struct inlinfo size obody)
-(define-struct callinfo call callees ifctx loopctx)
+(define-struct inlinfo size)
 (define-struct protoinfo assig method svar)
 
 ;*---------------------------------------------------------------------*/
@@ -136,7 +151,7 @@
 (define (function-size this::J2SFun)
    (with-access::J2SFun this (%info body)
       (unless (inlinfo? %info)
-	 (set! %info (inlinfo (node-size this) body)))
+	 (set! %info (inlinfo (node-size this))))
       (inlinfo-size %info)))
 
 ;*---------------------------------------------------------------------*/
@@ -254,12 +269,22 @@
 	  (call-default-walker))))
    
 ;*---------------------------------------------------------------------*/
+;*    inline! ::J2SMetaInl ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (inline! this::J2SMetaInl
+		       limit::long stack::pair-nil pmethods prgm conf)
+   (with-access::J2SMetaInl this (inlstack stmt loc)
+      (set! stmt
+	 (inline! stmt limit (append inlstack stack) pmethods prgm conf))
+      this))
+   
+;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SDeclFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SDeclFun
 		       limit::long stack::pair-nil pmethods prgm conf)
    (with-access::J2SDeclFun this (val id)
-      (inline! val limit '() pmethods prgm conf)
+      (inline! val limit stack pmethods prgm conf)
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -277,8 +302,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SCall
 		       limit::long stack::pair-nil pmethods prgm conf)
-
-   (define (find-inline-methods fun arity)
+   
+   (define (find-inline-methods this fun arity)
       (with-access::J2SAccess fun (obj field)
 	 (when (isa? obj J2SRef)
 	    (when (isa? field J2SString)
@@ -295,8 +320,8 @@
 				      mets))
 			      limit)
 			mets)))))))
-
-   (define (find-inline-function fun arity)
+   
+   (define (find-inline-function this::J2SCall fun arity)
       (with-access::J2SRef fun (decl)
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val id)
@@ -305,34 +330,35 @@
 			  (<=fx (function-size val) limit))
 		  val)))))
    
-   (define (inline-access-call fun::J2SAccess args loc)
-      (let ((mets (find-inline-methods fun (length args))))
+   (define (inline-access-call this::J2SCall fun::J2SAccess args loc)
+      (let ((mets (find-inline-methods this fun (length args))))
 	 (when (and mets (pair? mets))
 	    (let* ((vals (map protoinfo-method mets))
 		   (sz (apply + (map function-size vals))))
 	       (inline-verb loc fun (length mets) sz limit conf)
 	       (when (pair? stack) 
 		  (invalidate-function-size! (car stack)))
-	       (let ((e (inline-stmt->expr loc
-			   (inline-method-call fun mets args loc
-			      limit stack pmethods prgm conf))))
-		  (inline! e limit (append vals stack) pmethods prgm conf))))))
+	       (let ((e (inline-method-call fun mets args loc
+			   limit stack pmethods prgm conf)))
+		  (inline-stmt->expr loc
+		     (J2SMetaInl (append vals stack)
+			(config-get conf :optim 0)
+			(inline! e limit (append vals stack) pmethods prgm conf))))))))
    
-   (define (inline-ref-call fun::J2SRef args loc)
-      (let ((val (find-inline-function fun (length args))))
+   (define (inline-ref-call this::J2SCall fun::J2SRef args loc)
+      (let ((val (find-inline-function this fun (length args))))
 	 (when val
 	    (inline-verb loc fun 0 (function-size val) limit conf)
 	    (when (pair? stack)
 	       (invalidate-function-size! (car stack)))
-	    (let ((e (inline-stmt->expr loc
-			(inline-function-call val args loc
-			   limit stack pmethods prgm conf))))
-	       (inline! e limit (cons val stack) pmethods prgm conf)))))
+	    (inline-stmt->expr loc
+	       (inline-function-call val args loc
+		  limit stack pmethods prgm conf)))))
    
    (with-access::J2SCall this (fun args type loc)
       (cond
-	 ((isa? fun J2SAccess) (or (inline-access-call fun args loc) this))
-	 ((isa? fun J2SRef) (or (inline-ref-call fun args loc) this))
+	 ((isa? fun J2SAccess) (or (inline-access-call this fun args loc) this))
+	 ((isa? fun J2SRef) (or (inline-ref-call this fun args loc) this))
 	 (else this))))
 
 ;*---------------------------------------------------------------------*/
@@ -340,11 +366,14 @@
 ;*---------------------------------------------------------------------*/
 (define (inline-function-call val::J2SFun args::pair-nil loc
 	   limit::long stack::pair-nil pmethods prgm conf)
-   (with-access::J2SFun val (body thisp params loc)
+   (with-access::J2SFun val (body thisp params (floc loc))
       (let ((vals (inline-args params args limit stack pmethods prgm conf)))
-	 (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
-	    (j2s-alpha body
-	       (cons thisp params) (cons (J2SUndefined) vals))))))
+	 (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
+	    (J2SMetaInl (cons val stack)
+	       (config-get conf :optim 0)
+	       (inline!
+		  (j2s-alpha body (cons thisp params) (cons (J2SUndefined) vals))
+		  limit (cons val stack) pmethods prgm conf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-method-call ...                                           */
@@ -388,11 +417,11 @@
 	 args))
 
    (define (inline-method obj::J2SRef field callee args cache loc kont)
-      (with-access::J2SFun (protoinfo-method callee) (body thisp params)
+      (with-access::J2SFun (protoinfo-method callee) (body thisp params (floc loc))
 	 (let ((vals (inline-args params args limit stack pmethods prgm conf)))
 	    (with-access::J2SRef obj (decl)
 	       (cache-check cache loc obj field kont
-		  (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
+		  (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
 		     (j2s-alpha body
 			(cons thisp params) (cons decl vals))))))))
    
@@ -469,10 +498,13 @@
    (map (lambda (p a)
 	   (if (and (ronly-variable? p) (isa? a J2SLiteral))
 	       a
-	       (with-access::J2SDecl p (usage id)
+	       (with-access::J2SDecl p (usage id writable)
 		  (with-access::J2SNode a (loc)
-		     (J2SLetOpt usage (gensym id)
-			(inline! a limit stack pmethods prgm conf))))))
+		     (let ((d (J2SLetOpt usage (gensym id)
+				 (inline! a limit stack pmethods prgm conf))))
+			(with-access::J2SDecl d ((w writable))
+			   (set! w writable))
+			d)))))
       params args))
 
 ;*---------------------------------------------------------------------*/
@@ -520,285 +552,6 @@
 	 (else
 	  (J2SBindExit #f bd)))))
    
-;*---------------------------------------------------------------------*/
-;*    inline-call ...                                                  */
-;*---------------------------------------------------------------------*/
-(define (inline-call::J2SExpr this::J2SCall callees::pair prgm::J2SProgram)
-   
-   (define (ronly-variable? obj)
-      (cond
-	 ((isa? obj J2SRef)
-	  (with-access::J2SRef obj (decl)
-	     (with-access::J2SDecl decl (ronly)
-		ronly)))
-	 ((isa? obj J2SDecl)
-	  (with-access::J2SDecl obj (ronly)
-	     ronly))
-	 (else
-	  #f)))
-   
-   (define (get-cache prgm::J2SProgram)
-      (with-access::J2SProgram prgm (pcache-size)
-	 (let ((n pcache-size))
-	    (set! pcache-size (+fx pcache-size 1))
-	    n)))
-   
-   (define (cache-check c loc obj field kont inline::J2SStmt)
-      (with-access::J2SCall this (cache)
-	 (J2SIf (J2SCacheCheck 'proto-method c obj field)
-	    inline
-	    (kont))))
-   
-   (define (LetBlock loc t body)
-      (if (pair? t)
-	  (J2SLetRecBlock #f t body)
-	  body))
-   
-   (define (get-svar callee)
-      (if (protoinfo-svar callee)
-	  (protoinfo-svar callee)
-	  (let ((fun (gensym '%fun)))
-	     (protoinfo-svar-set! callee fun)
-	     (with-access::J2SProgram prgm (globals)
-		(set! globals (cons `(define ,fun #unspecified) globals))
-		(with-access::J2SAssig (protoinfo-assig callee) (rhs loc)
-		   (set! rhs
-		      (J2SSequence
-			 (J2SAssig (J2SHopRef fun) rhs)
-			 (J2SHopRef fun)))))
-	     fun)))
-   
-   (define (inline-args params args loc)
-      (map (lambda (p a)
-	      (if (and (ronly-variable? p) (isa? a J2SLiteral))
-		  a
-		  (with-access::J2SDecl p (usage id)
-		     (J2SLetOpt usage (gensym id) a))))
-	 params args))
-   
-   (define (inline-method obj::J2SRef field callee args cache loc kont)
-      (with-access::J2SFun (protoinfo-method callee) (body thisp params)
-	 (let ((vals (inline-args params args loc)))
-	    (with-access::J2SRef obj (decl)
-	       (cache-check cache loc obj field kont
-		  (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
-		     (j2s-alpha body
-			(cons thisp params) (cons decl vals))))))))
-   
-   (define (inline-object-method-call this obj args)
-      (with-access::J2SCall this (fun loc)
-	 (with-access::J2SAccess fun (field)
-	    (let loop ((callees callees)
-		       (caches '()))
-	       (if (null? callees)
-		   (let ((f (J2SLetOpt '(call) (gensym 'f) fun)))
-		      (J2SLetRecBlock #f (list f)
-			 (let loop ((caches caches))
-			    (if (null? caches)
-				(J2SNop)
-				(let ((v (get-svar (cdar caches))))
-				   (J2SIf
-				      (J2SBinary 'eq? (J2SRef f)
-					 (J2SHopRef v))
-				      (J2SStmtExpr
-					 (J2SCacheUpdate 'proto-method
-					    (caar caches) obj))
-				      (loop (cdr caches))))))
-			 (J2SReturn #t
-			    (J2SMethodCall* (J2SRef f) (list obj) args))))
-		   (let ((cache (get-cache prgm)))
-		      (inline-method obj field (car callees) args cache loc
-			 (lambda ()
-			    (loop (cdr callees)
-			       (cons (cons cache (car callees)) caches))))))))))
-   
-   (define (inline-method-call this)
-      (with-access::J2SCall this (fun args)
-	 (with-access::J2SAccess fun (obj field loc)
-	    ;; see J2S-EXPR-TYPE-TEST@__JS2SCHEME_AST for the
-	    ;; shape of the test that suits the tyflow analysis
-	    (let* ((vals (map (lambda (a)
-				 (if (isa? a J2SLiteral)
-				     a
-				     (let ((id (gensym 'a)))
-					(J2SLetOpt '(ref) id a))))
-			    args))
-		   (t (filter (lambda (b) (isa? b J2SDecl)) vals))
-		   (args (map (lambda (v)
-				 (if (isa? v J2SDecl)
-				     (with-access::J2SDecl v (loc)
-					(J2SRef v))
-				     v))
-			    vals)))
-	       (cond
-		  ((and (not (eq? (j2s-type obj) 'object))
-			(not (isa? obj J2SRef)))
-		   (let* ((id (gensym 'this))
-			  (d (J2SLetOpt '(get) id obj)))
-		      (LetBlock loc (cons d t)
-			 (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
-				   (J2SRef d))
-			    (inline-object-method-call this (J2SRef d) args)
-			    (J2SMeta 0 0
-			       (J2SStmtExpr
-				  (J2SCall* (J2SAccess (J2SRef d) field)
-				     args)))))))
-		  ((not (eq? (j2s-type obj) 'object))
-		   (LetBlock loc t 
-		      (J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
-				obj)
-			 (inline-object-method-call this obj args)
-			 (J2SMeta 0 0
-			    (J2SStmtExpr
-			       (J2SCall* (J2SAccess obj field) args))))))
-		  ((not (isa? obj J2SRef))
-		   (let* ((id (gensym 'this))
-			  (d (J2SLetOpt '(get) id obj)))
-		      (LetBlock loc (cons d t)
-			 (inline-object-method-call this (J2SRef d) args))))
-		  (else
-		   (inline-object-method-call this obj args)))))))
-   
-   (define (inline-function-call this)
-      (with-access::J2SCall this (fun loc args)
-	 (with-access::J2SFun (protoinfo-method (car callees)) (body thisp params loc)
-	    (let ((vals (inline-args params args loc)))
-	       (LetBlock loc (filter (lambda (b) (isa? b J2SDecl)) vals)
-		  (j2s-alpha body
-		     (cons thisp params) (cons (J2SUndefined) vals)))))))
-   
-   (define (stmt->expr node)
-      (cond
-	 ((isa? node J2SStmtExpr)
-	  (with-access::J2SStmtExpr node (expr)
-	     expr))
-	 ((isa? node J2SLetBlock)
-	  (with-access::J2SLetBlock node (loc decls nodes)
-	     (when (and (null? decls) (pair? nodes) (null? (cdr nodes)))
-		(stmt->expr (cadr nodes)))))
-	 ((isa? node J2SBlock)
-	  (with-access::J2SBlock node (nodes loc)
-	     (cond
-		((null? nodes)
-		 (J2SUndefined))
-		((null? (cdr nodes))
-		 (stmt->expr (car nodes)))
-		(else
-		 #f))))
-	 (else
-	  #f)))
-   
-   (with-access::J2SCall this (fun loc args)
-      (let ((body (if (isa? fun J2SAccess)
-		      (inline-method-call this)
-		      (inline-function-call this))))
-	 (let* ((lbl (gensym '%return))
-		(cell (make-cell '()))
-		(bd (bind-exit! body lbl cell '())))
-	    (cond
-	       ((pair? (cell-ref cell))
-		(let ((be (J2SBindExit lbl bd)))
-		   ;; patch all returns
-		   (for-each (lambda (ret::J2SReturn)
-				(with-access::J2SReturn ret (from)
-				   (set! from be)))
-		      (cell-ref cell))
-		   be))
-	       ((stmt->expr bd)
-		=>
-		(lambda (expr) expr))
-	       (else
-		(J2SBindExit #f bd)))))))
-
-;*---------------------------------------------------------------------*/
-;*    collect-inlinables ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SNode pmethods stk ifctx loopctx)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    collect-inlinables* ::J2SFun ...                                 */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SFun pmethods stk ifctx loopctx)
-   '())
-
-;*---------------------------------------------------------------------*/
-;*    collect-inlinables* ::J2SIf ...                                  */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SIf pmethods stk ifctx loopctx)
-   (with-access::J2SIf this (test then else)
-      (append (collect-inlinables* test pmethods stk ifctx loopctx)
-	 (collect-inlinables* then pmethods stk (+fx 1 ifctx) loopctx)
-	 (collect-inlinables* else pmethods stk (+fx 1 ifctx) loopctx))))
-
-;*---------------------------------------------------------------------*/
-;*    collect-inlinables* ::J2SFor ...                                 */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SFor pmethods stk ifctx loopctx)
-   (with-access::J2SFor this (init test incr body)
-      (append (collect-inlinables* init pmethods stk ifctx loopctx)
-	 (collect-inlinables* test pmethods stk ifctx (+fx 1 loopctx))
-	 (collect-inlinables* incr pmethods stk ifctx (+fx 1 loopctx))
-	 (collect-inlinables* body pmethods stk ifctx (+fx 1 loopctx)))))
-	 
-;*---------------------------------------------------------------------*/
-;*    collect-inlinables* ::J2SWhile ...                               */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SWhile pmethods stk ifctx loopctx)
-   (with-access::J2SWhile this (test body)
-      (append (collect-inlinables* test pmethods stk ifctx loopctx)
-	 (collect-inlinables* body pmethods stk ifctx (+fx 1 loopctx)))))
-
-;*---------------------------------------------------------------------*/
-;*    collect-inlinables* ::J2SMeta ...                                */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SMeta pmethods stk ifctx loopctx)
-   (with-access::J2SMeta this (optim debug)
-      (if (or (=fx optim 0) (>fx debug 0))
-	  '()
-	  (call-default-walker))))
-
-;*---------------------------------------------------------------------*/
-;*    collect-inlinables* ::J2SCall ...                                */
-;*---------------------------------------------------------------------*/
-(define-walk-method (collect-inlinables* this::J2SCall pmethods stk ifctx loopctx)
-
-   (define (same-arity? fun::J2SFun arity)
-      (with-access::J2SFun fun (params)
-	 (=fx (length params) arity)))
-
-   (define (find-inline-methods fun arity)
-      (with-access::J2SAccess fun (obj field)
-	 (when (isa? obj J2SRef)
-	    (when (isa? field J2SString)
-	       (with-access::J2SString field (val)
-		  (filter (lambda (m::struct)
-			     (and (same-arity? (protoinfo-method m) arity)
-				  (or inline-recursive
-				      (not (memq (protoinfo-method m) stk)))))
-		     (or (hashtable-get pmethods val) '())))))))
-
-   (define (find-inline-function fun arity)
-      (with-access::J2SRef fun (decl)
-	 (when (isa? decl J2SDeclFun)
-	    (with-access::J2SDeclFun decl (val id)
-	       (when (and (same-arity? val arity)
-			  (or inline-recursive
-			      (not (memq val stk))))
-		  (when (check-id id)
-		     (list (protoinfo #f val #f))))))))
-   
-   (define (find-inlines fun arity)
-      (cond
-	 ((isa? fun J2SAccess) (find-inline-methods fun arity))
-	 ((isa? fun J2SRef) (find-inline-function fun arity))))
-
-   (with-access::J2SCall this (fun args type)
-      (let ((inls (find-inlines fun (length args))))
-	 (if (and (pair? inls) (<=fx (length inls) inline-max-targets))
-	     (cons (callinfo this inls ifctx loopctx) (call-default-walker))
-	     (call-default-walker)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    inline-expr! ...                                                 */
 ;*---------------------------------------------------------------------*/
@@ -1060,59 +813,17 @@
    (cell-set! cnt (+fx 1 (cell-ref cnt))))
 
 ;*---------------------------------------------------------------------*/
-;*    funs* ...                                                        */
-;*    -------------------------------------------------------------    */
-;*    Returns all the functions of a node                              */
+;*    unmetainl! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (funs* this::J2SNode)
+(define-walk-method (unmetainl! this::J2SNode)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    funs* ::J2SFun ...                                               */
+;*    unmetainl! ::J2SMetaInl ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (funs* this::J2SFun)
-   (list this))
-
-;*---------------------------------------------------------------------*/
-;*    weight ::J2SNode ...                                             */
-;*    -------------------------------------------------------------    */
-;*    Compute a function weight                                        */
-;*---------------------------------------------------------------------*/
-(define-walk-method (weight this::J2SNode)
-   (call-default-walker))
-
-;*---------------------------------------------------------------------*/
-;*    weight ::J2SFun ...                                              */
-;*---------------------------------------------------------------------*/
-(define-walk-method (weight this::J2SFun)
-   (with-access::J2SFun this (%info body)
-      (set! %info
-	 (inlinfo
-	    (if (has-loop? body)
-		(+fx inline-max-size 1)
-		(node-size body))
-	    body))))
-
-;*---------------------------------------------------------------------*/
-;*    has-loop? ...                                                    */
-;*---------------------------------------------------------------------*/
-(define (has-loop? this::J2SNode)
-   (let ((res (make-cell #f)))
-      (has-loop this res)
-      (cell-ref res)))
-	 
-;*---------------------------------------------------------------------*/
-;*    has-loop ::J2SNode ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (has-loop this::J2SNode res)
-   (unless (cell-ref res)
-      (call-default-walker)))
-
-;*---------------------------------------------------------------------*/
-;*    has-loop ::J2SLoop ...                                           */
-;*---------------------------------------------------------------------*/
-(define-walk-method (has-loop this::J2SLoop res)
-   (cell-set! res #t))
+(define-method (unmetainl! this::J2SMetaInl)
+   (with-access::J2SMetaInl this (stmt)
+      stmt))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-verb ...                                                  */

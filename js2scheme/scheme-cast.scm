@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Jan 23 08:28:02 2018 (serrano)                */
+;*    Last change :  Tue Jan 23 09:08:18 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -72,6 +72,7 @@
 	 (int32 ,js-number->int32)
 	 (uint32 ,js-number->uint32)
 	 (string ,js-number->string)
+	 (int53 nop)
 	 (integer nop)
 	 (propname nop)
 	 (any nop)))

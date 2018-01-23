@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Jan 23 08:13:18 2018 (serrano)                */
+;*    Last change :  Tue Jan 23 11:35:02 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -739,7 +739,8 @@
 			     (expr-type-set! this nenv fix utype
 				(append lbk rbk))))
 			 (tyr
-			  (with-access::J2SRef lhs (decl)
+			  (with-access::J2SRef lhs (decl loc)
+			     
 			     (decl-vtype-set! decl tyr fix)
 			     (let ((nenv (extend-env env decl tyr)))
 				(expr-type-set! this nenv fix tyr
@@ -1730,6 +1731,7 @@
 			(call-default-walker))
 		       (else
 			(unfix! fix "resolve.J2SBinary")
+			(tprint "RESOLVE BINARY: " (j2s->list this))
 			(J2SBool #t)))))
 		((instanceof)
 		 (with-access::J2SExpr ref (type)
