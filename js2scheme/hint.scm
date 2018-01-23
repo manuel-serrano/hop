@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sun Jan  7 09:48:26 2018 (serrano)                */
+;*    Last change :  Tue Jan 23 08:45:41 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -42,10 +42,10 @@
       ;; reset previously collected hints
       (for-each j2s-reset-hint decls)
       (for-each j2s-reset-hint nodes)
-      ;; first we collect all possible hints...
+      ;; first collect all possible hints...
       (for-each (lambda (n) (j2s-hint n '() 'number 1)) decls)
       (for-each (lambda (n) (j2s-hint n '() 'number 1)) nodes)
-      ;; then, for each function whose parameters are "hinted", we generate
+      ;; then, for each function whose parameters are "hinted", generate
       ;; an ad-hoc typed version
       (if (>=fx (config-get conf :optim 0) 3)
 	  (let ((dups (append-map (lambda (d) (j2s-hint-function* d conf))
@@ -519,16 +519,23 @@
    
    (define (param-hint-count p::J2SDecl)
       (with-access::J2SDecl p (hint usecnt useinloop itype)
-	 (let ((bt (best-hint-type p #f)))
-	    (cond
-	       ((eq? bt 'unknown)
-		0)
-	       ((or (eq? itype 'unknown)
-		    (eq? itype 'any)
-		    (and (eq? itype 'number) (or (assq 'integer hint))))
-		(if useinloop (*fx 2 usecnt) usecnt))
-	       (else
-		0)))))
+	 (if (and (>=fx (length hint) 4)
+		  (let* ((w (map cdr hint))
+			 (max (apply max w))
+			 (min (apply min w)))
+		     (<fx (-fx max min) 6)))
+	     ;; a megamorph argument, don't specialize it
+	     0
+	     (let ((bt (best-hint-type p #f)))
+		(cond
+		   ((eq? bt 'unknown)
+		    0)
+		   ((or (eq? itype 'unknown)
+			(eq? itype 'any)
+			(and (eq? itype 'number) (or (assq 'integer hint))))
+		    (if useinloop (*fx 2 usecnt) usecnt))
+		   (else
+		    0))))))
    
    (define (duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
@@ -583,19 +590,18 @@
 	 (dup
 	  (with-access::J2SDeclFun this (val id rtype)
 	     (with-access::J2SFun val (params body)
-		(let* ((htypes (map (lambda (p)
-				       (best-hint-type p #t))
-				  params))
-		       (itypes (map (lambda (p::J2SDecl)
-				       (with-access::J2SDecl p (itype)
-					  itype))
-				  params))
-		       (fu (fun-duplicate-untyped this conf))
-		       (ft (fun-duplicate-typed this htypes fu conf)))
+		(let ((htypes (map (lambda (p)
+				      (best-hint-type p #t))
+				 params)))
 		   (if (or (not (memq 'object htypes))
 			   (not (self-recursive? this)))
 		       ;; only hints non-recursive or non-object functions
-		       (begin
+		       (let* ((itypes (map (lambda (p::J2SDecl)
+					      (with-access::J2SDecl p (itype)
+						 itype))
+					 params))
+			      (fu (fun-duplicate-untyped this conf))
+			      (ft (fun-duplicate-typed this htypes fu conf)))
 			  (fun-dispatch! this htypes ft itypes fu)
 			  (list ft fu))
 		       (loop #f))))))
