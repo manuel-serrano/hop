@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Jan 23 11:38:47 2018 (serrano)                */
+;*    Last change :  Tue Jan 23 14:09:37 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -341,9 +341,7 @@
 	       (let ((e (inline-method-call fun mets args loc
 			   limit stack pmethods prgm conf)))
 		  (inline-stmt->expr loc
-		     (J2SMetaInl (append vals stack)
-			(config-get conf :optim 0)
-			(inline! e limit (append vals stack) pmethods prgm conf))))))))
+		     (inline! e limit (append vals stack) pmethods prgm conf)))))))
    
    (define (inline-ref-call this::J2SCall fun::J2SRef args loc)
       (let ((val (find-inline-function this fun (length args))))
@@ -372,7 +370,8 @@
 	    (J2SMetaInl (cons val stack)
 	       (config-get conf :optim 0)
 	       (inline!
-		  (j2s-alpha body (cons thisp params) (cons (J2SUndefined) vals))
+		  (j2s-alpha body
+		     (cons thisp params) (cons (J2SUndefined) vals))
 		  limit (cons val stack) pmethods prgm conf))))))
 
 ;*---------------------------------------------------------------------*/
@@ -417,13 +416,18 @@
 	 args))
 
    (define (inline-method obj::J2SRef field callee args cache loc kont)
-      (with-access::J2SFun (protoinfo-method callee) (body thisp params (floc loc))
-	 (let ((vals (inline-args params args limit stack pmethods prgm conf)))
-	    (with-access::J2SRef obj (decl)
-	       (cache-check cache loc obj field kont
-		  (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
-		     (j2s-alpha body
-			(cons thisp params) (cons decl vals))))))))
+      (let ((val (protoinfo-method callee)))
+	 (with-access::J2SFun val (body thisp params (floc loc))
+	    (let ((vals (inline-args params args limit stack pmethods prgm conf)))
+	       (with-access::J2SRef obj (decl)
+		  (cache-check cache loc obj field kont
+		     (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
+			(J2SMetaInl (cons val stack)
+			   (config-get conf :option 0)
+			   (inline!
+			      (j2s-alpha body
+				 (cons thisp params) (cons decl vals))
+			      limit (cons val stack) pmethods prgm conf)))))))))
    
    (define (inline-object-method-call fun obj args)
       (with-access::J2SAccess fun (field)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Jan 17 15:01:30 2018 (serrano)                */
+;*    Last change :  Tue Jan 23 14:05:15 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -992,6 +992,23 @@
 		       (j2s-cast
 			  `(,(bitop op)
 			    ,(toint32 left tl) ,(toint32 right tr))
+			  #f 'int32 type conf))))
+		  ((memq tl '(int32 uint32 integer))
+		   (case op
+		      ((>> <<)
+		       (j2s-cast
+			  `(,(bitop op)
+			    ,(asint32 left tl) ,(mask32 right rhs))
+			  #f 'int32 type conf))
+		      ((>>>)
+		       (j2s-cast
+			  `(,(bitop op)
+			    ,(asuint32 left tl) ,(mask32 right rhs))
+			  #f 'uint32 type conf))
+		      (else
+		       (j2s-cast
+			  `(,(bitop op)
+			    ,(asint32 left tl) ,(toint32 right tr))
 			  #f 'int32 type conf))))
 		  ((memq op '(& ^ BIT_OR))
 		   `(if (and (fixnum? ,left) (fixnum? ,right))
