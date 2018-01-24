@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Jan 23 14:09:37 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 14:50:03 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -109,6 +109,19 @@
 	  ;; mark all the function sizes
 	  (let ((size (node-size this))
 		(pms (ptable (append-map collect-proto-methods* nodes))))
+	     (when (string-contains (or (getenv "HOPTRACE") "") "j2s:inline")
+		(with-output-to-port (current-error-port)
+		   (lambda ()
+		      (print "\n      proto methods:")
+		      (hashtable-for-each pms
+			 (lambda (k b)
+			    (print "       " k ": ")
+			    (for-each (lambda (p)
+					 (with-access::J2SAssig (protoinfo-assig p) (loc)
+					    (print "         " (cadr loc)
+					       ":" (caddr loc) " size="
+					       (node-size (protoinfo-method p)))))
+			       b))))))
 	     (let loop ((limit 10))
 		(inline! this limit '() pms this args)
 		(let ((nsize (max (node-size this) limit)))
@@ -305,21 +318,20 @@
    
    (define (find-inline-methods this fun arity)
       (with-access::J2SAccess fun (obj field)
-	 (when (isa? obj J2SRef)
-	    (when (isa? field J2SString)
-	       (with-access::J2SString field (val)
-		  (let ((mets (filter (lambda (m::struct)
-					 (let ((f (protoinfo-method m)))
-					    (and (=fx (function-arity f) arity)
-						 (not (memq f stack)))))
-				 (or (hashtable-get pmethods val) '()))))
-		     (when (<fx (apply +
-				   (map (lambda (m)
-					   (function-size
-					      (protoinfo-method m)))
-				      mets))
-			      limit)
-			mets)))))))
+	 (when (isa? field J2SString)
+	    (with-access::J2SString field (val)
+	       (let ((mets (filter (lambda (m::struct)
+				      (let ((f (protoinfo-method m)))
+					 (and (=fx (function-arity f) arity)
+					      (not (memq f stack)))))
+			      (or (hashtable-get pmethods val) '()))))
+		  (when (<fx (apply +
+				(map (lambda (m)
+					(function-size
+					   (protoinfo-method m)))
+				   mets))
+			   limit)
+		     mets))))))
    
    (define (find-inline-function this::J2SCall fun arity)
       (with-access::J2SRef fun (decl)
@@ -327,12 +339,13 @@
 	    (with-access::J2SDeclFun decl (val id)
 	       (when (and (=fx (function-arity val) arity)
 			  (not (memq val stack))
-			  (<=fx (function-size val) limit))
+			  (<=fx (function-size val) limit)
+			  (check-id id))
 		  val)))))
    
    (define (inline-access-call this::J2SCall fun::J2SAccess args loc)
       (let ((mets (find-inline-methods this fun (length args))))
-	 (when (and mets (pair? mets))
+	 (when (pair? mets)
 	    (let* ((vals (map protoinfo-method mets))
 		   (sz (apply + (map function-size vals))))
 	       (inline-verb loc fun (length mets) sz limit conf)
@@ -423,7 +436,7 @@
 		  (cache-check cache loc obj field kont
 		     (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
 			(J2SMetaInl (cons val stack)
-			   (config-get conf :option 0)
+			   (config-get conf :optim 0)
 			   (inline!
 			      (j2s-alpha body
 				 (cons thisp params) (cons decl vals))
@@ -467,8 +480,7 @@
 			       v))
 		      vals)))
 	 (cond
-	    ((and (not (eq? (j2s-type obj) 'object))
-		  (not (isa? obj J2SRef)))
+	    ((not (eq? (j2s-type obj) 'object))
 	     (let* ((id (gensym 'this))
 		    (d (J2SLetOpt '(get) id obj)))
 		(LetBlock loc (cons d t)
@@ -487,6 +499,11 @@
 		   (J2SMeta 0 0
 		      (J2SStmtExpr
 			 (J2SCall* (J2SAccess obj field) args))))))
+	    ((not (isa? obj J2SRef))
+	     (let* ((id (gensym 'this))
+		    (d (J2SLetOpt '(get) id obj)))
+		(LetBlock loc (cons d t)
+		   (inline-object-method-call fun (J2SRef d) args))))
 	    ((not (isa? obj J2SRef))
 	     (let* ((id (gensym 'this))
 		    (d (J2SLetOpt '(get) id obj)))
@@ -827,7 +844,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (unmetainl! this::J2SMetaInl)
    (with-access::J2SMetaInl this (stmt)
-      stmt))
+      (unmetainl! stmt)))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-verb ...                                                  */
@@ -852,10 +869,20 @@
 		(with-access::J2SAccess fun (obj field)
 		   (with-access::J2SString field (val)
 		      (display "\n      ")
-		      (when (isa? obj J2SRef)
-			 (with-access::J2SRef obj (decl)
-			    (with-access::J2SDecl decl (id)
-			       (display id))))
+		      (let loop ((obj obj))
+			 (cond
+			    ((isa? obj J2SRef)
+			     (with-access::J2SRef obj (decl)
+				(with-access::J2SDecl decl (id)
+				   (display id))))
+			    ((isa? obj J2SAccess)
+			     (with-access::J2SAccess obj (obj field)
+				(loop obj)
+				(display ".")
+				(if (isa? field J2SString)
+				    (with-access::J2SString field (val)
+				       (display val))
+				    (display "..."))))))
 		      (display ".")
 		      (display val)))))
 	    (display "() ")

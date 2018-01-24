@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Jan 17 07:13:32 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 15:02:17 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -231,15 +231,18 @@
 ;*    typeof-this ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (typeof-this obj conf)
-   (let ((ty (j2s-vtype obj)))
-      (if (eq? ty 'object)
-	  (if (and (isa? obj J2SThis)
-		   (with-access::J2SThis obj (decl)
-		      (with-access::J2SDecl decl (vtype)
-			 (eq? vtype 'this))))
-	      'this
-	      ty)
-	  ty)))
+   (let ((ty (j2s-type obj)))
+      (if (not (memq ty '(any unknown)))
+	  ty
+	  (let ((tyv (j2s-vtype obj)))
+	     (if (eq? tyv 'object)
+		 (if (and (isa? obj J2SThis)
+			  (with-access::J2SThis obj (decl)
+			     (with-access::J2SDecl decl (vtype)
+				(eq? vtype 'this))))
+		     'this
+		     tyv)
+		 tyv)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    maybe-number? ...                                                */
