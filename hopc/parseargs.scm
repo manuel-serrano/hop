@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jan 17 09:08:43 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 17:27:21 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -301,6 +301,10 @@
 	     (when (>=fx (string->integer level) 2)
 		(hopc-bigloo-options-set!
 		   (cons* "-srfi" "cache-level2" (hopc-bigloo-options)))))
+	    (("-fcache-instanceof" (help "Enable instanceof caching"))
+	     (hopc-j2s-flags-set! (cons* :optim-cinstanceof #t (hopc-j2s-flags))))
+	    (("-fno-cache-instanceof" (help "Enable instanceof caching"))
+	     (hopc-j2s-flags-set! (cons* :optim-cinstanceof #f (hopc-j2s-flags))))
 	    (("-fvector" (help "Enable array-to-vector optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-vector #t (hopc-j2s-flags))))
 	    (("-fno-vector" (help "Disable array-to-vector optimization"))

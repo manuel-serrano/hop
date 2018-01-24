@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sun Dec 10 13:47:21 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Jan 24 15:58:03 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Init the this variable of all function in non-strict mode        */
 ;*=====================================================================*/
@@ -71,7 +71,7 @@
 				;; (set! this %scope)
 				;; but it breaks nodejs/test/simple/test-fs-fstat.js
 				(set! this %this))
-			       ((not (isa? this JsObject))
+			       ((not (js-object? this))
 				(set! this (js-toobject %this this))))))))
       (instantiate::J2SStmtExpr
 	 (loc loc)

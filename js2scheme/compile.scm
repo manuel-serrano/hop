@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Jan 17 13:47:34 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 17:28:43 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -30,6 +30,7 @@
 	   __js2scheme_ronly
 	   __js2scheme_use
 	   __js2scheme_property
+	   __js2scheme_instanceof
 	   __js2scheme_constrsize
 	   __js2scheme_ctor
 	   __js2scheme_propcce
@@ -183,6 +184,7 @@
       j2s-varpreinit-stage
       j2s-tyflow-stage
       j2s-property-stage
+      j2s-instanceof-stage
       j2s-propcce-stage
       j2s-range-stage
       j2s-ctor-stage
@@ -385,7 +387,9 @@
 	    (set! o (cons* :optim-vector #t o))))
       (when (>=fx l 2)
 	 (unless (memq :optim-tyflow-resolve o)
-	    (set! o (cons* :optim-tyflow-resolve #t o))))
+	    (set! o (cons* :optim-tyflow-resolve #t o)))
+	 (unless (memq :optim-cinstanceof o)
+	    (set! o (cons* :optim-cinstanceof #t o))))
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))

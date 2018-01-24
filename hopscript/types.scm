@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jan 17 18:53:00 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 17:22:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -370,8 +370,8 @@
 	   (inline js-object-properties ::JsObject)
 	   (inline js-object-properties-set! ::JsObject ::obj)
 	   
-	   (inline js-object-mode::ubyte ::JsObject)
-	   (inline js-object-mode-set! ::JsObject ::ubyte)
+	   (inline js-object-mode::ubyte ::object)
+	   (inline js-object-mode-set! ::object ::ubyte)
 	   
 	   (gencmapid::uint32))
    

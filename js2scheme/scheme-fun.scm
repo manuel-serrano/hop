@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Fri Dec 22 09:20:43 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Wed Jan 24 15:57:44 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
 ;*=====================================================================*/
@@ -469,7 +469,7 @@
 			    (cond
 			       ((null? args)
 				(fun this))
-			       ((and (isa? (car args) JsObject)
+			       ((and (js-object? (car args))
 				     (null? (cdr args)))
 				(apply fun this
 				   (js-jsobject->plist (car args) %this)))

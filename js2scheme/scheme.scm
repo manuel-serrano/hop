@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jan 24 14:59:42 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 17:13:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1092,7 +1092,7 @@
 	    (with-access::J2SRef obj (type)
 	       (if (eq? type 'object)
 		   precache
-		   `(and (isa? ,scmobj JsObject) ,precache))))))
+		   `(and (js-object? ,scmobj) ,precache))))))
    
    (define (precache-test this)
       (with-access::J2SPrecache this (accesses)
@@ -2287,7 +2287,7 @@
 				,(aput-inc otmp pro prov op lhs cache inc 1)
 				,(aput-inc otmp pro prov op lhs rhscache inc 2)))))
 		    (else
-		     `(if (and (isa? ,otmp JsObject)
+		     `(if (and (js-object? ,otmp)
 			       (with-access::JsObject ,otmp (cmap)
 				  (eq? (js-pcache-cmap ,(js-pcache cache)) cmap)))
 			  ,(aput-inc otmp pro prov op lhs cache inc 1 'object)
@@ -2389,7 +2389,7 @@
 				,(aput-assigop otmp pro prov op
 				    tl lhs rhs 2)))))
 		    (else
-		     `(if (isa? ,otmp JsObject)
+		     `(if (js-object? ,otmp)
 			  (with-access::JsObject ,otmp (cmap)
 			     (let ((%omap cmap))
 				(if (eq? (js-pcache-cmap ,(js-pcache cache))
@@ -2502,6 +2502,9 @@
 	 ((proto-method)
 	  `(eq? (js-pcache-pmap (js-pcache-ref %pcache ,cache))
 	      (js-object-cmap ,(j2s-scheme obj mode return conf hint))))
+	 ((instanceof)
+	  `(eq? (js-pcache-cmap (js-pcache-ref %pcache ,cache))
+	      (js-object-cmap ,(j2s-scheme obj mode return conf hint))))
 	 (else
 	  (error "j2s-scheme" "Illegal J2SCacheCheck property" prop)))))
 
@@ -2514,6 +2517,11 @@
 	 ((proto-method)
 	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (pmap)
 	      (set! pmap
+		 (js-object-cmap
+		    ,(j2s-scheme obj mode return conf hint)))))
+	 ((instanceof)
+	  `(with-access::JsPropertyCache (js-pcache-ref %pcache ,cache) (cmap)
+	      (set! cmap
 		 (js-object-cmap
 		    ,(j2s-scheme obj mode return conf hint)))))
 	 (else

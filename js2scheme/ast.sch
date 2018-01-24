@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Fri Dec 22 11:46:03 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Wed Jan 24 17:18:07 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
 ;*=====================================================================*/
@@ -138,6 +138,14 @@
        (thisarg '())
        (args ,(if (pair? args) `(list ,@args) ''()))))
 
+(define-macro (J2SHopCall/type type fun . args)
+   `(instantiate::J2SCall
+       (loc loc)
+       (fun ,fun)
+       (type ,type)
+       (thisarg '())
+       (args ,(if (pair? args) `(list ,@args) ''()))))
+
 (define-macro (J2SCall* fun args)
    `(instantiate::J2SCall
        (loc loc)
@@ -182,6 +190,7 @@
        (loc loc)
        (id ,id)
        (rtype ,rtype)
+       (type ,rtype)
        (module ,(when (pair? module) (car module)))))
 
 (define-macro (J2SRef decl . opts)
@@ -478,13 +487,14 @@
        (debug ,debug)
        (stmt ,stmt)))
 
-(define-macro (J2SCacheCheck prop cache obj field)
+(define-macro (J2SCacheCheck prop cache obj . fields)
    `(instantiate::J2SCacheCheck
        (loc loc)
        (prop ,prop)
        (cache ,cache)
        (obj ,obj)
-       (fields (list ,field))))
+       (type 'bool)
+       (fields ,(if (pair? fields) `(list ,@fields) ''()))))
 
 (define-macro (J2SCacheUpdate prop cache obj)
    `(instantiate::J2SCacheUpdate

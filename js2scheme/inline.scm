@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Jan 24 14:50:03 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 17:01:44 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -499,11 +499,6 @@
 		   (J2SMeta 0 0
 		      (J2SStmtExpr
 			 (J2SCall* (J2SAccess obj field) args))))))
-	    ((not (isa? obj J2SRef))
-	     (let* ((id (gensym 'this))
-		    (d (J2SLetOpt '(get) id obj)))
-		(LetBlock loc (cons d t)
-		   (inline-object-method-call fun (J2SRef d) args))))
 	    ((not (isa? obj J2SRef))
 	     (let* ((id (gensym 'this))
 		    (d (J2SLetOpt '(get) id obj)))
