@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Thu Jan 18 08:01:09 2018 (serrano)                */
+;*    Last change :  Tue Jan 23 20:00:15 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -188,7 +188,6 @@
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
 		  :debug (bigloo-debug)
-		  :enable-worker (hopc-js-worker)
 		  (hopc-j2s-flags)))))
       
       (define (generate-js out::output-port)
@@ -215,7 +214,6 @@
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
 		  :debug (bigloo-debug)
-		  :enable-worker (hopc-js-worker)
 		  (hopc-j2s-flags)))))
       
       (define (generate out::output-port lang::symbol)
@@ -337,7 +335,6 @@
 			:verbose (hop-verbose)
 			:long-size (hopc-long-size)
 			:debug (bigloo-debug)
-			:enable-worker (hopc-js-worker)
 			(hopc-j2s-flags))))
 	       file
 	       temp)))

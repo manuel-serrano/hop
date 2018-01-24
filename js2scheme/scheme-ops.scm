@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Jan 23 14:05:15 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 09:49:56 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1853,7 +1853,7 @@
       ((eq? tr 'integer) `(fixnum? ,left))
       ((and (memq tl '(int32 uint32 int53 integer number any unknown))
 	    (memq tr '(int32 uint32 int53 integer number any unknown)))
-       `(and (fixnum? ,left) (fixnum? ,right)))
+       `(fixnums? ,left ,right))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/

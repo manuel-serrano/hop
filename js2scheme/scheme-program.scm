@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Jan 18 08:55:01 2018 (serrano)                */
+;*    Last change :  Tue Jan 23 20:01:27 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -115,7 +115,7 @@
 	    (scmdecls (j2s-scheme decls mode return conf hint))
 	    (scmnodes (j2s-scheme nodes mode return conf hint))
 	    (scmcnsts (%cnsts cnsts mode return conf hint)))
-      (if (and main (not (config-get conf :enable-worker #t)))
+      (if (and main (not (config-get conf :worker #t)))
 	  (j2s-main-sans-worker-module this name
 	     scmcnsts
 	     (flatten-nodes (append scmheaders scmdecls))

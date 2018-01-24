@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Wed Jan  3 05:41:46 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 08:15:41 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -43,7 +43,7 @@
 	  (inline js-int32-tointeger::obj ::int32)
 	  (inline js-uint32-tointeger::obj ::uint32)
 	  
-	  (inline +fx/overflow::obj ::long ::long)
+	  (inline +fx/overflow::obj ::obj ::obj)
 	  (inline +fx32/overflow::obj ::long ::long)
 	  (inline +s32/overflow::obj ::int32 ::int32)
 	  (inline +u32/overflow::obj ::uint32 ::uint32)
@@ -226,8 +226,17 @@
 ;*    -------------------------------------------------------------    */
 ;*    The argument are 30bit integers encoded into long values.        */
 ;*---------------------------------------------------------------------*/
-(define-inline (+fx/overflow x::long y::long)
-   (overflow29 (+fx x y)))
+(define-inline (+fx/overflow x::obj y::obj)
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::long 0))
+	  (if (pragma::bool "__builtin_saddl_overflow((long)$1, (long)$2-TAG_INT, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT($1)))+((double)(CINT($2))))"
+		 x y)
+	      (pragma::bint "(obj_t)($1)" res))))
+      (else
+       (overflow29 (+fx x y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    +fx32/overflow ...                                               */

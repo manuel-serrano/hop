@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Thu Jan  4 09:03:20 2018 (serrano)                */
+;*    Last change :  Wed Jan 24 09:50:19 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -58,6 +58,8 @@
 	   (>js::bool ::obj ::obj ::JsGlobalObject)
 	   (<=js::bool ::obj ::obj ::JsGlobalObject)
 	   (>=js::bool ::obj ::obj ::JsGlobalObject)
+	   
+	   (inline fixnums?::bool ::obj ::obj)
 	   )
    
    (export (js-int53-toint32::int32 ::obj)
@@ -587,4 +589,12 @@
 		    (ny (js-tonumber py %this)))
 		 (>= nx ny))))))
 
-
+;*---------------------------------------------------------------------*/
+;*    fixnums? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-inline (fixnums? a b)
+   (cond-expand
+      (bigloo-c
+       (pragma::bool "INTEGERP( (long)$1 & (long)$2 )" a b))
+      (else
+       (and (fixnum? a) (fixnum? b)))))
