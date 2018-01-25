@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Aug  1 10:53:17 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Thu Jan 25 18:37:49 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
 ;*=====================================================================*/
@@ -495,7 +495,8 @@
 	 :precompiled-declared-variables hopscheme-declared
 	 :precompiled-free-variables hopscheme-free
 	 :filename-resolver hop-clientc-filename-resolver
-	 :jsc nodejs-compile-file)
+	 :jsc nodejs-compile-file
+	 :jsonc nodejs-compile-json)
 
       (init-hop-services!)
       (init-hop-widgets!)
