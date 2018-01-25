@@ -29,6 +29,7 @@
 	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
+	   (nodejs-compile-json ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-pending::int)
 	   (nodejs-compile-add-event-listener! ::bstring ::procedure ::bool)
 	   (nodejs-compile-remove-event-listener! ::bstring ::procedure)
@@ -76,6 +77,28 @@
 	 (call-with-output-file srcmap
 	    (lambda (p)
 	       (generate-source-map tree ifile ofile p))))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-json ...                                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-json ifile::bstring name::bstring ofile::bstring query)
+   
+   (define (compile-json op)
+      (let ((str (call-with-input-file ifile read-string)))
+	 (if (string=? query "es")
+	     (display str op)
+	     (begin
+		(fprintf op "hop[ '%requires' ][ ~s ] = function() {\n"
+		   ifile)
+		(fprintf op "var exports = ~a; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n return exports; }\n"
+		   str
+		   name ifile
+		   (js-paths (nodejs-filename->paths ifile))
+		   ifile)))))
+   
+   (if (string=? ofile "-")
+       (compile-json (current-output-port))
+       (call-with-output-file ofile compile-json)))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-pending ...                                       */
@@ -128,18 +151,6 @@
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (module->javascript filename::bstring id op compile isexpr srcmap query)
-   
-   (define (js-paths vec)
-      (let ((len (-fx (vector-length vec) 1)))
-	 (call-with-output-string
-	    (lambda (p)
-	       (let loop ((i 0))
-		  (when (<=fx i len)
-		     (display "'" p)
-		     (display (vector-ref vec i) p)
-		     (display "'" p)
-		     (if (<fx i len) (display ", " p))
-		     (loop (+fx i 1))))))))
 
    (define (init-dummy-module! this worker)
       (with-access::JsGlobalObject this (js-object)
@@ -211,6 +222,21 @@
 		     ;; first element of the tree is a position offset
 		     ;; see sourcemap generation
 		     (cons offset tree))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-paths ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (js-paths vec)
+   (let ((len (-fx (vector-length vec) 1)))
+      (call-with-output-string
+	 (lambda (p)
+	    (let loop ((i 0))
+	       (when (<=fx i len)
+		  (display "'" p)
+		  (display (vector-ref vec i) p)
+		  (display "'" p)
+		  (if (<fx i len) (display ", " p))
+		  (loop (+fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-driver ...                                                */

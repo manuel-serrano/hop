@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Apr 28 11:23:23 2016                          */
-/*    Last change :  Wed Sep 27 19:00:14 2017 (serrano)                */
+/*    Last change :  Wed Dec 13 13:23:24 2017 (serrano)                */
 /*    Copyright   :  2016-17 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Reactive runtime.                                                */
@@ -211,7 +211,7 @@ hop.reactNode = function( proc, parent, sibling, anchor, key ) {
 	       return;
 	    }
 	 } else {
-	    for( var i = nodes.length - 1; i >= 0; i-- ) {
+	    for( var i = 0; i < nodes.length; i++ ) {
 	       parentNode.appendChild( nodes[ i ] );
 	    }
 	 }

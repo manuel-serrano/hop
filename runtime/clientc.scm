@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Tue Aug 16 10:21:43 2016 (serrano)                */
-;*    Copyright   :  2009-16 Manuel Serrano                            */
+;*    Last change :  Thu Jan 25 18:53:18 2018 (serrano)                */
+;*    Copyright   :  2009-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
 ;*=====================================================================*/
@@ -46,6 +46,7 @@
 	       (precompiled-declared-variables::procedure read-only)
 	       (precompiled-free-variables::procedure read-only)
 	       (jsc::procedure read-only)
+	       (jsonc::procedure read-only)
 	       (filename-resolver::procedure read-only (default find-file/path)))
 
 	    (init-clientc-compiler! #!key
@@ -59,7 +60,8 @@
 	       precompiled-declared-variables
 	       precompiled-free-variables
 	       filename-resolver
-	       jsc)
+	       jsc
+	       jsonc)
 
 	    (current-module-clientc-import)
 	    
@@ -91,7 +93,8 @@
 	   precompiled-declared-variables
 	   precompiled-free-variables
 	   filename-resolver
-	   jsc)
+	   jsc
+	   jsonc)
    
    (define (null e) '())
    
@@ -123,7 +126,8 @@
 	 (precompiled-declared-variables (or precompiled-declared-variables null))
 	 (precompiled-free-variables (or precompiled-free-variables null))
 	 (filename-resolver (or filename-resolver (lambda (n p) n)))
-	 (jsc (or jsc error)))))
+	 (jsc (or jsc error))
+	 (jsonc (or jsonc error)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    current-module-clientc-import ...                                */
@@ -192,10 +196,14 @@
 ;*    compile-client ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (compile-client path name output query)
-   (with-access::clientc (hop-clientc) (filec jsc)
-      (if (string-suffix? ".js" path)
-	  (jsc path name output query)
-	  (filec path output '()))))
+   (with-access::clientc (hop-clientc) (filec jsc jsonc)
+      (cond
+	 ((string-suffix? ".js" path)
+	  (jsc path name output query))
+	 ((string-suffix? ".json" path)
+	  (jsonc path name output query))
+	 (else
+	  (filec path output '())))))
    
 ;*---------------------------------------------------------------------*/
 ;*    clientc-cached-response ...                                      */
