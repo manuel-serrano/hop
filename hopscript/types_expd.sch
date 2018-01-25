@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Fri Oct 27 16:40:27 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Thu Jan 25 06:02:22 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
 ;*=====================================================================*/
@@ -20,7 +20,9 @@
 
 	     (define builtins
 		'((properties '())
-		  (mode (js-object-default-mode))))
+		  (mode ,(if (pair? (cddr x))
+			     (caddr x)
+			     '(js-object-default-mode)))))
 	     
 	     (define (builtin? f)
 		(assq (car f) builtins))
@@ -64,7 +66,7 @@
 (define-instantiate-expander JsObject)
 (define-instantiate-expander JsWrapper)
 (define-instantiate-expander JsGlobalObject)
-(define-instantiate-expander JsArray)
+(define-instantiate-expander JsArray (js-array-default-mode))
 (define-instantiate-expander JsArrayBuffer)
 (define-instantiate-expander JsArrayBufferView)
 (define-instantiate-expander JsTypedArray)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Jan  3 17:59:32 2018 (serrano)                */
+;*    Last change :  Thu Jan 25 05:52:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -21,7 +21,7 @@
 	    "stringliteral.sch"
 	    "property.sch")
    
-   (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::byte)
+   (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsarray")
 	   ($js-init-vector::vector (::void* ::long ::obj)
 	      "bgl_init_vector")
@@ -48,7 +48,6 @@
 	   (inline js-make-vector ::long ::obj)
 	   (inline js-array-mark::long)
 	   *JS-ARRAY-MARK*
-	   (inline js-array?::bool ::obj)
 	   (inline js-array-length::uint32 ::JsArray)
 	   (inline js-array-update-length!::long ::JsArray ::long)
 	   
@@ -445,12 +444,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-mark)
    *JS-ARRAY-MARK*)
-
-;*---------------------------------------------------------------------*/
-;*    js-array? ...                                                    */
-;*---------------------------------------------------------------------*/
-(define-inline (js-array? obj)
-   (isa? obj JsArray))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-length ...                                              */

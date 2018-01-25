@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Jan 24 17:22:41 2018 (serrano)                */
+;*    Last change :  Thu Jan 25 06:05:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -300,7 +300,8 @@
 	   (class JsGenerator::JsObject
 	      %next)
 	   
-	   (inline js-object-default-mode::ubyte)
+	   (inline js-object-default-mode::uint32)
+	   (inline js-array-default-mode::uint32)
 	   
 	   (inline js-object-mode-extensible?::bool ::JsObject)
 	   (inline js-object-mode-extensible-set! ::JsObject ::bool)
@@ -323,14 +324,15 @@
 	   (inline js-object-mode-instance?::bool ::JsObject)
 	   (inline js-object-mode-instance-set! ::JsObject ::bool)
 	   
-	   (inline JS-OBJECT-MODE-EXTENSIBLE::ubyte)
-	   (inline JS-OBJECT-MODE-SEALED::ubyte)
-	   (inline JS-OBJECT-MODE-FROZEN::ubyte)
-	   (inline JS-OBJECT-MODE-INLINE::ubyte)
-	   (inline JS-OBJECT-MODE-GETTER::ubyte)
-	   (inline JS-OBJECT-MODE-HASINSTANCE::ubyte)
-	   (inline JS-OBJECT-MODE-INSTANCE::ubyte)
-	   (inline JS-OBJECT-MODE-JSOBJECTTAG::ubyte)
+	   (inline JS-OBJECT-MODE-EXTENSIBLE::uint32)
+	   (inline JS-OBJECT-MODE-SEALED::uint32)
+	   (inline JS-OBJECT-MODE-FROZEN::uint32)
+	   (inline JS-OBJECT-MODE-INLINE::uint32)
+	   (inline JS-OBJECT-MODE-GETTER::uint32)
+	   (inline JS-OBJECT-MODE-HASINSTANCE::uint32)
+	   (inline JS-OBJECT-MODE-INSTANCE::uint32)
+	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
+	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
@@ -362,6 +364,7 @@
 	   
 	   (inline js-number?::bool ::obj)
 	   (inline js-object?::bool ::obj)
+	   (inline js-array?::bool ::obj)
 	   (inline js-function?::bool ::obj)
 	   (inline js-symbol?::bool ::obj)
 
@@ -370,8 +373,8 @@
 	   (inline js-object-properties ::JsObject)
 	   (inline js-object-properties-set! ::JsObject ::obj)
 	   
-	   (inline js-object-mode::ubyte ::object)
-	   (inline js-object-mode-set! ::object ::ubyte)
+	   (inline js-object-mode::uint32 ::object)
+	   (inline js-object-mode-set! ::object ::uint32)
 	   
 	   (gencmapid::uint32))
    
@@ -389,96 +392,101 @@
 ;*    js-object-default-mode ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-default-mode)
-   (bit-or (JS-OBJECT-MODE-EXTENSIBLE)
-      (bit-or (JS-OBJECT-MODE-INLINE) (JS-OBJECT-MODE-JSOBJECTTAG))))
+   (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
+      (bit-oru32 (JS-OBJECT-MODE-INLINE) (JS-OBJECT-MODE-JSOBJECTTAG))))
 
-(define-inline (JS-OBJECT-MODE-EXTENSIBLE) 1)
-(define-inline (JS-OBJECT-MODE-SEALED) 2)
-(define-inline (JS-OBJECT-MODE-FROZEN) 4)
-(define-inline (JS-OBJECT-MODE-INLINE) 8)
-(define-inline (JS-OBJECT-MODE-GETTER) 16)
-(define-inline (JS-OBJECT-MODE-HASINSTANCE) 32)
-(define-inline (JS-OBJECT-MODE-INSTANCE) 64)
-(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) 128)
+(define-inline (js-array-default-mode)
+   (bit-oru32 (js-object-default-mode) (JS-OBJECT-MODE-JSARRAYTAG)))
 
-(define-macro (JS-OBJECT-MODE-EXTENSIBLE) 1)
-(define-macro (JS-OBJECT-MODE-SEALED) 2)
-(define-macro (JS-OBJECT-MODE-FROZEN) 4)
-(define-macro (JS-OBJECT-MODE-INLINE) 8)
-(define-macro (JS-OBJECT-MODE-GETTER) 16)
-(define-macro (JS-OBJECT-MODE-HASINSTANCE) 32)
-(define-macro (JS-OBJECT-MODE-INSTANCE) 64)
-(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) 128)
+(define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
+(define-inline (JS-OBJECT-MODE-SEALED) #u32:2)
+(define-inline (JS-OBJECT-MODE-FROZEN) #u32:4)
+(define-inline (JS-OBJECT-MODE-INLINE) #u32:8)
+(define-inline (JS-OBJECT-MODE-GETTER) #u32:16)
+(define-inline (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
+(define-inline (JS-OBJECT-MODE-INSTANCE) #u32:64)
+(define-inline (JS-OBJECT-MODE-JSOBJECTTAG) #u32:128)
+(define-inline (JS-OBJECT-MODE-JSARRAYTAG) #u32:256)
+
+(define-macro (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
+(define-macro (JS-OBJECT-MODE-SEALED) #u32:2)
+(define-macro (JS-OBJECT-MODE-FROZEN) #u32:4)
+(define-macro (JS-OBJECT-MODE-INLINE) #u32:8)
+(define-macro (JS-OBJECT-MODE-GETTER) #u32:16)
+(define-macro (JS-OBJECT-MODE-HASINSTANCE) #u32:32)
+(define-macro (JS-OBJECT-MODE-INSTANCE) #u32:64)
+(define-macro (JS-OBJECT-MODE-JSOBJECTTAG) #u32:128)
+(define-macro (JS-OBJECT-MODE-JSARRAYTAG) #u32:256)
 
 (define-inline (js-object-mode-extensible? o)
-   (=fx (bit-and (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-EXTENSIBLE) (js-object-mode o))
       (JS-OBJECT-MODE-EXTENSIBLE)))
 
 (define-inline (js-object-mode-extensible-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-EXTENSIBLE))
-	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-EXTENSIBLE))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-EXTENSIBLE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-EXTENSIBLE))))))
 
 (define-inline (js-object-mode-frozen? o)
-   (=fx (bit-and (JS-OBJECT-MODE-FROZEN) (js-object-mode o))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-FROZEN) (js-object-mode o))
       (JS-OBJECT-MODE-FROZEN)))
 
 (define-inline (js-object-mode-frozen-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-FROZEN))
-	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-FROZEN))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-FROZEN))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-FROZEN))))))
 
 (define-inline (js-object-mode-sealed? o)
-   (=fx (bit-and (JS-OBJECT-MODE-SEALED) (js-object-mode o))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-SEALED) (js-object-mode o))
       (JS-OBJECT-MODE-SEALED)))
 
 (define-inline (js-object-mode-sealed-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-SEALED))
-	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-SEALED))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-SEALED))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-SEALED))))))
 
 (define-inline (js-object-mode-inline? o)
-   (=fx (bit-and (JS-OBJECT-MODE-INLINE) (js-object-mode o))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-INLINE) (js-object-mode o))
       (JS-OBJECT-MODE-INLINE)))
 
 (define-inline (js-object-mode-inline-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-INLINE))
-	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-INLINE))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-INLINE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-INLINE))))))
 
 (define-inline (js-object-mode-getter? o)
-   (=fx (bit-and (JS-OBJECT-MODE-GETTER) (js-object-mode o))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-GETTER) (js-object-mode o))
       (JS-OBJECT-MODE-GETTER)))
 
 (define-inline (js-object-mode-getter-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-GETTER))
-	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-GETTER))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-GETTER))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-GETTER))))))
 
 (define-inline (js-object-mode-hasinstance? o)
-   (=fx (bit-and (JS-OBJECT-MODE-HASINSTANCE) (js-object-mode o))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-HASINSTANCE) (js-object-mode o))
       (JS-OBJECT-MODE-HASINSTANCE)))
 
 (define-inline (js-object-mode-hasinstance-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-HASINSTANCE))
-	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-HASINSTANCE))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-HASINSTANCE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-HASINSTANCE))))))
 
 (define-inline (js-object-mode-instance? o)
-   (=fx (bit-and (JS-OBJECT-MODE-INSTANCE) (js-object-mode o))
+   (=u32 (bit-andu32 (JS-OBJECT-MODE-INSTANCE) (js-object-mode o))
       (JS-OBJECT-MODE-INSTANCE)))
 
 (define-inline (js-object-mode-instance-set! o flag)
    (js-object-mode-set! o
       (if flag
-	  (bit-or (js-object-mode o) (JS-OBJECT-MODE-INSTANCE))
-	  (bit-and (js-object-mode o) (bit-not (JS-OBJECT-MODE-INSTANCE))))))
+	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-INSTANCE))
+	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-INSTANCE))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */
@@ -799,8 +807,15 @@
 ;*    js-object? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object? o)
-   (and (%object? o) (>fx (js-object-mode o) 0)))
+   (and (%object? o) (>u32 (js-object-mode o) #u32:0)))
 ;*    (isa? o JsObject))                                               */
+
+;*---------------------------------------------------------------------*/
+;*    js-array? ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-inline (js-array? o)
+   (and (%object? o) (>=u32 (js-object-mode o) (JS-OBJECT-MODE-JSARRAYTAG))))
+;*    (isa? o JsArray))                                                */
 
 ;*---------------------------------------------------------------------*/
 ;*    js-function? ...                                                 */
@@ -836,10 +851,10 @@
 ;*    js-object-mode ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-mode o)
-   (object-header-size o))
+   (fixnum->uint32 (object-header-size o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-mode-set! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-mode-set! o p)
-   (object-header-size-set! o p))
+   (object-header-size-set! o (uint32->fixnum p)))

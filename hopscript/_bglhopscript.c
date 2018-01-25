@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Dec 21 17:56:17 2017 (serrano)                */
-/*    Copyright   :  2016-17 Manuel Serrano                            */
+/*    Last change :  Thu Jan 25 05:52:08 2018 (serrano)                */
+/*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
@@ -126,7 +126,7 @@ bgl_make_pcache( obj_t obj, int len, obj_t template ) {
 /*         (__proto__ __proto__))                                      */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode ) {
+bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
    long bsize = JSOBJECT_SIZE + VECTOR_SIZE + ( (constrsize-1) * OBJ_SIZE );
    BgL_jsobjectz00_bglt o = (BgL_jsobjectz00_bglt)HOP_MALLOC( bsize );
    obj_t vector;
@@ -139,7 +139,7 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
    o->BgL___proto__z00 = __proto__;
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
    BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
-   BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), mode );
+   BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), (long)mode );
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
@@ -201,7 +201,7 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 /*    INNER_POINTER activated.                                         */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, char mode ) {
+bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
    long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE );
    BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC( bsize );
    obj_t vector;
@@ -216,7 +216,7 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, cha
    o->BgL_elementsz00 = empty_vector;
    o->BgL_lengthz00 = len;
    o->BgL_ilenz00 = 0;
-   BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), mode );
+   BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), (long)mode );
    BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
   
    // vector initialization

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Dec 31 13:09:12 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Thu Jan 25 05:51:29 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
 ;*=====================================================================*/
@@ -16,7 +16,7 @@
 
    (option (set! *compiler-debug-trace* 0))
 
-   (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::byte)
+   (extern ($js-make-jsobject::JsObject (::int ::JsConstructMap ::obj ::uint32)
 	      "bgl_make_jsobject"))
 
    (include "types.sch")
