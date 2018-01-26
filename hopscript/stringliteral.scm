@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Fri Dec 29 09:34:55 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 13:25:48 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
 ;*=====================================================================*/
@@ -25,6 +25,7 @@
 	   __hopscript_property)
 
    (export (js-jsstring-debug msg obj)
+	   (js-jsstring-for-of str ::procedure ::JsGlobalObject)
 	   (inline js-ascii->jsstring::bstring ::bstring)
 	   (inline js-utf8->jsstring::JsStringLiteralUTF8 ::bstring)
 	   (js-string->jsstring::obj ::bstring)
@@ -2854,3 +2855,37 @@
        (let ((slice (js-get-name/cache this 'slice
 		       (js-pcache-ref %pcache 30) %this)))
 	  (js-call2 %this slice this start end))))
+
+;*---------------------------------------------------------------------*/
+;*    js-jsstring-for-of ...                                           */
+;*    -------------------------------------------------------------    */
+;*    This function is invoked on simple literal ascii strings.        */
+;*---------------------------------------------------------------------*/
+(define (js-jsstring-for-of o proc %this)
+   (let ((len (string-length o)))
+      (let loop ((i 0))
+	 (when (<fx i len)
+	    (let ((val (vector-ref prealloc-strings
+			  (char->integer (string-ref-ur o i)))))
+	       (proc val)
+	       (loop (+fx i 1)))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-for-of ::JsStringLiteral ...                                  */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-of o::JsStringLiteral proc close %this)
+
+   (define (ascii-for-of val proc %this)
+      (js-jsstring-for-of val proc %this))
+
+   (define (utf8-for-of val proc %this)
+      (let ((len (string-length val)))
+	 (let loop ((i 0))
+	       (when (<fx i len)
+		  (let* ((z (utf8-char-size (string-ref val i)))
+			 (s (substring val i (+fx i z))))
+		     (proc (js-string->jsstring s))
+		     (loop (+fx i z)))))))
+   
+   (string-dispatch for-of o proc %this))
+

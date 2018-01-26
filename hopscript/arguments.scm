@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Mon Dec  4 08:41:16 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 14:03:04 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
 ;*=====================================================================*/
@@ -441,5 +441,19 @@
 		    (call-next-method))))
 	  (call-next-method))))
 
-
-  
+;*---------------------------------------------------------------------*/
+;*    js-for-of ::JsArguments ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-of o::JsArguments proc close %this)
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (let ((fun (js-get o js-symbol-iterator %this)))
+	 (if (isa? fun JsFunction)
+	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
+	     (with-access::JsArguments o (vec)
+		(let ((len (minfx (vector-length vec)
+			      (uint32->fixnum
+				 (js-touint32 (js-get o 'length %this) %this)))))
+		   (let loop ((i 0))
+		      (when (<fx i len)
+			 (proc (js-property-value o (vector-ref vec i) %this))
+			 (loop (+fx i 1))))))))))

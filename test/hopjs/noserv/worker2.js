@@ -1,21 +1,22 @@
 /*=====================================================================*/
-/*    .../project/hop/3.0.x/test/hopjs/noserv/worker2.js               */
+/*    serrano/prgm/project/hop/3.1.x/test/hopjs/noserv/worker2.js      */
 /*    -------------------------------------------------------------    */
-/*    Author      :  Vincent Prunet                                    */
+/*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Mon Sep  28 18:43:00 2015                         */
-/*    Last change :  Tue Sep  8 18:10:37 2015 (serrano)                */
-/*    Copyright   :  2015 Inria                                        */
+/*    Last change :  Fri Jan 26 06:20:55 2018 (serrano)                */
+/*    Copyright   :  2015-18 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing workers                                                  */
 /*=====================================================================*/
-
 
 var w = new Worker( './aux/worker2.js' );
 
 var testResult = false;
 
 w.onmessage = function( e ) {
-   console.log( 'Received result', e.data );
+   if( e.data.length != 7 ) {
+      throw "bad master value " + e.data;
+   }
    testResult = true;
 };
 
@@ -43,5 +44,7 @@ setTimeout( function() {
 	 
 console.log( 'Sending Payload' );
 
-w.postMessage( 'Payload' );
+let v = [ 1, 2, 3, 4, 5 ];
+v.push( 6 );
+w.postMessage( v );
 

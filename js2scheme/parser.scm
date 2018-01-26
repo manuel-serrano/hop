@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Dec 28 07:23:38 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 09:39:26 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -342,6 +342,15 @@
 		 (instantiate::J2SVarDecls
 		    (loc (token-loc token))
 		    (decls rev-vars)))))
+	    ((of)
+	     (cond
+		((not in-for-init?)
+		 (parse-token-error "illegal variable declaration"
+		    (peek-token)))
+		(else
+		 (instantiate::J2SVarDecls
+		    (loc (token-loc token))
+		    (decls rev-vars)))))
 	    (else
 	     (if (and (not in-for-init?)
 		      (or (at-new-line-token?)
@@ -392,7 +401,12 @@
 	       (binder 'let)
 	       (val val)))
 	 (lambda (loc id)
-	    (parse-token-error "const-block" (consume-any!)))))
+	    (instantiate::J2SDeclInit
+	       (loc loc)
+	       (id id)
+	       (writable #f)
+	       (binder 'let)
+	       (val (J2SUndefined))))))
    
    (define (var in-for-init? constrinit constr)
       (let ((id (consume-any!)))
@@ -457,6 +471,7 @@
 	 (case tok0
 	    ((var) (var-decl-list #t))
 	    ((let) (let-decl-list #t))
+	    ((const) (const-decl-list #t))
 	    ((SEMICOLON) #f)
 	    (else (expression #t))))
 
@@ -468,7 +483,7 @@
 	       ((SEMICOLON)
 		(for-init/test/incr loc
 		   (or first-part (instantiate::J2SNop (loc loc)))))
-	       ((in)
+	       ((in of)
 		(for-in loc first-part))))))
    
    ;; for (init; test; incr)
@@ -494,8 +509,8 @@
    ;; for (lhs/var x in obj)
    (define (for-in loc lhs)
       ;; TODO: weed out bad lhs
-      (consume! 'in)
-      (let ((error-token (peek-token))
+      (let ((op (token-tag (consume-any!)))
+	    (error-token (peek-token))
 	    (obj (expression #f))
 	    (ignore-RPAREN (consume! 'RPAREN))
 	    (body (statement)))
@@ -514,6 +529,7 @@
 		error-token)))
 	 (instantiate::J2SForIn
 	    (loc loc)
+	    (op op)
 	    (lhs lhs)
 	    (obj obj)
 	    (body body))))

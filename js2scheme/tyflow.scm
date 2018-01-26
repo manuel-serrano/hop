@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue Jan 23 11:35:02 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 10:58:46 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1571,15 +1571,16 @@
 ;*    typing ::J2SForIn ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SForIn env::pair-nil fix::cell)
-   (with-access::J2SForIn this (lhs obj body)
+   (with-access::J2SForIn this (lhs obj body op)
       (let ((decl (if (isa? lhs J2SRef)
 		      (with-access::J2SRef lhs (decl) decl)
 		      (with-access::J2SGlobalRef lhs (decl) decl))))
 	 (with-access::J2SDecl decl (utype vtype itype)
+	    (unless (eq? op 'in))
 	    (set! utype 'any)
 	    (set! itype 'any)
 	    (set! vtype 'any))
-	 (let loop ((env (extend-env env decl 'any)))
+	 (let loop ((env (extend-env env decl (if (eq? op 'in) 'string 'any))))
 	    (let ((ofix (cell-ref fix)))
 	       (multiple-value-bind (typ envb bk)
 		  (typing-seq (list obj body) env fix)
@@ -1731,7 +1732,6 @@
 			(call-default-walker))
 		       (else
 			(unfix! fix "resolve.J2SBinary")
-			(tprint "RESOLVE BINARY: " (j2s->list this))
 			(J2SBool #t)))))
 		((instanceof)
 		 (with-access::J2SExpr ref (type)

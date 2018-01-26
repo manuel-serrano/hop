@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Mon Dec 11 14:46:19 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 13:58:39 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -1297,4 +1297,17 @@
 	 
 	 js-dataview)))
 	 
-   
+;*---------------------------------------------------------------------*/
+;*    js-for-of ::JsTypedArray ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-of o::JsTypedArray proc close %this)
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (let ((fun (js-get o js-symbol-iterator %this)))
+	 (if (isa? fun JsFunction)
+	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
+	     (with-access::JsTypedArray o (length %data)
+		(let ((vref (js-typedarray-ref o)))
+		   (let loop ((i #u32:0))
+		      (when (<u32 i length)
+			 (proc (vref %data (uint32->fixnum i)))
+			 (loop (+u32 i 1))))))))))

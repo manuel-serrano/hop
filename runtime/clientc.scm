@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Mar 25 14:37:34 2009                          */
-;*    Last change :  Thu Jan 25 18:53:18 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 08:30:33 2018 (serrano)                */
 ;*    Copyright   :  2009-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP client-side compiler                                         */
@@ -47,6 +47,7 @@
 	       (precompiled-free-variables::procedure read-only)
 	       (jsc::procedure read-only)
 	       (jsonc::procedure read-only)
+	       (htmlc::procedure read-only)
 	       (filename-resolver::procedure read-only (default find-file/path)))
 
 	    (init-clientc-compiler! #!key
@@ -61,7 +62,8 @@
 	       precompiled-free-variables
 	       filename-resolver
 	       jsc
-	       jsonc)
+	       jsonc
+	       htmlc)
 
 	    (current-module-clientc-import)
 	    
@@ -94,7 +96,8 @@
 	   precompiled-free-variables
 	   filename-resolver
 	   jsc
-	   jsonc)
+	   jsonc
+	   htmlc)
    
    (define (null e) '())
    
@@ -127,7 +130,8 @@
 	 (precompiled-free-variables (or precompiled-free-variables null))
 	 (filename-resolver (or filename-resolver (lambda (n p) n)))
 	 (jsc (or jsc error))
-	 (jsonc (or jsonc error)))))
+	 (jsonc (or jsonc error))
+	 (htmlc (or htmlc error)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    current-module-clientc-import ...                                */
@@ -196,12 +200,14 @@
 ;*    compile-client ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (compile-client path name output query)
-   (with-access::clientc (hop-clientc) (filec jsc jsonc)
+   (with-access::clientc (hop-clientc) (filec jsc jsonc htmlc)
       (cond
 	 ((string-suffix? ".js" path)
 	  (jsc path name output query))
 	 ((string-suffix? ".json" path)
 	  (jsonc path name output query))
+	 ((string-suffix? ".html" path)
+	  (htmlc path name output query))
 	 (else
 	  (filec path output '())))))
    

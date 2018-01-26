@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Jan 17 07:30:58 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 09:41:56 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -94,6 +94,12 @@
 	      (incr::J2SExpr (info '("ast"))))
 	   
 	   (final-class J2SForIn::J2SLoop
+	      ;; op: in, of
+	      (op::symbol read-only (default 'in))
+	      (lhs::J2SNode (info '("ast")))
+	      (obj::J2SExpr (info '("ast"))))
+	   
+	   (final-class J2SForOf::J2SLoop
 	      (lhs::J2SNode (info '("ast")))
 	      (obj::J2SExpr (info '("ast"))))
 	   
@@ -256,6 +262,7 @@
 	      id::symbol
 	      (_scmid (default #f) (info '("notraverse")))
 	      (key (default (ast-decl-key)) (info '("notraverse")))
+	      ;; writable=#f iff decl is const
 	      (writable (default #t) (info '("notraverse")))
 	      (immutable (default #f) (info '("notraverse")))
 	      (ronly (default #f) (info '("notraverse")))

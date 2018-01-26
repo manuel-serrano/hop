@@ -99,3 +99,9 @@ ${ <span class="label label-info">requirec/example.json</span> }
 ```hopscript
 ${ doc.include( doc.EXAMPLES_DIR + "/requirec/example.json", 0 ) }
 ```
+
+${ <span class="label label-info">requirec/mod.html</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod.html", 0 ) }
+```

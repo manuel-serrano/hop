@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Jan 17 11:36:37 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 13:47:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -136,7 +136,9 @@
 	   (generic js-freeze ::JsObject ::obj)
 	   (generic js-prevent-extensions ::JsObject)
 	   
-	   (generic js-for-in ::obj proc::procedure ::JsGlobalObject)
+	   (generic js-for-in ::obj ::procedure ::JsGlobalObject)
+	   (generic js-for-of ::obj ::procedure ::bool ::JsGlobalObject)
+	   (js-for-of-iterator ::obj ::obj ::procedure ::bool ::JsGlobalObject)
 	   
 	   (js-bind! ::JsGlobalObject ::JsObject name::obj #!key
 	      (value #f)
@@ -2489,6 +2491,7 @@
 ;*    js-for-in ...                                                    */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-12.6.4       */
+;*    http://www.ecma-international.org/ecma-262/6.0/#sec-13.7.5       */
 ;*---------------------------------------------------------------------*/
 (define-generic (js-for-in obj proc %this)
    (if (or (eq? obj (js-undefined)) (eq? obj (js-null)))
@@ -2553,6 +2556,46 @@
 		   (loop (+fx i 1)))))
 	  (js-for-in jsobj proc %this))))
 
+;*---------------------------------------------------------------------*/
+;*    js-for-of ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/6.0/#sec-13.7.5       */
+;*---------------------------------------------------------------------*/
+(define-generic (js-for-of obj proc close %this)
+   (if (js-jsstring? obj)
+       (js-jsstring-for-of obj proc %this)
+       (with-access::JsGlobalObject %this (js-symbol-iterator)
+	  (let ((fun (js-get obj js-symbol-iterator %this)))
+	     (when (isa? fun JsFunction)
+		(js-for-of-iterator (js-call0 %this fun obj) obj proc close %this))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-for-of-iterator ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-for-of-iterator iterator obj proc close %this)
+   
+   (define (for next)
+      (let loop ()
+	 (let ((n (js-call0 %this next iterator)))
+	    (unless (eq? (js-get n 'done %this) #t)
+	       (proc (js-get n 'value %this))
+	       (loop))))
+      #t)
+   
+   (let ((next (js-get iterator 'next %this))
+	 (exn #t))
+      (if (isa? next JsFunction)
+	  (if close
+	      (unwind-protect
+		 (begin
+		    (for next)
+		    (set! exn #f))
+		 (when exn
+		    (let ((return (js-get iterator 'return %this)))
+		       (when (isa? return JsFunction)
+			  (js-call0 %this return iterator)))))
+	      (for next)))))
+			 
 ;*---------------------------------------------------------------------*/
 ;*    js-call/cache ...                                                */
 ;*---------------------------------------------------------------------*/

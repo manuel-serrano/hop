@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Sat Dec  9 06:19:49 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 09:43:33 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
 ;*=====================================================================*/
@@ -104,7 +104,7 @@
 	    (raise
 	       (instantiate::&io-error
 		  (proc "ronly")
-		  (msg "Const variables cannot be assigned")
+		  (msg "Assignment to constant variable")
 		  (obj id)
 		  (fname (cadr loc))
 		  (location (caddr loc))))))

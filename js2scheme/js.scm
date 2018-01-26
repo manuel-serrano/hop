@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Dec 16 06:32:52 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 09:08:49 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
 ;*=====================================================================*/
@@ -600,13 +600,13 @@
 ;*    j2s-js ::J2SForIn ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SForIn tildec dollarc mode evalp conf)
-   (with-access::J2SForIn this (lhs obj body)
+   (with-access::J2SForIn this (lhs obj body op)
       (cons* this "for("
          (append (if (isa? lhs J2SVarDecls)
 		     (with-access::J2SVarDecls lhs (decls)
 			(list "var " (j2s-js-id (car decls))))
 		     (j2s-js lhs tildec dollarc mode evalp conf))
-	    '(" in ")
+	    (if (eq? op 'in) '(" in ") '(" of "))
 	    (j2s-js obj tildec dollarc mode evalp conf)
 	    '(") ")
 	    (if (isa? body J2SNop)

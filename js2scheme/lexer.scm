@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Dec 15 07:29:46 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 09:01:29 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
 ;*=====================================================================*/
@@ -66,6 +66,7 @@
      "let"
      "new"
      "null"
+     "of"
      "return"
      "switch"
      "this"
@@ -92,7 +93,6 @@
 (define *future-strict-reserved-list*
    '("implements"
      "interface"
-     "of"
      "package"
      "private"
      "protected"

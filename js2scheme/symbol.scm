@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Thu Dec 14 08:41:19 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 09:48:18 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
 ;*    -------------------------------------------------------------    */
@@ -461,11 +461,12 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (resolve! this::J2SForIn env mode withs wenv genv ctx conf)
 
-   (define (let->init d::J2SDecl)
+   (define (let->init d::J2SDecl writable)
       (with-access::J2SDecl d (loc id)
 	 (instantiate::J2SDeclInit
 	    (loc loc)
 	    (id id)
+	    (writable writable)
 	    (binder 'let-opt)
 	    (val (instantiate::J2SRef
 		    (loc loc)
@@ -474,7 +475,7 @@
    (define (for-in-let for)
       (with-access::J2SForIn for (lhs loc body)
 	 (with-access::J2SVarDecls lhs (loc decls)
-	    (with-access::J2SDecl (car decls) (loc id binder)
+	    (with-access::J2SDecl (car decls) (loc id binder writable)
 	       (let ((decl (instantiate::J2SDeclInit
 			      (loc loc)
 			      (id id)
@@ -490,7 +491,7 @@
 			(nodes (list
 				  (instantiate::J2SVarDecls
 				     (loc loc)
-				     (decls (list (let->init decl))))
+				     (decls (list (let->init decl writable))))
 				  body))))
 		  (set! decls (list decl))
 		  (set! lhs (instantiate::J2SRef (loc loc) (decl decl)))

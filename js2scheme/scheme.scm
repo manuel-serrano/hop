@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jan 24 17:13:10 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 13:47:20 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1256,61 +1256,74 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SForIn mode return conf hint)
 
-   (define (for-in/break-comp tmp name props obj body set)
+   (define (js-for-in op)
+      (if (eq? op 'in) 'js-for-in 'js-for-of))
+
+   (define (close op close)
+      (cond
+	 ((eq? op 'in) '())
+	 (close '(#t))
+	 (else '(#f))))
+   
+   (define (for-in/break-comp tmp name props obj body set op)
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
 	 (let ((for `(let ((%acc (js-undefined)))
-			(js-for-in ,(j2s-scheme obj mode return conf hint)
+			(,(js-for-in op) ,(j2s-scheme obj mode return conf hint)
 			   (lambda (,name)
 			      ,set
 			      ,(if need-bind-exit-continue
 				   `(bind-exit (,(escape-name '%continue id))
 				       ,(j2s-scheme body mode acc-return conf hint))
 				   (j2s-scheme body mode acc-return conf hint)))
+			   ,@(close op #t)
 			   %this)
 			%acc)))
 	    (if need-bind-exit-break
 		`(bind-exit (,(escape-name '%break id)) ,for)
 		for))))
 
-   (define (for-in/break-eval tmp name props obj body set)
+   (define (for-in/break-eval tmp name props obj body set op)
       (with-access::J2SForIn this (need-bind-exit-break need-bind-exit-continue id)
-	 (let ((for `(js-for-in ,(j2s-scheme obj mode return conf hint)
+	 (let ((for `(,(js-for-in op) ,(j2s-scheme obj mode return conf hint)
 			(lambda (,name)
 			   ,set
 			   ,(if need-bind-exit-continue
 				`(bind-exit (,(escape-name '%continue id))
 				    ,(j2s-scheme body mode return conf hint))
 				(j2s-scheme body mode return conf hint)))
+			,@(close op #t)
 			%this)))
 	    (if need-bind-exit-break
 		`(bind-exit (,(escape-name '%break id)) ,for)
 		for))))
 
-   (define (for-in/break tmp name props obj body set)
+   (define (for-in/break tmp name props obj body set op)
       (if (in-eval? return)
-	  (for-in/break-eval tmp name props obj body set)
-	  (for-in/break-comp tmp name props obj body set)))
+	  (for-in/break-eval tmp name props obj body set op)
+	  (for-in/break-comp tmp name props obj body set op)))
 
-   (define (for-in/w-break-comp tmp name props obj body set)
-      `(js-for-in ,(j2s-scheme obj mode return conf hint)
+   (define (for-in/w-break-comp tmp name props obj body set op)
+      `(,(js-for-in op) ,(j2s-scheme obj mode return conf hint)
 	  (lambda (,name)
 	     ,set
 	     ,(j2s-scheme body mode return conf hint))
+	  ,@(close op (throw? body))
 	  %this))
 
-   (define (for-in/w-break-eval tmp name props obj body set)
+   (define (for-in/w-break-eval tmp name props obj body set op)
       `(let ((%acc (js-undefined)))
-	  (js-for-in ,(j2s-scheme obj mode return conf hint)
+	  (,(js-for-in op) ,(j2s-scheme obj mode return conf hint)
 	     (lambda (,name)
 		,set
 		,(j2s-scheme body mode acc-return conf hint))
+	     ,@(close op (throw? body))
 	     %this)
 	  %acc))
 
-   (define (for-in/w-break tmp name props obj body set)
+   (define (for-in/w-break tmp name props obj body set op)
       (if (in-eval? return)
-	  (for-in/w-break-eval tmp name props obj body set)
-	  (for-in/w-break-comp tmp name props obj body set)))
+	  (for-in/w-break-eval tmp name props obj body set op)
+	  (for-in/w-break-comp tmp name props obj body set op)))
 
    (define (set lhs name loc)
       (let loop ((lhs lhs))
@@ -1345,7 +1358,7 @@
 	    (else
 	     (j2s-error "j2sscheme" "Illegal lhs" this)))))
    
-   (with-access::J2SForIn this (loc lhs obj body
+   (with-access::J2SForIn this (loc lhs obj body op
 				  need-bind-exit-break need-bind-exit-continue)
       (let* ((tmp (gensym))
 	     (name (gensym))
@@ -1353,8 +1366,8 @@
 	     (set (set lhs name loc)))
 	 (epairify-deep loc
 	    (if (or need-bind-exit-continue need-bind-exit-break)
-		(for-in/break tmp name props obj body set)
-		(for-in/w-break tmp name props obj body set))))))
+		(for-in/break tmp name props obj body set op)
+		(for-in/w-break tmp name props obj body set op))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SLabel ...                                        */
@@ -2930,13 +2943,8 @@
 					  (init-expr init
 					     (lambda (e)
 						(with-access::J2SExpr e (loc)
-						   `(vector-set! ,elements (+fx ,i ,offset) ,e))))
-;* 						   (instantiate::J2SSexp */
-;* 						      (loc loc)        */
-;* 						      (proc (lambda (v) */
-;* 							       `(vector-set! ,elements (+fx ,i ,offset) ,v))) */
-;* 						      (args (list e)))))) */
-					  mode return conf hint))
+						   `(vector-set! ,elements (+fx ,i ,offset) ,e))))	
+				  mode return conf hint))
 				  nodes (iota (length nodes)))
 			     (with-access::JsObject ,%ref ((omap cmap))
 				(set! omap ,cmap1))))
@@ -2951,12 +2959,48 @@
 					 (vector-length props))
 				   (set! ,cmap0 ,cmap)
 				   (set! ,cmap1 cmap))))))))))))
-   
-;* {*---------------------------------------------------------------------*} */
-;* {*    j2s-scheme ::J2SSexp ...                                         *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (j2s-scheme this::J2SSexp mode return conf hint)     */
-;*    (with-access::J2SSexp this (proc args)                           */
-;*       (apply proc                                                   */
-;* 	 (map (lambda (a) (j2s-scheme a mode return conf hint)) args)))) */
-;* 		                                                       */
+
+;*---------------------------------------------------------------------*/
+;*    throw? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (throw? node)
+   (let ((cell (make-cell #f)))
+      (canthrow node '() cell)))
+
+;*---------------------------------------------------------------------*/
+;*    canthrow ::J2SNode ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (canthrow this::J2SNode stack cell)
+   (or (cell-ref cell) (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    canthrow ::J2SThrow ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (canthrow this::J2SThrow stack cell)
+   (cell-set! cell #t))
+
+;*---------------------------------------------------------------------*/
+;*    canthrow ::J2SAccess ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (canthrow this::J2SAccess stack cell)
+   (cell-set! cell #t))
+
+;*---------------------------------------------------------------------*/
+;*    canthrow ::J2SCall ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (canthrow this::J2SCall stack cell)
+   (with-access::J2SCall this (fun args)
+      (if (not (isa? fun J2SRef))
+	  (cell-set! cell #t)
+	  (with-access::J2SRef fun (decl)
+	     (for-each (lambda (a) (canthrow a stack cell)) args)
+	     (unless (cell-ref cell)
+		(cond
+		   ((not (isa? decl J2SDeclFun))
+		    (cell-set! cell #t))
+		   ((not (memq decl stack))
+		    (with-access::J2SDeclFun decl (val)
+		       (with-access::J2SFun val (body)
+			  (canthrow val (cons decl stack) cell))))))))))
+	  
+      

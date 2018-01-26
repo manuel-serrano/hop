@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec  4 08:40:41 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 13:24:38 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
 ;*    -------------------------------------------------------------    */
@@ -753,6 +753,17 @@
 		       (loop (+u32 i #u32:1)))
 		    (call-next-method)))
 	     (call-next-method)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-for-of ::JsString ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-of o::JsString proc close %this)
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (let ((fun (js-get o js-symbol-iterator %this)))
+	 (if (isa? fun JsFunction)
+	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
+	     (with-access::JsString o (val)
+		(js-for-of val proc close %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-template-raw ...                                              */

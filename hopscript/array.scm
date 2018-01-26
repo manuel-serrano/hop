@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Jan 26 07:33:40 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 13:24:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -163,12 +163,15 @@
 (define-method (js-donate obj::JsArray worker %_this)
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-array)
-	 (with-access::JsArray obj (vec frozen sealed)
+	 (with-access::JsArray obj (vec frozen sealed length ilen)
 	    (let ((nobj (js-vector->jsarray
 			   (vector-map (lambda (e)
 					  (js-donate e worker %_this))
 			      vec)
 			   %this)))
+	       (with-access::JsArray nobj ((nlength length) (nilen ilen))
+		  (set! nlength length)
+		  (set! nilen ilen))
 	       ;; donate the value of the array
 	       (js-for-in obj
 		  (lambda (k)
@@ -2958,6 +2961,42 @@
 		       (loop (+u32 i #u32:1)))
 		    (call-next-method))))
 	  (call-next-method))))
+  
+;*---------------------------------------------------------------------*/
+;*    js-for-of ::JsArray ...                                          */
+;*---------------------------------------------------------------------*/
+(define-method (js-for-of o::JsArray proc close %this)
+   
+   (define (vector-forof o len::uint32 proc i::uint32)
+      [%assert-array! o "vector-forof"]
+      (if (js-array-full-inlined? o)
+	  (with-access::JsArray o (vec ilen)
+	     (let loop ((i i))
+		(cond
+		   ((>=u32 i ilen)
+		    (js-undefined))
+		   ((not (js-array-full-inlined? o))
+		    (array-forof o len proc i))
+		   (else
+		    (proc (vector-ref vec (uint32->fixnum i)))
+		    (loop (+u32 i 1))))))
+	  (array-forof o len proc i)))
+   
+   (define (array-forof o len proc i::uint32)
+      (let loop ((i i))
+	 (when (<u32 i len)
+	    (let ((pv (js-get-property-value o o (js-toname i %this) %this)))
+	       (proc (if (js-absent? pv) (js-undefined) pv))
+	       (loop (+u32 i 1))))))
+
+   (with-access::JsGlobalObject %this (js-symbol-iterator)
+      (let ((fun (js-get o js-symbol-iterator %this)))
+	 (if (isa? fun JsFunction)
+	     (js-for-of-iterator (js-call0 %this fun o) o proc close %this)
+	     (with-access::JsArray o (length vec ilen)
+		(if (js-array-inlined? o)
+		    (vector-forof o length proc #u32:0)
+		    (array-forof o length proc #u32:0)))))))
   
 ;*---------------------------------------------------------------------*/
 ;*    js-array-push ...                                                */

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Mon Dec  4 08:43:34 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 11:53:55 2018 (serrano)                */
+;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
 ;*    -------------------------------------------------------------    */
@@ -84,7 +84,7 @@
 ;*    js-init-generator! ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (js-init-generator! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype)
+   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype js-symbol-iterator)
 
       (define js-gen-proto
 	 (instantiateJsObject
@@ -166,6 +166,14 @@
 		      (js-generator-next this val #t))
 		   1 'throw)
 	 :hidden-class #t)
+
+      (js-bind! %this js-gen-proto js-symbol-iterator
+	 :configurable #f :enumerable #f
+	 :value (js-make-function %this
+		   (lambda (this val)
+		      this)
+		   0 '@@iterator
+		   :prototype (js-undefined)))
       
       (set! js-generator-prototype js-gen-proto)
       

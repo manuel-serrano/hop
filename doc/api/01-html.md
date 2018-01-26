@@ -49,33 +49,9 @@ function foo( title ) {
 }
 ```
 
-Using client side modules.
+An example using client side module can be found
+in the [LANG MODULE](01-module.html) Section.
 
-${ doc.include( doc.EXAMPLES_DIR + "/requirec/README.md" ) }
-
-${ <span class="label label-info">requirec/requirec.js</span> }
-
-```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/requirec/requirec.js", 14 ) }
-```
-
-${ <span class="label label-info">requirec/mod1.js</span> }
-
-```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod1.js", 14 ) }
-```
-
-${ <span class="label label-info">requirec/mod2.js</span> }
-
-```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod2.js", 14 ) }
-```
-
-${ <span class="label label-info">requirec/example.json</span> }
-
-```javascript
-${ doc.include( doc.EXAMPLES_DIR + "/requirec/example.json", 0 ) }
-```
 
 ### <IMG> ###
 [:@glyphicon glyphicon-tag tag]
