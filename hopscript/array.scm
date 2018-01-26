@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Jan 25 05:52:19 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 07:33:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -663,7 +663,7 @@
 	  (cond
 	     ((<u32 (fixnum->uint32 idx) ilen)
 	      (vector-set! vec idx val))
-	     ((>=fx idx 0)
+	     ((and (>=fx idx 0) (<fx idx (bit-lsh 1 29)))
 	      (js-array-set-ur! arr (fixnum->uint32 idx) val throw %this))
 	     (else
 	      (js-array-put! arr idx val throw %this)))

@@ -71,10 +71,10 @@ ${ <span class="label label-info">requirec/mod2.js</span> }
 ${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod2.js", 14 ) }
 ```
 
-${ <span class="label label-info">requirec/example.js</span> }
+${ <span class="label label-info">requirec/example.json</span> }
 
-```hopscript
-${ doc.include( doc.EXAMPLES_DIR + "/requirec/example.js", 0 ) }
+```javascript
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/example.json", 0 ) }
 ```
 
 ### <IMG> ###

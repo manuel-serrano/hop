@@ -7,7 +7,7 @@ In this cases, both modules have to be mentionned in the `module` attribute
 of the `head` element of the main document.
 
 ${ <span class="label label-warning">Note:</span> } Modules mentioned
-in the `head`' `module` attribute are loaded asynchronously when the
+in the `head`'s `module` attribute are loaded asynchronously when the
 page is created on the client. Thus they cannot be required in following
 sequential code. Two options are then possible to require modules. Either
 use the `require` form inside a `window.onload` callback or use the
