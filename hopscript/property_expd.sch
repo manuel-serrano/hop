@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Oct 10 07:45:35 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 18:40:12 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
@@ -31,7 +31,7 @@
    (match-case x
       ((?- (and (? integer?) ?num))
        (e `(cond-expand
-	     (bigloo-c
+	     ((and bigloo-c (not hopjs-worker-slave))
 	      ($js-make-pcache (pragma::obj "(obj_t)(__bgl_pcache)")
 		 ,num (instantiate::JsPropertyCache)))
 	     (else
@@ -45,7 +45,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-ref-expander x e)
    (e `(cond-expand
-	  (bigloo-c
+	  ((and bigloo-c (not hopjs-worker-slave))
 	   (free-pragma::JsPropertyCache "(BgL_jspropertycachez00_bglt)BOBJECT(&(__bgl_pcache[ $1 ]))" ,(caddr x)))
 	  (else
 	   ((@ js-pcache-ref __hopscript_property) ,(cadr x) ,(caddr x))))
@@ -57,7 +57,7 @@
 (define (js-pcache-cmap-expander x e)
    (let ((c (cadr x)))
       (e `(cond-expand
-	     (bigloo-c
+	     ((and bigloo-c (not hopjs-worker-slave))
 	      (free-pragma::obj "(__bgl_pcache[ $1 ].BgL_cmapz00)" ,(caddr c)))
 	     (else
 	      (with-access::JsPropertyCache ((@ js-pcache-ref __hopscript_property) ,(cadr c) ,(caddr c)) (cmap)
@@ -70,7 +70,7 @@
 (define (js-pcache-pmap-expander x e)
    (let ((c (cadr x)))
       (e `(cond-expand
-	     (bigloo-c
+	     ((and bigloo-c (not hopjs-worker-slave))
 	      (free-pragma::obj "(__bgl_pcache[ $1 ].BgL_pmapz00)" ,(caddr c)))
 	     (else
 	      (with-access::JsPropertyCache ((@ js-pcache-ref __hopscript_property) ,(cadr c) ,(caddr c)) (pmap)
@@ -83,7 +83,7 @@
 (define (js-pcache-index-expander x e)
    (let ((c (cadr x)))
       (e `(cond-expand
-	     (bigloo-c
+	     ((and bigloo-c (not hopjs-worker-slave))
 	      (free-pragma::long "(__bgl_pcache[ $1 ].BgL_indexz00)" ,(caddr c)))
 	     (else
 	      (with-access::JsPropertyCache ((@ js-pcache-ref __hopscript_property) ,(cadr c) ,(caddr c)) (index)
@@ -96,7 +96,7 @@
 (define (js-pcache-vindex-expander x e)
    (let ((c (cadr x)))
       (e `(cond-expand
-	     (bigloo-c
+	     ((and bigloo-c (not hopjs-worker-slave))
 	      (free-pragma::long "(__bgl_pcache[ $1 ].BgL_vindexz00)" ,(caddr c)))
 	     (else
 	      (with-access::JsPropertyCache ((@ js-pcache-ref __hopscript_property) ,(cadr c) ,(caddr c)) (vindex)
@@ -109,7 +109,7 @@
 (define (js-pcache-owner-expander x e)
    (let ((c (cadr x)))
       (e `(cond-expand
-	     (bigloo-c
+	     ((and bigloo-c (not hopjs-worker-slave))
 	      (free-pragma::obj "(__bgl_pcache[ $1 ].BgL_ownerz00)" ,(caddr c)))
 	     (else
 	      (with-access::JsPropertyCache ((@ js-pcache-ref __hopscript_property) ,(cadr c) ,(caddr c)) (owner)
@@ -122,10 +122,11 @@
 (define (js-pcache-method-expander x e)
    (let ((c (cadr x)))
       (e `(cond-expand
-	     (bigloo-c
+	     ((and bigloo-c (not hopjs-worker-slave))
 	      (free-pragma::obj "(__bgl_pcache[ $1 ].BgL_methodz00)" ,(caddr c)))
 	     (else
-	      (with-access::JsPropertyCache ((@ js-pcache-ref __hopscript_property) ,(cadr c)) (method)
+	      (with-access::JsPropertyCache ((@ js-pcache-ref __hopscript_property) ,(cadr c) ,(caddr c))
+		    (method)
 		 method)))
 	 e)))
 

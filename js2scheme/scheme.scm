@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan 26 15:49:57 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 18:53:00 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -515,10 +515,12 @@
       (with-access::J2SProgram this (mode pcache-size cnsts globals)
 	 (let ((slave (config-get conf :worker-slave)))
 	    (list
-	       module
 	       (if slave
-		   `(register-srfi! 'hopjs-worker-slave)
-		   `(%define-pcache ,pcache-size))
+		   (append module
+		      `((option (register-srfi! 'hopjs-worker-slave))))
+		   module)
+	       (unless slave
+		  `(%define-pcache ,pcache-size))
 	       (unless slave
 		  `(define %pcache (js-make-pcache ,pcache-size)))
 	       '(define %source (or (the-loading-file) "/"))
