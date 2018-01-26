@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jan 26 08:29:47 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 15:42:23 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -626,7 +626,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile filename::bstring #!optional lang)
+(define (nodejs-compile filename::bstring #!optional lang worker-slave)
    
    (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
@@ -643,6 +643,7 @@
 			:mmap-src m
 			:module-main #f
 			:module-name (symbol->string mod)
+			:worker-slave worker-slave
 			:verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 			:debug (bigloo-debug))
 		     (close-mmap m)))))))
@@ -661,6 +662,7 @@
 		  :filename filename
 		  :module-main #f
 		  :module-name (symbol->string mod)
+		  :worker-slave worker-slave
 		  :verbose (if (>=fx (bigloo-debug) 3) (hop-verbose) 0)
 		  :debug (bigloo-debug))))))
    
@@ -1062,35 +1064,37 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-load filename worker::WorkerHopThread #!optional lang)
 
-   (define (loadso-or-compile filename lang)
-      (let loop ((sopath (hop-find-sofile filename)))
-	 (cond
-	    ((string? sopath)
-	     (let ((p (hop-dynamic-load sopath)))
-		(if (and (procedure? p) (=fx (procedure-arity p) 4))
-		    p
-		    (js-raise-error (js-new-global-object)
-		       (format "Wrong compiled file format ~s" sopath)
-		       sopath))))
-	    ((and (not (eq? sopath 'error)) (hop-sofile-enable))
-	     (case (hop-sofile-compile-policy)
-		((aot)
-		 (loop (nodejs-socompile filename lang)))
-		((nte nte+)
-		 (nodejs-socompile-queue-push filename lang)
-		 (nodejs-compile filename lang))
+   (define (loadso-or-compile filename lang worker-slave)
+      (if worker-slave
+	  (nodejs-compile filename lang #t)
+	  (let loop ((sopath (hop-find-sofile filename)))
+	     (cond
+		((string? sopath)
+		 (let ((p (hop-dynamic-load sopath)))
+		    (if (and (procedure? p) (=fx (procedure-arity p) 4))
+			p
+			(js-raise-error (js-new-global-object)
+			   (format "Wrong compiled file format ~s" sopath)
+			   sopath))))
+		((and (not (eq? sopath 'error)) (hop-sofile-enable))
+		 (case (hop-sofile-compile-policy)
+		    ((aot)
+		     (loop (nodejs-socompile filename lang)))
+		    ((nte nte+)
+		     (nodejs-socompile-queue-push filename lang)
+		     (nodejs-compile filename lang))
+		    (else
+		     (nodejs-compile filename lang))))
 		(else
-		 (nodejs-compile filename lang))))
-	    (else
-	     (when (eq? (hop-sofile-compile-policy) 'nte+)
-		(nodejs-socompile-queue-push filename lang))
-	     (nodejs-compile filename lang)))))
+		 (when (eq? (hop-sofile-compile-policy) 'nte+)
+		    (nodejs-socompile-queue-push filename lang))
+		 (nodejs-compile filename lang))))))
    
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
-	 (with-access::WorkerHopThread worker (%this prehook)
+	 (with-access::WorkerHopThread worker (%this prehook parent)
 	    (with-access::JsGlobalObject %this (js-object js-main)
-	       (let ((hopscript (loadso-or-compile filename lang))
+	       (let ((hopscript (loadso-or-compile filename lang parent))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-module (if js-main filename ".")

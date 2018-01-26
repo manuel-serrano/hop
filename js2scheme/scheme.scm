@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Oct  3 13:20:22 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 15:49:57 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
 ;*=====================================================================*/
@@ -511,24 +511,26 @@
 	  (%cnsts-debug cnsts)
 	  (%cnsts-intext cnsts)))
    
-   (define (define-pcache pcache-size)
-      `(%define-pcache ,pcache-size))
-   
    (define (j2s-module module body)
       (with-access::J2SProgram this (mode pcache-size cnsts globals)
-	 (list
-	    module
-	    (define-pcache pcache-size)
-	    `(define %pcache (js-make-pcache ,pcache-size))
-	    '(define %source (or (the-loading-file) "/"))
-	    '(define %resource (dirname %source))
-	    `(define (hopscript %this this %scope %module)
-		(define %worker (js-current-worker))
-		(define %cnsts ,(%cnsts cnsts))
-		,@globals
-		,@(exit-body body))
-	    ;; for dynamic loading
-	    'hopscript)))
+	 (let ((slave (config-get conf :worker-slave)))
+	    (list
+	       module
+	       (if slave
+		   `(register-srfi! 'hopjs-worker-slave)
+		   `(%define-pcache ,pcache-size))
+	       (unless slave
+		  `(define %pcache (js-make-pcache ,pcache-size)))
+	       '(define %source (or (the-loading-file) "/"))
+	       '(define %resource (dirname %source))
+	       `(define (hopscript %this this %scope %module)
+		   ,(when slave `(define %pcache (js-make-pcache ,pcache-size)))
+		   (define %worker (js-current-worker))
+		   (define %cnsts ,(%cnsts cnsts))
+		   ,@globals
+		   ,@(exit-body body))
+	       ;; for dynamic loading
+	       'hopscript))))
    
    (define (j2s-main-module name body)
       (let ((module `(module ,(string->symbol name)
@@ -543,7 +545,7 @@
 	 (with-access::J2SProgram this (mode pcache-size %this path cnsts globals)
 	    (list
 	       module
-	       (define-pcache pcache-size)
+	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
 	       `(define %pcache (js-make-pcache ,pcache-size))
 	       '(hopjs-standalone-set! #t)
@@ -594,7 +596,7 @@
 	    ((not name)
 	     ;; a mere expression
 	     `(lambda (%this this %scope %module)
-		 ,(define-pcache pcache-size)	       
+		 (%define-pcache ,pcache-size)
 		 (define %pcache (js-make-pcache ,pcache-size))
 		 (define %worker (js-current-worker))
 		 (define %source (or (the-loading-file) "/"))
