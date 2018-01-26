@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/examples/Makefile                 */
+#*    serrano/prgm/project/hop/3.2.x/examples/Makefile                 */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Wed May 17 14:06:51 2017 (serrano)                */
-#*    Copyright   :  2006-17 Manuel Serrano                            */
+#*    Last change :  Fri Jan 26 08:32:11 2018 (serrano)                */
+#*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
 #*=====================================================================*/
@@ -25,7 +25,7 @@ POPULATION = Makefile \
   require/node_modules require/node_modules/mod2.js require/require.js \
   require/mod1.js require/example.json \
   requirec/requirec.js requirec/mod2.js requirec/mod1.js \
-  requirec/example.json requirec/README.md \
+  requirec/example.json requirec/mod.html requirec/README.md \
   requirew/requirew.js requirew/provider.js requirew/foo.js \
   requirew/example.json \
   js2http/js2http.js js2http/fact.js \
