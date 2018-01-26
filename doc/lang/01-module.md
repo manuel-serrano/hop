@@ -66,10 +66,11 @@ ${ doc.include( doc.EXAMPLES_DIR + "/htmlr/htmlr.html", 14 ) }
 
 Modules can be imported from either server-side or client-side code.
 However, a module can be imported from a client-side only if it
-has been cited in the `require` attribute of the `<head>` element
-of the HTML document that is loaded on the client. The `require` attribute
+has been cited in the `module` attribute of the `<head>` element
+of the HTML document that is loaded on the client. The `module` attribute
 can either be a string or an array of strings. See [API HTML](01-html.html)
 for details.
+
 
 #### Example ####
 
@@ -93,3 +94,8 @@ ${ <span class="label label-info">requirec/mod2.js</span> }
 ${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod2.js", 14 ) }
 ```
 
+${ <span class="label label-info">requirec/example.js</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/example.js", 0 ) }
+```

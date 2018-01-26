@@ -36,15 +36,45 @@ Hop.js extends the HTML5 `<head>` attributes with the following list:
  * `title`: a string. The title of the document, equivalent to a `<title>`
  node.
  * `inline`: a boolean. When `true` all resources are inlined in the generated
- document, which is then standlone.
+ document, which is then standone.
 
 
-Example
+#### Example ####
+
+A basic example.
 
 ```hopscript
 function foo( title ) {
   return <head title=${title} css=${PATH + "/my-css.hss"} inline=${true}>;
 }
+```
+
+Using client side modules.
+
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/README.md" ) }
+
+${ <span class="label label-info">requirec/requirec.js</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/requirec.js", 14 ) }
+```
+
+${ <span class="label label-info">requirec/mod1.js</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod1.js", 14 ) }
+```
+
+${ <span class="label label-info">requirec/mod2.js</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/mod2.js", 14 ) }
+```
+
+${ <span class="label label-info">requirec/example.js</span> }
+
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/requirec/example.js", 0 ) }
 ```
 
 ### <IMG> ###
