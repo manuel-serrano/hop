@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Nov 25 15:37:20 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Fri Jan 26 06:10:57 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
 ;*=====================================================================*/
@@ -141,12 +141,15 @@
 (define-method (js-donate obj::JsArray worker %_this)
    (with-access::WorkerHopThread worker (%this)
       (with-access::JsGlobalObject %this (js-array)
-	 (with-access::JsArray obj (vec frozen sealed)
+	 (with-access::JsArray obj (vec frozen sealed length ilen)
 	    (let ((nobj (js-vector->jsarray
 			   (vector-map (lambda (e)
 					  (js-donate e worker %_this))
 			      vec)
 			   %this)))
+	       (with-access::JsArray nobj ((nlength length) (nilen ilen))
+		  (set! nlength length)
+		  (set! nilen ilen))
 	       ;; donate the value of the array
 	       (js-for-in obj
 		  (lambda (k)
