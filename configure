@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Dec 29 06:38:03 2017 (serrano)                */
-#*    Copyright   :  2004-17 Manuel Serrano                            */
+#*    Last change :  Fri Jan 26 14:28:18 2018 (serrano)                */
+#*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -1348,6 +1348,14 @@ cat etc/hopshrc.hop.in \
           -e "s|@DOCDIR@|$docdir|" \
           -e "s|@MIMETYPES@|$mimetypes|" \
     >> $hopshrc
+
+# doc/doc.json
+docjson=doc/doc.json
+rm -f $docjson 2> /dev/null
+cat $docjson.in \
+  | sed -e "s|@VERSION@|$version $state$minor|" \
+	-e "s|@BIGLOOVERSION@|$bglversion|" \
+    >> $docjson
 
 # lib/hop.init
 init=lib/hop/$version/hop.init

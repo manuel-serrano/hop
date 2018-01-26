@@ -1,10 +1,10 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/doc/Makefile                      */
+#*    serrano/prgm/project/hop/3.2.x/doc/Makefile                      */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Nov  5 19:04:28 2017 (serrano)                */
-#*    Copyright   :  2006-17 Manuel Serrano                            */
+#*    Last change :  Fri Jan 26 14:25:44 2018 (serrano)                */
+#*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -39,7 +39,7 @@ JQUERY_POP=js/jquery.min.js
 POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   $(ICONS_POP:%/icons/%) \
   Makefile doc.js xml.js html.js ecma-262-60.js \
-  doc.json \
+  doc.json.in \
   api/api.json api/00-hop.md api/10-dom.md api/20-websocket.md api/01-html.md \
   widget/widget.json \
   lang/lang.json _lang.md \
@@ -98,7 +98,7 @@ builddoc: $(ALL_TARGETS) \
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	$(RM) $(API_TARGETS) $(LANG_TARGETS) $(WIDGET_TARGETS)
+	$(RM) $(API_TARGETS) $(LANG_TARGETS) $(WIDGET_TARGETS) $(DEV_TARGETS)
 	$(RM) license.html index.html nodejs.html download.html dev.html
 	$(RM) 00-command.html 10-edit.html
 	$(RM) idx.json idx.html

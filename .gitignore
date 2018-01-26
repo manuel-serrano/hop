@@ -80,6 +80,7 @@ doc/hss/fontifier.css
 doc/hss/markdown.hss
 doc/hss/markdown.css
 doc/hss/doc.css
+doc/version.json
 
 # widget compiled files
 widget/colorchooser.scm
