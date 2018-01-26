@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Jan 25 18:55:15 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 08:29:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -30,6 +30,7 @@
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-json ::bstring ::bstring ::bstring ::bstring)
+	   (nodejs-compile-html ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-pending::int)
 	   (nodejs-compile-add-event-listener! ::bstring ::procedure ::bool)
 	   (nodejs-compile-remove-event-listener! ::bstring ::procedure)
@@ -92,6 +93,41 @@
 		   ifile)
 		(fprintf op "var exports = ~a; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n return exports; }\n"
 		   str
+		   name ifile
+		   (js-paths (nodejs-filename->paths ifile))
+		   ifile)))))
+   
+   (if (string=? ofile "-")
+       (compile-json (current-output-port))
+       (call-with-output-file ofile compile-json)))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-html ...                                          */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-html ifile::bstring name::bstring ofile::bstring query)
+
+   (define (compile-html filename)
+      (call-with-input-file filename
+	 (lambda (in)
+	    (debug-compile-trace filename)
+	    (let ((tree (j2s-compile in
+			   :filename filename
+			   :parser 'client-program
+			   :site 'client
+			   :driver (j2s-javascript-driver))))
+	       (filter (lambda (exp)
+			  (not (isa? exp J2SNode)))
+		  tree)))))
+   
+   (define (compile-json op)
+      (let ((strs (compile-html ifile)))
+	 (if (string=? query "es")
+	     (for-each (lambda (e) (display e op)) strs)
+	     (begin
+		(fprintf op "hop[ '%requires' ][ ~s ] = function() {\n"
+		   ifile)
+		(fprintf op "var exports = ~a; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n return exports; }\n"
+		   (apply string-append strs)
 		   name ifile
 		   (js-paths (nodejs-filename->paths ifile))
 		   ifile)))))

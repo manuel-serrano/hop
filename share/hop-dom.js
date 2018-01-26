@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat May  6 14:10:27 2006                          */
-/*    Last change :  Wed Dec 13 13:34:33 2017 (serrano)                */
-/*    Copyright   :  2006-17 Manuel Serrano                            */
+/*    Last change :  Fri Jan 26 07:48:15 2018 (serrano)                */
+/*    Copyright   :  2006-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    The DOM component of the HOP runtime library.                    */
 /*    -------------------------------------------------------------    */
@@ -373,7 +373,6 @@ function hop_dom_create( tag, args ) {
       for( var attr in args[ 0 ] ) {
 	 var val = args[ 0 ][ attr ];
 	 
-	 console.log( "attr=", attr,  (attr === "class"), " val=", val );
 	 if( attr === "class" ) {
 	    valstr( val, function( v ) { el.className = v } );
 	 } else if( attr === "style" ) {
