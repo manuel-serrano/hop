@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Fri Jan 26 09:48:18 2018 (serrano)                */
+;*    Last change :  Sat Jan 27 08:59:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -846,20 +846,6 @@
 		(fname (cadr loc))
 		(location (caddr loc))))
 	  (call-default-walker))))
-
-;*---------------------------------------------------------------------*/
-;*    resolve! ::J2SComprehension ...                                  */
-;*---------------------------------------------------------------------*/
-(define-walk-method (resolve! this::J2SComprehension env mode withs wenvs genv ctx conf)
-   (with-access::J2SComprehension this (test expr iterables decls)
-      (set! iterables
-	 (map (lambda (iterable)
-		 (resolve! iterable env mode withs wenvs genv ctx conf))
-	    iterables))
-      (let ((nenv (append decls env)))
-	 (set! test (resolve! test nenv mode withs wenvs genv ctx conf))
-	 (set! expr (resolve! expr nenv mode withs wenvs genv ctx conf))
-	 this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    resolve! ::J2SCall ...                                           */

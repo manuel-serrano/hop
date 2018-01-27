@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Jan 24 17:27:21 2018 (serrano)                */
+;*    Last change :  Fri Jan 26 15:13:29 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -183,9 +183,9 @@
 	     (hopc-source-language-set! (string->symbol lang)))
 	    
 	    (section "JavaScript dialect and features")
-	    (("--js-worker" (help "Enable JavaScript worker"))
+	    (("--js-worker" (help "Enable JavaScript workers"))
 	     (hopc-js-worker-set! #t))
-	    (("--js-no-worker" (help "Disable JavaScript worker"))
+	    (("--js-no-worker" (help "Disable JavaScript workers"))
 	     (hopc-js-worker-set! #f))
 	    (("--js-module-name" ?name (help "Set Bigloo module name"))
 	     (hopc-js-module-name-set! name))

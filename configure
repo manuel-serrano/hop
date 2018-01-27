@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Fri Jan 26 14:28:18 2018 (serrano)                */
+#*    Last change :  Sat Jan 27 07:11:14 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -91,7 +91,7 @@ mansec=man1
 mandir=$prefix/man/$mansec
 webletsdir=
 contribsdir=$prefix/share/hop/contribs
-docdir=$prefix/share/doc/hop
+docdir=$prefix/share/doc/hop/$version
 buildlibdir=$PWD/lib/hop/$version
 buildsharedir=$PWD/share
 distribdir=$HOME/prgm/distrib
@@ -1311,7 +1311,7 @@ for file in etc/hopjs.el; do
             -e "s|@DOCDIR@|$docdir|" \
             -e "s|@DOCDIR@|$docdir|" \
       >> $file
-  chmod a+x $file
+  chmod a+r $file
 done
 
 # etc/hoprc.hop

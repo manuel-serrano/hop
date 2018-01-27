@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Jan 26 09:39:26 2018 (serrano)                */
+;*    Last change :  Sat Jan 27 08:58:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2000,10 +2000,6 @@
 				  (loc (token-loc token)))
 			    rev-els)
 		      (+fx length 1))))
-	       ((for)
-		(if (pair? rev-els)
-		    (parse-token-error "unexpected token" (consume-any!))
-		    (comprehension-literal (token-loc token))))
 	       (else
 		(let ((array-el (assig-expr #f)))
 		   (case (peek-token-type)
@@ -2020,68 +2016,6 @@
 		      (else
 		       (parse-token-error "unexpected token"
 			  (consume-any!))))))))))
-
-   (define (comprehension-literal loc)
-      ;; ECMAScript 7 array comprehension
-      (let loop ((decls '())
-		 (iterables '())
-		 (test (instantiate::J2SBool (val #t) (loc loc))))
-	 (case (peek-token-type)
-	    ((for)
-	     (consume-any!)
-	     (multiple-value-bind (decl iterable)
-		(comprehension-binding loc)
-		(loop (cons decl decls) (cons iterable iterables) test)))
-	    ((if)
-	     (let ((tok (consume-any!)))
-		(let ((ntest (comprehension-test)))
-		   (loop decls iterables
-		      (if (isa? test J2SBool)
-			  ntest
-			  (instantiate::J2SBinary
-			     (loc (token-loc tok))
-			     (lhs test)
-			     (op '&&)
-			     (type 'bool)
-			     (rhs ntest)))))))
-	    (else
-	     (instantiate::J2SComprehension
-		(loc loc)
-		(decls (reverse! decls))
-		(iterables (reverse! iterables))
-		(test test)
-		(expr (comprehension-expression)))))))
-
-   (define (comprehension-binding loc)
-      ;; parses the comprehension binder (<id> of <expression>)
-      (push-open-token (consume-token! 'LPAREN))
-      (let* ((id (consume-token! 'ID))
-	     (of (consume-any!)))
-	 (unless (and (eq? (car of) 'ID) (eq? (cdr of) 'of))
-	    (parse-token-error
-	       (format "expected \"of\" got \"~a\"" (cdr of)) of))
-	 (let* ((iterable (expression #f))
-		(loc (token-loc id))
-		(decl (instantiate::J2SDeclInit
-			 (binder 'let-opt)
-			 (id (cdr id))
-			 (val (J2SUndefined))
-			 (loc loc))))
-	    (consume-token! 'RPAREN)
-	    (pop-open-token)
-	    (values decl iterable))))
-
-   (define (comprehension-expression::J2SExpr)
-      (let ((expr (expression #f)))
-	 (consume-token! 'RBRACKET)
-	 expr))
-
-   (define (comprehension-test::J2SExpr)
-      (push-open-token (consume-token! 'LPAREN))
-      (let ((test (expression #f)))
-	 (consume-token! 'RPAREN)
-	 (pop-open-token)
-	 test))
 
    (define (property-name)
       (case (peek-token-type)

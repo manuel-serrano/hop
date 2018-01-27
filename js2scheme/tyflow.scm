@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jan 26 10:58:46 2018 (serrano)                */
+;*    Last change :  Sat Jan 27 08:59:59 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1340,22 +1340,6 @@
 	     (expr-type-set! this enve fix tye bke)
 	     (return 'unknown enve bke)))))
 
-;*---------------------------------------------------------------------*/
-;*    typing ::J2SComprehension ...                                    */
-;*---------------------------------------------------------------------*/
-(define-walk-method (typing this::J2SComprehension env::pair-nil fix::cell)
-   (with-access::J2SComprehension this (decls iterables test expr)
-      (multiple-value-bind (_ envi bki)
-	 (typing-seq iterables env fix)
-	 (let loop ((env envi)
-		    (i 0))
-	    (let ((ofix (cell-ref fix)))
-	       (multiple-value-bind (_ envb bk)
-		  (typing-seq (list test expr) env fix)
-		  (if (=fx ofix (cell-ref fix))
-		      (return 'array envb (filter-breaks (append bk bki) this))
-		      (loop (env-merge env envb) (+fx i 1)))))))))
-		  
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SNop ...                                              */
 ;*---------------------------------------------------------------------*/

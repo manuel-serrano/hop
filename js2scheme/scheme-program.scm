@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Jan 23 20:01:27 2018 (serrano)                */
+;*    Last change :  Sat Jan 27 08:13:14 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -31,15 +31,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SProgram mode return conf hint)
    
-   
-   
-   
-   
-   (define (j2s-module module scmcnsts body)
+   (define (j2s-master-module module scmcnsts body)
       (with-access::J2SProgram this (mode pcache-size globals)
-	 (list
-	    module
-	    (define-pcache pcache-size)
+	 (list module
+	    `(%define-pcache ,pcache-size)
 	    `(define %pcache (js-make-pcache ,pcache-size))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
@@ -50,8 +45,27 @@
 		,@(exit-body body conf))
 	    ;; for dynamic loading
 	    'hopscript)))
-   
-   (define (j2s-main-worker-module name scmcnsts body)
+
+   (define (j2s-slave-module module scmcnsts body)
+      (with-access::J2SProgram this (mode pcache-size globals)
+	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
+	    '(define %source (or (the-loading-file) "/"))
+	    '(define %resource (dirname %source))
+	    `(define (hopscript %this this %scope %module)
+		(define %pcache (js-make-pcache ,pcache-size))
+		(define %worker (js-current-worker))
+		(define %cnsts ,scmcnsts)
+		,@globals
+		,@(exit-body body conf))
+	    ;; for dynamic loading
+	    'hopscript)))
+
+   (define (j2s-module module scmcnsts body)
+      (if (config-get conf :worker-slave)
+	  (j2s-slave-module module scmcnsts body)
+	  (j2s-master-module module scmcnsts body)))
+
+   (define (j2s-main-module/workers name scmcnsts body)
       (let ((module `(module ,(string->symbol name)
 			(eval (library hop)
 			   (library hopscript)
@@ -60,9 +74,8 @@
 			(cond-expand (enable-libuv (library libuv)))
 			(main main))))
 	 (with-access::J2SProgram this (mode pcache-size %this path globals)
-	    (list
-	       module
-	       (define-pcache pcache-size)
+	    (list module
+	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
 	       `(define %pcache (js-make-pcache ,pcache-size))
 	       '(hopjs-standalone-set! #t)
@@ -129,7 +142,7 @@
 		((not name)
 		 ;; a mere expression
 		 `(lambda (%this this %scope %module)
-		     ,(define-pcache pcache-size)	       
+		     (%define-pcache ,pcache-size)	       
 		     (define %pcache (js-make-pcache ,pcache-size))
 		     (define %worker (js-current-worker))
 		     (define %source (or (the-loading-file) "/"))
@@ -138,8 +151,8 @@
 		     ,@globals
 		     ,@(exit-body body conf)))
 		(main
-		 ;; generate a main hopscript module
-		 (j2s-main-worker-module name scmcnsts body))
+		 ;; generate a main hopscript module 
+		 (j2s-main-module/workers name scmcnsts body))
 		(else
 		 ;; generate the module clause
 		 (let ((module `(module ,(string->symbol name)
@@ -159,8 +172,7 @@
 		     (cond-expand (enable-libuv (library libuv)))
 		     (main main))))
       (with-access::J2SProgram this (mode pcache-size %this path globals)
-	 `(,module
-		,(define-pcache pcache-size)
+	 `(,module (%define-pcache ,pcache-size)
 	     (define %pcache (js-make-pcache ,pcache-size))
 	     (hop-sofile-compile-policy-set! 'static)
 	     (hopjs-standalone-set! #t)
@@ -211,12 +223,6 @@
    (if (config-get conf :return-as-exit)
        `((bind-exit (%jsexit) ,@body))
        body))
-
-;*---------------------------------------------------------------------*/
-;*    define-pcache ...                                                */
-;*---------------------------------------------------------------------*/
-(define (define-pcache pcache-size)
-   `(%define-pcache ,pcache-size))
 
 ;*---------------------------------------------------------------------*/
 ;*    %cnsts ...                                                       */

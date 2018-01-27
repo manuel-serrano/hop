@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri Jan 26 09:41:56 2018 (serrano)                */
+;*    Last change :  Sat Jan 27 08:59:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -252,12 +252,6 @@
 	      (then::J2SExpr (info '("ast")))
 	      (else::J2SExpr (info '("ast"))))
 
-	   (class J2SComprehension::J2SExpr
-	      (decls::pair (info '("ast")))
-	      (iterables::pair (info '("ast")))
-	      (test::J2SExpr (info '("ast")))
-	      (expr::J2SExpr (info '("ast"))))
-	   
 	   (class J2SDecl::J2SStmt
 	      id::symbol
 	      (_scmid (default #f) (info '("notraverse")))
@@ -921,7 +915,6 @@
 (gen-walks J2SPrecache (accesses) test then else)
 (gen-walks J2SCond test then else)
 (gen-walks J2SDollar node)
-(gen-walks J2SComprehension (iterables) test expr)
 (gen-walks J2SYield expr)
 (gen-walks J2SKont body)
 (gen-walks J2SCast expr)

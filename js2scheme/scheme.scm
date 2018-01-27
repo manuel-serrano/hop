@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jan 26 13:47:20 2018 (serrano)                */
+;*    Last change :  Sat Jan 27 09:00:15 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -484,56 +484,6 @@
 	 `(if ,(j2s-test test mode return conf)
 	      ,(j2s-scheme then mode return conf hint)
 	      ,(j2s-scheme else mode return conf hint)))))
-
-;*---------------------------------------------------------------------*/
-;*    j2s-scheme ::J2SComprehension ...                                */
-;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SComprehension mode return conf hint)
-   (with-access::J2SComprehension this (loc test expr decls iterables)
-      (if (not (strict-mode? mode))
-	  (match-case loc
-	     ((at ?fname ?loc)
-	      `(with-access::JsGlobalObject %this (js-syntax-error)
-		  (js-raise
-		     (js-new %this js-syntax-error
-			,(j2s-jsstring
-			    "comprehension only supported in strict mode"
-			    loc)
-			,fname ,loc))))
-	     (else
-	      `(with-access::JsGlobalObject %this (js-syntax-error)
-		  (js-raise
-		     (js-new %this js-syntax-error
-			,(j2s-jsstring
-			    "comprehension only supported in strict mode"
-			    loc))))))
-	  (let* ((names (map j2s-decl-scheme-id decls))
-		 (iters (map (lambda (iter)
-				(j2s-scheme iter mode return conf hint))
-			   iterables))
-		 (fun `(lambda (this ,@names)
-			  ,(j2s-scheme expr mode return conf hint)))
-		 (ast-pred (call-with-output-string
-			      (lambda (op) (ast->json test op))))
-		 (ast-expr (call-with-output-string
-			      (lambda (op) (ast->json expr op))))
-		 (ast-decls (map (lambda (decl)
-				    (call-with-output-string
-				       (lambda (op) (ast->json decl op))))
-			       decls)))
-	     (epairify loc
-		(if (not (isa? test J2SBool))
-		    (let ((test `(lambda (this ,@names)
-				    ,(j2s-scheme test mode return conf hint))))
-		       `(js-array-comprehension %this (list ,@iters)
-			   ,fun ,test
-			   ',names ,ast-pred ,ast-expr (list ,@ast-decls)))
-		    (with-access::J2SBool test (val)
-		       (if val
-			   `(js-array-comprehension %this (list ,@iters)
-			       ,fun #t
-			       ',names ,ast-pred ,ast-expr (list ,@ast-decls))
-			   `(js-empty-vector->jsarray %this)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved-put! ...                                          */

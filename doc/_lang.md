@@ -6,15 +6,8 @@ HopScript is based on JavaScript and aims at ensuring compatibility
 with this language.
 
   * HopScript fully supports [ECMAScript 5][es5]
-  * HopScript also support some [ECMAScript 6][es6] features:
-    * arrow functions.
-    * default function parameters.
-    * rest arguments.
-    * `let` and `const` bindings.
-    * symbols.
-    * template strings.
-    * promises.
-    * typed Arrays.
+  * HopScript supports most of [ECMAScript 6][es6] features. 
+    See [ECMAScript support](01-es.html) for the full list.
   * HopScript supports most [Nodejs][nodejs] APIs (see Section
   [Nodejs](nodejs.html))
     
