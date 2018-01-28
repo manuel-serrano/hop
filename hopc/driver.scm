@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Fri Oct 20 05:55:42 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Sun Jan 28 06:37:30 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
 ;*=====================================================================*/
@@ -169,6 +169,7 @@
 		  :mmap-src mmap
 		  :driver (js-driver)
 		  :worker (hopc-js-worker)
+		  :worker-slave (hopc-js-worker-slave)
 		  :module-main (if (boolean? (hopc-js-module-main))
 				   (hopc-js-module-main)
 				   (not (memq (hopc-pass) '(object so))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 26 15:13:29 2018 (serrano)                */
+;*    Last change :  Sun Jan 28 06:36:58 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -186,6 +186,10 @@
 	     (hopc-js-worker-set! #t))
 	    (("--js-no-worker" (help "Disable JavaScript workers"))
 	     (hopc-js-worker-set! #f))
+	    (("--js-worker-slave" (help "Compile a worker slave code"))
+	     (hopc-js-worker-slave-set! #t))
+	    (("--js-no-worker-slave" (help "Compile a worker master code"))
+	     (hopc-js-worker-slave-set! #f))
 	    (("--js-module-name" ?name (help "Set Bigloo module name"))
 	     (hopc-js-module-name-set! name))
 	    (("--js-module-path" ?path (help "Set Bigloo module path"))

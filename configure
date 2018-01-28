@@ -4,8 +4,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Sun Nov  5 19:20:35 2017 (serrano)                */
-#*    Copyright   :  2004-17 Manuel Serrano                            */
+#*    Last change :  Sun Jan 28 06:40:53 2018 (serrano)                */
+#*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
 #*=====================================================================*/
@@ -1030,6 +1030,7 @@ if [ "$threads " = "yes " ]; then
   bigloopthlibs="-lbigloopthread_s-$""(RELEASE)";
   bigloopthlibu="-lbigloopthread_u-$""(RELEASE)";
   bigloogc="-lbigloogc_fth-$""(RELEASE)"
+  bhopcflags="--js-worker-slave";
 else
   bigloopthlibs="";
   bigloopthlibu="";

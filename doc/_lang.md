@@ -2,6 +2,12 @@ Compatibilities & Standards
 ===========================
 [:@nonumber]
 
+Hop.js is a multi-language platform. It can either be programmed
+in HopScript, which is a super-set of [JavaScript][es5], or in
+a variant of the [Scheme][r5rs] programming. This documentation only
+presents the HopScript language and environment. Programming Hop.js
+in Scheme is decribed [here](http://hop.inria.fr/hop/doc).
+
 HopScript is based on JavaScript and aims at ensuring compatibility
 with this language.
 
@@ -34,3 +40,4 @@ Its caracteristics are:
 [es5]: http://www.ecma-international.org/ecma-262/5.1
 [es6]: http://www.ecma-international.org/ecma-262/6.0
 [nodejs]: https://nodejs.org/api
+[r5rs]: http://www-sop.inria.fr/indes/fp/Bigloo/doc/r5rs.html

@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Tue Jul 11 19:05:36 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Sun Jan 28 09:34:02 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
 /*=====================================================================*/
@@ -45,6 +45,7 @@ const css = [ P( "hss/doc.css" ),
 	      P( "lib/bootstrap/css/bootstrap.min.css" ) ];
 const jscript = [ P( "lib/jquery/js/jquery.min.js" ),
 		  P( "lib/bootstrap/js/bootstrap.min.js" ) ];
+const favicon = P( "favicon.png" );
 
 const alias = {
    "user.md": "api",
@@ -167,6 +168,7 @@ function compileSection( page ) {
      <head css=${css}
 	   title=${doc.title + "/" + title}
            jscript=${jscript}
+	   favicon=${favicon}
            rts=${false}/>
 
      <body data-spy="scroll" data-target="#navbar" class=${title}
@@ -235,6 +237,7 @@ function compileChapter( json ) {
      <head css=${css}
 	   title=${doc.title + "/" + chapter.title}
            jscript=${jscript}
+	   favicon=${favicon}
            rts=${false}/>
 
      <body data-spy="scroll" data-target="#navbar">
@@ -286,6 +289,7 @@ function compileMain( content ) {
      <head css=${css}
 	   title=${doc.title}
            jscript=${jscript}
+	   favicon=${favicon}
            rts=${false}/>
 
      <body class="home" data-spy="scroll" data-target="#navbar">
@@ -318,6 +322,7 @@ function compileLibrary( content ) {
      <head css=${css}
 	   title=${doc.title}
            jscript=${jscript}
+	   favicon=${favicon}
            rts=${false}/>
 
      <body class="library" data-spy="scroll" data-target="#navbar">
@@ -355,6 +360,7 @@ function compileIdx( json ) {
      <head css=${css}
 	   title=${doc.title + "/" + chapter.title}
            jscript=${jscript}
+	   favicon=${favicon}
            rts=${false}/>
 
      <body data-spy="scroll" data-target="#navbar">

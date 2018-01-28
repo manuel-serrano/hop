@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sun Nov  5 19:04:28 2017 (serrano)                */
-#*    Copyright   :  2006-17 Manuel Serrano                            */
+#*    Last change :  Sun Jan 28 09:21:41 2018 (serrano)                */
+#*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
 #*=====================================================================*/
@@ -49,6 +49,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   lang/01-es.md lang/01-service.md lang/02-worker.md \
   lang/01-module.md lang/03-react.md lang/app.js lang/stateful.js lang/ui.js \
   dev/dev.json dev/00-command.md dev/01-rcfile.md dev/10-edit.md \
+  intf/intf.json intf/01-nodejs.md intf/10-scheme.md \
   license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
@@ -64,8 +65,10 @@ WIDGET_TARGETS=widget.html tree.html spage.html
 
 DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html 20-cross.html
 
-ALL_TARGETS=index.html download.html nodejs.html \
-  $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
+INTF_TARGETS=intf.html 01-nodejs.html 10-scheme.html
+
+ALL_TARGETS=index.html download.html \
+  $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) $(INTF_TARGETS) \
   idx.html
 
 HTML="/usr/local/doc/html40/index/elements.html"
@@ -73,7 +76,7 @@ HTML="/usr/local/doc/html40/index/elements.html"
 #*---------------------------------------------------------------------*/
 #*    Search path                                                      */
 #*---------------------------------------------------------------------*/
-VPATH=api lang dev widget \
+VPATH=api lang dev widget intf \
   ../node_modules/tree/doc \
   ../node_modules/spage/doc \
   ../node_modules/hss/doc \
@@ -91,18 +94,20 @@ build:
 	$(MAKE) builddoc HOPFLAGS="$(HOPFLAGS) $(HOPBOOTFLAGS)"
 
 builddoc: $(ALL_TARGETS) \
-  hss/markdown.css hss/fontifier.css hss/doc.css html-idx.json mdn-idx.json
-
+  hss/markdown.css hss/fontifier.css hss/doc.css html-idx.json mdn-idx.json \
+  favicon.png
 
 #*---------------------------------------------------------------------*/
 #*    clean                                                            */
 #*---------------------------------------------------------------------*/
 clean:
-	$(RM) $(API_TARGETS) $(LANG_TARGETS) $(WIDGET_TARGETS)
-	$(RM) license.html index.html nodejs.html download.html dev.html
+	$(RM) $(API_TARGETS) $(LANG_TARGETS) $(WIDGET_TARGETS) $(DEV_TARGETS)
+	$(RM) $(INTF_TARGETS)
+	$(RM) license.html index.html download.html dev.html
 	$(RM) 00-command.html 10-edit.html
 	$(RM) idx.json idx.html
 	$(RM) -f hss/markdown.hss hss/fontifier.hss
+	$(RM) -f favicon.png
 
 devclean: clean
 
@@ -122,6 +127,7 @@ install:
 	cp -r hss $(DESTDIR)$(HOPDOCDIR)/hss
 	$(INSTALL) doc.js $(DESTDIR)$(HOPDOCDIR)
 	$(INSTALL) xml.js $(DESTDIR)$(HOPDOCDIR)
+	$(INSTALL) favicon.png $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)
 	chmod $(MODDIR) $(DESTDIR)$(HOPDOCDIR)/hss
 	chmod $(MODFILE) $(DESTDIR)$(HOPDOCDIR)/hss/*
@@ -173,7 +179,8 @@ index.html: _index.md doc.js xml.js
 #*---------------------------------------------------------------------*/
 #*    idx.json ...                                                     */
 #*---------------------------------------------------------------------*/
-idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS)
+idx.json: $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) \
+  $(INTF_TARGETS)
 	$(HOP) $(HOPFLAGS) $(EFLAGS) -- \
           $(BUILDDIR)/doc/doc.js "html-to-idx" . $^ > $@ \
           || ($(RM) $@; exit 1)
@@ -217,3 +224,5 @@ hss/fontifier.css: ../node_modules/fontifier/hss/fontifier.hss
 hss/doc.css: hss/doc.hss
 	cp $< $@
 
+favicon.png: ../share/icons/hop/favicon-16x16.png
+	cp $< $@

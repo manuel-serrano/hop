@@ -12,7 +12,7 @@
       { "name": "Lang", "icon": "glyphicon-blackboard", "href": "lang.html", "json": "lang/lang.json" },
       { "name": "Api", "icon": "glyphicon-book", "href": "api.html", "json": "api/api.json" },
       { "name": "Widget", "icon": "glyphicon-sound-stereo", "href": "widget.html", "json": "widget/widget.json" },
-      { "name": "Nodejs", "icon": "glyphicon-cloud", "href": "nodejs.html" },
+      { "name": "Interface", "icon": "glyphicon-duplicate", "href": "intf.html", "json": "intf/intf.json" },
       { "name": "Index", "icon": "glyphicon-list", "href": "idx.html" }
    ]
 }
