@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:20:48 2015                          */
-/*    Last change :  Tue Jul 11 18:59:55 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Mon Jan 29 15:07:18 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    HSS for the Hop.js documentation                                 */
 /*=====================================================================*/
@@ -213,20 +213,27 @@ h2.markdown {
 }
 
 h3.markdown {
-  font-size: 150%;
+  font-size: 130%;
 }
 
-h3.glyphicon {
+h3.glyphicon,
+h4.glyphicon {
   color: #444;
 }
 
-h3.glyphicon {
-  font-family: inherit;
+h3.glyphicon,
+h4.glyphicon {
+  font-family: monospace;
   font-weight: 500;
   line-height: 1.1;
+  font-size: 110%;
+  padding-top: 3px;
+  padding-bottom: 3px;
+  background-color: #f0f0f0;
 }
 
-h3.glyphicon:before {
+h3.glyphicon:before,
+h4.glyphicon:before {
   font-size: 65%;
   margin-right: 0.4em;
   font-family: 'Glyphicons Halflings';
@@ -236,20 +243,29 @@ h3.glyphicon:before {
   -webkit-font-smoothing: antialiased;
 }
 
-h3.parameter:before {
+h3.parameter:before,
+h4.parameter:before {
   color: #d85023;
 }
 
-h3.constructor:before {
+h3.constructor:before,
+h4.constructor:before {
   color: #eeb930;
 }
 
-h3.function:before {
+h3.function:before,
+h4.function:before {
   color: #1467e6;
 }
 
-h3.tag:before {
+h3.tag:before,
+h4.tag:before {
   color: #22ba5a;
+}
+
+h3.scheme:before,
+h4.scheme:before {
+  color: #720bc3;
 }
 
 /*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Sun Jan 28 09:34:02 2018 (serrano)                */
+/*    Last change :  Mon Jan 29 14:48:21 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -208,7 +208,12 @@ function compileSection( page ) {
 	          data-offset-top="215" data-offset-bottom="100">
                <ul class="nav bs-docs-sidenav">
                   ${makeToc( toc, 0, function( el ) {
-		     return el.childNodes[ 0 ].data.replace( /[(].*$/, "");
+		     if( el.childNodes[ 0 ].data.charAt( 0 ) === "(" ) {
+			let m = el.childNodes[ 0 ].data.match( /[(](?:class |generic )?([^ )]*)/ );
+			return m[ 1 ];
+		     } else {
+			return el.childNodes[ 0 ].data.replace( /[(].*$/, "");
+		     }
 		  } )}
 	       </ul>
 	     </nav> 

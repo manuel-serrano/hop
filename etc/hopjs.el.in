@@ -4,8 +4,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Sat Oct 21 06:59:26 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Mon Jan 29 10:42:20 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
 ;*=====================================================================*/
@@ -265,8 +265,10 @@
 	(cons "$\{[^ \t\r\n{}]*\}" 'font-lock-face-hopjs2)
 	(list "\\([$]\\){" 1 'font-lock-face-hopjs2)
 	(list "\\([~]\\){" 1 'font-lock-face-hopjs3)
-	(cons "[0-9a-zA-Z_-]*:" 'font-lock-face-hopjs10)
+	(cons "[0-9a-zA-Z_-]+:" 'font-lock-face-hopjs10)
 	(cons "\\<\\(?:async\\|yield\\|await\\)\\>" 'font-lock-face-hopjs3)
+	(list "#:\\([^ \t\r\n{}(),;=[]*\\)" 1 'font-lock-face-hopjs3)
+	(cons "exports." 'font-lock-keyword-face)
 	(list (concat "^\\s-*\\(?:service\\)\\s-+\\(" js--name-re "\\)") 1 'font-lock-function-name-face)))
 
 ;*---------------------------------------------------------------------*/
@@ -306,11 +308,11 @@
   (concat "\\(?:\\(?:var\\|let\\|const\\)[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*=[ \t]*"
 	  hopjs-re-open-tag))
 
-(defconst hopjs-re-entering-retun
+(defconst hopjs-re-entering-return
   (concat "return[ \t]+" hopjs-re-open-tag))
 
 (defconst hopjs-re-entering
-  (concat hopjs-re-entering-var "\\|" hopjs-re-entering-retun))
+  (concat hopjs-re-entering-var "\\|" hopjs-re-entering-return))
 
 (defconst hopjs-re-entering-html
   "\\(?:\\(?:var\\|let\\|const\\)[ \t ]*\\)?[a-zA-Z_$][:.0-9a-zA-Z_$]*[ \t]*[(= ]?[ \t]*<\\(?:[^> \n/]+\\|[^/]>\\)")
@@ -555,12 +557,12 @@ usage: (js-return)  -- [RET]"
 
 (defun js--proper-indentation (parse-status)
   "Return the proper indentation for the current line."
+  (message "GLOP point=%s %s" (point) parse-status)
   (save-excursion
     (back-to-indentation)
     (cond ((nth 4 parse-status)		; inside comment
 	   (js--get-c-offset 'c (nth 8 parse-status)))
 	  ((nth 3 parse-status) 0)	; inside string
-	  ((eq (char-after) ?#) 0)
 	  ((save-excursion (js--beginning-of-macro)) 4)
 	  ;; Indent array comprehension continuation lines specially.
 	  ((let ((bracket (nth 1 parse-status))
@@ -614,7 +616,6 @@ usage: (js-return)  -- [RET]"
 		 (forward-char)
 		 (skip-chars-forward " \t"))
 	       (current-column))))
-
 	  ((js--continued-expression-p)
 	   (+ js-indent-level js-expr-indent-offset))
 	  (t 0))))

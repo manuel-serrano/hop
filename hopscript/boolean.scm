@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun May 21 09:31:38 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Mon Jan 29 13:05:50 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript booleans                     */
 ;*    -------------------------------------------------------------    */
@@ -30,7 +30,7 @@
 	   __hopscript_error)
 
    (export (js-init-boolean! ::JsGlobalObject)
-	   (js-bool->jsboolean::JsBoolean ::bool ::JsGlobalObject)))
+	   (js-bool->jsBoolean::JsBoolean ::bool ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */
@@ -44,7 +44,7 @@
    (lambda (o)
       (with-access::JsBoolean o (val) val))
    (lambda (o %this)
-      (js-bool->jsboolean o (or %this (js-initial-global-object)))))
+      (js-bool->jsBoolean o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsBoolean ...                                        */
@@ -167,9 +167,9 @@
       :hidden-class #t))
       
 ;*---------------------------------------------------------------------*/
-;*    js-bool->jsboolean ...                                           */
+;*    js-bool->jsBoolean ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (js-bool->jsboolean val::bool %this::JsGlobalObject)
+(define (js-bool->jsBoolean val::bool %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-boolean)
       (js-new1 %this js-boolean val)))
 
