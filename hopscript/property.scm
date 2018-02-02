@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jan 26 13:47:36 2018 (serrano)                */
+;*    Last change :  Fri Feb  2 18:30:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -213,7 +213,7 @@
 	   (js-get-vindex::long ::JsGlobalObject)
 	   
 	   (log-cache-miss!)
-	   (add-cache-miss! ::symbol ::obj)
+	   (add-cache-log! ::symbol ::obj)
 	   (show-cache-misses)
 	   (log-function! ::bool)
 	   (profile-function ::obj ::symbol)
@@ -1246,7 +1246,7 @@
 ;*    to keep the base object (the actual receiver) available.         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject o::JsObject base p %this)
-   (when (symbol? p) (add-cache-miss! 'get p))
+   (when (symbol? p) (add-cache-log! 'get p))
    (let ((pval (js-get-property-value o base p %this)))
       (if (eq? pval (js-absent))
 	  (js-undefined)
@@ -1284,7 +1284,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get-lookup o::JsObject name::obj cache::JsPropertyCache throw %this)
    
-   (add-cache-miss! 'get name)
+   (add-cache-log! 'get name)
 
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
@@ -1781,7 +1781,7 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
    
-   (add-cache-miss! 'put name)
+   (add-cache-log! 'put name)
 
    (let loop ((obj o))
       (jsobject-find obj name
@@ -2880,7 +2880,7 @@
 	 (else
 	  #f)))
 
-   (add-cache-miss! 'call name)
+   (add-cache-log! 'call name)
    
    (let loop ((obj o))
       (jsobject-find obj name
@@ -2976,9 +2976,9 @@
    (set! *log-vtables* #t))
 
 ;*---------------------------------------------------------------------*/
-;*    add-cache-miss! ...                                              */
+;*    add-cache-log! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (add-cache-miss! what name)
+(define (add-cache-log! what name)
    (when *log-misses*
       (let ((ow (assq what *misses*)))
 	 (if (not ow)
@@ -3181,7 +3181,29 @@
 ;*---------------------------------------------------------------------*/
 (define (show-allocs)
    
-   (define (show-percentages vec)
+   (define (show-json-percentages vec)
+      (let ((len (vector-length vec)))
+	 (let loop ((i (-fx len 1))
+		    (sum #l0))
+	    (if (=fx i -1)
+		(let luup ((i 0)
+			   (cum #l0)
+			   (sep " [\n"))
+		   (when (and (<fx i len) (<llong cum sum))
+		      (display sep)
+		      (let* ((n0 (vector-ref vec i))
+			     (n (if (fixnum? n0) (fixnum->llong n0) n0))
+			     (c (+llong cum n))
+			     (p (/llong (*llong n (fixnum->llong 100)) sum))
+			     (pc (/llong (*llong c (fixnum->llong 100)) sum)))
+			 (printf "   {\"occurrences\": ~d, \"percentage\": ~2,0d, \"cumulative\": ~d}" n p pc)
+			 (luup (+fx i 1) c ",\n"))))
+		(let ((n (vector-ref vec i)))
+		   (loop (-fx i 1)
+		      (+llong sum (if (fixnum? n) (fixnum->llong n) n))))))
+	 (display "]")))
+
+   (define (show-text-percentages vec)
       (let ((len (vector-length vec)))
 	 (let loop ((i (-fx len 1))
 		    (sum #l0))
@@ -3203,21 +3225,44 @@
 		(let ((n (vector-ref vec i)))
 		   (loop (-fx i 1)
 		      (+llong sum (if (fixnum? n) (fixnum->llong n) n))))))))
+
+   (define (show-json-alloc)
+      (cond-expand
+	 (profile
+	  (print "{")
+	  (display " \"object-allocs\":")
+	  (show-json-percentages js-profile-allocs)
+	  (display ",\n \"accesses\":")
+	  (show-json-percentages js-profile-accesses)
+	  (display ",\n \"extensions\":")
+	  (show-json-percentages js-profile-extensions)
+	  (display ",\n \"vector-extensions\":")
+	  (show-json-percentages js-profile-vectors)
+	  (print "\n}"))
+	 (else #f)))
+				  
+   (define (show-text-alloc)
+      (cond-expand
+	 (profile
+	  (print  "\nOBJECT ALLOCS:\n" "==============\n")
+	  (show-text-percentages js-profile-allocs)
+	  (print  "\nACCESSES:\n" "=======\n")
+	  (show-text-percentages js-profile-accesses)
+	  (print  "\nEXTENSIONS:\n" "===========\n")
+	  (show-text-percentages js-profile-extensions)
+	  (print  "\nVECTOR EXTENSIONS:\n" "==================\n")
+	  (show-text-percentages js-profile-vectors))
+	 (else #f)))
    
    (with-output-to-port (current-error-port)
       (lambda ()
 	 (let ((m (pregexp-match "hopscript:alloc([0-9]+)"
 		     (getenv "HOPTRACE"))))
 	    (cond-expand
-	       (profile 
-		(print  "\nOBJECT ALLOCS:\n" "==============\n")
-		(show-percentages js-profile-allocs)
-		(print  "\nACCESS:\n" "=======\n")
-		(show-percentages js-profile-accesses)
-		(print  "\nEXTENSIONS:\n" "===========\n")
-		(show-percentages js-profile-extensions)
-		(print  "\nVECTOR EXTENSIONS:\n" "==================\n")
-		(show-percentages js-profile-vectors))
+	       (profile
+		(if (string-contains (getenv "HOPTRACE") "format:json")
+		    (show-json-alloc)
+		    (show-text-alloc)))
 	       (else
 		(print "re-configure hop in profiling mode")))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Jan 27 08:58:54 2018 (serrano)                */
+;*    Last change :  Fri Feb  2 14:43:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -342,25 +342,24 @@
 		 (instantiate::J2SVarDecls
 		    (loc (token-loc token))
 		    (decls rev-vars)))))
-	    ((of)
+	    (else
 	     (cond
-		((not in-for-init?)
-		 (parse-token-error "illegal variable declaration"
-		    (peek-token)))
-		(else
+		((and (eq? (peek-token-type) 'ID)
+		      (eq? (token-value (peek-token)) 'of)
+		      in-for-init?)
 		 (instantiate::J2SVarDecls
 		    (loc (token-loc token))
-		    (decls rev-vars)))))
-	    (else
-	     (if (and (not in-for-init?)
+		    (decls rev-vars)))
+		((and (not in-for-init?)
 		      (or (at-new-line-token?)
 			  (eq? (peek-token-type) 'RBRACE)
 			  (eq? (peek-token-type) 'EOF)))
 		 (instantiate::J2SVarDecls
 		    (loc (token-loc token))
-		    (decls (reverse! rev-vars)))
+		    (decls (reverse! rev-vars))))
+		(else
 		 (parse-token-error "illegal variable declaration"
-		    (consume-any!)))))))
+		    (consume-any!))))))))
    
    (define (var-decl-list in-for-init?)
       (decl-list (consume-token! 'var) in-for-init?
@@ -483,8 +482,11 @@
 	       ((SEMICOLON)
 		(for-init/test/incr loc
 		   (or first-part (instantiate::J2SNop (loc loc)))))
-	       ((in of)
-		(for-in loc first-part))))))
+	       ((in)
+		(for-in loc first-part))
+	       ((ID)
+		(when (eq? (token-value (peek-token)) 'of)
+		   (for-in loc first-part)))))))
    
    ;; for (init; test; incr)
    (define (for-init/test/incr loc init::J2SNode)

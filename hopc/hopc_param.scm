@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Tue Jan 23 20:05:54 2018 (serrano)                */
+;*    Last change :  Sun Jan 28 06:35:52 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -86,6 +86,9 @@
 
 	    (hopc-js-worker::bool)
 	    (hopc-js-worker-set! ::bool)
+
+	    (hopc-js-worker-slave::bool)
+	    (hopc-js-worker-slave-set! ::bool)
 
 	    (hopc-js-module-name::obj)
 	    (hopc-js-module-name-set! ::obj)
@@ -275,6 +278,12 @@
    (cond-expand
       (enable-threads #t)
       (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    hopc-js-worker-slave ...                                         */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-js-worker-slave
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    hopc-js-module-name ...                                          */

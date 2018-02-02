@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Wed Jan 24 08:15:41 2018 (serrano)                */
+;*    Last change :  Mon Jan 29 15:17:15 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -30,6 +30,8 @@
    (cond-expand
       ((or bint30 bint32)
        (export
+	  (js-number->jsnumber ::obj)
+	  
 	  (inline overflow29 ::long)
 	  
 	  (inline js-toint32::int32 ::obj ::JsGlobalObject)
@@ -60,6 +62,63 @@
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
 	  (*/overflow::obj ::obj ::obj)
 	  ))))
+
+;*---------------------------------------------------------------------*/
+;*    oveflow? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define-macro (overflowu32? num shift)
+   `(not (=u32 (bit-andu32 ,num (fixnum->int32 (-fx (bit-lsh 1 ,shift) 1))) #u32:0)))
+   
+(define-macro (overflows64? num shift)
+   `(not (=s64 (bit-ands64 ,num (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1))) #s64:0)))
+
+(define-macro (overflowu64? num shift)
+   `(not (=u64 (bit-andu64 ,num (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1))) #u64:0)))
+   
+(define-macro (overflowllong? num shift)
+   `(not (=llong (bit-andllong ,num (fixnum->llong (-fx (bit-lsh 1 ,shift) 1))) 0)))
+   
+;*---------------------------------------------------------------------*/
+;*    js-number->jsnumber ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-number->jsnumber val)
+   (cond
+      ((fixnum? val)
+       (overflow29 val))
+      ((flonum? val)
+       val)
+      ((uint32? val)
+       (if (overflowu32? val 29)
+	   (uint32->flonum val)
+	   (uint32->fixnum val)))
+      ((int32? val)
+       (overflow29 (int32->fixnum val)))
+      ((uint8? val)
+       (uint8->fixnum val))
+      ((int8? val)
+       (int8->fixnum val))
+      ((uint16? val)
+       (uint16->fixnum val))
+      ((int16? val)
+       (int16->fixnum val))
+      ((int64? val)
+       (if (overflows64? val 29)
+	   (int64->flonum val)
+	   (int64->fixnum val)))
+      ((uint64? val)
+       (if (overflowu64? val 29)
+	   (uint64->flonum val)
+	   (uint64->fixnum val)))
+      ((elong? val)
+       (overflow29 (elong->fixnum val)))
+      ((llong? val)
+       (if (overflowllong? val 29)
+	   (llong->flonum val)
+	   (llong->fixnum val)))
+      ((bignum? val)
+       (bignum->flonum val))
+      (else
+       (bigloo-type-error "js-number->jsnumber" "number" val))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */

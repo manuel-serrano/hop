@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Dec  4 08:41:54 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Mon Jan 29 13:30:35 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
 ;*=====================================================================*/
@@ -100,8 +100,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-obj->jsobject obj::obj %this::JsGlobalObject)
    (cond
-      ((fixnum? obj) obj)
-      ((flonum? obj) obj)
+      ((number? obj) (js-number->jsnumber obj))
       ((boolean? obj) obj)
       ((eq? obj #unspecified) obj)
       ((null? obj) obj)
@@ -109,8 +108,6 @@
       ((date? obj) (js-date->jsdate obj %this))
       ((vector? obj) (js-vector->jsobject obj %this))
       ((struct? obj) (js-struct->jsobject obj %this))
-      ((int64? obj) (int64->flonum obj))
-      ((elong? obj) (elong->flonum obj))
       ((regexp? obj) (js-regexp->jsregexp obj %this))
       ((keyword? obj) (js-string->jsstring (keyword->string obj)))
       ((symbol? obj) (js-string->jsstring (symbol->string obj)))
@@ -133,8 +130,8 @@
 ;*---------------------------------------------------------------------*/
 (define (js-struct->jsobject stu %this)
    (case (struct-key stu)
-      ((__JsBoolean__) (js-bool->jsboolean (struct-ref stu 0) %this))
-      ((__JsNumber__) (js-number->jsnumber (struct-ref stu 0) %this))
+      ((__JsBoolean__) (js-bool->jsBoolean (struct-ref stu 0) %this))
+      ((__JsNumber__) (js-number->jsNumber (struct-ref stu 0) %this))
       ((__JsCustom__) ((struct-ref stu 1) (struct-ref stu 0) %this))
       (else (js-obj->jsobject (list->vector (struct->list stu)) %this))))
 

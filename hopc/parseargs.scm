@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 26 15:13:29 2018 (serrano)                */
+;*    Last change :  Fri Feb  2 18:04:11 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -44,8 +44,10 @@
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:range, j2s:usage, j2s:key,")
    (print "      j2s:loc,")
-   (print "      hopscript:cache[num] (*), hopscript:function[num] (*), hopscript:alloc[num] (*),")
-   (print "      nodejs:compile")
+   (print "      nodejs:compile,")
+   (print "      hopscript:cache[num] (*), hopscript:function[num] (*),")
+   (print "      hopscript:alloc[num] (*),")
+   (print "      format:json")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print " (*) Need both compile and runtime variable and need to be compiled")
    (print " in profile mode: --profile")
@@ -187,6 +189,10 @@
 	     (hopc-js-worker-set! #t))
 	    (("--js-no-worker" (help "Disable JavaScript workers"))
 	     (hopc-js-worker-set! #f))
+	    (("--js-worker-slave" (help "Compile a worker slave code"))
+	     (hopc-js-worker-slave-set! #t))
+	    (("--js-no-worker-slave" (help "Compile a worker master code"))
+	     (hopc-js-worker-slave-set! #f))
 	    (("--js-module-name" ?name (help "Set Bigloo module name"))
 	     (hopc-js-module-name-set! name))
 	    (("--js-module-path" ?path (help "Set Bigloo module path"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Jan  4 09:02:54 2018 (serrano)                */
+;*    Last change :  Mon Jan 29 15:13:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -29,7 +29,7 @@
 	   __hopscript_arithmetic)
    
    (export (js-init-number! ::JsGlobalObject)
-	   (js-number->jsnumber ::obj ::JsGlobalObject)
+	   (js-number->jsNumber ::obj ::JsGlobalObject)
 	   
 	   (js-real->string ::double)
 	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
@@ -49,7 +49,7 @@
    (lambda (o)
       (with-access::JsNumber o (val) val))
    (lambda (o %this)
-      (js-number->jsnumber o (or %this (js-initial-global-object)))))
+      (js-number->jsNumber o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsNumber ...                                         */
@@ -330,9 +330,9 @@
       :hidden-class #f))
 
 ;*---------------------------------------------------------------------*/
-;*    js-number->jsnumber ...                                          */
+;*    js-number->jsNumber ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-number->jsnumber val %this::JsGlobalObject)
+(define (js-number->jsNumber val %this::JsGlobalObject)
    (with-access::JsGlobalObject %this (js-number)
       (js-new1 %this js-number val)))
 
