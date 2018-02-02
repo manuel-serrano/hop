@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Jan 29 13:32:46 2018 (serrano)                */
+;*    Last change :  Mon Jan 29 15:18:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -405,18 +405,6 @@
 (define-macro (overflowfx? num shift)
    `(not (=fx (bit-and ,num (-fx (bit-lsh 1 ,shift) 1)) 0)))
    
-(define-macro (overflows8? num shift)
-   `(not (=s8 (bit-ands8 ,num (fixnum->int8 (-fx (bit-lsh 1 ,shift) 1))) #s8:0)))
-
-(define-macro (overflowu8? num shift)
-   `(not (=u8 (bit-andu8 ,num (fixnum->int8 (-fx (bit-lsh 1 ,shift) 1))) #u8:0)))
-   
-(define-macro (overflows16? num shift)
-   `(not (=s16 (bit-ands16 ,num (fixnum->int16 (-fx (bit-lsh 1 ,shift) 1))) #s16:0)))
-
-(define-macro (overflowu16? num shift)
-   `(not (=u16 (bit-andu16 ,num (fixnum->int16 (-fx (bit-lsh 1 ,shift) 1))) #u16:0)))
-   
 (define-macro (overflows32? num shift)
    `(not (=s32 (bit-ands32 ,num (fixnum->int32 (-fx (bit-lsh 1 ,shift) 1))) #s32:0)))
 
@@ -467,37 +455,13 @@
 	  (else
 	   (int32->fixnum val))))
       ((uint8? val)
-       (cond-expand
-	  ((or bint29 bint30 bint32)
-	   (if (overflowu8? val 29)
-	       (uint8->flonum val)
-	       (uint8->fixnum val)))
-	  (else
-	   (uint8->fixnum val))))
+       (uint8->fixnum val))
       ((int8? val)
-       (cond-expand
-	  ((or bint29 bint30 bint32)
-	   (if (overflows8? val 29)
-	       (int8->flonum val)
-	       (int8->fixnum val)))
-	  (else
-	   (int8->fixnum val))))
+       (int8->fixnum val))
       ((uint16? val)
-       (cond-expand
-	  ((or bint29 bint30 bint32)
-	   (if (overflowu16? val 29)
-	       (uint16->flonum val)
-	       (uint16->fixnum val)))
-	  (else
-	   (uint16->fixnum val))))
+       (uint16->fixnum val))
       ((int16? val)
-       (cond-expand
-	  ((or bint29 bint30 bint32)
-	   (if (overflows16? val 29)
-	       (int16->flonum val)
-	       (int16->fixnum val)))
-	  (else
-	   (int16->fixnum val))))
+       (int16->fixnum val))
       ((int64? val)
        (cond-expand
 	  ((or bint29 bint30 bint64)
@@ -529,7 +493,7 @@
       ((llong? val)
        (cond-expand
 	  ((or bint29 bint30 bint32)
-	   (if (overflowfx? val 29)
+	   (if (overflowllong? val 29)
 	       (llong->flonum val)
 	       (llong->fixnum val)))
 	  (else
