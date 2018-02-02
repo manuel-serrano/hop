@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Feb  2 14:07:53 2018 (serrano)                */
+;*    Last change :  Fri Feb  2 14:08:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -418,7 +418,7 @@
    `(not (=u64 (bit-andu64 ,num (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1))) #u64:0)))
    
 (define-macro (overflowelong? num shift)
-   `(overflowfx? ,num ,shift))
+   `(overflowfx? (elong->fixnum ,num) ,shift))
    
 (define-macro (overflowllong? num shift)
    `(not (=llong (bit-andllong ,num (fixnum->llong (-fx (bit-lsh 1 ,shift) 1))) 0)))
