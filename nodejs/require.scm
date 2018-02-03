@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Jan 26 15:42:23 2018 (serrano)                */
+;*    Last change :  Sat Feb  3 09:24:33 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -24,6 +24,7 @@
    (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::symbol)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
+	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
@@ -402,7 +403,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-head ...                                                  */
 ;*    -------------------------------------------------------------    */
-;*    Per module version of js-html-head@__hopscript_public            */
+;*    Per module version of js-html-script@__hopscript_public          */
 ;*    (see hopscript/public.scm).                                      */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-head worker::WorkerHopThread %this::JsGlobalObject %scope::JsObject %module)
@@ -428,6 +429,26 @@
 	 -1 "HEAD"))
 
    head)
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-script ...                                                */
+;*    -------------------------------------------------------------    */
+;*    Per module version of js-html-script@__hopscript_public          */
+;*    (see hopscript/public.scm).                                      */
+;*---------------------------------------------------------------------*/
+(define (nodejs-script worker::WorkerHopThread %this::JsGlobalObject %scope::JsObject %module)
+   
+   ;; script
+   (define script
+      (js-make-function %this
+	 (lambda (this attrs . nodes)
+	    (apply <SCRIPT> :idiom "javascript" :context %scope
+	       (when (isa? attrs JsObject)
+		  (js-object->keyword-arguments* attrs %this))
+	       nodes))
+	 -1 "SCRIPT"))
+   
+   script)
 
 ;*---------------------------------------------------------------------*/
 ;*    *resolve-service* ...                                            */

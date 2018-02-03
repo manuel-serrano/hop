@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Nov 25 15:54:09 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Sat Feb  3 09:09:43 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
 ;*                                                                     */
@@ -460,10 +460,12 @@
 	    ;; rebound in generated code
 	    (js-bind! %this %this 'HEAD
 	       :value (js-html-head %this) :enumerable #f :hidden-class #f)
+	    (js-bind! %this %this 'SCRIPT
+	       :value (js-html-script %this) :enumerable #f :hidden-class #f)
 
 	    ;; html_head
 	    (js-bind-tags! %this %this
-	       LINK SCRIPT STYLE)
+	       LINK STYLE)
 
 	    (js-bind-tags! %this %this IMG)
 
