@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Wed Sep 27 19:01:54 2017 (serrano)                */
-;*    Copyright   :  2005-17 Manuel Serrano                            */
+;*    Last change :  Sat Feb  3 09:16:45 2018 (serrano)                */
+;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
 ;*=====================================================================*/
@@ -586,7 +586,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		 (loop (cdr a) mode rts dir path base inl packed 
 		       (cons (script (absolute-path file dir) inl) els))))
 	     ((:require :module)
-	      (let* ((v (xml-primitive-value (car a)))
+	      (let* ((v (car a))
 		     (file (clientc-resolve-filename v (or context path))))
 		 (if (not file)
 		     (error "<HEAD>" "Cannot find required file" file)
@@ -723,6 +723,9 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 (define-tag <SCRIPT> ((inline #f boolean)
 		      (src #unspecified)
 		      (type (hop-mime-type))
+		      (idiom #f)
+		      (context #f)
+		      (module #f)
 		      (attributes)
 		      body)
    
@@ -762,15 +765,25 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		(attributes `(:type ,type ,@attributes))
 		(body (list "\n" body)))
 	     (default src))))
+
+   (define (require p m inl)
+      (<REQUIRE> :type (hop-mime-type)
+	 :inline inl :src p :mod m))
    
    (let ((src (xml-primitive-value src))
-	 (type (xml-primitive-value type)))
+	 (type (xml-primitive-value type))
+	 (module (xml-primitive-value module)))
       (purify
-	 (if (and inline (string? src))
-	     (if (file-exists? src)
-		 (inl src)
-		 (default src))
-	     (default src)))))
+	 (cond
+	    ((not (string? src))
+	     (default src))
+	    (module
+	     (let ((file (clientc-resolve-filename src context)))
+		(require file src inline)))
+	    ((and inline (file-exists? src))
+	     (inl src))
+	    (else
+	     (default src))))))
  
 ;*---------------------------------------------------------------------*/
 ;*    REQUIRE ...                                                      */

@@ -65,11 +65,12 @@ ${ doc.include( doc.EXAMPLES_DIR + "/htmlr/htmlr.html", 14 ) }
 ### Client Side modules ###
 
 Modules can be imported from either server-side or client-side code.
-However, a module can be imported from a client-side only if it
-has been cited in the `module` attribute of the `<head>` element
-of the HTML document that is loaded on the client. The `module` attribute
-can either be a string or an array of strings. See [API HTML](01-html.html)
-for details.
+However, a module can be imported from a client-side. For that, it
+must be first mentionned in a `script` tag of the head of the web
+page, using the special attribute `module`. Then, it can be required
+using the same syntax as any regular server-side module. The `src`
+attribute of the `script` tag must exactly match the path mentioned
+in the `require` call. See [API HTML](01-html.html) for details.
 
 
 #### Example ####

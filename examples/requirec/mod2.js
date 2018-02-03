@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.0.x/examples/requirec/mod2.js         */
+/*    serrano/prgm/project/hop/3.1.x/examples/requirec/mod2.js         */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Sat Dec 20 09:47:27 2014 (serrano)                */
-/*    Copyright   :  2014 Manuel Serrano                               */
+/*    Last change :  Sat Feb  3 09:28:56 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    multitier require                                                */
 /*    -------------------------------------------------------------    */
@@ -12,5 +12,5 @@
 /*=====================================================================*/
 
 exports.hello = function( s ) {
-   return <div onclick=~{ alert( "s=" + s ) }>${s}</div>;
+   return <button onclick=~{ alert( "s=" + s ) }>${s}</button>;
 }

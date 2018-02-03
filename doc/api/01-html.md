@@ -19,9 +19,6 @@ use only. These are described in this document.
 
 Hop.js extends the HTML5 `<head>` attributes with the following list:
 
- * `module`: a string or an array of strings. The list of modules that
- can be _required_ in client side code. Requiring a module from a client-side
- code not listed in this list raises a runtime error.
  * `script`: a string or an array of strings. The list of client-side scripts
  that are used by the document. This attribute is automatically expanded
  into the correspondant list of `<SCRIPT>` nodes.
@@ -49,9 +46,17 @@ function foo( title ) {
 }
 ```
 
-An example using client side module can be found
-in the [LANG MODULE](01-module.html) Section.
+### <SCRIPT> ###
+[:@glyphicon glyphicon-tag tag]
 
+Hop.js extends the HTML5 `<script>` with one attribute:
+
+ * `module`: When used in conjunction with a `src` attrbute, this tells
+ Hop.js that this module is to be used as a client-side module. The string
+ used in the `src` attribute, can then be used, in client-side code,
+ to _require_ client-side modules. See [LANG Modules](01-module.html) for
+ details.
+ 
 
 ### <IMG> ###
 [:@glyphicon glyphicon-tag tag]
