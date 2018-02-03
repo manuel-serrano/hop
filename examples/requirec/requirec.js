@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/examples/requirec/requirec.js     */
+/*    serrano/prgm/project/hop/3.1.x/examples/requirec/requirec.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Apr 18 09:42:04 2014                          */
-/*    Last change :  Fri Jan 26 08:00:28 2018 (serrano)                */
+/*    Last change :  Sat Feb  3 09:37:26 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    multitier require                                                */
@@ -11,6 +11,8 @@
 /*    run: hop -v -g requirec.js                                       */
 /*    browser: http://localhost:8080/hop/requirec                      */
 /*=====================================================================*/
+const mod1 = require( "./mod1.js" );
+
 service requirec() {
    return <html> 
      <head module= ${[ "./mod1.js", "./mod2.js", "./example.json", "./mod.html" ]}>

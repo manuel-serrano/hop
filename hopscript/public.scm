@@ -163,7 +163,8 @@
 	   (generic js-cast-object obj ::JsGlobalObject ::bstring)
 	   (generic js-inspect ::obj ::int)
 
-	   (js-html-head ::JsGlobalObject)))
+	   (js-html-head ::JsGlobalObject)
+	   (js-html-script ::JsGlobalObject)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-make-jsobject ...                                             */
@@ -1747,4 +1748,20 @@
 	       nodes)))
       2 'HEAD))
 
+;*---------------------------------------------------------------------*/
+;*    js-html-script ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    Normally overriden by nodejs-script@__nodejs_require               */
+;*    (see nodejs/require.scm).                                        */
+;*---------------------------------------------------------------------*/
+(define (js-html-script %this)
+   (js-make-function %this
+      (lambda (this attrs . nodes)
+	 (apply <SCRIPT> :idiom "javascript" :context %this
+	    (when (isa? attrs JsObject)
+	       (js-object->keyword-arguments* attrs %this))
+	    (filter (lambda (n)
+		       (or (isa? n xml-tilde) (isa? n xml-markup)))
+	       nodes)))
+      2 'SCRIPT))
 
