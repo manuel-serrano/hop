@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Wed May 17 14:26:43 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Sat Feb  3 19:30:57 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for tilde expressions).                                  */
 ;*=====================================================================*/
@@ -518,27 +518,40 @@
 ;*    j2s-js ::J2SAccessorPropertyInit ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-js this::J2SAccessorPropertyInit tildec dollarc mode evalp conf)
+   
+   (define (j2s-js-propname name)
+      (if (isa? name J2SString)
+	  (with-access::J2SString name (val)
+	     (list val))
+	  (j2s-js name tildec dollarc mode evalp conf)))
+   
    (with-access::J2SAccessorPropertyInit this (name get set)
       (cons this
 	 (cond
-	    ((and get set)
+	    ((and (isa? get J2SFun) (isa? set J2SFun))
 	     (append
 		(with-access::J2SFun get (id body)
-		   (append "get " (j2s-js name tildec dollarc mode evalp conf)
+		   (append '("get ")
+		      (j2s-js-propname name)
+		      '("()")
 		      (j2s-js body tildec dollarc mode evalp conf)))
-		", "
+		'(", ")
 		(with-access::J2SFun set (id body params)
-		   (append "set " (j2s-js name tildec dollarc mode evalp conf)
+		   (append '("set ")
+		      (j2s-js-propname name)
 		      (j2s-js* this "(" ")" "," params tildec dollarc mode evalp conf)
 		      (j2s-js body tildec dollarc mode evalp conf)))))
-	    (set
+	    ((isa? set J2SFun)
 	     (with-access::J2SFun set (id body params)
-		(append "set " (j2s-js name tildec dollarc mode evalp conf)
+		(append '("set ")
+		   (j2s-js-propname name)
 		   (j2s-js* this "(" ")" "," params tildec dollarc mode evalp conf)
 		   (j2s-js body tildec dollarc mode evalp conf))))
 	    (else
 	     (with-access::J2SFun get (id body)
-		(append "get " (j2s-js name tildec dollarc mode evalp conf)
+		(append '("get ")
+		   (j2s-js-propname name)
+		   '("()")
 		   (j2s-js body tildec dollarc mode evalp conf))))))))
 
 ;*---------------------------------------------------------------------*/
