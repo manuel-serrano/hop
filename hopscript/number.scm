@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Feb  2 14:08:28 2018 (serrano)                */
+;*    Last change :  Sun Feb  4 07:51:12 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -403,25 +403,25 @@
 ;*    oveflow? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-macro (overflowfx? num shift)
-   `(not (=fx (bit-and ,num (-fx (bit-lsh 1 ,shift) 1)) 0)))
+   `(not (=fx (bit-and ,num (bit-not (-fx (bit-lsh 1 ,shift) 1))) 0)))
    
 (define-macro (overflows32? num shift)
-   `(not (=s32 (bit-ands32 ,num (fixnum->int32 (-fx (bit-lsh 1 ,shift) 1))) #s32:0)))
+   `(not (=s32 (bit-ands32 ,num (bit-nots32 (fixnum->int32 (-fx (bit-lsh 1 ,shift) 1)))) #s32:0)))
 
 (define-macro (overflowu32? num shift)
-   `(not (=u32 (bit-andu32 ,num (fixnum->int32 (-fx (bit-lsh 1 ,shift) 1))) #u32:0)))
+   `(not (=u32 (bit-andu32 ,num (bit-notu32 (fixnum->uint32 (-fx (bit-lsh 1 ,shift) 1)))) #u32:0)))
    
 (define-macro (overflows64? num shift)
-   `(not (=s64 (bit-ands64 ,num (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1))) #s64:0)))
+   `(not (=s64 (bit-ands64 ,num (bit-nots64 (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1)))) #s64:0)))
 
 (define-macro (overflowu64? num shift)
-   `(not (=u64 (bit-andu64 ,num (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1))) #u64:0)))
+   `(not (=u64 (bit-andu64 ,num (bit-notu64 (fixnum->uint64 (-fx (bit-lsh 1 ,shift) 1)))) #u64:0)))
    
 (define-macro (overflowelong? num shift)
    `(overflowfx? (elong->fixnum ,num) ,shift))
    
 (define-macro (overflowllong? num shift)
-   `(not (=llong (bit-andllong ,num (fixnum->llong (-fx (bit-lsh 1 ,shift) 1))) 0)))
+   `(not (=llong (bit-andllong ,num (bit-notllong (fixnum->llong (-fx (bit-lsh 1 ,shift) 1)))) 0)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-number->jsnumber ...                                          */
@@ -465,6 +465,15 @@
       ((int64? val)
        (cond-expand
 	  ((or bint29 bint30 bint64)
+	   (if (overflows64? val 29)
+	       (tprint "ICI val=" val " " 
+		  " -> " (if (overflows64? val 29)
+			     (int64->flonum val)
+			     (int64->fixnum val)))
+	       (tprint "LA val=" val " " 
+		  " -> " (if (overflows64? val 29)
+			     (int64->flonum val)
+			     (int64->fixnum val))))
 	   (if (overflows64? val 29)
 	       (int64->flonum val)
 	       (int64->fixnum val)))
