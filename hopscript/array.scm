@@ -2460,7 +2460,11 @@
 ;*---------------------------------------------------------------------*/
 (define (string->uint32 n)
    (let ((n (string->number n)))
-      (when n (fixnum->uint32 n))))
+      (cond
+	 ((fixnum? n) (fixnum->uint32 n))
+	 ((bignum? n) (elong->uint32 (bignum->elong n)))
+	 ((elong? n) (elong->uint32 n))
+	 ((llong? n) (llong->uint32 n)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expandable-array ...                                             */
