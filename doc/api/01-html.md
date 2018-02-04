@@ -49,13 +49,15 @@ function foo( title ) {
 ### <SCRIPT> ###
 [:@glyphicon glyphicon-tag tag]
 
-Hop.js extends the HTML5 `<script>` with one attribute:
+Hop.js extends the HTML5 `<script>` with two attributes:
 
  * `module`: When used in conjunction with a `src` attrbute, this tells
  Hop.js that this module is to be used as a client-side module. The string
  used in the `src` attribute, can then be used, in client-side code,
  to _require_ client-side modules. See [LANG Modules](01-module.html) for
  details.
+ * `inline`: a boolean. When `true` the script is inlined in the generated
+ document.
  
 
 ### <IMG> ###
