@@ -3,12 +3,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Fri Dec 22 12:50:54 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Sun Feb  4 07:02:18 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
 ;*    -------------------------------------------------------------    */
-;*    This optimization duplication function as method, where THIS     */
+;*    This optimization duplicates functions as methods, where THIS    */
 ;*    is statically known to be an object. This transformation applies */
 ;*    only when the occurrence number of THIS inside a function is     */
 ;*    sufficient.                                                      */
@@ -44,7 +44,7 @@
 ;*    this-occurrence-threshold ...                                    */
 ;*---------------------------------------------------------------------*/
 (define this-occurrence-threshold 1)
-(define body-size-threashold 100)
+(define body-size-threshold 100)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-method! ::J2SProgram ...                                     */
@@ -72,7 +72,7 @@
 	    (when thisp
 	       (with-access::J2SDecl thisp (usecnt)
 		  (when (and (>=fx usecnt this-occurrence-threshold)
-			     (<fx (node-size body) body-size-threashold))
+			     (<fx (node-size body) body-size-threshold))
 		     (set! rhs
 			(instantiate::J2SMethod 
 			   (loc loc)
@@ -85,13 +85,24 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (method! this::J2SDeclFun)
    (with-access::J2SDeclFun this (usage val)
-      (when (only-usage? '(new init) usage)
-	 (with-access::J2SFun val (thisp)
-	    (with-access::J2SDecl thisp (itype utype vtype)
-	       (set! itype 'object)
-	       (set! utype 'object)
-	       (set! vtype 'object)))))
-      (call-default-walker))
+      (set! val (method! val))
+      (with-access::J2SFun val (thisp loc body)
+	 (with-access::J2SDecl thisp (usecnt)
+	    (cond
+	       ((only-usage? '(new init) usage)
+		(with-access::J2SDecl thisp (itype utype vtype)
+		   (set! itype 'object)
+		   (set! utype 'object)
+		   (set! vtype 'object)))
+	       ((and (usage? '(ref get) usage)
+		     (>=fx usecnt this-occurrence-threshold)
+		     (<fx (node-size body) body-size-threshold))
+		(set! val
+		   (instantiate::J2SMethod
+		      (loc loc)
+		      (function val)
+		      (method (function->method val))))))))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    function->method ...                                             */

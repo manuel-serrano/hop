@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 24 16:22:25 2018                          */
-;*    Last change :  Wed Jan 24 17:28:21 2018 (serrano)                */
+;*    Last change :  Sun Feb  4 06:43:08 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Cache instanceof tests.                                          */
@@ -74,7 +74,7 @@
 	    (J2SReturn #t (J2SBool #t) be)
 	    (J2SIf this
 	       (J2SBlock/w-endloc
-		  (J2SCacheUpdate 'instanceof cache obj)
+		  (J2SStmtExpr (J2SCacheUpdate 'instanceof cache obj))
 		  (J2SReturn #t (J2SBool #t) be))
 	       (J2SReturn #t (J2SBool #f) be)))))
    

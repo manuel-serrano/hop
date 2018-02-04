@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Tue Jan 23 08:45:41 2018 (serrano)                */
+;*    Last change :  Sat Feb  3 19:53:03 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -540,29 +540,31 @@
    (define (duplicable? decl::J2SDeclFun)
       ;; returns #t iff the function is duplicable, returns #f otherwise
       (with-access::J2SDeclFun this (val id %info hintinfo)
-	 (with-access::J2SFun val (params vararg body)
-	    (and (not (isa? %info J2SDecl))
-		 (not (isa? hintinfo FunHintInfo))
-		 (not vararg)
-		 (not (isa? val J2SSvc))
-		 (pair? params)
-		 (>=fx (apply + (map param-hint-count params)) 3)
-		 (not (type-checker? val))))))
+	 (when (isa? val J2SFun)
+	    (with-access::J2SFun val (params vararg body)
+	       (and (not (isa? %info J2SDecl))
+		    (not (isa? hintinfo FunHintInfo))
+		    (not vararg)
+		    (not (isa? val J2SSvc))
+		    (pair? params)
+		    (>=fx (apply + (map param-hint-count params)) 3)
+		    (not (type-checker? val)))))))
    
    (define (typed? decl::J2SDeclFun)
       ;; return #t iff the function's arguments are all typed
       (with-access::J2SDeclFun this (val id %info hintinfo)
-	 (with-access::J2SFun val (params vararg)
-	    (and (not (isa? %info J2SDecl))
-		 (not (isa? hintinfo FunHintInfo))
-		 (not vararg)
-		 (not (isa? val J2SSvc))
-		 (pair? params)
-		 (any (lambda (p::J2SDecl)
-			 (with-access::J2SDecl p (hint usecnt itype)
-			    (when (>fx usecnt 0)
-			       (not (memq itype '(unknown any))))))
-		    params)))))
+	 (when (isa? val J2SFun)
+	    (with-access::J2SFun val (params vararg)
+	       (and (not (isa? %info J2SDecl))
+		    (not (isa? hintinfo FunHintInfo))
+		    (not vararg)
+		    (not (isa? val J2SSvc))
+		    (pair? params)
+		    (any (lambda (p::J2SDecl)
+			    (with-access::J2SDecl p (hint usecnt itype)
+			       (when (>fx usecnt 0)
+				  (not (memq itype '(unknown any))))))
+		       params))))))
    
    (define (fun-dispatch! fun::J2SDecl htypes::pair-nil ft itypes::pair-nil fu)
       (with-access::J2SDeclFun this (val id)
@@ -733,24 +735,33 @@
 ;*    profile-fun! ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (profile-fun! fun::J2SDeclFun id::symbol attr::symbol)
-   (with-access::J2SDeclFun fun (val loc)
-      (with-access::J2SFun val (body)
+   
+   (define (prof val::J2SFun)
+      (with-access::J2SFun val (body loc)
 	 (let ((prof (J2SStmtExpr
 			(J2SPragma
 			   `(profile-function ,(format "~a" id) ',attr)))))
 	    (set! body
 	       (duplicate::J2SBlock body
-		  (nodes (list prof body))))))))
+		  (nodes (list prof body)))))))
+   
+   (with-access::J2SDeclFun fun (val loc)
+      (if (isa? val J2SFun)
+	  (prof val)
+	  (with-access::J2SMethod val (function method)
+	     (prof function)
+	     (prof method)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-fun? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (profile-fun? fun::J2SDeclFun)
    (with-access::J2SDeclFun fun (val id %info loc)
-      (with-access::J2SFun val (body)
-	 (with-access::J2SBlock body (nodes)
-	    (when (pair? nodes)
-	       (profile-node? (car nodes)))))))
+      (when (isa? val J2SFun)
+	 (with-access::J2SFun val (body)
+	    (with-access::J2SBlock body (nodes)
+	       (when (pair? nodes)
+		  (profile-node? (car nodes))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-node? ...                                                */

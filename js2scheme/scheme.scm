@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Jan 27 09:00:15 2018 (serrano)                */
+;*    Last change :  Sat Feb  3 20:14:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1875,10 +1875,14 @@
       (cond
 	 ((isa? fun J2SDeclFun)
 	  (with-access::J2SDeclFun fun (id val usage)
-	     (check-hopscript-fun-arity val id args)
-	     (let ((%gen (if (typed-generator? fun) '(%gen) '())))
-		(call-fun-function val thisarg protocol
-		   (j2s-fast-id id) %gen args))))
+	     (let ((val (if (isa? val J2SFun)
+			    val
+			    (with-access::J2SMethod val (function)
+			       function))))
+		(check-hopscript-fun-arity val id args)
+		(let ((%gen (if (typed-generator? fun) '(%gen) '())))
+		   (call-fun-function val thisarg protocol
+		      (j2s-fast-id id) %gen args)))))
 	 ((j2s-let-opt? fun)
 	  (with-access::J2SDeclInit fun (id val)
 	     (call-fun-function val thisarg protocol

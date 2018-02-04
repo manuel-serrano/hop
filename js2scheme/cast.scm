@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Jan  3 06:39:06 2018 (serrano)                */
+;*    Last change :  Sat Feb  3 20:12:05 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -272,7 +272,10 @@
 	     (cond
 		((isa? decl J2SDeclFun)
 		 (with-access::J2SDeclFun decl (val)
-		    (known-fun this val)))
+		    (if (isa? val J2SFun)
+			(known-fun this val)
+			(with-access::J2SMethod val (function method)
+			   (known-fun this function)))))
 		(else
 		 (unknown-fun this)))))
 	 (else

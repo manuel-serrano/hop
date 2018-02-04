@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Mon Jan 29 15:17:15 2018 (serrano)                */
+;*    Last change :  Sun Feb  4 07:52:29 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32 bit platforms                        */
@@ -67,16 +67,16 @@
 ;*    oveflow? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-macro (overflowu32? num shift)
-   `(not (=u32 (bit-andu32 ,num (fixnum->int32 (-fx (bit-lsh 1 ,shift) 1))) #u32:0)))
+   `(not (=u32 (bit-andu32 ,num (bit-notu32 (fixnum->int32 (-fx (bit-lsh 1 ,shift) 1)))) #u32:0)))
    
 (define-macro (overflows64? num shift)
-   `(not (=s64 (bit-ands64 ,num (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1))) #s64:0)))
+   `(not (=s64 (bit-ands64 ,num (bit-nots64 (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1)))) #s64:0)))
 
 (define-macro (overflowu64? num shift)
-   `(not (=u64 (bit-andu64 ,num (fixnum->int64 (-fx (bit-lsh 1 ,shift) 1))) #u64:0)))
+   `(not (=u64 (bit-andu64 ,num (bit-notu64 (fixnum->uint64 (-fx (bit-lsh 1 ,shift) 1)))) #u64:0)))
    
 (define-macro (overflowllong? num shift)
-   `(not (=llong (bit-andllong ,num (fixnum->llong (-fx (bit-lsh 1 ,shift) 1))) 0)))
+   `(not (=llong (bit-andllong ,num (bit-notllong (fixnum->llong (-fx (bit-lsh 1 ,shift) 1)))) 0)))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-number->jsnumber ...                                          */

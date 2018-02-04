@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Jan 27 08:59:59 2018 (serrano)                */
+;*    Last change :  Sun Feb  4 07:02:00 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -625,7 +625,10 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (ronly id key)
 	 (when (isa? decl J2SDeclFun)
-	    (with-access::J2SDeclFun decl (val) (escape-fun val fix)))
+	    (with-access::J2SDeclFun decl (val)
+	       (if (isa? val J2SMethod)
+		   (escape-method val fix)
+		   (escape-fun val fix))))
 	 (let ((etyp (env-lookup env decl)))
 	    (when (eq? etyp 'unknown)
 	       (with-access::J2SDecl decl (vtype)
@@ -694,21 +697,30 @@
 	      (not (memq 'ref usage))
 	      (not (memq 'call usage))
 	      (not (memq 'eval usage)))))
+
+   (define (typing-ctor val)
+      (with-access::J2SFun val (thisp generator rtype)
+	 (when generator
+	    (set! rtype 'any))
+	 (when (isa? thisp J2SDecl)
+	    (with-access::J2SDecl thisp (vtype utype itype)
+	       (set! vtype 'object)
+	       (set! utype 'object)
+	       (set! itype 'object)))))
    
    (with-access::J2SDeclFun this (val itype)
       (decl-vtype-set! this 'function fix)
       (when (constructor-only? this)
 	 ;; a mere constructor
-	 (with-access::J2SFun val (thisp generator rtype)
-	    (when generator
-	       (set! rtype 'any))
-	    (when (isa? thisp J2SDecl)
-	       (with-access::J2SDecl thisp (vtype utype itype)
-		  (set! vtype 'object)
-		  (set! utype 'object)
-		  (set! itype 'object)))))
+	 (if (isa? val J2SFun)
+	     (typing-ctor val)
+	     (with-access::J2SMethod val (function method)
+		(typing-ctor function)
+		(typing-ctor method))))
       (multiple-value-bind (tyf env _)
-	 (typing-fun val (typing-fun-decl val env) fix)
+	 (if (isa? val J2SMethod)
+	     (typing val env fix)
+	     (typing-fun val (typing-fun-decl val env) fix))
 	 (return 'void (extend-env env this tyf) '()))))
 
 ;*---------------------------------------------------------------------*/
@@ -891,6 +903,14 @@
 			 (unfix! fix "escape"))))
 	 params)))
 
+;*---------------------------------------------------------------------*/
+;*    escape-method ...                                                */
+;*---------------------------------------------------------------------*/
+(define (escape-method fun::J2SMethod fix)
+   (with-access::J2SMethod fun (method function)
+      (escape-fun function fix)
+      (escape-fun method fix)))
+				  
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/

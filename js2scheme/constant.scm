@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Dec 21 15:49:19 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Sat Feb  3 15:23:45 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
 ;*    closed functions, ...)                                           */
@@ -189,8 +189,9 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constant! this::J2SDeclFun env nesting)
    (with-access::J2SDeclFun this (val)
-      (with-access::J2SFun val (body)
-	 (constant! body env nesting)))
+      (constant! val env nesting))
+;*       (with-access::J2SFun val (body)                               */
+;* 	 (constant! body env nesting)))                                */
    this)
 
 ;*---------------------------------------------------------------------*/

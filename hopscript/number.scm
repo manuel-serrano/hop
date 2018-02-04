@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Feb  3 10:19:13 2018 (serrano)                */
+;*    Last change :  Sat Feb  3 10:44:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -29,7 +29,8 @@
 	   __hopscript_arithmetic)
    
    (export (js-init-number! ::JsGlobalObject)
-	   
+
+	   (js-number->jsNumber ::obj ::JsGlobalObject)
 	   (js-real->string ::double)
 	   (js-jsnumber-tostring ::obj ::obj ::JsGlobalObject)
 	   (js-jsnumber-maybe-tostring ::obj ::obj ::JsGlobalObject)
@@ -48,9 +49,7 @@
    (lambda (o)
       (with-access::JsNumber o (val) val))
    (lambda (o %this)
-      (let ((this (or %this (js-initial-global-object))))
-	 (with-access::JsGlobalObject this (js-number)
-	    (js-new1 %this js-number o)))))
+      (js-number->jsNumber o (or %this (js-initial-global-object)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-donate ::JsNumber ...                                         */
@@ -76,6 +75,13 @@
       (display "new Number(" op)
       (display (if (and (flonum? val) (nanfl? val)) "undefined" val) op)
       (display ")" op)))
+
+;*---------------------------------------------------------------------*/
+;*    js-number->jsNumber ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-number->jsNumber o %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-number)
+      (js-new1 %this js-number o)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-number! ...                                              */

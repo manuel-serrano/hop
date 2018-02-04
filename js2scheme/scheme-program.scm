@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Jan 27 08:13:14 2018 (serrano)                */
+;*    Last change :  Sat Feb  3 11:08:22 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -98,26 +98,7 @@
 			 (define %cnsts ,scmcnsts)
 			 ,@globals
 			 ,@(exit-body body conf)))
-		   (when (string-contains (or (getenv "HOPTRACE") "")
-			    "hopscript:cache")
-		      (log-cache-miss!)
-		      (register-exit-function!
-			 (lambda (n)
-			    (show-cache-misses)
-			    n)))
-		   (when (string-contains (or (getenv "HOPTRACE") "")
-			    "hopscript:function")
-		      (log-function! ,(config-get conf :profile #f))
-		      (register-exit-function!
-			 (lambda (n)
-			    (show-functions)
-			    n)))
-		   (when (string-contains (or (getenv "HOPTRACE") "")
-			    "hopscript:alloc")
-		      (register-exit-function!
-			 (lambda (n)
-			    (show-allocs)
-			    n)))
+		   ,(profilers conf)
 		   (thread-join! (thread-start-joinable! %worker)))))))
 
    
@@ -195,27 +176,43 @@
 		(bigloo-library-path-set! ',(bigloo-library-path))
 		(set! !process (nodejs-process %worker %this))
 		,@(exit-body body conf)
-		(when (string-contains (or (getenv "HOPTRACE") "")
-			 "hopscript:cache")
-		   (log-cache-miss!)
-		   (register-exit-function!
-		      (lambda (n)
-			 (show-cache-misses)
-			 n)))
-		(when (string-contains (or (getenv "HOPTRACE") "")
-			 "hopscript:function")
-		   (log-function! ,(config-get conf :profile #f))
-		   (register-exit-function!
-		      (lambda (n)
-			 (show-functions)
-			 n)))
-		(when (string-contains (or (getenv "HOPTRACE") "")
-			 "hopscript:alloc")
-		   (register-exit-function!
-		      (lambda (n)
-			 (show-allocs)
-			 n))))))))
+		,(profilers conf))))))
 
+;*---------------------------------------------------------------------*/
+;*    profilers ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (profilers conf)
+   `(let ((trc (or (getenv "HOPTRACE") "")))
+       (when (string-contains trc "hopscript")
+	  (when (string-contains trc "hopscript:cache")
+	     (log-cache-miss!))
+	  (when (string-contains trc "hopscript:function")
+	     (log-function! ,(config-get conf :profile #f)))
+	  (register-exit-function!
+	     (lambda (n)
+		(profile-start)
+		(when (string-contains trc "hopscript:cache")
+		   (profile-cache-misses))
+		(when (string-contains trc "hopscript:function")
+		   (profile-functions))
+		(when (string-contains trc "hopscript:alloc")
+		   (profile-allocs))
+		(profile-end ',(filter-config conf)))))))
+
+;*---------------------------------------------------------------------*/
+;*    filter-config ...                                                */
+;*---------------------------------------------------------------------*/
+(define (filter-config conf)
+   (let loop ((conf conf)
+	      (res '()))
+      (cond
+	 ((null? conf)
+	  (reverse! res))
+	 ((or (number? (cadr conf)) (string? (cadr conf)) (boolean? (cadr conf)))
+	  (loop (cddr conf) (cons* (cadr conf) (car conf) res)))
+	 (else
+	  (loop (cddr conf) res)))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    exit-body ...                                                    */
 ;*---------------------------------------------------------------------*/
