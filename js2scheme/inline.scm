@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Jan 24 17:01:44 2018 (serrano)                */
+;*    Last change :  Mon Feb  5 14:26:05 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -143,7 +143,11 @@
 ;*---------------------------------------------------------------------*/
 (define (used-decl? decl)
    (with-access::J2SDecl decl (usecnt)
-      (or (>fx usecnt 0) (not (isa? decl J2SDeclFun)))))
+      (when (or (>fx usecnt 0) (not (isa? decl J2SDeclFun)))
+	 (when (isa? decl J2SDeclFun)
+	    (with-access::J2SDeclFun decl (val)
+	       (set! val (dead-inner-decl! val))))
+	 #t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    iinfo                                                            */
@@ -284,7 +288,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SMetaInl ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (inline! this::J2SMetaInl
+(define-walk-method (inline! this::J2SMetaInl
 		       limit::long stack::pair-nil pmethods prgm conf)
    (with-access::J2SMetaInl this (inlstack stmt loc)
       (set! stmt
@@ -892,3 +896,21 @@
 	       (display targets)
 	       (display "]"))))))
 
+
+;*---------------------------------------------------------------------*/
+;*    dead-inner-decl! ::J2SNode ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (dead-inner-decl! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    dead-inner-decl! ::J2SDeclInit ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (dead-inner-decl! this::J2SDeclInit)
+   (with-access::J2SDecl this (usecnt loc id key)
+      (if (=fx usecnt 0)
+	  (J2SNop)
+	  (begin
+	     (call-default-walker)
+	     this))))
+   

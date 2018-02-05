@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Tue Dec 19 11:42:56 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Mon Feb  5 14:05:07 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript Return -> bind-exit                                   */
 ;*    -------------------------------------------------------------    */
@@ -181,7 +181,7 @@
 ;*    unreturn! ::J2SFun ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SFun target tail? in-handler args)
-   (with-access::J2SFun this (body)
+   (with-access::J2SFun this (body name)
       (set! body (walk! body this #t in-handler args)))
    this)
 
@@ -216,15 +216,16 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SReturn target tail? in-handler args)
    (with-access::J2SReturn this (tail from loc expr exit)
-      (if target
-	  (set! from target)
-	  (if (config-get args :return-as-exit)
-	      (begin
-		 (set! exit #t)
-		 (set! tail #t)
-		 (set! tail? #t)
-		 (set! expr (walk! expr target #f in-handler args)))
-	      (syntax-error this "Illegal \"return\" statement")))
+      (cond
+	 (target
+	  (set! from target))
+	 ((config-get args :return-as-exit)
+	  (set! exit #t)
+	  (set! tail #t)
+	  (set! tail? #t)
+	  (set! expr (walk! expr target #f in-handler args)))
+	 (else
+	  (syntax-error this "Illegal \"return\" statement")))
       (unless tail?
 	 ;; mark the return as non-tail
 	 (set! tail #f)
@@ -287,7 +288,7 @@
 ;*    unreturn! ::J2SDeclInit ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unreturn! this::J2SDeclInit target tail? in-handler args)
-   (with-access::J2SDeclInit this (val)
+   (with-access::J2SDeclInit this (val id)
       (set! val (walk! val target #f in-handler args)))
    this)
 

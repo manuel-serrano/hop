@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Feb  4 08:16:53 2018 (serrano)                */
+;*    Last change :  Mon Feb  5 08:34:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -3032,13 +3032,13 @@
 			  (print "     -1 ] },"))
 		*misses*)
 	     (print "  },")
-	     (print "  \"total-cache-misses\": "
+	     (print "  \"totalCacheMisses\": "
 		(apply + (map cadr (filter true-miss *misses*))) ", ")
-	     (print "  \"total-cache-level0-misses\": "
+	     (print "  \"totalCacheLevel0Misses\": "
 		(apply + (map cadr *misses*)) ", ")
-	     (print "  \"hidden-class-number\": "
+	     (print "  \"hiddenClassNumber\": "
 		(gencmapid) ",")
-	     (print "  \"pmap invalidations\": "
+	     (print "  \"pmapInvalidations\": "
 		*pmap-invalidations* ",")
 	     (print "  \"vtables\": { \"number\": " *vtables*
 		", \"mem\": " *vtables-mem* "}")
@@ -3233,13 +3233,13 @@
       (cond-expand
 	 (profile
 	  (print "\"allocs\": {")
-	  (display " \"object-allocs\":")
+	  (display " \"objectAllocs\":")
 	  (show-json-percentages js-profile-allocs)
 	  (display ",\n \"accesses\":")
 	  (show-json-percentages js-profile-accesses)
 	  (display ",\n \"extensions\":")
 	  (show-json-percentages js-profile-extensions)
-	  (display ",\n \"vector-extensions\":")
+	  (display ",\n \"vectorExtensions\":")
 	  (show-json-percentages js-profile-vectors)
 	  (print "\n},"))
 	 (else #f)))
@@ -3325,7 +3325,7 @@
 	    (display "\"config\": ")
 	    (profile-config conf)
 	    (display ",\n" )
-	    (printf "\"command-line\": \"~( )\",\n" (command-line))
+	    (printf "\"commandline\": \"~( )\",\n" (command-line))
 	    (printf "\"date\": ~s\n}\n" (date))))))
 
 ;*---------------------------------------------------------------------*/

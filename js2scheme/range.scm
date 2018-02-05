@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Jan  6 09:42:49 2018 (serrano)                */
+;*    Last change :  Mon Feb  5 13:34:12 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -908,6 +908,24 @@
 	 (when (isa? from J2SFun)
 	    (node-interval-set! from '() fix intv))
 	 (return intv env))))
+   
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SReturnYield ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SReturnYield env::pair-nil args fix::struct)
+   (with-access::J2SReturnYield this (expr from loc)
+      (multiple-value-bind (intv env)
+	 (node-range expr env args fix)
+	 (return #f env))))
+   
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SYield ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SYield env::pair-nil args fix::struct)
+   (with-access::J2SYield this (expr from loc)
+      (multiple-value-bind (intv env)
+	 (node-range expr env args fix)
+	 (return #f env))))
    
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SDataPropertyInit ...                             */

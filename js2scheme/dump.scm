@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Feb  4 06:54:11 2018 (serrano)                */
+;*    Last change :  Mon Feb  5 14:22:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -202,7 +202,26 @@
 		(string-contains (or (getenv "HOPTRACE") "") "j2s:loc")))
        `(,key ,loc)
        '()))
-      
+
+;*---------------------------------------------------------------------*/
+;*    dump-from ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (dump-from from)
+   (if (or (>= (bigloo-debug) 2)
+	   (string-contains (or (getenv "HOPTRACE") "") "j2s:from"))
+       `(:from ,(cond
+		   ((isa? from J2SDecl)
+		    (with-access::J2SDecl from (id key)
+		       (format "[j2sdecl:~a,~a]" id key)))
+		   ((isa? from J2SFun)
+		    (with-access::J2SFun from (name loc)
+		       (format "[j2sfun:~a,~a]" name loc)))
+		   ((boolean? from)
+		    from)
+		   (else
+		    (typeof from))))
+       '()))
+
 ;*---------------------------------------------------------------------*/
 ;*    j2s-dump-decls ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -511,6 +530,7 @@
 (define-method (j2s->list this::J2SReturn)
    (with-access::J2SReturn this (expr tail from)
       `(,@(call-next-method)
+	  ,@(dump-from from)
 	  ,@(if (isa? from J2SFun)
 		(dump-rtype from)
 		'())
