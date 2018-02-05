@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Feb  4 07:51:12 2018 (serrano)                */
+;*    Last change :  Mon Feb  5 17:42:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -465,15 +465,6 @@
       ((int64? val)
        (cond-expand
 	  ((or bint29 bint30 bint64)
-	   (if (overflows64? val 29)
-	       (tprint "ICI val=" val " " 
-		  " -> " (if (overflows64? val 29)
-			     (int64->flonum val)
-			     (int64->fixnum val)))
-	       (tprint "LA val=" val " " 
-		  " -> " (if (overflows64? val 29)
-			     (int64->flonum val)
-			     (int64->fixnum val))))
 	   (if (overflows64? val 29)
 	       (int64->flonum val)
 	       (int64->fixnum val)))
