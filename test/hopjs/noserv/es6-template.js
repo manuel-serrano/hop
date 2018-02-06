@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.0.x/test/hopjs/noserv/es6-template.js     */
+/*    .../prgm/project/hop/3.1.x/test/hopjs/noserv/es6-template.js     */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Fri Aug 14 09:43:13 2015                          */
-/*    Last change :  Sun Dec 27 11:02:54 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Tue Feb  6 14:36:49 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing ES6 template strings                                     */
 /*=====================================================================*/
@@ -54,6 +54,12 @@ String.raw( `foo$${1+0}$${2+0}$`, `foo$${1+0}$${2+0}$` );
 
 // errors
 assert.throws( function() { eval( "`foo${`" ) } );
+
+// esacape
+assert.strictEqual( `\``, "`" );
+assert.strictEqual( `\`foo\``, "`foo`" );
+assert.strictEqual( `\`${1+2}\``, "`3`" );
+assert.strictEqual( `fo\`o$${1+0}$${2+0}$`, "fo`o$1$2$" );
 
 /*---------------------------------------------------------------------*/
 /*    Kangax                                                           */
@@ -154,6 +160,9 @@ function mkraw(strings, ...values) {
    return strings.raw[0];
 }
 
+/*---------------------------------------------------------------------*/
+/*    mdn                                                              */
+/*---------------------------------------------------------------------*/
 console.log( "mdn" );
 
 console.log( "   tag()" );
