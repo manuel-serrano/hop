@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Dec 22 13:55:39 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Tue Feb  6 16:35:52 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
 ;*=====================================================================*/
@@ -232,7 +232,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (usage this::J2SNode ctx deval infun)
    (default-walk this ctx deval infun))
-   
+
+;*---------------------------------------------------------------------*/
+;*    usage ::J2SExpr ...                                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (usage this::J2SExpr ctx deval infun)
+   (default-walk this 'ref deval infun))
+      
 ;*---------------------------------------------------------------------*/
 ;*    usage ::J2SRef ...                                               */
 ;*---------------------------------------------------------------------*/

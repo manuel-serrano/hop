@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sat Feb  3 09:24:33 2018 (serrano)                */
+;*    Last change :  Tue Feb  6 18:30:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -934,14 +934,20 @@
 			       output: "/dev/null"
 			       (cdr line))
 			    cmd  filename ksucc kfail))))
-	     (estr (when (process? proc)
-		      (let ((err (process-error-port proc)))
-			 (with-handler
-			    (lambda (e) e)
-			    (unwind-protect
-			       (read-string err)
-			       (close-input-port err))))))
-	     (debug-abort #f))
+	     (estr #f))
+	 ;; error logger (mandatory to flush child stderr)
+	 (when (process? proc)
+	    (thread-start!
+	       (instantiate::hopthread
+		  (name "errlogger")
+		  (body (lambda ()
+			   (let ((err (process-error-port proc)))
+			      (with-handler
+				 (lambda (e) e)
+				 (unwind-protect
+				    (synchronize socompile-mutex
+				       (set! estr (read-string err)))
+				    (close-input-port err)))))))))
 	 (with-handler
 	    (lambda (e)
 	       (exception-notify e))
@@ -952,16 +958,11 @@
 		     (let ((evt (instantiate::event
 				   (name "start")
 				   (target filename)
-				   (value compile-pending))))
+				   (value `(pending: ,compile-pending
+					      command: ,cmd)))))
 			(apply-listeners compile-listeners-start evt))))
-	       (when debug-abort
-		  (tprint ">>> wait-process " proc " " cmd))
 	       (nodejs-process-wait proc filename)
-	       (when debug-abort
-		  (tprint "<<< wait-process " proc " " cmd))
 	       (synchronize socompile-mutex
-		  (when debug-abort
-		     (tprint "spcompile-ended=" socompile-ended " estr=" estr))
 		  (if (and socompile-ended (=fx (process-exit-status proc) 0))
 		      'ended
 		      (begin
@@ -1025,7 +1026,7 @@
 				      (format "-v~a" (hop-verbose)))
 				  filename
 				  sopathtmp
-				  (hop-hopc-flags)
+				  (if (hop-profile) " --profile" "")
 				  (if (eq? nodejs-debug-compile 'yes)
 				      (string-append " -t "
 					 (make-file-name "/tmp/HOP"
@@ -1033,10 +1034,7 @@
 					       (prefix (basename filename) )
 					       ".scm")))
 				      "")
-				  (if (or (>= (hop-verbose) 4)
-					  (eq? nodejs-debug-compile 'yes))
-				      " -- -v2"
-				      "")))
+				  (hop-hopc-flags)))
 			  (ksucc (make-ksucc sopath sopathtmp))
 			  (kfail (make-kfail sopath sopathtmp)))
 		      (make-directories (dirname sopath))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Aug  9 14:00:32 2013                          */
-;*    Last change :  Mon Dec  4 20:20:14 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Tue Feb  6 17:36:22 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    THe module used to build the hopscript heap file.                */
 ;*=====================================================================*/
@@ -21,6 +21,7 @@
 	   __hopscript_arithmetic32
 	   __hopscript_arithmetic64
 	   __hopscript_property
+	   __hopscript_profile
 	   __hopscript_public
 	   __hopscript_lib
 	   __hopscript_object
