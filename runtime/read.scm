@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan  6 11:55:38 2005                          */
-;*    Last change :  Thu Jan 11 15:01:44 2018 (serrano)                */
+;*    Last change :  Mon Feb  5 19:28:09 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An ad-hoc reader that supports blending s-expressions and        */
@@ -961,6 +961,20 @@
    (define (errfile file)
       (string-append file ".err"))
 
+   (define (find-in-unix-path file)
+      (let ((env (getenv "HOP_LIBS_PATH")))
+	 (when (string? env)
+	    (let loop ((paths (unix-path->list env)))
+	       (when (pair? paths)
+		  (let ((path (make-file-path (car paths) file)))
+		     (cond
+			((more-recent? path)
+			 path)
+			((more-recent? (errfile path))
+			 'error)
+			(else
+			 (loop (cdr paths))))))))))
+
    ;; check the path directory first
    (when (hop-sofile-enable)
       (let* ((dir (dirname path))
@@ -987,29 +1001,24 @@
 		   ((more-recent? (errfile sopath))
 		    'error)
 		   (else
-		    (let ((env (getenv "HOP_LIBS_PATH")))
-		       (when (string? env)
-			  (let loop ((paths (unix-path->list env)))
-			     (when (pair? paths)
-				(let ((path (make-file-path (car paths) file)))
-				   (cond
-				      ((more-recent? path)
-				       path)
-				      ((more-recent? (errfile path))
-				       'error)
-				      (else
-				       (loop (cdr paths)))))))))))))))))
+		    (or (find-in-unix-path (hop-soname path))
+			(find-in-unix-path path))))))))))
 
+;*---------------------------------------------------------------------*/
+;*    hop-soname ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (hop-soname path)
+   (let ((base (prefix (basename path))))
+      (string-append base "-" (md5sum-string path) (so-suffix))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    hop-sofile-path ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (hop-sofile-path path)
-   (let* ((base (prefix (basename path)))
-	  (soname (string-append base "-" (md5sum-string path) (so-suffix))))
-      (make-file-path
-	 (hop-sofile-directory)
-	 (hop-version) (hop-build-id) (so-arch-directory)
-	 soname)))
+   (make-file-path
+      (hop-sofile-directory)
+      (hop-version) (hop-build-id) (so-arch-directory)
+      (hop-soname path)))
    
 ;*---------------------------------------------------------------------*/
 ;*    hop-load-file ...                                                */
