@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Fri Feb  2 14:35:40 2018 (serrano)                */
+;*    Last change :  Tue Feb  6 14:36:43 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -429,11 +429,30 @@
        (let ((str (the-substring 0 -1)))
 	  (token-string (pregexp-replace* "\r\n?" str "\n")
 	     (the-length) 'TSTRING)))
+      ((or (: (* (or (out "`{") "\\`")) "`")
+	   (: (* (or (out "`$") "\\`")) "`")
+	   (: (* (or (out "`$") "\\`" (: #\$ (out "`${")))) "`")
+	   (: (* (or (out "`$") "\\`" (: #\$ (out "`${")))) "$`"))
+       ;; template string no escape
+       (let ((str (the-substring 0 -1)))
+	  (token-string
+	     (pregexp-replace* "\r\n?"
+		(pregexp-replace* "\\\\" str "")
+		"\n")
+	     (the-length) 'TSTRING)))
       
       ((: (* (or (out "`$") (: #\$ (out "${")))) "${")
        ;; template string with escape sequence
        (rgc-buffer-unget-char (the-port) (char->integer #\{))
        (token 'TEMPLATE (pregexp-replace* "\r\n?" (the-substring 0 -1) "\n")
+	  (the-length)))
+      ((: (* (or (out "`$") "\\`" (: #\$ (out "${")))) "${")
+       ;; template string with escape sequence
+       (rgc-buffer-unget-char (the-port) (char->integer #\{))
+       (token 'TEMPLATE
+	  (pregexp-replace* "\r\n?"
+	     (pregexp-replace* "\\\\" (the-substring 0 -1) "")
+	     "\n")
 	  (the-length)))
       
       ((: (* (or (out "`$") (: #\$ (out "${")))) "$$")
@@ -442,12 +461,34 @@
 	  (rgc-buffer-unget-char (the-port) (char->integer #\$))
 	  (token-string (pregexp-replace "[$][$]" (pregexp-replace* "\r\n?" str "\n") "$")
 	     (the-length) 'TEMPLATE)))
+      ((: (* (or (out "`$") "\\`" (: #\$ (out "${")))) "$$")
+       ;; template string with escape, with double $$
+       (let ((str (the-substring 0 -1)))
+	  (rgc-buffer-unget-char (the-port) (char->integer #\$))
+	  (token-string
+	     (pregexp-replace "[$][$]"
+		(pregexp-replace* "\r\n?"
+		   (pregexp-replace* "\\\\" str "")
+		   "\n")
+		"$")
+	     (the-length) 'TEMPLATE)))
       
       ((: (* (or (out "`$") (: #\$ (out "${")))) "$${")
        ;; template string with escape, with double $$
        (let ((str (the-substring 0 -1)))
 	  (rgc-buffer-unget-char (the-port) (char->integer #\{))
 	  (token-string (pregexp-replace "[$][$]" (pregexp-replace* "\r\n?" str "\n") "$")
+	     (the-length) 'TEMPLATE)))
+      ((: (* (or (out "`$") "\\`" (: #\$ (out "${")))) "$${")
+       ;; template string with escape, with double $$
+       (let ((str (the-substring 0 -1)))
+	  (rgc-buffer-unget-char (the-port) (char->integer #\{))
+	  (token-string
+	     (pregexp-replace "[$][$]"
+		(pregexp-replace* "\r\n?"
+		   (pregexp-replace* "\\\\" str "")
+		   "\n")
+		"$")
 	     (the-length) 'TEMPLATE)))
       
       (else
