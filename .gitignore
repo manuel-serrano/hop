@@ -82,6 +82,7 @@ doc/hss/markdown.css
 doc/hss/doc.css
 doc/version.json
 doc/favicon.png
+doc/doc.json
 
 # widget compiled files
 widget/colorchooser.scm

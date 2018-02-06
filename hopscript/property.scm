@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Feb  5 08:34:36 2018 (serrano)                */
+;*    Last change :  Tue Feb  6 13:01:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1870,7 +1870,7 @@
 ;*    does not check the extensibility flags.                          */
 ;*    -------------------------------------------------------------    */
 ;*    When HIDDEN-CLASS is FALSE, it is assumed that the object        */
-;*    CMAP is not shared by any other object.                          */
+;*    CMAP is not shared with any other object.                        */
 ;*    -------------------------------------------------------------    */
 ;*    [[Put]]                                                          */
 ;*       http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.4    */
@@ -1918,25 +1918,21 @@
 	     (typeof o)))
 	 ((or get set)
 	  (with-access::JsObject o (elements)
-	     (vector-set! elements i
-		(instantiate::JsAccessorDescriptor
-		   (name name)
-		   (get get)
-		   (set set)
-		   (%get (function0->proc get %this))
-		   (%set (function1->proc set %this))
-		   (enumerable enumerable)
-		   (configurable configurable)))))
-;* 	 ((or (not writable) (not enumerable) (not configurable))      */
-;* 	  (with-access::JsObject o (elements)                          */
-;* 	     (vector-set! elements i                                   */
-;* 		(instantiate::JsValueDescriptor                        */
-;* 		   (name name)                                         */
-;* 		   (value value)                                       */
-;* 		   (writable writable)                                 */
-;* 		   (enumerable enumerable)                             */
-;* 		   (configurable configurable)))                       */
-;* 	     value))                                                   */
+	     (let ((old (vector-ref elements i)))
+		(when (isa? old JsAccessorDescriptor)
+		   (with-access::JsAccessorDescriptor old ((oget get)
+							   (oset set))
+		      (when (eq? get (js-undefined)) (set! get oget))
+		      (when (eq? set (js-undefined)) (set! set oset))))
+		(vector-set! elements i
+		   (instantiate::JsAccessorDescriptor
+		      (name name)
+		      (get get)
+		      (set set)
+		      (%get (function0->proc get %this))
+		      (%set (function1->proc set %this))
+		      (enumerable enumerable)
+		      (configurable configurable))))))
 	 (else
 	  (with-access::JsObject o (elements)
 	     (vector-set! elements i value)
@@ -1996,13 +1992,6 @@
 		      ;; extending the elements vector is mandatory
 		      (js-object-push! o index newdesc)
 		      (js-undefined)))
-;* 		  ((or #t (plain-data-property? flags))                */
-;* 		   (let ((nextmap (next-cmap o name value flags)))     */
-;* 		      (with-access::JsConstructMap nextmap (methods)   */
-;* 			 (validate-cache-method! value methods index)) */
-;* 		      ;; store in the obj                              */
-;* 		      (js-object-push! o index value)                  */
-;* 		      value))                                          */
 		  (else
 		   ;; create a new map with a JsIndexDescriptor
 		   (let* ((newdesc (instantiate::JsValueDescriptor

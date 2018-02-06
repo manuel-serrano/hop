@@ -3,10 +3,10 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sat Sep  2 03:13:21 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Tue Feb  6 09:07:02 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    Testing ECMAScript 1.6 arrow functions                           */
+/*    Testing ECMAScript 1.6 default parameter values                  */
 /*=====================================================================*/
 "use hopscript";
 

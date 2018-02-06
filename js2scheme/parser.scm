@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Feb  2 14:43:26 2018 (serrano)                */
+;*    Last change :  Tue Feb  6 13:31:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -767,7 +767,7 @@
 	       (expr expr)))))
    
    (define (function-declaration)
-      (function #t))
+      (function #t (consume-token! 'function) #f))
 
    (define (async-declaration)
       (let* ((tok (consume-any!))
@@ -782,7 +782,7 @@
       (clazz #t))
    
    (define (function-expression)
-      (function #f))
+      (function #f (consume-token! 'function)))
    
    (define (service-declaration)
       (service #t))
@@ -894,10 +894,9 @@
       (when (pair? params)
 	 (with-access::J2SDecl (car (last-pair params)) (usage)
 	    (when (equal? usage '(rest)) 'rest))))
-   
-   (define (function declaration?)
-      (let* ((token (consume-token! 'function))
-	     (loc (token-loc token)))
+
+   (define (function declaration? token #!optional methodof)
+      (let ((loc (token-loc token)))
 	 (with-this 'this loc
 	    (let* ((gen (when (eq? (peek-token-type) '*)
 			   (consume-any!) '*))
@@ -916,6 +915,7 @@
 					    (name (cdr id))
 					    (mode mode)
 					    (generator gen)
+					    (ismethodof methodof)
 					    (body body)
 					    (vararg (rest-params params))))
 				    (decl (instantiate::J2SDeclFun
@@ -934,6 +934,7 @@
 					    (name (cdr id))
 					    (thisp (current-this))
 					    (params params)
+					    (ismethodof methodof)
 					    (vararg (rest-params params))
 					    (body body)))
 				    (decl (instantiate::J2SDeclFun
@@ -955,6 +956,7 @@
 		      (thisp (current-this))
 		      (params params)
 		      (vararg (rest-params params))
+		      (ismethodof methodof)
 		      (body body))))))))
 
    (define (init->params init)
@@ -2104,7 +2106,6 @@
 			   (loc loc)
 			   (thisp (current-this))
 			   (params params)
-			   (name (cdr id))
 			   (vararg (rest-params params))
 			   (body body)))
 		   (oprop (find-prop (symbol->string! (cdr id)) props))
@@ -2128,9 +2129,39 @@
 			  (parse-token-error "wrong property" (peek-token))))
 		  ;; return a prop only if new
 		  (unless oprop prop)))))
+
+      (define (dynamic-property-accessor loc propname name props)
+	 (with-this 'this loc
+	    (let* ((params (params))
+		   (body (fun-body params current-mode))
+		   (mode (or (javascript-mode body) current-mode))
+		   (fun (instantiate::J2SFun
+			   (mode mode)
+			   (loc loc)
+			   (thisp (current-this))
+			   (params params)
+			   (vararg (rest-params params))
+			   (body body)))
+		   (prop (instantiate::J2SAccessorPropertyInit
+			    (loc loc)
+			    (get (instantiate::J2SUndefined
+				    (loc loc)))
+			    (set (instantiate::J2SUndefined
+				    (loc loc)))
+			    (name propname))))
+	       (with-access::J2SAccessorPropertyInit prop (get set)
+		  (if (eq? name 'get)
+		      (if (isa? get J2SUndefined)
+			  (set! get fun)
+			  (parse-token-error "wrong property" (peek-token)))
+		      (if (isa? set J2SUndefined)
+			  (set! set fun)
+			  (parse-token-error "wrong property" (peek-token))))
+		  ;; return a prop only if new
+		  prop))))
       
       (define (property-init props)
-	 (let* ((loc (token-loc (peek-token)))
+	 (let* ((token (peek-token))
 		(tokname (property-name))
 		(name (when (pair? tokname) (cdr tokname))))
 	    (case name
@@ -2148,50 +2179,50 @@
 				   (loc loc)
 				   (val (symbol->string name))))
 			  (val val))))
+;* 		   ((LBRACKET)                                         */
+;* 		    (let ((expr (expression #f)))                      */
+;* 		       (consume-token! 'RBRACKET)                      */
+;* 		       (consume-token! ':)                             */
+;* 		       (let* ((ignore (consume-any!))                  */
+;* 			      (val (assig-expr #f)))                   */
+;* 			  (with-access::J2SLiteral ignore (loc)        */
+;* 			     (instantiate::J2SDataPropertyInit         */
+;* 				(loc loc)                              */
+;* 				(name (instantiate::J2SString          */
+;* 					 (loc loc)                     */
+;* 					 (val (symbol->string name)))) */
+;* 				(val val))))))                         */
 		   ((LBRACKET)
+		    (consume-any!)
 		    (let ((expr (expression #f)))
 		       (consume-token! 'RBRACKET)
-		       (consume-token! ':)
-		       (let* ((ignore (consume-any!))
-			      (val (assig-expr #f)))
-			  (with-access::J2SLiteral ignore (loc)
-			     (instantiate::J2SDataPropertyInit
-				(loc loc)
-				(name (instantiate::J2SString
-					 (loc loc)
-					 (val (symbol->string name))))
-				(val val))))))
+		       (dynamic-property-accessor (token-loc token) expr name props)))
 		   (else
 		    (if (j2s-reserved-id? (peek-token-type))
 			(property-accessor tokname name props)
 			(parse-token-error "wrong property name" (peek-token))))))
 	       (else
-		(if (eq? (peek-token-type) 'LPAREN)
-		    (with-this 'this loc
-		       (let* ((params (params))
-			      (body (fun-body params current-mode))
-			      (mode (or (javascript-mode body) current-mode))
-			      (val (instantiate::J2SFun
-				      (loc loc)
-				      (mode mode)
-				      (name '||)
-				      (thisp (current-this))
-				      (params params)
-				      (vararg (rest-params params))
-				      (ismethodof '__proto__)
-				      (body body))))
-			  (with-access::J2SLiteral tokname (loc)
-			     (instantiate::J2SDataPropertyInit
-				(loc loc)
-				(name tokname)
-				(val val)))))
-		    (let* ((ignore (consume! ':))
-			   (val (assig-expr #f)))
-		       (with-access::J2SExpr tokname (loc)
-			  (instantiate::J2SDataPropertyInit
-			     (loc loc)
-			     (name tokname)
-			     (val val)))))))))
+		(let* ((loc (token-loc token))
+		       (val (case (peek-token-type)
+			       ((COMMA RBRACE)
+				(if (eq? (token-tag token) 'ID)
+				    (instantiate::J2SUnresolvedRef
+				       (loc loc)
+				       (id (token-value token)))
+				    (parse-token-error "unexpected token"
+				       token)))
+			       ((LPAREN)
+				(function #f token '__proto__))
+			       ((:)
+				(consume-any!)
+				(assig-expr #f))
+			       (else
+				(parse-token-error "unexpected token"
+				   (peek-token))))))
+		   (instantiate::J2SDataPropertyInit
+		      (loc loc)
+		      (name tokname)
+		      (val val)))))))
       
       (push-open-token (consume-token! 'LBRACE))
       (if (eq? (peek-token-type) 'RBRACE)
