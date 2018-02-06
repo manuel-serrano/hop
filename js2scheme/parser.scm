@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Jul  2 07:24:53 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Tue Feb  6 11:53:20 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
 ;*=====================================================================*/
@@ -732,7 +732,7 @@
 	       (expr expr)))))
    
    (define (function-declaration)
-      (function #t))
+      (function #t (consume-token! 'function)))
 
    (define (async-declaration)
       (let* ((tok (consume-any!))
@@ -744,7 +744,7 @@
 	     (parse-token-error "Illegal async function declaration" tok))))
    
    (define (function-expression)
-      (function #f))
+      (function #f (consume-token! 'function)))
    
    (define (service-declaration)
       (service #t))
@@ -854,10 +854,9 @@
       (when (pair? params)
 	 (with-access::J2SDecl (car (last-pair params)) (usage)
 	    (when (equal? usage '(rest)) 'rest))))
-   
-   (define (function declaration?)
-      (let* ((token (consume-token! 'function))
-	     (loc (token-loc token)))
+
+   (define (function declaration? token)
+      (let ((loc (token-loc token)))
 	 (with-this 'this loc
 	    (let* ((gen (when (eq? (peek-token-type) '*)
 			   (consume-any!) '*))
@@ -2061,7 +2060,8 @@
 		  (unless oprop prop)))))
       
       (define (property-init props)
-	 (let* ((tokname (property-name))
+	 (let* ((token (peek-token))
+		(tokname (property-name))
 		(name (when (pair? tokname) (cdr tokname))))
 	    (case name
 	       ((get set)
@@ -2096,13 +2096,23 @@
 			(property-accessor tokname name props)
 			(parse-token-error "wrong property name" (peek-token))))))
 	       (else
-		(let* ((ignore (consume! ':))
-		       (val (assig-expr #f)))
-		   (with-access::J2SLiteral tokname (loc)
-		      (instantiate::J2SDataPropertyInit
-			 (loc loc)
-			 (name tokname)
-			 (val val))))))))
+		(let* ((loc (token-loc token))
+		       (val (case (peek-token-type)
+			       ((COMMA RBRACE)
+				(token-push-back! token)
+				(primary))
+			       ((LPAREN)
+				(function #f token))
+			       ((:)
+				(consume-any!)
+				(assig-expr #f))
+			       (else
+				(parse-token-error "unexpected token"
+				   (peek-token))))))
+		   (instantiate::J2SDataPropertyInit
+		      (loc loc)
+		      (name tokname)
+		      (val val)))))))
       
       (push-open-token (consume-token! 'LBRACE))
       (if (eq? (peek-token-type) 'RBRACE)

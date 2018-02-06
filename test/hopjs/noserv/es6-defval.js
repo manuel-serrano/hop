@@ -1,12 +1,12 @@
 /*=====================================================================*/
-/*    .../prgm/project/hop/3.0.x/test/hopjs/noserv/es6-defval.js       */
+/*    .../prgm/project/hop/3.1.x/test/hopjs/noserv/es6-defval.js       */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Jun 30 17:54:33 2015                          */
-/*    Last change :  Sat Aug 22 09:20:47 2015 (serrano)                */
-/*    Copyright   :  2015 Manuel Serrano                               */
+/*    Last change :  Tue Feb  6 09:07:02 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
-/*    Testing ECMAScript 1.6 arrow functions                           */
+/*    Testing ECMAScript 1.6 default parameter values                  */
 /*=====================================================================*/
 "use hopscript";
 
