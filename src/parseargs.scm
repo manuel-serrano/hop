@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/src/parseargs.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/src/parseargs.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Jan 26 08:08:25 2018 (serrano)                */
+;*    Last change :  Tue Feb  6 18:18:07 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -347,6 +347,8 @@
 		   (else val))))
 	    (("--js-modules-dir" ?dir (help "Set default node_modules dir"))
 	     (nodejs-modules-directory-set! dir))
+	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
+	     (hop-profile-set! #t))
 	    ;; Internals
 	    (section "Internals")
 	    (("--configure" ?config (help "Report HOP configuration"))

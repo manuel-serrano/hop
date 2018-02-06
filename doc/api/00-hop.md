@@ -464,7 +464,7 @@ events are
 
   * `start`: emitted when a background compilation starts.
     The `event.target` denotes the file name.
-  * `end`: emitted when a background compilation starts.
+  * `end`: emitted when a background compilation ends.
     The `event.target` denotes the file name and `event.value` the
     compilation termination status (an integer).
   * `all`: emitted when all background compilation complete. This event

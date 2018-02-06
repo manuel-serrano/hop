@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Sat Feb  3 11:08:22 2018 (serrano)                */
+;*    Last change :  Tue Feb  6 18:23:11 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -172,32 +172,18 @@
 	     ,@globals
 	     ,@toplevel
 	     (define (main args)
+		,(profilers conf)
 		(hopscript-install-expanders!)
 		(bigloo-library-path-set! ',(bigloo-library-path))
 		(set! !process (nodejs-process %worker %this))
-		,@(exit-body body conf)
-		,(profilers conf))))))
+		,@(exit-body body conf))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profilers ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (profilers conf)
-   `(let ((trc (or (getenv "HOPTRACE") "")))
-       (when (string-contains trc "hopscript")
-	  (when (string-contains trc "hopscript:cache")
-	     (log-cache-miss!))
-	  (when (string-contains trc "hopscript:function")
-	     (log-function! ,(config-get conf :profile #f)))
-	  (register-exit-function!
-	     (lambda (n)
-		(profile-start)
-		(when (string-contains trc "hopscript:cache")
-		   (profile-cache-misses))
-		(when (string-contains trc "hopscript:function")
-		   (profile-functions))
-		(when (string-contains trc "hopscript:alloc")
-		   (profile-allocs))
-		(profile-end ',(filter-config conf)))))))
+   (when (config-get conf :profile #f)
+      `(js-profilers ',(filter-config conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-config ...                                                */

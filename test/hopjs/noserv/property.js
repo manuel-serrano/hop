@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 05:40:26 2014                          */
-/*    Last change :  Sat Sep  2 13:38:04 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Tue Feb  6 12:35:45 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Property access (get/set) tests.                                 */
 /*=====================================================================*/
@@ -159,6 +159,14 @@ var o = { get readwrite() { return 24; },set readwrite( val ) {} };
 
 assert.strictEqual( o.readwrite, 24 );
 
+function getfun() {
+   var foo = 55;
+   var o = { get foo() { return foo; } };
+
+   return o.foo;
+}
+
+assert.strictEqual( getfun(), 55, "getter" );
 
 /*---------------------------------------------------------------------*/
 /*    Prototypes                                                       */

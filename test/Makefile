@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.2.x/test/Makefile                     */
+#*    serrano/prgm/project/hop/3.1.x/test/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Sat Jan 27 08:13:46 2018 (serrano)                */
+#*    Last change :  Tue Feb  6 09:07:49 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -61,6 +61,7 @@ POPULATION = Makefile \
   hopjs/noserv/es6-rest.js \
   hopjs/noserv/es6-array.js \
   hopjs/noserv/es6-misc.js \
+  hopjs/noserv/es6-literal.js \
   hopjs/noserv/es6-forof.js \
   hopjs/noserv/worker1.js \
   hopjs/noserv/worker2.js \

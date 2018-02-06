@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Feb  3 20:14:47 2018 (serrano)                */
+;*    Last change :  Tue Feb  6 12:25:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2591,11 +2591,22 @@
 			  (with-access::J2SDataPropertyInit i (val)
 			     (j2s-scheme val mode return conf hint)))
 		     inits)))
-	 `(let ((,names ,(if (every symbol? props)
-			     `(quote ,(list->vector props))
-			     `(vector ,@props)))
-		(,elements (vector ,@vals)))
-	     (js-literal->jsobject ,elements ,names %this))))
+	 (if (every symbol? props)
+	     `(let ((,names ',(list->vector props))
+		    (,elements (vector ,@vals)))
+		 (js-literal->jsobject ,elements ,names %this))
+	     (let ((len (length props)))
+		`(let ((,names (cond-expand
+				   (bigloo-c ($create-vector ,len))
+				   (else (make-vector ,len))))
+		       (,elements (cond-expand
+				     (bigloo-c ($create-vector ,len))
+				     (else (make-vector ,len)))))
+		    ,@(append-map (lambda (idx name val)
+				     `((vector-set! ,names ,idx ,name)
+				       (vector-set! ,elements ,idx ,val)))
+			 (iota len) props vals)
+		    (js-literal->jsobject ,elements ,names %this))))))
 
    (define (cmap->jsobj inits cmap)
       (let ((vals (map (lambda (i)

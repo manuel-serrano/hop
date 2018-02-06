@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Nov 24 18:13:08 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Tue Feb  6 17:01:59 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
 ;*=====================================================================*/
@@ -115,9 +115,11 @@
       (define (js-compiler-driver-add-event-listener this event proc . cap)
 	 (let ((e (js-tostring event %this))
 	       (f (lambda (evt)
-		     (js-worker-push-thunk! (js-current-worker) "server"
-			(lambda ()
-			   (js-call1 %this proc this evt))))))
+		     (if (eq? (hop-sofile-compile-policy) 'aot)
+			 (js-call1 %this proc this evt)
+			 (js-worker-push-thunk! (js-current-worker) "server"
+			    (lambda ()
+			       (js-call1 %this proc this evt)))))))
 	    (nodejs-compile-add-event-listener! e f (when (pair? cap) cap))))
 
       (define (js-compiler-driver-remove-event-listener this event proc . cap)
