@@ -1,18 +1,31 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/test/hopjs/serv/http.js           */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/serv/http.js           */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  4 18:43:00 2015                          */
-/*    Last change :  Thu Oct 13 08:11:10 2016 (serrano)                */
-/*    Copyright   :  2015-16 Inria                                     */
+/*    Last change :  Wed Feb  7 10:47:44 2018 (serrano)                */
+/*    Copyright   :  2015-18 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Testing services, webSockets and Broadcast over http and https   */
 /*=====================================================================*/
 
 setTimeout( function() {
-   console.log( 'TIMEOUT while running tests. Abort' );
-   process.exit( 1 );
-}, 2000 );
+   if( hop.compilerDriver.pending > 0 ) {
+      hop.compilerDriver.addEventListener( "all", function( e ) {
+         checkCompletion();
+      } );
+   } else {
+      checkCompletion();
+   }
+}, 1000 );
+
+
+function checkCompletion() {
+   setTimeout( function() {
+      console.log( 'TIMEOUT while running tests. Abort' );
+      process.exit( 1 );
+   }, 2000 );
+}
 
 var assert = require( 'assert' );
 var hop = require( 'hop' );

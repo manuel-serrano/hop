@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Dec 29 10:00:24 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Feb  7 14:18:17 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
 ;*=====================================================================*/
@@ -111,16 +111,16 @@
 			      (value 0))))
 	    (set! js-regexp-prototype
 	       (instantiateJsRegExp
-			  (lastindex lastindex)
-			  (global global)
-			  (rx (pregexp ""))
-			  (__proto__ __proto__)
-			  (properties (list lastindex global)))))
+		  (lastindex lastindex)
+		  (global global)
+		  (rx (pregexp ""))
+		  (__proto__ __proto__)
+		  (properties (list lastindex global)))))
 	 
 	 ;; create a HopScript regexp object constructor
 	 (set! js-regexp
 	    (js-make-function %this
-	       (%js-regexp %this) 2 'RegExp
+	       (%js-regexp %this) 3 'RegExp
 	       :__proto__ js-function-prototype
 	       :prototype js-regexp-prototype
 	       :construct (js-regexp-construct %this)))
@@ -137,11 +137,11 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.3.1    */
 ;*---------------------------------------------------------------------*/
 (define (%js-regexp %this::JsGlobalObject)
-   (lambda (this pattern flags)
+   (lambda (this pattern flags loc)
       (with-access::JsGlobalObject %this (js-regexp)
 	 (if (and (isa? pattern JsRegExp) (eq? flags (js-undefined)))
 	     pattern
-	     (js-new %this js-regexp pattern flags)))))
+	     (js-new3 %this js-regexp pattern flags loc)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    make-js-regexp-pattern ...                                       */
@@ -264,10 +264,10 @@
    
    (define (err fmt str)
       (js-raise-syntax-error %this fmt str))
-   
+
    ;; (string-ref str j) == #\[
    (let* ((len (string-length str))
-	  (res (make-string (*fx 3 len))))
+	  (res (make-string (*fx 4 len))))
       (let loop ((i (+fx i0 1))
 		 (w 0)
 		 (chars '())
@@ -338,7 +338,7 @@
 					 (loop (+fx j 6) (+fx w 2) chars ascii))
 					((and (>=fx n 128) ascii)
 					 (if (or (ending-range? res w)
-						 (starting-range? str (+fx j 5)))
+						 (starting-range? str (+fx j 6)))
 					     (let* ((s (integer->utf8 n))
 						    (l (string-length s)))
 						(blit-string! s 0 res w l)
@@ -417,11 +417,11 @@
 ;*---------------------------------------------------------------------*/
 (define (integer->utf8 n)
    (cond
-      ((and (>=fx n #xD800) (<=fx n #xdbff))
+      ((and (>=fx n #xD800) (<=fx n #xdfff))
        ;; MS 9feb2016: don't know what to do as PCRE cannot handle
        ;; "red" cells https://en.wikipedia.org/wiki/UTF-8
        (ucs2-string->utf8-string
-	  (make-ucs2-string 1 (integer->ucs2 #xd7ff))))
+	  (make-ucs2-string 1 (integer->ucs2 #xe000))))
       (else
        (let ((u (make-ucs2-string 1 (integer->ucs2 n))))
 	  (ucs2-string->utf8-string u)))))
@@ -432,9 +432,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.10.4.1    */
 ;*---------------------------------------------------------------------*/
 (define (js-regexp-construct %this::JsGlobalObject)
-   (lambda (_ . l)
-      (let ((pattern (if (null? l) (js-undefined) (car l)))
-	    (flags (if (or (null? l) (null? (cdr l))) (js-undefined) (cadr l)))
+   (lambda (_ pattern flags loc)
+      (let (;;(pattern (if (null? l) (js-undefined) (car l)))
+	    ;;(flags (if (or (null? l) (null? (cdr l))) (js-undefined) (cadr l)))
 	    (i #f)
 	    (m #f)
 	    (g #f))
@@ -486,7 +486,7 @@
 	       (lambda (e)
 		  (if (isa? e &io-parse-error)
 		      (with-access::&io-parse-error e (msg)
-			 (js-raise-syntax-error %this
+			 (js-raise-syntax-error/loc %this loc
 			    (format "~a \"~a\"" msg pattern) ""))
 		      (raise e)))
 	       (with-access::JsGlobalObject %this (js-regexp js-regexp-prototype)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Feb  6 18:24:42 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 11:27:31 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -302,6 +302,7 @@
 	 (exp (call-with-input-string "false"
 		 (lambda (in)
 		    (j2s-compile in :driver (j2s-plain-driver)
+		       :driver-name "j2s-plain-driver"
 		       :parser 'repl
 		       :verbose 0
 		       :filename "repl.js")))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Feb  6 18:18:07 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 11:05:29 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -333,6 +333,9 @@
 			  (nodejs-compiler-options-add! ext #t))
 		ecmascript-es6))
 	    (("--js-es2017" (help "Enable all EcmaScript 2017 supports"))
+	     (for-each (lambda (ext)
+			  (nodejs-compiler-options-add! ext #t))
+		ecmascript-es6)
 	     (for-each (lambda (ext)
 			  (nodejs-compiler-options-add! ext #t))
 		ecmascript-es2017))

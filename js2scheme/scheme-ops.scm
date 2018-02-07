@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Jan 24 09:49:56 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 12:39:29 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -913,7 +913,6 @@
 			      (if (memq op '(== ===)) 'eqir? '!eqir?))
 			     (else
 			      op))))
-		   
 		   (js-binop loc op left lhs right rhs conf))))))))
 
 ;*---------------------------------------------------------------------*/

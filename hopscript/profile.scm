@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Feb  6 18:24:05 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 14:45:35 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -97,6 +97,19 @@
 		(if (not on)
 		    (set-cdr! (cdr ow) (cons (cons name 1) (cddr ow)))
 		    (set-cdr! on (+fx 1 (cdr on)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-symbol->string! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (js-symbol->string! s)
+   (cond
+      ((symbol? s)
+       (symbol->string! s))
+      ((isa? s JsSymbolLiteral)
+       (with-access::JsSymbolLiteral s (val)
+	  val))
+      (else
+       (typeof s))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *functions* ...                                                  */
@@ -409,8 +422,8 @@
 					 ((>fx (cdr e1) (cdr e2)) #t)
 					 ((<fx (cdr e1) (cdr e2)) #f)
 					 (else
-					  (string<=? (symbol->string! (car e1))
-					     (symbol->string! (car e2))))))
+					  (string<=? (js-symbol->string! (car e1))
+					     (js-symbol->string! (car e2))))))
 				(cddr what)))
 			  (print "     -1 ] },"))
 		*misses*)
@@ -443,8 +456,8 @@
 				      ((>fx (cdr e1) (cdr e2)) #t)
 				      ((<fx (cdr e1) (cdr e2)) #f)
 				      (else
-				       (string<=? (symbol->string! (car e1))
-					  (symbol->string! (car e2))))))
+				       (string<=? (js-symbol->string! (car e1))
+					  (js-symbol->string! (car e2))))))
 			     (cddr what)))
 		       (newline (current-error-port))))
 	  *misses*)

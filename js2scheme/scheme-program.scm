@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Feb  6 18:23:11 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 12:37:17 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -234,6 +234,9 @@
 	    ((isa? this J2SString)
 	     (with-access::J2SString this (val)
 		(vector 0 val)))
+	    ((isa? this J2SRegExp)
+	     (with-access::J2SRegExp this (loc val flags inline)
+		(vector (if inline 5 4) val flags loc)))
 	    ((isa? this J2SRegExp)
 	     (with-access::J2SRegExp this (loc val flags inline)
 		(vector (if inline 3 1) val flags)))

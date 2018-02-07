@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Sun Jan 28 06:37:30 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 12:02:33 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -100,6 +100,23 @@
        (j2s-plain-driver))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-driver-name ...                                               */
+;*---------------------------------------------------------------------*/
+(define (js-driver-name)
+   (cond
+      ((string? (hopc-js-driver))
+       (hopc-js-driver))
+      ((eq? (hopc-pass) 'client-js)
+       (cond
+	  ((eq? (hopc-js-target) 'es5) "j2s-ecmascript5-driver")
+	  ((>=fx (hopc-optim-level) 1) "j2s-javascript-optim-driver")
+	  (else "j2s-javascript-driver")))
+      ((>=fx (hopc-optim-level) 1)
+       "j2s-optim-driver")
+      (else
+       "j2s-plain-driver")))
+
+;*---------------------------------------------------------------------*/
 ;*    js-drivers-list ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-drivers-list)
@@ -175,6 +192,7 @@
 		  :return-as-exit (hopc-js-return-as-exit)
 		  :mmap-src mmap
 		  :driver (js-driver)
+		  :driver-name (js-driver-name)
 		  :worker (hopc-js-worker)
 		  :worker-slave (hopc-js-worker-slave)
 		  :module-main (if (boolean? (hopc-js-module-main))
@@ -202,6 +220,7 @@
 		  :return-as-exit (hopc-js-return-as-exit)
 		  :mmap-src mmap
 		  :driver (js-driver)
+		  :driver-name (js-driver-name)
 		  :worker (hopc-js-worker)
 		  :module-main (if (boolean? (hopc-js-module-main))
 				   (hopc-js-module-main)
@@ -323,6 +342,7 @@
 			:return-as-exit (hopc-js-return-as-exit)
 			:mmap-src mmap
 			:driver (js-driver)
+			:driver-name (js-driver-name)
 			:worker (hopc-js-worker)
 			:module-main (if (boolean? (hopc-js-module-main))
 					 (hopc-js-module-main)

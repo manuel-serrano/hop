@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri Feb  2 18:04:11 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 12:05:20 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -246,6 +246,10 @@
 		      ((or (string=? val "false") (string=? val "#f")) #f)
 		      ((string->number val) => (lambda (val) val))
 		      (else val))
+		   (j2s-compile-options))))
+	    (("--js-config" ?conf (help "Use JavaScript compilation config"))
+	     (j2s-compile-options-set!
+		(append (call-with-input-string conf read)
 		   (j2s-compile-options))))
 	    (("--no-server" (help "Hop compatibility, ignored"))
 	     #unspecified)

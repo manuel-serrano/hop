@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Mon Jan 29 13:30:35 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 13:18:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -66,30 +66,44 @@
 			  ;; a plain string
 			  (let ((str (vector-ref-ur el 1)))
 			     (js-string->jsstring str)))
-			 ((1)
+			 ((1 4)
 			  ;; a plain regexp
 			  (with-access::JsGlobalObject %this (js-regexp)
 			     (let* ((cnsts (vector-ref-ur el 1))
 				    (flags (vector-ref-ur el 2))
 				    (rx (js-string->jsstring cnsts)))
 				(if flags
-				    (js-new2 %this js-regexp rx
-				       (js-string->jsstring flags))
-				    (js-new1 %this js-regexp rx)))))
+				    (if (eq? (vector-ref el 0) 4)
+					(js-new3 %this js-regexp rx
+					   (js-string->jsstring flags)
+					   (vector-ref-ur el 3))
+					(js-new2 %this js-regexp rx
+					   (js-string->jsstring flags)))
+				    (if (eq? (vector-ref el 0) 4)
+					(js-new2 %this js-regexp rx
+					   (vector-ref-ur el 3))
+					(js-new1 %this js-regexp rx))))))
 			 ((2)
 			  ;; a literal cmap
 			  (let ((props (vector-ref-ur el 1)))
 			     (js-names->cmap props)))
-			 ((3)
+			 ((3 5)
 			  ;; an inlined regexp
 			  (with-access::JsGlobalObject %this (js-regexp)
 			     (let* ((cnsts (vector-ref-ur el 1))
 				    (flags (vector-ref-ur el 2))
 				    (rx (js-string->jsstring cnsts))
 				    (regexp (if flags
-						(js-new2 %this js-regexp rx
-						   (js-string->jsstring flags))
-						(js-new1 %this js-regexp rx))))
+						(if (eq? (vector-ref el 0) 5)
+						    (js-new3 %this js-regexp rx
+						       (js-string->jsstring flags)
+						       (vector-ref-ur el 3))
+						    (js-new2 %this js-regexp rx
+						       (js-string->jsstring flags)))
+						(if (eq? (vector-ref el 0) 5)
+						    (js-new2 %this js-regexp rx
+						       (vector-ref-ur el 3))
+						    (js-new1 %this js-regexp rx)))))
 				(with-access::JsRegExp regexp (rx)
 				   rx))))))))
 	       (loop (-fx i 1)))))

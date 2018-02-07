@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Feb  6 18:30:28 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 12:24:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -115,7 +115,8 @@
 			   :filename filename
 			   :parser 'client-program
 			   :site 'client
-			   :driver (j2s-javascript-driver))))
+			   :driver (j2s-javascript-driver)
+			   :driver-name "j2s-javascript-driver")))
 	       (filter (lambda (exp)
 			  (not (isa? exp J2SNode)))
 		  tree)))))
@@ -242,6 +243,10 @@
 						 esplainp)
 					     (j2s-javascript-driver)
 					     (j2s-javascript-debug-driver))
+				 :driver-name (if (or (<=fx (bigloo-debug) 0)
+						      "esplainp")
+						  "j2s-javascript-driver"
+						  "j2s-javascript-debug-driver")
 				 :site 'client
 				 :debug (if esplainp 0 (bigloo-debug)))))
 		     (for-each (lambda (exp)
@@ -633,6 +638,7 @@
 		  (unwind-protect
 		     (j2s-compile in
 			:driver (nodejs-driver)
+			:driver-name "nodejs-driver"
 			:filename filename
 			:language (or lang 'hopscript)
 			:mmap-src m
@@ -653,6 +659,7 @@
 	       (input-port-name-set! in url)
 	       (j2s-compile in
 		  :driver (nodejs-driver)
+		  :driver-name "nodejs-driver"
 		  :language (or lang 'hopscript)
 		  :filename filename
 		  :module-main #f
@@ -922,9 +929,9 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-socompile filename lang)
    
-   (define (exec cmd::bstring ksucc::procedure kfail::procedure)
+   (define (exec line::pair ksucc::procedure kfail::procedure)
       
-      (let* ((line (string-split cmd " "))
+      (let* ((cmd (format "~( )" line))
 	     (proc (synchronize socompile-mutex
 		      (unless socompile-ended
 			 (register-socompile-process!
@@ -933,8 +940,9 @@
 			       error: pipe:
 			       output: "/dev/null"
 			       (cdr line))
-			    cmd  filename ksucc kfail))))
+			    cmd filename ksucc kfail))))
 	     (estr #f))
+	 ;; verbose
 	 ;; error logger (mandatory to flush child stderr)
 	 (when (process? proc)
 	    (thread-start!
@@ -950,6 +958,7 @@
 				    (close-input-port err)))))))))
 	 (with-handler
 	    (lambda (e)
+	       (fprint (current-error-port) "**** ERROR: compilation failed " filename)
 	       (exception-notify e))
 	    (when (process? proc)
 	       (synchronize socompile-mutex
@@ -1017,31 +1026,43 @@
 			  (sopathtmp (make-file-name
 					(dirname sopath)
 					(string-append "#" (basename sopath))))
-			  (cmd (format "~a --bigloo=~a ~a ~a -y --js-no-module-main -o ~a ~a ~a ~a"
-				  (hop-hopc) (hop-bigloo)
-				  (if (= (hop-verbose) 0)
-				      (if (eq? nodejs-debug-compile 'yes)
-					  "-v4"
-					  "")
-				      (format "-v~a" (hop-verbose)))
-				  filename
-				  sopathtmp
-				  (if (hop-profile) " --profile" "")
-				  (if (eq? nodejs-debug-compile 'yes)
-				      (string-append " -t "
-					 (make-file-name "/tmp/HOP"
-					    (string-append
-					       (prefix (basename filename) )
-					       ".scm")))
-				      "")
-				  (hop-hopc-flags)))
+			  (cmd `(,(hop-hopc)
+				  ;; bigloo
+				  ,(format "--bigloo=~a" (hop-bigloo))
+				  ;; verbosity
+				  ,@(if (= (hop-verbose) 0)
+					(if (eq? nodejs-debug-compile 'yes) '("-v4") '())
+				       (list (format "-v~a" (hop-verbose))))
+				  ;; source
+				  ,filename
+				  ;; target
+				  "-y" "--js-no-module-main" "-o" ,sopathtmp
+				  ;; profiling
+				  ,@(if (hop-profile) '("--profile") '())
+				  ;; debug
+				  ,@(if (eq? nodejs-debug-compile 'yes)
+					`("-t" ,(make-file-name "/tmp/HOP"
+						   (string-append
+						      (prefix (basename filename))
+						      ".scm")))
+					'())
+				  ;; config
+				  ,@(if (pair? (j2s-compile-options))
+					`("--js-config"
+					    ,(string-for-read
+						(format "~s"
+						   (j2s-compile-options))))
+					'())
+				  ;; other options
+				  ,@(call-with-input-string (hop-hopc-flags) port->string-list)))
 			  (ksucc (make-ksucc sopath sopathtmp))
 			  (kfail (make-kfail sopath sopathtmp)))
 		      (make-directories (dirname sopath))
 		      (trace-item "sopath=" sopath)
 		      (trace-item "sopathtmp=" sopathtmp)
 		      (trace-item "cmd=" cmd)
-		      (hop-verb 3 (hop-color -1 -1 " COMPILE") " " cmd "\n")
+		      (hop-verb 3 (hop-color -2 -2 " COMPILE") " "
+			 (format "~( )" cmd) "\n")
 		      (synchronize-global
 			 (make-file-name
 			    (dirname (hop-sofile-path "hop.lock"))

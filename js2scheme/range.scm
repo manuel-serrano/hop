@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Feb  5 13:34:12 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 08:04:28 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1363,7 +1363,8 @@
 			       (set! range ni)))))
 		   (loop (cdr params) (cdr args))))
 	       ((eq? rtype 'any)
-		(node-interval-set! this env fix *infinity-intv*))
+		(return *infinity-intv* env))
+;* 		(node-interval-set! this env fix *infinity-intv*))     */
 	       (else
 		(node-interval-set! this env fix range))))))
    
