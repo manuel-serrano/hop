@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Sat Feb  3 09:09:43 2018 (serrano)                */
+;*    Last change :  Fri Feb  9 09:54:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -912,7 +912,9 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.2.4       */
 ;*---------------------------------------------------------------------*/
 (define (js-init-object-prototype! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this ((obj __proto__) js-object)
+   (with-access::JsGlobalObject %this ((obj __proto__)
+				       js-object
+				       js-symbol-tostringtag)
       
       ;; __proto__
       (js-bind! %this obj '__proto__
@@ -947,23 +949,29 @@
 		(js-string->jsstring (js-tostring obj %this))))
 	    (else
 	     (let* ((obj (js-toobject %this this))
-		    (clazz (if (isa? obj JsFunction)
-			       JsFunction
-			       (object-class obj)))
-		    (name (symbol->string! (class-name clazz))))
-		(js-string->jsstring
-		   (format "[object ~a]"
-		      (cond
-			 ((not (string-prefix? "Js" name))
-			  name)
-			 ((string=? name "JsGlobalObject")
-			  "Object")
-			 ((isa? obj JsArrayBufferView)
-			  (let ((ctor (js-get obj 'constructor %this)))
-			     (with-access::JsFunction ctor (name)
-				name)))
-			 (else
-			  (substring name 2)))))))))
+		    (tag (js-get obj js-symbol-tostringtag %this)))
+		(if (js-jsstring? tag)
+		    (js-jsstring-append
+		       (js-string->jsstring "[object")
+		       (js-jsstring-append tag
+			  (js-string->jsstring "]")))
+		    (let* ((clazz (if (isa? obj JsFunction)
+				      JsFunction
+				      (object-class obj)))
+			   (name (symbol->string! (class-name clazz))))
+		       (js-string->jsstring
+			  (format "[object ~a]"
+			     (cond
+				((not (string-prefix? "Js" name))
+				 name)
+				((string=? name "JsGlobalObject")
+				 "Object")
+				((isa? obj JsArrayBufferView)
+				 (let ((ctor (js-get obj 'constructor %this)))
+				    (with-access::JsFunction ctor (name)
+				       name)))
+				(else
+				 (substring name 2)))))))))))
       
       (js-bind! %this obj 'toString
 	 :value (js-make-function %this
