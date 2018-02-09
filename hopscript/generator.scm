@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Jan 26 11:53:55 2018 (serrano)                */
+;*    Last change :  Thu Feb  8 18:00:53 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -57,7 +57,6 @@
 ;*    js-yield-cmap ...                                                */
 ;*---------------------------------------------------------------------*/
 (define js-yield-cmap #f)
-(define js-generator-cmap #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsGenerator ...                              */
@@ -82,11 +81,18 @@
 	 
 ;*---------------------------------------------------------------------*/
 ;*    js-init-generator! ...                                           */
+;*    -------------------------------------------------------------    */
+;*    https://www.ecma-international.org/ecma-262/6.0/#sec-25.2        */
 ;*---------------------------------------------------------------------*/
 (define (js-init-generator! %this::JsGlobalObject)
-   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype js-symbol-iterator)
+   (with-access::JsGlobalObject %this (__proto__ js-function-prototype js-generator-prototype js-generatorfunction-prototype js-symbol-iterator js-symbol-tostringtag)
 
       (define js-gen-proto
+	 (instantiateJsObject
+	    (cmap (instantiate::JsConstructMap))
+	    (__proto__ __proto__)))
+
+      (define js-genfun-proto
 	 (instantiateJsObject
 	    (cmap (instantiate::JsConstructMap))
 	    (__proto__ js-function-prototype)))
@@ -168,19 +174,26 @@
 	 :hidden-class #t)
 
       (js-bind! %this js-gen-proto js-symbol-iterator
-	 :configurable #f :enumerable #f
+	 :configurable #t :enumerable #f :writable #t
 	 :value (js-make-function %this
 		   (lambda (this val)
 		      this)
 		   0 '@@iterator
 		   :prototype (js-undefined)))
+      (js-bind! %this js-gen-proto js-symbol-tostringtag
+	 :configurable #t :enumerable #f :writable #f
+	 :value (js-string->jsstring "Generator"))
+
+      
+      (js-bind! %this js-genfun-proto js-symbol-tostringtag
+	 :configurable #t :enumerable #f :writable #f
+	 :value (js-string->jsstring "GeneratorFunction"))
       
       (set! js-generator-prototype js-gen-proto)
+      (set! js-generatorfunction-prototype js-genfun-proto)
       
       (set! js-yield-cmap (js-names->cmap '#(value done)))
       
-      (with-access::JsObject js-gen-proto (cmap)
-	 (set! js-generator-cmap cmap))
       ))
 	    
 ;*---------------------------------------------------------------------*/
@@ -215,8 +228,8 @@
 ;*    overriden for that class.                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-make-generator proc proto %this)
-   (with-access::JsGlobalObject %this (js-generator-prototype)
-      (with-access::JsObject js-generator-prototype (cmap elements)
+   (with-access::JsGlobalObject %this (js-generatorfunction-prototype)
+      (with-access::JsObject js-generatorfunction-prototype (cmap elements)
 	 (instantiateJsGenerator
 	    (cmap cmap)
 	    (elements elements)

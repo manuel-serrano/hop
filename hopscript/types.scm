@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Jan 25 06:05:04 2018 (serrano)                */
+;*    Last change :  Thu Feb  8 17:35:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -162,6 +162,7 @@
 	      (js-promise (default (class-nil JsFunction)))
 	      (js-worker-prototype::JsWorker (default (class-nil JsWorker)))
 	      (js-generator-prototype::JsObject (default (class-nil JsObject)))
+	      (js-generatorfunction-prototype::JsObject (default (class-nil JsObject)))
 	      (js-buffer-proto (default #f))
 	      (js-slowbuffer-proto (default #f))
 	      (js-symbol-ctor::procedure (default list))
@@ -169,6 +170,7 @@
 	      (js-symbol-iterator (default (js-undefined)))
 	      (js-symbol-species (default (js-undefined)))
 	      (js-symbol-hasinstance (default (js-undefined)))
+	      (js-symbol-tostringtag (default (js-undefined)))
 	      (js-main (default (js-null)))
 	      (js-call (default #f))
 	      (js-apply (default #f))

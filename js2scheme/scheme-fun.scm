@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sat Feb  3 20:04:29 2018 (serrano)                */
+;*    Last change :  Thu Feb  8 17:40:47 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -703,8 +703,8 @@
 (define (j2s-fun-__proto__ this)
    (with-access::J2SFun this (generator)
       (if generator
-	  `(with-access::JsGlobalObject %this (js-generator-prototype)
-	      js-generator-prototype)
+	  `(with-access::JsGlobalObject %this (js-generatorfunction-prototype)
+	      js-generatorfunction-prototype)
 	  #f)))
    
 ;*---------------------------------------------------------------------*/

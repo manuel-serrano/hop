@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Feb  3 15:04:34 2018 (serrano)                */
+;*    Last change :  Thu Feb  8 19:01:46 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -217,7 +217,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-object-get-name/cache-level0-expander ...                     */
 ;*    -------------------------------------------------------------    */
-;*    Simiar to JS-OBJECT-GET-NAME/CACHE-EXPANDER but cache level2     */
+;*    Similar to JS-OBJECT-GET-NAME/CACHE-EXPANDER but cache level2    */
 ;*    is not inlined in the expanded call.                             */
 ;*---------------------------------------------------------------------*/
 (define (js-object-get-name/cache-level0-expander x e)
@@ -318,7 +318,12 @@
        (e `(with-access::JsObject ,o ((omap cmap) elements)
 	      (with-access::JsPropertyCache ,cache (cmap index)
 		 (if (eq? cmap omap)
-		     (vector-ref elements index)
+		     (begin
+			(cond-expand
+			   (profile
+			    (add-cache-log! 'getCache ,prop)
+			    (profile-cache-index index)))
+			(vector-ref elements index))
 		     ((@ js-global-object-get-name/cache __hopscript_property)
 		      ,o ,prop ,cache ,throw ,%this))))
 	  e))
@@ -480,16 +485,15 @@
 		     (if (<fx ,cindx (vector-length %vec))
 			 (begin
 			    (cond-expand
-			       (profile (add-cache-log! 'putCachePrototype ,prop)))
-			    (cond-expand
 			       (profile
-				(add-cache-log! 'putCache ,prop)
+				(add-cache-log! 'putCachePrototype ,prop)
 				(profile-cache-index ,cindx)))
 			    (vector-set! %vec ,cindx ,tmp))
 			 (begin
 			    (cond-expand
 			       (profile
-				(add-cache-log! 'putCacheExtend ,prop)))
+				(add-cache-log! 'putCacheExtend ,prop)
+				(profile-cache-index ,cindx)))
 			    (js-object-add! ,o ,cindx ,tmp))))
 		  (with-access::JsObject ,o ((omap cmap))
 		     (set! omap (if (eq? ,ccmap #t) ,cpmap ,ccmap)))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec  4 08:43:13 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Thu Feb  8 17:17:00 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
 ;*    -------------------------------------------------------------    */
@@ -166,7 +166,8 @@
 					 js-symbol-table
 					 js-symbol-iterator
 					 js-symbol-species
-					 js-symbol-hasinstance)
+					 js-symbol-hasinstance
+					 js-symbol-tostringtag)
       (with-access::JsFunction js-function ((js-function-prototype __proto__))
 	 
 	 ;; builtin prototype
@@ -245,11 +246,12 @@
 	 ;; global symbols
 	 (for-each bind-symbol!
 	    '(isConcatSpreadable match
-	      replace search split toPrimitive toStringTag
+	      replace search split toPrimitive
 	      unscopables))
 
 	 ;; bind the known symbols
 	 (set! js-symbol-iterator (bind-symbol! 'iterator))
+	 (set! js-symbol-tostringtag (bind-symbol! 'toStringTag))
 	 (set! js-symbol-species (bind-symbol! 'species))
 
 	 ;; hasinstance has already been allocated
