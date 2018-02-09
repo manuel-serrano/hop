@@ -451,6 +451,19 @@ status.
 ### hop.compilerDriver ###
 [:@glyphicon glyphicon-tag parameter]
 
+### hop.compilerDriver.policy ###
+[:@glyphicon glyphicon-tag parameter]
+
+The compilation policy. The possible values are:
+
+  * `none`: never compile.
+  * `aot`: compile before loading.
+  * `nte`: compile for the next execution. The pending compilation are stopped
+ when the current execution is about to end.  
+  * `nte+`: compile for the next execution and wait for all running compilations
+ before ending current execution.
+
+
 ### hop.compilerDriver.pending ###
 [:@glyphicon glyphicon-tag parameter]
 

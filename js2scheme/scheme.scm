@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Feb  7 19:19:03 2018 (serrano)                */
+;*    Last change :  Fri Feb  9 10:57:33 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -825,15 +825,25 @@
 	       ((or (not (isa? val J2SFun))
 		    (isa? val J2SSvc)
 		    (memq 'assig usage))
-		(list `(,var ,(j2s-scheme val mode return conf hint))))
-	       ((usage? '(ref get new set) usage)
-		(let (
-;* 		      (fun (jsfun->lambda val mode return conf         */
-;* 			      `(js-get ,ident 'prototype %this) #f))   */
-		      (fun (j2s-scheme val mode return conf hint))
-		      (tmp (j2s-fast-id id)))
-		   `((,tmp ,fun)
-		     (,var ,(j2sfun->scheme val tmp tmp mode return conf)))))
+		`((,var ,(j2s-scheme val mode return conf hint))))
+	       ((and (usage? '(ref get new set) usage))
+		(with-access::J2SFun val (decl)
+		   (if (isa? decl J2SDecl)
+		       (let ((tmp (gensym 'f))
+			     (proc (gensym 'p))
+			     (^tmp (j2s-decl-scheme-id decl))
+			     (fun (jsfun->lambda val mode return conf
+				     `(js-get ,ident 'prototype %this) #f)))
+			  `((,^tmp #unspecified)
+			    (,tmp ,fun)
+			    (,var (let ((,proc ,(j2sfun->scheme val tmp tmp mode return conf)))
+				      (set! ,^tmp ,proc)
+				      ,proc))))
+		       (let ((fun (jsfun->lambda val mode return conf
+				     `(js-get ,ident 'prototype %this) #f))
+			     (tmp (j2s-fast-id id)))
+			  `((,tmp ,fun)
+			    (,var ,(j2sfun->scheme val tmp tmp mode return conf)))))))
 	       ((usage? '(call) usage)
 		`((,(j2s-fast-id id)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))

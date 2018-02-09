@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Tue Feb  6 17:01:59 2018 (serrano)                */
+;*    Last change :  Fri Feb  9 11:06:50 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -130,7 +130,7 @@
 	 
       (define js-compiler-driver
 	 (let ((driver (instantiateJsObject
-		       (__proto__ __proto__))))
+			  (__proto__ __proto__))))
 	    (js-bind! %this driver 'pending
 	       :get (js-make-function %this
 		       (lambda (this)
@@ -149,6 +149,20 @@
 			 js-compiler-driver-remove-event-listener
 			 3 'removeEventListener)
 	       :writable #f
+	       :configurable #f)
+	    (js-bind! %this driver 'policy
+	       :get (js-make-function %this
+		       (lambda (this)
+			  (js-string->jsstring
+			     (symbol->string (hop-sofile-compile-policy))))
+		       0 'get)
+	       :set (js-make-function %this
+		       (lambda (this v)
+			  (hop-sofile-compile-policy-set!
+			     (string->symbol
+				(js-tostring v %this))))
+		       1 'set)
+	       :writable #t
 	       :configurable #f)
 	    driver))
       
