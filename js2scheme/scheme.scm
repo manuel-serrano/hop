@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Feb  6 12:25:08 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 19:19:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -827,12 +827,14 @@
 		    (memq 'assig usage))
 		(list `(,var ,(j2s-scheme val mode return conf hint))))
 	       ((usage? '(ref get new set) usage)
-		(let ((fun (jsfun->lambda val mode return conf
-			      `(js-get ,ident 'prototype %this) #f))
+		(let (
+;* 		      (fun (jsfun->lambda val mode return conf         */
+;* 			      `(js-get ,ident 'prototype %this) #f))   */
+		      (fun (j2s-scheme val mode return conf hint))
 		      (tmp (j2s-fast-id id)))
 		   `((,tmp ,fun)
 		     (,var ,(j2sfun->scheme val tmp tmp mode return conf)))))
-	       ((memq 'call usage)
+	       ((usage? '(call) usage)
 		`((,(j2s-fast-id id)
 		   ,(jsfun->lambda val mode return conf (j2s-fun-prototype val) #f))))
 	       (else

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Feb  7 11:16:40 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 17:41:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2247,6 +2247,13 @@
 		    (let ((expr (expression #f)))
 		       (consume-token! 'RBRACKET)
 		       (dynamic-property-accessor (token-loc token) expr name props)))
+		   ((LPAREN)
+		    (instantiate::J2SDataPropertyInit
+		       (loc (token-loc token))
+		       (name (instantiate::J2SString
+				(loc (token-loc token))
+				(val (symbol->string (token-value token)))))
+		       (val (function #f token '__proto__))))
 		   (else
 		    (if (j2s-reserved-id? (peek-token-type))
 			(property-accessor tokname name props)

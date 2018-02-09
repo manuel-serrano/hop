@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Feb  5 14:22:18 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 18:48:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -460,10 +460,11 @@
 				need-bind-exit-return idthis generator loc)
       (cond
 	 ((isa? decl J2SDeclFun)
-	  (with-access::J2SDecl decl (key usage)
+	  (with-access::J2SDecl decl (key usage scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
 		 ,@(dump-key key)
+		 ,@(dump-scope scope)
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
@@ -477,10 +478,11 @@
 		 :thisp ,(j2s->list thisp)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
-	  (with-access::J2SDecl decl (key)
+	  (with-access::J2SDecl decl (key scope)
 	     `(,@(call-next-method) ,@(if generator '(*) '())
 		 :name ,name
 		 ,@(dump-key key)
+		 ,@(dump-scope scope)
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)

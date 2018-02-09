@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Feb  7 12:24:03 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 17:22:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1062,7 +1062,12 @@
 		      (trace-item "sopathtmp=" sopathtmp)
 		      (trace-item "cmd=" cmd)
 		      (hop-verb 3 (hop-color -2 -2 " COMPILE") " "
-			 (format "~( )" cmd) "\n")
+			 (format "~( )\n"
+			    (map (lambda (s)
+				    (if (string-index s #\space)
+					(string-append "\"" s "\"")
+					s))
+			       cmd)))
 		      (synchronize-global
 			 (make-file-name
 			    (dirname (hop-sofile-path "hop.lock"))

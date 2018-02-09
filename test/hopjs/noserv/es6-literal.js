@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Feb  6 09:07:26 2018                          */
-/*    Last change :  Tue Feb  6 13:12:57 2018 (serrano)                */
+/*    Last change :  Wed Feb  7 17:42:40 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ object literal syntaxes                 */
@@ -32,9 +32,19 @@ function hopb() {
    return a.i == 10;
 }
 
+function hopc() {
+   var o = {
+      get() { return this.a },
+      a: 3
+   }
+
+   return o.get() == 3;
+}
+
 console.log( "hop" );
 console.log( "   hopa()"); assert.ok( hopa(), "hopa" );
 console.log( "   hopb()"); assert.ok( hopb(), "hopb" );
+console.log( "   hopc()"); assert.ok( hopc(), "hopc" );
 
 /*---------------------------------------------------------------------*/
 /*    mdn                                                              */

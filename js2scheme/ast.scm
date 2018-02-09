@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Jan 27 08:59:01 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 18:01:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -488,43 +488,43 @@
 ;*    j2s-var? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-var? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder)
+   (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((var) #t)
 	 ((let let-opt) #t)
 	 ((param class) #f)
-	 (else (error "j2s-var?" "wrong binder" binder)))))
+	 (else (error "j2s-var?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-let? ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder)
+   (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let let-opt) #t)
 	 ((var param class) #f)
-	 (else (error "j2s-let?" "wrong binder" binder)))))
+	 (else (error "j2s-let?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-const? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-const? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder writable)
+   (with-access::J2SDecl decl (binder writable id loc)
       (unless writable
 	 (case binder
 	    ((let let-opt) #t)
 	    ((var param class) #f)
-	    (else (error "j2s-const?" "wrong binder" binder))))))
+	    (else (error "j2s-const?" "wrong binder" (vector loc id binder)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-let-opt? ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-let-opt? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder)
+   (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((let-opt) #t)
 	 ((let var param class) #f)
-	 (else (error "j2s-let-opt?" "wrong binder" binder)))))
+	 (else (error "j2s-let-opt?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-access-field ...                                             */
@@ -550,11 +550,11 @@
 ;*    j2s-param? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-param? decl::J2SDecl)
-   (with-access::J2SDecl decl (binder)
+   (with-access::J2SDecl decl (binder id loc)
       (case binder
 	 ((param) #t)
 	 ((var let const let-opt const-opt class) #f)
-	 (else (error "j2s-param?" "wrong binder" binder)))))
+	 (else (error "j2s-param?" "wrong binder" (vector loc id binder))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sfun-id ...                                                    */

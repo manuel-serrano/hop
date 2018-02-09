@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Feb  5 14:26:05 2018 (serrano)                */
+;*    Last change :  Wed Feb  7 18:28:11 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -341,11 +341,15 @@
       (with-access::J2SRef fun (decl)
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val id)
-	       (when (and (=fx (function-arity val) arity)
-			  (not (memq val stack))
-			  (<=fx (function-size val) limit)
-			  (check-id id))
-		  val)))))
+	       (let ((val (if (isa? val J2SFun)
+			      val
+			      (with-access::J2SMethod val (function)
+				 function))))
+		  (when (and (=fx (function-arity val) arity)
+			     (not (memq val stack))
+			     (<=fx (function-size val) limit)
+			     (check-id id))
+		     val))))))
    
    (define (inline-access-call this::J2SCall fun::J2SAccess args loc)
       (let ((mets (find-inline-methods this fun (length args))))
@@ -913,4 +917,12 @@
 	  (begin
 	     (call-default-walker)
 	     this))))
-   
+
+;*---------------------------------------------------------------------*/
+;*    dead-inner-decl! ::J2SLetBlock ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (dead-inner-decl! this::J2SLetBlock)
+   (call-default-walker)
+   (with-access::J2SLetBlock this (decls)
+      (set! decls (filter (lambda (d) (isa? d J2SDecl)) decls))
+      this))

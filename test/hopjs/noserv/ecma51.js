@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Fri Dec  8 08:57:49 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Wed Feb  7 18:45:19 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
 /*=====================================================================*/
@@ -359,3 +359,12 @@ var p1 = Object.getOwnPropertyDescriptor( ctor, "length" );
 var p2 = Object.getOwnPropertyDescriptor( ctor, "name" );
 
 assert.ok( !p2.writable && !p2.enumerable && !p2.configurable );
+
+/*---------------------------------------------------------------------*/
+/*    binding                                                          */
+/*---------------------------------------------------------------------*/
+var Reference = exports.Reference = function Reference() {
+   return Reference;
+}
+
+assert.ok( Reference );
