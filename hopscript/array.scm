@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Jan 27 09:01:29 2018 (serrano)                */
+;*    Last change :  Fri Feb  9 13:21:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -43,6 +43,9 @@
 	   __hopscript_symbol
 	   __hopscript_string
 	   __hopscript_generator)
+
+   (cond-expand
+      (profile (import __hopscript_profile)))
    
    (export (js-init-array! ::JsGlobalObject)
 	   (inline js-make-vector ::long ::obj)

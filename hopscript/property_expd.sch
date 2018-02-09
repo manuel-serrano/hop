@@ -3,13 +3,19 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Feb  8 19:01:46 2018 (serrano)                */
+;*    Last change :  Fri Feb  9 18:50:43 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
 ;*    -------------------------------------------------------------    */
 ;*    See expanders.sch and property.sch                               */
 ;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    profile ...                                                      */
+;*---------------------------------------------------------------------*/
+(define-macro (jsprof . exprs)
+   (cond-expand (profile ,@exprs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache-expander ...                                      */
@@ -191,10 +197,9 @@
       `(let ((%omap omap))
 	  (if (eq? ,ccmap %omap)
 	      (with-access::JsObject ,o (elements)
-		 (cond-expand
-		    (profile
-		     (add-cache-log! 'getCache ,prop)
-		     (profile-cache-index ,cindex)))
+		 (jsprof
+		    (js-jsprof-log-cache! 'getCache ,prop ,cache)
+		    (jsprof-cache-index ,cindex))
 		 (vector-ref elements ,cindex))
 	      (js-object-get-name/cache-level2 ,@(cdr x)))))
    
@@ -226,10 +231,9 @@
       `(let ((%omap omap))
 	  (if (eq? ,ccmap %omap)
 	      (with-access::JsObject ,o (elements)
-		 (cond-expand
-		    (profile
-		     (add-cache-log! 'getCache ,prop)
-		     (profile-cache-index ,cindex)))
+		 (jsprof
+		    (js-jsprof-log-cache! 'getCache ,prop ,cache)
+		    (jsprof-cache-index ,cindex))
 		 (vector-ref elements ,cindex))
 	      ((@ js-object-get-name/cache-level2 __hopscript_property)
 	       ,@(cdr x)))))
@@ -271,16 +275,14 @@
 	   (with-access::JsObject ,cowner (elements)
 	      (if (>=fx ,cindex 0)
 		  (begin
-		     (cond-expand
-			(profile
-			 (add-cache-log! 'getCachePrototype ,prop)
-			 (profile-cache-index ,cindex)))
+		     (jsprof
+			(js-jsprof-log-cache! 'getCachePrototype ,prop ,cache)
+			(jsprof-cache-index ,cindex))
 		     (vector-ref elements ,cindex))
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
-		     (cond-expand
-			(profile
-			 (add-cache-log! 'getCacheAccessor ,prop)
-			 (profile-cache-index (-fx (negfx ,cindex) 1))))
+		     (jsprof
+			(js-jsprof-log-cache! 'getCacheAccessor ,prop ,cache)
+			(jsprof-cache-index (-fx (negfx ,cindex) 1)))
 		     (js-property-value ,o desc ,%this)))))
 	  (else
 	   (with-access::JsConstructMap %omap (vlen vtable %id)
@@ -288,8 +290,8 @@
 		       (<fx ,vindx vlen)
 		       (fixnum? (vector-ref vtable ,vindx)))
 		  (begin
-		     (cond-expand
-			(profile (add-cache-log! 'getCacheVtable ,prop)))
+		     (jsprof
+			(js-jsprof-log-cache! 'getCacheVtable ,prop ,cache))
 		     (vector-ref elements (vector-ref vtable ,vindx)))
 		  (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))))
    
@@ -319,10 +321,9 @@
 	      (with-access::JsPropertyCache ,cache (cmap index)
 		 (if (eq? cmap omap)
 		     (begin
-			(cond-expand
-			   (profile
-			    (add-cache-log! 'getCache ,prop)
-			    (profile-cache-index index)))
+			(jsprof
+			   (js-jsprof-log-cache! 'getCache ,prop ,cache)
+			   (jsprof-cache-index index))
 			(vector-ref elements index))
 		     ((@ js-global-object-get-name/cache __hopscript_property)
 		      ,o ,prop ,cache ,throw ,%this))))
@@ -424,10 +425,9 @@
       `(let ((%omap omap))
 	  (if (eq? ,ccmap %omap)
 	      (begin
-		 (cond-expand
-		    (profile
-		     (add-cache-log! 'putCache ,prop)
-		     (profile-cache-index ,cindx)))
+		 (jsprof
+		    (js-jsprof-log-cache! 'putCache ,prop ,cache)
+		    (jsprof-cache-index ,cindx))
 		 (vector-set! elements ,cindx ,tmp)
 		 ,tmp)
 	      (js-object-put-name/cache-level2! ,o ,prop
@@ -457,10 +457,9 @@
    
    (define (set o prop tmp throw cache %this cindx ccmap cpmap cowner vindx)
       `(begin
-	  (cond-expand
-	     (profile
-	      (add-cache-log! 'putCache ,prop)
-	      (profile-cache-index ,cindx)))
+	  (jsprof
+	     (js-jsprof-log-cache! 'putCache ,prop ,cache)
+	     (jsprof-cache-index ,cindx))
 	  (vector-set! elements ,cindx ,tmp)
 	  ,tmp))
    
@@ -484,25 +483,22 @@
 		  (let ((%vec elements))
 		     (if (<fx ,cindx (vector-length %vec))
 			 (begin
-			    (cond-expand
-			       (profile
-				(add-cache-log! 'putCachePrototype ,prop)
-				(profile-cache-index ,cindx)))
+			    (jsprof
+			       (js-jsprof-log-cache! 'putCachePrototype ,prop ,cache)
+			       (jsprof-cache-index ,cindx))
 			    (vector-set! %vec ,cindx ,tmp))
 			 (begin
-			    (cond-expand
-			       (profile
-				(add-cache-log! 'putCacheExtend ,prop)
-				(profile-cache-index ,cindx)))
+			    (jsprof
+			       (js-jsprof-log-cache! 'putCacheExtend ,prop ,cache)
+			       (jsprof-cache-index ,cindx))
 			    (js-object-add! ,o ,cindx ,tmp))))
 		  (with-access::JsObject ,o ((omap cmap))
 		     (set! omap (if (eq? ,ccmap #t) ,cpmap ,ccmap)))
 		  ,tmp)
 	       (with-access::JsObject ,cowner (elements)
-		  (cond-expand
-		     (profile
-		      (add-cache-log! 'putCacheAccessor ,prop)
-		      (profile-cache-index (-fx (negfx ,cindx) 1))))
+		  (jsprof
+		     (js-jsprof-log-cache! 'putCacheAccessor ,prop ,cache)
+		     (jsprof-cache-index (-fx (negfx ,cindx) 1)))
 		  (let ((desc (vector-ref elements (-fx (negfx ,cindx) 1))))
 		     (js-property-value-set! ,o desc ,tmp %this)))))
 	  (else
@@ -512,8 +508,8 @@
 		       (pair? (vector-ref vtable ,vindx)))
 		  (let ((indx (car (vector-ref vtable ,vindx)))
 			(cmap (cdr (vector-ref vtable ,vindx))))
-		     (cond-expand
-			(profile (add-cache-log! 'putCacheVtable ,prop)))
+		     (jsprof
+			(js-jsprof-log-cache! 'putCacheVtable ,prop ,cache))
 		     (js-object-push! ,o indx ,tmp)
 		     (with-access::JsObject ,o ((omap cmap))
 			(set! omap cmap))
@@ -645,16 +641,16 @@
 	     ((and (cond-expand (no-vtable-cache #f) (else #t))
 		   (<fx ,vindex vlen)
 		   (procedure? (vector-ref vtable ,vindex)))
-	      (cond-expand
-		 (profile (add-cache-log! 'callCacheVtable ',name)))
+	      (jsprof
+		 (js-jsprof-log-cache! 'callCacheVtable ,prop ,cache))
 	      ;; polymorphic call
 	      ((vector-ref vtable ,vindex) ,obj ,@args))
 	     ((eq? ,cmap #t)
 	      ;; uncachable call
 	      (let ((f ((@ js-object-get-name/cache __hopscript_property)
 			,obj ',name ,ocache %this)))
-		 (cond-expand
-		    (profile (add-cache-log! 'callCacheMissUncachable ',name)))
+		 (jsprof
+		    (js-jsprof-log-cache! 'callCacheMissUncachable ,prop ,cache))
 		 ,(calln 'f obj args)))
 	     (else
 	      ;; pure cache miss
@@ -673,8 +669,8 @@
 	     (if (eq? ,pmap %omap)
 		 ;; prototype method invocation
 		 (begin
-		    (cond-expand
-		       (profile (add-cache-log! 'callCache ',name)))
+		    (jsprof
+		       (js-jsprof-log-cache! 'callCache ,prop ,cache))
 		    (,method ,obj ,@args))
 		 (js-object-method-call-name/cache-level2
 		    ,(cadr x) ,obj ,@(cdddr x))))))

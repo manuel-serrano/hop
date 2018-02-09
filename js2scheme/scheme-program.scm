@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Feb  7 12:37:17 2018 (serrano)                */
+;*    Last change :  Fri Feb  9 15:38:39 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -183,7 +183,7 @@
 ;*---------------------------------------------------------------------*/
 (define (profilers conf)
    (when (config-get conf :profile #f)
-      `(js-profilers ',(filter-config conf))))
+      `(js-profile-init ',(filter-config conf))))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-config ...                                                */

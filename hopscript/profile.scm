@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Feb  7 14:45:35 2018 (serrano)                */
+;*    Last change :  Fri Feb  9 16:15:48 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -25,7 +25,10 @@
    
    (import __hopscript_types)
 
-   (export (js-profilers conf)
+   (export (js-profile-init conf)
+
+	   (js-profile-log-cache! ::symbol ::obj ::obj)
+	   
 	   (log-cache-miss!)
 	   (add-cache-log! ::symbol ::obj)
 	   (log-pmap-invalidation!)
@@ -33,38 +36,89 @@
 	   (profile-cache-misses)
 	   (profile-function ::obj ::symbol)
 	   (profile-cache-index ::long)
+	   (profile-cache-extension ::long)
 	   (profile-vector-extension ::long ::long)
 	   (profile-functions)
 	   (profile-allocs)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-profilers ...                                                 */
+;*    *profile* ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (js-profilers conf)
-   (unless *profiling*
-      (set! *profiling* #t)
+(define *profile* #f)
+(define *profile-cache* #f)
+(define *profile-caches* '())
+
+(define *profile-cache-hit*
+   '(getCache getCachePrototype getCacheAccessor getCacheVtable
+     putCache putCachePrototype putCacheAccessor utCacheVtable putCacheExtend
+     callCacheVtable callCache))
+
+(define *profile-cache-miss*
+   '(getCacheMiss
+     putCacheMiss
+     callCacheMissUncachable))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-init ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-profile-init conf)
+   (unless *profile*
+      (set! *profile* #t)
       (let ((trc (or (getenv "HOPTRACE") "")))
 	 (when (string-contains trc "hopscript")
+	    (profile-cache-start! trc)
 	    (when (string-contains trc "hopscript:cache")
 	       (log-cache-miss!))
 	    (when (string-contains trc "hopscript:function")
 	       (log-function!))
 	    (register-exit-function!
 	       (lambda (n)
-		  (profile-start)
+		  (profile-report-start trc)
+		  (profile-report-cache trc)
 		  (when (string-contains trc "hopscript:cache")
 		     (profile-cache-misses))
 		  (when (string-contains trc "hopscript:function")
 		     (profile-functions))
 		  (when (string-contains trc "hopscript:alloc")
 		     (profile-allocs))
-		  (profile-end conf)))))))
+		  (profile-report-end trc conf)))))))
 
+;*---------------------------------------------------------------------*/
+;*    profile-cache-start! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (profile-cache-start!)
+   (when (string-contains trc "hopscript:access")
+      (set! *profile-cache* #t)
+      (set! *profile-caches*
+	 (append-map (lambda (k) (cons k '()))
+	    *profile-cache-hit* *profile-cache-miss*))))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-log-cache! ...                                        */
+;*---------------------------------------------------------------------*/
+(define (js-profile-log-cache! key pname pcache)
+   (when *profile-caches*
+      (let ((ow (assq key *profile-log-caches*)))
+	 (if (not ow)
+	     (begin
+		(warning "js-profile-log-cache!" "unregistrated key" key)
+		(set! *profile-log-caches*
+		   (cons (cons key (cons 1 (list (cons pname 1))))
+		      *profile-log-*caches*)))
+	     (let ((on (assq pname (cddr ow))))
+		(set-car! (cdr ow) (+fx 1 (cadr ow)))
+		(if (not on)
+		    (set-cdr! (cdr ow) (cons (cons pname 1) (cddr ow)))
+		    (set-cdr! on (+fx 1 (cdr on)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-report-cache ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-profile-report-cache
+   
 ;*---------------------------------------------------------------------*/
 ;*    *misses* ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define *profiling* #f)
-
 (define *misses* '())
 (define *log-misses* #f)
 (define *log-miss-threshold* 100)
@@ -291,7 +345,7 @@
 	 (profile
 	  (print  "\nOBJECT ALLOCS:\n" "==============\n")
 	  (show-text-percentages js-profile-allocs)
-	  (print  "\nACCESSES:\n" "=======\n")
+	  (print  "\nACCESSES:\n" "=========\n")
 	  (show-text-percentages js-profile-accesses)
 	  (print  "\nEXTENSIONS:\n" "===========\n")
 	  (show-text-percentages js-profile-extensions)
@@ -351,17 +405,17 @@
        #f)))
    
 ;*---------------------------------------------------------------------*/
-;*    profile-start ...                                                */
+;*    profile-report-start ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (profile-start)
-   (when (string-contains (getenv "HOPTRACE") "format:json")
+(define (profile-report-start trc)
+   (when (string-contains trc "format:json")
       (display "{\n" (current-error-port))))
 
 ;*---------------------------------------------------------------------*/
-;*    profile-end ...                                                  */
+;*    profile-report-end ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (profile-end conf)
-   (when (string-contains (getenv "HOPTRACE") "format:json")
+(define (profile-report-end trc conf)
+   (when (string-contains trc "format:json")
       (with-output-to-port (current-error-port)
 	 (lambda ()
 	    (display "\"config\": ")
@@ -389,6 +443,96 @@
    (display "\n}"))
 
 ;*---------------------------------------------------------------------*/
+;*    profile-report-cache ...                                         */
+;*---------------------------------------------------------------------*/
+(define (profile-report-cache trc)
+   
+   (define (hit? e) (memq e *profile-cache-hit*))
+   (define (hit0? e) (memq e '(getCache putCache callCache)))
+   (define (miss? e) (memq e *profile-cache-miss*))
+   
+   (define threshold
+      (let ((m (pregexp-match "hopscript:cache=([0-9]+)" trc)))
+	 (if m (string->integer (cadr m)) 100)))
+   
+   (define (total-cache-hits)
+      (apply + (map cadr (filter hit? *profile-caches*))))
+   
+   (define (total-cache-hits0)
+      (apply + (map cadr (filter hit0? *profile-caches*))))
+   
+   (define (total-cache-misses)
+      (apply + (map cadr (filter misses? *profile-caches*))))
+   
+   (cond
+      ((string-contains (getenv "HOPTRACE") "format:json")
+       (with-output-to-port (current-error-port)
+	  (lambda ()
+	     (display "\"caches\": ")
+	     (display "  \"caches\": {\n")
+	     (for-each (lambda (what)
+			  (print "    \"" (car what) "\": {")
+			  (print "      \"total\": " (cadr what) ",")
+			  (print "      \"entries\": [")
+			  (for-each (lambda (e)
+				       (when (>=fx (cdr e) *log-miss-threshold*)
+					  (print "       { \"" (car e) "\": "
+					     (cdr e) "},")))
+			     (sort (lambda (e1 e2)
+				      (cond
+					 ((>fx (cdr e1) (cdr e2)) #t)
+					 ((<fx (cdr e1) (cdr e2)) #f)
+					 (else
+					  (string<=? (js-symbol->string! (car e1))
+					     (js-symbol->string! (car e2))))))
+				(cddr what)))
+			  (print "     -1 ] },"))
+		*profile-caches*)
+	     (print "  },")
+	     (print "  \"totalCacheHits\": " (total-cache-hits) ", ")
+	     (print "  \"totalCacheHits0\": " (total-cache-hits0) ", ")
+	     (print "  \"totalCacheMisses\": " (total-cache-misses) ", ")
+	     (print "  \"hiddenClassNumber\": " (gencmapid) ",")
+	     (print "  \"pmapInvalidations\": " *pmap-invalidations* ",")
+	     (print "  \"vtables\": { \"number\": " *vtables*
+		", \"mem\": " *vtables-mem* "}")
+	     (print "}, \n"))))
+      (else
+       (fprint (current-error-port) "\nCACHES:\n" "=======\n")
+       (for-each (lambda (what)
+		    (let ((c 0))
+		       (fprint (current-error-port) (car what) ": "
+			  (cadr what))
+		       (for-each (lambda (e)
+				    (when (or (>=fx (cdr e) *log-miss-threshold*)
+					      (<fx c 10))
+				       (set! c (+fx c 1))
+				       (fprint (current-error-port) "   "
+					  (car e) ": " (cdr e))))
+			  (sort (lambda (e1 e2)
+				   (cond
+				      ((>fx (cdr e1) (cdr e2)) #t)
+				      ((<fx (cdr e1) (cdr e2)) #f)
+				      (else
+				       (string<=? (js-symbol->string! (car e1))
+					  (js-symbol->string! (car e2))))))
+			     (cddr what)))
+		       (newline (current-error-port))))
+	  *profile-caches*)
+       (fprint (current-error-port)
+	  "total cache hits         : " (total-cache-hits))
+       (fprint (current-error-port)
+	  "total cache level0 misses: " (total-cache-hits0))
+       (fprint (current-error-port)
+	  "total cache misses       : " (total-cache-misses))
+       (fprint (current-error-port)
+	  "hidden classes num       : " (gencmapid))
+       (fprint (current-error-port)
+	  "pmap invalidations       : " *pmap-invalidations*)
+       (fprint (current-error-port)
+	  "vtables                  : " *vtables* " (" *vtables-mem* "b)"))))
+
+;*---------------------------------------------------------------------*/
 ;*    profile-cache-misses ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (profile-cache-misses)
@@ -403,11 +547,6 @@
        (with-output-to-port (current-error-port)
 	  (lambda ()
 	     (display "\"caches\": ")
-	     (let ((m (pregexp-match "name=([^ ]+)" (getenv "HOPTRACE"))))
-		(print "{")
-		(print "  \"name\": \""
-		   (if (pair? m) (cadr m) (car (command-line)))
-		   "\","))
 	     (display "  \"caches\": {\n")
 	     (for-each (lambda (what)
 			  (print "    \"" (car what) "\": {")
