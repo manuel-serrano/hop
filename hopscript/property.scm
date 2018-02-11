@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Feb 11 19:07:34 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 19:46:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1760,6 +1760,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-put/cache! o prop v::obj throw::bool %this
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+   (tprint "js-put/cache " (typeof o) " prop=" prop)
    (if (or (not (string? prop)) (not (isa? o JsObject)))
        (js-put! o prop v throw %this)
        (let ((pname (js-toname prop %this)))
@@ -1773,6 +1774,7 @@
 (define (js-put-name/cache! o prop::symbol v::obj throw::bool
 	   %this::JsGlobalObject
 	   pcache::JsPropertyCache #!optional (point -1) (cspecs '()))
+   (tprint "js-put-name/cache " (typeof o) " prop=" prop)
    (if (isa? o JsObject)
        (js-object-put-name/cache! o prop v throw %this pcache point cspecs)
        (js-put! o prop v throw %this)))

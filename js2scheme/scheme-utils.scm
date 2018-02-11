@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Feb 11 19:23:54 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 19:37:35 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -600,7 +600,7 @@
 	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))
 	     (else
 	      `(js-put/cache! ,obj , prop
-		  ,(box val tyval conf) ,mode ,(js-pcache cache) %this))))
+		  ,(box val tyval conf) ,mode %this ,(js-pcache cache)))))
 	 (else
 	  (cond
 	     ((string? prop)
