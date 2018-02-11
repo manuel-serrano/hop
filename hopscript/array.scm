@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Feb  9 13:21:55 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 07:05:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -388,7 +388,7 @@
 	       ;; else let T be undefined.
 	       ;;  10. Let lenValue be Get(items, "length").
 	       ;; 11. Let len be ToLength(lenValue).
-	       (let ((len (js-get-length items #f %this)))
+	       (let ((len (js-get-length items %this)))
 		  ;; 13. If IsConstructor(C) is true, then
 		  ;; 13. a. Let A be the result of calling the [[Construct]]
 		  ;;     internal method of C with an argument list containing
@@ -459,14 +459,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsArray ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-length o::JsArray cache %this)
+(define-method (js-get-length o::JsArray %this #!optional cache)
    (with-access::JsArray o (length)
       (js-uint32-tointeger length)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32 ::JsArray ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-lengthu32 o::JsArray cache %this)
+(define-method (js-get-lengthu32 o::JsArray %this #!optional cache)
    (with-access::JsArray o (length)
       length))
 
@@ -804,7 +804,7 @@
 		   %this))))
       
       (let* ((o (js-toobject %this this))
-	     (lenval::uint32 (js-get-lengthu32 o #f %this)))
+	     (lenval::uint32 (js-get-lengthu32 o %this)))
 	 (if (=u32 lenval #u32:0)
 	     (js-ascii->jsstring "")
 	     (let* ((sep ",")
@@ -846,7 +846,7 @@
 		   (if (and (>fx (vector-length vdst) 0)
 			    (>fx (vector-length vsrc) 0))
 		       (let* ((lsrc (vector-length vsrc))
-			      (slen (js-get-length src #f %this))
+			      (slen (js-get-length src %this))
 			      (alen (minfx slen lsrc)))
 			  ;; fast vector-copy
 			  (when (>fx (+fx i alen) (vector-length vdst))
@@ -858,8 +858,8 @@
 			      (copy-array-slow dst (+fx i lsrc) src lsrc slen)
 			      (+fx i alen)))
 		       ;; slow copy
-		       (copy-array-slow dst i src 0 (js-get-length src #f %this)))))
-	     (copy-array-slow dst i src 0 (js-get-length src #f %this))))
+		       (copy-array-slow dst i src 0 (js-get-length src %this)))))
+	     (copy-array-slow dst i src 0 (js-get-length src %this))))
 
       (let* ((l (cons (js-toobject %this this) l))
 	     (new-len (let loop ((l l)
@@ -870,7 +870,7 @@
 			    ((isa? (car l) JsArray)
 			     (loop (cdr l)
 				(+fx/overflow len
-				   (js-get-length (car l) #f %this))))
+				   (js-get-length (car l) %this))))
 			    (else
 			     (loop (cdr l) (+ 1 len))))))
 	     (arr (with-access::JsGlobalObject %this (js-array)
@@ -904,7 +904,7 @@
 	     (js-tostring el %this)))
 
       (let* ((o (js-toobject %this this))
-	     (lenval::uint32 (js-get-lengthu32 o #f %this))
+	     (lenval::uint32 (js-get-lengthu32 o %this))
 	     (sep (if (eq? separator (js-undefined))
 		      ","
 		      (js-tostring separator %this))))
@@ -928,7 +928,7 @@
    ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.4.4.6
    (define (array-prototype-pop this::obj)
       (let* ((o (js-toobject %this this))
-	     (len::uint32 (js-get-lengthu32 o #f %this)))
+	     (len::uint32 (js-get-lengthu32 o %this)))
 	 (cond
 	    ((=u32 len #u32:0)
 	     (js-put-length! o 0 #f #f %this)
@@ -951,7 +951,7 @@
    (define (array-prototype-push this::obj . items)
       (if (not (isa? this JsArray))
 	  (let ((o (js-toobject %this this)))
-	     (let ((n (js-uint32-tointeger (js-get-lengthu32 o #f %this))))
+	     (let ((n (js-uint32-tointeger (js-get-lengthu32 o %this))))
 		
 		(for-each (lambda (item)
 			     (js-put! o n item #f %this)
@@ -993,7 +993,7 @@
       
       (define (array-reverse! o)
 	 (with-access::JsArray o (ilen)
-	    (let* ((len::uint32 (js-get-lengthu32 o #f %this))
+	    (let* ((len::uint32 (js-get-lengthu32 o %this))
 		   (len/2::uint32 (/u32 len #u32:2)))
 	       (let loop ((i #u32:0))
 		  (cond
@@ -1086,7 +1086,7 @@
 		    (vector-shift! o length))
 		   (else
 		    (array-shift! o length))))
-	     (let ((len (js-get-lengthu32 o #f %this)))
+	     (let ((len (js-get-lengthu32 o %this)))
 		(cond
 		   ((=u32 len #u32:0)
 		    (js-put-length! o 0 #f #f %this)
@@ -1163,7 +1163,7 @@
 	    (array-copy! o 0 arr k final)))
       
       (let* ((o (js-toobject %this this))
-	     (len (js-uint32-tointeger (js-get-lengthu32 o #f %this)))
+	     (len (js-uint32-tointeger (js-get-lengthu32 o %this)))
 	     (relstart (js-tointeger start %this))
 	     (k (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
 	     (relend (if (eq? end (js-undefined)) len (js-tointeger end %this)))
@@ -1184,7 +1184,7 @@
 			   (string-slice! o %data start end))
 			  ((>fx vlen 0)
 			   (let* ((arr (string-slice! o %data start vlen))
-				  (vlen (->fixnum (js-get-length arr #f %this))))
+				  (vlen (->fixnum (js-get-length arr %this))))
 			      (array-copy! o vlen arr (- len vlen) end)))
 			  (else
 			   (array-slice! o start end)))))
@@ -1198,7 +1198,7 @@
 			   (u8vector-slice! o %data start end))
 			  ((>fx vlen 0)
 			   (let* ((arr (u8vector-slice! o %data start vlen))
-				  (vlen (->fixnum (js-get-length arr #f %this))))
+				  (vlen (->fixnum (js-get-length arr %this))))
 			      (array-copy! o vlen arr (- len vlen) end)))
 			  (else
 			   (array-slice! o start end)))))
@@ -1214,7 +1214,7 @@
 		       (vector-slice! o vec (->fixnum k) (->fixnum final)))
 		      ((>fx vlen 0)
 		       (let* ((arr (vector-slice! o vec (->fixnum k) vlen))
-			      (vlen (->fixnum (js-get-length arr #f %this))))
+			      (vlen (->fixnum (js-get-length arr %this))))
 			  (array-copy! o vlen arr (- len vlen) final)))
 		      (else
 		       (array-slice! o k final)))))))))
@@ -1299,7 +1299,7 @@
 		  (quicksort arr cmp (+ pivotnewindex 1) right)))))
 
       (define (array-sort arr cmp)
-	 (let ((len (js-uint32-tointeger (js-get-lengthu32 arr #f %this))))
+	 (let ((len (js-uint32-tointeger (js-get-lengthu32 arr %this))))
 	    (unless (< len 2)
 	       (quicksort arr cmp 0 (- len 1)))
 	    arr))
@@ -1311,7 +1311,7 @@
 		(cond
 		   ((js-array-full-inlined? this)
 		    (vector-sort this (get-compare comparefn)))
-		   ((=u32 (js-get-lengthu32 o #f %this) #u32:0)
+		   ((=u32 (js-get-lengthu32 o %this) #u32:0)
 		    this)
 		   (else
 		    (array-sort this (get-compare comparefn))))))))
@@ -1402,7 +1402,7 @@
 
       (let* ((o (js-toobject %this this))
 	     (relstart (js-tointeger start %this))
-	     (len (js-uint32-tointeger (js-get-lengthu32 o #f %this)))
+	     (len (js-uint32-tointeger (js-get-lengthu32 o %this)))
 	     (actualstart (if (< relstart 0) (max (+ len relstart) 0) (min relstart len)))
 	     (actualdeletecount (min (max (js-tointeger deletecount %this) 0)
 				   (- len actualstart))))
@@ -1476,7 +1476,7 @@
 		    (vector-unshift this))
 		   (else
 		    (array-unshift this length))))
-	     (let ((len::uint32 (js-get-lengthu32 o #f %this)))
+	     (let ((len::uint32 (js-get-lengthu32 o %this)))
 		(if (null? items)
 		    (let ((nlen (js-uint32-tointeger len)))
 		       ;; override the length as the conversion touin32
@@ -1520,7 +1520,7 @@
 		   (loop (+ k 1)))))))
 
       (let* ((o (js-toobject %this this))
-	     (len::uint32 (js-get-lengthu32 o #f %this)))
+	     (len::uint32 (js-get-lengthu32 o %this)))
 	 (if (=u32 len #u32:0)
 	     -1
 	     (let ((n (if (pair? indx) (js-tointeger (car indx) %this) 0)))
@@ -1583,7 +1583,7 @@
 	     (array-lastindexof o k)))
       
       (let* ((o (js-toobject %this this))
-	     (len::uint32 (js-get-lengthu32 o #f %this)))
+	     (len::uint32 (js-get-lengthu32 o %this)))
 	 (if (=u32 len #u32:0)
 	     -1
 	     (let ((n (if (pair? indx)
@@ -1911,7 +1911,7 @@
 		acc)))
       
       (let* ((o (js-toobject %this this))
-	     (len::uint32 (js-get-lengthu32 o #f %this)))
+	     (len::uint32 (js-get-lengthu32 o %this)))
 	 (if (not (isa? proc JsFunction))
 	     (js-raise-type-error %this "Not a procedure ~s" proc)
 	     ;; find the accumulator init value
@@ -1951,7 +1951,7 @@
 		   acc))))
       
       (let* ((o (js-toobject %this this))
-	     (len::uint32 (js-get-lengthu32 o #f %this)))
+	     (len::uint32 (js-get-lengthu32 o %this)))
 	 (if (not (isa? proc JsFunction))
 	     (js-raise-type-error %this "Not a procedure ~s" proc)
 	     ;; find the accumulator init value
@@ -2023,9 +2023,8 @@
    (with-access::JsGlobalObject %this (js-array js-array-prototype)
       (let ((proto (if (eq? constructor js-array)
 		       js-array-prototype
-		       (js-get-name/cache constructor 'prototype
-			  (js-pcache-ref %pcache 0)
-			  %this))))
+		       (js-get-name/cache constructor 'prototype #f %this
+			  (js-pcache-ref %pcache 0)))))
 	 (instantiateJsArray
 	    (cmap (js-not-a-cmap))
 	    (__proto__ proto)))))
@@ -2263,7 +2262,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-name/cache-miss o::JsArray p::obj cache::JsPropertyCache throw %this)
+(define-method (js-get-name/cache-miss o::JsArray p::obj
+		  throw::bool %this::JsGlobalObject
+		  cache::JsPropertyCache
+		  #!optional (point -1) (cspecs '()))
    (with-access::JsArray o (vec ilen length)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
@@ -2841,7 +2843,7 @@
    (let ((o (js-toobject %this this)))
       (cond
 	 ((not (isa? o JsArray))
-	  (let ((len (js-get-lengthu32 o #f %this)))
+	  (let ((len (js-get-lengthu32 o %this)))
 	     (if (not (isa? proc JsFunction))
 		 (js-raise-type-error %this "Not a procedure ~s" proc)
 		 (array-iterator o len proc t #u32:0))))
@@ -2970,9 +2972,7 @@
    (if (isa? this JsArray)
        (js-array-push this item %this)
        (js-call1 %this
-	  (js-get-name/cache this 'push
-	     (js-pcache-ref %pcache 1)
-	     %this)
+	  (js-get-name/cache this 'push #f %this (js-pcache-ref %pcache 1))
 	  this item)))
 
 ;*---------------------------------------------------------------------*/
@@ -2980,7 +2980,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-pop o %this)
    (with-access::JsArray o (length ilen vec)
-      (let ((len::uint32 (js-get-lengthu32 o #f %this)))
+      (let ((len::uint32 (js-get-lengthu32 o %this)))
 	 (cond
 	    ((not (array-shrinkable? o))
 	     (js-raise-type-error %this
@@ -3011,13 +3011,14 @@
    (if (isa? this JsArray)
        (js-array-pop this %this)
        (js-call0 %this
-	  (js-get-name/cache this 'pop (js-pcache-ref %pcache 2) %this) this)))
+	  (js-get-name/cache this 'pop #f %this (js-pcache-ref %pcache 2))
+	  this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-fill ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-array-fill this::JsArray value start end %this)
-   (let* ((len::uint32 (js-get-lengthu32 this #f %this))
+   (let* ((len::uint32 (js-get-lengthu32 this %this))
 	  (k (if (eq? start (js-undefined))
 		 #u32:0
 		 (let ((relstart (js-tointeger start %this)))
@@ -3063,7 +3064,7 @@
    (if (isa? this JsArray)
        (js-array-fill this value start end %this)
        (js-call3 %this
-	  (js-get-name/cache this 'fill (js-pcache-ref %pcache 3) %this)
+	  (js-get-name/cache this 'fill #f %this (js-pcache-ref %pcache 3))
 	  this value start end)))
 
 ;*---------------------------------------------------------------------*/

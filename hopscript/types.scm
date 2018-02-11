@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Fri Feb  9 15:46:55 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 06:41:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -82,12 +82,16 @@
 	      (index::long (default -1))
 	      (vindex::long (default (js-not-a-index)))
 	      (owner::obj (default #f))
+	      (point::long (default -1))
 	      (name::obj (default '||))
 	      (method::obj (default #f))
-	      (minid::uint32 (default 0))
-	      (maxid::uint32 (default 0))
+	      (pcache::obj (default #f))
+	      (usage::symbol (default 'get))
 	      (cntmiss::long (default 0))
-	      (cntpolymiss::long (default 0)))
+	      (cntcmap::long (default 0))
+	      (cntpmap::long (default 0))
+	      (cntamap::long (default 0))
+	      (cntvtable::long (default 0)))
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))

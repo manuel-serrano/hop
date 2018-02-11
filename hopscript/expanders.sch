@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Wed Jan 17 09:06:39 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 06:01:54 2018 (serrano)                */
 ;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -34,15 +34,14 @@
 	     ,js-pcache-method-expander))
    (eval `(define-expander js-get-name/cache
 	     ,js-get-name/cache-expander))
+
+   (eval `(define-expander js-profile-log-cache-expander
+	     ,js-profile-log-cache-expander))
+   (eval `(define-expander js-profile-log-index-expander
+	     ,js-profile-log-index-expander))
    
    (eval `(define-expander js-object-get-name/cache
 	     ,js-object-get-name/cache-expander))
-   (eval `(define-expander js-object-get-name/cache-level0
-	     ,js-object-get-name/cache-level0-expander))
-   (eval `(define-expander js-object-get-name/cache-level1
-	     ,js-object-get-name/cache-level1-expander))
-   (eval `(define-expander js-object-get-name/cache-level2
-	     ,js-object-get-name/cache-level2-expander))
    (eval `(define-expander js-global-object-get-name
 	     ,js-global-object-get-name-expander))
    (eval `(define-expander js-global-object-get-name/cache
@@ -55,21 +54,15 @@
 	     ,js-put-name/cache-expander))
    (eval `(define-expander js-object-put-name/cache!
 	     ,js-object-put-name/cache-expander))
-   (eval `(define-expander js-object-put-name/cache-level1!
-	     ,js-object-put-name/cache-level1-expander))
-   (eval `(define-expander js-object-put-name/cache-level2!
-	     ,js-object-put-name/cache-level2-expander))
    
+   (eval `(define-expander js-call/cache
+	     ,js-call/cache-expander))
    (eval `(define-expander js-method-call-name/cache
 	     ,js-method-call-name/cache-expander))
    (eval `(define-expander js-object-method-call-name/cache
 	     ,js-object-method-call-name/cache-expander))
    (eval `(define-expander js-non-object-method-call-name
 	     ,js-non-object-method-call-name-expander))
-   (eval `(define-expander js-object-method-call-name/cache-level2
-	     ,js-object-method-call-name/cache-level2-expander))
-   (eval `(define-expander js-call/cache
-	     ,js-call/cache-expander))
    
    (eval `(define-expander js-let-set!
 	     ,js-let-set!-expander))

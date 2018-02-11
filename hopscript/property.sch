@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Jan 17 07:13:11 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 06:01:36 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -15,6 +15,14 @@
 ;*    directives                                                       */
 ;*---------------------------------------------------------------------*/
 (directives (option (loadq "property_expd.sch")))
+
+;*---------------------------------------------------------------------*/
+;*    profiling                                                        */
+;*---------------------------------------------------------------------*/
+(define-expander js-profile-log-cache
+   js-profile-log-cache-expander)
+(define-expander js-profile-log-index
+   js-profile-log-index-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache ...                                               */
@@ -45,12 +53,6 @@
    js-get-name/cache-expander)
 (define-expander js-object-get-name/cache
    js-object-get-name/cache-expander)
-(define-expander js-object-get-name/cache-level0
-   js-object-get-name/cache-level0-expander)
-(define-expander js-object-get-name/cache-level1
-   js-object-get-name/cache-level1-expander)
-(define-expander js-object-get-name/cache-level2
-   js-object-get-name/cache-level2-expander)
 (define-expander js-global-object-get-name
    js-global-object-get-name-expander)
 (define-expander js-global-object-get-name/cache
@@ -65,10 +67,6 @@
    js-put-name/cache-expander)
 (define-expander js-object-put-name/cache!
    js-object-put-name/cache-expander)
-(define-expander js-object-put-name/cache-level1!
-   js-object-put-name/cache-level1-expander)
-(define-expander js-object-put-name/cache-level2!
-   js-object-put-name/cache-level2-expander)
 
 ;*---------------------------------------------------------------------*/
 ;*    js-call-XXX ...                                                  */
@@ -79,8 +77,6 @@
    js-method-call-name/cache-expander)
 (define-expander js-object-method-call-name/cache
    js-object-method-call-name/cache-expander)
-(define-expander js-object-method-call-name/cache-level2
-   js-object-method-call-name/cache-level2-expander)
 (define-expander js-non-object-method-call-name
    js-non-object-method-call-name-expander)
 		    

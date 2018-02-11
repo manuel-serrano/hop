@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Fri Jan 26 13:24:38 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 06:45:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript strings                      */
@@ -167,9 +167,9 @@
 	 (define (js-string-alloc::JsString constructor::JsFunction)
 	    (instantiateJsString
 	       (val (js-ascii->jsstring ""))
-	       (__proto__ (js-get-name/cache constructor 'prototype
-			     (js-pcache-ref %pcache 0)
-			     %this))))
+	       (__proto__ (js-object-get-name/cache constructor 'prototype #f
+			     %this
+			     (js-pcache-ref %pcache 0)))))
 
 	 ;; then, create a HopScript object
 	 (set! js-string

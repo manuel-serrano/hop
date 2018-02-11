@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/hopscript/spawn.scm               */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/spawn.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Sat Oct  8 07:26:17 2016 (serrano)                */
-;*    Copyright   :  2016 Manuel Serrano                               */
+;*    Last change :  Sat Feb 10 10:59:37 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
 ;*                                                                     */
@@ -76,7 +76,7 @@
 (define-macro (ref obj prop)
    (eval '(set! idx (+fx 1 idx)))
    (eval '(when (>=fx idx 10) (error "ref" "index out-of-bound" idx)))
-   `(js-get-name/cache ,obj ,prop (js-pcache-ref %pcache ,(eval idx)) %this))
+   `(js-get-name/cache ,obj ,prop #f %this (js-pcache-ref %pcache ,(eval idx))))
 
 ;*---------------------------------------------------------------------*/
 ;*    call ...                                                         */

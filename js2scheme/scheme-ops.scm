@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Feb  7 12:39:29 2018 (serrano)                */
+;*    Last change :  Sat Feb 10 10:57:45 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -187,7 +187,7 @@
 	 ((isa? expr J2SUnresolvedRef)
 	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3
 	  (with-access::J2SUnresolvedRef expr (id loc cache)
-	     `(js-typeof ,(j2s-unresolved id cache #f))))
+	     `(js-typeof ,(j2s-unresolved id #f cache loc))))
 	 ((isa? expr J2SParen)
 	  (with-access::J2SParen expr (expr)
 	     (typeof->scheme expr)))
@@ -762,7 +762,7 @@
 	 ((isa? expr J2SUnresolvedRef)
 	  ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.4.3
 	  (with-access::J2SUnresolvedRef expr (id loc cache)
-	     (j2s-unresolved id cache #f)))
+	     (j2s-unresolved id #f cache loc)))
 	 ((isa? expr J2SParen)
 	  (with-access::J2SParen expr (expr)
 	     (typeof-expr expr mode return conf hint)))

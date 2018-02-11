@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Feb  9 16:15:48 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 19:22:15 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -27,7 +27,9 @@
 
    (export (js-profile-init conf)
 
-	   (js-profile-log-cache! ::symbol ::obj ::obj)
+	   (js-profile-log-cache ::JsPropertyCache
+	      #!key cmap pmap amap vtable)
+	   (js-profile-log-index ::long)
 	   
 	   (log-cache-miss!)
 	   (add-cache-log! ::symbol ::obj)
@@ -86,7 +88,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    profile-cache-start! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (profile-cache-start!)
+(define (profile-cache-start! trc)
    (when (string-contains trc "hopscript:access")
       (set! *profile-cache* #t)
       (set! *profile-caches*
@@ -94,28 +96,26 @@
 	    *profile-cache-hit* *profile-cache-miss*))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-profile-log-cache! ...                                        */
+;*    js-profile-log-cache ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-profile-log-cache! key pname pcache)
-   (when *profile-caches*
-      (let ((ow (assq key *profile-log-caches*)))
-	 (if (not ow)
-	     (begin
-		(warning "js-profile-log-cache!" "unregistrated key" key)
-		(set! *profile-log-caches*
-		   (cons (cons key (cons 1 (list (cons pname 1))))
-		      *profile-log-*caches*)))
-	     (let ((on (assq pname (cddr ow))))
-		(set-car! (cdr ow) (+fx 1 (cadr ow)))
-		(if (not on)
-		    (set-cdr! (cdr ow) (cons (cons pname 1) (cddr ow)))
-		    (set-cdr! on (+fx 1 (cdr on)))))))))
+(define (js-profile-log-cache cache::JsPropertyCache
+	   #!key cmap pmap amap vtable)
+   (with-access::JsPropertyCache cache (cntcmap cntpmap cntamap cntvtable)
+      (cond
+	 (cmap (set! cntcmap (+fx 1 cntcmap)))
+	 (pmap (set! cntpmap (+fx 1 cntpmap)))
+	 (amap (set! cntamap (+fx 1 cntamap)))
+	 (vtable (set! cntvtable (+fx 1 cntvtable))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-profile-report-cache ...                                      */
+;*    js-profile-log-index ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (js-profile-report-cache
-   
+(define (js-profile-log-index idx)
+   (let* ((len (vector-length js-profile-accesses))
+	  (i (if (>=fx idx len) (-fx len 1) idx)))
+      (vector-set! js-profile-accesses i
+	 (+llong (fixnum->llong 1) (vector-ref js-profile-accesses i)))))
+      
 ;*---------------------------------------------------------------------*/
 ;*    *misses* ...                                                     */
 ;*---------------------------------------------------------------------*/
@@ -265,14 +265,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    profiling                                                        */
 ;*---------------------------------------------------------------------*/
-(cond-expand
-   (profile (define js-profile-allocs (make-vector 32 #l0))))
-(cond-expand
-   (profile (define js-profile-accesses (make-vector 32 #l0))))
-(cond-expand
-   (profile (define js-profile-extensions (make-vector 32 #l0))))
-(cond-expand
-   (profile (define js-profile-vectors (make-vector 32 #l0))))
+(define js-profile-allocs (make-vector 32 #l0))
+(define js-profile-accesses (make-vector 32 #l0))
+(define js-profile-extensions (make-vector 32 #l0))
+(define js-profile-vectors (make-vector 32 #l0))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-allocs ...                                               */
@@ -462,7 +458,7 @@
       (apply + (map cadr (filter hit0? *profile-caches*))))
    
    (define (total-cache-misses)
-      (apply + (map cadr (filter misses? *profile-caches*))))
+      (apply + (map cadr (filter miss? *profile-caches*))))
    
    (cond
       ((string-contains (getenv "HOPTRACE") "format:json")

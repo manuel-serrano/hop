@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Jan 24 15:02:17 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 19:23:54 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -26,6 +26,8 @@
            j2s-unresolved-del-workspace
 	   j2s-unresolved-get-workspace
 	   j2s-unresolved-call-workspace
+
+	   (loc->point::long ::obj)
 	   
 	   (epairify loc expr)
 	   (epairify-deep loc expr)
@@ -60,15 +62,15 @@
 	   (j2s-jsstring val loc)
 	   (js-string->jsstring ::bstring)
 	   
-	   (j2s-unresolved name cache throw)
+	   (j2s-unresolved name throw cache loc)
 	   (js-not expr)
 	   
 	   (js-pcache cache)
-	   (js-object-get-name/cache::symbol clevel::long)
-	   (js-object-put-name/cache!::symbol clevel::long)
 	   
-	   (j2s-get loc obj tyobj prop typrop tyval conf cache #!optional (clevel 100))
-	   (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (clevel 100))
+	   (j2s-get loc obj tyobj prop typrop tyval conf cache
+	      #!optional (cspecs '()))
+	   (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache
+	      #!optional (cspecs '()))
 
 	   (inrange-positive?::bool ::J2SExpr)
 	   (inrange-one?::bool ::J2SExpr)
@@ -94,6 +96,14 @@
 (define j2s-unresolved-del-workspace '%this)
 (define j2s-unresolved-get-workspace '%scope)
 (define j2s-unresolved-call-workspace '%this)
+
+;*---------------------------------------------------------------------*/
+;*    loc->point ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (loc->point loc)
+   (match-case loc
+      ((at ?- ?point) point)
+      (else -1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    epairify ...                                                     */
@@ -414,15 +424,15 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-unresolved ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (j2s-unresolved name cache throw)
+(define (j2s-unresolved name throw cache loc)
    (cond
       ((eq? name 'undefined)
        `(js-undefined))
       (cache
        `(js-global-object-get-name/cache ,j2s-unresolved-get-workspace ',name
-	   ,(js-pcache cache)
 	   ,(if (pair? throw) `',throw throw)
-	   %this))
+	   %this
+	   ,(js-pcache cache) ,(loc->point loc)))
       (else
        `(js-global-object-get-name ,j2s-unresolved-get-workspace ',name
 	   ,(if (pair? throw) `',throw throw)
@@ -453,28 +463,10 @@
    `(js-pcache-ref %pcache ,cache))
 
 ;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache ...                                     */
-;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache::symbol clevel::long)
-   (case clevel
-      ((0) 'js-object-get-name/cache-level0)
-      ((1) 'js-object-get-name/cache-level1)
-      ((2) 'js-object-get-name/cache-level2)
-      (else 'js-object-get-name/cache)))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache! ...                                    */
-;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache!::symbol clevel::long)
-   (case clevel
-      ((1) 'js-object-put-name/cache-level1!)
-      ((2) 'js-object-put-name/cache-level2!)
-      (else 'js-object-put-name/cache!)))
-   
-;*---------------------------------------------------------------------*/
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-get loc obj tyobj prop typrop tyval conf cache #!optional (clevel 100))
+(define (j2s-get loc obj tyobj prop typrop tyval conf cache
+	   #!optional (cspecs '()))
 
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
@@ -522,29 +514,33 @@
 	     ((string? prop)
 	      (if (string=? prop "length")
 		  (if (eq? tyval 'uint32)
-		      `(js-get-lengthu32 ,obj ,(js-pcache cache) %this)
-		      `(js-get-length ,obj ,(js-pcache cache) %this))
+		      `(js-get-lengthu32 ,obj %this ,(js-pcache cache))
+		      `(js-get-length ,obj %this ,(js-pcache cache)))
 		  (case tyobj
 		     ((object this)
-		      `(,(js-object-get-name/cache clevel) ,obj
-			  ',(string->symbol prop) ,(js-pcache cache) %this))
+		      `(js-object-get-name/cache ,obj
+			  ',(string->symbol prop) #f %this
+			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 		     ((global)
 		      `(js-global-object-get-name/cache ,obj
-			  ',(string->symbol prop) ,(js-pcache cache) #f %this))
+			  ',(string->symbol prop) #f %this
+			  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 		     (else
 		      `(js-get-name/cache ,obj
-			  ',(string->symbol prop) ,(js-pcache cache) %this)))))
+			  ',(string->symbol prop) #f %this
+			  ,(js-pcache cache) ,(loc->point loc))))))
 	     ((memq typrop '(int32 uint32))
 	      `(js-get ,obj ,(box prop typrop conf) %this))
 	     ((maybe-string? prop typrop)
-	      `(js-get/cache ,obj ,prop ,(js-pcache cache) %this))
+	      `(js-get/cache ,obj ,prop %this
+		  ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 	     (else
 	      `(js-get ,obj ,prop %this))))
 	 ((string? prop)
 	  (if (string=? prop "length")
 	      (if (eq? tyval 'uint32)
-		  `(js-get-lengthu32 ,obj #f %this)
-		  `(js-get-length ,obj #f %this))
+		  `(js-get-lengthu32 ,obj %this #f)
+		  `(js-get-length ,obj %this #f))
 	      `(js-get ,obj ',(string->symbol prop) %this)))
 	 ((memq typrop '(int32 uint32))
 	  `(js-get ,obj ,(box prop typrop conf) %this))
@@ -554,7 +550,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (clevel 100))
+(define (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (cspecs '()))
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)
@@ -587,19 +583,20 @@
 		  (begin
 		     (case tyobj
 			((object global this)
-			 `(,(js-object-put-name/cache! clevel)
-			   ,obj
-			   ',(string->symbol prop)
-			   ,(box val tyval conf)
-			   ,mode ,(js-pcache cache) %this))
+			 `(js-object-put-name/cache! ,obj
+			     ',(string->symbol prop)
+			     ,(box val tyval conf)
+			     ,mode %this
+			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))
 			(else
 			 `(js-put-name/cache! ,obj ',(string->symbol prop)
 			     ,(box val tyval conf)
-			     ,mode ,(js-pcache cache) %this))))))
+			     ,mode %this
+			     ,(js-pcache cache) ,(loc->point loc) ',cspecs))))))
 	     ((memq typrop '(int32 uint32))
 	      `(js-put! ,obj ,(box prop typrop conf)
 		  ,(box val tyval conf) ,mode %this))
-	     ((or (number? prop) (>=fx clevel 10))
+	     ((or (number? prop) (null? cspecs))
 	      `(js-put! ,obj ,prop ,(box val tyval conf) ,mode %this))
 	     (else
 	      `(js-put/cache! ,obj , prop

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Fri Jan 26 14:03:04 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 07:14:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -312,23 +312,11 @@
 	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-length ::JsArguments ...                                  */
-;*---------------------------------------------------------------------*/
-;* (define-method (js-get-length o::JsArguments cache %this)           */
-;*    (with-access::JsArguments o (vec)                                */
-;*       (call-next-method)))                                          */
-;* {*       (vector-length vec)))                                         *} */
-   
-;* {*---------------------------------------------------------------------*} */
-;* {*    js-get-lookup ...                                                *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (js-get-lookup o::JsArguments p::obj cache::JsPropertyCache throw %this) */
-;*    (js-get o p %this))                                              */
-
-;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ...                                       */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-name/cache-miss o::JsArguments p::obj cache::JsPropertyCache throw %this)
+(define-method (js-get-name/cache-miss o::JsArguments p::obj
+		  throw::bool %this::JsGlobalObject
+		  cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-get o p %this))
 
 ;*---------------------------------------------------------------------*/

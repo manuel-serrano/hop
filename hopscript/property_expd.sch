@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Feb  9 18:50:43 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 19:22:09 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -12,10 +12,37 @@
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
-;*    profile ...                                                      */
+;*    js-profile-log-cache-expander ...                                */
 ;*---------------------------------------------------------------------*/
-(define-macro (jsprof . exprs)
-   (cond-expand (profile ,@exprs)))
+(define (js-profile-log-cache-expander x e)
+   (cond-expand
+      (profile
+       (match-case x
+	  ((js-profile-log-cache ?cache . ?cspecs)
+	   (e `(with-access::JsPropertyCache ,cache (cntcmap cntpmap
+						       cntamap cntvtable)
+		  ,@(filter-map (lambda (c)
+				   (when (keyword? c)
+				      (let ((id (symbol-append 'cnt
+						   (string->symbol
+						      (keyword->string c)))))
+					 `(set! ,id (+fx 1 ,id)))))
+		       cspecs))
+	      e))
+	  (else
+	   (map (lambda (x) (e x e)) x))))
+      (else
+       #unspecified)))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-log-index-expander ...                                */
+;*---------------------------------------------------------------------*/
+(define (js-profile-log-index-expander x e)
+   (cond-expand
+      (profile
+       (map (lambda (x) (e x e)) x))
+      (else
+       #unspecified)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %define-pcache-expander ...                                      */
@@ -137,165 +164,117 @@
 	 e)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-get-name/cache-expander ...                            */
+;*---------------------------------------------------------------------*/
+(define (js-object-get-name/cache-expander x e)
+
+   (define (cache-miss-fun prop)
+      (match-case prop
+	 (((kwote quote) length)
+	  '(@ js-get-name/cache-miss __hopscript_property))
+	 (else
+	  '(@ js-get-lookup __hopscript_property))))
+   
+   (define (expand-cache-specs cspecs obj prop throw %this cache loc)
+      `(with-access::JsObject ,obj (cmap elements)
+	  (let ((%cmap cmap))
+	     ,(let loop ((cs cspecs)
+			 (inpmap #f))
+		 (if (null? cs)
+		     ;; cache miss
+		     `(,(cache-miss-fun prop)
+		       ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs)
+		     (case (car cs)
+			((cmap)
+			 ;; direct property get
+			 `(if (eq? %cmap (js-pcache-cmap ,cache))
+			      (let ((idx (js-pcache-index ,cache)))
+				 (js-profile-log-cache ,cache 'cmap #t)
+				 (js-profile-log-index idx)
+				 (vector-ref elements idx))
+			      ,(loop (cdr cs) #f)))
+			((pmap pmap+)
+			 ;; prototype property get
+			 (if inpmap
+			     `(with-access::JsObject (js-pcache-owner ,cache) (elements)
+				 (js-profile-log-cache ,cache :pmap #t)
+				 (js-profile-log-index idx)
+				 (vector-ref elements idx))
+			     `(if (eq? %cmap (js-pcache-pmap ,cache))
+				  (let ((idx (js-pcache-index ,cache)))
+				     (if (>=fx idx 0)
+					 ,(loop cs #t)
+					 ,(loop (cdr cs) #f))))))
+			((amap amap+)
+			 ;; accessor property get
+			 (if inpmap
+			     `(with-access::JsObject (js-pcache-owner ,cache) (elements)
+				 (let* ((idx (-fx (negfx idx) 1))
+					(desc (vector-ref elements idx)))
+				    (js-profile-log-cache ,cache :amap #t)
+				    (js-profile-log-index idx)
+				    (js-property-value ,obj desc ,%this)))
+			     `(if (eq? %cmap (js-pcache-pmap ,cache))
+				  (let ((idx (js-pcache-index ,cache)))
+				     (if (<fx idx 0)
+					 ,(loop cs #t)
+					 ,(loop (cdr cs) #f))))))
+			((vtable)
+			 ;; vtable property get
+			 (cond-expand
+			    (no-vtable-cache
+			     (loop (cdr cs) inpmap))
+			    (else
+			     `(with-access::JsConstructMap %cmap (vlen vtable %id)
+				 (let ((vidx (js-pcache-vindex ,cache)))
+				    (if (and (<fx vidx vlen) (fixnum? vidx))
+					(let ((idx (vector-ref vtable vidx)))
+					   (js-profile-log-cache ,cache
+					      :vtable #t)
+					   (js-profile-log-index idx)
+					   (vector-ref elements idx))
+					,(loop (cdr cs) #f)))))))
+			((global)
+			 `((@ js-global-object-get-name/cache __hopscript_property)
+			   ,obj ,prop ,throw ,%this
+			   ,cache ,loc ',cspecs))
+			(else
+			 (error "js-object-get-name/cache" "bad cache spec"
+			    cs))))))))
+      
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-get)
+       (map (lambda (e x e)) x))
+      (else
+       (match-case x
+	  ((js-object-get-name/cache (and (? symbol?) ?obj)
+	      ?prop ?throw ?%this (and ?cache (js-pcache-ref %pcache ?ci))
+	      ?loc (quote ?cspecs))
+	   (e (expand-cache-specs cspecs obj prop throw %this cache loc) e))
+	  ((js-object-get-name/cache ?obj ?prop ?throw ?%this ?cache ?loc)
+	   (e (append x '('(cmap pmap amap vtable))) e))
+	  ((js-object-get-name/cache ?obj ?prop ?throw ?%this ?cache)
+	   (e (append x '(-1 '(cmap pmap amap vtable))) e))
+	  (else
+	   (map (lambda (x) (e x e)) x))))))
+
+;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-expander ...                                   */
 ;*---------------------------------------------------------------------*/
 (define (js-get-name/cache-expander x e)
    (match-case x
-      ((?- (and (? symbol?) ?obj) ((kwote quote) ?name) ?cache (and (? symbol?) ?%this))
+      ((?- (and (? symbol?) ?obj) ?prop ?throw ?%this . ?rest)
        (e `(if (js-object? ,obj)
-	       (js-object-get-name/cache ,obj ',name ,cache ,%this)
-	       (js-get ,obj ',name ,%this))
+	       (js-object-get-name/cache ,obj ,prop ,throw ,%this ,@rest)
+	       (js-get ,obj ,prop ,%this))
 	  e))
-      ((?- ?obj ((kwote quote) ?name) ?cache (and (? symbol?) ?%this))
+      ((?- ?obj . ?rest)
        (let ((tmp (gensym 'obj)))
 	  (e `(let ((,tmp ,obj))
-		 (if (js-object? ,tmp)
-		     (js-object-get-name/cache ,tmp ',name ,cache ,%this)
-		     (js-get ,tmp ',name ,%this)))
+		 (js-get-name/cache ,tmp ,@rest))
 	     e)))
       (else
        (map (lambda (x) (e x e)) x))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-match-expander ...                      */
-;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache-match-expander x e ref)
-   (match-case x
-      ((?- (and (? symbol?) ?obj) ?prop (and ?cache (js-pcache-ref %pcache ?ci))
-	  ?%this)
-       (e `(with-access::JsObject ,obj ((omap cmap) elements)
-	      ,(ref obj prop cache %this
-		  `(js-pcache-index ,cache)
-		  `(js-pcache-cmap ,cache)
-		  `(js-pcache-pmap ,cache)
-		  `(js-pcache-owner ,cache)
-		  `(js-pcache-vindex ,cache)))
-	  e))
-      ((?- (and (? symbol?) ?obj) ?prop ?cache ?%this . ?rest)
-       (e `(with-access::JsObject ,obj ((omap cmap) elements)
-	      (with-access::JsPropertyCache ,cache (cmap pmap index owner vindex)
-		 ,(ref obj prop cache %this
-		     'index 'cmap 'pmap 'owner 'vindex)))
-	  e))
-      ((?- ?obj ?prop ?cache ?%this)
-       (let ((tmp (gensym 'tmp)))
-	  (e `(let ((,tmp ,obj))
-		 (with-access::JsObject ,tmp ((omap cmap) elements)
-		    (with-access::JsPropertyCache ,cache (cmap pmap index owner vindex)
-		       ,(ref tmp prop cache %this
-			   'index 'cmap 'pmap 'owner 'vindex))))
-	     e)))
-      (else
-       (map (lambda (x) (e x e)) x))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-expander ...                            */
-;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache-expander x e)
-   
-   (define (ref o prop cache %this cindex ccmap cpmap cowner vindx)
-      `(let ((%omap omap))
-	  (if (eq? ,ccmap %omap)
-	      (with-access::JsObject ,o (elements)
-		 (jsprof
-		    (js-jsprof-log-cache! 'getCache ,prop ,cache)
-		    (jsprof-cache-index ,cindex))
-		 (vector-ref elements ,cindex))
-	      (js-object-get-name/cache-level2 ,@(cdr x)))))
-   
-   (cond-expand
-      ((or no-macro-cache no-macro-cache-get)
-       (map (lambda (x) (e x e)) x))
-      (else
-       (let ((e1 (cond-expand
-		    (cache-level2
-		     e)
-		    (else
-		     (lambda (x e2)
-			(match-case x
-			   ((js-object-get-name/cache-level2 . ?-)
-			    (map (lambda (x) (e x e)) x))
-			   (else
-			    (e x e2))))))))
-	  (js-object-get-name/cache-match-expander x e1 ref)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-level0-expander ...                     */
-;*    -------------------------------------------------------------    */
-;*    Similar to JS-OBJECT-GET-NAME/CACHE-EXPANDER but cache level2    */
-;*    is not inlined in the expanded call.                             */
-;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache-level0-expander x e)
-   
-   (define (ref o prop cache %this cindex ccmap cpmap cowner vindx)
-      `(let ((%omap omap))
-	  (if (eq? ,ccmap %omap)
-	      (with-access::JsObject ,o (elements)
-		 (jsprof
-		    (js-jsprof-log-cache! 'getCache ,prop ,cache)
-		    (jsprof-cache-index ,cindex))
-		 (vector-ref elements ,cindex))
-	      ((@ js-object-get-name/cache-level2 __hopscript_property)
-	       ,@(cdr x)))))
-   
-   (cond-expand
-      ((or no-macro-cache no-macro-cache-get)
-       (map (lambda (x) (e x e)) x))
-      (else
-       (js-object-get-name/cache-match-expander x e ref))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-level1-expander ...                     */
-;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache-level1-expander x e)
-   
-   (define (ref o prop cache %this cindex ccmap cpmap cowner vindx)
-      `(with-access::JsObject ,o (elements)
-	  (vector-ref elements ,cindex)))
-   
-   (cond-expand
-      ((or no-macro-cache no-macro-cache-get)
-       (map (lambda (x) (e x e)) x))
-      (else
-       (js-object-get-name/cache-match-expander x e ref))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-get-name/cache-level2-expander ...                     */
-;*---------------------------------------------------------------------*/
-(define (js-object-get-name/cache-level2-expander x e)
-   
-   (define (cache-miss-fun prop)
-      (match-case prop
-	 (((kwote quote) length) 'js-get-name/cache-miss)
-	 (else 'js-get-lookup)))
-   
-   (define (ref o prop cache %this cindex ccmap cpmap cowner vindx)
-      `(cond
-	  ((eq? ,cpmap %omap)
-	   (with-access::JsObject ,cowner (elements)
-	      (if (>=fx ,cindex 0)
-		  (begin
-		     (jsprof
-			(js-jsprof-log-cache! 'getCachePrototype ,prop ,cache)
-			(jsprof-cache-index ,cindex))
-		     (vector-ref elements ,cindex))
-		  (let ((desc (vector-ref elements (-fx (negfx ,cindex) 1))))
-		     (jsprof
-			(js-jsprof-log-cache! 'getCacheAccessor ,prop ,cache)
-			(jsprof-cache-index (-fx (negfx ,cindex) 1)))
-		     (js-property-value ,o desc ,%this)))))
-	  (else
-	   (with-access::JsConstructMap %omap (vlen vtable %id)
-	      (if (and (cond-expand (no-vtable-cache #f) (else #t))
-		       (<fx ,vindx vlen)
-		       (fixnum? (vector-ref vtable ,vindx)))
-		  (begin
-		     (jsprof
-			(js-jsprof-log-cache! 'getCacheVtable ,prop ,cache))
-		     (vector-ref elements (vector-ref vtable ,vindx)))
-		  (,(cache-miss-fun prop) ,o ,prop ,cache #f ,%this))))))
-   
-   (js-object-get-name/cache-match-expander x e ref))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-global-object-get-name-expander ...                           */
@@ -316,17 +295,17 @@
 ;*---------------------------------------------------------------------*/
 (define (js-global-object-get-name/cache-expander x e)
    (match-case x
-      ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-)) ?cache ?throw ?%this)
-       (e `(with-access::JsObject ,o ((omap cmap) elements)
-	      (with-access::JsPropertyCache ,cache (cmap index)
-		 (if (eq? cmap omap)
-		     (begin
-			(jsprof
-			   (js-jsprof-log-cache! 'getCache ,prop ,cache)
-			   (jsprof-cache-index index))
-			(vector-ref elements index))
-		     ((@ js-global-object-get-name/cache __hopscript_property)
-		      ,o ,prop ,cache ,throw ,%this))))
+      ((js-global-object-get-name/cache ?obj ?prop ?throw ?%this ?cache)
+       (e `(js-object-get-name/cache ,obj ,prop ,throw ,%this
+	      ,cache -1 '(cmap global))
+	  e))
+      ((js-global-object-get-name/cache ?obj ?prop ?throw ?%this ?cache ?loc)
+       (e `(js-object-get-name/cache ,obj ,prop ,throw ,%this
+	      ,cache ,loc '(cmap global))
+	  e))
+      ((js-global-object-get-name/cache ?obj ?prop ?throw ?%this ?cache ?loc ?cs)
+       (e `(js-object-get-name/cache ,obj ,prop ,throw ,%this
+	      ,cache ,loc ,cs)
 	  e))
       (else
        (map (lambda (x) (e x e)) x))))
@@ -336,12 +315,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-get-length-expander x e)
    (match-case x
-      ((?- (and (? symbol?) ?o) ?cache ?%this)
+      ((?- (and (? symbol?) ?o) ?%this ?cache)
        (e `(if (isa? ,o JsArray)
 	       (js-uint32-tointeger (js-array-length ,o))
 	       ((@ js-get-length __hopscript_property) ,@(cdr x)))
 	  e))
-      ((?- ?o ?cache ?%this)
+      ((?- ?o ?%this ?cache)
        (let ((tmp (gensym)))
 	  (e `(let ((,tmp ,o))
 		 (if (isa? ,tmp JsArray)
@@ -350,183 +329,247 @@
 	     e)))
       (else
        (map (lambda (x) (e x e)) x))))
-      
-;*---------------------------------------------------------------------*/
-;*    js-put-name/cache-expander ...                                   */
-;*---------------------------------------------------------------------*/
-(define (js-put-name/cache-expander x e)
-   (match-case x
-      ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-))
-	  (and (or (? symbol?) (? number?)) ?v)
-	  ?throw ?cache (and (? symbol?) ?%this))
-       (e `(if (js-object? ,o)
-	       (js-object-put-name/cache! ,o ,prop ,v ,throw ,cache ,%this)
-	       (js-put! ,o ,prop ,v ,throw ,%this))
-	  e))
-      ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-)) ?v ?throw ?cache (and (? symbol?) ?%this))
-       (let ((tmp (gensym 'tmp)))
-	  (e `(let ((,tmp ,v))
-		 (if (js-object? ,o)
-		     (js-object-put-name/cache! ,o ,prop ,tmp ,throw ,cache ,%this)
-		     (js-put! ,o ,prop ,tmp ,throw ,%this)))
-	     e)))
-      ((?- ?o (and ?prop ((kwote quote) ?-)) ?v ?throw ?cache (and (? symbol?) ?%this))
-       (let ((tmp (gensym 'tmp)))
-	  (e `(let ((,tmp ,o)) (,(car x) ,tmp ,@(cddr x))) e)))
-      (else
-       (map (lambda (x) (e x e)) x))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache-match-expander ...                      */
-;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-match-expander x e set err)
-
-   (define (expand/tmp v set)
-      (if (or (symbol? v) (number? v) (string? v) (cnst? v))
-	  (set v)
-	  (let ((tmp (gensym 'tmp)))
-	     `(let ((,tmp ,v))
-		 ,(set tmp)))))
-   
-   (match-case x
-      ((?- (and (? symbol?) ?o) (and ?prop ((kwote quote) ?-)) ?v ?throw
-	  (and ?cache (js-pcache-ref %pcache ?ci))
-	  (and (? symbol?) ?%this))
-       (e (expand/tmp v
-	     (lambda (tmp)
-		`(with-access::JsObject ,o ((omap cmap) elements)
-		    ,(set o prop tmp throw cache %this
-			`(js-pcache-index ,cache)
-			`(js-pcache-cmap ,cache)
-			`(js-pcache-pmap ,cache)
-			`(js-pcache-owner ,cache)
-			`(js-pcache-vindex ,cache)))))
-	  e))
-      ((?- (and (? symbol?) ?o) ?prop ?v ?throw ?cache ?%this)
-       (e (expand/tmp v
-	     (lambda (tmp)
-		`(with-access::JsObject ,o ((omap cmap) elements)
-		    (with-access::JsPropertyCache ,cache (cmap pmap index owner vindex)
-		       ,(set o prop tmp throw cache %this
-			   'index 'cmap 'pmap 'owner 'vindex)))))
-	  e))
-      ((?- ?o ?prop ?v ?throw ?cache ?%this)
-       (let ((tmp (gensym 'tmp)))
-	  (e `(let ((,tmp ,o)) (,(car x) ,tmp ,@(cddr x))) e)))
-      (else
-       (err x))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-expander ...                            */
 ;*---------------------------------------------------------------------*/
 (define (js-object-put-name/cache-expander x e)
-   
-   (define (set o prop tmp throw cache %this cindx ccmap cpmap cowner vindx)
-      `(let ((%omap omap))
-	  (if (eq? ,ccmap %omap)
-	      (begin
-		 (jsprof
-		    (js-jsprof-log-cache! 'putCache ,prop ,cache)
-		    (jsprof-cache-index ,cindx))
-		 (vector-set! elements ,cindx ,tmp)
-		 ,tmp)
-	      (js-object-put-name/cache-level2! ,o ,prop
-		 ,tmp ,throw ,cache ,%this))))
-   
+
+   (define (expand-tmp e val proc)
+      (if (or (symbol? val) (number? val) (string? val) (cnst? val))
+	  (e (proc val) e)
+	  (let ((tmp (gensym 'v)))
+	     `(let ((,tmp ,(e val e)))
+		 ,(e (proc tmp) e)))))
+      
+   (define (expand-cache-specs cspecs obj prop tmp throw %this pcache loc)
+      `(with-access::JsObject ,obj (cmap elements)
+	  (let ((%cmap cmap))
+	     ,(let loop ((cs cspecs)
+			 (inpmap #f))
+		 (if (null? cs)
+		     `((@ js-object-put-name/cache-miss! __hopscript_property)
+		       ,obj ,prop ,tmp ,throw ,%this
+		       ,pcache ,loc ',cspecs)
+		     (case (car cs)
+			((cmap)
+			 ;; directory property set
+			 `(if (eq? %cmap (js-pcache-cmap ,cache))
+			      (let ((idx (js-pcache-index ,cache)))
+				 (js-profile-log-cache ,cache :cmap #t)
+				 (js-profile-log-index idx)
+				 (vector-set! elements idx ,tmp)
+				 ,tmp)
+			      ,(loop (cdr cs) #f)))
+			((pmap)
+			 ;; prototype property set
+			 (if inpmap
+			     `(let ((%vec elements))
+				 (js-profile-log-index idx)
+				 (if (<fx idx (vector-length %vec))
+				     (begin
+					(js-profile-log-cache ,cache :pmap #t)
+					(vector-set! %vec idx ,tmp))
+				     (js-object-add! ,obj idx ,tmp))
+				 (set! cmap
+				    (if (eq? (js-pcache-cmap ,cache) #t)
+					(js-pcache-pmap ,cache)
+					(js-pcache-pmap ,cache)))
+				 ,tmp)
+			     `(if (eq? %cmap (js-pcache-pmap ,cache))
+				  (let ((idx (js-pcache-index ,cache)))
+				     (if (>=fx idx 0)
+					 ,(loop cs #t)
+					 ,(loop (cdr cs) #f))))))
+			((amap)
+			 ;; accessor property set
+			 (if inpmap
+			     `(with-access::JsObject (js-pcache-owner ,cache) (elements)
+				 (let* ((idx (-fx (negfx idx) 1))
+					(desc (vector-ref elements idx)))
+				    (js-profile-log-cache ,cache :amap #t)
+				    (js-profile-log-index idx)
+				    (js-property-value-set! ,obj desc ,tmp %this)
+				    ,tmp))
+			     `(if (eq? %cmap (js-pcache-pmap ,cache))
+				  (let ((idx (js-pcache-index ,cache)))
+				     (if (<fx idx 0)
+					 ,(loop cs #t)
+					 ,(loop (cdr cs) #f))))))
+			((vtable)
+			 ;; vtable property set
+			 (cond-expand
+			    (no-vtable-cache
+			     (loop (cdr cs) inpmap))
+			    (else
+			     `(with-access::JsConstructMap %omap (vlen vtable)
+				 (let ((vidx (js-pcache-vindex ,cache)))
+				    (if (and (<fx vidx vlen)
+					     (pair? (vector-ref vtable vidx)))
+					(let ((indx (car (vector-ref vtable vidx)))
+					      (cmap (cdr (vector-ref vtable vidx))))
+					   (js-profile-log-cache ,cache :vtable #t)
+					   (js-object-push! ,obj idx ,tmp)
+					   (set! %cmap cmap)
+					   ,tmp)
+					(loop (cdr cs) #f)))))))
+			(else
+			 (error "js-object-put-name/cache" "bad cache spec"
+			    cs))))))))
+				  
    (cond-expand
       ((or no-macro-cache no-macro-cache-put)
        (map (lambda (x) (e x e)) x))
       (else
-       (let ((e1 (cond-expand
-		    (cache-level2
-		     e)
-		    (else
-		     (lambda (x e2)
-			(match-case x
-			   ((js-object-put-name/cache-level2! . ?-)
-			    (map (lambda (x) (e x e2)) x))
-			   (else
-			    (e x e2))))))))
-	  (js-object-put-name/cache-match-expander x e1 set
-	     (lambda (x) (map (lambda (x) (e x e)) x)))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache-level1-expander ...                     */
-;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-level1-expander x e)
-   
-   (define (set o prop tmp throw cache %this cindx ccmap cpmap cowner vindx)
-      `(begin
-	  (jsprof
-	     (js-jsprof-log-cache! 'putCache ,prop ,cache)
-	     (jsprof-cache-index ,cindx))
-	  (vector-set! elements ,cindx ,tmp)
-	  ,tmp))
-   
-   (cond-expand
-      ((or no-macro-cache no-macro-cache-put)
-       (map (lambda (x) (e x e)) x))
-      (else
-       (js-object-put-name/cache-match-expander x e set
-	  (lambda (x) (map (lambda (x) (e x e)) x))))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-put-name/cache-level2-expander ...                     */
-;*---------------------------------------------------------------------*/
-(define (js-object-put-name/cache-level2-expander x e)
-
-   (define (set o prop tmp throw cache %this cindx ccmap cpmap cowner vindx)
-      `(cond
-	  ((eq? ,cpmap %omap)
-	   (if (>=fx ,cindx 0)
-	       (begin
-		  (let ((%vec elements))
-		     (if (<fx ,cindx (vector-length %vec))
-			 (begin
-			    (jsprof
-			       (js-jsprof-log-cache! 'putCachePrototype ,prop ,cache)
-			       (jsprof-cache-index ,cindx))
-			    (vector-set! %vec ,cindx ,tmp))
-			 (begin
-			    (jsprof
-			       (js-jsprof-log-cache! 'putCacheExtend ,prop ,cache)
-			       (jsprof-cache-index ,cindx))
-			    (js-object-add! ,o ,cindx ,tmp))))
-		  (with-access::JsObject ,o ((omap cmap))
-		     (set! omap (if (eq? ,ccmap #t) ,cpmap ,ccmap)))
-		  ,tmp)
-	       (with-access::JsObject ,cowner (elements)
-		  (jsprof
-		     (js-jsprof-log-cache! 'putCacheAccessor ,prop ,cache)
-		     (jsprof-cache-index (-fx (negfx ,cindx) 1)))
-		  (let ((desc (vector-ref elements (-fx (negfx ,cindx) 1))))
-		     (js-property-value-set! ,o desc ,tmp %this)))))
+       (match-case x
+	  ((js-object-put-name/cache (and (? symbol?) ?obj)
+	      (and ?prop ((kwote quote) ?-)) ?val ?throw ?%this
+	      (and ?cache (js-pcache-ref %pcache ?ci))
+	      ?loc (quote ?cspecs))
+	   (expand-tmp e val
+	      (lambda (tmp)
+		 (expand-cache-specs cspecs obj prop tmp throw %this cache loc) e)))
+	  ((js-object-put-name/cache ?obj ?prop ?val ?throw ?%this ?cache ?loc)
+	   (e (append x '('(cmap pmap amap vtable)) e)))
+	  ((js-object-put-name/cache ?obj ?prop ?val ?throw ?%this ?cache)
+	   (e (append x '(-1 '(cmap pmap amap vtable)) e)))
 	  (else
-	   (with-access::JsConstructMap %omap (vlen vtable)
-	      (if (and (cond-expand (no-vtable-cache #f) (else #t))
-		       (<fx ,vindx vlen)
-		       (pair? (vector-ref vtable ,vindx)))
-		  (let ((indx (car (vector-ref vtable ,vindx)))
-			(cmap (cdr (vector-ref vtable ,vindx))))
-		     (jsprof
-			(js-jsprof-log-cache! 'putCacheVtable ,prop ,cache))
-		     (js-object-push! ,o indx ,tmp)
-		     (with-access::JsObject ,o ((omap cmap))
-			(set! omap cmap))
-		     ,tmp)
-		  (js-object-put-name/cache-miss! ,o ,prop ,tmp ,throw
-		     ,cache ,%this))))))
-
-   (js-object-put-name/cache-match-expander x e set
-      (lambda (x)
-	 (error "js-object-put-name/cache-level2" "wrong syntax" x))))
+	   (map (lambda (x) (e x e)) x))))))
+	      
+;*---------------------------------------------------------------------*/
+;*    js-put-name/cache-expander ...                                   */
+;*---------------------------------------------------------------------*/
+(define (js-put-name/cache-expander x e)
+   (match-case x
+      ((?- (and (? symbol?) ?o) ?prop ?val ?throw ?%this . ?rest)
+       (e `(if (js-object? ,o)
+	       (js-object-put-name/cache! ,o ,prop ,val ,throw ,%this ,@rest)
+	       (js-put! ,o ,prop ,val ,throw ,%this))
+	  e))
+      ((?- ?obj ?prop ?val ?throw ?%this . ?rest)
+       (let ((tmp (gensym 'o)))
+	  (e `(let ((,tmp ,obj))
+		 (if (js-object? ,tmp)
+		     (js-object-put-name/cache! ,tmp ,prop ,val ,throw ,%this
+			,@rest)
+		     (js-put! ,tmp ,prop ,val ,throw ,%this)))
+	     e)))
+      (else
+       (map (lambda (x) (e x e)) x))))
    
+;*---------------------------------------------------------------------*/
+;*    js-object-method-call-name/cache-expander ...                    */
+;*---------------------------------------------------------------------*/
+(define (js-object-method-call-name/cache-expander x e)
+
+   (define (calln %this m obj args)
+      (let* ((len (length args))
+	     (call (string->symbol
+		      (format "js-call~a" (if (>=fx len 11) "n" len)))))
+	 `(,call ,%this ,m ,obj ,@args)))
+   
+   (define (calln-miss %this obj prop args ccache ocache loc cspecs)
+      `(js-object-method-call/cache-miss %this ,obj prop (list ,@args)
+	  ,ccache ,ocache ,loc ,cspecs))
+
+   (define (calln-uncachable %this obj prop args ccache ocache loc)
+      `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc '())))
+	  (js-profile-log-cache ,ccache :cmap #t)
+	  ,(calln %this 'f obj args)))
+   
+   (define (expand-cache-specs cspecs %this obj prop args ccache ocache loc)
+      `(with-access::JsObject ,obj (cmap)
+	  (let ((%cmap cmap))
+	     ,(let loop ((cs cspecs))
+		 (if (null? cs)
+		     `(if (eq? %cmap #t)
+			  ,(calln-uncachable %this obj prop args ccache ocache loc)
+			  ,(calln-miss %this obj prop args ccache ocache loc cspecs)))
+		 (case (car cs)
+		    ((pmap)
+		     `(if (eq? %cmap (js-pcache-pmap ,ccache))
+			  (begin
+			     (js-profile-log-cache ,ccache :pmap #t)
+			     ((js-pcache-method ,ccache) ,obj ,@args))
+			  ,(loop (cdr cs))))
+		    ((vtable)
+		     (cond-expand
+			(no-vtable-cache 
+			 (loop (cdr cs)))
+			(else
+			 `(with-access::JsConstructMap %omap (vlen vtable)
+			     (let ((vidx (js-pcache-vindex ,cache)))
+				(if (and (<fx vidx vlen)
+					 (procedure? (vector-ref vtable vidx)))
+				    (begin
+				       (js-profile-log ,cache :vtable #t)
+				       ((vector-ref vtable vix) ,obj ,@args))
+				    ,(loop (cdr cs))))))))
+		    (else
+		     (error "js-object-method-call-name/cache"
+			"bad cache spec" cs)))))))
+		 
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-call)
+       (map (lambda (x) (e x e)) x))
+      (else
+       (match-case x
+	  ((js-object-method-call-name/cache ?%this (and (? symbol?) ?obj)
+	      ?prop
+	      (and ?ccache (js-pcache-ref %pcache ?-))
+	      (and ?ocache (js-pcache-ref %pcache ?-))
+	      ?loc (quote ?cspecs)
+	      . ?args)
+	   (e (expand-cache-specs cspecs %this obj prop args ccache ocache loc)
+	      e))
+	  ((js-object-method-call-name/cache ?%this ?obj . ?rest)
+	   (let ((o (gensym '%o)))
+	      (e `(let ((,o ,obj))
+		     (js-object-method-call-name/cache ?%this ,o ,@rest))
+		 e)))
+	  (else
+	   (map (lambda (x) (e x e)) x))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-non-object-method-call-name-expander ...                      */
+;*---------------------------------------------------------------------*/
+(define (js-non-object-method-call-name-expander x e)
+   (cond-expand
+      ((or no-macro-cache no-macro-cache-call)
+       (e `(js-call-methodn ,@(cdr x)) e))
+      (else
+       (match-case x
+	  ((?- ?%this ?obj (quote toString))
+	   (e `(js-tostring ,obj ,%this) e))
+	  ((?- ?%this ?obj ?prop . ?args)
+	   (e `(js-call-methodn ,%this ,obj ,prop ,@args) e))
+	  (else
+	   (error "js-non-object-method-call-name" "Illegal form" x))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-method-call-name/cache-expander ...                           */
+;*---------------------------------------------------------------------*/
+(define (js-method-call-name/cache-expander x e)
+   (match-case x
+      ((js-method-call-name/cache ?%this (and (? symbol?) ?obj) . ?rest)
+       (e `(if (js-object? ,obj)
+	       (js-object-method-call-name/cache ,%this ,obj ,@rest)
+	       (js-non-object-method-call-name %this ,obj ,@rest))
+	  e))
+      ((?- ?%this ?obj . ?rest)
+       (let ((o (gensym '%o)))
+	  (e `(let ((,o ,obj))
+		 (js-method-call-name/cache-expander ,%this ,o ,@rest))
+	     e)))
+      (else
+       (error "js-object-call-name/cache" "wrong form" x))))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-call/cache-expander ...                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-call/cache-expander x e)
    
-   (define (call %this fun ccache this args)
+   (define (call %this fun this ccache args)
       (let ((len (length args)))
 	 `(cond
 	     ((eq? (js-pcache-owner ,ccache) ,fun)
@@ -552,161 +595,19 @@
        (map (lambda (x) (e x e)) x))
       (else
        (match-case x
-	  ((?- ?%this (and (? symbol?) ?fun)
+	  ((js-call/cache ?%this (and (? symbol?) ?fun) ?this
 	      (and ?ccache (js-pcache-ref %pcache ?-))
-	      ?this . ?args)
-	   (e (call %this fun ccache this args) e))
-	  ((?- ?%this ?fun
+	      . ?args)
+	   (e (call %this fun this ccache args) e))
+	  ((js-call/cache ?%this ?fun ?this
 	      (and ?ccache (js-pcache-ref %pcache ?-))
-	      ?this . ?args)
-	   (let ((f (gensym '%fun)))
-	      `(let ((,f ,(e fun e)))
-		  ,(e (call %this f ccache this args) e))))
+	      . ?args)
+	   (let ((f (gensym '%f)))
+	      (e `(let ((,f ,fun))
+		     (js-call/cache ,%this ,f ,this ,ccache ,@args))
+		 e)))
 	  (else
 	   (error "js-call/cache" "wrong form" x))))))
 
-;*---------------------------------------------------------------------*/
-;*    js-method-call-name/cache-expander ...                           */
-;*---------------------------------------------------------------------*/
-(define (js-method-call-name/cache-expander x e)
-   (cond-expand
-      ((or no-macro-cache no-macro-cache-call)
-       (map (lambda (x) (e x e)) x))
-      (else
-       (match-case x
-	  ((?- ?%this (and (? symbol?) ?obj) ?prop ?ccache ?ocache . ?args)
-	   (e `(if (js-object? ,obj)
-		   (js-object-method-call-name/cache ,%this
-		      ,obj ,prop ,ccache ,ocache ,@args)
-		   (js-non-object-method-call-name %this ,obj ,prop ,@args))
-	      e))
-	  ((?- ?%this ?obj ?prop ?ccache ?ocache . ?args)
-	   (let ((o (gensym '%obj)))
-	      (e `(let ((,o ,obj))
-		     (if (js-object? ,o)
-			 (js-object-method-call-name/cache ,%this
-			    ,o ,prop ,ccache ,ocache ,@args)
-			 (js-non-object-method-call-name %this ,o ,prop ,@args)))
-		 e)))
-	  (else
-	   (error "js-object-call-name/cache" "wrong form" x))))))
 
-;*---------------------------------------------------------------------*/
-;*    js-method-call-name/cache-match-expander ...                     */
-;*---------------------------------------------------------------------*/
-(define (js-method-call-name/cache-match-expander x e call)
-   (match-case x
-      ((?- ?%this
-	  (and (? symbol?) ?obj) ((kwote quote) ?name)
-	  (and ?ccache (js-pcache-ref %pcache ?-))
-	  (and ?ocache (js-pcache-ref %pcache ?-))
-	  . ?args)
-       (e (call obj name ccache ocache args
-	     `(js-pcache-pmap ,ccache)
-	     `(js-pcache-cmap ,ccache)
-	     `(js-pcache-method ,ccache)
-	     `(js-pcache-vindex ,ccache))
-	  e))
-      ((?- ?%this (and (? symbol?) ?obj) ?name ?ccache ?ocache . ?args)
-       (e `(with-access::JsPropertyCache ,ccache (pmap cmap method vindex)
-	      ,(call obj name ccache ocache args 'pmap 'cmap 'method 'vindex))
-	  e))
-      ((?- ?%this ?obj ?name ?ccache ?ocache . ?args)
-       (let ((this (gensym 'this)))
-	  (e `(let ((,this ,obj))
-		 (with-access::JsPropertyCache ,ccache (pmap cmap method vindex)
-		    ,(call this name ccache ocache args 'pmap 'cmap 'method 'vindex)))
-	     e)))
-      (else
-       (error "js-object-call-name/cache" "wrong form" x))))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-method-call-name/cache-level2-expander ...             */
-;*---------------------------------------------------------------------*/
-(define (js-object-method-call-name/cache-level2-expander x e)
-
-   (define (calln m obj args)
-      (let* ((len (length args))
-	     (call (string->symbol
-		      (format "js-call~a" (if (>=fx len 11) "n" len)))))
-	 `(,call %this ,m ,obj ,@args)))
-
-   (define (calln/miss obj name ccache ocache args)
-      `(js-object-method-call/cache-miss %this ,obj ',name ,ccache ,ocache
-	  (list ,@args)))
-
-   (define (call obj name ccache ocache args _ cmap method vindex)
-      `(with-access::JsConstructMap %omap (vlen vtable)
-	  (cond
-	     ((and (cond-expand (no-vtable-cache #f) (else #t))
-		   (<fx ,vindex vlen)
-		   (procedure? (vector-ref vtable ,vindex)))
-	      (jsprof
-		 (js-jsprof-log-cache! 'callCacheVtable ,prop ,cache))
-	      ;; polymorphic call
-	      ((vector-ref vtable ,vindex) ,obj ,@args))
-	     ((eq? ,cmap #t)
-	      ;; uncachable call
-	      (let ((f ((@ js-object-get-name/cache __hopscript_property)
-			,obj ',name ,ocache %this)))
-		 (jsprof
-		    (js-jsprof-log-cache! 'callCacheMissUncachable ,prop ,cache))
-		 ,(calln 'f obj args)))
-	     (else
-	      ;; pure cache miss
-	      ,(calln/miss obj name ccache ocache args)))))
-
-   (js-method-call-name/cache-match-expander x e call))
-   
-;*---------------------------------------------------------------------*/
-;*    js-object-method-call-name/cache-expander ...                    */
-;*---------------------------------------------------------------------*/
-(define (js-object-method-call-name/cache-expander x e)
-   
-   (define (call obj name ccache ocache args pmap _ method vindex)
-      `(with-access::JsObject ,obj ((omap cmap))
-	  (let ((%omap omap))
-	     (if (eq? ,pmap %omap)
-		 ;; prototype method invocation
-		 (begin
-		    (jsprof
-		       (js-jsprof-log-cache! 'callCache ,prop ,cache))
-		    (,method ,obj ,@args))
-		 (js-object-method-call-name/cache-level2
-		    ,(cadr x) ,obj ,@(cdddr x))))))
-   
-   (cond-expand
-      ((or no-macro-cache no-method-cache)
-       (map (lambda (x) (e x e)) x))
-      (else
-       (let ((e1 (cond-expand
-		    (cache-level2
-		     e)
-		    (else
-		     (lambda (x e2)
-			(match-case x
-			   ((js-object-call-name/cache-level2 ?%this ?obj ?name ?ccache ?ocache . ?args)
-			    (let* ((len (length args))
-				   (call (format "js-object-method-call~a/cache-miss"
-					    (if (>=fx len 11) "n" len))))
-			       `(,call ,@(map (lambda (x) (e x e2)) x))))
-			   (else
-			    (e x e2))))))))
-	  (js-method-call-name/cache-match-expander x e1 call)))))
-
-;*---------------------------------------------------------------------*/
-;*    js-non-object-method-call-name-expander ...                      */
-;*---------------------------------------------------------------------*/
-(define (js-non-object-method-call-name-expander x e)
-   (cond-expand
-      ((or no-macro-cache no-macro-cache-call)
-       (e `(js-call-methodn ,%this ,obj ,prop ,@args) e))
-      (else
-       (match-case x
-	  ((?- ?%this ?obj (quote toString))
-	   (e `(js-tostring ,obj ,%this) e))
-	  ((?- ?%this ?obj ?prop . ?args)
-	   (e `(js-call-methodn ,%this ,obj ,prop ,@args) e))
-	  (else
-	   (error "js-non-object-method-call-name" "Illegal form" x))))))
 

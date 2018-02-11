@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Wed Jan 17 09:04:48 2018 (serrano)                */
+;*    Last change :  Sat Feb 10 10:56:09 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -176,7 +176,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propclevel this::J2SAccess ptable)
    (call-default-walker)
-   (with-access::J2SAccess this (clevel obj field)
+   (with-access::J2SAccess this (cspecs obj field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (let ((i (hashtable-get ptable val)))
@@ -187,5 +187,5 @@
 		  (if (and (=fx (propinfo-set i) 1)
 			   (=fx (propinfo-accessor i) 0))
 		      (tprint "YES val: " val " " i)
-		      (set! clevel 0)))))))
+		      (set! cspecs '(cmap pmap+ vtable))))))))
    this)

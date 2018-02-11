@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri Jan 26 13:58:39 2018 (serrano)                */
+;*    Last change :  Sun Feb 11 18:29:39 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -744,7 +744,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsTypedArray ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-length o::JsTypedArray cache %this)
+(define-method (js-get-length o::JsTypedArray %this #!optional cache)
    (with-access::JsTypedArray o (length)
       (if (or (not *optimize-length*) (=u32 length #u32:0))
 	  (call-next-method)
@@ -753,7 +753,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32 ::JsTypedArray ...                              */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-lengthu32 o::JsTypedArray cache %this)
+(define-method (js-get-lengthu32 o::JsTypedArray %this #!optional cache)
    (with-access::JsTypedArray o (length)
       (if (or (not *optimize-length*) (=u32 length #u32:0))
 	  (call-next-method)
@@ -762,7 +762,10 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-name/cache-miss ::JsTypedArray ...                        */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-name/cache-miss o::JsTypedArray p cache::JsPropertyCache throw %this)
+(define-method (js-get-name/cache-miss o::JsTypedArray p
+		  throw::bool %this::JsGlobalObject
+		  cache::JsPropertyCache
+		  #!optional (point -1) (cspecs '()))
    (if (and *optimize-length* (eq? p 'length))
        (with-access::JsTypedArray o (length)
 	  (if (=u32 length #u32:0)
