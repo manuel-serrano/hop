@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 22 19:47:45 2017                          */
-;*    Last change :  Fri Dec 22 20:01:24 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Mon Feb 12 20:50:39 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    An optional stage used in debug mode to assign to replace        */
 ;*    all UNKNOWN type occurrences with ANY.                           */
@@ -57,6 +57,27 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (any-types this::J2SNode)
    (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    any-types ::J2SString ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SString)
+   (with-access::J2SExpr this (type)
+      (set! type 'string)))
+
+;*---------------------------------------------------------------------*/
+;*    any-types ::J2SBool ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SBool)
+   (with-access::J2SExpr this (type)
+      (set! type 'bool)))
+
+;*---------------------------------------------------------------------*/
+;*    any-types ::J2SArray ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (any-types this::J2SArray)
+   (with-access::J2SExpr this (type)
+      (set! type 'array)))
 
 ;*---------------------------------------------------------------------*/
 ;*    any-types ::J2SExpr ...                                          */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Feb  6 16:35:52 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 20:41:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -312,6 +312,14 @@
    (with-access::J2SCall this (fun args)
       (usage fun 'call deval infun)
       (for-each (lambda (a) (usage a 'ref deval infun)) args))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    usage ::J2SParen ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (usage this::J2SParen ctx deval infun)
+   (with-access::J2SParen this (expr)
+      (usage expr ctx deval infun))
    this)
 
 ;*---------------------------------------------------------------------*/
