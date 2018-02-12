@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Feb  7 14:18:17 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 10:21:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript regexps                      */
@@ -40,7 +40,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 3)
-(define %pcache (js-make-pcache 3))
+(define %pcache (js-make-pcache 3 "hopscript/regexp.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral begin                                            */

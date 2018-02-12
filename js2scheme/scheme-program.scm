@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Fri Feb  9 15:38:39 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 11:34:24 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -35,7 +35,8 @@
       (with-access::J2SProgram this (mode pcache-size globals)
 	 (list module
 	    `(%define-pcache ,pcache-size)
-	    `(define %pcache (js-make-pcache ,pcache-size))
+	    `(define %pcache
+		(js-make-pcache ,pcache-size ,(config-get conf :filename)))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    `(define (hopscript %this this %scope %module)
@@ -52,7 +53,8 @@
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    `(define (hopscript %this this %scope %module)
-		(define %pcache (js-make-pcache ,pcache-size))
+		(define %pcache
+		   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
 		(define %worker (js-current-worker))
 		(define %cnsts ,scmcnsts)
 		,@globals
@@ -77,7 +79,8 @@
 	    (list module
 	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
-	       `(define %pcache (js-make-pcache ,pcache-size))
+	       `(define %pcache
+		   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
 	       '(hopjs-standalone-set! #t)
 	       `(define %this (nodejs-new-global-object))
 	       `(define %source ,path)
@@ -109,37 +112,38 @@
 	    (scmdecls (j2s-scheme decls mode return conf hint))
 	    (scmnodes (j2s-scheme nodes mode return conf hint))
 	    (scmcnsts (%cnsts cnsts mode return conf hint)))
-      (if (and main (not (config-get conf :worker #t)))
-	  (j2s-main-sans-worker-module this name
-	     scmcnsts
-	     (flatten-nodes (append scmheaders scmdecls))
-	     (flatten-nodes scmnodes)
-	     conf)
-	  (let ((body (flatten-nodes (append scmheaders scmdecls scmnodes))))
-	     (cond
-		(module
-		 ;; a module whose declaration is in the source
-		 (j2s-module module scmcnsts body))
-		((not name)
-		 ;; a mere expression
-		 `(lambda (%this this %scope %module)
-		     (%define-pcache ,pcache-size)	       
-		     (define %pcache (js-make-pcache ,pcache-size))
-		     (define %worker (js-current-worker))
-		     (define %source (or (the-loading-file) "/"))
-		     (define %resource (dirname %source))
-		     (define %cnsts ,scmcnsts)
-		     ,@globals
-		     ,@(exit-body body conf)))
-		(main
-		 ;; generate a main hopscript module 
-		 (j2s-main-module/workers name scmcnsts body))
-		(else
-		 ;; generate the module clause
-		 (let ((module `(module ,(string->symbol name)
-				   (library hop hopscript js2scheme nodejs)
-				   (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
-		    (j2s-module module scmcnsts body)))))))))
+	 (if (and main (not (config-get conf :worker #t)))
+	     (j2s-main-sans-worker-module this name
+		scmcnsts
+		(flatten-nodes (append scmheaders scmdecls))
+		(flatten-nodes scmnodes)
+		conf)
+	     (let ((body (flatten-nodes (append scmheaders scmdecls scmnodes))))
+		(cond
+		   (module
+		    ;; a module whose declaration is in the source
+		    (j2s-module module scmcnsts body))
+		   ((not name)
+		    ;; a mere expression
+		    `(lambda (%this this %scope %module)
+			(%define-pcache ,pcache-size)	       
+			(define %pcache
+			   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
+			(define %worker (js-current-worker))
+			(define %source (or (the-loading-file) "/"))
+			(define %resource (dirname %source))
+			(define %cnsts ,scmcnsts)
+			,@globals
+			,@(exit-body body conf)))
+		   (main
+		    ;; generate a main hopscript module 
+		    (j2s-main-module/workers name scmcnsts body))
+		   (else
+		    ;; generate the module clause
+		    (let ((module `(module ,(string->symbol name)
+				      (library hop hopscript js2scheme nodejs)
+				      (export (hopscript ::JsGlobalObject ::JsObject ::JsObject ::JsObject)))))
+		       (j2s-module module scmcnsts body)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-main-sans-worker-module ...                                  */
@@ -154,7 +158,8 @@
 		     (main main))))
       (with-access::J2SProgram this (mode pcache-size %this path globals)
 	 `(,module (%define-pcache ,pcache-size)
-	     (define %pcache (js-make-pcache ,pcache-size))
+	     (define %pcache
+		(js-make-pcache ,pcache-size ,(config-get conf :filename)))
 	     (hop-sofile-compile-policy-set! 'static)
 	     (hopjs-standalone-set! #t)
 	     (define %this (nodejs-new-global-object))

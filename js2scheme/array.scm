@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Dec 20 17:31:40 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Mon Feb 12 11:57:33 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
 ;*=====================================================================*/
@@ -144,7 +144,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (array! this::J2SWhile env::pair-nil)
    (with-access::J2SWhile this (test body loc)
-      (let ((arrs (delete-duplicates! (array-collect* body env))))
+      (let ((arrs (delete-duplicates! (array-collect* body env) eq?)))
 	 (if (null? arrs)
 	     (call-default-walker)
 	     (let* ((adecls (map decl->adecl arrs))

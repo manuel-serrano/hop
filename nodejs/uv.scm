@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed May 14 05:42:05 2014                          */
-;*    Last change :  Sat Jan 20 09:59:56 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 09:32:53 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS libuv binding                                             */
@@ -1808,27 +1808,14 @@
    (uv-stream-write handle buffer offset length
       :loop (worker-loop %worker)
       :callback callback))
-;*       :callback (lambda (status)                                    */
-;* 		   ;; (tprint "AfterWrite status=" status)             */
-;* 		   ;; CARE: MS 2 may 2015                              */
-;* 		   (js-worker-push-thunk! %worker "stream-write"       */
-;* 		     (lambda ()                                        */
-;* 			(callback status)))                            */
-;* 		   (callback status)                                   */
-;* 		   (js-worker-tick %worker))))                         */
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-write2 ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-stream-write2 %worker %this handle buffer offset length sendhandle callback)
-;*    (tprint "WriteBuffer2 offset=" offset " length=" length)         */
    (uv-stream-write2 handle buffer offset length sendhandle
       :loop (worker-loop %worker)
       :callback callback))
-;*       :callback (lambda (status)                                    */
-;* 		   (js-worker-push-thunk! %worker "stream-write"       */
-;* 		      (lambda ()                                       */
-;* 			 (callback status)))                           */
    
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-stream-read-start ...                                     */
@@ -1854,12 +1841,6 @@
    (uv-stream-shutdown handle
       :loop (worker-loop %worker)
       :callback callback))
-;*       :callback (lambda (status handle)                             */
-;* 		   ;; CARE: MS 2 may 2015                              */
-;* 		   (js-worker-push-thunk! %worker "stream-shutdown"    */
-;* 		      (lambda ()                                       */
-;* 			 (callback status handle)))                    */
-
 
 ;*---------------------------------------------------------------------*/
 ;*    store-stream-fd! ...                                             */
@@ -1909,10 +1890,6 @@
 				(path ""))))
 		    (store-stream-fd! %worker file fd)
 		    file))))))))
-;* 		(else                                                  */
-;* 		 (tprint "PAS de FD: " fd " pid=" (getpid))            */
-;* 		 (js-raise-type-error %this                            */
-;* 		    (format "Illegal descriptor (~a) ~~a" fd) fd)))))))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    close-uvfile ...                                                 */
@@ -2180,11 +2157,6 @@
    (uv-pipe-connect handle (js-jsstring->string name)
       :loop (worker-loop %worker)
       :callback callback))
-;*       :callback (lambda (status handle)                             */
-;* 		   ;; (tprint "pipe-connect status=" status)           */
-;* 		   (js-worker-push-thunk! %worker "pipe-connect"       */
-;* 		      (lambda ()                                       */
-;* 			 (callback status handle))))))                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-pipe-listen ...                                           */

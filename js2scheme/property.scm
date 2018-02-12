@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Nov 23 07:47:43 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Mon Feb 12 10:26:24 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
 ;*=====================================================================*/
@@ -222,7 +222,11 @@
 
    (define (decl-fun decl)
       (if (isa? decl J2SDeclFun)
-	  (with-access::J2SDeclFun decl (val) val)
+	  (with-access::J2SDeclFun decl (val)
+	     (if (isa? val J2SFun)
+		 val
+		 (with-access::J2SMethod val (function)
+		    function)))
 	  (with-access::J2SDeclInit decl (val) val)))
 
    (define (ctor-function? clazz args)

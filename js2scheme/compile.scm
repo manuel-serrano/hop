@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Feb  7 12:07:15 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 11:47:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -347,7 +347,7 @@
 		     (if (string=? (input-port-name in) "[string]")
 			 "stdin"
 			 (input-port-name in)))))
-	 (opts (compile-opts args)))
+	 (opts (compile-opts in args)))
       (when (>=fx (bigloo-debug) 1) (make-directories tmp))
       (let ((ast (j2s-parser in opts)))
 	 (if (eof-object? ast)
@@ -364,7 +364,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    compile-opts ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (compile-opts args)
+(define (compile-opts in args)
    (let ((o (append args (j2s-compile-options)))
 	 (l (config-get args :optim 0)))
       (when (>=fx l 900)
@@ -398,6 +398,8 @@
 	    (set! o (cons* :optim-clevel #t o))))
 ;* 		     (unless (memq :optim-cce o)                       */
 ;* 			(set! o (cons* :optim-cce #t o)))              */
+      (unless (memq :filename o)
+	 (set! o (cons* :filename (input-port-name in) o)))
       (let ((v (getenv "HOPCFLAGS")))
 	 (when (string? v)
 	    (cond

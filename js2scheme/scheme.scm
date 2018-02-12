@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Feb 11 06:41:30 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 18:48:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1921,8 +1921,8 @@
 	       (cache
 		`(js-call/cache
 		    ,j2s-unresolved-call-workspace
-		    ,(j2s-scheme fun mode return conf hint)
 		    ,(js-pcache cache)
+		    ,(j2s-scheme fun mode return conf hint)
 		    ,@self
 		    ,@(j2s-scheme args mode return conf hint)))
 	       (else
@@ -2294,6 +2294,7 @@
 		(with-access::J2SCast lhs (expr)
 		   (loop expr)))
 	       (else
+		(tprint "lhs=" (typeof lhs) " rhs=" (typeof rhs))
 		(j2s-error "j2sscheme"
 		   (format "Illegal expression \"~a\"" op)
 		   this)))))))

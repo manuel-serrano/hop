@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Feb 11 07:05:37 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 10:20:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -130,7 +130,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 4)
-(define %pcache (js-make-pcache 4))
+(define %pcache (js-make-pcache 4 "hopscript/array.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    global parameters                                                */

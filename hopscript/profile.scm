@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Feb 11 19:22:15 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 15:29:59 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -22,8 +22,9 @@
    (cond-expand
       (profile
        (export js-profile-allocs::obj)))
-   
-   (import __hopscript_types)
+
+   (import __hopscript_types
+	   __hopscript_property)
 
    (export (js-profile-init conf)
 
@@ -447,18 +448,92 @@
    (define (hit0? e) (memq e '(getCache putCache callCache)))
    (define (miss? e) (memq e *profile-cache-miss*))
    
+   (define pcaches
+      (let ((m (pregexp-match "hopscript:profile=([^ ]+)" trc)))
+	 (if m
+	     (let ((filename (cadr m)))
+		(filter (lambda (pc) (string=? (car pc) filename))
+		   ($js-get-pcaches)))
+	     ($js-get-pcaches))))
+   
    (define threshold
       (let ((m (pregexp-match "hopscript:cache=([0-9]+)" trc)))
 	 (if m (string->integer (cadr m)) 100)))
    
+   (define (pcache-for-each proc pcaches)
+      (for-each (lambda (p)
+		   (let ((vec (cdr p)))
+		      (let loop ((i (-fx (vector-length vec) 1)))
+			 (when (>=fx i 0)
+			    (proc (vector-ref vec i))
+			    (loop (-fx i 1))))))
+	 pcaches))
+   
+   (define (pcache-hits pc)
+      (with-access::JsPropertyCache pc (cntcmap cntpmap cntamap cntvtable)
+	 (+fx cntcmap
+	    (+fx cntpmap
+	       (+fx cntamap cntvtable)))))
+
+   (define (pcache-polymorphic pc)
+      (with-access::JsPropertyCache pc (name usage cntcmap cntpmap cntamap cntvtable)
+	 (when (> (+ (if (>fx cntcmap 0) 1 0)
+		     (if (>fx cntpmap 0) 1 0)
+		     (if (>fx cntamap 0) 1 0)
+		     (if (>fx cntvtable 0) 1 0))
+		  1)
+	    (cons name (+ cntcmap cntpmap cntamap cntvtable)))))
+   
    (define (total-cache-hits)
-      (apply + (map cadr (filter hit? *profile-caches*))))
+      (let ((res 0))
+	 (pcache-for-each (lambda (pc)
+			     (set! res (+fx res (pcache-hits pc))))
+	    pcaches)
+	 res))
+
+   (define (total-cache-polymorphics)
+      (let ((res '()))
+	 (pcache-for-each (lambda (pc)
+			     (let ((n (pcache-polymorphic pc)))
+				(when  n
+				   (set! res (cons n res)))))
+	    pcaches)
+	 res))
+   
+   (define (total-cache-cmaps)
+      (let ((res 0))
+	 (pcache-for-each (lambda (pc)
+			     (with-access::JsPropertyCache pc (cntcmap)
+				(set! res (+fx res cntcmap))))
+	    pcaches)
+	 res))
+   
+   (define (total-cache-pmaps)
+      (let ((res 0))
+	 (pcache-for-each (lambda (pc)
+			     (with-access::JsPropertyCache pc (cntpmap)
+				(set! res (+fx res cntpmap))))
+	    pcaches)
+	 res))
+
+   (define (total-cache-vtables)
+      (let ((res 0))
+	 (pcache-for-each (lambda (pc)
+			     (with-access::JsPropertyCache pc (cntvtable)
+				(set! res (+fx res cntvtable))))
+	    pcaches)
+	 res))
+   
+   (define (total-cache-misses)
+      (let ((res 0))
+	 (pcache-for-each (lambda (pc)
+			     (with-access::JsPropertyCache pc (cntmiss)
+				(set! res (+fx res cntmiss))))
+	    pcaches)
+	 res))
    
    (define (total-cache-hits0)
       (apply + (map cadr (filter hit0? *profile-caches*))))
-   
-   (define (total-cache-misses)
-      (apply + (map cadr (filter miss? *profile-caches*))))
    
    (cond
       ((string-contains (getenv "HOPTRACE") "format:json")
@@ -515,18 +590,39 @@
 			     (cddr what)))
 		       (newline (current-error-port))))
 	  *profile-caches*)
-       (fprint (current-error-port)
-	  "total cache hits         : " (total-cache-hits))
-       (fprint (current-error-port)
-	  "total cache level0 misses: " (total-cache-hits0))
-       (fprint (current-error-port)
-	  "total cache misses       : " (total-cache-misses))
-       (fprint (current-error-port)
-	  "hidden classes num       : " (gencmapid))
-       (fprint (current-error-port)
-	  "pmap invalidations       : " *pmap-invalidations*)
-       (fprint (current-error-port)
-	  "vtables                  : " *vtables* " (" *vtables-mem* "b)"))))
+       (let ((total (+ (total-cache-hits) (total-cache-misses)))
+	     (poly (total-cache-polymorphics)))
+	  (when (>fx total 0)
+	     (fprint (current-error-port)
+		"total accesses           : " total)
+	     (fprint (current-error-port)
+		"total cache hits         : " (total-cache-hits)
+		" (" (/fx (*fx 100 (total-cache-hits)) total) "%)")
+	     (fprint (current-error-port)
+		"total cache cmap hits    : " (total-cache-cmaps)
+		" (" (/fx (*fx 100 (total-cache-cmaps)) total) "%)")
+	     (fprint (current-error-port)
+		"total cache pmap hits    : " (total-cache-pmaps)
+		" (" (/fx (*fx 100 (total-cache-pmaps)) total) "%)")
+	     (fprint (current-error-port)
+		"total cache vtable hits  : " (total-cache-vtables)
+		" (" (/fx (*fx 100 (total-cache-vtables)) total) "%)")
+	     (fprint (current-error-port)
+		"total cache misses       : " (total-cache-misses)
+		" (" (/fx (*fx 100 (total-cache-misses)) total) "%)")
+	     (let ((l (sort (lambda (n1 n2) (<=fx (cdr n1) (cdr n2))) poly))
+		   (poly (apply + (map cdr poly))))
+		(fprint (current-error-port)
+		   "total cache polymorphic  : " poly
+		   " (" (/fx (*fx 100 poly) total) "%) "
+		   (map car (take l (min (length l) 5)))))
+	     (fprint (current-error-port)
+		"hidden classes num       : " (gencmapid))
+	     (fprint (current-error-port)
+		"pmap invalidations       : " *pmap-invalidations*)
+	     (fprint (current-error-port)
+		"vtables                  : " *vtables*
+		" (" *vtables-mem* "b)"))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-cache-misses ...                                         */

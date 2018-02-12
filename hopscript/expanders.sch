@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 18:25:11 2006                          */
-;*    Last change :  Sun Feb 11 06:01:54 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 09:37:11 2018 (serrano)                */
 ;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders installer                                    */
@@ -35,9 +35,9 @@
    (eval `(define-expander js-get-name/cache
 	     ,js-get-name/cache-expander))
 
-   (eval `(define-expander js-profile-log-cache-expander
+   (eval `(define-expander js-profile-log-cache
 	     ,js-profile-log-cache-expander))
-   (eval `(define-expander js-profile-log-index-expander
+   (eval `(define-expander js-profile-log-index
 	     ,js-profile-log-index-expander))
    
    (eval `(define-expander js-object-get-name/cache

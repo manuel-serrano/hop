@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/websocket.scm             */
+;*    serrano/prgm/project/hop/3.2.x/runtime/websocket.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Tue Jul 11 08:58:57 2017 (serrano)                */
-;*    Copyright   :  2012-17 Manuel Serrano                            */
+;*    Last change :  Mon Feb 12 17:32:19 2018 (serrano)                */
+;*    Copyright   :  2012-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
 ;*=====================================================================*/
@@ -244,7 +244,7 @@
       ;; Subprotocols described at
       ;; http://tools.ietf.org/html/rfc6455#section-11.3.4
       (cond
-	 ((not srvproto)
+	 ((not (pair? srvproto))
 	  ;; the client will notice the error when it receives the response
 	  #f)
 	 ((not clientproto)

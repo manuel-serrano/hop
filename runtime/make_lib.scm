@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/make_lib.scm              */
+;*    serrano/prgm/project/hop/3.2.x/runtime/make_lib.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Thu Apr 28 18:43:22 2016 (serrano)                */
-;*    Copyright   :  2006-16 Manuel Serrano                            */
+;*    Last change :  Mon Feb 12 16:37:12 2018 (serrano)                */
+;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
 ;*=====================================================================*/
@@ -100,6 +100,7 @@
 	   (class http-response-persistent)
 	   (class http-response-async)
 	   (class http-response-put)
+	   (class http-response-websocket)
 	   
 	   (class hop-service)
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Sun Feb 11 18:42:22 2018 (serrano)                */
+;*    Last change :  Mon Feb 12 10:08:06 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -112,7 +112,7 @@
 ;*    property caches ...                                              */
 ;*---------------------------------------------------------------------*/
 (%define-pcache 31)
-(define %pcache (js-make-pcache 31))
+(define %pcache (js-make-pcache 31 "hopscript/stringliteral.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsString ...                                 */
@@ -1021,7 +1021,7 @@
 				  compare naturalCompare localeCompare trim))
 		     ;; (tprint "JS_GET_PROTO: " prop " " (typeof prop))
 		     (with-access::JsGlobalObject %this (js-string)
-			(let ((proto (js-get-name/cache js-string 'prototype
+			(let ((proto (js-object-get-name/cache js-string 'prototype
 					#f %this
 					(js-pcache-ref %pcache 0))))
 			   (js-get proto prop %this))))
