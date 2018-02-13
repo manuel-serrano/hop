@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon Feb 12 15:29:59 2018 (serrano)                */
+;*    Last change :  Tue Feb 13 17:02:50 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -152,6 +152,58 @@
 		(if (not on)
 		    (set-cdr! (cdr ow) (cons (cons name 1) (cddr ow)))
 		    (set-cdr! on (+fx 1 (cdr on)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    padding ...                                                      */
+;*---------------------------------------------------------------------*/
+(define (padding o sz #!optional (align 'left))
+   
+   (define (format-number o)
+      (let ((s (number->string o)))
+	 (cond
+	    ((and (<=fx (string-length s) sz) (<=fx o 10000))
+	     s)
+	    ((<fx o 1000)
+	     (number->string o))
+	    ((<fx o 1000000)
+	     (string-append (number->string (/fx o 1000)) ".10^3"))
+	    ((<fx o 1000000000)
+	     (string-append (number->string (/fx o 1000000)) ".10^6"))
+	    (else
+	     s))))
+
+   (define (format-uint32 o)
+      (let ((s (number->string o)))
+	 (cond
+	    ((and (<=fx (string-length s) sz) (<u32 o #u32:10000))
+	     s)
+	    ((<u32 o #u32:1000)
+	     (number->string o))
+	    ((<u32 o #u32:1000000)
+	     (string-append (number->string (/u32 o #u32:1000)) ".10^3"))
+	    ((<u32 o #u32:1000000000)
+	     (string-append (number->string (/u32 o #u32:1000000)) ".10^6"))
+	    (else
+	     s))))
+   
+   (let* ((s (cond
+		((string? o) o)
+		((uint32? o) (format-uint32 o))
+		((number? o) (format-number o))
+		((symbol? o) (symbol->string o))
+		(else (call-with-output-string (lambda () (display o))))))
+	  (l (string-length s)))
+      (if (>fx l sz)
+          (substring s 0 sz)
+          (case align
+             ((left)
+              (string-append s (make-string (-fx sz l) #\space)))
+             ((right)
+              (string-append (make-string (-fx sz l) #\space) s))
+             (else
+              (let ((res (make-string sz #\space)))
+                 (blit-string! s 0 res (/fx (-fx sz l) 2) l)
+                 res))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-symbol->string! ...                                           */
@@ -449,7 +501,7 @@
    (define (miss? e) (memq e *profile-cache-miss*))
    
    (define pcaches
-      (let ((m (pregexp-match "hopscript:profile=([^ ]+)" trc)))
+      (let ((m (pregexp-match "hopscript:file=([^ ]+)" trc)))
 	 (if m
 	     (let ((filename (cadr m)))
 		(filter (lambda (pc) (string=? (car pc) filename))
@@ -569,7 +621,8 @@
 		", \"mem\": " *vtables-mem* "}")
 	     (print "}, \n"))))
       (else
-       (fprint (current-error-port) "\nCACHES:\n" "=======\n")
+       (fprint (current-error-port) "\nCACHES:\n" "=======")
+       (fprintf (current-error-port) "~(, )\n\n" (map car pcaches))
        (for-each (lambda (what)
 		    (let ((c 0))
 		       (fprint (current-error-port) (car what) ": "
@@ -594,35 +647,113 @@
 	     (poly (total-cache-polymorphics)))
 	  (when (>fx total 0)
 	     (fprint (current-error-port)
-		"total accesses           : " total)
+		"total accesses           : "
+		(padding total 12 'right))
 	     (fprint (current-error-port)
-		"total cache hits         : " (total-cache-hits)
+		"total cache hits         : "
+		(padding (total-cache-hits) 12 'right)
 		" (" (/fx (*fx 100 (total-cache-hits)) total) "%)")
 	     (fprint (current-error-port)
-		"total cache cmap hits    : " (total-cache-cmaps)
+		"total cache cmap hits    : "
+		(padding (total-cache-cmaps) 12 'right)
 		" (" (/fx (*fx 100 (total-cache-cmaps)) total) "%)")
 	     (fprint (current-error-port)
-		"total cache pmap hits    : " (total-cache-pmaps)
+		"total cache pmap hits    : "
+		(padding (total-cache-pmaps) 12 'right)
 		" (" (/fx (*fx 100 (total-cache-pmaps)) total) "%)")
 	     (fprint (current-error-port)
-		"total cache vtable hits  : " (total-cache-vtables)
+		"total cache vtable hits  : "
+		(padding (total-cache-vtables) 12 'right)
 		" (" (/fx (*fx 100 (total-cache-vtables)) total) "%)")
 	     (fprint (current-error-port)
-		"total cache misses       : " (total-cache-misses)
+		"total cache misses       : "
+		(padding (total-cache-misses) 12 'right)
 		" (" (/fx (*fx 100 (total-cache-misses)) total) "%)")
 	     (let ((l (sort (lambda (n1 n2) (<=fx (cdr n1) (cdr n2))) poly))
 		   (poly (apply + (map cdr poly))))
 		(fprint (current-error-port)
-		   "total cache polymorphic  : " poly
+		   "total cache polymorphic  : "
+		   (padding poly 12 'right)
 		   " (" (/fx (*fx 100 poly) total) "%) "
 		   (map car (take l (min (length l) 5)))))
 	     (fprint (current-error-port)
-		"hidden classes num       : " (gencmapid))
+		"hidden classes num       : "
+		(padding (gencmapid) 12 'right))
 	     (fprint (current-error-port)
-		"pmap invalidations       : " *pmap-invalidations*)
+		"pmap invalidations       : "
+		(padding *pmap-invalidations* 12 'right))
 	     (fprint (current-error-port)
-		"vtables                  : " *vtables*
-		" (" *vtables-mem* "b)"))))))
+		"vtables                  : "
+		(padding *vtables* 12 'right)
+		" (" *vtables-mem* "b)")
+	     (when (and (pair? pcaches) (null? (cdr pcaches)))
+		(profile-pcache (car pcaches))))))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-pcache ...                                               */
+;*---------------------------------------------------------------------*/
+(define (profile-pcache pcache)
+   (newline (current-error-port))
+   (fprint (current-error-port)
+      (car pcache) ":")
+   (fprint (current-error-port)
+      (make-string (string-length (car pcache)) #\=) "=")
+
+   (let* ((pcache (sort (lambda (x y)
+			   (with-access::JsPropertyCache x
+				 ((p1 point))
+			      (with-access::JsPropertyCache y
+				    ((p2 point))
+				 (<fx p1 p2))))
+		     (cdr pcache)))
+	  (maxpoint (let ((pc (vector-ref pcache (-fx (vector-length pcache) 1))))
+		       (with-access::JsPropertyCache pc (point)
+			  (number->string point))))
+	  (ppading (max (string-length maxpoint) 5)))
+      (fprint (current-error-port) (padding "point" ppading 'center)
+	 " "
+	 (padding "property" 8 'center)
+	 " "
+	 (padding "use" 4 'center)
+	 " | "
+	 (padding "cntmiss" 8 'right)
+	 " " 
+	 (padding "cntcmap" 8 'right)
+	 " " 
+	 (padding "cntpmap" 8 'right)
+	 " " 
+	 (padding "cntamap" 8 'right)
+	 " " 
+	 (padding "cntvtable" 8 'right))
+      (fprint (current-error-port) (make-string (+ ppading 1 8 1 4) #\-)
+	 "-+-"
+	 (make-string (+ 8 1 8 1 8 1 8 1 8) #\-))
+      (for-each (lambda (pc)
+		   (with-access::JsPropertyCache pc (point name usage
+						       cntmiss
+						       cntcmap
+						       cntpmap
+						       cntamap
+						       cntvtable)
+		      (when (> (+ cntmiss cntcmap cntpmap cntamap cntvtable)
+			       *log-miss-threshold*)
+			 (fprint (current-error-port)
+			    (padding (number->string point) ppading 'right)
+			    " " 
+			    (padding name 8 'right)
+			    " " 
+			    (padding usage 4)
+			    " | "
+			    (padding cntmiss 8 'right)
+			    " " 
+			    (padding cntcmap 8 'right)
+			    " " 
+			    (padding cntpmap 8 'right)
+			    " " 
+			    (padding cntamap 8 'right)
+			    " " 
+			    (padding cntvtable 8 'right)))))
+	 (vector->list pcache))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-cache-misses ...                                         */

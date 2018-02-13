@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue Dec 26 06:14:13 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Tue Feb 13 16:56:10 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
 ;*=====================================================================*/
@@ -25,7 +25,8 @@
 	   __js2scheme_stage
 	   __js2scheme_scheme
 	   __js2scheme_scheme-utils
-	   __js2scheme_scheme-fun)
+	   __js2scheme_scheme-fun
+	   __js2scheme_scheme-ops)
 
    (export (j2s-math-builtin-method fun::J2SAccess args
 	      mode return::procedure conf hint)))
@@ -34,7 +35,7 @@
 ;*    j2s-math-builtin-method ...                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-math-builtin-method fun::J2SAccess args mode return conf hint)
-   (with-access::J2SAccess fun (obj field)
+   (with-access::J2SAccess fun (loc obj field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (cond
@@ -53,6 +54,14 @@
 	       ((string=? val "random")
 		(when (=fx (length args) 0)
 		   `(randomfl)))
+	       ((string=? val "max")
+		(when (=fx (length args) 2)
+		   (j2s-math-inline-min-max loc 'MAX
+		      (car args) (cadr args) mode return conf hint)))
+	       ((string=? val "min")
+		(when (=fx (length args) 2)
+		   (j2s-math-inline-min-max loc 'MIN
+		      (car args) (cadr args) mode return conf hint)))
 	       (else
 		#f))))))
 
@@ -126,3 +135,10 @@
 	     (else
 	      `(/pow2fx ,(j2s-scheme (car p2) mode return conf hint)
 		  ,(cdr p2))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-inline-min-max ...                                      */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-inline-min-max loc op x::J2SExpr y::J2SExpr mode return conf hint)
+   (js-binop2 loc op 'number x y mode return conf hint))
+   

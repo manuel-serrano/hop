@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Feb 11 19:37:35 2018 (serrano)                */
+;*    Last change :  Tue Feb 13 08:43:49 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -68,9 +68,9 @@
 	   (js-pcache cache)
 	   
 	   (j2s-get loc obj tyobj prop typrop tyval conf cache
-	      #!optional (cspecs '()))
+	      #!optional (cspecs '(cmap pmap amap vtable)))
 	   (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache
-	      #!optional (cspecs '()))
+	      #!optional (cspecs '(cmap pmap amap vtable)))
 
 	   (inrange-positive?::bool ::J2SExpr)
 	   (inrange-one?::bool ::J2SExpr)
@@ -466,7 +466,7 @@
 ;*    j2s-get ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define (j2s-get loc obj tyobj prop typrop tyval conf cache
-	   #!optional (cspecs '()))
+	   #!optional (cspecs '(cmap pmap amap vtable)))
 
    (define (maybe-string? prop typrop)
       (and (not (number? prop))
@@ -550,7 +550,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-put! ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (cspecs '()))
+(define (j2s-put! loc obj tyobj prop typrop val tyval mode conf cache #!optional (cspecs '(cmap pmap amap vtable)))
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)

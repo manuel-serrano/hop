@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Feb 12 12:31:37 2018 (serrano)                */
+;*    Last change :  Tue Feb 13 18:05:53 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -46,7 +46,7 @@
    (print "      j2s:loc,")
    (print "      nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:function[num] (*),")
-   (print "      hopscript:alloc[num] hopscript:profile=filename(*),")
+   (print "      hopscript:alloc[num] hopscript:file=path(*),")
    (print "      format:json")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print " (*) Need both compile and runtime variable and need to be compiled")
@@ -95,9 +95,7 @@
 		 (hopc-optim-level-set! 1))
 		((string=? level "x")
 		 (hopc-optim-level-set! 1000)
-		 (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags)))
-		 (hopc-bigloo-options-set!
-		    (cons* "-srfi" "cache-level2" (hopc-bigloo-options))))
+		 (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
 		(else
 		 (hopc-optim-level-set! (string->integer level))))
 	     (hopc-bigloo-options-set!
@@ -307,10 +305,6 @@
 	     (hopc-j2s-flags-set! (cons* :optim-literals #t (hopc-j2s-flags))))
 	    (("-fno-literals" (help "Disable literals optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #f (hopc-j2s-flags))))
-	    (("-fcache-level=?level" (help "Set cache inlining level"))
-	     (when (>=fx (string->integer level) 2)
-		(hopc-bigloo-options-set!
-		   (cons* "-srfi" "cache-level2" (hopc-bigloo-options)))))
 	    (("-fcache-instanceof" (help "Enable instanceof caching"))
 	     (hopc-j2s-flags-set! (cons* :optim-cinstanceof #t (hopc-j2s-flags))))
 	    (("-fno-cache-instanceof" (help "Enable instanceof caching"))

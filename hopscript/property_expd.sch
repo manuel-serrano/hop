@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Feb 12 15:31:07 2018 (serrano)                */
+;*    Last change :  Tue Feb 13 18:12:43 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -258,12 +258,13 @@
 			((vtable)
 			 ;; vtable property get
 			 (cond-expand
-			    (no-vtable-cache
+			    ((or no-vtable-cache no-vtable-cache-get)
 			     (loop (cdr cs)))
 			    (else
 			     `(with-access::JsConstructMap %cmap (vlen vtable %id)
 				 (let ((vidx (js-pcache-vindex ,cache)))
-				    (if (and (<fx vidx vlen) (fixnum? vidx))
+				    (if (and (<fx vidx vlen)
+					     (fixnum? (vector-ref vtable vidx)))
 					(let ((idx (vector-ref vtable vidx)))
 					   (js-profile-log-cache ,cache
 					      :vtable #t)
@@ -417,7 +418,7 @@
 				 (set! cmap
 				    (if (eq? (js-pcache-cmap ,cache) #t)
 					(js-pcache-pmap ,cache)
-					(js-pcache-pmap ,cache)))
+					(js-pcache-cmap ,cache)))
 				 ,tmp)
 			      ,(loop (cdr cs))))
 			((amap)
@@ -435,7 +436,7 @@
 			((vtable)
 			 ;; vtable property set
 			 (cond-expand
-			    (no-vtable-cache
+			    ((or no-vtable-cache no-vtable-cache-put)
 			     (loop (cdr cs)))
 			    (else
 			     `(with-access::JsConstructMap %cmap (vlen vtable)
@@ -443,10 +444,11 @@
 				    (if (and (<fx vidx vlen)
 					     (pair? (vector-ref vtable vidx)))
 					(let ((idx (car (vector-ref vtable vidx)))
-					      (cmap (cdr (vector-ref vtable vidx))))
+					      (ncmap (cdr (vector-ref vtable vidx))))
 					   (js-profile-log-cache ,cache :vtable #t)
+					   (js-profile-log-index idx)
 					   (js-object-push! ,obj idx ,tmp)
-					   (set! %cmap cmap)
+					   (set! cmap ncmap)
 					   ,tmp)
 					,(loop (cdr cs))))))))
 			(else
@@ -524,8 +526,7 @@
 	  ,ccache ,ocache ,loc ',cspecs))
 
    (define (calln-uncachable %this obj prop args ccache ocache loc)
-      `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc '())))
-	  (js-profile-log-cache ,ccache :cmap #t)
+      `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc '(cmap pmap amap))))
 	  ,(calln %this 'f obj args)))
    
    (define (expand-cache-specs cspecs %this obj prop args ccache ocache loc)
@@ -533,7 +534,7 @@
 	  (let ((%cmap cmap))
 	     ,(let loop ((cs cspecs))
 		 (if (null? cs)
-		     `(if (eq? %cmap #t)
+		     `(if (eq? (js-pcache-cmap ,ccache) #t)
 			  ,(calln-uncachable %this obj prop args ccache ocache loc)
 			  ,(calln-miss %this obj prop args ccache ocache loc cspecs))
 		     (case (car cs)
@@ -547,7 +548,7 @@
 			      ,(loop (cdr cs))))
 			((vtable)
 			 (cond-expand
-			    (no-vtable-cache 
+			    ((or no-vtable-cache no-vtable-cache-call)
 			     (loop (cdr cs)))
 			    (else
 			     `(with-access::JsConstructMap %cmap (vlen vtable)

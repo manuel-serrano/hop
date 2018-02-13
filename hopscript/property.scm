@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Feb 12 15:22:16 2018 (serrano)                */
+;*    Last change :  Tue Feb 13 18:08:15 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -17,8 +17,7 @@
 
    (library hop)
    
-   (option  (register-srfi! 'cache-level2)
-            (bigloo-compiler-debug-set! 0))
+   (option  (bigloo-compiler-debug-set! 0))
    
    (include "stringliteral.sch"
 	    "property.sch")
@@ -222,15 +221,25 @@
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
        (with-access::JsPropertyCache pcache (cmap pmap index)
-	  (when (isa? cmap JsConstructMap)
-	     (with-access::JsConstructMap cmap ((%cid %id) (cprops props))
-		(with-access::JsConstructMap pmap ((%pid %id) (pprops props))
-		   (fprint (current-error-port) msg (typeof pcache)
-		      " index=" index
-		      "\n  cmap.%id=" %cid
-		      " cmap.props=" cprops
-		      "\n  pmap.%id=" %pid
-		      " pmap.props=" pprops)))))
+	  (cond
+	     ((isa? cmap JsConstructMap)
+	      (with-access::JsConstructMap cmap ((%cid %id) (cprops props))
+		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
+		    (fprint (current-error-port) msg (typeof pcache)
+		       " index=" index
+		       "\n  cmap.%id=" %cid
+		       " cmap.props=" cprops
+		       "\n  pmap.%id=" %pid
+		       " pmap.props=" pprops))))
+	     ((isa? pmap JsConstructMap)
+	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
+		 (fprint (current-error-port) msg (typeof pcache)
+		    " index=" index
+		    "\n  pmap.%id=" %pid
+		    " pmap.props=" pprops)))
+	     (else
+	      (fprint (current-error-port) msg (typeof pcache)
+		 " no map"))))
        (fprint (current-error-port) msg (typeof pcache))))
 	 
 ;*---------------------------------------------------------------------*/
@@ -616,7 +625,7 @@
 ;*---------------------------------------------------------------------*/
 (define (js-object-literal-init! o::JsObject)
    (with-access::JsObject o ((%elements elements) cmap)
-      (with-access::JsConstructMap cmap ((%methods methods))
+      (with-access::JsConstructMap cmap ((%methods methods) props %id)
 	 (let ((elements %elements)
 	       (methods %methods))
 	    (let loop ((i (-fx (vector-length elements) 1)))
@@ -1247,12 +1256,10 @@
 
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
-	 (if (=fx cntmiss (vtable-threshold))
-	     (begin
-		(when (=fx vindex (js-not-a-index))
-		   (set! vindex (js-get-vindex %this)))
-		(js-cmap-vtable-add! omap vindex i))
-	     (set! cntmiss (+fx cntmiss 1)))))
+	 (when (>=fx cntmiss (vtable-threshold))
+	    (when (=fx vindex (js-not-a-index))
+	       (set! vindex (js-get-vindex %this)))
+	    (js-cmap-vtable-add! omap vindex i))))
 
    (let loop ((obj o))
       (jsobject-find obj name
@@ -1778,7 +1785,6 @@
 (define (js-put-name/cache! o prop::symbol v::obj throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (tprint "js-put-name/cache " (typeof o) " prop=" prop)
    (if (isa? o JsObject)
        (js-object-put-name/cache! o prop v throw %this cache point cspecs)
        (js-put! o prop v throw %this)))
@@ -1809,16 +1815,15 @@
 	    (set! name prop)
 	    (set! cpoint point)
 	    (set! usage 'put))
-
+	 
 	 (unless (eq? %omap (js-not-a-cmap))
 	    (with-access::JsPropertyCache cache (index cmap vindex cntmiss)
-	       (if (=fx cntmiss (vtable-threshold))
-		   (when (>=fx index 0)
-		      (when (=fx vindex (js-not-a-index))
-			 (set! vindex (js-get-vindex %this)))
-		      (with-access::JsObject o (cmap)
-			 (js-cmap-vtable-add! %omap vindex (cons index cmap))))
-		   (set! cntmiss (+fx cntmiss 1)))))
+	       (when (>=fx cntmiss (vtable-threshold))
+		  (when (>=fx index 0)
+		     (when (=fx vindex (js-not-a-index))
+			(set! vindex (js-get-vindex %this)))
+		     (js-cmap-vtable-add! %omap vindex (cons index omap))))))
+	 
 	 tmp)))
 
 ;*---------------------------------------------------------------------*/
@@ -2616,11 +2621,13 @@
 	   o::JsObject name::obj args::pair-nil
 	   ccache::JsPropertyCache ocache::JsPropertyCache
 	   point::long cspecs::pair-nil)
+   
    (with-access::JsPropertyCache ccache (cntmiss (cname name) (cpoint point) usage)
       (set! cntmiss (+fx 1 cntmiss))
       (set! cname name)
       (set! cpoint point)
       (set! usage 'call))
+   
    (with-access::JsPropertyCache ccache (pmap vindex method)
       (when (and (procedure? method)
 		 (isa? pmap JsConstructMap)
@@ -2722,7 +2729,7 @@
 	  #f)))
 
    (add-cache-log! 'callCacheMiss name)
-   
+
    (let loop ((obj o))
       (jsobject-find obj name
 	 ;; map search
@@ -2730,7 +2737,7 @@
 	    ;;(tprint "js-object-method-call/cache-miss name=" name " MAPPED")
 	    (with-access::JsObject o ((omap cmap) __proto__)
 	       (with-access::JsObject obj ((wmap cmap) elements)
-		  (with-access::JsConstructMap wmap (methods)
+		  (with-access::JsConstructMap wmap (methods %id)
 		     (let ((el-or-desc (vector-ref elements i)))
 			(cond
 			   ((isa? el-or-desc JsAccessorDescriptor)

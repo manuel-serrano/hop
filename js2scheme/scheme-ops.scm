@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Feb 10 10:57:45 2018 (serrano)                */
+;*    Last change :  Tue Feb 13 16:56:31 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -348,6 +348,10 @@
 		  ,(j2s-cast (j2s-scheme rhs mode return conf hint) rhs
 		      (j2s-vtype rhs) type conf)
 		  ,(j2s-cast lhsv lhs (j2s-vtype lhs) type conf)))))
+      ((MAX)
+       (js-min-max loc '>= lhs rhs mode return conf hint))
+      ((MIN)
+       (js-min-max loc '<= lhs rhs mode return conf hint))
       (else
        (with-tmp lhs rhs mode return conf hint 'any
 	  (lambda (left right)
@@ -630,6 +634,25 @@
 			    (box left tl conf)
 			    (box right tr conf)
 			    #f))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-min-max ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (js-min-max loc op lhs rhs mode return conf hint)
+   (with-tmp lhs rhs mode return conf hint 'any
+      (lambda (left right)
+	 (let ((lhs (with-access::J2SExpr lhs (loc)
+		       (instantiate::J2SHopRef
+			  (type (j2s-vtype lhs))
+			  (loc loc)
+			  (id left))))
+	       (rhs (with-access::J2SExpr rhs (loc)
+		       (instantiate::J2SHopRef
+			  (type (j2s-vtype rhs))
+			  (loc loc)
+			  (id right)))))
+	    `(if ,(js-cmp loc op  lhs rhs mode return conf hint)
+		 ,left ,right)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-equality ...                                                  */

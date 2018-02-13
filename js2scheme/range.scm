@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Wed Feb  7 08:04:28 2018 (serrano)                */
+;*    Last change :  Tue Feb 13 14:51:17 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -1333,11 +1333,6 @@
 					#f)
 				       (else
 					#f))))
-;* 				       ((type->range vtype args)       */
-;* 					=>                             */
-;* 					(lambda (rng)                  */
-;* 					   (set! range rng)            */
-;* 					   (cons p rng))))))           */
 		     params)))
 	 (multiple-value-bind (intv env)
 	    (node-range body envp args fix)
@@ -1750,6 +1745,22 @@
 	     (set! vtype (map-type vtype defmap)))))
    this)
 
+;*---------------------------------------------------------------------*/
+;*    type-range! ::J2SPrefix ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (type-range! this::J2SPrefix tymap)
+   (call-next-method)
+   (with-access::J2SPrefix this (lhs rhs (rng range))
+      (when (isa? lhs J2SRef)
+	 (with-access::J2SRef lhs (decl)
+	    (with-access::J2SDecl decl (vtype id key range)
+	       (if (and (interval? rng) (range-type? vtype))
+		   (begin
+		      (set! range (interval-merge range rng))
+		      (set! vtype (interval->type range tymap)))
+		   (set! vtype (map-type vtype defmap)))))))
+   this)
+	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-range-opt-program! ...                                       */
 ;*---------------------------------------------------------------------*/
