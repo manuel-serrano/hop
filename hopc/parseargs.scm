@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue Feb 13 18:05:53 2018 (serrano)                */
+;*    Last change :  Wed Feb 14 18:15:31 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -46,8 +46,8 @@
    (print "      j2s:loc,")
    (print "      nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:function[num] (*),")
-   (print "      hopscript:alloc[num] hopscript:file=path(*),")
-   (print "      format:json")
+   (print "      hopscript:alloc[num], hopscript:file=path(*), hopscript:uncache")
+   (print "      format:json, format:flog")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print " (*) Need both compile and runtime variable and need to be compiled")
    (print " in profile mode: --profile")
@@ -313,6 +313,9 @@
 	     (hopc-j2s-flags-set! (cons* :optim-vector #t (hopc-j2s-flags))))
 	    (("-fno-vector" (help "Disable array-to-vector optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-vector #f (hopc-j2s-flags))))
+	    (("-flog" ?log (help "Profile log file optimization"))
+	     (hopc-j2s-flags-set! (cons* :profile-log log (hopc-j2s-flags)))
+	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))

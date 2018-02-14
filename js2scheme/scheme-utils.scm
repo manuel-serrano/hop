@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Tue Feb 13 08:43:49 2018 (serrano)                */
+;*    Last change :  Wed Feb 14 15:13:14 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -472,7 +472,7 @@
       (and (not (number? prop))
 	   (not (type-number? typrop))
 	   (not (eq? typrop 'array))))
-	 
+
    (let ((prop (match-case prop
 		  ((js-utf8->jsstring ?str) str)
 		  ((js-ascii->jsstring ?str) str)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Feb 13 18:08:15 2018 (serrano)                */
+;*    Last change :  Wed Feb 14 11:02:34 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1212,7 +1212,7 @@
 ;*    to keep the base object (the actual receiver) available.         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject o::JsObject base prop %this)
-   (when (symbol? prop) (add-cache-log! 'getCacheMiss prop))
+   (js-profile-log-get prop)
    (let ((pval (js-get-property-value o base prop %this)))
       (if (eq? pval (js-absent))
 	  (js-undefined)
@@ -1252,8 +1252,6 @@
       (set! cpoint point)
       (set! usage 'get))
    
-   (add-cache-log! 'getCacheMiss name)
-
    (define (js-pcache-vtable! omap cache i)
       (with-access::JsPropertyCache cache (cntmiss vindex)
 	 (when (>=fx cntmiss (vtable-threshold))
@@ -1747,7 +1745,7 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
-   (add-cache-log! 'putCacheMiss name)
+   (js-profile-log-put name)
 
    (let loop ((obj o))
       (jsobject-find obj name
@@ -2728,7 +2726,7 @@
 	 (else
 	  #f)))
 
-   (add-cache-log! 'callCacheMiss name)
+   (js-profile-log-call name)
 
    (let loop ((obj o))
       (jsobject-find obj name

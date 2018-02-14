@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sat Feb 10 10:56:09 2018 (serrano)                */
+;*    Last change :  Wed Feb 14 18:55:24 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -24,6 +24,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_clevel
 
+   (library web)
+   
    (include "ast.sch")
    
    (import __js2scheme_ast
@@ -50,18 +52,182 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-clevel this::obj args)
    (when (isa? this J2SProgram)
-      (with-access::J2SProgram this (nodes headers decls)
-	 (let ((ptable (create-hashtable)))
-	    (propcollect* decls ptable)
-	    (propcollect* nodes ptable)
-	    (propclevel* decls ptable)
-	    (propclevel* nodes ptable))))
+      (let ((log (config-get args :profile-log #f)))
+	 (if (string? log)
+	     (cache-profile-log this log args)
+	     (with-access::J2SProgram this (nodes headers decls)
+		(let ((ptable (create-hashtable)))
+		   (propcollect* decls ptable)
+		   (propcollect* nodes ptable)
+		   (propclevel* decls ptable)
+		   (propclevel* nodes ptable))))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    cache-profile-log ...                                            */
+;*---------------------------------------------------------------------*/
+(define (cache-profile-log this::J2SProgram logfile conf)
+
+   (define (get key lst)
+      (let ((c (assq key lst)))
+	 (when (pair? c) (cdr c))))
+
+   (define (cache-verb . args)
+      (when (>=fx (config-get conf :verbose 0) 3)
+	 (with-output-to-port (current-error-port)
+	    (lambda ()
+	       (display "\n      ")
+	       (for-each display args)))))
+
+   (cache-verb "loading log file " (string-append "\"" logfile "\""))
+   
+   (let* ((log (load-profile-log logfile))
+	  (srcs (get 'sources log))
+	  (file (config-get conf :filename)))
+      (when (vector? srcs)
+	 (let loop ((i (-fx (vector-length srcs) 1)))
+	    (when (>=fx i 0)
+	       (let ((filename (get 'filename (vector-ref srcs i))))
+		  (if (string=? file filename)
+		      (let ((verb (make-cell 0)))
+			 (logclevel this (get 'caches (vector-ref srcs i)) verb)
+			 (cache-verb "cspecs " (cell-ref verb)))
+		      (loop (-fx i 1))))))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    load-profile-log ...                                             */
+;*---------------------------------------------------------------------*/
+(define (load-profile-log logfile)
+   
+   (define (alist->pcache l)
+      (let ((p (pcache -1 '- 0 0 0 0)))
+	 (for-each (lambda (l)
+		      (case (car l)
+			 ((point) (pcache-point-set! p (cdr l)))
+			 ((usage) (pcache-usage-set! p (cdr l)))
+			 ((cmap) (pcache-cmap-set! p (cdr l)))
+			 ((pmap) (pcache-pmap-set! p (cdr l)))
+			 ((amap) (pcache-amap-set! p (cdr l)))
+			 ((vtable) (pcache-vtable-set! p (cdr l)))))
+	    l)
+	 p))
+   
+   (define (val->caches vals::vector)
+      (sort (lambda (x y)
+	       (<=fx (pcache-point x) (pcache-point y)))
+	 (vector-map! alist->pcache vals)))
+
+   (call-with-input-file logfile
+      (lambda (ip)
+	 (json-parse ip
+	    :array-alloc (lambda () (make-cell '()))
+	    :array-set (lambda (a i val)
+			  (cell-set! a (cons val (cell-ref a))))
+	    :array-return (lambda (a i)
+			     (list->vector (reverse! (cell-ref a))))
+	    :object-alloc (lambda ()
+			     (make-cell '()))
+	    :object-set (lambda (o p val)
+			   (if (string=? p "caches")
+			       (cell-set! o
+				  (cons (cons 'caches (val->caches val))
+				     (cell-ref o)))
+			       (cell-set! o
+				  (cons (cons (string->symbol p) val)
+				     (cell-ref o)))))
+	    :object-return (lambda (o)
+			      (reverse! (cell-ref o)))
+	    :parse-error (lambda (msg fname loc)
+			    (error "json->ast" "Wrong JSON file" msg))))))
+
+;*---------------------------------------------------------------------*/
+;*    pcache ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-struct pcache point usage cmap pmap amap vtable)
 
 ;*---------------------------------------------------------------------*/
 ;*    propinfo ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-struct propinfo get set value accessor prototype polymorphic)
+
+;*---------------------------------------------------------------------*/
+;*    logclevel ...                                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (logclevel this::J2SNode logtable verb)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    logclevel ::J2SAccess ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (logclevel this::J2SAccess logtable verb)
+   (call-default-walker)
+   (with-access::J2SAccess this (cspecs loc)
+      (let ((entry (logtable-find logtable loc)))
+	 (when entry
+	    (let ((policy (pcache->cspecs entry)))
+	       (when policy
+		  (cell-set! verb (+fx (cell-ref verb) 1))
+		  (set! cspecs policy))))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    logtable-find ...                                                */
+;*---------------------------------------------------------------------*/
+(define (logtable-find table::vector loc)
+   (let ((len (vector-length table)))
+      (when (>fx len 0)
+	 (match-case loc
+	    ((?at ?fname ?point)
+	     (let loop ((start 0)
+			(end (-fx len 1))
+			(pivot (/fx len 2)))
+		(let ((pi (pcache-point (vector-ref table pivot))))
+		   (cond
+		      ((=fx pi point)
+		       (vector-ref table pivot))
+		      ((=fx start end)
+		       #f)
+		      ((>fx pi point)
+		       (loop start pivot
+			  (+fx start (/fx (-fx pivot start) 2))))
+		      (else
+		       (loop (+fx pivot 1) end
+			  (+fx pivot (+fx 1 (/fx (-fx end (+fx pivot 1)) 2)))))))))
+	    (else
+	     #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    pcache->cspecs ...                                               */
+;*---------------------------------------------------------------------*/
+(define (pcache->cspecs pc)
+   (cond
+      ((and (> (pcache-cmap pc) 0)
+	    (= (pcache-pmap pc) 0)
+	    (= (pcache-amap pc) 0)
+	    (= (pcache-vtable pc) 0))
+       '(cmap))
+      ((and (> (pcache-pmap pc) 0)
+	    (= (pcache-cmap pc) 0)
+	    (= (pcache-amap pc) 0)
+	    (= (pcache-vtable pc) 0))
+       '(pmap))
+      ((and (> (pcache-vtable pc) 0)
+	    (= (pcache-cmap pc) 0)
+	    (= (pcache-pmap pc) 0)
+	    (= (pcache-amap pc) 0))
+       '(vtable))
+      ((and (> (pcache-amap pc) 0)
+	    (= (pcache-cmap pc) 0)
+	    (= (pcache-pmap pc) 0)
+	    (= (pcache-vtable pc) 0))
+       '(amap))
+      ((and (> (pcache-cmap pc) 0)
+	    (> (pcache-vtable pc) 0)
+	    (= (pcache-pmap pc) 0))
+       '(cmap vtable))
+      (else
+       #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    propcollect* ...                                                 */
@@ -105,7 +271,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (propcollect this::J2SAccess ptable)
    (call-default-walker)
-   (with-access::J2SAccess this (clevel obj field)
+   (with-access::J2SAccess this (obj field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
 	    (let ((i (hashtable-get ptable val)))

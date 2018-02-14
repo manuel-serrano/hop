@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue Jan 16 08:59:05 2018 (serrano)                */
+;*    Last change :  Wed Feb 14 13:55:00 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Json                         */
@@ -93,6 +93,11 @@
       :expr expr
       :undefined undefined
       :string-alloc js-string->jsstring
+      :constant-alloc (lambda (n)
+			 (cond
+			    ((elong? n) (elong->flonum n))
+			    ((llong? n) (llong->flonum n))
+			    (else n)))
       :array-alloc (lambda ()
 		      (with-access::JsGlobalObject %this (js-array)
 			 (make-cell '())))
