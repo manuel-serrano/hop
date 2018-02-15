@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Feb 15 05:42:06 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 07:37:56 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -220,23 +220,32 @@
 ;*---------------------------------------------------------------------*/
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
-       (with-access::JsPropertyCache pcache (cmap pmap index)
+       (with-access::JsPropertyCache pcache (cmap pmap amap index)
 	  (cond
 	     ((isa? cmap JsConstructMap)
 	      (with-access::JsConstructMap cmap ((%cid %id) (cprops props))
 		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
-		    (fprint (current-error-port) msg (typeof pcache)
-		       " index=" index
-		       "\n  cmap.%id=" %cid
-		       " cmap.props=" cprops
-		       "\n  pmap.%id=" %pid
-		       " pmap.props=" pprops))))
+		    (with-access::JsConstructMap amap ((%aid %id) (aprops props))
+		       (fprint (current-error-port) msg (typeof pcache)
+			  " index=" index
+			  "\n  cmap.%id=" %cid
+			  " cmap.props=" cprops
+			  "\n  pmap.%id=" %pid
+			  " pmap.props=" pprops
+			  "\n  amap.%id=" %pid
+			  " amap.props=" aprops)))))
 	     ((isa? pmap JsConstructMap)
 	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
 		 (fprint (current-error-port) msg (typeof pcache)
 		    " index=" index
 		    "\n  pmap.%id=" %pid
 		    " pmap.props=" pprops)))
+	     ((isa? amap JsConstructMap)
+	      (with-access::JsConstructMap amap ((%aid %id) (aprops props))
+		 (fprint (current-error-port) msg (typeof pcache)
+		    " index=" index
+		    "\n  amap.%id=" %aid
+		    " amap.props=" aprops)))
 	     (else
 	      (fprint (current-error-port) msg (typeof pcache)
 		 " no map"))))
@@ -354,10 +363,13 @@
 (define (js-invalidate-pcaches-pmap! %this::JsGlobalObject)
    
    (define (invalidate-pcache-pmap! pcache)
-      (with-access::JsPropertyCache pcache (pmap)
+      (with-access::JsPropertyCache pcache (pmap amap)
 	 (when (isa? pmap JsConstructMap)
 	    (reset-cmap-vtable! pmap))
-	 (set! pmap #t)))
+	 (when (isa? amap JsConstructMap)
+	    (reset-cmap-vtable! amap))
+	 (set! pmap #t)
+	 (set! amap #t)))
 
    (with-access::JsGlobalObject %this (js-pmap-valid)
       (when js-pmap-valid
@@ -392,9 +404,10 @@
 ;*    js-pache-invalidate! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-pache-invalidate! pcache::JsPropertyCache)
-   (with-access::JsPropertyCache pcache (cmap pmap index owner)
+   (with-access::JsPropertyCache pcache (cmap pmap amap index owner)
       (set! cmap #t)
       (set! pmap #t)
+      (set! amap #t)
       (set! owner #f)
       (set! index 0)))
    
@@ -407,11 +420,12 @@
    [assert (obj) (isa? obj JsObject)]   
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (cmap pmap index owner)
+	 (with-access::JsPropertyCache pcache (cmap pmap amap index owner)
 	    (set! cmap #t)
+	    (set! pmap #t)
+	    (set! amap omap)
 	    (set! owner obj)
-	    (set! pmap omap)
-	    (set! index (-fx (negfx i) 1))))))
+	    (set! index i)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-update-direct! ...                                     */
@@ -421,9 +435,10 @@
 (define (js-pcache-update-direct! pcache::JsPropertyCache i o::JsObject)
    [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
-      (with-access::JsPropertyCache pcache (cmap pmap index)
+      (with-access::JsPropertyCache pcache (cmap pmap amap index)
 	 (set! cmap omap)
 	 (set! pmap #t)
+	 (set! amap #t)
 	 (set! index i))))
 
 ;*---------------------------------------------------------------------*/
@@ -436,9 +451,10 @@
    [assert (obj) (isa? obj JsObject)]
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (cmap pmap index owner)
+	 (with-access::JsPropertyCache pcache (cmap pmap amap index owner)
 	    (set! cmap #t)
 	    (set! pmap omap)
+	    (set! amap #t)
 	    (set! owner obj)
 	    (set! index i)))))
 
@@ -451,10 +467,11 @@
    [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (pmap cmap index owner)
+	 (with-access::JsPropertyCache pcache (pmap amap cmap index owner)
 	    [assert (pcache) (= (cmap-size nextmap) (+ 1 (cmap-size omap)))]
-	    (set! pmap omap)
 	    (set! cmap nextmap)
+	    (set! pmap omap)
+	    (set! amap #t)
 	    (set! owner #f)
 	    (set! index i)))))
 
@@ -1265,7 +1282,7 @@
 	 (lambda (obj i)
 	    (with-access::JsObject o ((omap cmap))
 	       (with-access::JsObject obj (elements)
-		  (with-access::JsPropertyCache cache (cmap pmap index owner cntmiss)
+		  (with-access::JsPropertyCache cache (index owner cntmiss)
 		     (let ((el-or-desc (vector-ref elements i)))
 			(cond
 			   ((isa? el-or-desc JsPropertyDescriptor)
@@ -1289,9 +1306,8 @@
 			    el-or-desc)))))))
 	 ;; property search
 	 (lambda (obj v)
-	    (with-access::JsPropertyCache cache (cmap pmap index owner)
-	       (with-access::JsObject o ((omap cmap))
-		  (js-property-value o v %this))))
+	    (with-access::JsPropertyCache cache (index owner)
+	       (js-property-value o v %this)))
 	 ;; not found
 	 (lambda ()
 	    (js-get-notfound name throw %this))
@@ -1383,16 +1399,17 @@
 	   throw::bool %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (with-access::JsObject o ((omap cmap) elements)
-      (with-access::JsPropertyCache cache (cmap pmap index owner)
+      (with-access::JsPropertyCache cache (cmap pmap amap index owner)
 	 (cond
 	    ((eq? pmap omap)
 	     (with-access::JsObject owner (elements)
-		(if (>=fx index 0)
-		    (vector-ref elements index)
-		    (let ((desc (vector-ref elements (-fx (negfx index) 1))))
-		       (js-property-value o desc %this)))))
+		(vector-ref elements index)))
 	    ((eq? cmap omap)
 	     (vector-ref elements index))
+	    ((eq? amap omap)
+	     (with-access::JsObject owner (elements)
+		(let ((desc (vector-ref elements index)))
+		   (js-property-value o desc %this))))
 	    (else
 	     (js-get-name/cache-miss o name throw %this cache point cspecs))))))
 

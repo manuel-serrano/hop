@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue Feb 13 16:56:31 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 11:29:29 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -349,9 +349,9 @@
 		      (j2s-vtype rhs) type conf)
 		  ,(j2s-cast lhsv lhs (j2s-vtype lhs) type conf)))))
       ((MAX)
-       (js-min-max loc '>= lhs rhs mode return conf hint))
+       (js-min-max loc '>>= lhs rhs mode return conf hint))
       ((MIN)
-       (js-min-max loc '<= lhs rhs mode return conf hint))
+       (js-min-max loc '<<= lhs rhs mode return conf hint))
       (else
        (with-tmp lhs rhs mode return conf hint 'any
 	  (lambda (left right)
@@ -2229,7 +2229,11 @@
    (if flip `(,op ,right ,left) `(,op ,left ,right)))
    
 (define (binop-int32-int32 op type left right flip)
-   (let ((op (if (memq op '(== ===)) '=s32 (symbol-append op 's32))))
+   (let ((op (cond
+		((memq op '(== ===)) '=s32)
+		((eq? op '<<=) '<=s32)
+		((eq? op '>>=) '>=s32)
+		(else (symbol-append op 's32)))))
       (case type
 	 ((int32)
 	  (binop-flip op left right flip))
@@ -2241,7 +2245,11 @@
 	  (binop-flip (symbol-append op '/overflow) left right flip)))))
    
 (define (binop-uint32-uint32 op type left right flip)
-   (let ((op (if (memq op '(== ===)) '=u32 (symbol-append op 'u32))))
+   (let ((op (cond
+		((memq op '(== ===)) '=u32)
+		((eq? op '<<=) '<=u32)
+		((eq? op '>>=) '>=u32)
+		(else (symbol-append op 'u32)))))
       (case type
 	 ((int32)
 	  `(uint32->int32 ,(binop-flip op left right flip)))
@@ -2253,7 +2261,11 @@
 	  (binop-flip (symbol-append op '/overflow) left right flip)))))
    
 (define (binop-fixnum-fixnum op type left right flip)
-   (let ((op (if (memq op '(== ===)) '=fx (symbol-append op 'fx))))
+   (let ((op (cond
+		((memq op '(== ===)) '=fx)
+		((eq? op '<<=) '<=fx)
+		((eq? op '>>=) '>=fx)
+		(else (symbol-append op 'fx)))))
       (case type
 	 ((int32)
 	  `(fixnum->int32 ,(binop-flip op left right flip)))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Feb 14 19:12:19 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 13:30:36 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -725,7 +725,7 @@
 				(loop (+fx i 1) x (cons old res)))))))))))
 
    (cond
-      ((string-contains trc "format:jlog")
+      ((string-contains trc "format:fprofile")
        (when (pair? filecaches)
 	  (with-output-to-port (current-error-port)
 	     (lambda ()

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec 25 08:14:25 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Thu Feb 15 11:05:23 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
 ;*    -------------------------------------------------------------    */
@@ -443,9 +443,3 @@
       ((=fl x +inf.0) x)
       ((=fl x -inf.0) x)
       (else (inexact->exact (floor (+ x 0.5))))))
-
-
-
-
-
-   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Wed Jan 24 11:42:29 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 11:32:08 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -58,6 +58,15 @@
 	   (>js::bool ::obj ::obj ::JsGlobalObject)
 	   (<=js::bool ::obj ::obj ::JsGlobalObject)
 	   (>=js::bool ::obj ::obj ::JsGlobalObject)
+	   
+	   (inline >>=js::bool ::obj ::obj ::JsGlobalObject)
+	   (inline <<=js::bool ::obj ::obj ::JsGlobalObject)
+	   
+	   (>>=::bool ::obj ::obj)
+	   (<<=::bool ::obj ::obj)
+	   
+	   (>>=fl::bool ::double ::double)
+	   (<<=fl::bool ::double ::double)
 	   
 	   (inline fixnums?::bool ::obj ::obj)
 	   )
@@ -588,6 +597,54 @@
 	      (let ((nx (js-tonumber px %this))
 		    (ny (js-tonumber py %this)))
 		 (>= nx ny))))))
+
+;*---------------------------------------------------------------------*/
+;*    >>=js ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (>>=js left right %this::JsGlobalObject)
+   (>>= (js-tonumber left %this) (js-tonumber right %this)))
+
+;*---------------------------------------------------------------------*/
+;*    <<=js ...                                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (<<=js left right %this::JsGlobalObject)
+   (<<= (js-tonumber left %this) (js-tonumber right %this)))
+
+;*---------------------------------------------------------------------*/
+;*    >>= ...                                                          */
+;*---------------------------------------------------------------------*/
+(define (>>= left right)
+   (cond
+      ((not (= left left)) #t)
+      ((not (= right right)) #f)
+      (else (>= left right))))
+
+;*---------------------------------------------------------------------*/
+;*    <<= ...                                                          */
+;*---------------------------------------------------------------------*/
+(define (<<= left right)
+   (cond
+      ((not (= left left)) #t)
+      ((not (= right right)) #f)
+      (else (<= left right))))
+
+;*---------------------------------------------------------------------*/
+;*    >>=fl ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (>>=fl left right)
+   (cond
+      ((not (=fl left left)) #t)
+      ((not (=fl right right)) #f)
+      (else (>=fl left right))))
+
+;*---------------------------------------------------------------------*/
+;*    <<=fl ...                                                        */
+;*---------------------------------------------------------------------*/
+(define (<<=fl left right)
+   (cond
+      ((not (=fl left left)) #t)
+      ((not (=fl right right)) #f)
+      (else (<=fl left right))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fixnums? ...                                                     */

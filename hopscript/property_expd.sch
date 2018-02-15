@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Feb 15 05:42:27 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 07:46:05 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -235,8 +235,7 @@
 			      ,(loop (cdr cs))))
 			((pmap pmap+)
 			 ;; prototype property get
-			 `(if (and (eq? %cmap (js-pcache-pmap ,cache))
-				   (>=fx (js-pcache-index ,cache) 0))
+			 `(if (eq? %cmap (js-pcache-pmap ,cache))
 			      (let ((idx (js-pcache-index ,cache)))
 				 (with-access::JsObject (js-pcache-owner ,cache) (elements)
 				    (js-profile-log-cache ,cache :pmap #t)
@@ -245,12 +244,10 @@
 			      ,(loop (cdr cs))))
 			((amap amap+)
 			 ;; accessor property get
-			 `(if (and (eq? %cmap (js-pcache-pmap ,cache))
-				   (<fx (js-pcache-index ,cache) 0))
+			 `(if (eq? %cmap (js-pcache-pmap ,cache))
 			      (let ((idx (js-pcache-index ,cache)))
 				 (with-access::JsObject (js-pcache-owner ,cache) (elements)
-				    (let* ((idx (-fx (negfx idx) 1))
-					   (desc (vector-ref elements idx)))
+				    (let ((desc (vector-ref elements idx)))
 				       (js-profile-log-cache ,cache :amap #t)
 				       (js-profile-log-index idx)
 				       (js-property-value ,obj desc ,%this))))
@@ -405,8 +402,7 @@
 			      ,(loop (cdr cs))))
 			((pmap)
 			 ;; prototype property set
-			 `(if (and (eq? %cmap (js-pcache-pmap ,cache))
-				   (>=fx (js-pcache-index ,cache) 0))
+			 `(if (eq? %cmap (js-pcache-pmap ,cache))
 			      (let ((idx (js-pcache-index ,cache))
 				    (%vec elements))
 				 (js-profile-log-index idx)
@@ -423,10 +419,9 @@
 			      ,(loop (cdr cs))))
 			((amap)
 			 ;; accessor property set
-			 `(if (and (eq? %cmap (js-pcache-pmap ,cache))
-				   (<fx (js-pcache-index ,cache) 0))
+			 `(if (eq? %cmap (js-pcache-pmap ,cache))
 			      (with-access::JsObject (js-pcache-owner ,cache) (elements)
-				 (let* ((idx (-fx (negfx (js-pcache-index ,cache)) 1))
+				 (let* ((idx (js-pcache-index ,cache))
 					(desc (vector-ref elements idx)))
 				    (js-profile-log-cache ,cache :amap #t)
 				    (js-profile-log-index idx)
@@ -521,9 +516,9 @@
 		      (format "js-call~a" (if (>=fx len 11) "n" len)))))
 	 `(,call ,%this ,m ,obj ,@args)))
    
-   (define (calln-miss %this obj prop args ccache ocache loc cspecs)
+   (define (calln-miss %this obj prop args ccache ocache loc cspecs ospecs)
       `(js-object-method-call/cache-miss %this ,obj ,prop (list ,@args)
-	  ,ccache ,ocache ,loc ',cspecs))
+	  ,ccache ,ocache ,loc ',cspecs ',ospecs))
 
    (define (calln-uncachable %this obj prop args ccache ocache loc)
       `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc '(cmap pmap amap))))
@@ -536,7 +531,7 @@
 		 (if (null? cs)
 		     `(if (eq? (js-pcache-cmap ,ccache) #t)
 			  ,(calln-uncachable %this obj prop args ccache ocache loc)
-			  ,(calln-miss %this obj prop args ccache ocache loc ocspecs))
+			  ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
 		     (case (car cs)
 			((cmap amap)
 			 (loop (cdr cs)))

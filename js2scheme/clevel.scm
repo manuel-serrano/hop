@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Thu Feb 15 05:50:44 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 13:53:24 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -91,7 +91,7 @@
 		  (if (string=? file filename)
 		      (let ((verb (make-cell 0))
 			    (logtable (get 'caches (vector-ref srcs i))))
-			 (profile-clevel this logtable verb)
+			 (profile-clevel this logtable verb conf)
 			 (cache-verb "cspecs " (cell-ref verb)))
 		      (loop (-fx i 1))))))))
    this)
@@ -161,27 +161,37 @@
 ;*---------------------------------------------------------------------*/
 ;*    profile-clevel ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (profile-clevel this::J2SNode logtable verb)
+(define-walk-method (profile-clevel this::J2SNode logtable verb conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-clevel ::J2SAccess ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (profile-clevel this::J2SAccess logtable verb)
+(define-walk-method (profile-clevel this::J2SAccess logtable verb conf)
    (call-default-walker)
-   (with-access::J2SAccess this (cspecs loc)
-      (let ((entry (logtable-find logtable loc)))
+   (with-access::J2SAccess this (obj field cspecs loc)
+      (let ((entry (logtable-find logtable (loc->point loc))))
 	 (when entry
 	    (let ((policy (pcache->cspecs entry)))
 	       (when policy
+		  (when (>=fx (config-get conf :verbose 0) 4)
+		     (display* "\n        " loc " -> " policy))
 		  (cell-set! verb (+fx (cell-ref verb) 1))
 		  (set! cspecs policy))))))
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    loc->point ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (loc->point loc)
+   (match-case loc
+      ((at ?fname ?point) point)
+      (else -1)))
+
+;*---------------------------------------------------------------------*/
 ;*    profile-clevel ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (profile-clevel this::J2SCall logtable verb)
+(define-walk-method (profile-clevel this::J2SCall logtable verb conf)
    (call-default-walker)
    (with-access::J2SCall this (cspecs loc)
       (let ((entry (logtable-find logtable loc 'call)))
@@ -194,37 +204,33 @@
 ;*---------------------------------------------------------------------*/
 ;*    logtable-find ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (logtable-find table::vector loc #!optional usage)
+(define (logtable-find table::vector point #!optional usage)
    (let ((len (vector-length table)))
       (when (>fx len 0)
-	 (match-case loc
-	    ((?at ?fname ?point)
-	     (let loop ((start 0)
-			(end (-fx len 1))
-			(pivot (/fx len 2)))
-		(let* ((pi (vector-ref table pivot))
-		       (po (pcache-point pi)))
-		   (cond
-		      ((=fx po point)
-		       (if (or (not usage) (eq? (pcache-usage pi) usage))
-			   pi
-			   (let loop ((i (+fx pivot 1)))
-			      (if (<fx i end)
-				  (let ((pi (vector-ref table i)))
-				     (when (=fx (pcache-point pi) point)
-					(if (eq? (pcache-usage pi) usage)
-					    pi
-					    (loop (+fx i 1)))))))))
-		      ((=fx start end)
-		       #f)
-		      ((>fx pi point)
-		       (loop start pivot
-			  (+fx start (/fx (-fx pivot start) 2))))
-		      (else
-		       (loop (+fx pivot 1) end
-			  (+fx pivot (+fx 1 (/fx (-fx end (+fx pivot 1)) 2)))))))))
-	    (else
-	     #f)))))
+	 (let loop ((start 0)
+		    (end (-fx len 1))
+		    (pivot (/fx len 2)))
+	    (let* ((pi (vector-ref table pivot))
+		   (po (pcache-point pi)))
+	       (cond
+		  ((=fx po point)
+		   (if (or (not usage) (eq? (pcache-usage pi) usage))
+		       pi
+		       (let loop ((i (+fx pivot 1)))
+			  (if (<fx i end)
+			      (let ((pi (vector-ref table i)))
+				 (when (=fx (pcache-point pi) point)
+				    (if (eq? (pcache-usage pi) usage)
+					pi
+					(loop (+fx i 1)))))))))
+		  ((=fx start end)
+		   #f)
+		  ((>fx po point)
+		   (loop start pivot
+		      (+fx start (/fx (-fx pivot start) 2))))
+		  (else
+		   (loop (+fx pivot 1) end
+		      (+fx pivot (+fx 1 (/fx (-fx end (+fx pivot 1)) 2)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    pcache->cspecs ...                                               */
