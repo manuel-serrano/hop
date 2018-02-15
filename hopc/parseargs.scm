@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed Feb 14 18:15:31 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 05:29:09 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -313,7 +313,7 @@
 	     (hopc-j2s-flags-set! (cons* :optim-vector #t (hopc-j2s-flags))))
 	    (("-fno-vector" (help "Disable array-to-vector optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-vector #f (hopc-j2s-flags))))
-	    (("-flog" ?log (help "Profile log file optimization"))
+	    (("-fprofile" ?log (help "Profile log file optimization"))
 	     (hopc-j2s-flags-set! (cons* :profile-log log (hopc-j2s-flags)))
 	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))

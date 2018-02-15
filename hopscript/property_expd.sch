@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Feb 13 18:12:43 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 05:42:27 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -529,14 +529,14 @@
       `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc '(cmap pmap amap))))
 	  ,(calln %this 'f obj args)))
    
-   (define (expand-cache-specs cspecs %this obj prop args ccache ocache loc)
+   (define (expand-cache-specs ccspecs ocspecs %this obj prop args ccache ocache loc)
       `(with-access::JsObject ,obj (cmap)
 	  (let ((%cmap cmap))
-	     ,(let loop ((cs cspecs))
+	     ,(let loop ((cs ccspecs))
 		 (if (null? cs)
 		     `(if (eq? (js-pcache-cmap ,ccache) #t)
 			  ,(calln-uncachable %this obj prop args ccache ocache loc)
-			  ,(calln-miss %this obj prop args ccache ocache loc cspecs))
+			  ,(calln-miss %this obj prop args ccache ocache loc ocspecs))
 		     (case (car cs)
 			((cmap amap)
 			 (loop (cdr cs)))
@@ -571,9 +571,9 @@
        (match-case x
 	  ((js-object-method-call-name/cache ?%this (and (? symbol?) ?obj)
 	      ?prop ?ccache ?ocache
-	      ?loc ((kwote quote) ?cspecs)
+	      ?loc ((kwote quote) ?ccspecs) ((kwote quote) ?ocspecs)
 	      . ?args)
-	   (e (expand-cache-specs cspecs %this obj prop args ccache ocache loc)
+	   (e (expand-cache-specs ccspecs ocspecs %this obj prop args ccache ocache loc)
 	      e))
 	  ((js-object-method-call-name/cache ?%this ?obj . ?rest)
 	   (let ((o (gensym '%o)))

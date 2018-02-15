@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Feb 14 11:02:34 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 05:42:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -167,13 +167,13 @@
 	      ::symbol ::procedure ::obj ::obj ::obj)
 	   
 	   (js-method-call-name/cache ::JsGlobalObject ::obj ::obj
-	      ::JsPropertyCache ::JsPropertyCache . args)
+	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil ::pair-nil . args)
 	   (js-object-method-call-name/cache ::JsGlobalObject ::JsObject ::obj
-	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil . args)
+	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil ::pair-nil . args)
 	   
 	   (js-object-method-call/cache-miss ::JsGlobalObject
 	      ::JsObject ::obj ::pair-nil
-	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil)
+	      ::JsPropertyCache ::JsPropertyCache ::long ::pair-nil ::pair-nil)
 	   
 	   (js-call/cache ::JsGlobalObject ::JsPropertyCache obj this . args)
 	   
@@ -2573,9 +2573,12 @@
 ;*    js-method-call-name/cache ...                                    */
 ;*---------------------------------------------------------------------*/
 (define (js-method-call-name/cache %this::JsGlobalObject obj::obj name::obj
-	   ccache::JsPropertyCache ocache::JsPropertyCache . args)
+	   ccache::JsPropertyCache ocache::JsPropertyCache
+	   point::long ccspecs::pair-nil ocspecs
+	   . args)
    (if (isa? obj JsObject)
-       (apply js-object-method-call-name/cache %this obj name ccache ocache args)
+       (apply js-object-method-call-name/cache %this obj name
+	  ccache ocache point ccspecs ocspecs args)
        (let ((o (js-toobject %this obj)))
 	  (js-apply %this (js-get o name %this) o args))))
 
@@ -2587,7 +2590,7 @@
 (define (js-object-method-call-name/cache %this::JsGlobalObject
 	   obj::JsObject name::obj
 	   ccache::JsPropertyCache ocache::JsPropertyCache
-	   point::long cspecs::pair-nil
+	   point::long ccspecs::pair-nil ocspecs
 	   . args)
    (with-access::JsObject obj ((omap cmap) __proto__)
       (with-access::JsPropertyCache ccache (cmap pmap method vindex)
@@ -2607,7 +2610,7 @@
 		    (let ((m (vector-ref vtable vindex)))
 		       (apply m obj args))
 		    (js-object-method-call/cache-miss %this obj name args
-		       ccache ocache point cspecs))))))))
+		       ccache ocache point ccspecs ocspecs))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-method-call/cache-miss ...                             */
@@ -2618,7 +2621,7 @@
 (define (js-object-method-call/cache-miss %this::JsGlobalObject
 	   o::JsObject name::obj args::pair-nil
 	   ccache::JsPropertyCache ocache::JsPropertyCache
-	   point::long cspecs::pair-nil)
+	   point::long ccspecs::pair-nil ocspecs::pair-nil)
    
    (with-access::JsPropertyCache ccache (cntmiss (cname name) (cpoint point) usage)
       (set! cntmiss (+fx 1 cntmiss))
@@ -2634,7 +2637,7 @@
 	    (set! vindex (js-get-vindex %this)))
 	 (js-cmap-vtable-add! pmap vindex method))
       (js-object-method-call/cache-fill %this o name args
-	 ccache ocache point cspecs)))
+	 ccache ocache point ccspecs ocspecs)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-method-call/cache-fill ...                             */
@@ -2648,7 +2651,7 @@
 (define (js-object-method-call/cache-fill %this::JsGlobalObject
 	   o::JsObject name::obj args::pair-nil
 	   ccache::JsPropertyCache ocache::JsPropertyCache
-	   point::long cspecs::pair-nil)
+	   point::long ccspecs::pair-nil ospecs::pair-nil)
    
    (define (jsapply method)
       (if (procedure? method)

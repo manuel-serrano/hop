@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Feb 12 18:48:04 2018 (serrano)                */
+;*    Last change :  Thu Feb 15 05:40:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1679,8 +1679,8 @@
    (define (call-super-method fun args)
       (call-unknown-function fun '(this) args))
 
-   (define (call-ref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
-      (with-access::J2SAccess fun (loc field cspecs)
+   (define (call-ref-method self ccache ocache ccspecs fun::J2SAccess obj::J2SExpr args)
+      (with-access::J2SAccess fun (loc field (ocspecs cspecs))
 	 (cond
 	    ((isa? self J2SSuper)
 	     (call-super-method fun args))
@@ -1698,7 +1698,8 @@
 			   ,(js-pcache ccache)
 			   ,(js-pcache ocache)
 			   ,(loc->point loc)
-			   ',cspecs
+			   ',ccspecs
+			   ',ocspecs
 			   ,@(map (lambda (arg)
 				     (j2s-scheme arg mode return conf hint))
 				args)))))
@@ -1735,7 +1736,7 @@
 			(else
 			 #f))))))))
    
-   (define (call-method ccache ocache fun::J2SAccess args)
+   (define (call-method ccache ocache ccspecs fun::J2SAccess args)
       (with-access::J2SAccess fun (loc obj field)
 	 (let loop ((obj obj))
 	    (cond
@@ -1743,10 +1744,10 @@
 		=>
 		(lambda (sexp) sexp))
 	       ((isa? obj J2SRef)
-		(call-ref-method obj ccache ocache fun obj args))
+		(call-ref-method obj ccache ocache ccspecs fun obj args))
 	       ((isa? obj J2SGlobalRef)
 		(or (call-globalref-method obj ccache ocache fun obj args)
-		    (call-ref-method obj ccache ocache fun obj args)))
+		    (call-ref-method obj ccache ocache ccspecs fun obj args)))
 	       ((isa? obj J2SParen)
 		(with-access::J2SParen obj (expr)
 		   (loop expr)))
@@ -1759,7 +1760,7 @@
 		       (ttmp (type-ident tmp (j2s-vtype obj))))
 		   `(let ((,ttmp ,(j2s-scheme obj mode return conf hint)))
 		       ,(call-ref-method obj
-			   ccache ocache
+			   ccache ocache ccspecs
 			   (duplicate::J2SAccess fun
 			      (obj (instantiate::J2SPragma
 				      (loc loc)
@@ -1950,13 +1951,13 @@
 	  (call-unknown-function fun
 	     (j2s-scheme thisarg mode return conf hint) args)))
 
-   (with-access::J2SCall this (loc fun thisarg args protocol cache)
+   (with-access::J2SCall this (loc fun thisarg args protocol cache cspecs)
       (let loop ((fun fun))
 	 (epairify loc
 	    (cond
 	       ((isa? fun J2SAccess)
 		(with-access::J2SAccess fun ((ocache cache))
-		   (call-method cache ocache fun args)))
+		   (call-method cache ocache cspecs fun args)))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
 		   (loop expr)))
