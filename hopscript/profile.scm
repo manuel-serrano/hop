@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Feb 15 13:30:36 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 09:22:21 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -499,14 +499,14 @@
 ;*    profile-report-start ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (profile-report-start trc)
-   (when (or (string-contains trc "format:json") (string-contains trc "format:jlog"))
+   (when (or (string-contains trc "format:json") (string-contains trc "format:fprofile"))
       (display "{\n" (current-error-port))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-report-end ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (profile-report-end trc conf)
-   (when (or (string-contains trc "format:json") (string-contains trc "format:jlog"))
+   (when (or (string-contains trc "format:json") (string-contains trc "format:fprofile"))
       (with-output-to-port (current-error-port)
 	 (lambda ()
 	    (display "\"config\": ")
@@ -559,6 +559,13 @@
 
    (define (vmap proc::procedure vec::vector)
       (vector->list (vector-map proc vec)))
+
+   (define (vany proc::procedure vec::vector)
+      (let loop ((i (-fx (vector-length vec) 1)))
+	 (when (>=fx i 0)
+	    (if (proc (vector-ref vec i))
+		(vector-ref vec i)
+		(loop (-fx i 1))))))
 
    (define (filecache-name fc)
       (car fc))
@@ -731,28 +738,35 @@
 	     (lambda ()
 		(print "\"sources\": [")
 		(for-each (lambda (fc)
-			     (print "  { \"filename\": \"" (filecache-name fc) "\",")
-			     (print "    \"caches\": [")
-			     (vfor-each (lambda (pc)
-					   (with-access::JsPropertyCache pc (point usage cntmiss cntcmap cntpmap cntamap cntvtable)
-					      (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
-						 (display* "      { \"point\": " point)
-						 (display* ", \"usage\": \"" usage "\"")
-						 (when (> cntmiss 1) (display* ", \"miss\": " cntmiss))
-						 (when (> cntcmap 0) (display* ", \"cmap\": " cntcmap))
-						 (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
-						 (when (> cntamap 0) (display* ", \"amap\": " cntamap))
-						 (when (> cntvtable 0) (display* ", \"vtable\": " cntvtable))
-						 (print " }, "))))
-				(collapse
-				   (sort (lambda (x y)
-					    (with-access::JsPropertyCache x ((xpoint point))
-					       (with-access::JsPropertyCache y ((ypoint point))
-						  (<= xpoint ypoint))))
-				      (filecache-caches fc))))
-			     (print "      { \"point\": -1 } ]")
-			     (print "  }\n],"))
-		   filecaches)))))
+			     (when (and (vector? (filecache-caches fc))
+					(vany (lambda (pc)
+						 (with-access::JsPropertyCache pc (cntmiss)
+						    (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))))
+					   (filecache-caches fc)))
+				(print "  { \"filename\": \"" (filecache-name fc) "\",")
+				(print "    \"caches\": [")
+				(vfor-each (lambda (pc)
+					      (with-access::JsPropertyCache pc (point usage cntmiss cntcmap cntpmap cntamap cntvtable)
+						 (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
+						    (display* "      { \"point\": " point)
+						    (display* ", \"usage\": \"" usage "\"")
+						    (when (> cntmiss 1) (display* ", \"miss\": " cntmiss))
+						    (when (> cntcmap 0) (display* ", \"cmap\": " cntcmap))
+						    (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
+						    (when (> cntamap 0) (display* ", \"amap\": " cntamap))
+						    (when (> cntvtable 0) (display* ", \"vtable\": " cntvtable))
+						    (print " }, "))))
+				   (collapse
+				      (sort (lambda (x y)
+					       (with-access::JsPropertyCache x ((xpoint point))
+						  (with-access::JsPropertyCache y ((ypoint point))
+						     (<= xpoint ypoint))))
+					 (filecache-caches fc))))
+				(print "      { \"point\": -1 } ]")
+				(print "  },")))
+		   filecaches)
+		(print "  { \"filename\": \"\", \"caches\": [] }")
+		(print "],")))))
       ((string-contains trc "format:json")
        (with-output-to-port (current-error-port)
 	  (lambda ()
@@ -913,15 +927,15 @@
 	 " "
 	 (padding "use" 4 'center)
 	 " | "
-	 (padding "cntmiss" 10 'right)
+	 (padding "miss" 10 'right)
 	 " " 
-	 (padding "cntcmap" 10 'right)
+	 (padding "cmap" 10 'right)
 	 " " 
-	 (padding "cntpmap" 10 'right)
+	 (padding "pmap" 10 'right)
 	 " " 
-	 (padding "cntamap" 10 'right)
+	 (padding "amap" 10 'right)
 	 " " 
-	 (padding "cntvtable" 10 'right))
+	 (padding "vtable" 10 'right))
       (fprint (current-error-port) (make-string (+ ppading 1 10 1 4) #\-)
 	 "-+-"
 	 (make-string (+ 10 1 10 1 10 1 10 1 10) #\-))
@@ -951,6 +965,3 @@
 			    " " 
 			    (padding cntvtable 10 'right)))))
 	 (vector->list pcache))))
-
-
-

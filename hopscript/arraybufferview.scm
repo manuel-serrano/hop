@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Sun Feb 11 18:29:39 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 08:46:41 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
@@ -760,9 +760,9 @@
 	  length)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-name/cache-miss ::JsTypedArray ...                        */
+;*    js-object-get-name/cache-miss ::JsTypedArray ...                 */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-name/cache-miss o::JsTypedArray p
+(define-method (js-object-get-name/cache-miss o::JsTypedArray p
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache
 		  #!optional (point -1) (cspecs '()))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Feb 12 10:20:55 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 08:46:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2260,9 +2260,9 @@
 	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-name/cache-miss ...                                       */
+;*    js-object-get-name/cache-miss ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-name/cache-miss o::JsArray p::obj
+(define-method (js-object-get-name/cache-miss o::JsArray p::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache
 		  #!optional (point -1) (cspecs '()))

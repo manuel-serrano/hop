@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Thu Feb 15 13:53:24 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 10:43:39 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -171,15 +171,29 @@
    (call-default-walker)
    (with-access::J2SAccess this (obj field cspecs loc)
       (let ((entry (logtable-find logtable (loc->point loc))))
+	 (if entry
+	     (let ((policy (pcache->cspecs entry)))
+		(when policy
+		   (when (>=fx (config-get conf :verbose 0) 4)
+		      (display* "\n        " (loc->string loc) " -> " policy))
+		   (cell-set! verb (+fx (cell-ref verb) 1))
+		   (set! cspecs policy)))
+	     (set! cspecs '(cmap+)))))
+   this)
+
+;*---------------------------------------------------------------------*/
+;*    profile-clevel ::J2SCall ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (profile-clevel this::J2SCall logtable verb conf)
+   (call-default-walker)
+   (with-access::J2SCall this (cspecs loc)
+      (let ((entry (logtable-find logtable (loc->point loc) 'call)))
 	 (when entry
 	    (let ((policy (pcache->cspecs entry)))
 	       (when policy
-		  (when (>=fx (config-get conf :verbose 0) 4)
-		     (display* "\n        " loc " -> " policy))
 		  (cell-set! verb (+fx (cell-ref verb) 1))
-		  (set! cspecs policy))))))
-   this)
-
+		  (set! cspecs policy)))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    loc->point ...                                                   */
 ;*---------------------------------------------------------------------*/
@@ -189,18 +203,13 @@
       (else -1)))
 
 ;*---------------------------------------------------------------------*/
-;*    profile-clevel ::J2SCall ...                                     */
+;*    loc->string ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (profile-clevel this::J2SCall logtable verb conf)
-   (call-default-walker)
-   (with-access::J2SCall this (cspecs loc)
-      (let ((entry (logtable-find logtable loc 'call)))
-	 (when entry
-	    (let ((policy (pcache->cspecs entry)))
-	       (when policy
-		  (cell-set! verb (+fx (cell-ref verb) 1))
-		  (set! cspecs policy)))))))
-   
+(define (loc->string loc)
+   (match-case loc
+      ((at ?fname ?point) (format "~a:~a" fname point))
+      (else "")))
+
 ;*---------------------------------------------------------------------*/
 ;*    logtable-find ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -223,7 +232,7 @@
 				    (if (eq? (pcache-usage pi) usage)
 					pi
 					(loop (+fx i 1)))))))))
-		  ((=fx start end)
+		  ((or (=fx start end) (=fx start pivot) (=fx end pivot))
 		   #f)
 		  ((>fx po point)
 		   (loop start pivot
@@ -260,7 +269,15 @@
       ((and (> (pcache-cmap pc) 0)
 	    (> (pcache-vtable pc) 0)
 	    (= (pcache-pmap pc) 0))
-       '(cmap vtable))
+       (if (> (pcache-vtable pc) (pcache-cmap pc))
+	   '(vtable cmap)
+	   '(cmap vtable)))
+      ((and (= (pcache-cmap pc) 0)
+	    (> (pcache-pmap pc) 0)
+	    (> (pcache-vtable pc) 0))
+       (if (> (pcache-vtable pc) (pcache-pmap pc))
+	   '(vtable pmap)
+	   '(pmap vtable)))
       (else
        #f)))
 

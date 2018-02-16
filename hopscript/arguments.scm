@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sun Feb 11 07:14:16 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 08:46:23 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -312,9 +312,9 @@
 	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-name/cache-miss ...                                       */
+;*    js-object-get-name/cache-miss ...                                */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-name/cache-miss o::JsArguments p::obj
+(define-method (js-object-get-name/cache-miss o::JsArguments p::obj
 		  throw::bool %this::JsGlobalObject
 		  cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-get o p %this))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Feb 15 07:46:05 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 08:55:14 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -212,10 +212,10 @@
    (define (cache-miss-fun prop)
       (match-case prop
 	 (((kwote quote) length)
-	  '(@ js-get-name/cache-miss __hopscript_property))
+	  '(@ js-object-get-name/cache-miss __hopscript_property))
 	 (else
-	  '(@ js-get-lookup __hopscript_property))))
-   
+	  '(@ js-object-get-lookup __hopscript_property))))
+
    (define (expand-cache-specs cspecs obj prop throw %this cache loc)
       `(with-access::JsObject ,obj (cmap elements)
 	  (let ((%cmap cmap))
@@ -233,6 +233,15 @@
 				 (js-profile-log-index idx)
 				 (vector-ref elements idx))
 			      ,(loop (cdr cs))))
+			((cmap+)
+			 ;; cmap + level 2 cache
+			 `(if (eq? %cmap (js-pcache-cmap ,cache))
+			      (let ((idx (js-pcache-index ,cache)))
+				 (js-profile-log-cache ,cache :cmap #t)
+				 (js-profile-log-index idx)
+				 (vector-ref elements idx))
+			      ((@ js-object-get-name/cache-cmap+ __hopscript_property)
+			       ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs)))
 			((pmap pmap+)
 			 ;; prototype property get
 			 `(if (eq? %cmap (js-pcache-pmap ,cache))
@@ -400,6 +409,17 @@
 				 (vector-set! elements idx ,tmp)
 				 ,tmp)
 			      ,(loop (cdr cs))))
+			((cmap+)
+			 ;; cmap + level2 cache
+			 `(if (eq? %cmap (js-pcache-cmap ,cache))
+			      (let ((idx (js-pcache-index ,cache)))
+				 (js-profile-log-cache ,cache :cmap #t)
+				 (js-profile-log-index idx)
+				 (vector-set! elements idx ,tmp)
+				 ,tmp)
+			      ((@ js-object-put-name/cache-cmap+! __hopscript_property)
+			       ,obj ,prop ,tmp ,throw ,%this
+			       ,cache ,loc ',cspecs)))
 			((pmap)
 			 ;; prototype property set
 			 `(if (eq? %cmap (js-pcache-pmap ,cache))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Feb 15 07:37:56 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 09:00:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -79,7 +79,7 @@
 	   
 	   (generic js-get-property-value ::obj ::obj ::obj ::JsGlobalObject)
 	   
-	   (js-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
+	   (js-object-get-lookup ::JsObject ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache ::long ::pair-nil)
 	   (js-get-property ::JsObject ::obj ::JsGlobalObject)
 	   
@@ -98,7 +98,10 @@
 	   (js-object-get-name/cache ::JsObject ::obj ::bool ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
-	   (generic js-get-name/cache-miss ::JsObject ::obj ::bool
+	   (generic js-object-get-name/cache-miss ::JsObject ::obj ::bool
+	      ::JsGlobalObject
+	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   (js-object-get-name/cache-cmap+ ::JsObject ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
@@ -129,6 +132,9 @@
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
 	   (js-object-put-name/cache-miss! ::JsObject ::obj ::obj ::bool
+	      ::JsGlobalObject
+	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   (js-object-put-name/cache-cmap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
@@ -1255,12 +1261,12 @@
 	  (js-get _o prop %this)))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-lookup ...                                                */
+;*    js-object-get-lookup ...                                         */
 ;*    -------------------------------------------------------------    */
 ;*    Look for the property, if found update the cache and return      */
 ;*    the property value.                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-get-lookup o::JsObject name::obj throw::bool %this::JsGlobalObject
+(define (js-object-get-lookup o::JsObject name::obj throw::bool %this::JsGlobalObject
 	    cache::JsPropertyCache point::long cspecs::pair-nil)
 
    (with-access::JsPropertyCache cache (cntmiss (cname name) (cpoint point) usage)
@@ -1411,20 +1417,32 @@
 		(let ((desc (vector-ref elements index)))
 		   (js-property-value o desc %this))))
 	    (else
-	     (js-get-name/cache-miss o name throw %this cache point cspecs))))))
+	     (js-object-get-name/cache-miss o name throw %this cache point cspecs))))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-get-name/cache-miss ...                                       */
+;*    js-object-get-name/cache-miss ...                                */
 ;*    -------------------------------------------------------------    */
 ;*    Use a per site cache for the [[GET]] operation. The name is a    */
 ;*    static constant, so the actual value is not compared against     */
 ;*    the cache value.                                                 */
 ;*---------------------------------------------------------------------*/
-(define-generic (js-get-name/cache-miss obj::JsObject name::obj
+(define-generic (js-object-get-name/cache-miss obj::JsObject name::obj
 		   throw::bool %this::JsGlobalObject
 		   cache::JsPropertyCache
 		   #!optional (point -1) (cspecs '()))
-   (js-get-lookup obj name throw %this cache point cspecs))
+   (js-object-get-lookup obj name throw %this cache point cspecs))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-get-name/cache-cmap+ ...                               */
+;*    -------------------------------------------------------------    */
+;*    !!! Overriden in property_expd.sch                               */
+;*---------------------------------------------------------------------*/
+(define (js-object-get-name/cache-cmap+ obj::JsObject name::obj
+	   throw::bool %this::JsGlobalObject
+	   cache::JsPropertyCache
+	   #!optional (point -1) (cspecs '()))
+   (js-object-get-name/cache obj name throw %this cache point
+      '(pmap amap vtable)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-can-put ...                                                   */
@@ -1840,6 +1858,18 @@
 		     (js-cmap-vtable-add! %omap vindex (cons index omap))))))
 	 
 	 tmp)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-put-name/cache-cmap+! ...                              */
+;*    -------------------------------------------------------------    */
+;*    !!! Overriden in property_expd.sch                               */
+;*---------------------------------------------------------------------*/
+(define (js-object-put-name/cache-cmap+! o::JsObject prop::symbol v::obj
+	   throw::bool
+	   %this::JsGlobalObject
+	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+   (js-object-put-name/cache! o prop v throw %this cache point
+      '(pmap amap vtable)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind! ...                                                     */

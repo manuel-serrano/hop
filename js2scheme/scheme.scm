@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Feb 15 05:40:14 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 09:58:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2025,7 +2025,7 @@
       (let loop ((lhs lhs))
 	 (cond
 	    ((isa? lhs J2SAccess)
-	     (with-access::J2SAccess lhs (obj field cache (loca loc))
+	     (with-access::J2SAccess lhs (obj field cache cspecs (loca loc))
 		(epairify loc
 		   (cond
 		      ((eq? (j2s-vtype obj) 'vector)
@@ -2043,7 +2043,8 @@
 			  (j2s-vtype rhs)
 			  (strict-mode? mode)
 			  conf
-			  cache))))))
+			  cache
+			  cspecs))))))
 	    ((and (isa? lhs J2SRef) (not (isa? lhs J2SThis)))
 	     (with-access::J2SRef lhs (decl loc type)
 		(with-access::J2SDecl decl (hint vtype)
@@ -2274,9 +2275,9 @@
 		     `(if (and (js-object? ,otmp)
 			       (with-access::JsObject ,otmp (cmap)
 				  (eq? (js-pcache-cmap ,(js-pcache cache)) cmap)))
-			  ,(aput-inc otmp pro prov op lhs cache inc 1 'object)
+			  ,(aput-inc otmp pro prov op lhs cache inc cspecs 'object)
 			  (let ((%omap (with-access::JsObject ,otmp (cmap) cmap)))
-			     ,(aput-inc otmp pro prov op lhs rhscache inc 2)))))))))
+			     ,(aput-inc otmp pro prov op lhs rhscache inc '(cmap+))))))))))
    
    (with-access::J2SAssig this (loc lhs rhs type)
       (epairify-deep loc
@@ -2370,9 +2371,9 @@
 			 (let ((%omap cmap))
 			    (if (eq? (js-pcache-cmap ,(js-pcache cache)) %omap)
 				,(aput-assigop otmp pro prov op
-				    tl lhs rhs 1)
+				    tl lhs rhs cspecs)
 				,(aput-assigop otmp pro prov op
-				    tl lhs rhs 2)))))
+				    tl lhs rhs '(cmap+))))))
 		    (else
 		     `(if (js-object? ,otmp)
 			  (with-access::JsObject ,otmp (cmap)
@@ -2380,12 +2381,12 @@
 				(if (eq? (js-pcache-cmap ,(js-pcache cache))
 				       %omap)
 				    ,(aput-assigop otmp pro prov op
-					tl lhs rhs 1)
+					tl lhs rhs cspecs)
 				    ,(aput-assigop otmp pro prov op
-					tl lhs rhs 2))))
+					tl lhs rhs '(cmap+)))))
 			  (let ((%omap (js-not-a-cmap)))
 			     ,(aput-assigop otmp pro prov op
-				 tl lhs rhs 2)))))))))
+				 tl lhs rhs '(cmap+))))))))))
 
    (define (access-assigop op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache)
