@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Fri Feb 16 10:43:39 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 18:47:33 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -91,7 +91,7 @@
 		  (if (string=? file filename)
 		      (let ((verb (make-cell 0))
 			    (logtable (get 'caches (vector-ref srcs i))))
-			 (profile-clevel this logtable verb conf)
+			 (profile-clevel this logtable 'get verb conf)
 			 (cache-verb "cspecs " (cell-ref verb)))
 		      (loop (-fx i 1))))))))
    this)
@@ -161,38 +161,51 @@
 ;*---------------------------------------------------------------------*/
 ;*    profile-clevel ...                                               */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (profile-clevel this::J2SNode logtable verb conf)
+(define-walk-method (profile-clevel this::J2SNode logtable ctx verb conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-clevel ::J2SAccess ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (profile-clevel this::J2SAccess logtable verb conf)
-   (call-default-walker)
+(define-walk-method (profile-clevel this::J2SAccess logtable ctx verb conf)
    (with-access::J2SAccess this (obj field cspecs loc)
-      (let ((entry (logtable-find logtable (loc->point loc))))
+      (let ((entry (logtable-find logtable (loc->point loc) ctx)))
 	 (if entry
 	     (let ((policy (pcache->cspecs entry)))
 		(when policy
 		   (when (>=fx (config-get conf :verbose 0) 4)
-		      (display* "\n        " (loc->string loc) " -> " policy))
+		      (display* "\n        " (loc->string loc)
+			 " (" (pcache-usage entry) ") -> " policy))
 		   (cell-set! verb (+fx (cell-ref verb) 1))
 		   (set! cspecs policy)))
 	     (set! cspecs '(cmap+)))))
-   this)
+   (call-default-walker))
 
+;*---------------------------------------------------------------------*/
+;*    profile-clevel ::J2SAssig ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (profile-clevel this::J2SAssig logtable ctx verb conf)
+   (with-access::J2SAssig this (lhs rhs)
+      (profile-clevel rhs logtable 'put verb conf)
+      (profile-clevel lhs logtable ctx verb conf)))
+   
 ;*---------------------------------------------------------------------*/
 ;*    profile-clevel ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (profile-clevel this::J2SCall logtable verb conf)
-   (call-default-walker)
-   (with-access::J2SCall this (cspecs loc)
-      (let ((entry (logtable-find logtable (loc->point loc) 'call)))
-	 (when entry
-	    (let ((policy (pcache->cspecs entry)))
-	       (when policy
-		  (cell-set! verb (+fx (cell-ref verb) 1))
-		  (set! cspecs policy)))))))
+(define-walk-method (profile-clevel this::J2SCall logtable ctx verb conf)
+   (with-access::J2SCall this (cspecs fun)
+      (when (isa? fun J2SAccess)
+	 (with-access::J2SAccess fun (loc)
+	    (let ((entry (logtable-find logtable (loc->point loc) 'call)))
+	       (when entry
+		  (let ((policy (pcache->cspecs entry)))
+		     (when policy
+			(when (>=fx (config-get conf :verbose 0) 4)
+			   (display* "\n        " (loc->string loc)
+			      " (" (pcache-usage entry) ") -> " policy))
+			(cell-set! verb (+fx (cell-ref verb) 1))
+			(set! cspecs policy))))))))
+   (call-default-walker))
    
 ;*---------------------------------------------------------------------*/
 ;*    loc->point ...                                                   */

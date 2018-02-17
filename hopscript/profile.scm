@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Feb 16 09:22:21 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 18:59:18 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -574,7 +574,7 @@
       (cdr fc))
    
    (define filecaches
-      (let ((m (pregexp-match "hopscript:file=([^ ]+)" trc)))
+      (let ((m (pregexp-match "filename=([^ ]+)" trc)))
 	 (if m
 	     (let ((filename (cadr m)))
 		(filter (lambda (fc) (string=? (filecache-name fc) filename))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Feb 16 08:55:14 2018 (serrano)                */
+;*    Last change :  Fri Feb 16 18:54:46 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -540,8 +540,8 @@
       `(js-object-method-call/cache-miss %this ,obj ,prop (list ,@args)
 	  ,ccache ,ocache ,loc ',cspecs ',ospecs))
 
-   (define (calln-uncachable %this obj prop args ccache ocache loc)
-      `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc '(cmap pmap amap))))
+   (define (calln-uncachable %this ocspecs obj prop args ccache ocache loc)
+      `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc ',ocspecs)))
 	  ,(calln %this 'f obj args)))
    
    (define (expand-cache-specs ccspecs ocspecs %this obj prop args ccache ocache loc)
@@ -550,7 +550,7 @@
 	     ,(let loop ((cs ccspecs))
 		 (if (null? cs)
 		     `(if (eq? (js-pcache-cmap ,ccache) #t)
-			  ,(calln-uncachable %this obj prop args ccache ocache loc)
+			  ,(calln-uncachable %this ocspecs obj prop args ccache ocache loc)
 			  ,(calln-miss %this obj prop args ccache ocache loc ccspecs ocspecs))
 		     (case (car cs)
 			((cmap amap)
