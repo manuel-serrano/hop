@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Feb 17 17:38:27 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 18:12:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -456,7 +456,7 @@
 	 (if (js-object-inline-next-element? o i)
 	     (begin
 		(set! imap omap)
-		(set! cmap #t))
+		(set! cmap omap))
 	     (begin
 		(set! cmap omap)
 		(set! imap #t)))

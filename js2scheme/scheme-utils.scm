@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Wed Feb 14 15:13:14 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 18:11:41 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -528,7 +528,7 @@
 		     (else
 		      `(js-get-name/cache ,obj
 			  ',(string->symbol prop) #f %this
-			  ,(js-pcache cache) ,(loc->point loc))))))
+			  ,(js-pcache cache) ,(loc->point loc) ',cspecs)))))
 	     ((memq typrop '(int32 uint32))
 	      `(js-get ,obj ,(box prop typrop conf) %this))
 	     ((maybe-string? prop typrop)

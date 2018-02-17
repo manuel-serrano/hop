@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Feb 17 13:33:56 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 18:12:41 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -323,12 +323,12 @@
 	      ?loc ((kwote quote) ?cspecs))
 	   (e (expand-cache-specs cspecs obj prop throw %this cache loc) e))
 	  ((js-object-get-name/cache ?obj ?prop ?throw ?%this ?cache ?loc (? symbol?))
-	   (set-car! (last-pair x) ''(cmap pmap amap vtable))
+	   (set-car! (last-pair x) ''(cmap+))
 	   (e x e))
 	  ((js-object-get-name/cache ?obj ?prop ?throw ?%this ?cache ?loc)
-	   (e (append x '('(cmap pmap amap vtable))) e))
+	   (e (append x '('(cmap+))) e))
 	  ((js-object-get-name/cache ?obj ?prop ?throw ?%this ?cache)
-	   (e (append x '(-1 '(cmap pmap amap vtable))) e))
+	   (e (append x '(-1 '(cmap+))) e))
 	  (else
 	   (error "js-object-get-name/cache" "bad form" x))))))
 
