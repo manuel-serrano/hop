@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Feb 17 15:10:35 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 15:15:10 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -131,4 +131,4 @@
 ;*    property-flags-default ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-macro (property-flags-default)
-   '(property-flags #t #t #t #f #f))
+   '(property-flags #t #t #t #f))

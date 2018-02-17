@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Feb 17 10:42:26 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 16:08:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -664,7 +664,7 @@
 (define-method (j2s-scheme this::J2SCmap mode return conf hint)
    (with-access::J2SCmap this (loc val)
       (epairify loc
-	 `(js-names->cmap ',val #f))))
+	 `(js-names->cmap ',val))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNull ...                                         */
@@ -818,13 +818,14 @@
    
    (define (j2s-let-decl-inner::pair-nil d::J2SDecl mode return conf singledecl
 	      typed)
-      (with-access::J2SDeclInit d (val usage id vtype ronly utype)
+      (with-access::J2SDeclInit d (usage id vtype ronly utype)
 	 (let* ((ident (j2s-decl-scheme-id d))
-		(var (type-ident ident vtype)))
+		(var (type-ident ident vtype))
+		(val (j2sdeclinit-val-fun d)))
 	    (cond
 	       ((or (not (isa? val J2SFun))
 		    (isa? val J2SSvc)
-		    (memq 'assig usage))
+		    (usage? '(assig) usage))
 		`((,var ,(j2s-scheme val mode return conf hint))))
 	       ((and (usage? '(ref get new set) usage))
 		(with-access::J2SFun val (decl)
@@ -837,8 +838,8 @@
 			  `((,^tmp #unspecified)
 			    (,tmp ,fun)
 			    (,var (let ((,proc ,(j2sfun->scheme val tmp tmp mode return conf)))
-				      (set! ,^tmp ,proc)
-				      ,proc))))
+				     (set! ,^tmp ,proc)
+				     ,proc))))
 		       (let ((fun (jsfun->lambda val mode return conf
 				     `(js-get ,ident 'prototype %this) #f))
 			     (tmp (j2s-fast-id id)))
@@ -1889,11 +1890,8 @@
    (define (call-known-function protocol fun::J2SDecl thisarg::pair-nil args)
       (cond
 	 ((isa? fun J2SDeclFun)
-	  (with-access::J2SDeclFun fun (id val usage)
-	     (let ((val (if (isa? val J2SFun)
-			    val
-			    (with-access::J2SMethod val (function)
-			       function))))
+	  (with-access::J2SDeclFun fun (id usage)
+	     (let ((val (j2sdeclinit-val-fun fun)))
 		(check-hopscript-fun-arity val id args)
 		(let ((%gen (if (typed-generator? fun) '(%gen) '())))
 		   (call-fun-function val thisarg protocol
@@ -2324,7 +2322,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAssigOp mode return conf hint)
    
-   (define (aput-assigop otmp pro prov op
+   (define (aput-assigop otmp::symbol pro prov op
 	      tl::symbol lhs::J2SAccess rhs::J2SExpr cs)
       (with-access::J2SAssigOp this ((typea type))
 	 (with-access::J2SAccess lhs (obj field loc cache cspecs (typel type))
@@ -2354,7 +2352,7 @@
 			  cache (if (is-number? field) '() cs))
 		      ,vtmp))))))
       
-   (define (access-assigop/otmp otmp op tl::symbol lhs::J2SAccess rhs::J2SExpr)
+   (define (access-assigop/otmp otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache cspecs)
 	 (let* ((prov (j2s-property-scheme field mode return conf))
 		(pro (when (pair? prov) (gensym 'prop))))
@@ -2390,13 +2388,12 @@
 
    (define (access-assigop op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache)
-	 (if (isa? obj J2SRef)
-	     (access-assigop/otmp
-		(j2s-scheme obj mode return conf hint)
-		op tl lhs rhs)
-	     (let ((otmp (gensym 'obj)))
-		`(let ((,otmp ,(j2s-scheme obj mode return conf hint)))
-		    ,(access-assigop/otmp otmp op tl lhs rhs))))))
+	 (let ((tmpval (j2s-scheme obj mode return conf hint)))
+	    (if (symbol? tmpval)
+		(access-assigop/otmp tmpval op tl lhs rhs)
+		(let ((otmp (gensym 'obj)))
+		   `(let ((,otmp ,tmpval))
+		       ,(access-assigop/otmp otmp op tl lhs rhs)))))))
    
       
    (with-access::J2SAssigOp this (loc lhs rhs op type)

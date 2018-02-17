@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Feb  7 18:28:11 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 16:00:51 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -340,11 +340,8 @@
    (define (find-inline-function this::J2SCall fun arity)
       (with-access::J2SRef fun (decl)
 	 (when (isa? decl J2SDeclFun)
-	    (with-access::J2SDeclFun decl (val id)
-	       (let ((val (if (isa? val J2SFun)
-			      val
-			      (with-access::J2SMethod val (function)
-				 function))))
+	    (with-access::J2SDeclFun decl (id)
+	       (let ((val (j2sdeclinit-val-fun decl)))
 		  (when (and (=fx (function-arity val) arity)
 			     (not (memq val stack))
 			     (<=fx (function-size val) limit)

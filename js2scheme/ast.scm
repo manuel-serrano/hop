@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Feb 17 10:03:24 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 16:00:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -460,7 +460,9 @@
 	   (j2s-let-opt?::bool ::J2SDecl)
 
 	   (j2s-field-name::obj ::J2SNode)
-	   (inline j2s-field-length?::bool ::J2SNode))
+	   (inline j2s-field-length?::bool ::J2SNode)
+
+	   (j2sdeclinit-val-fun::J2SExpr ::J2SDeclInit))
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
@@ -1184,3 +1186,13 @@
    (with-access::J2SPragma node (expr)
       (set! expr (call-with-input-string expr read))
       node))
+
+;*---------------------------------------------------------------------*/
+;*    j2sdeclinit-val-fun ...                                          */
+;*---------------------------------------------------------------------*/
+(define (j2sdeclinit-val-fun node::J2SDeclInit)
+   (with-access::J2SDeclInit node (val)
+      (if (isa? val J2SMethod)
+	  (with-access::J2SMethod val (function)
+	     function)
+	  val)))
