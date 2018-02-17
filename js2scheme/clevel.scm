@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Fri Feb 16 18:47:33 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 10:11:30 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -102,13 +102,15 @@
 (define (load-profile-log logfile)
    
    (define (alist->pcache l)
-      (let ((p (pcache -1 '- 0 0 0 0)))
+      (let ((p (pcache -1 '- 0 0 0 0 0)))
 	 (for-each (lambda (l)
 		      (case (car l)
 			 ((point)
 			  (pcache-point-set! p (cdr l)))
 			 ((usage)
 			  (pcache-usage-set! p (string->symbol (cdr l))))
+			 ((imap)
+			  (pcache-imap-set! p (cdr l)))
 			 ((cmap)
 			  (pcache-cmap-set! p (cdr l)))
 			 ((pmap)
@@ -151,7 +153,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    pcache ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define-struct pcache point usage cmap pmap amap vtable)
+(define-struct pcache point usage imap cmap pmap amap vtable)
 
 ;*---------------------------------------------------------------------*/
 ;*    propinfo ...                                                     */
@@ -259,6 +261,20 @@
 ;*---------------------------------------------------------------------*/
 (define (pcache->cspecs pc)
    (cond
+      ((and (> (pcache-imap pc) 0)
+	    (= (pcache-cmap pc) 0)
+	    (= (pcache-pmap pc) 0)
+	    (= (pcache-amap pc) 0)
+	    (= (pcache-vtable pc) 0))
+       '(imap))
+      ((and (> (pcache-imap pc) 0)
+	    (> (pcache-cmap pc) 0)
+	    (= (pcache-pmap pc) 0)
+	    (= (pcache-amap pc) 0)
+	    (= (pcache-vtable pc) 0))
+       (if (> (pcache-imap pc) (pcache-cmap pc))
+	   '(imap cmap)
+	   '(cmap imap)))
       ((and (> (pcache-cmap pc) 0)
 	    (= (pcache-pmap pc) 0)
 	    (= (pcache-amap pc) 0)

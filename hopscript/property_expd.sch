@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Feb 16 18:54:46 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 13:33:56 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -19,7 +19,7 @@
       (profile
        (match-case x
 	  ((js-profile-log-cache ?cache . ?cspecs)
-	   (e `(with-access::JsPropertyCache ,cache (cntcmap cntpmap name
+	   (e `(with-access::JsPropertyCache ,cache (cntimap cntcmap cntpmap name
 						       cntamap cntvtable)
 		  ,@(filter-map (lambda (c)
 				   (when (keyword? c)
@@ -83,6 +83,23 @@
 	   (free-pragma::JsPropertyCache "(BgL_jspropertycachez00_bglt)BOBJECT(&(__bgl_pcache[ $1 ]))" ,(caddr x)))
 	  (else
 	   ((@ js-pcache-ref __hopscript_property) ,(cadr x) ,(caddr x))))
+      e))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-imap-expander ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-imap-expander x e)
+   (e (match-case x
+	 ((js-pcache-imap (and ?c (js-pcache-ref %pcache ?idx)))
+	  (cond-expand
+	     ((and bigloo-c (not hopjs-worker-slave))
+	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_imapz00)" ,idx))
+	     (else
+	      `(with-access::JsPropertyCache ,c (imap) imap))))
+	 ((js-pcache-imap ?c)
+	  `(with-access::JsPropertyCache ,c (imap) imap))
+	 (else
+	  (error "js-pcache-imap" "bad syntax" x)))
       e))
 
 ;*---------------------------------------------------------------------*/
@@ -225,6 +242,14 @@
 		     `(,(cache-miss-fun prop)
 		       ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs)
 		     (case (car cs)
+			((imap)
+			 ;; direct inlined property get
+			 `(if (eq? %cmap (js-pcache-imap ,cache))
+			      (let ((idx (js-pcache-index ,cache)))
+				 (js-profile-log-cache ,cache :imap #t)
+				 (js-profile-log-index idx)
+				 (js-object-inline-ref ,obj idx))
+			      ,(loop (cdr cs))))
 			((cmap)
 			 ;; direct property get
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))
@@ -400,7 +425,7 @@
 		       ,obj ,prop ,tmp ,throw ,%this
 		       ,cache ,loc ',cspecs)
 		     (case (car cs)
-			((cmap)
+			((cmap imap)
 			 ;; directory property set
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))
 			      (let ((idx (js-pcache-index ,cache)))
@@ -431,10 +456,7 @@
 					(js-profile-log-cache ,cache :pmap #t)
 					(vector-set! %vec idx ,tmp))
 				     (js-object-add! ,obj idx ,tmp))
-				 (set! cmap
-				    (if (eq? (js-pcache-cmap ,cache) #t)
-					(js-pcache-pmap ,cache)
-					(js-pcache-cmap ,cache)))
+				 (set! cmap (js-pcache-cmap ,cache))
 				 ,tmp)
 			      ,(loop (cdr cs))))
 			((amap)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Feb 16 09:00:53 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 15:10:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -48,6 +48,7 @@
 	   (js-make-pcache ::int ::obj)
 	   (js-invalidate-pcaches-pmap! ::JsGlobalObject)
 	   (inline js-pcache-ref ::obj ::int)
+	   (inline js-pcache-imap ::JsPropertyCache)
 	   (inline js-pcache-cmap ::JsPropertyCache)
 	   
 	   (inline property-name::symbol ::struct)
@@ -210,6 +211,7 @@
 		 (with-access::JsConstructMap cmap (%id props methods)
 		    (fprint (current-error-port) msg (typeof obj) " MAPPED"
 		       " length=" (vector-length elements)
+		       " inline=" (js-object-inline-elements? obj)
 		       " mlengths=" (vector-length methods)
 		       "\n  elements=" (vector-map
 					  (lambda (v)
@@ -407,6 +409,15 @@
       cmap))
 
 ;*---------------------------------------------------------------------*/
+;*    js-pcache-imap ...                                               */
+;*    -------------------------------------------------------------    */
+;*    !!! Overriden in property_expd.sch                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-pcache-imap pcache)
+   (with-access::JsPropertyCache pcache (imap)
+      imap))
+
+;*---------------------------------------------------------------------*/
 ;*    js-pache-invalidate! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-pache-invalidate! pcache::JsPropertyCache)
@@ -441,8 +452,14 @@
 (define (js-pcache-update-direct! pcache::JsPropertyCache i o::JsObject)
    [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
-      (with-access::JsPropertyCache pcache (cmap pmap amap index)
-	 (set! cmap omap)
+      (with-access::JsPropertyCache pcache (imap cmap pmap amap index)
+	 (if (js-object-inline-next-element? o i)
+	     (begin
+		(set! imap omap)
+		(set! cmap #t))
+	     (begin
+		(set! cmap omap)
+		(set! imap #t)))
 	 (set! pmap #t)
 	 (set! amap #t)
 	 (set! index i))))
@@ -492,6 +509,13 @@
 ;*---------------------------------------------------------------------*/
 (define (pmap-index cmap::JsPropertyCache)
    (with-access::JsPropertyCache cmap (index) index))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-inline-next-element? ...                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-next-element? o::JsObject idx::long)
+   (with-access::JsObject o (elements)
+      (and (js-object-inline-elements? o) (<fx idx (vector-length elements)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    transition ...                                                   */
@@ -1684,15 +1708,16 @@
 	 (with-access::JsObject o (cmap elements)
 	    (with-access::JsConstructMap cmap (props single)
 	       (let* ((name (js-toname p %this))
-		      (flags (property-flags #t #t #t #f))
-		      (index (vector-length props)))
+		      (index (vector-length props))
+		      (inl (js-object-inline-next-element? o index))
+		      (flags (property-flags #t #t #t #f)))
 		  (let loop ()
 		     (cond
 			((cmap-find-transition cmap name v flags)
 			 =>
 			 (lambda (nextmap)
 			    ;; follow the next map
-			    (with-access::JsConstructMap nextmap (ctor)
+			    (with-access::JsConstructMap nextmap (ctor inline)
 			       (when cache
 				  [assert (index p) (<=fx index (vector-length elements))]
 				  (js-pcache-next-direct! cache o nextmap index))
@@ -1704,7 +1729,7 @@
 			 (extend-cmap! cmap name flags)
 			 (with-access::JsConstructMap cmap (methods)
 			    (validate-cache-method! v methods index))
-			 (with-access::JsConstructMap cmap (ctor)
+			 (with-access::JsConstructMap cmap (ctor inline)
 			    (when cache
 			       (js-pcache-next-direct! cache o cmap index))
 			    (js-object-push/ctor! o index v ctor))
@@ -1714,7 +1739,7 @@
 			 (let ((nextmap (extend-cmap cmap name flags)))
 			    (with-access::JsConstructMap nextmap (methods)
 			       (validate-cache-method! v methods index))
-			    (with-access::JsConstructMap cmap (ctor singlep)
+			    (with-access::JsConstructMap cmap (ctor inline)
 			       (when cache
 				  (js-pcache-next-direct! cache o nextmap index))
 			       (link-cmap! cmap nextmap name v flags)
@@ -1917,9 +1942,6 @@
 	  (js-raise-type-error %this
 	     (format "wrong setter for property \"~a\", ~~a" name) set))))
    
-   (define (plain-data-property? flags)
-      (=fx flags (property-flags #t #t #t #f)))
-   
    (define (update-mapped-object! obj i)
       (cond
 	 ((not (eq? obj o))
@@ -1966,8 +1988,9 @@
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props)
 	    (let* ((axs (accessor-property? get set))
-		   (flags (property-flags writable enumerable configurable axs))
-		   (index (vector-length props)))
+		   (index (vector-length props))
+		   (inl (js-object-inline-next-element? o index))
+		   (flags (property-flags writable enumerable configurable axs)))
 	       (cond
 		  ((cmap-find-transition cmap name value flags)
 		   =>

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Feb 16 09:58:13 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 10:42:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -664,7 +664,7 @@
 (define-method (j2s-scheme this::J2SCmap mode return conf hint)
    (with-access::J2SCmap this (loc val)
       (epairify loc
-	 `(js-names->cmap ',val))))
+	 `(js-names->cmap ',val #f))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SNull ...                                         */

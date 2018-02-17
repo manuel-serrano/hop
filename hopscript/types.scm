@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon Feb 12 14:56:51 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 13:23:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -77,6 +77,7 @@
 	      %set::procedure)
 	   
 	   (final-class JsPropertyCache
+	      (imap::obj (default #f))
 	      (cmap::obj (default #f))
 	      (pmap::obj (default #t))
 	      (amap::obj (default #t))
@@ -89,6 +90,7 @@
 	      (pcache::obj (default #f))
 	      (usage::symbol (default '-))
 	      (cntmiss::long (default 0))
+	      (cntimap::long (default 0))
 	      (cntcmap::long (default 0))
 	      (cntpmap::long (default 0))
 	      (cntamap::long (default 0))
@@ -96,6 +98,7 @@
 	   
 	   (final-class JsConstructMap
 	      (%id::uint32 read-only (default (gencmapid)))
+	      (size::long (default 0))
 	      (props::vector (default '#()))
 	      (methods::vector (default '#()))
 	      (transitions::pair-nil (default '()))
@@ -341,6 +344,9 @@
 	   (inline JS-OBJECT-MODE-INSTANCE::uint32)
 	   (inline JS-OBJECT-MODE-JSOBJECTTAG::uint32)
 	   (inline JS-OBJECT-MODE-JSARRAYTAG::uint32)
+
+	   (inline js-object-inline-elements?::bool ::JsObject)
+	   (inline js-object-inline-ref ::JsObject ::long)
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
@@ -495,6 +501,32 @@
       (if flag
 	  (bit-oru32 (js-object-mode o) (JS-OBJECT-MODE-INSTANCE))
 	  (bit-andu32 (js-object-mode o) (bit-notu32 (JS-OBJECT-MODE-INSTANCE))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-inline-elements? ...                                   */
+;*    -------------------------------------------------------------    */
+;*    See bgl_make_jsobject in _bglhopscript.c.                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-elements?::bool o::JsObject)
+   (cond-expand
+      (bigloo-c
+       (with-access::JsObject o (elements)
+	  (eq? elements
+	     (pragma::obj "BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(CREF($1)))->BgL_elementsz00))) + 1)))"
+		o))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-inline-ref ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-ref o::JsObject idx::long)
+   (cond-expand
+      (bigloo-c
+       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(CREF($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
+      (else
+       (with-access::JsObject o (elements)
+	  (vector-ref element idx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */

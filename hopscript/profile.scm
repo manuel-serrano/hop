@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Feb 16 18:59:18 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 13:37:27 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -29,7 +29,7 @@
    (export (js-profile-init conf)
 
 	   (js-profile-log-cache ::JsPropertyCache
-	      #!key cmap pmap amap vtable)
+	      #!key imap cmap pmap amap vtable)
 	   (js-profile-log-index ::long)
 	   
 	   (js-profile-log-get ::symbol)
@@ -112,9 +112,10 @@
 ;*    js-profile-log-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-cache cache::JsPropertyCache
-	   #!key cmap pmap amap vtable)
-   (with-access::JsPropertyCache cache (cntcmap cntpmap cntamap cntvtable)
+	   #!key imap cmap pmap amap vtable)
+   (with-access::JsPropertyCache cache (cntimap cntcmap cntpmap cntamap cntvtable)
       (cond
+	 (imap (set! cntimap (+ 1 cntimap)))
 	 (cmap (set! cntcmap (+ 1 cntcmap)))
 	 (pmap (set! cntpmap (+ 1 cntpmap)))
 	 (amap (set! cntamap (+ 1 cntamap)))
@@ -586,19 +587,21 @@
 	 (if m (string->integer (cadr m)) 100)))
 
    (define (pcache-hits pc)
-      (with-access::JsPropertyCache pc (cntcmap cntpmap cntamap cntvtable)
-	 (+ cntcmap
-	    (+ cntpmap
-	       (+ cntamap cntvtable)))))
+      (with-access::JsPropertyCache pc (cntimap cntcmap cntpmap cntamap cntvtable)
+	 (+ cntimap 
+	    (+ cntcmap
+	       (+ cntpmap
+		  (+ cntamap cntvtable))))))
 
    (define (pcache-polymorphic pc)
-      (with-access::JsPropertyCache pc (name usage cntcmap cntpmap cntamap cntvtable)
-	 (when (> (+ (if (> cntcmap 0) 1 0)
+      (with-access::JsPropertyCache pc (name usage cntimap cntcmap cntpmap cntamap cntvtable)
+	 (when (> (+ (if (> cntimap 0) 1 0)
+		     (if (> cntcmap 0) 1 0)
 		     (if (> cntpmap 0) 1 0)
 		     (if (> cntamap 0) 1 0)
 		     (if (> cntvtable 0) 1 0))
 		  1)
-	    (cons name (+ cntcmap cntpmap cntamap cntvtable)))))
+	    (cons name (+ cntimap cntcmap cntpmap cntamap cntvtable)))))
 
    (define (filecache-sum-field filecaches fieldname)
       (let ((field (find-class-field JsPropertyCache fieldname)))
@@ -619,6 +622,9 @@
 
    (define (filecaches-cmaps filecaches)
       (filecache-sum-field filecaches 'cntcmap))
+
+   (define (filecaches-imaps filecaches)
+      (filecache-sum-field filecaches 'cntimap))
 
    (define (filecaches-pmaps filecaches)
       (filecache-sum-field filecaches 'cntpmap))
@@ -716,14 +722,16 @@
 		      (with-access::JsPropertyCache x ((xpoint point)
 						       (xusage usage)
 						       (xcntmiss cntmiss)
+						       (xcntimap cntimap)
 						       (xcntcmap cntcmap)
 						       (xcntpmap cntpmap)
 						       (xcntamap cntamap)
 						       (xcntvtable cntvtable))
-			 (with-access::JsPropertyCache old (point usage cntmiss cntcmap cntpmap cntamap cntvtable)
+			 (with-access::JsPropertyCache old (point usage cntmiss cntimap cntcmap cntpmap cntamap cntvtable)
 			    (if (and (= point xpoint) (eq? xusage usage))
 				(begin
 				   (set! cntmiss (+ cntmiss xcntmiss))
+				   (set! cntimap (+ cntimap xcntimap))
 				   (set! cntcmap (+ cntcmap xcntcmap))
 				   (set! cntpmap (+ cntpmap xcntpmap))
 				   (set! cntamap (+ cntamap xcntamap))
@@ -746,11 +754,12 @@
 				(print "  { \"filename\": \"" (filecache-name fc) "\",")
 				(print "    \"caches\": [")
 				(vfor-each (lambda (pc)
-					      (with-access::JsPropertyCache pc (point usage cntmiss cntcmap cntpmap cntamap cntvtable)
+					      (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntcmap cntpmap cntamap cntvtable)
 						 (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
 						    (display* "      { \"point\": " point)
 						    (display* ", \"usage\": \"" usage "\"")
 						    (when (> cntmiss 1) (display* ", \"miss\": " cntmiss))
+						    (when (> cntimap 0) (display* ", \"imap\": " cntimap))
 						    (when (> cntcmap 0) (display* ", \"cmap\": " cntcmap))
 						    (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
 						    (when (> cntamap 0) (display* ", \"amap\": " cntamap))
@@ -780,6 +789,7 @@
 	     (print "    \"put\": " *profile-puts* ",")
 	     (print "    \"call\": " *profile-calls*)
 	     (print "  },")
+	     (show-json-cache 'imap)
 	     (show-json-cache 'cmap)
 	     (show-json-cache 'pmap)
 	     (show-json-cache 'amap)
@@ -819,6 +829,10 @@
 	     "total cache hits         : "
 	     (padding (filecaches-hits filecaches) 12 'right)
 	     " (" (percent (filecaches-hits filecaches) total) "%)")
+	  (fprint (current-error-port)
+	     "total cache imap hits    : "
+	     (padding (filecaches-imaps filecaches) 12 'right)
+	     " (" (percent (filecaches-imaps filecaches) total) "%)")
 	  (fprint (current-error-port)
 	     "total cache cmap hits    : "
 	     (padding (filecaches-cmaps filecaches) 12 'right)
@@ -920,48 +934,54 @@
 	  (maxpoint (let ((pc (vector-ref pcache (-fx (vector-length pcache) 1))))
 		       (with-access::JsPropertyCache pc (point)
 			  (number->string point))))
-	  (ppading (max (string-length maxpoint) 5)))
+	  (ppading (max (string-length maxpoint) 5))
+	  (cwidth 8))
       (fprint (current-error-port) (padding "point" ppading 'center)
 	 " "
-	 (padding "property" 10 'center)
+	 (padding "property" cwidth 'center)
 	 " "
 	 (padding "use" 4 'center)
 	 " | "
-	 (padding "miss" 10 'right)
+	 (padding "miss" cwidth 'right)
 	 " " 
-	 (padding "cmap" 10 'right)
+	 (padding "imap" cwidth 'right)
+	 " "
+	 (padding "cmap" cwidth 'right)
+	 " "
+	 (padding "pmap" cwidth 'right)
 	 " " 
-	 (padding "pmap" 10 'right)
+	 (padding "amap" cwidth 'right)
 	 " " 
-	 (padding "amap" 10 'right)
-	 " " 
-	 (padding "vtable" 10 'right))
-      (fprint (current-error-port) (make-string (+ ppading 1 10 1 4) #\-)
+	 (padding "vtable" cwidth 'right))
+      (fprint (current-error-port) (make-string (+ ppading 1 cwidth 1 4) #\-)
 	 "-+-"
-	 (make-string (+ 10 1 10 1 10 1 10 1 10) #\-))
+	 (make-string (* 6 (+ cwidth 1)) #\-))
       (for-each (lambda (pc)
 		   (with-access::JsPropertyCache pc (point name usage
 						       cntmiss
+						       cntimap
 						       cntcmap
 						       cntpmap
 						       cntamap
 						       cntvtable)
-		      (when (> (+ cntmiss cntcmap cntpmap cntamap cntvtable)
+		      (when (> (+ cntmiss cntimap cntcmap cntpmap cntamap cntvtable)
 			       *log-miss-threshold*)
 			 (fprint (current-error-port)
 			    (padding (number->string point) ppading 'right)
 			    " " 
-			    (padding name 10 'right)
+			    (padding name cwidth 'right)
 			    " " 
 			    (padding usage 4)
 			    " | "
-			    (padding cntmiss 10 'right)
+			    (padding cntmiss cwidth 'right)
 			    " " 
-			    (padding cntcmap 10 'right)
+			    (padding cntimap cwidth 'right)
 			    " " 
-			    (padding cntpmap 10 'right)
+			    (padding cntcmap cwidth 'right)
 			    " " 
-			    (padding cntamap 10 'right)
+			    (padding cntpmap cwidth 'right)
 			    " " 
-			    (padding cntvtable 10 'right)))))
+			    (padding cntamap cwidth 'right)
+			    " " 
+			    (padding cntvtable cwidth 'right)))))
 	 (vector->list pcache))))
