@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Feb 17 15:10:49 2018 (serrano)                */
+;*    Last change :  Sat Feb 17 17:38:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1259,7 +1259,8 @@
 ;*    to keep the base object (the actual receiver) available.         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject o::JsObject base prop %this)
-   (js-profile-log-get prop)
+   (when (string? prop)
+      (js-profile-log-get (string->symbol prop)))
    (let ((pval (js-get-property-value o base prop %this)))
       (if (eq? pval (js-absent))
 	  (js-undefined)
