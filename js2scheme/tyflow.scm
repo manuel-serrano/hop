@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Feb  4 07:02:00 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 08:12:15 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -891,8 +891,14 @@
 ;*    escape-fun ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (escape-fun val::J2SFun fix)
+   
+   (define (escape-type rtype)
+      (case rtype
+	 ((undefined any obj object null) rtype)
+	 (else 'any)))
+   
    (with-access::J2SFun val (params rtype)
-      (set! rtype 'any)
+      (set! rtype (escape-type rtype))
       (for-each (lambda (p::J2SDecl)
 		   (with-access::J2SDecl p (itype vtype id)
 		      (unless (eq? vtype 'any)
@@ -1410,7 +1416,7 @@
 ;*    typing ::J2SReturn ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SReturn env::pair-nil fix::cell)
-   (with-access::J2SReturn this (expr from)
+   (with-access::J2SReturn this (expr from loc)
       (multiple-value-bind (tye enve bke)
 	 (typing expr env fix)
 	 (cond

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 22 06:56:33 2013                          */
-;*    Last change :  Sat Dec  9 08:32:59 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Sun Feb 18 09:14:35 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript function implementation                                */
 ;*    -------------------------------------------------------------    */
@@ -40,7 +40,8 @@
 	      #!key
 	      __proto__ prototype constructor construct alloc
 	      (strict 'normal) arity (minlen -1) src rest
-	      (constrsize 3) (maxconstrsize 100) method (shared-cmap #t))
+	      (constrsize 3) constrmap (maxconstrsize 100)
+	      method (shared-cmap #t))
 	   (js-make-function-simple::JsFunction ::JsGlobalObject ::procedure
 	      ::int ::obj ::int ::int ::symbol ::bool ::int)))
 
@@ -303,7 +304,7 @@
 	   #!key __proto__ prototype
 	   constructor alloc construct (strict 'normal)
 	   arity (minlen -1) src rest
-	   (constrsize 3) (maxconstrsize 100) method (shared-cmap #t))
+	   (constrsize 3) constrmap (maxconstrsize 100) method (shared-cmap #t))
    
    (define (js-not-a-constructor constr)
       (with-access::JsFunction constr (name)
@@ -334,7 +335,7 @@
 			       __proto__))))))
 
    (define (prototype-set o::JsFunction v)
-      (with-access::JsFunction o (constrmap %prototype elements cmap)
+      (with-access::JsFunction o (constrmap constrsize %prototype elements cmap)
 	 ;; as the prototype property is not configurable, we are sure
 	 ;; to find it in the object
 	 (let ((desc (if (eq? cmap (js-not-a-cmap))
@@ -352,7 +353,13 @@
 		     ((isa? desc JsWrapperDescriptor)
 		      (with-access::JsWrapperDescriptor desc (value)
 			 (set! value v))))
-		  (set! constrmap #f)
+		  ;; the prototype is changed, generate a fresh constrmap
+		  (when constrmap
+		     (set! constrmap
+			(instantiate::JsConstructMap
+			   (ctor o)
+			   (size constrsize))))
+		  ;; (set! constrmap #f)
 		  (with-access::JsGlobalObject %this (__proto__)
 		     (set! %prototype (if (isa? v JsObject) v __proto__)))))))
       v)
@@ -405,6 +412,7 @@
 				  (construct (lambda (_) #unspecified))
 				  (else js-not-a-constructor)))
 			(constrsize constrsize)
+			(constrmap constrmap)
 			(maxconstrsize maxconstrsize)
 			(construct constr)
 			(elements els)
@@ -450,6 +458,13 @@
 	    (unless (eq? strict 'normal)
 	       (vector-set! els 4 strict-arguments-property)
 	       (vector-set! els 5 strict-caller-property))
+	    ;; constrmap
+	    (when constrmap
+	       (with-access::JsFunction fun (constrsize constrmap)
+		  (set! constrmap
+		     (instantiate::JsConstructMap
+			(ctor fun)
+			(size constrsize)))))
 	    fun))))
 
 ;*---------------------------------------------------------------------*/

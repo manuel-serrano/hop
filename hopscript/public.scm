@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Feb 18 06:39:27 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 08:56:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -62,6 +62,8 @@
 	   (inline js-make-jsobject::JsObject ::int ::obj ::obj)
 
 	   (inline js-object-alloc ::JsFunction)
+	   (inline js-object-alloc-fast ::JsFunction)
+	   (inline js-object-alloc-super-fast ::JsFunction)
 	   (inline js-instance-alloc ::JsFunction)
 	   
 	   (js-apply ::JsGlobalObject fun::obj this ::pair-nil)
@@ -228,10 +230,29 @@
 (define-inline (js-object-alloc ctor::JsFunction)
    (with-access::JsFunction ctor (constrsize constrmap %prototype)
       (if (not constrmap)
-	  (set! constrmap (instantiate::JsConstructMap (ctor ctor) (size constrsize)))
+	  (set! constrmap
+	     (instantiate::JsConstructMap (ctor ctor) (size constrsize)))
  	  (with-access::JsConstructMap constrmap (size)
 	     (unless (=fx size constrsize)
 		(set! constrmap (instantiate::JsConstructMap (ctor ctor) (size constrsize))))))
+      (js-make-jsobject constrsize constrmap %prototype)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-alloc-fast ...                                         */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-alloc-fast ctor::JsFunction)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype)
+      (with-access::JsConstructMap constrmap (size)
+	 (unless (=fx size constrsize)
+	    (set! constrmap
+	       (instantiate::JsConstructMap (ctor ctor) (size constrsize)))))
+      (js-make-jsobject constrsize constrmap %prototype)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-alloc-super-fast ...                                   */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-alloc-super-fast ctor::JsFunction)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype)
       (js-make-jsobject constrsize constrmap %prototype)))
 
 ;*---------------------------------------------------------------------*/

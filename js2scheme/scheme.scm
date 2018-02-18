@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Feb 17 16:08:50 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 09:47:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2715,14 +2715,18 @@
 
    (define (constructor-no-return? decl)
       ;; does this constructor never returns something else than UNDEF?
-      (let ((fun (cond
-		    ((isa? decl J2SDeclFun)
-		     (with-access::J2SDeclFun decl (val) val))
-		    ((j2s-let-opt? decl)
-		     (with-access::J2SDeclInit decl (val) val)))))
+      (let ((fun (j2sdeclinit-val-fun decl)))
 	 (when (isa? fun J2SFun)
 	    (with-access::J2SFun fun (rtype)
 	       (eq? rtype 'undefined)))))
+
+   (define (object-alloc clazz::J2SRef fun)
+      (with-access::J2SRef clazz (decl loc)
+	 (if (isa? decl J2SDeclFun)
+	     (if (cancall? decl)
+		 `(js-object-alloc-fast ,fun)
+		 `(js-object-alloc-super-fast ,fun))
+	     `(js-object-alloc ,fun))))
       
    (define (j2s-new-fast cache clazz args)
       (with-access::J2SRef clazz (decl loc)
@@ -2735,11 +2739,11 @@
 		(proto `(js-object-get-name/cache ,fun 'prototype
 			   %this ,(js-pcache cache) ,(loc->point loc) '(cmap)))
 		(obj (gensym '%obj)))
-	    `(let ((,obj (js-object-alloc ,fun)))
+	    `(let ((,obj ,(object-alloc clazz fun)))
 		,(if (constructor-no-return? decl)
 		     `(begin
 			 (,fid ,obj ,@args)
-			 ,obj)
+			 (js-new-return-fast ,fun ,obj))
 		     `(js-new-return ,fun (,fid ,obj ,@args) ,obj))))))
    
    (with-access::J2SNew this (loc cache clazz args type)
@@ -2946,7 +2950,8 @@
 ;*---------------------------------------------------------------------*/
 (define (throw? node)
    (let ((cell (make-cell #f)))
-      (canthrow node '() cell)))
+      (canthrow node '() cell)
+      (cell-ref cell)))
 
 ;*---------------------------------------------------------------------*/
 ;*    canthrow ::J2SNode ...                                           */
@@ -2984,4 +2989,23 @@
 		       (with-access::J2SFun val (body)
 			  (canthrow val (cons decl stack) cell))))))))))
 	  
-      
+;*---------------------------------------------------------------------*/
+;*    cancall? ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (cancall? node)
+   (let ((cell (make-cell #f)))
+      (cancall node cell)
+      (cell-ref cell)))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SNode ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SNode cell)
+   (or (cell-ref cell) (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SCall ...                                            */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SCall cell)
+   (cell-set! cell #t))
+   

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Feb  8 17:40:47 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 09:21:54 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -42,7 +42,7 @@
 	     (with-access::J2SMethod val (function) function))))
    
    (define (make-function this::J2SDeclFun)
-      (with-access::J2SDeclFun this (loc id scope val usage ronly)
+      (with-access::J2SDeclFun this (loc id scope val ronly usage)
 	 (let ((val (declfun-fun this)))
 	    (with-access::J2SFun val (params mode vararg body name generator
 					constrsize method)
@@ -65,7 +65,8 @@
 			  :prototype ,(j2s-fun-prototype val)
 			  :__proto__ ,(j2s-fun-__proto__ val)
 			  :construct ,fastid
-			  :constrsize ,constrsize))
+			  :constrsize ,constrsize
+			  :constrmap ,(usage? '(new) usage)))
 		     (src
 		      `(js-make-function %this ,fastid
 			  ,len ,(symbol->string! id)
@@ -77,6 +78,7 @@
 			  :alloc js-object-alloc
 			  :construct ,fastid
 			  :constrsize ,constrsize
+			  :constrmap ,(usage? '(new) usage)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -88,6 +90,7 @@
 			  :minlen ,minlen
 			  :strict ',mode 
 			  :constrsize ,constrsize
+			  :constrmap ,(usage? '(new) usage)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
@@ -101,9 +104,21 @@
 			  :alloc js-object-alloc
 			  :construct ,fastid
 			  :constrsize ,constrsize
+			  :constrmap ,(usage? '(new) usage)
 			  :method ,(when method
 				      (jsfun->lambda method
 					 mode return conf #f #f))))
+		     ((usage? '(new) usage)
+		      `(js-make-function %this ,fastid
+			  ,len ,(symbol->string! id)
+			  :rest ,(eq? vararg 'rest)
+			  :arity ,arity
+			  :minlen ,minlen
+			  :strict ',mode
+			  :alloc js-object-alloc
+			  :construct ,fastid
+			  :constrsize ,constrsize
+			  :constrmap #t))
 		     (else
 		      `(js-make-function-simple %this ,fastid
 			  ,len ,(symbol->string! id)
@@ -344,7 +359,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sfun->scheme this::J2SFun tmp ctor mode return conf)
    (with-access::J2SFun this (loc name params mode vararg mode generator
-				constrsize method)
+				constrsize method usage)
       (let* ((id (j2sfun-id this))
 	     (lparams (length params))
 	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))
