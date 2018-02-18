@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Feb 18 09:21:54 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 21:01:04 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -359,7 +359,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2sfun->scheme this::J2SFun tmp ctor mode return conf)
    (with-access::J2SFun this (loc name params mode vararg mode generator
-				constrsize method usage)
+				constrsize method)
       (let* ((id (j2sfun-id this))
 	     (lparams (length params))
 	     (len (if (eq? vararg 'rest) (-fx lparams 1) lparams))

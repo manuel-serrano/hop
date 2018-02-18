@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Feb 18 09:47:59 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 21:07:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2721,8 +2721,12 @@
 	       (eq? rtype 'undefined)))))
 
    (define (object-alloc clazz::J2SRef fun)
+      (tprint "MS a verifier avec j2s-scheme ::J2SDeclFun")
+      (tprint "verifier /tmp/TESTJS/15.2.3.5-3-1.js")
       (with-access::J2SRef clazz (decl loc)
-	 (if (isa? decl J2SDeclFun)
+	 (if (and (isa? decl J2SDeclFun)
+		  (with-access::J2SDecl decl (scope)
+		     (eq? scope '%scope)))
 	     (if (cancall? decl)
 		 `(js-object-alloc-fast ,fun)
 		 `(js-object-alloc-super-fast ,fun))
