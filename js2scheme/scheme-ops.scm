@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Thu Feb 15 11:29:29 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 17:39:30 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -641,16 +641,20 @@
 (define (js-min-max loc op lhs rhs mode return conf hint)
    (with-tmp lhs rhs mode return conf hint 'any
       (lambda (left right)
-	 (let ((lhs (with-access::J2SExpr lhs (loc)
-		       (instantiate::J2SHopRef
-			  (type (j2s-vtype lhs))
-			  (loc loc)
-			  (id left))))
-	       (rhs (with-access::J2SExpr rhs (loc)
-		       (instantiate::J2SHopRef
-			  (type (j2s-vtype rhs))
-			  (loc loc)
-			  (id right)))))
+	 (let ((lhs (if (symbol? left)
+			(with-access::J2SExpr lhs (loc)
+			   (instantiate::J2SHopRef
+			      (type (j2s-vtype lhs))
+			      (loc loc)
+			      (id left)))
+			lhs))
+	       (rhs (if (symbol? right)
+			(with-access::J2SExpr rhs (loc)
+			   (instantiate::J2SHopRef
+			      (type (j2s-vtype rhs))
+			      (loc loc)
+			      (id right)))
+			rhs)))
 	    `(if ,(js-cmp loc op  lhs rhs mode return conf hint)
 		 ,left ,right)))))
 
