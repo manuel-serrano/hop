@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Feb 17 13:23:42 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 05:57:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -347,6 +347,7 @@
 
 	   (inline js-object-inline-elements?::bool ::JsObject)
 	   (inline js-object-inline-ref ::JsObject ::long)
+	   (inline js-object-inline-set! ::JsObject ::long ::obj)
 	   
 	   (generic js-clone::obj ::obj)
 	   (generic js-donate ::obj ::WorkerHopThread ::JsGlobalObject)
@@ -527,6 +528,17 @@
       (else
        (with-access::JsObject o (elements)
 	  (vector-ref element idx)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-inline-set! ...                                        */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-inline-set! o::JsObject idx::long val::obj)
+   (cond-expand
+      (bigloo-c
+       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(CREF($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
+      (else
+       (with-access::JsObject o (elements)
+	  (vector-set! element idx val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */

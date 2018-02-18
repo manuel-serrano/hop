@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Feb 17 18:12:50 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 06:19:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -102,6 +102,9 @@
 	   (generic js-object-get-name/cache-miss ::JsObject ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   (js-object-get-name/cache-imap+ ::JsObject ::obj ::bool
+	      ::JsGlobalObject
+	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-object-get-name/cache-cmap+ ::JsObject ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
@@ -133,6 +136,9 @@
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
 	   (js-object-put-name/cache-miss! ::JsObject ::obj ::obj ::bool
+	      ::JsGlobalObject
+	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   (js-object-put-name/cache-imap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-object-put-name/cache-cmap+! ::JsObject ::obj ::obj ::bool
@@ -1470,6 +1476,18 @@
       '(pmap amap vtable)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-get-name/cache-imap+ ...                               */
+;*    -------------------------------------------------------------    */
+;*    !!! Overriden in property_expd.sch                               */
+;*---------------------------------------------------------------------*/
+(define (js-object-get-name/cache-imap+ obj::JsObject name::obj
+	   throw::bool %this::JsGlobalObject
+	   cache::JsPropertyCache
+	   #!optional (point -1) (cspecs '()))
+   (js-object-get-name/cache obj name throw %this cache point
+      '(cmap pmap amap vtable)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-can-put ...                                                   */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-8.12.4       */
@@ -1884,6 +1902,18 @@
 		     (js-cmap-vtable-add! %omap vindex (cons index omap))))))
 	 
 	 tmp)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-put-name/cache-imap+! ...                              */
+;*    -------------------------------------------------------------    */
+;*    !!! Overriden in property_expd.sch                               */
+;*---------------------------------------------------------------------*/
+(define (js-object-put-name/cache-imap+! o::JsObject prop::symbol v::obj
+	   throw::bool
+	   %this::JsGlobalObject
+	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+   (js-object-put-name/cache! o prop v throw %this cache point
+      '(cmap pmap amap vtable)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-put-name/cache-cmap+! ...                              */

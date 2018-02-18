@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sat Feb 17 10:11:30 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 06:19:52 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -97,6 +97,11 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    pcache ...                                                       */
+;*---------------------------------------------------------------------*/
+(define-struct pcache point usage imap cmap pmap amap vtable)
+
+;*---------------------------------------------------------------------*/
 ;*    load-profile-log ...                                             */
 ;*---------------------------------------------------------------------*/
 (define (load-profile-log logfile)
@@ -151,11 +156,6 @@
 			    (error "json->ast" "Wrong JSON file" msg))))))
 
 ;*---------------------------------------------------------------------*/
-;*    pcache ...                                                       */
-;*---------------------------------------------------------------------*/
-(define-struct pcache point usage imap cmap pmap amap vtable)
-
-;*---------------------------------------------------------------------*/
 ;*    propinfo ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-struct propinfo get set value accessor prototype polymorphic)
@@ -172,15 +172,19 @@
 (define-walk-method (profile-clevel this::J2SAccess logtable ctx verb conf)
    (with-access::J2SAccess this (obj field cspecs loc)
       (let ((entry (logtable-find logtable (loc->point loc) ctx)))
-	 (if entry
+	 (cond
+	    (entry
 	     (let ((policy (pcache->cspecs entry)))
 		(when policy
 		   (when (>=fx (config-get conf :verbose 0) 4)
 		      (display* "\n        " (loc->string loc)
 			 " (" (pcache-usage entry) ") -> " policy))
 		   (cell-set! verb (+fx (cell-ref verb) 1))
-		   (set! cspecs policy)))
-	     (set! cspecs '(cmap+)))))
+		   (set! cspecs policy))))
+	    ((eq? ctx 'put)
+	     (set! cspecs '(pmap cmap+)))
+	    (else
+	     (set! cspecs '(imap+))))))
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
@@ -188,8 +192,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (profile-clevel this::J2SAssig logtable ctx verb conf)
    (with-access::J2SAssig this (lhs rhs)
-      (profile-clevel rhs logtable 'put verb conf)
-      (profile-clevel lhs logtable ctx verb conf)))
+      (profile-clevel rhs logtable ctx verb conf)
+      (profile-clevel lhs logtable 'put verb conf)))
    
 ;*---------------------------------------------------------------------*/
 ;*    profile-clevel ::J2SCall ...                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Feb 17 18:12:41 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 06:20:01 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -250,6 +250,15 @@
 				 (js-profile-log-index idx)
 				 (js-object-inline-ref ,obj idx))
 			      ,(loop (cdr cs))))
+			((imap+)
+			 ;; direct inlined property get
+			 `(if (eq? %cmap (js-pcache-imap ,cache))
+			      (let ((idx (js-pcache-index ,cache)))
+				 (js-profile-log-cache ,cache :imap #t)
+				 (js-profile-log-index idx)
+				 (js-object-inline-ref ,obj idx))
+			      ((@ js-object-get-name/cache-imap+ __hopscript_property)
+			       ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs)))
 			((cmap)
 			 ;; direct property get
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))
@@ -425,7 +434,27 @@
 		       ,obj ,prop ,tmp ,throw ,%this
 		       ,cache ,loc ',cspecs)
 		     (case (car cs)
-			((cmap imap)
+			((imap)
+			 ;; directory property set
+			 `(if (eq? %cmap (js-pcache-cmap ,cache))
+			      (let ((idx (js-pcache-index ,cache)))
+				 (js-profile-log-cache ,cache :imap #t)
+				 (js-profile-log-index idx)
+				 (js-object-inline-set! ,obj idx ,tmp)
+				 ,tmp)
+			      ,(loop (cdr cs))))
+			((imap+)
+			 ;; imap + level2 cache
+			 `(if (eq? %cmap (js-pcache-imap ,cache))
+			      (let ((idx (js-pcache-index ,cache)))
+				 (js-profile-log-cache ,cache :imap #t)
+				 (js-profile-log-index idx)
+				 (vector-set! elements idx ,tmp)
+				 ,tmp)
+			      ((@ js-object-put-name/cache-imap+! __hopscript_property)
+			       ,obj ,prop ,tmp ,throw ,%this
+			       ,cache ,loc ',cspecs)))
+			((cmap)
 			 ;; directory property set
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))
 			      (let ((idx (js-pcache-index ,cache)))
