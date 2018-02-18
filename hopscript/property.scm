@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Feb 18 07:00:38 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 20:46:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -214,10 +214,11 @@
 				  name))
 			  properties)
 		       "\n  props=" properties "\n"))
-		 (with-access::JsConstructMap cmap (%id props methods)
+		 (with-access::JsConstructMap cmap (%id props methods size)
 		    (fprint (current-error-port) msg (typeof obj) " MAPPED"
 		       " length=" (vector-length elements)
 		       " inline=" (js-object-inline-elements? obj)
+		       " size=" size
 		       " mlengths=" (vector-length methods)
 		       "\n  elements=" (vector-map
 					  (lambda (v)
@@ -234,20 +235,23 @@
 ;*---------------------------------------------------------------------*/
 (define (js-debug-pcache pcache #!optional (msg ""))
    (if (isa? pcache JsPropertyCache)
-       (with-access::JsPropertyCache pcache (cmap pmap amap index)
+       (with-access::JsPropertyCache pcache (imap cmap pmap amap index)
 	  (cond
 	     ((isa? cmap JsConstructMap)
-	      (with-access::JsConstructMap cmap ((%cid %id) (cprops props))
-		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
-		    (with-access::JsConstructMap amap ((%aid %id) (aprops props))
-		       (fprint (current-error-port) msg (typeof pcache)
-			  " index=" index
-			  "\n  cmap.%id=" %cid
-			  " cmap.props=" cprops
-			  "\n  pmap.%id=" %pid
-			  " pmap.props=" pprops
-			  "\n  amap.%id=" %pid
-			  " amap.props=" aprops)))))
+	      (with-access::JsConstructMap imap ((%iid %id) (iprops props))
+		 (with-access::JsConstructMap cmap ((%cid %id) (cprops props))
+		    (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
+		       (with-access::JsConstructMap amap ((%aid %id) (aprops props))
+			  (fprint (current-error-port) msg (typeof pcache)
+			     " index=" index
+			     "\n  imap.%id=" %iid
+			     " imap.props=" iprops
+			     "\n  cmap.%id=" %cid
+			     " cmap.props=" cprops
+			     "\n  pmap.%id=" %pid
+			     " pmap.props=" pprops
+			     "\n  amap.%id=" %pid
+			     " amap.props=" aprops))))))
 	     ((isa? pmap JsConstructMap)
 	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
 		 (fprint (current-error-port) msg (typeof pcache)
@@ -427,7 +431,8 @@
 ;*    js-pache-invalidate! ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-pache-invalidate! pcache::JsPropertyCache)
-   (with-access::JsPropertyCache pcache (cmap pmap amap index owner)
+   (with-access::JsPropertyCache pcache (imap cmap pmap amap index owner)
+      (set! imap #t)
       (set! cmap #t)
       (set! pmap #t)
       (set! amap #t)
@@ -443,7 +448,8 @@
    [assert (obj) (isa? obj JsObject)]   
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (cmap pmap amap index owner)
+	 (with-access::JsPropertyCache pcache (imap cmap pmap amap index owner)
+	    (set! imap #t)
 	    (set! cmap #t)
 	    (set! pmap #t)
 	    (set! amap omap)
@@ -464,8 +470,8 @@
 		(set! imap omap)
 		(set! cmap omap))
 	     (begin
-		(set! cmap omap)
-		(set! imap #t)))
+		(set! imap #t)
+		(set! cmap omap)))
 	 (set! pmap #t)
 	 (set! amap #t)
 	 (set! index i))))
@@ -480,7 +486,8 @@
    [assert (obj) (isa? obj JsObject)]
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (cmap pmap amap index owner)
+	 (with-access::JsPropertyCache pcache (imap cmap pmap amap index owner)
+	    (set! imap #t)
 	    (set! cmap #t)
 	    (set! pmap omap)
 	    (set! amap #t)
@@ -496,9 +503,15 @@
    [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
-	 (with-access::JsPropertyCache pcache (pmap amap cmap index owner)
+	 (with-access::JsPropertyCache pcache (imap pmap amap cmap index owner)
 	    [assert (pcache) (= (cmap-size nextmap) (+ 1 (cmap-size omap)))]
-	    (set! cmap nextmap)
+	    (if (js-object-inline-next-element? o i)
+		(begin
+		   (set! imap nextmap)
+		   (set! cmap nextmap))
+		(begin
+		   (set! imap #t)
+		   (set! cmap nextmap)))
 	    (set! pmap omap)
 	    (set! amap #t)
 	    (set! owner #f)
@@ -1722,50 +1735,49 @@
 			     (reject "Read-only property"))))))))))
    
    (define (extend-mapped-object!)
-      (with-trace 'prop "extend-mapped-object!"
-	 ;; 8.12.5, step 6
-	 (with-access::JsObject o (cmap elements)
-	    (with-access::JsConstructMap cmap (props single)
-	       (let* ((name (js-toname p %this))
-		      (index (vector-length props))
-		      (inl (js-object-inline-next-element? o index))
-		      (flags (property-flags #t #t #t #f)))
-		  (let loop ()
-		     (cond
-			((cmap-find-transition cmap name v flags)
-			 =>
-			 (lambda (nextmap)
-			    ;; follow the next map
-			    (with-access::JsConstructMap nextmap (ctor inline)
-			       (when cache
-				  [assert (index p) (<=fx index (vector-length elements))]
-				  (js-pcache-next-direct! cache o nextmap index))
-			       [assert (o) (isa? nextmap JsConstructMap)]
-			       (js-object-push/ctor! o index v ctor)
-			       (set! cmap nextmap)
-			       v)))
-			(single
-			 (extend-cmap! cmap name flags)
-			 (with-access::JsConstructMap cmap (methods)
+      ;; 8.12.5, step 6
+      (with-access::JsObject o (cmap elements)
+	 (with-access::JsConstructMap cmap (props single)
+	    (let* ((name (js-toname p %this))
+		   (index (vector-length props))
+		   (inl (js-object-inline-next-element? o index))
+		   (flags (property-flags #t #t #t #f)))
+	       (let loop ()
+		  (cond
+		     ((cmap-find-transition cmap name v flags)
+		      =>
+		      (lambda (nextmap)
+			 ;; follow the next map
+			 (with-access::JsConstructMap nextmap (ctor inline)
+			    (when cache
+			       [assert (index p) (<=fx index (vector-length elements))]
+			       (js-pcache-next-direct! cache o nextmap index))
+			    [assert (o) (isa? nextmap JsConstructMap)]
+			    (js-object-push/ctor! o index v ctor)
+			    (set! cmap nextmap)
+			    v)))
+		     (single
+		      (extend-cmap! cmap name flags)
+		      (with-access::JsConstructMap cmap (methods)
+			 (validate-cache-method! v methods index))
+		      (with-access::JsConstructMap cmap (ctor inline)
+			 (when cache
+			    (js-pcache-next-direct! cache o cmap index))
+			 (js-object-push/ctor! o index v ctor))
+		      v)
+		     (else
+		      ;; create a new map
+		      (let ((nextmap (extend-cmap cmap name flags)))
+			 (with-access::JsConstructMap nextmap (methods)
 			    (validate-cache-method! v methods index))
 			 (with-access::JsConstructMap cmap (ctor inline)
 			    (when cache
-			       (js-pcache-next-direct! cache o cmap index))
+			       (js-pcache-next-direct! cache o nextmap index))
+			    (link-cmap! cmap nextmap name v flags)
+			    [assert (o) (isa? nextmap JsConstructMap)]
 			    (js-object-push/ctor! o index v ctor))
-			 v)
-			(else
-			 ;; create a new map
-			 (let ((nextmap (extend-cmap cmap name flags)))
-			    (with-access::JsConstructMap nextmap (methods)
-			       (validate-cache-method! v methods index))
-			    (with-access::JsConstructMap cmap (ctor inline)
-			       (when cache
-				  (js-pcache-next-direct! cache o nextmap index))
-			       (link-cmap! cmap nextmap name v flags)
-			       [assert (o) (isa? nextmap JsConstructMap)]
-			       (js-object-push/ctor! o index v ctor))
-			    (set! cmap nextmap)
-			    v)))))))))
+			 (set! cmap nextmap)
+			 v))))))))
    
    (define (update-properties-object! obj desc)
       (with-trace 'prop "update-properties-object!"

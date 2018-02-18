@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Feb 18 07:05:35 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 20:13:54 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -248,7 +248,15 @@
 			      (let ((idx (js-pcache-index ,cache)))
 				 (js-profile-log-cache ,cache :imap #t)
 				 (js-profile-log-index idx)
-				 (js-object-inline-ref ,obj idx))
+				 ;;(js-object-inline-ref ,obj idx)
+				 (unless (and (js-object-inline-elements? ,obj)
+					      (<fx idx (vector-length elements)))
+				    (tprint "GET ERROR: " ,prop ',loc " idx=" idx)
+				    (js-debug-object ,obj "OBJ=")
+				    (js-debug-pcache ,cache)
+				    (error "get" ,prop ',loc))
+				 (vector-ref elements idx)
+				 )
 			      ,(if (eq? (car cs) 'imap)
 				   (loop (cdr cs))
 				   `((@ js-object-get-name/cache-imap+
@@ -430,7 +438,14 @@
 			      (let ((idx (js-pcache-index ,cache)))
 				 (js-profile-log-cache ,cache :imap #t)
 				 (js-profile-log-index idx)
-				 (js-object-inline-set! ,obj idx ,tmp)
+				 ;;(js-object-inline-set! ,obj idx ,tmp)
+				 (unless (and (js-object-inline-elements? ,obj)
+					      (<fx idx (vector-length elements)))
+				    (tprint "PUT ERROR: " ,prop " " ',loc " idx=" idx)
+				    (js-debug-object ,obj "OBJ=")
+				    (js-debug-pcache ,cache)
+				    (error "put" ,prop ',loc))
+				 (vector-set! elements idx ,tmp)
 				 ,tmp)
 			      ,(if (eq? (car cs) 'imap)
 				   (loop (cdr cs))
