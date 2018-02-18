@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu Jan 25 06:02:22 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 07:48:59 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -15,9 +15,9 @@
 (define-expander define-instantiate-expander
    (lambda (x e)
 
-      (define (def clazz)
+      (define (def-default clazz)
 	 `(define (,(symbol-append 'js-instantiate- clazz '-expander) x e)
-
+	     
 	     (define builtins
 		'((properties '())
 		  (mode ,(if (pair? (cddr x))
@@ -47,6 +47,66 @@
 			   nobj)))
 		(e nx e))))
 
+      (define (def-jsobject)
+	 `(define (js-instantiate-JsObject-expander x e)
+	     
+	     (define builtins
+		'((properties '())
+		  (mode ,(if (pair? (cddr x))
+			     (caddr x)
+			     '(js-object-default-mode)))))
+	     
+	     (define (builtin? f)
+		(assq (car f) builtins))
+
+	     (match-case x
+		((instantiateJsObject
+		    (cmap ?cmap)
+		    (elements (vector . ?elements))
+		    (__proto__ ?__proto__))
+		 ;; The purpose of this special expansion is to force allocate
+		 ;; the object with the JS-MAKE-JSOBJECT that creates
+		 ;;; properties inline, with constrat with the regular
+		 ;; constructor that allocates properties in a separate vector.
+		 (let ((obj (gensym 'o))
+		       (vec (gensym 'v)))
+		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_public)
+				      ,(length elements)
+				      ,cmap
+				      ,__proto__))
+			       (,vec (with-access::JsObject ,obj (elements)
+					elements)))
+			   ,@(map (lambda (el idx)
+				     `(vector-set! ,vec ,idx ,el))
+				elements (iota (length elements)))
+			   ,obj)
+		       e)))
+		(else
+		 (let* ((nobj (gensym 'nobj))
+			(nx (list 'let
+			       (list (list nobj
+					(cons 'instantiate::JsObject
+					   (filter (lambda (f)
+							    (not (builtin? f)))
+						    (cdr x)))))
+			       (cons 'begin
+				  (map (lambda (f)
+					  (let ((c (assq (car f) (cdr x)))
+						(set (symbol-append
+							'js-object- (car f)
+							'-set!)))
+					     (if (pair? c)
+						 (list set nobj (cadr c))
+						 (list set nobj (cadr f)))))
+				     builtins))
+			       nobj)))
+		    (e nx e))))))
+      
+      (define (def clazz)
+	 (if (eq? clazz 'JsObject)
+	     (def-jsobject)
+	     (def-default clazz)))
+
       (e (def (cadr x)) e)))
 
 ;*---------------------------------------------------------------------*/
@@ -60,6 +120,31 @@
 	 (eval `(define-instantiate-expander ,clazz))
 	 (e defe  e))))
 
+;*---------------------------------------------------------------------*/
+;*    js-instantiate-JsObjectLiteral-expander ...                      */
+;*    -------------------------------------------------------------    */
+;*---------------------------------------------------------------------*/
+(define (js-instantiate-JsObjectLiteral-expander x e)
+   (match-case x
+      ((instantiateJsObjectLiteral
+	  (cmap ?cmap)
+	  (elements (vector . ?elements))
+	  (__proto__ ?__proto__))
+       (let ((obj (gensym 'o))
+	     (vec (gensym 'v)))
+	  (e `(let* ((,obj ((@ js-make-jsobject __hopscript_public)
+			    ,(length elements)
+			    ,cmap
+			    ,__proto__))
+		     (,vec (with-access::JsObject ,obj (elements) elements)))
+		 ,@(map (lambda (el idx)
+			   `(vector-set! ,vec ,idx ,el))
+		      elements (iota (length elements)))
+		 ,obj)
+	     e)))
+      (else
+       (e `(instantiateJsObject ,@(cdr x)) e))))
+	      
 ;*---------------------------------------------------------------------*/
 ;*    constructors                                                     */
 ;*---------------------------------------------------------------------*/

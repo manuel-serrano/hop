@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Feb 18 06:19:57 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 07:00:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1892,7 +1892,7 @@
 	    (set! name prop)
 	    (set! cpoint point)
 	    (set! usage 'put))
-	 
+
 	 (unless (eq? %omap (js-not-a-cmap))
 	    (with-access::JsPropertyCache cache (index cmap vindex cntmiss)
 	       (when (>=fx cntmiss (vtable-threshold))

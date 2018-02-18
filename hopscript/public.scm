@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Feb 17 14:39:04 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 06:39:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -223,6 +223,26 @@
        (js-raise-type-error/loc %this loc "new: object is not a function ~s" f)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-alloc ...                                              */
+;*---------------------------------------------------------------------*/
+(define-inline (js-object-alloc ctor::JsFunction)
+   (with-access::JsFunction ctor (constrsize constrmap %prototype)
+      (if (not constrmap)
+	  (set! constrmap (instantiate::JsConstructMap (ctor ctor) (size constrsize)))
+ 	  (with-access::JsConstructMap constrmap (size)
+	     (unless (=fx size constrsize)
+		(set! constrmap (instantiate::JsConstructMap (ctor ctor) (size constrsize))))))
+      (js-make-jsobject constrsize constrmap %prototype)))
+
+;*---------------------------------------------------------------------*/
+;*    js-instance-alloc ...                                            */
+;*---------------------------------------------------------------------*/
+(define-inline (js-instance-alloc ctor::JsFunction)
+   (let ((obj (js-object-alloc ctor)))
+      (js-object-mode-instance-set! obj #t)
+      obj))
+
+;*---------------------------------------------------------------------*/
 ;*    js-new-return ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (js-new-return f r o)
@@ -349,26 +369,6 @@
 	     (let ((r (js-call8% %this ctor construct o a0 a1 a2 a3 a4 a5 a6 a7)))
 		(js-new-return ctor r o))))
        (js-raise-type-error %this "new: object is not a function ~s" ctor)))
-
-;*---------------------------------------------------------------------*/
-;*    js-object-alloc ...                                              */
-;*---------------------------------------------------------------------*/
-(define-inline (js-object-alloc ctor::JsFunction)
-   (with-access::JsFunction ctor (constrsize constrmap %prototype)
-      (if (not constrmap)
-	  (set! constrmap (instantiate::JsConstructMap (ctor ctor) (size constrsize)))
-	  (with-access::JsConstructMap constrmap (size)
-	     (unless (=fx size constrsize)
-		(set! constrmap (instantiate::JsConstructMap (ctor ctor) (size constrsize))))))
-      (js-make-jsobject constrsize constrmap %prototype)))
-
-;*---------------------------------------------------------------------*/
-;*    js-instance-alloc ...                                            */
-;*---------------------------------------------------------------------*/
-(define-inline (js-instance-alloc ctor::JsFunction)
-   (let ((obj (js-object-alloc ctor)))
-      (js-object-mode-instance-set! obj #t)
-      obj))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-apply ...                                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Feb 18 06:20:01 2018 (serrano)                */
+;*    Last change :  Sun Feb 18 07:05:35 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -242,40 +242,30 @@
 		     `(,(cache-miss-fun prop)
 		       ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs)
 		     (case (car cs)
-			((imap)
+			((imap imap+)
 			 ;; direct inlined property get
 			 `(if (eq? %cmap (js-pcache-imap ,cache))
 			      (let ((idx (js-pcache-index ,cache)))
 				 (js-profile-log-cache ,cache :imap #t)
 				 (js-profile-log-index idx)
 				 (js-object-inline-ref ,obj idx))
-			      ,(loop (cdr cs))))
-			((imap+)
-			 ;; direct inlined property get
-			 `(if (eq? %cmap (js-pcache-imap ,cache))
-			      (let ((idx (js-pcache-index ,cache)))
-				 (js-profile-log-cache ,cache :imap #t)
-				 (js-profile-log-index idx)
-				 (js-object-inline-ref ,obj idx))
-			      ((@ js-object-get-name/cache-imap+ __hopscript_property)
-			       ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs)))
-			((cmap)
+			      ,(if (eq? (car cs) 'imap)
+				   (loop (cdr cs))
+				   `((@ js-object-get-name/cache-imap+
+					__hopscript_property)
+				     ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs))))
+			((cmap cmap+)
 			 ;; direct property get
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))
 			      (let ((idx (js-pcache-index ,cache)))
 				 (js-profile-log-cache ,cache :cmap #t)
 				 (js-profile-log-index idx)
 				 (vector-ref elements idx))
-			      ,(loop (cdr cs))))
-			((cmap+)
-			 ;; cmap + level 2 cache
-			 `(if (eq? %cmap (js-pcache-cmap ,cache))
-			      (let ((idx (js-pcache-index ,cache)))
-				 (js-profile-log-cache ,cache :cmap #t)
-				 (js-profile-log-index idx)
-				 (vector-ref elements idx))
-			      ((@ js-object-get-name/cache-cmap+ __hopscript_property)
-			       ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs)))
+			      ,(if (eq? (car cs) 'cmap)
+				   (loop (cdr cs))
+				   `((@ js-object-get-name/cache-cmap+
+					__hopscript_property)
+				     ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs))))
 			((pmap pmap+)
 			 ;; prototype property get
 			 `(if (eq? %cmap (js-pcache-pmap ,cache))
@@ -434,27 +424,21 @@
 		       ,obj ,prop ,tmp ,throw ,%this
 		       ,cache ,loc ',cspecs)
 		     (case (car cs)
-			((imap)
+			((imap imap+)
 			 ;; directory property set
-			 `(if (eq? %cmap (js-pcache-cmap ,cache))
+			 `(if (eq? %cmap (js-pcache-imap ,cache))
 			      (let ((idx (js-pcache-index ,cache)))
 				 (js-profile-log-cache ,cache :imap #t)
 				 (js-profile-log-index idx)
 				 (js-object-inline-set! ,obj idx ,tmp)
 				 ,tmp)
-			      ,(loop (cdr cs))))
-			((imap+)
-			 ;; imap + level2 cache
-			 `(if (eq? %cmap (js-pcache-imap ,cache))
-			      (let ((idx (js-pcache-index ,cache)))
-				 (js-profile-log-cache ,cache :imap #t)
-				 (js-profile-log-index idx)
-				 (vector-set! elements idx ,tmp)
-				 ,tmp)
-			      ((@ js-object-put-name/cache-imap+! __hopscript_property)
-			       ,obj ,prop ,tmp ,throw ,%this
-			       ,cache ,loc ',cspecs)))
-			((cmap)
+			      ,(if (eq? (car cs) 'imap)
+				   (loop (cdr cs))
+				   `((@ js-object-put-name/cache-imap+!
+					__hopscript_property)
+				     ,obj ,prop ,tmp ,throw ,%this
+				     ,cache ,loc ',cspecs))))
+			((cmap cmap+)
 			 ;; directory property set
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))
 			      (let ((idx (js-pcache-index ,cache)))
@@ -462,18 +446,12 @@
 				 (js-profile-log-index idx)
 				 (vector-set! elements idx ,tmp)
 				 ,tmp)
-			      ,(loop (cdr cs))))
-			((cmap+)
-			 ;; cmap + level2 cache
-			 `(if (eq? %cmap (js-pcache-cmap ,cache))
-			      (let ((idx (js-pcache-index ,cache)))
-				 (js-profile-log-cache ,cache :cmap #t)
-				 (js-profile-log-index idx)
-				 (vector-set! elements idx ,tmp)
-				 ,tmp)
-			      ((@ js-object-put-name/cache-cmap+! __hopscript_property)
-			       ,obj ,prop ,tmp ,throw ,%this
-			       ,cache ,loc ',cspecs)))
+			      ,(if (eq? (car cs) 'cmap)
+				   (loop (cdr cs))
+				   `((@ js-object-put-name/cache-cmap+!
+					__hopscript_property)
+				     ,obj ,prop ,tmp ,throw ,%this
+				     ,cache ,loc ',cspecs))))
 			((pmap)
 			 ;; prototype property set
 			 `(if (eq? %cmap (js-pcache-pmap ,cache))
