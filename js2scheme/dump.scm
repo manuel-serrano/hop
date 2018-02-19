@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Feb  7 18:48:42 2018 (serrano)                */
+;*    Last change :  Mon Feb 19 07:43:12 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -163,6 +163,9 @@
 	      (if cache `(:cache ,cache) '())))
 	  ((isa? this J2SCall)
 	   (with-access::J2SCall this (cache)
+	      (if cache `(:cache ,cache) '())))
+	  ((isa? this J2SNew)
+	   (with-access::J2SNew this (cache)
 	      (if cache `(:cache ,cache) '())))
 	  (else
 	   '()))
@@ -801,8 +804,9 @@
 ;*    j2s->list ::J2SNew ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SNew)
-   (with-access::J2SNew this (clazz args)
+   (with-access::J2SNew this (clazz args cache)
       `(,@(call-next-method) ,@(dump-type this)
+	  ,@(dump-cache this)
 	  ,(j2s->list clazz) ,@(map j2s->list args))))
 
 ;*---------------------------------------------------------------------*/

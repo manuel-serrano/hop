@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Feb 12 10:26:24 2018 (serrano)                */
+;*    Last change :  Mon Feb 19 07:45:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -220,19 +220,10 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (property* this::J2SNew count env ccall assig infunp shared-pcache)
 
-   (define (decl-fun decl)
-      (if (isa? decl J2SDeclFun)
-	  (with-access::J2SDeclFun decl (val)
-	     (if (isa? val J2SFun)
-		 val
-		 (with-access::J2SMethod val (function)
-		    function)))
-	  (with-access::J2SDeclInit decl (val) val)))
-
    (define (ctor-function? clazz args)
       (when (read-only-function? clazz)
 	 (with-access::J2SRef clazz (decl)
-	    (let ((val (decl-fun decl)))
+	    (let ((val (j2sdeclinit-val-fun decl)))
 	       (with-access::J2SFun val (params vararg generator)
 		  (and (not vararg) (not generator)
 		       (=fx (length params) (length args))))))))

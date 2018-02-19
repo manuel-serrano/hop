@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Feb  7 17:22:40 2018 (serrano)                */
+;*    Last change :  Mon Feb 19 11:30:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -977,6 +977,8 @@
 		      (begin
 			 (unregister-socompile-process! proc)
 			 (unless (=fx (process-exit-status proc) 0)
+			    (tprint "ERROR.2 status=" (process-exit-status proc)
+			       "estr=[" estr "]")
 			    estr))))))))
    
    (define (dump-error cmd sopath msg)

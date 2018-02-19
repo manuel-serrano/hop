@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb 12 10:08:06 2018 (serrano)                */
+;*    Last change :  Mon Feb 19 10:52:35 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2058,7 +2058,7 @@
 		       (js-substring/enc s (cdar r)
 			  (string-length s) enc)))))))
 	 (else
-	  (if (string-index replacevalue #\$)
+	  (if (string-index newstring #\$)
 	      (let loop ((i 0)
 			 (res (js-ascii->jsstring "")))
 		 (let ((r (pregexp-match-positions rx s i)))

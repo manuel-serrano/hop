@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Feb 18 20:46:11 2018 (serrano)                */
+;*    Last change :  Mon Feb 19 10:38:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -44,6 +44,7 @@
 
    (export (js-debug-object ::obj #!optional (msg ""))
 	   (js-debug-pcache ::obj #!optional (msg ""))
+	   (js-debug-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
 	   (js-make-pcache ::int ::obj)
 	   (js-invalidate-pcaches-pmap! ::JsGlobalObject)
@@ -268,7 +269,31 @@
 	      (fprint (current-error-port) msg (typeof pcache)
 		 " no map"))))
        (fprint (current-error-port) msg (typeof pcache))))
-	 
+
+;*---------------------------------------------------------------------*/
+;*    js-debug-cmap ...                                                */
+;*---------------------------------------------------------------------*/
+(define (js-debug-cmap cmap #!optional (msg ""))
+   (with-access::JsConstructMap cmap (%id props methods size transitions)
+      (fprint (current-error-port) msg
+	 "cmap.%id=" %id
+	 " size=" size
+	 " plength=" (vector-length props)
+	 " mlength=" (vector-length methods)
+	 "\nprops.names=" (vector-map prop-name props)
+	 "\nprops=" props
+	 "\ntransitions="
+	 (map (lambda (tr)
+		 (format "~a [~a] -> ~a"
+		    (if (symbol? (transition-name-or-value tr))
+			(transition-name-or-value tr)
+			(typeof (transition-name-or-value tr)))
+		    (transition-flags tr)
+		    (with-access::JsConstructMap (transition-nextmap tr) (%id)
+		       %id)))
+	    transitions)
+	 "\n")))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-object-add! ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -503,8 +528,8 @@
    [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
+	 [assert (pcache) (or (eq? omap nextmap) (= (cmap-size nextmap) (+ 1 (cmap-size omap))))]
 	 (with-access::JsPropertyCache pcache (imap pmap amap cmap index owner)
-	    [assert (pcache) (= (cmap-size nextmap) (+ 1 (cmap-size omap)))]
 	    (if (js-object-inline-next-element? o i)
 		(begin
 		   (set! imap nextmap)
