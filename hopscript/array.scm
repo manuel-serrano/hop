@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Feb 16 08:46:53 2018 (serrano)                */
+;*    Last change :  Mon Feb 19 12:07:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1725,7 +1725,6 @@
 		     (js-call3 %this proc t pv (uint32->fixnum i) o))
 		  (loop (+u32 i 1))))))
 
-      
       (array-prototype-iterator %this this proc t array-foreach vector-foreach)
       (js-undefined))
 

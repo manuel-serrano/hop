@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Feb 19 07:47:14 2018 (serrano)                */
+;*    Last change :  Mon Feb 19 12:34:50 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2922,7 +2922,7 @@
 		(let ((,cmap cmap))
 		   (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))
 		       ;; cache hit
-		       (with-access::JsConstructMap ,cmap (props)
+		       (with-access::JsConstructMap ,cmap0 (props)
 			  (let ((,i (vector-length props))
 				(,elements elements))
 			     ,@(map (lambda (init offset)
