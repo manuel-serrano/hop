@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Feb 19 10:49:43 2018 (serrano)                */
+;*    Last change :  Mon Feb 19 20:03:30 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -285,7 +285,7 @@
 			      ,(loop (cdr cs))))
 			((amap amap+)
 			 ;; accessor property get
-			 `(if (eq? %cmap (js-pcache-pmap ,cache))
+			 `(if (eq? %cmap (js-pcache-amap ,cache))
 			      (let ((idx (js-pcache-index ,cache)))
 				 (with-access::JsObject (js-pcache-owner ,cache) (elements)
 				    (let ((desc (vector-ref elements idx)))
@@ -483,7 +483,7 @@
 			      ,(loop (cdr cs))))
 			((amap)
 			 ;; accessor property set
-			 `(if (eq? %cmap (js-pcache-pmap ,cache))
+			 `(if (eq? %cmap (js-pcache-amap ,cache))
 			      (with-access::JsObject (js-pcache-owner ,cache) (elements)
 				 (let* ((idx (js-pcache-index ,cache))
 					(desc (vector-ref elements idx)))

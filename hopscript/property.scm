@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Feb 19 10:38:46 2018 (serrano)                */
+;*    Last change :  Mon Feb 19 20:46:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -51,6 +51,7 @@
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-imap ::JsPropertyCache)
 	   (inline js-pcache-cmap ::JsPropertyCache)
+	   (inline js-pcache-amap ::JsPropertyCache)
 	   
 	   (inline property-name::symbol ::struct)
 	   
@@ -451,6 +452,15 @@
 (define-inline (js-pcache-imap pcache)
    (with-access::JsPropertyCache pcache (imap)
       imap))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-amap ...                                               */
+;*    -------------------------------------------------------------    */
+;*    !!! Overriden in property_expd.sch                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-pcache-amap pcache)
+   (with-access::JsPropertyCache pcache (amap)
+      amap))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pache-invalidate! ...                                         */
