@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sat Feb 17 13:37:27 2018 (serrano)                */
+;*    Last change :  Tue Feb 20 08:17:23 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -841,6 +841,10 @@
 	     "total cache pmap hits    : "
 	     (padding (filecaches-pmaps filecaches) 12 'right)
 	     " (" (percent (filecaches-pmaps filecaches) total) "%)")
+	  (fprint (current-error-port)
+	     "total cache amap hits    : "
+	     (padding (filecaches-amaps filecaches) 12 'right)
+	     " (" (percent (filecaches-amaps filecaches) total) "%)")
 	  (fprint (current-error-port)
 	     "total cache vtable hits  : "
 	     (padding (filecaches-vtables filecaches) 12 'right)

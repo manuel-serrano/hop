@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/ctor.scm                */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/ctor.scm                */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sat May 13 19:24:17 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Tue Feb 20 08:02:42 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors sizes                       */
 ;*    -------------------------------------------------------------    */
@@ -131,18 +131,12 @@
 ;*    constrinit! ::J2SDeclInit ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (constrinit! this::J2SDeclInit prog)
-   (with-access::J2SDeclInit this (id usage val)
-      (when (and (isa? val J2SFun) (or #t (memq 'new usage)))
-	 (constrinit-ctor! val prog)))
-   this)
-
-;*---------------------------------------------------------------------*/
-;*    constrinit! ::J2SDeclFun ...                                     */
-;*---------------------------------------------------------------------*/
-(define-walk-method (constrinit! this::J2SDeclFun prog)
-   (with-access::J2SDeclFun this (id usage val)
-      (when (and (isa? val J2SFun) (or #t (memq 'new usage)))
-	 (constrinit-ctor! val prog)))
+   (with-access::J2SDeclInit this (id usage)
+      (let ((val (j2sdeclinit-val-fun this)))
+	 (when (and (isa? val J2SFun) (usage? '(new) usage))
+	    (with-access::J2SFun val (optimize)
+	       (when optimize
+		  (constrinit-ctor! val prog))))))
    this)
 
 ;*---------------------------------------------------------------------*/

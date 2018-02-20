@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Mon Feb 19 12:34:50 2018 (serrano)                */
+;*    Last change :  Tue Feb 20 08:11:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2922,19 +2922,18 @@
 		(let ((,cmap cmap))
 		   (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))
 		       ;; cache hit
-		       (with-access::JsConstructMap ,cmap0 (props)
-			  (let ((,i (vector-length props))
-				(,elements elements))
-			     ,@(map (lambda (init offset)
-				       (j2s-scheme 
-					  (init-expr init
-					     (lambda (e)
-						(with-access::J2SExpr e (loc)
-						   `(vector-set! ,elements (+fx ,i ,offset) ,e))))	
-				  mode return conf hint))
-				  nodes (iota (length nodes)))
-			     (with-access::JsObject ,%ref ((omap cmap))
-				(set! omap ,cmap1))))
+		       (let* ((,elements elements)
+			      (,i (vector-length ,elements)))
+			  ,@(map (lambda (init offset)
+				    (j2s-scheme 
+				       (init-expr init
+					  (lambda (e)
+					     (with-access::J2SExpr e (loc)
+						`(vector-set! ,elements (+fx ,i ,offset) ,e))))	
+				       mode return conf hint))
+			       nodes (iota (length nodes) (- (length nodes))))
+			  (with-access::JsObject ,%ref ((omap cmap))
+			     (set! omap ,cmap1)))
 		       ;; cache miss
 		       (with-access::JsConstructMap ,cmap (props)
 			  (let ((len0 (vector-length props)))
