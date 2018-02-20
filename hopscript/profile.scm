@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Feb 20 08:17:23 2018 (serrano)                */
+;*    Last change :  Tue Feb 20 09:12:44 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -875,9 +875,18 @@
 	     "vtables                  : "
 	     (padding *vtables* 12 'right)
 	     " (" *vtables-mem* "b)")
-	  
-	  (when (and (pair? filecaches) (null? (cdr filecaches)))
-	     (profile-pcache (car filecaches))))
+
+	  (if (and (pair? filecaches) (pair? (cdr filecaches)))
+	      (for-each (lambda (fc)
+			   (when (and (vector? (filecache-caches fc))
+				      (vany (lambda (pc)
+					       (with-access::JsPropertyCache pc (cntmiss)
+						  (or (> (pcache-hits pc) 0)
+						      (> cntmiss *log-miss-threshold*))))
+					 (filecache-caches fc)))
+			      (profile-pcache fc)))
+		 filecaches)
+	      (profile-pcache (car filecaches))))
        
        (when (pair? *profile-gets-props*)
 	  (let ((gets (sort (lambda (x y) (>= (cdr x) (cdr y)))

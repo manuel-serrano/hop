@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Feb 19 20:46:11 2018 (serrano)                */
+;*    Last change :  Tue Feb 20 16:18:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -240,20 +240,24 @@
        (with-access::JsPropertyCache pcache (imap cmap pmap amap index)
 	  (cond
 	     ((isa? cmap JsConstructMap)
-	      (with-access::JsConstructMap imap ((%iid %id) (iprops props))
+	      (fprint (current-error-port) msg (typeof pcache)
+		 " index=" index)
+	      (when (isa? imap JsConstructMap)
+		 (with-access::JsConstructMap imap ((%iid %id) (iprops props))
+		    (fprint (current-error-port) "  imap.%id=" %iid
+		       " imap.props=" iprops)))
+	      (when (isa? cmap JsConstructMap)
 		 (with-access::JsConstructMap cmap ((%cid %id) (cprops props))
-		    (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
-		       (with-access::JsConstructMap amap ((%aid %id) (aprops props))
-			  (fprint (current-error-port) msg (typeof pcache)
-			     " index=" index
-			     "\n  imap.%id=" %iid
-			     " imap.props=" iprops
-			     "\n  cmap.%id=" %cid
-			     " cmap.props=" cprops
-			     "\n  pmap.%id=" %pid
-			     " pmap.props=" pprops
-			     "\n  amap.%id=" %pid
-			     " amap.props=" aprops))))))
+		    (fprint (current-error-port) "  cmap.%id=" %cid
+		       " cmap.props=" cprops)))
+	      (when (isa? pmap JsConstructMap)
+		 (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
+		    (fprint (current-error-port) "  pmap.%id=" %pid
+		       " pmap.props=" pprops)))
+	      (when (isa? amap JsConstructMap)
+		 (with-access::JsConstructMap amap ((%aid %id) (aprops props))
+		    (fprint (current-error-port) "  amap.%id=" %aid
+		       " amap.props=" aprops))))
 	     ((isa? pmap JsConstructMap)
 	      (with-access::JsConstructMap pmap ((%pid %id) (pprops props))
 		 (fprint (current-error-port) msg (typeof pcache)
@@ -1931,8 +1935,8 @@
 	   throw::bool
 	   %this::JsGlobalObject
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
-   (with-access::JsObject o ((omap cmap))
-      (let* ((%omap omap)
+   (with-access::JsObject o (cmap)
+      (let* ((%omap cmap)
 	     (tmp (js-put-jsobject! o prop v throw #t %this cache point cspecs)))
 	 (with-access::JsPropertyCache cache (cntmiss name (cpoint point) usage)
 	    (set! cntmiss (+fx 1 cntmiss))
@@ -1941,12 +1945,13 @@
 	    (set! usage 'put))
 
 	 (unless (eq? %omap (js-not-a-cmap))
-	    (with-access::JsPropertyCache cache (index cmap vindex cntmiss)
-	       (when (>=fx cntmiss (vtable-threshold))
-		  (when (>=fx index 0)
-		     (when (=fx vindex (js-not-a-index))
-			(set! vindex (js-get-vindex %this)))
-		     (js-cmap-vtable-add! %omap vindex (cons index omap))))))
+	    (with-access::JsPropertyCache cache (index vindex cntmiss)
+	       (if (=fx cntmiss (vtable-threshold))
+		   (when (>=fx index 0)
+		      (when (=fx vindex (js-not-a-index))
+			 (set! vindex (js-get-vindex %this)))
+		      (js-cmap-vtable-add! %omap vindex (cons index cmap)))
+		   (set! cntmiss (+fx cntmiss 1)))))
 	 
 	 tmp)))
 
