@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Sun Apr 16 20:58:37 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Wed Feb 21 17:55:36 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
 /*=====================================================================*/
@@ -109,3 +109,10 @@ assert.equal( Math.pow(2, 32), 4294967296, "Math.pow(2" );
 assert.equal( Math.pow(2, 32) + 123, 4294967419, "Math.pow(2" );
 assert.equal( Math.pow(2, 33), 8589934592, "Math.pow(2" );
 assert.equal( ((1<<29) + 123) << 2, -2147483156, "((1<<29) + 123) << 2" );
+
+/*---------------------------------------------------------------------*/
+/*    maxint parsing                                                   */
+/*---------------------------------------------------------------------*/
+assert.equal( parseInt( "4294967295", 10 ), 4294967295, "parseMaxInt.1" );
+assert.equal( parseInt( "4294967295" ), 4294967295, "parseMaxInt.2" );
+assert.equal( parseInt( "ffffffff", 16 ), 4294967295, "parseMaxInt.3" );

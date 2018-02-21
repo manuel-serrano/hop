@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Mon Oct  9 18:35:29 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Wed Feb 21 17:47:47 2018 (serrano)                */
+;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
@@ -77,7 +77,7 @@
 	       (set! nodes
 		  (map! j2s-update-ref!
 		     (j2s-toplevel-letopt! nodes (reverse! lets) vars)))))
-	 ;; optimze global variables literals
+	 ;; optimize global variables literals
 	 (when (config-get args :optim-literals #f)
 	    (when (>= (config-get args :verbose 0) 4)
 	       (fprintf (current-error-port) " [optim-literal]"))
@@ -701,7 +701,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
-(define-method (node-used* node::J2SFun decls store)
+(define-walk-method (node-used* node::J2SFun decls store)
    (with-access::J2SFun node (%info body decl)
       (if (isa? %info FunInfo)
 	  (with-access::FunInfo %info (used)
@@ -798,7 +798,10 @@
       (trace-item "no-used*=" (map j2s->list (node-used* node decls #t)))
       (for-each (lambda (d)
 		   (when (eq? (decl-maybe-opt? d) #unspecified)
-		      (mark-decl-noopt! d)))
+		      (mark-decl-noopt! d)
+		      (when (isa? d J2SDeclInit)
+			 (with-access::J2SDeclInit d (val)
+			    (mark-used-noopt*! val decls)))))
 	 (node-used* node decls #t))))
    
 ;*---------------------------------------------------------------------*/
