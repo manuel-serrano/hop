@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Feb 19 11:30:03 2018 (serrano)                */
+;*    Last change :  Wed Feb 21 17:16:34 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -60,7 +60,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    socompile ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define-struct socompile proc cmd src ksucc kfail)
+(define-struct socompile proc cmd src ksucc kfail abortp)
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
@@ -467,7 +467,7 @@
 ;*---------------------------------------------------------------------*/
 (define (nodejs-new-global-object)
    (unless (or *resolve-service* (<fx (hop-port) -1))
-      (when (memq (hop-sofile-compile-policy) '(nte nte+))
+      (when (memq (hop-sofile-compile-policy) '(nte nte1 nte+))
 	 (nodejs-compile-workers-inits!))
       (set! *resolve-service*
 	 (service :name *resolve-url-path* (name filename)
@@ -791,32 +791,37 @@
 	 (if (and status (=fx (process-exit-status proc) 0))
 	     ((socompile-ksucc p))
 	     ((socompile-kfail p)))))
-   
+
    (register-exit-function!
       (lambda (status)
 	 (synchronize socompile-mutex
 	    (for-each (lambda (p)
 			 (define debug-abort #f)
-			 (if (eq? (hop-sofile-compile-policy) 'nte+)
+			 (case (hop-sofile-compile-policy)
+			    ((nte1)
 			     (socompile-wait p #t)
-			     (begin
-				(when debug-abort
-				   (tprint "aborting " (socompile-proc p)
-				      " " (socompile-cmd p)))
-				(hop-verb 3 (hop-color -1 -1 " ABORTING ") " "
-				   (socompile-cmd p) "\n")
-				(process-kill (socompile-proc p))
-				(when debug-abort
-				   (tprint "waiting/abort " (socompile-proc p)))
-				(socompile-wait p #f)
-				(when debug-abort
-				   (tprint "killed " (socompile-proc p))))))
+			     (hop-sofile-compile-policy-set! 'abort))
+			    ((nte+)
+			     (socompile-wait p #t))
+			    (else
+			     (when debug-abort
+				(tprint "aborting " (socompile-proc p)
+				   " " (socompile-cmd p)))
+			     (hop-verb 3 (hop-color -1 -1 " ABORTING ") " "
+				(socompile-cmd p) "\n")
+			     (socompile-abortp-set! p #t)
+			     (process-kill (socompile-proc p))
+			     (when debug-abort
+				(tprint "waiting/abort " (socompile-proc p)))
+			     (socompile-wait p #f)
+			     (when debug-abort
+				(tprint "killed " (socompile-proc p))))))
 	       socompile-processes)
 	    (set! socompile-processes '())
 	    (set! socompile-files '())
 	    (set! socompile-ended #t)
 	    status)))
-   
+
    (thread-start!
       (instantiate::hopthread
 	 (name "socompile-orchestrator")
@@ -842,7 +847,7 @@
 (define (register-socompile-process! proc::process cmd::bstring src ksucc kfail)
    ;; socompile-mutex already locked
    (set! socompile-processes
-      (cons (socompile proc cmd src ksucc kfail) socompile-processes))
+      (cons (socompile proc cmd src ksucc kfail #f) socompile-processes))
    proc)
 
 ;*---------------------------------------------------------------------*/
@@ -852,8 +857,8 @@
    ;; socompile-mutex already locked
    (let ((el (find (lambda (s) (eq? (socompile-proc s) proc))
 		socompile-processes)))
-      (set! socompile-processes (delete! el socompile-processes)))
-   proc)
+      (set! socompile-processes (delete! el socompile-processes))
+      el))
 
 ;*---------------------------------------------------------------------*/
 ;*    soworker-name ...                                                */
@@ -941,6 +946,7 @@
 			       output: "/dev/null"
 			       (cdr line))
 			    cmd filename ksucc kfail))))
+	     (mutex (make-mutex "compilation"))
 	     (estr #f))
 	 ;; verbose
 	 ;; error logger (mandatory to flush child stderr)
@@ -953,7 +959,7 @@
 			      (with-handler
 				 (lambda (e) e)
 				 (unwind-protect
-				    (synchronize socompile-mutex
+				    (synchronize mutex
 				       (set! estr (read-string err)))
 				    (close-input-port err)))))))))
 	 (with-handler
@@ -971,18 +977,16 @@
 					      command: ,cmd)))))
 			(apply-listeners compile-listeners-start evt))))
 	       (nodejs-process-wait proc filename)
-	       (synchronize socompile-mutex
+	       (synchronize mutex
 		  (if (and socompile-ended (=fx (process-exit-status proc) 0))
 		      'ended
-		      (begin
-			 (unregister-socompile-process! proc)
+		      (let ((soc (unregister-socompile-process! proc)))
 			 (unless (=fx (process-exit-status proc) 0)
-			    (tprint "ERROR.2 status=" (process-exit-status proc)
-			       "estr=[" estr "]")
-			    estr))))))))
+			    (if soc
+				(unless (socompile-abortp soc)
+				   estr))))))))))
    
    (define (dump-error cmd sopath msg)
-      (display msg (current-error-port))
       (call-with-output-file (string-append sopath ".err")
 	 (lambda (op)
 	    (display cmd op)
@@ -998,6 +1002,10 @@
    
    (define (make-kfail sopath sopathtmp)
       (lambda ()
+	 (let ((o (string-append (prefix sopathtmp) ".o"))
+	       (c (string-append (prefix sopathtmp) ".c")))
+	    (when (file-exists? o) (delete-file o))
+	    (when (file-exists? c) (delete-file c)))
 	 (when (file-exists? sopath) (delete-file sopath))
 	 (when (file-exists? sopathtmp) (delete-file sopathtmp))))
    
@@ -1118,13 +1126,13 @@
 		 (case (hop-sofile-compile-policy)
 		    ((aot)
 		     (loop (nodejs-socompile filename lang)))
-		    ((nte nte+)
+		    ((nte nte1 nte+)
 		     (nodejs-socompile-queue-push filename lang)
 		     (nodejs-compile filename lang))
 		    (else
 		     (nodejs-compile filename lang))))
 		(else
-		 (when (eq? (hop-sofile-compile-policy) 'nte+)
+		 (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
 		    (nodejs-socompile-queue-push filename lang))
 		 (nodejs-compile filename lang))))))
    

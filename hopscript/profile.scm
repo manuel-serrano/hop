@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Feb 21 07:10:03 2018 (serrano)                */
+;*    Last change :  Wed Feb 21 15:12:22 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -783,6 +783,7 @@
 	     (print "  \"accesses\": " total ",")
 	     (print "  \"hits\": " (filecaches-hits filecaches) ",")
 	     (print "  \"misses\": " (filecaches-misses filecaches) ",")
+	     (print "  \"polymorphics\": " (apply + (map cdr poly)) ",")
 	     (print "  \"uncaches\": {")
 	     (print "    \"total\": " (total-uncaches) ",")
 	     (print "    \"get\": " *profile-gets* ",")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Feb  7 17:41:16 2018 (serrano)                */
+;*    Last change :  Wed Feb 21 16:15:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1877,32 +1877,6 @@
 			(instantiate::J2SParen
 			   (loc (token-loc token))
 			   (expr expr)))))))
-	 ((LPAREN-not-used-anymore)
-	  (let ((token (push-open-token (consume-any!))))
-	     (if (eq? (peek-token-type) 'RPAREN)
-		 (let ((tok (consume-any!)))
-		    (pop-open-token)
-		    (if (eq? (peek-token-type) '=>)
-			;; zero-argument arrow function
-			(arrow-function '() (token-loc token))
-			(parse-token-error "unexpected token" tok)))
-		 (let* ((expr (expression #f))
-			(ignore-too (consume! 'RPAREN)))
-		    (pop-open-token)
-		    (if (eq? (peek-token-type) '=>)
-			(cond
-			   ((isa? expr J2SAssig)
-			    (arrow-function (list expr) (token-loc token)))
-			   ((isa? expr J2SUnresolvedRef)
-			    (arrow-function (list expr) (token-loc token)))
-			   ((isa? expr J2SSequence)
-			    (with-access::J2SSequence expr (exprs)
-			       (arrow-function exprs (token-loc token))))
-			   (else
-			    (parse-node-error "unexpected token" expr)))
-			(instantiate::J2SParen
-			   (loc (token-loc token))
-			   (expr expr)))))))
 	 ((LBRACKET)
 	  (array-literal))
 	 ((LBRACE)
@@ -2229,19 +2203,6 @@
 				   (loc loc)
 				   (val (symbol->string name))))
 			  (val val))))
-;* 		   ((LBRACKET)                                         */
-;* 		    (let ((expr (expression #f)))                      */
-;* 		       (consume-token! 'RBRACKET)                      */
-;* 		       (consume-token! ':)                             */
-;* 		       (let* ((ignore (consume-any!))                  */
-;* 			      (val (assig-expr #f)))                   */
-;* 			  (with-access::J2SLiteral ignore (loc)        */
-;* 			     (instantiate::J2SDataPropertyInit         */
-;* 				(loc loc)                              */
-;* 				(name (instantiate::J2SString          */
-;* 					 (loc loc)                     */
-;* 					 (val (symbol->string name)))) */
-;* 				(val val))))))                         */
 		   ((LBRACKET)
 		    (consume-any!)
 		    (let ((expr (expression #f)))
