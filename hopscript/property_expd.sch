@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Feb 20 16:53:31 2018 (serrano)                */
+;*    Last change :  Wed Feb 21 07:18:23 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -469,7 +469,7 @@
 				 (js-profile-log-index idx)
 				 (if (<fx idx (vector-length %vec))
 				     (vector-set! %vec idx ,tmp)
-				     (js-object-add! ,obj idx ,tmp))
+				     (js-object-ctor-add! ,obj idx ,tmp))
 				 (set! cmap (js-pcache-cmap ,cache))
 				 ,tmp)
 			      ,(loop (cdr cs))))
@@ -498,7 +498,7 @@
 					      (ncmap (cdr (vector-ref vtable vidx))))
 					   (js-profile-log-cache ,cache :vtable #t)
 					   (js-profile-log-index idx)
-					   (js-object-push! ,obj idx ,tmp)
+					   (js-object-ctor-push! ,obj idx ,tmp)
 					   (set! cmap ncmap)
 					   ,tmp)
 					,(loop (cdr cs))))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Feb 20 16:18:06 2018 (serrano)                */
+;*    Last change :  Wed Feb 21 07:40:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -72,6 +72,8 @@
 	   
 	   (js-object-add! obj::JsObject index::long value)
 	   (js-object-push! obj::JsObject index::long value)
+	   (js-object-ctor-add! obj::JsObject index::long value)
+	   (js-object-ctor-push! obj::JsObject index::long value)
 	   
 	   (generic js-properties-names::pair-nil ::obj ::bool ::JsGlobalObject)
 	   (generic js-properties-name::vector ::obj ::bool ::JsGlobalObject)
@@ -311,12 +313,34 @@
 	 obj)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-object-ctor-add! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (js-object-ctor-add! obj::JsObject idx::long value)
+   (with-access::JsObject obj (cmap)
+      (with-access::JsConstructMap cmap (ctor)
+	 (when (isa? ctor JsFunction)
+	    (with-access::JsFunction ctor (constrsize maxconstrsize)
+	       (when (<fx constrsize maxconstrsize)
+		  (set! constrsize (+fx 1 constrsize)))))))
+   (js-object-add! obj idx value)
+   obj)
+
+;*---------------------------------------------------------------------*/
 ;*    js-object-push! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (js-object-push! obj::JsObject idx::long value)
    (with-access::JsObject obj (elements)
       (if (>=fx idx (vector-length elements))
 	  (js-object-add! obj idx value)
+	  (vector-set! elements idx value))))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-ctor-push! ...                                         */
+;*---------------------------------------------------------------------*/
+(define (js-object-ctor-push! obj::JsObject idx::long value)
+   (with-access::JsObject obj (elements)
+      (if (>=fx idx (vector-length elements))
+	  (js-object-ctor-add! obj idx value)
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
@@ -328,9 +352,12 @@
 	  (begin
 	     (js-object-add! obj idx value)
 	     (when (isa? ctor JsFunction)
-		(with-access::JsFunction ctor (constrsize maxconstrsize)
+		(with-access::JsFunction ctor (constrmap constrsize maxconstrsize)
 		   (when (<fx constrsize maxconstrsize)
-		      (set! constrsize (+fx 1 constrsize))))))
+		      (set! constrsize (+fx 1 constrsize))
+		      (set! constrmap (instantiate::JsConstructMap
+					 (ctor ctor)
+					 (size constrsize)))))))
 	  (vector-set! elements idx value))))
 
 ;*---------------------------------------------------------------------*/
@@ -1779,7 +1806,6 @@
 	 (with-access::JsConstructMap cmap (props single)
 	    (let* ((name (js-toname p %this))
 		   (index (vector-length props))
-		   (inl (js-object-inline-next-element? o index))
 		   (flags (property-flags #t #t #t #f)))
 	       (let loop ()
 		  (cond
@@ -1787,7 +1813,7 @@
 		      =>
 		      (lambda (nextmap)
 			 ;; follow the next map
-			 (with-access::JsConstructMap nextmap (ctor inline)
+			 (with-access::JsConstructMap nextmap (ctor)
 			    (when cache
 			       [assert (index p) (<=fx index (vector-length elements))]
 			       (js-pcache-next-direct! cache o nextmap index))
@@ -1799,7 +1825,7 @@
 		      (extend-cmap! cmap name flags)
 		      (with-access::JsConstructMap cmap (methods)
 			 (validate-cache-method! v methods index))
-		      (with-access::JsConstructMap cmap (ctor inline)
+		      (with-access::JsConstructMap cmap (ctor)
 			 (when cache
 			    (js-pcache-next-direct! cache o cmap index))
 			 (js-object-push/ctor! o index v ctor))
@@ -1809,7 +1835,7 @@
 		      (let ((nextmap (extend-cmap cmap name flags)))
 			 (with-access::JsConstructMap nextmap (methods)
 			    (validate-cache-method! v methods index))
-			 (with-access::JsConstructMap cmap (ctor inline)
+			 (with-access::JsConstructMap cmap (ctor)
 			    (when cache
 			       (js-pcache-next-direct! cache o nextmap index))
 			    (link-cmap! cmap nextmap name v flags)
