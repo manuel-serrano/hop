@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Feb 21 07:40:32 2018 (serrano)                */
+;*    Last change :  Wed Feb 21 11:31:33 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1067,12 +1067,12 @@
 ;*---------------------------------------------------------------------*/
 (define (js-property-value obj desc %this)
    (cond
-      ((isa? desc JsValueDescriptor)
-       (with-access::JsValueDescriptor desc (value)
-	  value))
       ((isa? desc JsAccessorDescriptor)
        (with-access::JsAccessorDescriptor desc (%get)
 	  (%get obj)))
+      ((isa? desc JsValueDescriptor)
+       (with-access::JsValueDescriptor desc (value)
+	  value))
       ((isa? desc JsWrapperDescriptor)
        (with-access::JsWrapperDescriptor desc (value)
 	  value))
@@ -1086,13 +1086,13 @@
 ;*---------------------------------------------------------------------*/
 (define (js-property-value-set! obj desc v %this)
    (cond
+      ((isa? desc JsAccessorDescriptor)
+       (with-access::JsAccessorDescriptor desc (%set)
+	  (%set obj v)))
       ((isa? desc JsValueDescriptor)
        (with-access::JsValueDescriptor desc (value)
 	  (set! value v)
 	  v))
-      ((isa? desc JsAccessorDescriptor)
-       (with-access::JsAccessorDescriptor desc (%set)
-	  (%set obj v)))
       ((isa? desc JsWrapperDescriptor)
        (with-access::JsWrapperDescriptor desc (%set)
 	  (%set obj v)

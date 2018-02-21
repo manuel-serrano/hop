@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Wed Feb 21 07:18:23 2018 (serrano)                */
+;*    Last change :  Wed Feb 21 08:54:37 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -248,15 +248,7 @@
 			      (let ((idx (js-pcache-index ,cache)))
 				 (js-profile-log-cache ,cache :imap #t)
 				 (js-profile-log-index idx)
-				 (js-object-inline-ref ,obj idx)
-;* 				 (unless (and (js-object-inline-elements? ,obj) */
-;* 					      (<fx idx (vector-length elements))) */
-;* 				    (tprint "GET ERROR: " ,prop ',loc " idx=" idx) */
-;* 				    (js-debug-object ,obj "OBJ=")      */
-;* 				    (js-debug-pcache ,cache)           */
-;* 				    (error "get" ,prop ',loc))         */
-;* 				 (vector-ref elements idx)             */
-				 )
+				 (js-object-inline-ref ,obj idx))
 			      ,(if (eq? (car cs) 'imap)
 				   (loop (cdr cs))
 				   `((@ js-object-get-name/cache-imap+
