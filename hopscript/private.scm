@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Mon Dec  4 11:07:15 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Feb 21 18:11:09 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
 ;*=====================================================================*/
@@ -371,7 +371,7 @@
 		 (integer (str->integer s 16) s 16)
 		 (integer (string->bignum-safe s 16) s 16))))
 	 ((zeros32? r)
-	  (if (<=fx l 10)
+	  (if (<=fx l 8)
 	      (integer (str->integer s 10) s 10)
 	      (integer (string->bignum-safe s 10) s 10)))
 	 (else

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Feb  7 18:45:19 2018 (serrano)                */
+/*    Last change :  Wed Feb 21 18:42:05 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -351,6 +351,22 @@ function protoLit( CNT, m ) {
 }
 
 assert.ok( protoLit( 20000, 1 ) === 12345, "literal with __proto__" );
+
+/*---------------------------------------------------------------------*/
+/*    Compilation failure                                              */
+/*---------------------------------------------------------------------*/
+(function() {
+   function bar() {
+      return "ok";
+   }
+   
+   function foo() {
+      return bar();
+   }
+   
+   foo();
+   var myVar = "foo";
+})();
 
 /*---------------------------------------------------------------------*/
 /*    Function properties                                              */
