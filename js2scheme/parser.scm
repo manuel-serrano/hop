@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Feb  6 11:53:20 2018 (serrano)                */
+;*    Last change :  Wed Feb 21 16:17:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -2099,8 +2099,12 @@
 		(let* ((loc (token-loc token))
 		       (val (case (peek-token-type)
 			       ((COMMA RBRACE)
-				(token-push-back! token)
-				(primary))
+				(if (eq? (token-tag token) 'ID)
+				    (begin
+				       (token-push-back! token)
+				       (primary))
+				    (parse-token-error "unexpected token"
+				       (peek-token))))
 			       ((LPAREN)
 				(function #f token))
 			       ((:)

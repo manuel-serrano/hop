@@ -28,6 +28,9 @@
  "S15.5.1.1_A1_T9.js"
  "B.2.1.propertyCheck.js"
  "B.2.2.propertyCheck.js"
+ ;; incompatible with ES6 destructuring args
+ "S12.1_A4_T2.js"
+ "S12.6.4_A15.js"
  ;; Hop binds a global variable called OBJECT (for HTML)
  "S11.8.6_A2.1_T3.js"
  "S11.8.6_A2.4_T3.js"
