@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Feb 20 08:11:36 2018 (serrano)                */
+;*    Last change :  Thu Feb 22 09:05:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -5064,43 +5064,86 @@
    (define (init-expr node)
       ;; see ctor.scm
       (with-access::J2SStmtExpr node (expr)
-	 (with-access::J2SAssig expr (rhs)
-	    rhs)))
+         (with-access::J2SAssig expr (rhs)
+            rhs)))
    
-   (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1)
+   (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1 offset)
       (let ((%ref (gensym '%ref))
-	    (cmap (gensym '%cmap0))
-	    (i (gensym '%i))
-	    (elements (gensym '%elements)))
-	 `(let ((,%ref ,(j2s-scheme ref mode return conf hint totype)))
-	     (with-access::JsObject ,%ref (cmap elements)
-		(let ((,cmap cmap))
-		   (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))
-		       ;; cache hit
-		       (let ((,elements elements)
-			     (,i (vector-length elements)))
-			  
-			  ,@(map (lambda (init offset)
-				    `(vector-set! ,elements (+fx ,i ,offset)
-					,(j2s-scheme (init-expr init)
-					    mode return conf hint totype)))
-			       
-			       
-			       nodes (iota (length nodes) (- (length nodes))))
-			  (with-access::JsObject ,%ref ((omap cmap))
-			     (set! omap ,cmap1)))
-		       ;; cache miss
-		       (with-access::JsConstructMap ,cmap (names)
-			  (let ((len0 (vector-length names)))
-			     ,@(map (lambda (n)
-				       (j2s-scheme n
-					  mode return conf hint totype))
-				  nodes)
-			     (with-access::JsConstructMap cmap (names)
-				(when (=fx (+fx len0 ,(length nodes))
-					 (vector-length names))
-				   (set! ,cmap0 ,cmap)
-				   (set! ,cmap1 cmap))))))))))))
+            (cmap (gensym '%cmap0))
+            (i (gensym '%i))
+            (elements (gensym '%elements)))
+         `(let ((,%ref ,(j2s-scheme ref mode return conf hint totype)))
+             (with-access::JsObject ,%ref (cmap elements)
+                (let ((,cmap cmap))
+                   (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))
+                       ;; cache hit
+                       (with-access::JsConstructMap ,cmap (names)
+                          (let ((,i ,offset)
+                                (,elements elements))
+                             ,@(map (lambda (init offset)
+                                       `(vector-set! ,elements (+fx ,i ,offset)
+                                           ,(j2s-scheme (init-expr init)
+                                               mode return conf hint totype)))
+                                  
+                                  
+                                  nodes (iota (length nodes)))
+                             (with-access::JsObject ,%ref ((omap cmap))
+                                (set! omap ,cmap1))))
+                       ;; cache miss
+                       (with-access::JsConstructMap ,cmap (names)
+                          (let ((len0 (vector-length names)))
+                             ,@(map (lambda (n)
+                                       (j2s-scheme n
+                                          mode return conf hint totype))
+                                  nodes)
+                             (with-access::JsConstructMap cmap (names)
+                                (when (=fx (+fx len0 ,(length nodes))
+                                         (vector-length names))
+				   (set! ,offset len0)
+                                   (set! ,cmap0 ,cmap)
+                                   (set! ,cmap1 cmap))))))))))))
+;* (define-method (j2s-scheme this::J2SOPTInitSeq mode return conf hint totype) */
+;*                                                                     */
+;*    (define (init-expr node)                                         */
+;*       ;; see ctor.scm                                               */
+;*       (with-access::J2SStmtExpr node (expr)                         */
+;* 	 (with-access::J2SAssig expr (rhs)                             */
+;* 	    rhs)))                                                     */
+;*                                                                     */
+;*    (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1)     */
+;*       (let ((%ref (gensym '%ref))                                   */
+;* 	    (cmap (gensym '%cmap0))                                    */
+;* 	    (i (gensym '%i))                                           */
+;* 	    (elements (gensym '%elements)))                            */
+;* 	 `(let ((,%ref ,(j2s-scheme ref mode return conf hint totype))) */
+;* 	     (with-access::JsObject ,%ref (cmap elements)              */
+;* 		(let ((,cmap cmap))                                    */
+;* 		   (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))      */
+;* 		       ;; cache hit                                    */
+;* 		       (let ((,elements elements)                      */
+;* 			     (,i (vector-length elements)))            */
+;* 			                                               */
+;* 			  ,@(map (lambda (init offset)                 */
+;* 				    `(vector-set! ,elements (+fx ,i ,offset) */
+;* 					,(j2s-scheme (init-expr init)  */
+;* 					    mode return conf hint totype))) */
+;* 			                                               */
+;* 			                                               */
+;* 			       nodes (iota (length nodes) (- (length nodes)))) */
+;* 			  (with-access::JsObject ,%ref ((omap cmap))   */
+;* 			     (set! omap ,cmap1)))                      */
+;* 		       ;; cache miss                                   */
+;* 		       (with-access::JsConstructMap ,cmap (names)      */
+;* 			  (let ((len0 (vector-length names)))          */
+;* 			     ,@(map (lambda (n)                        */
+;* 				       (j2s-scheme n                   */
+;* 					  mode return conf hint totype)) */
+;* 				  nodes)                               */
+;* 			     (with-access::JsConstructMap cmap (names) */
+;* 				(when (=fx (+fx len0 ,(length nodes))  */
+;* 					 (vector-length names))        */
+;* 				   (set! ,cmap0 ,cmap)                 */
+;* 				   (set! ,cmap1 cmap))))))))))))       */
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-error ...                                                    */

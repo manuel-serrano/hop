@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:25 2014                          */
-/*    Last change :  Wed Feb 21 17:55:36 2018 (serrano)                */
+/*    Last change :  Thu Feb 22 07:43:01 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing JS numbers                                               */
@@ -116,3 +116,12 @@ assert.equal( ((1<<29) + 123) << 2, -2147483156, "((1<<29) + 123) << 2" );
 assert.equal( parseInt( "4294967295", 10 ), 4294967295, "parseMaxInt.1" );
 assert.equal( parseInt( "4294967295" ), 4294967295, "parseMaxInt.2" );
 assert.equal( parseInt( "ffffffff", 16 ), 4294967295, "parseMaxInt.3" );
+
+/*---------------------------------------------------------------------*/
+/*    tostring                                                         */
+/*---------------------------------------------------------------------*/
+var num1 = 0xFFFFFFFF;
+var num2 = parseInt( "FFFFFFFF", 16);
+
+assert.equal( num1.toString( 16 ), "ffffffff" );
+assert.equal( num2.toString( 16 ), "ffffffff" );

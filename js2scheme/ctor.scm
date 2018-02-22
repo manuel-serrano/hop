@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Sat May 13 19:24:17 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Thu Feb 22 09:07:21 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors sizes                       */
 ;*    -------------------------------------------------------------    */
@@ -247,11 +247,13 @@
 	 (else
 	  ;; optimize the init sequence, first create two program globals
 	  (let ((cmap0 (gensym '%cmap0))
-		(cmap1 (gensym '%cmap1)))
+		(cmap1 (gensym '%cmap1))
+		(offset (gensym '%offset)))
 	     (with-access::J2SProgram prog (globals)
 		(set! globals
 		   (cons* `(define ,cmap0 #f)
 		      `(define ,cmap1 #f)
+		      `(define ,offset -1)
 		      globals)))
 	     ;; then split the init sequence
 	     (with-access::J2SBlock this (nodes loc)
@@ -261,6 +263,7 @@
 			    (ref ref)
 			    (nodes init)
 			    (cmap0 cmap0)
-			    (cmap1 cmap1))
+			    (cmap1 cmap1)
+			    (offset offset))
 		      (map! (lambda (n) (constrinit-seq! n prog)) rest))))
 	     this)))))

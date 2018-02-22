@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Feb  5 17:42:53 2018 (serrano)                */
+;*    Last change :  Thu Feb 22 07:54:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -1035,6 +1035,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsnumber-tostring ...                                         */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.4.2     */
 ;*---------------------------------------------------------------------*/
 (define (js-jsnumber-tostring val radix %this)
    (let ((r (if (eq? radix (js-undefined))
@@ -1051,6 +1053,10 @@
 	  (js-string->jsstring "-Infinity"))
 	 ((or (= r 10) (= r 0))
 	  (js-tojsstring val %this))
+	 ((fixnum? val)
+	  (js-string->jsstring (fixnum->string val r)))
+	 ((integer? val)
+	  (js-string->jsstring (llong->string (flonum->llong val) r)))
 	 (else
 	  (js-string->jsstring (number->string val r))))))
 
