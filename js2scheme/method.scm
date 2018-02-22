@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sun Feb  4 07:02:18 2018 (serrano)                */
+;*    Last change :  Thu Feb 22 08:53:41 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -94,7 +94,7 @@
 		   (set! itype 'object)
 		   (set! utype 'object)
 		   (set! vtype 'object)))
-	       ((and (usage? '(ref get) usage)
+	       ((and (usage? '(ref) usage)
 		     (>=fx usecnt this-occurrence-threshold)
 		     (<fx (node-size body) body-size-threshold))
 		(set! val

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Tue Feb 20 08:02:42 2018 (serrano)                */
+;*    Last change :  Thu Feb 22 09:34:21 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Static approximation of constructors sizes                       */
@@ -135,7 +135,7 @@
       (let ((val (j2sdeclinit-val-fun this)))
 	 (when (and (isa? val J2SFun) (usage? '(new) usage))
 	    (with-access::J2SFun val (optimize)
-	       (when optimize
+	       (when (or #t optimize)
 		  (constrinit-ctor! val prog))))))
    this)
 
@@ -227,7 +227,7 @@
 			  (else
 			   (set-cdr! prev '())
 			   (values nodes ns ref)))))))))
-   
+
    (multiple-value-bind (init rest ref)
       (split-init-sequence this)
       (cond
@@ -241,11 +241,13 @@
 	 (else
 	  ;; optimize the init sequence, first create two program globals
 	  (let ((cmap0 (gensym '%cmap0))
-		(cmap1 (gensym '%cmap1)))
+		(cmap1 (gensym '%cmap1))
+		(offset (gensym '%offset)))
 	     (with-access::J2SProgram prog (globals)
 		(set! globals
 		   (cons* `(define ,cmap0 #f)
 		      `(define ,cmap1 #f)
+		      `(define ,offset -1)
 		      globals)))
 	     ;; then split the init sequence
 	     (with-access::J2SBlock this (nodes loc)
@@ -253,8 +255,23 @@
 		   (cons (instantiate::J2SOPTInitSeq
 			    (loc loc)
 			    (ref ref)
-			    (nodes init)
+			    (nodes (map adjust-cspecs! init))
 			    (cmap0 cmap0)
-			    (cmap1 cmap1))
+			    (cmap1 cmap1)
+			    (offset offset))
 		      (map! (lambda (n) (constrinit-seq! n prog)) rest))))
 	     this)))))
+
+;*---------------------------------------------------------------------*/
+;*    adjust-cspecs! ::J2SNode ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (adjust-cspecs! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    adjust-cspecs! ::J2SAccess ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (adjust-cspecs! this::J2SAccess)
+   (with-access::J2SAccess this (cspecs)
+      (set! cspecs '(pmap cmap+))
+      (call-default-walker)))

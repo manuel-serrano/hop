@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Feb 19 07:43:12 2018 (serrano)                */
+;*    Last change :  Thu Feb 22 09:00:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -159,11 +159,11 @@
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:cache"))
        (cond
 	  ((isa? this J2SAccess)
-	   (with-access::J2SAccess this (cache)
-	      (if cache `(:cache ,cache) '())))
+	   (with-access::J2SAccess this (cache cspecs)
+	      (if cache `(:cache ,cache :cspecs ,cspecs) '())))
 	  ((isa? this J2SCall)
-	   (with-access::J2SCall this (cache)
-	      (if cache `(:cache ,cache) '())))
+	   (with-access::J2SCall this (cache cspecs)
+	      (if cache `(:cache ,cache :cspecs ,cspecs) '())))
 	  ((isa? this J2SNew)
 	   (with-access::J2SNew this (cache)
 	      (if cache `(:cache ,cache) '())))

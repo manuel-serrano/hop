@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue Feb 20 08:11:53 2018 (serrano)                */
+;*    Last change :  Thu Feb 22 08:41:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2912,7 +2912,7 @@
 		(error "j2s-scheme" "wrong init expr"
 		   (j2s->list node)))))))
    
-   (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1)
+   (with-access::J2SOPTInitSeq this (loc ref nodes cmap0 cmap1 offset)
       (let ((%ref (gensym '%ref))
 	    (cmap (gensym '%cmap0))
 	    (i (gensym '%i))
@@ -2923,7 +2923,7 @@
 		   (if (or (eq? ,cmap ,cmap0) (eq? ,cmap ,cmap1))
 		       ;; cache hit
 		       (let* ((,elements elements)
-			      (,i (vector-length ,elements)))
+			      (,i ,offset))
 			  ,@(map (lambda (init offset)
 				    (j2s-scheme 
 				       (init-expr init
@@ -2931,7 +2931,7 @@
 					     (with-access::J2SExpr e (loc)
 						`(vector-set! ,elements (+fx ,i ,offset) ,e))))	
 				       mode return conf hint))
-			       nodes (iota (length nodes) (- (length nodes))))
+			       nodes (iota (length nodes)))
 			  (with-access::JsObject ,%ref ((omap cmap))
 			     (set! omap ,cmap1)))
 		       ;; cache miss
@@ -2943,6 +2943,7 @@
 			     (with-access::JsConstructMap cmap (props)
 				(when (=fx (+fx len0 ,(length nodes))
 					 (vector-length props))
+				   (set! ,offset len0)
 				   (set! ,cmap0 ,cmap)
 				   (set! ,cmap1 cmap))))))))))))
 

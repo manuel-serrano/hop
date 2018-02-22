@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Feb 17 16:00:37 2018 (serrano)                */
+;*    Last change :  Thu Feb 22 08:40:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -412,7 +412,8 @@
 	   (final-class J2SOPTInitSeq::J2SSeq
 	      ref::J2SRef
 	      (cmap0::symbol read-only)
-	      (cmap1::symbol read-only))
+	      (cmap1::symbol read-only)
+	      (offset::symbol read-only))
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
