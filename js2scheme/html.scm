@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Wed Sep 20 05:37:11 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Fri Feb 23 16:52:50 2018 (serrano)                */
+;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
 ;*=====================================================================*/
@@ -160,32 +160,57 @@
 ;*---------------------------------------------------------------------*/
 ;*    html-parse-script ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (html-parse-script iport)
+(define (html-parse-script iport conf)
    (let* ((sp (input-port-position iport))
 	  (g (regular-grammar ()
 		((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
 		 (let ((s (instantiate::J2SString
 			     (escape '(escape))
-			     (val (the-substring 1 (-fx (the-length) 1)))
+			     (val (the-string))
 			     (loc (the-coord (the-port) (+fx (the-length) 1))))))
 		    (cons s (ignore))))
-		((: "\'" (* (or (out #a000 #\\ #\') (: #\\ all))) "\'")
+		((: "'" (* (or (out #a000 #\\ #\') (: #\\ all))) "'")
 		 (let ((s (instantiate::J2SString
 			     (escape '(escape))
-			     (val (string-for-read
-				     (the-substring 1 (-fx (the-length) 1))))
+			     (val (string-for-read (the-string)))
 			     (loc (the-coord (the-port) (+fx (the-length) 1))))))
 		    (cons s (ignore))))
 		((: "//" (* all))
 		 (ignore))
 		((: "/*" (* (or (out #\*) (: #\* (out "/")))) "*/")
 		 (ignore))
-		((or (+ (out "<")) #\<)
+		("/"
 		 (let ((s (instantiate::J2SString
 			     (escape '(escape))
 			     (val (the-string))
 			     (loc (the-coord (the-port) (the-length))))))
 		    (cons s (ignore))))
+		((or (+ (out "<$~\"'/")) #\<)
+		 (let ((s (instantiate::J2SString
+			     (escape '(escape))
+			     (val (the-string))
+			     (loc (the-coord (the-port) (the-length))))))
+		    (cons s (ignore))))
+		((: (in "$~") (out "{"))
+		 (let ((s (instantiate::J2SString
+			     (escape '(escape))
+			     (val (the-string))
+			     (loc (the-coord (the-port) (the-length))))))
+		    (cons s (ignore))))
+		("${"
+		 (let ((str (the-string))
+		       (loc (the-coord (the-port) (the-length))))
+		    (rgc-buffer-insert-substring! (the-port) str 0 2)
+		    (let ((expr (j2s-parser (the-port)
+				   (cons* :parser 'dollar-expression conf))))
+		       (cons expr (ignore)))))
+		("~{"
+		 (let ((str (the-string))
+		       (loc (the-coord (the-port) (the-length))))
+		    (rgc-buffer-insert-substring! (the-port) str 0 2)
+		    (let ((expr (j2s-parser (the-port)
+				   (cons* :parser 'tilde-expression conf))))
+		       (cons expr (ignore)))))
 		((uncase "</script>")
 		 '())  
 		(else
@@ -360,7 +385,7 @@
 		      (make-dom-create tag attributes '() lang conf))))
 	       ((html-property-script? prop)
 		(let ((tag (token type sym (the-length)))
-		      (args (html-parse-script (the-port))))
+		      (args (html-parse-script (the-port) conf)))
 		   (push-node-ignore
 		      (make-dom-create tag attributes args lang conf))))
 	       (else

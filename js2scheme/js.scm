@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Sat Feb  3 19:30:57 2018 (serrano)                */
+;*    Last change :  Fri Feb 23 15:17:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -336,6 +336,8 @@
 		#t)
 	       ((pair? (cdr nodes))
 		#f)
+	       ((isa? (car nodes) J2SNop)
+		#t)
 	       ((isa? (car nodes) J2SStmtExpr)
 		(with-access::J2SStmtExpr (car nodes) (expr)
 		   (isa? expr J2SPragma)))))))
