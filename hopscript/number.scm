@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Feb  5 17:42:53 2018 (serrano)                */
+;*    Last change :  Fri Feb 23 17:12:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -446,6 +446,10 @@
 	  (js-ascii->jsstring "-Infinity"))
 	 ((or (= r 10) (= r 0))
 	  (js-tojsstring val %this))
+	 ((fixnum? val)
+	  (js-string->jsstring (fixnum->string val r)))
+	 ((integer? val)
+	  (js-string->jsstring (llong->string (flonum->llong val) r)))
 	 (else
 	  (js-ascii->jsstring (number->string val r))))))
 
