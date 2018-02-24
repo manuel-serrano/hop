@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Fri Feb 23 16:52:50 2018 (serrano)                */
+;*    Last change :  Sat Feb 24 21:00:25 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -161,6 +161,13 @@
 ;*    html-parse-script ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (html-parse-script iport conf)
+   (rgc-buffer-insert-substring! iport "~{" 0 2)
+   (j2s-parser iport (cons* :parser 'script-expression conf)))
+
+;*---------------------------------------------------------------------*/
+;*    html-parse-script-TOBEREMOVED-2018-02-22 ...                     */
+;*---------------------------------------------------------------------*/
+(define (html-parse-script-TOBEREMOVED-2018-02-22 iport conf)
    (let* ((sp (input-port-position iport))
 	  (g (regular-grammar ()
 		((: "\"" (* (or (out #a000 #\\ #\") (: #\\ all))) "\"")
@@ -384,10 +391,17 @@
 		   (push-node-ignore
 		      (make-dom-create tag attributes '() lang conf))))
 	       ((html-property-script? prop)
-		(let ((tag (token type sym (the-length)))
-		      (args (html-parse-script (the-port) conf)))
+		(let ((tag (token type sym (the-length))))
 		   (push-node-ignore
-		      (make-dom-create tag attributes args lang conf))))
+		      (make-dom-create tag attributes
+			 (list (html-parse-script (the-port) conf))
+			 lang conf))))
+;* 	       ((html-property-script? prop)                           */
+;* 		(let ((tag (token type sym (the-length)))              */
+;* 		      (args (html-parse-script-TOBEREMOVED-2018-02-22  */
+;* 			       (the-port))))                           */
+;* 		   (push-node-ignore                                   */
+;* 		      (make-dom-create tag attributes args lang conf)))) */
 	       (else
 		(let* ((tag (token type sym (the-length)))
 		       (el (element tag attributes

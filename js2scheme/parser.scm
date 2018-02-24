@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Feb 21 16:15:46 2018 (serrano)                */
+;*    Last change :  Sat Feb 24 19:46:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1763,6 +1763,14 @@
 		   (instantiate::J2SSeq
 		      (loc (token-loc token))
 		      (nodes (reverse! rev-stats))))
+		  ((CTAG)
+		   (if (eq? (token-value (peek-token)) '<script>)
+		       (if (eq? (config-get conf :parser #f) 'script-expression)
+			   (instantiate::J2SSeq
+			      (loc (token-loc token))
+			      (nodes (reverse! rev-stats)))
+			   (loop (cons (statement) rev-stats)))
+		       (loop (cons (statement) rev-stats))))
 		  (else
 		   (loop (cons (statement) rev-stats))))))))
 
@@ -2324,6 +2332,7 @@
 	     el)))
 
    (case (config-get conf :parser #f)
+      ((script-expression) (with-tilde tilde-expression))
       ((tilde-expression) (with-tilde tilde-expression))
       ((dollar-expression) (dollar-expression))
       ((module) (program #f))
