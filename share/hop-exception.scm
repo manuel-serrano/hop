@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/share/hop-exception.scm           */
+;*    serrano/prgm/project/hop/3.2.x/share/hop-exception.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jun  4 15:51:42 2009                          */
-;*    Last change :  Thu Nov 16 07:58:35 2017 (serrano)                */
-;*    Copyright   :  2009-17 Manuel Serrano                            */
+;*    Last change :  Sat Feb 24 21:14:12 2018 (serrano)                */
+;*    Copyright   :  2009-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Client-side debugging facility (includes when Hop launched in    */
 ;*    debug mode).                                                     */

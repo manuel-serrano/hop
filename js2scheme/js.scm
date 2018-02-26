@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Fri Feb 23 15:17:36 2018 (serrano)                */
+;*    Last change :  Mon Feb 26 18:48:43 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -237,9 +237,14 @@
 	 ((and (eq? scope 'global)
 	       (> (config-get conf :debug-client 0) 0)
 	       (or (j2s-let-opt? this) (not (isa? val J2SUndefined))))
-	  (cons* this "var " (j2s-js-id this) "="
-	     (append (j2s-js val tildec dollarc mode evalp conf)
-		(if (j2s-param? this) '() '(";")))))
+	  (if writable
+	      (cons* this "var " (j2s-js-id this) "="
+		 (append (j2s-js val tildec dollarc mode evalp conf)
+		    (if (j2s-param? this) '() '(";"))))
+	      (cons* this "Object.defineProperty( window, \""
+		 (j2s-js-id this) "\", { value: "
+		 (append (j2s-js val tildec dollarc mode evalp conf)
+		    '(", writable: false} );")))))
 	 ((or (j2s-let-opt? this) (not (isa? val J2SUndefined)))
 	  (cons* this (j2s-binder binder writable) (j2s-js-id this) "="
 	     (append (j2s-js val tildec dollarc mode evalp conf)
