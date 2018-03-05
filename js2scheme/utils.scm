@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat Jan 20 09:12:17 2018 (serrano)                */
+;*    Last change :  Sun Mar  4 10:47:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -36,6 +36,7 @@
 	   (type-fixnum?::bool ::obj)
 	   (type-integer?::bool ::obj)
 	   (type-number?::bool ::obj)
+	   (type-object?::bool ::obj)
 	   (type-name type conf)
 	   (min-type::symbol ::obj ::obj)
 	   (max-type::symbol ::obj ::obj)
@@ -205,6 +206,12 @@
 ;*---------------------------------------------------------------------*/
 (define (type-number? type)
    (or (type-integer? type) (eq? type 'number)))
+
+;*---------------------------------------------------------------------*/
+;*    type-object? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (type-object? type)
+   (memq type '(object regexp date Promise array arguments global this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-name ...                                                    */
