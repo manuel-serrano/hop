@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu May 15 05:51:37 2014                          */
-;*    Last change :  Mon Dec  4 08:42:21 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Wed Mar  7 13:29:39 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSockets                                                   */
 ;*=====================================================================*/
@@ -448,7 +448,7 @@
 			  ((connecting) (js-websocket-state-connecting))
 			  ((open) (js-websocket-state-open))
 			  ((closing) (js-websocket-state-closing))
-			  ((close) (js-websocket-state-closed))
+			  ((closed) (js-websocket-state-closed))
 			  (else (js-websocket-state-error))))))
 	      0 'readyState)
       :hidden-class #t)

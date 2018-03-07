@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Feb 21 17:47:47 2018 (serrano)                */
+;*    Last change :  Wed Mar  7 14:04:05 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -587,6 +587,12 @@
 	 disabled)
       decls)
 
+   (define (literal? expr)
+      (when (isa? expr J2SLiteral)
+	 (or (not (isa? expr J2SArray))
+	     (with-access::J2SArray expr (exprs)
+		(every literal? exprs)))))
+
    (let loop ((n nodes)
 	      (decls decls)
 	      (deps '())
@@ -610,8 +616,21 @@
 		       (let ((used (get-used-decls rhs (append decls vars)))
 			     (init (car inits)))
 			  (cond
-			     ((null? used)
-			      ;; optimize this binding
+;* 			     ((null? used)                             */
+;* 			      ;; optimize this binding                 */
+;* 			      (let ((decl (init-decl init)))           */
+;* 				 (with-access::J2SInit init (rsh)      */
+;* 				    (with-access::J2SDeclInit decl (binder val) */
+;* 				       (set! val rhs)                  */
+;* 				       (set! binder 'let-opt)))        */
+;* 				 (let ((ndecls (remq decl decls))      */
+;* 				       (stmtinit (instantiate::J2SStmtExpr */
+;* 						    (loc loc)          */
+;* 						    (expr init))))     */
+;* 				    (liip (cdr inits) ndecls           */
+;* 				       deps res))))                    */
+			     ((literal? rhs)
+			      ;; optimize this binding but keep tracks
 			      (let ((decl (init-decl init)))
 				 (with-access::J2SInit init (rsh)
 				    (with-access::J2SDeclInit decl (binder val)
@@ -622,9 +641,7 @@
 						    (loc loc)
 						    (expr init))))
 				    (liip (cdr inits) ndecls
-				       deps
-				       res))))
-;* 				       (cons stmtinit res)))))         */
+				       deps res))))
 			     ((isa? rhs J2SFun)
 			      ;; optimize this binding but keep tracks
 			      ;; of its dependencies
@@ -638,15 +655,27 @@
 				       (cons (cons init used) deps)
 				       res))))
 			     (else
-			      ;; optimize this binding but mark that
+			      ;; do not optimize this variable and mark
 			      ;; the variables it uses are disabled
 			      (let ((decl (init-decl init))
-				    (used (get-used-decls rhs (append decls vars)))
+				    (used (get-used-decls rhs
+					     (append decls vars)))
 				    (disabled (get-used-deps used deps)))
 				 (liip (cdr inits)
 				    (remove-disabled! decls disabled)
 				    deps
 				    (cons (car n) res)))))))))))
+;* 			     (else                                     */
+;* 			      ;; optimize this binding but mark that   */
+;* 			      ;; the variables it uses are disabled    */
+;* 			      (let ((decl (init-decl init))            */
+;* 				    (used (get-used-decls rhs          */
+;* 					     (append decls vars)))     */
+;* 				    (disabled (get-used-deps used deps))) */
+;* 				 (liip (cdr inits)                     */
+;* 				    (remove-disabled! decls disabled)  */
+;* 				    deps                               */
+;* 				    (cons (car n) res)))))))))))       */
 	 ((null? (cdr n))
 	  ;; this is the last stmt which happens not to be a binding
 	  (reverse! (cons (car n) res)))

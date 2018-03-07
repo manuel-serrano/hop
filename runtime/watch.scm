@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/watch.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/runtime/watch.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 21 18:31:30 2017                          */
-;*    Last change :  Sat Jun 24 09:41:04 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Wed Mar  7 11:56:07 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Watch for socket close                                           */
 ;*=====================================================================*/
@@ -41,7 +41,7 @@
 	  (set! *sockets* (cons socket *sockets*))
 	  (if *outpipe*
 	      (begin
-		 (write-char *outpipe*)
+		 (write-char #\Newline *outpipe*)
 		 (flush-output-port *outpipe*))
 	      (thread-start!
 		 (instantiate::hopthread
