@@ -89,8 +89,8 @@ The state of the WebSocket. It can be one of the following constant
 
  * `WebSocket.CONNECTING`: 0
  * `WebSocket.OPEN`: 1
- * `WebSocket.CONNECTING`: 2
- * `WebSocket.CLOSING`: 3
+ * `WebSocket.CLOSING`: 2
+ * `WebSocket.CLOSED`: 3
 
 ### WebSocket.url ###
 [:@glyphicon glyphicon-tag parameter]
