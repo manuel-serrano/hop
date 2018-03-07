@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Mar  7 12:23:33 2018 (serrano)                */
+;*    Last change :  Wed Mar  7 14:04:05 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -594,6 +594,12 @@
 	 disabled)
       decls)
 
+   (define (literal? expr)
+      (when (isa? expr J2SLiteral)
+	 (or (not (isa? expr J2SArray))
+	     (with-access::J2SArray expr (exprs)
+		(every literal? exprs)))))
+
    (let loop ((n nodes)
 	      (decls decls)
 	      (deps '())
@@ -630,7 +636,7 @@
 ;* 						    (expr init))))     */
 ;* 				    (liip (cdr inits) ndecls           */
 ;* 				       deps res))))                    */
-			     ((isa? rhs J2SLiteral)
+			     ((literal? rhs)
 			      ;; optimize this binding but keep tracks
 			      (let ((decl (init-decl init)))
 				 (with-access::J2SInit init (rsh)
