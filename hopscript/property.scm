@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Feb 21 11:31:33 2018 (serrano)                */
+;*    Last change :  Thu Mar  8 08:28:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1972,13 +1972,11 @@
 
 	 (unless (eq? %omap (js-not-a-cmap))
 	    (with-access::JsPropertyCache cache (index vindex cntmiss)
-	       (if (=fx cntmiss (vtable-threshold))
+	       (when (=fx cntmiss (vtable-threshold))
 		   (when (>=fx index 0)
 		      (when (=fx vindex (js-not-a-index))
 			 (set! vindex (js-get-vindex %this)))
-		      (js-cmap-vtable-add! %omap vindex (cons index cmap)))
-		   (set! cntmiss (+fx cntmiss 1)))))
-	 
+		      (js-cmap-vtable-add! %omap vindex (cons index cmap))))))
 	 tmp)))
 
 ;*---------------------------------------------------------------------*/

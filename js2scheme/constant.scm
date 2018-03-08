@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Sat Feb  3 15:23:45 2018 (serrano)                */
+;*    Last change :  Thu Mar  8 08:51:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -39,10 +39,28 @@
 ;*    j2s-constant ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (j2s-constant this args)
+   
+   (define (keys-hashnumber v)
+      (cond
+	 ((not (vector? v))
+	  (get-hashnumber v))
+	 ((=fx (vector-length v) 0)
+	  0)
+	 ((=fx (vector-length v) 1)
+	  (get-hashnumber (vector-ref v 0)))
+	 (else
+	  (let loop ((i (-fx (vector-length v) 2))
+		     (n (get-hashnumber
+			   (vector-ref v (-fx (vector-length v) 1)))))
+	     (if (=fx i 0)
+		 n
+		 (bit-xor (get-hashnumber (vector-ref v i)) n))))))
+   
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes headers decls loc pcache-size cnsts)
 	 (let ((env (env 0 '() (create-hashtable)
-		       (create-hashtable :eqtest equal?)
+		       (create-hashtable :eqtest equal?
+			  :hash keys-hashnumber)
 		       '())))
 	    (for-each (lambda (n) (constant! n env 0)) headers)
 	    (for-each (lambda (n) (constant! n env 0)) decls)
@@ -190,8 +208,6 @@
 (define-walk-method (constant! this::J2SDeclFun env nesting)
    (with-access::J2SDeclFun this (val)
       (constant! val env nesting))
-;*       (with-access::J2SFun val (body)                               */
-;* 	 (constant! body env nesting)))                                */
    this)
 
 ;*---------------------------------------------------------------------*/

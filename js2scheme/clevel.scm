@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sun Feb 18 06:19:52 2018 (serrano)                */
+;*    Last change :  Thu Mar  8 13:38:13 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -134,26 +134,33 @@
 
    (call-with-input-file logfile
       (lambda (ip)
-	 (json-parse ip
-	    :array-alloc (lambda () (make-cell '()))
-	    :array-set (lambda (a i val)
-			  (cell-set! a (cons val (cell-ref a))))
-	    :array-return (lambda (a i)
-			     (list->vector (reverse! (cell-ref a))))
-	    :object-alloc (lambda ()
-			     (make-cell '()))
-	    :object-set (lambda (o p val)
-			   (if (string=? p "caches")
-			       (cell-set! o
-				  (cons (cons 'caches (val->caches val))
-				     (cell-ref o)))
-			       (cell-set! o
-				  (cons (cons (string->symbol p) val)
-				     (cell-ref o)))))
-	    :object-return (lambda (o)
-			      (reverse! (cell-ref o)))
-	    :parse-error (lambda (msg fname loc)
-			    (error "json->ast" "Wrong JSON file" msg))))))
+	 (let ((fprofile #f))
+	    (json-parse ip
+	       :array-alloc (lambda () (make-cell '()))
+	       :array-set (lambda (a i val)
+			     (cell-set! a (cons val (cell-ref a))))
+	       :array-return (lambda (a i)
+				(list->vector (reverse! (cell-ref a))))
+	       :object-alloc (lambda ()
+				(make-cell '()))
+	       :object-set (lambda (o p val)
+			      (cond
+				 ((string=? p "caches")
+				  (unless fprofile
+				     (error "fprofile" "Wrong log format" logfile))
+				  (cell-set! o
+				     (cons (cons 'caches (val->caches val))
+					(cell-ref o))))
+				 ((string=? p "format")
+				  (set! fprofile (equal? val "fprofile")))
+				 (else
+				  (cell-set! o
+				     (cons (cons (string->symbol p) val)
+					(cell-ref o))))))
+	       :object-return (lambda (o)
+				 (reverse! (cell-ref o)))
+	       :parse-error (lambda (msg fname loc)
+			       (error "fprofile" "Wrong JSON file" msg)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    propinfo ...                                                     */
@@ -191,7 +198,7 @@
 ;*    profile-clevel ::J2SAssig ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (profile-clevel this::J2SAssig logtable ctx verb conf)
-   (with-access::J2SAssig this (lhs rhs)
+   (with-access::J2SAssig this (lhs rhs loc)
       (profile-clevel rhs logtable ctx verb conf)
       (profile-clevel lhs logtable 'put verb conf)))
    
@@ -233,6 +240,25 @@
 ;*    logtable-find ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (logtable-find table::vector point #!optional usage)
+
+   (define (find-left pivot)
+      (let loop ((i pivot))
+	 (if (>=fx i 0)
+	     (let ((pi (vector-ref table i)))
+		(if (=fx (pcache-point pi) point)
+		    (loop (-fx i 1))
+		    (+fx i 1)))
+	     0)))
+
+   (define (find-right pivot end)
+      (let loop ((i pivot))
+	 (when (<=fx i end)
+	    (let ((pi (vector-ref table i)))
+	       (when (=fx (pcache-point pi) point)
+		  (if (eq? (pcache-usage pi) usage)
+		      pi
+		      (loop (+fx i 1))))))))
+   
    (let ((len (vector-length table)))
       (when (>fx len 0)
 	 (let loop ((start 0)
@@ -242,15 +268,7 @@
 		   (po (pcache-point pi)))
 	       (cond
 		  ((=fx po point)
-		   (if (or (not usage) (eq? (pcache-usage pi) usage))
-		       pi
-		       (let loop ((i (+fx pivot 1)))
-			  (if (<fx i end)
-			      (let ((pi (vector-ref table i)))
-				 (when (=fx (pcache-point pi) point)
-				    (if (eq? (pcache-usage pi) usage)
-					pi
-					(loop (+fx i 1)))))))))
+		   (find-right (find-left pivot) end))
 		  ((or (=fx start end) (=fx start pivot) (=fx end pivot))
 		   #f)
 		  ((>fx po point)
