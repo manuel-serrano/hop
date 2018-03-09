@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Jan 26 08:32:11 2018 (serrano)                */
+#*    Last change :  Fri Mar  9 09:52:56 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -107,6 +107,9 @@ POPULATION = Makefile \
   hzdemo/foo-1.0.0.hz \
   scheme/scheme.js \
   scheme/scheme.hop \
+  scheme/README.md \
+  scheme/example.json \
+  lang/README.md lang/lang.js lang/csv.js lang/csv.hop lang/example.json \
   md/md.js md/markdown.hss md/tex.hss md/README.md md/example.json \
   mdtag/mdtag.js mdtag/README.md mdtag/example.json \
   syslog/README.md syslog/syslog.js syslog/example.json \

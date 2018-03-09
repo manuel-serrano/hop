@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/examples/scheme/scheme.hop        */
+;*    serrano/prgm/project/hop/3.2.x/examples/scheme/scheme.hop        */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct  6 09:53:48 2014                          */
-;*    Last change :  Mon Oct  6 11:09:00 2014 (serrano)                */
-;*    Copyright   :  2014 Manuel Serrano                               */
+;*    Last change :  Fri Mar  9 09:55:35 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme part                                                      */
 ;*=====================================================================*/
@@ -32,15 +32,13 @@
 	    (js-make-function %this
 	       ;; wrap the Hop md5sum function into a JS function
 	       (lambda (this val)
-		  ;; as JavaScript string values are represented as
-		  ;; Hop strings, there is no need to convert the val
-		  ;; value
-		  (md5sum val))
+		  (js-string->jsstring (md5sum val)))
 	       1 "md5sum")
 	    #f %this)
 	 (js-put! exports 'sha256sum
 	    ;; wrap the Hop sh256sum function into a JS function
 	    (js-make-function %this
-	       (lambda (this val) (sha256sum val))
+	       (lambda (this val)
+		  (js-string->jsstring (sha256sum val)))
 	       1 "sha256sum")
 	    #f %this))))

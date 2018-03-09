@@ -21,12 +21,6 @@ The arguments are as follows:
    * `html`;
    * `hopscript`.
    
-When a language is specified and when this language is not `hopscript`,
-all the syntactic extensions of Hop.js are disabled (`service`, HTML syntax,
-`${<span>$</span>}{`, and `${<span>~</span>}{` mark). Requiring a module
-specifying the `javascript` language is then useful to require a module
-that uses the extra HopScript keywords as normal identifiers.
-
 Modules are loaded differently depending on their source file suffix.
 
  * `.js`, the module is source file module. It is loaded as plain source
@@ -44,6 +38,10 @@ retrieved from a remote Hop.js server, and issues http requests to the
 given server to get the file contents. Modules required within the
 retrieved file are downloaded from the same location, except for
 system modules which are assumed to be available locally.
+
+The optional argument `language` is a string denoting an implementation
+language for the module to be loaded, see [Language definition](20-lang.html).
+
 
 #### Example ####
 

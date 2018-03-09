@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Mar  8 15:58:29 2018 (serrano)                */
+;*    Last change :  Fri Mar  9 15:11:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1539,6 +1539,10 @@
 		     :verbose 0
 		     :driver (j2s-eval-driver)
 		     :driver-name "j2s-eval-driver"
+		     :es6-arrow-function #t
+		     :es6-let #t
+		     :es6-defaut-value #t
+		     :es6-rest-argument #t
 		     :parser parser))
 	       (m (js-get scope 'module scope)))
 	    (with-trace 'hopscript-eval "%js-eval-inner"

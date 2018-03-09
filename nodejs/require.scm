@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Mar  9 07:25:03 2018 (serrano)                */
+;*    Last change :  Fri Mar  9 15:01:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -46,6 +46,12 @@
 ;;(define-macro (bigloo-debug) 0)
 
 ;*---------------------------------------------------------------------*/
+;*    builtin-language? ...                                            */
+;*---------------------------------------------------------------------*/
+(define (builtin-language? str)
+   (member str '("hopscript" "html" "json" "hop")))
+
+;*---------------------------------------------------------------------*/
 ;*    compile-mutex ...                                                */
 ;*---------------------------------------------------------------------*/
 (define compile-mutex (make-mutex))
@@ -64,15 +70,36 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file ...                                          */
+;*    -------------------------------------------------------------    */
+;*    This function implements the clientc jsc compiler                */
+;*    (see src/parserargs.scm). It is used when a client, i.e., a      */
+;*    browser requests a JavaScript module.                            */
+;*    See alao runtime/clientc.scm                                     */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile-file ifile::bstring name::bstring ofile::bstring query)
+   (let ((i (string-contains query "&lang=")))
+      (if i
+	  (let ((lang (substring query (+fx i 6))))
+	     (if (string=? lang "hopscript")
+		 (nodejs-compile-file-hopscript ifile name ofile query)
+		 (nodejs-compile-file-lang ifile name ofile query lang)))
+	  (nodejs-compile-file-hopscript ifile name ofile query))))
+
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-file-hopscript ...                                */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-file-hopscript ifile name ofile query #!optional srcalias)
    (let* ((srcmap (when (>fx (bigloo-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
 		  (current-output-port)
 		  (open-output-file ofile)))
+	  (qr (cond
+		 ((string-prefix? "js=" query) 'js)
+		 ((string-prefix? "el=" query) 'el)
+		 (else 'js)))
 	  (tree (unwind-protect
-		   (module->javascript ifile name op #f #f srcmap query)
+		   (module->javascript ifile name op #f #f srcmap qr srcalias)
 		   (unless (eq? op (current-output-port))
 		      (close-output-port op)))))
       (when (>fx (bigloo-debug) 0)
@@ -80,6 +107,58 @@
 	    (lambda (p)
 	       (generate-source-map tree ifile ofile p))))))
 
+;*---------------------------------------------------------------------*/
+;*    nodejs-compile-file-lang ...                                     */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-file-lang ifile name ofile query lang)
+
+   (define (filename->file val lang %this)
+      (nodejs-compile-file-hopscript (js-tostring val %this)
+	 name ofile query ifile))
+
+   (define (json->file val lang %this)
+      (nodejs-compile-json
+	 (string-append "string:" (js-jsstring->string val))
+	 name ofile query))
+   
+   (define (value->file val lang %this)
+      (with-access::JsGlobalObject %this (js-json)
+	 (let* ((stringify (js-get js-json 'stringify %this))
+		(str (js-call1 %this stringify (js-undefined) val)))
+	    (json->file str lang %this))))
+      
+   (let ((worker (js-current-worker)))
+      (js-worker-exec worker "nodejs-compile-file-lang"
+	 (lambda ()
+	    (with-access::WorkerHopThread worker (%this)
+	       (with-access::JsGlobalObject %this (js-object js-symbol)
+		  (let* ((mod (nodejs-module ifile lang worker %this))
+			 (exp (nodejs-require-module lang worker %this mod 'hiphop))
+			 (key (js-get js-symbol 'compiler %this))
+			 (comp (js-get exp key %this)))
+		     (if (isa? comp JsFunction)
+			 (let ((obj (js-call1 %this comp (js-undefined)
+				       (js-string->jsstring ifile))))
+			    (when (isa? obj JsObject)
+			       (let ((ty (js-tostring (js-get obj 'type %this) %this))
+				     (val (js-get obj 'value %this))
+				     (lang (js-get obj 'language %this)))
+				  (cond
+				     ((string=? ty "filename")
+				      (filename->file val lang %this))
+				     ((string=? ty "json")
+				      (json->file val lang %this))
+				     ((string=? ty "value")
+				      (value->file val lang %this))
+				     (else
+				      (js-raise-error (js-new-global-object)
+					 "Wrong language compiler output"
+					 lang))))))
+			 (js-raise-error (js-new-global-object)
+			    (format "Wrong language object `~a'"
+			       (typeof comp))
+			    lang)))))))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-json ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -185,10 +264,13 @@
 (define-macro (hop-boot)
    (file->string "../share/hop-boot.js"))
 
+
+
 ;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (module->javascript filename::bstring id op compile isexpr srcmap query)
+(define (module->javascript filename::bstring id op compile isexpr srcmap query
+	   #!optional srcalias)
 
    (define (init-dummy-module! this worker)
       (with-access::JsGlobalObject this (js-object)
@@ -205,8 +287,7 @@
 	    (js-put! this '__dirname
 	       (js-string->jsstring (dirname filename)) #f this)
 	    (js-put! this 'require
-	       (nodejs-require worker this mod (js-string->jsstring "hopscript")
-		  #f this)
+	       (nodejs-require worker this mod 'hopscript) #f this)
 	    (js-put! this 'process
 	       (nodejs-process worker this) #f this)
 	    (js-put! this 'console
@@ -214,7 +295,7 @@
 
    (let ((this (nodejs-new-global-object))
 	 (worker (js-current-worker))
-	 (esplainp (string=? query "es")))
+	 (esplainp (eq? query 'es)))
       (init-dummy-module! this worker)
       (let ((header (unless esplainp
 		       (format "var exports = {}; var module = { id: ~s, filename: ~s, loaded: true, exports: exports, paths: [~a] };\nhop[ '%modules' ][ '~a' ] = module.exports;\nfunction require( url ) { return hop[ '%require' ]( url, module ) }\n"
@@ -223,7 +304,8 @@
 			  filename))))
 	 (when header
 	    (fprintf op (hop-boot))
-	    (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n" filename)
+	    (fprintf op "hop[ '%requires' ][ ~s ] = function() {\n"
+	       (or srcalias filename))
 	    (flush-output-port op))
 	 (let ((offset (output-port-position op)))
 	    (call-with-input-file filename
@@ -233,7 +315,7 @@
 				 :%this this
 				 :source filename
 				 :resource (dirname filename)
-				 :filename filename
+				 :filename (or srcalias filename)
 				 :worker worker
 				 :header header
 				 :verbose (if (>=fx (bigloo-debug) 3)
@@ -355,25 +437,32 @@
    (define require
       (js-make-function this
 	 (lambda (_ name lang)
-	    (nodejs-require-module (js-tostring name this)
-	       (js-current-worker) this %module
-	       (cond
-		  ((eq? lang (js-undefined))
-		   language)
-		  ((isa? lang JsObject)
-		   (with-access::JsGlobalObject this (js-symbol)
-		      (let* ((key (js-get js-symbol 'compiler %this))
-			     (comp (js-get lang key %this)))
-			 (if (isa? comp JsFunction)
-			     comp
-			     (js-raise-error (js-new-global-object)
-				"Wrong language object"
-				lang)))))
-		  ((js-jsstring? lang)
-		   (let ((mod (nodejs-require worker this 
-		   
-		  (else
-		   (string->symbol (js-tostring lang this))))))
+	    (let loop ((lang lang))
+	       (nodejs-require-module (js-tostring name this)
+		  (js-current-worker) this %module
+		  (cond
+		     ((eq? lang (js-undefined))
+		      language)
+		     ((and (isa? lang JsObject) (eq? language 'hopscript))
+		      (with-access::JsGlobalObject this (js-symbol)
+			 (let* ((key (js-get js-symbol 'compiler this))
+				(comp (js-get lang key this)))
+			    (if (isa? comp JsFunction)
+				comp
+				(js-raise-error (js-new-global-object)
+				   "Wrong language object"
+				   lang)))))
+		     ((and (js-jsstring? lang) (eq? language 'hopscript))
+		      (let ((str (js-jsstring->string lang)))
+			 (if (builtin-language? str)
+			     (string->symbol str)
+			     (let ((langmod (nodejs-require-module
+					       str
+					       (js-current-worker) this %module
+					       'hopscript)))
+				(loop langmod)))))
+		     (else
+		      (string->symbol (js-tostring lang this)))))))
 	 2 "require"))
 
    ;; require.main
@@ -1314,6 +1403,14 @@
 			      'hopscript
 			      (string->symbol (js-tostring lang %this)))
 			  path))
+		      ((string=? ty "value")
+		       (let ((mod (nodejs-module path path worker %this)))
+			  (js-put! mod 'exports val #f %this)
+			  mod))
+		      ((string=? ty "json")
+		       (let ((mod (nodejs-module path path worker %this)))
+			  (js-put! mod 'exports val #f %this)
+			  mod))
 		      (else
 		       val))))))
 	 ((string-suffix? ".json" path)

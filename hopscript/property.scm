@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar  8 08:28:55 2018 (serrano)                */
+;*    Last change :  Fri Mar  9 08:49:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1901,7 +1901,8 @@
 		;; 8.12.5, step 6
 		(extend-properties-object!))))))
 
-   (js-profile-log-put name)
+   (when (symbol? name)
+      (js-profile-log-put name))
 
    (let loop ((obj o))
       (jsobject-find obj name
