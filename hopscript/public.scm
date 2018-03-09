@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Feb 18 08:56:25 2018 (serrano)                */
+;*    Last change :  Thu Mar  8 15:58:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1774,9 +1774,9 @@
       2 'HEAD))
 
 ;*---------------------------------------------------------------------*/
-;*    js-html-script ...                                                 */
+;*    js-html-script ...                                               */
 ;*    -------------------------------------------------------------    */
-;*    Normally overriden by nodejs-script@__nodejs_require               */
+;*    Normally overriden by nodejs-script@__nodejs_require             */
 ;*    (see nodejs/require.scm).                                        */
 ;*---------------------------------------------------------------------*/
 (define (js-html-script %this)

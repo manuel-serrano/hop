@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Feb 21 17:16:34 2018 (serrano)                */
+;*    Last change :  Fri Mar  9 07:25:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -22,12 +22,12 @@
 	   __nodejs_syncg)
 
    (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::symbol)
+	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang)
+	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang srcalias)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-json ::bstring ::bstring ::bstring ::bstring)
@@ -205,7 +205,8 @@
 	    (js-put! this '__dirname
 	       (js-string->jsstring (dirname filename)) #f this)
 	    (js-put! this 'require
-	       (nodejs-require worker this mod 'hopscript) #f this)
+	       (nodejs-require worker this mod (js-string->jsstring "hopscript")
+		  #f this)
 	    (js-put! this 'process
 	       (nodejs-process worker this) #f this)
 	    (js-put! this 'console
@@ -348,7 +349,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language::symbol)
+(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language)
 
    ;; require
    (define require
@@ -356,9 +357,23 @@
 	 (lambda (_ name lang)
 	    (nodejs-require-module (js-tostring name this)
 	       (js-current-worker) this %module
-	       (if (eq? lang (js-undefined))
-		   language
-		   (string->symbol (js-tostring lang this)))))
+	       (cond
+		  ((eq? lang (js-undefined))
+		   language)
+		  ((isa? lang JsObject)
+		   (with-access::JsGlobalObject this (js-symbol)
+		      (let* ((key (js-get js-symbol 'compiler %this))
+			     (comp (js-get lang key %this)))
+			 (if (isa? comp JsFunction)
+			     comp
+			     (js-raise-error (js-new-global-object)
+				"Wrong language object"
+				lang)))))
+		  ((js-jsstring? lang)
+		   (let ((mod (nodejs-require worker this 
+		   
+		  (else
+		   (string->symbol (js-tostring lang this))))))
 	 2 "require"))
 
    ;; require.main
@@ -429,8 +444,10 @@
 		  (when (isa? attrs JsObject)
 		     (js-object->keyword-arguments* attrs %this))
 		  (filter (lambda (n)
-			     (or (isa? n xml-tilde) (isa? n xml-markup)))
-		     nodes))))
+			     (or (isa? n xml-tilde)
+				 (isa? n xml-markup)
+				 (isa? n xml-cdata)))
+		     (xml-body nodes)))))
 	 -1 "HEAD"))
 
    head)
@@ -447,10 +464,13 @@
    (define script
       (js-make-function %this
 	 (lambda (this attrs . nodes)
-	    (apply <SCRIPT> :idiom "javascript" :context %scope
-	       (when (isa? attrs JsObject)
-		  (js-object->keyword-arguments* attrs %this))
-	       nodes))
+	    (let ((tmp (apply <SCRIPT> :idiom "javascript" :context %scope
+			  (when (isa? attrs JsObject)
+			     (js-object->keyword-arguments* attrs %this))
+			  nodes)))
+	       (if (pair? tmp)
+		   (js-vector->jsarray (list->vector tmp) %this)
+		   tmp)))
 	 -1 "SCRIPT"))
    
    script)
@@ -626,7 +646,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile filename::bstring #!optional lang worker-slave)
+(define (nodejs-compile filename::bstring #!key lang worker-slave srcalias)
    
    (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
@@ -639,7 +659,7 @@
 		     (j2s-compile in
 			:driver (nodejs-driver)
 			:driver-name "nodejs-driver"
-			:filename filename
+			:filename (or srcalias filename)
 			:language (or lang 'hopscript)
 			:mmap-src m
 			:module-main #f
@@ -661,7 +681,7 @@
 		  :driver (nodejs-driver)
 		  :driver-name "nodejs-driver"
 		  :language (or lang 'hopscript)
-		  :filename filename
+		  :filename (or filename srcalias)
 		  :module-main #f
 		  :module-name (symbol->string mod)
 		  :worker-slave worker-slave
@@ -1108,11 +1128,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-load ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-load filename worker::WorkerHopThread #!optional lang)
+(define (nodejs-load filename worker::WorkerHopThread #!optional lang srcalias)
 
    (define (loadso-or-compile filename lang worker-slave)
       (if worker-slave
-	  (nodejs-compile filename lang #t)
+	  (nodejs-compile filename :lang lang :worker-slave #t :srcalias srcalias)
 	  (let loop ((sopath (hop-find-sofile filename)))
 	     (cond
 		((string? sopath)
@@ -1128,13 +1148,13 @@
 		     (loop (nodejs-socompile filename lang)))
 		    ((nte nte1 nte+)
 		     (nodejs-socompile-queue-push filename lang)
-		     (nodejs-compile filename lang))
+		     (nodejs-compile filename :lang lang :srcalias srcalias))
 		    (else
-		     (nodejs-compile filename lang))))
+		     (nodejs-compile filename :lang lang :srcalias srcalias))))
 		(else
 		 (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
 		    (nodejs-socompile-queue-push filename lang))
-		 (nodejs-compile filename lang))))))
+		 (nodejs-compile filename :lang lang :srcalias srcalias))))))
    
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
@@ -1144,7 +1164,7 @@
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-module (if js-main filename ".")
-			     filename worker %this)))
+			     (or srcalias filename) worker %this)))
 		  ;; prehooking
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
@@ -1167,11 +1187,11 @@
       (with-trace 'require "require@load-module-html"
 	 (with-access::WorkerHopThread worker (%this prehook)
 	    (with-access::JsGlobalObject %this (js-object js-main)
-	       (let ((hopscript (nodejs-compile filename lang))
+	       (let ((hopscript (nodejs-compile filename :lang lang))
 		     (this (js-new0 %this js-object))
 		     (scope (nodejs-new-scope-object %this))
 		     (mod (nodejs-module (if js-main filename ".")
-			     filename worker %this)))
+			     (or srcalias filename) worker %this)))
 		  ;; prehooking
 		  (when (procedure? prehook)
 		     (prehook %this this scope mod))
@@ -1203,7 +1223,8 @@
 	    (let ((evmod-or-init (hop-load/cache filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module filename filename worker %this)))
+		  (mod (nodejs-module filename
+			  (or srcalias filename) worker %this)))
 	       (cond
 		  ((and (procedure? evmod-or-init)
 			(=fx (procedure-arity evmod-or-init) 4))
@@ -1221,7 +1242,8 @@
 	    (let ((init (hop-dynamic-load filename))
 		  (this (js-new0 %this js-object))
 		  (scope (nodejs-new-scope-object %this))
-		  (mod (nodejs-module filename filename worker %this)))
+		  (mod (nodejs-module filename
+			  (or srcalias filename) worker %this)))
 	       (when (procedure? init)
 		  (init %this this scope mod))
 	       ;; return the newly created module
@@ -1274,14 +1296,30 @@
 	 (js-put! mod 'exports json #f %this)
 	 mod))
    
-   (define (load-module path worker %this %module)
+   (define (load-module path worker %this %module lang srcalias)
       (cond
 	 ((core-module? path)
 	  (nodejs-core-module path worker %this))
+	 ((isa? lang JsFunction)
+	  (let ((obj (js-call1 %this lang (js-undefined) path)))
+	     (when (isa? obj JsObject)
+		(let ((ty (js-tostring (js-get obj 'type %this) %this))
+		      (val (js-get obj 'value %this))
+		      (lang (js-get obj 'language %this)))
+		   (cond
+		      ((string=? ty "filename")
+		       (load-module (js-tostring val %this)
+			  worker %this %module
+			  (if (eq? lang (js-undefined))
+			      'hopscript
+			      (string->symbol (js-tostring lang %this)))
+			  path))
+		      (else
+		       val))))))
 	 ((string-suffix? ".json" path)
 	  (load-json path))
 	 (else
-	  (let ((mod (nodejs-load path worker lang)))
+	  (let ((mod (nodejs-load path worker lang srcalias)))
 	     (unless (js-get mod 'parent %this)
 		;; parent and children
 		(let* ((children (js-get %module 'children %this))
@@ -1297,7 +1335,7 @@
 	    (trace-item "path=" path)
 	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod)))
 	    (if (eq? mod (js-absent))
-		(let ((mod (load-module path worker %this %module)))
+		(let ((mod (load-module path worker %this %module lang #f)))
 		   (js-get mod 'exports %this))
 		(let ((exports (js-get mod 'exports %this)))
 		   (trace-item "exports=" (typeof exports))
