@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Mar  9 15:01:26 2018 (serrano)                */
+;*    Last change :  Fri Mar  9 15:35:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -49,7 +49,8 @@
 ;*    builtin-language? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (builtin-language? str)
-   (member str '("hopscript" "html" "json" "hop")))
+   (member str '("hopscript" "html" "json" "hop" "ecmascript5"
+		 "ecmascript6" "ecmascript2017")))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-mutex ...                                                */
@@ -133,7 +134,7 @@
 	    (with-access::WorkerHopThread worker (%this)
 	       (with-access::JsGlobalObject %this (js-object js-symbol)
 		  (let* ((mod (nodejs-module ifile lang worker %this))
-			 (exp (nodejs-require-module lang worker %this mod 'hiphop))
+			 (exp (nodejs-require-module lang worker %this mod 'hopscript))
 			 (key (js-get js-symbol 'compiler %this))
 			 (comp (js-get exp key %this)))
 		     (if (isa? comp JsFunction)
@@ -330,6 +331,7 @@
 						      "esplainp")
 						  "j2s-javascript-driver"
 						  "j2s-javascript-debug-driver")
+				 :language 'hopscript
 				 :site 'client
 				 :debug (if esplainp 0 (bigloo-debug)))))
 		     (for-each (lambda (exp)

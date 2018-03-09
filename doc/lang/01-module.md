@@ -40,7 +40,19 @@ retrieved file are downloaded from the same location, except for
 system modules which are assumed to be available locally.
 
 The optional argument `language` is a string denoting an implementation
-language for the module to be loaded, see [Language definition](20-lang.html).
+language for the module to be loaded. The builtin languages are:
+
+  * `hopscript`
+  * `hop`
+  * `html`
+  * `json`
+  * `ecmascript5`
+  * `ecmascript6`
+  * `ecmascript2017`
+
+
+Additinoal custom languages may also be defined. See chapter
+[Language definition](20-lang.html).
 
 
 #### Example ####
