@@ -1,19 +1,19 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/examples/scheme/scheme.hop        */
+;*    serrano/prgm/project/hop/3.2.x/examples/lang/csv.hop             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
-;*    Creation    :  Mon Oct  6 09:53:48 2014                          */
-;*    Last change :  Fri Mar  9 09:55:35 2018 (serrano)                */
-;*    Copyright   :  2014-18 Manuel Serrano                            */
+;*    Creation    :  Fri Mar  9 09:02:19 2018                          */
+;*    Last change :  Fri Mar  9 10:04:14 2018 (serrano)                */
+;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
-;*    Scheme part                                                      */
+;*    The CSV parsing use the native Hop's parser                      */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module scheme
-   (library hopscript)
+(module csv
+   (library csv)
    (export (hopscript %this this %scope %module)))
 
 ;*---------------------------------------------------------------------*/
@@ -24,21 +24,30 @@
 ;*    allocated module                                                 */
 ;*---------------------------------------------------------------------*/
 (define (hopscript %this this %scope %module)
+
+   (define (literal->js v)
+      (cond
+	 ((string? v) (js-string->jsstring v))
+	 ((number? v) (js-number->jsnumber v))
+	 (else v)))
+   
    (with-access::JsGlobalObject %this (js-object)
       (let ((exports (js-new0 %this js-object)))
-	 (js-put! %module 'exports exports #f %this)
-	 ;; bind the md5sum function is the pseudo javascript module
-	 (js-put! exports 'md5sum
-	    (js-make-function %this
-	       ;; wrap the Hop md5sum function into a JS function
-	       (lambda (this val)
-		  (js-string->jsstring (md5sum val)))
-	       1 "md5sum")
-	    #f %this)
-	 (js-put! exports 'sha256sum
-	    ;; wrap the Hop sh256sum function into a JS function
-	    (js-make-function %this
-	       (lambda (this val)
-		  (js-string->jsstring (sha256sum val)))
-	       1 "sha256sum")
+         (js-put! %module 'exports exports #f %this)
+         ;; bind the load function is the pseudo javascript module
+         (js-put! exports 'load
+            (js-make-function %this
+               ;; wrap the Hop read-csv records function into a JS function
+               (lambda (this url)
+		  (call-with-input-file url
+		     (lambda (p)
+			(js-vector->jsarray
+			   (apply vector
+			      (map (lambda (row)
+				      (js-vector->jsarray
+					 (apply vector (map literal->js row))
+					 %this))
+				 (read-csv-records p)))
+			   %this))))
+               1 "load")
 	    #f %this))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sat Feb 24 19:46:54 2018 (serrano)                */
+;*    Last change :  Thu Mar  8 13:08:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1589,7 +1589,7 @@
 			   ;; it computes static analysis (e.g., type inference)
 			   ;; of the AST
 			   (instantiate::J2SPostfix
-			      (loc (token-loc token))
+			      (loc loc)
 			      (lhs (dup-expr expr))
 			      (rhs rhs)
 			      (op (token-tag token))))
@@ -1705,7 +1705,7 @@
 			(eq? key 'service)
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
-			     (loc (token-loc ignore))
+			     (loc loc)
 			     (obj expr)
 			     (field (instantiate::J2SString
 				       (loc (token-loc field))

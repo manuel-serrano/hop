@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Mon Feb 12 11:47:10 2018 (serrano)                */
+;*    Last change :  Fri Mar  9 15:35:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -400,6 +400,15 @@
 ;* 			(set! o (cons* :optim-cce #t o)))              */
       (unless (memq :filename o)
 	 (set! o (cons* :filename (input-port-name in) o)))
+
+      (when (memq (config-get args :language)
+	       '(hopscript ecmascript6 ecmascript2017))
+	 (for-each (lambda (k)
+		      (unless (memq k o)
+			 (set! o (cons* k #t o))))
+	    '(:es6-let :es6-default-value :es6-arrow-function
+	      :es6-rest-argument :es2017-async)))
+      
       (let ((v (getenv "HOPCFLAGS")))
 	 (when (string? v)
 	    (cond

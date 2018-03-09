@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Mar  4 12:11:42 2018 (serrano)                */
+;*    Last change :  Thu Mar  8 13:38:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2161,7 +2161,7 @@
    
    (define (aput-inc otmp prop op lhs cache inc cs)
       (with-access::J2SAccess lhs (loc obj field cspecs (loca loc))
-	 (with-access::J2SExpr obj (type loc)
+	 (with-access::J2SExpr obj (type)
 	    (let* ((tmp (gensym 'aput))
 		   (oref (instantiate::J2SHopRef
 			    (loc loc)
@@ -2184,7 +2184,7 @@
 				  (type 'bint))))
 		      `(let ((,tmp ,scmlhs))
 			  ,(new-or-old tmp
-			      (js-binop2 loc '+ 'number ;; (typeof-this obj conf)
+			      (js-binop2 loc '+ 'number
 				 tref rhs mode return conf hint)
 			      (lambda (val tmp)
 				 `(begin
@@ -2204,7 +2204,7 @@
 					   (id tmp)
 					   (type 'bint))))
 			       (new-or-old tmp
-				  (js-binop2 loc '+ 'number ;;(typeof-this obj conf)
+				  (js-binop2 loc '+ 'number
 				     tref rhs mode return conf hint)
 				  (lambda (val tmp)
 				     `(begin
@@ -2223,7 +2223,7 @@
 					    (type 'number))))
 			       `(let ((,tmp2 (js-tonumber ,tmp %this)))
 				   ,(new-or-old tmp2
-				       (js-binop2 loc '+ 'number ;;(typeof-this obj conf)
+				       (js-binop2 loc '+ 'number
 					  tref rhs mode return conf hint)
 				       (lambda (val tmp)
 					  `(begin
@@ -2257,11 +2257,11 @@
 			    (aput-inc otmp prop op lhs (rhs-cache rhs) inc '()))
 			   ((eq? (car cs) 'imap)
 			    `(if (eq? %cmap (js-pcache-imap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc otmp prop op lhs cache inc 'imap)
+				 ,(aput-inc otmp prop op lhs (rhs-cache rhs) inc 'imap)
 				 ,(loop (cdr cs))))
 			   ((eq? (car cs) 'cmap)
 			    `(if (eq? %cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc otmp prop op lhs cache inc 'cmap)
+				 ,(aput-inc otmp prop op lhs (rhs-cache rhs) inc 'cmap)
 				 ,(loop (cdr cs))))
 			   (else
 			    (loop (cdr cs))))))))))

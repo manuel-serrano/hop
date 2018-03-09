@@ -1,9 +1,9 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/html_head.scm             */
+;*    serrano/prgm/project/hop/3.2.x/runtime/html_head.scm             */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jan 14 05:36:34 2005                          */
-;*    Last change :  Sat Feb  3 09:16:45 2018 (serrano)                */
+;*    Last change :  Fri Mar  9 10:28:38 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Various HTML extensions                                          */
@@ -725,7 +725,7 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		      (type (hop-mime-type))
 		      (idiom #f)
 		      (context #f)
-		      (module #f)
+		      (lang #f)
 		      (attributes)
 		      body)
    
@@ -766,20 +766,20 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		(body (list "\n" body)))
 	     (default src))))
 
-   (define (require p m inl)
+   (define (require p m inl lang)
       (<REQUIRE> :type (hop-mime-type)
-	 :inline inl :src p :mod m))
+	 :inline inl :src p :mod m :lang lang))
    
    (let ((src (xml-primitive-value src))
 	 (type (xml-primitive-value type))
-	 (module (xml-primitive-value module)))
+	 (lang (xml-primitive-value lang)))
       (purify
 	 (cond
 	    ((not (string? src))
 	     (default src))
-	    (module
+	    (lang
 	     (let ((file (clientc-resolve-filename src context)))
-		(require file src inline)))
+		(require file src inline lang)))
 	    ((and inline (file-exists? src))
 	     (inl src))
 	    (else
@@ -793,12 +793,16 @@ function hop_realm() {return \"" (hop-realm) "\";}"))))
 		       (mod #unspecified string)
 		       (id #unspecified string)
 		       (type (hop-mime-type) string)
+		       (lang #f)
 		       (attributes)
 		       body)
    
    (define (default src)
       (if (string? src)
-	  (let ((src (string-append src "?js=" (or mod src))))
+	  (let ((src (if (string? lang)
+			 (string-append src "?js=" (or mod src)
+			    "&lang=" lang)
+			 (string-append src "?js=" (or mod src)))))
 	     (when inline (warning "<SCRIPT>" "Cannot inline file -- " src))
 	     (instantiate::xml-cdata
 		(tag 'script)

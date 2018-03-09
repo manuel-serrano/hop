@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Feb 22 09:00:48 2018 (serrano)                */
+;*    Last change :  Thu Mar  8 12:38:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -167,6 +167,9 @@
 	  ((isa? this J2SNew)
 	   (with-access::J2SNew this (cache)
 	      (if cache `(:cache ,cache) '())))
+	  ((isa? this J2SAssig)
+	   (with-access::J2SAssig this (lhs rhs)
+	      (append (dump-cache lhs) (dump-cache rhs))))
 	  (else
 	   '()))
        '()))
@@ -336,8 +339,10 @@
 (define-method (j2s->list this::J2SAssig)
    (with-access::J2SAssig this (lhs rhs loc)
       `(,@(call-next-method) 
+	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-range this)
+	  ,@(dump-cache this)
 	  ,@(if (isa? lhs J2SRef)
 		(with-access::J2SRef lhs (decl)
 		   (dump-vtype decl))
@@ -588,8 +593,9 @@
 ;*    j2s->list ::J2SBinary ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SBinary)
-   (with-access::J2SBinary this (op rhs lhs)
+   (with-access::J2SBinary this (op rhs lhs loc)
       `(,@(call-next-method) ,op
+	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
 	  ,@(dump-range this)
@@ -713,8 +719,9 @@
 ;*    j2s->list ::J2SAccess ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SAccess)
-   (with-access::J2SAccess this (obj field)
+   (with-access::J2SAccess this (obj field loc)
       `(,@(call-next-method)
+	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
 	  ,@(dump-range this)

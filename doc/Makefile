@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Mon Jan 29 10:27:28 2018 (serrano)                */
+#*    Last change :  Fri Mar  9 15:00:02 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -50,7 +50,7 @@ POPULATION=$(BOOTSTRAP_POP:%=lib/bootstrap/%) $(JQUERY_POP:%=lib/jquery/%) \
   lang/01-module.md lang/03-react.md lang/app.js lang/stateful.js lang/ui.js \
   dev/dev.json dev/00-command.md dev/01-rcfile.md dev/10-edit.md \
   intf/intf.json intf/01-nodejs.md intf/10-scheme.md intf/scheme.bnf \
-  license.md _index.md \
+  intf/20-lang.md license.md _index.md \
   nodejs.md download.md \
   hss/doc.hss \
   html-idx.json mdn-idx.json mdn.js
@@ -65,7 +65,7 @@ WIDGET_TARGETS=widget.html tree.html spage.html
 
 DEV_TARGETS=dev.html 00-command.html 01-rcfile.html 10-edit.html 20-cross.html
 
-INTF_TARGETS=intf.html 01-nodejs.html 10-scheme.html
+INTF_TARGETS=intf.html 01-nodejs.html 10-scheme.html 20-lang.html
 
 ALL_TARGETS=index.html download.html \
   $(API_TARGETS) $(LANG_TARGETS) $(DEV_TARGETS) $(WIDGET_TARGETS) $(INTF_TARGETS) \

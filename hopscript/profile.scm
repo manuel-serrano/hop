@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Feb 21 15:12:22 2018 (serrano)                */
+;*    Last change :  Thu Mar  8 13:19:23 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -744,6 +744,7 @@
        (when (pair? filecaches)
 	  (with-output-to-port (current-error-port)
 	     (lambda ()
+		(print "\"format\": \"fprofile\",")
 		(print "\"sources\": [")
 		(for-each (lambda (fc)
 			     (when (and (vector? (filecache-caches fc))
@@ -779,6 +780,7 @@
       ((string-contains trc "format:json")
        (with-output-to-port (current-error-port)
 	  (lambda ()
+	     (print "\"format\": \"json\",")
 	     (print "\"caches\": {")
 	     (print "  \"accesses\": " total ",")
 	     (print "  \"hits\": " (filecaches-hits filecaches) ",")

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Sun Feb 18 07:48:59 2018 (serrano)                */
+;*    Last change :  Thu Mar  8 08:33:34 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -66,7 +66,7 @@
 		    (__proto__ ?__proto__))
 		 ;; The purpose of this special expansion is to force allocate
 		 ;; the object with the JS-MAKE-JSOBJECT that creates
-		 ;;; properties inline, with constrat with the regular
+		 ;;; properties inline, in contrast to the regular
 		 ;; constructor that allocates properties in a separate vector.
 		 (let ((obj (gensym 'o))
 		       (vec (gensym 'v)))

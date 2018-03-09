@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Feb  8 17:17:00 2018 (serrano)                */
+;*    Last change :  Fri Mar  9 07:06:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript symbols                      */
@@ -248,6 +248,9 @@
 	    '(isConcatSpreadable match
 	      replace search split toPrimitive
 	      unscopables))
+
+	 ;; hop symbol
+	 (bind-symbol! 'compiler)
 
 	 ;; bind the known symbols
 	 (set! js-symbol-iterator (bind-symbol! 'iterator))
