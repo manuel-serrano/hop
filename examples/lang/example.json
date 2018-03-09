@@ -1,0 +1,7 @@
+{
+   "tags": [ "lang", "interface" ],
+   "description": "CSV Language",
+   "doc": "Shows how to define a new language and how to require modules",
+   "files": [ "lang.js", "csv.js", "csv.hop", "sample.csv" ],
+   "level": 3.1
+}

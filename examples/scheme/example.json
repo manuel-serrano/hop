@@ -1,0 +1,7 @@
+{
+   "tags": [ "interface" ],
+   "description": "JavaScript/Scheme connection",
+   "doc": "Shows how to blend Scheme and JavaScript modules",
+   "files": [ "scheme.js", "scheme.hop" ],
+   "level": 3.1
+}

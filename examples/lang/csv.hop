@@ -1,0 +1,53 @@
+;*=====================================================================*/
+;*    serrano/prgm/project/hop/3.2.x/examples/lang/csv.hop             */
+;*    -------------------------------------------------------------    */
+;*    Author      :  Manuel Serrano                                    */
+;*    Creation    :  Fri Mar  9 09:02:19 2018                          */
+;*    Last change :  Fri Mar  9 10:04:14 2018 (serrano)                */
+;*    Copyright   :  2018 Manuel Serrano                               */
+;*    -------------------------------------------------------------    */
+;*    The CSV parsing use the native Hop's parser                      */
+;*=====================================================================*/
+
+;*---------------------------------------------------------------------*/
+;*    The module                                                       */
+;*---------------------------------------------------------------------*/
+(module csv
+   (library csv)
+   (export (hopscript %this this %scope %module)))
+
+;*---------------------------------------------------------------------*/
+;*    hopscript ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    This is the function called by JavaScript when the Hop module    */
+;*    is required. It binds the exports field of the newly             */
+;*    allocated module                                                 */
+;*---------------------------------------------------------------------*/
+(define (hopscript %this this %scope %module)
+
+   (define (literal->js v)
+      (cond
+	 ((string? v) (js-string->jsstring v))
+	 ((number? v) (js-number->jsnumber v))
+	 (else v)))
+   
+   (with-access::JsGlobalObject %this (js-object)
+      (let ((exports (js-new0 %this js-object)))
+         (js-put! %module 'exports exports #f %this)
+         ;; bind the load function is the pseudo javascript module
+         (js-put! exports 'load
+            (js-make-function %this
+               ;; wrap the Hop read-csv records function into a JS function
+               (lambda (this url)
+		  (call-with-input-file url
+		     (lambda (p)
+			(js-vector->jsarray
+			   (apply vector
+			      (map (lambda (row)
+				      (js-vector->jsarray
+					 (apply vector (map literal->js row))
+					 %this))
+				 (read-csv-records p)))
+			   %this))))
+               1 "load")
+	    #f %this))))
