@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Mar 11 19:37:12 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 20:24:40 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -695,8 +695,7 @@
 			      (with-access::J2SBlock body (endloc)
 				 (match-case endloc
 				    ((at ?file ?end)
-				     (when (and (string=? (mmap-name m) file)
-						(>fx end start))
+				     (when (string=? (mmap-name m) file)
 					(mmap-substring m
 					    (fixnum->elong start)
 					    (+elong 1 (fixnum->elong end)))))))))))

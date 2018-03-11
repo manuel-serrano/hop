@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Sun Mar 11 19:16:33 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 21:10:55 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -135,9 +135,18 @@
 ;*    sourcemap! ::J2SBlock ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (sourcemap! this::J2SBlock translations)
-   (with-access::J2SBlock this (endloc)
+   (with-access::J2SBlock this (loc endloc)
+      (tprint ">>> loc=" loc " endloc=" endloc)
       (update-node-location! endloc translations)
-      (call-next-method)))
+      (call-next-method)
+      (tprint "<<< loc=" loc " endloc=" endloc)
+      (match-case loc
+	 ((at ?- ?start)
+	  (match-case endloc
+	     ((at ?- ?end)
+	      (when (<fx end start)
+		 (tprint "### loc=" loc " endloc=" endloc))))))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    sourcemap! ::J2SDataPropertyInit ...                             */
@@ -200,8 +209,8 @@
 	  (let ((r (find-closest-shift-position translations pos 1))
 		(l (find-closest-shift-position translations pos -1)))
 	     (cond
-		((not r) (if (pair? l) l))
-		((not l) (if (pair? r) r))
+		((not r) l)
+		((not l) r)
 		((< (abs (car r)) (abs (car l))) r)
 		(else l)))))
 	     
