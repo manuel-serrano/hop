@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/debug.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/runtime/debug.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Wed Dec 16 21:37:48 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Sat Mar 10 07:23:17 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
 ;*=====================================================================*/
@@ -127,15 +127,13 @@
    (when (string? cache)
       (let ((smap (string-append cache ".map")))
 	 (if (file-exists? smap)
-	    (with-handler
-	       (lambda (e)
-		  #f)
-	       (let ((s (get-smap smap)))
-		  (when (pair? s)
-		     (let ((mappings (assq 'mappings s))
-			   (sources (assq 'sources s)))
-			(when (and (pair? mappings) (pair? sources))
-			   (hop-debug-source-map-file/smap (cdr mappings)
-			      (cdr sources) file line col))))))))))
-
-
+	     (with-handler
+		(lambda (e)
+		   #f)
+		(let ((s (get-smap smap)))
+		   (when (pair? s)
+		      (let ((mappings (assq 'mappings s))
+			    (sources (assq 'sources s)))
+			 (when (and (pair? mappings) (pair? sources))
+			    (hop-debug-source-map-file/smap (cdr mappings)
+			       (cdr sources) file line col))))))))))

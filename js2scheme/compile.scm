@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri Mar  9 15:35:08 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 19:32:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -56,7 +56,8 @@
 	   __js2scheme_method
 	   __js2scheme_inline
 	   __js2scheme_unthis
-	   __js2scheme_any)
+	   __js2scheme_any
+	   __js2scheme_sourcemap)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -163,6 +164,7 @@
 (define (j2s-optim-driver)
    (list
       j2s-syntax-stage
+      j2s-sourcemap-stage
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
@@ -202,6 +204,7 @@
 (define (j2s-plain-driver)
    (list
       j2s-syntax-stage
+      j2s-sourcemap-stage
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
@@ -222,6 +225,7 @@
 (define (j2s-debug-driver)
    (list
       j2s-syntax-stage
+      j2s-sourcemap-stage
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
@@ -242,6 +246,7 @@
 (define (j2s-eval-driver)
    (list
       j2s-syntax-stage
+      j2s-sourcemap-stage
       j2s-hopscript-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
@@ -262,6 +267,7 @@
 (define (j2s-javascript-optim-driver)
    (list
       j2s-syntax-stage
+      j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
@@ -284,6 +290,7 @@
 (define (j2s-javascript-driver)
    (list
       j2s-syntax-stage
+      j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
@@ -296,6 +303,7 @@
 (define (j2s-ecmascript5-driver)
    (list
       j2s-syntax-stage
+      j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
@@ -311,6 +319,7 @@
 (define (j2s-javascript-debug-driver)
    (list
       j2s-syntax-stage
+      j2s-sourcemap-stage
       j2s-loopexit-stage
       j2s-bestpractice-stage
       j2s-symbol-stage
@@ -340,26 +349,30 @@
 	   args)
    (unless (and (list? driver) (every (lambda (s) (isa? s J2SStage))))
       (bigloo-type-error "j2s-compile" "driver list" driver))
-   (let ((tmp (or tmp
-		  (make-file-path (os-tmp) 
-		     (or (getenv "USER") "anonymous")
-		     "J2S"
-		     (if (string=? (input-port-name in) "[string]")
-			 "stdin"
-			 (input-port-name in)))))
-	 (opts (compile-opts in args)))
+   (let* ((tmp (or tmp
+		   (make-file-path (os-tmp) 
+		      (or (getenv "USER") "anonymous")
+		      "J2S"
+		      (if (string=? (input-port-name in) "[string]")
+			  "stdin"
+			  (input-port-name in)))))
+	  (opts (compile-opts in args))
+	  (conf (cons* :mmaps '() opts)))
       (when (>=fx (bigloo-debug) 1) (make-directories tmp))
-      (let ((ast (j2s-parser in opts)))
-	 (if (eof-object? ast)
-	     '()
-	     (let loop ((ast ast)
-			(driver driver)
-			(count 1))
-		(if (null? driver)
-		    ast
-		    (multiple-value-bind (ast on)
-		       (stage-exec (car driver) ast tmp count opts)
-		       (loop ast (cdr driver) (+fx (if on 1 0) count)))))))))
+      (unwind-protect
+	 (let ((ast (j2s-parser in conf)))
+	    (if (eof-object? ast)
+		'()
+		(let loop ((ast ast)
+			   (driver driver)
+			   (count 1))
+		   (if (null? driver)
+		       ast
+		       (multiple-value-bind (ast on)
+			  (stage-exec (car driver) ast tmp count conf)
+			  (loop ast (cdr driver) (+fx (if on 1 0) count)))))))
+	 (let ((mmaps (config-get conf :mmaps)))
+	    (for-each close-mmap mmaps)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    compile-opts ...                                                 */

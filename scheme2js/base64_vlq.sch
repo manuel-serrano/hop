@@ -1,15 +1,15 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.5.x/scheme2js/base64_vlq.sch          */
+;*    serrano/prgm/project/hop/3.2.x/scheme2js/base64_vlq.sch          */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 28 15:16:54 2013                          */
-;*    Last change :  Mon Jul 29 14:48:34 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Sat Mar 10 05:34:43 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    base64-vlq encoding/decoding                                     */
 ;*    -------------------------------------------------------------    */
 ;*    This code is largely adapted from a Mozilla library which        */
-;*    implement the base64-vlq encoding/decoding in JavaScript.        */
+;*    implements the base64-vlq encoding/decoding in JavaScript.       */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/

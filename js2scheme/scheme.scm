@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Mar  8 13:38:24 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 17:41:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -508,7 +508,7 @@
 (define-method (j2s-scheme this::J2SUnresolvedRef mode return conf hint)
    (with-access::J2SUnresolvedRef this (loc cache id)
       (epairify loc
-	 (j2s-unresolved id #t cache loc))))
+	 (j2s-unresolved id (or loc #t) cache loc))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SArrayAbsent ...                                  */
@@ -2146,7 +2146,7 @@
    (define (unresolved-inc op lhs inc)
       (with-access::J2SUnresolvedRef lhs (id cache loc)
 	 (let ((tmp (gensym 'tmp)))
-	    `(let ((,tmp ,(j2s-unresolved id #t cache loc)))
+	    `(let ((,tmp ,(j2s-unresolved id (or loc #t) cache loc)))
 		(if (fixnum? ,tmp)
 		    ,(new-or-old tmp `(+fx/overflow ,tmp ,inc)
 		       (lambda (val tmp)

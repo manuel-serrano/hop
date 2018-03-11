@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Mar  9 15:35:40 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 07:04:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1415,7 +1415,7 @@
 			  mod))
 		      (else
 		       val))))))
-	 ((string-suffix? ".json" path)
+	 ((or (eq? lang 'json) (string-suffix? ".json" path))
 	  (load-json path))
 	 (else
 	  (let ((mod (nodejs-load path worker lang srcalias)))

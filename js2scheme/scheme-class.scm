@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sat Dec 16 06:16:43 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Sun Mar 11 19:27:32 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
 ;*=====================================================================*/
@@ -254,7 +254,7 @@
       (when src
 	 (match-case loc
 	    ((at ?path ?start)
-	     (let ((m (config-get conf :mmap-src)))
+	     (let ((m (config-get-mmap conf path)))
 		`'(,loc . ,(when (mmap? m)
 			      (match-case endloc
 				 ((at ?- ?end)

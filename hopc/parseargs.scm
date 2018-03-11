@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Feb 15 13:30:54 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 17:34:40 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -115,6 +115,9 @@
 	     (if (string=? level "")
 		 (bigloo-warning-set! (+fx 1 (bigloo-warning)))
 		 (bigloo-warning-set! (string->integer level))))
+	    (("--source-mapping-url" ?file (help "Read source-map file for JS compilation"))
+	     (j2s-compile-options-set!
+		(cons* :source-mapping-url file (j2s-compile-options))))
 	    (("--no-color" (help "Disable colored traces"))
 	     (bigloo-trace-color-set! #f))
 	    (("--eval" ?string (help "Evaluate STRING"))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Mar  4 10:47:31 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 19:34:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -21,6 +21,7 @@
 	   (error/loc proc obj msg loc)
 	   (illegal-node ::bstring ::J2SNode)
 	   (config-get ::pair-nil ::keyword #!optional def)
+	   (config-get-mmap ::pair-nil path)
 	   (config-put! ::pair-nil ::keyword ::obj)
 	   (this?::bool ::J2SNode)
 	   
@@ -89,6 +90,22 @@
 	  def)))
 
 ;*---------------------------------------------------------------------*/
+;*    config-get-mmap ...                                              */
+;*---------------------------------------------------------------------*/
+(define (config-get-mmap conf path)
+   (if (string=? path (config-get conf :filename))
+       (config-get conf :mmap-src)
+       (let ((mmaps (config-get conf :mmaps)))
+	  (let ((m (assoc path mmaps)))
+	     (cond
+		((pair? m)
+		 (cdr m))
+		((file-exists? path)
+		 (let ((mmap (open-mmap path :write #f)))
+		    (config-put! conf :mmaps (cons (cons path mmap) mmaps))
+		    mmap)))))))
+	      
+;*---------------------------------------------------------------------*/
 ;*    config-put! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (config-put! conf k val)
@@ -129,7 +146,7 @@
 ;*    j2s-expression-src ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-expression-src loc conf default::bstring)
-
+   
    (define delims
       '(#\space #\newline #\tab #\; #\{ #\} #\( #\) #\* #\+ #\- #\/))
    
@@ -140,16 +157,16 @@
 	       ((>=elong i end) i)
 	       ((memq (mmap-ref mmap i) delims) i)
 	       (else (loop (+elong i #e1)))))))
-	     
-   (let ((m (config-get conf :mmap-src)))
-      (if (mmap? m)
-	  (match-case loc
-	     ((at ?path ?start)
+   
+   (match-case loc
+      ((at ?path ?start)
+       (let ((m (config-get-mmap conf path)))
+	  (if (mmap? m)
 	      (mmap-substring m
-		 (fixnum->elong start) (find-delim m (fixnum->elong start))))
-	     (else
-	      default))
-	  default)))
+		 (fixnum->elong start) (find-delim m (fixnum->elong start)))
+	      default)))
+      (else
+       default)))
 
 ;*---------------------------------------------------------------------*/
 ;*    m64? ...                                                         */

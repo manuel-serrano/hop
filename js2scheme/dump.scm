@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu Mar  8 12:38:13 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 11:45:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -376,8 +376,8 @@
 ;*    j2s->list ::J2SUnresolvedRef ...                                 */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SUnresolvedRef)
-   (with-access::J2SUnresolvedRef this (id)
-      `(,@(call-next-method) ,id
+   (with-access::J2SUnresolvedRef this (id loc)
+      `(,@(call-next-method) ,(dump-loc loc) ,id
 	  ,@(dump-type this))))
 
 ;*---------------------------------------------------------------------*/

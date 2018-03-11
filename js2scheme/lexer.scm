@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Tue Feb  6 14:36:43 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 06:45:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -192,10 +192,18 @@
        (token 'NEWLINE #\newline 1))
 
       ;; line comment
-      ((:"//" (* (or (out "\n\xe2\r")
-		     (: "\xe2" (out "\x80"))
-		     (: "\xe2\x80" (out "\xa8\xa9")))))
-       (ignore))
+      ((: "//" (* (or (out "\n\xe2\r")
+		      (: "\xe2" (out "\x80"))
+		      (: "\xe2\x80" (out "\xa8\xa9")))))
+       (if (and (>fx (the-length) 20)
+		(=fx (the-byte-ref 2) (char->integer #\#)))
+	   ;; source-map parsing
+	   (let* ((s (the-substring 3 (the-length)))
+		  (i (string-skip s " \t" 0)))
+	      (if (and i (substring-at? s "sourceMappingURL=" i))
+		  (token 'SOURCEMAP (substring s (+fx i 17)) (the-length))
+		  (ignore)))
+	   (ignore)))
 
       ;; type comments
       ((: "/* ::" (+ letter) " */")

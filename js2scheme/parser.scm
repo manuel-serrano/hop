@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Thu Mar  8 13:08:01 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 17:35:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -36,7 +36,8 @@
    (define tilde-level (config-get conf :tilde-level 0))
    (define lang (config-get conf :language 'hopscript))
    (define current-mode 'normal)
-
+   (define source-map (config-get conf :source-map #f))
+   
    (define (with-tilde proc)
       (set! tilde-level (+fx tilde-level 1))
       (let ((res (proc)))
@@ -238,9 +239,11 @@
 			     (endloc endloc)
 			     (nodes nodes))))))
 	     (let ((el (source-element)))
-		(when first
-		   (source-element-mode! el))
-		(loop (cons el rev-ses) #f)))))
+		(if (eq? el 'source-map)
+		    (loop rev-ses #f)
+		    (begin
+		       (when first (source-element-mode! el))
+		       (loop (cons el rev-ses) #f)))))))
    
    (define (source-element)
       (case (peek-token-type)
@@ -263,6 +266,13 @@
 		 (consume-any!))))
 	 ((ERROR)
 	  (parse-token-error "error" (consume-any!)))
+	 ((SOURCEMAP)
+	  (let ((tok (consume-any!)))
+	     (if (eof?)
+		 (begin
+		    (set! source-map (token-value tok))
+		    'source-map)
+		 (parse-token-error "unexpected source-map" tok))))
 	 (else
 	  (statement))))
 
@@ -1601,11 +1611,8 @@
 	     expr)))
    
    ;; we start by getting all news (new-expr)
-   ;; the remaining access and calls are then caught by the access-or-call
+   ;; the remaining accesses and calls are then caught by the access-or-call
    ;; invocation allowing call-parenthesis.
-   ;;
-   ;; the access-or-call in new-expr does not all any parenthesis to be
-   ;; consumed as they would be part of the new-expr.
    (define (lhs loc)
       (access-or-call (new-expr loc) loc #t))
    
@@ -2296,6 +2303,7 @@
 	       (endloc endloc)
 	       (path (abspath))
 	       (module module)
+	       (source-map (config-get conf :source-mapping-url source-map))
 	       (path (config-get conf :filename (abspath)))
 	       (main (config-get conf :module-main #f))
 	       (name (config-get conf :module-name #f))

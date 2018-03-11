@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Feb 18 21:01:04 2018 (serrano)                */
+;*    Last change :  Sun Mar 11 19:37:12 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -690,14 +690,16 @@
       (when src
 	 (match-case loc
 	    ((at ?path ?start)
-	     (let ((m (config-get conf :mmap-src)))
+	     (let ((m (config-get-mmap conf path)))
 		`'(,loc . ,(when (mmap? m)
 			      (with-access::J2SBlock body (endloc)
 				 (match-case endloc
-				    ((at ?- ?end)
-				     (mmap-substring m
-					(fixnum->elong start)
-					(+elong 1 (fixnum->elong end))))))))))
+				    ((at ?file ?end)
+				     (when (and (string=? (mmap-name m) file)
+						(>fx end start))
+					(mmap-substring m
+					    (fixnum->elong start)
+					    (+elong 1 (fixnum->elong end)))))))))))
 	    (else
 	     (error "j2s-function-src" "bad location" loc))))))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Thu Feb 22 09:05:55 2018 (serrano)                */
+;*    Last change :  Sat Mar 10 07:08:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -48,7 +48,8 @@
 	      (decls::pair-nil (default '()) (info '("ast")))
 	      (headers::pair-nil (default '()) (info '("ast")))
 	      (globals::pair-nil (default '()) (info '("ast")))
-	      (direct-eval::bool (default #t)))
+	      (direct-eval::bool (default #t))
+	      (source-map (default #f)))
 
 	   (abstract-class J2SExpr::J2SNode
 	      (type::symbol (default 'unknown) (info '("notraverse")))
