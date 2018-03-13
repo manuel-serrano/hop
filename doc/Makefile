@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Fri Mar  9 15:00:02 2018 (serrano)                */
+#*    Last change :  Tue Mar 13 15:27:27 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -59,7 +59,7 @@ API_TARGETS=api.html 00-hop.html 10-dom.html 20-websocket.html \
   hss.html config.html user.html 01-html.html markdown.html syslog.html
 
 LANG_TARGETS=lang.html 00-syntax.html 01-service.html 02-worker.html \
-  01-es.html 03-react.html 01-module.html
+  01-es.html 03-react.html 01-module.html cpp.html
 
 WIDGET_TARGETS=widget.html tree.html spage.html
 
@@ -83,7 +83,8 @@ VPATH=api lang dev widget intf \
   ../node_modules/config/doc \
   ../node_modules/user/doc \
   ../node_modules/markdown/doc \
-  ../node_modules/syslog/doc
+  ../node_modules/syslog/doc \
+  ../node_modules/cpp/doc
 
 #*---------------------------------------------------------------------*/
 #*    The hop executable                                               */

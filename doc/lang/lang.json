@@ -1,6 +1,6 @@
 {
    "title": "Lang",
-   "files": [ "lang" ],
+   "files": [ "lang", [], "../node_modules/cpp/doc/cpp.md" ],
    "description": "_lang.md",
    "key": "lang"
 }

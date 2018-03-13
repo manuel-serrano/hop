@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/doc/doc.js                        */
+/*    serrano/prgm/project/hop/3.2.x/doc/doc.js                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Thu Jul 30 17:20:13 2015                          */
-/*    Last change :  Mon Jan 29 14:48:21 2018 (serrano)                */
+/*    Last change :  Tue Mar 13 15:44:25 2018 (serrano)                */
 /*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Tools to build the Hop.js documentation.                         */
@@ -71,18 +71,22 @@ function chapterEntries( chapter ) {
    }
    
    function chapterEntry( file, i = false, arr = false ) {
-      var fp = path.join( ROOT, file );
-      if( fs.lstatSync( fp ).isDirectory() ) {
-	 return fs.readdirSync( fp )
-	    .filter( function( e, idx = undefined, arr = undefined ) {
-	       return e.match( /[.]md$/ ) && (e != "index.md");
-	    } )
-	    .sort( function( left, right ) {
-	       return left.naturalCompare( right );
-	    } )
-	    .map( chapterFile );
+      if( typeof file != "string" ) {
+	 return [ false ];
       } else {
-	 return [ chapterFile( file ) ];
+	 var fp = path.join( ROOT, file );
+	 if( fs.lstatSync( fp ).isDirectory() ) {
+	    return fs.readdirSync( fp )
+	       .filter( function( e, idx = undefined, arr = undefined ) {
+		  return e.match( /[.]md$/ ) && (e != "index.md");
+	       } )
+	       .sort( function( left, right ) {
+		  return left.naturalCompare( right );
+	       } )
+	       .map( chapterFile );
+	 } else {
+	    return [ chapterFile( file ) ];
+	 }
       }
    }
 
@@ -236,7 +240,7 @@ function compileSection( page ) {
 function compileChapter( json ) {
    var footer = path.join( PWD, "footer.md" );
    var chapter = require( path.join( PWD, json ) );
-   var toc = chapterEntries( chapter );
+   var toc = chapterEntries( chapter ).filter( x => x );
 
    var document = <html>
      <head css=${css}

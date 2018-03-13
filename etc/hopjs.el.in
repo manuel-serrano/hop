@@ -1,10 +1,10 @@
 ;; -*- mode: lisp -*-
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/etc/hopjs.el.in                   */
+;*    serrano/prgm/project/hop/3.2.x/etc/hopjs.el.in                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Mon Jan 29 10:42:20 2018 (serrano)                */
+;*    Last change :  Tue Mar 13 08:32:09 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -557,12 +557,12 @@ usage: (js-return)  -- [RET]"
 
 (defun js--proper-indentation (parse-status)
   "Return the proper indentation for the current line."
-  (message "GLOP point=%s %s" (point) parse-status)
   (save-excursion
     (back-to-indentation)
     (cond ((nth 4 parse-status)		; inside comment
 	   (js--get-c-offset 'c (nth 8 parse-status)))
 	  ((nth 3 parse-status) 0)	; inside string
+          ((and (eq (char-after) ?#) (not (eq (char-after (1+ (point))) ?:))) 0)
 	  ((save-excursion (js--beginning-of-macro)) 4)
 	  ;; Indent array comprehension continuation lines specially.
 	  ((let ((bracket (nth 1 parse-status))

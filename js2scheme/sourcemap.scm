@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Sun Mar 11 21:10:55 2018 (serrano)                */
+;*    Last change :  Tue Mar 13 15:10:48 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -60,14 +60,15 @@
 			 (translations (make-vector (vector-length positions)))
 			 (srcs (vector-map!
 				  (lambda (f)
-				     (let ((p (if root
+				     (let ((p (if (and root
+						       (not (string-null? root)))
 						  (make-file-name root f)
 						  f)))
 					(cons p (read-line-positions p))))
 				  sources)))
 		     (decode-mappings! mappings srcs positions translations)
 		     (set! nodes
-			(map! (lambda (n) (sourcemap! n translations))
+			(map! (lambda (n) (sourcemap! n translations path))
 			   nodes))))))))
    this)
 
@@ -107,15 +108,17 @@
 ;*---------------------------------------------------------------------*/
 ;*    sourcemap! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-generic (sourcemap! this::obj translations)
-   this)
+(define-generic (sourcemap! this::obj translations path)
+   (if (pair? this)
+       (map! (lambda (n) (sourcemap! n translations path)) this)
+       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    sourcemap! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (sourcemap! this::J2SNode translations)
+(define-method (sourcemap! this::J2SNode translations path)
    (with-access::J2SNode this (loc)
-      (update-node-location! loc translations))
+      (update-node-location! loc translations path))
    (let* ((clazz (object-class this))
 	  (fields (class-all-fields clazz)))
       ;; instance fields
@@ -126,7 +129,7 @@
 	       (when (and (pair? info) (member "ast" info))
 		  (let ((v ((class-field-accessor f) this)))
 		     (when (class-field-mutator f)
-			(let ((nv (sourcemap! v translations)))
+			(let ((nv (sourcemap! v translations path)))
 			   ((class-field-mutator f) this nv)))))
 	       (loop (-fx i 1)))))
       this))
@@ -134,24 +137,22 @@
 ;*---------------------------------------------------------------------*/
 ;*    sourcemap! ::J2SBlock ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-method (sourcemap! this::J2SBlock translations)
+(define-method (sourcemap! this::J2SBlock translations path)
    (with-access::J2SBlock this (loc endloc)
-      (tprint ">>> loc=" loc " endloc=" endloc)
-      (update-node-location! endloc translations)
       (call-next-method)
-      (tprint "<<< loc=" loc " endloc=" endloc)
+      (update-node-location! endloc translations path)
       (match-case loc
 	 ((at ?- ?start)
 	  (match-case endloc
 	     ((at ?- ?end)
 	      (when (<fx end start)
-		 (tprint "### loc=" loc " endloc=" endloc))))))
+		 (set-car! (cddr endloc) start))))))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    sourcemap! ::J2SDataPropertyInit ...                             */
 ;*---------------------------------------------------------------------*/
-(define-method (sourcemap! this::J2SDataPropertyInit translations)
+(define-method (sourcemap! this::J2SDataPropertyInit translations path)
    
    (define (%location? %this)
       (with-access::J2SDataPropertyInit this (name val)
@@ -162,33 +163,35 @@
 		     (with-access::J2SObjInit val (inits)
 			(when (and (list? inits) (=fx (length inits) 3))
 			   (every (lambda (i) (isa? i J2SDataPropertyInit)) inits)))))))))
+
+   (define (update-%location-init! i loc)
+      (with-access::J2SDataPropertyInit i (name)
+	 (when (isa? name J2SString)
+	    (with-access::J2SString name (val)
+	       (cond
+		  ((string=? val "filename")
+		   (with-access::J2SDataPropertyInit i (val)
+		      (when (isa? val J2SString)
+			 (with-access::J2SString val (val)
+			    (set! val (cadr loc))))))
+		  ((string=? val "pos")
+		   (with-access::J2SDataPropertyInit i (val)
+		      (when (isa? val J2SNumber)
+			 (with-access::J2SNumber val (val)
+			    (set! val (caddr loc)))))))))))
    
    (if (%location? this)
        (with-access::J2SDataPropertyInit this (val loc)
-	  (when (update-node-location! loc translations)
+	  (when (update-node-location! loc translations path)
 	     (with-access::J2SObjInit val (inits)
-		(set! inits (map! (lambda (i)
-				     (with-access::J2SDataPropertyInit i (name)
-					(when (isa? name J2SString)
-					   (with-access::J2SString name (val)
-					      (cond
-						 ((string=? val "filename")
-						  (with-access::J2SDataPropertyInit i (val)
-						     (when (isa? val J2SString)
-							(with-access::J2SString val (val)
-							   (set! val (cadr loc))))))
-						 ((string=? val "pos")
-						  (with-access::J2SDataPropertyInit i (val)
-						     (when (isa? val J2SNumber)
-							(with-access::J2SNumber val (val)
-							   (set! val (caddr loc)))))))))))
+		(set! inits (map! (lambda (i) (update-%location-init! i loc))
 			       inits)))))
        (call-next-method)))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    update-node-location! ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (update-node-location! loc translations)
+(define (update-node-location! loc translations path)
 
    (define (find-closest-shift-position translations pos direction)
       (let loop ((pos pos)
@@ -213,12 +216,15 @@
 		((not l) r)
 		((< (abs (car r)) (abs (car l))) r)
 		(else l)))))
-	     
+
    (match-case loc
       ((at ?fname ?pos)
-       (when (<fx pos (vector-length translations))
+       (when (and (equal? fname path) (<fx pos (vector-length translations)))
 	  (let ((p (find-closest-position translations pos)))
 	     (when (pair? p)
+;* 		(tprint "update loc=" loc)                             */
+;* 		(tprint "      nloc=" `(at ,(cadr p) ,(+fx (car p) (cddr p)) */
+;* 					  ,(car p)))                   */
 		(set-car! (cdr loc) (cadr p))
 		(set-car! (cddr loc) (+fx (car p) (cddr p)))
 		#t))))
@@ -231,49 +237,10 @@
 (define (read-source-map smap)
    (javascript->obj (call-with-input-file smap read-string)))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    read-positions ...                                               *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (read-positions::vector path)                               */
-;*                                                                     */
-;*    (define (read-mmap-positions path)                               */
-;*       (let* ((mmap (open-mmap path :read #t))                       */
-;* 	     (len (mmap-length mmap))                                  */
-;* 	     (vec (make-vector len)))                                  */
-;* 	 (unwind-protect                                               */
-;* 	    (let loop ((i 0)                                           */
-;* 		       (line 0)                                        */
-;* 		       (col 0))                                        */
-;* 	       (when (<fx i len)                                       */
-;* 		  (vector-set! vec i (cons line col))                  */
-;* 		  (if (char=? (mmap-ref mmap i) #\Newline)             */
-;* 		      (loop (+fx i 1) (+fx line 1) 0)                  */
-;* 		      (loop (+fx i 1) line (+fx col 1)))))             */
-;* 	    (close-mmap mmap))                                         */
-;* 	 vec))                                                         */
-;*                                                                     */
-;*    (define (read-file-positions path)                               */
-;*       (call-with-input-file path                                    */
-;* 	 (lambda (ip)                                                  */
-;* 	    (let loop ((i 0)                                           */
-;* 		       (line 0)                                        */
-;* 		       (col 0)                                         */
-;* 		       (acc '()))                                      */
-;* 	       (if (eof-object? ip)                                    */
-;* 		   (list->vector (reverse! acc))                       */
-;* 		   (let ((e (cons line col)))                          */
-;* 		      (if (char=? (read-char ip) #\Newline)            */
-;* 			  (loop (+fx i 1) (+fx line 1) 0 (cons e acc)) */
-;* 			  (loop (+fx i 1) line (+fx col 1) (cons e acc))))))))) */
-;*                                                                     */
-;*    (if (file-exists? path)                                          */
-;*        (read-mmap-positions path)                                   */
-;*        (read-file-positions path)))                                 */
-
 ;*---------------------------------------------------------------------*/
 ;*    read-line-positions ...                                          */
 ;*    -------------------------------------------------------------    */
-;*    Build a vector contains all the positions (character numbers)    */
+;*    Build a vector containing all the positions (character numbers)  */
 ;*    of the line beginings.                                           */
 ;*---------------------------------------------------------------------*/
 (define (read-line-positions::vector path)
@@ -288,7 +255,7 @@
 	       (when (<fx i len)
 		  (if (char=? (mmap-ref mmap i) #\Newline)
 		      (begin
-			 (vector-set! vec (+fx line 1) i)
+			 (vector-set! vec line (+fx i 1))
 			 (loop (+fx i 1) (+fx line 1)))
 		      (loop (+fx i 1) line))))
 	    (close-mmap mmap))
@@ -303,7 +270,7 @@
 	       (if (eof-object? ip)
 		   (list->vector (reverse! acc))
 		   (if (char=? (read-char ip) #\Newline)
-		       (loop (+fx i 1) (+fx line 1) (cons (+fx line 1) acc))
+		       (loop (+fx i 1) (+fx line 1) (cons (+fx i 1) acc))
 		       (loop (+fx i 1) line acc)))))))
    
    (if (file-exists? path)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Sun Mar 11 07:04:27 2018 (serrano)                */
+;*    Last change :  Tue Mar 13 14:30:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -151,6 +151,8 @@
 				      (json->file val lang %this))
 				     ((string=? ty "value")
 				      (value->file val lang %this))
+				     ((string=? ty "error")
+				      (raise val))
 				     (else
 				      (js-raise-error (js-new-global-object)
 					 "Wrong language compiler output"
@@ -316,7 +318,7 @@
 				 :%this this
 				 :source filename
 				 :resource (dirname filename)
-				 :filename (or srcalias filename)
+				 :filename filename
 				 :worker worker
 				 :header header
 				 :verbose (if (>=fx (bigloo-debug) 3)
@@ -750,7 +752,7 @@
 		     (j2s-compile in
 			:driver (nodejs-driver)
 			:driver-name "nodejs-driver"
-			:filename (or srcalias filename)
+			:filename filename
 			:language (or lang 'hopscript)
 			:mmap-src m
 			:module-main #f
@@ -772,7 +774,7 @@
 		  :driver (nodejs-driver)
 		  :driver-name "nodejs-driver"
 		  :language (or lang 'hopscript)
-		  :filename (or filename srcalias)
+		  :filename filename
 		  :module-main #f
 		  :module-name (symbol->string mod)
 		  :worker-slave worker-slave

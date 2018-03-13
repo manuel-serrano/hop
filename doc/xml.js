@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.1.x/doc/xml.js                        */
+/*    serrano/prgm/project/hop/3.2.x/doc/xml.js                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Aug  1 10:22:56 2015                          */
-/*    Last change :  Thu Jul 13 08:25:55 2017 (serrano)                */
-/*    Copyright   :  2015-17 Manuel Serrano                            */
+/*    Last change :  Tue Mar 13 15:44:44 2018 (serrano)                */
+/*    Copyright   :  2015-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Hop.js XML extensions                                            */
 /*=====================================================================*/
@@ -121,7 +121,11 @@ function navbar( attrs, chapters ) {
                    <li><a href=${p.href}>${p.name}</a></li>
                    <li role="separator" class="divider"></li>
 	           ${p.entries.map( function( e, idx = undefined, arr = undefined ) {
-                        return <li><a href=${e.href}>${e.title}</a></li>
+		      if( !(e instanceof Object) ) {
+			 return <li role="separator" class="divider"></li>;
+		      } else {
+			 return <li><a href=${e.href}>${e.title}</a></li>
+		      }
 		   } )}
                  </ul>
 	       </li>
@@ -262,7 +266,7 @@ function idxEntry( e, idx = undefined, arr = undefined ) {
 /*    idx ...                                                          */
 /*---------------------------------------------------------------------*/
 function idx( attrs, entries ) {
-   var en = idxLetters( entries );
+   var en = idxLetters( entries.filter( x => x ) );
    var collen = en.length / 3;
    
    return <div class="row">

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Sun Mar 11 20:24:40 2018 (serrano)                */
+;*    Last change :  Tue Mar 13 14:53:28 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -698,7 +698,7 @@
 				     (when (string=? (mmap-name m) file)
 					(mmap-substring m
 					    (fixnum->elong start)
-					    (+elong 1 (fixnum->elong end)))))))))))
+					    (fixnum->elong end))))))))))
 	    (else
 	     (error "j2s-function-src" "bad location" loc))))))
 
