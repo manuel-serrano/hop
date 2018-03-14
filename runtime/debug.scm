@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Sat Mar 10 07:23:17 2018 (serrano)                */
+;*    Last change :  Wed Mar 14 07:27:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
@@ -20,7 +20,7 @@
 	    "param.sch"
 	    "client-exception.sch"
 	    "sourcemap.sch"
-	    "../scheme2js/base64_vlq.sch")
+	    "base64_vlq.sch")
 
    (library web)
 

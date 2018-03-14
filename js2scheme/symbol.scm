@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Jan 27 08:59:46 2018 (serrano)                */
+;*    Last change :  Wed Mar 14 08:20:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -80,7 +80,7 @@
 ;*    eq-conf-lang? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (eq-conf-lang? conf lang)
-   (eq? (config-get conf :language 'hopscript) lang))
+   (string=? (config-get conf :language "hopscript") lang))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-decl ...                                                    */
@@ -194,7 +194,7 @@
 			 (obj id)
 			 (fname (cadr loc))
 			 (location (caddr loc)))))
-		  ((and (eq? id 'service) (eq-conf-lang? conf 'hopscript))
+		  ((and (eq? id 'service) (eq-conf-lang? conf "hopscript"))
 		   (raise
 		      (instantiate::&io-parse-error
 			 (proc "symbol resolution (symbol)")
@@ -623,7 +623,7 @@
    (with-access::J2SDecl decl (immutable id)
       (when (and immutable (or (isa? decl J2SDeclClass) (isa? decl J2SDeclFun)))
 	 (cond
-	    ((eq-conf-lang? conf 'hopscript)
+	    ((eq-conf-lang? conf "hopscript")
 	     (raise
 		(instantiate::&io-parse-error
 		   (proc "symbol resolution (symbol)")

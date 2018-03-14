@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jul 23 17:15:52 2015                          */
-;*    Last change :  Sat Feb 24 21:00:25 2018 (serrano)                */
+;*    Last change :  Wed Mar 14 08:19:21 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    J2S Html parser                                                  */
@@ -30,19 +30,19 @@
 ;*    html-parser ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (html-parser port conf::pair-nil #!optional tag sep)
-   (let ((lang (config-get conf :language 'hopscript)))
+   (let ((lang (config-get conf :language "hopscript")))
       (if tag
 	  (let ((str (symbol->string! (token-value tag))))
 	     (when sep
 		(rgc-buffer-unget-char port (char->integer #\space)))
 	     (rgc-buffer-insert-substring! port str 0 (string-length str))
 	     (read/rp xml-grammar port '()
-		(eq? lang 'hopscript) #f
+		(string=? lang "hopscript") #f
 		(lambda (x) x)
 		(hop-locale) lang conf))
 	  (let loop ()
 	     (let ((v (read/rp xml-grammar port '()
-			 (eq? lang 'hopscript) #f
+			 (string=? lang "hopscript") #f
 			 (lambda (x) x)
 			 (hop-locale)
 			 lang conf)))
@@ -396,12 +396,6 @@
 		      (make-dom-create tag attributes
 			 (list (html-parse-script (the-port) conf))
 			 lang conf))))
-;* 	       ((html-property-script? prop)                           */
-;* 		(let ((tag (token type sym (the-length)))              */
-;* 		      (args (html-parse-script-TOBEREMOVED-2018-02-22  */
-;* 			       (the-port))))                           */
-;* 		   (push-node-ignore                                   */
-;* 		      (make-dom-create tag attributes args lang conf)))) */
 	       (else
 		(let* ((tag (token type sym (the-length)))
 		       (el (element tag attributes
@@ -525,7 +519,7 @@
       ("~{"
        (push-ignore
 	  (let ((str (the-string)))
-	     (if (eq? lang 'html)
+	     (if (string=? lang "html")
 		 (instantiate::J2SString
 		    (escape '(escape))
 		    (val str)
@@ -537,7 +531,7 @@
       ("${"
        (push-ignore
 	  (let ((str (the-string)))
-	     (if (eq? lang 'html)
+	     (if (string=? lang "html")
 		 (instantiate::J2SString
 		    (escape '(escape))
 		    (val str)
@@ -664,7 +658,7 @@
 	     (inits (if dbg
 			(cons (debug-init loc (token-value tag)) inits)
 			inits))
-	     (inits (if (or (eq? lang 'hopscript) (not (html? tag)))
+	     (inits (if (or (string=? lang "hopscript") (not (html? tag)))
 			inits
 			(cons (hopautohead-init loc) inits)))
 	     (a (cond

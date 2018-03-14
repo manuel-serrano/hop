@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/share/hop-debug.scm               */
+;*    serrano/prgm/project/hop/3.2.x/share/hop-debug.scm               */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jul 29 14:46:23 2013                          */
-;*    Last change :  Fri Aug 14 06:22:13 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Wed Mar 14 07:22:05 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop runtime debugging support                                    */
 ;*=====================================================================*/
@@ -15,7 +15,7 @@
 (module __hop-debug
    
    (include
-      "../scheme2js/base64_vlq.sch"
+      "../runtime/base64_vlq.sch"
       "../runtime/sourcemap.sch")
    
    (import

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Mar 11 17:35:24 2018 (serrano)                */
+;*    Last change :  Wed Mar 14 08:19:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -34,7 +34,7 @@
 (define (j2s-parser input-port conf::pair-nil)
 
    (define tilde-level (config-get conf :tilde-level 0))
-   (define lang (config-get conf :language 'hopscript))
+   (define lang (config-get conf :language "hopscript"))
    (define current-mode 'normal)
    (define source-map (config-get conf :source-map #f))
    
@@ -813,7 +813,7 @@
       (with-access::J2SFun fun (generator body mode thisp)
 	 (cond
 	    ((and (not (config-get conf :es2017-async))
-		  (not (eq? lang 'hopscript)))
+		  (not (string=? lang "hopscript")))
 	     (parse-node-error "Async function requires hopscript or ecmascript2017 mode" fun))
 	    (generator
 	     (parse-node-error "Wrong async function declaration" fun))

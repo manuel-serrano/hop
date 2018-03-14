@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 06:46:36 2013                          */
-;*    Last change :  Fri Mar  9 07:22:42 2018 (serrano)                */
+;*    Last change :  Wed Mar 14 08:18:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme compilation header stage                               */
@@ -77,7 +77,8 @@
       (js-def-extern 'exports #t #t
 	 '(js-get %module 'exports %scope))
       (js-def-extern 'require #t #f
-	 `(nodejs-require %worker %this %module ',(config-get conf :language 'hopscript)))
+	 `(nodejs-require %worker %this %module
+	     ,(config-get conf :language "hopscript")))
       (js-def-extern 'HEAD #t #f
 	 `(nodejs-head %worker %this %scope %module))
       (js-def-extern 'SCRIPT #t #f

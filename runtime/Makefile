@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/runtime/Makefile                  */
+#*    serrano/prgm/project/hop/3.2.x/runtime/Makefile                  */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Sep 12 13:40:08 2017 (serrano)                */
+#*    Last change :  Wed Mar 14 07:21:11 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOP library.                           */
 #*=====================================================================*/
@@ -47,7 +47,7 @@ _OBJECTS = param thread misc priv types read module \
            http_error http_filter \
            hop_inline \
            event websocket color weblets preferences expanders \
-           security xdomain zeroconf upnp debug watch
+           security xdomain zeroconf upnp debug watch base64_vlq
 
 OBJECTS = $(_OBJECTS:%=o/%.o) o/configure.o
 EOBJECTS = o/make_lib.o
@@ -67,7 +67,8 @@ INCLUDES = thread.sch http_lib.sch expanders.sch \
            verbose.sch verbose_expd.sch \
            wiki_syntax.sch wiki_parser.sch \
            zeroconf_avahi.sch zeroconf_dummy.sch \
-           client-exception.sch sourcemap.sch
+           client-exception.sch sourcemap.sch \
+           base64_vlq.sch
 
 #*---------------------------------------------------------------------*/
 #*    Sources                                                          */

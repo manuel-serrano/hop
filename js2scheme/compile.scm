@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Sun Mar 11 19:32:25 2018 (serrano)                */
+;*    Last change :  Wed Mar 14 08:18:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -414,8 +414,8 @@
       (unless (memq :filename o)
 	 (set! o (cons* :filename (input-port-name in) o)))
 
-      (when (memq (config-get args :language)
-	       '(hopscript ecmascript6 ecmascript2017))
+      (when (member (config-get args :language)
+	       '("hopscript" "ecmascript6" "ecmascript2017"))
 	 (for-each (lambda (k)
 		      (unless (memq k o)
 			 (set! o (cons* k #t o))))

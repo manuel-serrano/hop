@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 18 10:49:38 2006                          */
-;*    Last change :  Mon Feb 12 16:37:12 2018 (serrano)                */
+;*    Last change :  Wed Mar 14 07:21:24 2018 (serrano)                */
 ;*    Copyright   :  2006-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The module used to build the HOP heap file.                      */
@@ -69,7 +69,8 @@
 	   __hop_hz
 	   __hop_security
 	   __hop_zeroconf
-	   __hop_upnp)
+	   __hop_upnp
+	   __hop-base64-vlq)
 	   
    (eval   (export-all)
 

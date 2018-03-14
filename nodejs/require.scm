@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Mar 13 14:30:36 2018 (serrano)                */
+;*    Last change :  Wed Mar 14 08:31:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -22,7 +22,7 @@
 	   __nodejs_syncg)
 
    (export (nodejs-module::JsObject ::bstring ::bstring ::WorkerHopThread ::JsGlobalObject)
-	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::obj)
+	   (nodejs-require ::WorkerHopThread ::JsGlobalObject ::JsObject ::bstring)
 	   (nodejs-head ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-script ::WorkerHopThread ::JsGlobalObject ::JsObject ::JsObject)
 	   (nodejs-core-module ::bstring ::WorkerHopThread ::JsGlobalObject)
@@ -82,14 +82,14 @@
       (if i
 	  (let ((lang (substring query (+fx i 6))))
 	     (if (string=? lang "hopscript")
-		 (nodejs-compile-file-hopscript ifile name ofile query)
+		 (nodejs-compile-file-hopscript ifile name ofile query #f lang)
 		 (nodejs-compile-file-lang ifile name ofile query lang)))
-	  (nodejs-compile-file-hopscript ifile name ofile query))))
+	  (nodejs-compile-file-hopscript ifile name ofile query #f "hopscript"))))
 
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file-hopscript ...                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file-hopscript ifile name ofile query #!optional srcalias)
+(define (nodejs-compile-file-hopscript ifile name ofile query srcalias lang)
    (let* ((srcmap (when (>fx (bigloo-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
@@ -100,7 +100,7 @@
 		 ((string-prefix? "el=" query) 'el)
 		 (else 'js)))
 	  (tree (unwind-protect
-		   (module->javascript ifile name op #f #f srcmap qr srcalias)
+		   (module->javascript ifile name op #f #f srcmap qr srcalias lang)
 		   (unless (eq? op (current-output-port))
 		      (close-output-port op)))))
       (when (>fx (bigloo-debug) 0)
@@ -111,11 +111,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file-lang ...                                     */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file-lang ifile name ofile query lang)
+(define (nodejs-compile-file-lang ifile name ofile query lang::bstring)
 
    (define (filename->file val lang %this)
       (nodejs-compile-file-hopscript (js-tostring val %this)
-	 name ofile query ifile))
+	 name ofile query ifile lang))
 
    (define (json->file val lang %this)
       (nodejs-compile-json
@@ -134,7 +134,7 @@
 	    (with-access::WorkerHopThread worker (%this)
 	       (with-access::JsGlobalObject %this (js-object js-symbol)
 		  (let* ((mod (nodejs-module ifile lang worker %this))
-			 (exp (nodejs-require-module lang worker %this mod 'hopscript))
+			 (exp (nodejs-require-module lang worker %this mod))
 			 (key (js-get js-symbol 'compiler %this))
 			 (comp (js-get exp key %this)))
 		     (if (isa? comp JsFunction)
@@ -267,13 +267,11 @@
 (define-macro (hop-boot)
    (file->string "../share/hop-boot.js"))
 
-
-
 ;*---------------------------------------------------------------------*/
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (module->javascript filename::bstring id op compile isexpr srcmap query
-	   #!optional srcalias)
+	   srcalias lang)
 
    (define (init-dummy-module! this worker)
       (with-access::JsGlobalObject this (js-object)
@@ -290,7 +288,7 @@
 	    (js-put! this '__dirname
 	       (js-string->jsstring (dirname filename)) #f this)
 	    (js-put! this 'require
-	       (nodejs-require worker this mod 'hopscript) #f this)
+	       (nodejs-require worker this mod "hopscript") #f this)
 	    (js-put! this 'process
 	       (nodejs-process worker this) #f this)
 	    (js-put! this 'console
@@ -333,7 +331,7 @@
 						      "esplainp")
 						  "j2s-javascript-driver"
 						  "j2s-javascript-debug-driver")
-				 :language 'hopscript
+				 :language (or lang "hopscript")
 				 :site 'client
 				 :debug (if esplainp 0 (bigloo-debug)))))
 		     (for-each (lambda (exp)
@@ -435,19 +433,20 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-require ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language)
+(define (nodejs-require worker::WorkerHopThread this::JsGlobalObject %module::JsObject language::bstring)
 
    ;; require
    (define require
       (js-make-function this
 	 (lambda (_ name lang)
-	    (let loop ((lang lang))
-	       (nodejs-require-module (js-tostring name this)
-		  (js-current-worker) this %module
+	    (nodejs-require-module (js-tostring name this)
+	       (js-current-worker) this %module
+	       (if (eq? lang (js-undefined))
+		   language
+		   (js-tostring lang this))
+	       (let loop ((lang lang))
 		  (cond
-		     ((eq? lang (js-undefined))
-		      language)
-		     ((and (isa? lang JsObject) (eq? language 'hopscript))
+		     ((isa? lang JsObject)
 		      (with-access::JsGlobalObject this (js-symbol)
 			 (let* ((key (js-get js-symbol 'compiler this))
 				(comp (js-get lang key this)))
@@ -456,17 +455,20 @@
 				(js-raise-error (js-new-global-object)
 				   "Wrong language object"
 				   lang)))))
-		     ((and (js-jsstring? lang) (eq? language 'hopscript))
+		     ((js-jsstring? lang)
 		      (let ((str (js-jsstring->string lang)))
-			 (if (builtin-language? str)
-			     (string->symbol str)
-			     (let ((langmod (nodejs-require-module
-					       str
-					       (js-current-worker) this %module
-					       'hopscript)))
-				(loop langmod)))))
+			 (unless (builtin-language? str)
+			    (let ((langmod (nodejs-require-module str
+					      (js-current-worker)
+					      this %module)))
+			       (loop langmod)))))
+		     ((not (builtin-language? language))
+		      (let ((langmod (nodejs-require-module language
+					(js-current-worker)
+					this %module)))
+			 (loop langmod)))
 		     (else
-		      (string->symbol (js-tostring lang this)))))))
+		      #f)))))
 	 2 "require"))
 
    ;; require.main
@@ -508,7 +510,7 @@
       :enumerable #f)
 
    ;; require.language
-   (let ((lang (js-string->jsstring (symbol->string language))))
+   (let ((lang (js-string->jsstring language)))
       (js-put! require 'language lang #f this))
    
    require)
@@ -739,7 +741,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile filename::bstring #!key lang worker-slave srcalias)
+(define (nodejs-compile filename::bstring #!key lang worker-slave)
    
    (define (compile-file filename::bstring mod)
       (with-trace 'require "compile-file"
@@ -753,7 +755,7 @@
 			:driver (nodejs-driver)
 			:driver-name "nodejs-driver"
 			:filename filename
-			:language (or lang 'hopscript)
+			:language (or lang "hopscript")
 			:mmap-src m
 			:module-main #f
 			:module-name (symbol->string mod)
@@ -773,7 +775,7 @@
 	       (j2s-compile in
 		  :driver (nodejs-driver)
 		  :driver-name "nodejs-driver"
-		  :language (or lang 'hopscript)
+		  :language (or lang "hopscript")
 		  :filename filename
 		  :module-main #f
 		  :module-name (symbol->string mod)
@@ -1225,7 +1227,7 @@
 
    (define (loadso-or-compile filename lang worker-slave)
       (if worker-slave
-	  (nodejs-compile filename :lang lang :worker-slave #t :srcalias srcalias)
+	  (nodejs-compile filename :lang lang :worker-slave #t)
 	  (let loop ((sopath (hop-find-sofile filename)))
 	     (cond
 		((string? sopath)
@@ -1241,13 +1243,13 @@
 		     (loop (nodejs-socompile filename lang)))
 		    ((nte nte1 nte+)
 		     (nodejs-socompile-queue-push filename lang)
-		     (nodejs-compile filename :lang lang :srcalias srcalias))
+		     (nodejs-compile filename :lang lang))
 		    (else
-		     (nodejs-compile filename :lang lang :srcalias srcalias))))
+		     (nodejs-compile filename :lang lang))))
 		(else
 		 (when (memq (hop-sofile-compile-policy) '(nte1 nte+))
 		    (nodejs-socompile-queue-push filename lang))
-		 (nodejs-compile filename :lang lang :srcalias srcalias))))))
+		 (nodejs-compile filename :lang lang))))))
    
    (define (load-module-js)
       (with-trace 'require "require@load-module-js"
@@ -1379,7 +1381,7 @@
 ;*    reuse the previously loaded module structure.                    */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-require-module name::bstring worker::WorkerHopThread %this
-	   %module #!optional lang)
+	   %module #!optional (lang "hopscript") compiler)
    
    (define (load-json path)
       (let ((mod (nodejs-module path path worker %this))
@@ -1389,23 +1391,24 @@
 	 (js-put! mod 'exports json #f %this)
 	 mod))
    
-   (define (load-module path worker %this %module lang srcalias)
+   (define (load-module path worker %this %module lang compiler srcalias)
       (cond
 	 ((core-module? path)
 	  (nodejs-core-module path worker %this))
-	 ((isa? lang JsFunction)
-	  (let ((obj (js-call1 %this lang (js-undefined) path)))
+	 ((isa? compiler JsFunction)
+	  (let ((obj (js-call1 %this compiler (js-undefined) path)))
 	     (when (isa? obj JsObject)
 		(let ((ty (js-tostring (js-get obj 'type %this) %this))
 		      (val (js-get obj 'value %this))
-		      (lang (js-get obj 'language %this)))
+		      (langc (js-get obj 'language %this)))
 		   (cond
 		      ((string=? ty "filename")
 		       (load-module (js-tostring val %this)
 			  worker %this %module
-			  (if (eq? lang (js-undefined))
-			      'hopscript
-			      (string->symbol (js-tostring lang %this)))
+			  (if (eq? langc (js-undefined))
+			      lang
+			      (js-tostring langc %this))
+			  #f
 			  path))
 		      ((string=? ty "value")
 		       (let ((mod (nodejs-module path path worker %this)))
@@ -1436,7 +1439,7 @@
 	    (trace-item "path=" path)
 	    (trace-item "mod=" (if (eq? mod (js-absent)) 'absent (typeof mod)))
 	    (if (eq? mod (js-absent))
-		(let ((mod (load-module path worker %this %module lang #f)))
+		(let ((mod (load-module path worker %this %module lang compiler #f)))
 		   (js-get mod 'exports %this))
 		(let ((exports (js-get mod 'exports %this)))
 		   (trace-item "exports=" (typeof exports))

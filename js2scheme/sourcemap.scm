@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Tue Mar 13 15:10:48 2018 (serrano)                */
+;*    Last change :  Wed Mar 14 07:23:37 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -17,7 +17,6 @@
    (library hop)
    
    (include "ast.sch"
-	    "../scheme2js/base64_vlq.sch"
 	    "../runtime/sourcemap.sch")
    
    (import __js2scheme_ast
