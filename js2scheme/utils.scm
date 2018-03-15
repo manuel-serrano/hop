@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Mar 11 19:34:18 2018 (serrano)                */
+;*    Last change :  Thu Mar 15 13:01:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -162,8 +162,10 @@
       ((at ?path ?start)
        (let ((m (config-get-mmap conf path)))
 	  (if (mmap? m)
-	      (mmap-substring m
-		 (fixnum->elong start) (find-delim m (fixnum->elong start)))
+	      (let ((end (find-delim m (fixnum->elong start))))
+		 (if (>elong end (fixnum->elong start))
+		     (mmap-substring m (fixnum->elong start) end)
+		     default))
 	      default)))
       (else
        default)))

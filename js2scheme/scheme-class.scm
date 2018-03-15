@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:01:46 2017                          */
-;*    Last change :  Sun Mar 11 19:27:32 2018 (serrano)                */
+;*    Last change :  Thu Mar 15 13:03:54 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    ES2015 Scheme class generation                                   */
@@ -257,10 +257,15 @@
 	     (let ((m (config-get-mmap conf path)))
 		`'(,loc . ,(when (mmap? m)
 			      (match-case endloc
-				 ((at ?- ?end)
-				  (mmap-substring m
-				     (fixnum->elong start)
-				     (+elong 1 (fixnum->elong end)))))))))))))
+				 ((at ?file ?end)
+				  (when (and (string=? (mmap-name m) file)
+					     (string=? path file)
+					     (<fx start end)
+					     (>=fx start 0)
+					     (<fx end (mmap-length m)))
+				     (mmap-substring m
+					(fixnum->elong start)
+					(+elong 1 (fixnum->elong end))))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme-super ...                                             */
