@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Wed Mar 14 08:31:06 2018 (serrano)                */
+;*    Last change :  Fri Mar 16 08:36:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -89,7 +89,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-file-hopscript ...                                */
 ;*---------------------------------------------------------------------*/
-(define (nodejs-compile-file-hopscript ifile name ofile query srcalias lang)
+(define (nodejs-compile-file-hopscript ifile name ofile query srcalias lang::bstring)
    (let* ((srcmap (when (>fx (bigloo-debug) 0)
 		     (string-append ofile ".map")))
 	  (op (if (string=? ofile "-")
@@ -141,9 +141,10 @@
 			 (let ((obj (js-call1 %this comp (js-undefined)
 				       (js-string->jsstring ifile))))
 			    (when (isa? obj JsObject)
-			       (let ((ty (js-tostring (js-get obj 'type %this) %this))
-				     (val (js-get obj 'value %this))
-				     (lang (js-get obj 'language %this)))
+			       (let* ((ty (js-tostring (js-get obj 'type %this) %this))
+				      (val (js-get obj 'value %this))
+				      (l (js-get obj 'language %this))
+				      (lang (if (eq? l (js-undefined)) lang (js-tostring l %this))))
 				  (cond
 				     ((string=? ty "filename")
 				      (filename->file val lang %this))
@@ -271,7 +272,7 @@
 ;*    module->javascript ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (module->javascript filename::bstring id op compile isexpr srcmap query
-	   srcalias lang)
+	   srcalias lang::bstring)
 
    (define (init-dummy-module! this worker)
       (with-access::JsGlobalObject this (js-object)
@@ -331,7 +332,7 @@
 						      "esplainp")
 						  "j2s-javascript-driver"
 						  "j2s-javascript-debug-driver")
-				 :language (or lang "hopscript")
+				 :language lang
 				 :site 'client
 				 :debug (if esplainp 0 (bigloo-debug)))))
 		     (for-each (lambda (exp)
