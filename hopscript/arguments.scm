@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 14 09:14:55 2013                          */
-;*    Last change :  Sat Mar 17 18:17:44 2018 (serrano)                */
+;*    Last change :  Sat Mar 17 19:28:42 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arguments objects            */
@@ -148,6 +148,12 @@
 	       (<u32 idx (fixnum->uint32 (vector-length vec))))
 	  (u32vref vec idx)
 	  (js-get arr idx %this))))
+
+;*---------------------------------------------------------------------*/
+;*    js-put-length! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-method (js-put-length! o::JsArguments v::obj throw::bool cache %this)
+   (js-put! o 'length v throw %this))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-put! ::JsArguments ...                                        */
