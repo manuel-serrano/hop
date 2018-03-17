@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Feb 19 12:07:42 2018 (serrano)                */
+;*    Last change :  Sat Mar 17 09:53:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -459,16 +459,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-get-length ::JsArray ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-length o::JsArray %this #!optional cache)
-   (with-access::JsArray o (length)
-      (js-uint32-tointeger length)))
+(define-method (js-get-length arr::JsArray %this #!optional cache)
+   (js-uint32-tointeger (js-array-length arr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-lengthu32 ::JsArray ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (js-get-lengthu32 o::JsArray %this #!optional cache)
-   (with-access::JsArray o (length)
-      length))
+(define-method (js-get-lengthu32 arr::JsArray %this #!optional cache)
+   (js-array-length arr))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-inlined? ...                                            */

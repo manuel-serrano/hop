@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:04:57 2017                          */
-;*    Last change :  Thu Mar 15 13:10:35 2018 (serrano)                */
+;*    Last change :  Sat Mar 17 11:41:47 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript functions                   */
@@ -699,10 +699,10 @@
 						(string=? path file)
 						(<fx start end)
 						(>=fx start 0)
-						(<fx end (mmap-length m)))
+						(<fx (+fx 1 end) (mmap-length m)))
 					(mmap-substring m
 					    (fixnum->elong start)
-					    (fixnum->elong end))))))))))
+					    (+fx 1 (fixnum->elong end)))))))))))
 	    (else
 	     (error "j2s-function-src" "bad location" loc))))))
 

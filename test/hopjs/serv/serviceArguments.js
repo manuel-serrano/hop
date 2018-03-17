@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    .../project/hop/3.1.x/test/hopjs/serv/serviceArguments.js        */
+/*    .../project/hop/3.2.x/test/hopjs/serv/serviceArguments.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Vincent Prunet                                    */
 /*    Creation    :  Fri Sep  25 11:43:00 2015                         */
-/*    Last change :  Mon Oct 31 21:11:39 2016 (serrano)                */
-/*    Copyright   :  2015-16 Inria                                     */
+/*    Last change :  Sat Mar 17 11:18:23 2018 (serrano)                */
+/*    Copyright   :  2015-18 Inria                                     */
 /*    -------------------------------------------------------------    */
 /*    Test service constructor and arguments                           */
 /*=====================================================================*/
@@ -37,8 +37,10 @@ var svcnew2 = new Service( function() {
 });
 
 var svcF = service( a, b ) {
-   assert.equal( a, arguments[ 0 ] );
-   assert.equal( b, arguments [ 1 ] );
+   console.log( "a=", a, " a[0]=", arguments[ 0 ] );
+   console.log( "b=", b, " a[1]=", arguments[ 1 ] );
+   assert.equal( a, arguments[ 0 ], "svcF.a" );
+   assert.equal( b, arguments [ 1 ], "svcF.b" );
    return b;
 };
 
@@ -104,7 +106,7 @@ var testSuite = [
    },
    function() {
       svc( 'foo' ).post( function( result ) {
-	 assert.equal( result, 1 );
+	 assert.equal( result, 1, 'svc("foo")' );
 	 pass();
       }, fail );
    },
@@ -116,7 +118,7 @@ var testSuite = [
    },
    function() {
       svc1().post( function( result ) {
-	 assert.equal( result, undefined );
+	 assert.equal( result, undefined, "svc1" );
 	 pass();
       }, fail );
    },
@@ -134,7 +136,7 @@ var testSuite = [
    },
    function() {
       svc2().post( function( result ) {
-	 assert.equal( result, undefined );
+	 assert.equal( result, undefined, "svc2" );
 	 pass();
       }, fail );
    },
@@ -170,7 +172,7 @@ var testSuite = [
    },
    function() {
       svcnew1().post( function( result ) {
-	 assert.equal( result, undefined );
+	 assert.equal( result, undefined, "svcnew1" );
 	 pass();
       }, fail );
    },

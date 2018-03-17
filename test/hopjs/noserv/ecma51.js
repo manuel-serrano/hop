@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Wed Feb 21 18:42:05 2018 (serrano)                */
+/*    Last change :  Sat Mar 17 10:48:38 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -170,10 +170,10 @@ function bar4( buf ) {
    return arguments[ 0 ];
 }
 
-assert.equal( foo1( 10 ), 55 );
-assert.equal( foo2( 10 ), 10 );
-assert.equal( bar1( 10 ), 55 );
-assert.equal( bar2( 10 ), 55 );
+assert.equal( foo1( 10 ), 55, "foo1" );
+assert.equal( foo2( 10 ), 10, "foo2" );
+assert.equal( bar1( 10 ), 55, "bar1" );
+assert.equal( bar2( 10 ), 55, "bar2" );
 assert.strictEqual( bar3( 1, 2, 3, 4, 5, 6 ), true, "arguments.length" );
 assert.strictEqual( bar4( 10 ), 3, "arguments overriding" );
 

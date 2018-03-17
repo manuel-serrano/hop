@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Mar 11 17:41:57 2018 (serrano)                */
+;*    Last change :  Sat Mar 17 09:26:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -35,7 +35,8 @@
 	   __js2scheme_scheme-regexp
 	   __js2scheme_scheme-math
 	   __js2scheme_scheme-date
-	   __js2scheme_scheme-array)
+	   __js2scheme_scheme-array
+	   __js2scheme_scheme-arguments)
    
    (export j2s-scheme-stage
 	   j2s-scheme-eval-stage
@@ -2442,29 +2443,57 @@
 	    (j2s-property-scheme field mode return conf)
 	    (j2s-vtype field) (j2s-vtype this) conf cache cspecs)))
 
+   (define (canbe-array? obj)
+      (memq (j2s-type obj) '(any undefined unknown object)))
+
+   (define (canbe-string? obj)
+      (memq (j2s-type obj) '(any undefined unknown object)))
+
+   (define (canbe-arguments? obj)
+      (memq (j2s-type obj) '(any undefined unknown object)))
+
    (define (index-ref obj field cache cspecs loc)
       (if (isa? obj J2SRef)
 	  (let ((tmp (j2s-scheme obj mode return conf hint)))
 	     `(cond
-		 ((isa? ,tmp JsArray)
-		  ,(or (j2s-array-ref this mode return conf hint)
-		       (get obj field cache cspecs loc)))
-		 ((js-jsstring? ,tmp)
-		  ,(or (j2s-string-ref this mode return conf hint)
-		       (get obj field cache cspecs loc)))
+		 ,@(if (canbe-array? obj)
+		    `(((isa? ,tmp JsArray)
+		       ,(or (j2s-array-ref this mode return conf hint)
+			    (get obj field cache cspecs loc))))
+		    '())
+		 ,@(if (canbe-string? obj)
+		    `(((js-jsstring? ,tmp)
+		       ,(or (j2s-string-ref this mode return conf hint)
+			    (get obj field cache cspecs loc))))
+		    '())
+		 ,@(if (canbe-arguments? obj)
+		    `(((isa? ,tmp JsArguments)
+		       ,(or (j2s-arguments-ref this mode return conf hint)
+			    (get obj field cache cspecs loc))))
+		    '())
 		 (else
 		  ,(get obj field cache cspecs loc))))
 	  (let ((tmp (gensym 'tmp)))
 	     `(let ((,tmp ,(j2s-scheme obj mode return conf hint)))
 		 (cond
-		    ((isa? ,tmp JsArray)
-		     ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
-			 (or (j2s-array-ref access mode return conf hint)
-			     (get (J2SHopRef tmp) field cache cspecs loc))))
-		    ((js-jsstring? ,tmp)
-		     ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
-			 (or (j2s-string-ref access mode return conf hint)
-			     (get (J2SHopRef tmp) field cache cspecs loc))))
+		    ,@(if (canbe-array? obj)
+		       `(((isa? ,tmp JsArray)
+			  ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
+			      (or (j2s-array-ref access mode return conf hint)
+				  (get (J2SHopRef tmp) field cache cspecs loc)))))
+		       '())
+		    ,@(if (canbe-string? obj)
+		       `(((js-jsstring? ,tmp)
+			  ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
+			      (or (j2s-string-ref access mode return conf hint)
+				  (get (J2SHopRef tmp) field cache cspecs loc)))))
+		       '())
+		    ,@(if (canbe-arguments? obj)
+		       `(((isa? ,tmp JsArguments)
+			  ,(let ((access (J2SAccess (J2SHopRef tmp) field)))
+			      (or (j2s-arguments-ref access mode return conf hint)
+				  (get (J2SHopRef tmp) field cache cspecs loc)))))
+		       '())
 		    (else
 		     ,(get (J2SHopRef tmp) field cache cspecs loc)))))))
    
@@ -2476,8 +2505,11 @@
 	    ((eq? (j2s-type obj) 'array)
 	     (or (j2s-array-ref this mode return conf hint)
 		 (get obj field cache cspecs loc)))
-	    ((eq? (j2s-type obj) 'string)
+ 	    ((eq? (j2s-type obj) 'string)
 	     (or (j2s-string-ref this mode return conf hint)
+		 (get obj field cache cspecs loc)))
+	    ((eq? (j2s-type obj) 'arguments)
+	     (or (j2s-arguments-ref this mode return conf hint)
 		 (get obj field cache cspecs loc)))
 	    ((is-number? field)
 	     (index-ref obj field cache cspecs loc))
