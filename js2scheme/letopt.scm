@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Mar  7 14:04:05 2018 (serrano)                */
+;*    Last change :  Sun Mar 18 13:45:50 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -587,12 +587,38 @@
 	 disabled)
       decls)
 
-   (define (literal? expr)
-      (when (isa? expr J2SLiteral)
-	 (or (not (isa? expr J2SArray))
-	     (with-access::J2SArray expr (exprs)
-		(every literal? exprs)))))
-
+   (define (liftable? expr)
+      (cond
+	 ((isa? expr J2SLiteral)
+	  (or (not (isa? expr J2SArray))
+	      (with-access::J2SArray expr (exprs)
+		 (every liftable? exprs))))
+	 ((isa? expr J2SBinary)
+	  (with-access::J2SBinary expr (op lhs rhs)
+	     (and (liftable? lhs) (liftable? rhs))))
+	 ((isa? expr J2SUnary)
+	  (with-access::J2SUnary expr (expr)
+	     (liftable? expr)))
+	 ((isa? expr J2SCond)
+	  (with-access::J2SCond expr (test then else)
+	     (and (liftable? test) (liftable? then) (liftable? else))))
+	 ((isa? expr J2SRef)
+	  (with-access::J2SRef expr (decl)
+	     (with-access::J2SDecl decl (binder writable usage)
+		(when (eq? binder 'let-opt)
+		   (or (not writable) (not (usage? '(assig) usage)))))))
+	 ((isa? expr J2SGlobalRef)
+	  (with-access::J2SGlobalRef expr (decl)
+	     (with-access::J2SDecl decl (writable usage id)
+		(when (or (not writable) (not (usage? '(assig) usage)))
+		   (memq id '(Array Function Number Boolean Promise))))))
+	 ((isa? expr J2SNew)
+	  (with-access::J2SNew expr (clazz args)
+	     (when (every liftable? args)
+		(liftable? clazz))))
+	 (else
+	  #f)))
+   
    (let loop ((n nodes)
 	      (decls decls)
 	      (deps '())
@@ -629,7 +655,7 @@
 ;* 						    (expr init))))     */
 ;* 				    (liip (cdr inits) ndecls           */
 ;* 				       deps res))))                    */
-			     ((literal? rhs)
+			     ((liftable? rhs)
 			      ;; optimize this binding but keep tracks
 			      (let ((decl (init-decl init)))
 				 (with-access::J2SInit init (rsh)
