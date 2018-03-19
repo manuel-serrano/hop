@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Wed Mar 14 07:23:37 2018 (serrano)                */
+;*    Last change :  Mon Mar 19 17:20:41 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -40,7 +40,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-sourcemap! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (j2s-sourcemap! this)
+(define (j2s-sourcemap! this conf)
    
    (define (assq-get k lst)
       (let ((v (assq k lst)))
@@ -401,20 +401,22 @@
 ;*    and the column number.                                           */
 ;*---------------------------------------------------------------------*/
 (define (linetable-find table fromline pos file)
-   (let ((len (vector-length table)))
-      (let loop ((i fromline))
-	 (if (<fx i len)
-	     (let* ((line (vector-ref table i))
-		    (b (car line))
-		    (e (cdr line)))
-		(cond
-		   ((<fx pos b)
-		    (linetable-find table 0 pos file))
-		   ((>=fx e pos)
-		    (values i b e))
-		   (else
-		    (loop (+fx i 1)))))
-	     (linetable-find table 0 pos file)))))
+   (if (>=fx pos 0)
+       (let ((len (vector-length table)))
+	  (let loop ((i fromline))
+	     (if (<fx i len)
+		 (let* ((line (vector-ref table i))
+			(b (car line))
+			(e (cdr line)))
+		    (cond
+		       ((<fx pos b)
+			(linetable-find table 0 pos file))
+		       ((>=fx e pos)
+			(values i b e))
+		       (else
+			(loop (+fx i 1)))))
+		 (linetable-find table 0 pos file))))
+       (values 0 0 0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    segments ...                                                     */
