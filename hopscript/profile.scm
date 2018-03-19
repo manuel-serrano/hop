@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Mar  8 13:19:23 2018 (serrano)                */
+;*    Last change :  Mon Mar 19 07:42:36 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -61,6 +61,8 @@
 (define *profile-calls* 0)
 (define *profile-calls-props* #f)
 
+(define *profile-port* (current-error-port))
+
 (define *profile-cache-hit*
    '(getCache getCachePrototype getCacheAccessor getCacheVtable
      putCache putCachePrototype putCacheAccessor utCacheVtable putCacheExtend
@@ -79,6 +81,9 @@
       (set! *profile* #t)
       (let ((trc (or (getenv "HOPTRACE") "")))
 	 (when (string-contains trc "hopscript")
+	    (let ((m (pregexp-match "logfile=([^ ]+)" trc)))
+	       (when m
+		  (set! *profile-port* (open-output-file (cadr m)))))
 	    (profile-cache-start! trc)
 	    (when (string-contains trc "hopscript:cache")
 	       (log-cache-miss!))
@@ -96,7 +101,9 @@
 		     (profile-functions))
 		  (when (string-contains trc "hopscript:alloc")
 		     (profile-allocs))
-		  (profile-report-end trc conf)))))))
+		  (profile-report-end trc conf)
+		  (unless (eq? *profile-port* (current-error-port))
+		     (close-output-port *profile-port*))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-cache-start! ...                                         */
@@ -317,7 +324,7 @@
 ;*    profile-functions ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (profile-functions)
-   (with-output-to-port (current-error-port)
+   (with-output-to-port *profile-port*
       (lambda ()
 	 (let ((m (pregexp-match "hopscript:function([0-9]+)"
 		     (getenv "HOPTRACE"))))
@@ -445,7 +452,7 @@
 	  (show-text-percentages js-profile-vectors))
 	 (else #f)))
    
-   (with-output-to-port (current-error-port)
+   (with-output-to-port *profile-port*
       (lambda ()
 	 (let ((m (pregexp-match "hopscript:alloc([0-9]+)"
 		     (getenv "HOPTRACE"))))
@@ -500,15 +507,17 @@
 ;*    profile-report-start ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (profile-report-start trc)
-   (when (or (string-contains trc "format:json") (string-contains trc "format:fprofile"))
-      (display "{\n" (current-error-port))))
+   (when (or (string-contains trc "format:json")
+	     (string-contains trc "format:fprofile"))
+      (display "{\n" *profile-port*)))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-report-end ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (profile-report-end trc conf)
-   (when (or (string-contains trc "format:json") (string-contains trc "format:fprofile"))
-      (with-output-to-port (current-error-port)
+   (when (or (string-contains trc "format:json")
+	     (string-contains trc "format:fprofile"))
+      (with-output-to-port *profile-port*
 	 (lambda ()
 	    (display "\"config\": ")
 	    (profile-config conf)
@@ -575,7 +584,7 @@
       (cdr fc))
    
    (define filecaches
-      (let ((m (pregexp-match "filename=([^ ]+)" trc)))
+      (let ((m (pregexp-match "srcfile=([^ ]+)" trc)))
 	 (if m
 	     (let ((filename (cadr m)))
 		(filter (lambda (fc) (string=? (filecache-name fc) filename))
@@ -742,7 +751,7 @@
    (cond
       ((string-contains trc "format:fprofile")
        (when (pair? filecaches)
-	  (with-output-to-port (current-error-port)
+	  (with-output-to-port *profile-port*
 	     (lambda ()
 		(print "\"format\": \"fprofile\",")
 		(print "\"sources\": [")
@@ -778,7 +787,7 @@
 		(print "  { \"filename\": \"\", \"caches\": [] }")
 		(print "],")))))
       ((string-contains trc "format:json")
-       (with-output-to-port (current-error-port)
+       (with-output-to-port *profile-port*
 	  (lambda ()
 	     (print "\"format\": \"json\",")
 	     (print "\"caches\": {")
@@ -802,17 +811,17 @@
 	     (print "  \"vtables\": { \"number\": " *vtables* ", \"mem\": " *vtables-mem* "}")
 	     (print "},"))))
       (else
-       (fprint (current-error-port) "\nCACHES:\n" "=======")
-       (fprintf (current-error-port) "~(, )\n\n" (map car filecaches))
+       (fprint *profile-port* "\nCACHES:\n" "=======")
+       (fprintf *profile-port* "~(, )\n\n" (map car filecaches))
        (for-each (lambda (what)
 		    (let ((c 0))
-		       (fprint (current-error-port) (car what) ": "
+		       (fprint *profile-port* (car what) ": "
 			  (cadr what))
 		       (for-each (lambda (e)
 				    (when (or (>= (cdr e) *log-miss-threshold*)
 					      (< c 10))
 				       (set! c (+ c 1))
-				       (fprint (current-error-port) "   "
+				       (fprint *profile-port* "   "
 					  (car e) ": " (cdr e))))
 			  (sort (lambda (e1 e2)
 				   (cond
@@ -822,59 +831,59 @@
 				       (string<=? (js-symbol->string! (car e1))
 					  (js-symbol->string! (car e2))))))
 			     (cddr what)))
-		       (newline (current-error-port))))
+		       (newline *profile-port*)))
 	  *profile-caches*)
        (when (> total 0)
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "total accesses           : "
 	     (padding total 12 'right))
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "total cache hits         : "
 	     (padding (filecaches-hits filecaches) 12 'right)
 	     " (" (percent (filecaches-hits filecaches) total) "%)")
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "total cache imap hits    : "
 	     (padding (filecaches-imaps filecaches) 12 'right)
 	     " (" (percent (filecaches-imaps filecaches) total) "%)")
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "total cache cmap hits    : "
 	     (padding (filecaches-cmaps filecaches) 12 'right)
 	     " (" (percent (filecaches-cmaps filecaches) total) "%)")
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "total cache pmap hits    : "
 	     (padding (filecaches-pmaps filecaches) 12 'right)
 	     " (" (percent (filecaches-pmaps filecaches) total) "%)")
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "total cache amap hits    : "
 	     (padding (filecaches-amaps filecaches) 12 'right)
 	     " (" (percent (filecaches-amaps filecaches) total) "%)")
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "total cache vtable hits  : "
 	     (padding (filecaches-vtables filecaches) 12 'right)
 	     " (" (percent (filecaches-vtables filecaches) total) "%)")
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "total cache misses       : "
 	     (padding (filecaches-misses filecaches) 12 'right)
 	     " (" (percent (filecaches-misses filecaches) total) "%)")
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "total uncaches           : "
 	     (padding (total-uncaches) 12 'right)
 	     " (" (percent (total-uncaches) total) "%)")
 	  
 	  (let ((l (sort (lambda (n1 n2) (<= (cdr n1) (cdr n2))) poly))
 		(poly (apply + (map cdr poly))))
-	     (fprint (current-error-port)
+	     (fprint *profile-port*
 		"total cache polymorphic  : "
 		(padding poly 12 'right)
 		" (" (percent poly total) "%) "
 		(map car (take l (min (length l) 5)))))
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "hidden classes num       : "
 	     (padding (gencmapid) 12 'right))
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "pmap invalidations       : "
 	     (padding *pmap-invalidations* 12 'right))
-	  (fprint (current-error-port)
+	  (fprint *profile-port*
 	     "vtables                  : "
 	     (padding *vtables* 12 'right)
 	     " (" *vtables-mem* "b)")
@@ -898,19 +907,19 @@
 			 *profile-puts-props*))
 		(calls (sort (lambda (x y) (>= (cdr x) (cdr y)))
 			  *profile-calls-props*)))
-	     (newline (current-error-port)) 
-	     (fprint (current-error-port)
+	     (newline *profile-port*) 
+	     (fprint *profile-port*
 		"UNCACHED GETS:\n==============")
 	     (profile-uncached gets *profile-gets*)
-	     (newline (current-error-port))
-	     (fprint (current-error-port)
+	     (newline *profile-port*)
+	     (fprint *profile-port*
 		"UNCACHED PUTS:\n==============")
 	     (profile-uncached puts *profile-puts*)
-	     (newline (current-error-port))
-	     (fprint (current-error-port)
+	     (newline *profile-port*)
+	     (fprint *profile-port*
 		"UNCACHED CALLS:\n===============")
 	     (profile-uncached calls *profile-calls*)
-	     (newline (current-error-port)))))))
+	     (newline *profile-port*))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-uncached ...                                             */
@@ -920,7 +929,7 @@
 	      (sum 0))
       (when (and (pair? es) (> (/ (cdar es) total) 0.01))
 	 (let ((e (car es)))
-	    (fprint (current-error-port) (padding (car e) 10 'right) ": "
+	    (fprint *profile-port* (padding (car e) 10 'right) ": "
 	       (padding (cdr e) 10 'right)
 	       (padding
 		  (string-append " (" (number->string (percent (cdr e) total)) "%)")
@@ -934,10 +943,10 @@
 ;*    profile-pcache ...                                               */
 ;*---------------------------------------------------------------------*/
 (define (profile-pcache pcache)
-   (newline (current-error-port))
-   (fprint (current-error-port)
+   (newline *profile-port*)
+   (fprint *profile-port*
       (car pcache) ":")
-   (fprint (current-error-port)
+   (fprint *profile-port*
       (make-string (string-length (car pcache)) #\=) "=")
 
    (let* ((pcache (sort (lambda (x y)
@@ -952,7 +961,7 @@
 			  (number->string point))))
 	  (ppading (max (string-length maxpoint) 5))
 	  (cwidth 8))
-      (fprint (current-error-port) (padding "point" ppading 'center)
+      (fprint *profile-port* (padding "point" ppading 'center)
 	 " "
 	 (padding "property" cwidth 'center)
 	 " "
@@ -969,7 +978,7 @@
 	 (padding "amap" cwidth 'right)
 	 " " 
 	 (padding "vtable" cwidth 'right))
-      (fprint (current-error-port) (make-string (+ ppading 1 cwidth 1 4) #\-)
+      (fprint *profile-port* (make-string (+ ppading 1 cwidth 1 4) #\-)
 	 "-+-"
 	 (make-string (* 6 (+ cwidth 1)) #\-))
       (for-each (lambda (pc)
@@ -982,7 +991,7 @@
 						       cntvtable)
 		      (when (> (+ cntmiss cntimap cntcmap cntpmap cntamap cntvtable)
 			       *log-miss-threshold*)
-			 (fprint (current-error-port)
+			 (fprint *profile-port*
 			    (padding (number->string point) ppading 'right)
 			    " " 
 			    (padding name cwidth 'right)

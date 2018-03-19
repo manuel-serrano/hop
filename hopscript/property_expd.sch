@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Mar  8 12:59:44 2018 (serrano)                */
+;*    Last change :  Mon Mar 19 07:41:47 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -323,7 +323,7 @@
       
    (cond-expand
       ((or no-macro-cache no-macro-cache-get)
-       (map (lambda (e x e)) x))
+       (map (lambda (x) (e x e)) x))
       (else
        (match-case x
 	  ((js-object-get-name/cache (and (? (lambda (o) (not (symbol? o)))) ?obj) . ?rest)

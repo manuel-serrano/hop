@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Mar 11 17:34:40 2018 (serrano)                */
+;*    Last change :  Mon Mar 19 07:47:46 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -46,8 +46,8 @@
    (print "      j2s:loc,")
    (print "      nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:function[num] (*),")
-   (print "      hopscript:alloc[num], hopscript:file=path(*), hopscript:uncache")
-   (print "      format:json, format:fprofile")
+   (print "      hopscript:alloc[num], hopscript:uncache")
+   (print "      format:json, format:fprofile, srcfile=path, logfile=path")
    (print "   - HOPCFLAGS: hopc compilation flags")
    (print " (*) Need both compile and runtime variable and need to be compiled")
    (print " in profile mode: --profile")
