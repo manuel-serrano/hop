@@ -16,9 +16,10 @@ The arguments are as follows:
 
  * `id` is a string that designates the source file containing the module.
  * `language` is an optional string denoting the implementation language
- of the module. The supported languages are:
+ of the module. The supported builtin languages are:
    * `javascript`;
    * `html`;
+   * `json`;
    * `hopscript`.
    
 Modules are loaded differently depending on their source file suffix.
@@ -39,22 +40,6 @@ given server to get the file contents. Modules required within the
 retrieved file are downloaded from the same location, except for
 system modules which are assumed to be available locally.
 
-The optional argument `language` is a string denoting an implementation
-language for the module to be loaded. The builtin languages are:
-
-  * `hopscript`
-  * `hop`
-  * `html`
-  * `json`
-  * `ecmascript5`
-  * `ecmascript6`
-  * `ecmascript2017`
-
-
-Additinoal custom languages may also be defined. See chapter
-[Language definition](20-lang.html).
-
-
 #### Example ####
 
 ${ doc.include( doc.EXAMPLES_DIR + "/htmlr/README.md" ) }
@@ -70,6 +55,37 @@ ${ <span class="label label-info">htmlr/htmlr.html</span> }
 ```hopscript
 ${ doc.include( doc.EXAMPLES_DIR + "/htmlr/htmlr.html", 14 ) }
 ```
+
+#### Languages ####
+
+The optional argument `language` is a string denoting an implementation
+language for the module to be required. The builtin languages are:
+
+  * `hopscript`
+  * `hop`
+  * `html`
+  * `json`
+  * `ecmascript5`
+  * `ecmascript6`
+  * `ecmascript2017`
+
+
+Additional custom languages may also be defined. See chapter
+[Language definition](20-lang.html). The optional `language` defaults
+to `require.lang`.
+
+### require.lang ###
+[:@glyphicon glyphicon-tag parameter] 
+The default language used to require other modules.
+
+${ <span class="label label-warning">Note:</span> } Language
+importation is recursive. That is, if a module `mod` is imported with
+a language `lang`, all the modules imported by `mod` will be
+considered implemented in the same language `lang`, unless a specific
+language is specified on the `require` calls.
+
+This can be changed by modified the value of the `require.lang`
+attribute.
 
 
 ### Client Side modules ###

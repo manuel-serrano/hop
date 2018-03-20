@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Mon Mar 19 17:20:41 2018 (serrano)                */
+;*    Last change :  Tue Mar 20 08:10:00 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -338,9 +338,9 @@
 			       (loc (cadr seg))
 			       (file (hashtable-get sourcetable (cadr loc)))
 			       (src-linetable (vector-ref src-linetables file)))
-			   (multiple-value-bind (dstline dstbeg dstend)
+			   (multiple-value-bind (dstline dstbeg)
 			      (linetable-find dst-linetable pdstline pos dst-file)
-			      (multiple-value-bind (srcline srcbeg srcend)
+			      (multiple-value-bind (srcline srcbeg)
 				 (linetable-find src-linetable psrcline (caddr loc) src-file)
 				 (let ((srccol (-fx (caddr loc) srcbeg))
 				       (dstcol (-fx pos dstbeg)))
@@ -401,7 +401,8 @@
 ;*    and the column number.                                           */
 ;*---------------------------------------------------------------------*/
 (define (linetable-find table fromline pos file)
-   (if (>=fx pos 0)
+   (if (and (>=fx pos 0) (>=fx fromline 0))
+       ;; guard against corrupted ast
        (let ((len (vector-length table)))
 	  (let loop ((i fromline))
 	     (if (<fx i len)
@@ -412,11 +413,11 @@
 		       ((<fx pos b)
 			(linetable-find table 0 pos file))
 		       ((>=fx e pos)
-			(values i b e))
+			(values i b))
 		       (else
 			(loop (+fx i 1)))))
 		 (linetable-find table 0 pos file))))
-       (values 0 0 0)))
+       (values 0 0)))
 
 ;*---------------------------------------------------------------------*/
 ;*    segments ...                                                     */

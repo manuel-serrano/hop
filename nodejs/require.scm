@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Fri Mar 16 08:36:38 2018 (serrano)                */
+;*    Last change :  Tue Mar 20 07:38:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -472,6 +472,19 @@
 		      #f)))))
 	 2 "require"))
 
+   ;; require.lang
+   (js-bind! this require 'lang
+      :get (js-make-function this
+	      (lambda (_)
+		 (js-string->jsstring language)) 0
+		 'lang)
+      :set (js-make-function this
+	      (lambda (_ val)
+		 (set! language (js-tostring val this))
+		 val)
+	      1 'lang)
+      :configurable #f :writable #t)
+   
    ;; require.main
    (with-access::JsGlobalObject this (js-main js-object) 
       (js-bind! this require 'main
@@ -510,10 +523,6 @@
       :value require
       :enumerable #f)
 
-   ;; require.language
-   (let ((lang (js-string->jsstring language)))
-      (js-put! require 'language lang #f this))
-   
    require)
 
 ;*---------------------------------------------------------------------*/
