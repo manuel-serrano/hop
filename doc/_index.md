@@ -49,7 +49,7 @@ Hop is multitier. That is client-side codes are also implemented in Hop. The
 
 ```hopscript[:prog3@homeprog]
 service hello() {
-  return <html><div onclick=~{ alert( "world" ) }>hello</html>;
+  return <html><div onclick=~{ alert( "world" ) }>hello</div></html>;
 }
 ```
 
@@ -58,7 +58,7 @@ Hop client-side code and server-side can also be mixed using the
 
 ```hopscript[:prog4@homeprog]
 service hello( { who: "foo" } ) {
-  return <html><div onclick=~{ alert( "Hi " + ${who} + "!") }>hello</html>;
+  return <html><div onclick=~{ alert( "Hi " + ${who} + "!") }>hello</div></html>;
 }
 ```
 
