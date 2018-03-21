@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Thu Oct 26 05:55:40 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed Mar 21 10:28:42 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
 ;*=====================================================================*/
@@ -186,13 +186,13 @@
 	       (let ((remall (js-make-function %this removeall 1 "removeAllListeners")))
 		  (js-put! %process 'removeAllListeners remall #f %this))))
 	 ;; stdios
-	 (let* ((oldstdout (js-get %process 'stdout %this))
-		(oldstderr (js-get %process 'stderr %this))
+	 (let* (;; (oldstdout (js-get %process 'stdout %this))
+		;; (oldstderr (js-get %process 'stderr %this))
 		(m (nodejs-require-core "node_stdio" %worker %this))
 		(stdio (js-get m 'initNodeStdio %this)))
 	    (js-call1 %this stdio (js-undefined) %process))
 	 ;; console finalization
-	 ;; for this a new console object is create and the core module
+	 ;; for this a new console object is created and the core module
 	 ;; console.exports value is updated
 	 (let* ((stdout (js-get %process 'stdout %this))
 		(stderr (js-get %process 'stderr %this))

@@ -3,8 +3,8 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Mar 15 07:22:39 2006                          */
-#*    Last change :  Mon Oct 23 16:05:45 2017 (serrano)                */
-#*    Copyright   :  2006-17 Manuel Serrano                            */
+#*    Last change :  Wed Mar 21 10:26:33 2018 (serrano)                */
+#*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The common Makefile for building libraries                       */
 #*=====================================================================*/
@@ -89,7 +89,10 @@ lib-c: $(TAGS) o lib-c-static lib-c-shared
 o:
 	mkdir -p $@
 
-lib-c-static: .afile $(OBJECTS)
+lib-c-static: .afile
+	$(MAKE) lib-c-static-sans-afile
+
+lib-c-static-sans-afile: $(OBJECTS)
 	$(MAKE) LIBVERSION=$(LIBVERSION) \
                 $(BUILDLIBDIR)/lib$(TARGETNAME)_s-$(LIBVERSION).a \
 	        $(BUILDLIBDIR)/lib$(TARGETNAME)_u-$(LIBVERSION).a \
