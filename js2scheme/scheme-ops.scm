@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Feb 18 17:39:30 2018 (serrano)                */
+;*    Last change :  Fri Mar 23 19:13:32 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -997,7 +997,9 @@
 		  ((memq type '(int32 uint32))
 		   (case op
 		      ((>> <<)
-		       `(,(bitop op) ,(toint32 left tl) ,(mask32 right rhs)))
+		       (if (and (= right 0) (eq? type tl))
+			   (toint32 left tl)
+			   `(,(bitop op) ,(toint32 left tl) ,(mask32 right rhs))))
 		      ((>>>)
 		       `(,(bitop op) ,(touint32 left tl) ,(mask32 right rhs)))
 		      (else
@@ -1006,8 +1008,10 @@
 		   (case op
 		      ((>> <<)
 		       (j2s-cast
-			  `(,(bitop op)
-			    ,(toint32 left tl) ,(mask32 right rhs))
+			  (if (and (= right 0) (eq? type tl))
+			      (toint32 left tl)
+			      `(,(bitop op)
+				,(toint32 left tl) ,(mask32 right rhs)))
 			  #f 'int32 type conf))
 		      ((>>>)
 		       (j2s-cast
@@ -1451,9 +1455,19 @@
 	  `(uint32->int32 (/u32 ,left ,right)))
 	 ((and (eq? tl 'int32) (eq? tr 'int32))
 	  `(/s32 ,left ,right))
+	 ((and (eq? tl 'int32) (eq? tr 'uint32) (inrange-int32? rhs))
+	  `(/s32 ,left ,(asint32 right tr)))
+	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
+	  (if-fixnum? left tl
+	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
+	     `(js-toint32 (/js ,left ,right %this) %this)))
+	 ((eq? tr 'int32)
+	  (if-fixnum? left tl
+	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
+	     `(js-toint32 (/js ,left ,right %this) %this)))
 	 (else
 	  (if-fixnums? left tl right tr
-	     `(fixnum->int32 (/fx ,left ,right))
+	     `(fixnum->int32 (/fx ,(asfixnum left tl) ,(asfixnum right tr)))
 	     `(js-toint32 (/js ,left ,right %this) %this)))))
 
    (define (divu32 left right tl tr)
@@ -1462,6 +1476,8 @@
 	  `(/u32 ,left ,right))
 	 ((and (eq? tl 'int32) (eq? tr 'int32))
 	  `(int32->uint32 (/s32 ,left ,right)))
+	 ((and (eq? tr 'int32) (inrange-uint32? rhs))
+	  `(/u32 ,left ,(asuint32 right tr)))
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(fixnum->uint32 (/fx ,left ,right))
@@ -1510,7 +1526,7 @@
    (let ((k (power2 rhs)))
       (if (and k (not (memq type '(int32 uint32))))
 	  (div-power2 k)
-	  (with-tmp lhs rhs mode return conf hint '*
+	  (with-tmp lhs rhs mode return conf hint '/
 	     (lambda (left right)
 		(let ((tl (j2s-vtype lhs))
 		      (tr (j2s-vtype rhs)))
@@ -1877,8 +1893,8 @@
    (cond
       ((eq? tl 'integer) (if (eq? tr 'integer) #t `(fixnum? ,right)))
       ((eq? tr 'integer) `(fixnum? ,left))
-      ((and (memq tl '(int32 uint32 int53 integer number any unknown))
-	    (memq tr '(int32 uint32 int53 integer number any unknown)))
+      ((and (memq tl '(int53 integer number any unknown))
+	    (memq tr '(int53 integer number any unknown)))
        `(fixnums? ,left ,right))
       (else #f)))
 
@@ -1887,6 +1903,19 @@
 ;*---------------------------------------------------------------------*/
 (define (if-fixnums? left tl right tr then else)
    (let ((test (fixnums? left tl right tr)))
+      (cond
+	 ((eq? test #t) then)
+	 ((eq? test #f) else)
+	 (else `(if ,test ,then ,else)))))
+
+;*---------------------------------------------------------------------*/
+;*    if-fixnum? ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (if-fixnum? left tl then else)
+   (let ((test (cond
+		  ((eq? tl 'integer) #t)
+		  ((memq tl '(int53 number any unknown)) `(fixnum? ,left))
+		  (else #f))))
       (cond
 	 ((eq? test #t) then)
 	 ((eq? test #f) else)

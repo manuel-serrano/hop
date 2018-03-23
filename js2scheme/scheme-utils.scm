@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat Feb 17 18:11:41 2018 (serrano)                */
+;*    Last change :  Fri Mar 23 19:18:03 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -109,7 +109,9 @@
 ;*    epairify ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (epairify loc expr)
-   (econs (car expr) (cdr expr) loc))
+   (if (pair? expr)
+       (econs (car expr) (cdr expr) loc)
+       expr))
 
 ;*---------------------------------------------------------------------*/
 ;*    epairify-deep ...                                                */
