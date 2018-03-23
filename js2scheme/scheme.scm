@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Mar 17 09:26:11 2018 (serrano)                */
+;*    Last change :  Fri Mar 23 14:14:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2986,6 +2986,20 @@
 				   (set! ,offset len0)
 				   (set! ,cmap0 ,cmap)
 				   (set! ,cmap1 cmap))))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SDProducer ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SDProducer mode return conf hint)
+   (with-access::J2SDProducer this (expr)
+      (j2s-scheme expr mode return conf hint)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-scheme ::J2SDConsumer ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (j2s-scheme this::J2SDConsumer mode return conf hint)
+   (with-access::J2SDConsumer this (expr)
+      (j2s-scheme expr mode return conf hint)))
 
 ;*---------------------------------------------------------------------*/
 ;*    throw? ...                                                       */

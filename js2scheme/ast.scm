@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sat Mar 10 07:08:02 2018 (serrano)                */
+;*    Last change :  Fri Mar 23 13:45:55 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -415,6 +415,15 @@
 	      (cmap0::symbol read-only)
 	      (cmap1::symbol read-only)
 	      (offset::symbol read-only))
+
+	   (final-class J2SDProducer::J2SExpr
+	      (decl::J2SDecl read-only (info '("notraverse")))
+	      (expr::J2SExpr (info '("ast"))))
+
+	   (final-class J2SDConsumer::J2SExpr
+	      (decl::J2SDecl read-only (info '("notraverse")))
+	      (expr::J2SExpr (info '("ast")))
+	      (path read-only))
 
 	   (generic walk0 n::J2SNode p::procedure)
 	   (generic walk1 n::J2SNode p::procedure a0)
@@ -924,6 +933,8 @@
 (gen-walks J2SCast expr)
 (gen-walks J2SClass super (elements))
 (gen-walks J2SClassElement prop)
+(gen-walks J2SDProducer expr)
+(gen-walks J2SDConsumer expr)
 
 (gen-traversals J2STilde)
 

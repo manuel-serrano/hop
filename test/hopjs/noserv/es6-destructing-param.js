@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Wed Feb  7 10:35:10 2018 (serrano)                */
+/*    Last change :  Fri Mar 23 13:05:25 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
@@ -34,7 +34,7 @@ console.log( "   hopb()"); assert.ok( hopb( {b: 2, a: 1}, -1 ), "hopb" );
 /*    kangax                                                           */
 /*---------------------------------------------------------------------*/
 function kangaxj() {
-   return function( {c, x:d, e} ) {
+   return function( {c, x: d, e} ) {
       return c === 7 && d === 8 && e === undefined;
    }( {c:7, x:8} );
 }

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Mar 14 08:19:38 2018 (serrano)                */
+;*    Last change :  Fri Mar 23 13:17:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -333,16 +333,16 @@
 		(loop (cons (statement) rev-stats)))))))
 
    (define (decl-list token in-for-init? constrinit constr)
-      (let loop ((rev-vars (list (var in-for-init? constrinit constr))))
+      (let loop ((vars (var in-for-init? constrinit constr)))
 	 (case (peek-token-type)
 	    ((SEMICOLON)
 	     (unless in-for-init? (consume-any!))
 	     (instantiate::J2SVarDecls
 		(loc (token-loc token))
-		(decls (reverse! rev-vars))))
+		(decls vars)))
 	    ((COMMA)
 	     (consume-any!)
-	     (loop (cons (var in-for-init? constrinit constr) rev-vars)))
+	     (loop (append vars (var in-for-init? constrinit constr))))
 	    ((in)
 	     (cond
 		((not in-for-init?)
@@ -351,7 +351,7 @@
 		(else
 		 (instantiate::J2SVarDecls
 		    (loc (token-loc token))
-		    (decls rev-vars)))))
+		    (decls vars)))))
 	    (else
 	     (cond
 		((and (eq? (peek-token-type) 'ID)
@@ -359,14 +359,14 @@
 		      in-for-init?)
 		 (instantiate::J2SVarDecls
 		    (loc (token-loc token))
-		    (decls rev-vars)))
+		    (decls vars)))
 		((and (not in-for-init?)
 		      (or (at-new-line-token?)
 			  (eq? (peek-token-type) 'RBRACE)
 			  (eq? (peek-token-type) 'EOF)))
 		 (instantiate::J2SVarDecls
 		    (loc (token-loc token))
-		    (decls (reverse! rev-vars))))
+		    (decls vars)))
 		(else
 		 (parse-token-error "illegal variable declaration"
 		    (consume-any!))))))))
@@ -417,26 +417,42 @@
 	       (binder 'let)
 	       (val (J2SUndefined))))))
    
-   (define (var in-for-init? constrinit constr)
-      (let ((id (consume-any!)))
-	 (case (car id)
+   (define (var::pair in-for-init? constrinit constr)
+      (let ((id (peek-token)))
+	 (case (token-tag id)
 	    ((ID static)
-	     (if (or (eq? (car id) 'ID) (eq? current-mode 'normal))
+	     (consume-any!)
+	     (if (or (eq? (token-tag id) 'ID) (eq? current-mode 'normal))
 		 (case (peek-token-type)
 		    ((=)
 		     (let* ((token (consume-any!))
 			    (expr (assig-expr in-for-init?)))
-			(constrinit (token-loc token) (cdr id) expr)))
+			(list (constrinit (token-loc token) (cdr id) expr))))
 		    (else
-		     (constr (token-loc id) (cdr id))))
+		     (list (constr (token-loc id) (cdr id)))))
 		 (parse-token-error "Illegal lhs" id))) 
 	    ((undefined NaN Infinity)
+	     (consume-any!)
 	     (case (peek-token-type)
 		((=)
 		 (consume-any!)
-		 (assig-expr in-for-init?))
+		 (list (assig-expr in-for-init?)))
 		(else
 		 (parse-token-error "Illegal variable declaration" id))))
+	    ((LBRACE LBRACKET)
+	     (let* ((lhs (if (eq? (peek-token-type) 'LBRACE)
+			     (object-literal)
+			     (array-literal)))
+		    (assig (consume-token! '=))
+		    (rhs (assig-expr in-for-init?))
+		    (loc (token-loc id))
+		    (decl (constrinit loc (gensym '%obj) (J2SUndefined))))
+		(with-access::J2SDeclInit decl (val)
+		   (set! val (instantiate::J2SDProducer
+				(loc (token-loc assig))
+				(decl decl)
+				(expr rhs))))
+		(cons decl (destructure decl lhs))))
 	    (else
 	     (parse-token-error "Illegal lhs" id)))))
    
@@ -1236,7 +1252,7 @@
    (define (fun-destructure params args body::J2SBlock)
       (if (find (lambda (a) (isa? a J2SObjInit)) args)
 	  (with-access::J2SBlock body (loc nodes)
-	     (let* ((decls (append-map descructure params args))
+	     (let* ((decls (append-map destructure params args))
 		    (vdecls (instantiate::J2SVarDecls
 			       (loc loc)
 			       (decls decls))))
@@ -1245,7 +1261,7 @@
 		body))
 	  body))
 
-   (define (descructure param arg)
+   (define (destructure param arg)
       (if (isa? arg J2SObjInit)
 	  (with-access::J2SObjInit arg (inits)
 	     (map (lambda (init)
@@ -1257,12 +1273,14 @@
 				   (instantiate::J2SDeclInit
 				      (loc loc)
 				      (id id)
-				      (val (J2SAccess (J2SRef param) name))))
+				      (val (J2SDConsumer param '()
+					      (J2SAccess (J2SRef param) name)))))
 				(with-access::J2SString name (val)
 				   (instantiate::J2SDeclInit
 				      (loc loc)
 				      (id (string->symbol val))
-				      (val (J2SAccess (J2SRef param) name)))))))
+				      (val (J2SDConsumer param '()
+					      (J2SAccess (J2SRef param) name))))))))
 			(else
 			 (parse-error "Bad argument" init))))
 		inits))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Wed Jan 24 17:18:07 2018 (serrano)                */
+;*    Last change :  Fri Mar 23 14:27:10 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -382,6 +382,13 @@
        (usage ,usage)
        (val ,val)
        (id ,id)))
+
+(define-macro (J2SDConsumer decl path expr)
+   `(instantiate::J2SDConsumer
+       (loc loc)
+       (decl ,decl)
+       (expr ,expr)
+       (path ,path)))
 
 (define-macro (%J2STail expr . from)
    `(instantiate::%J2STail

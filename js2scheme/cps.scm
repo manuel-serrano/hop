@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 14:30:38 2013                          */
-;*    Last change :  Fri Jan 12 19:30:42 2018 (serrano)                */
+;*    Last change :  Fri Mar 23 17:19:12 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript CPS transformation                                    */
@@ -678,7 +678,10 @@
    (assert-kont k KontExpr this)
    (with-access::J2SBindExit this (stmt lbl)
       (if lbl
-	  (error "cps" "illegal JSBindExit" (j2s->list this))
+	  (begin
+	     ;; an inlined function
+	     (set! stmt (cps-fun! stmt))
+	     (kcall k this))
 	  (if (yield-expr? stmt kbreaks kcontinues)
 	      (cps stmt
 		 (KontStmt (lambda (kstmt::J2SStmt)
@@ -689,23 +692,6 @@
 	      (begin
 		 (set! stmt (cps-fun! stmt))
 		 (kcall k this))))))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    cps ::J2SExprStmt ...                                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (cps this::J2SExprStmt k pack kbreaks kcontinues ktry fun) */
-;*    (assert-kont k KontExpr this)                                    */
-;*    (with-access::J2SExprStmt this (stmt)                            */
-;*       (if (yield-expr? stmt kbreaks kcontinues)                     */
-;* 	  (cps stmt                                                    */
-;* 	     (KontStmt (lambda (kstmt::J2SStmt)                        */
-;* 			  (set! stmt kstmt)                            */
-;* 			  (kcall k this))                              */
-;* 		this k)                                                */
-;* 	     pack kbreaks kcontinues ktry fun)                             */
-;* 	  (begin                                                       */
-;* 	     (set! stmt (cps-fun! stmt))                               */
-;* 	     (kcall k this)))))                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    cps ::J2SFor ...                                                 */
