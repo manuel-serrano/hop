@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Thu Mar 15 13:01:25 2018 (serrano)                */
+;*    Last change :  Fri Mar 23 08:31:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -103,7 +103,9 @@
 		((file-exists? path)
 		 (let ((mmap (open-mmap path :write #f)))
 		    (config-put! conf :mmaps (cons (cons path mmap) mmaps))
-		    mmap)))))))
+		    mmap))
+		(else
+		 #f))))))
 	      
 ;*---------------------------------------------------------------------*/
 ;*    config-put! ...                                                  */

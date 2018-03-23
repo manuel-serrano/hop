@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Tue Mar 20 08:10:00 2018 (serrano)                */
+;*    Last change :  Fri Mar 23 08:09:42 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -152,7 +152,7 @@
 ;*    sourcemap! ::J2SDataPropertyInit ...                             */
 ;*---------------------------------------------------------------------*/
 (define-method (sourcemap! this::J2SDataPropertyInit translations path)
-   
+
    (define (%location? %this)
       (with-access::J2SDataPropertyInit this (name val)
 	 (when (isa? name J2SString)
@@ -178,15 +178,15 @@
 		      (when (isa? val J2SNumber)
 			 (with-access::J2SNumber val (val)
 			    (set! val (caddr loc)))))))))))
-   
-   (if (%location? this)
-       (with-access::J2SDataPropertyInit this (val loc)
-	  (when (update-node-location! loc translations path)
-	     (with-access::J2SObjInit val (inits)
-		(set! inits (map! (lambda (i) (update-%location-init! i loc))
-			       inits)))))
-       (call-next-method)))
-	 
+
+   (when (%location? this)
+      (with-access::J2SDataPropertyInit this (val loc)
+	 (when (update-node-location! loc translations path)
+	    (with-access::J2SObjInit val (inits)
+	       (for-each (lambda (i) (update-%location-init! i loc))
+		  inits)))))
+   (call-next-method))
+
 ;*---------------------------------------------------------------------*/
 ;*    update-node-location! ...                                        */
 ;*---------------------------------------------------------------------*/
@@ -220,8 +220,8 @@
       ((at ?fname ?pos)
        (when (and (equal? fname path) (<fx pos (vector-length translations)))
 	  (let ((p (find-closest-position translations pos)))
-	     (when (pair? p)
-;* 		(tprint "update loc=" loc)                             */
+	     (when (and (pair? p) (>=fx (+fx (car p) (cddr p)) 0)) 
+;* 		(tprint "update loc=" loc " => " p)                    */
 ;* 		(tprint "      nloc=" `(at ,(cadr p) ,(+fx (car p) (cddr p)) */
 ;* 					  ,(car p)))                   */
 		(set-car! (cdr loc) (cadr p))
