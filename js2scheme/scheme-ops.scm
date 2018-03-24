@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Mar 24 07:03:18 2018 (serrano)                */
+;*    Last change :  Sat Mar 24 19:12:19 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1560,8 +1560,14 @@
 	  `(if (fixnum? ,left)
 	       (remainderfx ,left ,(asfixnum right tr))
 	       (remainder ,left ,(todouble right tr))))
+	 ((eq? tr 'uint32)
+	  `(if (fixnum? ,left)
+	       (remainderfx ,left ,(asfixnum right tr))
+	       (remainderfl ,(todouble left tl) ,(todouble right tr))))
 	 (else
-	  `(remainder ,(todouble left tl) ,(todouble right tr)))))
+	  `(if (fixnums? ,left ,right)
+	       (remainderfx ,left ,right)
+	       (remainderfl ,(todouble left tl) ,(todouble right tr))))))
    
    (define (remainders32 left right tl tr)
       (cond

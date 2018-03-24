@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 24 09:21:08 2018 (serrano)                */
+;*    Last change :  Sat Mar 24 18:43:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2661,7 +2661,7 @@
 		   (if (>=fx i stop)
 		       (begin
 			  ;; 3.l
-			  (vector-set! vec i (js-undefined))
+			  (vector-set! vec i (js-absent))
 			  (loop (-fx i 1)))
 		       (set! length newlen)))))
 	  (for-each (lambda (name)
