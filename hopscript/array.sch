@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Dec 18 08:02:30 2016                          */
-;*    Last change :  Fri Dec 22 16:49:17 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Sat Mar 24 07:20:16 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array macros for js2scheme                                       */
 ;*=====================================================================*/
@@ -71,12 +71,15 @@
 (define-macro (JS-ARRAY-MARK-SET! arr idx val avec alen mark throw %this)
 
    (define (set i v)
-      `(if (and (fixnum? ,i)
-		(>=fx ,i 0)
-		(<u32 (fixnum->uint32 ,i) ,alen)
-		(eq? ,mark (js-array-mark)))
-	   (vector-set-ur! ,avec ,i ,v)
-	   (js-array-set! ,arr ,i ,v ,throw ,%this)))
+      (let ((tmp (gensym 'tmp)))
+	 `(if (and (fixnum? ,i)
+		   (>=fx ,i 0)
+		   (<u32 (fixnum->uint32 ,i) ,alen)
+		   (eq? ,mark (js-array-mark)))
+	      (vector-set-ur! ,avec ,i ,v)
+	      (let ((,tmp (js-array-set! ,arr ,i ,v ,throw ,%this)))
+		 (set! ,alen (js-array-ilen ,arr))
+		 ,tmp))))
 
    (%make-set idx val set))
 

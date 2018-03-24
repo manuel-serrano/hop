@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Jan 23 09:08:18 2018 (serrano)                */
+;*    Last change :  Sat Mar 24 06:16:49 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -214,7 +214,7 @@
 (define (js->object v expr conf)
    (if (eq? (j2s-type expr) 'object)
        v
-       `(js-toobject ,v %this)))
+       `(js-toobject %this ,v)))
 
 (define (js->number v expr conf)
    (if (memq (j2s-type expr) '(uint32 int32 integer bint number))

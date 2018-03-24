@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Feb 18 08:12:15 2018 (serrano)                */
+;*    Last change :  Sat Mar 24 06:04:22 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -841,6 +841,24 @@
 	       (else
 		;; a non variable assignment
 		(expr-type-set! this envr fix tyr bkr)))))))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SDProducer ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SDProducer env::pair-nil fix::cell)
+   (with-access::J2SDProducer this (expr)
+      (multiple-value-bind (ty env bk)
+	 (typing expr env fix)
+	 (expr-type-set! this env fix ty bk))))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SDConsumer ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SDConsumer env::pair-nil fix::cell)
+   (with-access::J2SDConsumer this (expr)
+      (multiple-value-bind (ty env bk)
+	 (typing expr env fix)
+	 (expr-type-set! this env fix ty bk))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing-fun ...                                                   */

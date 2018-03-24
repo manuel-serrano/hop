@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 17 09:53:13 2018 (serrano)                */
+;*    Last change :  Sat Mar 24 06:22:43 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -281,7 +281,7 @@
 	  (len::uint32 (js-array-length o)))
       (if (=u32 len #u32:0)
 	  '#()
-	  (let ((res (make-vector (uint32->fixnum len) (js-undefined))))
+	  (let ((res (js-create-vector (uint32->fixnum len))))
 	     (let loop ((i #u32:0))
 		(cond
 		   ((=u32 i len)
@@ -396,7 +396,7 @@
 		  ;; 14. a. Else, Let A be ArrayCreate(len).
 		  (let ((A (if (isa? C JsFunction)
 			       (js-toobject %this (js-new1 %this C len))
-			       (js-vector->jsarray (make-vector len) %this))))
+			       (js-vector->jsarray (js-create-vector len) %this))))
 		     ;; 16. Let k be 0.
 		     ;; 17. Repeat, while k < len... (also steps a - h)
 		     (let loop ((k 0))
@@ -437,6 +437,15 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-make-vector len init)
    (make-vector len init))
+
+;*---------------------------------------------------------------------*/
+;*    js-create-vector ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Creator used in this file to avoid duplicating in the source     */
+;*    code the default init slot value.                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-create-vector len)
+   (make-vector len (js-undefined)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *JS-ARRAY-MARK* ...                                              */
@@ -661,6 +670,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-set! arr::JsArray idx val throw %this)
    (with-access::JsArray arr (vec ilen length)
+      (tprint "JS-ARRAY-SET idx=" idx " ilen=" ilen " length=" length)
       (if (fixnum? idx) 
 	  (cond
 	     ((<u32 (fixnum->uint32 idx) ilen)
@@ -751,10 +761,11 @@
 		    (when (>=u32 idx length)
 		       (set! length nilen)))
 		 val)
-		((<u32 idx ilen)
+		((or (<u32 idx ilen) (js-object-mode-holey? arr))
 		 (vector-set! vec (uint32->fixnum idx) val)
 		 val)
 		(else
+		 (tprint "JS-ARRAY-PUT..." idx)
 		 (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
 	 (else
 	  (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
@@ -1022,15 +1033,15 @@
 			 (js-delete! o rni #t %this)
 			 (loop ni))))))))
       
-      (let ((o (js-toobject %this this)))
-	 (if (isa? o JsArray)
-	     (with-access::JsArray o (vec)
-		(if (js-array-full-inlined? o)
-		    ;; fast path
-		    (with-access::JsArray o (ilen)
-		       (vector-reverse! vec (uint32->fixnum ilen))
-		       o)
-		    (array-reverse! o)))
+      (if (isa? this JsArray)
+	  (with-access::JsArray this (vec)
+	     (if (js-array-full-inlined? this)
+		 ;; fast path
+		 (with-access::JsArray this (ilen)
+		    (vector-reverse! vec (uint32->fixnum ilen))
+		    this)
+		 (array-reverse! this)))
+	  (let ((o (js-toobject %this this)))
 	     (array-reverse! o))))
    
    (js-bind! %this js-array-prototype 'reverse
@@ -1120,7 +1131,7 @@
 	    (vector-slice/vec! o val k final vec)))
 
       (define (u8vector-slice! o val::u8vector k::long final::long)
-	 (let ((vec (make-vector (-fx final k))))
+	 (let ((vec (js-create-vector (-fx final k))))
 	    (let loop ((i k)
 		       (j 0))
 	       (if (=fx i final)
@@ -1331,7 +1342,7 @@
 		   (rlen (+fx actualstart actualdeletecount))
 		   (nlen (+fx len (-fx litems actualdeletecount)))
 		   (cstart (+fx actualstart actualdeletecount))
-		   (vres (make-vector actualdeletecount))
+		   (vres (js-create-vector actualdeletecount))
 		   (res (js-vector->jsarray vres %this)))
 	       ;; populate the result vector
 	       (when (<fx actualstart alen)
@@ -1750,7 +1761,7 @@
 
 	 (define (vector-map o len::uint32 proc::JsFunction t i::uint32)
 	    (with-access::JsArray o (vec ilen length)
-	       (let ((v (make-vector (vector-length vec) (js-undefined)))
+	       (let ((v (js-create-vector (vector-length vec)))
 		     (l length))
 		  (let loop ((i i))
 		     (cond
@@ -1815,7 +1826,7 @@
 	 [%assert-array! o "vector-filter"]
 	 (with-access::JsArray o (vec ilen length)
 	    (if (js-array-full-inlined? o)
-		(let ((v (make-vector (vector-length vec) (js-undefined))))
+		(let ((v (js-create-vector (vector-length vec))))
 		   (let loop ((i i)
 			      (j 0))
 		      (cond
@@ -2048,7 +2059,7 @@
 	  this)
        
        (let* ((this (js-array-alloc %this))
-	      (vec (make-vector (uint32->fixnum len) (js-undefined))))
+	      (vec (js-create-vector (uint32->fixnum len))))
 	  (array-set! this vec #u32:0 len)))))
 
 ;*---------------------------------------------------------------------*/
@@ -2064,16 +2075,16 @@
 	 (set! ilen iln)
 	 (set! vec v))
       this)
-   
+
    (cond
       ((<=u32 len (bit-lshu32 #u32:1 16))
        ;; MS CARE: the max boundary for a concrete vector
        ;; is pure heuristic. This should be confirmed by
        ;; actual tests
-       (let ((vec (make-vector (uint32->fixnum len) (js-undefined))))
+       (let ((vec (js-create-vector (uint32->fixnum len))))
 	  (array-set! vec #u32:0 len)))
       (else
-       (array-set! (make-vector 10 (js-undefined)) #u32:0 len))))
+       (array-set! (js-create-vector 10) #u32:0 len))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-construct ...                                           */
@@ -2162,7 +2173,7 @@
     (define (js-empty-vector->jsarray::JsArray %this::JsGlobalObject)
        (let ((mode (js-object-default-mode)))
 	  (with-access::JsGlobalObject %this (js-array-prototype)
-	     (let ((vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-undefined))))
+	     (let ((vec (js-create-vector (DEFAULT-EMPTY-ARRAY-SIZE))))
 		(instantiateJsArray
 		   (__proto__ js-array-prototype)
 		   (length #u32:0)
@@ -2947,7 +2958,7 @@
 		;; (js-array-update-length! o (+fx (uint32->fixnum n) 1))
 		(js-uint32-tointeger idx)))
 	    ((=fx (vector-length vec) 0)
-	     (set! vec (make-vector (DEFAULT-EMPTY-ARRAY-SIZE) (js-undefined)))
+	     (set! vec (js-create-vector (DEFAULT-EMPTY-ARRAY-SIZE)))
 	     (set! ilen #u32:1)
 	     (set! length #u32:1)
 	     (vector-set! vec 0 item)
