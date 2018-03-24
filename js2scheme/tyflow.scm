@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Mar 24 06:04:22 2018 (serrano)                */
+;*    Last change :  Sat Mar 24 16:23:01 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -394,7 +394,9 @@
 		     (let* ((decl (car entry))
 			    (typl (cdr entry))
 			    (typf (env-lookup env2 decl))
-			    (typm (merge-types typl typf)))
+			    (typm (if (eq? typf 'unknown)
+				      'unknown
+				      (merge-types typl typf))))
 			(unless (eq? typm 'unknown)
 			   (cons decl typm))))
 	 env1))
@@ -633,13 +635,6 @@
 	    (when (eq? etyp 'unknown)
 	       (with-access::J2SDecl decl (vtype)
 		  (set! etyp vtype)))
-;* 		  (cond                                                */
-;* 		     ((and ronly (isa? decl J2SDeclInit))              */
-;* 		      (set! etyp vtype))                               */
-;* 		     ((isa? decl J2SDeclInit))                         */
-;* 		      (set! etyp vtype))                               */
-;* 		     ((eq? vtype 'any)                                 */
-;* 		      (set! etyp vtype)))))                            */
 	    (expr-type-set! this env fix etyp)))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat Mar 24 06:16:49 2018 (serrano)                */
+;*    Last change :  Sat Mar 24 16:40:00 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -301,7 +301,9 @@
       ((and (inrange-int32? expr) (m64? conf))
        `(fixnum->int32 ,v))
       (else
-       `(js-number-toint32 ,v))))
+       (if (pair? v)
+	   `(js-number-toint32 ,v)
+	   `(if (fixnum? ,v) (fixnum->int32 ,v) (js-number-toint32 ,v))))))
 
 (define (js-number->uint32 v expr conf)
    (cond
