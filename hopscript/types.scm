@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Mar 24 07:41:17 2018 (serrano)                */
+;*    Last change :  Sat Mar 24 09:29:34 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -412,10 +412,13 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-default-mode)
    (bit-oru32 (JS-OBJECT-MODE-EXTENSIBLE)
-      (bit-oru32 (JS-OBJECT-MODE-INLINE) (JS-OBJECT-MODE-JSOBJECTTAG))))
+      (bit-oru32 (JS-OBJECT-MODE-INLINE)
+	 (JS-OBJECT-MODE-JSOBJECTTAG))))
 
 (define-inline (js-array-default-mode)
-   (bit-oru32 (js-object-default-mode) (JS-OBJECT-MODE-JSARRAYTAG)))
+   (bit-oru32 (js-object-default-mode)
+      (bit-oru32 (JS-OBJECT-MODE-JSARRAYHOLEY)
+	 (JS-OBJECT-MODE-JSARRAYTAG))))
 
 (define-inline (JS-OBJECT-MODE-EXTENSIBLE) #u32:1)
 (define-inline (JS-OBJECT-MODE-SEALED) #u32:2)

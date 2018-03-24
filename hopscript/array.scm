@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 24 06:22:43 2018 (serrano)                */
+;*    Last change :  Sat Mar 24 09:21:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -131,6 +131,26 @@
 ;*---------------------------------------------------------------------*/
 (%define-pcache 4)
 (define %pcache (js-make-pcache 4 "hopscript/array.scm"))
+
+;*---------------------------------------------------------------------*/
+;*    js-make-vector ...                                               */
+;*    -------------------------------------------------------------    */
+;*    This function is overriden by a macro in array.sch. The          */
+;*    overriden macro allocates the vector in the stack as the         */
+;*    hopc compiler generates JS-MAKE-VECTOR only for vectors that     */
+;*    never escapes their dynamic scope.                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-make-vector len init)
+   (make-vector len init))
+
+;*---------------------------------------------------------------------*/
+;*    js-create-vector ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Creator used in this file to avoid duplicating in the source     */
+;*    code the default init slot value.                                */
+;*---------------------------------------------------------------------*/
+(define-inline (js-create-vector len)
+   (make-vector len (js-absent)))
 
 ;*---------------------------------------------------------------------*/
 ;*    global parameters                                                */
@@ -428,26 +448,6 @@
 	 js-array)))
 
 ;*---------------------------------------------------------------------*/
-;*    js-make-vector ...                                               */
-;*    -------------------------------------------------------------    */
-;*    This function is overriden by a macro in array.sch. The          */
-;*    overriden macro allocates the vector in the stack as the         */
-;*    hopc compiler generates JS-MAKE-VECTOR only for vectors that     */
-;*    never escapes their dynamic scope.                               */
-;*---------------------------------------------------------------------*/
-(define-inline (js-make-vector len init)
-   (make-vector len init))
-
-;*---------------------------------------------------------------------*/
-;*    js-create-vector ...                                             */
-;*    -------------------------------------------------------------    */
-;*    Creator used in this file to avoid duplicating in the source     */
-;*    code the default init slot value.                                */
-;*---------------------------------------------------------------------*/
-(define-inline (js-create-vector len)
-   (make-vector len (js-undefined)))
-
-;*---------------------------------------------------------------------*/
 ;*    *JS-ARRAY-MARK* ...                                              */
 ;*---------------------------------------------------------------------*/
 (define *JS-ARRAY-MARK* 0)
@@ -621,7 +621,6 @@
 (define-inline (js-array-fixnum-ref arr::JsArray idx::long %this)
    (with-access::JsArray arr (vec ilen)
       (cond
-;* 	 ((and (>=fx idx 0) (<u32 (fixnum->uint32 idx) ilen))          */
 	 ((<u32 (fixnum->uint32 idx) ilen)
 	  (vector-ref vec idx))
 	 (else
@@ -670,7 +669,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-set! arr::JsArray idx val throw %this)
    (with-access::JsArray arr (vec ilen length)
-      (tprint "JS-ARRAY-SET idx=" idx " ilen=" ilen " length=" length)
       (if (fixnum? idx) 
 	  (cond
 	     ((<u32 (fixnum->uint32 idx) ilen)
@@ -765,7 +763,6 @@
 		 (vector-set! vec (uint32->fixnum idx) val)
 		 val)
 		(else
-		 (tprint "JS-ARRAY-PUT..." idx)
 		 (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
 	 (else
 	  (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
@@ -2203,6 +2200,10 @@
 	 (cond
 	    ((<u32 i ilen) #t)
 	    ((eq? p 'length) #t)
+	    ((and (js-object-mode-holey? o)
+		  (<u32 i (fixnum->uint32 (vector-length vec)))
+		  (<u32 i length))
+	     (not (js-absent? (u32vref vec i))))
 	    (else (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2227,6 +2228,19 @@
 	     (if (eq? p 'length)
 		 (js-array-update-length-property! o)
 		 (call-next-method)))
+	    ((and (js-object-mode-holey? o)
+		  (<u32 i (fixnum->uint32 (vector-length vec))))
+	     (if (>=u32 i length)
+		 (js-undefined)
+		 (let ((v (u32vref vec i)))
+		    (if (js-absent? v)
+			(js-undefined)
+			(instantiate::JsValueDescriptor
+			   (name (js-toname p %this))
+			   (value v)
+			   (enumerable #t)
+			   (writable (not frozen))
+			   (configurable (not frozen)))))))
 	    (else
 	     (call-next-method))))))
 
@@ -2247,6 +2261,14 @@
 	     (if (eq? p 'length)
 		 (js-uint32-tointeger length)
 		 (call-next-method)))
+	    ((and (js-object-mode-holey? o)
+		  (<u32 i (fixnum->uint32 (vector-length vec))))
+	     (if (>=u32 i length)
+		 (js-undefined)
+		 (let ((v (u32vref vec i)))
+		    (if (js-absent? v)
+			(js-undefined)
+			v))))
 	    (else
 	     (call-next-method))))))
 
@@ -2264,6 +2286,14 @@
 	     (if (eq? p 'length)
 		 (js-uint32-tointeger length)
 		 (call-next-method)))
+	    ((and (js-object-mode-holey? o)
+		  (<u32 i (fixnum->uint32 (vector-length vec))))
+	     (if (>=u32 i length)
+		 (js-undefined)
+		 (let ((v (u32vref vec i)))
+		    (if (js-absent? v)
+			(js-undefined)
+			v))))
 	    (else
 	     (call-next-method))))))
 
@@ -2284,6 +2314,12 @@
 	     (if (eq? p 'length)
 		 (js-uint32-tointeger length)
 		 (call-next-method)))
+	    ((and (js-object-mode-holey? o)
+		  (<u32 i (fixnum->uint32 (vector-length vec))))
+	     (let ((v (u32vref vec i)))
+		(if (js-absent? v)
+		    (js-undefined)
+		    v)))
 	    (else
 	     (call-next-method))))))
 
@@ -2329,6 +2365,7 @@
    ;; to a slow inefficient object representation
    (with-access::JsArray arr (vec ilen)
       (js-object-mode-inline-set! arr #f)
+      (js-object-mode-holey-set! arr #f)
       (js-array-update-length-property! arr)
       (when (>fx (vector-length vec) 0)
 	 (let ((plen (car (js-object-properties arr))))
@@ -2350,6 +2387,7 @@
 (define (reinline-array! o::JsArray nilen %this)
    (with-access::JsArray o (vec ilen length cmap)
       (js-object-mode-inline-set! o #t)
+      (js-object-mode-holey-set! o #t)
       (let ((len (minu32 (fixnum->uint32 (vector-length vec)) length)))
 	 (let loop ((i nilen))
 	    (if (<u32 i len)
@@ -2379,29 +2417,29 @@
 ;*---------------------------------------------------------------------*/
 (define (js-array-put! o::JsArray p v throw %this)
    
-   (define (aput! o::JsArray p::obj v)
-      (if (not (js-can-put o p %this))
+   (define (aput! o::JsArray q::obj v)
+      (if (not (js-can-put o q %this))
 	  ;; 1
 	  (if throw
 	      (js-raise-type-error %this
 		 (if (js-object-mode-extensible? o)
 		     "Can't add property ~a"
 		     "Can't add property ~a, object not extensible")
-		 p)
+		 q)
 	      (js-undefined))
-	  (let ((owndesc (js-get-own-property o p %this)))
+	  (let ((owndesc (js-get-own-property o q %this)))
 	     ;; 2
 	     (if (js-is-data-descriptor? owndesc)
 		 ;; 3
-		 (if (eq? p 'length)
+		 (if (eq? q 'length)
 		     (let ((newdesc (duplicate::JsValueDescriptor owndesc
 				       (value v))))
 			(js-array-update-length-property! o)
-			(js-define-own-property o p newdesc throw %this))
+			(js-define-own-property o q newdesc throw %this))
 		     (with-access::JsValueDescriptor owndesc ((valuedesc value))			
 			(set! valuedesc v)
-			(js-define-own-property o p owndesc throw %this)))
-		 (let ((desc (js-get-property o p %this)))
+			(js-define-own-property o q owndesc throw %this)))
+		 (let ((desc (js-get-property o q %this)))
 		    ;; 4
 		    (if (js-is-accessor-descriptor? desc)
 			;; 5
@@ -2410,13 +2448,13 @@
 			       (js-call1 %this setter o v)
 			       (js-undefined)))
 			(let ((newdesc (instantiate::JsValueDescriptor
-					  (name p)
+					  (name q)
 					  (value v)
 					  (writable #t)
 					  (enumerable #t)
 					  (configurable #t))))
 			   ;; 6
-			   (js-define-own-property o p newdesc throw %this)))))
+			   (js-define-own-property o q newdesc throw %this)))))
 	     v)))
    
    (with-access::JsArray o (vec ilen)
@@ -2439,6 +2477,9 @@
 		       (set! ilen nilen)
 		       (when (>=u32 idx length)
 			  (set! length nilen)))
+		    v)
+		   ((js-object-mode-holey? o)
+		    (vector-set! vec (uint32->fixnum idx) v)
 		    v)
 		   (else
 		    (aput! o (js-toname p %this) v)))))
@@ -2501,6 +2542,7 @@
 	     (u32vset! vec i (js-undefined))
 	     (set! ilen i)
 	     (js-object-mode-inline-set! o #f)
+	     (js-object-mode-holey-set! o #f)
 	     #t)
 	    ((<u32 i ilen)
 	     (unless (js-object-mode-frozen? o)
@@ -2659,7 +2701,9 @@
 			      ((<u32 ulen ilen)
 			       (set! ilen ulen))
 			      ((>u32 ulen ilen)
-			       (js-object-mode-inline-set! a #f)))))))
+			       '(when (js-object-mode-inline? a)
+				  (js-object-mode-holey-set! a #t)
+				  (js-object-mode-inline-set! a #f))))))))
 	       r))))
    
    (define (define-own-property-length oldlendesc)
@@ -2757,10 +2801,16 @@
 			(u32vset! vec p value)
 			(reinline-array! a (+u32 ilen #u32:1) %this)
 			#t)
+		       ((and (<u32 p (fixnum->uint32 (vector-length vec)))
+			     (<u32 p length)
+			     (js-object-mode-holey? a))
+			(u32vset! vec p value)
+			#t)
 		       (else
 			;; MS: 22 feb 2017
 			;; (uninline-array! a %this)
 			(js-object-mode-inline-set! a #f)
+			(js-object-mode-holey-set! a #f)
 			(js-define-own-property% a (js-toname p %this) desc #f %this)))
 		    (begin
 		       (uninline-array! a %this)
@@ -2800,12 +2850,11 @@
 				     (lambda (len)
 					(let ((olen (vector-length vec))
 					      (nlen (uint32->fixnum len)))
-					   ;; MS CARE
-;* 					      (set! ilen len)          */
 					   (cond-expand
 					      (profile (profile-vector-extension
 							  nlen olen)))
-					   (set! vec (copy-vector-fill! vec nlen (js-undefined))))
+					   (set! vec
+					      (copy-vector-fill! vec nlen (js-absent))))
 					(js-define-own-property-array
 					   a index desc #f)))
 				    (else
