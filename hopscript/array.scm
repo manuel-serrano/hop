@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Mar 25 19:34:27 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 20:08:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1024,7 +1024,6 @@
 		     (else
 		      (let* ((ni (+u32 i (fixnum->uint32 1)))
 			     (rni (js-uint32-tointeger (-u32 len ni))))
-			 
 			 (if (js-has-property o (js-toname rni %this) %this)
 			     (js-put! o (uint32->fixnum i)
 				(js-get o rni %this) #f %this)
@@ -2708,7 +2707,7 @@
 			      ((<u32 ulen ilen)
 			       (set! ilen ulen))
 			      ((>u32 ulen ilen)
-			       '(when (js-object-mode-inline? a)
+			       (when (js-object-mode-inline? a)
 				  (js-object-mode-holey-set! a #t)
 				  (js-object-mode-inline-set! a #f))))))))
 	       r))))
