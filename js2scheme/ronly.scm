@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Sun Mar 25 16:23:47 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 17:14:52 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -44,15 +44,12 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-ronly-program this::J2SProgram args)
    (with-access::J2SProgram this (nodes headers decls mode)
-      (let ((mode (cond
-		     ((eq? mode 'hopscript) mode)
-		     ((or (not (eq? mode 'strict)) (direct-eval? this)) mode)
-		     (else 'hopscript))))
-	 (when (eq? mode 'hopscript)
+      (let ((deval (direct-eval? this)))
+	 (when (and (not deval) (eq? mode 'hopscript))
 	    (init-decls-ronly! decls))
-	 (for-each (lambda (o) (ronly! o mode)) headers)
-	 (for-each (lambda (o) (ronly! o mode)) decls)
-	 (for-each (lambda (o) (ronly! o mode)) nodes))
+	 (for-each (lambda (o) (ronly! o mode deval)) headers)
+	 (for-each (lambda (o) (ronly! o mode deval)) decls)
+	 (for-each (lambda (o) (ronly! o mode deval)) nodes))
       this))
 
 ;*---------------------------------------------------------------------*/
@@ -91,13 +88,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SNode ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SNode mode::symbol)
-   (default-walk! this mode))
+(define-walk-method (ronly! this::J2SNode mode::symbol deval::bool)
+   (default-walk! this mode deval))
 
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SAssig ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SAssig mode::symbol)
+(define-walk-method (ronly! this::J2SAssig mode::symbol deval::bool)
 
    (define (assig decl loc)
       (when (j2s-const? decl)
@@ -120,25 +117,25 @@
 	 ((isa? lhs J2SGlobalRef)
 	  (with-access::J2SGlobalRef lhs (decl)
 	     (assig decl loc))))
-      (ronly! rhs mode))
+      (ronly! rhs mode deval))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SInit ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SInit mode::symbol)
+(define-walk-method (ronly! this::J2SInit mode::symbol deval::bool)
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
 	    (with-access::J2SDecl decl (ronly id)
 	       (set! ronly #f))))
-      (ronly! rhs mode))
+      (ronly! rhs mode deval))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SUnary ...                                            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SUnary mode::symbol)
+(define-walk-method (ronly! this::J2SUnary mode::symbol deval::bool)
    (with-access::J2SUnary this (op expr)
       (if (and (eq? op 'delete) (isa? expr J2SRef))
 	  (with-access::J2SRef expr (decl)
@@ -150,53 +147,55 @@
 ;*---------------------------------------------------------------------*/
 ;*    ronly-decl! ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (ronly-decl! this::J2SDecl mode::symbol)
+(define (ronly-decl! this::J2SDecl mode::symbol deval::bool)
    (with-access::J2SDecl this (ronly scope writable usage id key)
-      (when (and (or (eq? mode 'hopscript) (eq? mode 'strict))
-		 (or (not (memq scope '(global %scope)))
-		     (not writable)
-		     (not (usage? '(assig) usage))))
-	 (set! ronly #t)))
+      (unless deval
+	 (when (and (or (eq? mode 'hopscript) (eq? mode 'strict))
+		    (or (not (memq scope '(global %scope)))
+			(not writable)
+			(not (usage? '(assig) usage))))
+	    (set! ronly #t))))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SDeclInit mode::symbol)
+(define-walk-method (ronly! this::J2SDeclInit mode::symbol deval::bool)
    (with-access::J2SDeclInit this (id key val ronly)
-      (ronly-decl! this mode)
-      (ronly! val mode))
+      (ronly-decl! this mode deval)
+      (ronly! val mode deval))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SLetBlock ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SLetBlock mode::symbol)
+(define-walk-method (ronly! this::J2SLetBlock mode::symbol deval::bool)
    (with-access::J2SLetBlock this (decls)
-      (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) decls)
+      (for-each (lambda (d::J2SDecl) (ronly-decl! d mode deval)) decls)
       (call-next-method)))
 		   
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SVarDecls ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SVarDecls mode::symbol)
+(define-walk-method (ronly! this::J2SVarDecls mode::symbol deval::bool)
    (with-access::J2SVarDecls this (decls)
-      (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) decls)
+      (for-each (lambda (d::J2SDecl) (ronly-decl! d mode deval)) decls)
       (call-next-method)))
 
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SFun ...                                              */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SFun mode::symbol)
-   (with-access::J2SFun this (params thisp)
+(define-walk-method (ronly! this::J2SFun mode::symbol deval::bool)
+   (with-access::J2SFun this (params thisp mode body)
       (when thisp (with-access::J2SDecl thisp (ronly) (set! ronly #t)))
-      (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) params)
-      (call-next-method)))
+      (for-each (lambda (d::J2SDecl) (ronly-decl! d mode deval)) params)
+      (set! body (ronly! body mode deval))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SWith ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (ronly! this::J2SWith mode::symbol)
+(define-walk-method (ronly! this::J2SWith mode::symbol deval::bool)
    (with-access::J2SWith this (block)
       (mark-write! block)
       this))
