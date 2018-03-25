@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Mar 25 09:47:35 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 19:34:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -999,9 +999,9 @@
 		     (vector-set! val i (vector-ref val (-fx len ni)))
 		     (vector-set! val (-fx len ni) t)
 		     (loop ni))))))
-      
+
       (define (array-reverse! o)
-	 (with-access::JsArray o (ilen)
+	 (with-access::JsArray o (ilen length)
 	    (let* ((len::uint32 (js-get-lengthu32 o %this))
 		   (len/2::uint32 (/u32 len #u32:2)))
 	       (let loop ((i #u32:0))
@@ -1024,15 +1024,14 @@
 		     (else
 		      (let* ((ni (+u32 i (fixnum->uint32 1)))
 			     (rni (js-uint32-tointeger (-u32 len ni))))
+			 
 			 (if (js-has-property o (js-toname rni %this) %this)
-			     (begin
-				(js-put! o (uint32->fixnum i)
-				   (js-get o rni %this) #f %this))
-			     (begin
-				(js-delete! o (uint32->fixnum i) #t %this)))
+			     (js-put! o (uint32->fixnum i)
+				(js-get o rni %this) #f %this)
+			     (js-delete! o (uint32->fixnum i) #t %this))
 			 (js-delete! o rni #t %this)
 			 (loop ni))))))))
-      
+
       (if (isa? this JsArray)
 	  (with-access::JsArray this (vec)
 	     (if (js-array-full-inlined? this)
@@ -2390,8 +2389,9 @@
 ;*---------------------------------------------------------------------*/
 (define (reinline-array! o::JsArray nilen %this)
    (with-access::JsArray o (vec ilen length cmap)
-      (js-object-mode-inline-set! o #t)
-      (js-object-mode-holey-set! o #t)
+      (when (=u32 ilen length)
+	 (js-object-mode-inline-set! o #t)
+	 (js-object-mode-holey-set! o #t))
       (let ((len (minu32 (fixnum->uint32 (vector-length vec)) length)))
 	 (let loop ((i nilen))
 	    (if (<u32 i len)
