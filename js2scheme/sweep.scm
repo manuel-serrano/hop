@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue Dec 19 11:09:45 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Sun Mar 25 16:26:52 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dead code removal                                                */
 ;*=====================================================================*/
@@ -153,8 +153,9 @@
    (with-access::J2SInit this (lhs rhs)
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
-	    (with-access::J2SDecl decl (usecnt)
+	    (with-access::J2SDecl decl (usecnt usage)
 	       (and (=fx usecnt 0)
+		    (not (usage? '(eval) usage))
 		    (dead-expr? rhs)))))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Mar 25 07:45:32 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 09:47:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -42,7 +42,8 @@
 	   __hopscript_worker
 	   __hopscript_symbol
 	   __hopscript_string
-	   __hopscript_generator)
+	   __hopscript_generator
+	   __hopscript_profile)
 
    (cond-expand
       (profile (import __hopscript_profile)))
@@ -761,6 +762,8 @@
 		 val)
 		((or (<u32 idx ilen) (js-object-mode-holey? arr))
 		 (vector-set! vec (uint32->fixnum idx) val)
+		 (when (>u32 idx length)
+		    (set! length (+u32 idx #u32:1)))
 		 val)
 		(else
 		 (js-array-put! arr (js-uint32-tointeger idx) val throw %this)))))
@@ -2276,6 +2279,7 @@
 ;*    js-get ::JsArray ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsArray p %this)
+   (js-profile-log-get (if (symbol? p) p '%aidx))
    (with-access::JsArray o (vec ilen length)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
@@ -2418,6 +2422,7 @@
 (define (js-array-put! o::JsArray p v throw %this)
    
    (define (aput! o::JsArray q::obj v)
+      (js-profile-log-put (if (symbol? p) p '%aidx))
       (if (not (js-can-put o q %this))
 	  ;; 1
 	  (if throw
@@ -2457,7 +2462,7 @@
 			   (js-define-own-property o q newdesc throw %this)))))
 	     v)))
    
-   (with-access::JsArray o (vec ilen)
+   (with-access::JsArray o (vec ilen length)
       (let ((idx::uint32 (js-toindex p)))
 	 (cond
 	    ((<u32 idx ilen)
@@ -2480,6 +2485,8 @@
 		    v)
 		   ((js-object-mode-holey? o)
 		    (vector-set! vec (uint32->fixnum idx) v)
+		    (when (>u32 idx length)
+		       (set! length (+u32 idx #u32:1)))
 		    v)
 		   (else
 		    (aput! o (js-toname p %this) v)))))

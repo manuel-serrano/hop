@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Feb 17 16:00:51 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 16:30:24 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -142,8 +142,10 @@
 ;*    used-decl? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (used-decl? decl)
-   (with-access::J2SDecl decl (usecnt)
-      (when (or (>fx usecnt 0) (not (isa? decl J2SDeclFun)))
+   (with-access::J2SDecl decl (usecnt usage)
+      (when (or (>fx usecnt 0)
+		(not (isa? decl J2SDeclFun))
+		(usage? '(eval) usage))
 	 (when (isa? decl J2SDeclFun)
 	    (with-access::J2SDeclFun decl (val)
 	       (set! val (dead-inner-decl! val))))
