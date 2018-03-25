@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Mar 25 07:01:18 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 17:29:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -765,7 +765,7 @@
 		    (isa? val J2SSvc)
 		    (usage? '(assig) usage))
 		`((,var ,(j2s-scheme val mode return conf hint))))
-	       ((and (usage? '(ref get new set) usage))
+	       ((or (not ronly) (usage? '(ref get new set) usage))
 		(with-access::J2SFun val (decl)
 		   (if (isa? decl J2SDecl)
 		       (let ((tmp (gensym 'f))
