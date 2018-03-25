@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sat Mar 24 16:23:01 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 09:12:30 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -138,8 +138,6 @@
       (with-access::J2SDecl decl (scope ronly %info vtype)
 	 (when (not ronly)
 	    (unless (memq decl env)
-;* 	       (when (memq vtype '(integer index))                     */
-;* 		  (set! vtype 'number))                                */
 	       (set! %info 'capture))))))
 
 ;*---------------------------------------------------------------------*/
@@ -649,14 +647,21 @@
 	 (expr-type-set! this env fix etyp))))
 
 ;*---------------------------------------------------------------------*/
+;*    typing ::J2SWithRef ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SWithRef env::pair-nil fix::cell)
+   (with-access::J2SWithRef this (expr)
+      (typing expr '() fix)
+      (expr-type-set! this env fix 'any)))
+   
+;*---------------------------------------------------------------------*/
 ;*    typing ::J2SBindExit ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (typing this::J2SBindExit env::pair-nil fix::cell)
+(define-walk-method (typing this::J2SBindExit env::pair-nil fix::cell)
    (with-access::J2SBindExit this (stmt type)
       (multiple-value-bind (typ env bk)
 	 (typing stmt env fix)
 	 (return type env '()))))
-	 ;;(expr-type-set! this env fix typ))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDecl ...                                             */
@@ -1449,6 +1454,17 @@
 		(values 'void enve (list this))))
 	    (else
 	     (values 'void enve (list this)))))))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SWith ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SWith env::pair-nil fix::cell)
+   (with-access::J2SWith this (obj block)
+      (multiple-value-bind (tye enve bke)
+	 (typing obj env fix)
+	 (multiple-value-bind (tyb envb bkb)
+	    (typing block enve fix)
+	    (return 'void envb (append bke bkb))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SReturnYield ...                                      */

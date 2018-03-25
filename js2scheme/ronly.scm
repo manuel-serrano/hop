@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Sun Mar 25 07:26:03 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 08:15:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -192,3 +192,28 @@
       (when thisp (with-access::J2SDecl thisp (ronly) (set! ronly #t)))
       (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) params)
       (call-next-method)))
+
+;*---------------------------------------------------------------------*/
+;*    ronly! ::J2SWith ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (ronly! this::J2SWith mode::symbol)
+   (with-access::J2SWith this (block)
+      (mark-write! block)
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    mark-write! ::J2SNode ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-write! this::J2SNode)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    mark-write! ::J2SRef ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (mark-write! this::J2SRef)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (usage ronly)
+	 (set! usage (cons 'assig usage))
+	 (set! ronly #f)
+	 this)))
+   
