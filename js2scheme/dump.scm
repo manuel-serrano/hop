@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Mar 11 11:45:21 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 07:21:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -473,11 +473,10 @@
 		 :name ,name
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
+		 ,@(dump-access decl)
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)
-		 ,@(if (>= (bigloo-debug) 3)
-		       `(:usage ,usage) '())
 		 ,@(if (>= (bigloo-debug) 3)
 		       `(:need-bind-exit-return ,need-bind-exit-return) '())
 		 :optimize ,optimize
@@ -491,6 +490,7 @@
 		 :name ,name
 		 ,@(dump-key key)
 		 ,@(dump-scope scope)
+		 ,@(dump-access decl)
 		 ,@(dump-info this)
 		 ,@(dump-type this)
 		 ,@(dump-rtype this)

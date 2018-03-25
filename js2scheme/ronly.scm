@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 07:55:23 2013                          */
-;*    Last change :  Fri Jan 26 09:43:33 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 07:26:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Mark read-only variables in the J2S AST.                         */
@@ -17,7 +17,8 @@
    (import __js2scheme_ast
 	   __js2scheme_dump
 	   __js2scheme_compile
-	   __js2scheme_stage)
+	   __js2scheme_stage
+	   __js2scheme_utils)
 
    (export j2s-ronly-stage))
 
@@ -150,18 +151,20 @@
 ;*    ronly-decl! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (ronly-decl! this::J2SDecl mode::symbol)
-   (with-access::J2SDecl this (ronly scope writable)
-      (if (eq? mode 'hopscript)
-	  (set! ronly #t)
-	  (set! ronly (or (not (memq scope '(global %scope))) (not writable)))))
+   (with-access::J2SDecl this (ronly scope writable usage id key)
+      (when (or (eq? mode 'hopscript)
+		(not (memq scope '(global %scope)))
+		(not writable)
+		(not (usage? '(assig) usage)))
+	 (set! ronly #t)))
    this)
 
 ;*---------------------------------------------------------------------*/
 ;*    ronly! ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (ronly! this::J2SDeclInit mode::symbol)
-   (call-next-method)
-   (with-access::J2SDeclInit this (val ronly)
+   (with-access::J2SDeclInit this (id key val ronly)
+      (ronly-decl! this mode)
       (ronly! val mode))
    this)
 
@@ -189,21 +192,3 @@
       (when thisp (with-access::J2SDecl thisp (ronly) (set! ronly #t)))
       (for-each (lambda (d::J2SDecl) (ronly-decl! d mode)) params)
       (call-next-method)))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    ronly! ::J2SLetInit ...                                          *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (ronly! this::J2SLetInit)                       */
-;*    (call-next-method)                                               */
-;*    (with-access::J2SLetInit this (val)                              */
-;*       (ronly! val))                                                 */
-;*    this)                                                            */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    ronly! ::J2SLetOpt ...                                           *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (ronly! this::J2SLetOpt)                        */
-;*    (call-next-method)                                               */
-;*    (with-access::J2SLetOpt this (val id)                            */
-;*       (ronly! val))                                                 */
-;*    this)                                                            */

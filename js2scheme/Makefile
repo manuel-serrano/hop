@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Wed Mar 21 10:25:04 2018 (serrano)                */
+#*    Last change :  Sun Mar 25 07:01:38 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -43,7 +43,7 @@ _OBJECTS = lexer header parser html ast dump utils \
   array alpha letfusion constrsize ctor propcce clevel sweep inline unthis \
   instanceof scheme scheme-utils scheme-program scheme-fun scheme-ops \
   scheme-test scheme-class scheme-string scheme-math scheme-date \
-  scheme-array scheme-regexp scheme-cast scheme-arguments
+  scheme-array scheme-regexp scheme-cast scheme-arguments scheme-call
 
 OBJECTS = $(_OBJECTS:%=o/%.o)
 EOBJECTS = o/make_lib.o

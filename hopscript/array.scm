@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 24 18:43:29 2018 (serrano)                */
+;*    Last change :  Sun Mar 25 07:45:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2203,7 +2203,7 @@
 	    ((and (js-object-mode-holey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec)))
 		  (<u32 i length))
-	     (not (js-absent? (u32vref vec i))))
+	     (if (js-absent? (u32vref vec i)) (call-next-method) #t))
 	    (else (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/
@@ -2234,7 +2234,7 @@
 		 (js-undefined)
 		 (let ((v (u32vref vec i)))
 		    (if (js-absent? v)
-			(js-undefined)
+			(call-next-method)
 			(instantiate::JsValueDescriptor
 			   (name (js-toname p %this))
 			   (value v)
@@ -2264,10 +2264,10 @@
 	    ((and (js-object-mode-holey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec))))
 	     (if (>=u32 i length)
-		 (js-undefined)
+		 (call-next-method)
 		 (let ((v (u32vref vec i)))
 		    (if (js-absent? v)
-			(js-undefined)
+			(call-next-method)
 			v))))
 	    (else
 	     (call-next-method))))))
@@ -2289,10 +2289,10 @@
 	    ((and (js-object-mode-holey? o)
 		  (<u32 i (fixnum->uint32 (vector-length vec))))
 	     (if (>=u32 i length)
-		 (js-undefined)
+		 (call-next-method)
 		 (let ((v (u32vref vec i)))
 		    (if (js-absent? v)
-			(js-undefined)
+			(call-next-method)
 			v))))
 	    (else
 	     (call-next-method))))))
@@ -2318,7 +2318,7 @@
 		  (<u32 i (fixnum->uint32 (vector-length vec))))
 	     (let ((v (u32vref vec i)))
 		(if (js-absent? v)
-		    (js-undefined)
+		    (call-next-method)
 		    v)))
 	    (else
 	     (call-next-method))))))
@@ -3048,7 +3048,7 @@
 	    ((=u32 length ilen)
 	     (let* ((idx (-u32 len #u32:1))
 		    (el (vector-ref vec (uint32->fixnum (-u32 ilen 1)))))
-		(vector-set! vec (uint32->fixnum (-u32 ilen 1)) (js-undefined))
+		(vector-set! vec (uint32->fixnum (-u32 ilen 1)) (js-absent))
 		(set! length idx)
 		(set! ilen idx)
 		;; ms: 22 feb 2017
