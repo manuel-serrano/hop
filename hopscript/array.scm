@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Mar 26 17:19:18 2018 (serrano)                */
+;*    Last change :  Mon Mar 26 20:36:31 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -492,7 +492,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-inlined? arr::JsArray)
    (with-access::JsArray arr (vec length ilen)
-      (or (>fx (vector-length vec) 0) (=u32 length #u32:0))))
+      (or (>u32 ilen #u32:0) (=u32 length #u32:0))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-full-inlined? ...                                       */
