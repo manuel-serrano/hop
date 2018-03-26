@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sat Feb 17 09:23:38 2018 (serrano)                */
+/*    Last change :  Mon Mar 26 07:54:59 2018 (serrano)                */
 /*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -224,7 +224,7 @@ static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 /*    INNER_POINTER activated.                                         */
 /*---------------------------------------------------------------------*/
 obj_t
-bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, uint32_t mode ) {
+bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj_t absent, uint32_t mode ) {
    long bsize = JSARRAY_SIZE + VECTOR_SIZE + ( (size-1) * OBJ_SIZE );
    BgL_jsarrayz00_bglt o = (BgL_jsarrayz00_bglt)HOP_MALLOC( bsize );
    obj_t vector;
@@ -254,34 +254,34 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, uin
    o->BgL_vecz00 = vector;
 
    for( i = 0; i < size; i++ ) {
-      VECTOR_SET( vector, i, BUNSPEC );
+      VECTOR_SET( vector, i, absent );
    }
 
    return BOBJECT( o );
 }
 
-/*---------------------------------------------------------------------*/
-/*    obj_t                                                            */
-/*    bgl_init_vector ...                                              */
-/*---------------------------------------------------------------------*/
-obj_t
-bgl_init_vector( obj_t vector, long len, obj_t init ) {
-#if(  VECTOR_SIZE_TAG_NB_BIT != 0 )  
-   if( len & ~(VECTOR_LENGTH_MASK) ) { 
-      C_FAILURE( "create_vector", "vector too large", BINT( len ) );
-      return BUNSPEC;
-   } else
-#endif
-   {
-#if( !defined( TAG_VECTOR ) )
-      vector->vector_t.header = MAKE_HEADER( VECTOR_TYPE, 0 );
-#endif		
-      vector->vector_t.length = len;
-
-      bgl_fill_vector( BVECTOR( vector ), 0, len, init );
-      return BVECTOR( vector );
-   }
-}
+/* {*---------------------------------------------------------------------*} */
+/* {*    obj_t                                                            *} */
+/* {*    bgl_init_vector ...                                              *} */
+/* {*---------------------------------------------------------------------*} */
+/* obj_t                                                               */
+/* bgl_init_vector( obj_t vector, long len, obj_t init ) {             */
+/* #if(  VECTOR_SIZE_TAG_NB_BIT != 0 )                                 */
+/*    if( len & ~(VECTOR_LENGTH_MASK) ) {                              */
+/*       C_FAILURE( "create_vector", "vector too large", BINT( len ) ); */
+/*       return BUNSPEC;                                               */
+/*    } else                                                           */
+/* #endif                                                              */
+/*    {                                                                */
+/* #if( !defined( TAG_VECTOR ) )                                       */
+/*       vector->vector_t.header = MAKE_HEADER( VECTOR_TYPE, 0 );      */
+/* #endif		                                               */
+/*       vector->vector_t.length = len;                                */
+/*                                                                     */
+/*       bgl_fill_vector( BVECTOR( vector ), 0, len, init );           */
+/*       return BVECTOR( vector );                                     */
+/*    }                                                                */
+/* }                                                                   */
 
 /*---------------------------------------------------------------------*/
 /*    long                                                             */

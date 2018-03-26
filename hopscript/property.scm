@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Mar  9 08:49:02 2018 (serrano)                */
+;*    Last change :  Mon Mar 26 10:29:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -42,7 +42,7 @@
 	   ($js-get-pcaches::pair-nil ()
 	      "bgl_get_pcaches"))
 
-   (export (js-debug-object ::obj #!optional (msg ""))
+   (export (generic js-debug-object ::obj #!optional (msg ""))
 	   (js-debug-pcache ::obj #!optional (msg ""))
 	   (js-debug-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
@@ -204,7 +204,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-debug-object ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-debug-object obj #!optional (msg ""))
+(define-generic (js-debug-object obj #!optional (msg ""))
    (if (isa? obj JsObject)
        (with-access::JsObject obj (cmap elements)
 	  (let ((properties (js-object-properties obj)))
@@ -217,7 +217,7 @@
 			       (with-access::JsPropertyDescriptor d (name)
 				  name))
 			  properties)
-		       "\n  props=" properties "\n"))
+		       "\n  props=" properties))
 		 (with-access::JsConstructMap cmap (%id props methods size)
 		    (fprint (current-error-port) msg (typeof obj) " MAPPED"
 		       " length=" (vector-length elements)
@@ -231,7 +231,7 @@
 						 v))
 					  elements)
 		       "\n  cmap.%id=" %id
-		       " cmap.props=" props "\n")))))
+		       " cmap.props=" props)))))
        (fprint (current-error-port) msg (typeof obj))))
 
 ;*---------------------------------------------------------------------*/
