@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Mar 26 07:52:34 2018 (serrano)                */
+;*    Last change :  Mon Mar 26 17:19:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2825,7 +2825,8 @@
 			      ;; 3.g
 			      (reject "property read-only \"~a\"")
 			      ;; 3.h
-			      (let* ((inlp (js-object-mode-inline? a))
+			      (let* ((inlp (or (js-object-mode-inline? a)
+					       (js-object-mode-holey? a)))
 				     (deferredwritable (newwritable!
 							  oldlendesc newlendesc))
 				     (desc (js-define-own-length% a
@@ -2960,6 +2961,7 @@
 				    (else
 				     ;; slow access
 				     (uninline-array! a %this)
+				     (unholey-array! a %this)
 				     (js-define-own-property%
 					a (js-toname p %this) desc #f
 					%this)))))
