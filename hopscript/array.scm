@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Mar 26 20:36:31 2018 (serrano)                */
+;*    Last change :  Tue Mar 27 05:12:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3043,7 +3043,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-for-in o::JsArray proc %this)
    (with-access::JsArray o (vec ilen)
-      (if (js-array-inlined? o)
+      (if (or (js-array-inlined? o) (js-object-mode-holey? o))
 	  (let ((len ilen)
 		(vlen (fixnum->uint32 (vector-length vec))))
 	     (let loop ((i #u32:0))
