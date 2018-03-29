@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Mar 25 09:15:00 2018 (serrano)                */
+;*    Last change :  Tue Mar 27 17:53:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -908,3 +908,18 @@
    (with-access::J2SClassElement this (prop static)
       `(J2SClassElement :static ,static
 	  ,(j2s->list prop))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SDProducer ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SDProducer)
+   (with-access::J2SDProducer this (decl expr)
+      `(,@(call-next-method) ,(j2s->list expr))))
+		  
+;*---------------------------------------------------------------------*/
+;*    j2s->list ::J2SDConsumer ...                                     */
+;*---------------------------------------------------------------------*/
+(define-method (j2s->list this::J2SDConsumer)
+   (with-access::J2SDConsumer this (expr path)
+      `(,@(call-next-method) ,path ,(j2s->list expr))))
+

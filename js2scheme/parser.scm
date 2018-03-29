@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Fri Mar 23 13:17:58 2018 (serrano)                */
+;*    Last change :  Tue Mar 27 17:44:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -97,25 +97,6 @@
 	    (display "ignoring...\n" (current-error-port))
 	    #f)
 	 (parse-token-error msg token)))
-
-   (define (parse-node-error msg node::J2SNode)
-      (with-access::J2SNode node (loc)
-	 (let ((l (read-line input-port)))
-	    (match-case loc
-	       ((at ?fname ?loc)
-		(raise
-		   (instantiate::&io-parse-error
-		      (proc "hopscript")
-		      (msg msg)
-		      (obj (j2s->list node))
-		      (fname fname)
-		      (location loc))))
-	       (else
-		(raise
-		   (instantiate::&io-parse-error
-		      (proc "hopscript")
-		      (msg msg)
-		      (obj (j2s->list node)))))))))
 
    (define (parse-error msg obj)
       (let ((fname (input-port-name input-port))
@@ -447,12 +428,12 @@
 		    (rhs (assig-expr in-for-init?))
 		    (loc (token-loc id))
 		    (decl (constrinit loc (gensym '%obj) (J2SUndefined))))
-		(with-access::J2SDeclInit decl (val)
+		(with-access::J2SDeclInit decl (val id)
 		   (set! val (instantiate::J2SDProducer
 				(loc (token-loc assig))
 				(decl decl)
 				(expr rhs))))
-		(cons decl (destructure decl lhs))))
+		(cons decl (j2s-destructure decl lhs))))
 	    (else
 	     (parse-token-error "Illegal lhs" id)))))
    
@@ -830,9 +811,11 @@
 	 (cond
 	    ((and (not (config-get conf :es2017-async))
 		  (not (string=? lang "hopscript")))
-	     (parse-node-error "Async function requires hopscript or ecmascript2017 mode" fun))
+	     (parse-node-error
+		"Async function requires hopscript or ecmascript2017 mode" fun))
 	    (generator
-	     (parse-node-error "Wrong async function declaration" fun))
+	     (parse-node-error
+		"Wrong async function declaration" fun))
 	    (else
 	     (with-access::J2SBlock body (loc endloc)
 		(let ((gen (instantiate::J2SFun
@@ -879,7 +862,7 @@
 			(loc loc)
 			(id id)
 			(binder 'param))))
-		 ((isa? p J2SObjInit)
+		 ((or (isa? p J2SObjInit) (isa? p J2SArray))
 		  (with-access::J2SExpr p (loc)
 		     (let ((id (string->symbol (format "%~a" idx))))
 			(instantiate::J2SDecl
@@ -899,7 +882,7 @@
 	  (let* ((expr (assig-expr #f))
 		 (endloc (token-loc (peek-token) -1)))
 	     (with-access::J2SNode expr (loc)
-		(fun-destructure params args
+		(destructure-fun-params params args
 		   (instantiate::J2SBlock
 		      (loc loc)
 		      (endloc endloc)
@@ -1137,6 +1120,16 @@
 		   (id id)
 		   (_scmid id))
 		(object-literal))))
+	 ((LBRACKET)
+	  (let ((id (string->symbol (format "%~a" idx)))
+		(loc (token-loc (peek-token))))
+	     (values
+		(instantiate::J2SDecl
+		   (binder 'param)
+		   (loc loc)
+		   (id id)
+		   (_scmid id))
+		(array-literal))))
 	 (else
 	  (parse-error "Unexpected token" (consume-any!)))))
 
@@ -1238,7 +1231,7 @@
 		     (if (eq? (peek-token-type) 'RBRACE)
 			 (let ((etoken (consume-any!)))
 			    (pop-open-token)
-			    (fun-destructure params args
+			    (destructure-fun-params params args
 			       (instantiate::J2SBlock
 				  (loc (token-loc token))
 				  (endloc (token-loc etoken))
@@ -1248,43 +1241,6 @@
 			    (source-element-mode! el)
 			    (loop (cons el rev-ses) #f))))))
 	    (set! current-mode cmode))))
-
-   (define (fun-destructure params args body::J2SBlock)
-      (if (find (lambda (a) (isa? a J2SObjInit)) args)
-	  (with-access::J2SBlock body (loc nodes)
-	     (let* ((decls (append-map destructure params args))
-		    (vdecls (instantiate::J2SVarDecls
-			       (loc loc)
-			       (decls decls))))
-		(check-unique (append params decls) parse-error)
-		(set! nodes (cons vdecls nodes))
-		body))
-	  body))
-
-   (define (destructure param arg)
-      (if (isa? arg J2SObjInit)
-	  (with-access::J2SObjInit arg (inits)
-	     (map (lambda (init)
-		     (cond
-			((isa? init J2SDataPropertyInit)
-			 (with-access::J2SDataPropertyInit init (loc name val)
-			    (if (isa? val J2SUnresolvedRef)
-				(with-access::J2SUnresolvedRef val (id)
-				   (instantiate::J2SDeclInit
-				      (loc loc)
-				      (id id)
-				      (val (J2SDConsumer param '()
-					      (J2SAccess (J2SRef param) name)))))
-				(with-access::J2SString name (val)
-				   (instantiate::J2SDeclInit
-				      (loc loc)
-				      (id (string->symbol val))
-				      (val (J2SDConsumer param '()
-					      (J2SAccess (J2SRef param) name))))))))
-			(else
-			 (parse-error "Bad argument" init))))
-		inits))
-	  '()))
 
    (define (clazz declaration?)
       (let* ((loc (current-loc))
@@ -1903,7 +1859,7 @@
 			   ((isa? expr J2SSequence)
 			    (with-access::J2SSequence expr (exprs)
 			       (arrow-function exprs (token-loc token))))
-			   ((isa? expr J2SObjInit)
+			   ((or (isa? expr J2SObjInit) (isa? expr J2SArray))
 			    (arrow-function (list expr) (token-loc token)))
 			   (else
 			    (parse-node-error "bad arrow parameter" expr)))
@@ -2443,6 +2399,116 @@
 	  mode)))
 
 ;*---------------------------------------------------------------------*/
+;*    parse-node-error ...                                             */
+;*---------------------------------------------------------------------*/
+(define (parse-node-error msg node::J2SNode)
+   (with-access::J2SNode node (loc)
+      (match-case loc
+	 ((at ?fname ?loc)
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "hopscript")
+		(msg msg)
+		(obj (j2s->list node))
+		(fname fname)
+		(location loc))))
+	 (else
+	  (raise
+	     (instantiate::&io-parse-error
+		(proc "hopscript")
+		(msg msg)
+		(obj (j2s->list node))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-destructure ...                                              */
+;*---------------------------------------------------------------------*/
+(define (j2s-destructure decl::J2SDecl arg::J2SExpr)
+   (with-access::J2SDecl decl (id)
+      (destructure-path decl arg id)))
+
+;*---------------------------------------------------------------------*/
+;*    destructure-path ...                                             */
+;*---------------------------------------------------------------------*/
+(define (destructure-path decl::J2SDecl arg::J2SExpr path::obj)
+   (cond
+      ((isa? arg J2SObjInit)
+       (with-access::J2SObjInit arg (inits)
+	  (append-map (lambda (init)
+			 (cond
+			    ((isa? init J2SDataPropertyInit)
+			     (with-access::J2SDataPropertyInit init (name val)
+				(destructure-expr val name decl arg path)))
+			    (else
+			     (parse-node-error "Bad argument" init))))
+	     inits)))
+      ((isa? arg J2SArray)
+       (with-access::J2SArray arg (exprs len)
+	  (append-map (lambda (e i)
+			 (if (isa? e J2SArrayAbsent)
+			     '()
+			     (with-access::J2SExpr e (loc)
+				(destructure-expr e (J2SNumber i) decl arg path))))
+	     exprs (iota len))))
+      ((isa? arg J2SUnresolvedRef)
+       '())
+      (else
+       (parse-node-error "Bad declaration" arg))))
+
+;*---------------------------------------------------------------------*/
+;*    destructure-expr ...                                             */
+;*---------------------------------------------------------------------*/
+(define (destructure-expr::pair
+	   val::J2SExpr name decl::J2SDecl arg::J2SExpr path)
+   (with-access::J2SExpr val (loc)
+      (cond
+	 ((isa? val J2SUnresolvedRef)
+	  (with-access::J2SUnresolvedRef val (id)
+	     (list 
+		(instantiate::J2SDeclInit
+		   (loc loc)
+		   (id id)
+		   (val (J2SDConsumer decl
+			   `(get ,name ,path)
+			   (J2SAccess (J2SRef decl) name)))))))
+	 ((isa? val J2SObjInit)
+	  (with-access::J2SString name ((id val))
+	     (let* ((tmp (gensym '%tmp))
+		    (path `(get ,name ,path))
+		    (decl (instantiate::J2SDeclInit
+			     (loc loc)
+			     (id tmp)
+			     (val (J2SDConsumer decl path
+				     (J2SAccess (J2SRef decl) name))))))
+		(cons decl (destructure-path decl val path)))))
+	 ((isa? val J2SArray)
+	  (with-access::J2SString name ((id val))
+	     (let* ((tmp (gensym '%tmp))
+		    (path `(get ,name ,path))
+		    (decl (instantiate::J2SDeclInit
+			     (loc loc)
+			     (id tmp)
+			     (val (J2SDConsumer decl path
+				     (J2SAccess (J2SRef decl) name))))))
+		(cons decl (destructure-path decl val path)))))
+	 (else
+	  (parse-node-error "Bad destructuring argument" val)))))
+
+;*---------------------------------------------------------------------*/
+;*    destructure-fun-params ...                                       */
+;*---------------------------------------------------------------------*/
+(define (destructure-fun-params params::pair-nil args::pair-nil body::J2SBlock)
+   (if (find (lambda (a) (isa? a J2SObjInit)) args)
+       (with-access::J2SBlock body (loc nodes)
+	  (let* ((decls (append-map j2s-destructure params args))
+		 (vdecls (instantiate::J2SVarDecls
+			    (loc loc)
+			    (decls decls))))
+	     (check-unique (append params decls) parse-node-error)
+	     (set! nodes (cons vdecls nodes))
+	     body))
+       body))
+
+;*---------------------------------------------------------------------*/
 ;*    lbrace-following? ...                                            */
 ;*---------------------------------------------------------------------*/
 (define (lbrace-following? port)
@@ -2609,19 +2675,6 @@
    (with-access::J2SFun this (mode name)
       (unless (memq mode '(hopscript ecmascript6 ecmascript2017))
 	 (call-default-walker))))
-
-;*---------------------------------------------------------------------*/
-;*    disable-es6-let ::J2SArrow ...                                   */
-;*---------------------------------------------------------------------*/
-;* (define-walk-method (disable-es6-let this::J2SLetInit)              */
-;*    (with-access::J2SLetInit this (loc id)                           */
-;*       (raise                                                        */
-;* 	 (instantiate::&io-parse-error                                 */
-;* 	    (proc "js-parser")                                         */
-;* 	    (msg "arrow/const block disabled")                         */
-;* 	    (obj id)                                                   */
-;* 	    (fname (cadr loc))                                         */
-;* 	    (location (caddr loc))))))                                 */
 
 ;*---------------------------------------------------------------------*/
 ;*    disable-es6-arrow ...                                            */
