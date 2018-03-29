@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Mar 29 08:46:48 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 23:12:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1956,7 +1956,7 @@
    (define (canbe-arguments? obj)
       (memq (j2s-type obj) '(any undefined unknown object)))
 
-   (define (index-obj-literal-ref this obj::J2SRef field cache cspecs loc)
+   (define (index-obj-literal-ref this obj field cache cspecs loc)
       (let ((tmp (j2s-scheme obj mode return conf hint)))
 	 `(cond
 	     ,@(if (canbe-array? obj)
