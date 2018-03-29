@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Thu Mar  8 13:38:13 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 16:00:34 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -45,23 +45,39 @@
       (name "clevel")
       (comment "Cache level annotation optimization")
       (proc j2s-clevel)
-      (optional :optim-clevel)))
+      (optional '(:optim-clevel :cspecs))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-clevel ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define (j2s-clevel this::obj args)
    (when (isa? this J2SProgram)
-      (let ((log (config-get args :profile-log #f)))
-	 (if (string? log)
+      (cond
+	 ((config-get args :profile-log #f)
+	  =>
+	  (lambda (log)
 	     (cache-profile-log this log args)
 	     (with-access::J2SProgram this (nodes headers decls)
 		(let ((ptable (create-hashtable)))
 		   (propcollect* decls ptable)
 		   (propcollect* nodes ptable)
 		   (propclevel* decls ptable)
-		   (propclevel* nodes ptable))))))
+		   (propclevel* nodes ptable)))))
+	 ((config-get args :cspecs #f)
+	  =>
+	  (lambda (cspecs)
+	     (cspecs-update this cspecs args)))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    cache-verb ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (cache-verb conf . args)
+   (when (>=fx (config-get conf :verbose 0) 3)
+      (with-output-to-port (current-error-port)
+	 (lambda ()
+	    (display "\n      ")
+	    (for-each display args)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    cache-profile-log ...                                            */
@@ -72,14 +88,7 @@
       (let ((c (assq key lst)))
 	 (when (pair? c) (cdr c))))
 
-   (define (cache-verb . args)
-      (when (>=fx (config-get conf :verbose 0) 3)
-	 (with-output-to-port (current-error-port)
-	    (lambda ()
-	       (display "\n      ")
-	       (for-each display args)))))
-
-   (cache-verb "loading log file " (string-append "\"" logfile "\""))
+   (cache-verb conf "loading log file " (string-append "\"" logfile "\""))
    
    (let* ((log (load-profile-log logfile))
 	  (srcs (get 'sources log))
@@ -92,10 +101,17 @@
 		      (let ((verb (make-cell 0))
 			    (logtable (get 'caches (vector-ref srcs i))))
 			 (profile-clevel this logtable 'get verb conf)
-			 (cache-verb "cspecs " (cell-ref verb)))
+			 (cache-verb cons "cspecs " (cell-ref verb)))
 		      (loop (-fx i 1))))))))
    this)
 
+;*---------------------------------------------------------------------*/
+;*    cspecs-update ...                                                */
+;*---------------------------------------------------------------------*/
+(define (cspecs-update this::J2SProgram cspecs conf)
+   (cache-verb conf "update cspecs " cspecs)
+   (cspecs-update! this cspecs))
+   
 ;*---------------------------------------------------------------------*/
 ;*    pcache ...                                                       */
 ;*---------------------------------------------------------------------*/
@@ -451,10 +467,30 @@
 	    (let ((i (hashtable-get ptable val)))
 	       ;; if there is only one setter, which is not an accessor
 	       ;; use simple cache here
-	       (tprint "val: " val " " i)
 	       (when (propinfo? i)
 		  (if (and (=fx (propinfo-set i) 1)
 			   (=fx (propinfo-accessor i) 0))
-		      (tprint "YES val: " val " " i)
-		      (set! cspecs '(cmap pmap+ vtable))))))))
+		      (set! cspecs '(imap cmap pmap+ vtable))))))))
    this)
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-update! ...                                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-update! this::J2SNode cs)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-update! ::J2SAccess ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-update! this::J2SAccess cs)
+   (with-access::J2SAccess this (cspecs)
+      (set! cspecs cs)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    cspecs-update! ::J2SCall ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cspecs-update! this::J2SCall cs)
+   (with-access::J2SCall this (cspecs)
+      (set! cspecs cs)
+      (call-default-walker)))

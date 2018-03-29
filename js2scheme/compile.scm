@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Wed Mar 14 08:18:04 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 11:25:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -406,7 +406,10 @@
       (when (>=fx l 1)
 	 (unless (memq :optim-tyflow o)
 	    (set! o (cons* :optim-tyflow #t o))))
-      (when (and #f (>=fx l 2))
+      (when (>=fx l 2)
+	 (unless (memq :optim-ccall o)
+	    (set! o (cons* :optim-ccall #t o))))
+      (when (>=fx l 2)
 	 (unless (memq :optim-clevel o)
 	    (set! o (cons* :optim-clevel #t o))))
 ;* 		     (unless (memq :optim-cce o)                       */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Mar 27 05:12:44 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 09:11:15 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -602,7 +602,8 @@
 	  (else
 	   (and (fixnum? idx) (>=fx idx 0) (<=fx idx (-fx (bit-lsh 1 32) 2)))))
        (js-array-index-ref arr (fixnum->uint32 idx) %this)
-       (js-get arr idx %this)))
+       (begin
+	  (js-get arr idx %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-array-inl-ref ...                                             */
@@ -610,7 +611,6 @@
 (define-inline (js-array-inl-ref arr::JsArray idx::obj
 		  avec::vector alen::uint32 mark::obj %this::JsGlobalObject)
    (if (and (fixnum? idx)
-	    ;;(>=fx idx 0)
  	    (<u32 (fixnum->uint32 idx) alen)
 	    (eq? mark (js-array-mark)))
        (vector-ref avec idx)
@@ -624,6 +624,12 @@
       (cond
 	 ((<u32 idx ilen)
 	  (vector-ref vec (uint32->fixnum idx)))
+	 ((and (js-object-mode-holey? arr)
+	       (<u32 idx (fixnum->uint32 (vector-length vec))))
+	  (let ((v (vector-ref vec (uint32->fixnum idx))))
+	     (if (js-absent? v)
+		 (js-get arr (js-uint32-tointeger idx) %this)
+		 v)))
 	 (else
 	  (js-get arr (js-uint32-tointeger idx) %this)))))
 
@@ -644,15 +650,21 @@
       (cond
 	 ((<u32 (fixnum->uint32 idx) ilen)
 	  (vector-ref vec idx))
+	 ((and (js-object-mode-holey? arr)
+	       (<fx idx (vector-length vec)))
+	  (let ((v (vector-ref vec idx)))
+	     (if (js-absent? v)
+		 (js-get arr idx %this)
+		 v)))
 	 (else
-	  (js-get arr (js-uint32-tointeger idx) %this)))))
+	  (js-get arr idx %this)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    js-array-fixnum-inl-ref ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-array-fixnum-inl-ref arr::JsArray idx::long
 		  avec::vector alen::uint32 mark::obj %this::JsGlobalObject)
-   (if (and '' (>=fx idx 0)
+   (if (and (>=fx idx 0)
 	    (<u32 (fixnum->uint32 idx) alen)
 	    (eq? mark (js-array-mark)))
        (vector-ref avec idx)
@@ -667,7 +679,11 @@
 	 ((<u32 idx ilen)
 	  (vector-ref vec (uint32->fixnum idx)))
 	 ((<u32 idx (fixnum->uint32 (vector-length vec)))
-	  (js-get arr (uint32->fixnum idx) %this))
+	  (if (js-object-mode-holey? arr)
+	      (let ((v (u32vref vec idx)))
+		 (if (js-absent? v)
+		     (js-get arr (uint32->fixnum idx) %this)
+		     v))))
 	 ((cond-expand
 	     ((or bint30 bint32)
 	      (expandable-array arr idx
@@ -2310,7 +2326,7 @@
 ;*    js-get ::JsArray ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-method (js-get o::JsArray p %this)
-   (js-profile-log-get (if (symbol? p) p '%aidx))
+   (js-profile-log-get (if (symbol? p) p '%raidx))
    (with-access::JsArray o (vec ilen length)
       (let ((i::uint32 (js-toindex p)))
 	 (cond
@@ -2501,7 +2517,7 @@
 (define (js-array-put! o::JsArray p v throw %this)
    
    (define (aput! o::JsArray q::obj v)
-      (js-profile-log-put (if (symbol? p) p '%aidx))
+      (js-profile-log-put (if (symbol? p) p '%waidx))
       (if (not (js-can-put o q %this))
 	  ;; 1
 	  (if throw

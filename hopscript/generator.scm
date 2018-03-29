@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 29 21:14:17 2015                          */
-;*    Last change :  Fri Feb  9 11:14:04 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 08:40:00 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native BIgloo support of JavaScript generators                   */
@@ -99,8 +99,8 @@
       
       (define (js-generator-done)
 	 (instantiateJsObject
-	    (__proto__ __proto__)
 	    (cmap js-yield-cmap)
+	    (__proto__ __proto__)
 	    (elements (vector (js-undefined) #t))))
       
       (define (js-generator-next this val exn)
@@ -116,8 +116,8 @@
 	 (if (isa? this JsGenerator)
 	     (with-access::JsGenerator this (%next)
 		(let ((done (instantiateJsObject
-			       (__proto__ __proto__)
 			       (cmap js-yield-cmap)
+			       (__proto__ __proto__)
 			       (elements (vector val #t)))))
 		   (set! %next #f)
 		   done))
@@ -273,7 +273,8 @@
 		     (with-access::JsGlobalObject %this (js-generator-prototype)
 			js-generator-prototype)
 		     %this)))
-      %gen))				  
+      %gen))
+
 ;*---------------------------------------------------------------------*/
 ;*    js-generator-yield ...                                           */
 ;*---------------------------------------------------------------------*/
@@ -282,8 +283,8 @@
       (set! %next kont)
       (with-access::JsGlobalObject %this (__proto__)
 	 (instantiateJsObject
-	    (__proto__ __proto__)
 	    (cmap js-yield-cmap)
+	    (__proto__ __proto__)
 	    (elements (vector val done))))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Mar 26 10:29:02 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 08:50:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -1344,8 +1344,11 @@
 ;*    to keep the base object (the actual receiver) available.         */
 ;*---------------------------------------------------------------------*/
 (define (js-get-jsobject o::JsObject base prop %this)
-   (when (string? prop)
-      (js-profile-log-get (string->symbol prop)))
+   (cond
+      ((symbol? prop)
+       (js-profile-log-get prop))
+      ((string? prop)
+       (js-profile-log-get (string->symbol prop))))
    (let ((pval (js-get-property-value o base prop %this)))
       (if (eq? pval (js-absent))
 	  (js-undefined)
@@ -1661,7 +1664,7 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-put-length! o::obj v::obj throw::bool cache %this::JsGlobalObject)
    (if cache
-       (js-put-name/cache! o 'length v throw %this  cache)
+       (js-put-name/cache! o 'length v throw %this cache)
        (js-put! o 'length v throw %this)))
 
 ;*---------------------------------------------------------------------*/

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 30 06:52:06 2014                          */
-;*    Last change :  Tue Dec 19 16:37:15 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Thu Mar 29 10:38:23 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native native bindings                                           */
 ;*=====================================================================*/
@@ -49,6 +49,12 @@
 	    (make-slab-allocator ::JsGlobalObject ::JsObject)
 	    (slab-allocate ::object ::obj ::long)
 	    (slab-shrink! ::obj ::obj ::long ::long)))
+
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 3)
+(define %pcache (js-make-pcache 3 "nodejs/buffer.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    buffer-parser ...                                                */
@@ -256,9 +262,12 @@
 ;*---------------------------------------------------------------------*/
 (define (hopscript %this this %scope %module)
    ((@ hopscript __nodejs_buffer) %this this %scope %module)
-   (let* ((exp (js-get %module 'exports %this))
-	  (buf (js-get exp 'Buffer %this))
-	  (proto (js-get buf 'prototype %this)))
+   (let* ((exp (js-object-get-name/cache %module 'exports #f %this
+		  (js-pcache-ref %pcache 0)))
+	  (buf (js-object-get-name/cache exp 'Buffer #f %this
+		  (js-pcache-ref %pcache 1)))
+	  (proto (js-object-get-name/cache buf 'prototype #f %this
+		    (js-pcache-ref %pcache 2))))
 
       (with-access::JsGlobalObject %this (js-buffer-proto js-slowbuffer-proto)
 	 (set! js-buffer-proto proto))

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Wed Dec 27 14:28:46 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Thu Mar 29 09:20:47 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
 ;*=====================================================================*/
@@ -60,6 +60,10 @@
 	     (if (eq? type 'uint32)
 		 x
 		 (js-uint32->jsnum x conf))))
+	 ((maybe-number? field)
+	  `(js-string-ref ,(j2s-scheme obj mode return conf hint)
+	      ,(j2s-scheme field mode return conf hint)
+	      %this))
 	 (else
 	  #f))))
 

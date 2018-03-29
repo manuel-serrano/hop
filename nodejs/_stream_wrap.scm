@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/nodejs/_stream_wrap.scm           */
+;*    serrano/prgm/project/hop/3.2.x/nodejs/_stream_wrap.scm           */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Sun Nov 27 11:53:45 2016 (serrano)                */
-;*    Copyright   :  2014-16 Manuel Serrano                            */
+;*    Last change :  Thu Mar 29 10:30:07 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
 ;*=====================================================================*/
@@ -33,6 +33,12 @@
 	   (stream-read-stop ::WorkerHopThread ::JsGlobalObject
 	      ::JsHandle)
 	   (ucs2-string->buffer ::ucs2string)))
+
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 7)
+(define %pcache (js-make-pcache 7 "nodejs/_stream_wrap.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    stream-shutdown ...                                              */
@@ -78,16 +84,23 @@
 	    (set! reqs (cons req reqs))
 	    (with-access::JsProcess process (using-domains)
 	       (if using-domains
-		   (let ((dom (js-get process 'domain %this)))
-		      (js-put! req 'domain dom #f %this))
-		   (js-put! req 'domain (js-null) #f %this)))
-	    (js-put! req 'bytes len #f %this)
+		   (let ((dom (js-object-get-name/cache process 'domain #f %this
+				 (js-pcache-ref %pcache 0))))
+		      (js-object-put-name/cache! req 'domain dom #f %this
+			 (js-pcache-ref %pcache 1)))
+		   (js-object-put-name/cache! req 'domain (js-null) #f %this
+		      (js-pcache-ref %pcache 2))))
+	    (js-object-put-name/cache! req 'bytes len #f %this
+	       (js-pcache-ref %pcache 3))
 	    (with-access::JsHandle this (handle)
 	       (set! reqs (remq req reqs))
 	       (let ((cb (lambda (status)
-			    (js-put! this 'writeQueueSize
-			       (nodejs-stream-write-queue-size handle) #f %this)
-			    (let ((oncomp (js-get req 'oncomplete %this)))
+			    (js-object-put-name/cache! this 'writeQueueSize
+			       (nodejs-stream-write-queue-size handle) #f %this
+			       (js-pcache-ref %pcache 4))
+			    (let ((oncomp (js-object-get-name/cache req
+					     'oncomplete #f %this
+					     (js-pcache-ref %pcache 5))))
 			       (js-call3 %this oncomp req status this req)
 			       '(js-worker-tick %worker)
 			       (js-undefined)))))
@@ -95,15 +108,18 @@
 		      (if (isa? sendhandle JsHandle)
 			  (with-access::JsHandle sendhandle ((shdl handle))
 			     (begin
-				(js-put! req 'handle sendhandle #f %this)
+				(js-object-put-name/cache! req 'handle
+				   sendhandle #f %this
+				   (js-pcache-ref %pcache 6))
 				(nodejs-stream-write2 %worker %this handle
 				   string offset len shdl cb)))
 			  (nodejs-stream-write2 %worker %this handle
 			     string offset len #f cb))
 		      (nodejs-stream-write %worker %this handle
 			 string offset len cb)))
-	       (js-put! this 'writeQueueSize
-		  (nodejs-stream-write-queue-size handle) #f %this))
+	       (js-object-put-name/cache! this 'writeQueueSize
+		  (nodejs-stream-write-queue-size handle) #f %this
+		  (js-pcache-ref %pcache 7)))
 	    req))))
 
 ;*---------------------------------------------------------------------*/

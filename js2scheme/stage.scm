@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Mon Mar 19 17:20:18 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 16:11:01 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -57,11 +57,13 @@
 
    (define (active? stage)
       (with-access::J2SStage stage (optional)
-	 (or (not optional)
-	     (and (keyword? optional) (config-get args optional #f))
-	     (and (integer? optional) (>= (config-get args :optim 0) optional))
-	     (and (procedure? optional) (optional args))
-	     (and (eq? optional #t) (error "stage" "bad opt" stage)))))
+	 (let loop ((opt optional))
+	    (or (not opt)
+		(and (keyword? opt) (config-get args opt #f))
+		(and (integer? opt) (>= (config-get args :optim 0) opt))
+		(and (procedure? opt) (opt args))
+		(and (eq? opt #t) (error "stage" "bad opt" stage))
+		(and (pair? opt) (any loop opt))))))
    
    (with-access::J2SStage stage (name comment before after)
       (if (active? stage)

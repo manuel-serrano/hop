@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon Mar 19 07:42:36 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 09:05:35 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -899,27 +899,28 @@
 			      (profile-pcache fc)))
 		 filecaches)
 	      (profile-pcache (car filecaches))))
-       
-       (when (pair? *profile-gets-props*)
-	  (let ((gets (sort (lambda (x y) (>= (cdr x) (cdr y)))
-			 *profile-gets-props*))
-		(puts (sort (lambda (x y) (>= (cdr x) (cdr y)))
-			 *profile-puts-props*))
-		(calls (sort (lambda (x y) (>= (cdr x) (cdr y)))
-			  *profile-calls-props*)))
-	     (newline *profile-port*) 
-	     (fprint *profile-port*
-		"UNCACHED GETS:\n==============")
-	     (profile-uncached gets *profile-gets*)
-	     (newline *profile-port*)
-	     (fprint *profile-port*
-		"UNCACHED PUTS:\n==============")
-	     (profile-uncached puts *profile-puts*)
-	     (newline *profile-port*)
-	     (fprint *profile-port*
-		"UNCACHED CALLS:\n===============")
-	     (profile-uncached calls *profile-calls*)
-	     (newline *profile-port*))))))
+
+       (if (pair? *profile-gets-props*)
+	   (let ((gets (sort (lambda (x y) (>= (cdr x) (cdr y)))
+			  *profile-gets-props*))
+		 (puts (sort (lambda (x y) (>= (cdr x) (cdr y)))
+			  *profile-puts-props*))
+		 (calls (sort (lambda (x y) (>= (cdr x) (cdr y)))
+			   *profile-calls-props*)))
+	      (newline *profile-port*) 
+	      (fprint *profile-port*
+		 "UNCACHED GETS:\n==============")
+	      (profile-uncached gets *profile-gets*)
+	      (newline *profile-port*)
+	      (fprint *profile-port*
+		 "UNCACHED PUTS:\n==============")
+	      (profile-uncached puts *profile-puts*)
+	      (newline *profile-port*)
+	      (fprint *profile-port*
+		 "UNCACHED CALLS:\n===============")
+	      (profile-uncached calls *profile-calls*)
+	      (newline *profile-port*))
+	   (fprint *profile-port* "(use HOPTRACE=\"hopscript:uncache\" for uncached accesses)")))))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-uncached ...                                             */

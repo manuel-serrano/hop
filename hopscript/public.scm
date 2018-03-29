@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Mar  9 15:11:01 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 08:46:12 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -178,10 +178,10 @@
 	  ($js-make-jsobject constrsize constrmap __proto__ mode))
 	 (else
 	  (instantiateJsObject
-	     (mode mode)
 	     (cmap constrmap)
+	     (__proto__ __proto__)
 	     (elements (make-vector constrsize (js-undefined)))
-	     (__proto__ __proto__))))))
+	     (mode mode))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-new/function ...                                              */

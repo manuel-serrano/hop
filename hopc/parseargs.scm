@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Mon Mar 19 07:47:46 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 11:18:45 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -43,7 +43,7 @@
    (print "Shell Variables:")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:range, j2s:usage, j2s:key,")
-   (print "      j2s:loc,")
+   (print "      j2s:loc, j2s:cache")
    (print "      nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:function[num] (*),")
    (print "      hopscript:alloc[num], hopscript:uncache")
@@ -264,7 +264,7 @@
 	     (hopc-j2s-flags-set! (cons* :optim-tyflow-resolve #t (hopc-j2s-flags))))
 	    (("-fno-tyflow-resolve" (help "Disable tyflow-resolve typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-tyflow-resolve #f (hopc-j2s-flags))))
-	    (("-fccall" (help "Enable call caches (-Ox)"))
+	    (("-fccall" (help "Enable call caches (-O2)"))
 	     (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
 	    (("-fno-ccall" (help "Disable call caches"))
 	     (hopc-j2s-flags-set! (cons* :optim-ccall #f (hopc-j2s-flags))))
@@ -323,6 +323,11 @@
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))
 	    (section "Experimental features")
+	    (("--js-cspecs" ?cspecs (help "force default cache specs"))
+	     (call-with-input-string cspecs
+		(lambda (ip)
+		   (hopc-j2s-flags-set!
+		      (cons* :cspecs (read ip) (hopc-j2s-flags))))))
 	    (else
 	     (if (string=? else "--")
 		 (begin

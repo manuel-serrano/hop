@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Feb  7 13:18:26 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 08:43:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -182,8 +182,8 @@
    (with-access::JsGlobalObject %this (__proto__)
       (instantiateJsObject
 	 (cmap (js-names->cmap names))
-	 (elements elements)
-	 (__proto__ __proto__))))
+	 (__proto__ __proto__)
+	 (elements elements))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-alist->jsobject ...                                           */
@@ -202,8 +202,8 @@
 			       (props props))))
 		   (instantiateJsObject
 		      (cmap cmap)
-		      (elements elements)
-		      (__proto__ __proto__)))
+		      (__proto__ __proto__)
+		      (elements elements)))
 		(let* ((name (cond
 				((keyword? (caar alist))
 				 (keyword->symbol (caar alist)))
@@ -231,8 +231,8 @@
 			       (props props))))
 		   (instantiateJsObject
 		      (cmap cmap)
-		      (elements elements)
-		      (__proto__ __proto__)))
+		      (__proto__ __proto__)
+		      (elements elements)))
 		(let* ((name (cond
 				((keyword? (car plist))
 				 (keyword->symbol (car plist)))

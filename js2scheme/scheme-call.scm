@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Mar 25 07:37:01 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 11:01:29 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -284,18 +284,23 @@
 			(else
 			 #f))))))))
    
-   (define (call-method ccache ocache ccspecs fun::J2SAccess args)
-      (with-access::J2SAccess fun (loc obj field)
+   (define (call-method ccache ccspecs fun::J2SAccess args)
+      (with-access::J2SAccess fun (loc obj field (acache cache) (acspecs cspecs))
 	 (let loop ((obj obj))
 	    (cond
 	       ((call-builtin-method obj field args)
 		=>
 		(lambda (sexp) sexp))
 	       ((isa? obj J2SRef)
-		(call-ref-method obj ccache ocache ccspecs fun obj args))
+		(call-ref-method obj ccache acache ccspecs fun obj args))
 	       ((isa? obj J2SGlobalRef)
-		(or (call-globalref-method obj ccache ocache fun obj args)
-		    (call-ref-method obj ccache ocache ccspecs fun obj args)))
+		(or (call-globalref-method obj ccache acache fun obj args)
+		    (let* ((tmp (gensym '%obj))
+			   (fun (J2SAccess/cache (J2SHopRef tmp) field
+				   acache acspecs)))
+		       `(let ((,tmp ,(j2s-scheme obj mode return conf hint)))
+			   ,(call-ref-method obj ccache acache
+			      ccspecs fun (J2SHopRef tmp) args)))))
 	       ((isa? obj J2SParen)
 		(with-access::J2SParen obj (expr)
 		   (loop expr)))
@@ -308,7 +313,7 @@
 		       (ttmp (type-ident tmp (j2s-vtype obj))))
 		   `(let ((,ttmp ,(j2s-scheme obj mode return conf hint)))
 		       ,(call-ref-method obj
-			   ccache ocache ccspecs
+			   ccache acache ccspecs
 			   (duplicate::J2SAccess fun
 			      (obj (instantiate::J2SPragma
 				      (loc loc)
@@ -501,8 +506,7 @@
 	 (epairify loc
 	    (cond
 	       ((isa? fun J2SAccess)
-		(with-access::J2SAccess fun ((ocache cache))
-		   (call-method cache ocache cspecs fun args)))
+		(call-method cache cspecs fun args))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
 		   (loop expr)))

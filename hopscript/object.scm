@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Sep 17 08:43:24 2013                          */
-;*    Last change :  Fri Feb  9 09:54:19 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 08:44:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo implementation of JavaScript objects               */
@@ -242,12 +242,12 @@
    ;; before all, initialize the builtin object prototype
    ;; and then create the global object
    (let* ((%prototype (instantiateJsObject
+			 (cmap (instantiate::JsConstructMap))
 			 (__proto__ (js-null))
-			 (elements (make-vector 20))
-			 (cmap (instantiate::JsConstructMap))))
+			 (elements (make-vector 20))))
 	  (%this (instantiateJsGlobalObject
-		    (__proto__ %prototype)
-		    (cmap (make-cmap '#())))))
+		    (cmap (make-cmap '#()))
+		    (__proto__ %prototype))))
       ;; for bootstrap, first allocat hasInstance symbol
       (with-access::JsGlobalObject %this (js-symbol-hasinstance)
 	 (set! js-symbol-hasinstance

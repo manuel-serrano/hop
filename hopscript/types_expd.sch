@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu Mar  8 08:33:34 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 08:41:24 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -62,8 +62,8 @@
 	     (match-case x
 		((instantiateJsObject
 		    (cmap ?cmap)
-		    (elements (vector . ?elements))
-		    (__proto__ ?__proto__))
+		    (__proto__ ?__proto__)
+		    (elements (vector . ?elements)))
 		 ;; The purpose of this special expansion is to force allocate
 		 ;; the object with the JS-MAKE-JSOBJECT that creates
 		 ;;; properties inline, in contrast to the regular
@@ -79,6 +79,27 @@
 			   ,@(map (lambda (el idx)
 				     `(vector-set! ,vec ,idx ,el))
 				elements (iota (length elements)))
+			   ,obj)
+		       e)))
+		((instantiateJsObject
+		    (cmap ?cmap)
+		    (__proto__ ?__proto__)
+		    (elements (make-vector ?n)))
+		 ;; The purpose of this special expansion is to force allocate
+		 ;; the object with the JS-MAKE-JSOBJECT that creates
+		 ;;; properties inline, in contrast to the regular
+		 ;; constructor that allocates properties in a separate vector.
+		 (let ((obj (gensym 'o))
+		       (vec (gensym 'v)))
+		    (e `(let* ((,obj ((@ js-make-jsobject __hopscript_public)
+				      ,n
+				      ,cmap
+				      ,__proto__))
+			       (,vec (with-access::JsObject ,obj (elements)
+					elements)))
+			   ,@(map (lambda (idx)
+				     `(vector-set! ,vec ,idx (js-undefined)))
+				(iota n))
 			   ,obj)
 		       e)))
 		(else

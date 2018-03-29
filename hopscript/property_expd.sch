@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Mar 24 07:05:16 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 10:48:56 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -382,11 +382,11 @@
    (match-case x
       ((js-global-object-get-name/cache ?obj ?prop ?throw ?%this ?cache)
        (e `(js-object-get-name/cache ,obj ,prop ,throw ,%this
-	      ,cache -1 '(cmap global))
+	      ,cache -1 '(imap cmap global))
 	  e))
       ((js-global-object-get-name/cache ?obj ?prop ?throw ?%this ?cache ?loc)
        (e `(js-object-get-name/cache ,obj ,prop ,throw ,%this
-	      ,cache ,loc '(cmap global))
+	      ,cache ,loc '(imap cmap global))
 	  e))
       ((js-global-object-get-name/cache ?obj ?prop ?throw ?%this ?cache ?loc ?cs)
        (e `(js-object-get-name/cache ,obj ,prop ,throw ,%this
