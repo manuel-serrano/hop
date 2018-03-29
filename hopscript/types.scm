@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Sat Mar 24 09:29:34 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 22:58:12 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -714,6 +714,8 @@
 	  (js-donate (car obj) worker %this)
 	  (js-donate (cdr obj) worker %this)
 	  (js-donate (cer obj) worker %this)))
+      ((js-absent? obj)
+       obj)
       ((pair? obj)
        (cons
 	  (js-donate (car obj) worker %this)

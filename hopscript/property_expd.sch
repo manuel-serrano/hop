@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Mar 29 10:48:56 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 21:21:01 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -382,11 +382,11 @@
    (match-case x
       ((js-global-object-get-name/cache ?obj ?prop ?throw ?%this ?cache)
        (e `(js-object-get-name/cache ,obj ,prop ,throw ,%this
-	      ,cache -1 '(imap cmap global))
+	      ,cache -1 '(imap+ global))
 	  e))
       ((js-global-object-get-name/cache ?obj ?prop ?throw ?%this ?cache ?loc)
        (e `(js-object-get-name/cache ,obj ,prop ,throw ,%this
-	      ,cache ,loc '(imap cmap global))
+	      ,cache ,loc '(imap+ global))
 	  e))
       ((js-global-object-get-name/cache ?obj ?prop ?throw ?%this ?cache ?loc ?cs)
        (e `(js-object-get-name/cache ,obj ,prop ,throw ,%this
@@ -596,7 +596,7 @@
       `(let ((f (js-object-get-name/cache ,obj ,prop #f ,%this ,ocache ,loc ',ocspecs)))
 	  ,(calln %this 'f obj args)))
    
-   (define (expand-cache-specs ccspecs ocspecs %this obj prop args ccache ocache loc)
+   (define (expand-cache-specs/args ccspecs ocspecs %this obj prop args ccache ocache loc)
       `(with-access::JsObject ,obj (cmap)
 	  (let ((%cmap cmap))
 	     ,(let loop ((cs ccspecs))
@@ -630,6 +630,15 @@
 			(else
 			 (error "js-object-method-call-name/cache"
 			    "bad cache spec" cs))))))))
+   
+   (define (expand-cache-specs ccspecs ocspecs %this obj prop args ccache ocache loc)
+      (let* ((tmps (map (lambda (a) (when (pair? a) (gensym '%a))) args))
+	     (bindings (filter-map (lambda (t o) (when t (list t o))) tmps args))
+	     (nargs (map (lambda (t a) (or t a)) tmps args)))
+	 (if (pair? bindings)
+	     `(let ,bindings
+		 ,(expand-cache-specs/args ccspecs ocspecs %this obj prop nargs ccache ocache loc))
+	     (expand-cache-specs/args ccspecs ocspecs %this obj prop nargs ccache ocache loc))))
 		 
    (cond-expand
       ((or no-macro-cache no-macro-cache-call)
@@ -670,12 +679,25 @@
 ;*    js-method-call-name/cache-expander ...                           */
 ;*---------------------------------------------------------------------*/
 (define (js-method-call-name/cache-expander x e)
+
+   (define (expand-call %this obj name ccache ocache loc cs os args)
+      `(if (js-object? ,obj)
+	   (js-object-method-call-name/cache ,%this ,obj ,name ,ccache ,ocache ,loc ,cs ,os ,@args)
+	   (js-non-object-method-call-name %this ,obj ,name ,@args)))
+   
+   (define (expand-call/tmp %this obj name ccache ocache loc cs os args)
+      (let* ((tmps (map (lambda (a) (when (pair? a) (gensym '%a))) args))
+	     (bindings (filter-map (lambda (t o) (when t (list t o))) tmps args))
+	     (nargs (map (lambda (t a) (or t a)) tmps args)))
+	 (if (pair? bindings)
+	     `(let ,bindings
+		 ,(expand-call %this obj name ccache ocache loc cs os nargs))
+	     (expand-call %this obj name ccache ocache loc cs os args))))
+
    (match-case x
-      ((js-method-call-name/cache ?%this (and (? symbol?) ?obj) . ?rest)
-       (e `(if (js-object? ,obj)
-	       (js-object-method-call-name/cache ,%this ,obj ,@rest)
-	       (js-non-object-method-call-name %this ,obj ,@rest))
-	  e))
+      ((js-method-call-name/cache ?%this (and (? symbol?) ?obj)
+	  ?name ?ccache ?ocache ?loc ?cs ?os . ?args)
+       (e (expand-call/tmp %this obj name ccache ocache loc cs os args) e))
       ((?- ?%this ?obj . ?rest)
        (let ((o (gensym '%o)))
 	  (e `(let ((,o ,obj))

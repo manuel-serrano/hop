@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 29 08:50:53 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 22:40:56 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2972,7 +2972,6 @@
 			       (jsapply (funval el-or-desc))))))))))
 	 ;; property search
 	 (lambda (obj v)
-;* 	    (tprint "js-object-method-call/cache-miss name=" name " UNMAPPED") */
 	    (with-access::JsPropertyCache ccache (cmap pmap)
 	       (set! pmap #t)
 	       (set! cmap #t)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Mar 29 09:11:15 2018 (serrano)                */
+;*    Last change :  Thu Mar 29 22:59:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -202,7 +202,11 @@
 			   %this)))
 	       (with-access::JsArray nobj ((nlength length) (nilen ilen))
 		  (set! nlength length)
-		  (set! nilen ilen))
+		  (set! nilen ilen)
+		  (js-object-mode-inline-set! nobj
+		     (js-object-mode-inline? obj))
+		  (js-object-mode-holey-set! nobj
+		     (js-object-mode-holey? obj)))
 	       ;; donate the value of the array
 	       (js-for-in obj
 		  (lambda (k)
@@ -3067,6 +3071,8 @@
 		   ((<u32 i len)
 		    (proc (js-integer->jsstring (uint32->fixnum i)))
 		    (loop (+u32 i #u32:1)))
+		   ((js-object-mode-inline? o)
+		    (call-next-method))
 		   ((<u32 i vlen)
 		    (unless (js-absent? (u32vref vec i))
 		       (proc (js-integer->jsstring (uint32->fixnum i)))
