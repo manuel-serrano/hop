@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Thu Mar 29 22:59:11 2018 (serrano)                */
+;*    Last change :  Fri Mar 30 16:11:43 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1587,10 +1587,15 @@
 				 (->uint32 n))))
 		       (if (isa? o JsArray)
 			   (with-access::JsArray o (vec ilen)
-			      (if (js-object-mode-inline? o)
+			      (cond
+				 ((js-object-mode-inline? o)
 				  (vector-indexof o vec (uint32->fixnum k)
-				     (uint32->fixnum ilen))
-				  (array-indexof this k len)))
+				     (uint32->fixnum ilen)))
+				 ((js-object-mode-holey? o)
+				  (vector-indexof o vec (uint32->fixnum k)
+				     (vector-length vec)))
+				 (else
+				  (array-indexof this k len))))
 			   (array-indexof o k len))))))))
 
    (js-bind! %this js-array-prototype 'indexOf
@@ -1628,13 +1633,19 @@
       (define (lastindexof::int o::JsObject k::uint32)
 	 (if (isa? o JsArray)
 	     (with-access::JsArray o (vec ilen)
-		(if (and (js-object-mode-inline? o) (<u32 k ilen))
+		(cond
+		   ((and (js-object-mode-inline? o) (<u32 k ilen))
 		    (vector-lastindexof o vec
 		       (minfx (uint32->fixnum k)
-			  (uint32->fixnum (-u32 ilen #u32:1))))
-		    (array-lastindexof o k)))
+			  (uint32->fixnum (-u32 ilen #u32:1)))))
+		   ((js-object-mode-holey? o)
+		    (vector-lastindexof o vec
+		       (minfx (uint32->fixnum k)
+			  (-fx (vector-length vec) 1))))
+		   (else
+		    (array-lastindexof o k))))
 	     (array-lastindexof o k)))
-      
+
       (let* ((o (js-toobject %this this))
 	     (len::uint32 (js-get-lengthu32 o %this)))
 	 (if (=u32 len #u32:0)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Mar 30 10:08:40 2018 (serrano)                */
+;*    Last change :  Fri Mar 30 15:47:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -653,7 +653,8 @@
 		    "wrong number of arguments" (cons (length args) minlen)))
 		((<=fx (-fx n 1) len)
 		 (if (not rest)
-		     (apply procedure this args)
+		     (apply procedure this
+			(append args (make-list (-fx (negfx arity) (+fx n 1)))))
 		     (apply procedure this
 			(append args (js-rest-args %this (-fx (+fx len 1) n))))))
 		((not rest)
