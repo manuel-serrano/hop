@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Thu Mar 29 08:46:12 2018 (serrano)                */
+;*    Last change :  Fri Mar 30 10:08:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -646,16 +646,18 @@
 		 (js-raise-type-error %this
 		    "wrong number of arguments" (cons (length args) minlen))
 		 (apply procedure this (take args (-fx arity 1)))))
-	    ((not rest)
-	     (apply procedure this args))
 	    (else
 	     (cond
 		((and (<=fx (-fx n 1) minlen) (>fx minlen 0))
 		 (js-raise-type-error %this
 		    "wrong number of arguments" (cons (length args) minlen)))
 		((<=fx (-fx n 1) len)
-		 (apply procedure this
-		    (append args (js-rest-args %this (-fx (+fx len 1) n)))))
+		 (if (not rest)
+		     (apply procedure this args)
+		     (apply procedure this
+			(append args (js-rest-args %this (-fx (+fx len 1) n))))))
+		((not rest)
+		 (apply procedure this args))
 		(else
 		 (apply procedure this
 		    (append (take args len)

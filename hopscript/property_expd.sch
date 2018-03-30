@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Mar 29 21:21:01 2018 (serrano)                */
+;*    Last change :  Fri Mar 30 09:54:14 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -589,7 +589,8 @@
 	 `(,call ,%this ,m ,obj ,@args)))
    
    (define (calln-miss %this obj prop args ccache ocache loc cspecs ospecs)
-      `(js-object-method-call/cache-miss %this ,obj ,prop (list ,@args)
+      `(js-object-method-call/cache-miss %this ,obj ,prop
+	  ,(if (pair? args) `(list ,@args) ''())
 	  ,ccache ,ocache ,loc ',cspecs ',ospecs))
 
    (define (calln-uncachable %this ocspecs obj prop args ccache ocache loc)
