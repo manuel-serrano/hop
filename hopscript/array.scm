@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 31 05:20:32 2018 (serrano)                */
+;*    Last change :  Sat Mar 31 08:13:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -24,7 +24,11 @@
    (extern ($js-make-jsarray::JsArray (::long ::uint32 ::JsConstructMap ::obj ::obj ::uint32)
 	      "bgl_make_jsarray")
 	   ($js-vector-bytesize::long (::long)
-	      "bgl_vector_bytesize"))
+	      "bgl_vector_bytesize")
+	   ($js-init-vector::vector (::void* ::long ::obj)
+              "bgl_init_vector")
+	   ($alloca::void* (::long)
+              "alloca"))
    
    (import __hopscript_types
 	   __hopscript_arithmetic

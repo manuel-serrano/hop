@@ -4,7 +4,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun May 25 13:05:16 2014                          */
-;*    Last change :  Tue Mar 13 08:32:09 2018 (serrano)                */
+;*    Last change :  Sat Mar 31 10:07:57 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPJS customization of the standard js-mode                      */
@@ -567,12 +567,16 @@ usage: (js-return)  -- [RET]"
 	  ;; Indent array comprehension continuation lines specially.
 	  ((let ((bracket (nth 1 parse-status))
 		 beg)
-	     (and bracket
+	     (and (number-or-marker-p bracket)
 		  (not (js--same-line bracket))
-		  (setq beg (js--indent-in-array-comp bracket))
-		  ;; At or after the first loop?
-		  (>= (point) beg)
-		  (js--array-comp-indentation bracket beg))))
+		  (condition-case nil
+		      (let ((val (js--indent-in-array-comp bracket)))
+			(setq beg val)
+			;; At or after the first loop?
+			(>= (point) beg)
+			(js--array-comp-indentation bracket beg))
+		    (error
+		     nil)))))
 	  ((js--html-statement-indentation))
 	  ((js--ctrl-statement-indentation))
 	  ((js--multi-line-declaration-indentation))
