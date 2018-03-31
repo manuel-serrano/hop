@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Thu Mar 29 16:00:34 2018 (serrano)                */
+;*    Last change :  Sat Mar 31 07:37:05 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -314,32 +314,43 @@
 	   '(imap cmap)
 	   '(cmap imap)))
       ((and (> (pcache-cmap pc) 0)
+	    (= (pcache-imap pc) 0)
 	    (= (pcache-pmap pc) 0)
 	    (= (pcache-amap pc) 0)
 	    (= (pcache-vtable pc) 0))
        '(cmap))
       ((and (> (pcache-pmap pc) 0)
+	    (= (pcache-imap pc) 0)
 	    (= (pcache-cmap pc) 0)
 	    (= (pcache-amap pc) 0)
 	    (= (pcache-vtable pc) 0))
        '(pmap))
       ((and (> (pcache-vtable pc) 0)
+	    (= (pcache-imap pc) 0)
 	    (= (pcache-cmap pc) 0)
 	    (= (pcache-pmap pc) 0)
 	    (= (pcache-amap pc) 0))
        '(vtable))
       ((and (> (pcache-amap pc) 0)
+	    (= (pcache-imap pc) 0)
 	    (= (pcache-cmap pc) 0)
 	    (= (pcache-pmap pc) 0)
 	    (= (pcache-vtable pc) 0))
        '(amap))
+      ((and (> (pcache-imap pc) 0)
+	    (> (pcache-vtable pc) 0)
+	    (= (pcache-pmap pc) 0))
+       (if (> (pcache-vtable pc) (pcache-imap pc))
+	   '(vtable imap)
+	   '(imap vtable)))
       ((and (> (pcache-cmap pc) 0)
 	    (> (pcache-vtable pc) 0)
 	    (= (pcache-pmap pc) 0))
        (if (> (pcache-vtable pc) (pcache-cmap pc))
 	   '(vtable cmap)
 	   '(cmap vtable)))
-      ((and (= (pcache-cmap pc) 0)
+      ((and (= (pcache-imap pc) 0)
+	    (= (pcache-cmap pc) 0)
 	    (> (pcache-pmap pc) 0)
 	    (> (pcache-vtable pc) 0))
        (if (> (pcache-vtable pc) (pcache-pmap pc))

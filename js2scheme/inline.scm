@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Mar 25 16:30:24 2018 (serrano)                */
+;*    Last change :  Sat Mar 31 06:13:20 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -163,6 +163,13 @@
 (define (function-arity fun::J2SFun)
    (with-access::J2SFun fun (params)
       (length params)))
+
+;*---------------------------------------------------------------------*/
+;*    function-fxarg? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (function-fxarg? fun::J2SFun)
+   (with-access::J2SFun fun (vararg)
+      (not vararg)))
 
 ;*---------------------------------------------------------------------*/
 ;*    function-size ...                                                */
@@ -329,6 +336,7 @@
 	       (let ((mets (filter (lambda (m::struct)
 				      (let ((f (protoinfo-method m)))
 					 (and (=fx (function-arity f) arity)
+					      (function-fxarg? f)
 					      (not (memq f stack)))))
 			      (or (hashtable-get pmethods val) '()))))
 		  (when (<fx (apply +
@@ -345,6 +353,7 @@
 	    (with-access::J2SDeclFun decl (id)
 	       (let ((val (j2sdeclinit-val-fun decl)))
 		  (when (and (=fx (function-arity val) arity)
+			     (function-fxarg? val)
 			     (not (memq val stack))
 			     (<=fx (function-size val) limit)
 			     (check-id id))

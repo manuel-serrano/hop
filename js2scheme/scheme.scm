@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Thu Mar 29 23:12:44 2018 (serrano)                */
+;*    Last change :  Sat Mar 31 06:16:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1969,11 +1969,11 @@
 		   ,(or (j2s-string-ref this mode return conf hint)
 			(get obj tmp field cache cspecs loc))))
 		'())
-	     ,@(if (canbe-arguments? obj)
-		`(((isa? ,tmp JsArguments)
-		   ,(or (j2s-arguments-ref this mode return conf hint)
-			(get obj tmp field cache cspecs loc))))
-		'())
+;* 	     ,@(if (canbe-arguments? obj)                              */
+;* 		`(((isa? ,tmp JsArguments)                             */
+;* 		   ,(or (j2s-arguments-ref this mode return conf hint) */
+;* 			(get obj tmp field cache cspecs loc))))        */
+;* 		'())                                                   */
 	     (else
 	      ,(get obj tmp field cache cspecs loc)))))
    
