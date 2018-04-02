@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Fri Feb  9 11:06:50 2018 (serrano)                */
+;*    Last change :  Mon Apr  2 18:36:57 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -439,7 +439,7 @@
 	 (authorization #f)
 	 (fail #f)
 	 (asynchronous (not force-sync))
-	 (header #f)
+	 (header '())
 	 (timeout 0)
 	 (method 'GET)
 	 (body #f)
@@ -521,7 +521,7 @@
       
       (define (scheme->js val)
 	 (js-obj->jsobject val %this))
-      
+
       (cond
 	 ((not asynchronous)
 	  (post 

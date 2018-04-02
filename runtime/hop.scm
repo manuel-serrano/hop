@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/runtime/hop.scm                   */
+;*    serrano/prgm/project/hop/3.2.x/runtime/hop.scm                   */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Nov 27 08:37:38 2017 (serrano)                */
-;*    Copyright   :  2004-17 Manuel Serrano                            */
+;*    Last change :  Mon Apr  2 18:39:26 2018 (serrano)                */
+;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
 ;*=====================================================================*/
@@ -468,7 +468,7 @@
 			      (userinfo userinfo)
 			      (host (or host path))
 			      (port (or port (scheme-default-port s)))
-			      (header (cons `(connection: . ,connection) header))
+			      (header header)
 			      (connection-timeout timeout)
 			      (connection connection)
 			      (timeout timeout)
