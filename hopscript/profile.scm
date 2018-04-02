@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Mon Apr  2 17:09:17 2018 (serrano)                */
+;*    Last change :  Mon Apr  2 17:31:33 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -686,7 +686,9 @@
 	 (for-each (lambda (vtable)
 		      (let ((c 0))
 			 (vfor-each (lambda (e)
-				       (when e
+				       (when (or (procedure? e)
+						 (pair? e)
+						 (fixnum? e))
 					  (set! c (+fx c 1))))
 			    vtable)
 			 (when (>fx c maxe) (set! maxe c))))
