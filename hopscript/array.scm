@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sat Mar 31 08:13:38 2018 (serrano)                */
+;*    Last change :  Mon Apr  2 11:21:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2692,7 +2692,7 @@
 		(js-object-mode-inline-set! o #f)
 		(js-object-mode-holey-set! o #t)
 		(u32vset! vec i (js-absent))
-		(set! ilen (+u32 i 1))
+		(set! ilen i)
 		#t))
 	    ((or (eq? p 'length) (eq? (js-toname p %this) 'length))
 	     #f)

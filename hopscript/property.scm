@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Mar 29 22:40:56 2018 (serrano)                */
+;*    Last change :  Mon Apr  2 11:15:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -725,6 +725,7 @@
 	 (set! vlen (+fx idx 1))
 	 (set! vtable (copy-vector vtable (+fx idx 1))))
       (vector-set! vtable idx obj)
+      (log-vtable-entries! vtable)
       obj))
 
 ;*---------------------------------------------------------------------*/
@@ -1109,6 +1110,7 @@
 ;*    js-properties-names ::JsObject ...                               */
 ;*---------------------------------------------------------------------*/
 (define-method (js-properties-names o::JsObject enump::bool %this)
+   
    (define (cmap->names cmap)
       (with-access::JsConstructMap cmap (props)
 	 (let loop ((i (-fx (vector-length props) 1))

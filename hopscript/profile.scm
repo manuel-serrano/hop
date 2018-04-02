@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sat Mar 31 07:32:26 2018 (serrano)                */
+;*    Last change :  Mon Apr  2 17:09:17 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -41,6 +41,7 @@
 
 	   (log-pmap-invalidation!)
 	   (log-vtable! idx)
+	   (log-vtable-entries! vtable)
 	   (profile-function ::obj ::symbol)
 	   (profile-cache-index ::long)
 	   (profile-cache-extension ::long)
@@ -180,7 +181,8 @@
 (define *log-vtables* #f)
 
 (define *pmap-invalidations* 0)
-(define *vtables* 0)
+(define *vtables* '())
+(define *vtables-cnt* 0)
 (define *vtables-mem* 0)
 
 ;*---------------------------------------------------------------------*/
@@ -292,8 +294,16 @@
 ;*---------------------------------------------------------------------*/
 (define (log-vtable! idx)
    (when *log-vtables*
-      (set! *vtables* (+ 1 *vtables*))
+      (set! *vtables-cnt* (+ 1 *vtables-cnt*))
       (set! *vtables-mem* (+ *vtables-mem* (+ idx 1)))))
+
+;*---------------------------------------------------------------------*/
+;*    log-vtable-entries! ...                                          */
+;*---------------------------------------------------------------------*/
+(define (log-vtable-entries! vtable)
+   (when *log-vtables*
+      (unless (memq vtable *vtables*)
+	 (set! *vtables* (cons vtable *vtables*)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    attr->index ...                                                  */
@@ -671,6 +681,18 @@
    (define poly
       (filecaches-polymorphics filecaches))
 
+   (define (max-vtable-entries)
+      (let ((maxe 0))
+	 (for-each (lambda (vtable)
+		      (let ((c 0))
+			 (vfor-each (lambda (e)
+				       (when e
+					  (set! c (+fx c 1))))
+			    vtable)
+			 (when (>fx c maxe) (set! maxe c))))
+	    *vtables*)
+	 maxe))
+
    (define (show-json-property-cache-entries filecaches fieldname)
       (let* ((field (find-class-field JsPropertyCache fieldname))
 	     (proc (class-field-accessor field)))
@@ -808,7 +830,7 @@
 	     (show-json-cache 'vtable)
 	     (print "  \"hclasses\": " (gencmapid) ",")
 	     (print "  \"invalidations\": " *pmap-invalidations* ",")
-	     (print "  \"vtables\": { \"number\": " *vtables* ", \"mem\": " *vtables-mem* "}")
+	     (print "  \"vtables\": { \"number\": " *vtables-cnt* ", \"mem\": " *vtables-mem* ", \"max-entries-per-table\": " (max-vtable-entries) "}")
 	     (print "},"))))
       (else
        (fprint *profile-port* "\nCACHES:\n" "=======")
@@ -885,9 +907,13 @@
 	     (padding *pmap-invalidations* 12 'right))
 	  (fprint *profile-port*
 	     "vtables                  : "
-	     (padding *vtables* 12 'right)
-	     " (" *vtables-mem* "b)")
-
+	     (padding *vtables-cnt* 12 'right))
+	  (fprint *profile-port*
+	     "vtables size             : "
+	     (padding *vtables-mem* 12 'right) "b")
+	  (fprint *profile-port*
+	     "vtables max entries      : "
+	     (padding (max-vtable-entries) 12 'right))
 	  (if (and (pair? filecaches) (pair? (cdr filecaches)))
 	      (for-each (lambda (fc)
 			   (when (and (vector? (filecache-caches fc))

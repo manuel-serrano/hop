@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sat Mar 31 06:13:20 2018 (serrano)                */
+;*    Last change :  Mon Apr  2 09:15:59 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -919,8 +919,14 @@
 ;*    dead-inner-decl! ::J2SDeclInit ...                               */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (dead-inner-decl! this::J2SDeclInit)
-   (with-access::J2SDecl this (usecnt loc id key)
-      (if (=fx usecnt 0)
+   
+   (define (simple-expr? val::J2SExpr)
+      (or (isa? val J2SLiteralCnst)
+	  (isa? val J2SFun)
+	  (isa? val J2SRef)))
+   
+   (with-access::J2SDeclInit this (usecnt loc id key val)
+      (if (and (=fx usecnt 0) (simple-expr? val))
 	  (J2SNop)
 	  (begin
 	     (call-default-walker)

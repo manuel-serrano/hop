@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Oct 25 15:52:55 2017                          */
-;*    Last change :  Thu Mar 29 08:41:24 2018 (serrano)                */
+;*    Last change :  Mon Apr  2 09:36:52 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Types Companion macros                                           */
@@ -31,9 +31,14 @@
 		    (id (symbol-append 'instantiate:: ',clazz))
 		    (nx (list 'let
 			   (list (list nobj
-				    (cons id (filter (lambda (f)
-							(not (builtin? f)))
-						(cdr x)))))
+				    (cons id
+				       (append
+					  (if (or #t (pair? (assq 'cmap (cdr x))))
+					      '()
+					      '((cmap (instantiate::JsConstructMap))))
+					  (filter (lambda (f)
+						     (not (builtin? f)))
+					     (cdr x))))))
 			   (cons 'begin
 			      (map (lambda (f)
 				      (let ((c (assq (car f) (cdr x)))
@@ -107,9 +112,12 @@
 			(nx (list 'let
 			       (list (list nobj
 					(cons 'instantiate::JsObject
-					   (filter (lambda (f)
-							    (not (builtin? f)))
-						    (cdr x)))))
+					   (append (if (or #t (assq 'cmap (cdr x)))
+						       '()
+						       '((cmap (instantiate::JsConstructMap))))
+					      (filter (lambda (f)
+							 (not (builtin? f)))
+						 (cdr x))))))
 			       (cons 'begin
 				  (map (lambda (f)
 					  (let ((c (assq (car f) (cdr x)))
