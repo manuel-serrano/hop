@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Apr  2 18:28:18 2018 (serrano)                */
+;*    Last change :  Tue Apr  3 17:49:33 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -134,6 +134,23 @@
 	  `(with-access::JsPropertyCache ,c (pmap) pmap))
 	 (else
 	  (error "js-pcache-pmap" "bad syntax" x)))
+      e))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-emap-expander ...                                      */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-emap-expander x e)
+   (e (match-case x
+	 ((js-pcache-emap (and ?c (js-pcache-ref %pcache ?idx)))
+	  (cond-expand
+	     ((and bigloo-c (not hopjs-worker-slave))
+	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_emapz00)" ,idx))
+	     (else
+	      `(with-access::JsPropertyCache ,c (emap) emap))))
+	 ((js-pcache-emap ?c)
+	  `(with-access::JsPropertyCache ,c (emap) emap))
+	 (else
+	  (error "js-pcache-emap" "bad syntax" x)))
       e))
 
 ;*---------------------------------------------------------------------*/
@@ -278,6 +295,8 @@
 				   `((@ js-object-get-name/cache-imap+
 					__hopscript_property)
 				     ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs))))
+			((emap)
+			 (loop (cdr cs)))
 			((cmap cmap+)
 			 ;; direct property get
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))
@@ -442,20 +461,34 @@
 			 (js-profile-log-index idx)
 			 (js-object-inline-set! ,obj idx ,tmp)
 			 ,tmp))
+		    ((eq? cs 'emap)
+		     `(let ((idx (js-pcache-index ,cache)))
+			 (js-profile-log-cache ,cache :imap #t)
+			 (js-profile-log-index idx)
+			 (js-object-inline-set! ,obj idx ,tmp)
+			 (set! cmap (js-pcache-cmap ,cache))
+			 ,tmp))
 		    ((eq? cs 'cmap)
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :cmap #t)
 			 (js-profile-log-index idx)
 			 (vector-set! elements idx ,tmp)
 			 ,tmp))
+;* 		    ((eq? cs 'pmap)                                    */
+;* 		     `(let ((idx (js-pcache-index ,cache))             */
+;* 			    (%vec elements))                           */
+;* 			 (js-profile-log-cache ,cache :pmap #t)        */
+;* 			 (js-profile-log-index idx)                    */
+;* 			 (if (<fx idx (vector-length %vec))            */
+;*                              (vector-set! %vec idx ,tmp)            */
+;*                              (js-object-ctor-add! ,obj idx ,tmp))   */
+;* 			 (set! cmap (js-pcache-cmap ,cache))           */
+;* 			 ,tmp))                                        */
 		    ((eq? cs 'pmap)
-		     `(let ((idx (js-pcache-index ,cache))
-			    (%vec elements))
+		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :pmap #t)
 			 (js-profile-log-index idx)
-			 (if (<fx idx (vector-length %vec))
-			     (vector-set! %vec idx ,tmp)
-			     (js-object-ctor-add! ,obj idx ,tmp))
+			 (js-object-push! ,obj idx ,tmp)
 			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'amap)
@@ -480,6 +513,11 @@
 					__hopscript_property)
 				     ,obj ,prop ,tmp ,throw ,%this
 				     ,cache ,loc ',cspecs))))
+			((emap)
+			 ;; directory property set
+			 `(if (eq? %cmap (js-pcache-emap ,cache))
+			      ,(loop 'emap)
+			      ,(loop (cdr cs))))
 			((cmap cmap+)
 			 ;; directory property set
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))

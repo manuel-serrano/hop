@@ -3,12 +3,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb  1 13:36:09 2017                          */
-;*    Last change :  Thu Feb 22 12:53:13 2018 (serrano)                */
+;*    Last change :  Tue Apr  3 18:12:14 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Static approximation of constructors sizes                       */
+;*    Constructor optimization                                         */
 ;*    -------------------------------------------------------------    */
-;*    This stage must executes after the property stage as the         */
+;*    This stage must execute after the property stage as the          */
 ;*    cache indexes are needed.                                        */
 ;*=====================================================================*/
 
@@ -37,6 +37,11 @@
       (name "ctor")
       (comment "Type ctors")
       (proc j2s-ctor!)))
+
+;*---------------------------------------------------------------------*/
+;*    ctor-init-threshold ...                                          */
+;*---------------------------------------------------------------------*/
+(define ctor-init-threshold 5)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-ctor! ::obj ...                                              */
@@ -234,8 +239,8 @@
 	 ((null? init)
 	  ;; no init, just a regular block
 	  (call-default-walker))
-	 ((<fx (length init) 5)
-	  ;; too small to be optimized, not worse the bookkeeping
+	 ((<fx (length init) ctor-init-threshold)
+	  ;; too small to be optimized, not worth the bookkeeping
 	  (set-cdr! (last-pair init) rest)
 	  (call-default-walker))
 	 (else

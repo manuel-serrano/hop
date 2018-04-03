@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Mar 29 22:58:12 2018 (serrano)                */
+;*    Last change :  Tue Apr  3 17:48:41 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -78,6 +78,7 @@
 	   
 	   (final-class JsPropertyCache
 	      (imap::obj (default #f))
+	      (emap::obj (default #f))
 	      (cmap::obj (default #f))
 	      (pmap::obj (default #t))
 	      (amap::obj (default #t))
