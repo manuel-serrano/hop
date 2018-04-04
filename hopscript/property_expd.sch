@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Apr  2 18:28:18 2018 (serrano)                */
+;*    Last change :  Tue Apr  3 08:51:09 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -490,11 +490,16 @@
 					__hopscript_property)
 				     ,obj ,prop ,tmp ,throw ,%this
 				     ,cache ,loc ',cspecs))))
-			((pmap)
+			((pmap pmap+)
 			 ;; prototype property set
 			 `(if (eq? %cmap (js-pcache-pmap ,cache))
 			      ,(loop 'pmap)
-			      ,(loop (cdr cs))))
+			      ,(if (eq? (car cs) 'pmap)
+				   (loop (cdr cs))
+				   `((@ js-object-put-name/cache-pmap+!
+					__hopscript_property)
+				     ,obj ,prop ,tmp ,throw ,%this
+				     ,cache ,loc ',cspecs))))
 			((amap)
 			 ;; accessor property set
 			 `(if (eq? %cmap (js-pcache-amap ,cache))

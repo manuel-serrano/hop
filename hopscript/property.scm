@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Apr  2 11:15:32 2018 (serrano)                */
+;*    Last change :  Tue Apr  3 08:51:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -146,6 +146,9 @@
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   (js-object-put-name/cache-cmap+! ::JsObject ::obj ::obj ::bool
+	      ::JsGlobalObject
+	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
+	   (js-object-put-name/cache-pmap+! ::JsObject ::obj ::obj ::bool
 	      ::JsGlobalObject
 	      ::JsPropertyCache #!optional (point -1) (cspecs '()))
 	   
@@ -2008,6 +2011,18 @@
 	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
    (js-object-put-name/cache! o prop v throw %this cache point
       '(pmap amap vtable)))
+
+;*---------------------------------------------------------------------*/
+;*    js-object-put-name/cache-pmap+! ...                              */
+;*    -------------------------------------------------------------    */
+;*    !!! Overriden in property_expd.sch                               */
+;*---------------------------------------------------------------------*/
+(define (js-object-put-name/cache-pmap+! o::JsObject prop::symbol v::obj
+	   throw::bool
+	   %this::JsGlobalObject
+	   cache::JsPropertyCache #!optional (point -1) (cspecs '()))
+   (js-object-put-name/cache! o prop v throw %this cache point
+      '(amap vtable)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-bind! ...                                                     */
