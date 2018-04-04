@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Apr  3 17:58:16 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 07:48:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -50,6 +50,7 @@
 	   (js-invalidate-pcaches-pmap! ::JsGlobalObject)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-imap ::JsPropertyCache)
+	   (inline js-pcache-emap ::JsPropertyCache)
 	   (inline js-pcache-cmap ::JsPropertyCache)
 	   (inline js-pcache-amap ::JsPropertyCache)
 	   
@@ -468,7 +469,7 @@
    (vector-ref pcache index))
 
 ;*---------------------------------------------------------------------*/
-;*    js-pcache-cmap ...                                               */
+;*    js-pcache-Xmap ...                                               */
 ;*    -------------------------------------------------------------    */
 ;*    !!! Overriden in property_expd.sch                               */
 ;*---------------------------------------------------------------------*/
@@ -476,20 +477,14 @@
    (with-access::JsPropertyCache pcache (cmap)
       cmap))
 
-;*---------------------------------------------------------------------*/
-;*    js-pcache-imap ...                                               */
-;*    -------------------------------------------------------------    */
-;*    !!! Overriden in property_expd.sch                               */
-;*---------------------------------------------------------------------*/
 (define-inline (js-pcache-imap pcache)
    (with-access::JsPropertyCache pcache (imap)
       imap))
 
-;*---------------------------------------------------------------------*/
-;*    js-pcache-amap ...                                               */
-;*    -------------------------------------------------------------    */
-;*    !!! Overriden in property_expd.sch                               */
-;*---------------------------------------------------------------------*/
+(define-inline (js-pcache-emap pcache)
+   (with-access::JsPropertyCache pcache (emap)
+      emap))
+
 (define-inline (js-pcache-amap pcache)
    (with-access::JsPropertyCache pcache (amap)
       amap))
@@ -586,7 +581,6 @@
 		   (set! cmap nextmap)
 		   (set! emap #t)))
 	    (set! pmap omap)
-	    (set! emap #t)
 	    (set! amap #t)
 	    (set! owner #f)
 	    (set! index i)))))
@@ -596,12 +590,6 @@
 ;*---------------------------------------------------------------------*/
 (define (cmap-size cmap::JsConstructMap)
    (with-access::JsConstructMap cmap (props) (vector-length props)))
-
-;*---------------------------------------------------------------------*/
-;*    pmap-index ...                                                   */
-;*---------------------------------------------------------------------*/
-(define (pmap-index cmap::JsPropertyCache)
-   (with-access::JsPropertyCache cmap (index) index))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-next-element? ...                               */
@@ -726,14 +714,19 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-cmap-vtable-add! ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-cmap-vtable-add! o::JsConstructMap idx::long obj)
+(define (js-cmap-vtable-add! o::JsConstructMap idx::long obj cache::JsPropertyCache)
    (with-access::JsConstructMap o (vlen vtable)
-      (when (>=fx idx (vector-length vtable))
-	 (log-vtable! idx)
-	 (set! vlen (+fx idx 1))
-	 (set! vtable (copy-vector vtable (+fx idx 1))))
-      (vector-set! vtable idx obj)
-      (log-vtable-entries! vtable)
+      (let ((l (vector-length vtable)))
+	 (cond
+	    ((>=fx idx l)
+	     (let ((old vtable))
+		(set! vlen (+fx idx 1))
+		(set! vtable (copy-vector vtable (+fx idx 1)))
+		(log-vtable! idx vtable old))
+	     (vector-fill! vtable (cons #f #f) l))
+	    ((car (vector-ref vtable idx))
+	     (log-vtable-conflict!))))
+      (vector-set! vtable idx (cons cache obj))
       obj))
 
 ;*---------------------------------------------------------------------*/
@@ -1403,7 +1396,7 @@
 	 (when (>=fx cntmiss (vtable-threshold))
 	    (when (=fx vindex (js-not-a-index))
 	       (set! vindex (js-get-vindex %this)))
-	    (js-cmap-vtable-add! omap vindex i))))
+	    (js-cmap-vtable-add! omap vindex i cache))))
 
    (let loop ((obj o))
       (jsobject-find obj name
@@ -1777,9 +1770,10 @@
 				(else
 				 (when (invalidate-cache-method! v methods i)
 				    (reset-cmap-vtable! cmap)
-				    (set! cmap (duplicate::JsConstructMap cmap
-						  (vlen 0)
-						  (vtable '#()))))
+				    (set! cmap
+				       (duplicate::JsConstructMap cmap
+					  (vlen 0)
+					  (vtable '#()))))
 				 (when cache
 				    [assert (i) (<fx i (vector-length elements))]
 				    (js-pcache-update-direct! cache i o))
@@ -1788,9 +1782,10 @@
 			 ((flags-writable? (prop-flags (vector-ref props i)))
 			  (when (invalidate-cache-method! v methods i)
 			     (reset-cmap-vtable! cmap)
-			     (set! cmap (duplicate::JsConstructMap cmap
-					   (vlen 0)
-					   (vtable '#()))))
+			     (set! cmap
+				(duplicate::JsConstructMap cmap
+				   (vlen 0)
+				   (vtable '#()))))
 			  (when cache
 			     [assert (i) (<fx i (vector-length elements))]
 			     (js-pcache-update-direct! cache i o))
@@ -1990,7 +1985,7 @@
 		   (when (>=fx index 0)
 		      (when (=fx vindex (js-not-a-index))
 			 (set! vindex (js-get-vindex %this)))
-		      (js-cmap-vtable-add! %omap vindex (cons index cmap))))))
+		      (js-cmap-vtable-add! %omap vindex (cons index cmap) cache)))))
 	 tmp)))
 
 ;*---------------------------------------------------------------------*/
@@ -2826,7 +2821,7 @@
 		 (=fx (procedure-arity method) (+fx 1 (length args))))
 	 (when (=fx vindex (js-not-a-index))
 	    (set! vindex (js-get-vindex %this)))
-	 (js-cmap-vtable-add! pmap vindex method))
+	 (js-cmap-vtable-add! pmap vindex method ccache))
       (js-object-method-call/cache-fill %this o name args
 	 ccache ocache point ccspecs ocspecs)))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue Apr  3 17:49:33 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 07:38:28 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -19,7 +19,8 @@
       (profile
        (match-case x
 	  ((js-profile-log-cache ?cache . ?cspecs)
-	   (e `(with-access::JsPropertyCache ,cache (cntimap cntcmap cntpmap name
+	   (e `(with-access::JsPropertyCache ,cache (cntimap cntemap
+						       cntcmap cntpmap 
 						       cntamap cntvtable)
 		  ,@(filter-map (lambda (c)
 				   (when (keyword? c)
@@ -325,8 +326,9 @@
 			     `(with-access::JsConstructMap %cmap (vlen vtable %id)
 				 (let ((vidx (js-pcache-vindex ,cache)))
 				    (if (and (<fx vidx vlen)
-					     (fixnum? (vector-ref vtable vidx)))
-					(let ((idx (vector-ref vtable vidx)))
+					     (eq? (car (vector-ref vtable vidx))
+						,cache))
+					(let ((idx (cdr (vector-ref vtable vidx))))
 					   (js-profile-log-cache ,cache
 					      :vtable #t)
 					   (js-profile-log-index idx)
@@ -463,7 +465,7 @@
 			 ,tmp))
 		    ((eq? cs 'emap)
 		     `(let ((idx (js-pcache-index ,cache)))
-			 (js-profile-log-cache ,cache :imap #t)
+			 (js-profile-log-cache ,cache :emap #t)
 			 (js-profile-log-index idx)
 			 (js-object-inline-set! ,obj idx ,tmp)
 			 (set! cmap (js-pcache-cmap ,cache))
@@ -547,9 +549,10 @@
 			     `(with-access::JsConstructMap %cmap (vlen vtable)
 				 (let ((vidx (js-pcache-vindex ,cache)))
 				    (if (and (<fx vidx vlen)
-					     (pair? (vector-ref vtable vidx)))
-					(let ((idx (car (vector-ref vtable vidx)))
-					      (ncmap (cdr (vector-ref vtable vidx))))
+					     (eq? (car (vector-ref vtable vidx))
+						,cache))
+					(let ((idx (cadr (vector-ref vtable vidx)))
+					      (ncmap (cddr (vector-ref vtable vidx))))
 					   (js-profile-log-cache ,cache :vtable #t)
 					   (js-profile-log-index idx)
 					   (js-object-ctor-push! ,obj idx ,tmp)
@@ -575,10 +578,10 @@
 	      (lambda (tmp)
 		 (expand-cache-specs cspecs obj prop tmp throw %this cache loc))))
 	  ((js-object-put-name/cache! ?obj ?prop ?val ?throw ?%this ?cache ?loc (? symbol?))
-	   (set-car! (last-pair x) ''(cmap pmap amap vtable))
+	   (set-car! (last-pair x) ''(imap emap cmap pmap amap vtable))
 	   (e x e))
 	  ((js-object-put-name/cache! ?obj ?prop ?val ?throw ?%this ?cache)
-	   (e (append x '(-1 '(cmap pmap amap vtable))) e))
+	   (e (append x '(-1 '(imap emap cmap pmap amap vtable))) e))
 	  (else
 	   (error "js-object-put-name/cache!" "bad form" x))))))
 	      
@@ -660,11 +663,13 @@
 			     `(with-access::JsConstructMap %cmap (vlen vtable)
 				 (let ((vidx (js-pcache-vindex ,ccache)))
 				    (if (and (<fx vidx vlen)
-					     (procedure? (vector-ref vtable vidx)))
+					     (eq? (car (vector-ref vtable vidx))
+						,ccache))
 					(begin
 					   (js-profile-log-cache ,ccache
 					      :vtable #t)
-					   ((vector-ref vtable vidx) ,obj ,@args))
+					   ((cdr (vector-ref vtable vidx))
+					    ,obj ,@args))
 					,(loop (cdr cs))))))))
 			(else
 			 (error "js-object-method-call-name/cache"

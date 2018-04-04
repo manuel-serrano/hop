@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Apr  3 19:35:11 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 07:39:56 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -29,7 +29,7 @@
    (export (js-profile-init conf)
 
 	   (js-profile-log-cache ::JsPropertyCache
-	      #!key imap cmap pmap amap vtable)
+	      #!key imap emap cmap pmap amap vtable)
 	   (js-profile-log-index ::long)
 	   
 	   (js-profile-log-get ::symbol)
@@ -38,8 +38,8 @@
 	   
 	   (log-cache-miss!)
 	   (log-pmap-invalidation!)
-	   (log-vtable! idx)
-	   (log-vtable-entries! vtable)
+	   (log-vtable! ::int ::vector ::vector)
+	   (log-vtable-conflict!)
 	   
 	   (profile-function ::obj ::symbol)
 	   (profile-cache-index ::long)
@@ -119,10 +119,11 @@
 ;*    js-profile-log-cache ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (js-profile-log-cache cache::JsPropertyCache
-	   #!key imap cmap pmap amap vtable)
-   (with-access::JsPropertyCache cache (cntimap cntcmap cntpmap cntamap cntvtable)
+	   #!key imap emap cmap pmap amap vtable)
+   (with-access::JsPropertyCache cache (cntimap cntemap cntcmap cntpmap cntamap cntvtable)
       (cond
 	 (imap (set! cntimap (+ 1 cntimap)))
+	 (emap (set! cntemap (+ 1 cntemap)))
 	 (cmap (set! cntcmap (+ 1 cntcmap)))
 	 (pmap (set! cntpmap (+ 1 cntpmap)))
 	 (amap (set! cntamap (+ 1 cntamap)))
@@ -183,6 +184,7 @@
 (define *vtables* '())
 (define *vtables-cnt* 0)
 (define *vtables-mem* 0)
+(define *vtables-conflicts* 0)
 
 ;*---------------------------------------------------------------------*/
 ;*    log-cache-miss! ...                                              */
@@ -291,18 +293,18 @@
 ;*---------------------------------------------------------------------*/
 ;*    log-vtable! ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (log-vtable! idx)
+(define (log-vtable! idx vtable old)
    (when *log-vtables*
       (set! *vtables-cnt* (+ 1 *vtables-cnt*))
-      (set! *vtables-mem* (+ *vtables-mem* (+ idx 1)))))
+      (set! *vtables-mem* (+ *vtables-mem* (+ idx 1)))
+      (set! *vtables* (cons vtable (remq! old *vtables*)))))
 
 ;*---------------------------------------------------------------------*/
-;*    log-vtable-entries! ...                                          */
+;*    log-vtable-conflict! ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (log-vtable-entries! vtable)
+(define (log-vtable-conflict!)
    (when *log-vtables*
-      (unless (memq vtable *vtables*)
-	 (set! *vtables* (cons vtable *vtables*)))))
+      (set! *vtables-conflicts* (+fx 1 *vtables-conflicts*))))
 
 ;*---------------------------------------------------------------------*/
 ;*    attr->index ...                                                  */
@@ -605,21 +607,23 @@
 	 (if m (string->integer (cadr m)) 100)))
 
    (define (pcache-hits pc)
-      (with-access::JsPropertyCache pc (cntimap cntcmap cntpmap cntamap cntvtable)
-	 (+ cntimap 
-	    (+ cntcmap
-	       (+ cntpmap
-		  (+ cntamap cntvtable))))))
+      (with-access::JsPropertyCache pc (cntimap cntemap cntcmap cntpmap cntamap cntvtable)
+	 (+ cntimap
+	    (+ cntemap
+	       (+ cntcmap
+		  (+ cntpmap
+		     (+ cntamap cntvtable)))))))
 
-   (define (pcache-polymorphic pc)
-      (with-access::JsPropertyCache pc (name usage cntimap cntcmap cntpmap cntamap cntvtable)
+   (define (pcache-multi pc)
+      (with-access::JsPropertyCache pc (name usage cntimap cntemap cntcmap cntpmap cntamap cntvtable)
 	 (when (> (+ (if (> cntimap 0) 1 0)
+		     (if (> cntemap 0) 1 0)
 		     (if (> cntcmap 0) 1 0)
 		     (if (> cntpmap 0) 1 0)
 		     (if (> cntamap 0) 1 0)
 		     (if (> cntvtable 0) 1 0))
 		  1)
-	    (cons name (+ cntimap cntcmap cntpmap cntamap cntvtable)))))
+	    (cons name (+ cntimap cntemap cntcmap cntpmap cntamap cntvtable)))))
 
    (define (filecache-sum-field filecaches fieldname)
       (let ((field (find-class-field JsPropertyCache fieldname)))
@@ -644,6 +648,9 @@
    (define (filecaches-imaps filecaches)
       (filecache-sum-field filecaches 'cntimap))
 
+   (define (filecaches-emaps filecaches)
+      (filecache-sum-field filecaches 'cntemap))
+
    (define (filecaches-pmaps filecaches)
       (filecache-sum-field filecaches 'cntpmap))
 
@@ -653,10 +660,10 @@
    (define (filecaches-vtables filecaches)
       (filecache-sum-field filecaches 'cntvtable))
 
-   (define (filecaches-polymorphics filecaches)
+   (define (filecaches-multis filecaches)
       (append-map (lambda (fc)
 		     (filter (lambda (x) x)
-			(vmap pcache-polymorphic (filecache-caches fc))))
+			(vmap pcache-multi (filecache-caches fc))))
 	 filecaches))
 
    (define (filecaches-usage-filter filecaches u)
@@ -677,15 +684,15 @@
 	 (filecaches-misses filecaches)
 	 (total-uncaches)))
 
-   (define poly
-      (filecaches-polymorphics filecaches))
+   (define multi
+      (filecaches-multis filecaches))
 
    (define (max-vtable-entries)
       (let* ((msize (apply max (map vector-length *vtables*)))
 	     (vec (make-vector msize 0)))
 	 (for-each (lambda (vtable)
 		      (vfor-each (lambda (i v)
-				    (when (or (pair? v) (integer? v) (pair? v))
+				    (when (car v)
 				       (vector-set! vec i
 					  (+fx (vector-ref vec i) 1))))
 			 vtable))
@@ -761,15 +768,17 @@
 						       (xusage usage)
 						       (xcntmiss cntmiss)
 						       (xcntimap cntimap)
+						       (xcntemap cntemap)
 						       (xcntcmap cntcmap)
 						       (xcntpmap cntpmap)
 						       (xcntamap cntamap)
 						       (xcntvtable cntvtable))
-			 (with-access::JsPropertyCache old (point usage cntmiss cntimap cntcmap cntpmap cntamap cntvtable)
+			 (with-access::JsPropertyCache old (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
 			    (if (and (= point xpoint) (eq? xusage usage))
 				(begin
 				   (set! cntmiss (+ cntmiss xcntmiss))
 				   (set! cntimap (+ cntimap xcntimap))
+				   (set! cntemap (+ cntemap xcntemap))
 				   (set! cntcmap (+ cntcmap xcntcmap))
 				   (set! cntpmap (+ cntpmap xcntpmap))
 				   (set! cntamap (+ cntamap xcntamap))
@@ -793,12 +802,13 @@
 				(print "  { \"filename\": \"" (filecache-name fc) "\",")
 				(print "    \"caches\": [")
 				(vfor-each (lambda (i pc)
-					      (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntcmap cntpmap cntamap cntvtable)
+					      (with-access::JsPropertyCache pc (point usage cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
 						 (when (or (> (pcache-hits pc) 0) (> cntmiss *log-miss-threshold*))
 						    (display* "      { \"point\": " point)
 						    (display* ", \"usage\": \"" usage "\"")
 						    (when (> cntmiss 1) (display* ", \"miss\": " cntmiss))
 						    (when (> cntimap 0) (display* ", \"imap\": " cntimap))
+						    (when (> cntemap 0) (display* ", \"emap\": " cntemap))
 						    (when (> cntcmap 0) (display* ", \"cmap\": " cntcmap))
 						    (when (> cntpmap 0) (display* ", \"pmap\": " cntpmap))
 						    (when (> cntamap 0) (display* ", \"amap\": " cntamap))
@@ -825,7 +835,7 @@
 		(print "  \"accesses\": " total ",")
 		(print "  \"hits\": " (filecaches-hits filecaches) ",")
 		(print "  \"misses\": " (filecaches-misses filecaches) ",")
-		(print "  \"polymorphics\": " (apply + (map cdr poly)) ",")
+		(print "  \"multis\": " (apply + (map cdr multi)) ",")
 		(print "  \"uncaches\": {")
 		(print "    \"total\": " (total-uncaches) ",")
 		(print "    \"get\": " *profile-gets* ",")
@@ -833,13 +843,14 @@
 		(print "    \"call\": " *profile-calls*)
 		(print "  },")
 		(show-json-cache 'imap)
+		(show-json-cache 'emap)
 		(show-json-cache 'cmap)
 		(show-json-cache 'pmap)
 		(show-json-cache 'amap)
 		(show-json-cache 'vtable)
 		(print "  \"hclasses\": " (gencmapid) ",")
 		(print "  \"invalidations\": " *pmap-invalidations* ",")
-		(print "  \"vtables\": { \"number\": " *vtables-cnt* ", \"mem\": " *vtables-mem* ", \"locations\": " locations ", \"degree\":" degree "}")
+		(print "  \"vtables\": { \"number\": " *vtables-cnt* ", \"mem\": " *vtables-mem* ", \"locations\": " locations ", \"degree\":" degree ", \"conflicts\":" *vtables-conflicts* "}")
 		(print "},")))))
       (else
        (fprint *profile-port* "\nCACHES:\n" "=======")
@@ -877,6 +888,10 @@
 	     (padding (filecaches-imaps filecaches) 12 'right)
 	     " (" (percent (filecaches-imaps filecaches) total) "%)")
 	  (fprint *profile-port*
+	     "total cache emap hits    : "
+	     (padding (filecaches-emaps filecaches) 12 'right)
+	     " (" (percent (filecaches-emaps filecaches) total) "%)")
+	  (fprint *profile-port*
 	     "total cache cmap hits    : "
 	     (padding (filecaches-cmaps filecaches) 12 'right)
 	     " (" (percent (filecaches-cmaps filecaches) total) "%)")
@@ -901,12 +916,12 @@
 	     (padding (total-uncaches) 12 'right)
 	     " (" (percent (total-uncaches) total) "%)")
 	  
-	  (let ((l (sort (lambda (n1 n2) (<= (cdr n1) (cdr n2))) poly))
-		(poly (apply + (map cdr poly))))
+	  (let ((l (sort (lambda (n1 n2) (<= (cdr n1) (cdr n2))) multi))
+		(multi (apply + (map cdr multi))))
 	     (fprint *profile-port*
-		"total cache polymorphic  : "
-		(padding poly 12 'right)
-		" (" (percent poly total) "%) "
+		"total cache multi       : "
+		(padding multi 12 'right)
+		" (" (percent multi total) "%) "
 		(map car (take l (min (length l) 5)))))
 	  (fprint *profile-port*
 	     "hidden classes num       : "
@@ -927,7 +942,10 @@
 		(padding locations 12 'right))
 	     (fprint *profile-port*
 		"vtables degree           : "
-		(padding degree 12 'right)))
+		(padding degree 12 'right))
+	     (fprint *profile-port*
+		"vtables conflicts        : "
+		(padding *vtables-conflicts* 12 'right)))
 	  (if (and (pair? filecaches) (pair? (cdr filecaches)))
 	      (for-each (lambda (fc)
 			   (when (and (vector? (filecache-caches fc))
@@ -1012,6 +1030,8 @@
 	 " " 
 	 (padding "imap" cwidth 'right)
 	 " "
+	 (padding "emap" cwidth 'right)
+	 " "
 	 (padding "cmap" cwidth 'right)
 	 " "
 	 (padding "pmap" cwidth 'right)
@@ -1021,16 +1041,17 @@
 	 (padding "vtable" cwidth 'right))
       (fprint *profile-port* (make-string (+ ppading 1 cwidth 1 4) #\-)
 	 "-+-"
-	 (make-string (* 6 (+ cwidth 1)) #\-))
+	 (make-string (* 7 (+ cwidth 1)) #\-))
       (for-each (lambda (pc)
 		   (with-access::JsPropertyCache pc (point name usage
 						       cntmiss
 						       cntimap
+						       cntemap
 						       cntcmap
 						       cntpmap
 						       cntamap
 						       cntvtable)
-		      (when (> (+ cntmiss cntimap cntcmap cntpmap cntamap cntvtable)
+		      (when (> (+ cntmiss cntimap cntemap cntcmap cntpmap cntamap cntvtable)
 			       *log-miss-threshold*)
 			 (fprint *profile-port*
 			    (padding (number->string point) ppading 'right)
@@ -1042,6 +1063,8 @@
 			    (padding cntmiss cwidth 'right)
 			    " " 
 			    (padding cntimap cwidth 'right)
+			    " " 
+			    (padding cntemap cwidth 'right)
 			    " " 
 			    (padding cntcmap cwidth 'right)
 			    " " 
