@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Mar 29 22:58:12 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 07:40:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -78,6 +78,7 @@
 	   
 	   (final-class JsPropertyCache
 	      (imap::obj (default #f))
+	      (emap::obj (default #f))
 	      (cmap::obj (default #f))
 	      (pmap::obj (default #t))
 	      (amap::obj (default #t))
@@ -91,6 +92,7 @@
 	      (usage::symbol (default '-))
 	      (cntmiss::long (default 0))
 	      (cntimap::long (default 0))
+	      (cntemap::long (default 0))
 	      (cntcmap::long (default 0))
 	      (cntpmap::long (default 0))
 	      (cntamap::long (default 0))
