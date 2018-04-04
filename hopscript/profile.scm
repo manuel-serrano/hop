@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Apr  3 18:37:28 2018 (serrano)                */
+;*    Last change :  Tue Apr  3 19:35:11 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -685,7 +685,7 @@
 	     (vec (make-vector msize 0)))
 	 (for-each (lambda (vtable)
 		      (vfor-each (lambda (i v)
-				    (when (and v (not (eq? v #unspecified)))
+				    (when (or (pair? v) (integer? v) (pair? v))
 				       (vector-set! vec i
 					  (+fx (vector-ref vec i) 1))))
 			 vtable))
