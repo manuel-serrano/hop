@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Apr  4 07:39:56 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 18:54:13 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -688,24 +688,26 @@
       (filecaches-multis filecaches))
 
    (define (max-vtable-entries)
-      (let* ((msize (apply max (map vector-length *vtables*)))
-	     (vec (make-vector msize 0)))
-	 (for-each (lambda (vtable)
-		      (vfor-each (lambda (i v)
-				    (when (car v)
-				       (vector-set! vec i
-					  (+fx (vector-ref vec i) 1))))
-			 vtable))
-	    *vtables*)
-	 (let ((locations 0)
-	       (degree 0))
-	    (vfor-each (lambda (i v)
-			  (when (>fx v 0)
-			     (set! locations (+fx locations 1))
-			     (when (>fx v degree)
-				(set! degree v))))
-	       vec)
-	    (values locations degree))))
+      (if (null? *vtables*)
+	  (values 0 0)
+	  (let* ((msize (apply max (map vector-length *vtables*)))
+		 (vec (make-vector msize 0)))
+	     (for-each (lambda (vtable)
+			  (vfor-each (lambda (i v)
+					(when (car v)
+					   (vector-set! vec i
+					      (+fx (vector-ref vec i) 1))))
+			     vtable))
+		*vtables*)
+	     (let ((locations 0)
+		   (degree 0))
+		(vfor-each (lambda (i v)
+			      (when (>fx v 0)
+				 (set! locations (+fx locations 1))
+				 (when (>fx v degree)
+				    (set! degree v))))
+		   vec)
+		(values locations degree)))))
 
    (define (show-json-property-cache-entries filecaches fieldname)
       (let* ((field (find-class-field JsPropertyCache fieldname))
