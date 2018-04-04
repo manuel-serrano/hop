@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Thu Mar 29 08:43:25 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 11:08:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -194,12 +194,14 @@
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let* ((len (length alist))
 	     (elements ($create-vector len))
-	     (props ($create-vector len)))
+	     (props ($create-vector len))
+	     (methods (make-vector len #f)))
 	 (let loop ((i 0)
 		    (alist alist))
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
-			       (props props))))
+			       (props props)
+			       (methods methods))))
 		   (instantiateJsObject
 		      (cmap cmap)
 		      (__proto__ __proto__)
@@ -214,6 +216,7 @@
 		       (val (js-obj->jsobject (cdar alist) %this)))
 		   (vector-set-ur! props i (prop name (property-flags-default)))
 		   (vector-set-ur! elements i val)
+		   (when (isa? val JsFunction) (vector-set! methods i #t))
 		   (loop (+fx i 1) (cdr alist))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -223,11 +226,13 @@
    (with-access::JsGlobalObject %this (js-object __proto__)
       (let* ((len (/fx (length plist) 2))
 	     (elements ($create-vector len))
-	     (props ($create-vector len)))
+	     (props ($create-vector len))
+	     (methods (make-vector len #f)))
 	 (let loop ((i 0)
 		    (plist plist))
 	    (if (=fx i len)
 		(let ((cmap (instantiate::JsConstructMap
+			       (methods methods)
 			       (props props))))
 		   (instantiateJsObject
 		      (cmap cmap)
@@ -243,6 +248,7 @@
 		       (val (js-obj->jsobject (cadr plist) %this)))
 		   (vector-set-ur! props i (prop name (property-flags-default)))
 		   (vector-set-ur! elements i val)
+		   (when (isa? val JsFunction) (vector-set! methods i #t))
 		   (loop (+fx i 1) (cddr plist))))))))
 
 ;*---------------------------------------------------------------------*/
