@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:16:17 2013                          */
-;*    Last change :  Wed Apr  4 11:08:22 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 13:08:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The Hop client-side compatibility kit (share/hop-lib.js)         */
@@ -52,7 +52,7 @@
    (let ((cnsts (string->obj str)))
       (let loop ((i (-fx (vector-length cnsts) 1)))
 	 (when (>=fx i 0)
-	    (let ((el (vector-ref-ur cnsts i)))
+	    (let ((el (vector-ref cnsts i)))
 	       (cond
 		  ((isa? el JsRegExp)
 		   ;; patch the regexp prototype
@@ -60,49 +60,49 @@
 		      (with-access::JsRegExp el (__proto__)
 			 (set! __proto__ js-regexp-prototype))))
 		  ((vector? el)
-		   (vector-set-ur! cnsts i
+		   (vector-set! cnsts i
 		      (case (vector-ref el 0)
 			 ((0)
 			  ;; a plain string
-			  (let ((str (vector-ref-ur el 1)))
+			  (let ((str (vector-ref el 1)))
 			     (js-string->jsstring str)))
 			 ((1 4)
 			  ;; a plain regexp
 			  (with-access::JsGlobalObject %this (js-regexp)
-			     (let* ((cnsts (vector-ref-ur el 1))
-				    (flags (vector-ref-ur el 2))
+			     (let* ((cnsts (vector-ref el 1))
+				    (flags (vector-ref el 2))
 				    (rx (js-string->jsstring cnsts)))
 				(if flags
 				    (if (eq? (vector-ref el 0) 4)
 					(js-new3 %this js-regexp rx
 					   (js-string->jsstring flags)
-					   (vector-ref-ur el 3))
+					   (vector-ref el 3))
 					(js-new2 %this js-regexp rx
 					   (js-string->jsstring flags)))
 				    (if (eq? (vector-ref el 0) 4)
 					(js-new2 %this js-regexp rx
-					   (vector-ref-ur el 3))
+					   (vector-ref el 3))
 					(js-new1 %this js-regexp rx))))))
 			 ((2)
 			  ;; a literal cmap
-			  (let ((props (vector-ref-ur el 1)))
+			  (let ((props (vector-ref el 1)))
 			     (js-names->cmap props)))
 			 ((3 5)
 			  ;; an inlined regexp
 			  (with-access::JsGlobalObject %this (js-regexp)
-			     (let* ((cnsts (vector-ref-ur el 1))
-				    (flags (vector-ref-ur el 2))
+			     (let* ((cnsts (vector-ref el 1))
+				    (flags (vector-ref el 2))
 				    (rx (js-string->jsstring cnsts))
 				    (regexp (if flags
 						(if (eq? (vector-ref el 0) 5)
 						    (js-new3 %this js-regexp rx
 						       (js-string->jsstring flags)
-						       (vector-ref-ur el 3))
+						       (vector-ref el 3))
 						    (js-new2 %this js-regexp rx
 						       (js-string->jsstring flags)))
 						(if (eq? (vector-ref el 0) 5)
 						    (js-new2 %this js-regexp rx
-						       (vector-ref-ur el 3))
+						       (vector-ref el 3))
 						    (js-new1 %this js-regexp rx)))))
 				(with-access::JsRegExp regexp (rx)
 				   rx))))))))
@@ -214,8 +214,8 @@
 				(else
 				 (caar alist))))
 		       (val (js-obj->jsobject (cdar alist) %this)))
-		   (vector-set-ur! props i (prop name (property-flags-default)))
-		   (vector-set-ur! elements i val)
+		   (vector-set! props i (prop name (property-flags-default)))
+		   (vector-set! elements i val)
 		   (when (isa? val JsFunction) (vector-set! methods i #t))
 		   (loop (+fx i 1) (cdr alist))))))))
 
@@ -246,8 +246,8 @@
 				(else
 				 (car plist))))
 		       (val (js-obj->jsobject (cadr plist) %this)))
-		   (vector-set-ur! props i (prop name (property-flags-default)))
-		   (vector-set-ur! elements i val)
+		   (vector-set! props i (prop name (property-flags-default)))
+		   (vector-set! elements i val)
 		   (when (isa? val JsFunction) (vector-set! methods i #t))
 		   (loop (+fx i 1) (cddr plist))))))))
 

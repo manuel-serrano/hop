@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Mar 14 08:20:57 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 13:36:15 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -376,7 +376,10 @@
 			 ((pair? (hopc-bigloo-safe-option))
 			  (append (hopc-bigloo-safe-option) opts))
 			 ((and (>=fx (hopc-optim-level) 1)
-			       (=fx (bigloo-debug) 0))
+			       (=fx (bigloo-debug) 0)
+			       (cond-expand
+				  ((not devel) #t)
+				  (else (>=fx (hopc-optim-level) 100))))
 			  (cons "-unsafe" opts))
 			 (else
 			  opts))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Apr  4 07:40:08 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 13:07:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -544,22 +544,22 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-ref o::JsObject idx::long)
    (cond-expand
-      (bigloo-c
+      ((and bigloo-c (not devel))
        (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(CREF($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
       (else
        (with-access::JsObject o (elements)
-	  (vector-ref element idx)))))
+	  (vector-ref elements idx)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-object-inline-set! ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object-inline-set! o::JsObject idx::long val::obj)
    (cond-expand
-      (bigloo-c
+      ((and bigloo-c (not devel))
        (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(CREF($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
       (else
        (with-access::JsObject o (elements)
-	  (vector-set! element idx val)))))
+	  (vector-set! elements idx val)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    xml-primitive-value ::JsWrapper ...                              */

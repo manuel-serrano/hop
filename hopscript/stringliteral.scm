@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Mon Feb 19 10:52:35 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 13:08:39 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -776,7 +776,7 @@
 (define (js-integer->jsstring num::long)
    (if (or (<fx num 0) (>=fx num (vector-length integers)))
        (js-ascii->jsstring (integer->string num))
-       (vector-ref-ur integers num)))
+       (vector-ref integers num)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-jsstring->bool ...                                            */
@@ -1363,10 +1363,10 @@
    (define (ascii-charat/table val position)
       (let* ((c (string-ref-ur val position))
 	     (i (char->integer c))
-	     (o (vector-ref-ur charat-table i)))
+	     (o (vector-ref charat-table i)))
 	 (or o
 	     (let ((ns (js-ascii->jsstring (make-string 1 c))))
-		(vector-set-ur! charat-table i ns)
+		(vector-set! charat-table i ns)
 		ns))))
    
    (define (ascii-charat val::bstring)

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Feb 12 08:20:44 2018 (serrano)                */
+#*    Last change :  Wed Apr  4 13:06:29 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -283,7 +283,7 @@ while : ; do
       bcflagsrts=;
       bcflagsdev=-cg;
       bscm2jsflags=;
-      bcflags="$bcflags -Wall -Wno-slot";;
+      bcflags="$bcflags -Wall -Wno-slot -srfi devel";;
 
     --debug)
       devmode="debug";
@@ -293,7 +293,7 @@ while : ; do
       bhopcflags=-g;
       ccflagsdebug=-g;
       hflags="$hflags -g";
-      bcflags="$bcflags $bcflagsdbg -Wall -Wno-slot";;
+      bcflags="$bcflags $bcflagsdbg -Wall -Wno-slot -srfi devel -srfi debug";;
 
     --debug2)
       devmode="debug2";
@@ -302,7 +302,7 @@ while : ; do
       bscm2jsflags=-g;
       bhopcflags=-g;
       hflags=-g;
-      bcflags="$bcflags $bcflagsdbg2 -Wall -Wno-slot";;
+      bcflags="$bcflags $bcflagsdbg2 -Wall -Wno-slot -srfi devel -srfi debug";;
 
     --pmem)
       devmode="pmem";

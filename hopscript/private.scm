@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed Feb 21 18:11:09 2018 (serrano)                */
+;*    Last change :  Wed Apr  4 13:08:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Private (i.e., not exported by the lib) utilitary functions      */
@@ -671,13 +671,13 @@
 ;*    u32vref ...                                                      */
 ;*---------------------------------------------------------------------*/
 (define-inline (u32vref v::vector i::uint32)
-   (vector-ref-ur v (uint32->fixnum i)))
+   (vector-ref v (uint32->fixnum i)))
 
 ;*---------------------------------------------------------------------*/
 ;*    u32vset! ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define-inline (u32vset! v::vector i::uint32 o)
-   (vector-set-ur! v (uint32->fixnum i) o))
+   (vector-set! v (uint32->fixnum i) o))
 
 ;*---------------------------------------------------------------------*/
 ;*    u32vlen ...                                                      */

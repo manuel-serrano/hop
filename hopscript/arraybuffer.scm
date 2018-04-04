@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 13 08:07:32 2014                          */
-;*    Last change :  Mon Dec  4 11:07:29 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Wed Apr  4 13:09:10 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBuffer                  */
 ;*=====================================================================*/
@@ -80,8 +80,8 @@
       (let loop ((i 0))
 	 (when (<fx i (u8vector-length data))
 	    (let ((v (uint8->fixnum (u8vector-ref data i))))
-	       (write-char (vector-ref-ur chars (bit-rsh v 8)) op)
-	       (write-char (vector-ref-ur chars (bit-and v #xf)) op))
+	       (write-char (vector-ref chars (bit-rsh v 8)) op)
+	       (write-char (vector-ref chars (bit-and v #xf)) op))
 	    (loop (+fx i 1))))
       (display "\")" op)))
 
