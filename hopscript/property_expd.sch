@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Apr  5 15:49:52 2018 (serrano)                */
+;*    Last change :  Thu Apr  5 20:53:51 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -326,7 +326,8 @@
 			     `(with-access::JsConstructMap %cmap (vlen vcache vtable %id)
 				 (let ((vidx (js-pcache-vindex ,cache)))
 ;* 				    (if (and (<fx vidx vlen) (eq? ,cache vcache)) */
-				    (if (<fx vidx vlen)
+				    (if (and (<fx vidx vlen)
+					     (fixnum? (vector-ref vtable vidx)))
 					(let ((idx (vector-ref vtable vidx)))
 					   (js-profile-log-cache ,cache
 					      :vtable #t)
@@ -553,7 +554,8 @@
 			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
 				 (let ((vidx (js-pcache-vindex ,cache)))
 				    ;;(if (and (<fx vidx vlen) (eq? vcache ,cache))
-				    (if (<fx vidx vlen)
+				    (if (and (<fx vidx vlen)
+					     (pair? (vector-ref vtable vidx)))
 					(let ((idx (car (vector-ref vtable vidx)))
 					      (ncmap (cdr (vector-ref vtable vidx))))
 					   (js-profile-log-cache ,cache :vtable #t)
@@ -668,7 +670,8 @@
 			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
 				 (let ((vidx (js-pcache-vindex ,ccache)))
 ;* 				    (if (and (<fx vidx vlen) (eq? ,ccache vcache)) */
-				    (if (<fx vidx vlen)
+				    (if (and (<fx vidx vlen)
+					     (procedure? (vector-ref vtable vidx)))
 					(begin
 					   (js-profile-log-cache ,ccache
 					      :vtable #t)
