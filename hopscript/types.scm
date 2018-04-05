@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Wed Apr  4 13:07:48 2018 (serrano)                */
+;*    Last change :  Thu Apr  5 15:51:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -107,7 +107,8 @@
 	      (ctor::obj (default #f))
 	      (single::bool read-only (default #f))
 	      (vlen::long (default 0))
-	      (vtable::vector (default '#())))
+	      (vtable::vector (default '#()))
+	      (vcache::obj (default #f)))
 	   
 	   ;; Literal strings that are not plain Scheme string
 	   ;; for the sake of concat performance

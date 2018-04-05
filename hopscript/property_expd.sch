@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu Apr  5 05:32:07 2018 (serrano)                */
+;*    Last change :  Thu Apr  5 15:49:52 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -323,12 +323,11 @@
 			    ((or no-vtable-cache no-vtable-cache-get)
 			     (loop (cdr cs)))
 			    (else
-			     `(with-access::JsConstructMap %cmap (vlen vtable %id)
+			     `(with-access::JsConstructMap %cmap (vlen vcache vtable %id)
 				 (let ((vidx (js-pcache-vindex ,cache)))
-				    (if (and (<fx vidx vlen)
-					     (eq? (car (vector-ref vtable vidx))
-						,cache))
-					(let ((idx (cdr (vector-ref vtable vidx))))
+;* 				    (if (and (<fx vidx vlen) (eq? ,cache vcache)) */
+				    (if (<fx vidx vlen)
+					(let ((idx (vector-ref vtable vidx)))
 					   (js-profile-log-cache ,cache
 					      :vtable #t)
 					   (js-profile-log-index idx)
@@ -551,13 +550,12 @@
 			    ((or no-vtable-cache no-vtable-cache-put)
 			     (loop (cdr cs)))
 			    (else
-			     `(with-access::JsConstructMap %cmap (vlen vtable)
+			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
 				 (let ((vidx (js-pcache-vindex ,cache)))
-				    (if (and (<fx vidx vlen)
-					     (eq? (car (vector-ref vtable vidx))
-						,cache))
-					(let ((idx (cadr (vector-ref vtable vidx)))
-					      (ncmap (cddr (vector-ref vtable vidx))))
+				    ;;(if (and (<fx vidx vlen) (eq? vcache ,cache))
+				    (if (<fx vidx vlen)
+					(let ((idx (car (vector-ref vtable vidx)))
+					      (ncmap (cdr (vector-ref vtable vidx))))
 					   (js-profile-log-cache ,cache :vtable #t)
 					   (js-profile-log-index idx)
 					   (js-object-ctor-push! ,obj idx ,tmp)
@@ -667,16 +665,14 @@
 			    ((or no-vtable-cache no-vtable-cache-call)
 			     (loop (cdr cs)))
 			    (else
-			     `(with-access::JsConstructMap %cmap (vlen vtable)
+			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
 				 (let ((vidx (js-pcache-vindex ,ccache)))
-				    (if (and (<fx vidx vlen)
-					     (eq? (car (vector-ref vtable vidx))
-						,ccache))
+;* 				    (if (and (<fx vidx vlen) (eq? ,ccache vcache)) */
+				    (if (<fx vidx vlen)
 					(begin
 					   (js-profile-log-cache ,ccache
 					      :vtable #t)
-					   ((cdr (vector-ref vtable vidx))
-					    ,obj ,@args))
+					   ((vector-ref vtable vidx) ,obj ,@args))
 					,(loop (cdr cs))))))))
 			(else
 			 (error "js-object-method-call-name/cache"

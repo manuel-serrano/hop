@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Apr  5 05:25:51 2018 (serrano)                */
+;*    Last change :  Thu Apr  5 10:06:41 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -37,7 +37,7 @@
 	   (js-profile-log-call ::symbol)
 	   
 	   (log-cache-miss!)
-	   (log-pmap-invalidation!)
+	   (log-pmap-invalidation! ::obj)
 	   (log-vtable! ::int ::vector ::vector)
 	   (log-vtable-conflict!)
 	   
@@ -287,7 +287,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    log-pmap-invalidation! ...                                       */
 ;*---------------------------------------------------------------------*/
-(define (log-pmap-invalidation!)
+(define (log-pmap-invalidation! reason)
+   ;;(tprint "invalide " reason)
    (set! *pmap-invalidations* (+ 1 *pmap-invalidations*)))
 
 ;*---------------------------------------------------------------------*/

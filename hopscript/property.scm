@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Wed Apr  4 07:48:53 2018 (serrano)                */
+;*    Last change :  Thu Apr  5 10:05:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -47,7 +47,7 @@
 	   (js-debug-cmap ::obj #!optional (msg ""))
 	   (%define-pcache ::int)
 	   (js-make-pcache ::int ::obj)
-	   (js-invalidate-pcaches-pmap! ::JsGlobalObject)
+	   (js-invalidate-pcaches-pmap! ::JsGlobalObject ::obj)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-imap ::JsPropertyCache)
 	   (inline js-pcache-emap ::JsPropertyCache)
@@ -439,7 +439,7 @@
 ;*       3) a property is deleted, or                                  */
 ;*       4) a property hidding a prototype property is added.          */
 ;*---------------------------------------------------------------------*/
-(define (js-invalidate-pcaches-pmap! %this::JsGlobalObject)
+(define (js-invalidate-pcaches-pmap! %this::JsGlobalObject reason)
    
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap emap amap)
@@ -453,7 +453,7 @@
 
    (with-access::JsGlobalObject %this (js-pmap-valid)
       (when js-pmap-valid
-	 (log-pmap-invalidation!)
+	 (log-pmap-invalidation! reason)
 	 (set! js-pmap-valid #f)
 	 ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap!)
 	 (for-each (lambda (pcache-entry)
@@ -718,19 +718,21 @@
 ;*    js-cmap-vtable-add! ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (js-cmap-vtable-add! o::JsConstructMap idx::long obj cache::JsPropertyCache)
-   (with-access::JsConstructMap o (vlen vtable)
-      (let ((l (vector-length vtable)))
-	 (cond
-	    ((>=fx idx l)
-	     (let ((old vtable))
-		(set! vlen (+fx idx 1))
-		(set! vtable (copy-vector vtable (+fx idx 1)))
-		(log-vtable! idx vtable old))
-	     (vector-fill! vtable (cons #f #f) l))
-	    ((car (vector-ref vtable idx))
-	     (log-vtable-conflict!))))
-      (vector-set! vtable idx (cons cache obj))
-      obj))
+   (with-access::JsConstructMap o (vlen vcache vtable)
+      (when (or (not vcache) (eq? vcache cache))
+	 (let ((l (vector-length vtable)))
+	    (cond
+	       ((>=fx idx l)
+		(let ((old vtable))
+		   (set! vlen (+fx idx 1))
+		   (set! vtable (copy-vector vtable (+fx idx 1)))
+		   (log-vtable! idx vtable old))
+		(vector-fill! vtable (cons #f #f) l))
+	       ((car (vector-ref vtable idx))
+		(log-vtable-conflict!))))
+	 (vector-set! vtable idx obj)
+	 (set! vcache cache)
+	 obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-vindex ...                                                */
@@ -1801,7 +1803,8 @@
 		      (reject "sealed object"))
 		     ((not (isa? el-or-desc JsPropertyDescriptor))
 		      ;; 8.12.5, step 6
-		      (js-invalidate-pcaches-pmap! %this)
+		      (js-invalidate-pcaches-pmap! %this name)
+		      ;;(tprint "POINT=" point)
 		      (extend-object!))
 		     (else
 		      (with-access::JsDataDescriptor el-or-desc (writable)
@@ -2274,7 +2277,7 @@
 		       (delete-configurable o
 			  (configurable-mapped-property? o i)
 			  (lambda (o)
-			     (js-invalidate-pcaches-pmap! %this)
+			     (js-invalidate-pcaches-pmap! %this "js-delete")
 			     ;; create a new cmap for the object
 			     (let ((nextmap (clone-cmap cmap)))
 				(link-cmap! cmap nextmap n #f -1)
