@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Apr  4 18:54:13 2018 (serrano)                */
+;*    Last change :  Thu Apr  5 05:25:51 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -921,7 +921,7 @@
 	  (let ((l (sort (lambda (n1 n2) (<= (cdr n1) (cdr n2))) multi))
 		(multi (apply + (map cdr multi))))
 	     (fprint *profile-port*
-		"total cache multi       : "
+		"total cache multiple     : "
 		(padding multi 12 'right)
 		" (" (percent multi total) "%) "
 		(map car (take l (min (length l) 5)))))
