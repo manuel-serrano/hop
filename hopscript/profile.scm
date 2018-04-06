@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Apr  5 18:57:23 2018 (serrano)                */
+;*    Last change :  Fri Apr  6 08:43:58 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -297,7 +297,8 @@
 (define (log-vtable! idx vtable old)
    (when *log-vtables*
       (set! *vtables-cnt* (+ 1 *vtables-cnt*))
-      (set! *vtables-mem* (+ *vtables-mem* (+ idx 1)))
+      ;; add 3 for the vector header
+      (set! *vtables-mem* (+ *vtables-mem* (+ 3 (vector-length vtable))))
       (set! *vtables* (cons vtable (remq! old *vtables*)))))
 
 ;*---------------------------------------------------------------------*/
@@ -555,6 +556,14 @@
 	       (display ",\n")
 	       (loop (cddr conf))))))
    (display "\n}"))
+
+;*---------------------------------------------------------------------*/
+;*    vector-mem-size ...                                              */
+;*    -------------------------------------------------------------    */
+;*    An approximation of a vector memory size                         */
+;*---------------------------------------------------------------------*/
+(define (vector-mem-size v)
+   (*fx v (if (>fx (bigloo-config 'elong-size) 32) 8 4)))
 
 ;*---------------------------------------------------------------------*/
 ;*    profile-report-cache ...                                         */
@@ -853,7 +862,7 @@
 		(show-json-cache 'vtable)
 		(print "  \"hclasses\": " (gencmapid) ",")
 		(print "  \"invalidations\": " *pmap-invalidations* ",")
-		(print "  \"vtables\": { \"number\": " *vtables-cnt* ", \"mem\": " *vtables-mem* ", \"locations\": " locations ", \"degree\":" degree ", \"conflicts\":" *vtables-conflicts* "}")
+		(print "  \"vtables\": { \"number\": " *vtables-cnt* ", \"mem\": " (vector-mem-size *vtables-mem*) ", \"locations\": " locations ", \"degree\":" degree ", \"conflicts\":" *vtables-conflicts* "}")
 		(print "},")))))
       (else
        (fprint *profile-port* "\nCACHES:\n" "=======")
@@ -937,7 +946,7 @@
 	     (padding *vtables-cnt* 12 'right))
 	  (fprint *profile-port*
 	     "vtables size             : "
-	     (padding *vtables-mem* 12 'right) "b")
+	     (padding (vector-mem-size *vtables-mem*) 12 'right) "b")
 	  (multiple-value-bind (locations degree)
 	     (max-vtable-entries)
 	     (fprint *profile-port*
