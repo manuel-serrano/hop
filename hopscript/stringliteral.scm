@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 21 14:13:28 2014                          */
-;*    Last change :  Wed Apr  4 13:08:39 2018 (serrano)                */
+;*    Last change :  Sun Apr  8 18:08:53 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Internal implementation of literal strings                       */
@@ -2278,7 +2278,6 @@
 		      (cons (if (eq? v (js-undefined)) (js-ascii->jsstring "") v)
 			 l)))))))
 
-   (tprint "PAS BON LA...")
    (with-access::JsGlobalObject %this (js-regexp js-array)
       (let ((string (js-jsstring->string this)))
 	 (cond

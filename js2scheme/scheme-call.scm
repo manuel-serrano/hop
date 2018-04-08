@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Mar 29 23:08:20 2018 (serrano)                */
+;*    Last change :  Sun Apr  8 17:39:17 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -235,24 +235,26 @@
 	    ((and ccache (= (bigloo-debug) 0))
 	     (cond
 		((isa? field J2SString)
-		 (let ((call (if (eq? (j2s-vtype obj) 'object)
-				 'js-object-method-call-name/cache
-				 'js-method-call-name/cache)))
-		    (with-access::J2SString field (val)
-		       `(,call
-			   ,j2s-unresolved-call-workspace
-			   ,(j2s-scheme obj mode return conf hint)
-			   ',(string->symbol val)
-			   ,(js-pcache ccache)
-			   ,(js-pcache ocache)
-			   ,(loc->point loc)
-			   ',ccspecs
-			   ',(if (>=fx (config-get conf :optim 0) 3)
-				 ocspecs
-				 '(imap+))
-			   ,@(map (lambda (arg)
-				     (j2s-scheme arg mode return conf hint))
-				args)))))
+		 (with-access::J2SString field (val)
+		    (or (and (string=? val "toString")
+			     (j2s-tostring this mode return conf hint))
+			(let ((call (if (eq? (j2s-vtype obj) 'object)
+					'js-object-method-call-name/cache
+					'js-method-call-name/cache)))
+			   `(,call
+			       ,j2s-unresolved-call-workspace
+			       ,(j2s-scheme obj mode return conf hint)
+			       ',(string->symbol val)
+			       ,(js-pcache ccache)
+			       ,(js-pcache ocache)
+			       ,(loc->point loc)
+			       ',ccspecs
+			       ',(if (>=fx (config-get conf :optim 0) 3)
+				     ocspecs
+				     '(imap+))
+			       ,@(map (lambda (arg)
+					 (j2s-scheme arg mode return conf hint))
+				    args))))))
 		(else
 		 (call-unknown-function fun
 		    (list (j2s-scheme obj mode return conf hint))
@@ -538,3 +540,35 @@
 		(call-unknown-function fun
 		   (j2s-scheme thisarg mode return conf hint) args)))))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-tostring ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (j2s-tostring this mode return conf hint)
+   (with-access::J2SCall this (fun args)
+      (with-access::J2SAccess fun (obj)
+	 (case (j2s-type obj)
+	    ((number)
+	     `(js-jsnumber-tostring ,(j2s-scheme obj mode return conf hint)
+		 ,(if (pair? args)
+		      (j2s-scheme (car args) mode return conf hint)
+		      10) %this))
+	    ((int53 bint)
+	     `(js-string->jsstring
+		 (fixnum->string ,(j2s-scheme obj mode return conf hint)
+		    ,(if (pair? args)
+			 (j2s-scheme (car args) mode return conf hint)
+			 10))))
+	    ((int32)
+	     `(js-string->jsstring
+		 (number->string ,(j2s-scheme obj mode return conf hint)
+		    ,(if (pair? args)
+			 (j2s-scheme (car args) mode return conf hint)
+			 10))))
+	    ((uint32)
+	     `(js-string->jsstring
+		 (number->string ,(j2s-scheme obj mode return conf hint)
+		    ,(if (pair? args)
+			 (j2s-scheme (car args) mode return conf hint)
+			 10))))
+	    (else
+	     #f)))))

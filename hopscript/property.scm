@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Thu Apr  5 18:56:19 2018 (serrano)                */
+;*    Last change :  Sun Apr  8 18:25:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -719,20 +719,21 @@
 ;*---------------------------------------------------------------------*/
 (define (js-cmap-vtable-add! o::JsConstructMap idx::long obj cache::JsPropertyCache)
    (with-access::JsConstructMap o (vlen vcache vtable)
-      (if (or (not vcache) (eq? vcache cache))
-	  (let ((l (vector-length vtable)))
-	     (when (>=fx idx l)
-		(let ((old vtable))
-		   (set! vlen (+fx idx 1))
-		   (set! vtable (copy-vector vtable (+fx idx 1)))
-		   (log-vtable! idx vtable old)
-		   (vector-fill! vtable #unspecified l)))
-	     (vector-set! vtable idx obj)
-	     (set! vcache cache)
-	     obj)
-	  (begin
-	     (log-vtable-conflict!)
-	     #f))))
+      (with-access::JsPropertyCache cache (pcache)
+	 (if (or (not vcache) (eq? vcache pcache))
+	     (let ((l (vector-length vtable)))
+		(when (>=fx idx l)
+		   (let ((old vtable))
+		      (set! vlen (+fx idx 1))
+		      (set! vtable (copy-vector vtable (+fx idx 1)))
+		      (log-vtable! idx vtable old)
+		      (vector-fill! vtable #unspecified l)))
+		(vector-set! vtable idx obj)
+		(set! vcache pcache)
+		obj)
+	     (begin
+		(log-vtable-conflict!)
+		#f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-get-vindex ...                                                */

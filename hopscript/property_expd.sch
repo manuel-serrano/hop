@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Apr  6 07:09:24 2018 (serrano)                */
+;*    Last change :  Sun Apr  8 18:23:14 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -84,6 +84,23 @@
 	   (free-pragma::JsPropertyCache "(BgL_jspropertycachez00_bglt)BOBJECT(&(__bgl_pcache[ $1 ]))" ,(caddr x)))
 	  (else
 	   ((@ js-pcache-ref __hopscript_property) ,(cadr x) ,(caddr x))))
+      e))
+
+;*---------------------------------------------------------------------*/
+;*    js-pcache-pache-expander ...                                     */
+;*---------------------------------------------------------------------*/
+(define (js-pcache-pcache-expander x e)
+   (e (match-case x
+	 ((js-pcache-imap (and ?c (js-pcache-ref %pcache ?idx)))
+	  (cond-expand
+	     ((and bigloo-c (not hopjs-worker-slave))
+	      `(free-pragma::obj "(__bgl_pcache[ $1 ].BgL_pcachez00)" ,idx))
+	     (else
+	      `(with-access::JsPropertyCache ,c (pcache) pcache))))
+	 ((js-pcache-pcache ?c)
+	  `(with-access::JsPropertyCache ,c (pcache) pcache))
+	 (else
+	  (error "js-pcache-pcache" "bad syntax" x)))
       e))
 
 ;*---------------------------------------------------------------------*/
@@ -325,7 +342,6 @@
 			    (else
 			     `(with-access::JsConstructMap %cmap (vlen vcache vtable %id)
 				 (let ((vidx (js-pcache-vindex ,cache)))
-;* 				    (if (and (<fx vidx vlen) (eq? ,cache vcache)) */
 				    (if (and (<fx vidx vlen)
 					     (fixnum? (vector-ref vtable vidx)))
 					(let ((idx (vector-ref vtable vidx)))
@@ -553,7 +569,6 @@
 			    (else
 			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
 				 (let ((vidx (js-pcache-vindex ,cache)))
-				    ;;(if (and (<fx vidx vlen) (eq? vcache ,cache))
 				    (if (and (<fx vidx vlen)
 					     (pair? (vector-ref vtable vidx)))
 					(let ((idx (car (vector-ref vtable vidx)))
@@ -669,7 +684,6 @@
 			    (else
 			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
 				 (let ((vidx (js-pcache-vindex ,ccache)))
-;* 				    (if (and (<fx vidx vlen) (eq? ,ccache vcache)) */
 				    (if (and (<fx vidx vlen)
 					     (procedure? (vector-ref vtable vidx)))
 					(begin

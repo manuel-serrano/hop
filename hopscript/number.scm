@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Fri Feb 23 17:12:21 2018 (serrano)                */
+;*    Last change :  Sun Apr  8 17:47:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -438,6 +438,8 @@
       (cond
 	 ((or (< r 2) (> r 36))
 	  (js-raise-range-error %this "Radix out of range: ~a" r))
+	 ((fixnum? val)
+	  (js-string->jsstring (fixnum->string val r)))
 	 ((and (flonum? val) (nanfl? val))
 	  (js-ascii->jsstring "NaN"))
 	 ((= val +inf.0)
@@ -446,8 +448,6 @@
 	  (js-ascii->jsstring "-Infinity"))
 	 ((or (= r 10) (= r 0))
 	  (js-tojsstring val %this))
-	 ((fixnum? val)
-	  (js-string->jsstring (fixnum->string val r)))
 	 ((integer? val)
 	  (js-string->jsstring (llong->string (flonum->llong val) r)))
 	 (else

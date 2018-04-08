@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Fri Apr  6 08:43:58 2018 (serrano)                */
+;*    Last change :  Sun Apr  8 15:58:30 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -998,7 +998,7 @@
 (define (profile-uncached entries total)
    (let loop ((es entries)
 	      (sum 0))
-      (when (and (pair? es) (> (/ (cdar es) total) 0.01))
+      (when (and (pair? es) (> (/ (cdar es) total) 0.005))
 	 (let ((e (car es)))
 	    (fprint *profile-port* (padding (car e) 10 'right) ": "
 	       (padding (cdr e) 10 'right)
