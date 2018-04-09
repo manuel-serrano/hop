@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue Mar 20 07:38:53 2018 (serrano)                */
+;*    Last change :  Mon Apr  9 19:59:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -1359,6 +1359,25 @@
 	 (format "Don't know how to load module ~s" filename)
 	 filename))
 
+   (define (mime-html? url)
+      (multiple-value-bind (scheme userinfo host port path)
+	 (url-parse url)
+	 (let ((r (instantiate::http-server-request
+		     (scheme (string->symbol scheme))
+		     (userinfo userinfo)
+		     (host (or host path))
+		     (port (or port 80))
+		     (connection-timeout (hop-connection-timeout))
+		     (connection 'close)
+		     (method 'HEAD)
+		     (path (if host path "/")))))
+	    (http-send-request r
+	       (lambda (p status header clength tenc)
+		  (let ((ct (assq :content-type header)))
+		     (when (pair? ct)
+			(string-prefix? "text/html"
+			   (cdr ct)))))))))
+
    (define (load-module)
       (cond
 	 ((string-suffix? ".js" filename)
@@ -1373,9 +1392,13 @@
 	  (load-module-so))
 	 ((or (string-prefix? "http://" filename)
 	      (string-prefix? "https://" filename))
-	  (case lang
-	     ((html) (load-module-html))
-	     (else (load-module-js))))
+	  (cond
+	     ((string=? lang "html")
+	      (load-module-html))
+	     ((mime-html? filename)
+	      (load-module-html))
+	     (else
+	      (load-module-js))))
 	 ((not (string-index (basename filename) #\.))
 	  (load-module-js))
 	 (else

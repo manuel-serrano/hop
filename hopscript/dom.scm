@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jun 19 13:51:54 2015                          */
-;*    Last change :  Mon Dec  4 08:43:01 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Mon Apr  9 20:07:23 2018 (serrano)                */
+;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Server-side DOM API implementation                               */
 ;*=====================================================================*/
@@ -332,6 +332,38 @@
 			       o)))
 		      body))
 		%this)))
+	 ((firstChild)
+	  (with-access::xml-markup o (body)
+	     (if (null? body)
+		 (js-undefined)
+		 (let ((o (car body)))
+		    (cond
+		       ((string? o)
+			(instantiate::xml-verbatim
+			   (parent o)
+			   (data o)))
+		       ((isa? o JsStringLiteral)
+			(instantiate::xml-verbatim
+			   (parent o)
+			   (data (js-jsstring->string o))))
+		       (else
+			o))))))
+	 ((lastChild)
+	  (with-access::xml-markup o (body)
+	     (if (null? body)
+		 (js-undefined)
+		 (let ((o (car (last-pair body))))
+		    (cond
+		       ((string? o)
+			(instantiate::xml-verbatim
+			   (parent o)
+			   (data o)))
+		       ((isa? o JsStringLiteral)
+			(instantiate::xml-verbatim
+			   (parent o)
+			   (data (js-jsstring->string o))))
+		       (else
+			o))))))
 	 (else
 	  (with-access::xml-markup o (attributes)
 	     (let ((name (if (eq? pname 'className)

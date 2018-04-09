@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 19 10:44:22 2005                          */
-;*    Last change :  Fri Feb 23 16:22:57 2018 (serrano)                */
+;*    Last change :  Mon Apr  9 19:55:08 2018 (serrano)                */
 ;*    Copyright   :  2005-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP css loader                                               */
@@ -328,7 +328,8 @@
 ;*    hss-cache ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define hss-cache
-   #unspecified)
+   (instantiate::cache-memory
+      (max-file-size #e1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    hss->css ...                                                     */
