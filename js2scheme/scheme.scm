@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Mar 31 06:16:06 2018 (serrano)                */
+;*    Last change :  Sat Apr 14 09:40:43 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2299,11 +2299,18 @@
 	    (eq? id 'Array))))
 
    (define (constructor-no-return? decl)
-      ;; does this constructor never returns something else than UNDEF?
+      ;; does this constructor never return something else than UNDEF?
       (let ((fun (j2sdeclinit-val-fun decl)))
 	 (when (isa? fun J2SFun)
 	    (with-access::J2SFun fun (rtype)
 	       (eq? rtype 'undefined)))))
+
+   (define (constructor-no-call? decl)
+      ;; does this constructor call another function?
+      (let ((fun (j2sdeclinit-val-fun decl)))
+	 (when (isa? fun J2SFun)
+	    (with-access::J2SFun fun (body)
+	       (not (cancall? body))))))
 
    (define (object-alloc clazz::J2SRef fun)
       (with-access::J2SRef clazz (decl loc)
@@ -2330,7 +2337,9 @@
 		,(if (constructor-no-return? decl)
 		     `(begin
 			 (,fid ,obj ,@args)
-			 (js-new-return-fast ,fun ,obj))
+			 ,(if (constructor-no-call? decl)
+			      obj
+			      `(js-new-return-fast ,fun ,obj)))
 		     `(js-new-return ,fun (,fid ,obj ,@args) ,obj))))))
    
    (with-access::J2SNew this (loc cache clazz args type)

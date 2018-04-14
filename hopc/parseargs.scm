@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Mar 29 11:18:45 2018 (serrano)                */
+;*    Last change :  Sat Apr 14 12:54:47 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -280,9 +280,9 @@
 	     (hopc-j2s-flags-set! (cons* :optim-integer #t (hopc-j2s-flags))))
 	    (("-fno-integer" (help "Disable integer optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-integer #f (hopc-j2s-flags))))
-	    (("-finline" (help "Enable method inlining (-Ox)"))
+	    (("-finlining" (help "Enable method inlining (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-inline #t (hopc-j2s-flags))))
-	    (("-fno-inline" (help "Disable method inlining"))
+	    (("-fno-inlining" (help "Disable method inlining"))
 	     (hopc-j2s-flags-set! (cons* :optim-inline #f (hopc-j2s-flags))))
 	    (("-fshared-pcache" (help "Share pcaches (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :shared-pcache #t (hopc-j2s-flags))))
