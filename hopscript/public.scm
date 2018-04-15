@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Fri Mar 30 15:47:17 2018 (serrano)                */
+;*    Last change :  Sat Apr 14 19:49:56 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -127,6 +127,7 @@
 	   (inline js-index?::bool ::obj)
 	   
 	   (generic js-tostring::bstring ::obj ::JsGlobalObject)
+	   (js-tostring-safe::bstring ::obj ::JsGlobalObject)
 	   (js-tojsstring::obj ::obj ::JsGlobalObject)
 	   
 	   (js-toobject::obj ::JsGlobalObject ::obj)
@@ -1164,22 +1165,26 @@
 ;*---------------------------------------------------------------------*/
 (define-generic (js-tostring::bstring obj %this::JsGlobalObject)
    (cond
-      ((string? obj)
-       obj)
-      ((eq? obj (js-undefined))
-       "undefined")
-      ((eq? obj #t)
-       "true")
-      ((eq? obj #f)
-       "false")
-      ((eq? obj (js-null))
-       "null")
-      ((number? obj)
-       (js-number->string obj))
-      ((symbol? obj)
-       (symbol->string! obj))
-      (else
-       (typeof obj))))
+      ((string? obj) obj)
+      ((eq? obj (js-undefined)) "undefined")
+      ((eq? obj #t) "true")
+      ((eq? obj #f) "false")
+      ((eq? obj (js-null)) "null")
+      ((number? obj) (js-number->string obj))
+      ((symbol? obj) (symbol->string! obj))
+      (else (typeof obj))))
+
+;*---------------------------------------------------------------------*/
+;*    js-tostring-safe ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-tostring-safe::bstring obj %this::JsGlobalObject)
+   (cond
+      ((string? obj) obj)
+      ((eq? obj #t) "true")
+      ((eq? obj #f) "false")
+      ((number? obj) (js-number->string obj))
+      ((symbol? obj) (symbol->string! obj))
+      (else (js-tostring (js-toobject %this obj) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-tostring ::JsWrapper ...                                      */

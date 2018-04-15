@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Apr  8 18:23:14 2018 (serrano)                */
+;*    Last change :  Sat Apr 14 19:48:05 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -733,7 +733,7 @@
       (else
        (match-case x
 	  ((?- ?%this ?obj ((kwote quote) toString))
-	   (e `(js-tostring ,obj ,%this) e))
+	   (e `(js-tostring-safe ,obj ,%this) e))
 	  ((?- ?%this ?obj ?prop . ?args)
 	   (e `(js-call-methodn ,%this ,obj ,prop ,@args) e))
 	  (else
@@ -744,19 +744,24 @@
 ;*---------------------------------------------------------------------*/
 (define (js-method-call-name/cache-expander x e)
 
-   (define (expand-call %this obj name ccache ocache loc cs os args)
-      `(if (js-object? ,obj)
+   (define (expand-call %this iso obj name ccache ocache loc cs os args)
+      `(if ,iso
 	   (js-object-method-call-name/cache ,%this ,obj ,name ,ccache ,ocache ,loc ,cs ,os ,@args)
 	   (js-non-object-method-call-name %this ,obj ,name ,@args)))
    
    (define (expand-call/tmp %this obj name ccache ocache loc cs os args)
       (let* ((tmps (map (lambda (a) (when (pair? a) (gensym '%a))) args))
 	     (bindings (filter-map (lambda (t o) (when t (list t o))) tmps args))
-	     (nargs (map (lambda (t a) (or t a)) tmps args)))
-	 (if (pair? bindings)
-	     `(let ,bindings
-		 ,(expand-call %this obj name ccache ocache loc cs os nargs))
-	     (expand-call %this obj name ccache ocache loc cs os args))))
+	     (nargs (map (lambda (t a) (or t a)) tmps args))
+	     (iso (gensym 'isobj)))
+	 `(let ((,iso (js-object? ,obj)))
+	     ,(if (pair? bindings)
+		  `(if (or ,iso (not (or (eq? ,obj (js-undefined)) (null? ,obj))))
+		       (let ,bindings
+			  ,(expand-call %this iso obj name ccache ocache loc cs os nargs))
+		       (js-raise-type-error %this "toObject: cannot convert ~s"
+			  ,obj))
+		  (expand-call %this iso obj name ccache ocache loc cs os args)))))
 
    (match-case x
       ((js-method-call-name/cache ?%this (and (? symbol?) ?obj)

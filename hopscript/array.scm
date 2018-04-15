@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr  2 11:21:21 2018 (serrano)                */
+;*    Last change :  Sun Apr 15 08:30:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -1128,7 +1128,7 @@
 		  (nlen (-u32 len #u32:1))
 		  (vlen (vector-length vec)))
 	       (vector-copy! vec 0 vec 1)
-	       (vector-set! vec (-fx vlen 1) (js-undefined))
+	       (vector-set! vec (-fx vlen 1) (js-absent))
 	       (set! length nlen)
 	       (set! ilen (-u32 ilen 1))
 	       first)))
@@ -1142,7 +1142,10 @@
 		   (js-delete! o (-fx i 1) #t %this)
 		   (js-put-length! o (-fx i 1) #f #f %this)
 		   first)
-		  ((eq? (js-get-property o (js-toname i %this) %this) (js-undefined))
+;* 		  ((eq? (js-get-property o (js-toname i %this) %this) (js-undefined)) */
+;* 		   (js-delete! o (-fx i 1) #t %this)                   */
+;* 		   (loop (+fx i 1)))                                   */
+		  ((js-absent? (js-get-property o (js-toname i %this) %this))
 		   (js-delete! o (-fx i 1) #t %this)
 		   (loop (+fx i 1)))
 		  (else
@@ -1581,6 +1584,21 @@
 	       (else
 		(loop (+fx k 1))))))
 
+      (define (vector-holey-indexof::int arr vec k::int len::int)
+	 (let loop ((k k))
+	    (cond
+	       ((>=fx k len)
+		-1)
+	       ((js-strict-equal? (vector-ref vec k) el)
+		k)
+	       ((and (js-absent? (vector-ref vec k))
+		     (let ((name (js-toname k %this)))
+			(and (js-has-property arr name %this)
+			     (js-strict-equal? (js-get arr name %this) el))))
+		k)
+	       (else
+		(loop (+fx k 1))))))
+
       (define (array-indexof::int arr k::uint32 len::uint32)
 	 (let ((k (js-uint32-tointeger k))
 	       (len (js-uint32-tointeger len)))
@@ -1615,7 +1633,7 @@
 				  (vector-indexof o vec (uint32->fixnum k)
 				     (uint32->fixnum ilen)))
 				 ((js-object-mode-holey? o)
-				  (vector-indexof o vec (uint32->fixnum k)
+				  (vector-holey-indexof o vec (uint32->fixnum k)
 				     (vector-length vec)))
 				 (else
 				  (array-indexof this k len))))
@@ -1640,6 +1658,21 @@
 		k)
 	       (else
 		(loop (-fx k 1))))))
+
+      (define (vector-holey-lastindexof::int arr vec k::long)
+	 (let loop ((k k))
+	    (cond
+	       ((<fx k 0)
+		-1)
+	       ((js-strict-equal? (vector-ref vec k) el)
+		k)
+	       ((and (js-absent? (vector-ref vec k))
+		     (let ((name (js-toname k %this)))
+			(and (js-has-property arr name %this)
+			     (js-strict-equal? (js-get arr name %this) el))))
+		(js-uint32-tointeger k))
+	       (else
+		(loop (-fx k 1))))))
       
       (define (array-lastindexof::int arr k::uint32)
 	 (let loop ((k k))
@@ -1662,7 +1695,7 @@
 		       (minfx (uint32->fixnum k)
 			  (uint32->fixnum (-u32 ilen #u32:1)))))
 		   ((js-object-mode-holey? o)
-		    (vector-lastindexof o vec
+		    (vector-holey-lastindexof o vec
 		       (minfx (uint32->fixnum k)
 			  (-fx (vector-length vec) 1))))
 		   (else
@@ -2699,7 +2732,7 @@
 	    (else
 	     (when (<u32 i (fixnum->uint32 (vector-length vec)))
 		(u32vset! vec i (js-absent))
-		(when (>u32 i ilen) (js-array-update-ilen! o ilen i)))
+		(when (<u32 i ilen) (set! ilen i)))
 	     (call-next-method))))))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Sat Mar 17 10:48:38 2018 (serrano)                */
+/*    Last change :  Sat Apr 14 19:46:30 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing basic ECMA 262, 5.1 features                             */
@@ -384,3 +384,18 @@ var Reference = exports.Reference = function Reference() {
 }
 
 assert.ok( Reference );
+
+/*---------------------------------------------------------------------*/
+/*    method call                                                      */
+/*---------------------------------------------------------------------*/
+function illmet() {
+   let o = new Object();
+   let b = o.bar;
+   try {
+      let c = b.toString();
+      return false;
+   } catch( e ) {
+      return true;
+   }
+}
+assert.ok( illmet(), "illegal method" );
