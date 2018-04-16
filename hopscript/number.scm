@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Apr  8 17:47:25 2018 (serrano)                */
+;*    Last change :  Mon Apr 16 08:12:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -41,6 +41,12 @@
 	   (js* ::obj ::obj ::JsGlobalObject)
 	   (js/ ::obj ::obj ::JsGlobalObject)
 	   (js/num left right)))
+
+;*---------------------------------------------------------------------*/
+;*    property caches ...                                              */
+;*---------------------------------------------------------------------*/
+(%define-pcache 2)
+(define %pcache (js-make-pcache 2 "hopscript/number.scm"))
 
 ;*---------------------------------------------------------------------*/
 ;*    object-serializer ::JsNumber ...                                 */
@@ -98,13 +104,19 @@
 	       (__proto__ __proto__)))
 
 	 (define (js-number-constructor f value)
-	    (instantiateJsNumber
-	       (__proto__ (js-get f 'prototype %this))
-	       (val (if (eq? value (js-null)) 0 (js-tonumber value %this)))))
+	    (with-access::JsFunction f (constrmap)
+	       (instantiateJsNumber
+		  (cmap constrmap)
+		  (__proto__ (js-object-get-name/cache f 'prototype
+				#f %this
+				(js-pcache-ref %pcache 0)))
+		  (val (if (eq? value (js-null)) 0 (js-tonumber value %this))))))
 		
 	 (define (js-number-alloc constructor::JsFunction)
 	    (instantiateJsNumber
-	       (__proto__ (js-get constructor 'prototype %this))))
+	       (__proto__ (js-object-get-name/cache constructor 'prototype
+			     #f %this
+			     (js-pcache-ref %pcache 1)))))
 
 	 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.7.1
 	 (define (%js-number this . arg)
@@ -127,6 +139,7 @@
 	       :prototype js-number-prototype
 	       :constructor js-number-constructor
 	       :alloc js-number-alloc
+	       :constrmap (instantiate::JsConstructMap)
 	       :shared-cmap #f))
 	 
 	 ;; other properties of the Number constructor

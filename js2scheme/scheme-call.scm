@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sun Apr  8 17:39:17 2018 (serrano)                */
+;*    Last change :  Mon Apr 16 20:37:45 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -97,7 +97,16 @@
 ;* 	("slice" js-array-slice array () %this)                        */
 ;* 	("slice" js-array-maybe-slice any () %this)                    */
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this)
-	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this))))
+	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this)
+	;; functions
+	("call" ,j2s-call function (any any) %this))))
+
+(define (j2s-call obj args mode return conf hint)
+   (with-access::J2SExpr obj (loc)
+      (tprint "args=" (j2s->list (car args)))
+      (let ((call (J2SMethodCall* obj (caar args) (cadar args))))
+	 (tprint "CALL=" (j2s->list call))
+	 (j2s-scheme call mode return conf hint))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function ...                                           */
@@ -365,7 +374,7 @@
 	    (cond
 	       ((=fx lenf lena)
 		;; matching arity
-		`(,f ,@%gen
+ft		`(,f ,@%gen
 		    ,@(j2s-self thisarg)
 		    ,@(map (lambda (a p)
 			      (with-access::J2SDecl p (utype)
