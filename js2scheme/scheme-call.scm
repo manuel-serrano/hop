@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Apr 16 20:37:45 2018 (serrano)                */
+;*    Last change :  Mon Apr 16 22:26:30 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -99,14 +99,27 @@
 	("fill" js-array-fill array (any (any 0) (any #unspecified)) %this)
 	("fill" js-array-maybe-fill any (any (any 0) (any #unspecified)) %this)
 	;; functions
-	("call" ,j2s-call function (any any) %this))))
+	("call" ,j2s-call function (any any) #f))))
 
+;*---------------------------------------------------------------------*/
+;*    j2s-call ...                                                     */
+;*---------------------------------------------------------------------*/
 (define (j2s-call obj args mode return conf hint)
-   (with-access::J2SExpr obj (loc)
-      (tprint "args=" (j2s->list (car args)))
-      (let ((call (J2SMethodCall* obj (caar args) (cadar args))))
-	 (tprint "CALL=" (j2s->list call))
-	 (j2s-scheme call mode return conf hint))))
+   (when (isa? obj J2SRef)
+      (with-access::J2SRef obj (loc decl)
+	 (when (or (isa? decl J2SDeclFun)
+		   (and (isa? decl J2SDeclInit)
+			(with-access::J2SDeclInit decl (val ronly)
+			   (and (isa? val J2SFun) ronly))))
+	    (with-access::J2SDecl decl (usage)
+	       (when (and (only-usage? '(get call new init) usage)
+			  (and (pair? args) (<=fx (length args) 2)))
+		  (j2s-scheme (J2SMethodCall* obj
+				 (list (car args))
+				 (if (pair? (cdr args))
+				     (cdr args)
+				     (list (J2SUndefined))))
+		     mode return conf hint)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function ...                                           */
