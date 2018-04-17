@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Sat Mar 31 08:13:55 2018 (serrano)                */
+/*    Last change :  Tue Apr 17 17:40:37 2018 (serrano)                */
 /*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -168,9 +168,9 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
 
 #if( !defined( TAG_VECTOR ) )
-   vector->vector_t.header = MAKE_HEADER( VECTOR_TYPE, 0 );
+   vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
 #endif		
-   vector->vector_t.length = constrsize;
+   vector->vector.length = constrsize;
    vector = BVECTOR( vector );
    
    o->BgL_elementsz00 = vector;
@@ -200,12 +200,12 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
 static struct {
    __CNST_ALIGN header_t header;
    long length;
-} _empty_vector = { __CNST_FILLER, MAKE_HEADER( VECTOR_TYPE, 0 ), 0 };
+} _empty_vector = { __CNST_FILLER MAKE_HEADER( VECTOR_TYPE, 0 ), 0 };
 static obj_t empty_vector = BVECTOR( &(_empty_vector.header ) );
 #else   
 static struct {
    __CNST_ALIGN long length;
-} _empty_vector = { __CNST_FILLER, 0 };
+} _empty_vector = { __CNST_FILLER 0 };
 static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 #endif   
    
@@ -246,9 +246,9 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj
    vector = (obj_t)(&(o->BgL_vecz00) + 1);
 
 #if( !defined( TAG_VECTOR ) )
-   vector->vector_t.header = MAKE_HEADER( VECTOR_TYPE, 0 );
+   vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
 #endif		
-   vector->vector_t.length = size;
+   vector->vector.length = size;
    vector = BVECTOR( vector );
    
    o->BgL_vecz00 = vector;
@@ -274,9 +274,9 @@ bgl_init_vector( obj_t vector, long len, obj_t init ) {
 #endif
    {
 #if( !defined( TAG_VECTOR ) )
-      vector->vector_t.header = MAKE_HEADER( VECTOR_TYPE, 0 );
+      vector->vector.header = MAKE_HEADER( VECTOR_TYPE, 0 );
 #endif
-      vector->vector_t.length = len;
+      vector->vector.length = len;
 
       bgl_fill_vector( BVECTOR( vector ), 0, len, init );
       return BVECTOR( vector );
