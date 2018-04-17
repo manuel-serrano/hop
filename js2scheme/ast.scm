@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue Apr  3 18:01:35 2018 (serrano)                */
+;*    Last change :  Tue Apr 17 18:29:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -418,7 +418,8 @@
 
 	   (final-class J2SDProducer::J2SExpr
 	      (decl::J2SDecl read-only (info '("notraverse")))
-	      (expr::J2SExpr (info '("ast"))))
+	      (expr::J2SExpr (info '("ast")))
+	      (size::long read-only (info '("notraverse"))))
 
 	   (final-class J2SDConsumer::J2SExpr
 	      (decl::J2SDecl read-only (info '("notraverse")))

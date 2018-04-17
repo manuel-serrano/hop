@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sat Apr 14 09:40:43 2018 (serrano)                */
+;*    Last change :  Tue Apr 17 18:22:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2545,8 +2545,11 @@
 ;*    j2s-scheme ::J2SDProducer ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SDProducer mode return conf hint)
-   (with-access::J2SDProducer this (expr)
-      (j2s-scheme expr mode return conf hint)))
+   (with-access::J2SDProducer this (expr size)
+      (let ((sexpr (j2s-scheme expr mode return conf hint)))
+	 (if (eq? (j2s-type expr) 'array)
+	     sexpr
+	     `(js-iterator-to-array ,sexpr ,size %this)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SDConsumer ...                                    */

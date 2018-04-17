@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Apr 15 08:30:04 2018 (serrano)                */
+;*    Last change :  Tue Apr 17 18:31:44 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -97,7 +97,8 @@
 	   (js-array-pop ::JsArray ::JsGlobalObject)
 	   (js-array-maybe-pop ::obj ::JsGlobalObject)
 	   (js-array-fill ::JsArray ::obj ::obj ::obj ::JsGlobalObject)
-	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject))
+	   (js-array-maybe-fill ::obj ::obj ::obj ::obj ::JsGlobalObject)
+	   (js-iterator-to-array ::obj ::long ::JsGlobalObject))
    
    (cond-expand
       (bigloo-c
@@ -3322,6 +3323,48 @@
 	  this value start end)))
 
 ;*---------------------------------------------------------------------*/
+;*    js-iterator-to-array ...                                         */
+;*    -------------------------------------------------------------    */
+;*    This function is used when destructuring a binding.              */
+;*---------------------------------------------------------------------*/
+(define (js-iterator-to-array value size %this)
+
+   (define (return it res)
+      (let ((ret (js-get it 'return %this)))
+	 (if (isa? ret JsFunction)
+	     (js-call0 %this ret it)
+	     (js-undefined))))
+   
+   (if (isa? value JsArray)
+       value
+       (with-access::JsGlobalObject %this (js-symbol-iterator)
+	  (let ((proc (js-get value js-symbol-iterator %this)))
+	     (if (isa? proc JsFunction)
+		 (let* ((vec (make-vector size (js-absent)))
+			(res (js-vector->jsarray vec %this))
+			(it (js-call0 %this proc value)))
+		    (let loop ((i 0))
+		       (let* ((n (js-get it 'next %this))
+			      (v (js-call0 %this n it))
+			      (done (js-get v 'done %this)))
+			  (cond
+			     ((=fx i size)
+			      (return it res))
+			     (done
+			      (with-access::JsArray res (ilen length)
+				 (set! ilen (fixnum->uint32 i))
+				 (set! length (fixnum->uint32 i))
+				 res))
+			     (else
+			      (let ((value (js-get v 'value %this)))
+				 (vector-set! vec i value)
+				 (loop (+fx i 1))))))))
+		 (js-raise-type-error %this
+		    "Invalid attempt to destructure non-iterable instance"
+		    value))))))
+       
+;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */
 ;*---------------------------------------------------------------------*/
 (%js-jsstringliteral-end!)
+

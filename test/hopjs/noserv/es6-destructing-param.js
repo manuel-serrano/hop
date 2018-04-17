@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb  7 09:48:34 2018                          */
-/*    Last change :  Wed Mar 28 08:12:03 2018 (serrano)                */
+/*    Last change :  Tue Apr 17 18:53:57 2018 (serrano)                */
 /*    Copyright   :  2018 Manuel Serrano                               */
 /*    -------------------------------------------------------------    */
 /*    Testing ECMAScript 2015+ destructuring function parameters       */
@@ -33,6 +33,24 @@ console.log( "   hopb()"); assert.ok( hopb( {b: 2, a: 1}, -1 ), "hopb" );
 /*---------------------------------------------------------------------*/
 /*    kangax                                                           */
 /*---------------------------------------------------------------------*/
+function __createIterableObject(arr, methods) {
+   methods = methods || {};
+   if( typeof Symbol !== 'function' || !Symbol.iterator ) {
+      return {};
+   }
+   arr.length++;
+   var iterator = {
+      next: function() {
+         return { value: arr.shift(), done: arr.length <= 0 };
+      },
+      'return': methods[ 'return' ],
+      'throw': methods[ 'throw' ]
+   };
+   var iterable = {};
+   iterable[ Symbol.iterator ] = function(){ return iterator; }
+   return iterable;
+}
+
 function kangaxa() {
    var [a, , [b], c] = [5, null, [6]];
    return a === 5 && b === 6 && c === undefined
@@ -49,9 +67,9 @@ function kangaxc() {
 }
 
 function kangaxd() {
-   var [c] = "𠮷𠮶";
-   console.log( "c=", c, "𠮷" );
-   return c === "𠮷";
+   var [c] = "ð ®·ð ®¶";
+   console.log( "c=", c, "ð ®·" );
+   return c === "ð ®·";
 }
 
 function kangaxe() {
@@ -60,18 +78,18 @@ function kangaxe() {
 }
 
 function kangaxf() {
-   var [a, b, c] = global.__createIterableObject([1, 2]);
+   var [a, b, c] = __createIterableObject([1, 2], {});
    return a === 1 && b === 2 && c === undefined;
 }
 
 function kangaxg() {
-   var [a, b, c] = Object.create(global.__createIterableObject([1, 2]));
+   var [a, b, c] = Object.create(__createIterableObject([1, 2], {}));
    return a === 1 && b === 2 && c === undefined;
 }
 
-function kangash() {
+function kangaxh() {
    var closed = false;
-   var iter = global.__createIterableObject([1, 2, 3], {
+   var iter = __createIterableObject([1, 2, 3], {
       'return': function(){ closed = true; return {}; }
    });
    var [a, b] = iter;
@@ -137,56 +155,56 @@ function kangaxp() {
       && h === 11 && i === 12;   
 }
 
-function kangaxq() {
-   for(var [i, j, k] in { qux: 1 }) {
-      return i === "q" && j === "u" && k === "x";
-   }
-}
-
-function kangaxr() {
-   for(var [i, j, k] of [[1,2,3]]) {
-      return i === 1 && j === 2 && k === 3;
-   }   
-}
-
-function kangaxs() {
-   try {
-      throw [1,2];
-   } catch([i,j]) {
-      try {
-	 throw { k: 3, l: 4 };
-      } catch({k, l}) {
-	 return i === 1 && j === 2 && k === 3 && l === 4;
-      }
-   }   
-}
-
-function kangaxt() {
-   var [a, ...b] = [3, 4, 5];
-   var [c, ...d] = [6];
-   return a === 3 && b instanceof Array && (b + "") === "4,5" &&
-      c === 6 && d instanceof Array && d.length === 0;   
-}
-
-function kangaxu() {
-   var {a = 1, b = 0, z:c = 3} = {b:2, z:undefined};
-   var [d = 0, e = 5, f = 6] = [4,,undefined];
-   return a === 1 && b === 2 && c === 3
-      && d === 4 && e === 5 && f === 6;   
-}
-
-function kangaxv() {
-   var {a, b = 2} = {a:1};
-   try {
-      eval("let {c = c} = {};");
-      return false;
-   } catch(e){}
-   try {
-      eval("let {c = d, d} = {d:1};");
-      return false;
-   } catch(e){}
-   return a === 1 && b === 2;  
-}
+/* function kangaxq() {                                                */
+/*    for(var [i, j, k] in { qux: 1 }) {                               */
+/*       return i === "q" && j === "u" && k === "x";                   */
+/*    }                                                                */
+/* }                                                                   */
+/*                                                                     */
+/* function kangaxr() {                                                */
+/*    for(var [i, j, k] of [[1,2,3]]) {                                */
+/*       return i === 1 && j === 2 && k === 3;                         */
+/*    }                                                                */
+/* }                                                                   */
+/*                                                                     */
+/* function kangaxs() {                                                */
+/*    try {                                                            */
+/*       throw [1,2];                                                  */
+/*    } catch([i,j]) {                                                 */
+/*       try {                                                         */
+/* 	 throw { k: 3, l: 4 };                                         */
+/*       } catch({k, l}) {                                             */
+/* 	 return i === 1 && j === 2 && k === 3 && l === 4;              */
+/*       }                                                             */
+/*    }                                                                */
+/* }                                                                   */
+/*                                                                     */
+/* function kangaxt() {                                                */
+/*    var [a, ...b] = [3, 4, 5];                                       */
+/*    var [c, ...d] = [6];                                             */
+/*    return a === 3 && b instanceof Array && (b + "") === "4,5" &&    */
+/*       c === 6 && d instanceof Array && d.length === 0;              */
+/* }                                                                   */
+/*                                                                     */
+/* function kangaxu() {                                                */
+/*    var {a = 1, b = 0, z:c = 3} = {b:2, z:undefined};                */
+/*    var [d = 0, e = 5, f = 6] = [4,,undefined];                      */
+/*    return a === 1 && b === 2 && c === 3                             */
+/*       && d === 4 && e === 5 && f === 6;                             */
+/* }                                                                   */
+/*                                                                     */
+/* function kangaxv() {                                                */
+/*    var {a, b = 2} = {a:1};                                          */
+/*    try {                                                            */
+/*       eval("let {c = c} = {};");                                    */
+/*       return false;                                                 */
+/*    } catch(e){}                                                     */
+/*    try {                                                            */
+/*       eval("let {c = d, d} = {d:1};");                              */
+/*       return false;                                                 */
+/*    } catch(e){}                                                     */
+/*    return a === 1 && b === 2;                                       */
+/* }                                                                   */
 
 console.log( "kangax" );
 console.log( "   kangaxa()"); assert.ok( kangaxa(), "kangaxa" );
@@ -205,9 +223,9 @@ console.log( "   kangaxm()"); assert.ok( kangaxm(), "kangaxm" );
 console.log( "   kangaxn()"); assert.ok( kangaxn(), "kangaxn" );
 console.log( "   kangaxo()"); assert.ok( kangaxo(), "kangaxo" );
 console.log( "   kangaxp()"); assert.ok( kangaxp(), "kangaxp" );
-console.log( "   kangaxq()"); assert.ok( kangaxq(), "kangaxq" );
-console.log( "   kangaxr()"); assert.ok( kangaxr(), "kangaxr" );
-console.log( "   kangaxs()"); assert.ok( kangaxs(), "kangaxs" );
-console.log( "   kangaxt()"); assert.ok( kangaxt(), "kangaxt" );
-console.log( "   kangaxu()"); assert.ok( kangaxu(), "kangaxu" );
-console.log( "   kangaxv()"); assert.ok( kangaxv(), "kangaxv" );
+/* console.log( "   kangaxq()"); assert.ok( kangaxq(), "kangaxq" );    */
+/* console.log( "   kangaxr()"); assert.ok( kangaxr(), "kangaxr" );    */
+/* console.log( "   kangaxs()"); assert.ok( kangaxs(), "kangaxs" );    */
+/* console.log( "   kangaxt()"); assert.ok( kangaxt(), "kangaxt" );    */
+/* console.log( "   kangaxu()"); assert.ok( kangaxu(), "kangaxu" );    */
+/* console.log( "   kangaxv()"); assert.ok( kangaxv(), "kangaxv" );    */

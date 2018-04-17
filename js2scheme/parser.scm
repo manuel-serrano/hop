@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue Mar 27 17:44:26 2018 (serrano)                */
+;*    Last change :  Tue Apr 17 18:29:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -427,13 +427,15 @@
 		    (assig (consume-token! '=))
 		    (rhs (assig-expr in-for-init?))
 		    (loc (token-loc id))
-		    (decl (constrinit loc (gensym '%obj) (J2SUndefined))))
+		    (decl (constrinit loc (gensym '%obj) (J2SUndefined)))
+		    (bindings (j2s-destructure decl lhs)))
 		(with-access::J2SDeclInit decl (val id)
 		   (set! val (instantiate::J2SDProducer
 				(loc (token-loc assig))
+				(size (length bindings))
 				(decl decl)
 				(expr rhs))))
-		(cons decl (j2s-destructure decl lhs))))
+		(cons decl bindings)))
 	    (else
 	     (parse-token-error "Illegal lhs" id)))))
    
