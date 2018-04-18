@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Mar  8 13:11:08 2018 (serrano)                */
+;*    Last change :  Wed Apr 18 09:28:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -143,18 +143,25 @@
 ;*    property* ::J2SAccess ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (property* this::J2SAccess count env ccall assig infunp shared-pcache)
+   
+   (define (canbe-object? obj)
+      (not (type-number? (j2s-type obj))))
+
    (if infunp
        (with-access::J2SAccess this (cache obj field)
-	  (if (and (isa? obj J2SRef) (isa? field J2SString))
-	      (with-access::J2SRef obj (decl)
-		 (with-access::J2SDecl decl (ronly)
-		    (if ronly
-			(with-access::J2SString field (val)
-			   (set! cache
-			      (decl-cache decl val count env assig shared-pcache)))
-			(set! cache (inc! count)))))
-	      (set! cache (inc! count)))
-	  (cons cache (call-default-walker)))
+	  (if (canbe-object? obj)
+	      (begin
+		 (if (and (isa? obj J2SRef) (isa? field J2SString))
+		     (with-access::J2SRef obj (decl)
+			(with-access::J2SDecl decl (ronly)
+			   (if ronly
+			       (with-access::J2SString field (val)
+				  (set! cache
+				     (decl-cache decl val count env assig shared-pcache)))
+			       (set! cache (inc! count)))))
+		     (set! cache (inc! count)))
+		 (cons cache (call-default-walker)))
+	      (call-default-walker)))
        (call-default-walker)))
 
 ;*---------------------------------------------------------------------*/

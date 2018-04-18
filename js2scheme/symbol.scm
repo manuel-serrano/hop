@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Mar 14 08:20:11 2018 (serrano)                */
+;*    Last change :  Wed Apr 18 08:49:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -882,7 +882,27 @@
 		(obj (j2s-expression-src loc conf "super"))
 		(fname (cadr loc))
 		(location (caddr loc)))))))
-      
+
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SDProducer ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SDProducer env mode withs wenvs genv ctx conf)
+   (with-access::J2SDProducer this (decl)
+      (with-access::J2SDecl decl (id)
+	 (let ((d (find-decl id env)))
+	    (set! decl d)))
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    resolve! ::J2SDConsumer ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (resolve! this::J2SDConsumer env mode withs wenvs genv ctx conf)
+   (with-access::J2SDConsumer this (decl)
+      (with-access::J2SDecl decl (id)
+	 (let ((d (find-decl id env)))
+	    (set! decl d)))
+      (call-default-walker)))
+
 ;*---------------------------------------------------------------------*/
 ;*    resolve-tilde! ...                                               */
 ;*---------------------------------------------------------------------*/
@@ -1019,4 +1039,3 @@
 		  (obj ref)
 		  (field index)))
 	    this))))
-

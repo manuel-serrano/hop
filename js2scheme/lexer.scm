@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Sun Mar 11 06:45:07 2018 (serrano)                */
+;*    Last change :  Wed Apr 18 13:52:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -298,7 +298,7 @@
 	   "*=" "%=" "<<=" ">>=" ">>>=" "&=" "^=" "/=" #\/ #\?)
        (token (the-symbol) (the-string) (the-length)))
       ("=>" (token '=> "=>" 2))
-      ("..." (token 'DOTS #\. 3))
+      ("..." (token 'DOTS "..." 3))
 
       ;; strings
       ((: #\" (* string_char_quote) #\")

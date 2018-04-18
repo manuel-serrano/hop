@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Thu Dec 21 17:29:59 2017 (serrano)                */
-;*    Copyright   :  2016-17 Manuel Serrano                            */
+;*    Last change :  Wed Apr 18 08:24:03 2018 (serrano)                */
+;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
 ;*=====================================================================*/
@@ -311,6 +311,24 @@
 	    (param nparam)
 	    (exn nexn)
 	    (body (j2s-alpha body (list param exn) (list nparam nexn)))))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SDConsumer ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SDConsumer)
+   (with-access::J2SDConsumer this (decl expr)
+      (duplicate::J2SDConsumer this
+	 (decl (j2sdecl-duplicate decl))
+	 (expr (alpha expr)))))
+
+;*---------------------------------------------------------------------*/
+;*    alpha ::J2SDProducer ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (alpha this::J2SDProducer)
+   (with-access::J2SDProducer this (decl expr)
+      (duplicate::J2SDProducer this
+	 (decl (j2sdecl-duplicate decl))
+	 (expr (alpha expr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2sdecl-duplicate ...                                            */

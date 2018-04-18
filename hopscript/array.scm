@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Tue Apr 17 18:31:44 2018 (serrano)                */
+;*    Last change :  Wed Apr 18 09:58:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3335,8 +3335,12 @@
 	     (js-call0 %this ret it)
 	     (js-undefined))))
    
-   (if (isa? value JsArray)
-       value
+   (cond
+      ((isa? value JsArray)
+       value)
+      ((js-jsstring? value)
+       value)
+      (else
        (with-access::JsGlobalObject %this (js-symbol-iterator)
 	  (let ((proc (js-get value js-symbol-iterator %this)))
 	     (if (isa? proc JsFunction)
@@ -3361,7 +3365,7 @@
 				 (loop (+fx i 1))))))))
 		 (js-raise-type-error %this
 		    "Invalid attempt to destructure non-iterable instance"
-		    value))))))
+		    value)))))))
        
 ;*---------------------------------------------------------------------*/
 ;*    JsStringLiteral end                                              */

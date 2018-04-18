@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue Mar 27 17:53:11 2018 (serrano)                */
+;*    Last change :  Wed Apr 18 07:07:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -914,12 +914,12 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDProducer)
    (with-access::J2SDProducer this (decl expr)
-      `(,@(call-next-method) ,(j2s->list expr))))
+      `(,@(call-next-method) ,@(dump-type this) ,(j2s->list expr))))
 		  
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SDConsumer ...                                     */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SDConsumer)
    (with-access::J2SDConsumer this (expr path)
-      `(,@(call-next-method) ,path ,(j2s->list expr))))
+      `(,@(call-next-method) ,@(dump-type this) ,path ,(j2s->list expr))))
 

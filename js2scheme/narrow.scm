@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.1.x/js2scheme/narrow.scm              */
+;*    serrano/prgm/project/hop/3.2.x/js2scheme/narrow.scm              */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Wed May 24 08:08:06 2017 (serrano)                */
-;*    Copyright   :  2015-17 Manuel Serrano                            */
+;*    Last change :  Wed Apr 18 09:41:36 2018 (serrano)                */
+;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
 ;*    -------------------------------------------------------------    */
@@ -312,6 +312,8 @@
 	     (with-access::J2SNarrowInfo %info (ldecl narrowable)
 		(if narrowable
 		    (begin
+		       (unless ldecl
+			  (tprint "PAS BON: " (j2s->list this)))
 		       (set! decl ldecl)
 		       this)
 		    (call-default-walker)))

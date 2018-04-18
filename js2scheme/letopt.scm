@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Sun Mar 18 13:45:50 2018 (serrano)                */
+;*    Last change :  Wed Apr 18 09:16:30 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -448,7 +448,7 @@
 		   ;; a function
 		   (let ((decl (car inodes)))
 		      (j2s-letopt! decl)
-		      (with-access::J2SDecl decl (binder %info)
+		      (with-access::J2SDecl decl (%info)
 			 (if (decl-maybe-opt? decl)
 			     (mark-decl-opt! decl)
 			     (with-access::J2SDeclFun decl (val)
@@ -458,14 +458,21 @@
 		   ;; a variable declaration without init
 		   (trace-item "no-init=" (j2s-dump-decls (car inodes)))
 		   (let ((decl (car inodes)))
-		      (if (used-before-init? decl inits rests)
-			  ;; potentially used before initialized
-			  (mark-decl-noopt! decl)
-			  ;; never used before initialized
-			  (with-access::J2SDecl decl (loc)
-			     (decl-update-info! decl
-				(new-let-opt decl
-				   (J2SInit (J2SRef decl) (J2SUndefined)))))))
+		      (with-access::J2SDecl decl (binder)
+			 (cond
+			    ((eq? binder 'let-opt)
+			    ;; already optimized by previous stages
+			     decl)
+			    ((used-before-init? decl inits rests)
+			     ;; potentially used before initialized
+			     (mark-decl-noopt! decl))
+			    (else
+			     ;; never used before initialized
+			     (with-access::J2SDecl decl (loc)
+				(decl-update-info! decl
+				   (new-let-opt decl
+				      (J2SInit (J2SRef decl)
+					 (J2SUndefined)))))))))
 		   (loop (cdr inodes)))
 		  ((not (decl-maybe-opt? (init-decl (car inodes))))
 		   (trace-item "no-opt="
@@ -746,6 +753,13 @@
    (with-access::J2SRef node (decl)
       (if (member decl decls) (list decl) '())))
 
+;*---------------------------------------------------------------------*/
+;*    node-used* ::J2SDeclInit ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-used* node::J2SDeclInit decls store)
+   (with-access::J2SDeclInit node (val)
+      (node-used* val decls store)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    node-used* ::J2SFun ...                                          */
 ;*---------------------------------------------------------------------*/
