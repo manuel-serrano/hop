@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 18 06:59:24 2018 (serrano)                */
+;*    Last change :  Wed Apr 18 20:09:03 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2550,7 +2550,7 @@
 	 (cond
 	    ((=fx size -1)
 	     sexpr)
-	    ((memq (j2s-type expr) '(array string))
+	    ((eq? (j2s-type expr) 'array)
 	     sexpr)
 	    (else
 	     `(js-iterator-to-array ,sexpr ,size %this))))))

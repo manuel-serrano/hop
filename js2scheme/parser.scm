@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Apr 18 06:58:46 2018 (serrano)                */
+;*    Last change :  Wed Apr 18 18:56:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -108,6 +108,24 @@
 	       (obj (read-line input-port))
 	       (fname fname)
 	       (location loc)))))
+
+   (define (parse-node-error msg node)
+      (with-access::J2SNode node (loc)
+	 (match-case loc
+	    ((at ?fname ?loc)
+	     (raise
+		(instantiate::&io-parse-error
+		   (proc "hopscript")
+		   (msg msg)
+		   (obj (typeof node))
+		   (fname fname)
+		   (location loc))))
+	    (else
+	     (raise
+		(instantiate::&io-parse-error
+		   (proc "hopscript")
+		   (msg msg)
+		   (obj (typeof node))))))))
    
    (define *peeked-tokens* '())
    (define *previous-token-type* #unspecified)
@@ -423,7 +441,7 @@
 	    ((LBRACE LBRACKET)
 	     (let* ((objectp (eq? (peek-token-type) 'LBRACE))
 		    (loc (token-loc id))
-		    (lhs (if objectp (object-literal) (array-literal)))
+		    (lhs (if objectp (object-literal #t) (array-literal)))
 		    (decl (constrinit loc (gensym '%obj) (J2SUndefined)))
 		    (bindings (j2s-destructure decl lhs)))
 		(if in-for-init?
@@ -437,6 +455,7 @@
 				       (loc loc)
 				       (size (if objectp -1 (length bindings)))
 				       (decl decl)
+				       (type (if objectp 'object 'array))
 				       (expr rhs))))
 		       (cons* tmp decl bindings))
 		    (let* ((assig (consume-token! '=))
@@ -446,6 +465,7 @@
 			  (set! val (instantiate::J2SDProducer
 				       (loc loc)
 				       (size (if objectp -1 (length bindings)))
+				       (type (if objectp 'object 'array))
 				       (decl decl)
 				       (expr rhs))))
 		       (cons decl bindings)))))
@@ -1190,7 +1210,7 @@
 		   (loc loc)
 		   (id id)
 		   (_scmid id))
-		(object-literal))))
+		(object-literal #t))))
 	 ((LBRACKET)
 	  (let ((id (string->symbol (format "%~a" idx)))
 		(loc (token-loc (peek-token))))
@@ -1940,7 +1960,7 @@
 	 ((LBRACKET)
 	  (array-literal))
 	 ((LBRACE)
-	  (object-literal))
+	  (object-literal #f))
 	 ((NaN)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2SNumber
@@ -2176,7 +2196,7 @@
 			(val (symbol->string (token-value token)))))))
 	      (parse-token-error "Wrong property name" (peek-token))))))
    
-   (define (object-literal)
+   (define (object-literal destructuringp)
       
       (define (find-prop name props)
 	 (find (lambda (prop)
@@ -2306,6 +2326,15 @@
 			       ((:)
 				(consume-any!)
 				(assig-expr #f))
+			       ((=)
+				(if destructuringp
+				    (begin
+				       (consume-any!)
+				       (J2SBinary 'OR
+					  (J2SUnresolvedRef (token-value token))
+					  (assig-expr #f)))
+				    (parse-token-error "Unexpected token"
+				       (peek-token))))
 			       (else
 				(parse-token-error "Unexpected token"
 				   (peek-token))))))
@@ -2553,6 +2582,32 @@
 		   (val (J2SDConsumer decl
 			   `(get ,name ,path)
 			   (J2SAccess (J2SRef decl) name)))))))
+	 ((isa? val J2SBinary)
+	  (with-access::J2SBinary val (lhs rhs)
+	     (with-access::J2SUnresolvedRef lhs (id)
+		(let ((id id))
+		   (set! lhs (J2SAccess (J2SRef decl) name))
+		   (list 
+		      (instantiate::J2SDeclInit
+			 (loc loc)
+			 (id id)
+			 (val (J2SDConsumer decl
+				 `(get-default ,name ,path ,rhs)
+				 val))))))))
+	 ((isa? val J2SAssig)
+	  (with-access::J2SAssig val (lhs rhs)
+	     (if (isa? lhs J2SUnresolvedRef)
+		 (with-access::J2SUnresolvedRef lhs (id)
+		    (list 
+		       (instantiate::J2SDeclInit
+			  (loc loc)
+			  (id id)
+			  (val (J2SDConsumer decl
+				  `(get-alias-default ,name ,path ,rhs)
+				  (J2SBinary 'OR
+				     (J2SAccess (J2SRef decl) name)
+				     rhs))))))
+		 (parse-node-error "Bad form" val))))
 	 ((isa? val J2SDots)
 	  (with-access::J2SDots val (id)
 	     (list 
