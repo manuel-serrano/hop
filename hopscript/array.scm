@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Wed Apr 18 20:10:10 2018 (serrano)                */
+;*    Last change :  Wed Apr 18 21:01:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -3336,7 +3336,6 @@
 	     (js-undefined)))
       res)
 
-   (tprint "VALUE=" (typeof value))
    (if (isa? value JsArray)
        value
        (with-access::JsGlobalObject %this (js-symbol-iterator)
