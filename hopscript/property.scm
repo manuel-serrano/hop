@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Apr  8 18:25:21 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 18:13:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -923,7 +923,7 @@
 		  (fixnum->pname (uint32->fixnum p))
 		  (string->symbol (llong->string (uint32->llong p)))))
 	     (bint32
-	      (if (<u32 p (bit-lshu32 (fixnum->uint32 1) (fixnum->uint32 30)))
+	      (if (<u32 p (bit-lshu32 (fixnum->uint32 1) 31))
 		  (fixnum->pname (uint32->fixnum p))
 		  (string->symbol (llong->string (uint32->llong p)))))
 	     (else

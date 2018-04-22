@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Wed Apr 18 18:56:59 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 19:54:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1892,7 +1892,17 @@
       (instantiate::J2STemplate
 	 (loc (token-loc (peek-token)))
 	 (exprs (template-expressions #f))))
-      
+
+   (define (number val conf)
+      (cond
+	 ((flonum? val)
+	  val)
+	 ((or (>llong (fixnum->llong val) (conf-max-int conf))
+	      (<llong (fixnum->llong val) (conf-min-int conf)))
+	  (fixnum->flonum val))
+	 (else
+	  val)))
+	      
    (define (primary)
       (case (peek-token-type)
 	 ((PRAGMA)
@@ -1988,12 +1998,12 @@
 	  (let ((token (consume-token! 'NUMBER)))
 	     (instantiate::J2SNumber
 		(loc (token-loc token))
-		(val (token-value token)))))
+		(val (number (token-value token) conf)))))
 	 ((OCTALNUMBER)
 	  (let ((token (consume-token! 'OCTALNUMBER)))
 	     (instantiate::J2SOctalNumber
 		(loc (token-loc token))
-		(val (token-value token)))))
+		(val (number (token-value token) conf)))))
 	 ((STRING TSTRING)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2SString
@@ -2167,12 +2177,12 @@
 	  (let ((token (consume-token! 'NUMBER)))
 	     (instantiate::J2SNumber
 		(loc (token-loc token))
-		(val (token-value token)))))
+		(val (number (token-value token) conf)))))
 	 ((OCTALNUMBER)
 	  (let ((token (consume-token! 'OCTALNUMBER)))
 	     (instantiate::J2SOctalNumber
 		(loc (token-loc token))
-		(val (token-value token)))))
+		(val (number (token-value token) conf)))))
 	 ((true false null)
 	  (let ((token (consume-any!)))
 	     (instantiate::J2SString

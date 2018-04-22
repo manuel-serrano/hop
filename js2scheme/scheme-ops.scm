@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Apr 22 16:41:08 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 19:31:09 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1900,6 +1900,8 @@
 ;*---------------------------------------------------------------------*/
 (define (fixnums? left tl right tr)
    (cond
+      ((or (flonum? left) (flonum? right))
+       #f)
       ((eq? tl 'integer) (if (eq? tr 'integer) #t `(fixnum? ,right)))
       ((eq? tr 'integer) `(fixnum? ,left))
       ((and (memq tl '(int53 integer number any unknown))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Apr 22 13:52:01 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 18:14:37 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -466,7 +466,7 @@
 (define-inline (-fx32/overflow x::long y::long)
    (cond-expand
       ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
-       (let ((res::int32 0))
+       (let ((res::int32 #s32:0))
 	  (if (pragma::bool "__builtin_ssub_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
@@ -521,13 +521,13 @@
 (define-inline (*fx/overflow x::long y::long)
    (cond-expand
       ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
-       (let ((res::int32 0))
+       (let ((res::int32 #s32:0))
 	  (cond
 	     ((pragma::bool "__builtin_smul_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
 		 x y))
-	     ((=fx res 0)
+	     ((=s32 res #s32:0)
 	      (if (or (and (<fx x 0) (>=fx y 0))
 		      (and (>=fx x 0) (<fx y 0)))
 		  -0.0
