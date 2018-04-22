@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Thu Mar 29 09:20:47 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 15:10:37 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript string functions.           */
@@ -59,7 +59,7 @@
 		       ,(j2s-scheme obj mode return conf hint))))
 	     (if (eq? type 'uint32)
 		 x
-		 (js-uint32->jsnum x conf))))
+		 (js-uint32-tointeger x conf))))
 	 ((maybe-number? field)
 	  `(js-string-ref ,(j2s-scheme obj mode return conf hint)
 	      ,(j2s-scheme field mode return conf hint)

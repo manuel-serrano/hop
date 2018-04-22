@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Feb  4 07:52:55 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 14:46:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 64 bit platforms                        */
@@ -32,7 +32,7 @@
        (export
 	  (js-number->jsnumber ::obj)
 	  
-	  (inline overflow29 ::long)
+	  (inline overflowfx ::long)
 	  (inline overflow53::obj ::long)
 	  
 	  (js-toint32::int32 ::obj ::JsGlobalObject)
@@ -43,6 +43,10 @@
 	  
 	  (inline js-int32-tointeger::obj ::int32)
 	  (inline js-uint32-tointeger::obj ::uint32)
+	  
+	  (inline js-int53-tointeger::bint ::obj)
+	  (js-int53-toint32::int32 ::obj)
+	  (js-int53-touint32::uint32 ::obj)
 	  
 	  (inline +fx/overflow::obj ::long ::long)
 	  (inline +s32/overflow::obj ::int32 ::int32)
@@ -112,20 +116,10 @@
        (bigloo-type-error "js-number->jsnumber" "number" val))))
 
 ;*---------------------------------------------------------------------*/
-;*    overflow29 ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    2^29-1 overflow                                                  */
-;*    -------------------------------------------------------------    */
-;*    See Hacker's Delight (second edition), H. Warren J.r,            */
-;*    Chapter 4, section 4.1, page 68                                  */
+;*    overflowfx ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define-inline (overflow29 v::long)
-   (let* ((a (-fx 0 (bit-lsh 1 29)))
-	  (b (-fx (bit-lsh 1 29) 1))
-	  (b-a (-fx b a)))
-      (if (<=u32 (fixnum->uint32 (-fx v a)) (fixnum->uint32 b-a))
-	  v
-	  (fixnum->flonum v))))
+(define-inline (overflowfx v::long)
+   (overflow53 v))
 
 ;*---------------------------------------------------------------------*/
 ;*    overflow53 ...                                                   */
@@ -143,9 +137,6 @@
 	  v
 	  (fixnum->flonum v))))
 
-(define (forcefail)
-   (tprint (/s32 #s32:1 (car (list #s32:0)))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-toint32 ::obj ...                                             */
 ;*    -------------------------------------------------------------    */
@@ -154,8 +145,6 @@
 (define (js-toint32::int32 obj %this)
    (cond
       ((or (fixnum? obj) (flonum? obj)) (js-number-toint32 obj))
-      ((uint32? obj) (tprint "should not be here.uint32 " obj) (forcefail) (uint32->int32 obj))
-      ((int32? obj) (tprint "should not be here.int32 " obj) (forcefail) obj)
       (else (js-number-toint32 (js-tonumber obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -166,8 +155,6 @@
 (define (js-touint32::uint32 obj %this)
    (cond
       ((or (fixnum? obj) (flonum? obj)) (js-number-touint32 obj))
-      ((int32? obj) (tprint "should not be here.int32") (forcefail) (int32->uint32 obj))
-      ((uint32? obj) (tprint "should not be here.uint32") (forcefail) obj)
       (else (js-number-touint32 (js-tointeger obj %this)))))
 
 ;*---------------------------------------------------------------------*/
@@ -276,6 +263,109 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-uint32-tointeger::obj u::uint32)
    (uint32->fixnum u))
+
+;*---------------------------------------------------------------------*/
+;*    js-int53-tointeger ...                                           */
+;*---------------------------------------------------------------------*/
+(define-inline (js-int53-tointeger::bint i::obj)
+   i)
+
+;*---------------------------------------------------------------------*/
+;*    js-int53-touint32 ...                                            */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
+;*---------------------------------------------------------------------*/
+(define (js-int53-touint32 i)
+   
+   (define 2^32 (exptfl 2. 32.))
+   
+   (define (positive-double->uint32::uint32 i::double)
+      (if (<fl i 2^32)
+	  (flonum->uint32 i)
+	  (flonum->uint32 (remainderfl i 2^32))))
+   
+   (define (double->uint32::uint32 i::double)
+      (cond
+	 ((or (= i +inf.0) (= i -inf.0) (not (= i i)))
+	  #u32:0)
+	 ((<fl i 0.)
+	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floor (abs i))))))
+	 (else
+	  (positive-double->uint32 i))))
+   
+   (cond
+      ((fixnum? i)
+       (if (<=fx i (-fx (bit-lsh 1 32) 1))
+	   (fixnum->uint32 i)
+	   (let* ((^31 (bit-lsh 1 31))
+		  (^32 (bit-lsh 1 32))
+		  (posint (if (<fx i 0) (+fx ^32 i) i))
+		  (int32bit (modulofx posint ^32)))
+	      (fixnum->uint32 int32bit))))
+      ((uint32? i)
+       i)
+      ((int32? i)
+       (int32->uint32 i))
+      ((flonum? i)
+       (double->uint32 i))
+      (else
+       (error "js-int53-touint32" "Illegal value" i))))
+
+;*---------------------------------------------------------------------*/
+;*    js-int53-toint32 ...                                             */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
+;*---------------------------------------------------------------------*/
+(define (js-int53-toint32 i)
+   
+   (define (int64->int32::int32 i::int64)
+      (let* ((i::elong (int64->elong i))
+	     (^31 (fixnum->elong (bit-lsh 1 31)))
+	     (^32 (fixnum->elong (bit-lsh 1 32)))
+	     (posint (if (<elong i #e0) (+elong ^32 i) i))
+	     (int32bit (moduloelong posint ^32))
+	     (n (if (>=elong int32bit ^31)
+		    (-elong int32bit ^32)
+		    int32bit)))
+	 (elong->int32 n)))
+   
+   (cond
+      ((int32? i)
+       i)
+      ((uint32? i)
+       (uint32->int32 i))
+      ((fixnum? i)
+       (cond-expand
+	  (bint61
+	   (if (and (<=fx i (-fx (bit-lsh 1 31) 1))
+		    (>=fx i (negfx (bit-lsh 1 31))))
+	       (fixnum->int32 i)
+	       (let* ((^31 (bit-lsh 1 31))
+		      (^32 (bit-lsh 1 32))
+		      (posint (if (<fx i 0) (+fx ^32 i) i))
+		      (int32bit (modulofx posint ^32))
+		      (n (if (>=fx int32bit ^31)
+			     (-fx int32bit ^32)
+			     int32bit)))
+		  (fixnum->int32 n))))
+	  (else
+	   (int64->int32 (fixnum->int64 i)))))
+      ((flonum? i)
+       (cond
+	  ((or (= i +inf.0) (= i -inf.0) (nanfl? i))
+	   (fixnum->int32 0))
+	  ((<fl i 0.)
+	   (let ((i (*fl -1. (floor (abs i)))))
+	      (if (>=fl i (negfl (exptfl 2. 31.)))
+		  (fixnum->int32 (flonum->fixnum i))
+		  (int64->int32 (flonum->int64 i)))))
+	  (else
+	   (let ((i (floor i)))
+	      (if (<=fl i (-fl (exptfl 2. 31.) 1.))
+		  (fixnum->int32 (flonum->fixnum i))
+		  (int64->int32 (flonum->int64 i)))))))
+      (else
+       (error "js-int53-toint32" "Illegal value" i))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tolong ...                                                       */

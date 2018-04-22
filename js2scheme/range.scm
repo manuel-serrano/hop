@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Tue Feb 13 14:51:17 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 09:09:05 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -60,8 +60,8 @@
 	       (lambda (ip)
 		  (set! *dump-stop* (read ip)))))))
    (when (isa? this J2SProgram)
-      (let ((tymap (if (=fx (config-get args :long-size 0) 64)
-		       typemap64 typemap32)))
+      (let ((tymap (if (>=fx (config-get args :int-size 0) 53)
+		       typemap53 typemap32)))
 	 (if (config-get args :optim-range #f)
 	     (begin
 		;; compute the integer value ranges,
@@ -218,7 +218,7 @@
       ((index)
        *index-intv*)
       ((integer)
-       (if (=fx (config-get args :long-size 0) 64)
+       (if (>=fx (config-get args :int-size 0) 53)
 	   *int53-intv*
 	   *int30-intv*))
       (else
@@ -1818,7 +1818,7 @@
      (integer number)
      (number number)))
 
-(define typemap64
+(define typemap53
    '((int29 int32)
      (uint29 uint32)
      (index uint32)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Wed Apr  4 13:36:15 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 09:05:13 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -207,6 +207,7 @@
 		  :optim (hopc-optim-level)
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
+		  :int-size (hopc-int-size)
 		  :debug (bigloo-debug)
 		  (hopc-j2s-flags)))))
       
@@ -235,6 +236,7 @@
 		  :optim (hopc-optim-level)
 		  :verbose (hop-verbose)
 		  :long-size (hopc-long-size)
+		  :int-size (hopc-int-size)
 		  :debug (bigloo-debug)
 		  (hopc-j2s-flags)))))
       
@@ -358,6 +360,7 @@
 			:optim (hopc-optim-level)
 			:verbose (hop-verbose)
 			:long-size (hopc-long-size)
+			:int-size (hopc-int-size)
 			:debug (bigloo-debug)
 			(hopc-j2s-flags))))
 	       file

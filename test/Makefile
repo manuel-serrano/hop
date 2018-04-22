@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/test/Makefile                     */
+#*    serrano/prgm/project/hop/3.2.x/test/Makefile                     */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Feb  6 09:07:49 2018 (serrano)                */
+#*    Last change :  Sun Apr 22 08:03:15 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    Example Makefile                                                 */
@@ -58,6 +58,8 @@ POPULATION = Makefile \
   hopjs/noserv/es6-generator.js \
   hopjs/noserv/es6-generator-mdn.js \
   hopjs/noserv/es6-generator-kangax.js \
+  hopjs/noserv/es6-destructuring-param.js \
+  hopjs/noserv/es6-destructuring-assig.js \
   hopjs/noserv/es6-rest.js \
   hopjs/noserv/es6-array.js \
   hopjs/noserv/es6-misc.js \

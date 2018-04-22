@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Nov 22 06:35:05 2014                          */
-;*    Last change :  Tue Oct 24 02:21:35 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Sat Apr 21 11:13:50 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JsStringLiteral Helper macros.                                   */
 ;*=====================================================================*/
@@ -52,7 +52,7 @@
 			     (let ((s (car c)))
 				`(instantiate::JsStringLiteral
 				    (weight ,(string-length s))
-				    (left (string-ascii-sentinel-mark! ,s)))))
+				    (left ,s))))
 			(reverse! (eval 'js-strings)))))
 	    e))))
 

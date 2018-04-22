@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:20:19 2004                          */
-;*    Last change :  Sun Mar 11 11:10:07 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 09:04:45 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC global parameters                                           */
@@ -50,6 +50,8 @@
 
 	    (hopc-long-size::obj)
 	    (hopc-long-size-set! ::obj)
+	    (hopc-int-size::obj)
+	    (hopc-int-size-set! ::obj)
 
 	    (hopc-jsheap::obj)
 	    (hopc-jsheap-set! ::obj)
@@ -203,6 +205,12 @@
 ;*    hopc-long-size ...                                               */
 ;*---------------------------------------------------------------------*/
 (define-parameter hopc-long-size
+   #f)
+
+;*---------------------------------------------------------------------*/
+;*    hopc-int-size ...                                                */
+;*---------------------------------------------------------------------*/
+(define-parameter hopc-int-size
    #f)
 
 ;*---------------------------------------------------------------------*/

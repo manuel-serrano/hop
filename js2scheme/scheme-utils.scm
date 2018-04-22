@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Mar 23 19:18:03 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 09:14:21 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -81,10 +81,9 @@
 	   (inrange-uint32?::bool ::J2SExpr)
 	   (inrange-int53?::bool ::J2SExpr)
 
-	   (overflow29 ::long)
 	   (box ::obj ::symbol ::pair-nil #!optional proc::obj)
-	   (box32 ::obj ::symbol #!optional proc::obj)
-	   (box64 ::obj ::symbol #!optional proc::obj)
+	   (box32 ::obj ::symbol ::pair-nil  #!optional proc::obj)
+	   (box64 ::obj ::symbol ::pair-nil #!optional proc::obj)
 
 	   (expr-asuint32 expr::J2SExpr)
 	   (uncast::J2SExpr ::J2SExpr)))
@@ -302,12 +301,10 @@
 	  ((and (>=elong val (-elong #e0 (bit-lshelong #e1 29)))
 		(<=elong val (bit-lshelong #e1 29)))
 	   (elong->fixnum val))
-	  ((=fx (config-get conf :long-size 0) 64)
+	  ((>=fx (config-get conf :int-size 0) 32)
 	   (cond-expand
-	      ((or bint30 bint32)
-	       `(elong->fixnum ,val))
-	      (else
-	       (elong->fixnum val))))
+	      (bint30 `(elong->fixnum ,val))
+	      (else (elong->fixnum val))))
 	  (else
 	   (elong->flonum val))))
       ((llong? val)
@@ -315,7 +312,7 @@
 	  ((and (>=llong val (-llong #l0 (bit-lshllong #l1 29)))
 		(<=llong val (bit-lshllong #l1 29)))
 	   (llong->fixnum val))
-	  ((and (=fx (config-get conf :long-size 0) 64)
+	  ((and (>=fx (config-get conf :int-size 0) 53)
 		(>=llong val (-llong #l0 (bit-lshllong #l1 53)))
 		(<=llong val (bit-lshllong #l1 53)))
 	   (cond-expand
@@ -333,7 +330,7 @@
 	   val)
 	  ((or bint61 62 64)
 	   (cond
-	      ((and (=fx (config-get conf :long-size 0) 64)
+	      ((and (>=fx (config-get conf :int-size 0) 53)
 		    (<fx val (bit-lsh 1 53))
 		    (>fx val (negfx (bit-lsh 1 53))))
 	       val)
@@ -344,7 +341,7 @@
 	       (fixnum->flonum val))))
 	  (else
 	   (error "j2s-scheme" "unknown integer size"
-	      (config-get conf :long-size (bigloo-config 'elong-size))))))
+	      (config-get conf :int-size (bigloo-config 'int-size))))))
       (else val)))
 
 ;*---------------------------------------------------------------------*/
@@ -618,6 +615,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    ranges                                                           */
 ;*---------------------------------------------------------------------*/
+(define-macro (max-uint32)
+   '(-u32 (bit-lshu32 #u32:1 31) #u32:1))
 (define-macro (max-int32)
    '(int32->fixnum
      (uint32->int32 (-u32 (bit-lshu32 #u32:1 31) #u32:1))))
@@ -766,50 +765,44 @@
 	      (memq type '(int32 uint32 integer bint))))))
 
 ;*---------------------------------------------------------------------*/
-;*    overflow29 ...                                                   */
-;*    -------------------------------------------------------------    */
-;*    2^53-1 overflow                                                  */
-;*    -------------------------------------------------------------    */
-;*    See Hacker's Delight (second edition), H. Warren J.r,            */
-;*    Chapter 4, section 4.1, page 68                                  */
-;*---------------------------------------------------------------------*/
-(define (overflow29 v::long)
-   (let* ((a (negfx (bit-lsh 1 29)))
-	  (b (-fx (bit-lsh 1 29) 1))
-	  (b-a (-fx b a)))
-      (if (<=u32 (fixnum->uint32 (-fx v a)) (fixnum->uint32 b-a))
-	  v
-	  (fixnum->flonum v))))
-
-;*---------------------------------------------------------------------*/
 ;*    box ...                                                          */
 ;*---------------------------------------------------------------------*/
 (define (box val type conf #!optional proc::obj)
    (if (m64? conf)
-       (box64 val type proc)
-       (box32 val type proc)))
+       (box64 val type conf proc)
+       (box32 val type conf proc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    box32 ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (box32 val type::symbol #!optional proc::obj)
+(define (box32 val type::symbol conf #!optional proc::obj)
+
    (case type
       ((int32)
        (if (int32? val)
-	   (overflow29 (int32->fixnum val))
-	   `(overflow29 (int32->fixnum ,val))))
+	   (if (and (>=llong (int32->llong val) (conf-min-int conf))
+		    (<=llong (int32->llong val) (conf-max-int conf)))
+	       (cond-expand
+		  (bint30 `(int32->fixnum ,val))
+		  (else (int32->fixnum val))))
+	   `(overflowfx (int32->fixnum ,val))))
       ((uint32)
        (if (uint32? val)
-	   (if (<u32 val (bit-lshu32 #u32:1 29))
-	       (uint32->fixnum val)
+	   (if (<=llong (uint32->llong val) (conf-max-int conf))
+	       (cond-expand
+		  (bint30 `(uint32->fixnum ,val))
+		  (else (uint32->fixnum val)))
 	       (uint32->flonum val))
-	   `(if (<u32 ,val ,(bit-lshu32 #u32:1 29))
+	   `(if (<u32 ,val ,(llong->uint32 (conf-max-int conf)))
 		(uint32->fixnum ,val)
 		(uint32->flonum ,val))))
       ((integer)
        (if (fixnum? val)
-	   (overflow29 val)
-	   `(overflow29 ,val)))
+	   (if (and (>=llong (fixnum->llong val) (conf-min-int conf))
+		    (<=llong (fixnum->llong val) (conf-max-int conf)))
+	       val
+	       (fixnum->flonum val))
+	   `(overflowfx ,val)))
       ((real number)
        val)
       (else
@@ -818,7 +811,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    box64 ...                                                        */
 ;*---------------------------------------------------------------------*/
-(define (box64 val type::symbol #!optional proc::obj)
+(define (box64 val type::symbol conf #!optional proc::obj)
    (case type
       ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
       ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))

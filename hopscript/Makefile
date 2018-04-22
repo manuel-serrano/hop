@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue Feb  6 17:29:40 2018 (serrano)                */
+#*    Last change :  Sun Apr 22 08:52:55 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -43,7 +43,7 @@ _OBJECTS = types rts object function string number regexp boolean \
   error array arguments date json math worker private public lib service \
   property websocket pair obj arraybuffer arraybufferview stringliteral dom \
   symbol promise generator spawn expanders profile \
-  arithmetic arithmetic32 arithmetic64
+  arithmetic arithmetic32 arithmetic64 
 
 _C_OBJECTS = _bglhopscript
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Mar 23 08:31:35 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 09:14:54 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -29,6 +29,8 @@
 	   
 	   (m64? conf)
 	   (u32? conf)
+	   (conf-max-int::llong ::pair-nil)
+	   (conf-min-int::llong ::pair-nil)
 	   
 	   (type-int32?::bool ::obj)
 	   (type-uint32?::bool ::obj)
@@ -41,7 +43,7 @@
 	   (type-name type conf)
 	   (min-type::symbol ::obj ::obj)
 	   (max-type::symbol ::obj ::obj)
-	   (js-uint32->jsnum expr conf)
+	   (js-uint32-tointeger expr conf)
 
 	   (j2s-expr-type-test ::J2SExpr)
 
@@ -176,13 +178,27 @@
 ;*    m64? ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (m64? conf)
-   (=fx (config-get conf :long-size 0) 64))
+   (>=fx (config-get conf :int-size 0) 53))
 
 ;*---------------------------------------------------------------------*/
 ;*    u32? ...                                                         */
 ;*---------------------------------------------------------------------*/
 (define (u32? conf)
    (>=fx (config-get conf :optim 0) 4))
+
+;*---------------------------------------------------------------------*/
+;*    conf-max-int ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (conf-max-int::llong conf)
+   (let ((shift (config-get conf :int-size 30)))
+      (-llong (bit-lshllong #l1 (fixnum->llong (-fx shift 1))) #l1)))
+   
+;*---------------------------------------------------------------------*/
+;*    conf-min-int ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (conf-min-int::llong conf)
+   (let ((shift (config-get conf :int-size 30)))
+      (negllong (bit-lshllong #l1 (fixnum->llong (-fx shift 1))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-uint32? ...                                                 */
@@ -238,10 +254,6 @@
 ;*    type-name ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (type-name type conf)
-   
-   (define (m64? conf)
-      (=fx (config-get conf :long-size 0) 64))
-   
    (case type
       ((int30 int32) 'int32)
       ((uint32) 'uint32)
@@ -317,17 +329,17 @@
 	   'any))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-uint32->jsnum ...                                             */
+;*    js-uint32-tointeger ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (js-uint32->jsnum expr conf)
-   (let ((lgsz (config-get conf :long-size 30)))
+(define (js-uint32-tointeger expr conf)
+   (let ((lgsz (config-get conf :int-size 30)))
       (cond
 	 ((and (uint32? expr) (<u32 expr (bit-lshu32 #u32:1 (-fx lgsz 1))))
 	  (uint32->fixnum expr))
 	 ((>fx lgsz 32)
 	  `(uint32->fixnum ,expr))
 	 (else
-	  `(js-uint32->jsnum ,expr)))))
+	  `(js-uint32-tointeger ,expr)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-expr-type-test ...                                           */

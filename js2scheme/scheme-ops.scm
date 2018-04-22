@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Mar 24 19:12:19 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 16:41:08 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -998,30 +998,30 @@
 		   (case op
 		      ((>> <<)
 		       (if (and (number? right) (= right 0) (eq? type tl))
-			   (toint32 left tl)
-			   `(,(bitop op) ,(toint32 left tl) ,(mask32 right rhs))))
+			   (toint32 left tl conf)
+			   `(,(bitop op) ,(toint32 left tl conf) ,(mask32 right rhs))))
 		      ((>>>)
-		       `(,(bitop op) ,(touint32 left tl) ,(mask32 right rhs)))
+		       `(,(bitop op) ,(touint32 left tl conf) ,(mask32 right rhs)))
 		      (else
-		       `(,(bitop op) ,(toint32 left tl) ,(toint32 right tr)))))
+		       `(,(bitop op) ,(toint32 left tl conf) ,(toint32 right tr conf)))))
 		  ((memq tr '(int32 uint32 integer))
 		   (case op
 		      ((>> <<)
 		       (j2s-cast
 			  (if (and (number? right) (= right 0) (eq? type tl))
-			      (toint32 left tl)
+			      (toint32 left tl conf)
 			      `(,(bitop op)
-				,(toint32 left tl) ,(mask32 right rhs)))
+				,(toint32 left tl conf) ,(mask32 right rhs)))
 			  #f 'int32 type conf))
 		      ((>>>)
 		       (j2s-cast
 			  `(,(bitop op)
-			    ,(touint32 left tl) ,(mask32 right rhs))
+			    ,(touint32 left tl conf) ,(mask32 right rhs))
 			  #f 'uint32 type conf))
 		      (else
 		       (j2s-cast
 			  `(,(bitop op)
-			    ,(toint32 left tl) ,(toint32 right tr))
+			    ,(toint32 left tl conf) ,(toint32 right tr conf))
 			  #f 'int32 type conf))))
 		  ((memq tl '(int32 uint32 integer))
 		   (case op
@@ -1038,7 +1038,7 @@
 		      (else
 		       (j2s-cast
 			  `(,(bitop op)
-			    ,(asint32 left tl) ,(toint32 right tr))
+			    ,(asint32 left tl) ,(toint32 right tr conf))
 			  #f 'int32 type conf))))
 		  ((memq op '(& ^ BIT_OR))
 		   `(if (and (fixnum? ,left) (fixnum? ,right))
@@ -1492,7 +1492,7 @@
 		   (js-uint32-tointeger (/u32 ,left ,right))
 		   (/fl ,(asreal left tl)
 		      ,(asreal right tr)))
-	      `(/fl ,(asreal left tl) ,(todouble right tr))))
+	      `(/fl ,(asreal left tl) ,(todouble right tr conf))))
 	 ((eq? tl 'int32)
 	  (if (eq? tr 'int32)
 	      `(if (and (not (=s32 ,right #s32:0))
@@ -1500,20 +1500,20 @@
 		   (js-int32-tointeger (/s32 ,left ,right))
 		   (/fl ,(asreal left tl)
 		      ,(asreal right tr)))
-	      `(/fl ,(asreal left tl) ,(todouble right tr))))
+	      `(/fl ,(asreal left tl) ,(todouble right tr conf))))
 	 ((eq? tr 'uint32)
-	  `(/fl ,(todouble left tl) ,(asreal right tr)))
+	  `(/fl ,(todouble left tl conf) ,(asreal right tr)))
 	 ((eq? tr 'int32)
-	  `(/fl ,(todouble left tl) ,(asreal right tr)))
+	  `(/fl ,(todouble left tl conf) ,(asreal right tr)))
 	 ((eq? tl 'integer)
 	  (if (eq? tr 'integer)
 	      `(if (and (not (=fx ,right 0))
 			(=fx (remainderfx ,left ,right) 0))
 		   (/fx ,left ,right)
-		   (/fl ,(todouble left tl) ,(todouble right tr)))
-	      `(/fl ,(todouble left tl) ,(todouble right tr))))
+		   (/fl ,(todouble left tl conf) ,(todouble right tr conf)))
+	      `(/fl ,(todouble left tl conf) ,(todouble right tr conf))))
 	 ((eq? tr 'integer)
-	  `(/js ,(todouble left tl) ,(asreal right tr)))
+	  `(/js ,(todouble left tl conf) ,(asreal right tr)))
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(if (and (not (=fx ,right 0))
@@ -1555,19 +1555,19 @@
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (remainderfx ,left ,(asfixnum right tr))
-	       (remainder ,left ,(todouble right tr))))
+	       (remainder ,left ,(todouble right tr conf))))
 	 ((eq? tr 'int32)
 	  `(if (fixnum? ,left)
 	       (remainderfx ,left ,(asfixnum right tr))
-	       (remainder ,left ,(todouble right tr))))
+	       (remainder ,left ,(todouble right tr conf))))
 	 ((eq? tr 'uint32)
 	  `(if (fixnum? ,left)
 	       (remainderfx ,left ,(asfixnum right tr))
-	       (remainderfl ,(todouble left tl) ,(todouble right tr))))
+	       (remainderfl ,(todouble left tl conf) ,(todouble right tr conf))))
 	 (else
 	  `(if (fixnums? ,left ,right)
 	       (remainderfx ,left ,right)
-	       (remainderfl ,(todouble left tl) ,(todouble right tr))))))
+	       (remainderfl ,(todouble left tl conf) ,(todouble right tr conf))))))
    
    (define (remainders32 left right tl tr)
       (cond
@@ -1584,15 +1584,15 @@
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (fixnum->int32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr))))
+	       (let ((n (remainder ,left ,(todouble right tr conf))))
 		  (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n)))))
 	 ((eq? tr 'int32)
 	  `(if (fixnum? ,left)
 	       (fixnum->int32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr))))
+	       (let ((n (remainder ,left ,(todouble right tr conf))))
 		  (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n)))))
 	 (else
-	  `(let ((n (remainder ,(todouble left tl) ,(todouble right tr))))
+	  `(let ((n (remainder ,(todouble left tl conf) ,(todouble right tr conf))))
 	      (if (fixnum? n) (fixnum->int32 n) (flonum->int32 n))))))
    
    (define (remainderu32 left right tl tr)
@@ -1608,15 +1608,15 @@
 	 ((and (eq? tr 'uint32) (inrange-int32? rhs))
 	  `(if (fixnum? ,left)
 	       (fixnum->uint32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr))))
+	       (let ((n (remainder ,left ,(todouble right tr conf))))
 		  (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n)))))
 	 ((eq? tr 'int32)
 	  `(if (fixnum? ,left)
 	       (fixnum->uint32 (remainderfx ,left ,(asfixnum right tr)))
-	       (let ((n (remainder ,left ,(todouble right tr))))
+	       (let ((n (remainder ,left ,(todouble right tr conf))))
 		  (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n)))))
 	 (else
-	  `(let ((n (remainder ,(todouble left tl) ,(todouble right tr))))
+	  `(let ((n (remainder ,(todouble left tl conf) ,(todouble right tr conf))))
 	      (if (fixnum? n) (fixnum->uint32 n) (flonum->int32 n))))))
    
    (with-tmp lhs rhs mode return conf hint '*
@@ -1663,15 +1663,15 @@
 		  (else
 		   (if (m64? conf)
 		       (if (and (number? right) (not (= right 0)))
-			   `(%$$NZ ,(tonumber64 left tlv)
-			       ,(tonumber64 right trv))
-			   `(%$$NN ,(tonumber64 left tlv)
-			       ,(tonumber64 right trv)))
+			   `(%$$NZ ,(tonumber64 left tlv conf)
+			       ,(tonumber64 right trv conf))
+			   `(%$$NN ,(tonumber64 left tlv conf)
+			       ,(tonumber64 right trv conf)))
 		       (if (and (number? right) (not (= right 0)))
-			   `(%$$NZ ,(tonumber32 left tlv)
-			       ,(tonumber32 right trv))
-			   `(%$$NN ,(tonumber32 left tlv)
-			       ,(tonumber32 right trv)))))))))))
+			   `(%$$NZ ,(tonumber32 left tlv conf)
+			       ,(tonumber32 right trv conf))
+			   `(%$$NN ,(tonumber32 left tlv conf)
+			       ,(tonumber32 right trv conf)))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    asint32 ...                                                      */
@@ -1752,7 +1752,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    toflonum ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (toflonum val type::symbol)
+(define (toflonum val type::symbol conf)
    (cond
       ((fixnum? val)
        (fixnum->flonum val))
@@ -1774,13 +1774,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    tonumber32 ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (tonumber32 val type::symbol)
-   (box32 val type (lambda (val) `(js-tonumber ,val %this))))
+(define (tonumber32 val type::symbol conf)
+   (box32 val type conf (lambda (val) `(js-tonumber ,val %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    toint32 ...                                                      */
 ;*---------------------------------------------------------------------*/
-(define (toint32 val type)
+(define (toint32 val type conf)
    (case type
       ((int32)
        val)
@@ -1789,14 +1789,14 @@
 	   (uint32->int32 val)
 	   `(uint32->int32 ,val)))
       (else
-       (if (and (fixnum? val) (fixnum? (overflow29 val)))
+       (if (fixnum? val)
 	   (fixnum->int32 val)
 	   `(if (fixnum? ,val) (fixnum->int32 ,val) (js-toint32 ,val %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    touint32 ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (touint32 val type)
+(define (touint32 val type conf)
    (case type
       ((int32)
        (if (int32? val) (int32->uint32 val) `(int32->uint32 ,val)))
@@ -1805,14 +1805,14 @@
       ((integer)
        (if (fixnum? val) (fixnum->uint32 val) `(fixnum->uint32 ,val)))
       (else
-       (if (and (fixnum? val) (fixnum? (overflow29 val)))
+       (if (fixnum? val)
 	   (fixnum->uint32 val)
 	   `(if (fixnum? ,val) (fixnum->uint32 ,val) (js-touint32 ,val %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    touint32/w-overflow ...                                          */
 ;*---------------------------------------------------------------------*/
-(define (touint32/w-overflow val type)
+(define (touint32/w-overflow val type conf)
    (cond
       ((int32? val)
        (int32->uint32 val))
@@ -1829,7 +1829,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    toint32/32 ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (toint32/32 val type::symbol)
+(define (toint32/32 val type::symbol conf)
    (case type
       ((int32) val)
       ((uint32) (if (uint32? val) (uint32->int32 val) `(uint32->int32 ,val)))
@@ -1839,22 +1839,25 @@
 ;*---------------------------------------------------------------------*/
 ;*    tolong32 ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (tolong32 val type::symbol)
-   
-   (define (int32-29? val)
-      (and (>=s32 val (negs32 (bit-lshs32 #u32:1 29)))
-	   (<s32 val (bit-lshs32 #s32:1 29))))
+(define (tolong32 val type::symbol conf)
 
-   (define (uint32-29? val)
-      (<u32 val (bit-lshu32 #u32:1 29)))
+   (define bit-shift32
+      (-fx (config-get :int-size 30) 1))
+   
+   (define (int32fx? val)
+      (and (>=s32 val (negs32 (bit-lshs32 #u32:1 bit-shift32)))
+	   (<s32 val (bit-lshs32 #s32:1 bit-shift32))))
+
+   (define (uint32fx? val)
+      (<u32 val (bit-lshu32 #u32:1 bit-shift32)))
    
    (case type
       ((int32)
-       (if (and (int32? val) (int32-29? val))
+       (if (and (int32? val) (int32fx? val))
 	   (int32->fixnum val)
 	   `(int32->fixnum ,val)))
       ((uint32)
-       (if (and (uint32? val) (uint32-29? val))
+       (if (and (uint32? val) (uint32fx? val))
 	   (uint32->fixnum val)
 	   `(uint32->fixnum ,val)))
       (else val)))
@@ -1862,7 +1865,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    tolong64 ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (tolong64 val type::symbol)
+(define (tolong64 val type::symbol conf)
    (case type
       ((int32) (if (int32? val) (int32->fixnum val) `(int32->fixnum ,val)))
       ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
@@ -1871,13 +1874,13 @@
 ;*---------------------------------------------------------------------*/
 ;*    tonumber64 ...                                                   */
 ;*---------------------------------------------------------------------*/
-(define (tonumber64 val type::symbol)
-   (box64 val type (lambda (val) `(js-tonumber ,val %this))))
+(define (tonumber64 val type::symbol conf)
+   (box64 val type conf (lambda (val) `(js-tonumber ,val %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    todouble ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (todouble val type::symbol)
+(define (todouble val type::symbol conf)
    (case type
       ((int32)
        (if (int32? val) (int32->flonum val) `(int32->flonum ,val)))

@@ -1,18 +1,18 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmetic32.scm        */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/arithmeticnan64.scm     */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Apr 22 13:52:01 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 14:06:12 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
-;*    Arithmetic operations on 32bit and nan64 platforms               */
+;*    Arithmetic operations on nan+64bit platforms                     */
 ;*=====================================================================*/
 
 ;*---------------------------------------------------------------------*/
 ;*    The module                                                       */
 ;*---------------------------------------------------------------------*/
-(module __hopscript_arithmetic32
+(module __hopscript_arithmeticnan64
 
    (library hop)
 
@@ -28,12 +28,11 @@
 	   __hopscript_public)
 
    (cond-expand
-      ((or bint30 bint32)
+      ((and bint32 (config nan-tagging #t))
        (export
 	  (js-number->jsnumber ::obj)
 	  
-	  (inline overflowfx ::long)
-	  (macro overflowu32?)
+	  (inline overflow29 ::long)
 	  
 	  (inline js-toint32::int32 ::obj ::JsGlobalObject)
 	  (js-toint32-slow::int32 ::obj ::JsGlobalObject)
@@ -45,10 +44,6 @@
 	  
 	  (inline js-int32-tointeger::obj ::int32)
 	  (inline js-uint32-tointeger::obj ::uint32)
-
-	  (inline js-int53-tointeger::obj ::obj)
-	  (js-int53-toint32::int32 ::obj)
-	  (js-int53-touint32::uint32 ::obj)
 	  
 	  (inline +fx/overflow::obj ::obj ::obj)
 	  (inline +fx32/overflow::obj ::long ::long)
@@ -65,40 +60,24 @@
 	  (inline *fx/overflow::obj ::long ::long)
 	  (inline *s32/overflow::obj ::int32 ::int32)
 	  (inline *u32/overflow::obj ::uint32 ::uint32)
-	  (*/overflow::obj ::obj ::obj)))))
+	  (*/overflow::obj ::obj ::obj)
+	  ))))
 
 ;*---------------------------------------------------------------------*/
 ;*    oveflow? ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define-macro (overflowfx? num)
-   (if (=fx (bigloo-config 'int-size) 32)
-       num
-       `(overflowfx (int32->fixnum ,val))))
-
 (define-macro (overflowu32? num)
-   `(>u32 ,num ,(fixnum->uint32 (maxvalfx))))
-
+   `(>u32 ,num ,(u32 (bit-lshu32 #u32:1 31) #u32:1)))
+   
 (define-macro (overflows64? num)
-   `(or (>s64 ,num ,(fixnum->int64 (maxvalfx))) (<s64 ,num ,(fixnum->int64 (minvalfx)))))
+   `(not (=s64 (bit-ands64 ,num ,(bit-nots64 (fixnum->int64 (-fx (bit-lsh 1 31) 1)))) #s64:0)))
 
 (define-macro (overflowu64? num)
-   `(>u64 ,num ,(fixnum->uint64 (maxvalfx))))
+   `(not (=u64 (bit-andu64 ,num ,(bit-notu64 (fixnum->uint64 (-fx (bit-lsh 1 31) 1)))) #u64:0)))
    
 (define-macro (overflowllong? num)
-   `(or (>llong ,num ,(fixnum->llong (maxvalfx))) (<llong ,num ,(fixnum->llong (minvalfx)))))
+   `(not (=llong (bit-andllong ,num ,(bit-notllong (fixnum->llong (-fx (bit-lsh 1 31) 1)))) 0)))
    
-;*---------------------------------------------------------------------*/
-;*    overflowfx ...                                                   */
-;*---------------------------------------------------------------------*/
-(define-inline (overflowfx v::long)
-   (cond-expand
-      ((config 'int-size 32)
-       v)
-      (else
-       (if (or (>fx v (maxvalfx)) (<fx v (minvalfx)))
-	   (fixnum->flonum v)
-	   v))))
-
 ;*---------------------------------------------------------------------*/
 ;*    js-number->jsnumber ...                                          */
 ;*---------------------------------------------------------------------*/
@@ -109,9 +88,11 @@
       ((flonum? val)
        val)
       ((uint32? val)
-       (js-uint32-tointeger val))
+       (if (overflowu32? val)
+	   (uint32->flonum val)
+	   (uint32->fixnum val)))
       ((int32? val)
-       (overflowfx (int32->fixnum val)))
+       (int32->fixnum val))
       ((uint8? val)
        (uint8->fixnum val))
       ((int8? val)
@@ -129,7 +110,7 @@
 	   (uint64->flonum val)
 	   (uint64->fixnum val)))
       ((elong? val)
-       (overflowfx (elong->fixnum val)))
+       (elong->fixnum val))
       ((llong? val)
        (if (overflowllong? val)
 	   (llong->flonum val)
@@ -198,8 +179,6 @@
 	 (llong->int32 n)))
    
    (cond
-      ((fixnum? obj)
-       (fixnum->int32 obj))
       ((flonum? obj)
        (cond
 	  ((or (= obj +inf.0) (= obj -inf.0) (nanfl? obj))
@@ -214,6 +193,8 @@
 	      (if (<=fl i (-fl (exptfl 2. 31.) 1.))
 		  (fixnum->int32 (flonum->fixnum i))
 		  (int64->int32 (flonum->int64 i)))))))
+      ((fixnum? obj)
+       (fixnum->int32 obj))
       (else
        (error "js-number-toint32" "bad number type" obj))))
 
@@ -239,106 +220,48 @@
 	  (positive-double->uint32 obj))))
    
    (cond
-      ((fixnum? obj) (fixnum->uint32 obj))
-      ((flonum? obj) (double->uint32 obj))
-      (else (error "js-number-touint32" "bad number type" obj))))
+      ((fixnum? obj)
+       (int32->uint32 (fixnum->uint32 obj)))
+      ((flonum? obj)
+       (double->uint32 obj))
+      ((int32? obj)
+       (tprint "should not be here")
+       (int32->uint32 obj))
+      ((uint32? obj)
+       (tprint "should not be here")
+       obj)
+      (else
+       (error "js-number-touint32" "bad number type" obj))))
+
+;*---------------------------------------------------------------------*/
+;*    overflow29 ...                                                   */
+;*    -------------------------------------------------------------    */
+;*    2^29-1 overflow                                                  */
+;*---------------------------------------------------------------------*/
+(define-inline (overflow29 v::long)
+   (if (or (>=fx v (bit-lsh 1 29)) (<fx v (negfx (bit-lsh 1 29))))
+       (fixnum->flonum v)
+       v))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-int32-tointeger ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-int32-tointeger::obj i::int32)
-   (overflowfx (int32->fixnum i)))
+   (int32->fixnum i))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-uint32-tointeger ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-uint32-tointeger::obj i::uint32)
-   (if (overflowu32? i)
-       (uint32->flonum i)
-       (uint32->fixnum i)))
-
-;*---------------------------------------------------------------------*/
-;*    js-int53-tointeger ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (js-int53-tointeger::obj i::obj)
-   i)
-
-;*---------------------------------------------------------------------*/
-;*    js-int53-touint32 ...                                            */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
-;*---------------------------------------------------------------------*/
-(define (js-int53-touint32 i)
-   
-   (define 2^32 (exptfl 2. 32.))
-   
-   (define (positive-double->uint32::uint32 i::double)
-      (if (<fl i 2^32)
-	  (flonum->uint32 i)
-	  (flonum->uint32 (remainderfl i 2^32))))
-   
-   (define (double->uint32::uint32 i::double)
-      (cond
-	 ((or (= i +inf.0) (= i -inf.0) (not (= i i)))
-	  #u32:0)
-	 ((<fl i 0.)
-	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floor (abs i))))))
-	 (else
-	  (positive-double->uint32 i))))
-   
-   (cond
-      ((fixnum? i)
-       (fixnum->uint32 i))
-      ((uint32? i)
-       i)
-      ((int32? i)
-       (int32->uint32 i))
-      ((flonum? i)
-       (double->uint32 i))
-      (else
-       (error "js-int53-touint32" "Illegal value" i))))
-
-;*---------------------------------------------------------------------*/
-;*    js-int53-toint32 ...                                             */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
-;*---------------------------------------------------------------------*/
-(define (js-int53-toint32 i)
-   
-   (define (int64->int32::int32 i::int64)
-      (let* ((i::llong (int64->llong i))
-	     (^31 (*llong #l8 (fixnum->llong (bit-lsh 1 28))))
-	     (^32 (*llong #l2 ^31))
-	     (posint (if (<llong i #l0) (+llong ^32 i) i))
-	     (int32bit (modulollong posint ^32))
-	     (n (if (>=llong int32bit ^31)
-		    (-llong int32bit ^32)
-		    int32bit)))
-	 (llong->int32 n)))
-   
-   (cond
-      ((int32? i)
-       i)
-      ((uint32? i)
-       (uint32->int32 i))
-      ((fixnum? i)
-       (fixnum->int32 i))
-      ((flonum? i)
-       (cond
-	  ((or (= i +inf.0) (= i -inf.0) (nanfl? i))
-	   (fixnum->int32 0))
-	  ((<fl i 0.)
-	   (let ((i (*fl -1. (floor (abs i)))))
-	      (if (>=fl i (negfl (exptfl 2. 31.)))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))
-	  (else
-	   (let ((i (floor i)))
-	      (if (<=fl i (-fl (exptfl 2. 31.) 1.))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))))
-      (else
-       (error "js-int53-toint32" "Illegal value" i))))
+   (cond-expand
+      (bint30
+       (if (<u32 i (bit-lshu32 #u32:1 29))
+	   (uint32->fixnum i)
+	   (uint32->flonum i)))
+      (bint32
+       (if (<u32 i (-u32 (bit-lshu32 #u32:1 30) #u32:1))
+	   (uint32->fixnum i)
+	   (uint32->flonum i)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    tolong ...                                                       */
@@ -359,13 +282,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx/overflow x::obj y::obj)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
-       (let ((res::int 0))
-	  (if (pragma::bool "__builtin_sadd_overflow((int)((long)$1), (int)((long)$2), &$3)"
-		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)(CINT($1)))+((double)(CINT($2))))"
-		 x y)
-	      (pragma::bint "BINT($1)" res))))
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_saddl_overflow((long)$1, (long)$2-TAG_INT, &$3)"
@@ -374,7 +290,7 @@
 		 x y)
 	      (pragma::bint "(obj_t)($1)" res))))
       (else
-       (overflowfx (+fx x y)))))
+       (overflow29 (+fx x y)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    +fx32/overflow ...                                               */
@@ -383,25 +299,18 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+fx32/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
-       (let ((res::int 0))
-	  (if (pragma::bool "__builtin_sadd_overflow((int)$1, (int)$2, &$3)"
-		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)($1))+((double)($2)))"
-		 x y)
-	      (pragma::bint "BINT($1)" res))))
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_saddl_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))+((double)($2)))"
 		 x y)
-	      (overflowfx res))))
+	      (overflow29 res))))
       (else
        (let ((z::long (pragma::long "(~($1 ^ $2)) & 0x80000000" x y)))
 	  (if (pragma::bool "$1 & (~((($2 ^ $1) + ($3)) ^ ($3)))" z x y)
 	      (fixnum->flonum (+fx x y))
-	      (overflowfx (+fx x y)))))))
+	      (overflow29 (+fx x y)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    +s32/overflow ...                                                */
@@ -414,25 +323,18 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (+u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
-       (let ((res::uint32 0))
-	  (if (pragma::bool "__builtin_uadd_overflow($1, $2, &$3)"
-		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)($1))+((double)($2)))"
-		 x y)
-	      (js-uint32-tointeger res))))
       ((and bigloo-c (config have-overflow #t))
-       (let ((res::ulong 0))
+       (let ((res::long 0))
 	  (if (pragma::bool "__builtin_uaddl_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))+((double)($2)))"
 		 x y)
-	      (js-uint32-tointeger (pragma::uint32 "(uint32_t)$1" res)))))
+	      (overflow29 res))))
       (else
        (let ((z::long (pragma::long "(~($1 ^ $2)) & 0x80000000" x y)))
 	  (if (pragma::bool "$1 & (~((($2 ^ $1) + ($3)) ^ ($3)))" z x y)
 	      (uint32->flonum (+u32 x y))
-	      (overflowfx (uint32->fixnum (+u32 x y))))))))
+	      (overflow29 (uint32->fixnum (+u32 x y))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    +/overflow ...                                                   */
@@ -456,7 +358,7 @@
 ;*    The argument are 30bit integers encoded into long values.        */
 ;*---------------------------------------------------------------------*/
 (define-inline (-fx/overflow x::long y::long)
-   (overflowfx (-fx x y)))
+   (overflow29 (-fx x y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    -fx32/overflow ...                                               */
@@ -465,13 +367,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (-fx32/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
-       (let ((res::int32 0))
-	  (if (pragma::bool "__builtin_ssub_overflow($1, $2, &$3)"
-		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
-		 x y)
-	     (pragma::bint "BINT($1)" res))))
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
 	  (if (pragma::bool "__builtin_ssubl_overflow($1, $2, &$3)"
@@ -495,7 +390,14 @@
 ;*    -u32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (-u32/overflow x::uint32 y::uint32)
-   (js-uint32-tointeger (-u32 x y)))
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t))
+       (overflow29 (int32->fixnum (uint32->int32 (-u32 x y)))))
+      (else
+       (let ((z::long (pragma::long "(~($1 ^ $2)) & 0x80000000" x y)))
+	  (if (pragma::bool "$1 & ((($2 ^ (long)$1) - ($3)) ^ ($3))" z x y)
+	      (uint32->flonum (-u32 x y))
+	      (overflow29 (int32->fixnum  (uint32->fixnum (-u32 x y)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    -/overflow ...                                                   */
@@ -520,20 +422,6 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*fx/overflow x::long y::long)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
-       (let ((res::int32 0))
-	  (cond
-	     ((pragma::bool "__builtin_smul_overflow($1, $2, &$3)"
-		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
-		 x y))
-	     ((=fx res 0)
-	      (if (or (and (<fx x 0) (>=fx y 0))
-		      (and (>=fx x 0) (<fx y 0)))
-		  -0.0
-		  (pragma::bint "BINT($1)" res)))
-	     (else
-	      (pragma::bint "BINT($1)" res)))))
       ((and bigloo-c (config have-overflow #t))
        (let ((res::long 0))
 	  (cond
@@ -545,9 +433,10 @@
 	      (if (or (and (<fx x 0) (>=fx y 0))
 		      (and (>=fx x 0) (<fx y 0)))
 		  -0.0
-		  (overflowfx res)))
+		  (overflow29 res)))
 	     (else
-	      (overflowfx res)))))
+	      (overflow29 res)))))
+      
       (else
        (define (neg? o)
 	  (if (flonum? o)
@@ -560,7 +449,7 @@
 		  (if (or (and (neg? x) (not (neg? y)))
 			  (and (not (neg? x)) (neg? y)))
 		      -0.0)
-		  (overflowfx r)))
+		  (overflow29 r)))
 	     ((flonum? r)
 	      r)
 	     ((bignum? r)
@@ -585,24 +474,19 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (*u32/overflow x::uint32 y::uint32)
    (cond-expand
-      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
-       (let ((res::uint32 0))
-	  (if (pragma::bool "__builtin_umul_overflow($1, $2, &$3)"
-		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
-		 x y)
-	      (js-uint32-tointeger (pragma::uint32 "(uint32_t)$1" res)))))
       ((and bigloo-c (config have-overflow #t))
-       (let ((res::ulong 0))
+       (let ((res::long 0))
 	  (if (pragma::bool "__builtin_umull_overflow($1, $2, &$3)"
 		 x y (pragma res))
 	      (pragma::real "DOUBLE_TO_REAL(((double)($1))*((double)($2)))"
 		 x y)
-	      (js-uint32-tointeger res))))
+	      (if (<u32 res (bit-lshu32 #u32:1 29))
+		  (uint32->fixnum res)
+		  (uint32->flonum res)))))
       (else
        (let ((r (*fl (uint32->flonum x) (uint32->flonum y))))
 	  (if (integer? r)
-	      (overflowfx (flonum->fixnum r))
+	      (overflow29 (flonum->fixnum r))
 	      r)))))
 
 ;*---------------------------------------------------------------------*/

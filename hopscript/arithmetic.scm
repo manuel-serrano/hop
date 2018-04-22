@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Thu Feb 15 11:32:08 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 15:08:18 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -37,23 +37,23 @@
 	   (*js::obj ::obj ::obj ::JsGlobalObject)
 	   (/js::obj ::obj ::obj ::JsGlobalObject)
 	   (negjs ::obj ::JsGlobalObject)
-
+	   
 	   (inline /pow2s32::int32 x::int32 y::long)
 	   (inline /pow2u32::uint32 x::uint32 y::long)
 	   (inline /pow2fx::long n::long k::long)
-
+	   
 	   (%$$NN ::obj ::obj)
 	   (%$$NZ ::obj ::obj)
-
+	   
 	   (bit-lshjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-rshjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-urshjs::obj ::obj ::obj ::JsGlobalObject)
-
+	   
 	   (bit-andjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-orjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-xorjs::obj ::obj ::obj ::JsGlobalObject)
 	   (bit-notjs::obj ::obj ::JsGlobalObject)
-
+	   
 	   (<js::bool ::obj ::obj ::JsGlobalObject)
 	   (>js::bool ::obj ::obj ::JsGlobalObject)
 	   (<=js::bool ::obj ::obj ::JsGlobalObject)
@@ -68,25 +68,7 @@
 	   (>>=fl::bool ::double ::double)
 	   (<<=fl::bool ::double ::double)
 	   
-	   (inline fixnums?::bool ::obj ::obj)
-	   )
-   
-   (export (js-int53-toint32::int32 ::obj)
-	   (js-int53-touint32::uint32 ::obj)
-	   (inline js-uint32->jsnum::obj ::uint32)
-	   )
-
-   (cond-expand
-      ((or bint30 bint32)
-       (export (inline js-int53-tointeger::obj ::obj)
-	  (inline +s32/safe::obj ::int32 ::int32)
-	  (inline +u32/safe::obj ::uint32 ::uint32)
-	  (inline js+fx32::obj ::long ::long)))
-      ((or bint61 bint64)
-       (export (inline js-int53-tointeger::bint ::obj)
-	       (inline js+fx64::obj ::long ::long)))
-      (else
-       (error "arithmetic" "unknown integer format" #f))))
+	   (inline fixnums?::bool ::obj ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-toflonum ...                                                  */
@@ -299,221 +281,6 @@
       (js-int32-tointeger (bit-nots32 num))))
 
 ;*---------------------------------------------------------------------*/
-;*    js-int53-tointeger ...                                           */
-;*---------------------------------------------------------------------*/
-(define-inline (js-int53-tointeger i)
-   i)
-
-;*---------------------------------------------------------------------*/
-;*    js-int53-touint32 ...                                            */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.6          */
-;*---------------------------------------------------------------------*/
-(define (js-int53-touint32 i)
-   
-   (define 2^32 (exptfl 2. 32.))
-   
-   (define (positive-double->uint32::uint32 i::double)
-      (if (<fl i 2^32)
-	  (flonum->uint32 i)
-	  (flonum->uint32 (remainderfl i 2^32))))
-   
-   (define (double->uint32::uint32 i::double)
-      (cond
-	 ((or (= i +inf.0) (= i -inf.0) (not (= i i)))
-	  #u32:0)
-	 ((<fl i 0.)
-	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floor (abs i))))))
-	 (else
-	  (positive-double->uint32 i))))
-   
-   (cond
-      ((fixnum? i)
-       (cond-expand
-	  (bint30
-	   (fixnum->uint32 i))
-	  (bint32
-	   (int32->uint32 (fixnum->int32 i)))
-	  (else
-	   (if (<=fx i (-fx (bit-lsh 1 32) 1))
-	       (fixnum->uint32 i)
-	       (let* ((^31 (bit-lsh 1 31))
-		      (^32 (bit-lsh 1 32))
-		      (posint (if (<fx i 0) (+fx ^32 i) i))
-		      (int32bit (modulofx posint ^32)))
-		  (fixnum->uint32 int32bit))))))
-      ((uint32? i)
-       i)
-      ((int32? i)
-       (int32->uint32 i))
-      ((flonum? i)
-       (double->uint32 i))
-      (else
-       (error "js-int53-touint32" "Illegal value" i))))
-
-;*---------------------------------------------------------------------*/
-;*    js-int53-toint32 ...                                             */
-;*    -------------------------------------------------------------    */
-;*    http://www.ecma-international.org/ecma-262/5.1/#sec-9.5          */
-;*---------------------------------------------------------------------*/
-(define (js-int53-toint32 i)
-   
-   (define (int64->int32::int32 i::int64)
-      (cond-expand
-	 ((or bint30 bint32)
-	  (let* ((i::llong (int64->llong i))
-		 (^31 (*llong #l8 (fixnum->llong (bit-lsh 1 28))))
-		 (^32 (*llong #l2 ^31))
-		 (posint (if (<llong i #l0) (+llong ^32 i) i))
-		 (int32bit (modulollong posint ^32))
-		 (n (if (>=llong int32bit ^31)
-			(-llong int32bit ^32)
-			int32bit)))
-	     (llong->int32 n)))
-	 (else
-	  (let* ((i::elong (int64->elong i))
-		 (^31 (fixnum->elong (bit-lsh 1 31)))
-		 (^32 (fixnum->elong (bit-lsh 1 32)))
-		 (posint (if (<elong i #e0) (+elong ^32 i) i))
-		 (int32bit (moduloelong posint ^32))
-		 (n (if (>=elong int32bit ^31)
-			(-elong int32bit ^32)
-			int32bit)))
-	     (elong->int32 n)))))
-   
-   (cond
-      ((int32? i)
-       i)
-      ((uint32? i)
-       (uint32->int32 i))
-      ((fixnum? i)
-       (cond-expand
-	  ((or bint30 bint32)
-	   (fixnum->int32 i))
-	  (bint61
-	   (if (and (<=fx i (-fx (bit-lsh 1 31) 1))
-		    (>=fx i (negfx (bit-lsh 1 31))))
-	       (fixnum->int32 i)
-	       (let* ((^31 (bit-lsh 1 31))
-		      (^32 (bit-lsh 1 32))
-		      (posint (if (<fx i 0) (+fx ^32 i) i))
-		      (int32bit (modulofx posint ^32))
-		      (n (if (>=fx int32bit ^31)
-			     (-fx int32bit ^32)
-			     int32bit)))
-		  (fixnum->int32 n))))
-	  (else
-	   (int64->int32 (fixnum->int64 i)))))
-      ((flonum? i)
-       (cond
-	  ((or (= i +inf.0) (= i -inf.0) (nanfl? i))
-	   (fixnum->int32 0))
-	  ((<fl i 0.)
-	   (let ((i (*fl -1. (floor (abs i)))))
-	      (if (>=fl i (negfl (exptfl 2. 31.)))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))
-	  (else
-	   (let ((i (floor i)))
-	      (if (<=fl i (-fl (exptfl 2. 31.) 1.))
-		  (fixnum->int32 (flonum->fixnum i))
-		  (int64->int32 (flonum->int64 i)))))))
-      (else
-       (error "js-int53-toint32" "Illegal value" i))))
-
-;*---------------------------------------------------------------------*/
-;*    js-uint32->jsnum ...                                             */
-;*---------------------------------------------------------------------*/
-(define-inline (js-uint32->jsnum n::uint32)
-   
-   (define-macro (intszu32)
-      (minfx (-fx (bigloo-config 'int-size) 1) 53))
-   
-   (define-macro (shiftu32)
-      (bit-lsh 1 (intszu32)))
-   
-   (define-macro (maxintu32)
-      (fixnum->uint32 (-fx (shiftu32) 1)))
-
-   (if (>u32 n (maxintu32))
-       (uint32->flonum n)
-       (uint32->fixnum n)))
-   
-;*---------------------------------------------------------------------*/
-;*    +s32/safe ...                                                    */
-;*---------------------------------------------------------------------*/
-(define-inline (+s32/safe x::int32 y::int32)
-   ;; requires x and y to be tagged
-   (cond-expand
-      ((and bigloo-c (config have-overflow #t))
-       (let ((res::long 0))
-	  (cond
-	     ((pragma::bool "__builtin_saddl_overflow( (long)$1, (long)$2, &$3 )"
-		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL( ((double)($1) + ((double)($2))) )"
-		 x y))
-	     ((=s32 res (bit-ands32 res (bit-lshs32 #s32:3 30)))
-	      (pragma::real "DOUBLE_TO_REAL( ((double)($1) + ((double)($2))) )"
-		 x y))
-	     (else
-	      (pragma::bint "(obj_t)($1 - TAG_INT)" res)))))
-      (else
-       (let ((z::long (pragma::long "(~((long)$1 ^ (long)$2)) & 0x80000000" x y)))
-	  (if (pragma::bool "$1 & (~((((long)$2 ^ (long)$1) + ((long)$3)) ^ ((long) $3)))" z x y)
-	      (+fl (int32->flonum x) (int32->flonum y))
-	      (+s32 x y))))))
-
-;*---------------------------------------------------------------------*/
-;*    +u32/safe ...                                                    */
-;*---------------------------------------------------------------------*/
-(define-inline (+u32/safe x::uint32 y::uint32)
-   ;; requires x and y to be tagged
-   (cond-expand
-      ((and bigloo-c (config have-overflow #t))
-       (let ((res::ulong (pragma::ulong "(ulong)($1)" #u32:0)))
-	  (cond
-	     ((pragma::bool "__builtin_uaddl_overflow( (ulong)$1, (ulong)$2, &$3 )"
-		 x y (pragma res))
-	      (pragma::real "DOUBLE_TO_REAL( ((double)($1) + ((double)($2))) )"
-		 x y))
-	     ((=u32 res (bit-andu32 res (bit-lshu32 #u32:3 30)))
-	      (pragma::real "DOUBLE_TO_REAL( ((double)($1) + ((double)($2))) )"
-		 x y))
-	     (else
-	      (pragma::bint "(obj_t)($1 - TAG_INT)" res)))))
-      (else
-       (let ((z::long (pragma::long "(~((long)$1 ^ (long)$2)) & 0x80000000" x y)))
-	  (if (pragma::bool "$1 & (~((((long)$2 ^ (long)$1) + ((long)$3)) ^ ((long) $3)))" z x y)
-	      (+fl (int32->flonum x) (int32->flonum y))
-	      (+s32 x y))))))
-
-;*---------------------------------------------------------------------*/
-;*    js+fx32 ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    Fixnum addition on 32 bits machines (two tagging bits).          */
-;*    -------------------------------------------------------------    */
-;*    See Hacker's Delight, second edition, page 29.                   */
-;*    -------------------------------------------------------------    */
-;*    This is the generic portable C implementation. Compilers and     */
-;*    platforms that supporting inlined assembly, this definition is   */
-;*    overriden the macro found in the include file arithmetic.sch     */
-;*---------------------------------------------------------------------*/
-(define-inline (js+fx32::obj x::long y::long)
-   ;; requires x and y to be tagged
-   (+s32/safe (fixnum->int32 x) (fixnum->int32 y)))
-
-;*---------------------------------------------------------------------*/
-;*    js+fx64 ...                                                      */
-;*    -------------------------------------------------------------    */
-;*    Fixnum addition on 64 bits machines (three tagging bits).        */
-;*---------------------------------------------------------------------*/
-(define-inline (js+fx64::obj x::long y::long)
-   (let ((r::long (+fx x y)))
-      (if (bit-and r (bit-lsh 1 52))
-	  r
-	  (fixnum->flonum r))))
-   
-;*---------------------------------------------------------------------*/
 ;*    <js                                                              */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.8.1       */
@@ -651,6 +418,8 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (fixnums? a b)
    (cond-expand
+      ((and bigloo-c (config nan-tagging #t))
+       (pragma::bool "INTEGERP( (long)$1 & (long)$2 )" a b))
       (bigloo-c
        (pragma::bool "INTEGERP( TAG_INT == 0 ? ((long)$1 | (long)$2) : ((long)$1 & (long)$2) )" a b))
       (else

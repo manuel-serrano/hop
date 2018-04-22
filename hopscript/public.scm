@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sat Apr 14 19:49:56 2018 (serrano)                */
+;*    Last change :  Sun Apr 22 15:34:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -986,22 +986,9 @@
       (cond
 	 ((number? obj)
 	  (cond
-	     ((uint32? obj)
-	      (cond-expand
-		 ((or bint30 bint32)
-		  (if (<u32 obj (bit-lshu32 #u32:1 29))
-		      (uint32->fixnum obj)
-		      (uint32->flonum obj)))
-		 (else
-		  (uint32->fixnum obj))))
-	     ((int32? obj)
-	      (cond-expand
-		 ((or bint30 bint32)
-		  (overflow29 (int32->fixnum obj)))
-		 (else
-		  (int32->fixnum obj))))
-	     (else
-	      obj)))
+	     ((uint32? obj) (bigloo-type-error "toNumber" "fixnum/flonum" obj))
+	     ((int32? obj) (bigloo-type-error "toNumber" "fixnum/flonum" obj))
+	     (else obj)))
 	 ((eq? obj (js-undefined))
 	  +nan.0)
 	 ((eq? obj (js-null))
