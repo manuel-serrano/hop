@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Wed Apr  4 13:06:29 2018 (serrano)                */
+#*    Last change :  Mon Apr 23 06:34:05 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -213,10 +213,14 @@ while : ; do
       hopc="`echo $1 | sed 's/^[^=]*=//'`";;
       
     --bigloo=*)
-      bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+      bigloo="`echo $1 | sed 's/^[^=]*=//'`";
+      hostbigloo="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --host-bigloo=*)
       hostbigloo="`echo $1 | sed 's/^[^=]*=//'`";;
+
+    --build-bigloo=*)
+      bigloo="`echo $1 | sed 's/^[^=]*=//'`";;
 
     --bigloo-pcre=*)
       bglpcre="`echo $1 | sed 's/^[^=]*=//'`";;
@@ -432,7 +436,8 @@ while : ; do
       echo "   --build-bindir=dir.......... cross compilers path ($buildbindir)" >&2;
       echo "   --hop=comp.................. the Hop binary ($hop)" >&2;
       echo "   --hopc=comp................. the Hopc binary ($hopc)" >&2;
-      echo "   --bigloo=comp............... the Bigloo compiler ($bigloo)" >&2;
+      echo "   --bigloo=comp............... set both build and host Bigloo compilers ($bigloo/$hostbigloo)" >&2;
+      echo "   --build-bigloo=comp......... the build Bigloo compiler ($bigloo)" >&2;
       echo "   --host-bigloo=comp.......... the host Bigloo compiler ($hostbigloo)" >&2;
       echo "   --bigloobindir=path......... the Bigloo bin-dir path" >&2;
       echo "   --bigloolibdir=path......... the Bigloo lib-dir path" >&2;
@@ -1071,6 +1076,7 @@ fi
 for p in hopc.sh hop.sh; do
   cat etc/$p.in \
       | sed -e "s|@RELEASE@|$version|" \
+            -e "s|@BIGLOO@|$bigloo|" \
             -e "s|@BRANCH@|$branch|" \
             -e "s|@DATE@|$date|" \
             -e "s|@DEVEL@|$devel|" \
