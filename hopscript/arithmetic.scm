@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Sun Apr 22 15:08:18 2018 (serrano)                */
+;*    Last change :  Mon Apr 23 10:31:08 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -418,9 +418,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (fixnums? a b)
    (cond-expand
-      ((and bigloo-c (config nan-tagging #t))
-       (pragma::bool "INTEGERP( (long)$1 & (long)$2 )" a b))
-      (bigloo-c
+      ((and bigloo-c (config nan-tagging #f))
        (pragma::bool "INTEGERP( TAG_INT == 0 ? ((long)$1 | (long)$2) : ((long)$1 & (long)$2) )" a b))
       (else
        (and (fixnum? a) (fixnum? b)))))
