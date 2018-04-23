@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri Jan 20 13:46:40 2006                          */
-#*    Last change :  Tue Mar 13 15:27:27 2018 (serrano)                */
+#*    Last change :  Mon Apr 23 10:44:26 2018 (serrano)                */
 #*    Copyright   :  2006-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    ETC Makefile                                                     */
@@ -16,7 +16,7 @@ do: builddoc
 -include ../etc/Makefile.hopconfig
 -include ../etc/Makefile.version
 
-HOPFLAGS=-q --no-autoload --no-clear-cache --no-cache --no-server --no-sofile
+HOPFLAGS=-q --no-autoload --no-zeroconf --no-clear-cache --no-cache --no-server --no-sofile
 HOP_MODULES=$(DESTDIR)$(HOPLIBDIR)/$(HOPFILDIR)/node_modules
 HOP_LIBS_PATH=$(HOP_MODULES)/markdown/lib/.libs/$(HOPRELEASE)/$(MACH):$(HOP_MODULES)/fontifier/lib/.libs/$(HOPRELEASE)/$(MACH)
 HOPBOOTFLAGS=--js-modules-dir $(BUILDDIR)/node_modules --icons-dir \
