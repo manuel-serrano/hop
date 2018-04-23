@@ -3,13 +3,13 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Fri Dec 22 17:01:06 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Mon Apr 23 12:27:43 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization consists in "pre-initializating" variables     */
 ;*    declarations in order to improve the variable typing.            */
 ;*                                                                     */
-;*    When a variable is declared with a plain J2SDec/var              */
+;*    When a variable is declared with a plain J2SDecl/var             */
 ;*    statement and if it can be proved that the variable is never     */
 ;*    accessed before initialized and if the initialization type is    */
 ;*    known (typically an number), then the declaration that should    */
