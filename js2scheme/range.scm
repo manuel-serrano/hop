@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Apr 22 09:09:05 2018 (serrano)                */
+;*    Last change :  Mon Apr 23 11:39:17 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -614,7 +614,9 @@
 	     (mi1 (min v2 v3))
 	     (ma0 (max v0 v1))
 	     (ma1 (max v2 v3))
-	     (intr (interval (min mi0 mi1) (max ma0 ma1))))
+	     (intr (interval
+		      (min mi0 mi1 (interval-min left) (interval-min right))
+		      (max ma0 ma1 (interval-max left) (interval-max right)))))
 	 (widening left right intr))))
    
 ;*---------------------------------------------------------------------*/
