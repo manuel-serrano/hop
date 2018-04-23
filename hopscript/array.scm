@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun Apr 22 18:08:33 2018 (serrano)                */
+;*    Last change :  Mon Apr 23 08:11:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -827,7 +827,8 @@
 		  (set! length (+u32 idx #u32:1)))
 		 ((=u32 idx ilen)
 		  ;; update ilen and check inliness again
-		  (js-array-update-ilen! arr ilen (-u32 length 1))
+		  (let ((len (-fx (vector-length vec) 1)))
+		     (js-array-update-ilen! arr ilen (fixnum->uint32 len)))
 		  (js-object-mode-inline-set! arr (=u32 ilen length)))
 		 (else
 		  (js-object-mode-inline-set! arr #f)))
