@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Fri Mar 23 08:09:42 2018 (serrano)                */
+;*    Last change :  Thu Apr 26 18:06:19 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -66,6 +66,8 @@
 					(cons p (read-line-positions p))))
 				  sources)))
 		     (decode-mappings! mappings srcs positions translations)
+;* 		     (tprint "positions=" positions " file=" file)     */
+;* 		     (tprint "*** translations " translations " " path) */
 		     (set! nodes
 			(map! (lambda (n) (sourcemap! n translations path))
 			   nodes))))))))
@@ -218,8 +220,12 @@
 
    (match-case loc
       ((at ?fname ?pos)
+;*        (tprint "path=" path " pos=" pos " trans=" (vector-length translations) */
+;* 	  " test="                                                     */
+;* 	  (and (equal? fname path) (<fx pos (vector-length translations)))) */
        (when (and (equal? fname path) (<fx pos (vector-length translations)))
 	  (let ((p (find-closest-position translations pos)))
+	     ;; (tprint "p=" p " " (+fx (car p) (cddr p)))
 	     (when (and (pair? p) (>=fx (+fx (car p) (cddr p)) 0)) 
 ;* 		(tprint "update loc=" loc " => " p)                    */
 ;* 		(tprint "      nloc=" `(at ,(cadr p) ,(+fx (car p) (cddr p)) */
@@ -248,9 +254,10 @@
       (let* ((mmap (open-mmap path :read #t))
 	     (len (mmap-length mmap))
 	     (vec (make-vector len 0)))
+	 (vector-set! vec 0 0)
 	 (unwind-protect
 	    (let loop ((i 0)
-		       (line 0))
+		       (line 1))
 	       (when (<fx i len)
 		  (if (char=? (mmap-ref mmap i) #\Newline)
 		      (begin
@@ -264,7 +271,7 @@
       (call-with-input-file path
 	 (lambda (ip)
 	    (let loop ((i 0)
-		       (line 0)
+		       (line 1)
 		       (acc '(0)))
 	       (if (eof-object? ip)
 		   (list->vector (reverse! acc))
