@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 15 07:21:08 2012                          */
-;*    Last change :  Mon Feb 12 17:32:19 2018 (serrano)                */
+;*    Last change :  Thu Apr 26 10:24:57 2018 (serrano)                */
 ;*    Copyright   :  2012-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop WebSocket server-side tools                                  */
@@ -814,7 +814,7 @@
 	     (write-byte (if mask (bit-or #x80 127) 127) port)
 	     (let loop ((i 0)
 			(len len))
-		(if (=fx i 8)
+		(if (=fx i 7)
 		    (write-byte len port)
 		    (begin
 		       (loop (+fx i 1) (quotientfx len 256))
