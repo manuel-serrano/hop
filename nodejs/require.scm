@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Mon Apr  9 19:59:11 2018 (serrano)                */
+;*    Last change :  Thu Apr 26 11:40:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -346,7 +346,7 @@
 			(when srcmap
 			   (fprintf op "\n\nhop_source_mapping_url(~s, \"~a\");\n"
 			      filename srcmap)
-			   (fprintf op "\n//# sourceMappingURL=~a\n" srcmap)))
+			   (fprintf op "\n# sourceMappingURL=~a\n" srcmap)))
 		     ;; first element of the tree is a position offset
 		     ;; see sourcemap generation
 		     (cons offset tree))))))))
