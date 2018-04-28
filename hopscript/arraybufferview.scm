@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jun 18 07:29:16 2014                          */
-;*    Last change :  Fri May 26 07:25:06 2017 (serrano)                */
-;*    Copyright   :  2014-17 Manuel Serrano                            */
+;*    Last change :  Sat Apr 28 17:43:37 2018 (serrano)                */
+;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript ArrayBufferView              */
 ;*=====================================================================*/
@@ -899,13 +899,13 @@
 		     
 		     ;; Uint8
 		     (js-bind! %this this 'getUint8
-			:value (js-make-function %this js-getInt8 2 "getUint8")
+			:value (js-make-function %this js-getUint8 2 "getUint8")
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this 'setUint8
-			:value (js-make-function %this js-setInt8 3 "setUint8")
+			:value (js-make-function %this js-setUint8 3 "setUint8")
 			:configurable #t
 			:writable #t
 			:enumerable #t

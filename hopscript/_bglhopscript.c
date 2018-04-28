@@ -3,8 +3,8 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Aug  3 14:00:36 2017 (serrano)                */
-/*    Copyright   :  2016-17 Manuel Serrano                            */
+/*    Last change :  Sat Apr 28 17:52:06 2018 (serrano)                */
+/*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
 /*    JsObject and cache implementations.                              */
@@ -13,6 +13,16 @@
 #include "bglhopscript.h"
 
 #include <stdio.h>
+
+/*---------------------------------------------------------------------*/
+/*    Bigloo backward compatibility                                    */
+/*---------------------------------------------------------------------*/
+#if( defined( BGL_NAN_TAGGING ) )
+#  define vector_t vector
+#  define FILLER_COMMA 
+#else
+#  define FILLER_COMMA ,
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    JsObject imports                                                 */
@@ -165,12 +175,12 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, char mode )
 static struct {
    __CNST_ALIGN header_t header;
    long length;
-} _empty_vector = { __CNST_FILLER, MAKE_HEADER( VECTOR_TYPE, 0 ), 0 };
+} _empty_vector = { __CNST_FILLER FILLER_COMMA MAKE_HEADER( VECTOR_TYPE, 0 ), 0 };
 static obj_t empty_vector = BVECTOR( &(_empty_vector.header ) );
 #else   
 static struct {
    __CNST_ALIGN long length;
-} _empty_vector = { __CNST_FILLER, 0 };
+} _empty_vector = { __CNST_FILLER FILLER_COMMA 0 };
 static obj_t empty_vector = BVECTOR( &(_empty_vector.length ) );
 #endif   
    
