@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Apr 18 20:54:38 2018 (serrano)                */
+;*    Last change :  Fri Apr 27 06:04:13 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1192,13 +1192,14 @@
    (with-access::J2SUnary this (op expr)
       (multiple-value-bind (ty env bk)
 	 (typing expr env fix)
-	 (let ((tye (case op
-		       ((+) (if (non-zero-integer? ty expr) 'integer 'number))
-		       ((-) (if (non-zero-integer? ty expr) 'integer 'number))
-		       ((~) (if (type-integer? ty) 'integer 'unknown))
-		       ((!) 'bool)
-		       ((typeof) 'string)
-		       (else 'any))))
+	 (let* ((tnum (if (eq? ty 'real) 'real 'number))
+		(tye (case op
+			((+) (if (non-zero-integer? ty expr) 'integer tnum))
+			((-) (if (non-zero-integer? ty expr) 'integer tnum))
+			((~) (if (type-integer? ty) 'integer 'unknown))
+			((!) 'bool)
+			((typeof) 'string)
+			(else 'any))))
 	    (expr-type-set! this env fix tye bk)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1212,6 +1213,8 @@
 	 (let ((typ (case op
 		       ((+)
 			(cond
+			   ((and (eq? typl 'real) (eq? typr 'real))
+			    'real)
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'integer)
 			   ((and (typnum? typl) (typnum? typr))
@@ -1227,6 +1230,8 @@
 			    'unknown)))
 		       ((- *)
 			(cond
+			   ((or (eq? typl 'real) (eq? typr 'real))
+			    'real)
 			   ((and (type-integer? typl) (type-integer? typr))
 			    'integer)
 ;* 			   ((or (eq? typl 'any) (eq? typr 'any))       */
@@ -1236,7 +1241,11 @@
 			   (else
 			    'number)))
 		       ((% /)
-			'number)
+			(cond
+			   ((or (eq? typl 'real) (eq? typr 'real))
+			    'real)
+			   (else
+			    'number)))
 ;* 			(cond                                          */
 ;* 			   ((and (type-integer? typl) (type-integer? typr)) */
 ;* 			    'number)                                   */

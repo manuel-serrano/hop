@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Apr 22 19:31:09 2018 (serrano)                */
+;*    Last change :  Fri Apr 27 06:01:23 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -241,7 +241,7 @@
 		 ((eq? typ 'int32)
 		  (epairify loc `(negs32js ,expr)))
 		 ((eq? typ 'uint32)
-		  (epairify loc `(negs32 (uint32->int32 ,expr))))
+		  (epairify loc `(negs32 ,(asint32 expr 'uint32))))
 		 (else
 		  (epairify loc `(js-toint32 (negjs ,expr %this) %this)))))
 	     ((uint32)
@@ -256,6 +256,10 @@
 	      (if (fixnum? expr)
 		  (negfx expr)
 		  (epairify loc `(negfx ,expr))))
+	     ((real)
+	      (if (flonum? expr)
+		  (negfl expr)
+		  (epairify loc `(negfl ,expr))))
 	     (else
 	      (epairify loc `(negjs ,expr %this))))))
       ((~)
@@ -978,13 +982,13 @@
 	  (int32->fixnum (bit-ands32 sexpr #s32:31)))
 	 ((inrange-32? expr)
 	  (case (j2s-vtype expr)
-	     ((int32) `(int32->fixnum ,sexpr))
-	     ((uint32) `(uint32->fixnum ,sexpr))
+	     ((int32) (asfixnum sexpr 'int32))
+	     ((uint32) (asfixnum sexpr 'uint32))
 	     (else sexpr)))
 	 (else
 	  (case (j2s-vtype expr)
-	     ((int32) `(int32->fixnum ,sexpr))
-	     ((uint32) `(uint32->fixnum ,sexpr))
+	     ((int32) (asfixnum sexpr 'int32))
+	     ((uint32) (asfixnum sexpr 'uint32))
 	     ((integer) sexpr)
 	     (else `(bit-and (js-tointeger ,sexpr %this) 31))))))
    
@@ -1075,7 +1079,7 @@
 	  (str-append flip
 	     left
 	     `(js-ascii->jsstring
-		 (fixnum->string (uint32->fixnum ,right)))))
+		 (fixnum->string ,(asfixnum right 'uint32)))))
 	 ((memq tr '(integer int53))
 	  (str-append flip
 	     left
@@ -1430,7 +1434,7 @@
 		 (if (=u32 (bit-andu32
 			      ,n ,(fixnum->uint32 (-fx (bit-lsh 1 k) 1)))
 			#u32:0)
-		     (uint32->fixnum(bit-rshu32 ,n ,k))
+		     (uint32->fixnum (bit-rshu32 ,n ,k))
 		     (/js ,n ,(bit-lsh 1 k) %this))))
 	    ((int32)
 	     `(let ((,n ,(j2s-scheme lhs mode return conf hint)))
@@ -1512,6 +1516,8 @@
 		   (/fx ,left ,right)
 		   (/fl ,(todouble left tl conf) ,(todouble right tr conf)))
 	      `(/fl ,(todouble left tl conf) ,(todouble right tr conf))))
+	 ((or (eq? tr 'real) (eq? tl 'real))
+	  `(/fl ,(todouble left tl conf) ,(todouble right tr conf)))
 	 ((eq? tr 'integer)
 	  `(/js ,(todouble left tl conf) ,(asreal right tr)))
 	 (else

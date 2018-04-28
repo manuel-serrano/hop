@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sun Apr 22 09:14:21 2018 (serrano)                */
+;*    Last change :  Fri Apr 27 07:27:48 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -789,9 +789,7 @@
       ((uint32)
        (if (uint32? val)
 	   (if (<=llong (uint32->llong val) (conf-max-int conf))
-	       (cond-expand
-		  (bint30 `(uint32->fixnum ,val))
-		  (else (uint32->fixnum val)))
+	       (uint32->fixnum val)
 	       (uint32->flonum val))
 	   `(if (<u32 ,val ,(llong->uint32 (conf-max-int conf)))
 		(uint32->fixnum ,val)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr 16 08:12:22 2018 (serrano)                */
+;*    Last change :  Fri Apr 27 07:59:57 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript numbers                      */
@@ -15,6 +15,8 @@
 (module __hopscript_number
    
    (library hop)
+
+   (extern (macro $snprintf::int (::string ::int ::string ::double) "snprintf"))
    
    (include "types.sch" "stringliteral.sch")
    
@@ -584,4 +586,3 @@
 	      (else +nan.0))))
       (else
        (/ lnum rnum))))
-

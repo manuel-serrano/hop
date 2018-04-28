@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sun Apr 22 09:14:54 2018 (serrano)                */
+;*    Last change :  Fri Apr 27 10:03:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -275,6 +275,7 @@
       ((Promise) 'JsPromise)
       ((class) 'JsFunction)
       ((arguments) 'JsArguments)
+      ((real) 'double)
       (else type)))
    
 ;*---------------------------------------------------------------------*/
