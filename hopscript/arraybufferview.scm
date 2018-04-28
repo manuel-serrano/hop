@@ -915,13 +915,13 @@
 		     
 		     ;; Uint8
 		     (js-bind! %this this 'getUint8
-			:value (js-make-function %this js-getInt8 2 "getUint8")
+			:value (js-make-function %this js-getUint8 2 "getUint8")
 			:configurable #t
 			:writable #t
 			:enumerable #t
 			:hidden-class #t)
 		     (js-bind! %this this 'setUint8
-			:value (js-make-function %this js-setInt8 3 "setUint8")
+			:value (js-make-function %this js-setUint8 3 "setUint8")
 			:configurable #t
 			:writable #t
 			:enumerable #t

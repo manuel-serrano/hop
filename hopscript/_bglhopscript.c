@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Tue Apr 17 17:40:37 2018 (serrano)                */
+/*    Last change :  Thu Aug  3 14:00:36 2017 (serrano)                */
 /*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -13,6 +13,16 @@
 #include <bigloo.h>
 #include "bglhopscript.h"
 #include "bglhopscript_malloc.h"
+
+/*---------------------------------------------------------------------*/
+/*    Bigloo backward compatibility                                    */
+/*---------------------------------------------------------------------*/
+#if( defined( BGL_NAN_TAGGING ) )
+#  define vector_t vector
+#  define FILLER_COMMA 
+#else
+#  define FILLER_COMMA ,
+#endif
 
 /*---------------------------------------------------------------------*/
 /*    JsObject imports                                                 */
