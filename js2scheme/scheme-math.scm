@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Apr 29 07:35:56 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 18:17:49 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -118,14 +118,14 @@
 	     (if (not p3)
 		 (let ((sexp (j2s-scheme arg mode return conf hint)))
 		    (if (eq? (j2s-type arg) 'real)
-			`(js-math-floorfl ,sexp)
+			`(js-math-floorfl ,sexp %this)
 			(match-case sexp
 			   ((/fl . ?-)
 			    `(js-math-floorfl ,sexp))
 			   ((let ?bindings (/fl . ?-))
 			    `(js-math-floorfl ,sexp))
 			   (else
-			    `(js-math-floor ,sexp)))))
+			    `(js-math-floor ,sexp %this)))))
 		 (case (j2s-vtype (car p3))
 		    ((int32)
 		     `(js-int32->tointeger
