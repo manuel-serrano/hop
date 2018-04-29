@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sat Feb  3 20:12:05 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 20:16:53 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -288,6 +288,14 @@
    (with-access::J2SNew this (args)
       (set! args (map! (lambda (a) (type-cast! a 'any)) args))
       (cast this totype)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SThrow ...                                        */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SThrow totype)
+   (with-access::J2SThrow this (expr)
+      (set! expr (type-cast! expr 'any))
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-cast! ::J2SReturn ...                                       */

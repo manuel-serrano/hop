@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Sun Apr 29 14:33:00 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 18:25:16 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -153,23 +153,40 @@
 ;*    j2s-narrow-fun! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun! o::J2SFun)
+
+   (define (select-assig decl assigs)
+      ;; select the top-most assig of decl
+      (let ((depth (maxvalfx))
+	    (assig #f))
+	 (for-each (lambda (a)
+		      (when (and (eq? (vector-ref a 0) decl)
+				 (<fx (vector-ref a 1) depth))
+			 (set! assig (vector-ref a 2))
+			 (set! depth (vector-ref a 1))))
+	    assigs)
+	 assig))
+   
    (with-access::J2SFun o (body)
       ;; find the declaring block of all declarations
       (j2s-find-init-blocks body #f o)
       ;; find the variables used but never initialized
-      (when #f
+      (when #t
 	 (let ((uvars (j2s-find-non-init-vars* body)))
 	    (when (pair? uvars)
-	       (let ((btree (build-body-btree body)))
+	       (let ((btree (build-body-btree body))
+		     (assigs (collect-assig* body uvars 0)))
 		  (for-each (lambda (uvar)
-			       (let ((block (j2s-assign-init-block uvar btree)))
-				  (when block
-				     (with-access::J2SDecl uvar (%info)
-					(with-access::J2SNarrowInfo %info
-					      (defblock narrowable ldecl)
-					   (set! defblock block)
-					   (set! ldecl uvar)
-					   (set! narrowable #t))))))
+			       (let ((assig (select-assig uvar assigs)))
+				  (when assig
+				     (let ((block (j2s-assign-init-block uvar btree)))
+					(when block
+					   (rewrite-assig! body assig)
+					   (with-access::J2SDecl uvar (%info)
+					      (with-access::J2SNarrowInfo %info
+						    (defblock narrowable ldecl)
+						 (set! defblock block)
+						 (set! ldecl uvar)
+						 (set! narrowable #t))))))))
 		     uvars)))))
       ;; get the set of narrowable declarations
       (j2s-mark-narrowable body '() #f o (make-cell #f))
@@ -535,5 +552,45 @@
 	     (else
 	      parent)))))
 
+;*---------------------------------------------------------------------*/
+;*    collect-assig ::J2SNode ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-assig* this::J2SNode decls depth)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    collect-assig* ::J2SBlock ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-assig* this::J2SBlock decls depth)
+   (with-access::J2SBlock this (nodes)
+      (append-map (lambda (n) (collect-assig* n decls (+fx depth 1))) nodes)))
+
+;*---------------------------------------------------------------------*/
+;*    collect-assig* ::J2SAssig ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-assig* this::J2SAssig decls depth)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (if (memq decl decls)
+		 ;; no need to descent the rhs
+		 (list (vector decl depth this))
+		 (append (collect-assig* lhs decls depth)
+		    (collect-assig* rhs decls depth))))
+	  (append (collect-assig* lhs decls depth)
+	     (collect-assig* rhs decls depth)))))
 	  
-	    
+;*---------------------------------------------------------------------*/
+;*    rewrite-assig! ::J2SNode ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (rewrite-assig! this::J2SNode assig)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    rewrite-assig! ::J2SAssig ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (rewrite-assig! this::J2SAssig assig)
+   (if (eq? this assig)
+       (duplicate::J2SInit this)
+       (call-default-walker)))
+   
