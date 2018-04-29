@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat Mar 24 16:40:00 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 11:32:48 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -105,8 +105,9 @@
      (scmstring
 	((any nop)))
      (real
-	((uint32 js-number-touint32))
-	((int32 js-number-toint32)))
+	((uint32 js-number-touint32)
+	 (int32 js-number-toint32)
+	 (any nop)))
      (class
 	((any nop)))
      (any
@@ -347,9 +348,10 @@
 	      (js->uint32 sexp expr conf))
 	     (else
 	      (tprint "CAST DEFAULT... " from " -> " to
-		 " " (when (isa? expr J2SExpr)
+		 " loc=" (when (isa? expr J2SExpr)
 			(with-access::J2SExpr expr (loc) loc))
-		 " " (j2s->list expr))
+		 " expr=" (j2s->list expr)
+		 " sexp=" sexp)
 	      (case from
 		 ((index uint32 length)
 		  (case to

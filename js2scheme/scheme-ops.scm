@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat Apr 28 18:09:09 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 11:45:26 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1254,6 +1254,16 @@
 		(binop-real-xxx '* type lhs tl left rhs tr right conf #f))
 	       ((eq? tr 'real)
 		(binop-real-xxx '* type rhs tr right lhs tl left conf #t))
+	       ((eq? type 'real)
+		(if-flonums? left tl right tr
+		   (binop-flonum-flonum '* type
+		      (asreal left tl)
+		      (asreal right tr)
+		      #f)
+		   (binop-any-any '* type
+		      (box left tl conf)
+		      (box right tr conf)
+		      #f)))
 	       (else
 		(if-fixnums? left tl right tr
 		   (binop-fixnum-fixnum '* type
@@ -1402,6 +1412,10 @@
 	  `(/fl ,(todouble left tl conf) ,(todouble right tr conf)))
 	 ((eq? tr 'integer)
 	  `(/js ,(todouble left tl conf) ,(asreal right tr)))
+	 ((eq? type 'real)
+	  (if-flonums? left tl right tr
+	     `(/fl ,left ,right)
+	     `(/js ,left ,right %this)))
 	 (else
 	  (if-fixnums? left tl right tr
 	     `(if (and (not (=fx ,right 0))

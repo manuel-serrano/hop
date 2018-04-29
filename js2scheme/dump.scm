@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed Apr 18 07:07:11 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 11:35:23 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -263,11 +263,12 @@
 ;*    j2s->list ::obj ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s->list this)
-   `(,(string->symbol (typeof this))
-     ,@(if (or (string? this) (symbol? this) (struct? this) (boolean? this)
-               (number? this) (char? this))
-           (list (format "~a" this))
-           '())))
+   `(alien :typeof ,(string->symbol (typeof this))
+       :expr ,@(if (or (string? this) (symbol? this)
+		       (struct? this) (boolean? this)
+		       (number? this) (char? this))
+		   (list (format "~a" this))
+		   '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SStmt ...                                          */
