@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Apr 29 11:35:23 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 14:26:13 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -20,7 +20,8 @@
 
    (export j2s-dump-stage
 	   (j2s-dump-decls::obj ::obj)
-	   (generic j2s->list ::obj)))
+	   (generic j2s->list ::obj)
+	   (generic j2s-info->list ::obj)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-dump-stage ...                                               */
@@ -36,40 +37,51 @@
 ;*    dump-info ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (dump-info this::J2SNode)
-   
-   (define (info this)
-      (cond
-	 ((and (pair? this) (null? (cdr this)))
-	  (cons (info (car this)) (info (cdr this))))
-	 ((list? this)
-	  (map info this))
-	 ((or (string? this) (symbol? this) (number? this) (boolean? this))
-	  this)
-	 ((or (char? this) (eq? this #unspecified))
-	  this)
-	 ((struct? this)
-	  (let ((o (make-struct (struct-key this) (struct-length this) #f)))
-	     (let loop ((i 0))
-		(if (=fx i (struct-length this))
-		    o
-		    (begin
-		       (struct-set! o i (info (struct-ref this i)))
-		       (loop (+fx i 1)))))))
-	 ((isa? this J2SString)
-	  (with-access::J2SString this (val)
-	     (format "[[J2SString:~a]]" val)))
-	 ((isa? this J2SDecl)
-	  (with-access::J2SDecl this (id)
-	     (format "[[J2SDecl:~a]]" id)))
-	 (else
-	  (format "[[~a]]" (typeof this)))))
-   
    (with-access::J2SNode this (%info)
       (if (and (not (eq? %info #unspecified))
 	       (or (>= (bigloo-debug) 3)
 		   (string-contains (or (getenv "HOPTRACE") "") "j2s:info")))
-	  `(:%info ,(info %info))
+	  `(:%info ,(j2s-info->list %info))
 	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-info->list ...                                               */
+;*---------------------------------------------------------------------*/
+(define-generic (j2s-info->list this)
+   (cond
+      ((and (pair? this) (null? (cdr this)))
+       (cons (j2s-info->list (car this)) (j2s-info->list (cdr this))))
+      ((list? this)
+       (map j2s-info->list this))
+      ((or (string? this) (symbol? this) (number? this) (boolean? this))
+       this)
+      ((or (char? this) (eq? this #unspecified))
+       this)
+      ((struct? this)
+       (let ((o (make-struct (struct-key this) (struct-length this) #f)))
+	  (let loop ((i 0))
+	     (if (=fx i (struct-length this))
+		 o
+		 (begin
+		    (struct-set! o i (j2s-info->list (struct-ref this i)))
+		    (loop (+fx i 1)))))))
+      ((isa? this J2SString)
+       (with-access::J2SString this (val)
+	  (format "[[J2SString:~a]]" val)))
+      ((isa? this J2SDecl)
+       (with-access::J2SDecl this (id)
+	  (format "[[J2SDecl:~a]]" id)))
+      (else
+       (format "[[~a]]" (typeof this)))))
+
+;*---------------------------------------------------------------------*/
+;*    dump-dump ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (dump-dump this::J2SNode)
+   (with-access::J2SNode this (%%dump)
+      (if (eq? %%dump #unspecified)
+	  '()
+	  (list :%%dump %%dump))))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-type ...                                                    */
@@ -181,13 +193,14 @@
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:access")
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:usage"))
-       (with-access::J2SDecl this (usecnt useinloop useinfun usage ronly writable)
+       (with-access::J2SDecl this (usecnt useinloop useinfun usage ronly writable scope)
 	  `((:ronly ,ronly)
 	    (:writable ,writable)
 	    (:usecnt ,usecnt)
 	    (:useinloop ,useinloop)
 	    (:useinfun ,useinfun)
-	    (:usage ,usage)))
+	    (:usage ,usage)
+	    (:scope ,scope)))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -263,12 +276,18 @@
 ;*    j2s->list ::obj ...                                              */
 ;*---------------------------------------------------------------------*/
 (define-generic (j2s->list this)
-   `(alien :typeof ,(string->symbol (typeof this))
-       :expr ,@(if (or (string? this) (symbol? this)
-		       (struct? this) (boolean? this)
-		       (number? this) (char? this))
-		   (list (format "~a" this))
-		   '())))
+   (if (isa? this J2SNode)
+       `(,(string->symbol (typeof this))
+	 ,@(if (or (string? this) (symbol? this) (struct? this) (boolean? this)
+		   (number? this) (char? this))
+	       (list (format "~a" this))
+	       '()))
+       `(alien :typeof ,(string->symbol (typeof this))
+	   :expr ,@(if (or (string? this) (symbol? this)
+			   (struct? this) (boolean? this)
+			   (number? this) (char? this))
+		       (list (format "~a" this))
+		       '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SStmt ...                                          */
@@ -774,6 +793,7 @@
    (with-access::J2SDecl this (id key binder _scmid usage ronly scope cache)
       `(,(string->symbol (format "~a/~a" (typeof this) binder))
 	,id
+	,@(dump-dump this)
 	,@(dump-key key)
 	,@(dump-access this)
 	,@(dump-itype this)

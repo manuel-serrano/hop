@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Apr 18 08:13:47 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 14:29:24 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -21,6 +21,7 @@
    (export (abstract-class J2SNode
 	      (loc::pair read-only (info '("notraverse")))
 	      (%info (default #unspecified) (info '("notraverse")))
+	      (%%dump (default #unspecified) (info '("notraverse")))
 	      (%%wstamp (default -1) (info '("notraverse"))))
 	   
 	   (abstract-class J2SStmt::J2SNode)

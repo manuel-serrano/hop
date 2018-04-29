@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Apr 29 11:45:26 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 13:59:00 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1408,7 +1408,7 @@
 		   (/fx ,left ,right)
 		   (/fl ,(todouble left tl conf) ,(todouble right tr conf)))
 	      `(/fl ,(todouble left tl conf) ,(todouble right tr conf))))
-	 ((or (eq? tr 'real) (eq? tl 'real))
+	 ((or (eq? tl 'real) (eq? tr 'real))
 	  `(/fl ,(todouble left tl conf) ,(todouble right tr conf)))
 	 ((eq? tr 'integer)
 	  `(/js ,(todouble left tl conf) ,(asreal right tr)))
@@ -1797,7 +1797,7 @@
       ((number)
        `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))
       (else
-       `(js-toflonum (js-tonumber ,val %this)))))
+       `(if (flonum? ,val) ,val (js-toflonum (js-tonumber ,val %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fixnums? ...                                                     */

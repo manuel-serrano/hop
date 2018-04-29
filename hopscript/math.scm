@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Apr 29 07:42:46 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 11:56:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -410,9 +410,9 @@
 (define (js-math-sqrt x %this)
    (let loop ((x x))
       (cond
+	 ((flonum? x) (js-math-sqrtfl x))
 	 ((fixnum? x) (js-math-sqrtfl (fixnum->flonum x)))
-	 ((not (flonum? x)) (loop (js-tonumber x %this)))
-	 (else (js-math-sqrtfl x)))))
+	 (else (loop (js-tonumber x %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math-sqrtfl ...                                               */

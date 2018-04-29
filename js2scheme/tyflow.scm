@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Apr 29 07:34:37 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 17:18:58 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -676,15 +676,20 @@
 ;*    typing ::J2SDeclInit ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SDeclInit env::pair-nil fix::cell)
-   (with-access::J2SDeclInit this (val itype)
+   (with-access::J2SDeclInit this (val itype usage)
       (multiple-value-bind (typv env bk)
 	 (typing val env fix)
-	 (if (or (eq? typv 'unknown) (not typv))
-	     (return 'void env bk)
-	     (begin
-		(decl-vtype-set! this typv fix)
-		(set! itype (merge-types itype typv))
-		(return 'void (extend-env env this typv) bk))))))
+	 (cond
+	    ((usage? '(eval) usage)
+	     (decl-vtype-set! this 'any fix)
+	     (set! itype (merge-types itype 'any))
+	     (return 'void (extend-env env this typv) bk))
+	    ((or (eq? typv 'unknown) (not typv))
+	     (return 'void env bk))
+	    (else
+	     (decl-vtype-set! this typv fix)
+	     (set! itype (merge-types itype typv))
+	     (return 'void (extend-env env this typv) bk))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDeclFun ...                                          */

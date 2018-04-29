@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Apr 23 11:39:17 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 14:36:51 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -46,7 +46,7 @@
    (let ((env (or (getenv "HOPTRACE") "")))
       (when (string-contains env "j2s:dump")
 	 (let ((i (string-contains env "j2s:dump")))
-	    (when i
+	    (when (and i (>=fx (string-length env) (+fx i 9)))
 	       (call-with-input-string (substring env (+fx i 9))
 		  (lambda (ip)
 		     (set! *dump-env* (port->sexp-list ip)))))))

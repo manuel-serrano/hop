@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Apr 18 20:09:03 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 17:08:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -725,9 +725,17 @@
 	 (cond
 	    ((or (not (isa? val J2SFun))
 		 (isa? val J2SSvc)
-		 (memq 'assig usage))
-	     `(define ,ident ,(j2s-scheme val mode return conf hint)))
-	    ((usage? '(ref get new set) usage)
+		 (usage? '(assig) usage))
+	     (if (usage? '(eval) usage)
+		 `(begin
+		     (define ,ident ,(j2s-scheme val mode return conf hint))
+		     (js-define %this ,scope ',id
+			(lambda (%) ,ident)
+			(lambda (% %v) (set! ,ident %v))
+			%source
+			,(caddr loc)))
+		 `(define ,ident ,(j2s-scheme val mode return conf hint))))
+	    ((usage? '(ref get new set eval) usage)
 	     (let ((fun (jsfun->lambda val mode return conf
 			   `(js-get ,ident 'prototype %this) #f))
 		   (tmp (j2s-fast-id id)))
@@ -735,14 +743,14 @@
 		    (define ,tmp ,fun)
 		    (define ,ident
 		       ,(j2sfun->scheme val tmp tmp mode return conf))
-		    ,@(if (memq 'eval usage)
+		    ,@(if (usage? '(eval) usage)
 			  `((js-define %this ,scope ',id
 			       (lambda (%) ,ident)
 			       (lambda (% %v) (set! ,ident %v))
 			       %source
 			       ,(caddr loc)))
 			  '()))))
-	    ((memq 'call usage)
+	    ((usage? '(call) usage)
 	     `(define ,(j2s-fast-id id)
 		 ,(jsfun->lambda val mode return conf
 		     `(js-get ,(j2s-fast-id id) 'prototype %this) #f)))

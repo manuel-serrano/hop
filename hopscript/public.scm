@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Apr 29 07:04:11 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 16:48:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1351,10 +1351,14 @@
 ;*---------------------------------------------------------------------*/
 (define (js-eq? x y)
    (cond
-      ((flonum? x) (and (flonum? y) (=fl x y)))
-      ((js-jsstring? x) (and (js-jsstring? y) (js-jsstring=? x y)))
-      ((fixnum? x) (and (fixnum? y) (=fx x y)))
-      (else #f)))
+      ((flonum? x)
+       (if (flonum? y) (=fl x y) (if (fixnum? y) (=fl x (fixnum->flonum y)))))
+      ((js-jsstring? x)
+       (and (js-jsstring? y) (js-jsstring=? x y)))
+      ((fixnum? x)
+       (if (fixnum? y) (=fx x y) (if (flonum? y) (=fl (fixnum->flonum x) y))))
+      (else
+       #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eqil? ...                                                     */
