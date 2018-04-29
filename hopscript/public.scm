@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Apr 22 15:34:57 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 07:04:11 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1342,15 +1342,18 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.4       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-strict-equal? o1 o2)
-   (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq? o1 o2)))
+   (cond-expand
+      ((config nan-tagging #t) (eq? o1 o2))
+      (else (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq? o1 o2)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eq? ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (js-eq? x y)
    (cond
-      ((number? x) (and (number? y) (= x y)))
+      ((flonum? x) (and (flonum? y) (=fl x y)))
       ((js-jsstring? x) (and (js-jsstring? y) (js-jsstring=? x y)))
+      ((fixnum? x) (and (fixnum? y) (=fx x y)))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/

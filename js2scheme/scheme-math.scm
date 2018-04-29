@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Apr  8 17:14:30 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 07:35:56 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -62,6 +62,9 @@
 		(when (=fx (length args) 2)
 		   (j2s-math-inline-min-max loc 'MIN
 		      (car args) (cadr args) mode return conf hint)))
+	       ((string=? val "sqrt")
+		(when (=fx (length args) 1)
+		   (j2s-math-inline-sqrt (car args) mode return conf hint)))
 	       (else
 		#f))))))
 
@@ -179,6 +182,26 @@
 		     (if (fixnum? ,tmp)
 			 (/pow2fx ,tmp ,(cdr p2))
 			 (js-math-floor (/js ,tmp ,(cdr p2) %this)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-math-inline-sqrt ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-math-inline-sqrt arg mode return conf hint)
+   (case (j2s-vtype arg)
+      ((int32)
+       (let ((tmp (gensym 'tmp)))
+	  `(let ((,tmp ,(j2s-scheme arg mode return conf hint)))
+	      (if (<s32 ,tmp 0) +nan.0 (sqrtfl (int32->flonum ,tmp))))))
+      ((uint32)
+       `(sqrtfl (uint32->flonum ,(j2s-scheme arg mode return conf hint))))
+      ((int53 bint)
+       (let ((tmp (gensym 'tmp)))
+	  `(let ((,tmp ,(j2s-scheme arg mode return conf hint)))
+	      (if (<fx ,tmp 0) +nan.0 (sqrtfl (fixnum->flonum ,tmp))))))
+      ((real)
+       `(js-math-sqrtfl ,(j2s-scheme arg mode return conf hint)))
+      (else
+       `(js-math-sqrt ,(j2s-scheme arg mode return conf hint) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-min-max ...                                      */

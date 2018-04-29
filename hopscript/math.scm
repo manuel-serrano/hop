@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Thu Feb 15 11:05:23 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 07:42:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -30,7 +30,9 @@
    
    (export (js-init-math! ::JsObject)
 	   (js-math-ceil ::obj)
-	   (js-math-floor ::obj)
+	   (js-math-sqrt ::obj ::JsGlobalObject)
+	   (inline js-math-sqrtfl ::double)
+	   (js-math-floor ::obj ::JsGlobalObject)
 	   (js-math-floorfl ::double)
 	   (js-math-round ::obj)))
 
@@ -221,7 +223,7 @@
       
       (js-bind! %this js-math 'floor
 	 :value (js-make-function %this
-		   (lambda (this x) (js-math-floor x)) 1 'floor)
+		   (lambda (this x) (js-math-floor x %this)) 1 'floor)
 	 :writable #t
 	 :configurable #t
 	 :enumerable #f
@@ -360,7 +362,7 @@
       ;; sqrt
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.17
       (define (js-math-sqrt this x)
-	 (if (< x 0) +nan.0 (sqrt x)))
+	 (js-math-sqrt x %this))
       
       (js-bind! %this js-math 'sqrt
 	 :value (js-make-function %this js-math-sqrt 1 'sqrt)
@@ -401,14 +403,34 @@
       (else (ceilingfl x))))
 
 ;*---------------------------------------------------------------------*/
+;*    js-math-sqrt ...                                                 */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.17    */
+;*---------------------------------------------------------------------*/
+(define (js-math-sqrt x %this)
+   (let loop ((x x))
+      (cond
+	 ((fixnum? x) (js-math-sqrtfl (fixnum->flonum x)))
+	 ((not (flonum? x)) (loop (js-tonumber x %this)))
+	 (else (js-math-sqrtfl x)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-math-sqrtfl ...                                               */
+;*---------------------------------------------------------------------*/
+(define-inline (js-math-sqrtfl x)
+   (if (<fl x 0.0) +nan.0 (sqrtfl x)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-math-floor ...                                                */
 ;*    -------------------------------------------------------------    */
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.9     */
 ;*---------------------------------------------------------------------*/
-(define (js-math-floor x)
-   (if (not (flonum? x))
-       x
-       (js-math-floorfl x)))
+(define (js-math-floor x %this)
+   (let loop ((x x))
+      (cond
+	 ((fixnum? x) x)
+	 ((not (flonum? x)) (loop (js-tonumber x %this)))
+	 (else (js-math-floorfl x)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-math-floorfl ...                                              */

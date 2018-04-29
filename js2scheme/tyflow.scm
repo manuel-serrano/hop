@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Apr 27 06:04:13 2018 (serrano)                */
+;*    Last change :  Sun Apr 29 07:34:37 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -256,23 +256,23 @@
 (define (math-static-method-type name)
    (builtin-method-type name
       '(("abs" . number)
-	("acos" . number)
-	("asin" . number)
-	("atan" . number)
-	("atan2" . number)
+	("acos" . real)
+	("asin" . real)
+	("atan" . real)
+	("atan2" . real)
 	("ceil" . number)
-	("cos" . number)
+	("cos" . real)
 	("exp" . number)
 	("floor" . number)
-	("log" . number)
+	("log" . real)
 	("max" . number)
 	("min" . number)
 	("pow" . number)
 	("random" . number)
 	("round" . number)
-	("sin" . number)
-	("sqrt" . number)
-	("tan" . number))))
+	("sin" . real)
+	("sqrt" . real)
+	("tan" . real))))
    
 ;*---------------------------------------------------------------------*/
 ;*    regexp-method-type ...                                           */
