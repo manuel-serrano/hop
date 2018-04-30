@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Apr 30 09:20:10 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 16:24:44 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -335,6 +335,7 @@
 ;*    j2s-narrow-body! ::J2SFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow-body! this::J2SFun)
+   (call-default-walker)
    (j2s-narrow-fun! this)
    this)
 
@@ -355,6 +356,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow-body! this::J2SDeclFun)
    (with-access::J2SDeclFun this (val)
+      (with-access::J2SFun val (body)
+	 (set! body (j2s-narrow-body! body)))
       (j2s-narrow-fun! val))
    this)
 
@@ -379,9 +382,10 @@
 (define (j2s-narrow-init! this::J2SInit)
    
    (define (decl->let!::J2SDecl decl::J2SDecl)
-      (with-access::J2SDecl decl (binder scope)
+      (with-access::J2SDecl decl (binder scope %info)
 	 (set! scope 'local)
 	 (set! binder 'let)
+	 (set! %info #f)
 	 decl))
    
    (define (patch-defblock! block::J2SBlock decl::J2SDecl)
@@ -403,6 +407,7 @@
 		       (set! %info lblock)))))))
    
    (with-access::J2SInit this (lhs rhs loc)
+      (set! rhs (j2s-narrow-body! rhs))
       (when (isa? lhs J2SRef)
 	 (with-access::J2SRef lhs (decl)
 	    (when (isa? decl J2SDecl)
@@ -640,8 +645,8 @@
 	     (cell-set! cell #f)
 	     (begin
 		(always-executed else assig cell)
-		(if (eq? (cell-ref cell) #t)
-		    (cell-set! cell #f)))))))
+		(when (eq? (cell-ref cell) #t)
+		   (cell-set! cell #f)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    always-executed ::J2SIf ...                                      */
@@ -663,8 +668,8 @@
 (define-walk-method (always-executed this::J2SLoop assig cell)
    (when (eq? (cell-ref cell) #unspecified)
       (call-default-walker)
-      (if (eq? (cell-ref cell) #t)
-	  (cell-set! cell #f))))
+      (when (eq? (cell-ref cell) #t)
+	 (cell-set! cell #f))))
    
 ;*---------------------------------------------------------------------*/
 ;*    collect-assig ::J2SNode ...                                      */
