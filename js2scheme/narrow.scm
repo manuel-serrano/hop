@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Apr 30 07:00:42 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 07:13:13 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -153,19 +153,6 @@
 ;*    j2s-narrow-fun! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun! o::J2SFun)
-
-   (define (select-assig decl assigs)
-      ;; select the top-most assig of decl
-      (let ((depth (maxvalfx))
-	    (assig #f))
-	 (for-each (lambda (a)
-		      (when (and (eq? (vector-ref a 0) decl)
-				 (<fx (vector-ref a 1) depth))
-			 (set! assig (vector-ref a 2))
-			 (set! depth (vector-ref a 1))))
-	    assigs)
-	 assig))
-   
    (with-access::J2SFun o (body)
       ;; find the declaring block of all declarations
       (j2s-find-init-blocks body #f o)
@@ -174,12 +161,13 @@
 	 (let ((uvars (j2s-find-non-init-vars* body)))
 	    (when (pair? uvars)
 	       (let ((btree (build-body-btree body))
-		     (assigs (collect-assig* body uvars 0)))
+		     (assigs (collect-assig* body uvars body)))
 		  (for-each (lambda (uvar)
-			       (let ((assig (select-assig uvar assigs)))
-				  (when assig
-				     (let ((block (j2s-assign-init-block uvar btree)))
-					(when block
+			       (let ((block (find-drop-block uvar btree)))
+				  (when block
+				     (let ((assig (find-drop-assig
+						     uvar assigs block)))
+					(when assig
 					   (rewrite-assig! body assig)
 					   (with-access::J2SDecl uvar (%info)
 					      (with-access::J2SNarrowInfo %info
@@ -227,14 +215,15 @@
 	    (with-access::J2SRef lhs (decl)
 	       (unless (or (j2s-let? decl) (j2s-param? decl))
 		  ;; skip let/const declarations
-		  (with-access::J2SDecl decl (%info %%dump)
+		  (with-access::J2SDecl decl (%info %%dump binder)
 		     (if (isa? %info J2SNarrowInfo)
-			 (with-access::J2SNarrowInfo %info (narrowable useblocks)
-			    (set! %%dump "not-narrowable-let/const")
-			    (set! useblocks (if (memq block useblocks)
-						useblocks
-						(cons block useblocks)))
-			    (set! narrowable #f))
+			 (with-access::J2SNarrowInfo %info (useblocks defblock deffun)
+			    (set! useblocks
+			       (if (memq block useblocks)
+				   useblocks
+				   (cons block useblocks)))
+			    (set! defblock block)
+			    (set! deffun fun))
 			 (set! %info
 			    (instantiate::J2SNarrowInfo
 			       (deffun fun)
@@ -251,9 +240,10 @@
 	 (with-access::J2SDecl decl (%info)
 	    (if (isa? %info J2SNarrowInfo)
 		(with-access::J2SNarrowInfo %info (useblocks)
-		   (set! useblocks (if (memq block useblocks)
-				      useblocks
-				      (cons block useblocks))))
+		   (set! useblocks
+		      (if (memq block useblocks)
+			  useblocks
+			  (cons block useblocks))))
 		(set! %info
 		   (instantiate::J2SNarrowInfo
 		      (useblocks (list block))
@@ -500,10 +490,13 @@
       (cons this (filter-map build-body-btree nodes))))
    
 ;*---------------------------------------------------------------------*/
-;*    j2s-assign-init-block ...                                        */
+;*    find-drop-block ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Drop down a variable declaration is the top-most ancestor of     */
+;*    all its uses.                                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-assign-init-block decl::J2SDecl btree::pair)
-   (tprint "j2s-assign decl=" (j2s->list decl) " " (btree->list btree))
+(define (find-drop-block decl::J2SDecl btree::pair)
+   ;;(tprint "j2s-assign decl=" (j2s->list decl) " " (btree->list btree))
    (with-access::J2SDecl decl (%info)
       (when (isa? %info J2SNarrowInfo)
 	 (with-access::J2SNarrowInfo %info (useblocks)
@@ -554,32 +547,44 @@
 	      parent)))))
 
 ;*---------------------------------------------------------------------*/
+;*    find-drop-assig ...                                              */
+;*    -------------------------------------------------------------    */
+;*    Find a declaration assignment in drop block.                     */
+;*---------------------------------------------------------------------*/
+(define (find-drop-assig decl assigs block)
+   (let ((a (find (lambda (a)
+		     (and (eq? (vector-ref a 0) decl)
+			  (eq? (vector-ref a 1) block)))
+	       assigs)))
+      (when a (vector-ref a 2))))
+
+;*---------------------------------------------------------------------*/
 ;*    collect-assig ::J2SNode ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-assig* this::J2SNode decls depth)
+(define-walk-method (collect-assig* this::J2SNode decls block)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-assig* ::J2SBlock ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-assig* this::J2SBlock decls depth)
+(define-walk-method (collect-assig* this::J2SBlock decls block)
    (with-access::J2SBlock this (nodes)
-      (append-map (lambda (n) (collect-assig* n decls (+fx depth 1))) nodes)))
+      (append-map (lambda (n) (collect-assig* n decls this)) nodes)))
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-assig* ::J2SAssig ...                                    */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (collect-assig* this::J2SAssig decls depth)
+(define-walk-method (collect-assig* this::J2SAssig decls block)
    (with-access::J2SAssig this (lhs rhs)
       (if (isa? lhs J2SRef)
 	  (with-access::J2SRef lhs (decl)
 	     (if (memq decl decls)
 		 ;; no need to descent the rhs
-		 (list (vector decl depth this))
-		 (append (collect-assig* lhs decls depth)
-		    (collect-assig* rhs decls depth))))
-	  (append (collect-assig* lhs decls depth)
-	     (collect-assig* rhs decls depth)))))
+		 (list (vector decl block this))
+		 (append (collect-assig* lhs decls block)
+		    (collect-assig* rhs decls block))))
+	  (append (collect-assig* lhs decls block)
+	     (collect-assig* rhs decls block)))))
 	  
 ;*---------------------------------------------------------------------*/
 ;*    rewrite-assig! ::J2SNode ...                                     */

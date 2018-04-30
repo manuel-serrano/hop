@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Apr 29 14:36:51 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 07:29:44 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Integer Range analysis (fixnum detection)                        */
@@ -846,7 +846,7 @@
    (multiple-value-bind (ints envs)
       (call-default-walker)
       (unless (or (null? envs) (pair? envs))
-	 (tprint "PAS BON ENV=" (j2s->list this)))
+	 (tprint "PAS BON ENV " (j2s->list this) " envs=" (typeof envs)))
       (with-access::J2SExpr this (type)
 	 (if (type-number? type)
 	     (return ints envs)
@@ -857,6 +857,13 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (node-range this::J2SLiteral env::pair-nil args fix::struct)
    (return #f env))
+
+;*---------------------------------------------------------------------*/
+;*    node-range ::J2SObjInit ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-range this::J2SObjInit env::pair-nil args fix::struct)
+   (with-access::J2SObjInit this (inits)
+      (node-range* inits env args fix)))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SPragma ...                                       */
@@ -1380,24 +1387,30 @@
 			(node-range-fun val args env)
 			(return *infinity-intv* env))))
 		(else
-		 (return *infinity-intv* env)))))
+		 (multiple-value-bind (_ env)
+		    (node-range* args env args fix)
+		    (return *infinity-intv* env))))))
 	 ((and (isa? callee J2SAccess) (eq? type 'integer))
-	  (with-access::J2SAccess callee (obj field)
-	     (let ((fn (j2s-field-name field)))
-		(if (string? fn)
-		    (case (j2s-type obj)
-		       ((string)
-			(let ((intv (string-method-range fn)))
-			   (with-access::J2SCall this (range)
-			      (unless (equal? intv range)
-				 (unfix! fix "j2scall")
-				 (set! range intv)))
-			   (return intv env)))
-		       (else
-			(return *infinity-intv* env)))
-		    (return *infinity-intv* env)))))
+	  (multiple-value-bind (_ env)
+	     (node-range* args env args fix)
+	     (with-access::J2SAccess callee (obj field)
+		(let ((fn (j2s-field-name field)))
+		   (if (string? fn)
+		       (case (j2s-type obj)
+			  ((string)
+			   (let ((intv (string-method-range fn)))
+			      (with-access::J2SCall this (range)
+				 (unless (equal? intv range)
+				    (unfix! fix "j2scall")
+				    (set! range intv)))
+			      (return intv env)))
+			  (else
+			   (return *infinity-intv* env)))
+		       (return *infinity-intv* env))))))
 	 (else
-	  (return *infinity-intv* env)))))
+	  (multiple-value-bind (_ env)
+	     (node-range* args env args fix)
+	     (return *infinity-intv* env))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-range ::J2SAccess ...                                       */

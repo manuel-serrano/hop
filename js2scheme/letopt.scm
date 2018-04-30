@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Wed Apr 18 09:16:30 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 07:25:45 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -565,21 +565,32 @@
 ;*    Extract the list of let-declarations of a statement.             */
 ;*---------------------------------------------------------------------*/
 (define (get-let-inits node::J2SStmt decls)
-   (when (isa? node J2SSeq)
-      (with-access::J2SSeq node (nodes)
-	 (let loop ((nodes nodes)
-		    (inits '()))
-	    (if (null? nodes)
-		(when (pair? inits)
-		   (reverse! inits))
-		(let ((n::J2SStmt (car nodes)))
-		   (when (isa? n J2SStmtExpr)
-		      (with-access::J2SStmtExpr n (expr)
-			 (when (isa? expr J2SInit)
-			    (let ((decl (init-decl expr)))
-			       (when (memq decl decls)
-				  (decl-update-init! decl expr)
-				  (loop (cdr nodes) (cons expr inits)))))))))))))
+
+   (define (get-init-stmtexpr n)
+      (with-access::J2SStmtExpr n (expr)
+	 (when (isa? expr J2SInit)
+	    (let ((decl (init-decl expr)))
+	       (when (memq decl decls)
+		  (decl-update-init! decl expr)
+		  expr)))))
+   
+   (cond
+      ((isa? node J2SSeq)
+       (with-access::J2SSeq node (nodes)
+	  (let loop ((nodes nodes)
+		     (inits '()))
+	     (if (null? nodes)
+		 (when (pair? inits)
+		    (reverse! inits))
+		 (let ((n::J2SStmt (car nodes)))
+		    (when (isa? n J2SStmtExpr)
+		       (let ((expr (get-init-stmtexpr n)))
+			  (when expr
+			     (loop (cdr nodes) (cons expr inits))))))))))
+      ((isa? node J2SStmtExpr)
+       (let ((expr (get-init-stmtexpr node)))
+	  (when expr
+	     (list expr))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-toplevel-letopt! ...                                         */
