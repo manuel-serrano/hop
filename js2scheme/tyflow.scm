@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Apr 29 17:18:58 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 17:18:32 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -667,10 +667,11 @@
 ;*    typing ::J2SDecl ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (typing this::J2SDecl env::pair-nil fix::cell)
-   (with-access::J2SDecl this (itype)
-      (decl-vtype-set! this 'any fix)
-      (set! itype (merge-types itype 'any))
-      (return 'void env '())))
+   (with-access::J2SDecl this (itype usage)
+      (let ((ty (if (usage? '(init set assig) usage) 'any 'undefined)))
+	 (decl-vtype-set! this ty fix)
+	 (set! itype (merge-types itype ty))
+	 (return 'void env '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SDeclInit ...                                         */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Apr 30 16:24:44 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 16:56:26 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -166,19 +166,20 @@
 	    (mark-block-parent body body)
 	    (let ((assigs (collect-assig* body uvars body)))
 	       (for-each (lambda (uvar)
-			    (let ((block (find-drop-block uvar body)))
-			       (when block
-				  (let ((assig (find-drop-assig
-						  uvar assigs block)))
-				     (when (always-executed? block assig)
-					;;(tprint "ASSIG=" (j2s->list assig))
-					(rewrite-assig! body assig)
-					(with-access::J2SDecl uvar (%info)
-					   (with-access::J2SNarrowInfo %info
-						 (defblock narrowable ldecl)
-					      (set! defblock block)
-					      (set! ldecl uvar)
-					      (set! narrowable #t))))))))
+			    (with-access::J2SDecl uvar (id)
+			       (let ((block (find-drop-block uvar body)))
+				  (when block
+				     (let ((assig (find-drop-assig
+						     uvar assigs block)))
+					(when (always-executed? block assig)
+					   ;;(tprint "ASSIG=" (j2s->list assig))
+					   (rewrite-assig! body assig)
+					   (with-access::J2SDecl uvar (%info)
+					      (with-access::J2SNarrowInfo %info
+						    (defblock narrowable ldecl)
+						 (set! defblock block)
+						 (set! ldecl uvar)
+						 (set! narrowable #t)))))))))
 		  uvars))))))
 
 ;*---------------------------------------------------------------------*/
@@ -188,7 +189,7 @@
    (with-access::J2SFun o (body)
       ;; find the declaring block of all declarations
       (j2s-find-init-blocks body body o)
-      ;; find the variables used but never initialized
+      ;; find the variables used but not initialized
       (j2s-narrow-fun/w-init! o)
       ;; get the set of narrowable declarations
       (j2s-mark-narrowable body '() #f o (make-cell #f))
@@ -207,7 +208,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-find-init-blocks ::J2SFun ...                                */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-find-init-blocks this::J2SFun blocks fun)
+(define-walk-method (j2s-find-init-blocks this::J2SFun block fun)
    (with-access::J2SFun this (body)
       (j2s-find-init-blocks body body this)))
 
@@ -335,7 +336,7 @@
 ;*    j2s-narrow-body! ::J2SFun ...                                    */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow-body! this::J2SFun)
-   (call-default-walker)
+   ;;(call-default-walker)
    (j2s-narrow-fun! this)
    this)
 

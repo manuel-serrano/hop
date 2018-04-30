@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sun Apr 29 13:59:00 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 17:52:46 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -678,7 +678,7 @@
 (define (js-equality loc op::symbol type lhs::J2SExpr rhs::J2SExpr
 	   mode return conf hint::pair-nil)
 
-   (define (is-fixnum? ty)
+   (define (type-fixnum? ty)
       (memq ty '(int32 uint32 integer bint)))
 
    (define (j2s-aref-length? expr::J2SExpr)
@@ -850,7 +850,7 @@
 			     test)))))
 	     (else
 	      (js-cmp loc op lhs rhs mode return conf hint))))
-	 ((and (is-fixnum? tl) (is-fixnum? tr))
+	 ((and (type-fixnum? tl) (type-fixnum? tr))
 	  (cond
 	     ((j2s-cast-aref-length? rhs)
 	      (with-access::J2SAref (cast-aref rhs) (field alen)
@@ -892,6 +892,12 @@
 			     test)))))
 	     (else
 	      (js-cmp loc op lhs rhs mode return conf hint))))
+	 ((and (eq? tl 'real) (eq? tr 'real))
+	  (with-tmp lhs rhs mode return conf '(string) 'any
+	     (lambda (left right)
+		(if (memq op '(== ===))
+		    `(=fl ,left ,right)
+		    `(not (=fl ,left ,right))))))
 	 ((and (eq? tl 'string) (eq? tr 'string))
 	  (with-tmp lhs rhs mode return conf '(string) 'any
 	     (lambda (left right)
@@ -948,9 +954,9 @@
 	  (with-tmp lhs rhs mode return conf hint 'any
 	     (lambda (left right)
 		(let ((op (cond
-			     ((is-fixnum? tl)
+			     ((type-fixnum? tl)
 			      (if (memq op '(== ===)) 'eqil? '!eqil?))
-			     ((is-fixnum? tr)
+			     ((type-fixnum? tr)
 			      (if (memq op '(== ===)) 'eqir? '!eqir?))
 			     (else
 			      op))))
