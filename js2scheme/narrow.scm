@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Apr 30 09:14:13 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 09:20:10 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -49,13 +49,17 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-info->list this::J2SNarrowInfo)
    (with-access::J2SNarrowInfo this (defblock narrowable ldecl useblocks)
-      (format "[[J2SNarrowInfo defblock=~s narrowable=~s useblocks=~s]]"
+      (format "[[J2SNarrowInfo defblock=~s narrowable=~s useblocks=~(, )]]"
 	 (when (isa? defblock J2SNode)
 	     (with-access::J2SNode defblock (loc)
 		loc))
 	 narrowable
-	 (format "~(, )"
-	    (map (lambda (b) (with-access::J2SBlock b (loc) loc)) useblocks)))))
+	 (if (pair? useblocks)
+	     (map (lambda (b)
+		     (with-access::J2SBlock b (loc)
+			(format "~s" loc)))
+		useblocks)
+	     '()))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow ...                                                   */
@@ -150,32 +154,42 @@
 		 (loop (cdr nodes) nodes)))))))
 
 ;*---------------------------------------------------------------------*/
+;*    j2s-narrow-fun/w-init! ...                                       */
+;*    -------------------------------------------------------------    */
+;*    For variables that are not initialize (but setted) try to        */
+;*    find one of the assignments that could act as an initializer.    */
+;*---------------------------------------------------------------------*/
+(define (j2s-narrow-fun/w-init! o::J2SFun)
+   (with-access::J2SFun o (body)
+      (let ((uvars (j2s-find-non-init-vars* body)))
+	 (when (pair? uvars)
+	    (mark-block-parent body body)
+	    (let ((assigs (collect-assig* body uvars body)))
+	       (for-each (lambda (uvar)
+			    (let ((block (find-drop-block uvar body)))
+			       (when block
+				  (let ((assig (find-drop-assig
+						  uvar assigs block)))
+				     (when (always-executed? block assig)
+					;;(tprint "ASSIG=" (j2s->list assig))
+					(rewrite-assig! body assig)
+					(with-access::J2SDecl uvar (%info)
+					   (with-access::J2SNarrowInfo %info
+						 (defblock narrowable ldecl)
+					      (set! defblock block)
+					      (set! ldecl uvar)
+					      (set! narrowable #t))))))))
+		  uvars))))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-narrow-fun! ...                                              */
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun! o::J2SFun)
    (with-access::J2SFun o (body)
       ;; find the declaring block of all declarations
-      (j2s-find-init-blocks body #f o)
+      (j2s-find-init-blocks body body o)
       ;; find the variables used but never initialized
-      (when #t
-	 (let ((uvars (j2s-find-non-init-vars* body)))
-	    (when (pair? uvars)
-	       (let ((btree (build-body-btree body))
-		     (assigs (collect-assig* body uvars body)))
-		  (for-each (lambda (uvar)
-			       (let ((block (find-drop-block uvar btree)))
-				  (when block
-				     (let ((assig (find-drop-assig
-						     uvar assigs block)))
-					(when assig
-					   (rewrite-assig! body assig)
-					   (with-access::J2SDecl uvar (%info)
-					      (with-access::J2SNarrowInfo %info
-						    (defblock narrowable ldecl)
-						 (set! defblock block)
-						 (set! ldecl uvar)
-						 (set! narrowable #t))))))))
-		     uvars)))))
+      (j2s-narrow-fun/w-init! o)
       ;; get the set of narrowable declarations
       (j2s-mark-narrowable body '() #f o (make-cell #f))
       ;; narrow the function body
@@ -195,7 +209,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-find-init-blocks this::J2SFun blocks fun)
    (with-access::J2SFun this (body)
-      (j2s-find-init-blocks body #f this)))
+      (j2s-find-init-blocks body body this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-find-init-blocks ::J2SBlock ...                              */
@@ -218,16 +232,17 @@
 		  (with-access::J2SDecl decl (%info %%dump binder)
 		     (if (isa? %info J2SNarrowInfo)
 			 (with-access::J2SNarrowInfo %info (useblocks defblock deffun)
-			    (set! useblocks
-			       (if (memq block useblocks)
-				   useblocks
-				   (cons block useblocks)))
+			    (when block
+			       (set! useblocks
+				  (if (memq block useblocks)
+				      useblocks
+				      (cons block useblocks))))
 			    (set! defblock block)
 			    (set! deffun fun))
 			 (set! %info
 			    (instantiate::J2SNarrowInfo
 			       (deffun fun)
-			       (useblocks (list block))
+			       (useblocks (if block (list block) '()))
 			       (defblock block)))))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -240,13 +255,14 @@
 	 (with-access::J2SDecl decl (%info)
 	    (if (isa? %info J2SNarrowInfo)
 		(with-access::J2SNarrowInfo %info (useblocks)
-		   (set! useblocks
-		      (if (memq block useblocks)
-			  useblocks
-			  (cons block useblocks))))
+		   (when block
+		      (set! useblocks
+			 (if (memq block useblocks)
+			     useblocks
+			     (cons block useblocks)))))
 		(set! %info
 		   (instantiate::J2SNarrowInfo
-		      (useblocks (list block))
+		      (useblocks (if block (list block) '()))
 		      (narrowable #f))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -309,10 +325,11 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow-body! ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Move down the narrowable variables.                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-narrow-body! this::J2SNode)
    (call-default-walker))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow-body! ::J2SFun ...                                    */
@@ -357,16 +374,16 @@
 	     (call-default-walker)))))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-narrow-body! ::J2SStmtExpr ...                               */
+;*    j2s-narrow-init! ...                                             */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (j2s-narrow-body! this::J2SStmtExpr)
+(define (j2s-narrow-init! this::J2SInit)
    
    (define (decl->let!::J2SDecl decl::J2SDecl)
       (with-access::J2SDecl decl (binder scope)
 	 (set! scope 'local)
 	 (set! binder 'let)
 	 decl))
-
+   
    (define (patch-defblock! block::J2SBlock decl::J2SDecl)
       (let loop ((block block))
 	 (if (isa? block J2SLetBlock)
@@ -385,21 +402,33 @@
 		       (set! nodes (list lblock))
 		       (set! %info lblock)))))))
    
+   (with-access::J2SInit this (lhs rhs loc)
+      (when (isa? lhs J2SRef)
+	 (with-access::J2SRef lhs (decl)
+	    (when (isa? decl J2SDecl)
+	       (with-access::J2SDecl decl (id %info)
+		  (when (isa? %info J2SNarrowInfo)
+		     (with-access::J2SNarrowInfo %info (narrowable defblock ldecl)
+			(when narrowable
+			   (set! ldecl (decl->let! decl))
+			   (patch-defblock! defblock ldecl)
+			   this)))))))))
+   
+;*---------------------------------------------------------------------*/
+;*    j2s-narrow-body! ::J2SStmtExpr ...                               */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-narrow-body! this::J2SStmtExpr)
    (with-access::J2SStmtExpr this (expr)
-      (or (when (isa? expr J2SInit)
-	     (with-access::J2SInit expr (lhs rhs loc)
-		(when (isa? lhs J2SRef)
-		   (with-access::J2SRef lhs (decl)
-		      (when (isa? decl J2SDecl)
-			 (with-access::J2SDecl decl (id %info)
-			    (when (isa? %info J2SNarrowInfo)
-			       (with-access::J2SNarrowInfo %info (narrowable defblock ldecl)
-				  (when narrowable
-				     ;; (tprint "  +-- NARROWING: " id)
-				     (set! ldecl (decl->let! decl))
-				     (patch-defblock! defblock ldecl)
-				     this)))))))))
+      (if (and (isa? expr J2SInit) (j2s-narrow-init! expr))
+	  this
 	  (call-default-walker))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-narrow-body! ::J2SInit ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (j2s-narrow-body! this::J2SInit)
+   (or (j2s-narrow-init! this) (call-default-walker)))
+
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow-body! ::J2SBlock ...                                  */
@@ -422,7 +451,7 @@
 (define-walk-method (j2s-lift-inits! this::J2SLetBlock)
    
    (define (lift? node::J2SNode decls)
-      ;; lift everything that is not an initilazation of one decls
+      ;; lift everything that is not an initialization of one decls
       (or (not (isa? node J2SStmtExpr))
 	  (with-access::J2SStmtExpr node (expr)
 	     (or (not (isa? expr J2SInit))
@@ -473,87 +502,77 @@
 	  '())))
 
 ;*---------------------------------------------------------------------*/
-;*    build-body-btree ::J2SNode ...                                   */
+;*    mark-block-parent ::J2SNode ...                                  */
 ;*    -------------------------------------------------------------    */
-;*    Build the J2SBlock tree in order to find a block parent          */
-;*    and to implement the predicate included-in?                      */
+;*    Add a parent link (in the %info field) to all blocks.            */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (build-body-btree this::J2SNode)
-   (let ((t (call-default-walker)))
-      (when (pair? t) t)))
+(define-walk-method (mark-block-parent this::J2SNode parent)
+   (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
-;*    build-body-btree ::J2SBlock ...                                  */
+;*    mark-block-parent ::J2SBlock ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (build-body-btree this::J2SBlock)
-   (with-access::J2SBlock this (nodes)
-      (cons this (filter-map build-body-btree nodes))))
-   
+(define-walk-method (mark-block-parent this::J2SBlock parent)
+   (with-access::J2SBlock this (nodes %info)
+      (set! %info parent)
+      (for-each (lambda (n) (mark-block-parent n this)) nodes)))
+      
 ;*---------------------------------------------------------------------*/
 ;*    find-drop-block ...                                              */
 ;*    -------------------------------------------------------------    */
 ;*    Drop down a variable declaration is the top-most ancestor of     */
 ;*    all its uses.                                                    */
 ;*---------------------------------------------------------------------*/
-(define (find-drop-block decl::J2SDecl btree::pair)
-   ;; (tprint "j2s-assign decl=" (j2s->list decl) " " (btree->list btree))
+(define (find-drop-block decl::J2SDecl parent::J2SNode)
+   ;;(tprint "j2s-assign decl=" (j2s->list decl))
    (with-access::J2SDecl decl (%info)
       (when (isa? %info J2SNarrowInfo)
 	 (with-access::J2SNarrowInfo %info (useblocks)
+	    ;;(tprint "blocks=" (block*->list useblocks))
 	    (let loop ((blocks (cdr useblocks))
 		       (block (car useblocks)))
 	       (if (null? blocks)
-		   (unless (eq? block (car btree))
+		   (unless (eq? block parent)
+		      ;;(tprint "block=" (car (block*->list (list block))))
 		      block)
 		   (loop (cdr blocks)
-		      (find-common-ancestor block (car blocks) btree))))))))
+		      (find-common-ancestor block (car blocks) parent))))))))
 
-(define (btree->list btree)
-   (cond
-      ((isa? btree J2SNode)
-       (with-access::J2SNode btree (loc) loc))
-      ((pair? btree)
-       (cons (btree->list (car btree)) (btree->list (cdr btree))))
-      (else btree)))
+(define (block*->list bs)
+   (map (lambda (b) (with-access::J2SBlock b (loc) loc)) bs))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-common-ancestor ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (find-common-ancestor block1 block2 btree)
+(define (find-common-ancestor block1 block2 parent)
 
-   (define (find-path block btree)
-      (cond
-	 ((null? btree)
-	  #f)
-	 ((eq? block (car btree))
-	  (list (car btree)))
-	 (else
-	  (let ((subpath (find (lambda (bt) (find-path block bt)) (cdr btree))))
-	     (when subpath
-		(cons (car btree) subpath))))))
+   (define (build-path block)
+      (let loop ((block block)
+		 (res '()))
+	 (with-access::J2SBlock block (%info)
+	    (if (eq? block %info)
+		res
+		(loop %info (cons block res))))))
 
    (if (eq? block1 block2)
        block1
-       (begin
-	  ;; (tprint "P1=" (btree->list (find-path block1 btree)))
-	  ;; (tprint "BT=" (btree->list btree))
-	  (let loop ((path1 (find-path block1 btree))
-		     (path2 (find-path block2 btree))
-		     (parent (car btree)))
-	     (cond
-		((null? path1)
-		 parent)
-		((null? path2)
-		 parent)
-		((eq? (car path1) (car path2))
-		 (loop (cdr path1) (cdr path2) (car path1)))
-		(else
-		 parent))))))
+       (let loop ((path1 (build-path block1))
+		  (path2 (build-path block2))
+		  (parent parent))
+	  (cond
+	     ((null? path1)
+	      parent)
+	     ((null? path2)
+	      parent)
+	     ((eq? (car path1) (car path2))
+	      (loop (cdr path1) (cdr path2) (car path1)))
+	     (else
+	      parent)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-drop-assig ...                                              */
 ;*    -------------------------------------------------------------    */
-;*    Find a declaration assignment in drop block.                     */
+;*    Find a declaration assignment in the drop block.                 */
 ;*---------------------------------------------------------------------*/
 (define (find-drop-assig decl assigs block)
    (let ((a (find (lambda (a)
@@ -562,6 +581,91 @@
 	       assigs)))
       (when a (vector-ref a 2))))
 
+;*---------------------------------------------------------------------*/
+;*    always-executed? ...                                             */
+;*    -------------------------------------------------------------    */
+;*    Check that in the block, the assigned variable is never used     */
+;*    before its assignment is executed.                               */
+;*---------------------------------------------------------------------*/
+(define (always-executed? block assig)
+   (when assig
+      (let ((cell (make-cell #unspecified)))
+	 (always-executed block assig cell)
+	 (eq? (cell-ref cell) #t))))
+
+;*---------------------------------------------------------------------*/
+;*    always-executed ::J2SNode ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (always-executed this::J2SNode assig::J2SAssig cell::cell)
+   (when (eq? (cell-ref cell) #unspecified)
+      (call-default-walker)))
+
+;*---------------------------------------------------------------------*/
+;*    always-executed ::J2SAssig ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (always-executed this::J2SAssig assig cell)
+   (with-access::J2SAssig this (lhs rhs)
+      (always-executed rhs assig cell)
+      (cond
+	 ((not (eq? (cell-ref cell) #unspecified))
+	  #unspecified)
+	 ((not (isa? lhs J2SRef))
+	  (always-executed lhs assig cell))
+	 ((eq? this assig)
+	  (cell-set! cell #t))
+	 (else
+	  (always-executed lhs assig cell)))))
+
+;*---------------------------------------------------------------------*/
+;*    always-executed ::J2SRef ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (always-executed this::J2SRef assig cell)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SAssig assig (lhs)
+	 (with-access::J2SRef lhs ((adecl decl))
+	    (when (eq? adecl decl)
+	       (cell-set! cell #f))))))
+
+;*---------------------------------------------------------------------*/
+;*    always-executed-condition ...                                    */
+;*---------------------------------------------------------------------*/
+(define (always-executed-condition test then else assig cell)
+   (when (eq? (cell-ref cell) #unspecified)
+      (always-executed test assig cell)
+      (when (eq? (cell-ref cell) #unspecified)
+	 (always-executed test assig cell)
+	 ;; check that the initialization does not occur in one
+	 ;; of the two branches of the test
+	 (if (eq? (cell-ref cell) #t)
+	     (cell-set! cell #f)
+	     (begin
+		(always-executed else assig cell)
+		(if (eq? (cell-ref cell) #t)
+		    (cell-set! cell #f)))))))
+
+;*---------------------------------------------------------------------*/
+;*    always-executed ::J2SIf ...                                      */
+;*---------------------------------------------------------------------*/
+(define-walk-method (always-executed this::J2SIf assig cell)
+   (with-access::J2SIf this (test then else)
+      (always-executed-condition test then else assig cell)))
+
+;*---------------------------------------------------------------------*/
+;*    always-executed ::J2SCond ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (always-executed this::J2SCond assig cell)
+   (with-access::J2SCond this (test then else)
+      (always-executed-condition test then else assig cell)))
+
+;*---------------------------------------------------------------------*/
+;*    always-executed ::J2SLoop ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (always-executed this::J2SLoop assig cell)
+   (when (eq? (cell-ref cell) #unspecified)
+      (call-default-walker)
+      (if (eq? (cell-ref cell) #t)
+	  (cell-set! cell #f))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    collect-assig ::J2SNode ...                                      */
 ;*---------------------------------------------------------------------*/
@@ -589,7 +693,26 @@
 		    (collect-assig* rhs decls block))))
 	  (append (collect-assig* lhs decls block)
 	     (collect-assig* rhs decls block)))))
-	  
+
+;*---------------------------------------------------------------------*/
+;*    collect-assig* ::J2SLoop ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-assig* this::J2SLoop decls block)
+   (with-access::J2SLoop this (test incr body)
+      ;; ignore consider the body part of the loops
+      (collect-assig* body decls block)))
+
+;*---------------------------------------------------------------------*/
+;*    collect-assig* ::J2SSwitch ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-assig* this::J2SSwitch decls block)
+   (with-access::J2SSwitch this (cases)
+      ;; only consider case bodies
+      (append-map (lambda (c)
+		     (with-access::J2SCase c (body)
+			(collect-assig* body decls block)))
+	 cases)))
+
 ;*---------------------------------------------------------------------*/
 ;*    rewrite-assig! ::J2SNode ...                                     */
 ;*---------------------------------------------------------------------*/
