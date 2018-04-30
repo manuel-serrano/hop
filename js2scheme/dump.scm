@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Apr 29 14:26:13 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 19:18:20 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -79,9 +79,12 @@
 ;*---------------------------------------------------------------------*/
 (define (dump-dump this::J2SNode)
    (with-access::J2SNode this (%%dump)
-      (if (eq? %%dump #unspecified)
-	  '()
-	  (list :%%dump %%dump))))
+      (if (or (>= (bigloo-debug) 2)
+	      (string-contains (or (getenv "HOPTRACE") "") "j2s:dump"))
+	  (if (eq? %%dump #unspecified)
+	      '()
+	      (list :%%dump %%dump))
+	  '())))
 
 ;*---------------------------------------------------------------------*/
 ;*    dump-type ...                                                    */
