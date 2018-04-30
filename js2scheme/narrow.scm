@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Apr 30 07:13:13 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 09:14:13 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -465,7 +465,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-find-non-init-vars* this::J2SDecl)
    (with-access::J2SDecl this (%info)
-      (if (isa? %info J2SNarrowInfo)
+      (if (and (isa? %info J2SNarrowInfo) (not (isa? this J2SDeclFun)))
 	  (with-access::J2SNarrowInfo %info (useblocks defblock)
 	     (if (and (not defblock) (pair? useblocks))
 		 (list this)
@@ -496,7 +496,7 @@
 ;*    all its uses.                                                    */
 ;*---------------------------------------------------------------------*/
 (define (find-drop-block decl::J2SDecl btree::pair)
-   ;;(tprint "j2s-assign decl=" (j2s->list decl) " " (btree->list btree))
+   ;; (tprint "j2s-assign decl=" (j2s->list decl) " " (btree->list btree))
    (with-access::J2SDecl decl (%info)
       (when (isa? %info J2SNarrowInfo)
 	 (with-access::J2SNarrowInfo %info (useblocks)
@@ -528,23 +528,27 @@
 	 ((eq? block (car btree))
 	  (list (car btree)))
 	 (else
-	  (cons (car btree)
-	     (find (lambda (bt) (find-path block bt)) (cdr btree))))))
-      
+	  (let ((subpath (find (lambda (bt) (find-path block bt)) (cdr btree))))
+	     (when subpath
+		(cons (car btree) subpath))))))
+
    (if (eq? block1 block2)
        block1
-       (let loop ((path1 (find-path block1 btree))
-		  (path2 (find-path block2 btree))
-		  (parent (car btree)))
-	  (cond
-	     ((null? path1)
-	      parent)
-	     ((null? path2)
-	      parent)
-	     ((eq? (car path1) (car path2))
-	      (loop (cdr path1) (cdr path2) (car path1)))
-	     (else
-	      parent)))))
+       (begin
+	  ;; (tprint "P1=" (btree->list (find-path block1 btree)))
+	  ;; (tprint "BT=" (btree->list btree))
+	  (let loop ((path1 (find-path block1 btree))
+		     (path2 (find-path block2 btree))
+		     (parent (car btree)))
+	     (cond
+		((null? path1)
+		 parent)
+		((null? path2)
+		 parent)
+		((eq? (car path1) (car path2))
+		 (loop (cdr path1) (cdr path2) (car path1)))
+		(else
+		 parent))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    find-drop-assig ...                                              */
