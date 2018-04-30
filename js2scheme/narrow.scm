@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Sun Apr 29 18:25:16 2018 (serrano)                */
+;*    Last change :  Mon Apr 30 07:00:42 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -489,7 +489,8 @@
 ;*    and to implement the predicate included-in?                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (build-body-btree this::J2SNode)
-   (call-default-walker))
+   (let ((t (call-default-walker)))
+      (when (pair? t) t)))
 
 ;*---------------------------------------------------------------------*/
 ;*    build-body-btree ::J2SBlock ...                                  */
