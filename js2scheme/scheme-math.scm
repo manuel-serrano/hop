@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Tue May  1 15:51:38 2018 (serrano)                */
+;*    Last change :  Tue May  1 18:53:39 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -143,7 +143,7 @@
 			`(let ((,tmp ,(j2s-scheme (car p3) mode return conf)))
 			    (if (fixnum? ,tmp)
 				(/fx ,tmp ,(cdr p3))
-				(js-math-floor (/js ,tmp ,(cdr p3) %this))))))))))
+				(js-math-floor (/js ,tmp ,(cdr p3) %this) %this)))))))))
 	 ((positive? (car p2))
 	  (case (j2s-vtype (car p2))
 	     ((int32)
@@ -162,7 +162,7 @@
 		 `(let ((,tmp ,(j2s-scheme (car p2) mode return conf)))
 		     (if (fixnum? ,tmp)
 			 (bit-rsh ,tmp ,(cdr p2))
-			 (js-math-floor (/js ,tmp ,(cdr p2) %this))))))))
+			 (js-math-floor (/js ,tmp ,(cdr p2) %this) %this)))))))
 	 (else
 	  (case (j2s-vtype (car p2))
 	     ((int32)
@@ -181,7 +181,7 @@
 		 `(let ((,tmp ,(j2s-scheme (car p2) mode return conf)))
 		     (if (fixnum? ,tmp)
 			 (/pow2fx ,tmp ,(cdr p2))
-			 (js-math-floor (/js ,tmp ,(cdr p2) %this)))))))))))
+			 (js-math-floor (/js ,tmp ,(cdr p2) %this) %this))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-sqrt ...                                         */
