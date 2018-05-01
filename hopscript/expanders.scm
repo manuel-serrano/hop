@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Aug 23 08:18:53 2017                          */
-;*    Last change :  Wed Oct 25 17:59:06 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Tue May  1 18:27:23 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript expanders                                              */
 ;*=====================================================================*/
@@ -36,7 +36,8 @@
 	    __hopscript_obj
 	    __hopscript_function
 	    __hopscript_lib
-	    __hopscript_property)
+	    __hopscript_property
+	    __hopscript_stringliteral)
 
    (export  (hopscript-install-expanders!)))
 

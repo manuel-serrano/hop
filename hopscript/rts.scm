@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/2.6.x/hopscript/rts.scm                 */
+;*    serrano/prgm/project/hop/3.2.x/hopscript/rts.scm                 */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:09:57 2013                          */
-;*    Last change :  Tue Nov  5 09:13:15 2013 (serrano)                */
-;*    Copyright   :  2013 Manuel Serrano                               */
+;*    Last change :  Tue May  1 18:25:43 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    runtime support functions.                                       */
 ;*=====================================================================*/
@@ -22,7 +22,8 @@
 	   __hopscript_error
 	   __hopscript_object
 	   __hopscript_public
-	   __hopscript_property)
+	   __hopscript_property
+	   __hopscript_stringliteral)
 
    (export (js-debug . l)))
 

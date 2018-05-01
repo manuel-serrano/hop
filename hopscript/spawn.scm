@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct  7 09:04:09 2016                          */
-;*    Last change :  Mon Feb 12 10:08:48 2018 (serrano)                */
+;*    Last change :  Tue May  1 18:27:09 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Spawn implementation as defined in                               */
@@ -57,7 +57,8 @@
 	   __hopscript_public
 	   __hopscript_function
 	   __hopscript_lib
-	   __hopscript_promise)
+	   __hopscript_promise
+	   __hopscript_stringliteral)
 
    (export (js-spawn ::JsFunction ::obj ::JsGlobalObject)))
 

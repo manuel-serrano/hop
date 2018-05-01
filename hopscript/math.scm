@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Tue May  1 06:43:00 2018 (serrano)                */
+;*    Last change :  Tue May  1 18:26:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -26,7 +26,8 @@
 	   __hopscript_private
 	   __hopscript_public
 	   __hopscript_function
-	   __hopscript_error)
+	   __hopscript_error
+	   __hopscript_stringliteral)
    
    (export (js-init-math! ::JsObject)
 	   (js-math-ceil ::obj)
