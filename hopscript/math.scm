@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Sun Apr 29 11:56:07 2018 (serrano)                */
+;*    Last change :  Tue May  1 06:43:00 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript Math                         */
@@ -164,22 +164,21 @@
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.8.2.5
       (define (js-math-atan2 this y x)
 	 (if (and (= x 0) (= y 0))
-	     (begin
-		(cond
-		   ((and (flonum? y) (=fx (signbitfl y) 0))
-		    (cond
-		       ((and (flonum? x) (>fx (signbitfl x) 0))
-			(* 2 (atan 1 0)))
-		       (else
-			0)))
-		   ((and (flonum? y) (>fx (signbitfl y) 0))
-		    (cond
-		       ((and (flonum? x) (>fx (signbitfl x) 0))
-			(* -2 (atan 1 0)))
-		       (else
-			0)))
-		   (else
-		    0)))
+	     (cond
+		((and (flonum? y) (=fx (signbitfl y) 0))
+		 (cond
+		    ((and (flonum? x) (>fx (signbitfl x) 0))
+		     (*fl 2. (atanfl 1. 0.)))
+		    (else
+		     0.)))
+		((and (flonum? y) (>fx (signbitfl y) 0))
+		 (cond
+		    ((and (flonum? x) (>fx (signbitfl x) 0))
+		     (*fl -2. (atan 1. 0.)))
+		    (else
+		     0.0)))
+		(else
+		 0.0))
 	     (atan y x)))
       
       (js-bind! %this js-math 'atan2

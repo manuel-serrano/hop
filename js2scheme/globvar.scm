@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Mon Apr 30 18:43:03 2018 (serrano)                */
+;*    Last change :  Tue May  1 06:41:04 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -51,24 +51,20 @@
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
 	 (unless direct-eval
-	    (tprint "ICI...")
 	    (let ((gcnsts (collect-gloconst* this)))
-	       ;; mark all the global before traversing for references
-	       (for-each (lambda (g)
-			    (with-access::J2SDecl g (%info)
-			       (set! %info #unspecified)))
-		  gcnsts)
-	       (tprint ">>> GCNSTS=")
-	       (for-each (lambda (g) (tprint (j2s->list g))) gcnsts)
-	       (invalidate-early-accesses this gcnsts)
-	       (tprint "<<< GCNSTS=")
-	       (for-each (lambda (g) (tprint (j2s->list g))) gcnsts)
-	       (when (find (lambda (g)
-			      (with-access::J2SDecl g (%info)
-				 (eq? %info globconst-mark)))
-			gcnsts)
-		  ;; propagate the constants
-		  (propagate-constant! this))))))
+	       (when (pair? gcnsts)
+		  ;; mark all the global before traversing for references
+		  (for-each (lambda (g)
+			       (with-access::J2SDecl g (%info)
+				  (set! %info #unspecified)))
+		     gcnsts)
+		  (invalidate-early-accesses this gcnsts)
+		  (when (find (lambda (g)
+				 (with-access::J2SDecl g (%info)
+				    (eq? %info globconst-mark)))
+			   gcnsts)
+		     ;; propagate the constants
+		     (propagate-constant! this)))))))
    this)
 
 ;*---------------------------------------------------------------------*/
