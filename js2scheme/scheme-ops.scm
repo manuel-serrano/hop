@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Mon Apr 30 17:52:46 2018 (serrano)                */
+;*    Last change :  Tue May  1 14:36:51 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2233,6 +2233,8 @@
 	  (binop-flip op left right flip))
 	 ((uint32)
 	  `(int32->uint32 ,(binop-flip op left right flip)))
+	 ((real)
+	  `(int32->flonum ,(binop-flip op left right flip)))
 	 ((bool)
 	  (binop-flip op left right flip))
 	 (else
@@ -2249,6 +2251,8 @@
 	  `(uint32->int32 ,(binop-flip op left right flip)))
 	 ((uint32)
 	  (binop-flip op left right flip))
+	 ((real)
+	  `(uint32->flonum ,(binop-flip op left right flip)))
 	 ((bool)
 	  (binop-flip op left right flip))
 	 (else
@@ -2265,6 +2269,8 @@
 	  `(fixnum->int32 ,(binop-flip op left right flip)))
 	 ((uint32)
 	  `(fixnum->uint32 ,(binop-flip op left right flip)))
+	 ((real)
+	  `(fixnum->flonum ,(binop-flip op left right flip)))
 	 ((bool)
 	  (binop-flip op left right flip))
 	 (else
@@ -2272,13 +2278,32 @@
    
 (define (binop-flonum-flonum op type left right flip)
    (let ((op (if (memq op '(== ===)) '=fl (symbol-append op 'fl))))
-      (binop-flip op left right flip)))
+      (case type
+	 ((int32)
+	  `(flonum->int32 ,(binop-flip op left right flip)))
+	 ((uint32)
+	  `(flonum->uint32 ,(binop-flip op left right flip)))
+	 ((bool)
+	  (binop-flip op left right flip))
+	 (else
+	  (binop-flip op left right flip)))))
    
 (define (binop-number-number op type left right flip)
    (let ((op (if (memq op '(== ===)) '= op)))
-      (if (eq? type 'bool)
-	  (binop-flip op left right flip)
-	  (binop-flip (symbol-append op '/overflow) left right flip))))
+      (case type
+	 ((bool)
+	  (binop-flip op left right flip))
+	 ((int32)
+	  `(js-number-toint32
+	      ,(binop-flip (symbol-append op '/overflow) left right flip)))
+	 ((uint32)
+	  `(js-number-touint32
+	      ,(binop-flip (symbol-append op '/overflow) left right flip)))
+	 ((real)
+	  `(js-toflonum
+	      ,(binop-flip (symbol-append op '/overflow) left right flip)))
+	 (else
+	  (binop-flip (symbol-append op '/overflow) left right flip)))))
    
 (define (binop-any-any op type left right flip)
    (if (eq? op '===)
@@ -2289,5 +2314,18 @@
 		    ((eq? op '==) 'js-equal?)
 		    ((memq type '(integer number bool)) (symbol-append op 'js))
 		    (else (symbol-append 'js op)))))
-	  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))))
+	  (case type
+	     ((bool)
+	      (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))
+	     ((int32)
+	      `(js-number-to-int32
+		  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+	     ((uint32)
+	      `(js-number-to-uint32
+		  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+	     ((real)
+	      `(js-toflonum
+		  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+	     (else
+	      (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))))))
    

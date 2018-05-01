@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon Apr 30 17:18:32 2018 (serrano)                */
+;*    Last change :  Tue May  1 15:17:20 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1714,7 +1714,7 @@
    (define (eq-typeof? type typ)
       (or (eq? type typ)
 	  (and (memq type '(date array)) (eq? typ 'object))
-	  (and (eq? typ 'number) (memq type '(integer index)))
+	  (and (eq? typ 'number) (memq type '(integer index real)))
 	  (and (eq? typ 'boolean) (eq? type 'bool))))
    
    (with-access::J2SBinary this (loc op)
