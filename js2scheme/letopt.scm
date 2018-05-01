@@ -3,12 +3,12 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Mon Apr 30 07:25:45 2018 (serrano)                */
+;*    Last change :  Tue May  1 07:14:39 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
 ;*    -------------------------------------------------------------    */
-;*    This implements the Let optimisation. When possible, it replaces */
+;*    This implements the Let optimization. When possible, it replaces */
 ;*    LetInit with LetOpt nodes, which are more efficient as they are  */
 ;*    potentially implemented as registers while LetInit are always    */
 ;*    implemented as boxed variables.                                  */
@@ -73,11 +73,11 @@
 			     (set! vars (cons x vars)))))
 	       decls)
 	    (when (pair? lets)
-	       ;; this modify nodes in place
+	       ;; this modifies nodes in place
 	       (set! nodes
 		  (map! j2s-update-ref!
 		     (j2s-toplevel-letopt! nodes (reverse! lets) vars)))))
-	 ;; optimize global variables literals
+	 ;; optimize global variable literals
 	 (when (config-get args :optim-literals #f)
 	    (when (>= (config-get args :verbose 0) 4)
 	       (fprintf (current-error-port) " [optim-literal]"))
@@ -117,17 +117,6 @@
 		(with-access::J2SDecl decl (usecnt)
 		   (set! usecnt 0)))
       decls))
-
-;*---------------------------------------------------------------------*/
-;*    get-inits ...                                                    */
-;*    -------------------------------------------------------------    */
-;*    As GET-LET-INITS but returns #f if no init found (easier with    */
-;*    COND forms).						       */
-;*---------------------------------------------------------------------*/
-(define (get-inits::obj node::J2SNode decls::pair-nil)
-   (let ((inits (get-let-inits node decls)))
-      (when (pair? inits)
-	 inits)))
 
 ;*---------------------------------------------------------------------*/
 ;*    init-decl ...                                                    */
@@ -357,7 +346,7 @@
 	       (values rests inits)))))
 
    (define (split-decls decls::pair)
-      ;; Separate the decls list in 3 groups: noopt, opt, unprocessed.
+      ;; separate the decls list in 3 groups: noopt, opt, unprocessed.
       (with-trace 'j2s-letopt "split-decls"
 	 (let ((noopts '())
 	       (opts '())
@@ -591,6 +580,17 @@
        (let ((expr (get-init-stmtexpr node)))
 	  (when expr
 	     (list expr))))))
+
+;*---------------------------------------------------------------------*/
+;*    get-inits ...                                                    */
+;*    -------------------------------------------------------------    */
+;*    As GET-LET-INITS but returns #f if no init found (easier with    */
+;*    COND forms).						       */
+;*---------------------------------------------------------------------*/
+(define (get-inits::obj node::J2SNode decls::pair-nil)
+   (let ((inits (get-let-inits node decls)))
+      (when (pair? inits)
+	 inits)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-toplevel-letopt! ...                                         */
@@ -880,7 +880,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-letopt-global-literals! ...                                  */
 ;*    -------------------------------------------------------------    */
-;*    Scan te nodes, skip the nop statements. Mark global constant     */
+;*    Scan the nodes, skip the nop statements. Mark global constant    */
 ;*    initializations as let-opt vars. Stop when the first non-let var */
 ;*    is found.                                                        */
 ;*---------------------------------------------------------------------*/
@@ -906,15 +906,21 @@
 	     (when (isa? expr J2SInit)
 		node)))))
    
-   (define (literal? node)
+   (define (literal? node env::pair-nil)
       (cond
 	 ((isa? node J2SLiteral)
 	  (or (not (isa? node J2SArray))
 	      (with-access::J2SArray node (exprs)
-		 (every literal? exprs))))
+		 (every (lambda (e) (literal? e env)) exprs))))
 	 ((isa? node J2SUnary)
 	  (with-access::J2SUnary node (op expr)
-	     (literal? expr)))))
+	     (literal? expr env)))
+	 ((isa? node J2SBinary)
+	  (with-access::J2SBinary node (op lhs rhs)
+	     (and (literal? lhs env) (literal? rhs env))))
+	 ((isa? node J2SRef)
+	  (with-access::J2SRef node (decl)
+	     (memq decl env)))))
    
    (define (letopt-literals literals)
       (when (pair? literals)
@@ -941,12 +947,13 @@
 	 (for-each j2s-update-ref! nodes)))
    
    (let loop ((n nodes)
-	      (literals '()))
+	      (literals '())
+	      (env '()))
       (cond
 	 ((null? n)
 	  (letopt-literals literals))
 	 ((nop? (car n))
-	  (loop (cdr n) literals))
+	  (loop (cdr n) literals env))
 	 ((init (car n))
 	  =>
 	  (lambda (stmt)
@@ -956,11 +963,12 @@
 		       (with-access::J2SRef lhs (decl)
 			  (with-access::J2SDecl decl (binder scope %info)
 			     (if (and (eq? binder 'var) (eq? scope '%scope))
-				 (if (literal? rhs)
+				 (if (literal? rhs env)
 				     (let ((init expr))
 					(set! expr (J2SUndefined))
 					(loop (cdr n)
-					   (cons (cons decl init) literals)))
+					   (cons (cons decl init) literals)
+					   (cons decl literals)))
 				     (letopt-literals literals))
 				 (letopt-literals literals))))
 		       (letopt-literals literals))))))

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Dec 21 09:27:29 2017                          */
-;*    Last change :  Mon Apr 23 12:27:43 2018 (serrano)                */
+;*    Last change :  Tue May  1 06:51:38 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    This optimization consists in "pre-initializating" variables     */
@@ -13,7 +13,7 @@
 ;*    statement and if it can be proved that the variable is never     */
 ;*    accessed before initialized and if the initialization type is    */
 ;*    known (typically an number), then the declaration that should    */
-;*    normally binds the variable to undefined is replaced to a        */
+;*    normally bind the variable to undefined is replaced to a         */
 ;*    more type friendly declaration.                                  */
 ;*=====================================================================*/
 

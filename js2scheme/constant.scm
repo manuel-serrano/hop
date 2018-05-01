@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Thu Mar  8 08:51:05 2018 (serrano)                */
+;*    Last change :  Tue May  1 06:52:27 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -202,6 +202,60 @@
 		this)
 	     (call-next-method)))))
 
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2SUnary ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SUnary env nesting)
+   (call-default-walker)
+   (with-access::J2SUnary this (op expr expr loc type)
+      (if (isa? expr J2SNumber)
+	  (with-access::J2SNumber expr (val)
+	     (case op
+		((+)
+		 (if (= val 0)
+		     (J2SNumber/type 'real +0.0)
+		     (J2SNumber/type type val)))
+		((-)
+		 (if (= val 0)
+		     (J2SNumber/type 'real -0.0)
+		     (J2SNumber/type type (- val))))
+		((~)
+		 (tprint "TODO.constant! " (j2s->list this))
+		 this)
+		(else
+		 this)))
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    constant! ::J2SBinary ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (constant! this::J2SBinary env nesting)
+   
+   (define (evaluate this op l r)
+      (with-access::J2SBinary this (loc)
+	 (cond
+	    ((and (flonum? l) (flonum? r)) (J2SNumber/type 'real (op l r)))
+	    ((flonum? l) (J2SNumber/type 'real (op l (fixnum->flonum r))))
+	    ((flonum? r) (J2SNumber/type 'real (op (fixnum->flonum l) r)))
+	    (else this))))
+   
+   (call-default-walker)
+   (with-access::J2SBinary this (op expr lhs rhs loc type)
+      
+      (if (and (isa? lhs J2SNumber) (isa? rhs J2SNumber))
+	  (with-access::J2SNumber lhs ((lval val))
+	     (with-access::J2SNumber rhs ((rval val))
+		(case op
+		   ((+) (evaluate this + lval rval))
+		   ((-) (evaluate this - lval rval))
+		   ((*) (evaluate this * lval rval))
+		   ((/) (evaluate this / lval rval))
+		   ((<< >> >>> & ^ BIT_OR %)
+		    (tprint "TODO.constant! " (j2s->list this))
+		    this)
+		   (else this))))
+	  this)))
+       
 ;*---------------------------------------------------------------------*/
 ;*    constant! ::J2SDeclFun ...                                       */
 ;*---------------------------------------------------------------------*/
