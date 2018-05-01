@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue May  1 15:33:59 2018 (serrano)                */
+;*    Last change :  Tue May  1 18:01:16 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2346,14 +2346,14 @@
 	     ((bool)
 	      (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))
 	     ((int32)
-	      `(js-number-to-int32
-		  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+	      `(js-number-toint32
+		  ,(if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
 	     ((uint32)
-	      `(js-number-to-uint32
-		  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+	      `(js-number-touint32
+		  ,(if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
 	     ((real)
 	      `(js-toflonum
-		  (if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+		  ,(if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
 	     (else
 	      (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))))))
    
