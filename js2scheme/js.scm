@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 23 09:28:30 2013                          */
-;*    Last change :  Mon Feb 26 18:48:43 2018 (serrano)                */
+;*    Last change :  Tue May  1 15:46:21 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Js->Js (for client side code).                                   */
@@ -45,7 +45,7 @@
 		     (j2s-js ast #f
 			(lambda (this::J2SDollar tildec dollarc mode evalp conf)
 			   (with-access::J2SDollar this (node)
-			      (let ((expr (j2s-scheme node mode evalp conf '())))
+			      (let ((expr (j2s-scheme node mode evalp conf)))
 				 (list (j2s-js-literal (eval! expr))))))
 			'normal (lambda (x) x) conf)))))))
 
@@ -989,7 +989,7 @@
 	 `(call-with-output-string
 	     (lambda (op)
 		(obj->javascript-attr
-		   ,(j2s-scheme node mode evalp conf '()) op))))))
+		   ,(j2s-scheme node mode evalp conf) op))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-js-client-dollar ...                                         */

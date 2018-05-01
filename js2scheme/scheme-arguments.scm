@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sat Mar 17 11:07:26 2018 (serrano)                */
+;*    Last change :  Tue May  1 15:33:34 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript arguments functions.        */
@@ -29,32 +29,32 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
 
-   (export (j2s-arguments-ref ::J2SAccess mode return conf hint)
-	   (j2s-arguments-set! ::J2SAssig mode return conf hint)))
+   (export (j2s-arguments-ref ::J2SAccess mode return conf)
+	   (j2s-arguments-set! ::J2SAssig mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-arguments-ref ...                                            */
 ;*---------------------------------------------------------------------*/
-(define (j2s-arguments-ref this::J2SAccess mode return conf hint)
+(define (j2s-arguments-ref this::J2SAccess mode return conf)
    (with-access::J2SAccess this (obj field type)
       (cond
 	 ((maybe-number? field)
 	  (if (eq? (j2s-vtype field) 'uint32)
-	      `(js-arguments-index-ref ,(j2s-scheme obj mode return conf hint)
-		  ,(j2s-scheme field mode return conf hint)
+	      `(js-arguments-index-ref ,(j2s-scheme obj mode return conf)
+		  ,(j2s-scheme field mode return conf)
 		  %this)
-	      `(js-arguments-ref ,(j2s-scheme obj mode return conf hint)
-		  ,(j2s-scheme field mode return conf hint)
+	      `(js-arguments-ref ,(j2s-scheme obj mode return conf)
+		  ,(j2s-scheme field mode return conf)
 		  %this)))
 	 ((j2s-field-length? field)
 	  `(js-arguments-length
-	      ,(j2s-scheme obj mode return conf hint) %this))
+	      ,(j2s-scheme obj mode return conf) %this))
 	 (else
 	  #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-arguments-set! ...                                           */
 ;*---------------------------------------------------------------------*/
-(define (j2s-arguments-set! this::J2SAssig mode return conf hint)
+(define (j2s-arguments-set! this::J2SAssig mode return conf)
    (tprint "NOT IMPLEMENTED YET"))
 

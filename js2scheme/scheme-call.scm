@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Apr 16 22:26:30 2018 (serrano)                */
+;*    Last change :  Tue May  1 15:52:17 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -104,7 +104,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-call ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (j2s-call obj args mode return conf hint)
+(define (j2s-call obj args mode return conf)
    (when (isa? obj J2SRef)
       (with-access::J2SRef obj (loc decl)
 	 (when (or (isa? decl J2SDeclFun)
@@ -119,7 +119,7 @@
 				 (if (pair? (cdr args))
 				     (cdr args)
 				     (list (J2SUndefined))))
-		     mode return conf hint)))))))
+		     mode return conf)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    read-only-function ...                                           */
@@ -142,11 +142,11 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SCall mode return conf hint)
+(define-method (j2s-scheme this::J2SCall mode return conf)
    
    (define (array-push obj arg)
-      (let ((scmobj (j2s-scheme obj mode return conf hint))
-	    (scmarg (j2s-scheme arg mode return conf hint)))
+      (let ((scmobj (j2s-scheme obj mode return conf))
+	    (scmarg (j2s-scheme arg mode return conf)))
 	 (if (isa? obj J2SAref)
 	     (with-access::J2SAref obj (array alen)
 		(let ((scmarr (j2s-decl-scheme-id array))
@@ -217,9 +217,9 @@
 	       (cond
 		  ((symbol? met)
 		   ;; builtin simple
-		   `(,met ,(j2s-scheme obj mode return conf hint)
+		   `(,met ,(j2s-scheme obj mode return conf)
 		       ,@(map (lambda (arg)
-				 (j2s-scheme arg mode return conf hint))
+				 (j2s-scheme arg mode return conf))
 			    args)
 		       ,@(if (=fx len arity)
 			     '()
@@ -241,7 +241,7 @@
 			 (if (builtin-method-%this m)
 			     '(%this)
 			     '()))
-		      mode return conf hint))
+		      mode return conf))
 		  (else
 		   (error "js2scheme" "illegal builtin method" m)))))))
 
@@ -259,13 +259,13 @@
 		((isa? field J2SString)
 		 (with-access::J2SString field (val)
 		    (or (and (string=? val "toString")
-			     (j2s-tostring this mode return conf hint))
+			     (j2s-tostring this mode return conf))
 			(let ((call (if (eq? (j2s-vtype obj) 'object)
 					'js-object-method-call-name/cache
 					'js-method-call-name/cache)))
 			   `(,call
 			       ,j2s-unresolved-call-workspace
-			       ,(j2s-scheme obj mode return conf hint)
+			       ,(j2s-scheme obj mode return conf)
 			       ',(string->symbol val)
 			       ,(js-pcache ccache)
 			       ,(js-pcache ocache)
@@ -275,15 +275,15 @@
 				     ocspecs
 				     '(imap+))
 			       ,@(map (lambda (arg)
-					 (j2s-scheme arg mode return conf hint))
+					 (j2s-scheme arg mode return conf))
 				    args))))))
 		(else
 		 (call-unknown-function fun
-		    (list (j2s-scheme obj mode return conf hint))
+		    (list (j2s-scheme obj mode return conf))
 		    args))))
 	    (else
 	     (call-unknown-function fun
-		(list (j2s-scheme obj mode return conf hint))
+		(list (j2s-scheme obj mode return conf))
 		args)))))
 
    (define (call-globalref-method self ccache ocache fun::J2SAccess obj::J2SExpr args)
@@ -293,11 +293,11 @@
 	       (case id
 		  ((Math)
 		   (j2s-math-builtin-method fun args
-		      mode return conf hint))
+		      mode return conf))
 		  (else
 		   #f))))))
 
-   (define (call-new-method obj::J2SNew field args mode return conf hint)
+   (define (call-new-method obj::J2SNew field args mode return conf)
       (with-access::J2SNew obj (clazz)
 	 (when (isa? clazz J2SGlobalRef)
 	    (with-access::J2SGlobalRef clazz (id decl)
@@ -306,7 +306,7 @@
 		     (case id
 			((Date)
 			 (j2s-date-new-method obj field args mode return
-			    conf hint))
+			    conf))
 			(else
 			 #f))))))))
    
@@ -324,20 +324,20 @@
 		    (let* ((tmp (gensym '%obj))
 			   (fun (J2SAccess/cache (J2SHopRef tmp) field
 				   acache acspecs)))
-		       `(let ((,tmp ,(j2s-scheme obj mode return conf hint)))
+		       `(let ((,tmp ,(j2s-scheme obj mode return conf)))
 			   ,(call-ref-method obj ccache acache
 			      ccspecs fun (J2SHopRef tmp) args)))))
 	       ((isa? obj J2SParen)
 		(with-access::J2SParen obj (expr)
 		   (loop expr)))
 	       ((and (isa? obj J2SNew)
-		     (call-new-method obj field args mode return conf hint))
+		     (call-new-method obj field args mode return conf))
 		=>
 		(lambda (sexp) sexp))
 	       (else
 		(let* ((tmp (gensym 'obj))
 		       (ttmp (type-ident tmp (j2s-vtype obj))))
-		   `(let ((,ttmp ,(j2s-scheme obj mode return conf hint)))
+		   `(let ((,ttmp ,(j2s-scheme obj mode return conf)))
 		       ,(call-ref-method obj
 			   ccache acache ccspecs
 			   (duplicate::J2SAccess fun
@@ -351,11 +351,11 @@
 			   args))))))))
    
    (define (call-hop-function fun::J2SHopRef thisarg args)
-      `(,(j2s-scheme fun mode return conf hint)
-	,@(j2s-scheme args mode return conf hint)))
+      `(,(j2s-scheme fun mode return conf)
+	,@(j2s-scheme args mode return conf)))
 
    (define (j2s-self thisarg)
-      (map (lambda (t) (j2s-scheme t mode return conf hint)) thisarg))
+      (map (lambda (t) (j2s-scheme t mode return conf)) thisarg))
 
    (define (call-rest-function fun::J2SFun thisarg::pair-nil f %gen args)
       ;; call a function that accepts a rest argument
@@ -368,7 +368,7 @@
 		;; the rest argument
 		`(,f ,@%gen ,@(j2s-self thisarg) ,@(reverse! actuals)
 		    (js-vector->jsarray
-		       (vector ,@(j2s-scheme args mode return conf hint))
+		       (vector ,@(j2s-scheme args mode return conf))
 		       %this)))
 	       ((null? args)
 		(with-access::J2SDecl (car params) (loc)
@@ -376,7 +376,7 @@
 		      (cons '(js-undefined) actuals))))
 	       (else
 		(loop (cdr params) (cdr args)
-		   (cons (j2s-scheme (car args) mode return conf hint)
+		   (cons (j2s-scheme (car args) mode return conf)
 		      actuals)))))))
 
    (define (call-fix-function fun::J2SFun thisarg::pair-nil f %gen args)
@@ -391,7 +391,7 @@ ft		`(,f ,@%gen
 		    ,@(j2s-self thisarg)
 		    ,@(map (lambda (a p)
 			      (with-access::J2SDecl p (utype)
-				 (j2s-scheme a mode return conf hint)))
+				 (j2s-scheme a mode return conf)))
 			 args params)))
 	       ((>fx lena lenf)
 		;; too many arguments ignore the extra values,
@@ -402,13 +402,13 @@ ft		`(,f ,@%gen
 					   (integer->string i))))
 				(iota lena))))
 		   `(let* ,(map (lambda (t a)
-				   `(,t ,(j2s-scheme a mode return conf hint))) temps args)
+				   `(,t ,(j2s-scheme a mode return conf))) temps args)
 		       (,f ,@%gen ,@(j2s-self thisarg)
 			  ,@(take temps lenf)))))
 	       (else
 		;; argument missing
 		`(,f ,@(j2s-self thisarg)
-		    ,@(j2s-scheme args mode return conf hint)
+		    ,@(j2s-scheme args mode return conf)
 		    ,@(make-list (-fx lenf lena) '(js-undefined))))))))
 
    (define (check-hopscript-fun-arity val::J2SFun id args)
@@ -437,7 +437,7 @@ ft		`(,f ,@%gen
 	 (case (if (eq? protocol 'bounce) 'bounce vararg)
 	    ((arguments)
 	     `(,f ,@%gen ,@(if idthis (j2s-self thisarg) '())
-		 ,@(j2s-scheme args mode return conf hint)))
+		 ,@(j2s-scheme args mode return conf)))
 	    ((rest)
 	     (call-rest-function fun (if idthis thisarg '()) f %gen args))
 	    (else
@@ -456,7 +456,7 @@ ft		`(,f ,@%gen
 
    (define (call-pragma fun::J2SPragma args)
       (with-access::J2SPragma fun (expr)
-	 `(,expr %this ,@(j2s-scheme args mode return conf hint))))
+	 `(,expr %this ,@(j2s-scheme args mode return conf))))
 
    (define (typed-generator? decl::J2SDeclFun)
       (with-access::J2SDeclFun decl (parent)
@@ -492,28 +492,28 @@ ft		`(,f ,@%gen
 		`(,(symbol-append call '/debug)
 		  ,j2s-unresolved-call-workspace
 		  ',loc
-		  ,(j2s-scheme fun mode return conf hint)
+		  ,(j2s-scheme fun mode return conf)
 		  ,@self
-		  ,@(j2s-scheme args mode return conf hint)))
+		  ,@(j2s-scheme args mode return conf)))
 	       (cache
 		`(js-call/cache
 		    ,j2s-unresolved-call-workspace
 		    ,(js-pcache cache)
-		    ,(j2s-scheme fun mode return conf hint)
+		    ,(j2s-scheme fun mode return conf)
 		    ,@self
-		    ,@(j2s-scheme args mode return conf hint)))
+		    ,@(j2s-scheme args mode return conf)))
 	       (else
 		`(,call ,j2s-unresolved-call-workspace
-		    ,(j2s-scheme fun mode return conf hint)
+		    ,(j2s-scheme fun mode return conf)
 		    ,@self
-		    ,@(j2s-scheme args mode return conf hint)))))))
+		    ,@(j2s-scheme args mode return conf)))))))
 
    (define (call-eval-function fun args)
       ;; http://www.ecma-international.org/ecma-262/5.1/#sec-15.1.2.1.1
       `(%js-direct-eval 
 	  ,(if (null? args)
 	       '(js-undefined)
-	       (j2s-scheme (car args) mode return conf hint))
+	       (j2s-scheme (car args) mode return conf))
 	  ,(strict-mode? mode)
 	  %this this %scope))
 
@@ -525,7 +525,7 @@ ft		`(,f ,@%gen
       (if (is-eval? fun)
 	  (call-eval-function fun args)
 	  (call-unknown-function fun
-	     (j2s-scheme thisarg mode return conf hint) args)))
+	     (j2s-scheme thisarg mode return conf) args)))
 
    (with-access::J2SCall this (loc fun thisarg args protocol cache cspecs)
       (let loop ((fun fun))
@@ -539,7 +539,7 @@ ft		`(,f ,@%gen
 	       ((isa? fun J2SHopRef)
 		(call-hop-function fun thisarg args))
 	       ((isa? fun J2SSuper)
-		(j2s-scheme-super this mode return conf hint))
+		(j2s-scheme-super this mode return conf))
 	       ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
 		(call-fun-function fun thisarg protocol
 		   (jsfun->lambda fun mode return conf (j2s-fun-prototype fun) #f)
@@ -553,44 +553,44 @@ ft		`(,f ,@%gen
 		(call-pragma fun args))
 	       ((not (isa? fun J2SRef))
 		(call-unknown-function fun
-		   (j2s-scheme thisarg mode return conf hint) args))
+		   (j2s-scheme thisarg mode return conf) args))
 	       ((read-only-function fun)
 		=>
 		(lambda (fun)
 		   (call-known-function protocol fun thisarg args)))
 	       (else
 		(call-unknown-function fun
-		   (j2s-scheme thisarg mode return conf hint) args)))))))
+		   (j2s-scheme thisarg mode return conf) args)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-tostring ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (j2s-tostring this mode return conf hint)
+(define (j2s-tostring this mode return conf)
    (with-access::J2SCall this (fun args)
       (with-access::J2SAccess fun (obj)
 	 (case (j2s-type obj)
 	    ((number)
-	     `(js-jsnumber-tostring ,(j2s-scheme obj mode return conf hint)
+	     `(js-jsnumber-tostring ,(j2s-scheme obj mode return conf)
 		 ,(if (pair? args)
-		      (j2s-scheme (car args) mode return conf hint)
+		      (j2s-scheme (car args) mode return conf)
 		      10) %this))
 	    ((int53 bint)
 	     `(js-string->jsstring
-		 (fixnum->string ,(j2s-scheme obj mode return conf hint)
+		 (fixnum->string ,(j2s-scheme obj mode return conf)
 		    ,(if (pair? args)
-			 (j2s-scheme (car args) mode return conf hint)
+			 (j2s-scheme (car args) mode return conf)
 			 10))))
 	    ((int32)
 	     `(js-string->jsstring
-		 (number->string ,(j2s-scheme obj mode return conf hint)
+		 (number->string ,(j2s-scheme obj mode return conf)
 		    ,(if (pair? args)
-			 (j2s-scheme (car args) mode return conf hint)
+			 (j2s-scheme (car args) mode return conf)
 			 10))))
 	    ((uint32)
 	     `(js-string->jsstring
-		 (number->string ,(j2s-scheme obj mode return conf hint)
+		 (number->string ,(j2s-scheme obj mode return conf)
 		    ,(if (pair? args)
-			 (j2s-scheme (car args) mode return conf hint)
+			 (j2s-scheme (car args) mode return conf)
 			 10))))
 	    (else
 	     #f)))))

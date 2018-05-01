@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Mon Apr 30 19:18:20 2018 (serrano)                */
+;*    Last change :  Tue May  1 16:38:15 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -143,11 +143,16 @@
 ;*---------------------------------------------------------------------*/
 ;*    dump-hint ...                                                    */
 ;*---------------------------------------------------------------------*/
-(define (dump-hint this::J2SDecl)
+(define (dump-hint this)
    (if (or (>= (bigloo-debug) 2)
 	   (string-contains (or (getenv "HOPTRACE") "") "j2s:hint"))
-       (with-access::J2SDecl this (hint)
-	  (if (pair? hint) `(:hint ,hint) '()))
+       (cond
+	  ((isa? this J2SDecl)
+	   (with-access::J2SDecl this (hint)
+	      (if (pair? hint) `(:hint ,hint) '())))
+	  ((isa? this J2SExpr)
+	   (with-access::J2SExpr this (hint)
+	      (if (pair? hint) `(:hint ,hint) '()))))
        '()))
 
 ;*---------------------------------------------------------------------*/
@@ -431,6 +436,7 @@
 	     ,@(dump-type this)
 	     ,@(dump-vtype decl)
 	     ,@(dump-info this)
+	     ,@(dump-hint this)
 	     ,@(dump-range this)))))
  
 ;*---------------------------------------------------------------------*/
@@ -621,6 +627,7 @@
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
+	  ,@(dump-hint this)
 	  ,@(dump-range this)
 	  ,(j2s->list lhs) ,(j2s->list rhs))))
       
@@ -641,6 +648,7 @@
       `(,@(call-next-method) ,op
 	  ,@(dump-type this)
 	  ,@(dump-info this)
+	  ,@(dump-hint this)
 	  ,(j2s->list expr))))
 
 ;*---------------------------------------------------------------------*/
@@ -747,6 +755,7 @@
 	  ,@(dump-loc loc)
 	  ,@(dump-type this)
 	  ,@(dump-info this)
+	  ,@(dump-hint this)
 	  ,@(dump-range this)
 	  ,@(dump-cache this)
 	  ,(j2s->list obj) ,(j2s->list field))))

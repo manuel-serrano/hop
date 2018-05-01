@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Mar 29 11:25:59 2018 (serrano)                */
+;*    Last change :  Tue May  1 16:24:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -57,7 +57,8 @@
 	   __js2scheme_inline
 	   __js2scheme_unthis
 	   __js2scheme_any
-	   __js2scheme_sourcemap)
+	   __js2scheme_sourcemap
+	   __js2scheme_hintnum)
 
    (export (j2s-compile-options::pair-nil)
 	   (j2s-compile-options-set! ::pair-nil)
@@ -185,6 +186,7 @@
       j2s-constant-stage
       j2s-varpreinit-stage
       j2s-tyflow-stage
+      j2s-hintnum-stage
       j2s-property-stage
       j2s-instanceof-stage
       j2s-propcce-stage
@@ -390,6 +392,8 @@
 	 (unless (memq :optim-literals o)
 	    (set! o (cons* :optim-literals #t o))))
       (when (>=fx l 4)
+	 (unless (memq :optim-hintnum o)
+	    (set! o (cons* :optim-hintnum #t o)))
 	 (unless (memq :optim-range o)
 	    (set! o (cons* :optim-range #t o)))
 	 (unless (memq :optim-ctor o)

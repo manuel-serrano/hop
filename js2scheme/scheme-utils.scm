@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Fri Apr 27 07:27:48 2018 (serrano)                */
+;*    Last change :  Tue May  1 17:52:15 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -84,6 +84,8 @@
 	   (box ::obj ::symbol ::pair-nil #!optional proc::obj)
 	   (box32 ::obj ::symbol ::pair-nil  #!optional proc::obj)
 	   (box64 ::obj ::symbol ::pair-nil #!optional proc::obj)
+
+	   (is-hint?::bool ::J2SExpr ::symbol)
 
 	   (expr-asuint32 expr::J2SExpr)
 	   (uncast::J2SExpr ::J2SExpr)))
@@ -815,6 +817,24 @@
       ((uint32) (if (uint32? val) (uint32->fixnum val) `(uint32->fixnum ,val)))
       ((integer real number) val)
       (else (if (not proc) val (proc val)))))
+
+;*---------------------------------------------------------------------*/
+;*    is-hint? ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    Is the most likely hint of type TYPE?                            */
+;*---------------------------------------------------------------------*/
+(define (is-hint? this::J2SExpr type)
+   (with-access::J2SExpr this (hint)
+      (when (pair? hint)
+	 (let loop ((hint (cdr hint))
+		    (h (car hint)))
+	    (cond
+	       ((null? hint)
+		(eq? (car h) type))
+	       ((>fx (cdr (car hint)) (cdr h))
+		(loop (cdr hint) (car hint)))
+	       (else
+		(loop (cdr hint) h)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    expr-asuint32 ...                                                */

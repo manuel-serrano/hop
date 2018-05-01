@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Mon Feb 12 11:34:24 2018 (serrano)                */
+;*    Last change :  Tue May  1 15:47:33 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -29,7 +29,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SProgram ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (j2s-scheme this::J2SProgram mode return conf hint)
+(define-method (j2s-scheme this::J2SProgram mode return conf)
    
    (define (j2s-master-module module scmcnsts body)
       (with-access::J2SProgram this (mode pcache-size globals)
@@ -108,10 +108,10 @@
    
    (with-access::J2SProgram this (module main nodes headers decls
 					 mode name pcache-size cnsts globals)
-      (let ((scmheaders (j2s-scheme headers mode return conf hint))
-	    (scmdecls (j2s-scheme decls mode return conf hint))
-	    (scmnodes (j2s-scheme nodes mode return conf hint))
-	    (scmcnsts (%cnsts cnsts mode return conf hint)))
+      (let ((scmheaders (j2s-scheme headers mode return conf))
+	    (scmdecls (j2s-scheme decls mode return conf))
+	    (scmnodes (j2s-scheme nodes mode return conf))
+	    (scmcnsts (%cnsts cnsts mode return conf)))
 	 (if (and main (not (config-get conf :worker #t)))
 	     (j2s-main-sans-worker-module this name
 		scmcnsts
@@ -215,12 +215,12 @@
 ;*---------------------------------------------------------------------*/
 ;*    %cnsts ...                                                       */
 ;*---------------------------------------------------------------------*/
-(define (%cnsts cnsts mode return conf hint)
+(define (%cnsts cnsts mode return conf)
    
    (define (%cnsts-debug cnsts)
       `(vector
 	  ,@(map (lambda (n)
-		    (let ((s (j2s-scheme n mode return conf hint)))
+		    (let ((s (j2s-scheme n mode return conf)))
 		       (if (isa? n J2SRegExp)
 			   (with-access::J2SRegExp n (loc val flags inline)
 			      (if inline

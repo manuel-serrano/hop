@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct  5 05:47:06 2017                          */
-;*    Last change :  Sun Apr 29 18:23:33 2018 (serrano)                */
+;*    Last change :  Tue May  1 15:51:38 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript Math functions.             */
@@ -29,12 +29,12 @@
 	   __js2scheme_scheme-ops)
 
    (export (j2s-math-builtin-method fun::J2SAccess args
-	      mode return::procedure conf hint)))
+	      mode return::procedure conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-builtin-method ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-math-builtin-method fun::J2SAccess args mode return conf hint)
+(define (j2s-math-builtin-method fun::J2SAccess args mode return conf)
    (with-access::J2SAccess fun (loc obj field)
       (when (isa? field J2SString)
 	 (with-access::J2SString field (val)
@@ -42,36 +42,36 @@
 	       ((string=? val "floor")
 		(when (=fx (length args) 1)
 		   (j2s-math-inline-floor
-		      (car args) mode return conf hint)))
+		      (car args) mode return conf)))
 	       ((string=? val "ceil")
 		(when (=fx (length args) 1)
 		   `(js-math-ceil
-		       ,(j2s-scheme (car args) mode return conf hint))))
+		       ,(j2s-scheme (car args) mode return conf))))
 	       ((string=? val "round")
 		(when (=fx (length args) 1)
 		   `(js-math-round
-		       ,(j2s-scheme (car args) mode return conf hint))))
+		       ,(j2s-scheme (car args) mode return conf))))
 	       ((string=? val "random")
 		(when (=fx (length args) 0)
 		   `(randomfl)))
 	       ((string=? val "max")
 		(when (=fx (length args) 2)
 		   (j2s-math-inline-min-max loc 'MAX
-		      (car args) (cadr args) mode return conf hint)))
+		      (car args) (cadr args) mode return conf)))
 	       ((string=? val "min")
 		(when (=fx (length args) 2)
 		   (j2s-math-inline-min-max loc 'MIN
-		      (car args) (cadr args) mode return conf hint)))
+		      (car args) (cadr args) mode return conf)))
 	       ((string=? val "sqrt")
 		(when (=fx (length args) 1)
-		   (j2s-math-inline-sqrt (car args) mode return conf hint)))
+		   (j2s-math-inline-sqrt (car args) mode return conf)))
 	       (else
 		#f))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-floor ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (j2s-math-inline-floor arg mode return conf hint)
+(define (j2s-math-inline-floor arg mode return conf)
    
    (define (find-power2 n)
       (let ((n (cond
@@ -116,7 +116,7 @@
 	 ((not p2)
 	  (let ((p3 (divide arg)))
 	     (if (not p3)
-		 (let ((sexp (j2s-scheme arg mode return conf hint)))
+		 (let ((sexp (j2s-scheme arg mode return conf)))
 		    (if (eq? (j2s-type arg) 'real)
 			`(js-math-floorfl ,sexp)
 			(match-case sexp
@@ -129,18 +129,18 @@
 		 (case (j2s-vtype (car p3))
 		    ((int32)
 		     `(js-int32->tointeger
-			 (/s32 ,(j2s-scheme (car p3) mode return conf hint)
+			 (/s32 ,(j2s-scheme (car p3) mode return conf)
 			    ,(cdr p3))))
 		    ((uint32)
 		     `(js-uint32-tointeger
-			 (/u32 ,(j2s-scheme (car p3) mode return conf hint)
+			 (/u32 ,(j2s-scheme (car p3) mode return conf)
 			    ,(cdr p3))))
 		    ((int53 bint)
-		     `(/fx ,(j2s-scheme (car p3) mode return conf hint)
+		     `(/fx ,(j2s-scheme (car p3) mode return conf)
 			 ,(cdr p3)))
 		    (else
 		     (let ((tmp (gensym 'tmp)))
-			`(let ((,tmp ,(j2s-scheme (car p3) mode return conf hint)))
+			`(let ((,tmp ,(j2s-scheme (car p3) mode return conf)))
 			    (if (fixnum? ,tmp)
 				(/fx ,tmp ,(cdr p3))
 				(js-math-floor (/js ,tmp ,(cdr p3) %this))))))))))
@@ -148,18 +148,18 @@
 	  (case (j2s-vtype (car p2))
 	     ((int32)
 	      `(js-int32-tointeger
-		  (bit-rshs32 ,(j2s-scheme (car p2) mode return conf hint)
+		  (bit-rshs32 ,(j2s-scheme (car p2) mode return conf)
 		     ,(cdr p2))))
 	     ((uint32)
 	      `(js-uint32-tointeger
-		  (bit-rshu32 ,(j2s-scheme (car p2) mode return conf hint)
+		  (bit-rshu32 ,(j2s-scheme (car p2) mode return conf)
 		     ,(cdr p2))))
 	     ((int53 bint)
-	      `(bit-rsh ,(j2s-scheme (car p2) mode return conf hint)
+	      `(bit-rsh ,(j2s-scheme (car p2) mode return conf)
 		  ,(cdr p2)))
 	     (else
 	      (let ((tmp (gensym 'tmp)))
-		 `(let ((,tmp ,(j2s-scheme (car p2) mode return conf hint)))
+		 `(let ((,tmp ,(j2s-scheme (car p2) mode return conf)))
 		     (if (fixnum? ,tmp)
 			 (bit-rsh ,tmp ,(cdr p2))
 			 (js-math-floor (/js ,tmp ,(cdr p2) %this))))))))
@@ -167,18 +167,18 @@
 	  (case (j2s-vtype (car p2))
 	     ((int32)
 	      `(js-int32->tointeger
-		  (/pow2s32 ,(j2s-scheme (car p2) mode return conf hint)
+		  (/pow2s32 ,(j2s-scheme (car p2) mode return conf)
 		     ,(cdr p2))))
 	     ((uint32)
 	      `(js-uint32-tointeger
-		  (/pow2u32 ,(j2s-scheme (car p2) mode return conf hint)
+		  (/pow2u32 ,(j2s-scheme (car p2) mode return conf)
 		     ,(cdr p2))))
 	     ((int53 bint)
-	      `(/pow2fx ,(j2s-scheme (car p2) mode return conf hint)
+	      `(/pow2fx ,(j2s-scheme (car p2) mode return conf)
 		  ,(cdr p2)))
 	     (else
 	      (let ((tmp (gensym 'tmp)))
-		 `(let ((,tmp ,(j2s-scheme (car p2) mode return conf hint)))
+		 `(let ((,tmp ,(j2s-scheme (car p2) mode return conf)))
 		     (if (fixnum? ,tmp)
 			 (/pow2fx ,tmp ,(cdr p2))
 			 (js-math-floor (/js ,tmp ,(cdr p2) %this)))))))))))
@@ -186,26 +186,26 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-sqrt ...                                         */
 ;*---------------------------------------------------------------------*/
-(define (j2s-math-inline-sqrt arg mode return conf hint)
+(define (j2s-math-inline-sqrt arg mode return conf)
    (case (j2s-vtype arg)
       ((int32)
        (let ((tmp (gensym 'tmp)))
-	  `(let ((,tmp ,(j2s-scheme arg mode return conf hint)))
+	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
 	      (if (<s32 ,tmp 0) +nan.0 (sqrtfl (int32->flonum ,tmp))))))
       ((uint32)
-       `(sqrtfl (uint32->flonum ,(j2s-scheme arg mode return conf hint))))
+       `(sqrtfl (uint32->flonum ,(j2s-scheme arg mode return conf))))
       ((int53 bint)
        (let ((tmp (gensym 'tmp)))
-	  `(let ((,tmp ,(j2s-scheme arg mode return conf hint)))
+	  `(let ((,tmp ,(j2s-scheme arg mode return conf)))
 	      (if (<fx ,tmp 0) +nan.0 (sqrtfl (fixnum->flonum ,tmp))))))
       ((real)
-       `(js-math-sqrtfl ,(j2s-scheme arg mode return conf hint)))
+       `(js-math-sqrtfl ,(j2s-scheme arg mode return conf)))
       (else
-       `(js-math-sqrt ,(j2s-scheme arg mode return conf hint) %this))))
+       `(js-math-sqrt ,(j2s-scheme arg mode return conf) %this))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-math-inline-min-max ...                                      */
 ;*---------------------------------------------------------------------*/
-(define (j2s-math-inline-min-max loc op x::J2SExpr y::J2SExpr mode return conf hint)
-   (js-binop2 loc op 'number x y mode return conf hint))
+(define (j2s-math-inline-min-max loc op x::J2SExpr y::J2SExpr mode return conf)
+   (js-binop2 loc op 'number x y mode return conf))
    

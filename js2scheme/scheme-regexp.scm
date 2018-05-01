@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec 25 17:49:28 2017                          */
-;*    Last change :  Tue Dec 26 06:54:51 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Tue May  1 15:51:54 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript regexp functions            */
 ;*=====================================================================*/
@@ -27,15 +27,15 @@
 	   __js2scheme_scheme-utils
 	   __js2scheme_scheme-fun)
 
-   (export (j2s-regexp-test obj args mode return conf hint)))
+   (export (j2s-regexp-test obj args mode return conf)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-regexp-test ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (j2s-regexp-test obj args mode return conf hint)
+(define (j2s-regexp-test obj args mode return conf)
    (when (isa? obj J2SLiteralCnst)
       (with-access::J2SLiteralCnst obj (index val)
 	 `(js-regexp-literal-test (vector-ref-ur %cnsts ,index)
 	     ,@(map (lambda (arg)
-		       (j2s-scheme arg mode return conf hint))
+		       (j2s-scheme arg mode return conf))
 		  args)))))

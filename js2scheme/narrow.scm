@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Mon Apr 30 16:56:26 2018 (serrano)                */
+;*    Last change :  Tue May  1 16:07:47 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -36,7 +36,7 @@
    (export j2s-narrow-stage))
 
 ;*---------------------------------------------------------------------*/
-;*    j2s-narrow-stage                                                 */
+;*    j2s-narrow-stage ...                                             */
 ;*---------------------------------------------------------------------*/
 (define j2s-narrow-stage
    (instantiate::J2SStageProc

@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:41:17 2017                          */
-;*    Last change :  Fri Dec 22 10:11:52 2017 (serrano)                */
-;*    Copyright   :  2017 Manuel Serrano                               */
+;*    Last change :  Tue May  1 15:48:26 2018 (serrano)                */
+;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme test code generation                                      */
 ;*=====================================================================*/
@@ -40,23 +40,23 @@
 	 ((eq? ty 'object)
 	  #t)
 	 ((eq? ty 'int32)
-	  `(not (=s32 ,(j2s-scheme test mode return conf '(bool)) #s32:0)))
+	  `(not (=s32 ,(j2s-scheme test mode return conf) #s32:0)))
 	 ((eq? ty 'uint32)
-	  `(not (=u32 ,(j2s-scheme test mode return conf '(bool)) #u32:0)))
+	  `(not (=u32 ,(j2s-scheme test mode return conf) #u32:0)))
 	 ((is-fixnum? test conf)
-	  `(not (=fx ,(j2s-scheme test mode return conf '(bool)) 0)))
+	  `(not (=fx ,(j2s-scheme test mode return conf) 0)))
 	 ((type-number? ty)
-	  `(not (= ,(j2s-scheme test mode return conf '(bool)) 0)))
+	  `(not (= ,(j2s-scheme test mode return conf) 0)))
 	 ((notbool-expr? test)
-	  `(js-toboolean ,(j2s-scheme test mode return conf '(bool))))
+	  `(js-toboolean ,(j2s-scheme test mode return conf)))
 	 (else
-	  `(js-totest ,(j2s-scheme test mode return conf '(bool)))))))
+	  `(js-totest ,(j2s-scheme test mode return conf))))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SNode ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-bool-test this::J2SNode mode return conf)
-   (j2s-scheme this mode return conf '(bool)))
+   (j2s-scheme this mode return conf))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-bool-test ::J2SExpr ...                                      */
@@ -64,7 +64,7 @@
 (define-walk-method (j2s-bool-test this::J2SExpr mode return conf)
    (with-access::J2SExpr this (type)
       (if (eq? type 'bool)
-	  (j2s-scheme this mode return conf '(bool))
+	  (j2s-scheme this mode return conf)
 	  (j2s-test this mode return conf))))
 
 ;*---------------------------------------------------------------------*/
