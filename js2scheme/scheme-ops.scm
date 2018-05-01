@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue May  1 18:01:16 2018 (serrano)                */
+;*    Last change :  Tue May  1 18:20:03 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -807,6 +807,13 @@
 			     (=fl
 				,(asreal left tl)
 				,(box right tr conf))))))))))
+
+   (define (equality-string op lhs tl rhs tr mode return conf)
+      (with-tmp lhs rhs mode return conf 'any
+	 (lambda (left right)
+	    (if (eq? op '!==)
+		`(not (js-eqstring? ,left ,right))
+		`(js-eqstring? ,left ,right)))))
 		
    (define (typeof-expr expr mode return conf)
       (cond
@@ -959,6 +966,8 @@
 	  (equality-uint32 op lhs tl rhs tr mode return conf))
 	 ((eq? tr 'uint32)
 	  (equality-uint32 op rhs tr lhs tl mode return conf))
+	 ((and (memq op '(=== !==)) (or (eq? tl 'string) (eq? tr 'string)))
+	  (equality-string op rhs tr lhs tl mode return conf))
 	 (else
 	  (with-tmp lhs rhs mode return conf 'any
 	     (lambda (left right)

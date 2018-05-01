@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Sun Apr 29 18:56:53 2018 (serrano)                */
+;*    Last change :  Tue May  1 18:17:45 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -140,6 +140,7 @@
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
 	   (js-eq?::bool ::obj ::obj)
+	   (inline js-eqstring?::bool ::obj ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
 
@@ -1343,7 +1344,7 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-strict-equal? o1 o2)
    (cond-expand
-      ((config nan-tagging #t) (eq? o1 o2))
+      ((config nan-tagging #t) (or (eq? o1 o2) (js-eqstring? o1 o2)))
       (else (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq? o1 o2)))))
 
 ;*---------------------------------------------------------------------*/
@@ -1359,6 +1360,12 @@
        (if (fixnum? y) (=fx x y) (when (flonum? y) (=fl (fixnum->flonum x) y))))
       (else
        #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-eqstring? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define-inline (js-eqstring?::bool x y)
+   (and (js-jsstring? x) (js-jsstring? y) (js-jsstring=? x y)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eqil? ...                                                     */
