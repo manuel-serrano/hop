@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Tue May  1 18:17:45 2018 (serrano)                */
+;*    Last change :  Wed May  2 07:53:29 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -139,6 +139,7 @@
 	   (inline js-equal-sans-flonum?::bool ::obj ::obj ::JsGlobalObject)
 	   (js-equality?::bool ::obj ::obj ::JsGlobalObject)
 	   (inline js-strict-equal?::bool ::obj ::obj)
+	   (inline js-strict-equal-no-string?::bool ::obj ::obj)
 	   (js-eq?::bool ::obj ::obj)
 	   (inline js-eqstring?::bool ::obj ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
@@ -1346,6 +1347,19 @@
    (cond-expand
       ((config nan-tagging #t) (or (eq? o1 o2) (js-eqstring? o1 o2)))
       (else (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq? o1 o2)))))
+
+;*---------------------------------------------------------------------*/
+;*    js-strict-equal-no-string?                                       */
+;*    -------------------------------------------------------------    */
+;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.4       */
+;*---------------------------------------------------------------------*/
+(define-inline (js-strict-equal-no-string? o1 o2)
+   (cond-expand
+      ((config nan-tagging #t)
+       (eq? o1 o2))
+      (else
+       (or (and (eq? o1 o2) (not (flonum? o1)))
+	   (and (flonum? o1) (flonum? o2) (=fl o1 o2))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eq? ...                                                       */

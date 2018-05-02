@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Tue May  1 18:20:03 2018 (serrano)                */
+;*    Last change :  Wed May  2 07:41:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -432,10 +432,18 @@
        `(js-eqil? ,lhs ,rhs))
       ((eqir?)
        `(js-eqir? ,lhs ,rhs))
+      ((js-string-equal-no-string?)
+       `(js-js-string-equal-no-string? ,lhs ,rhs))
       ((!eqil?)
        `(not (js-eqil? ,lhs ,rhs)))
       ((!eqir?)
        `(not (js-eqir? ,lhs ,rhs)))
+      ((!eqil?)
+       `(not (js-eqil? ,lhs ,rhs)))
+      ((!eqir?)
+       `(not (js-eqir? ,lhs ,rhs)))
+      ((!js-string-equal-no-string?)
+       `(not (js-js-string-equal-no-string? ,lhs ,rhs)))
       ((<-)
        `(js<- ,lhs ,rhs %this))
       ((instanceof)
@@ -976,6 +984,12 @@
 			      (if (memq op '(== ===)) 'eqil? '!eqil?))
 			     ((type-fixnum? tr)
 			      (if (memq op '(== ===)) 'eqir? '!eqir?))
+			     ((and (type-cannot? tr '(string))
+				   (type-cannot? tl '(string))
+				   (memq op '(=== !==)))
+			      (if (eq? op '===)
+				  'js-string-equal-no-string?
+				  '!js-string-equal-no-string?))
 			     (else
 			      op))))
 		   (js-binop loc op left lhs right rhs conf))))))))

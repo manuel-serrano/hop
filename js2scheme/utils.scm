@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Fri Apr 27 10:03:48 2018 (serrano)                */
+;*    Last change :  Wed May  2 07:51:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -40,6 +40,8 @@
 	   (type-integer?::bool ::obj)
 	   (type-number?::bool ::obj)
 	   (type-object?::bool ::obj)
+	   (type-maybe?::bool ::obj ::pair-nil)
+	   (type-cannot?::bool ::obj ::pair-nil)
 	   (type-name type conf)
 	   (min-type::symbol ::obj ::obj)
 	   (max-type::symbol ::obj ::obj)
@@ -249,6 +251,21 @@
 ;*---------------------------------------------------------------------*/
 (define (type-object? type)
    (memq type '(object regexp date Promise array arguments global this)))
+
+;*---------------------------------------------------------------------*/
+;*    type-maybe? ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (type-maybe? type types::pair-nil)
+   (cond
+      ((memq type '(any unknown)) #t)
+      ((memq type types) #t)
+      (else #f)))
+
+;*---------------------------------------------------------------------*/
+;*    type-cannot? ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (type-cannot? type types::pair-nil)
+   (not (type-maybe? type types)))
 
 ;*---------------------------------------------------------------------*/
 ;*    type-name ...                                                    */
