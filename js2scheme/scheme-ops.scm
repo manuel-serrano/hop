@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed May  2 07:41:10 2018 (serrano)                */
+;*    Last change :  Wed May  2 08:00:19 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -389,7 +389,7 @@
 	 ((eq? tr 'real)
 	  `(=fl ,(asreal lhs 'uint32) ,rhs))
 	 (else
-	  `(js-strict-equal? ,(asreal lhs 'uint32) ,rhs))))
+	  `(js-strict-equal-no-string? ,(asreal lhs 'uint32) ,rhs))))
 
    (define (strict-equal-int32 lhs rhs tr)
       (cond
@@ -402,16 +402,22 @@
 	 ((eq? tr 'real)
 	  `(=fl (int32->flonum ,lhs) ,rhs))
 	 (else
-	  `(js-strict-equal? (int32->flonum ,lhs) ,rhs))))
+	  `(js-strict-equal-no-string? (int32->flonum ,lhs) ,rhs))))
       
    (define (strict-equal lhs rhs)
       (let ((tl (j2s-vtype l))
 	    (tr (j2s-vtype r)))
 	 (cond
-	    ((eq? tl 'uint32) (strict-equal-uint32 lhs rhs tr))
-	    ((eq? tr 'uint32) (strict-equal-uint32 rhs lhs tl))
-	    ((eq? tr 'int32) (strict-equal-int32 rhs lhs tl))
-	    (else `(js-strict-equal? ,lhs ,rhs)))))
+	    ((eq? tl 'uint32)
+	     (strict-equal-uint32 lhs rhs tr))
+	    ((eq? tr 'uint32)
+	     (strict-equal-uint32 rhs lhs tl))
+	    ((eq? tr 'int32)
+	     (strict-equal-int32 rhs lhs tl))
+	    ((or (type-cannot? tr '(string)) (type-cannot? tl '(string)))
+	     `(js-strict-equal-no-string? ,lhs ,rhs))
+	    (else
+	     `(js-strict-equal? ,lhs ,rhs)))))
 
    (case op
       ((==)
@@ -432,8 +438,6 @@
        `(js-eqil? ,lhs ,rhs))
       ((eqir?)
        `(js-eqir? ,lhs ,rhs))
-      ((js-string-equal-no-string?)
-       `(js-js-string-equal-no-string? ,lhs ,rhs))
       ((!eqil?)
        `(not (js-eqil? ,lhs ,rhs)))
       ((!eqir?)
@@ -442,8 +446,6 @@
        `(not (js-eqil? ,lhs ,rhs)))
       ((!eqir?)
        `(not (js-eqir? ,lhs ,rhs)))
-      ((!js-string-equal-no-string?)
-       `(not (js-js-string-equal-no-string? ,lhs ,rhs)))
       ((<-)
        `(js<- ,lhs ,rhs %this))
       ((instanceof)
@@ -517,6 +519,8 @@
    (define (simple? expr)
       (cond
 	 ((isa? expr J2SRef)
+	  #t)
+	 ((isa? expr J2SGlobalRef)
 	  #t)
 	 ((isa? expr J2SHopRef)
 	  #t)
@@ -662,10 +666,15 @@
 			       (asreal left tl)
 			       (asreal right tr)
 			       #f)
-			    (binop-any-any op 'bool
-			       (box left tl conf)
-			       (box right tr conf)
-			       #f)))))))))))
+			    (let ((op (if (and (eq? op '===)
+					       (or (type-cannot? tl '(string))
+						   (type-cannot? tr '(string))))
+					  'js-strict-equal-no-string?
+					  op)))
+			       (binop-any-any op 'bool
+				  (box left tl conf)
+				  (box right tr conf)
+				  #f))))))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-min-max ...                                                   */
@@ -984,12 +993,6 @@
 			      (if (memq op '(== ===)) 'eqil? '!eqil?))
 			     ((type-fixnum? tr)
 			      (if (memq op '(== ===)) 'eqir? '!eqir?))
-			     ((and (type-cannot? tr '(string))
-				   (type-cannot? tl '(string))
-				   (memq op '(=== !==)))
-			      (if (eq? op '===)
-				  'js-string-equal-no-string?
-				  '!js-string-equal-no-string?))
 			     (else
 			      op))))
 		   (js-binop loc op left lhs right rhs conf))))))))
@@ -1867,8 +1870,15 @@
       ((eq? tr 'integer) `(fixnum? ,left))
       ((and (memq tl '(int53 integer number any unknown))
 	    (memq tr '(int53 integer number any unknown)))
-       `(fixnums? ,left ,right))
-      (else #f)))
+       (cond
+	  ((fixnum? left)
+	   (if (fixnum? right) #t `(fixnum? ,right)))
+	  ((fixnum? right)
+	   `(fixnum? ,left))
+	  (else
+	   `(fixnums? ,left ,right))))
+      (else
+       #f)))
 
 ;*---------------------------------------------------------------------*/
 ;*    if-fixnums? ...                                                  */
@@ -2357,26 +2367,43 @@
 	  (binop-flip (symbol-append op '/overflow) left right flip)))))
    
 (define (binop-any-any op type left right flip)
-   (if (eq? op '===)
+   (case op
+      ((===)
        (if flip
 	   `(js-strict-equal? ,right ,left)
-	   `(js-strict-equal? ,left ,right))
+	   `(js-strict-equal? ,left ,right)))
+      ((js-strict-equal-no-string?)
+       (if flip
+	   `(js-strict-equal-no-string? ,right ,left)
+	   `(js-strict-equal-no-string? ,left ,right)))
+      (else
        (let ((op (cond 
 		    ((eq? op '==) 'js-equal?)
 		    ((memq type '(integer number bool)) (symbol-append op 'js))
 		    (else (symbol-append 'js op)))))
 	  (case type
 	     ((bool)
-	      (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))
+	      (if flip
+		  `(,op ,right ,left %this)
+		  `(,op ,left ,right %this)))
 	     ((int32)
 	      `(js-number-toint32
-		  ,(if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+		  ,(if flip
+		       `(,op ,right ,left %this)
+		       `(,op ,left ,right %this))))
 	     ((uint32)
 	      `(js-number-touint32
-		  ,(if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+		  ,(if flip
+		       `(,op ,right ,left %this)
+		       `(,op ,left ,right %this))))
 	     ((real)
 	      `(js-toflonum
-		  ,(if flip `(,op ,right ,left %this) `(,op ,left ,right %this))))
+		  ,(if flip
+		       `(,op ,right ,left %this)
+		       `(,op ,left ,right %this))))
 	     (else
-	      (if flip `(,op ,right ,left %this) `(,op ,left ,right %this)))))))
+	      (if flip
+		  `(,op ,right ,left %this)
+		  `(,op ,left ,right %this))))))))
+
    

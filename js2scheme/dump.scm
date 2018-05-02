@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue May  1 16:38:15 2018 (serrano)                */
+;*    Last change :  Wed May  2 08:21:32 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -415,6 +415,7 @@
    (with-access::J2SGlobalRef this (id decl loc)
       (with-access::J2SDecl decl (id usage)
 	 `(,@(call-next-method)
+	     ,@(dump-vtype decl)
 	     ,@(dump-access decl)))))
  
 ;*---------------------------------------------------------------------*/
