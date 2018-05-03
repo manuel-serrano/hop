@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:47:16 2013                          */
-;*    Last change :  Mon Dec  4 08:41:04 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Wed May  2 16:26:17 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript errors                       */
 ;*    -------------------------------------------------------------    */
@@ -91,9 +91,11 @@
 (define-method (object-display o::JsError . port)
    (with-output-to-port (if (null? port) (current-output-port) (car port))
       (lambda ()
-	 (with-access::JsError o (name msg)
+	 (with-access::JsError o (name msg fname location)
 	    (display* "#<"
-	       (class-name (object-class o)) ": " name ", " msg ">")))))
+	       (class-name (object-class o)) ": " name ", " msg
+	       (if (and location fname) (format " ~s:~s" fname location) "")
+	       ">")))))
 
 (define-method (object-print o::JsError port pslot)
    (object-display o port))
@@ -176,19 +178,19 @@
 		      (js-bind! %this this 'message :value m :enumerable #f
 			 :hidden-class #t)
 		      (set! msg m)))
-		  ((?m (and (? string?) ?f) ?l)
-		   (unless (eq? m (js-undefined))
-		      (js-bind! %this this 'message :value m :enumerable #f
-			 :hidden-class #t)
-		      (set! msg m))
-		   (set! fname (js-string->jsstring f))
-		   (set! location l))
 		  ((?m (and (? js-jsstring?) ?f) ?l)
 		   (unless (eq? m (js-undefined))
 		      (js-bind! %this this 'message :value m :enumerable #f
 			 :hidden-class #t)
 		      (set! msg m))
 		   (set! fname f)
+		   (set! location l))
+		  ((?m (and (? string?) ?f) ?l)
+		   (unless (eq? m (js-undefined))
+		      (js-bind! %this this 'message :value m :enumerable #f
+			 :hidden-class #t)
+		      (set! msg m))
+		   (set! fname (js-string->jsstring f))
 		   (set! location l))
 		  ((?m . ?-)
 		   (unless (eq? m (js-undefined))

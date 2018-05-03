@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed May  2 07:53:29 2018 (serrano)                */
+;*    Last change :  Wed May  2 16:43:18 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -1619,8 +1619,9 @@
    (when (isa? err JsError)
       (with-access::JsError err (stack fname location)
 	 (set! stack (get-trace-stack))
-	 (set! fname f)
-	 (set! location l)))
+	 (unless (js-jsstring? fname)
+	    (set! fname f)
+	    (set! location l))))
    (with-access::WorkerHopThread %worker (%exn)
       (set! %exn
 	 (instantiate::&error

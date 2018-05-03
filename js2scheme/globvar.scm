@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue May  1 06:41:04 2018 (serrano)                */
+;*    Last change :  Thu May  3 07:07:58 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -82,7 +82,7 @@
        #t)
       ((isa? expr J2SRef)
        (with-access::J2SRef expr (decl)
-	  (with-access::J2SDecl decl (ronly writable)
+	  (with-access::J2SDecl decl (ronly writable usage)
 	     (or ronly (not writable)))))
       ((isa? expr J2SUnary)
        (with-access::J2SUnary expr (expr)
@@ -113,7 +113,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-gloconst* this::J2SDeclInit)
    (with-access::J2SDeclInit this (usage ronly val)
-      (if (and (usage? '(init) usage)
+      (if (and ronly
 	       (not (usage? '(assig) usage))
 	       (constant? val))
 	  (list this)

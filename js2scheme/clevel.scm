@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sat Mar 31 07:37:05 2018 (serrano)                */
+;*    Last change :  Wed May  2 16:56:10 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -66,7 +66,11 @@
 	 ((config-get args :cspecs #f)
 	  =>
 	  (lambda (cspecs)
-	     (cspecs-update this cspecs args)))))
+	     (let ((cs (cond
+			  ((pair? cspecs)  cspecs)
+			  ((symbol? cspecs) (list cspecs))
+			  (else (error "j2s-clevel" "Illegal cspecs" cspecs)))))
+		(cspecs-update this cs args))))))
    this)
 
 ;*---------------------------------------------------------------------*/
