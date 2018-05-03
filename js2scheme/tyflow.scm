@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed May  2 08:17:26 2018 (serrano)                */
+;*    Last change :  Thu May  3 19:10:09 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -729,7 +729,11 @@
    
    (with-access::J2SDeclFun this (val itype)
       (decl-vtype-set! this 'function fix)
-      (when (constructor-only? this)
+      (cond
+	 ((isa? this J2SDeclSvc)
+	  ;; services are as escaping function, the arguments are "any"
+	  (escape-fun val fix))
+	 ((constructor-only? this)
 	 ;; a mere constructor
 	 (if (isa? val J2SFun)
 	     (typing-ctor val)
