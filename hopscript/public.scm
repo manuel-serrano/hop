@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 08:10:39 2013                          */
-;*    Last change :  Wed May  2 16:43:18 2018 (serrano)                */
+;*    Last change :  Thu May  3 20:24:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Public (i.e., exported outside the lib) hopscript functions      */
@@ -141,6 +141,7 @@
 	   (inline js-strict-equal?::bool ::obj ::obj)
 	   (inline js-strict-equal-no-string?::bool ::obj ::obj)
 	   (js-eq?::bool ::obj ::obj)
+	   (js-eq-no-string?::bool ::obj ::obj)
 	   (inline js-eqstring?::bool ::obj ::obj)
 	   (inline js-eqil?::bool ::long ::obj)
 	   (inline js-eqir?::bool ::obj ::long)
@@ -1344,9 +1345,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.4       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-strict-equal? o1 o2)
-   (cond-expand
-      ((config nan-tagging #t) (or (eq? o1 o2) (js-eqstring? o1 o2)))
-      (else (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq? o1 o2)))))
+   (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq? o1 o2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-strict-equal-no-string?                                       */
@@ -1354,12 +1353,7 @@
 ;*    http://www.ecma-international.org/ecma-262/5.1/#sec-11.9.4       */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-strict-equal-no-string? o1 o2)
-   (cond-expand
-      ((config nan-tagging #t)
-       (eq? o1 o2))
-      (else
-       (or (and (eq? o1 o2) (not (flonum? o1)))
-	   (and (flonum? o1) (flonum? o2) (=fl o1 o2))))))
+   (or (and (eq? o1 o2) (not (flonum? o1))) (js-eq-no-string? o1 o2)))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-eq? ...                                                       */
@@ -1370,6 +1364,18 @@
        (if (flonum? y) (=fl x y) (when (fixnum? y) (=fl x (fixnum->flonum y)))))
       ((js-jsstring? x)
        (and (js-jsstring? y) (js-jsstring=? x y)))
+      ((fixnum? x)
+       (if (fixnum? y) (=fx x y) (when (flonum? y) (=fl (fixnum->flonum x) y))))
+      (else
+       #f)))
+
+;*---------------------------------------------------------------------*/
+;*    js-eq-no-string? ...                                             */
+;*---------------------------------------------------------------------*/
+(define (js-eq-no-string? x y)
+   (cond
+      ((flonum? x)
+       (if (flonum? y) (=fl x y) (when (fixnum? y) (=fl x (fixnum->flonum y)))))
       ((fixnum? x)
        (if (fixnum? y) (=fx x y) (when (flonum? y) (=fl (fixnum->flonum x) y))))
       (else
