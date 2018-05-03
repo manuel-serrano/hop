@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Tue May  1 07:14:39 2018 (serrano)                */
+;*    Last change :  Thu May  3 07:18:52 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -636,11 +636,25 @@
 		(liftable? clazz))))
 	 (else
 	  #f)))
+
+   (define (nop? this::J2SNode)
+      (cond
+	 ((isa? this J2SStmtExpr)
+	  (with-access::J2SStmtExpr this (expr)
+	     (nop? expr)))
+	 ((isa? this J2SSeq)
+	  (with-access::J2SSeq this (nodes)
+	     (every nop? nodes)))
+	 ((isa? this J2SExpr)
+	  (liftable? this))
+	 (else
+	  #f)))
    
    (let loop ((n nodes)
 	      (decls decls)
 	      (deps '())
-	      (res '()))
+	      (res '())
+	      (head #t))
       (cond
 	 ((null? n)
 	  (reverse! res))
@@ -653,27 +667,15 @@
 	     (let liip ((inits inits)
 			(decls decls)
 			(deps deps)
-			(res res))
+			(res res)
+			(head head))
 		(if (null? inits)
-		    (loop (cdr n) decls deps res)
+		    (loop (cdr n) decls deps res head)
 		    (with-access::J2SInit (car inits) (rhs loc)
 		       (let ((used (get-used-decls rhs (append decls vars)))
 			     (init (car inits)))
 			  (cond
-;* 			     ((null? used)                             */
-;* 			      ;; optimize this binding                 */
-;* 			      (let ((decl (init-decl init)))           */
-;* 				 (with-access::J2SInit init (rsh)      */
-;* 				    (with-access::J2SDeclInit decl (binder val) */
-;* 				       (set! val rhs)                  */
-;* 				       (set! binder 'let-opt)))        */
-;* 				 (let ((ndecls (remq decl decls))      */
-;* 				       (stmtinit (instantiate::J2SStmtExpr */
-;* 						    (loc loc)          */
-;* 						    (expr init))))     */
-;* 				    (liip (cdr inits) ndecls           */
-;* 				       deps res))))                    */
-			     ((liftable? rhs)
+			     ((or (liftable? rhs) head)
 			      ;; optimize this binding but keep tracks
 			      (let ((decl (init-decl init)))
 				 (with-access::J2SInit init (rsh)
@@ -685,7 +687,7 @@
 						    (loc loc)
 						    (expr init))))
 				    (liip (cdr inits) ndecls
-				       deps res))))
+				       deps res head))))
 			     ((isa? rhs J2SFun)
 			      ;; optimize this binding but keep tracks
 			      ;; of its dependencies
@@ -697,7 +699,8 @@
 				 (let ((ndecls (remq decl decls)))
 				    (liip (cdr inits) ndecls
 				       (cons (cons init used) deps)
-				       res))))
+				       res
+				       head))))
 			     (else
 			      ;; do not optimize this variable and mark
 			      ;; the variables it uses are disabled
@@ -708,18 +711,8 @@
 				 (liip (cdr inits)
 				    (remove-disabled! decls disabled)
 				    deps
-				    (cons (car n) res)))))))))))
-;* 			     (else                                     */
-;* 			      ;; optimize this binding but mark that   */
-;* 			      ;; the variables it uses are disabled    */
-;* 			      (let ((decl (init-decl init))            */
-;* 				    (used (get-used-decls rhs          */
-;* 					     (append decls vars)))     */
-;* 				    (disabled (get-used-deps used deps))) */
-;* 				 (liip (cdr inits)                     */
-;* 				    (remove-disabled! decls disabled)  */
-;* 				    deps                               */
-;* 				    (cons (car n) res)))))))))))       */
+				    (cons (car n) res)
+				    #f))))))))))
 	 ((null? (cdr n))
 	  ;; this is the last stmt which happens not to be a binding
 	  (reverse! (cons (car n) res)))
@@ -729,13 +722,15 @@
 	     (let ((used (get-used-decls (car n) (append decls vars))))
 		(if (null? used)
 		    ;; harmless statement, ignore it
-		    (loop (cdr n) decls deps (cons (car n) res))
+		    (loop (cdr n) decls deps (cons (car n) res)
+		       (when head (nop? (car n))))
 		    ;; disable optimization for recursively used decls
 		    (let ((disabled (get-used-deps used deps)))
 		       (loop (cdr n)
 			  (remove-disabled! decls disabled)
 			  deps
-			  (cons (car n) res))))))))))
+			  (cons (car n) res)
+			  #f)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    get-used-decls ...                                               */

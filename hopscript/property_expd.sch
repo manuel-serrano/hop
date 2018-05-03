@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Apr 14 19:48:05 2018 (serrano)                */
+;*    Last change :  Thu May  3 18:06:54 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -781,23 +781,33 @@
 (define (js-call/cache-expander x e)
    
    (define (call %this ccache fun this args)
+      (let* (
+	     (tmps (map (lambda (a) (when (pair? a) (gensym '%a))) args))
+	     (bdgs (filter-map (lambda (t o) (when t (list t o))) tmps args)))
+	 (if (pair? bdgs)
+	     `(let ,bdgs
+		 ,(call/tmp %this ccache fun this
+		    (map (lambda (t a) (or t a)) tmps args)))
+	     (call/tmp %this ccache fun this args))))
+
+   (define (call/tmp %this ccache fun this args)
       (let ((len (length args)))
-	 `(cond
-	     ((eq? (js-pcache-owner ,ccache) ,fun)
-	      ((js-pcache-method ,ccache) ,this ,@args))
-	     ((and (isa? ,fun JsFunction)
-		   (with-access::JsFunction ,fun (len)
-		      (=fx len ,len)))
-	      (with-access::JsPropertyCache ,ccache (method owner)
-		 (with-access::JsFunction ,fun (procedure)
-		    (set! owner ,fun)
-		    (set! method procedure)
-		    (procedure ,this ,@args))))
-	     (else
-	      ,(if (>=fx len 11)
-		   `(js-calln ,%this ,fun ,this ,@args)
-		   `(,(string->symbol (format "js-call~a" len))
-		     ,%this ,fun ,this ,@args))))))
+      `(cond
+	  ((eq? (js-pcache-owner ,ccache) ,fun)
+	   ((js-pcache-method ,ccache) ,this ,@args))
+	  ((and (isa? ,fun JsFunction)
+		(with-access::JsFunction ,fun (len)
+		   (=fx len ,len)))
+	   (with-access::JsPropertyCache ,ccache (method owner)
+	      (with-access::JsFunction ,fun (procedure)
+		 (set! owner ,fun)
+		 (set! method procedure)
+		 (procedure ,this ,@args))))
+	  (else
+	   ,(if (>=fx len 11)
+		`(js-calln ,%this ,fun ,this ,@args)
+		`(,(string->symbol (format "js-call~a" len))
+		  ,%this ,fun ,this ,@args))))))
    
    (cond-expand
       ((or no-macro-cache no-macro-cache-call)

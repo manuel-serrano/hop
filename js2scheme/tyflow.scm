@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue May  1 15:17:20 2018 (serrano)                */
+;*    Last change :  Wed May  2 08:17:26 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -617,6 +617,19 @@
 	     (if (eq? cla 'unknown)
 		 (expr-type-set! this env fix 'any)
 		 (expr-type-set! this env fix 'object)))))))
+
+;*---------------------------------------------------------------------*/
+;*    typing ::J2SGlobalRef ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (typing this::J2SGlobalRef env::pair-nil fix::cell)
+   (multiple-value-bind (typ env bk)
+      (call-next-method)
+      (with-access::J2SGlobalRef this (decl)
+	 (with-access::J2SDecl decl (vtype)
+	    (unless (or (eq? typ 'unknown) (eq? vtype typ))
+	       (unfix! fix "globalref")
+	       (set! vtype typ))))
+      (return typ env bk)))
 
 ;*---------------------------------------------------------------------*/
 ;*    typing ::J2SRef ...                                              */

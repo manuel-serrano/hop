@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Tue May  1 17:37:35 2018 (serrano)                */
+;*    Last change :  Wed May  2 09:12:38 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -80,25 +80,36 @@
 ;*---------------------------------------------------------------------*/
 ;*    add-expr-hint! ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (add-expr-hint! this::J2SExpr newhint fix)
+(define (add-expr-hint! this::J2SExpr newhint propagate::bool fix)
+   
+   (define (add-hint! hint newhint)
+      (cond
+	 ((null? hint)
+	  (cell-set! fix #f)
+	  newhint)
+	 ((not (every (lambda (h) (pair? (assq (car h) hint))) newhint))
+	  (cell-set! fix #f)
+	  (for-each (lambda (h)
+		       (let ((c (assq (car h) hint)))
+			  (if (pair? c)
+			      (when (<fx (cdr c) (cdr h))
+				 (cell-set! fix #f)
+				 (set-cdr! c (cdr h)))
+			      (begin
+				 (cell-set! fix #f)
+				 (set! hint (cons h hint))))))
+	     newhint)
+	  hint)
+	 (else
+	  hint)))
+
    (when (pair? newhint)
       (with-access::J2SExpr this (hint)
-	 (cond
-	    ((null? hint)
-	     (cell-set! fix #f)
-	     (set! hint newhint))
-	    ((not (every (lambda (h) (pair? (assq (car h) hint))) newhint))
-	     (cell-set! fix #f)
-	     (for-each (lambda (h)
-			  (let ((c (assq (car h) hint)))
-			     (if (pair? c)
-				 (when (<fx (cdr c) (cdr h))
-				    (cell-set! fix #f)
-				    (set-cdr! c (cdr h)))
-				 (begin
-				    (cell-set! fix #f)
-				    (set! hint (cons h hint))))))
-		newhint))))))
+	 (set! hint (add-hint! hint newhint)))
+      (when (and propagate (isa? this J2SRef))
+	 (with-access::J2SRef this (decl)
+	    (with-access::J2SDecl decl (hint)
+	       (set! hint (add-hint! hint newhint)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    union-hint! ...                                                  */
@@ -126,17 +137,17 @@
       ((+ - * / %)
        (when (memq (j2s-type lhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint rhs))))
-	     (add-expr-hint! lhs hint fix)))
+	     (add-expr-hint! lhs hint #t fix)))
        (when (memq (j2s-type rhs) '(any number))
 	  (let ((hint (union-hint! (expr-hint this) (expr-hint lhs))))
-	     (add-expr-hint! rhs hint fix))))
+	     (add-expr-hint! rhs hint #t fix))))
       ((< > <= >= == === != !==)
        (when (memq (j2s-type lhs) '(any number))
 	  (let ((hint (expr-hint rhs)))
-	     (add-expr-hint! lhs hint fix)))
+	     (add-expr-hint! lhs hint #t fix)))
        (when (memq (j2s-type rhs) '(any number))
 	  (let ((hint (expr-hint lhs)))
-	     (add-expr-hint! rhs hint fix))))))
+	     (add-expr-hint! rhs hint #t fix))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SBinary ...                                          */
@@ -153,7 +164,7 @@
    (call-default-walker)
    (with-access::J2SUnary this (expr)
       (when (memq (j2s-type expr) '(any number))
-	 (add-expr-hint! expr (expr-hint this) fix))))
+	 (add-expr-hint! expr (expr-hint this) #t fix))))
 
 ;*---------------------------------------------------------------------*/
 ;*    hintnum ::J2SAssigOp ...                                         */
@@ -178,4 +189,11 @@
    (with-access::J2SPrefix this (op lhs rhs)
       (call-default-walker)
       (hintnum-binary this op lhs rhs fix)))
-	 
+
+;*---------------------------------------------------------------------*/
+;*    hintnum ::J2SRef ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hintnum this::J2SRef fix::cell)
+   (with-access::J2SRef this (decl)
+      (with-access::J2SDecl decl (hint)
+	 (add-expr-hint! this hint #f fix))))

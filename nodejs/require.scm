@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Apr 26 17:50:26 2018 (serrano)                */
+;*    Last change :  Thu May  3 07:43:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -159,8 +159,8 @@
 					 "Wrong language compiler output"
 					 lang))))))
 			 (js-raise-error (js-new-global-object)
-			    (format "Wrong language object `~a'"
-			       (typeof comp))
+			    (format "Wrong language (~s) object `~a'"
+			       lang (typeof comp))
 			    lang)))))))))
    
 ;*---------------------------------------------------------------------*/
