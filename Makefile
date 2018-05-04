@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/Makefile                          */
+#*    serrano/prgm/project/hop/3.2.x/Makefile                          */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Feb 19 12:25:16 2000                          */
-#*    Last change :  Fri Oct  6 15:29:14 2017 (serrano)                */
+#*    Last change :  Fri May  4 10:27:35 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The Makefile to build HOP.                                       */
 #*=====================================================================*/
@@ -28,7 +28,7 @@ POPDIRS		= runtime hopscheme scheme2js hopscript js2scheme \
                   src hopc hopsh hopreplay hophz \
                   etc share arch \
                   weblets widget nodejs node_modules \
-                  examples test tools doc
+                  examples test tools doc docker
 
 #*---------------------------------------------------------------------*/
 #*    build                                                            */
