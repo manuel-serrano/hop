@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Sun Apr 22 09:03:11 2018 (serrano)                */
+;*    Last change :  Fri May  4 07:33:09 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -63,7 +63,8 @@
 	 (h "localhost")
 	 (p (hop-port))
 	 (login #f)
-	 (command-string #f))
+	 (command-string #f)
+	 (ecmascriptv 2017))
       (bind-exit (stop)
 	 (args-parse (cdr args)
 	    ((("-h" "--help") (help "This message"))
@@ -227,18 +228,12 @@
 	     (j2s-compile-options-set!
 		(cons* :target 'es5 (j2s-compile-options)))
 	     (hopc-pass-set! 'client-js))
+	    (("--js-es5" (help "Enable all EcmaScript 5 support"))
+	     (set! ecmascriptv 5))
 	    (("--js-es6" (help "Enable all EcmaScript 6 support"))
-	     (j2s-compile-options-set!
-		(append
-		   (apply append
-		      (map (lambda (f) (list f #t)) ecmascript-es6))
-		   (j2s-compile-options))))
-	    (("--js-es2017" (help "Enable all EcmaScript 2017 support"))
-	     (j2s-compile-options-set!
-		(append
-		   (apply append
-		      (map (lambda (f) (list f #t)) ecmascript-es2017))
-		   (j2s-compile-options))))
+	     (set! ecmascriptv 6))
+	    (("--js-es2017" (help "Enable all EcmaScript 2017 support (default)"))
+	     (set! ecmascriptv 2017))
 	    (("--js-option" ?opt ?val (help "Add JavaScript compilation option"))
 	     (j2s-compile-options-set!
 		(cons* (string->keyword opt)
@@ -335,6 +330,16 @@
 		       (append (hopc-bigloo-options) (cdr rest)))
 		    (stop #t))
 		 (hopc-sources-set! (append (hopc-sources) (list else)))))))
+      ;; ecmascript version
+      (j2s-compile-options-set!
+	 (append
+	    (apply append
+	       (map (lambda (f) (list f #t))
+		  (case ecmascriptv
+		     ((5) '())
+		     ((6) ecmascript-es6)
+		     ((2017) ecmascript-es2017))))
+	    (j2s-compile-options)))
       (when loadp
 	 (hopc-load-rc
 	    (if (string? rc-file)
