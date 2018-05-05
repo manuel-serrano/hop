@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Wed May  2 07:51:02 2018 (serrano)                */
+;*    Last change :  Sat May  5 07:33:23 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -56,7 +56,9 @@
 
 	   (usage?::bool ::pair-nil ::pair-nil)
 	   (only-usage?::bool ::pair-nil ::pair-nil)
-	   (strict-usage?::bool ::pair-nil ::pair-nil)))
+	   (strict-usage?::bool ::pair-nil ::pair-nil)
+
+	   (is-hint?::bool ::J2SExpr ::symbol)))
 
 ;*---------------------------------------------------------------------*/
 ;*    pass ...                                                         */
@@ -563,3 +565,21 @@
 	(only-usage? keys usage)))
 	
 	
+;*---------------------------------------------------------------------*/
+;*    is-hint? ...                                                     */
+;*    -------------------------------------------------------------    */
+;*    Is the most likely hint of type TYPE?                            */
+;*---------------------------------------------------------------------*/
+(define (is-hint? this::J2SExpr type)
+   (with-access::J2SExpr this (hint)
+      (when (pair? hint)
+	 (let loop ((hint (cdr hint))
+		    (h (car hint)))
+	    (cond
+	       ((null? hint)
+		(eq? (car h) type))
+	       ((>fx (cdr (car hint)) (cdr h))
+		(loop (cdr hint) (car hint)))
+	       (else
+		(loop (cdr hint) h)))))))
+

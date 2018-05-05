@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Apr 29 11:32:48 2018 (serrano)                */
+;*    Last change :  Sat May  5 17:41:59 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -74,6 +74,7 @@
 	 (string ,js-number->string)
 	 (int53 nop)
 	 (integer nop)
+	 (real ,js-number->real)
 	 (propname nop)
 	 (any nop)))
      (string
@@ -120,6 +121,7 @@
 	 (bool js-totest)
 	 (string ,js->string)
 	 (int32 ,js->int32)
+	 (real ,js-any->real)
 	 (uint32 ,js->uint32)
 	 (number ,js->number)
 	 (object ,js->object)))))
@@ -318,6 +320,47 @@
        `(fixnum->uint32 ,v))
       (else
        `(js-number-touint32 ,v))))
+
+;*---------------------------------------------------------------------*/
+;*    js-any->real ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (js-any->real v expr conf)
+   (js->real v expr conf #t))
+
+;*---------------------------------------------------------------------*/
+;*    js-number->real ...                                              */
+;*---------------------------------------------------------------------*/
+(define (js-number->real v expr conf)
+   (js->real v expr conf #f))
+
+;*---------------------------------------------------------------------*/
+;*    js->real ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (js->real v expr conf numberp)
+   (let loop ((v v))
+      (match-case v
+	 ((? symbol?)
+	  v)
+	 (((or let let* letrec letrec*) ?- ?body)
+	  (set-car! (cddr v) (loop body))
+	  v)
+	 ((if ?- ?then ?else)
+	  (set-car! (cddr v) (loop then))
+	  (set-car! (cdddr v) (loop else))
+	  v)
+	 (((or +fl -fl *fl /fl) ?- ?-)
+	  v)
+	 (((or -/overflow +/overflow */overflow) ?- ?-)
+	  `(js-toflonum ,v))
+	 (((or js-get-name/cache js-get-object-name/cache) . ?-)
+	  (if numberp
+	      `(js-toflonum ,v)
+	      `(js-toflonum (js-tonumber ,v %this))))
+	 (else
+	  (tprint "v=" v)
+	  (if numberp
+	      `(js-toflonum ,v)
+	      `(js-toflonum (js-tonumber ,v %this)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-cast ...                                                     */

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu Feb 22 08:53:41 2018 (serrano)                */
+;*    Last change :  Sat May  5 17:34:29 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -44,7 +44,7 @@
 ;*    this-occurrence-threshold ...                                    */
 ;*---------------------------------------------------------------------*/
 (define this-occurrence-threshold 1)
-(define body-size-threshold 100)
+(define body-size-threshold 150)
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-method! ::J2SProgram ...                                     */
@@ -84,12 +84,12 @@
 ;*    method! ::J2SDeclFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (method! this::J2SDeclFun)
-   (with-access::J2SDeclFun this (usage val)
+   (with-access::J2SDeclFun this (usage val id)
       (set! val (method! val))
       (with-access::J2SFun val (thisp loc body)
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
-	       ((only-usage? '(new init) usage)
+	       ((only-usage? '(new init get) usage)
 		(with-access::J2SDecl thisp (itype utype vtype)
 		   (set! itype 'object)
 		   (set! utype 'object)

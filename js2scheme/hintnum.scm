@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Wed May  2 09:12:38 2018 (serrano)                */
+;*    Last change :  Sat May  5 07:27:26 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -197,3 +197,17 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (hint)
 	 (add-expr-hint! this hint #f fix))))
+
+;*---------------------------------------------------------------------*/
+;*    hintnum ::J2SDeclInit ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hintnum this::J2SDeclInit fix::cell)
+   (call-default-walker)
+   (with-access::J2SDeclInit this (hint val vtype itype)
+      (unless (isa? this J2SDeclFun)
+	 (add-expr-hint! val hint  #f fix)
+	 (when (is-hint? val 'real)
+	    (set! vtype 'real)
+	    (set! itype 'real)))))
+
+      
