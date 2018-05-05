@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat May  5 17:41:59 2018 (serrano)                */
+;*    Last change :  Sat May  5 18:22:50 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -357,7 +357,7 @@
 	      `(js-toflonum ,v)
 	      `(js-toflonum (js-tonumber ,v %this))))
 	 (else
-	  (tprint "v=" v)
+	  (tprint "TODO js->real " v)
 	  (if numberp
 	      `(js-toflonum ,v)
 	      `(js-toflonum (js-tonumber ,v %this)))))))
