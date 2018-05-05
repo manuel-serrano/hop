@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Sat May  5 17:34:29 2018 (serrano)                */
+;*    Last change :  Sat May  5 19:52:05 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Function->method transformation                                  */
@@ -89,12 +89,12 @@
       (with-access::J2SFun val (thisp loc body)
 	 (with-access::J2SDecl thisp (usecnt)
 	    (cond
-	       ((only-usage? '(new init get) usage)
+	       ((only-usage? '(new init) usage)
 		(with-access::J2SDecl thisp (itype utype vtype)
 		   (set! itype 'object)
 		   (set! utype 'object)
 		   (set! vtype 'object)))
-	       ((and (usage? '(ref) usage)
+	       ((and (usage? '(ref get) usage)
 		     (>=fx usecnt this-occurrence-threshold)
 		     (<fx (node-size body) body-size-threshold))
 		(set! val
