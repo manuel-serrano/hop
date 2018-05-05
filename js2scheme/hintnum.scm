@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sat May  5 07:27:26 2018 (serrano)                */
+;*    Last change :  Sat May  5 18:32:34 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -63,6 +63,16 @@
 		  (flush-output-port (current-error-port)))
 	       (cell-set! fix #t)
 	       (hintnum this fix)
+	       (unless (cell-ref fix)
+		  (loop (+fx i 1)))))
+	 (when (>=fx j2s-verbose 4) "/")
+	 (let ((fix (make-cell #t)))
+	    (let loop ((i 1))
+	       (when (>=fx j2s-verbose 4)
+		  (fprintf (current-error-port) "~a." i)
+		  (flush-output-port (current-error-port)))
+	       (cell-set! fix #t)
+	       (propagate-types this fix)
 	       (unless (cell-ref fix)
 		  (loop (+fx i 1)))))))
    this)
@@ -210,4 +220,56 @@
 	    (set! vtype 'real)
 	    (set! itype 'real)))))
 
-      
+;*---------------------------------------------------------------------*/
+;*    type<? ...                                                       */
+;*---------------------------------------------------------------------*/
+(define (type<? t1 t2)
+   (unless (eq? t1 t2)
+      (eq? t1 'real)))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-types ::J2SNode ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SNode fix::cell)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-types! ::J2SRef ...                                    */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SRef fix::cell)
+   (with-access::J2SRef this (decl type)
+      (with-access::J2SDecl decl (vtype)
+	 (when (type<? vtype type)
+	    (set! type vtype)
+	    (cell-set! fix #t)))))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-types ::J2SBinary ...                                  */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SBinary fix::cell)
+   (call-next-method)
+   (with-access::J2SBinary this (op lhs rhs type)
+      (case op
+	 ((- / *)
+	  (when (or (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
+	     (unless (eq? type 'real)
+		(set! type 'real)
+		(cell-set! fix #f))))
+	 ((+)
+	  (when (and (eq? (j2s-vtype lhs) 'real) (eq? (j2s-vtype rhs) 'real))
+	     (unless (eq? type 'real)
+		(set! type 'real)
+		(cell-set! fix #f)))))))
+
+;*---------------------------------------------------------------------*/
+;*    propagate-types ::J2SUnary ...                                   */
+;*---------------------------------------------------------------------*/
+(define-walk-method (propagate-types this::J2SUnary fix::cell)
+   (call-next-method)
+   (with-access::J2SUnary this (op expr type)
+      (when (memq op '(- +))
+	 (when (eq? (j2s-vtype expr) 'real)
+	    (unless (eq? type 'real)
+	       (set! type 'real)
+	       (cell-set! fix #f))))))
+

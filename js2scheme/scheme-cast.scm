@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat May  5 18:22:50 2018 (serrano)                */
+;*    Last change :  Sat May  5 18:44:19 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -352,7 +352,7 @@
 	  v)
 	 (((or -/overflow +/overflow */overflow) ?- ?-)
 	  `(js-toflonum ,v))
-	 (((or js-get-name/cache js-get-object-name/cache) . ?-)
+	 (((or js-get/debug js-get-name/cache js-get-object-name/cache) . ?-)
 	  (if numberp
 	      `(js-toflonum ,v)
 	      `(js-toflonum (js-tonumber ,v %this))))
