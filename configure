@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon May  7 11:26:36 2018 (serrano)                */
+#*    Last change :  Mon May  7 11:27:27 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -54,7 +54,7 @@ bcflagsrts="-unsafe -safee"
 bscm2jsflags="-unsafe"
 bhopcflags=""
 
-blflags="-copt \$(CPICFLAGS) -copt \$(CNANFLAGS) -L \$(BUILDLIBDIR) -srfi bigloo-compile"
+blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 
 mimetypes=/etc/mime.types
 jsmimetype="application/x-javascript"
