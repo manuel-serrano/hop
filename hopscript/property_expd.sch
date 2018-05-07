@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Thu May  3 18:06:54 2018 (serrano)                */
+;*    Last change :  Mon May  7 08:45:51 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -522,7 +522,7 @@
 		    (else
 		     (case (car cs)
 			((imap imap+)
-			 ;; directory property set
+			 ;; direct property set
 			 `(if (eq? %cmap (js-pcache-imap ,cache))
 			      ,(loop 'imap)
 			      ,(if (eq? (car cs) 'imap)
@@ -532,12 +532,12 @@
 				     ,obj ,prop ,tmp ,throw ,%this
 				     ,cache ,loc ',cspecs))))
 			((emap)
-			 ;; directory property set
+			 ;; direct property set
 			 `(if (eq? %cmap (js-pcache-emap ,cache))
 			      ,(loop 'emap)
 			      ,(loop (cdr cs))))
 			((cmap cmap+)
-			 ;; directory property set
+			 ;; direct property set
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))
 			      ,(loop 'cmap)
 			      ,(if (eq? (car cs) 'cmap)

@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Sun Apr 22 08:52:55 2018 (serrano)                */
+#*    Last change :  Mon May  7 10:48:16 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the HOPSCRIPT library.                     */
 #*=====================================================================*/
@@ -105,7 +105,7 @@ getsources:
 #*    bglhopscript.h                                                   */
 #*---------------------------------------------------------------------*/
 bglhopscript.h: types.scm
-	$(BIGLOO) $(EFLAGS) $(BCFLAGS) -copt $(CPICFLAGS) -copt "-I$(C_SRC_DIR)" -copt "$(CEFLAGS)" $< -o $@ -hgen
+	$(BIGLOO) $(EFLAGS) $(BCFLAGS) -copt $(CPICFLAGS) -copt $(CNANFLAGS) -copt "-I$(C_SRC_DIR)" -copt "$(CEFLAGS)" $< -o $@ -hgen
 
 #*---------------------------------------------------------------------*/
 #*    Explicit dependencies                                            */

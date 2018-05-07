@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Jul 31 06:49:37 2004                          */
-#*    Last change :  Mon Apr 23 06:34:05 2018 (serrano)                */
+#*    Last change :  Mon May  7 10:51:23 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    HOP autoconfiguration                                            */
@@ -54,7 +54,7 @@ bcflagsrts="-unsafe -safee"
 bscm2jsflags="-unsafe"
 bhopcflags=""
 
-blflags="-copt \$(CPICFLAGS) -L \$(BUILDLIBDIR) -srfi bigloo-compile"
+blflags="-copt \$(CPICFLAGS) \$(CNANFLAGS) -L \$(BUILDLIBDIR) -srfi bigloo-compile"
 
 mimetypes=/etc/mime.types
 jsmimetype="application/x-javascript"
@@ -610,7 +610,7 @@ if [ "$ccflags " = " " ]; then
   if [ "$debug " = "yes " ]; then
     ccflags=`echo $ccflags | sed 's/[-]O[0-9]//'`
   fi
-  ccflags="$ccflags -I$bigloolibdir \$(CPICFLAGS)"
+  ccflags="$ccflags -I$bigloolibdir \$(CPICFLAGS) \$(CNANFLAGS)"
 fi
 
 if [ ! -f $bigloolibdir/Makefile.config ]; then

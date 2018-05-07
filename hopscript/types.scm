@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Thu Apr  5 15:51:45 2018 (serrano)                */
+;*    Last change :  Mon May  7 11:15:40 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -535,7 +535,7 @@
       (bigloo-c
        (with-access::JsObject o (elements)
 	  (eq? elements
-	     (pragma::obj "BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(CREF($1)))->BgL_elementsz00))) + 1)))"
+	     (pragma::obj "BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1)))"
 		o))))
       (else
        #f)))
@@ -546,7 +546,7 @@
 (define-inline (js-object-inline-ref o::JsObject idx::long)
    (cond-expand
       ((and bigloo-c (not devel))
-       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(CREF($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
+       (pragma::obj "VECTOR_REF( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2 )" o idx))
       (else
        (with-access::JsObject o (elements)
 	  (vector-ref elements idx)))))
@@ -557,7 +557,7 @@
 (define-inline (js-object-inline-set! o::JsObject idx::long val::obj)
    (cond-expand
       ((and bigloo-c (not devel))
-       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(CREF($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
+       (pragma::obj "VECTOR_SET( BVECTOR( (obj_t)(( ((obj_t *)(&(((BgL_jsobjectz00_bglt)(COBJECT($1)))->BgL_elementsz00))) + 1))), $2, $3 )" o idx val))
       (else
        (with-access::JsObject o (elements)
 	  (vector-set! elements idx val)))))
