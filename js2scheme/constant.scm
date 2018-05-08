@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue May  1 06:52:27 2018 (serrano)                */
+;*    Last change :  Tue May  8 15:01:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -220,8 +220,14 @@
 		     (J2SNumber/type 'real -0.0)
 		     (J2SNumber/type type (- val))))
 		((~)
-		 (tprint "TODO.constant! " (j2s->list this))
-		 this)
+		 (if (fixnum? val)
+		     (let ((~val (bit-nots32 (fixnum->int32 val))))
+			(if (and (>=fx (int32->fixnum ~val) (minvalfx))
+				 (<=fx (int32->fixnum ~val) (maxvalfx)))
+			    (J2SNumber/type 'integer
+			       (int32->fixnum (bit-nots32 (fixnum->int32 val))))
+			    this))
+		     this))
 		(else
 		 this)))
 	  this)))

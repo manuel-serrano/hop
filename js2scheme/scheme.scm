@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue May  1 15:30:31 2018 (serrano)                */
+;*    Last change :  Tue May  8 08:07:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1786,7 +1786,9 @@
 		     (if (type-object? (j2s-type obj))
 			 (access-inc-sans-object otmp prop op lhs rhs inc)
 			 `(if (js-object? ,otmp)
-			      ,(access-inc-sans-object otmp prop op lhs rhs inc)
+			      ,(with-object obj
+				  (lambda ()
+				     (access-inc-sans-object otmp prop op lhs rhs inc)))
 			      ,(j2s-put! loc otmp 'any prop 'any 1 'any (strict-mode? mode) conf cache '())))
 		     (let* ((ptmp (gensym 'prop))
 			    (pvar (J2SHopRef ptmp)))
@@ -1794,7 +1796,9 @@
 			    ,(if (type-object? (j2s-type obj))
 				 (access-inc-sans-object otmp pvar op lhs rhs inc)
 				 `(if (js-object? ,otmp)
-				      ,(access-inc-sans-object otmp pvar op lhs rhs inc)
+				      ,(with-object obj
+					  (lambda ()
+					     (access-inc-sans-object otmp pvar op lhs rhs inc)))
 				      ,(j2s-put! loc otmp 'any pvar 'any 1 'any (strict-mode? mode) conf cache '()))))))))))
 
    (with-access::J2SAssig this (loc lhs rhs type)
@@ -1842,7 +1846,7 @@
 (define-method (j2s-scheme this::J2SAssigOp mode return conf)
    
    (define (aput-assigop otmp::symbol pro prov op
-	      tl::symbol lhs::J2SAccess rhs::J2SExpr cs)
+	      tl::symbol lhs::J2SAccess rhs::J2SExpr cslhs cs)
       (with-access::J2SAssigOp this ((typea type))
 	 (with-access::J2SAccess lhs (obj field loc cache cspecs (typel type))
 	    (with-access::J2SExpr obj ((typeo type) loc)
@@ -1853,7 +1857,7 @@
 			       (itype typeo)))
 		      (lhs (J2SCast tl
 			      (duplicate::J2SAccess lhs
-				 (cspecs cs)
+				 (cspecs cslhs)
 				 (obj oref)
 				 (field (if pro
 					    (J2SHopRef/type pro
@@ -1870,49 +1874,51 @@
 			  (strict-mode? mode) conf
 			  cache (if (is-number? field) '() cs))
 		      ,vtmp))))))
-      
-   (define (access-assigop/otmp otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
+
+   (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache cspecs)
 	 (let* ((prov (j2s-property-scheme field mode return conf))
 		(pro (when (pair? prov) (gensym 'prop))))
 	    `(let* (,@(if pro (list `(,pro ,prov)) '()))
 		,(cond
-		    ((memq 'cmap cspecs)
-		     (aput-assigop otmp pro prov op
-			tl lhs rhs cspecs))
+;* 		    ((memq 'cmap cspecs)                               */
+;* 		     (aput-assigop otmp pro prov op                    */
+;* 			tl lhs rhs cspecs))                            */
 		    ((or (not cache) (is-integer? field))
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs '()))
+			tl lhs rhs '() '()))
 		    ((memq (typeof-this obj conf) '(object this global))
 		     `(with-access::JsObject ,otmp (cmap)
 			 (let ((%omap cmap))
 			    (if (eq? (js-pcache-cmap ,(js-pcache cache)) %omap)
 				,(aput-assigop otmp pro prov op
-				    tl lhs rhs cspecs)
+				    tl lhs rhs '(cmap-incache) cspecs)
 				,(aput-assigop otmp pro prov op
-				    tl lhs rhs '(cmap+))))))
+				    tl lhs rhs '(cmap+) '(cmap+))))))
 		    (else
-		     `(if (js-object? ,otmp)
-			  (with-access::JsObject ,otmp (cmap)
-			     (let ((%omap cmap))
-				(if (eq? (js-pcache-cmap ,(js-pcache cache))
-				       %omap)
-				    ,(aput-assigop otmp pro prov op
-					tl lhs rhs cspecs)
-				    ,(aput-assigop otmp pro prov op
-					tl lhs rhs '(cmap+)))))
+		      `(if (js-object? ,otmp)
+			   ,(with-object obj
+			      (lambda ()
+				 `(with-access::JsObject ,otmp (cmap)
+				    (let ((%omap cmap))
+				       (if (eq? (js-pcache-cmap ,(js-pcache cache))
+					      %omap)
+					   ,(aput-assigop otmp pro prov op
+					       tl lhs rhs '(cmap-incache) cspecs)
+					   ,(aput-assigop otmp pro prov op
+					       tl lhs rhs '(cmap+) '(cmap+)))))))
 			  (let ((%omap (js-not-a-cmap)))
 			     ,(aput-assigop otmp pro prov op
-				 tl lhs rhs '(cmap+))))))))))
+				 tl lhs rhs '() '())))))))))
 
    (define (access-assigop op tl::symbol lhs::J2SAccess rhs::J2SExpr)
       (with-access::J2SAccess lhs (obj field cache)
 	 (let ((tmpval (j2s-scheme obj mode return conf)))
 	    (if (symbol? tmpval)
-		(access-assigop/otmp tmpval op tl lhs rhs)
+		(access-assigop/otmp obj tmpval op tl lhs rhs)
 		(let ((otmp (gensym 'obj)))
 		   `(let ((,otmp ,tmpval))
-		       ,(access-assigop/otmp otmp op tl lhs rhs)))))))
+		       ,(access-assigop/otmp obj otmp op tl lhs rhs)))))))
    
       
    (with-access::J2SAssigOp this (loc lhs rhs op type)
@@ -2631,4 +2637,26 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cancall this::J2SCall cell)
    (cell-set! cell #t))
-   
+
+;*---------------------------------------------------------------------*/
+;*    with-object ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (with-object expr::J2SExpr thunk)
+   (with-access::J2SExpr expr (type)
+      (let ((otype type))
+	 (if (isa? expr J2SRef)
+	     (with-access::J2SRef expr (decl)
+		(with-access::J2SDecl decl (vtype usage ronly)
+		   (if ronly
+		       (let ((ovtype vtype))
+			  (set! vtype 'object)
+			  (set! type 'object)
+			  (unwind-protect
+			     (thunk)
+			     (begin
+				(set! vtype ovtype)
+				(set! type otype))))
+		       (thunk))))
+	     (unwind-protect
+		(thunk)
+		(set! type otype))))))

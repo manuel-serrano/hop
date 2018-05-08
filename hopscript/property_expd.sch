@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon May  7 08:45:51 2018 (serrano)                */
+;*    Last change :  Tue May  8 15:40:15 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -287,6 +287,11 @@
 			 (js-profile-log-cache ,cache :cmap #t)
 			 (js-profile-log-index idx)
 			 (vector-ref elements idx)))
+		    ((eq? cs 'cmap)
+		     `(let ((idx (js-pcache-index ,cache)))
+			 (js-profile-log-cache ,cache :cmap #t)
+			 (js-profile-log-index idx)
+			 (vector-ref elements idx)))
 		    ((eq? cs 'pmap)
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (with-access::JsObject (js-pcache-owner ,cache) (elements)
@@ -304,6 +309,8 @@
 		     (error "js-object-get-name/cache" "bad form" x))
 		    (else
 		     (case (car cs)
+			((imap-incache)
+			 (loop 'imap))
 			((imap imap+)
 			 ;; direct inlined property get
 			 `(if (eq? %cmap (js-pcache-imap ,cache))
@@ -315,6 +322,8 @@
 				     ,obj ,prop ,throw ,%this ,cache ,loc ',cspecs))))
 			((emap)
 			 (loop (cdr cs)))
+			((cmap-incache)
+			 (loop 'cmap))
 			((cmap cmap+)
 			 ;; direct property get
 			 `(if (eq? %cmap (js-pcache-cmap ,cache))
