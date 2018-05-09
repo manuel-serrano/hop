@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Sun Apr 22 18:14:37 2018 (serrano)                */
+;*    Last change :  Tue May  8 16:42:57 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -205,7 +205,7 @@
 	  ((or (= obj +inf.0) (= obj -inf.0) (nanfl? obj))
 	   (fixnum->int32 0))
 	  ((<fl obj 0.)
-	   (let ((i (*fl -1. (floor (abs obj)))))
+	   (let ((i (*fl -1. (floorfl (absfl obj)))))
 	      (if (>=fl i (negfl (exptfl 2. 31.)))
 		  (fixnum->int32 (flonum->fixnum i))
 		  (int64->int32 (flonum->int64 i)))))
@@ -234,7 +234,7 @@
 	 ((or (= obj +inf.0) (= obj -inf.0) (not (= obj obj)))
 	  #u32:0)
 	 ((<fl obj 0.)
-	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floor (abs obj))))))
+	  (positive-double->uint32 (+fl 2^32 (*fl -1. (floorfl (absfl obj))))))
 	 (else
 	  (positive-double->uint32 obj))))
    
