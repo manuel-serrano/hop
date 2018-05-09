@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Sep 21 10:17:45 2013                          */
-;*    Last change :  Mon May  7 11:15:40 2018 (serrano)                */
+;*    Last change :  Wed May  9 12:01:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript types                                                  */
@@ -883,7 +883,11 @@
 ;*    js-object? ...                                                   */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-object? o)
-   (and (%object? o) (>u32 (js-object-mode o) #u32:0)))
+   (cond-expand
+      ((config nan-tagging #t)
+       ($nanobject? o))
+      (else
+       (and (%object? o) (>u32 (js-object-mode o) #u32:0)))))
 ;*    (isa? o JsObject))                                               */
 
 ;*---------------------------------------------------------------------*/

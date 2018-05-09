@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Wed Feb 17 07:55:08 2016                          */
-/*    Last change :  Thu Aug  3 14:00:36 2017 (serrano)                */
+/*    Last change :  Wed May  9 11:55:34 2018 (serrano)                */
 /*    Copyright   :  2016-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optional file, used only for the C backend, that optimizes       */
@@ -166,13 +166,13 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
    int i;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BOBJECT( o ), JSOBJECT_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSOBJECT_CLASS_INDEX );
    
    // fields init
    o->BgL___proto__z00 = __proto__;
    o->BgL_cmapz00 = (BgL_jsconstructmapz00_bglt)constrmap;
-   BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
-   BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), (long)mode );
+   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), BNIL );
+   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
    
    // elements initialization
    vector = (obj_t)(&(o->BgL_elementsz00) + 1);
@@ -199,7 +199,7 @@ bgl_make_jsobject( int constrsize, obj_t constrmap, obj_t __proto__, uint32_t mo
    }
 #endif
    
-   return BOBJECT( o );
+   return BNANOBJECT( o );
 }
 
 /*---------------------------------------------------------------------*/
@@ -241,7 +241,7 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj
    int i;
 
    // class initialization
-   BGL_OBJECT_CLASS_NUM_SET( BOBJECT( o ), JSARRAY_CLASS_INDEX );
+   BGL_OBJECT_CLASS_NUM_SET( BNANOBJECT( o ), JSARRAY_CLASS_INDEX );
    
    // fields init
    o->BgL___proto__z00 = __proto__;
@@ -249,8 +249,8 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj
    o->BgL_elementsz00 = empty_vector;
    o->BgL_lengthz00 = len;
    o->BgL_ilenz00 = 0;
-   BGL_OBJECT_HEADER_SIZE_SET( BOBJECT( o ), (long)mode );
-   BGL_OBJECT_WIDENING_SET( BOBJECT( o ), BNIL );
+   BGL_OBJECT_HEADER_SIZE_SET( BNANOBJECT( o ), (long)mode );
+   BGL_OBJECT_WIDENING_SET( BNANOBJECT( o ), BNIL );
   
    // vector initialization
    vector = (obj_t)(&(o->BgL_vecz00) + 1);
@@ -267,7 +267,7 @@ bgl_make_jsarray( long size, uint32_t len, obj_t constrmap, obj_t __proto__, obj
       VECTOR_SET( vector, i, absent );
    }
 
-   return BOBJECT( o );
+   return BNANOBJECT( o );
 }
 
 /*---------------------------------------------------------------------*/
