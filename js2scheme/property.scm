@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Wed Apr 18 09:28:38 2018 (serrano)                */
+;*    Last change :  Wed May  9 12:36:53 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Add a cache to each object property lookup                       */
@@ -145,7 +145,8 @@
 (define-walk-method (property* this::J2SAccess count env ccall assig infunp shared-pcache)
    
    (define (canbe-object? obj)
-      (not (type-number? (j2s-type obj))))
+      (and (not (type-number? (j2s-type obj)))
+	   (not (eq? (j2s-type obj) 'pair))))
 
    (if infunp
        (with-access::J2SAccess this (cache obj field)
@@ -214,8 +215,12 @@
 	 ((not ccall)
 	  (call-default-walker))
 	 ((isa? fun J2SAccess)
-	  (set! cache (inc! count))
-	  (cons cache (call-default-walker)))
+	  (with-access::J2SAccess fun (obj)
+	     (if (eq? (j2s-type obj) 'pair)
+		 (call-default-walker)
+		 (begin
+		    (set! cache (inc! count))
+		    (cons cache (call-default-walker))))))
 	 ((read-only-function? fun)
 	  (call-default-walker))
 	 (else

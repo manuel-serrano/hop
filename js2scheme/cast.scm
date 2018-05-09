@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Sun Apr 29 20:16:53 2018 (serrano)                */
+;*    Last change :  Wed May  9 12:47:30 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Type casts introduction                                          */
@@ -551,4 +551,16 @@
 (define-method (type-cast! this::J2SDataPropertyInit totype)
    (with-access::J2SDataPropertyInit this (val)
       (set! val (type-cast! val 'any))
+      this))
+
+;*---------------------------------------------------------------------*/
+;*    type-cast! ::J2SDProducer ...                                    */
+;*---------------------------------------------------------------------*/
+(define-method (type-cast! this::J2SDProducer totype)
+   (with-access::J2SDProducer this (expr)
+      (if (eq? totype 'object)
+	  ;; only handle object cast, array cast will be handled
+	  ;; in the code generation of producer (see scheme.scm)
+	  (set! expr (type-cast! expr totype))
+	  (set! expr (type-cast! expr '*)))
       this))

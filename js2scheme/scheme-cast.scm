@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sat May  5 18:44:19 2018 (serrano)                */
+;*    Last change :  Wed May  9 12:49:27 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -42,6 +42,7 @@
 	 (propname ,js-int32->propname)
 	 (bool ,js-int32->bool)
 	 (string ,js-int32->string)
+	 (object js-number->jsobject)
 	 (any ,js-int32->integer)))
      (uint32
 	((uint29 nop)
@@ -52,12 +53,14 @@
 	 (propname ,js-uint32->propname)
 	 (bool ,js-uint32->bool)
 	 (string ,js-uint32->string)
+	 (object js-number->jsobject)
 	 (any ,js-uint32->integer)))
      (int53
 	((int30 nop)
 	 (int32 js-int53-toint32)
 	 (uint32 js-int53-touint32)
 	 (number js-int53-tointeger)
+	 (object js-number->jsobject)
 	 (any js-int53-tointeger)))
      (integer
 	((int32 ,js-fixnum->int32)
@@ -76,23 +79,30 @@
 	 (integer nop)
 	 (real ,js-number->real)
 	 (propname nop)
+	 (object ,js-number->jsobject)
 	 (any nop)))
      (string
 	((propname nop)
 	 (bool ,js-string->bool)
+	 (object ,js-string->jsobject)
 	 (any nop)))
      (function
 	((any nop)))
      (object
-	((any nop)))
+	((bool ,(lambda (v expr conf) #t))
+	 (array nop)
+	 (any nop)))
      (bool
 	((int32 ,js-bool->int32)
 	 (uint32 ,js-bool->uint32)
+	 (object ,js-bool->jsobject)
 	 (any nop)))
      (null
-	((any nop)))
+	((object ,js-toobject)
+	 (any nop)))
      (undefined
-	((any nop)))
+	((object ,js-toobject)
+	 (any nop)))
      (regexp
 	((any nop)))
      (array
@@ -108,6 +118,7 @@
      (real
 	((uint32 js-number-touint32)
 	 (int32 js-number-toint32)
+	 (object js-number->jsobject)
 	 (any nop)))
      (class
 	((any nop)))
@@ -213,6 +224,10 @@
        (>fx (string-length v) 0)
        `(js-jsstring->bool ,v)))
 
+(define (js-string->jsobject v expr conf)
+   `(with-access::JsGlobalObject %this (js-string)
+       (js-new1 %this js-string ,v)))
+
 ;; any
 (define (js->object v expr conf)
    (if (eq? (j2s-type expr) 'object)
@@ -242,7 +257,9 @@
 (define (js-bool->uint32 v expr conf)
    (if (boolean? v) (if v #u32:1 #u32:0) `(if ,v #u32:1 #u32:0)))
 
-
+(define (js-bool->jsobject v expr conf)
+   `(with-access::JsGlobalObject %this (js-boolean)
+       (js-new1 %this js-boolean ,v)))
 
 (define (js-uint32->propname v expr conf)
    (if (and (uint32? v) (<u32 v (-u32 (bit-lshu32 #u32:1 29) #u32:1)))
@@ -320,6 +337,12 @@
        `(fixnum->uint32 ,v))
       (else
        `(js-number-touint32 ,v))))
+
+(define (js-number->jsobject v expr conf)
+   `(js-number->jsNumber ,v %this))
+
+(define (js-toobject v expr conf)
+   `(js-toobject %this ,v))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-any->real ...                                                 */
