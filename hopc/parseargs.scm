@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Fri May  4 07:33:09 2018 (serrano)                */
+;*    Last change :  Wed May  9 16:22:48 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -263,10 +263,14 @@
 	     (hopc-j2s-flags-set! (cons* :optim-ccall #t (hopc-j2s-flags))))
 	    (("-fno-ccall" (help "Disable call caches"))
 	     (hopc-j2s-flags-set! (cons* :optim-ccall #f (hopc-j2s-flags))))
-	    (("-fhint" (help "Enable hint typing (-Ox)"))
+	    (("-fhint" (help "Enable hint typing (-O3)"))
 	     (hopc-j2s-flags-set! (cons* :optim-hint #t (hopc-j2s-flags))))
 	    (("-fno-hint" (help "Disable hint typing"))
 	     (hopc-j2s-flags-set! (cons* :optim-hint #f (hopc-j2s-flags))))
+	    (("-fhint-loop" (help "Enable loop hint typing"))
+	     (hopc-j2s-flags-set! (cons* :optim-hint-loop #t (hopc-j2s-flags))))
+	    (("-fno-hint-loop" (help "Disable loop hint typing"))
+	     (hopc-j2s-flags-set! (cons* :optim-hint-loop #f (hopc-j2s-flags))))
 	    (("-frange" (help "Enable range optimization (-Ox)"))
 	     (hopc-j2s-flags-set! (cons* :optim-range #t (hopc-j2s-flags))))
 	    (("-fno-range" (help "Disable range optimization"))
@@ -299,7 +303,7 @@
 	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
 	    (("-fno-clevel" (help "Disable property cache level optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-clevel #f (hopc-j2s-flags))))
-	    (("-fliterals" (help "Enable literals optimization (-Ox)"))
+	    (("-fliterals" (help "Enable literals optimization (-O3)"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #t (hopc-j2s-flags))))
 	    (("-fno-literals" (help "Disable literals optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-literals #f (hopc-j2s-flags))))

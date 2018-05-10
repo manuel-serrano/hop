@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue May  1 16:24:17 2018 (serrano)                */
+;*    Last change :  Wed May  9 15:52:34 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -386,12 +386,14 @@
 	 (unless (memq :optim-integer o)
 	    (set! o (cons* :optim-integer #t o)))
 	 (unless (memq :optim-inline o)
-	    (set! o (cons* :optim-inline #t o)))
+	    (set! o (cons* :optim-inline #t o))))
+      (when (>=fx l 4)
+	 (unless (memq :optim-literals o)
+	    (set! o (cons* :optim-literals #t o)))
 	 (unless (memq :optim-hint o)
 	    (set! o (cons* :optim-hint #t o)))
-	 (unless (memq :optim-literals o)
-	    (set! o (cons* :optim-literals #t o))))
-      (when (>=fx l 4)
+	 (unless (memq :optim-array o)
+	    (set! o (cons* :optim-array #t o)))
 	 (unless (memq :optim-hintnum o)
 	    (set! o (cons* :optim-hintnum #t o)))
 	 (unless (memq :optim-range o)

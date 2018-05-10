@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Sat Feb  3 19:53:03 2018 (serrano)                */
+;*    Last change :  Wed May  9 16:21:57 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -47,7 +47,7 @@
       (for-each (lambda (n) (j2s-hint n '() 'number 1)) nodes)
       ;; then, for each function whose parameters are "hinted", generate
       ;; an ad-hoc typed version
-      (if (>=fx (config-get conf :optim 0) 3)
+      (if (config-get conf :optim-hint)
 	  (let ((dups (append-map (lambda (d) (j2s-hint-function* d conf))
 			 decls)))
 	     (when (pair? dups)
@@ -59,6 +59,9 @@
 		      decls)))
 	     (for-each (lambda (n) (j2s-call-hint! n #f)) decls)
 	     (for-each (lambda (n) (j2s-call-hint! n #f)) nodes)
+	     (when (config-get conf :optim-hint-loop #f)
+		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) decls)
+		(for-each (lambda (n) (j2s-hint-loop! n #f 0)) nodes))
 	     dups)
 	  '())))
 
@@ -1036,7 +1039,8 @@
 					(let ((an (j2s-alpha n '() '())))
 					   (reset-type! an decls)))
 				   nodes))))
-		(otherwise (duplicate::J2SBlock this)))
+		(otherwise (J2SMeta 0 0
+			      (duplicate::J2SBlock this))))
 	    (dispatch-body this pred then otherwise))))
    
    (with-access::J2SLetBlock this (decls nodes loc)
@@ -1049,6 +1053,8 @@
 				   (best-hint-type p #t))
 			      decls)))
 		(set! nodes (list (loop-dispatch this decls htypes)))
+		(tprint "DUPLICATE LOOP loc="
+		   loc " " (j2s->list (test-hint-decls decls htypes loc)))
 		this)
 	     (call-default-walker)))))
 

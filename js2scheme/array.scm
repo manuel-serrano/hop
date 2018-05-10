@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov  3 18:13:46 2016                          */
-;*    Last change :  Mon Feb 12 11:57:33 2018 (serrano)                */
+;*    Last change :  Wed May  9 15:52:44 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Array loop optimization                                          */
@@ -37,6 +37,7 @@
    (instantiate::J2SStageProc
       (name "array")
       (comment "Array loop optimization")
+      (optional :optim-array)
       (proc j2s-array!)))
 
 ;*---------------------------------------------------------------------*/
@@ -44,8 +45,7 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-array! this args)
    (when (isa? this J2SProgram)
-      (when (>=fx (config-get args :optim 0) 6)
-	 (j2s-array-program! this args))
+      (j2s-array-program! this args)
       this))
 
 ;*---------------------------------------------------------------------*/

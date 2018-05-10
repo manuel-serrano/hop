@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Sat May  5 18:32:34 2018 (serrano)                */
+;*    Last change :  Wed May  9 15:54:04 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -44,6 +44,7 @@
    (instantiate::J2SStageProc
       (name "hintnum")
       (comment "Numerical hint typing")
+      (optional :optim-hintnum)
       (proc j2s-hintnum)))
 
 ;*---------------------------------------------------------------------*/
@@ -54,27 +55,26 @@
    (define j2s-verbose (config-get conf :verbose 0))
    
    (when (isa? this J2SProgram)
-      (when (config-get conf :optim-hintnum #f)
-	 (when (>=fx j2s-verbose 4) (display " " (current-error-port)))
-	 (let ((fix (make-cell #t)))
-	    (let loop ((i 1))
-	       (when (>=fx j2s-verbose 4)
-		  (fprintf (current-error-port) "~a." i)
-		  (flush-output-port (current-error-port)))
-	       (cell-set! fix #t)
-	       (hintnum this fix)
-	       (unless (cell-ref fix)
-		  (loop (+fx i 1)))))
-	 (when (>=fx j2s-verbose 4) "/")
-	 (let ((fix (make-cell #t)))
-	    (let loop ((i 1))
-	       (when (>=fx j2s-verbose 4)
-		  (fprintf (current-error-port) "~a." i)
-		  (flush-output-port (current-error-port)))
-	       (cell-set! fix #t)
-	       (propagate-types this fix)
-	       (unless (cell-ref fix)
-		  (loop (+fx i 1)))))))
+      (when (>=fx j2s-verbose 4) (display " " (current-error-port)))
+      (let ((fix (make-cell #t)))
+	 (let loop ((i 1))
+	    (when (>=fx j2s-verbose 4)
+	       (fprintf (current-error-port) "~a." i)
+	       (flush-output-port (current-error-port)))
+	    (cell-set! fix #t)
+	    (hintnum this fix)
+	    (unless (cell-ref fix)
+	       (loop (+fx i 1)))))
+      (when (>=fx j2s-verbose 4) "/")
+      (let ((fix (make-cell #t)))
+	 (let loop ((i 1))
+	    (when (>=fx j2s-verbose 4)
+	       (fprintf (current-error-port) "~a." i)
+	       (flush-output-port (current-error-port)))
+	    (cell-set! fix #t)
+	    (propagate-types this fix)
+	    (unless (cell-ref fix)
+	       (loop (+fx i 1))))))
    this)
 
 ;*---------------------------------------------------------------------*/
