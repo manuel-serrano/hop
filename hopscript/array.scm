@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Mon Apr 23 08:11:27 2018 (serrano)                */
+;*    Last change :  Sun May 13 20:22:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -2653,6 +2653,7 @@
 			     (set! length nilen)))
 		       v)
 		      ((js-object-mode-holey? o)
+		       (js-object-mode-inline-set! o #f)
 		       (vector-set! vec (uint32->fixnum idx) v)
 		       (when (>u32 idx length)
 			  (set! length (+u32 idx #u32:1)))
@@ -3144,8 +3145,8 @@
 		    (call-next-method))
 		   ((<u32 i vlen)
 		    (unless (js-absent? (u32vref vec i))
-		       (proc (js-integer->jsstring (uint32->fixnum i)))
-		       (loop (+u32 i #u32:1))))
+		       (proc (js-integer->jsstring (uint32->fixnum i))))
+		    (loop (+u32 i #u32:1)))
 		   (else
 		    (call-next-method)))))
 	  (call-next-method))))

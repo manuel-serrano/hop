@@ -1,10 +1,10 @@
 /*=====================================================================*/
-/*    serrano/trashcan/array.js                                        */
+/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/array.js        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Mon Dec 11 19:41:00 2017 (serrano)                */
-/*    Copyright   :  2014-17 Manuel Serrano                            */
+/*    Last change :  Sun May 13 20:28:03 2018 (serrano)                */
+/*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
 /*=====================================================================*/
@@ -299,3 +299,20 @@ var p = [];
 
 [1,2,3,4,5,6,7,8,9,10].forEach( n => assert.ok( p.push( true ) === n ) );
 
+/*---------------------------------------------------------------------*/
+/*    holey                                                            */
+/*---------------------------------------------------------------------*/
+function holey() {
+   var a = [];
+   var k = 0; 
+
+   a[ 1 ] = 3;
+
+   for( var i in a ) {
+      k += i;
+   }
+
+   return k;
+}
+
+assert.ok( holey(), 1 );
