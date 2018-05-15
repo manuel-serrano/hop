@@ -249,7 +249,6 @@
 	 ((function)
 	  (function-declaration))
 	 ((ID)
-	  (tprint "ID=" (peek-token-value))
 	  (if (eq? (peek-token-value) 'async)
 	      (let* ((token (consume-any!))
 		     (next (peek-token-type)))
