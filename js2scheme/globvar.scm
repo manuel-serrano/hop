@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu May  3 07:07:58 2018 (serrano)                */
+;*    Last change :  Tue May 15 09:57:38 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -47,7 +47,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-globvar! ::J2SProgram ...                                    */
 ;*---------------------------------------------------------------------*/
-(define (j2s-globvar! this::J2SProgram args)
+(define (j2s-globvar! this args)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)
 	 (unless direct-eval

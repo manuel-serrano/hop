@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed May  2 08:21:32 2018 (serrano)                */
+;*    Last change :  Tue May 15 10:41:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -39,6 +39,7 @@
 (define (dump-info this::J2SNode)
    (with-access::J2SNode this (%info)
       (if (and (not (eq? %info #unspecified))
+	       (not (null? %info))
 	       (or (>= (bigloo-debug) 3)
 		   (string-contains (or (getenv "HOPTRACE") "") "j2s:info")))
 	  `(:%info ,(j2s-info->list %info))

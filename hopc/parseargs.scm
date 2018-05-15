@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Wed May  9 16:22:48 2018 (serrano)                */
+;*    Last change :  Tue May 15 09:57:06 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -299,6 +299,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-cce #t (hopc-j2s-flags))))
 	    (("-fno-cce" (help "Disable common inline caching"))
 	     (hopc-j2s-flags-set! (cons* :optim-cce #f (hopc-j2s-flags))))
+	    (("-fpce" (help "Enable property cache elimination (-Ox)"))
+	     (hopc-j2s-flags-set! (cons* :optim-pce #t (hopc-j2s-flags))))
+	    (("-fno-pce" (help "Disable property cache elimination"))
+	     (hopc-j2s-flags-set! (cons* :optim-pce #f (hopc-j2s-flags))))
 	    (("-fclevel" (help "Enable property cache level optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
 	    (("-fno-clevel" (help "Disable property cache level optimization"))
