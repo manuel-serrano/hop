@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu May  3 07:43:06 2018 (serrano)                */
+;*    Last change :  Tue May 15 05:50:20 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -345,7 +345,7 @@
 			(display "\nreturn module.exports;}\n" op)
 			(when srcmap
 			   (fprintf op "\n\nhop_source_mapping_url(~s, \"~a\");\n"
-			      filename srcmap)
+			      (or srcalias filename) srcmap)
 			   (fprintf op "\n//# sourceMappingURL=~a\n" srcmap)))
 		     ;; first element of the tree is a position offset
 		     ;; see sourcemap generation

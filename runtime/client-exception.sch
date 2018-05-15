@@ -1,10 +1,10 @@
 ;*=====================================================================*/
-;*    serrano/prgm/project/hop/3.0.x/runtime/client-exception.sch      */
+;*    serrano/prgm/project/hop/3.2.x/runtime/client-exception.sch      */
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sat Aug 10 05:33:45 2013                          */
-;*    Last change :  Fri Oct 16 08:42:01 2015 (serrano)                */
-;*    Copyright   :  2013-15 Manuel Serrano                            */
+;*    Last change :  Mon May 14 16:23:10 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common exception implementation.                                 */
 ;*=====================================================================*/
@@ -84,7 +84,10 @@
    (pregexp "^([^ ]+)@([^ ]+)$"))
 
 (define *firefox-frame-location-regexp*
-   (pregexp "(.+):([0-9]+)$"))
+   (pregexp "(.+):([0-9]+):([0-9]+)$"))
+
+(define *firefox-id-regexp*
+   (pregexp "hop[[]\"%requires\"][[]\"[^\"]+\"]/(.*)"))
 
 ;*---------------------------------------------------------------------*/
 ;*    *opera-stack-frame-regexp* ...                                   */
@@ -133,7 +136,9 @@
    (define (firefox-frame f)
       
       (define (firefox-demangle id)
-	 (let ((i (string-index id "/")))
+	 (let* ((m (pregexp-match *firefox-id-regexp* id))
+		(id (if (pair? m) (cadr m) id))
+		(i (string-index id "/")))
 	    (if (integer? i)
 		(let* ((pref (substring id 0 i))
 		       (dm (hop-demangle pref)))
@@ -141,7 +146,7 @@
 		       (string-append dm " (let)")
 		       (string-append dm (hop-demangle (substring id i)))))
 		(hop-demangle id))))
-      
+
       (let ((m (pregexp-match *firefox-stack-frame-regexp* f)))
 	 (when (pair? m)
 	    (let* ((id (cadr m))
@@ -150,11 +155,13 @@
 		   (l (pregexp-match *firefox-frame-location-regexp* loc)))
 	       (unless (hop-hidden-frame-id? id)
 		  (if (pair? l)
-		      (let ((file (abspath (cadr l)))
-			    (line (string->integer (caddr l))))
+		      (let* ((file (abspath (cadr l)))
+			     (line (string->integer (caddr l)))
+			     (col (string->integer (cadddr l))))
 			 (multiple-value-bind (srcfile srcline _)
-			    (hop-source-map file line 0)
+			    (hop-source-map file line col)
 			    (if (string? srcfile)
+				;; FF returns a source-mapped stack
 				(list dm
 				   `(line ,srcfile ,srcline)
 				   `(js-line ,file ,(-fx line 1))
@@ -201,7 +208,7 @@
 				   `(type . ,(if (string=? dm id) 'js 'client))
 				   '(format . "~~~a")))))
 		      (list dm)))))))
-   
+
    (let* ((stack (car f))
 	  (lines (string-split stack "\n"))
 	  (offset (cdr (assq 'offset (cddr f)))))

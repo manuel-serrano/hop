@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jul 21 12:09:24 2013                          */
-;*    Last change :  Wed Mar 14 07:27:37 2018 (serrano)                */
+;*    Last change :  Mon May 14 16:28:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Debugging facilities                                             */
@@ -36,6 +36,8 @@
    
    (export (hop-debug-init! ::output-port)
 	   (hop-debug-exception-stack ::obj)))
+
+(define (alert . l) l)
 
 ;*---------------------------------------------------------------------*/
 ;*    services ...                                                     */
