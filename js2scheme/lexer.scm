@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:33:09 2013                          */
-;*    Last change :  Wed Apr 18 13:52:47 2018 (serrano)                */
+;*    Last change :  Tue May 15 11:22:25 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript lexer                                                 */
@@ -44,7 +44,7 @@
 (define *JS-care-future-reserved* #t)
 
 (define *keyword-list*
-   '("async"
+   '(;;"async"
      "await"
      "break"
      "case"

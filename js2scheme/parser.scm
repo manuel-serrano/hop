@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Sun Apr 22 19:54:25 2018 (serrano)                */
+;*    Last change :  Tue May 15 11:22:22 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -248,8 +248,16 @@
       (case (peek-token-type)
 	 ((function)
 	  (function-declaration))
-	 ((async)
-	  (async-declaration))
+	 ((ID)
+	  (tprint "ID=" (peek-token-value))
+	  (if (eq? (peek-token-value) 'async)
+	      (let* ((token (consume-any!))
+		     (next (peek-token-type)))
+		 (token-push-back! token)
+		 (if (eq? next 'function)
+		     (async-declaration)
+		     (statement)))
+	      (statement)))
 	 ((service)
 	  (service-declaration))
 	 ((class)
