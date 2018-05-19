@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Tue May 15 09:55:33 2018 (serrano)                */
+;*    Last change :  Fri May 18 16:01:59 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -361,7 +361,7 @@
 			  "stdin"
 			  (input-port-name in)))))
 	  (opts (compile-opts in args))
-	  (conf (cons* :mmaps '() opts)))
+	  (conf (cons* :mmaps '() :tmp tmp opts)))
       (when (>=fx (bigloo-debug) 1) (make-directories tmp))
       (unwind-protect
 	 (let ((ast (j2s-parser in conf)))

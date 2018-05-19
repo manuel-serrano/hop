@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue May 15 10:41:46 2018 (serrano)                */
+;*    Last change :  Wed May 16 06:01:51 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -680,7 +680,9 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SCond)
    (with-access::J2SCond this (test then else)
-      `(,@(call-next-method) ,@(dump-type this) ,@(dump-range this)
+      `(,@(call-next-method) ,@(dump-info this)
+	  ,@(dump-type this)
+	  ,@(dump-range this)
 	  ,(j2s->list test)
 	  ,(j2s->list then)
 	  ,(j2s->list else) )))
@@ -690,14 +692,16 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SWhile)
    (with-access::J2SWhile this (op test body)
-      `(,@(call-next-method) ,(j2s->list test) ,(j2s->list body))))
+      `(,@(call-next-method) ,@(dump-info this)
+	  ,(j2s->list test) ,(j2s->list body))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SFor ...                                           */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SFor)
    (with-access::J2SFor this (init test incr body)
-      `(,@(call-next-method) ,(j2s->list init)
+      `(,@(call-next-method) ,@(dump-info this)
+	  ,(j2s->list init)
 	  ,(j2s->list test)
 	  ,(j2s->list incr)
 	  ,(j2s->list body))))
@@ -707,7 +711,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SForIn)
    (with-access::J2SForIn this (lhs obj body)
-      `(,@(call-next-method) ,(j2s->list lhs)
+      `(,@(call-next-method) ,@(dump-info this)
+	  ,(j2s->list lhs)
 	  ,(j2s->list obj)
 	  ,(j2s->list body))))
 

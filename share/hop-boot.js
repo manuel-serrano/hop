@@ -18,8 +18,8 @@
 if( !('hop' in window) ) {
    window.hop = {
       'version': "3.2.0",
-      'buildId': "e25a90807999cac5ef80d10876ebda24",
-      'buildTag': "33234de8+",
+      'buildId': "caa4d0988ddc933e63ea18c49afb1d45",
+      'buildTag': "6d5d6b7a+",
       'etcDir': "/usr/local/etc",
       'binDir': "/usr/local/bin",
       'libDir': "/usr/local/lib",

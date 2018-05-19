@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Tue May  1 16:12:50 2018 (serrano)                */
+;*    Last change :  Fri May 18 17:18:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -209,6 +209,7 @@
 	   
 	   (class J2SPragma::J2SExpr
 	      (lang::symbol (default 'scheme))
+	      (bindings::pair-nil (default '()))
 	      (expr (info '("ast"))))
 	   
 	   (class J2SSequence::J2SExpr

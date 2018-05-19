@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 29 07:48:29 2013                          */
-;*    Last change :  Thu Mar 29 16:11:01 2018 (serrano)                */
+;*    Last change :  Fri May 18 16:02:39 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme stage definition and execution                         */
@@ -78,7 +78,6 @@
 		      (cond
 			 ((>=fx (bigloo-debug) 1)
 			  (call-with-output-file file
-			     
 			     (lambda (p)
 				(fprint p ";; -*-bee-*-")
 				(fprint p ";; " comment)

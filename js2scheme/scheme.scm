@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Tue May  8 08:07:05 2018 (serrano)                */
+;*    Last change :  Fri May 18 17:12:05 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -693,10 +693,17 @@
 ;*    j2s-scheme ::J2SPragma ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SPragma mode return conf)
-   (with-access::J2SPragma this (loc expr lang)
+   (with-access::J2SPragma this (loc expr lang bindings)
       (if (eq? lang 'scheme)
-	  (epairify-deep loc expr)
-  "#unspecified")))
+	  (if (null? bindings)
+	      (epairify-deep loc expr)
+	      (epairify-deep loc
+		 `(let ,(map (lambda (b)
+				`(,(car b)
+				  ,(j2s-scheme (cdr b) mode return conf)))
+			   bindings)
+		     expr)))
+	  "#unspecified")))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SSequence ...                                     */
