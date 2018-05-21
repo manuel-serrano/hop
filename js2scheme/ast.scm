@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Fri May 18 17:18:02 2018 (serrano)                */
+;*    Last change :  Sun May 20 16:54:04 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -209,8 +209,9 @@
 	   
 	   (class J2SPragma::J2SExpr
 	      (lang::symbol (default 'scheme))
-	      (bindings::pair-nil (default '()))
-	      (expr (info '("ast"))))
+	      (vars::pair-nil (default '()))
+	      (vals::pair-nil (default '()) (info '("ast")))
+	      (expr (info '("notraverse"))))
 	   
 	   (class J2SSequence::J2SExpr
 	      (exprs::pair (info '("ast"))))
@@ -940,6 +941,7 @@
 (gen-walks J2SClassElement prop)
 (gen-walks J2SDProducer expr)
 (gen-walks J2SDConsumer expr)
+(gen-walks J2SPragma (vals))
 
 (gen-traversals J2STilde)
 
@@ -1046,17 +1048,31 @@
 ;*    j2s->json ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->json this::J2SPragma op::output-port)
-   (with-access::J2SPragma this (expr loc lang)
+   (with-access::J2SPragma this (expr loc lang vars vals)
       (display "{ \"__node__\": \"J2SPragma\", \"expr\": \"" op)
       (display (string-for-read
 		  (call-with-output-string
 		     (lambda (op) (write expr op))))
 	 op)
-      (display "\", \"lang\": " op)
+      (display ", \"vars\": " op)
+      (display (format "\"(~(, ))\"" vars))
+      (display ", \"vals\": [" op)
+      (if (null? vals)
+	  (display "]" op)
+	  (let loop ((vals vals))
+	     (if (null? (cdr vals))
+		 (begin
+		    (j2s->json (car vals) op)
+		    (display "]" op))
+		 (begin
+		    (j2s->json (car vals) op)
+		    (display ", " op)
+		    (loop (cdr vals))))))
+      (display ", \"lang\": " op)
       (display #\" op)
       (display lang op)
       (display #\" op)
-      (display "\", \"loc\": " op)
+      (display ", \"loc\": " op)
       (j2s->json loc op)
       (display " }" op)))
 

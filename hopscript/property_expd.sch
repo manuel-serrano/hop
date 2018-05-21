@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Tue May  8 15:40:15 2018 (serrano)                */
+;*    Last change :  Sun May 20 18:25:32 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -530,6 +530,8 @@
 		     (error "js-object-put-name/cache" "bad form" x))
 		    (else
 		     (case (car cs)
+			((imap-incache)
+			 (loop 'imap))
 			((imap imap+)
 			 ;; direct property set
 			 `(if (eq? %cmap (js-pcache-imap ,cache))

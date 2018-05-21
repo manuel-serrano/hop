@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri May 18 17:12:05 2018 (serrano)                */
+;*    Last change :  Sun May 20 17:01:38 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -693,16 +693,15 @@
 ;*    j2s-scheme ::J2SPragma ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SPragma mode return conf)
-   (with-access::J2SPragma this (loc expr lang bindings)
+   (with-access::J2SPragma this (loc expr lang vars vals)
       (if (eq? lang 'scheme)
-	  (if (null? bindings)
+	  (if (null? vars)
 	      (epairify-deep loc expr)
 	      (epairify-deep loc
-		 `(let ,(map (lambda (b)
-				`(,(car b)
-				  ,(j2s-scheme (cdr b) mode return conf)))
-			   bindings)
-		     expr)))
+		 `(let ,(map (lambda (v e)
+				`(,v ,(j2s-scheme e mode return conf)))
+			   vars vals)
+		     ,expr)))
 	  "#unspecified")))
 
 ;*---------------------------------------------------------------------*/
@@ -1888,12 +1887,18 @@
 		(pro (when (pair? prov) (gensym 'prop))))
 	    `(let* (,@(if pro (list `(,pro ,prov)) '()))
 		,(cond
+		    
 ;* 		    ((memq 'cmap cspecs)                               */
 ;* 		     (aput-assigop otmp pro prov op                    */
 ;* 			tl lhs rhs cspecs))                            */
 		    ((or (not cache) (is-integer? field))
 		     (aput-assigop otmp pro prov op
 			tl lhs rhs '() '()))
+		    ((and (equal? cspecs '(imap-incache))
+			  (eq? (j2s-type obj) 'object))
+		     ;; see the PCE optimization
+		     (aput-assigop otmp pro prov op
+			tl lhs rhs '(imap-incache) '(imap-incache)))
 		    ((memq (typeof-this obj conf) '(object this global))
 		     `(with-access::JsObject ,otmp (cmap)
 			 (let ((%omap cmap))

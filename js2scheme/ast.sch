@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Jan 11 13:06:45 2016                          */
-;*    Last change :  Fri May 18 17:23:54 2018 (serrano)                */
+;*    Last change :  Sun May 20 17:02:35 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Minimal set of macros for creating new AST.                      */
@@ -87,10 +87,12 @@
        (loc loc)
        (expr ,expr)))
 
-(define-macro (J2SPragma/bindings bindings expr)
+(define-macro (J2SPragma/bindings type vars vals expr)
    `(instantiate::J2SPragma
        (loc loc)
-       (bindings ,bindings)
+       (type ,type)
+       (vars ,vars)
+       (vals ,vals)
        (expr ,expr)))
 
 (define-macro (J2SParen expr)
@@ -436,6 +438,14 @@
 (define-macro (J2SCond test then else)
    `(instantiate::J2SCond
        (loc loc)
+       (test ,test)
+       (then ,then)
+       (else ,else)))
+
+(define-macro (J2SCond/type type test then else)
+   `(instantiate::J2SCond
+       (loc loc)
+       (type ,type)
        (test ,test)
        (then ,then)
        (else ,else)))

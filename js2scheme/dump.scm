@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Wed May 16 06:01:51 2018 (serrano)                */
+;*    Last change :  Sun May 20 17:08:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -837,8 +837,11 @@
 ;*    j2s->list ::J2SPragma ...                                        */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SPragma)
-   (with-access::J2SPragma this (expr)
-      `(,@(call-next-method) ',expr)))
+   (with-access::J2SPragma this (expr vars vals type)
+      `(,@(call-next-method) ,@(dump-type this)
+	  :vars ,vars
+	  :vals ,(map j2s->list vals)
+	  ',expr)))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SSequence ...                                      */
