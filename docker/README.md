@@ -27,7 +27,7 @@ Run in the console
 
 Run a shell
 ----------
-  docker run -t --entrypoint=/bin/bash -v /tmp/hopdocker:/hoproot hop
+  docker run -t -i --entrypoint=/bin/bash -v /tmp/hopdocker:/hoproot hop
 
 Extract the documentation
 -------------------------
