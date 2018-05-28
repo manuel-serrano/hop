@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Tue May  8 15:12:40 2018 (serrano)                */
+;*    Last change :  Mon May 28 17:17:51 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1767,11 +1767,6 @@
 		((isa? lhs J2SBool)
 		 (with-access::J2SBool lhs (val)
 		    (if val (J2SBool #t) rhs)))
-		((isa? rhs J2SBool)
-		 ;; no reduction can be applied if val is true, see
-		 ;; http://www.ecma-international.org/ecma-262/5.1/#sec-11.7.3
-		 (with-access::J2SBool rhs (val)
-		    (if val this lhs)))
 		(else
 		 this))))
 	 (else

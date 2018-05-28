@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Sun May 20 16:54:04 2018 (serrano)                */
+;*    Last change :  Mon May 28 08:09:34 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -458,6 +458,10 @@
 	   
 	   (macro define-walk-method)
 
+	   (node-%info ::J2SNode)
+	   (node-loc ::J2SNode)
+	   (node-endloc ::J2SNode)
+	   
 	   (j2sfun-id ::J2SFun)
 	   (j2sfun-expression? ::J2SFun)
 	   
@@ -483,6 +487,26 @@
    
    (static (class %JSONDecl::J2SDecl
 	      (%id read-only))))
+
+;*---------------------------------------------------------------------*/
+;*    node-%info ...                                                   */
+;*---------------------------------------------------------------------*/
+(define (node-%info n)
+   (with-access::J2SNode n (%info) %info))
+
+;*---------------------------------------------------------------------*/
+;*    node-loc ...                                                     */
+;*---------------------------------------------------------------------*/
+(define (node-loc n)
+   (with-access::J2SNode n (loc) loc))
+
+;*---------------------------------------------------------------------*/
+;*    node-endloc ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (node-endloc n)
+   (if (isa? n J2SBlock)
+       (with-access::J2SBlock n (endloc) endloc)
+       (with-access::J2SNode n (loc) loc)))
 
 ;*---------------------------------------------------------------------*/
 ;*    %nodefval ...                                                    */

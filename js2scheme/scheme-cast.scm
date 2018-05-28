@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Wed May  9 16:27:08 2018 (serrano)                */
+;*    Last change :  Mon May 28 17:18:42 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -102,6 +102,7 @@
 	 (any nop)))
      (undefined
 	((object ,js-toobject)
+	 (bool ,(lambda (v expr conf) #f))
 	 (any nop)))
      (regexp
 	((any nop)))

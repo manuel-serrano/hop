@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Fri May 18 16:01:59 2018 (serrano)                */
+;*    Last change :  Mon May 28 08:20:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -43,6 +43,7 @@
 	   __js2scheme_array
 	   __js2scheme_letfusion
 	   __js2scheme_letopt
+	   __js2scheme_unletrec
 	   __js2scheme_narrow
 	   __js2scheme_scheme
 	   __js2scheme_js
@@ -174,6 +175,7 @@
       j2s-narrow-stage
       j2s-letfusion-stage
       j2s-letopt-stage
+      j2s-unletrec-stage
       j2s-this-stage
       j2s-use-stage
       j2s-sweep-stage
@@ -278,6 +280,7 @@
       j2s-narrow-stage
       j2s-letfusion-stage
       j2s-letopt-stage
+      j2s-unletrec-stage
       j2s-use-stage
       j2s-varpreinit-stage
       j2s-tyflow-stage
@@ -409,6 +412,10 @@
 	 (unless (memq :optim-pce o)
 	    (set! o (cons* :optim-pce #t o))))
       (when (>=fx l 2)
+	 (unless (memq :option-letopt o)
+	    (set! o (cons* :optim-letopt #t o)))
+	 (unless (memq :option-unletrec o)
+	    (set! o (cons* :optim-unletrec #t o)))
 	 (unless (memq :optim-tyflow-resolve o)
 	    (set! o (cons* :optim-tyflow-resolve #t o)))
 	 (unless (memq :optim-cinstanceof o)

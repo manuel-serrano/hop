@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Mon May 21 08:27:09 2018 (serrano)                */
+;*    Last change :  Tue May 22 15:15:48 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -26,7 +26,10 @@
 	   __js2scheme_alpha)
 
    (static (class J2SBlockPCE::J2SBlock)
-	   (class AInfo access::J2SAccess field::bstring))
+	   (class AInfo
+	      access::J2SAccess
+	      field::bstring
+	      (depth::long (default -1))))
 	      
    (export j2s-pce-stage))
 
@@ -37,7 +40,7 @@
    (instantiate::J2SStageProc
       (name "pce")
       (comment "Property Cache Elimination optimization")
-      (proc (lambda (n args) (j2s-pce! n args)))
+      (proc j2s-pce!)
       (optional :optim-pce)))
 
 ;*---------------------------------------------------------------------*/
@@ -45,20 +48,22 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-pce! this args)
    (if (isa? this J2SProgram)
-       (let ((nodes (mark-accesses! this)))
-	  (when (>=fx (bigloo-debug) 1)
-	     (let* ((tmp (config-get args :tmp "/tmp"))
-		    (f (make-file-path tmp
-			 (string-replace "pce-" (file-separator) #\_))))
-		(call-with-output-file f
-		   (lambda (p)
-		      (fprint p ";; -*-bee-*-")
-		      (pp (j2s->list nodes) p)))))
-	  (with-access::J2SProgram this (pcache-size)
-	     (let ((counter (make-counter pcache-size)))
-		(let ((res (expand-pce! this counter #t)))
-		   (set! pcache-size (get counter))
-		   res))))
+       (begin
+	  (mark-accesses! this (make-cell 0))
+	  (let ((nthis (insert-pce! this)))
+	     (when (>=fx (bigloo-debug) 1)
+		(let* ((tmp (config-get args :tmp "/tmp"))
+		       (f (make-file-path tmp
+			     (string-replace "pce-" (file-separator) #\_))))
+		   (call-with-output-file f
+		      (lambda (p)
+			 (fprint p ";; -*-bee-*-")
+			 (pp (j2s->list nthis) p)))))
+	     (with-access::J2SProgram nthis (pcache-size)
+		(let ((counter (make-counter pcache-size)))
+		   (let ((res (expand-pce! nthis counter #t)))
+		      (set! pcache-size (get counter))
+		      res)))))
        this))
 
 ;*---------------------------------------------------------------------*/
@@ -70,11 +75,20 @@
 ;*    j2s-info->list ::AInfo ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-info->list this::AInfo)
-   (with-access::AInfo this (access field)
+   (with-access::AInfo this (access field depth)
       (with-access::J2SAccess access (obj)
 	 (with-access::J2SRef obj (decl)
 	    (with-access::J2SDecl decl (id key)
-	       (format "~a.~a:~a" id key field))))))
+	       (format "~a.~a:~a[~a]" id key field depth))))))
+
+;*---------------------------------------------------------------------*/
+;*    ainfo-filter ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (ainfo-filter l::pair-nil d::long)
+   (filter (lambda (ai)
+	      (with-access::AInfo ai (depth)
+		 (=fx depth d)))
+      l))
 
 ;*---------------------------------------------------------------------*/
 ;*    uptostop ...                                                     */
@@ -91,43 +105,48 @@
 ;*---------------------------------------------------------------------*/
 ;*    mark-accesses! ::obj ...                                         */
 ;*---------------------------------------------------------------------*/
-(define-generic (mark-accesses!::pair-nil this::obj)
+(define-generic (mark-accesses!::pair-nil this::obj depth::cell)
    (if (pair? this)
-       (uptostop (append-map mark-accesses! this))
+       (append-map (lambda (n) (mark-accesses! n depth)) this)
        '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-accesses! ::J2SNode ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (mark-accesses! this::J2SNode)
+(define-method (mark-accesses! this::J2SNode depth)
    (with-access::J2SNode this (%info)
-      (let ((fields (class-all-fields (object-class this))))
+      (let ((fields (class-all-fields (object-class this)))
+	    (d (cell-ref depth)))
 	 (let loop ((i (-fx (vector-length fields) 1))
 		    (info '()))
 	    (if (=fx i -1)
 		(begin
-		   (set! %info (uptostop info))
+		   (set! %info (ainfo-filter info d))
 		   %info)
 		(let* ((f (vector-ref fields i))
 		       (ast (class-field-info f)))
 		   (if (and (pair? ast) (member "ast" ast))
-		       (let ((a (mark-accesses! ((class-field-accessor f) this))))
+		       (let ((a (mark-accesses!
+				   ((class-field-accessor f) this)
+				   depth)))
 			  (loop (-fx i 1) (append info a)))
 		       (loop (-fx i 1) info))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-accesses! ::J2SAccess ...                                   */
 ;*---------------------------------------------------------------------*/
-(define-method (mark-accesses! this::J2SAccess)
+(define-method (mark-accesses! this::J2SAccess depth)
    (with-access::J2SAccess this (obj field %info)
-      (let ((aobj (mark-accesses! obj))
-	    (afd (mark-accesses! field)))
-	 (if (or (memq 'stop aobj) (memq 'stop afd))
-	     '(stop)
+      (let* ((d (cell-ref depth))
+	     (aobj (mark-accesses! obj depth))
+	     (afd (mark-accesses! field depth)))
+	 (if (not (=fx d (cell-ref depth)))
+	     '()
 	     (if (and (isa? obj J2SRef) (isa? field J2SString))
 		 (with-access::J2SRef obj (decl)
 		    (with-access::J2SString field (val)
 		       (let ((ai (instantiate::AInfo
+				    (depth d)
 				    (access this)
 				    (field val))))
 			  (set! %info (list ai)))
@@ -137,85 +156,167 @@
 ;*---------------------------------------------------------------------*/
 ;*    mark-accesses! ::J2SAssigOp ...                                  */
 ;*---------------------------------------------------------------------*/
-(define-method (mark-accesses! this::J2SAssigOp)
+(define-method (mark-accesses! this::J2SAssigOp depth)
    (with-access::J2SAssigOp this (lhs rhs)
-      (append (mark-accesses! lhs) (call-next-method))))
+      (append (mark-accesses! lhs depth) (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-accesses! ::J2SCall ...                                     */
 ;*---------------------------------------------------------------------*/
-(define-method (mark-accesses! this::J2SCall)
+(define-method (mark-accesses! this::J2SCall depth)
    (with-access::J2SCall this (%info fun args thisarg)
-      (mark-accesses! fun)
-      (mark-accesses! args)
-      (mark-accesses! thisarg)
-      (set! %info '(stop))
-      %info))
+      (mark-accesses! fun depth)
+      (mark-accesses! args depth)
+      (mark-accesses! thisarg depth)
+      (cell-set! depth (+fx 1 (cell-ref depth)))
+      (set! %info '())
+      '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-accesses! ::J2SLetBlock ...                                 */
 ;*---------------------------------------------------------------------*/
-(define-method (mark-accesses! this::J2SLetBlock)
-
-   (define (node-%info n)
-      (with-access::J2SNode n (%info) %info))
-   
+(define-method (mark-accesses! this::J2SLetBlock depth)
    (with-access::J2SLetBlock this (loc endloc decls nodes %info)
-      (let ((asd (mark-accesses! decls))
-	    (asn (mark-accesses! nodes)))
-	 (set! %info 
-	    (uptostop
-	       (filter (lambda (ai)
-			  (or (eq? ai 'stop)
-			      (when (isa? ai AInfo)
-				 (with-access::AInfo ai (access)
-				    (with-access::J2SAccess access (obj)
-				       (with-access::J2SRef obj (decl)
-					  (not (memq decl decls))))))))
-		  (append asd asn))))
-	 (when (>=fx (-fx (length asn) 0) pce-duplicate-threshold)
-	    (let loop ((n nodes)
-		       (acc '())
-		       (before '()))
-	       (cond
-		  ((null? n)
-		   (if (pair? before)
-		       (set! nodes
-			  (reverse!
-			     (cons
-				(instantiate::J2SBlockPCE
-				   (loc loc)
-				   (endloc endloc)
-				   (%info (append-map node-%info before))
-				   (nodes (reverse! before)))
-				acc)))
-		       (reverse! acc)))
-		  ((with-access::J2SNode (car n) (%info) (memq 'stop %info))
-		   (if (pair? before)
-		       (loop (cdr n)
-			  (cons*
-			     (car n)
-			     (instantiate::J2SBlockPCE
-				(loc loc)
-				(endloc (with-access::J2SNode (car n) (loc) loc))
-				(%info (append-map node-%info before))
-				(nodes (reverse! before)))
-			     acc)
-			  '())
-		       (loop (cdr n) (cons (car n) acc) '())))
-		  (else
-		   (loop (cdr n) acc (cons (car n) before))))))
+      (let* ((d (cell-ref depth))
+	     (asd (mark-accesses! decls depth))
+	     (asn (mark-accesses! nodes depth)))
+	 (set! %info (ainfo-filter (append asd asn) depth))
 	 %info)))
 
 ;*---------------------------------------------------------------------*/
 ;*    mark-accesses! ::J2SFor ...                                      */
 ;*---------------------------------------------------------------------*/
-(define-method (mark-accesses! this::J2SFor)
+(define-method (mark-accesses! this::J2SFor depth)
    (with-access::J2SFor this (body %info)
-      (call-next-method)
-      (when (memq 'stop %info)
-	 (set! %info '(stop)))
-      %info))
+      (let ((d (cell-ref depth)))
+	 (call-next-method)
+	 (unless (=fx d (cell-ref depth))
+	    (set! %info '()))
+	 %info)))
+
+;*---------------------------------------------------------------------*/
+;*    insert-pce! ::J2SNode ...                                        */
+;*---------------------------------------------------------------------*/
+(define-walk-method (insert-pce! this::J2SNode)
+   (call-default-walker))
+
+;* {*---------------------------------------------------------------------*} */
+;* {*    insert-pce-block! ...                                            *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define (insert-pce-block! this::J2SBlock)                          */
+;*                                                                     */
+;*    (define (pce-block nodes)                                        */
+;*       (let* ((endloc (node-endloc (car pce)))                       */
+;* 	     (nodes (reverse! pce)))                                   */
+;* 	 (instantiate::J2SBlockPCE                                     */
+;* 	    (endloc endloc)                                            */
+;* 	    (loc (node-loc (car nodes)))                               */
+;* 	    (%info (append-map node-%info pce))                        */
+;* 	    (nodes nodes))))                                           */
+;*                                                                     */
+;*    (with-access::J2SBlock this (nodes %info)                        */
+;*       (let loop ((n nodes)                                          */
+;* 		 (acc '())                                             */
+;* 		 (pce '()))                                            */
+;* 	 ;; acc: the new elements that will constitute the block       */
+;* 	 ;; pce: the queue of the elements that will compose a PCE block */
+;* 	 (cond                                                         */
+;* 	    ((null? n)                                                 */
+;* 	     (if (pair? pce)                                           */
+;* 		 (set! nodes (reverse! (cons (pce-block pce) acc)))    */
+;* 		 (set! nodes (reverse! acc)))                          */
+;* 	     this)                                                     */
+;* 	    ((or (memq 'stop (node-%info (car n)))                     */
+;* 		 (null? (node-%info (car n)))                          */
+;* 		 (every AInfo-marked (node-%info (car n))))            */
+;* 	     (set-car! n (insert-pce-block! (car n)))                  */
+;* 	     (cond                                                     */
+;* 		((null? pce)                                           */
+;* 		 (loop (cdr n) (cons (car n) acc) '()))                */
+;* 		((<fx (length (append-map node-%info pce))             */
+;* 		    pce-duplicate-threshold)                           */
+;* 		 (loop (cdr n) (cons (car n) (append pce acc)) '()))   */
+;* 		(else                                                  */
+;* 		 (loop (cdr n) (cons* (car n) (pce-block pce) acc) '())))) */
+;* 	    (else                                                      */
+;* 	     (loop (cdr n) acc (cons (car n) pce)))))))                */
+;*                                                                     */
+;* {*---------------------------------------------------------------------*} */
+;* {*    insert-pce! ::J2SBlock ...                                       *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (insert-pce! this::J2SBlock)                    */
+;*    (insert-pce-block! this))                                        */
+;*                                                                     */
+;*---------------------------------------------------------------------*/
+;*    insert-pce! ::J2SLetBlock ...                                    */
+;*---------------------------------------------------------------------*/
+;* (define-walk-method (insert-pce! this::J2SLetBlock)                 */
+;*                                                                     */
+;*    (define (node-%info n)                                           */
+;*       (with-access::J2SNode n (%info) %info))                       */
+;*                                                                     */
+;*    (define (node-loc n)                                             */
+;*       (with-access::J2SNode n (loc) loc))                           */
+;*                                                                     */
+;*    (define (node-endloc n)                                          */
+;*       (if (isa? n J2SBlock)                                         */
+;* 	  (with-access::J2SBlock n (endloc) endloc)                    */
+;* 	  (with-access::J2SNode n (loc) loc)))                         */
+;*                                                                     */
+;*    (define (make-block-pce nodes)                                   */
+;*       (let ((%info (append-map node-%info nodes))                   */
+;* 	    (endloc (node-endloc (car nodes)))                         */
+;* 	    (nodes (reverse! nodes)))                                  */
+;* 	 (if (pair? %info)                                             */
+;* 	     (instantiate::J2SBlockPCE                                 */
+;* 		(loc (node-loc (car nodes)))                           */
+;* 		(endloc endloc)                                        */
+;* 		(%info %info)                                          */
+;* 		(nodes nodes))                                         */
+;* 	     (instantiate::J2SBlock                                    */
+;* 		(loc (node-loc (car nodes)))                           */
+;* 		(endloc endloc)                                        */
+;* 		(nodes nodes)))))                                      */
+;*                                                                     */
+;*                                                                     */
+;*                                                                     */
+;*    (define (insert-rec-block! this asn)                             */
+;*       (with-access::J2SLetBlock this (decls)                        */
+;* 	 (if (any (lambda (d) (memq 'stop (node-%info d))) decls)      */
+;* 	     ;; give up optimizing                                     */
+;* 	     (insert-pce-body! this asn)                               */
+;* 	     (make-block-pce                                           */
+;* 		(duplicate::J2SLetBlock this                           */
+;* 		   (decls dsplit))))))                                 */
+;*                                                                     */
+;*    (define (insert-no-rec-block! this asn)                          */
+;*       (with-access::J2SLetBlock this (decls)                        */
+;* 	 (let loop ((decls decls)                                      */
+;* 		    (dshare '())                                       */
+;* 		    (dsplit '()))                                      */
+;* 	    (cond                                                      */
+;* 	       ((null? decls)                                          */
+;* 		(if (null? dshare)                                     */
+;* 		    (make-block-pce dsplit (list this))                */
+;* 		    (duplicate::J2SLetBlock this                       */
+;* 		       (decls dshare)                                  */
+;* 		       (nodes (list (make-block-pce                    */
+;* 				       (duplicate::J2SLetBlock this    */
+;* 					  (decls dsplit))))))))        */
+;* 	       ((or (null? (node-%info (car decls)))                   */
+;* 		    (memq 'stop (node-%info (car decls))))             */
+;* 		(loop (cdr decls) (cons (car decls) dshare) dsplit))   */
+;* 	       (else                                                   */
+;* 		(loop (cdr decls) dshare (cons (car decls) dsplit))))))) */
+;*                                                                     */
+;*    (with-access::J2SLetBlock this (decls nodes %info rec)           */
+;*       (if (<fx (length %info) pce-duplicate-threshold)              */
+;* 	  (begin                                                       */
+;* 	     (for-each insert-pce! decls)                              */
+;* 	     (insert-pce-block! this))                                 */
+;* 	  (begin                                                       */
+;* 	     (for-each (lambda (d) (insert-pce! d %info)) decls)       */
+;* 	     (insert-pce-block! this %info)))))                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    make-counter ...                                                 */

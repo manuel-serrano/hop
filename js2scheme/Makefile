@@ -3,7 +3,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Wed Apr  1 18:45:46 1998                          */
-#*    Last change :  Tue May 15 09:54:02 2018 (serrano)                */
+#*    Last change :  Mon May 28 08:37:13 2018 (serrano)                */
 #*    -------------------------------------------------------------    */
 #*    The makefile to build the JS2SCHEME library.                     */
 #*=====================================================================*/
@@ -38,7 +38,7 @@ BLIBFLAGS = $(BCFLAGSRTS)
 _OBJECTS = lexer header parser html ast dump utils \
   stage compile js globvar varpreinit method nodesize \
   syntax return loopexit symbol ronly resolve this any \
-  use property bestpractice sourcemap debug stmtassign letopt \
+  use property bestpractice sourcemap debug stmtassign letopt unletrec \
   cps ecmascript5 narrow constant tyflow hint range cast vector \
   array alpha letfusion constrsize ctor propcce clevel sweep inline unthis \
   instanceof hintnum pce scheme scheme-utils scheme-program scheme-fun \
