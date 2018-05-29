@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun May 20 17:08:37 2018 (serrano)                */
+;*    Last change :  Tue May 29 08:24:06 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -781,7 +781,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SStmtExpr)
    (with-access::J2SStmtExpr this (expr)
-      `(,@(call-next-method) ,(j2s->list expr))))
+      `(,@(call-next-method) ,@(dump-info this) ,(j2s->list expr))))
    
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SObjectInit ...                                    */

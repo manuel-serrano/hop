@@ -547,6 +547,27 @@ frame.post( function( result ) {
 });
 ```
 
+Asynchronous Services
+---------------------
+
+Hop services can either be synchronous or asynchronous. A synchronous
+service directly returns its response to its client, using a normal
+return statement. Asynchronous services postpone their responses. For
+that, instead of returning a value, they simply return a JavaScript
+promise. When this promise resolves, its resolution is sent to the client
+as response of the service. If the promise reject, the error object
+is propagated to the client.
+
+#### Example ####
+
+${ doc.include( doc.EXAMPLES_DIR + "/asvc/README.md" ) }
+
+${ <span class="label label-info">asvc/asvc.js</span> }
+```hopscript
+${ doc.include( doc.EXAMPLES_DIR + "/asvc/asvc.js", 14 ) }
+```
+
+
 Examples
 --------
 
@@ -572,5 +593,6 @@ ${ <span class="label label-info">wspost/wsclient.js</span> }
 ```hopscript
 ${ doc.include( doc.EXAMPLES_DIR + "/wspost/wsclient.js", 14 ) }
 ```
+
 
 

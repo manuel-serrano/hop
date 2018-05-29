@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Mon May 28 16:54:24 2018 (serrano)                */
+;*    Last change :  Tue May 29 07:13:04 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Letrec optimization                                              */
@@ -55,7 +55,6 @@
 (define (j2s-unletrec! this args)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes headers decls)
-	 ;; statement optimization
 	 (for-each (lambda (o) (unletrec! o)) headers)
 	 (for-each (lambda (o) (unletrec! o)) decls)
 	 (for-each (lambda (o) (unletrec! o)) nodes)))

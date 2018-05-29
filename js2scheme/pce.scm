@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Tue May 22 15:15:48 2018 (serrano)                */
+;*    Last change :  Tue May 29 07:14:25 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -49,8 +49,8 @@
 (define (j2s-pce! this args)
    (if (isa? this J2SProgram)
        (begin
-	  (mark-accesses! this (make-cell 0))
-	  (let ((nthis (insert-pce! this)))
+	  (mark-accesses! this (make-counter 0))
+	  (let ((nthis (insert-pce! this 0)))
 	     (when (>=fx (bigloo-debug) 1)
 		(let* ((tmp (config-get args :tmp "/tmp"))
 		       (f (make-file-path tmp
@@ -82,13 +82,37 @@
 	       (format "~a.~a:~a[~a]" id key field depth))))))
 
 ;*---------------------------------------------------------------------*/
+;*    ainfo-depth ...                                                  */
+;*---------------------------------------------------------------------*/
+(define (ainfo-depth ai::AInfo)
+   (with-access::AInfo ai (depth)
+      depth))
+   
+;*---------------------------------------------------------------------*/
 ;*    ainfo-filter ...                                                 */
 ;*---------------------------------------------------------------------*/
 (define (ainfo-filter l::pair-nil d::long)
-   (filter (lambda (ai)
-	      (with-access::AInfo ai (depth)
-		 (=fx depth d)))
-      l))
+   (filter (lambda (ai) (=fx (ainfo-depth ai) d)) l))
+
+;*---------------------------------------------------------------------*/
+;*    make-counter ...                                                 */
+;*---------------------------------------------------------------------*/
+(define (make-counter val)
+   (make-cell val))
+
+;*---------------------------------------------------------------------*/
+;*    inc! ...                                                         */
+;*---------------------------------------------------------------------*/
+(define (inc! count)
+   (let ((c (cell-ref count)))
+      (cell-set! count (+fx c 1))
+      c))
+
+;*---------------------------------------------------------------------*/
+;*    get ...                                                          */
+;*---------------------------------------------------------------------*/
+(define (get count)
+   (cell-ref count))
 
 ;*---------------------------------------------------------------------*/
 ;*    uptostop ...                                                     */
@@ -116,7 +140,7 @@
 (define-method (mark-accesses! this::J2SNode depth)
    (with-access::J2SNode this (%info)
       (let ((fields (class-all-fields (object-class this)))
-	    (d (cell-ref depth)))
+	    (d (get depth)))
 	 (let loop ((i (-fx (vector-length fields) 1))
 		    (info '()))
 	    (if (=fx i -1)
@@ -133,14 +157,24 @@
 		       (loop (-fx i 1) info))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    mark-accesses! ::J2SFun ...                                      */
+;*---------------------------------------------------------------------*/
+(define-method (mark-accesses! this::J2SFun depth)
+   (with-access::J2SFun this (%info body optimize)
+      (when optimize
+	 (mark-accesses! body (make-counter 0)))
+      (set! %info '())
+      '()))
+
+;*---------------------------------------------------------------------*/
 ;*    mark-accesses! ::J2SAccess ...                                   */
 ;*---------------------------------------------------------------------*/
 (define-method (mark-accesses! this::J2SAccess depth)
    (with-access::J2SAccess this (obj field %info)
-      (let* ((d (cell-ref depth))
+      (let* ((d (get depth))
 	     (aobj (mark-accesses! obj depth))
 	     (afd (mark-accesses! field depth)))
-	 (if (not (=fx d (cell-ref depth)))
+	 (if (not (=fx d (get depth)))
 	     '()
 	     (if (and (isa? obj J2SRef) (isa? field J2SString))
 		 (with-access::J2SRef obj (decl)
@@ -168,7 +202,7 @@
       (mark-accesses! fun depth)
       (mark-accesses! args depth)
       (mark-accesses! thisarg depth)
-      (cell-set! depth (+fx 1 (cell-ref depth)))
+      (inc! depth)
       (set! %info '())
       '()))
 
@@ -177,10 +211,10 @@
 ;*---------------------------------------------------------------------*/
 (define-method (mark-accesses! this::J2SLetBlock depth)
    (with-access::J2SLetBlock this (loc endloc decls nodes %info)
-      (let* ((d (cell-ref depth))
+      (let* ((d (get depth))
 	     (asd (mark-accesses! decls depth))
 	     (asn (mark-accesses! nodes depth)))
-	 (set! %info (ainfo-filter (append asd asn) depth))
+	 (set! %info (ainfo-filter (append asd asn) d))
 	 %info)))
 
 ;*---------------------------------------------------------------------*/
@@ -188,65 +222,143 @@
 ;*---------------------------------------------------------------------*/
 (define-method (mark-accesses! this::J2SFor depth)
    (with-access::J2SFor this (body %info)
-      (let ((d (cell-ref depth)))
+      (let ((d (get depth)))
 	 (call-next-method)
-	 (unless (=fx d (cell-ref depth))
+	 (unless (=fx d (get depth))
 	    (set! %info '()))
 	 %info)))
 
 ;*---------------------------------------------------------------------*/
 ;*    insert-pce! ::J2SNode ...                                        */
 ;*---------------------------------------------------------------------*/
-(define-walk-method (insert-pce! this::J2SNode)
+(define-walk-method (insert-pce! this::J2SNode depth::long)
    (call-default-walker))
 
-;* {*---------------------------------------------------------------------*} */
-;* {*    insert-pce-block! ...                                            *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define (insert-pce-block! this::J2SBlock)                          */
-;*                                                                     */
-;*    (define (pce-block nodes)                                        */
-;*       (let* ((endloc (node-endloc (car pce)))                       */
-;* 	     (nodes (reverse! pce)))                                   */
-;* 	 (instantiate::J2SBlockPCE                                     */
-;* 	    (endloc endloc)                                            */
-;* 	    (loc (node-loc (car nodes)))                               */
-;* 	    (%info (append-map node-%info pce))                        */
-;* 	    (nodes nodes))))                                           */
-;*                                                                     */
-;*    (with-access::J2SBlock this (nodes %info)                        */
-;*       (let loop ((n nodes)                                          */
-;* 		 (acc '())                                             */
-;* 		 (pce '()))                                            */
-;* 	 ;; acc: the new elements that will constitute the block       */
-;* 	 ;; pce: the queue of the elements that will compose a PCE block */
-;* 	 (cond                                                         */
-;* 	    ((null? n)                                                 */
-;* 	     (if (pair? pce)                                           */
-;* 		 (set! nodes (reverse! (cons (pce-block pce) acc)))    */
-;* 		 (set! nodes (reverse! acc)))                          */
-;* 	     this)                                                     */
-;* 	    ((or (memq 'stop (node-%info (car n)))                     */
-;* 		 (null? (node-%info (car n)))                          */
-;* 		 (every AInfo-marked (node-%info (car n))))            */
-;* 	     (set-car! n (insert-pce-block! (car n)))                  */
-;* 	     (cond                                                     */
-;* 		((null? pce)                                           */
-;* 		 (loop (cdr n) (cons (car n) acc) '()))                */
-;* 		((<fx (length (append-map node-%info pce))             */
-;* 		    pce-duplicate-threshold)                           */
-;* 		 (loop (cdr n) (cons (car n) (append pce acc)) '()))   */
-;* 		(else                                                  */
-;* 		 (loop (cdr n) (cons* (car n) (pce-block pce) acc) '())))) */
-;* 	    (else                                                      */
-;* 	     (loop (cdr n) acc (cons (car n) pce)))))))                */
-;*                                                                     */
-;* {*---------------------------------------------------------------------*} */
-;* {*    insert-pce! ::J2SBlock ...                                       *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-walk-method (insert-pce! this::J2SBlock)                    */
-;*    (insert-pce-block! this))                                        */
-;*                                                                     */
+;*---------------------------------------------------------------------*/
+;*    insert-pce! ::J2SProgram ...                                     */
+;*---------------------------------------------------------------------*/
+(define-walk-method (insert-pce! this::J2SProgram depth)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    insert-pce! ::J2SFun ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (insert-pce! this::J2SFun depth)
+   (with-access::J2SFun this (optimize)
+      (if optimize
+	  (call-default-walker)
+	  this)))
+
+;*---------------------------------------------------------------------*/
+;*    insert-pce-block! ...                                            */
+;*---------------------------------------------------------------------*/
+(define (insert-pce-block! this::J2SBlock depth)
+   
+   (define (skip-stmt lst::pair-nil depth)
+      (let loop ((lst lst)
+		 (acc '()))
+	 (cond
+	    ((null? lst)
+	     (values (reverse! acc) '()))
+	    ((or (null? (node-%info (car lst)))
+		 (every (lambda (ai) (<fx (ainfo-depth ai) depth))
+		    (node-%info (car lst))))
+	     (loop (cdr lst) (cons (car lst) acc)))
+	    (else
+	     (values (reverse! acc) lst)))))
+   
+   (define (collect-stmt lst depth)
+      (let loop ((lst lst)
+		 (acc '()))
+	 (cond
+	    ((null? lst)
+	     (values (reverse! acc) '()))
+	    ((or (null? (node-%info (car lst)))
+		 (every (lambda (ai) (<fx (ainfo-depth ai) depth))
+		    (node-%info (car lst))))
+	     (multiple-value-bind (skip next)
+		(skip-stmt lst depth)
+		(cond
+		   ((null? next)
+		    (values (reverse! acc) skip))
+		   ((every (lambda (ai) (=fx (ainfo-depth ai) depth))
+		       (node-%info (car next)))
+		    (loop (cdr lst) (cons (car lst) acc)))
+		   (else
+		    (values (reverse! acc) lst)))))
+	    ((every (lambda (ai) (=fx (ainfo-depth ai) depth))
+		(node-%info (car lst)))
+	     (loop (cdr lst) (cons (car lst) acc)))
+	    (else
+	     (values (reverse! acc) lst)))))
+   
+   (define (next-block nodes depth)
+      (insert-pce-block!
+	 (instantiate::J2SBlock
+	    (loc (node-loc (car nodes)))
+	    (endloc (node-endloc (car (last-pair nodes))))
+	    (%info (ainfo-filter (append-map node-%info nodes) (+fx depth 1)))
+	    (nodes nodes))
+	 (+fx depth 1)))
+   
+   (define (pce-block nodes depth)
+      (let ((info (ainfo-filter (append-map node-%info nodes) depth)))
+	 (if (>=fx (length info) pce-duplicate-threshold)
+	     (instantiate::J2SBlockPCE
+		(endloc (node-endloc (car (last-pair nodes))))
+		(loc (node-loc (car nodes)))
+		(%info info)
+		(nodes nodes))
+	     (instantiate::J2SBlock
+		(endloc (node-endloc (car (last-pair nodes))))
+		(loc (node-loc (car nodes)))
+		(nodes nodes)))))
+   
+   (with-access::J2SBlock this (nodes)
+      (multiple-value-bind (skip next)
+	 (skip-stmt nodes depth)
+	 (cond
+	    ((null? next)
+	     this)
+	    ((every (lambda (ai) (=fx (ainfo-depth ai) depth))
+		(node-%info (car next)))
+	     (multiple-value-bind (collect next)
+		(collect-stmt next depth)
+		(cond
+		   ((and (null? skip) (null? next))
+		    (pce-block collect depth))
+		   ((null? skip)
+		    (instantiate::J2SBlock
+		       (loc (node-loc (car collect)))
+		       (endloc (node-endloc (car (last-pair next))))
+		       (nodes (list (pce-block collect depth)
+				 (next-block next depth)))))
+		   ((null? next)
+		    (instantiate::J2SBlock
+		       (loc (node-loc (car skip)))
+		       (endloc (node-endloc (car (last-pair collect))))
+		       (nodes (append skip (list (pce-block collect depth))))))
+		   (else
+		    (instantiate::J2SBlock
+		       (loc (node-loc (car skip)))
+		       (endloc (node-endloc (car (last-pair next))))
+		       (nodes (append skip
+				 (list (pce-block collect depth)
+				    (next-block skip depth)))))))))
+	    ((null? skip)
+	     (next-block next depth))
+	    (else
+	     (instantiate::J2SBlock
+		(loc (node-loc (car skip)))
+		(endloc (node-loc (car (last-pair next))))
+		(nodes (append skip (list (next-block next depth))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    insert-pce! ::J2SBlock ...                                       */
+;*---------------------------------------------------------------------*/
+(define-walk-method (insert-pce! this::J2SBlock depth)
+   (insert-pce-block! this depth))
+
 ;*---------------------------------------------------------------------*/
 ;*    insert-pce! ::J2SLetBlock ...                                    */
 ;*---------------------------------------------------------------------*/
@@ -317,26 +429,6 @@
 ;* 	  (begin                                                       */
 ;* 	     (for-each (lambda (d) (insert-pce! d %info)) decls)       */
 ;* 	     (insert-pce-block! this %info)))))                        */
-
-;*---------------------------------------------------------------------*/
-;*    make-counter ...                                                 */
-;*---------------------------------------------------------------------*/
-(define (make-counter val)
-   (make-cell val))
-
-;*---------------------------------------------------------------------*/
-;*    inc! ...                                                         */
-;*---------------------------------------------------------------------*/
-(define (inc! count)
-   (let ((c (cell-ref count)))
-      (cell-set! count (+fx c 1))
-      c))
-
-;*---------------------------------------------------------------------*/
-;*    get ...                                                          */
-;*---------------------------------------------------------------------*/
-(define (get count)
-   (cell-ref count))
 
 ;*---------------------------------------------------------------------*/
 ;*    expand-pce! ::J2SNode ...                                        */
