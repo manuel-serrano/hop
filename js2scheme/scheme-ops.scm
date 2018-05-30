@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Sat May  5 18:43:23 2018 (serrano)                */
+;*    Last change :  Wed May 30 15:55:21 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1867,7 +1867,7 @@
       ((number)
        `(if (fixnum? ,val) (fixnum->flonum ,val) ,val))
       (else
-       `(if (flonum? ,val) ,val (js-toflonum (js-tonumber ,val %this))))))
+       `(if ($flonum? ,val) ,val (js-toflonum (js-tonumber ,val %this))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    fixnums? ...                                                     */
@@ -1923,11 +1923,11 @@
    
    (cond
       ((or (number-not-flonum? left) (number-not-flonum? right)) #f)
-      ((eq? tl 'real) (if (eq? tr 'real) #t `(flonum? ,right)))
-      ((eq? tr 'real) `(flonum? ,left))
+      ((eq? tl 'real) (if (eq? tr 'real) #t `($flonum? ,right)))
+      ((eq? tr 'real) `($flonum? ,left))
       ((and (memq tl '(number any unknown))
 	    (memq tr '(number any unknown)))
-       `(and (flonum? ,left) (flonum? ,right)))
+       `(and ($flonum? ,left) ($flonum? ,right)))
       (else #f)))
 
 ;*---------------------------------------------------------------------*/
@@ -1946,7 +1946,7 @@
 (define (if-flonum? left tl then else)
    (let ((test (cond
 		  ((eq? tl 'real) #t)
-		  ((memq tl '(number any unknown)) `(flonum? ,left))
+		  ((memq tl '(number any unknown)) `($flonum? ,left))
 		  (else #f))))
       (cond
 	 ((eq? test #t) then)
