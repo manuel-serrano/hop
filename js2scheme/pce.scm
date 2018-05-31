@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Thu May 31 07:30:56 2018 (serrano)                */
+;*    Last change :  Thu May 31 07:32:00 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -132,7 +132,7 @@
       (let ((ainfos (map get-accesses* exprs)))
 	 (if (any (lambda (ai) (eq? ai stop)) ainfos)
 	     stop
-	     (apply append get-accesses* ainfos)))))
+	     (apply append ainfos)))))
    
 ;*---------------------------------------------------------------------*/
 ;*    get-accesses* ::J2SAccess ...                                    */
