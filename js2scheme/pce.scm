@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Thu May 31 07:32:00 2018 (serrano)                */
+;*    Last change :  Fri Jun  1 17:40:59 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -424,7 +424,15 @@
 	    (endloc (node-endloc (car (last-pair nodes))))
 	    (decls next)
 	    (nodes nodes))))
-   
+
+   (define (filter-xs xs::pair-nil decls::pair-nil)
+      (filter (lambda (x::AInfo)
+		 (with-access::AInfo x (access)
+		    (with-access::J2SAccess access (obj)
+		       (with-access::J2SRef obj (decl)
+			  (not (memq decl decls))))))
+	 xs))
+	      
    (define (insert-norec-pce! this::J2SLetBlock)
       (with-access::J2SLetBlock this (decls nodes endloc)
 	 (multiple-value-bind (skip next)
@@ -433,18 +441,19 @@
 		(insert-rec-pce! this)
 		(multiple-value-bind (collect xs next)
 		   (collect-decl next)
-		   (cond
-		      ((and (null? skip) (null? next))
-		       (pce-letblock-nonext collect xs nodes))
-		      ((null? next)
-		       (duplicate::J2SLetBlock this
-			  (decls skip)
-			  (nodes (list (pce-letblock-nonext collect xs nodes)))))
-		      (else
-		       (let ((nodes (list (next-letblock next nodes))))
+		   (let ((xs (filter-xs xs decls)))
+		      (cond
+			 ((and (null? skip) (null? next))
+			  (pce-letblock-nonext collect xs nodes))
+			 ((null? next)
 			  (duplicate::J2SLetBlock this
 			     (decls skip)
-			     (nodes (list (pce-letblock collect xs nodes))))))))))))
+			     (nodes (list (pce-letblock-nonext collect xs nodes)))))
+			 (else
+			  (let ((nodes (list (next-letblock next nodes))))
+			     (duplicate::J2SLetBlock this
+				(decls skip)
+				(nodes (list (pce-letblock collect xs nodes)))))))))))))
       
    (define (insert-rec-pce! this::J2SLetBlock)
       (with-access::J2SLetBlock this (decls nodes)
