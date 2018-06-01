@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Tue May 29 08:24:06 2018 (serrano)                */
+;*    Last change :  Thu May 31 08:58:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -406,7 +406,7 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s->list this::J2SUnresolvedRef)
    (with-access::J2SUnresolvedRef this (id loc)
-      `(,@(call-next-method) ,(dump-loc loc) ,id
+      `(,@(call-next-method) ,@(dump-loc loc) ,id
 	  ,@(dump-type this))))
 
 ;*---------------------------------------------------------------------*/
@@ -839,8 +839,8 @@
 (define-method (j2s->list this::J2SPragma)
    (with-access::J2SPragma this (expr vars vals type)
       `(,@(call-next-method) ,@(dump-type this)
-	  :vars ,vars
-	  :vals ,(map j2s->list vals)
+	  ,@(if (pair? vars) `(:vars ,vars) '())
+	  ,@(if (pair? vals) `(:vals ,(map j2s->list vals)) '())
 	  ',expr)))
 
 ;*---------------------------------------------------------------------*/

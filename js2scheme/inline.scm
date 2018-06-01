@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Mon Apr  2 09:15:59 2018 (serrano)                */
+;*    Last change :  Thu May 31 08:21:53 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -194,11 +194,11 @@
    (cond
       ((isa? obj J2SRef)
        (with-access::J2SRef obj (decl)
-	  (with-access::J2SDecl decl (ronly)
-	     ronly)))
+	  (with-access::J2SDecl decl (ronly usage)
+	     (or ronly (not (usage? '(assig) usage))))))
       ((isa? obj J2SDecl)
-       (with-access::J2SDecl obj (ronly)
-	  ronly))
+       (with-access::J2SDecl obj (ronly usage)
+	  (or ronly (not (usage? '(assig) usage)))))
       (else
        #f)))
 

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Tue May 15 09:57:06 2018 (serrano)                */
+;*    Last change :  Thu May 31 07:41:34 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -43,7 +43,7 @@
    (print "Shell Variables:")
    (print "   - HOPTRACE: hop internal trace [HOPTRACE=\"key1, key2, ...\"]")
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:range, j2s:usage, j2s:key,")
-   (print "      j2s:loc, j2s:cache")
+   (print "      j2s:loc, j2s:cache, j2s:dump")
    (print "      nodejs:compile,")
    (print "      hopscript:cache[num] (*), hopscript:function[num] (*),")
    (print "      hopscript:alloc[num], hopscript:uncache")
@@ -303,6 +303,10 @@
 	     (hopc-j2s-flags-set! (cons* :optim-pce #t (hopc-j2s-flags))))
 	    (("-fno-pce" (help "Disable property cache elimination"))
 	     (hopc-j2s-flags-set! (cons* :optim-pce #f (hopc-j2s-flags))))
+	    (("-funletrec" (help "Enable unletrec optimization (-O2)"))
+	     (hopc-j2s-flags-set! (cons* :optim-unletrec #t (hopc-j2s-flags))))
+	    (("-fno-unletrec" (help "Disable unletrec optimization"))
+	     (hopc-j2s-flags-set! (cons* :optim-unletrec #f (hopc-j2s-flags))))
 	    (("-fclevel" (help "Enable property cache level optimization"))
 	     (hopc-j2s-flags-set! (cons* :optim-clevel #t (hopc-j2s-flags))))
 	    (("-fno-clevel" (help "Disable property cache level optimization"))

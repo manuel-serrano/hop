@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:59:06 2013                          */
-;*    Last change :  Sat May  5 07:33:23 2018 (serrano)                */
+;*    Last change :  Thu May 31 08:23:43 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions                                                */
@@ -549,13 +549,19 @@
 ;*    usage? ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (usage? keys usage)
-   (any (lambda (k) (memq k usage)) keys))
+   (any (lambda (k)
+	   [assert (k) (memq k '(init new ref assig get set call))]
+	   (memq k usage))
+      keys))
 
 ;*---------------------------------------------------------------------*/
 ;*    only-usage? ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (only-usage? keys usage)
-   (every (lambda (u) (memq u keys)) usage))
+   (every (lambda (u)
+	     [assert (u) (memq k '(init new ref assig get set call))]
+	     (memq u keys))
+      usage))
 
 ;*---------------------------------------------------------------------*/
 ;*    strict-usage? ...                                                */
@@ -563,7 +569,6 @@
 (define (strict-usage? keys usage)
    (and (=fx (length keys) (length usage))
 	(only-usage? keys usage)))
-	
 	
 ;*---------------------------------------------------------------------*/
 ;*    is-hint? ...                                                     */

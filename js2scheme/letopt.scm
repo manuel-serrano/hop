@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Thu May  3 07:18:52 2018 (serrano)                */
+;*    Last change :  Thu May 31 15:13:17 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -649,7 +649,8 @@
 	  (liftable? this))
 	 (else
 	  #f)))
-   
+
+   (tprint "GLOBAL " (map j2s->list decls))
    (let loop ((n nodes)
 	      (decls decls)
 	      (deps '())
@@ -880,12 +881,24 @@
 ;*    is found.                                                        */
 ;*---------------------------------------------------------------------*/
 (define (j2s-letopt-global-literals! decls nodes)
-   
+
+   (define (prototype-function-binding? expr)
+      (when (isa? expr J2SAssig)
+	 (with-access::J2SAssig expr (lhs rhs)
+	    (when (and (isa? rhs J2SFun) (isa? lhs J2SAccess))
+	       (with-access::J2SAccess lhs (obj field)
+		  (when (isa? obj J2SAccess)
+		     (with-access::J2SAccess obj (obj field)
+			(when (isa? field J2SString)
+			   (when (and (isa? obj J2SRef) (isa? field J2SString))
+			      (with-access::J2SString field (val)
+				 (string=? val "prototype")))))))))))
    (define (nop? node)
       (or (isa? node J2SNop)
 	  (when (isa? node J2SStmtExpr)
 	     (with-access::J2SStmtExpr node (expr)
-		(isa? expr J2SLiteral)))
+		(or (isa? expr J2SLiteral)
+		    (prototype-function-binding? expr))))
 	  (when (isa? node J2SSeq)
 	     (with-access::J2SSeq node (nodes)
 		(every nop? nodes)))))
@@ -963,12 +976,9 @@
 					(set! expr (J2SUndefined))
 					(loop (cdr n)
 					   (cons (cons decl init) literals)
-					   (cons decl literals)))
+					   (cons decl env)))
 				     (letopt-literals literals))
 				 (letopt-literals literals))))
 		       (letopt-literals literals))))))
 	 (else
 	  (letopt-literals literals)))))
-
-
-		   

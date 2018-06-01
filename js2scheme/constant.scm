@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue May  8 15:01:09 2018 (serrano)                */
+;*    Last change :  Thu May 31 15:36:51 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -247,7 +247,6 @@
    
    (call-default-walker)
    (with-access::J2SBinary this (op expr lhs rhs loc type)
-      
       (if (and (isa? lhs J2SNumber) (isa? rhs J2SNumber))
 	  (with-access::J2SNumber lhs ((lval val))
 	     (with-access::J2SNumber rhs ((rval val))
@@ -256,7 +255,17 @@
 		   ((-) (evaluate this - lval rval))
 		   ((*) (evaluate this * lval rval))
 		   ((/) (evaluate this / lval rval))
-		   ((<< >> >>> & ^ BIT_OR %)
+		   ((BIT_OR)
+		    (if (and (fixnum? lval) (fixnum? rval))
+			(let* ((x (fixnum->int32 lval))
+			       (y (fixnum->int32 rval))
+			       (r (bit-ors32 x y)))
+			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
+				    (<=s32 (fixnum->int32 (maxvalfx)) r))
+			       (J2SNumber (int32->fixnum r))
+			       this))
+			this))
+		   ((<< >> >>> & ^ %)
 		    (tprint "TODO.constant! " (j2s->list this))
 		    this)
 		   (else this))))

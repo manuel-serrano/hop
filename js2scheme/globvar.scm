@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Tue May 15 09:57:38 2018 (serrano)                */
+;*    Last change :  Thu May 31 08:10:33 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -108,14 +108,26 @@
 (define-walk-method (collect-gloconst* this::J2SDecl)
    '())
 
+;* {*---------------------------------------------------------------------*} */
+;* {*    collect-gloconst* ::J2SInit ...                                  *} */
+;* {*---------------------------------------------------------------------*} */
+;* (define-walk-method (collect-gloconst* this::J2SInit)               */
+;*    (with-access::J2SInit this (lhs rhs)                             */
+;*       ;; no need to scan rhs as we are only looking for variable decls/inits */
+;*       (if (isa? lhs J2SRef)                                         */
+;* 	  (with-access::J2SRef lhs (decl)                              */
+;* 	     (with-access::J2SDecl decl (usage ronly val)              */
+;* 		(if (and (not (usage? '(assig) usage)) (constant? rhs)) */
+;* 		    (list decl)                                        */
+;* 		    '())))                                             */
+;* 	  '())))                                                       */
+;*                                                                     */
 ;*---------------------------------------------------------------------*/
 ;*    collect-gloconst* ::J2SDeclInit ...                              */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-gloconst* this::J2SDeclInit)
    (with-access::J2SDeclInit this (usage ronly val)
-      (if (and ronly
-	       (not (usage? '(assig) usage))
-	       (constant? val))
+      (if (and ronly (not (usage? '(assig) usage)) (constant? val))
 	  (list this)
 	  (collect-gloconst* val))))
 
@@ -146,9 +158,28 @@
 (define-walk-method (invalidate-early-decl this::J2SRef gcnsts flag)
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (%info %%dump)
+	 (when (isa? decl J2SDeclFun)
+	    (with-access::J2SDeclFun decl (%info val)
+	       (when (eq? decl #unspecified)
+		  (set! %info flag)
+		  (invalidate-early-decl val gcnsts flag))))
 	 (unless (eq? %info globconst-mark)
 	    (set! %%dump "globvar:early")
 	    (set! %info #f)))))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate-early-decl ::J2SInit ...                              */
+;*---------------------------------------------------------------------*/
+(define-walk-method (invalidate-early-decl this::J2SInit gcnsts flag)
+   (with-access::J2SInit this (lhs rhs %%dump)
+      (invalidate-early-decl rhs gcnsts flag)
+      (if (isa? lhs J2SRef)
+	  (with-access::J2SRef lhs (decl)
+	     (with-access::J2SDecl decl (%info)
+		(when (eq? %info #unspecified)
+		   (set! %%dump "globvar:conditional")
+		   (set! %info flag))))
+	  (invalidate-early-decl lhs gcnsts flag))))
 
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl ::J2SDeclInit ...                          */
@@ -159,6 +190,13 @@
       (when (eq? %info #unspecified)
 	 (set! %%dump "globvar:conditional")
 	 (set! %info flag))))
+
+;*---------------------------------------------------------------------*/
+;*    invalidate-early-decl ::J2SDeclFun ...                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (invalidate-early-decl this::J2SDeclFun gcnsts flag)
+   ;; don't walk through function definitions, wait for them to be used
+   #f)
 
 ;*---------------------------------------------------------------------*/
 ;*    invalidate-early-decl-condition ...                              */
