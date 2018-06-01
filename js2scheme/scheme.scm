@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun May 20 17:01:38 2018 (serrano)                */
+;*    Last change :  Fri Jun  1 13:52:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1772,13 +1772,13 @@
 			(cond
 			   ((null? cs)
 			    (aput-inc otmp prop op lhs (rhs-cache rhs) inc '()))
-			   ((eq? (car cs) 'imap)
+			   ((or (eq? (car cs) 'imap) (eq? (car cs) 'imap-incache))
 			    `(if (eq? %cmap (js-pcache-imap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc otmp prop op lhs (rhs-cache rhs) inc 'imap)
+				 ,(aput-inc otmp prop op lhs (rhs-cache rhs) inc (list (car cs)))
 				 ,(loop (cdr cs))))
 			   ((eq? (car cs) 'cmap)
 			    `(if (eq? %cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc otmp prop op lhs (rhs-cache rhs) inc 'cmap)
+				 ,(aput-inc otmp prop op lhs (rhs-cache rhs) inc (list (car cs)))
 				 ,(loop (cdr cs))))
 			   (else
 			    (loop (cdr cs))))))))))

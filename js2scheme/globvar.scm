@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Apr 26 08:28:06 2017                          */
-;*    Last change :  Thu May 31 08:10:33 2018 (serrano)                */
+;*    Last change :  Fri Jun  1 08:16:30 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Global variables optimization (initialization and constant       */
@@ -83,7 +83,7 @@
       ((isa? expr J2SRef)
        (with-access::J2SRef expr (decl)
 	  (with-access::J2SDecl decl (ronly writable usage)
-	     (or ronly (not writable)))))
+	     (or ronly (not writable) (not (usage? '(assig) usage))))))
       ((isa? expr J2SUnary)
        (with-access::J2SUnary expr (expr)
 	  (constant? expr)))
@@ -286,10 +286,9 @@
 	     (with-access::J2SDeclInit decl (val usecnt)
 		(set! usecnt (-fx usecnt 1))
 		;; copy the value
-		(j2s-alpha val '() '()))
+		(j2s-alpha (propagate-constant! val) '() '()))
 	     (call-default-walker)))))
-   
-   
+
 (define (j2s-globvar-old! this::J2SProgram args)
    (when (isa? this J2SProgram)
       (with-access::J2SProgram this (nodes decls direct-eval)

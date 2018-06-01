@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Thu May 31 15:13:17 2018 (serrano)                */
+;*    Last change :  Fri Jun  1 08:07:52 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -650,7 +650,6 @@
 	 (else
 	  #f)))
 
-   (tprint "GLOBAL " (map j2s->list decls))
    (let loop ((n nodes)
 	      (decls decls)
 	      (deps '())
