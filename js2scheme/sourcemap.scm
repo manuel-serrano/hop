@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Jul 11 10:52:32 2014                          */
-;*    Last change :  Thu Apr 26 18:06:19 2018 (serrano)                */
+;*    Last change :  Sat Jun  2 19:52:27 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript source map generation                                 */
@@ -423,7 +423,7 @@
 			(values i b))
 		       (else
 			(loop (+fx i 1)))))
-		 (linetable-find table 0 pos file))))
+		 (values (-fx len 1) (car (vector-ref table (-fx len 1)))))))
        (values 0 0)))
 
 ;*---------------------------------------------------------------------*/
@@ -437,11 +437,14 @@
 	 (let ((t (car tree)))
 	    (cond
 	       ((string? t)
-		(loop (cdr tree) (+fx offset (string-length t))))
+		(loop (cdr tree)
+		   (+fx offset (string-length t))))
 	       ((number? t)
-		(loop (cdr tree) (+fx offset (string-length (number->string t)))))
+		(loop (cdr tree)
+		   (+fx offset (string-length (number->string t)))))
 	       ((symbol? t)
-		(loop (cdr tree) (+fx offset (string-length (symbol->string! t)))))
+		(loop (cdr tree)
+		   (+fx offset (string-length (symbol->string! t)))))
 	       ((isa? t J2SNode)
 		(with-access::J2SNode t (loc)
 		   (let ((segment (list offset loc)))

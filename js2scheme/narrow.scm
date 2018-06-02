@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Tue May  1 16:07:47 2018 (serrano)                */
+;*    Last change :  Sat Jun  2 07:03:02 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -28,6 +28,7 @@
 
    (static (class J2SNarrowInfo
 	      (deffun::obj (default #f))
+	      (usefun::obj (default #f))
 	      (defblock::obj (default #f))
 	      (useblocks::pair-nil (default '()))
 	      (narrowable::bool (default #t))
@@ -156,7 +157,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    j2s-narrow-fun/w-init! ...                                       */
 ;*    -------------------------------------------------------------    */
-;*    For variables that are not initialize (but setted) try to        */
+;*    For variables that are not initialized (but setted) try to       */
 ;*    find one of the assignments that could act as an initializer.    */
 ;*---------------------------------------------------------------------*/
 (define (j2s-narrow-fun/w-init! o::J2SFun)
@@ -274,6 +275,7 @@
 ;*      1- it is never used outside its bounding block                 */
 ;*      2- it is never captured inside a loop                          */
 ;*      3- it is never used after a yield inside a loop                */
+;*      4- it is used in two different inner functions                 */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-mark-narrowable this::J2SNode blocks inloop fun yield)
    (call-default-walker))
@@ -294,10 +296,12 @@
    (with-access::J2SRef this (decl)
       (with-access::J2SDecl decl (%info id)
 	 (when (isa? %info J2SNarrowInfo)
-	    (with-access::J2SNarrowInfo %info (deffun defblock narrowable)
-	       (unless (and (memq defblock blocks)
-			    (or (not inloop)
-				(and (eq? fun deffun) (not (cell-ref yield)))))
+	    (with-access::J2SNarrowInfo %info (deffun usefun defblock narrowable)
+	       (unless usefun (set! usefun fun))
+	       (when (or (not (memq defblock blocks))
+			 (not (eq? fun usefun))
+			 (and inloop
+			      (or (not (eq? fun deffun)) (cell-ref yield))))
 		  (set! narrowable #f)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -311,10 +315,21 @@
 ;*    j2s-mark-narrowable ::J2SLoop ...                                */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-mark-narrowable this::J2SLoop blocks inloop fun yield)
-   (with-access::J2SLoop this (body)
-      (let ((res (call-default-walker)))
-	 (unless inloop (cell-set! yield #f))
-	 res)))
+   (let ((fields (class-all-fields (object-class this))))
+      (let loop ((i (-fx (vector-length fields) 1)))
+	 (cond
+	    ((=fx i -1)
+	     (unless inloop (cell-set! yield #f)))
+	    ((eq? (class-field-name (vector-ref fields i)) 'body)
+	     (with-access::J2SLoop this (body)
+		(j2s-mark-narrowable body blocks #t fun yield)))
+	    (else
+	     (let* ((f (vector-ref fields i))
+		    (get (class-field-accessor f))
+		    (info (class-field-info f)))
+		(when (and (pair? info) (member "ast" info))
+		   (j2s-mark-narrowable (get this) blocks inloop fun yield))
+		(loop (-fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-mark-narrowable ::J2SYield ...                               */
