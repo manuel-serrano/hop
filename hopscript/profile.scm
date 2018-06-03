@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Apr  8 15:58:30 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 15:20:48 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -794,7 +794,7 @@
 				   (set! cntcmap (+ cntcmap xcntcmap))
 				   (set! cntpmap (+ cntpmap xcntpmap))
 				   (set! cntamap (+ cntamap xcntamap))
-				   (set! cntvtable (+ cntvtable xcntamap))
+				   (set! cntvtable (+ cntvtable xcntvtable))
 				   (loop (+fx i 1) old res))
 				(loop (+fx i 1) x (cons old res)))))))))))
 

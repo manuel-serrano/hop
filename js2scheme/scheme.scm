@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Jun  3 07:59:34 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 16:30:15 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -2668,6 +2668,26 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (cancall this::J2SCall cell)
    (cell-set! cell #t))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SNew ...                                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SNew cell)
+   (cell-set! cell #t))
+
+;*---------------------------------------------------------------------*/
+;*    cancall ::J2SAssig ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (cancall this::J2SAssig cell)
+   (with-access::J2SAssig this (lhs rhs)
+      (if (isa? lhs J2SAccess)
+	  (with-access::J2SAccess lhs (obj field)
+	     (unless (isa? obj J2SThis)
+		(cancall field cell)
+		(cancall rhs cell)))
+	  (begin
+	     (cancall lhs cell)
+	     (cancall rhs cell)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    with-object ...                                                  */

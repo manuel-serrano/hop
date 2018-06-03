@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Sun Jun  3 07:26:10 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 15:46:36 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -190,7 +190,7 @@
        (cond
 	  ((isa? this J2SAccess)
 	   (with-access::J2SAccess this (cache cspecs)
-	      (if cache `(:cache ,cache :cspecs ,cspecs) '())))
+	      (if cache `(:cache ,cache :cspecs ,cspecs) `(:cspecs ,cspecs))))
 	  ((isa? this J2SCall)
 	   (with-access::J2SCall this (cache cspecs)
 	      (if cache `(:cache ,cache :cspecs ,cspecs) '())))

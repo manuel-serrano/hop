@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep  8 07:38:28 2013                          */
-;*    Last change :  Tue May 15 11:22:22 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 15:04:14 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript parser                                                */
@@ -1784,7 +1784,7 @@
 			(eq? key 'service)
 			(j2s-reserved-id? key))
 		    (loop (instantiate::J2SAccess
-			     (loc loc)
+			     (loc (token-loc ignore))
 			     (obj expr)
 			     (field (instantiate::J2SString
 				       (loc (token-loc field))
