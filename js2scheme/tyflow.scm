@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Mon May 28 17:17:51 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 06:31:27 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -775,7 +775,6 @@
 				(append lbk rbk))))
 			 (tyr
 			  (with-access::J2SRef lhs (decl loc)
-			     
 			     (decl-vtype-set! decl tyr fix)
 			     (let ((nenv (extend-env env decl tyr)))
 				(expr-type-set! this nenv fix tyr

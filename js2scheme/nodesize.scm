@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Sep 24 07:26:29 2017                          */
-;*    Last change :  Sat Jan 20 07:48:17 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 07:22:52 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Compute an AST size (used when inlining)                         */
@@ -26,6 +26,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    Constants                                                        */
 ;*---------------------------------------------------------------------*/
+(define FUN-TAX 3)
 (define CALL-TAX 3)
 (define LOOP-TAX 30)
 
@@ -81,13 +82,14 @@
 (define-method (node-size this::J2SReturn)
    (with-access::J2SReturn this (expr)
       ;; an extra weight as be counter when declarting the function
-      (node-size expr)))
+      (+fx 1 (node-size expr))))
 	 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SLetBLock ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (node-size this::J2SLetBlock)
-   (call-next-method))
+   (with-access::J2SLetBlock this (decls)
+      (+ 1 (apply + (map node-size decls)) (call-next-method))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SIf ...                                            */
@@ -125,7 +127,7 @@
 (define-method (node-size this::J2SFun)
    (with-access::J2SFun this (params)
       ;; 3 = 1 (return) + 1 (frame) + 1 (sp)
-      (+ (call-next-method) 3 (length params))))
+      (+ FUN-TAX (call-next-method) (length params))))
 
 ;*---------------------------------------------------------------------*/
 ;*    node-size ::J2SMethod ...                                        */

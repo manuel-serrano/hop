@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:12:21 2013                          */
-;*    Last change :  Thu May 31 08:58:17 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 07:26:10 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Dump the AST for debugging                                       */
@@ -16,7 +16,8 @@
    
    (import __js2scheme_ast
 	   __js2scheme_utils
-	   __js2scheme_stage)
+	   __js2scheme_stage
+	   __js2scheme_node-size)
 
    (export j2s-dump-stage
 	   (j2s-dump-decls::obj ::obj)
@@ -44,6 +45,14 @@
 		   (string-contains (or (getenv "HOPTRACE") "") "j2s:info")))
 	  `(:%info ,(j2s-info->list %info))
 	  '())))
+
+;*---------------------------------------------------------------------*/
+;*    dump-size ...                                                    */
+;*---------------------------------------------------------------------*/
+(define (dump-size this::J2SNode)
+   (if (string-contains (or (getenv "HOPTRACE") "") "j2s:size")
+       `(:size ,(node-size this))
+       '()))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s-info->list ...                                               */
@@ -339,10 +348,11 @@
 (define-method (j2s->list this::J2SBlock)
    (with-access::J2SBlock this (nodes loc endloc)
       `(,(string->symbol (typeof this))
-	  ,@(dump-loc loc)
-	  ,@(dump-loc endloc :endloc)
-	  ,@(dump-info this)
-	  ,@(map j2s->list nodes))))
+	,@(dump-loc loc)
+	,@(dump-loc endloc :endloc)
+	,@(dump-info this)
+	,@(dump-size this)
+	,@(map j2s->list nodes))))
 
 ;*---------------------------------------------------------------------*/
 ;*    j2s->list ::J2SLetBlock ...                                      */
@@ -353,6 +363,7 @@
 	,@(dump-loc loc)
 	,@(dump-loc endloc :endloc)
 	,@(dump-info this)
+	,@(dump-size this)
 	,(map j2s->list decls) ,@(map j2s->list nodes))))
 
 ;*---------------------------------------------------------------------*/
@@ -514,6 +525,7 @@
 		 :mode ,mode
 		 ,@(dump-range this)
 		 :thisp ,(j2s->list thisp)
+		 ,@(dump-size this)
 		 ,(map j2s->list params) ,(j2s->list body))))
 	 ((isa? decl J2SDecl)
 	  (with-access::J2SDecl decl (key scope)

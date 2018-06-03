@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu May 31 08:21:53 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 06:53:13 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -63,11 +63,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-default-factor ...                                        */
 ;*---------------------------------------------------------------------*/
-(define inline-default-global-expansion 2)
-(define inline-default-call-expansion 16)
-(define inline-max-targets 3)
-(define inline-recursive #f)
-(define inline-max-size 40)
+(define inline-global-expansion 2.5)
 
 ;*---------------------------------------------------------------------*/
 ;*    dev                                                              */
@@ -124,8 +120,9 @@
 			       b))))))
 	     (let loop ((limit 10))
 		(inline! this limit '() pms this args)
-		(let ((nsize (max (node-size this) limit)))
-		   (when (<fx limit 60)
+		(let ((nsize (node-size this)))
+		   (when (and (<fx limit 60)
+			      (< nsize (* size inline-global-expansion)))
 		      (loop (+fx limit 5)))))
 	     ;; cleanup use count
 	     (for-each reset-use-count decls)
@@ -528,15 +525,19 @@
 ;*---------------------------------------------------------------------*/
 (define (inline-args params args limit stack pmethods prgm conf)
    (map (lambda (p a)
-	   (if (and (ronly-variable? p) (isa? a J2SLiteral))
-	       a
+	   (cond
+	      ((and (ronly-variable? p) (isa? a J2SLiteral))
+	       a)
+	      ((and (ronly-variable? p) (isa? a J2SRef) (ronly-variable? a))
+	       a)
+	      (else
 	       (with-access::J2SDecl p (usage id writable)
 		  (with-access::J2SNode a (loc)
 		     (let ((d (J2SLetOpt usage (gensym id)
 				 (inline! a limit stack pmethods prgm conf))))
 			(with-access::J2SDecl d ((w writable))
 			   (set! w writable))
-			d)))))
+			d))))))
       params args))
 
 ;*---------------------------------------------------------------------*/

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May  1 16:06:44 2018                          */
-;*    Last change :  Wed May  9 15:54:04 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 06:11:13 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    hint typing of numerical values.                                 */
@@ -11,13 +11,15 @@
 ;*    This optimization consists in propagating expressions and        */
 ;*    declarations hints that will be used by the code generator.      */
 ;*    -------------------------------------------------------------    */
-;*    Two top-down hints are propagated on unary and binary            */
-;*    operations.                                                      */
+;*    Two top-down hints are propagated on unary op, binary op, and    */
+;*    assignments.                                                     */
 ;*                                                                     */
 ;*      1- if only one argument of binary expression is typed/hinted,  */
 ;*         add its type/hint as a hint of the second argument.         */
 ;*      2- if the result is typed/hinted propagate that hint to the    */
 ;*         arguments.                                                  */
+;*      3- in a variable assignment (aliasing), if one of the vars     */
+;*         is hinted/typed, the hint is propagated.                    */
 ;*                                                                     */
 ;*    This propagation iterates until the fix point is reached.        */
 ;*=====================================================================*/
@@ -221,6 +223,20 @@
 	    (set! itype 'real)))))
 
 ;*---------------------------------------------------------------------*/
+;*    hintnum ::J2SAssig ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (hintnum this::J2SAssig fix::cell)
+   (call-default-walker)
+   (with-access::J2SAssig this (lhs rhs)
+      (when (and (isa? lhs J2SRef) (isa? rhs J2SRef))
+	 (cond
+	    ((is-hint? lhs 'real)
+	     (add-expr-hint! rhs (expr-hint lhs) #f fix))
+	    ((is-hint? rhs 'real)
+	     (add-expr-hint! lhs (expr-hint rhs) #f fix)
+	     (add-expr-hint! this (expr-hint rhs) #f fix))))))
+
+;*---------------------------------------------------------------------*/
 ;*    type<? ...                                                       */
 ;*---------------------------------------------------------------------*/
 (define (type<? t1 t2)
@@ -241,7 +257,7 @@
       (with-access::J2SDecl decl (vtype)
 	 (when (type<? vtype type)
 	    (set! type vtype)
-	    (cell-set! fix #t)))))
+	    (cell-set! fix #f)))))
 
 ;*---------------------------------------------------------------------*/
 ;*    propagate-types ::J2SBinary ...                                  */

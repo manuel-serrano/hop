@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Mon May 28 17:18:42 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 06:09:22 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -361,16 +361,17 @@
 ;*    js->real ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js->real v expr conf numberp)
-   (let loop ((v v))
+   (let loop ((v v)
+	      (return #f))
       (match-case v
 	 ((? symbol?)
-	  v)
+	  `(js-toflonum ,v))
 	 (((or let let* letrec letrec*) ?- ?body)
-	  (set-car! (cddr v) (loop body))
+	  (set-car! (cddr v) (loop body return))
 	  v)
 	 ((if ?- ?then ?else)
-	  (set-car! (cddr v) (loop then))
-	  (set-car! (cdddr v) (loop else))
+	  (set-car! (cddr v) (loop then return))
+	  (set-car! (cdddr v) (loop else return))
 	  v)
 	 (((or +fl -fl *fl /fl) ?- ?-)
 	  v)
@@ -382,6 +383,14 @@
 	      `(js-toflonum (js-tonumber ,v %this))))
 	 (((or -js *js /js) ?- ?- ?-)
 	  `(js-toflonum ,v))
+	 ((bind-exit (?return) ?expr)
+	  (loop expr return))
+	 (((? (lambda (f) (eq? f return))) ?expr)
+	  (loop expr #f))
+	 (((or let* letrec*) ?- ?expr)
+	  (loop expr return))
+	 ((js-int32-tointeger ?expr)
+	  `(int32->flonum ,expr))
 	 (else
 	  (tprint "TODO js->real " v)
 	  (if numberp

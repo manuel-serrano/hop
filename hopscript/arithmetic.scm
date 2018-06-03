@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 07:42:21 2017                          */
-;*    Last change :  Mon Apr 23 10:31:08 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 06:33:59 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JS arithmetic operations (see 32 and 64 implementations).        */
@@ -31,7 +31,7 @@
 
    (from   __hopscript_arithmetic32 __hopscript_arithmetic64)
 
-   (export (js-toflonum::double ::obj)
+   (export (inline js-toflonum::double ::obj)
 	   (+js::obj ::obj ::obj ::JsGlobalObject)
 	   (-js::obj ::obj ::obj ::JsGlobalObject)
 	   (*js::obj ::obj ::obj ::JsGlobalObject)
@@ -73,13 +73,14 @@
 ;*---------------------------------------------------------------------*/
 ;*    js-toflonum ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (js-toflonum r)
-   (cond
-      ((flonum? r) r)
-      ((fixnum? r) (fixnum->flonum r))
-      ((uint32? r) (uint32->flonum r))
-      ((int32? r) (int32->flonum r))
-      (else (error "js-toflonum" (format "Illegal number (~a)" (typeof r)) r))))
+(define-inline (js-toflonum r)
+   (if (flonum? r) r (fixnum->flonum r)))
+;*    (cond                                                            */
+;*       ((flonum? r) r)                                               */
+;*       ((fixnum? r) (fixnum->flonum r))                              */
+;*       ((uint32? r) (uint32->flonum r))                              */
+;*       ((int32? r) (int32->flonum r))                                */
+;*       (else (error "js-toflonum" (format "Illegal number (~a)" (typeof r)) r)))) */
 
 ;*---------------------------------------------------------------------*/
 ;*    +js ...                                                          */
