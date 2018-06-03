@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Fri Jun  1 13:52:58 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 07:59:34 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1850,6 +1850,21 @@
 ;*    j2s-scheme ::J2SAssigOp ...                                      */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAssigOp mode return conf)
+
+   (define (nocall? expr::J2SExpr)
+      (cond
+	 ((isa? expr J2SRef)
+	  #t)
+	 ((and (isa? expr J2SLiteral) (not (isa? expr J2SArray)))
+	  #t)
+	 ((isa? expr J2SUnary)
+	  (with-access::J2SUnary expr (expr)
+	     (nocall? expr)))
+	 ((isa? expr J2SBinary)
+	  (with-access::J2SBinary expr (lhs rhs)
+	     (and (nocall? lhs) (nocall? rhs))))
+	 (else
+	  #f)))
    
    (define (aput-assigop otmp::symbol pro prov op
 	      tl::symbol lhs::J2SAccess rhs::J2SExpr cslhs cs)
@@ -1887,24 +1902,25 @@
 		(pro (when (pair? prov) (gensym 'prop))))
 	    `(let* (,@(if pro (list `(,pro ,prov)) '()))
 		,(cond
-		    
 ;* 		    ((memq 'cmap cspecs)                               */
 ;* 		     (aput-assigop otmp pro prov op                    */
 ;* 			tl lhs rhs cspecs))                            */
 		    ((or (not cache) (is-integer? field))
 		     (aput-assigop otmp pro prov op
 			tl lhs rhs '() '()))
-		    ((and (equal? cspecs '(imap-incache))
+		    ((and (or (equal? cspecs '(imap-incache))
+			      (equal? cspecs '(cmap-incache)))
 			  (eq? (j2s-type obj) 'object))
 		     ;; see the PCE optimization
 		     (aput-assigop otmp pro prov op
-			tl lhs rhs '(imap-incache) '(imap-incache)))
+			tl lhs rhs '(imap-incache) cspecs))
 		    ((memq (typeof-this obj conf) '(object this global))
 		     `(with-access::JsObject ,otmp (cmap)
 			 (let ((%omap cmap))
 			    (if (eq? (js-pcache-cmap ,(js-pcache cache)) %omap)
 				,(aput-assigop otmp pro prov op
-				    tl lhs rhs '(cmap-incache) cspecs)
+				    tl lhs rhs '(cmap-incache)
+				    (if (nocall? rhs) '(cmap-incache) cspecs))
 				,(aput-assigop otmp pro prov op
 				    tl lhs rhs '(cmap+) '(cmap+))))))
 		    (else
@@ -1916,7 +1932,10 @@
 				       (if (eq? (js-pcache-cmap ,(js-pcache cache))
 					      %omap)
 					   ,(aput-assigop otmp pro prov op
-					       tl lhs rhs '(cmap-incache) cspecs)
+					       tl lhs rhs '(cmap-incache)
+					       (if (nocall? rhs)
+						   '(cmap-incache)
+						   cspecs))
 					   ,(aput-assigop otmp pro prov op
 					       tl lhs rhs '(cmap+) '(cmap+)))))))
 			  (let ((%omap (js-not-a-cmap)))

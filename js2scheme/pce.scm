@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue May 15 09:53:30 2018                          */
-;*    Last change :  Fri Jun  1 17:40:59 2018 (serrano)                */
+;*    Last change :  Sun Jun  3 09:14:02 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Property Cache Elimination optimization                          */
@@ -574,9 +574,10 @@
 (define (disable-pce-cache ncaches loc)
    (J2SSeq*
       (map (lambda (entry)
-	      (J2SPragma
-		 `(with-access::JsPropertyCache (js-pcache-ref %pcache ,(cdr entry)) (imap)
-		    (set! imap #t))))
+	      (J2SStmtExpr
+		 (J2SPragma
+		    `(with-access::JsPropertyCache (js-pcache-ref %pcache ,(cdr entry)) (imap)
+			(set! imap #t)))))
 	 ncaches)))
 
 ;*---------------------------------------------------------------------*/
