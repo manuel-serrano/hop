@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Sat Sep 27 10:27:29 2014                          */
-/*    Last change :  Mon May 28 16:53:47 2018 (serrano)                */
+/*    Last change :  Mon Jun  4 18:55:56 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Optimization testing (i.e., optimizations that were wrong).      */
@@ -20,3 +20,16 @@ function bool( o ) {
 }
 
 assert.ok( bool( undefined ) === false );
+
+/*---------------------------------------------------------------------*/
+/*    assignment expressions                                           */
+/*---------------------------------------------------------------------*/
+var oscTypeCodes = { 'f': { rep : 'float' } };
+
+function bug( code ) {
+   var ref;
+
+   return (ref = oscTypeCodes[code]) != null ? ref.rep : void 0;
+}
+
+assert.equal( bug( "f" ), "float" );

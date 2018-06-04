@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Dec 25 07:41:22 2015                          */
-;*    Last change :  Sat Jun  2 07:03:02 2018 (serrano)                */
+;*    Last change :  Mon Jun  4 19:01:41 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Narrow local variable scopes                                     */
@@ -173,7 +173,6 @@
 				     (let ((assig (find-drop-assig
 						     uvar assigs block)))
 					(when (always-executed? block assig)
-					   ;;(tprint "ASSIG=" (j2s->list assig))
 					   (rewrite-assig! body assig)
 					   (with-access::J2SDecl uvar (%info)
 					      (with-access::J2SNarrowInfo %info
@@ -745,6 +744,8 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (rewrite-assig! this::J2SAssig assig)
    (if (eq? this assig)
-       (duplicate::J2SInit this)
+       (with-access::J2SAssig this (lhs loc)
+	  (with-access::J2SRef lhs (decl)
+	     (J2SSequence (duplicate::J2SInit this) (J2SRef decl))))
        (call-default-walker)))
    

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Jun  4 10:41:34 2018 (serrano)                */
+;*    Last change :  Mon Jun  4 19:26:02 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -527,7 +527,11 @@
 						(lambda (e)
 						   (js-promise-async p
 						      (lambda ()
-							 (js-call1 %this reject %this e))))
+							 (js-promise-async p
+							 (lambda ()
+							    (js-promise-reject p
+							       (scheme->js e)))))))
+;* 							 (js-call1 %this reject %this e)))) */
 						(post-request
 						   (lambda (x)
 						      (js-promise-async p

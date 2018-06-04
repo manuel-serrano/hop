@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Apr 18 06:41:05 2014                          */
-;*    Last change :  Mon Apr  2 18:36:57 2018 (serrano)                */
+;*    Last change :  Mon Jun  4 19:22:39 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop binding                                                      */
@@ -433,7 +433,7 @@
 		(js-call1 %this fail %this
 		   (js-alist->jsobject header %this)))
 	     (js-call1 %this fail %this obj))))
-   
+
    (let ((host "localhost")
 	 (port #f)
 	 (authorization #f)
