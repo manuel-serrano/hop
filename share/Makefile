@@ -1,9 +1,9 @@
 #*=====================================================================*/
-#*    serrano/prgm/project/hop/3.1.x/share/Makefile                    */
+#*    serrano/prgm/project/hop/3.2.x/share/Makefile                    */
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Sat Dec 25 07:19:48 2004                          */
-#*    Last change :  Sun Jan 28 08:30:35 2018 (serrano)                */
+#*    Last change :  Mon Jun  4 12:19:13 2018 (serrano)                */
 #*    Copyright   :  2004-18 Manuel Serrano                            */
 #*    -------------------------------------------------------------    */
 #*    The Makefile for the HOP shared directory                        */
@@ -297,6 +297,8 @@ hopjs_u.js: hop-boot.js hop-autoconf.js $(RTSCONFIG) \
 	echo "\"use strict\";" >> $@
 	echo >> $@
 	echo "var hop_current_stack_context;" >> $@
+	echo "function hop_callback_listener_context(m) { return m; }" >> $@
+	echo "function hop_callback_html_context(m) { return m; }" >> $@
 	echo "function hop_callback_handler( e, ctx ) { throw e; }" >> $@
 	echo "function sc_error( proc, msg, obj ) { throw msg; }" >> $@
 	cat $^ | sed -n '1h;1!H;$${;g;s%/[*]\([^*]\|[*][^/]\)*[*]/%%g;p;}' \

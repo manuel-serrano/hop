@@ -3,8 +3,8 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Dec  4 08:42:05 2017 (serrano)                */
-;*    Copyright   :  2013-17 Manuel Serrano                            */
+;*    Last change :  Mon Jun  4 10:41:34 2018 (serrano)                */
+;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
 ;*=====================================================================*/
@@ -1072,7 +1072,7 @@
 	     "Not a service ~s" (js-tostring svc %this)))
 	 ((not (member u *allow-urls*))
 	  (js-raise-type-error %this
-	     "URL now allowed for redirection ~s (see Service.allowURL)" u))
+	     "URL not allowed for redirection ~s (see Service.allowURL)" u))
 	 ((string-prefix? (hop-service-base) u)
 	  (js-raise-type-error %this
 	     (format "Illegal URL prefix ~~s (must not be a prefix of ~s)"
@@ -1098,7 +1098,7 @@
 	     "Not a service ~s" (js-tostring svc %this)))
 	 ((not (member u *allow-urls*))
 	  (js-raise-type-error %this
-	     "URL now allowed for redirection ~s (see Service.allowURL)" u))
+	     "URL not allowed for redirection ~s (see Service.allowURL)" u))
 	 (else
 	  (with-access::JsService svc (svc)
 	     (with-access::hop-service svc (path)
