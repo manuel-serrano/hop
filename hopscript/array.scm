@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 20 10:41:39 2013                          */
-;*    Last change :  Sun May 13 20:22:36 2018 (serrano)                */
+;*    Last change :  Tue Jun  5 14:51:19 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript arrays                       */
@@ -820,7 +820,6 @@
 	      val)
 	     ((js-object-mode-holey? arr)
 	      (vector-set! vec (uint32->fixnum idx) val)
-	      
 	      (cond
 		 ((>=u32 idx length)
 		  (js-object-mode-inline-set! arr #f)
@@ -2655,7 +2654,7 @@
 		      ((js-object-mode-holey? o)
 		       (js-object-mode-inline-set! o #f)
 		       (vector-set! vec (uint32->fixnum idx) v)
-		       (when (>u32 idx length)
+		       (when (>=u32 idx length)
 			  (set! length (+u32 idx #u32:1)))
 		       v)
 		      ((js-object-mode-inline? o)

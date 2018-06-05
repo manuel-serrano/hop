@@ -20,7 +20,7 @@ service serv1( o ) {
 
    assert.ok( x1 > 0 );
    assert.ok( y1 > x1 );
-   console.log( "serv1...test passed" );
+   
    res++;
    
    return x1 + y1;
@@ -33,7 +33,6 @@ service upload( o ) {
 
    assert.ok( stats.isFile() && (Date.now() - stats.ctime.getTime() < 2000) );
    assert.equal( content, chars );
-   console.log( "upload...test passed" );
    res++;
    
    return 'OK' ;
@@ -91,6 +90,7 @@ function test() {
    }, function(result) {
       result.on( 'data', function( chunk ) {
 	 assert.equal( eval( chunk.toString() ), 3 );
+	 console.log( "serv1...test passed" );
       } );
    } );
    req.write( postData );
@@ -114,6 +114,7 @@ function test() {
 	 var c = chunk.toString();
 	 console.log( "chunk=", c );
 	 assert.ok( c == "OK" );
+	 console.log( "upload...test passed" );
       });
    } );
 
@@ -121,9 +122,15 @@ function test() {
    req.end();
 
    serv2( "foobar+", { x: 0, val: "foobar" } )
-      .post( function( v ) { assert.ok( v ) } );
+      .post( function( v ) {
+	 assert.ok( v );
+	 console.log( "serv2a...test passed" );
+      } );
    serv2( { x: 0, val: "foobar" }, "foobar+" )
-      .post( function( v ) { assert.ok( v ) } );
+      .post( function( v ) {
+	 assert.ok( v );
+	 console.log( "serv2b...test passed" );
+      } );
 
    serv3()
       .post( function( v ) {
@@ -156,16 +163,16 @@ function checkCompletion() {
    }
 }
 
-setTimeout( function() {
-   if( hop.compilerDriver.pending > 0 ) {
-      hop.compilerDriver.addEventListener( "all", function( e ) {
-	 checkCompletion();
-      } );
-   } else {
-      checkCompletion();
-   }
-}, 1000 );
-
-test();
+/* setTimeout( function() {                                            */
+/*    if( hop.compilerDriver.pending > 0 ) {                           */
+/*       hop.compilerDriver.addEventListener( "all", function( e ) {   */
+/* 	 checkCompletion();                                            */
+/*       } );                                                          */
+/*    } else {                                                         */
+/*       checkCompletion();                                            */
+/*    }                                                                */
+/* }, 2000 );                                                          */
+/*                                                                     */
+/* test();                                                             */
 
 

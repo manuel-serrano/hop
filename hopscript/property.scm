@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Apr 22 18:13:26 2018 (serrano)                */
+;*    Last change :  Tue Jun  5 13:17:35 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -425,7 +425,7 @@
 (define (register-pcache! pcache len src)
    ;; bootstrap initialization
    (when (eq? *pcaches* #unspecified) (set! *pcaches* '()))
-   (set! *pcaches* (cons (vector pcache len src) *pcaches*))
+   (set! *pcaches* (cons (vector pcache len src (current-thread)) *pcaches*))
    pcache)
 
 
@@ -450,19 +450,21 @@
 	 (set! pmap #t)
 	 (set! emap #t)
 	 (set! amap #t)))
-
-   (with-access::JsGlobalObject %this (js-pmap-valid)
+   
+   (with-access::JsGlobalObject %this (js-pmap-valid cmap)
       (when js-pmap-valid
-	 (log-pmap-invalidation! reason)
 	 (set! js-pmap-valid #f)
+	 (log-pmap-invalidation! reason)
 	 ($js-invalidate-pcaches-pmap! invalidate-pcache-pmap!)
 	 (for-each (lambda (pcache-entry)
-		      (let ((vec (vector-ref pcache-entry 0)))
-			 (let loop ((i (-fx (vector-ref pcache-entry 1) 1)))
-			    (when (>=fx i 0)
-			       (let ((pcache (vector-ref vec i)))
-				  (invalidate-pcache-pmap! pcache))
-			       (loop (-fx i 1))))))
+		      (let ((vec (vector-ref pcache-entry 0))
+			    (th (vector-ref pcache-entry 3)))
+			 (when (eq? th (current-thread))
+			    (let loop ((i (-fx (vector-ref pcache-entry 1) 1)))
+			       (when (>=fx i 0)
+				  (let ((pcache (vector-ref vec i)))
+				     (invalidate-pcache-pmap! pcache))
+				  (loop (-fx i 1)))))))
 	    *pcaches*))))
 
 ;*---------------------------------------------------------------------*/

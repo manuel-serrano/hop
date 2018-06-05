@@ -3,7 +3,7 @@
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Sun May 13 20:28:03 2018 (serrano)                */
+/*    Last change :  Tue Jun  5 14:49:42 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -315,4 +315,19 @@ function holey() {
    return k;
 }
 
-assert.ok( holey(), 1 );
+assert.ok( holey() === 1, "holey" );
+
+/*---------------------------------------------------------------------*/
+/*    expansion                                                        */
+/*---------------------------------------------------------------------*/
+function expansion() {
+   var foo = [];
+
+   foo[ 1 ] = true;
+   foo[ 0 ] = true;
+   foo[ 2 ] = true;
+
+   return foo[ 2 ] ;
+}
+
+assert.ok( expansion(), "expansion" );

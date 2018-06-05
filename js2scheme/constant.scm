@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Fri Jun  1 15:08:55 2018 (serrano)                */
+;*    Last change :  Tue Jun  5 07:21:16 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -271,7 +271,7 @@
 		   ((<<)
 		    (if (and (fixnum? lval) (fixnum? rval))
 			(let* ((x (fixnum->int32 lval))
-			       (y (bit-andu32 (fixnum->uint32 rval) #u32:1))
+			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-lshu32 x (uint32->fixnum y))))
 			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
 				    (<=s32 (fixnum->int32 (maxvalfx)) r))
@@ -281,7 +281,7 @@
 		   ((>>)
 		    (if (and (fixnum? lval) (fixnum? rval))
 			(let* ((x (fixnum->int32 lval))
-			       (y (bit-andu32 (fixnum->uint32 rval) #u32:1))
+			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-rshs32 x (uint32->fixnum y))))
 			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
 				    (<=s32 (fixnum->int32 (maxvalfx)) r))
@@ -290,12 +290,11 @@
 			this))
 		   ((>>>)
 		    (if (and (fixnum? lval) (fixnum? rval))
-			(let* ((x (fixnum->int32 lval))
-			       (y (bit-andu32 (fixnum->uint32 rval) #u32:1))
+			(let* ((x (fixnum->uint32 lval))
+			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-rshu32 x (uint32->fixnum y))))
-			   (if (and (>=s32 (fixnum->int32 (minvalfx)) r)
-				    (<=s32 (fixnum->int32 (maxvalfx)) r))
-			       (J2SNumber (int32->fixnum r))
+			   (if (<=u32 (fixnum->uint32 (maxvalfx)) r)
+			       (J2SNumber (uint32->fixnum r))
 			       this))
 			this))
 		   ((%)

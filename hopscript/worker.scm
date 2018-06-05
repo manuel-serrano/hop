@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Apr  3 11:39:41 2014                          */
-;*    Last change :  Wed Feb  7 11:29:48 2018 (serrano)                */
+;*    Last change :  Tue Jun  5 13:30:52 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo support of JavaScript worker threads.              */
@@ -186,7 +186,7 @@
 				(js-get %this 'module %this) #f this)
 			     (loader source thread this)))
 		   (thread (instantiate::WorkerHopThread
-			      (name "WebWorker")
+			      (name (gensym (string-append "WebWorker@" src)))
 			      (parent parent)
 			      (tqueue (list (cons "init" thunk)))
 			      (%this this)
@@ -416,10 +416,11 @@
 (define (default-worker-load filename worker %this::JsGlobalObject)
    (loading-file-set! filename)
    (let ((exprs (call-with-input-file filename
-		   (lambda (in) (j2s-compile in
-				   :driver-name "default-worker-load"
-				   :main #f
-				   :%this %this)))))
+		   (lambda (in)
+		      (j2s-compile in
+			 :driver-name "default-worker-load"
+			 :main #f
+			 :%this %this)))))
       (let ((m (eval-module))
 	    (jsmodule #f))
 	 (unwind-protect

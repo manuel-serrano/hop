@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Nov 25 15:30:55 2004                          */
-;*    Last change :  Mon Apr  2 18:39:26 2018 (serrano)                */
+;*    Last change :  Tue Jun  5 10:22:15 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOP engine.                                                      */
@@ -68,6 +68,7 @@
 	       (ctx #f)
 	       (json-parser (lambda (ip ctx) (javascript->obj ip)))
 	       (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
+	       (connection-timeout 0)
 	       args)
 	    (generic with-hop-local obj success fail authorization header)
 	    (hop-get-file::obj ::bstring ::obj)
@@ -497,6 +498,7 @@
 	   (json-parser (lambda (ip ctx) (javascript->obj ip)))
 	   (x-javascript-parser (lambda (ip ctx) (javascript->obj ip)))
 	   (ctx #f)
+	   (connection-timeout 0)
 	   args)
    (set! hop-to-hop-id (-fx hop-to-hop-id 1))
    (hop-verb 1 (hop-color hop-to-hop-id hop-to-hop-id " WITH-HOP")
@@ -521,6 +523,7 @@
 			 (host host)
 			 (port port)
 			 (connection 'close)
+			 (connection-timeout connection-timeout)
 			 (header (cons*
 				    '(hop-serialize: . "x-hop")
 				    '(hop-responsetype: . "arraybuffer")

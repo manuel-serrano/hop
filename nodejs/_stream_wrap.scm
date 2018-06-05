@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Oct 20 12:31:24 2014                          */
-;*    Last change :  Wed Apr  4 13:57:30 2018 (serrano)                */
+;*    Last change :  Tue Jun  5 15:53:21 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Common stream functions                                          */
@@ -98,6 +98,9 @@
 			    (js-object-put-name/cache! this 'writeQueueSize
 			       (nodejs-stream-write-queue-size handle) #f %this
 			       (js-pcache-ref %pcache 4))
+			    (when (<fx status 0)
+			       (js-put! process '_errno
+				  (nodejs-err-name status) #f %this))
 			    (let ((oncomp (js-object-get-name/cache req
 					     'oncomplete #f %this
 					     (js-pcache-ref %pcache 5))))

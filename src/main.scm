@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Fri Feb  9 15:38:51 2018 (serrano)                */
+;*    Last change :  Tue Jun  5 12:58:46 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -92,6 +92,8 @@
 	 ;; install the builtin filters
 	 (hop-filter-add! service-filter)
 	 (hop-init args files exprs)
+	 ;; adjust the actual hop-port before executing client code
+	 (hop-port-set! (socket-port-number (hop-server-socket)))
 	 ;; js rc load
 	 (if (hop-javascript)
 	     (set! jsworker (javascript-init args files exprsjs))
@@ -122,8 +124,7 @@
 		  "An error has occurred in the Hop main loop, exiting...")
 	       (exit 1))
 	    (let ((serv (hop-server-socket)))
-	       ;; adjust the actual hop-port
-	       (hop-port-set! (socket-port-number serv))
+	       ;; fast server event socket
 	       (hop-fast-server-event-port-set! (socket-port-number serv))
 	       ;; ready to now say hello
 	       (hello-world)

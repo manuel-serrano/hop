@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Oct 17 08:19:20 2013                          */
-;*    Last change :  Mon Jun  4 19:26:02 2018 (serrano)                */
+;*    Last change :  Tue Jun  5 10:13:46 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript service implementation                                 */
@@ -512,6 +512,7 @@
 	    :ctx %this
 	    :json-parser json-parser
 	    :x-javascript-parser x-javascript-parser
+	    :connection-timeout (hop-connection-timeout)
 	    :args (map multipart-form-arg args))))
    
    (define (post-server-promise this %this host port auth scheme)
@@ -527,11 +528,8 @@
 						(lambda (e)
 						   (js-promise-async p
 						      (lambda ()
-							 (js-promise-async p
-							 (lambda ()
-							    (js-promise-reject p
-							       (scheme->js e)))))))
-;* 							 (js-call1 %this reject %this e)))) */
+							 (js-promise-reject p
+							    (scheme->js e)))))
 						(post-request
 						   (lambda (x)
 						      (js-promise-async p
@@ -658,7 +656,7 @@
 		   (post-websocket-async this srv success failure))
 		  (else
 		   (post-websocket-promise this srv)))))))
-   
+
    (with-access::JsHopFrame this (srv)
       (cond
 	 ((isa? srv JsServer)
