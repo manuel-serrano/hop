@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed May 30 15:55:21 2018 (serrano)                */
+;*    Last change :  Wed Jun  6 08:08:16 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -1973,8 +1973,15 @@
 	   (binop-fixnum-fixnum op type
 	      (asfixnum left tl) (asfixnum right tr) flip))
 	  (else
-	   (binop-number-number op type
-	      (box left tl conf) (box right tr conf) flip))))
+	   (case op
+	      ((<)
+	       `(if (<s32 ,left #s32:0)
+		    ,(if flip #f #t)
+		    ,(binop-uint32-xxx op type lhs 'uint32 `(int32->uint32 ,left)
+			rhs tr right conf flip)))
+	      (else
+	       (binop-number-number op type
+		  (box left tl conf) (box right tr conf) flip))))))
       ((bint)
        (if (m64? conf)
 	   (binop-fixnum-fixnum op type

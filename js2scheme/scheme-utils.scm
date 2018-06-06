@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:06:27 2017                          */
-;*    Last change :  Sat May  5 07:33:35 2018 (serrano)                */
+;*    Last change :  Wed Jun  6 07:30:02 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Utility functions for Scheme code generation                     */
@@ -783,8 +783,15 @@
 	   (if (and (>=llong (int32->llong val) (conf-min-int conf))
 		    (<=llong (int32->llong val) (conf-max-int conf)))
 	       (cond-expand
-		  (bint30 `(int32->fixnum ,val))
-		  (else (int32->fixnum val))))
+		  (bint30
+		   (if (and (>=llong (int32->llong val)
+			       (negllong (bit-lshllong #l1 29)))
+			    (<llong (int32->llong val)
+			       (bit-lshllong #l1 29)))
+		       (int32->fixnum val)
+		       `(int32->fixnum ,val)))
+		  (else
+		   (int32->fixnum val))))
 	   `(overflowfx (int32->fixnum ,val))))
       ((uint32)
        (if (uint32? val)
