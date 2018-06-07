@@ -163,16 +163,16 @@ function checkCompletion() {
    }
 }
 
-/* setTimeout( function() {                                            */
-/*    if( hop.compilerDriver.pending > 0 ) {                           */
-/*       hop.compilerDriver.addEventListener( "all", function( e ) {   */
-/* 	 checkCompletion();                                            */
-/*       } );                                                          */
-/*    } else {                                                         */
-/*       checkCompletion();                                            */
-/*    }                                                                */
-/* }, 2000 );                                                          */
-/*                                                                     */
-/* test();                                                             */
+setTimeout( function() {
+   if( hop.compilerDriver.pending > 0 ) {
+      hop.compilerDriver.addEventListener( "all", function( e ) {
+	 checkCompletion();
+      } );
+   } else {
+      checkCompletion();
+   }
+}, 2000 );
+
+test();
 
 

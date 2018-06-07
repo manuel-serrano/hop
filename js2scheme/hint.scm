@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed May  9 16:21:57 2018 (serrano)                */
+;*    Last change :  Wed Jun  6 09:41:35 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -300,7 +300,7 @@
 	  (j2s-hint obj '(object array string) numctx inc))
 	 ((memq (j2s-type field) '(index integer number))
 	  (with-access::J2SRef obj (decl)
-	     (j2s-add-hint! decl '(array string) inc)))
+	     (j2s-add-hint! decl hints inc)))
 	 ((isa? field J2SString)
 	  (with-access::J2SString field (val)
 	     (cond
@@ -340,7 +340,7 @@
 (define-walk-method (j2s-hint this::J2SAccess types numctx inc)
    (cond
       ((and (pair? types) (member (car types) '(index integer number)))
-       (j2s-hint-access this types '(object string array) 'number inc))
+       (j2s-hint-access this types '(string array) 'number inc))
       ((and (pair? types) (member (car types) '(string)))
        (j2s-hint-access this types '(object string array) 'number inc))
       (else
@@ -352,9 +352,7 @@
 (define-walk-method (j2s-hint this::J2SAssig types numctx inc)
    (with-access::J2SAssig this (lhs rhs)
       (when (isa? lhs J2SAccess)
-	 (if (and (pair? types) (member (car types) '(index integer number)))
-	     (j2s-hint-access lhs types '(array) 'number inc)
-	     (j2s-hint-access lhs types '(object) 'number inc)))
+	 (j2s-hint-access lhs types '(object array no-string) 'number inc))
       (j2s-hint rhs types 'number inc)))
 
 ;*---------------------------------------------------------------------*/
@@ -363,7 +361,7 @@
 (define-walk-method (j2s-hint this::J2SPostfix types numctx inc)
    (with-access::J2SPostfix this (lhs)
       (if (isa? lhs J2SAccess)
-	  (j2s-hint-access lhs types '(array) 'number inc)
+	  (j2s-hint-access lhs types '(array no-string) 'number inc)
 	  (j2s-hint lhs '(number) 'number inc))))
 
 ;*---------------------------------------------------------------------*/
@@ -372,7 +370,7 @@
 (define-walk-method (j2s-hint this::J2SPrefix types numctx inc)
    (with-access::J2SPrefix this (lhs)
       (if (isa? lhs J2SAccess)
-	  (j2s-hint-access lhs types '(array) 'number inc)
+	  (j2s-hint-access lhs types '(array no-string) 'number inc)
 	  (j2s-hint lhs '(number) 'number inc))))
 
 ;*---------------------------------------------------------------------*/

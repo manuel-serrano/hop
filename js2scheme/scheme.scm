@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Sun Jun  3 16:30:15 2018 (serrano)                */
+;*    Last change :  Wed Jun  6 10:07:07 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1994,7 +1994,11 @@
       (memq (j2s-type obj) '(any undefined unknown object)))
 
    (define (canbe-string? obj)
-      (memq (j2s-type obj) '(any undefined unknown object)))
+      (when (memq (j2s-type obj) '(any undefined unknown object))
+	 (if (isa? obj J2SRef)
+	     (with-access::J2SRef obj (hint)
+		(not (pair? (assq 'no-string hint))))
+	     #t)))
 
    (define (canbe-arguments? obj)
       (memq (j2s-type obj) '(any undefined unknown object)))

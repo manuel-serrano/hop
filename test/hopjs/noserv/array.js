@@ -1,9 +1,9 @@
 /*=====================================================================*/
-/*    serrano/prgm/project/hop/3.2.x/test/hopjs/noserv/array.js        */
+/*    serrano/trashcan/array.js                                        */
 /*    -------------------------------------------------------------    */
 /*    Author      :  Manuel Serrano                                    */
 /*    Creation    :  Tue Oct  7 07:34:02 2014                          */
-/*    Last change :  Tue Jun  5 14:49:42 2018 (serrano)                */
+/*    Last change :  Wed Jun  6 19:29:06 2018 (serrano)                */
 /*    Copyright   :  2014-18 Manuel Serrano                            */
 /*    -------------------------------------------------------------    */
 /*    Testing arrays                                                   */
@@ -308,7 +308,7 @@ function holey() {
 
    a[ 1 ] = 3;
 
-   for( var i in a ) {
+   for( var i = 0; i < a.length; i++ ) {
       k += i;
    }
 

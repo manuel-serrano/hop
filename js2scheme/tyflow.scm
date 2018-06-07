@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Sun Jun  3 06:31:27 2018 (serrano)                */
+;*    Last change :  Wed Jun  6 09:52:32 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -112,6 +112,7 @@
 	 ;;(force-unary-type! this))
       ;; cleanup the ast use count and remove obviously useless definitions
       (force-type! this 'unknown 'any)
+      (cleanup-hint! this)
       (program-cleanup! this))
    this)
 
@@ -2005,3 +2006,38 @@
 	       (set! type 'number)))))
 
    this)
+
+;*---------------------------------------------------------------------*/
+;*    cleanup-hint! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (cleanup-hint! this)
+   (cond
+      ((isa? this J2SNode)
+       (cleanup-hint-node! this))
+      ((pair? this)
+       (for-each cleanup-hint! this))))
+
+;*---------------------------------------------------------------------*/
+;*    cleanup-hint-node! ...                                           */
+;*---------------------------------------------------------------------*/
+(define (cleanup-hint-node! this::J2SNode)
+   (let ((fields (class-all-fields (object-class this))))
+      (let loop ((i (-fx (vector-length fields) 1)))
+	 (when (>=fx i 0)
+	    (let* ((f (vector-ref fields i))
+		   (info (class-field-info f)))
+	       (cond
+		  ((eq? (class-field-name f) 'hint)
+		   (let* ((get (class-field-accessor f))
+			  (set (class-field-mutator f))
+			  (hint (get this)))
+		      (when (and (pair? hint) (pair? (assq 'no-string hint)))
+			 (let ((c (assq 'string hint)))
+			    (set! hint (delete! c hint))
+			    (set this hint))))
+		   (loop (-fx i 1)))
+		  ((and (pair? info) (member "notraverse" info))
+		   (loop (-fx i 1)))
+		  (else
+		   (cleanup-hint! ((class-field-accessor f) this))
+		   (loop (-fx i 1)))))))))

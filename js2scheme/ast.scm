@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Mon May 28 08:09:34 2018 (serrano)                */
+;*    Last change :  Wed Jun  6 10:36:15 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -224,7 +224,7 @@
 	      (decl::J2SDecl (info '("nojson"))))
 	   
 	   (class J2SRef::J2SExpr
-	      (decl::J2SDecl (info '("nojson"))))
+	      (decl::J2SDecl (info '("nojson" "notraverse"))))
 	   
 	   (class J2SWithRef::J2SExpr
 	      (id::symbol read-only)
@@ -249,7 +249,7 @@
 	   (final-class J2SThis::J2SRef)
 	   
 	   (final-class J2SSuper::J2SRef
-	      (clazz (default #unspecified)))
+	      (clazz (default #unspecified) (info '("notraverse"))))
 
 	   (final-class J2SCond::J2SExpr
 	      (test::J2SExpr (info '("ast")))
