@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:30:13 2004                          */
-;*    Last change :  Tue Jun  5 12:58:46 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 13:09:28 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The HOP entry point                                              */
@@ -213,7 +213,7 @@
       (hop-loader-add! "js" (lambda (path . test) (nodejs-load path %worker)))
       ;; profiling
       (when (hop-profile)
-	 (js-profile-init `(:server #t)))
+	 (js-profile-init `(:server #t) #f))
       ;; rc.js file
       (when (string? (hop-rc-loaded))
 	 (javascript-rc %worker %global))
