@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Tue May 15 05:50:20 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 18:00:48 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -127,13 +127,13 @@
 	 (let* ((stringify (js-get js-json 'stringify %this))
 		(str (js-call1 %this stringify (js-undefined) val)))
 	    (json->file str lang %this))))
-      
+
    (let ((worker (js-current-worker)))
       (js-worker-exec worker "nodejs-compile-file-lang"
 	 (lambda ()
 	    (with-access::WorkerHopThread worker (%this)
 	       (with-access::JsGlobalObject %this (js-object js-symbol)
-		  (let* ((mod (nodejs-module ifile lang worker %this))
+		  (let* ((mod (nodejs-module lang ifile worker %this))
 			 (exp (nodejs-require-module lang worker %this mod))
 			 (key (js-get js-symbol 'compiler %this))
 			 (comp (js-get exp key %this)))

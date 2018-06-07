@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Apr 14 08:13:05 2014                          */
-;*    Last change :  Tue Jun  5 14:22:32 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 18:15:09 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HOPC compiler driver                                             */
@@ -142,7 +142,7 @@
 	     (mod (prefix (basename (input-port-name in)))))
 	 (if (string=? dir ".")
 	     mod
-	     (format "%%~a_~a" (basename dir) mod))))
+	     (format "%%~a_~a" dir mod))))
    
    (define (compile-javascript p)
       (if (string-suffix? ".js" p)
