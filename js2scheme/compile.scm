@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu May 31 08:01:16 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 08:34:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -431,6 +431,11 @@
 	    (set! o (cons* :optim-clevel #t o))))
 ;* 		     (unless (memq :optim-cce o)                       */
 ;* 			(set! o (cons* :optim-cce #t o)))              */
+
+      (when (config-get args :profile #f)
+	 (unless (memq :profile-call o)
+	    (set! o (cons* :profile-call #t o))))
+      
       (unless (memq :filename o)
 	 (set! o (cons* :filename (input-port-name in) o)))
 
@@ -441,7 +446,7 @@
 			 (set! o (cons* k #t o))))
 	    '(:es6-let :es6-default-value :es6-arrow-function
 	      :es6-rest-argument :es2017-async)))
-      
+
       (let ((v (getenv "HOPCFLAGS")))
 	 (when (string? v)
 	    (cond

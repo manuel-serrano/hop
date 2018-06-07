@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Sun Jun  3 15:20:48 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 08:42:11 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -26,7 +26,7 @@
    (import __hopscript_types
 	   __hopscript_property)
 
-   (export (js-profile-init conf)
+   (export (js-profile-init conf calltable)
 
 	   (js-profile-log-cache ::JsPropertyCache
 	      #!key imap emap cmap pmap amap vtable)
@@ -34,7 +34,9 @@
 	   
 	   (js-profile-log-get ::symbol)
 	   (js-profile-log-put ::symbol)
-	   (js-profile-log-call ::symbol)
+	   (js-profile-log-method ::symbol)
+
+	   (inline js-profile-log-call ::vector ::long)
 	   
 	   (log-cache-miss!)
 	   (log-pmap-invalidation! ::obj)
@@ -58,8 +60,9 @@
 (define *profile-gets-props* #f)
 (define *profile-puts* 0)
 (define *profile-puts-props* #f)
-(define *profile-calls* 0)
-(define *profile-calls-props* #f)
+(define *profile-methods* 0)
+(define *profile-methods-props* #f)
+(define *profile-call-tables* '())
 
 (define *profile-port* (current-error-port))
 
@@ -73,10 +76,11 @@
      putCacheMiss
      callCacheMissUncachable))
 
+
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-init ...                                              */
 ;*---------------------------------------------------------------------*/
-(define (js-profile-init conf)
+(define (js-profile-init conf calltable)
    (unless *profile*
       (set! *profile* #t)
       (let ((trc (or (getenv "HOPTRACE") "")))
@@ -92,7 +96,11 @@
 	    (when (string-contains trc "hopscript:uncache")
 	       (set! *profile-gets-props* '())
 	       (set! *profile-puts-props* '())
-	       (set! *profile-calls-props* '()))
+	       (set! *profile-methods-props* '()))
+	    (when (string-contains trc "hopscript:call")
+	       (when calltable
+		  (set! *profile-call-tables*
+		     (cons calltable *profile-call-tables*))))
 	    (register-exit-function!
 	       (lambda (n)
 		  (profile-report-start trc)
@@ -101,6 +109,8 @@
 		     (profile-functions))
 		  (when (string-contains trc "hopscript:alloc")
 		     (profile-allocs))
+		  (when (string-contains trc "hopscript:call")
+		     (profile-calls trc))
 		  (profile-report-end trc conf)
 		  (unless (eq? *profile-port* (current-error-port))
 		     (close-output-port *profile-port*))))))))
@@ -161,16 +171,22 @@
 	     (set! *profile-puts-props* (cons (cons prop 1) *profile-puts-props*))))))
    
 ;*---------------------------------------------------------------------*/
-;*    js-profile-log-call ...                                           */
+;*    js-profile-log-method ...                                        */
 ;*---------------------------------------------------------------------*/
-(define (js-profile-log-call prop)
-   (set! *profile-calls* (+ 1 *profile-calls*))
-   (when *profile-calls-props*
-      (let ((c (assq prop *profile-calls-props*)))
+(define (js-profile-log-method prop)
+   (set! *profile-methods* (+ 1 *profile-methods*))
+   (when *profile-methods-props*
+      (let ((c (assq prop *profile-methods-props*)))
 	 (if (pair? c)
 	     (set-cdr! c (+ 1 (cdr c)))
-	     (set! *profile-calls-props* (cons (cons prop 1) *profile-calls-props*))))))
-   
+	     (set! *profile-methods-props* (cons (cons prop 1) *profile-methods-props*))))))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-log-call ...                                          */
+;*---------------------------------------------------------------------*/
+(define-inline (js-profile-log-call table idx)
+   (vector-set! table idx (+fx (vector-ref table idx) 1)))
+
 ;*---------------------------------------------------------------------*/
 ;*    *misses* ...                                                     */
 ;*---------------------------------------------------------------------*/
@@ -852,7 +868,7 @@
 		(print "    \"total\": " (total-uncaches) ",")
 		(print "    \"get\": " *profile-gets* ",")
 		(print "    \"put\": " *profile-puts* ",")
-		(print "    \"call\": " *profile-calls*)
+		(print "    \"call\": " *profile-methods*)
 		(print "  },")
 		(show-json-cache 'imap)
 		(show-json-cache 'emap)
@@ -976,7 +992,7 @@
 		 (puts (sort (lambda (x y) (>= (cdr x) (cdr y)))
 			  *profile-puts-props*))
 		 (calls (sort (lambda (x y) (>= (cdr x) (cdr y)))
-			   *profile-calls-props*)))
+			   *profile-methods-props*)))
 	      (newline *profile-port*) 
 	      (fprint *profile-port*
 		 "UNCACHED GETS:\n==============")
@@ -987,8 +1003,8 @@
 	      (profile-uncached puts *profile-puts*)
 	      (newline *profile-port*)
 	      (fprint *profile-port*
-		 "UNCACHED CALLS:\n===============")
-	      (profile-uncached calls *profile-calls*)
+		 "UNCACHED METHODS:\n==================")
+	      (profile-uncached calls *profile-methods*)
 	      (newline *profile-port*))
 	   (fprint *profile-port* "\n(use HOPTRACE=\"hopscript:uncache\" for uncached accesses)")))))
 
@@ -1086,3 +1102,21 @@
 			    " " 
 			    (padding cntvtable cwidth 'right)))))
 	 (vector->list pcache))))
+
+;*---------------------------------------------------------------------*/
+;*    profile-calls ...                                                */
+;*---------------------------------------------------------------------*/
+(define (profile-calls trc)
+   (when (string-contains trc "format:fprofile")
+      (with-output-to-port *profile-port*
+	 (lambda ()
+	    (print "\"calls\": {")
+	    (for-each (lambda (t)
+			 (print "  { \"filename\": \""
+			    (vector-ref t 0) "\",")
+			 (print "    \"count\": "
+			    (format "[ ~(, ) ]," (vector->list (vector-ref t 1))))
+			 (print "    \"locations\": "
+			    (format "[ ~(, ) ] }," (vector->list (vector-ref t 2)))))
+	       *profile-call-tables*)
+	    (print "} },")))))

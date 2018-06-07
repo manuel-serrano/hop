@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 08:54:57 2013                          */
-;*    Last change :  Wed Jun  6 10:36:15 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 08:01:12 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript AST                                                   */
@@ -41,7 +41,8 @@
 	      (version::int read-only (default 1))
 	      (mode::symbol read-only (default 'normal))
 	      (path::bstring read-only)
-	      (pcache-size::int (default 0))
+	      (pcache-size::long (default 0))
+	      (call-size::long (default 0))
 	      (name read-only (default #f))
 	      (main read-only (default #f))
 	      (module read-only (default #f))
@@ -382,6 +383,7 @@
 	      (obj::J2SExpr (info '("ast"))))
 
 	   (final-class J2SCall::J2SExpr
+	      (profid::long (default -1) (info '("notraverse")))
 	      (cache (default #f) (info '("notraverse")))
 	      (cspecs (default '(pmap vtable)) (info '("notraverse")))
 	      (fun::J2SExpr (info '("ast")))

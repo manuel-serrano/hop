@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Tue Jun  5 13:17:35 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 08:43:26 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -2936,7 +2936,7 @@
 	 (else
 	  #f)))
 
-   (js-profile-log-call name)
+   (js-profile-log-method name)
 
    (let loop ((obj o))
       (jsobject-find obj name

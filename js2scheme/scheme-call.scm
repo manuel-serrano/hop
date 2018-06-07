@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue May  1 15:52:17 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 08:24:49 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -143,6 +143,13 @@
 ;*    j2s-scheme ::J2SCall ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SCall mode return conf)
+
+   (define (call-profile profid call)
+      (if (config-get conf :profile-call #f)
+	  `(begin
+	      (js-profile-log-call %call-log ,profid)
+	      ,call)
+	  call))
    
    (define (array-push obj arg)
       (let ((scmobj (j2s-scheme obj mode return conf))
@@ -432,16 +439,19 @@ ft		`(,f ,@%gen
 			    this
 			    (format "~a provided" la))))))))))
 
-   (define (call-fun-function fun::J2SFun thisarg::pair-nil protocol f %gen::pair-nil args::pair-nil)
+   (define (call-fun-function profid fun::J2SFun thisarg::pair-nil protocol f %gen::pair-nil args::pair-nil)
       (with-access::J2SFun fun (params vararg idthis)
 	 (case (if (eq? protocol 'bounce) 'bounce vararg)
 	    ((arguments)
-	     `(,f ,@%gen ,@(if idthis (j2s-self thisarg) '())
-		 ,@(j2s-scheme args mode return conf)))
+	     (call-profile profid
+		`(,f ,@%gen ,@(if idthis (j2s-self thisarg) '())
+		    ,@(j2s-scheme args mode return conf))))
 	    ((rest)
-	     (call-rest-function fun (if idthis thisarg '()) f %gen args))
+	     (call-profile profid
+		(call-rest-function fun (if idthis thisarg '()) f %gen args)))
 	    (else
-	     (call-fix-function fun (if idthis thisarg '()) f %gen args)))))
+	     (call-profile profid
+		(call-fix-function fun (if idthis thisarg '()) f %gen args))))))
 
    (define (call-with-function fun::J2SWithRef args)
       (with-access::J2SWithRef fun (id withs loc)
@@ -465,18 +475,18 @@ ft		`(,f ,@%gen
 	       (with-access::J2SFun val (generator)
 		  generator)))))
 
-   (define (call-known-function protocol fun::J2SDecl thisarg::pair-nil args)
+   (define (call-known-function protocol profid fun::J2SDecl thisarg::pair-nil args)
       (cond
 	 ((isa? fun J2SDeclFun)
 	  (with-access::J2SDeclFun fun (id usage)
 	     (let ((val (j2sdeclinit-val-fun fun)))
 		(check-hopscript-fun-arity val id args)
 		(let ((%gen (if (typed-generator? fun) '(%gen) '())))
-		   (call-fun-function val thisarg protocol
+		   (call-fun-function profid val thisarg protocol
 		      (j2s-fast-id id) %gen args)))))
 	 ((j2s-let-opt? fun)
 	  (with-access::J2SDeclInit fun (id val)
-	     (call-fun-function val thisarg protocol
+	     (call-fun-function profid val thisarg protocol
 		(j2s-fast-id id) '() args)))
 	 (else
 	  (error "js-scheme" "Should not be here" (j2s->list fun)))))
@@ -527,7 +537,7 @@ ft		`(,f ,@%gen
 	  (call-unknown-function fun
 	     (j2s-scheme thisarg mode return conf) args)))
 
-   (with-access::J2SCall this (loc fun thisarg args protocol cache cspecs)
+   (with-access::J2SCall this (loc profid fun thisarg args protocol cache cspecs)
       (let loop ((fun fun))
 	 (epairify loc
 	    (cond
@@ -541,7 +551,7 @@ ft		`(,f ,@%gen
 	       ((isa? fun J2SSuper)
 		(j2s-scheme-super this mode return conf))
 	       ((and (isa? fun J2SFun) (not (j2sfun-id fun)))
-		(call-fun-function fun thisarg protocol
+		(call-fun-function profid fun thisarg protocol
 		   (jsfun->lambda fun mode return conf (j2s-fun-prototype fun) #f)
 		   '()
 		   args))
@@ -557,7 +567,7 @@ ft		`(,f ,@%gen
 	       ((read-only-function fun)
 		=>
 		(lambda (fun)
-		   (call-known-function protocol fun thisarg args)))
+		   (call-known-function protocol profid fun thisarg args)))
 	       (else
 		(call-unknown-function fun
 		   (j2s-scheme thisarg mode return conf) args)))))))

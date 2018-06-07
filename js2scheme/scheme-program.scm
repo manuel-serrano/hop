@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue May  1 15:47:33 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 08:28:50 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -32,13 +32,17 @@
 (define-method (j2s-scheme this::J2SProgram mode return conf)
    
    (define (j2s-master-module module scmcnsts body)
-      (with-access::J2SProgram this (mode pcache-size globals)
+      (with-access::J2SProgram this (mode pcache-size call-size globals)
 	 (list module
 	    `(%define-pcache ,pcache-size)
 	    `(define %pcache
 		(js-make-pcache ,pcache-size ,(config-get conf :filename)))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
+	     (when (config-get conf :profile-call #f)
+		`(define %call-log (make-vector ,call-size 0)))
+	     (when (config-get conf :profile-call #f)
+		`(define %call-locations ',(call-locations this)))
 	    `(define (hopscript %this this %scope %module)
 		(define %worker (js-current-worker))
 		(define %cnsts ,scmcnsts)
@@ -48,13 +52,17 @@
 	    'hopscript)))
 
    (define (j2s-slave-module module scmcnsts body)
-      (with-access::J2SProgram this (mode pcache-size globals)
+      (with-access::J2SProgram this (mode pcache-size call-size globals)
 	 (list (append module `((option (register-srfi! 'hopjs-worker-slave))))
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	    `(define (hopscript %this this %scope %module)
 		(define %pcache
 		   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
+		,@(if (config-get conf :profile-call #f)
+		      `((define %call-log (make-vector ,call-size 0))
+			(define %call-locations ',(call-locations this)))
+		      '())
 		(define %worker (js-current-worker))
 		(define %cnsts ,scmcnsts)
 		,@globals
@@ -75,12 +83,16 @@
 			(library hop hopscript nodejs)
 			(cond-expand (enable-libuv (library libuv)))
 			(main main))))
-	 (with-access::J2SProgram this (mode pcache-size %this path globals)
+	 (with-access::J2SProgram this (mode pcache-size call-size %this path globals)
 	    (list module
 	       `(%define-pcache ,pcache-size)
 	       '(hop-sofile-compile-policy-set! 'static)
 	       `(define %pcache
 		   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
+		(when (config-get conf :profile-call #f)
+		   `(define %call-log (make-vector ,call-size 0)))
+		(when (config-get conf :profile-call #f)
+		   `(define %call-locations ',(call-locations this)))
 	       '(hopjs-standalone-set! #t)
 	       `(define %this (nodejs-new-global-object))
 	       `(define %source ,path)
@@ -107,7 +119,8 @@
    
    
    (with-access::J2SProgram this (module main nodes headers decls
-					 mode name pcache-size cnsts globals)
+					 mode name pcache-size call-size
+					 cnsts globals)
       (let ((scmheaders (j2s-scheme headers mode return conf))
 	    (scmdecls (j2s-scheme decls mode return conf))
 	    (scmnodes (j2s-scheme nodes mode return conf))
@@ -129,6 +142,10 @@
 			(%define-pcache ,pcache-size)	       
 			(define %pcache
 			   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
+			,@(if (config-get conf :profile-call #f)
+			      `((define %call-log (make-vector ,call-size 0))
+				(define %call-locations ',(call-locations this)))
+			      '())
 			(define %worker (js-current-worker))
 			(define %source (or (the-loading-file) "/"))
 			(define %resource (dirname %source))
@@ -156,10 +173,14 @@
 		     (library hop hopscript nodejs)
 		     (cond-expand (enable-libuv (library libuv)))
 		     (main main))))
-      (with-access::J2SProgram this (mode pcache-size %this path globals)
+      (with-access::J2SProgram this (mode pcache-size call-size %this path globals)
 	 `(,module (%define-pcache ,pcache-size)
 	     (define %pcache
 		(js-make-pcache ,pcache-size ,(config-get conf :filename)))
+	     ,@(if (config-get conf :profile-call #f)
+		   `((define %call-log (make-vector ,call-size 0))
+		     (define %call-locations ',(call-locations this)))
+		   '())
 	     (hop-sofile-compile-policy-set! 'static)
 	     (hopjs-standalone-set! #t)
 	     (define %this (nodejs-new-global-object))
@@ -188,7 +209,10 @@
 ;*---------------------------------------------------------------------*/
 (define (profilers conf)
    (when (config-get conf :profile #f)
-      `(js-profile-init ',(filter-config conf))))
+      `(js-profile-init ',(filter-config conf)
+	  ,(if (config-get conf :profile-call #f)
+	       '(vector %source %call-log %call-locations)
+	       #f))))
 
 ;*---------------------------------------------------------------------*/
 ;*    filter-config ...                                                */
@@ -259,3 +283,28 @@
    (if (>fx (bigloo-debug) 0)
        (%cnsts-debug cnsts)
        (%cnsts-intext cnsts)))
+
+;*---------------------------------------------------------------------*/
+;*    call-locations ...                                               */
+;*---------------------------------------------------------------------*/
+(define (call-locations this::J2SProgram)
+   (with-access::J2SProgram this (call-size)
+      (collect-call-locations this (make-vector call-size -1))))
+
+;*---------------------------------------------------------------------*/
+;*    collect-call-locations ::J2SNode ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-call-locations this::J2SNode vec)
+   (call-default-walker)
+   vec)
+
+;*---------------------------------------------------------------------*/
+;*    collect-call-locations ::J2SCall ...                             */
+;*---------------------------------------------------------------------*/
+(define-walk-method (collect-call-locations this::J2SCall vec)
+   (with-access::J2SCall this (profid loc)
+      (when (>fx profid 0)
+	 (match-case loc
+	    ((at ?- ?point)
+	     (vector-set! vec profid point)))))
+   vec)

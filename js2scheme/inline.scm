@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Wed Jun  6 07:16:46 2018 (serrano)                */
+;*    Last change :  Thu Jun  7 08:04:16 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -101,7 +101,11 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-inline! this args)
    (if (isa? this J2SProgram)
-       (with-access::J2SProgram this (decls nodes)
+       (with-access::J2SProgram this (decls nodes call-size)
+	  ;; count and mark all the calls
+	  (let ((count (make-cell 0)))
+	     (count-call this count)
+	     (set! call-size (cell-ref count)))
 	  ;; mark all the function sizes
 	  (let ((size (node-size this))
 		(pms (ptable (append-map collect-proto-methods* nodes))))
@@ -941,3 +945,19 @@
    (with-access::J2SLetBlock this (decls)
       (set! decls (filter (lambda (d) (isa? d J2SDecl)) decls))
       this))
+
+;*---------------------------------------------------------------------*/
+;*    count-call ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (count-call this::J2SNode count)
+   (call-default-walker))
+
+;*---------------------------------------------------------------------*/
+;*    count-call ::J2SCall ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (count-call this::J2SCall count)
+   (with-access::J2SCall this (profid)
+      (let ((id (cell-ref count)))
+	 (cell-set! count (+fx id 1))
+	 (call-default-walker)
+	 (set! profid id))))
