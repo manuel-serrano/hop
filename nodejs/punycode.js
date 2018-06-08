@@ -241,7 +241,7 @@
 		// Handle the basic code points: let `basic` be the number of input code
 		// points before the last delimiter, or `0` if there is none, then copy
 		// the first basic code points to the output.
-
+	   #:tprint( "lastIndexOf delim=", delimiter, " ", #:typeof( delimiter ), " ", #:typeof( input ) );
 		basic = input.lastIndexOf(delimiter);
 		if (basic < 0) {
 			basic = 0;

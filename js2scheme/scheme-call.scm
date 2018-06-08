@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Thu Jun  7 08:24:49 2018 (serrano)                */
+;*    Last change :  Fri Jun  8 18:54:15 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -261,7 +261,7 @@
 	 (cond
 	    ((isa? self J2SSuper)
 	     (call-super-method fun args))
-	    ((and ccache (= (bigloo-debug) 0))
+	    ((and #f ccache (= (bigloo-debug) 0)) ;; MS
 	     (cond
 		((isa? field J2SString)
 		 (with-access::J2SString field (val)
@@ -505,7 +505,7 @@ ft		`(,f ,@%gen
 		  ,(j2s-scheme fun mode return conf)
 		  ,@self
 		  ,@(j2s-scheme args mode return conf)))
-	       (cache
+	       ((and #f cache) ;; MS
 		`(js-call/cache
 		    ,j2s-unresolved-call-workspace
 		    ,(js-pcache cache)

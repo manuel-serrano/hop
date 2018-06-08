@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jun  8 17:29:53 2018 (serrano)                */
+;*    Last change :  Fri Jun  8 19:22:34 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -798,8 +798,7 @@
 (define (js-call/cache-expander x e)
    
    (define (call %this ccache fun this args)
-      (let* (
-	     (tmps (map (lambda (a) (when (pair? a) (gensym '%a))) args))
+      (let* ((tmps (map (lambda (a) (when (pair? a) (gensym '%a))) args))
 	     (bdgs (filter-map (lambda (t o) (when t (list t o))) tmps args)))
 	 (if (pair? bdgs)
 	     `(let ,bdgs
