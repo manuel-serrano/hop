@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Sep 11 11:47:51 2013                          */
-;*    Last change :  Wed Jun  6 10:07:07 2018 (serrano)                */
+;*    Last change :  Fri Jun  8 07:33:28 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Generate a Scheme program from out of the J2S AST.               */
@@ -1547,7 +1547,7 @@
 		       (j2s-vector-set! this mode return conf))
 		      ((and (eq? (j2s-vtype obj) 'array) (maybe-number? field))
 		       (j2s-array-set! this mode return conf))
-		      ((is-number? field)
+		      ((mightbe-number? field)
 		       (maybe-array-set lhs rhs))
 		      (else
 		       (j2s-put! loca (j2s-scheme obj mode return conf)
@@ -1676,14 +1676,14 @@
 			      ,(j2s-unresolved-put! `',id val #t mode return)
 			      ,tmp))))))))
    
-   (define (aput-inc otmp prop op lhs cache inc cs)
-      (with-access::J2SAccess lhs (loc obj field cspecs (loca loc))
+   (define (aput-inc tyobj otmp prop op lhs field cache inc cs)
+      (with-access::J2SAccess lhs (loc obj cspecs (loca loc))
 	 (with-access::J2SExpr obj (type)
 	    (let* ((tmp (gensym 'aput))
 		   (oref (instantiate::J2SHopRef
 			    (loc loc)
 			    (id otmp)
-			    (type 'object)))
+			    (type tyobj)))
 		   (oacc (duplicate::J2SAccess lhs
 			    (cspecs cs)
 			    (obj oref)
@@ -1705,8 +1705,7 @@
 				 tref rhs mode return conf)
 			      (lambda (val tmp)
 				 `(begin
-				     ,(j2s-put! loc otmp
-					 'object
+				     ,(j2s-put! loc otmp tyobj
 					 prop
 					 (j2s-vtype field)
 					 val 'number
@@ -1725,8 +1724,7 @@
 				     tref rhs mode return conf)
 				  (lambda (val tmp)
 				     `(begin
-					 ,(j2s-put! loc otmp
-					     'object
+					 ,(j2s-put! loc otmp tyobj
 					     prop
 					     (j2s-vtype field)
 					     val 'number
@@ -1744,8 +1742,7 @@
 					  tref rhs mode return conf)
 				       (lambda (val tmp)
 					  `(begin
-					      ,(j2s-put! loc otmp
-						  'object
+					      ,(j2s-put! loc otmp tyobj
 						  prop
 						  (j2s-vtype field)
 						  val 'number
@@ -1762,26 +1759,43 @@
 		(with-access::J2SAccess lhs (cache)
 		   cache)))))
    
-   (define (access-inc-sans-object otmp::symbol prop op::symbol lhs::J2SAccess rhs::J2SExpr inc::int)
-      (with-access::J2SAccess lhs (obj field cspecs cache (loca loc))
-	 (if (not cache)
-	     (aput-inc otmp prop op lhs cache inc '())
+   (define (access-inc-sans-object/field otmp::symbol prop op::symbol lhs::J2SAccess rhs::J2SExpr inc::int field)
+      (with-access::J2SAccess lhs (obj cspecs cache (loca loc))
+	 (cond
+	    ((eq? (j2s-type obj) 'array)
+	     (aput-inc 'array otmp prop op lhs field cache inc '()))
+	    ((not cache)
+	     (aput-inc 'object otmp prop op lhs field cache inc '()))
+	    (else
 	     `(with-access::JsObject ,otmp (cmap)
 		 (let ((%cmap cmap))
 		    ,(let loop ((cs cspecs))
 			(cond
 			   ((null? cs)
-			    (aput-inc otmp prop op lhs (rhs-cache rhs) inc '()))
+			    (aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc '()))
 			   ((or (eq? (car cs) 'imap) (eq? (car cs) 'imap-incache))
 			    `(if (eq? %cmap (js-pcache-imap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc otmp prop op lhs (rhs-cache rhs) inc (list (car cs)))
+				 ,(aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc (list (car cs)))
 				 ,(loop (cdr cs))))
 			   ((eq? (car cs) 'cmap)
 			    `(if (eq? %cmap (js-pcache-cmap (js-pcache-ref %pcache ,cache)))
-				 ,(aput-inc otmp prop op lhs (rhs-cache rhs) inc (list (car cs)))
+				 ,(aput-inc 'object otmp prop op lhs field (rhs-cache rhs) inc (list (car cs)))
 				 ,(loop (cdr cs))))
 			   (else
-			    (loop (cdr cs))))))))))
+			    (loop (cdr cs)))))))))))
+   
+   (define (access-inc-sans-object otmp::symbol prop op::symbol lhs::J2SAccess rhs::J2SExpr inc::int)
+      (with-access::J2SAccess lhs (field)
+	 (if (or (isa? field J2SRef) (and (isa? field J2SLiteral) (not (isa? field J2SArray))))
+	     (access-inc-sans-object/field otmp prop op lhs rhs inc field)
+	     (let* ((%field (gensym '%field)))
+		`(let ((,%field ,(j2s-scheme field mode return conf)))
+		    ,(access-inc-sans-object/field otmp prop op lhs rhs inc
+		       (with-access::J2SExpr field (loc)
+			  (instantiate::J2SHopRef
+			     (loc loc)
+			     (id %field)
+			     (type (j2s-type field))))))))))
 
    (define (access-inc op lhs::J2SAccess rhs::J2SExpr inc::int)
       (with-access::J2SAccess lhs (obj field cspecs cache loc)
@@ -1789,13 +1803,15 @@
 	       (prop (j2s-property-scheme field mode return conf)))
 	    `(let ((,otmp ,(j2s-scheme obj mode return conf)))
 		,(if prop
-		     (if (type-object? (j2s-type obj))
-			 (access-inc-sans-object otmp prop op lhs rhs inc)
+		     (cond
+			((type-object? (j2s-type obj))
+			 (access-inc-sans-object otmp prop op lhs rhs inc))
+			(else
 			 `(if (js-object? ,otmp)
 			      ,(with-object obj
 				  (lambda ()
 				     (access-inc-sans-object otmp prop op lhs rhs inc)))
-			      ,(j2s-put! loc otmp 'any prop 'any 1 'any (strict-mode? mode) conf cache '())))
+			      ,(j2s-put! loc otmp 'any prop 'any 1 'any (strict-mode? mode) conf cache '()))))
 		     (let* ((ptmp (gensym 'prop))
 			    (pvar (J2SHopRef ptmp)))
 			`(let ((,ptmp ,(j2s-scheme field mode return conf)))
@@ -1893,7 +1909,7 @@
 			  (or pro prov) (j2s-vtype field)
 			  (j2s-cast vtmp #f typea typel conf) typel
 			  (strict-mode? mode) conf
-			  cache (if (is-number? field) '() cs))
+			  cache (if (mightbe-number? field) '() cs))
 		      ,vtmp))))))
 
    (define (access-assigop/otmp obj otmp::symbol op tl::symbol lhs::J2SAccess rhs::J2SExpr)
@@ -1980,6 +1996,14 @@
 		      (j2s->list this)))))))))
 
 ;*---------------------------------------------------------------------*/
+;*    mightbe-number? ...                                              */
+;*---------------------------------------------------------------------*/
+(define (mightbe-number? field)
+   (or (is-number? field)
+       (with-access::J2SExpr field (hint)
+	  (or (assq 'index hint) (assq 'number hint) (assq 'integer hint)))))
+
+;*---------------------------------------------------------------------*/
 ;*    j2s-scheme ::J2SAccess ...                                       */
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-scheme this::J2SAccess mode return conf)
@@ -1991,13 +2015,30 @@
 	    (j2s-vtype field) (j2s-vtype this) conf cache cspecs)))
 
    (define (canbe-array? obj)
-      (memq (j2s-type obj) '(any undefined unknown object)))
+      (memq (j2s-type obj) '(any undefined unknown object array)))
 
    (define (canbe-string? obj)
-      (when (memq (j2s-type obj) '(any undefined unknown object))
+      (when (memq (j2s-type obj) '(any undefined unknown object string))
 	 (if (isa? obj J2SRef)
 	     (with-access::J2SRef obj (hint)
 		(not (pair? (assq 'no-string hint))))
+	     #t)))
+
+   (define (maybe-string? obj)
+      (when (memq (j2s-type obj) '(any undefined unknown object))
+	 (if (isa? obj J2SRef)
+	     (with-access::J2SRef obj (hint)
+		(let ((cs (assq 'string hint))
+		      (ca (assq 'array hint)))
+		   (cond
+		      ((pair? cs)
+		       (if (pair? ca)
+			   (=fx (cdr cs) (cdr ca))
+			   #t))
+		      ((pair? ca)
+		       #f)
+		      (else
+		       #t))))
 	     #t)))
 
    (define (canbe-arguments? obj)
@@ -2011,7 +2052,7 @@
 		   ,(or (j2s-array-ref this mode return conf)
 			(get obj tmp field cache cspecs loc))))
 		'())
-	     ,@(if (canbe-string? obj)
+	     ,@(if (and (canbe-string? obj) (maybe-string? obj))
 		`(((js-jsstring? ,tmp)
 		   ,(or (j2s-string-ref this mode return conf)
 			(get obj tmp field cache cspecs loc))))
@@ -2041,50 +2082,7 @@
 		 (access (J2SAccess (J2SHopRef tmp) field)))
 	     `(let ((,tmp ,(j2s-scheme obj mode return conf)))
 		 ,(index-obj-ref access ref field cache cspecs loc)))))
-;*                                                                     */
-;* 	  (let ((tmp (j2s-scheme obj mode return conf)))          */
-;* 	     `(cond                                                    */
-;* 		 ,@(if (canbe-array? obj)                              */
-;* 		    `(((isa? ,tmp JsArray)                             */
-;* 		       ,(or (j2s-array-ref this mode return conf) */
-;* 			    (get obj field cache cspecs loc))))        */
-;* 		    '())                                               */
-;* 		 ,@(if (canbe-string? obj)                             */
-;* 		    `(((js-jsstring? ,tmp)                             */
-;* 		       ,(or (j2s-string-ref this mode return conf) */
-;* 			    (get obj field cache cspecs loc))))        */
-;* 		    '())                                               */
-;* 		 ,@(if (canbe-arguments? obj)                          */
-;* 		    `(((isa? ,tmp JsArguments)                         */
-;* 		       ,(or (j2s-arguments-ref this mode return conf) */
-;* 			    (get obj field cache cspecs loc))))        */
-;* 		    '())                                               */
-;* 		 (else                                                 */
-;* 		  ,(get obj field cache cspecs loc))))                 */
-;* 	  (let ((tmp (gensym 'tmp)))                                   */
-;* 	     `(let ((,tmp ,(j2s-scheme obj mode return conf)))    */
-;* 		 (cond                                                 */
-;* 		    ,@(if (canbe-array? obj)                           */
-;* 		       `(((isa? ,tmp JsArray)                          */
-;* 			  ,(let ((access (J2SAccess (J2SHopRef tmp) field))) */
-;* 			      (or (j2s-array-ref access mode return conf) */
-;* 				  (get (J2SHopRef tmp) field cache cspecs loc))))) */
-;* 		       '())                                            */
-;* 		    ,@(if (canbe-string? obj)                          */
-;* 		       `(((js-jsstring? ,tmp)                          */
-;* 			  ,(let ((access (J2SAccess (J2SHopRef tmp) field))) */
-;* 			      (or (j2s-string-ref access mode return conf) */
-;* 				  (get (J2SHopRef tmp) field cache cspecs loc))))) */
-;* 		       '())                                            */
-;* 		    ,@(if (canbe-arguments? obj)                       */
-;* 		       `(((isa? ,tmp JsArguments)                      */
-;* 			  ,(let ((access (J2SAccess (J2SHopRef tmp) field))) */
-;* 			      (or (j2s-arguments-ref access mode return conf) */
-;* 				  (get (J2SHopRef tmp) field cache cspecs loc))))) */
-;* 		       '())                                            */
-;* 		    (else                                              */
-;* 		     ,(get (J2SHopRef tmp) field cache cspecs loc))))))) */
-;*                                                                     */
+	  
    (with-access::J2SAccess this (loc obj field cache cspecs type)
       (epairify-deep loc 
 	 (cond
@@ -2102,7 +2100,7 @@
 	     (or (j2s-arguments-ref this mode return conf)
 		 (get obj (j2s-scheme obj mode return conf)
 		    field cache cspecs loc)))
-	    ((is-number? field)
+	    ((mightbe-number? field)
 	     (index-ref obj field cache cspecs loc))
 	    (else
 	     (get obj (j2s-scheme obj mode return conf)

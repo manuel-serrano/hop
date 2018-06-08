@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Wed Jun  6 09:52:32 2018 (serrano)                */
+;*    Last change :  Fri Jun  8 07:32:56 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -112,7 +112,7 @@
 	 ;;(force-unary-type! this))
       ;; cleanup the ast use count and remove obviously useless definitions
       (force-type! this 'unknown 'any)
-      (cleanup-hint! this)
+      ;;(cleanup-hint! this)
       (program-cleanup! this))
    this)
 

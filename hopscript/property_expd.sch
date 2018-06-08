@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sun Jun  3 08:01:58 2018 (serrano)                */
+;*    Last change :  Fri Jun  8 15:01:15 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -493,6 +493,7 @@
 			 (js-profile-log-cache ,cache :emap #t)
 			 (js-profile-log-index idx)
 			 (js-object-inline-set! ,obj idx ,tmp)
+			 (js-invalidate-cache-method! ,tmp (js-pcache-cmap ,cache) idx)
 			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'cmap)
@@ -516,6 +517,7 @@
 			 (js-profile-log-cache ,cache :pmap #t)
 			 (js-profile-log-index idx)
 			 (js-object-push! ,obj idx ,tmp)
+			 (js-invalidate-cache-method! ,tmp (js-pcache-cmap ,cache) idx)
 			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'amap)
