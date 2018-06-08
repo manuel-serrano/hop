@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jun  8 14:50:53 2018 (serrano)                */
+;*    Last change :  Fri Jun  8 17:29:58 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -472,10 +472,17 @@
 ;*    js-invalidate-cache-method! ...                                  */
 ;*---------------------------------------------------------------------*/
 (define (js-invalidate-cache-method! v cmap idx)
-   (when (isa? v JsFunction)
-      (with-access::JsConstructMap cmap (methods)
-	 (when (vector-ref methods idx)
-	    (vector-set! methods idx #f)))))
+   (if (isa? v JsFunction)
+       (with-access::JsConstructMap cmap (methods)
+	  (if (vector-ref methods idx)
+	      (begin
+		 (vector-set! methods idx #f)
+		 (reset-cmap-vtable! cmap)
+		 (duplicate::JsConstructMap cmap
+		    (vlen 0)
+		    (vtable '#())))
+	      cmap))
+       cmap))
 
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-ref ...                                                */
@@ -1834,7 +1841,6 @@
 	    (let* ((name (js-toname p %this))
 		   (index (vector-length props))
 		   (flags (property-flags #t #t #t #f)))
-      (tprint "EXTEND-MAPPED name=" name)
 	       (let loop ()
 		  (cond
 		     ((cmap-find-transition cmap name v flags)
@@ -1842,8 +1848,6 @@
 		      (lambda (nextmap)
 			 ;; follow the next map
 			 (with-access::JsConstructMap nextmap (ctor methods)
-			    (when (isa? v JsFunction)
-			       (tprint "IS FUNCTION " name))
 			    (when (invalidate-cache-method! v methods index)
 			       (reset-cmap-vtable! nextmap))
 			    (when cache
@@ -1854,7 +1858,6 @@
 			    (set! cmap nextmap)
 			    v)))
 		     (single
-		      (tprint "SINGLE...")
 		      (extend-cmap! cmap name flags)
 		      (with-access::JsConstructMap cmap (methods)
 			 (validate-cache-method! v methods index))
@@ -1864,7 +1867,6 @@
 			 (js-object-push/ctor! o index v ctor))
 		      v)
 		     (else
-		      (tprint "NEW MAP..." name)
 		      ;; create a new map
 		      (let ((nextmap (extend-cmap cmap name flags)))
 			 (with-access::JsConstructMap nextmap (methods)
