@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Fri Jun  8 19:22:34 2018 (serrano)                */
+;*    Last change :  Sat Jun  9 09:58:58 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -812,8 +812,8 @@
 	  ((eq? (js-pcache-owner ,ccache) ,fun)
 	   ((js-pcache-method ,ccache) ,this ,@args))
 	  ((and (isa? ,fun JsFunction)
-		(with-access::JsFunction ,fun (len)
-		   (=fx len ,len)))
+		(with-access::JsFunction ,fun (procedure)
+		   (correct-arity? procedure ,(+fx len 1))))
 	   (with-access::JsPropertyCache ,ccache (method owner)
 	      (with-access::JsFunction ,fun (procedure)
 		 (set! owner ,fun)

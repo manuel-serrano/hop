@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 15:02:45 2013                          */
-;*    Last change :  Wed Mar 21 10:28:42 2018 (serrano)                */
+;*    Last change :  Sat Jun  9 11:43:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    NodeJS process object                                            */
@@ -417,12 +417,14 @@
 			(js-put! proc '_exiting #t #f %this)
 			(let ((emit (js-get proc 'emit %this)))
 			   (js-call2 %this emit proc "exit" r))
+			(nodejs-compile-abort-all!)
 			(exit r))))
 	       1 "exit")
 	    #f %this)
 	 (js-put! proc 'reallyExit
 	    (js-make-function %this
 	       (lambda (this status)
+		  (nodejs-compile-abort-all!)
 		  (exit (js-tointeger status %this)))
 	       1 "exit")
 	    #f %this)

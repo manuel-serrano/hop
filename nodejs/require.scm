@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 16 15:47:40 2013                          */
-;*    Last change :  Thu Jun  7 18:00:48 2018 (serrano)                */
+;*    Last change :  Sat Jun  9 10:58:17 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Native Bigloo Nodejs module implementation                       */
@@ -29,6 +29,7 @@
 	   (nodejs-require-core ::bstring ::WorkerHopThread ::JsGlobalObject)
 	   (nodejs-load ::bstring ::WorkerHopThread #!optional lang srcalias)
 	   (nodejs-import!  ::JsGlobalObject ::JsObject ::JsObject . bindings)
+	   (nodejs-compile-abort-all!)
 	   (nodejs-compile-file ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-json ::bstring ::bstring ::bstring ::bstring)
 	   (nodejs-compile-html ::bstring ::bstring ::bstring ::bstring)
@@ -894,6 +895,45 @@
 	       (apply-listeners compile-listeners-all evt))))))
 
 ;*---------------------------------------------------------------------*/
+;*    nodejs-compile-abort-all! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (nodejs-compile-abort-all!)
+   
+   (define (socompile-wait p::struct status::bool)
+      (let ((proc (socompile-proc p)))
+	 (nodejs-process-wait proc (socompile-src p))
+	 (if (and status (=fx (process-exit-status proc) 0))
+	     ((socompile-ksucc p))
+	     ((socompile-kfail p)))))
+
+   (synchronize socompile-mutex
+      (for-each (lambda (p)
+		   (define debug-abort #f)
+		   (case (hop-sofile-compile-policy)
+		      ((nte1)
+		       (socompile-wait p #t)
+		       (hop-sofile-compile-policy-set! 'abort))
+		      ((nte+)
+		       (socompile-wait p #t))
+		      (else
+		       (when debug-abort
+			  (tprint "aborting " (socompile-proc p)
+			     " " (socompile-cmd p)))
+		       (hop-verb 3 (hop-color -1 -1 " ABORTING ") " "
+			  (socompile-cmd p) "\n")
+		       (socompile-abortp-set! p #t)
+		       (process-kill (socompile-proc p))
+		       (when debug-abort
+			  (tprint "waiting/abort " (socompile-proc p)))
+		       (socompile-wait p #f)
+		       (when debug-abort
+			  (tprint "killed " (socompile-proc p))))))
+	 socompile-processes)
+      (set! socompile-processes '())
+      (set! socompile-files '())
+      (set! socompile-ended #t)))
+
+;*---------------------------------------------------------------------*/
 ;*    nodejs-compile-workers-inits! ...                                */
 ;*---------------------------------------------------------------------*/
 (define (nodejs-compile-workers-inits!)
@@ -909,43 +949,11 @@
 	     (begin
 		(condition-variable-wait! socompile-condv socompile-mutex)
 		(loop)))))
-   
-   (define (socompile-wait p::struct status::bool)
-      (let ((proc (socompile-proc p)))
-	 (nodejs-process-wait proc (socompile-src p))
-	 (if (and status (=fx (process-exit-status proc) 0))
-	     ((socompile-ksucc p))
-	     ((socompile-kfail p)))))
 
    (register-exit-function!
       (lambda (status)
-	 (synchronize socompile-mutex
-	    (for-each (lambda (p)
-			 (define debug-abort #f)
-			 (case (hop-sofile-compile-policy)
-			    ((nte1)
-			     (socompile-wait p #t)
-			     (hop-sofile-compile-policy-set! 'abort))
-			    ((nte+)
-			     (socompile-wait p #t))
-			    (else
-			     (when debug-abort
-				(tprint "aborting " (socompile-proc p)
-				   " " (socompile-cmd p)))
-			     (hop-verb 3 (hop-color -1 -1 " ABORTING ") " "
-				(socompile-cmd p) "\n")
-			     (socompile-abortp-set! p #t)
-			     (process-kill (socompile-proc p))
-			     (when debug-abort
-				(tprint "waiting/abort " (socompile-proc p)))
-			     (socompile-wait p #f)
-			     (when debug-abort
-				(tprint "killed " (socompile-proc p))))))
-	       socompile-processes)
-	    (set! socompile-processes '())
-	    (set! socompile-files '())
-	    (set! socompile-ended #t)
-	    status)))
+	 (nodejs-compile-abort-all!)
+	 status))
 
    (thread-start!
       (instantiate::hopthread
@@ -1061,55 +1069,57 @@
    
    (define (exec line::pair ksucc::procedure kfail::procedure)
       
-      (let* ((cmd (format "~( )" line))
-	     (proc (synchronize socompile-mutex
-		      (unless socompile-ended
-			 (register-socompile-process!
-			    (apply run-process (car line)
-			       :wait #f
-			       error: pipe:
-			       output: "/dev/null"
-			       (cdr line))
-			    cmd filename ksucc kfail))))
-	     (mutex (make-mutex "compilation"))
-	     (estr #f))
-	 ;; verbose
-	 ;; error logger (mandatory to flush child stderr)
-	 (when (process? proc)
-	    (thread-start!
-	       (instantiate::hopthread
-		  (name "errlogger")
-		  (body (lambda ()
-			   (let ((err (process-error-port proc)))
-			      (with-handler
-				 (lambda (e) e)
-				 (unwind-protect
-				    (synchronize mutex
-				       (set! estr (read-string err)))
-				    (close-input-port err)))))))))
-	 (with-handler
-	    (lambda (e)
-	       (fprint (current-error-port) "**** ERROR: compilation failed " filename)
-	       (exception-notify e))
+      (let ((cmd (format "~( )" line))
+	    (mutex (make-mutex "compilation"))
+	    (estr #f)
+	    (proc #f))
+	 
+	 (synchronize socompile-mutex
+	    (set! proc (unless socompile-ended
+			  (register-socompile-process!
+			     (apply run-process (car line)
+				:wait #f
+				error: pipe:
+				output: "/dev/null"
+				(cdr line))
+			     cmd filename ksucc kfail)))
+	    ;; error logger (mandatory to flush child stderr)
 	    (when (process? proc)
-	       (synchronize socompile-mutex
-		  (set! compile-pending (+fx compile-pending 1))
-		  (when (pair? compile-listeners-start)
-		     (let ((evt (instantiate::event
-				   (name "start")
-				   (target filename)
-				   (value `(pending: ,compile-pending
-					      command: ,cmd)))))
-			(apply-listeners compile-listeners-start evt))))
-	       (nodejs-process-wait proc filename)
-	       (synchronize mutex
-		  (if (and socompile-ended (=fx (process-exit-status proc) 0))
-		      'ended
-		      (let ((soc (unregister-socompile-process! proc)))
-			 (unless (=fx (process-exit-status proc) 0)
-			    (if soc
-				(unless (socompile-abortp soc)
-				   estr))))))))))
+	       (thread-start!
+		  (instantiate::hopthread
+		     (name "errlogger")
+		     (body (lambda ()
+			      (let ((err (process-error-port proc)))
+				 (with-handler
+				    (lambda (e) e)
+				    (unwind-protect
+				       (synchronize mutex
+					  (set! estr (read-string err)))
+				       (close-input-port err)))))))))
+	    (with-handler
+	       (lambda (e)
+		  (fprint (current-error-port) "**** ERROR: compilation failed " filename)
+		  (exception-notify e))
+	       (when (process? proc)
+		  ;;(synchronize socompile-mutex
+		  (begin
+		     (set! compile-pending (+fx compile-pending 1))
+		     (when (pair? compile-listeners-start)
+			(let ((evt (instantiate::event
+				      (name "start")
+				      (target filename)
+				      (value `(pending: ,compile-pending
+						 command: ,cmd)))))
+			   (apply-listeners compile-listeners-start evt)))))))
+	 (nodejs-process-wait proc filename)
+	 (synchronize mutex
+	    (if (and socompile-ended (=fx (process-exit-status proc) 0))
+		'ended
+		(let ((soc (unregister-socompile-process! proc)))
+		   (unless (=fx (process-exit-status proc) 0)
+		      (if soc
+			  (unless (socompile-abortp soc)
+			     estr))))))))
    
    (define (dump-error cmd sopath msg)
       (call-with-output-file (string-append sopath ".err")

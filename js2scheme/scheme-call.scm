@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Fri Jun  8 18:54:15 2018 (serrano)                */
+;*    Last change :  Sat Jun  9 09:57:55 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -505,7 +505,7 @@ ft		`(,f ,@%gen
 		  ,(j2s-scheme fun mode return conf)
 		  ,@self
 		  ,@(j2s-scheme args mode return conf)))
-	       ((and #f cache) ;; MS
+	       (cache
 		`(js-call/cache
 		    ,j2s-unresolved-call-workspace
 		    ,(js-pcache cache)
