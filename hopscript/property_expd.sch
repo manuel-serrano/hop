@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Jun  9 09:58:58 2018 (serrano)                */
+;*    Last change :  Sat Jun  9 14:35:24 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -493,9 +493,10 @@
 			 (js-profile-log-cache ,cache :emap #t)
 			 (js-profile-log-index idx)
 			 (js-object-inline-set! ,obj idx ,tmp)
-			 (set! cmap
-			    (js-invalidate-cache-method! ,tmp
-			       (js-pcache-cmap ,cache) idx))
+;* 			 (set! cmap                                    */
+;* 			    (js-invalidate-cache-method! ,tmp          */
+;* 			       (js-pcache-cmap ,cache) idx))           */
+			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'cmap)
 		     `(let ((idx (js-pcache-index ,cache)))
@@ -518,9 +519,10 @@
 			 (js-profile-log-cache ,cache :pmap #t)
 			 (js-profile-log-index idx)
 			 (js-object-push! ,obj idx ,tmp)
-			 (set! cmap
-			    (js-invalidate-cache-method! ,tmp
-			       (js-pcache-cmap ,cache) idx))
+;* 			 (set! cmap                                    */
+;* 			    (js-invalidate-cache-method! ,tmp          */
+;* 			       (js-pcache-cmap ,cache) idx))           */
+			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'amap)
 		     `(with-access::JsObject (js-pcache-owner ,cache) (elements)
@@ -695,6 +697,7 @@
 				 ((js-pcache-method ,ccache) ,obj ,@args))
 			      ,(loop (cdr cs))))
 			((vtable)
+			 ;; vtable method call
 			 (cond-expand
 			    ((or no-vtable-cache no-vtable-cache-call)
 			     (loop (cdr cs)))
@@ -808,22 +811,22 @@
 
    (define (call/tmp %this ccache fun this args)
       (let ((len (length args)))
-      `(cond
-	  ((eq? (js-pcache-owner ,ccache) ,fun)
-	   ((js-pcache-method ,ccache) ,this ,@args))
-	  ((and (isa? ,fun JsFunction)
-		(with-access::JsFunction ,fun (procedure)
-		   (correct-arity? procedure ,(+fx len 1))))
-	   (with-access::JsPropertyCache ,ccache (method owner)
-	      (with-access::JsFunction ,fun (procedure)
-		 (set! owner ,fun)
-		 (set! method procedure)
-		 (procedure ,this ,@args))))
-	  (else
-	   ,(if (>=fx len 11)
-		`(js-calln ,%this ,fun ,this ,@args)
-		`(,(string->symbol (format "js-call~a" len))
-		  ,%this ,fun ,this ,@args))))))
+	 `(cond
+	     ((eq? (js-pcache-owner ,ccache) ,fun)
+	      ((js-pcache-method ,ccache) ,this ,@args))
+	     ((and (isa? ,fun JsFunction)
+		   (with-access::JsFunction ,fun (procedure)
+		      (correct-arity? procedure ,(+fx len 1))))
+	      (with-access::JsPropertyCache ,ccache (method owner)
+		 (with-access::JsFunction ,fun (procedure)
+		    (set! owner ,fun)
+		    (set! method procedure)
+		    (procedure ,this ,@args))))
+	     (else
+	      ,(if (>=fx len 11)
+		   `(js-calln ,%this ,fun ,this ,@args)
+		   `(,(string->symbol (format "js-call~a" len))
+		     ,%this ,fun ,this ,@args))))))
    
    (cond-expand
       ((or no-macro-cache no-macro-cache-call)

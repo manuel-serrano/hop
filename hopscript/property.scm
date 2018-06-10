@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Fri Jun  8 17:29:58 2018 (serrano)                */
+;*    Last change :  Sat Jun  9 15:50:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -429,7 +429,6 @@
    (set! *pcaches* (cons (vector pcache len src (current-thread)) *pcaches*))
    pcache)
 
-
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-pcaches-pmap! ...                                  */
 ;*    -------------------------------------------------------------    */
@@ -441,13 +440,11 @@
 ;*       4) a property hidding a prototype property is added.          */
 ;*---------------------------------------------------------------------*/
 (define (js-invalidate-pcaches-pmap! %this::JsGlobalObject reason)
-   
+
    (define (invalidate-pcache-pmap! pcache)
       (with-access::JsPropertyCache pcache (pmap emap amap)
-	 (when (isa? pmap JsConstructMap)
-	    (reset-cmap-vtable! pmap))
-	 (when (isa? amap JsConstructMap)
-	    (reset-cmap-vtable! amap))
+	 (when (isa? pmap JsConstructMap) (reset-cmap-vtable! pmap))
+	 (when (isa? amap JsConstructMap) (reset-cmap-vtable! amap))
 	 (set! pmap #t)
 	 (set! emap #t)
 	 (set! amap #t)))
@@ -795,7 +792,7 @@
 			 ((not (isa? v JsFunction))
 			  (vector-set! methods i #f))
 			 ((eq? (vector-ref methods i) #unspecified)
-			  (vector-set! methods i #t))
+			  (vector-set! methods i v))
 			 (else
 			  (vector-set! methods i #f)))
 		      (loop (-fx i 1)))))))))
@@ -1733,15 +1730,6 @@
    
    (define name (js-toname p %this))
    
-   (define (invalidate-cache-method! v methods i)
-      (when (and (isa? v JsFunction) (vector-ref methods i))
-	 (vector-set! methods i #f)
-	 #t))
-   
-   (define (validate-cache-method! v methods i)
-      (when (isa? v JsFunction)
-	 (vector-set! methods i #t)))
-   
    (define (reject msg)
       (if throw
 	  (js-raise-type-error %this
@@ -1760,6 +1748,42 @@
 		v)
 	     ;; 8.12.4, setp 2.a
 	     (reject "No setter defined"))))
+
+   (define (update-mapped-object-value! obj cmap i v)
+      (with-access::JsObject obj (cmap elements)
+	 (with-access::JsConstructMap cmap (nextmap methods props)
+	    (cond
+	       ((isa? v JsFunction)
+		(cond
+		   ((eq? v (vector-ref methods i))
+		    ;; not cached
+		    v)
+		   ((eq? (vector-ref methods i) #f)
+		    ;; normal cached 
+		    (when cache (js-pcache-update-direct! cache i o))
+		    (vector-set! elements i v)
+		    v)
+		   (else
+		    ;; invalidate cache method and cache
+		    (vector-set! methods i #f)
+		    (js-invalidate-pcaches-pmap! %this name)
+		    (reset-cmap-vtable! cmap)
+		    (when cache (js-pcache-update-direct! cache i o))
+		    (vector-set! elements i v)
+		    v)))
+	       ((isa? (vector-ref methods i) JsFunction)
+		;; invalidate cache method and cache
+		(vector-set! methods i #f)
+		(js-invalidate-pcaches-pmap! %this name)
+		(reset-cmap-vtable! cmap)
+		(when cache (js-pcache-update-direct! cache i o))
+		(vector-set! elements i v)
+		v)
+	       (else
+		;; normal caching
+		(when cache (js-pcache-update-direct! cache i o))
+		(vector-set! elements i v)
+		v)))))
    
    (define (update-mapped-object! obj i)
       (with-trace 'prop "update-mapped-object"
@@ -1793,29 +1817,9 @@
 				    (js-pcache-update-descriptor! cache i o o))
 				 (js-property-value-set! o el-or-desc v %this))
 				(else
-				 (when (invalidate-cache-method! v methods i)
-				    (reset-cmap-vtable! cmap)
-				    (set! cmap
-				       (duplicate::JsConstructMap cmap
-					  (vlen 0)
-					  (vtable '#()))))
-				 (when cache
-				    [assert (i) (<fx i (vector-length elements))]
-				    (js-pcache-update-direct! cache i o))
-				 (vector-set! elements i v)
-				 v))))
+				 (update-mapped-object-value! obj cmap i v)))))
 			 ((flags-writable? (prop-flags (vector-ref props i)))
-			  (when (invalidate-cache-method! v methods i)
-			     (reset-cmap-vtable! cmap)
-			     (set! cmap
-				(duplicate::JsConstructMap cmap
-				   (vlen 0)
-				   (vtable '#()))))
-			  (when cache
-			     [assert (i) (<fx i (vector-length elements))]
-			     (js-pcache-update-direct! cache i o))
-			  (vector-set! elements i v)
-			  v)
+			  (update-mapped-object-value! obj cmap i v)) 
 			 (else
 			  (reject "Read-only property"))))
 		     ((not (js-object-mode-extensible? obj))
@@ -1848,34 +1852,47 @@
 		      (lambda (nextmap)
 			 ;; follow the next map
 			 (with-access::JsConstructMap nextmap (ctor methods)
-			    (when (invalidate-cache-method! v methods index)
-			       (reset-cmap-vtable! nextmap))
-			    (when cache
-			       [assert (index p) (<=fx index (vector-length elements))]
-			       (js-pcache-next-direct! cache o nextmap index))
-			    [assert (o) (isa? nextmap JsConstructMap)]
+			    (if (isa? v JsFunction)
+				;; validate cache method and don't cache
+				(unless (eq? v (vector-ref methods index))
+				   ;; invalidate cache method and cache
+				   (vector-set! methods index #f)
+				   (js-invalidate-pcaches-pmap! %this name))
+				(begin
+				   (when (isa? (vector-ref methods index) JsFunction)
+				      ;; invalidate cache method and cache
+				      (vector-set! methods index #f)
+				      (js-invalidate-pcaches-pmap! %this name))
+				   (when cache
+				      (js-pcache-next-direct! cache o nextmap index))))
 			    (js-object-push/ctor! o index v ctor)
 			    (set! cmap nextmap)
 			    v)))
 		     (single
 		      (extend-cmap! cmap name flags)
-		      (with-access::JsConstructMap cmap (methods)
-			 (validate-cache-method! v methods index))
-		      (with-access::JsConstructMap cmap (ctor)
-			 (when cache
-			    (js-pcache-next-direct! cache o cmap index))
+		      (with-access::JsConstructMap cmap (ctor methods)
+			 (if (isa? v JsFunction)
+			     ;; validate cache method and don't cache
+			     (vector-set! methods index v)
+			     (begin
+				(vector-set! methods index #f)
+				(when cache
+				   (js-pcache-next-direct! cache o cmap index))))
 			 (js-object-push/ctor! o index v ctor))
 		      v)
 		     (else
 		      ;; create a new map
 		      (let ((nextmap (extend-cmap cmap name flags)))
-			 (with-access::JsConstructMap nextmap (methods)
-			    (validate-cache-method! v methods index))
-			 (with-access::JsConstructMap cmap (ctor)
-			    (when cache
-			       (js-pcache-next-direct! cache o nextmap index))
+			 (with-access::JsConstructMap nextmap (methods ctor)
+			    (if (isa? v JsFunction)
+				;; validate cache method and don't cache
+				(vector-set! methods index v)
+				;; invalidate cate method and cache
+				(begin
+				   (vector-set! methods index #f)
+				   (when cache
+				      (js-pcache-next-direct! cache o nextmap index))))
 			    (link-cmap! cmap nextmap name v flags)
-			    [assert (o) (isa? nextmap JsConstructMap)]
 			    (js-object-push/ctor! o index v ctor))
 			 (set! cmap nextmap)
 			 v))))))))
@@ -2082,7 +2099,7 @@
    
    (define (validate-cache-method! v methods i)
       (when (isa? v JsFunction)
-	 (vector-set! methods i #t)))
+	 (vector-set! methods i v)))
    
    (define (accessor-property? get set)
       (or (and get (not (eq? get (js-undefined))))
@@ -2973,7 +2990,7 @@
 			       (set! emap #t)
 			       (set! cmap #t))
 			    (jsapply (js-property-value o el-or-desc %this)))
-			   ((eq? (vector-ref methods i) #t)
+			   ((isa? (vector-ref methods i) JsFunction)
 			    (let ((f (funval el-or-desc)))
 			       (cond
 				  ((procedure? f)

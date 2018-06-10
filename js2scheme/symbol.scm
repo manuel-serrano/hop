@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Wed Apr 18 08:49:09 2018 (serrano)                */
+;*    Last change :  Sat Jun  9 23:35:33 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -53,6 +53,8 @@
 ;*---------------------------------------------------------------------*/
 (define-method (j2s-symbol this::J2SProgram conf)
    (with-access::J2SProgram this (nodes loc mode headers decls)
+      ;; filters out double definitions
+      (set! nodes (decl-cleanup-duplicate! nodes))
       (let* ((hds (append-map (lambda (s) (collect* s)) headers))
 	     (vars (append-map (lambda (s) (collect* s)) nodes))
 	     (lets (collect-let nodes))
@@ -77,6 +79,28 @@
    this)
 
 ;*---------------------------------------------------------------------*/
+;*    decl-cleanup-duplicate! ...                                      */
+;*---------------------------------------------------------------------*/
+(define (decl-cleanup-duplicate! nodes)
+   (let loop ((n nodes)
+	      (nnodes '())
+	      (env '()))
+      (cond
+	 ((null? n)
+	  (reverse! nnodes))
+	 ((not (isa? (car n) J2SDecl))
+	  (loop (cdr n) (cons (car n) nnodes) env))
+	 (else
+	  (with-access::J2SDecl (car n) (id)
+	     (let ((old (find-decl id env)))
+		(if old
+		    (loop (cdr n)
+		       (cons (decl->assign! (car n) old '() '()) nnodes)
+		       env)
+		    (loop (cdr n) (cons (car n) nnodes)
+		       (cons (car n) env)))))))))
+
+;*---------------------------------------------------------------------*/
 ;*    eq-conf-lang? ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (eq-conf-lang? conf lang)
@@ -99,19 +123,21 @@
       env))
 
 ;*---------------------------------------------------------------------*/
+;*    decl->assign! ...                                                */
+;*---------------------------------------------------------------------*/
+(define (decl->assign! decl::J2SDeclInit old::J2SDecl withs wenv)
+   (with-access::J2SDeclInit decl (loc id val)
+      (instantiate::J2SStmtExpr
+	 (loc loc)
+	 (expr (instantiate::J2SAssig
+		  (loc loc)
+		  (lhs (j2sref old loc withs wenv))
+		  (rhs val))))))
+
+;*---------------------------------------------------------------------*/
 ;*    bind-decls! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (bind-decls! decls env mode scope::symbol withs::pair-nil wenv::pair-nil genv::pair-nil conf)
-   
-   (define (decl->assign! decl::J2SDeclInit old::J2SDecl)
-      (with-access::J2SDeclInit decl (loc id val)
-	 (instantiate::J2SStmtExpr
-	    (loc loc)
-	    (expr (instantiate::J2SInit
-		     (loc loc)
-		     (lhs (j2sref old loc withs wenv))
-		     (rhs val))))))
-
    (let loop ((decls (map (lambda (e) (bind! e env genv mode conf)) decls))
 	      (acc '())
 	      (funs '()))
@@ -124,7 +150,7 @@
 		   (if old
 		       (if (or (isa? decl J2SDeclFun)
 			       (isa? decl J2SDeclExtern))
-			   (let ((fun (decl->assign! decl old)))
+			   (let ((fun (decl->assign! decl old withs wenv)))
 			      (loop (cdr decls) acc (cons fun funs)))
 			   (loop (cdr decls) acc funs))
 		       (loop (cdr decls) (cons decl acc) funs))))))))

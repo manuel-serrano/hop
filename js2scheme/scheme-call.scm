@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jun  9 09:57:55 2018 (serrano)                */
+;*    Last change :  Sat Jun  9 14:52:26 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -261,7 +261,7 @@
 	 (cond
 	    ((isa? self J2SSuper)
 	     (call-super-method fun args))
-	    ((and #f ccache (= (bigloo-debug) 0)) ;; MS
+	    ((and ccache (= (bigloo-debug) 0))
 	     (cond
 		((isa? field J2SString)
 		 (with-access::J2SString field (val)

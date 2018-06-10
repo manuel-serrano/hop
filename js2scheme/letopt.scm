@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Jun 28 06:35:14 2015                          */
-;*    Last change :  Fri Jun  1 08:07:52 2018 (serrano)                */
+;*    Last change :  Sat Jun  9 16:03:03 2018 (serrano)                */
 ;*    Copyright   :  2015-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Let optimisation                                                 */
@@ -139,7 +139,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (j2s-letopt! this::J2SLetBlock)
    
-   (define (init-decl! d)
+   (define (init-decl! d::J2SDecl)
       (with-access::J2SDecl d (%info scope binder)
 	 (set! scope 'letblock)
 	 ;; non optimized local variables might have already
