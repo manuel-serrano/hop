@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sat Jun  9 15:50:09 2018 (serrano)                */
+;*    Last change :  Sun Jun 10 13:13:37 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -430,6 +430,13 @@
    pcache)
 
 ;*---------------------------------------------------------------------*/
+;*    js-validate-pcaches-pmap! ...                                    */
+;*---------------------------------------------------------------------*/
+(define (js-validate-pcaches-pmap! %this::JsGlobalObject)
+   (with-access::JsGlobalObject %this (js-pmap-valid)
+      (set! js-pmap-valid #t)))
+
+;*---------------------------------------------------------------------*/
 ;*    js-invalidate-pcaches-pmap! ...                                  */
 ;*    -------------------------------------------------------------    */
 ;*    Called when:                                                     */
@@ -685,7 +692,6 @@
    (with-access::JsConstructMap omap (props methods ctor)
       (let ((newprops (vector-extend props (prop name flags)))
 	    (newmethods (vector-extend methods #unspecified)))
-	 ;;(tprint "CREATE CMAP: " name)
 	 (instantiate::JsConstructMap
 	    (ctor ctor)
 	    (props newprops)
@@ -1246,8 +1252,6 @@
 ;*---------------------------------------------------------------------*/
 (define-method (js-get-own-property o::JsObject p::obj %this::JsGlobalObject)
    ;; JsObject x obj x JsGlobalObject -> JsPropertyDescriptor | Undefined
-;*    (when (and (isa? o JsArray) (symbol? p))                         */
-;*       (tprint "MS: js-get-own-property " p " " (typeof p) " " (typeof o))) */
    (jsobject-find o (js-toname p %this)
       ;; cmap search
       (lambda (owner i)
@@ -1431,8 +1435,7 @@
 			(cond
 			   ((isa? el-or-desc JsPropertyDescriptor)
 			    (unless (eq? o obj)
-			       (with-access::JsGlobalObject %this (js-pmap-valid)
-				  (set! js-pmap-valid #t)))
+			       (js-validate-pcaches-pmap! %this))
 			    ;; accessor property
 			    (js-pcache-update-descriptor! cache i o obj)
 			    (js-property-value o el-or-desc %this))
@@ -1444,8 +1447,7 @@
 			    el-or-desc)
 			   (else
 			    ;; direct access to a prototype object
-			    (with-access::JsGlobalObject %this (js-pmap-valid)
-			       (set! js-pmap-valid #t))
+			    (js-validate-pcaches-pmap! %this)
 			    (js-pcache-update-owner! cache i o obj)
 			    el-or-desc)))))))
 	 ;; property search
@@ -1759,7 +1761,7 @@
 		    ;; not cached
 		    v)
 		   ((eq? (vector-ref methods i) #f)
-		    ;; normal cached 
+		    ;; normal cached
 		    (when cache (js-pcache-update-direct! cache i o))
 		    (vector-set! elements i v)
 		    v)
@@ -1828,7 +1830,6 @@
 		     ((not (isa? el-or-desc JsPropertyDescriptor))
 		      ;; 8.12.5, step 6
 		      (js-invalidate-pcaches-pmap! %this name)
-		      ;;(tprint "POINT=" point)
 		      (extend-object!))
 		     (else
 		      (with-access::JsDataDescriptor el-or-desc (writable)
@@ -1853,18 +1854,20 @@
 			 ;; follow the next map
 			 (with-access::JsConstructMap nextmap (ctor methods)
 			    (if (isa? v JsFunction)
-				;; validate cache method and don't cache
-				(unless (eq? v (vector-ref methods index))
-				   ;; invalidate cache method and cache
-				   (vector-set! methods index #f)
-				   (js-invalidate-pcaches-pmap! %this name))
 				(begin
-				   (when (isa? (vector-ref methods index) JsFunction)
+				   ;; validate cache method and don't cache
+				   (unless (eq? v (vector-ref methods index))
 				      ;; invalidate cache method and cache
 				      (vector-set! methods index #f)
 				      (js-invalidate-pcaches-pmap! %this name))
-				   (when cache
-				      (js-pcache-next-direct! cache o nextmap index))))
+				   (begin
+				      (when (isa? (vector-ref methods index) JsFunction)
+					 ;; invalidate cache method and cache
+					 (vector-set! methods index #f)
+					 (js-invalidate-pcaches-pmap! %this name))
+				      (when cache
+					 (js-validate-pcaches-pmap! %this)
+					 (js-pcache-next-direct! cache o nextmap index)))))
 			    (js-object-push/ctor! o index v ctor)
 			    (set! cmap nextmap)
 			    v)))
@@ -1877,6 +1880,7 @@
 			     (begin
 				(vector-set! methods index #f)
 				(when cache
+				   (js-validate-pcaches-pmap! %this)
 				   (js-pcache-next-direct! cache o cmap index))))
 			 (js-object-push/ctor! o index v ctor))
 		      v)
@@ -1884,13 +1888,15 @@
 		      ;; create a new map
 		      (let ((nextmap (extend-cmap cmap name flags)))
 			 (with-access::JsConstructMap nextmap (methods ctor)
-			    (if (isa? v JsFunction)
+			    (if (and (isa? v JsFunction)
+				     (or #t (not (memq name '(bind)))))
 				;; validate cache method and don't cache
 				(vector-set! methods index v)
 				;; invalidate cate method and cache
 				(begin
 				   (vector-set! methods index #f)
 				   (when cache
+				      (js-validate-pcaches-pmap! %this)
 				      (js-pcache-next-direct! cache o nextmap index))))
 			    (link-cmap! cmap nextmap name v flags)
 			    (js-object-push/ctor! o index v ctor))
@@ -2978,7 +2984,6 @@
       (jsobject-find obj name
 	 ;; map search
 	 (lambda (obj i)
-	    ;;(tprint "js-object-method-call/cache-miss name=" name " MAPPED")
 	    (with-access::JsObject o ((omap cmap) __proto__)
 	       (with-access::JsObject obj ((wmap cmap) elements)
 		  (with-access::JsConstructMap wmap (methods %id)
@@ -2996,6 +3001,7 @@
 				  ((procedure? f)
 				   (with-access::JsPropertyCache ccache (pmap emap cmap index method)
 				      ;; correct arity, put in cache
+				      (js-validate-pcaches-pmap! %this)
 				      (set! pmap omap)
 				      (set! emap #t)
 				      (set! cmap #f)
@@ -3007,6 +3013,7 @@
 					 ((=fx (procedure-arity method) (+fx 1 (length args)))
 					  (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method))
 					     ;; correct arity, put in cache
+					     (js-validate-pcaches-pmap! %this)
 					     (set! pmap omap)
 					     (set! emap #t)
 					     (set! cmap #f)
@@ -3017,6 +3024,7 @@
 					  (lambda (procedure)
 					     (with-access::JsPropertyCache ccache (pmap emap cmap index (cmethod method))
 						;; correct arity, put in cache
+						(js-validate-pcaches-pmap! %this)
 						(set! pmap omap)
 						(set! emap #t)
 						(set! cmap #f)
