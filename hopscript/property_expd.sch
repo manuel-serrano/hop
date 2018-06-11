@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Jun 11 03:26:05 2018 (serrano)                */
+;*    Last change :  Mon Jun 11 13:02:08 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -675,7 +675,7 @@
 			((cmap amap imap emap)
 			 (loop (cdr cs)))
 			((pmap)
-			 `(if (and #f (eq? %cmap (js-pcache-pmap ,ccache)))
+			 `(if (eq? %cmap (js-pcache-pmap ,ccache))
 			      (begin
 				 (js-profile-log-cache ,ccache :pmap #t)
 				 ((js-pcache-method ,ccache) ,obj ,@args))
@@ -688,8 +688,7 @@
 			    (else
 			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
 				 (let ((vidx (js-pcache-vindex ,ccache)))
-				    (if (and #f
-					     (<fx vidx vlen)
+				    (if (and (<fx vidx vlen)
 					     (procedure? (vector-ref vtable vidx)))
 					(begin
 					   (js-profile-log-cache ,ccache
