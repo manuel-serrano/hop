@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Mon Jun 11 15:11:31 2018 (serrano)                */
+;*    Last change :  Mon Jun 11 15:50:41 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -678,9 +678,6 @@
 			 `(if (eq? %cmap (js-pcache-pmap ,ccache))
 			      (begin
 				 (js-profile-log-cache ,ccache :pmap #t)
-				 (when (eq? ,prop 'pause)
-				    (with-access::JsConstructMap cmap (%id)
-				       (tprint "CALLING PAUSE in cache..." %id)))
 				 ((js-pcache-method ,ccache) ,obj ,@args))
 			      ,(loop (cdr cs))))
 			((vtable)
