@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Sep 13 16:57:00 2013                          */
-;*    Last change :  Sat Jun  9 23:35:33 2018 (serrano)                */
+;*    Last change :  Mon Jun 11 14:20:33 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Variable Declarations                                            */
@@ -83,22 +83,34 @@
 ;*---------------------------------------------------------------------*/
 (define (decl-cleanup-duplicate! nodes)
    (let loop ((n nodes)
+	      (funs '())
 	      (nnodes '())
 	      (env '()))
       (cond
 	 ((null? n)
-	  (reverse! nnodes))
+	  (reverse! (append nnodes funs)))
 	 ((not (isa? (car n) J2SDecl))
-	  (loop (cdr n) (cons (car n) nnodes) env))
+	  (loop (cdr n) funs (cons (car n) nnodes) env))
 	 (else
 	  (with-access::J2SDecl (car n) (id)
 	     (let ((old (find-decl id env)))
-		(if old
+		(cond
+		   ((not old)
 		    (loop (cdr n)
+		       funs
+		       (cons (car n) nnodes)
+		       (cons (car n) env)))
+		   ((or (isa? (car n) J2SDeclFun)
+			(isa? (car n) J2SDeclExtern))
+		    (loop (cdr n)
+		       (cons (decl->assign! (car n) old '() '()) funs)
+		       nnodes
+		       env))
+		   (else
+		    (loop (cdr n)
+		       funs
 		       (cons (decl->assign! (car n) old '() '()) nnodes)
-		       env)
-		    (loop (cdr n) (cons (car n) nnodes)
-		       (cons (car n) env)))))))))
+		       env)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    eq-conf-lang? ...                                                */
