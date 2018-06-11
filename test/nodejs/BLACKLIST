@@ -181,3 +181,4 @@ pummel/test-vm-memleak.js
 #* simple/test-stdout-to-file.js                                       */
 simple/test-tls-fast-writing.js
 simple/test-http-many-keep-alive-connections.js
+internet/test-dns.js

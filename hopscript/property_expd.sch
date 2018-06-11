@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Feb 17 09:28:50 2016                          */
-;*    Last change :  Sat Jun  9 14:35:24 2018 (serrano)                */
+;*    Last change :  Mon Jun 11 03:26:05 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript property expanders                                     */
@@ -493,9 +493,6 @@
 			 (js-profile-log-cache ,cache :emap #t)
 			 (js-profile-log-index idx)
 			 (js-object-inline-set! ,obj idx ,tmp)
-;* 			 (set! cmap                                    */
-;* 			    (js-invalidate-cache-method! ,tmp          */
-;* 			       (js-pcache-cmap ,cache) idx))           */
 			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'cmap)
@@ -504,24 +501,11 @@
 			 (js-profile-log-index idx)
 			 (vector-set! elements idx ,tmp)
 			 ,tmp))
-;* 		    ((eq? cs 'pmap)                                    */
-;* 		     `(let ((idx (js-pcache-index ,cache))             */
-;* 			    (%vec elements))                           */
-;* 			 (js-profile-log-cache ,cache :pmap #t)        */
-;* 			 (js-profile-log-index idx)                    */
-;* 			 (if (<fx idx (vector-length %vec))            */
-;*                              (vector-set! %vec idx ,tmp)            */
-;*                              (js-object-ctor-add! ,obj idx ,tmp))   */
-;* 			 (set! cmap (js-pcache-cmap ,cache))           */
-;* 			 ,tmp))                                        */
 		    ((eq? cs 'pmap)
 		     `(let ((idx (js-pcache-index ,cache)))
 			 (js-profile-log-cache ,cache :pmap #t)
 			 (js-profile-log-index idx)
 			 (js-object-push! ,obj idx ,tmp)
-;* 			 (set! cmap                                    */
-;* 			    (js-invalidate-cache-method! ,tmp          */
-;* 			       (js-pcache-cmap ,cache) idx))           */
 			 (set! cmap (js-pcache-cmap ,cache))
 			 ,tmp))
 		    ((eq? cs 'amap)
@@ -691,7 +675,7 @@
 			((cmap amap imap emap)
 			 (loop (cdr cs)))
 			((pmap)
-			 `(if (eq? %cmap (js-pcache-pmap ,ccache))
+			 `(if (and #f (eq? %cmap (js-pcache-pmap ,ccache)))
 			      (begin
 				 (js-profile-log-cache ,ccache :pmap #t)
 				 ((js-pcache-method ,ccache) ,obj ,@args))
@@ -704,7 +688,8 @@
 			    (else
 			     `(with-access::JsConstructMap %cmap (vlen vcache vtable)
 				 (let ((vidx (js-pcache-vindex ,ccache)))
-				    (if (and (<fx vidx vlen)
+				    (if (and #f
+					     (<fx vidx vlen)
 					     (procedure? (vector-ref vtable vidx)))
 					(begin
 					   (js-profile-log-cache ,ccache

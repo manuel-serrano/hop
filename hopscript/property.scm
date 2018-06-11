@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jun 10 13:13:37 2018 (serrano)                */
+;*    Last change :  Sun Jun 10 16:56:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -592,10 +592,8 @@
 ;*    Used when adding a direct property to an object.                 */
 ;*---------------------------------------------------------------------*/
 (define (js-pcache-next-direct! pcache::JsPropertyCache o::JsObject nextmap i)
-   [assert (i) (>=fx i 0)]
    (with-access::JsObject o ((omap cmap))
       (unless (eq? omap (js-not-a-cmap))
-	 [assert (pcache) (or (eq? omap nextmap) (= (cmap-size nextmap) (+ 1 (cmap-size omap))))]
 	 (with-access::JsPropertyCache pcache (imap pmap amap cmap emap index owner)
 	    (if (js-object-inline-next-element? o i)
 		(begin
@@ -1853,21 +1851,25 @@
 		      (lambda (nextmap)
 			 ;; follow the next map
 			 (with-access::JsConstructMap nextmap (ctor methods)
-			    (if (isa? v JsFunction)
+			    (cond
+			       ((isa? v JsFunction)
+				;; validate cache method and don't cache
+				(unless (eq? v (vector-ref methods index))
+				   ;; invalidate cache method and cache
+				   (vector-set! methods index #f)
+				   (js-invalidate-pcaches-pmap! %this name)
+				   (reset-cmap-vtable! nextmap))
 				(begin
-				   ;; validate cache method and don't cache
-				   (unless (eq? v (vector-ref methods index))
+				   (when (isa? (vector-ref methods index) JsFunction)
 				      ;; invalidate cache method and cache
 				      (vector-set! methods index #f)
-				      (js-invalidate-pcaches-pmap! %this name))
-				   (begin
-				      (when (isa? (vector-ref methods index) JsFunction)
-					 ;; invalidate cache method and cache
-					 (vector-set! methods index #f)
-					 (js-invalidate-pcaches-pmap! %this name))
-				      (when cache
-					 (js-validate-pcaches-pmap! %this)
-					 (js-pcache-next-direct! cache o nextmap index)))))
+				      (js-invalidate-pcaches-pmap! %this name)
+				      (reset-cmap-vtable! nextmap))
+				   (when cache
+				      (js-validate-pcaches-pmap! %this)
+				      (js-pcache-next-direct! cache o nextmap index))))
+				(cache
+				 (js-pcache-next-direct! cache o nextmap index)))
 			    (js-object-push/ctor! o index v ctor)
 			    (set! cmap nextmap)
 			    v)))
