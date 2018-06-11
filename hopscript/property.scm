@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Sun Jun 10 16:56:09 2018 (serrano)                */
+;*    Last change :  Mon Jun 11 14:40:09 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -48,7 +48,6 @@
 	   (%define-pcache ::int)
 	   (js-make-pcache ::int ::obj)
 	   (js-invalidate-pcaches-pmap! ::JsGlobalObject ::obj)
-	   (js-invalidate-cache-method! ::obj ::JsConstructMap ::long)
 	   (inline js-pcache-ref ::obj ::int)
 	   (inline js-pcache-imap ::JsPropertyCache)
 	   (inline js-pcache-emap ::JsPropertyCache)
@@ -474,20 +473,19 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    js-invalidate-cache-method! ...                                  */
+;*    -------------------------------------------------------------    */
+;*    Method invalidation must be proppagated to all the sub hidden    */
+;*    classes (see bug nodejs/simple/test-stream2-readable-wrap.js).   */
 ;*---------------------------------------------------------------------*/
-(define (js-invalidate-cache-method! v cmap idx)
-   (if (isa? v JsFunction)
-       (with-access::JsConstructMap cmap (methods)
-	  (if (vector-ref methods idx)
-	      (begin
-		 (vector-set! methods idx #f)
-		 (reset-cmap-vtable! cmap)
-		 (duplicate::JsConstructMap cmap
-		    (vlen 0)
-		    (vtable '#())))
-	      cmap))
-       cmap))
-
+(define (js-invalidate-cache-method! cmap::JsConstructMap idx::long)
+   (with-access::JsConstructMap cmap (methods transitions)
+      (when (vector-ref methods idx)
+	 (vector-set! methods idx #f)
+	 (for-each (lambda (tr)
+		      (let ((cmap (transition-nextmap tr)))
+			 (js-invalidate-cache-method! cmap idx)))
+	    transitions))))
+   
 ;*---------------------------------------------------------------------*/
 ;*    js-pcache-ref ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -794,11 +792,11 @@
 		   (let ((v (vector-ref elements i)))
 		      (cond
 			 ((not (isa? v JsFunction))
-			  (vector-set! methods i #f))
+			  (js-invalidate-cache-method! cmap i))
 			 ((eq? (vector-ref methods i) #unspecified)
 			  (vector-set! methods i v))
 			 (else
-			  (vector-set! methods i #f)))
+			  (js-invalidate-cache-method! cmap i)))
 		      (loop (-fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1765,7 +1763,7 @@
 		    v)
 		   (else
 		    ;; invalidate cache method and cache
-		    (vector-set! methods i #f)
+		    (js-invalidate-cache-method! cmap i)
 		    (js-invalidate-pcaches-pmap! %this name)
 		    (reset-cmap-vtable! cmap)
 		    (when cache (js-pcache-update-direct! cache i o))
@@ -1773,7 +1771,7 @@
 		    v)))
 	       ((isa? (vector-ref methods i) JsFunction)
 		;; invalidate cache method and cache
-		(vector-set! methods i #f)
+		(js-invalidate-cache-method! cmap i)
 		(js-invalidate-pcaches-pmap! %this name)
 		(reset-cmap-vtable! cmap)
 		(when cache (js-pcache-update-direct! cache i o))
@@ -1851,25 +1849,25 @@
 		      (lambda (nextmap)
 			 ;; follow the next map
 			 (with-access::JsConstructMap nextmap (ctor methods)
-			    (cond
-			       ((isa? v JsFunction)
+			    (if (isa? v JsFunction)
 				;; validate cache method and don't cache
 				(unless (eq? v (vector-ref methods index))
 				   ;; invalidate cache method and cache
-				   (vector-set! methods index #f)
+				   (js-invalidate-cache-method! nextmap index)
 				   (js-invalidate-pcaches-pmap! %this name)
-				   (reset-cmap-vtable! nextmap))
+				   (reset-cmap-vtable! nextmap)
+				   (when cache
+				      (js-validate-pcaches-pmap! %this)
+				      (js-pcache-next-direct! cache o nextmap index)))
 				(begin
 				   (when (isa? (vector-ref methods index) JsFunction)
 				      ;; invalidate cache method and cache
-				      (vector-set! methods index #f)
+				      (js-invalidate-cache-method! nextmap index)
 				      (js-invalidate-pcaches-pmap! %this name)
 				      (reset-cmap-vtable! nextmap))
 				   (when cache
 				      (js-validate-pcaches-pmap! %this)
 				      (js-pcache-next-direct! cache o nextmap index))))
-				(cache
-				 (js-pcache-next-direct! cache o nextmap index)))
 			    (js-object-push/ctor! o index v ctor)
 			    (set! cmap nextmap)
 			    v)))
@@ -1880,7 +1878,7 @@
 			     ;; validate cache method and don't cache
 			     (vector-set! methods index v)
 			     (begin
-				(vector-set! methods index #f)
+				(js-invalidate-cache-method! cmap index)
 				(when cache
 				   (js-validate-pcaches-pmap! %this)
 				   (js-pcache-next-direct! cache o cmap index))))
@@ -1890,13 +1888,12 @@
 		      ;; create a new map
 		      (let ((nextmap (extend-cmap cmap name flags)))
 			 (with-access::JsConstructMap nextmap (methods ctor)
-			    (if (and (isa? v JsFunction)
-				     (or #t (not (memq name '(bind)))))
+			    (if (isa? v JsFunction)
 				;; validate cache method and don't cache
 				(vector-set! methods index v)
-				;; invalidate cate method and cache
+				;; invalidate cache method and cache
 				(begin
-				   (vector-set! methods index #f)
+				   (js-invalidate-cache-method! nextmap index)
 				   (when cache
 				      (js-validate-pcaches-pmap! %this)
 				      (js-pcache-next-direct! cache o nextmap index))))
