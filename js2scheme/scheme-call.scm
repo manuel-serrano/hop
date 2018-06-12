@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Sat Jun  9 14:52:26 2018 (serrano)                */
+;*    Last change :  Tue Jun 12 13:25:49 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -145,7 +145,7 @@
 (define-method (j2s-scheme this::J2SCall mode return conf)
 
    (define (call-profile profid call)
-      (if (config-get conf :profile-call #f)
+      (if (and (config-get conf :profile-call #f) (>fx profid 0))
 	  `(begin
 	      (js-profile-log-call %call-log ,profid)
 	      ,call)

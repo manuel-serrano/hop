@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Thu Jun  7 08:28:50 2018 (serrano)                */
+;*    Last change :  Tue Jun 12 13:19:03 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -40,7 +40,7 @@
 	    '(define %source (or (the-loading-file) "/"))
 	    '(define %resource (dirname %source))
 	     (when (config-get conf :profile-call #f)
-		`(define %call-log (make-vector ,call-size 0)))
+		`(define %call-log (make-vector ,call-size #l0)))
 	     (when (config-get conf :profile-call #f)
 		`(define %call-locations ',(call-locations this)))
 	    `(define (hopscript %this this %scope %module)
@@ -60,7 +60,7 @@
 		(define %pcache
 		   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
 		,@(if (config-get conf :profile-call #f)
-		      `((define %call-log (make-vector ,call-size 0))
+		      `((define %call-log (make-vector ,call-size #l0))
 			(define %call-locations ',(call-locations this)))
 		      '())
 		(define %worker (js-current-worker))
@@ -90,7 +90,7 @@
 	       `(define %pcache
 		   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
 		(when (config-get conf :profile-call #f)
-		   `(define %call-log (make-vector ,call-size 0)))
+		   `(define %call-log (make-vector ,call-size #l0)))
 		(when (config-get conf :profile-call #f)
 		   `(define %call-locations ',(call-locations this)))
 	       '(hopjs-standalone-set! #t)
@@ -143,7 +143,7 @@
 			(define %pcache
 			   (js-make-pcache ,pcache-size ,(config-get conf :filename)))
 			,@(if (config-get conf :profile-call #f)
-			      `((define %call-log (make-vector ,call-size 0))
+			      `((define %call-log (make-vector ,call-size #l0))
 				(define %call-locations ',(call-locations this)))
 			      '())
 			(define %worker (js-current-worker))
@@ -178,7 +178,7 @@
 	     (define %pcache
 		(js-make-pcache ,pcache-size ,(config-get conf :filename)))
 	     ,@(if (config-get conf :profile-call #f)
-		   `((define %call-log (make-vector ,call-size 0))
+		   `((define %call-log (make-vector ,call-size #l0))
 		     (define %call-locations ',(call-locations this)))
 		   '())
 	     (hop-sofile-compile-policy-set! 'static)

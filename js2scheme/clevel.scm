@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Sun Jun  3 15:31:04 2018 (serrano)                */
+;*    Last change :  Tue Jun 12 12:17:08 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -105,7 +105,7 @@
 		      (let ((verb (make-cell 0))
 			    (logtable (get 'caches (vector-ref srcs i))))
 			 (profile-clevel this logtable 'get verb conf)
-			 (cache-verb cons "cspecs " (cell-ref verb)))
+			 (cache-verb conf "cspecs " (cell-ref verb)))
 		      (loop (-fx i 1))))))))
    this)
 
@@ -182,7 +182,8 @@
 	       :object-return (lambda (o)
 				 (reverse! (cell-ref o)))
 	       :parse-error (lambda (msg fname loc)
-			       (error "fprofile" "Wrong JSON file" msg)))))))
+			       (error/location "fprofile" "Wrong JSON file" msg
+				  fname loc)))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    propinfo ...                                                     */

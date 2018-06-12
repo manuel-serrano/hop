@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Thu Jun  7 08:04:16 2018 (serrano)                */
+;*    Last change :  Tue Jun 12 11:49:56 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -21,6 +21,8 @@
 ;*---------------------------------------------------------------------*/
 (module __js2scheme_inline
 
+   (library web)
+   
    (include "ast.sch")
    
    (import __js2scheme_ast
@@ -64,6 +66,8 @@
 ;*    inline-default-factor ...                                        */
 ;*---------------------------------------------------------------------*/
 (define inline-global-expansion 3)
+(define inline-max-function-size 60)
+(define inline-min-call-occurrence 10000)
 
 ;*---------------------------------------------------------------------*/
 ;*    dev                                                              */
@@ -100,44 +104,81 @@
 ;*    j2s-inline! ...                                                  */
 ;*---------------------------------------------------------------------*/
 (define (j2s-inline! this args)
-   (if (isa? this J2SProgram)
-       (with-access::J2SProgram this (decls nodes call-size)
-	  ;; count and mark all the calls
-	  (let ((count (make-cell 0)))
-	     (count-call this count)
-	     (set! call-size (cell-ref count)))
-	  ;; mark all the function sizes
-	  (let ((size (node-size this))
-		(pms (ptable (append-map collect-proto-methods* nodes))))
-	     (when (string-contains (or (getenv "HOPTRACE") "") "j2s:inline")
-		(with-output-to-port (current-error-port)
-		   (lambda ()
-		      (print "\n      proto methods:")
-		      (hashtable-for-each pms
-			 (lambda (k b)
-			    (print "       " k ": ")
-			    (for-each (lambda (p)
-					 (with-access::J2SAssig (protoinfo-assig p) (loc)
-					    (print "         " (cadr loc)
-					       ":" (caddr loc) " size="
-					       (node-size (protoinfo-method p)))))
-			       b))))))
-	     (let loop ((limit 10))
-		(inline! this limit '() pms this args)
-		(let ((nsize (node-size this)))
-		   (when (and (<fx limit 60)
-			      (< nsize (* size inline-global-expansion)))
-		      (loop (+fx limit 5)))))
-	     ;; cleanup use count
-	     (for-each reset-use-count decls)
-	     (for-each reset-use-count nodes)
-	     (for-each (lambda (n) (use-count n +1 #f)) decls)
-	     (for-each (lambda (n) (use-count n +1 #f)) nodes)
-	     (set! decls (filter used-decl? decls))
-	     ;; cleanup metainl
-	     (unmetainl! this)
-	     this))
-       this))
+   (cond
+      ((not (isa? this J2SProgram))
+       this)
+      ((config-get args :profile-log #f)
+       =>
+       (lambda (logfile)
+	  (j2s-inline-profile this args logfile)))
+      (else
+       (j2s-inline-noprofile this args))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-inline-profile ...                                           */
+;*---------------------------------------------------------------------*/
+(define (j2s-inline-profile this::J2SProgram conf logfile)
+   (let ((log (call-profile-log this logfile conf)))
+      (if log
+	  ;; link the call nodes to their parent
+	  (let* ((calls (call-link* this this))
+		 (size (node-size this))
+		 (fuel (- (* size inline-global-expansion) size)))
+	     (let loop ((i 0)
+			(fuel (- (* size inline-global-expansion) size)))
+		(if (or (=fx i (vector-length log)) (<= fuel 0))
+		    this
+		    (let ((clog (vector-ref log i)))
+		       (if (>= (cdr clog) inline-min-call-occurrence)
+			   (let ((call (assq (car clog) calls)))
+			      (if (pair? call)
+				  (let ((f (inline-profile! (cdr call)
+					      this conf)))
+				     (loop (+fx i 1) (- fuel f)))
+				  (loop (+fx i 1) fuel)))
+			   this)))))
+	  (j2s-inline-noprofile this conf))))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-inline-noprofile ...                                         */
+;*---------------------------------------------------------------------*/
+(define (j2s-inline-noprofile this::J2SProgram conf)
+   (with-access::J2SProgram this (decls nodes call-size)
+      ;; count and mark all the calls
+      (let ((count (make-cell 0)))
+	 (count-call this count)
+	 (set! call-size (cell-ref count)))
+      ;; mark all the function sizes
+      (let ((size (node-size this))
+	    (pms (ptable (append-map collect-proto-methods* nodes))))
+	 (when (string-contains (or (getenv "HOPTRACE") "") "j2s:inline")
+	    (with-output-to-port (current-error-port)
+	       (lambda ()
+		  (print "\n      proto methods:")
+		  (hashtable-for-each pms
+		     (lambda (k b)
+			(print "       " k ": ")
+			(for-each (lambda (p)
+				     (with-access::J2SAssig (protoinfo-assig p) (loc)
+					(print "         " (cadr loc)
+					   ":" (caddr loc) " size="
+					   (node-size (protoinfo-method p)))))
+			   b))))))
+	 (let loop ((limit 10))
+	    (inline! this limit '() pms this conf)
+	    (let ((nsize (node-size this)))
+	       (when (and (<fx limit inline-max-function-size)
+			  (< nsize (* size inline-global-expansion)))
+		  (loop (+fx limit 5)))))
+	 ;; cleanup use count
+	 (for-each reset-use-count decls)
+	 (for-each reset-use-count nodes)
+	 (for-each (lambda (n) (use-count n +1 #f)) decls)
+	 (for-each (lambda (n) (use-count n +1 #f)) nodes)
+	 (set! decls (filter used-decl? decls))
+	 ;; cleanup metainl
+	 (unmetainl! this)
+	 this)))
 
 ;*---------------------------------------------------------------------*/
 ;*    used-decl? ...                                                   */
@@ -961,3 +1002,160 @@
 	 (cell-set! count (+fx id 1))
 	 (call-default-walker)
 	 (set! profid id))))
+
+;*---------------------------------------------------------------------*/
+;*    call-link* ::J2SNode ...                                         */
+;*    -------------------------------------------------------------    */
+;*    Link the call nodes to their parents and return the list of      */
+;*    all calls.                                                       */
+;*---------------------------------------------------------------------*/
+(define-generic (call-link*::pair-nil this parent::J2SNode)
+   (if (pair? this)
+       (append-map (lambda (n) (call-link* n parent)) this)
+       '()))
+
+;*---------------------------------------------------------------------*/
+;*    call-link* ::J2SNode ...                                         */
+;*---------------------------------------------------------------------*/
+(define-method (call-link* this::J2SNode parent::J2SNode)
+   (let ((fields (class-all-fields (object-class this))))
+      (let loop ((i (-fx (vector-length fields) 1))
+		 (c '()))
+	 (if (=fx i -1)
+	     c
+	     (let* ((f (vector-ref fields i))
+		    (info (class-field-info f)))
+		(if (and (pair? info) (member "ast" info))
+		    (loop (-fx i 1)
+		       (append
+			  (call-link* ((class-field-accessor f) this) parent)
+			  c))
+		    (loop (-fx i 1)
+		       c)))))))
+
+;*---------------------------------------------------------------------*/
+;*    call-link* ::J2SCall ...                                         */
+;*---------------------------------------------------------------------*/
+(define-walk-method (call-link* this::J2SCall parent::J2SNode)
+   (with-access::J2SCall this (fun thisarg args %info loc)
+      (set! %info parent)
+      (let ((next (append
+		     (call-link* fun this)
+		     (call-link* thisarg this)
+		     (call-link* args this))))
+	 (if loc
+	     (cons (cons (caddr loc) this) next)
+	     next))))
+
+;*---------------------------------------------------------------------*/
+;*    inline-profile! ...                                              */
+;*---------------------------------------------------------------------*/
+(define (inline-profile! this::J2SCall prgm conf)
+   (with-access::J2SCall this (%info)
+      (let* ((parent %info)
+	     (sz (node-size this))
+	     (new (inline! this inline-max-function-size '() '() prgm conf)))
+	 (if (eq? new this)
+	     0
+	     (begin
+		(update-parent! parent this new)
+		(-fx (node-size new) sz))))))
+
+;*---------------------------------------------------------------------*/
+;*    update-parent! ...                                               */
+;*---------------------------------------------------------------------*/
+(define (update-parent! this::J2SNode old new)
+   
+   (define (update-pair! f old new)
+      (let loop ((f f))
+	 (cond
+	    ((null? f)
+	     #f)
+	    ((eq? (car f) old)
+	     (set-car! f new)
+	     f)
+	    (else
+	     (loop f)))))
+      
+   (let ((fields (class-all-fields (object-class this))))
+      (let loop ((i (-fx (vector-length fields) 1)))
+	 (when (>=fx i 0)
+	    (let* ((f (vector-ref fields i))
+		   (info (class-field-info f)))
+	       (if (and (pair? info) (member "ast" info))
+		   (let ((f ((class-field-accessor f) this)))
+		      (cond
+			 ((eq? f old)
+			  ((class-field-mutator f) this new))
+			 ((update-pair! f old new)
+			  =>
+			  (lambda (newp)
+			     ((class-field-mutator f) this newp)))
+			 (else
+			  (loop (-fx i 1)))))))))))
+
+;*---------------------------------------------------------------------*/
+;*    call-profile-log ...                                             */
+;*---------------------------------------------------------------------*/
+(define (call-profile-log this::J2SProgram logfile conf)
+   
+   (define (get key lst)
+      (let ((c (assq key lst)))
+	 (when (pair? c) (cdr c))))
+   
+   (let* ((log (load-profile-log logfile))
+	  (srcs (get 'calls log))
+	  (file (config-get conf :filename)))
+      (when (vector? srcs)
+	 (when (>=fx (config-get conf :verbose 0) 3)
+	    (with-output-to-port (current-error-port)
+	       (lambda ()
+		  (display "\n      ")
+		  (display* "loading log file "
+		     (string-append "\"" logfile "\"")))))
+	 (let loop ((i (-fx (vector-length srcs) 1)))
+	    (when (>=fx i 0)
+	       (let ((filename (get 'filename (vector-ref srcs i))))
+		  (if (string=? file filename)
+		      (let ((verb (make-cell 0))
+			    (cvec (get 'counts (vector-ref srcs i)))
+			    (lvec (get 'locations (vector-ref srcs i))))
+			 (sort (lambda (x y)
+				  (>= (cdr x) (cdr y)))
+			    (vector-map cons lvec cvec)))
+		      (loop (-fx i 1)))))))))
+
+;*---------------------------------------------------------------------*/
+;*    load-profile-log ...                                             */
+;*---------------------------------------------------------------------*/
+(define (load-profile-log logfile)
+   (call-with-input-file logfile
+      (lambda (ip)
+	 (let ((fprofile #f))
+	    (json-parse ip
+	       :array-alloc (lambda () (make-cell '()))
+	       :array-set (lambda (a i val)
+			     (cell-set! a (cons val (cell-ref a))))
+	       :array-return (lambda (a i)
+				(list->vector (reverse! (cell-ref a))))
+	       :object-alloc (lambda ()
+				(make-cell '()))
+	       :object-set (lambda (o p val)
+			      (cond
+				 ((string=? p "calls")
+				  (unless fprofile
+				     (error "fprofile" "Wrong log format" logfile))
+				  (cell-set! o
+				     (cons (cons 'calls val)
+					(cell-ref o))))
+				 ((string=? p "format")
+				  (set! fprofile (equal? val "fprofile")))
+				 (else
+				  (cell-set! o
+				     (cons (cons (string->symbol p) val)
+					(cell-ref o))))))
+	       :object-return (lambda (o)
+				 (reverse! (cell-ref o)))
+	       :parse-error (lambda (msg fname loc)
+			       (error/location "fprofile" "Wrong JSON file" msg
+				  fname loc)))))))

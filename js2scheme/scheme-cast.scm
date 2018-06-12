@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Sun Jun  3 06:09:22 2018 (serrano)                */
+;*    Last change :  Tue Jun 12 13:11:38 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -391,6 +391,12 @@
 	  (loop expr return))
 	 ((js-int32-tointeger ?expr)
 	  `(int32->flonum ,expr))
+	 ((llong->flonum ?-)
+	  v)
+	 ((begin (and ?prof (js-profile-log-call . ?-)) ?call)
+	  `(begin ,prof ,(loop call return)))
+	 (((or bit-orjs bit-andjs bit-xorjs bitnojs) . ?rest)
+	  `(js-toflonum ,v))
 	 (else
 	  (tprint "TODO js->real " v)
 	  (if numberp

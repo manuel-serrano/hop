@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Thu Jun  7 08:42:11 2018 (serrano)                */
+;*    Last change :  Tue Jun 12 12:14:20 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -75,7 +75,6 @@
    '(getCacheMiss
      putCacheMiss
      callCacheMissUncachable))
-
 
 ;*---------------------------------------------------------------------*/
 ;*    js-profile-init ...                                              */
@@ -185,7 +184,7 @@
 ;*    js-profile-log-call ...                                          */
 ;*---------------------------------------------------------------------*/
 (define-inline (js-profile-log-call table idx)
-   (vector-set! table idx (+fx (vector-ref table idx) 1)))
+   (vector-set! table idx (+llong (vector-ref table idx) #l1)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *misses* ...                                                     */
@@ -1110,13 +1109,19 @@
    (when (string-contains trc "format:fprofile")
       (with-output-to-port *profile-port*
 	 (lambda ()
-	    (print "\"calls\": {")
-	    (for-each (lambda (t)
-			 (print "  { \"filename\": \""
-			    (vector-ref t 0) "\",")
-			 (print "    \"count\": "
-			    (format "[ ~(, ) ]," (vector->list (vector-ref t 1))))
-			 (print "    \"locations\": "
-			    (format "[ ~(, ) ] }," (vector->list (vector-ref t 2)))))
-	       *profile-call-tables*)
-	    (print "} },")))))
+	    (print "\"calls\": [")
+	    (let ((first #f))
+	       (for-each (lambda (t)
+			    (when first
+			       (set! first #f)
+			       (print ","))
+			    (print "  { \"filename\": \""
+			       (vector-ref t 0) "\",")
+			    (print "    \"counts\": "
+			       (format "[ ~(, ) ],"
+				  (vector->list (vector-ref t 1))))
+			    (display* "    \"locations\": "
+			       (format "[ ~(, ) ] }"
+				  (vector->list (vector-ref t 2)))))
+		  *profile-call-tables*))
+	    (print "],")))))
