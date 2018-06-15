@@ -1,8 +1,9 @@
 
-Building the docker image
-=========================
+Building and exporting the docker image
+=======================================
 
   (cd docker; docker build -t hop .)
+  docker export -o hop-docker-`date '+%d%b%y'`-git rev-parse --short HEAD`.tgz
 
 
 Importing a docker image

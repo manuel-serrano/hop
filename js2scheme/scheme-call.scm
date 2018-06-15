@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Tue Jun 12 13:25:49 2018 (serrano)                */
+;*    Last change :  Wed Jun 13 12:33:21 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -145,11 +145,16 @@
 (define-method (j2s-scheme this::J2SCall mode return conf)
 
    (define (call-profile profid call)
-      (if (and (config-get conf :profile-call #f) (>fx profid 0))
+      (if (and (config-get conf :profile-call #f) (>=fx profid 0))
 	  `(begin
 	      (js-profile-log-call %call-log ,profid)
 	      ,call)
 	  call))
+
+   (define (funcall-profile profid fun call)
+      `(begin
+	  (js-profile-log-funcall %call-log ,profid ,fun %source)
+	  ,call))
    
    (define (array-push obj arg)
       (let ((scmobj (j2s-scheme obj mode return conf))
@@ -496,7 +501,7 @@ ft		`(,f ,@%gen
 	     (call (if (>=fx len 11)
 		       'js-calln
 		       (string->symbol (format "js-call~a" len)))))
-	 (with-access::J2SCall this (loc cache)
+	 (with-access::J2SCall this (loc cache profid)
 	    (cond
 	       ((> (bigloo-debug) 0)
 		`(,(symbol-append call '/debug)
@@ -505,6 +510,14 @@ ft		`(,f ,@%gen
 		  ,(j2s-scheme fun mode return conf)
 		  ,@self
 		  ,@(j2s-scheme args mode return conf)))
+	       ((and (config-get conf :profile-call #f) (>=fx profid 0))
+		(let ((f (gensym '%fun)))
+		   `(let ((,f ,(j2s-scheme fun mode return conf)))
+		       ,(funcall-profile profid f
+			   `(,call ,j2s-unresolved-call-workspace
+			       ,f
+			       ,@self
+			       ,@(j2s-scheme args mode return conf))))))
 	       (cache
 		`(js-call/cache
 		    ,j2s-unresolved-call-workspace
@@ -542,7 +555,10 @@ ft		`(,f ,@%gen
 	 (epairify loc
 	    (cond
 	       ((isa? fun J2SAccess)
-		(call-method cache cspecs fun args))
+		(if (and (config-get conf :profile-call #f) (>fx profid 0))
+		    (call-unknown-function fun
+		       (j2s-scheme thisarg mode return conf) args)
+		    (call-method cache cspecs fun args)))
 	       ((isa? fun J2SParen)
 		(with-access::J2SParen fun (expr)
 		   (loop expr)))

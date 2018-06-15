@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Tue Jun 12 12:14:20 2018 (serrano)                */
+;*    Last change :  Wed Jun 13 12:32:20 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -37,6 +37,7 @@
 	   (js-profile-log-method ::symbol)
 
 	   (inline js-profile-log-call ::vector ::long)
+	   (js-profile-log-funcall ::vector ::long ::obj ::obj)
 	   
 	   (log-cache-miss!)
 	   (log-pmap-invalidation! ::obj)
@@ -185,6 +186,22 @@
 ;*---------------------------------------------------------------------*/
 (define-inline (js-profile-log-call table idx)
    (vector-set! table idx (+llong (vector-ref table idx) #l1)))
+
+;*---------------------------------------------------------------------*/
+;*    js-profile-log-funcall ...                                       */
+;*---------------------------------------------------------------------*/
+(define (js-profile-log-funcall table idx fun source)
+   (when (isa? fun JsFunction)
+      (with-access::JsFunction fun (src)
+	 (when (and (pair? src) (string=? (cadr (car src)) source))
+	    (let* ((id (caddr (car src)))
+		   (bucket (vector-ref table idx)))
+	       (if (pair? bucket)
+		   (let ((c (assq id bucket)))
+		      (if (pair? c)
+			  (set-cdr! c (+llong (cdr c) #l1))
+			  (vector-set! table idx (cons (cons id #l1) bucket))))
+		   (vector-set! table idx (list (cons id #l1)))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    *misses* ...                                                     */
@@ -1106,6 +1123,22 @@
 ;*    profile-calls ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (profile-calls trc)
+   
+   (define (print-call-counts counts)
+      (print
+	 (format "[ ~(, ) ],"
+	    (map (lambda (n)
+		    (if (number? n)
+			;; direct call
+			n
+			;; unknown call
+			(format "[ ~(, ) ]"
+			   (map (lambda (n)
+				   (format "{ \"loc\": ~a, \"cnt\": ~a }"
+				      (car n) (cdr n)))
+			      n))))
+	       counts))))
+   
    (when (string-contains trc "format:fprofile")
       (with-output-to-port *profile-port*
 	 (lambda ()
@@ -1117,9 +1150,8 @@
 			       (print ","))
 			    (print "  { \"filename\": \""
 			       (vector-ref t 0) "\",")
-			    (print "    \"counts\": "
-			       (format "[ ~(, ) ],"
-				  (vector->list (vector-ref t 1))))
+			    (display "    \"counts\": ")
+			    (print-call-counts (vector->list (vector-ref t 1)))
 			    (display* "    \"locations\": "
 			       (format "[ ~(, ) ] }"
 				  (vector->list (vector-ref t 2)))))

@@ -4,7 +4,7 @@
 #*    -------------------------------------------------------------    */
 #*    Author      :  Manuel Serrano                                    */
 #*    Creation    :  Fri May  4 07:52:08 2018                          */
-#*    Last change :  Fri May  4 10:07:16 2018 (serrano)                */
+#*    Last change :  Tue Jun 12 23:36:20 2018 (serrano)                */
 #*    Copyright   :  2018 Manuel Serrano                               */
 #*    -------------------------------------------------------------    */
 #*    Run Hop thru a docker container                                  */
@@ -87,6 +87,10 @@ sigint() {
 }
 
 trap sigint SIGINT SIGTERM
+
+if [ "$HOST " = " " ]; then
+  HOST=`hostname`
+fi
 
 docker run --tty --rm=true --name hop \
   -h $HOST \

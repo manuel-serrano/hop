@@ -1,1 +1,2 @@
 (add-user! "anonymous" :directories '* :services '*)
+(print "hello gg")

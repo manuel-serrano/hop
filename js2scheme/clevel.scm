@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Apr  2 19:46:13 2017                          */
-;*    Last change :  Tue Jun 12 12:17:08 2018 (serrano)                */
+;*    Last change :  Wed Jun 13 14:57:34 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Annotate property accesses with cache level information          */
@@ -56,7 +56,6 @@
 	 ((config-get args :profile-log #f)
 	  =>
 	  (lambda (log)
-	     (cache-profile-log this log args)
 	     (with-access::J2SProgram this (nodes headers decls)
 		(let ((ptable (create-hashtable)))
 		   (propcollect* decls ptable)

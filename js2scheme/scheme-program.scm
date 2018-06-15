@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Tue Jun 12 13:19:03 2018 (serrano)                */
+;*    Last change :  Wed Jun 13 13:18:37 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -303,7 +303,7 @@
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-call-locations this::J2SCall vec)
    (with-access::J2SCall this (profid loc)
-      (when (>fx profid 0)
+      (when (>=fx profid 0)
 	 (match-case loc
 	    ((at ?- ?point)
 	     (vector-set! vec profid point)))))
