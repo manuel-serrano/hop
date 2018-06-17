@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Tue Jun 12 15:03:03 2018 (serrano)                */
+;*    Last change :  Fri Jun 15 14:22:39 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -67,7 +67,7 @@
 ;*---------------------------------------------------------------------*/
 (define inline-global-expansion 3)
 (define inline-max-function-size 60)
-(define inline-min-call-occurrence 10000)
+(define inline-min-call-occurrence 100000)
 
 ;*---------------------------------------------------------------------*/
 ;*    dev                                                              */
@@ -122,25 +122,42 @@
 ;*---------------------------------------------------------------------*/
 (define (j2s-inline-profile prgm::J2SProgram conf logfile)
 
-   (define (find-targets candidates funs)
+   (define (find-protoinfo loc pms::struct)
+      (bind-exit (return)
+	 (hashtable-for-each pms
+	    (lambda (k b)
+	       (for-each (lambda (pi)
+			    (with-access::J2SFun (protoinfo-method pi) ((mloc loc))
+			       (match-case mloc
+				  ((at ?- ?l)
+				   (when (eq? l loc) (return pi))))))
+		  b)))))
+   
+   (define (find-targets candidates funs pms::struct)
       (let ((tgts (vector-map (lambda (v)
 				 (when (> (car v) inline-min-call-occurrence)
-				    (let* ((loc (cdr v))
-					   (tgt (assq loc funs)))
-				       (when tgt
-					  (cons (car v) (cdr tgt))))))
+				    (let ((loc (cdr v)))
+				       (cond
+					  ((assq loc funs)
+					   =>
+					   (lambda (tgt)
+					      (cons (car v) (cdr tgt))))
+					  ((find-protoinfo loc pms)
+					   =>
+					   (lambda (pi)
+					      (cons (car v) pi)))))))
 		     candidates)))
 	 (sort (lambda (x y) (> (car x) (car y)))
 	    (filter (lambda (x) x) (vector->list tgts)))))
 
-   (define (call-targets this::J2SCall clog funs)
-      (if (not (vector? (cddr clog)))
-	  (>= (cadr clog) inline-min-call-occurrence)
-	  (map cdr (find-targets (cddr clog) funs))))
+   (define (call-targets this::J2SCall clog funs pms::struct)
+      (if (vector? (cddr clog))
+	  (map cdr (find-targets (cddr clog) funs pms))
+	  (>= (cadr clog) inline-min-call-occurrence)))
    
    (define (inline-profile!::long this::J2SCall clog fuel owner pms funs)
-      (with-access::J2SCall this (%info)
-	 (let ((targets (call-targets this clog funs)))
+      (with-access::J2SCall this (%info loc)
+	 (let ((targets (call-targets this clog funs pms)))
 	    (if targets
 		(let ((parent %info)
 		      (sz (node-size this))
@@ -149,14 +166,12 @@
 		   (if (eq? new this)
 		       (values 0 '())
 		       (begin
-			  (tprint "NEW=" (j2s->list new))
-			  (tprint "PARENT=" (j2s->list parent))
 			  (update-parent! parent this new)
 			  (values (-fx (node-size new) sz)
 			     (collect-calls-and-link* new parent owner)))))
 		(values 0 '())))))
    
-   (define (inline-calls! nl::struct clog fuel pms funs)
+   (define (inline-calls! nl::struct clog fuel pms::struct funs)
       (let loop ((calls (nodelink-nodes nl))
 		 (sz 0)
 		 (nc '()))
@@ -179,9 +194,10 @@
 		(let loop ((i 0)
 			   (fuel (- (* size inline-global-expansion) size)))
 		   (if (or (=fx i (vector-length log)) (<= fuel 0))
-		       prgm
+		       (j2s-inline-profile-cleanup! prgm conf)
 		       (let ((clog (vector-ref log i)))
-			  (if (>= (cadr clog) inline-min-call-occurrence)
+			  (if (and (>=fx (car clog) 0)
+				   (>= (cadr clog) inline-min-call-occurrence))
 			      (let ((nl (assq (car clog) calls)))
 				 (if (pair? nl)
 				     (multiple-value-bind (f c)
@@ -222,16 +238,23 @@
 	    (let ((nsize (node-size this)))
 	       (when (and (<fx limit inline-max-function-size)
 			  (< nsize (* size inline-global-expansion)))
-		  (loop (+fx limit 5)))))
-	 ;; cleanup use count
-	 (for-each reset-use-count decls)
-	 (for-each reset-use-count nodes)
-	 (for-each (lambda (n) (use-count n +1 #f)) decls)
-	 (for-each (lambda (n) (use-count n +1 #f)) nodes)
-	 (set! decls (filter used-decl? decls))
-	 ;; cleanup metainl
-	 (unmetainl! this)
-	 this)))
+		  (loop (+fx limit 5))))))
+      (j2s-inline-profile-cleanup! this conf)))
+
+;*---------------------------------------------------------------------*/
+;*    j2s-inline-profile-cleanup! ...                                  */
+;*---------------------------------------------------------------------*/
+(define (j2s-inline-profile-cleanup! this::J2SProgram conf)
+   (with-access::J2SProgram this (decls nodes)
+      ;; cleanup use count
+      (for-each reset-use-count decls)
+      (for-each reset-use-count nodes)
+      (for-each (lambda (n) (use-count n +1 #f)) decls)
+      (for-each (lambda (n) (use-count n +1 #f)) nodes)
+      (set! decls (filter used-decl? decls))
+      ;; cleanup metainl
+      (unmetainl! this)
+      this))
 
 ;*---------------------------------------------------------------------*/
 ;*    used-decl? ...                                                   */
@@ -268,6 +291,15 @@
    (with-access::J2SFun fun (vararg)
       (not vararg)))
 
+;*---------------------------------------------------------------------*/
+;*    function-leaf? ...                                               */
+;*---------------------------------------------------------------------*/
+(define (function-leaf? fun::J2SFun)
+   (with-access::J2SFun fun (body)
+      (let ((cell (make-cell #t)))
+	 (node-leaf body cell)
+	 (cell-ref cell))))
+			       
 ;*---------------------------------------------------------------------*/
 ;*    function-size ...                                                */
 ;*---------------------------------------------------------------------*/
@@ -436,6 +468,7 @@
 	       (let ((val (j2sdeclinit-val-fun decl)))
 		  (when (and (=fx (function-arity val) arity)
 			     (function-fxarg? val)
+			     (function-leaf? val)
 			     (not (memq val stack))
 			     (<=fx (function-size val) limit)
 			     (check-id id))
@@ -449,6 +482,7 @@
 				      (let ((f (protoinfo-method m)))
 					 (and (=fx (function-arity f) arity)
 					      (function-fxarg? f)
+					      (function-leaf? f)
 					      (not (memq f stack)))))
 			      (or (hashtable-get pmethods val) '()))))
 		  (when (<fx (apply +
@@ -459,24 +493,22 @@
 			   limit)
 		     mets))))))
 
-   (define (call-targets this::J2SCall)
-      (with-access::J2SCall this (%info)
-	 (when (and (pair? %info) (eq? (car %info) 'inline-targets))
-	    (cdr %info))))
-   
    (define (inline-access-call this::J2SCall fun::J2SAccess args loc)
       (let ((mets (find-inline-methods this fun (length args))))
 	 (when (pair? mets)
-	    (let* ((vals (map protoinfo-method mets))
+	    (let* ((mets (if (pair? targets)
+			     (filter (lambda (t) (memq t mets)) targets)
+			     mets))
+		   (vals (map protoinfo-method mets))
 		   (sz (apply + (map function-size vals))))
 	       (inline-verb loc fun (length mets) sz limit conf)
 	       (when (pair? stack) 
 		  (invalidate-function-size! (car stack)))
 	       (let ((e (inline-method-call fun mets args loc
-			   targets limit stack pmethods prgm conf)))
+			   '() limit stack pmethods prgm conf)))
 		  (inline-stmt->expr loc
-		     (inline! e targets
-			limit (append vals stack) pmethods prgm conf)))))))
+		     (inline! e '()
+			0 (append vals stack) pmethods prgm conf)))))))
    
    (define (inline-ref-call this::J2SCall fun::J2SRef args loc)
       (cond
@@ -497,11 +529,18 @@
 		targets limit stack pmethods prgm conf)))
 	 (else
 	  #f)))
+
+   (define (inline-expr-call this fun args loc)
+      (let ((decl (J2SDeclInit '(ref) (gensym '%fun) fun)))
+	 (inline-stmt->expr loc
+	    (J2SLetBlock (list decl)
+	       (inline-ref-call this (J2SRef decl) args loc)))))
    
    (with-access::J2SCall this (fun args type loc)
       (cond
 	 ((isa? fun J2SAccess) (or (inline-access-call this fun args loc) this))
 	 ((isa? fun J2SRef) (or (inline-ref-call this fun args loc) this))
+	 ((pair? targets) (or (inline-expr-call this fun args loc) this))
 	 (else this))))
 
 ;*---------------------------------------------------------------------*/
@@ -561,7 +600,7 @@
    (define (get-svar callee)
       (if (protoinfo-svar callee)
 	  (protoinfo-svar callee)
-	  (let ((fun (gensym '%fun)))
+	  (let ((fun (gensym '%met)))
 	     (protoinfo-svar-set! callee fun)
 	     (with-access::J2SProgram prgm (globals)
 		(set! globals (cons `(define ,fun #unspecified) globals))
@@ -989,6 +1028,21 @@
    (cell-set! cnt (+fx 1 (cell-ref cnt))))
 
 ;*---------------------------------------------------------------------*/
+;*    node-leaf ::J2SNode ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-leaf node::J2SNode cell)
+   (when (cell-ref cell)
+      (call-default-walker))
+   (cell-ref cell))
+
+;*---------------------------------------------------------------------*/
+;*    node-leaf ::J2SCall ...                                          */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-leaf node::J2SCall cell)
+   (cell-set! cell #f)
+   #f)
+
+;*---------------------------------------------------------------------*/
 ;*    unmetainl! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unmetainl! this::J2SNode)
@@ -1187,30 +1241,32 @@
    (define (update-pair! f old new)
       (let loop ((f f))
 	 (cond
-	    ((null? f)
+	    ((not (pair? f))
 	     #f)
 	    ((eq? (car f) old)
 	     (set-car! f new)
 	     f)
 	    (else
-	     (loop f)))))
+	     (loop (cdr f))))))
       
    (let ((fields (class-all-fields (object-class this))))
       (let loop ((i (-fx (vector-length fields) 1)))
-	 (when (>=fx i 0)
-	    (let* ((f (vector-ref fields i))
-		   (info (class-field-info f)))
-	       (if (and (pair? info) (member "ast" info))
-		   (let ((val ((class-field-accessor f) this)))
-		      (cond
-			 ((eq? val old)
-			  ((class-field-mutator f) this new))
-			 ((update-pair! val old new)
-			  =>
-			  (lambda (newp)
-			     ((class-field-mutator f) this newp)))
-			 (else
-			  (loop (-fx i 1)))))))))))
+	 (if (=fx i -1)
+	     (error "update-parent!" "Cannot find node" (j2s->list old))
+	     (let* ((f (vector-ref fields i))
+		    (info (class-field-info f)))
+		(if (and (pair? info) (member "ast" info))
+		    (let ((val ((class-field-accessor f) this)))
+		       (cond
+			  ((eq? val old)
+			   ((class-field-mutator f) this new))
+			  ((update-pair! val old new)
+			   =>
+			   (lambda (newp)
+			      ((class-field-mutator f) this newp)))
+			  (else
+			   (loop (-fx i 1)))))
+		    (loop (-fx i 1))))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    call-profile-log ...                                             */
@@ -1226,8 +1282,9 @@
 		 (s #l0))
 	 (if (<fx i 0)
 	     s
-	     (let* ((e (vector-ref c i)))
-		(loop (-fx i 1) (+ s (car e)))))))
+	     (let ((e (vector-ref c i)))
+		(let ((cnt (get 'cnt e)))
+		   (loop (-fx i 1) (+ s cnt)))))))
 
    (let* ((log (load-profile-log logfile))
 	  (srcs (get 'calls log))
@@ -1244,16 +1301,21 @@
 	       (let ((filename (get 'filename (vector-ref srcs i))))
 		  (if (string=? file filename)
 		      (let ((verb (make-cell 0))
-			    (cvec (get 'counts (vector-ref srcs i)))
-			    (lvec (get 'locations (vector-ref srcs i))))
+			    (cvec (get 'calls (vector-ref srcs i))))
 			 (vector-map! (lambda (c)
-					 (if (vector? c)
-					     (cons (sum-method-count c) c)
-					     (cons c '())))
+					 (let ((cnt (get 'cnt c)))
+					    (list (get 'point c)
+					       (if (vector? cnt)
+						   (sum-method-count cnt)
+						   cnt)
+					       (if (vector? cnt)
+						   (vector-map! (lambda (c)
+								   (cons (get 'cnt c)
+								      (get 'point c)))
+						      cnt)
+						   #f))))
 			    cvec)
-			 (sort (lambda (x y)
-				  (>= (cadr x) (cadr y)))
-			    (vector-map cons lvec cvec)))
+			 (sort (lambda (x y) (>= (cadr x) (cadr y))) cvec))
 		      (loop (-fx i 1)))))))))
 
 ;*---------------------------------------------------------------------*/
@@ -1313,5 +1375,6 @@
 	       :object-return (lambda (o)
 				 (reverse! (cell-ref o)))
 	       :parse-error (lambda (msg fname loc)
+			       (tprint "msg=" msg " fname=" fname " loc=" loc)
 			       (error/location "fprofile" "Wrong JSON file" msg
 				  fname loc)))))))

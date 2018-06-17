@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 16 06:12:13 2016                          */
-;*    Last change :  Fri Jun  8 07:32:56 2018 (serrano)                */
+;*    Last change :  Sun Jun 17 12:24:33 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    js2scheme type inference                                         */
@@ -1877,6 +1877,7 @@
       (cond
 	 ((eq? typ tyr) #t)
 	 ((eq? typ 'fixnum) #unspecified)
+	 ((and (eq? typ 'index) (memq tyr '(number integer))) #unspecified)
 	 (else #f)))
    
    (with-access::J2SCall this (loc)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Jan 20 14:34:39 2016                          */
-;*    Last change :  Wed Apr 18 08:24:03 2018 (serrano)                */
+;*    Last change :  Sun Jun 17 12:37:41 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    AST Alpha conversion                                             */
@@ -116,15 +116,6 @@
 	 (when (procedure? ctor) ctor inst)
 	 (set! %info oinfo)
 	 inst)))
-
-;* {*---------------------------------------------------------------------*} */
-;* {*    alpha ::J2SExpr ...                                              *} */
-;* {*---------------------------------------------------------------------*} */
-;* (define-method (alpha this::J2SExpr)                                */
-;*    (let ((new (call-next-method)))                                  */
-;*       (with-access::J2SExpr new (type)                              */
-;* 	 (set! type #f)                                                */
-;* 	 new)))                                                        */
 
 ;*---------------------------------------------------------------------*/
 ;*    alpha ::J2SDecl ...                                              */

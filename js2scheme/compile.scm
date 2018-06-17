@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Sep 19 08:53:18 2013                          */
-;*    Last change :  Thu Jun  7 08:34:49 2018 (serrano)                */
+;*    Last change :  Fri Jun 15 22:30:43 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    The js2scheme compiler driver                                    */
@@ -387,6 +387,15 @@
 (define (compile-opts in args)
    (let ((o (append args (j2s-compile-options)))
 	 (l (config-get args :optim 0)))
+      ;; profiling
+      (when (config-get args :profile #f)
+	 (unless (memq :profile-call o)
+	    (set! o (cons* :profile-call #t o)))
+	 (unless (memq :profile-cache o)
+	    (set! o (cons* :profile-cache #t o)))
+	 (unless (memq :profile-hint o)
+	    (set! o (cons* :profile-hint #t o))))
+      ;; optimization
       (when (>=fx l 900)
 	 (unless (memq :optim-integer o)
 	    (set! o (cons* :optim-integer #t o)))
@@ -395,10 +404,10 @@
       (when (>=fx l 4)
 	 (unless (memq :optim-literals o)
 	    (set! o (cons* :optim-literals #t o)))
-	 (unless (memq :optim-hint o)
-	    (set! o (cons* :optim-hint #t o)))
 	 (unless (memq :optim-array o)
 	    (set! o (cons* :optim-array #t o)))
+	 (unless (memq :optim-hint o)
+	    (set! o (cons* :optim-hint #t o)))
 	 (unless (memq :optim-hintnum o)
 	    (set! o (cons* :optim-hintnum #t o)))
 	 (unless (memq :optim-range o)
@@ -431,10 +440,6 @@
 	    (set! o (cons* :optim-clevel #t o))))
 ;* 		     (unless (memq :optim-cce o)                       */
 ;* 			(set! o (cons* :optim-cce #t o)))              */
-
-      (when (config-get args :profile #f)
-	 (unless (memq :profile-call o)
-	    (set! o (cons* :profile-call #t o))))
       
       (unless (memq :filename o)
 	 (set! o (cons* :filename (input-port-name in) o)))

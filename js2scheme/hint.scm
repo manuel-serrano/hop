@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Jan 19 10:13:17 2016                          */
-;*    Last change :  Wed Jun  6 09:41:35 2018 (serrano)                */
+;*    Last change :  Sat Jun 16 12:38:02 2018 (serrano)                */
 ;*    Copyright   :  2016-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hint typing.                                                     */
@@ -83,7 +83,15 @@
 ;*    j2s-add-hint! ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (j2s-add-hint! decl::J2SDecl types::pair-nil inc)
-   (with-access::J2SDecl decl (hint itype)
+   
+   (define (add-hint! decl type::symbol)
+      (with-access::J2SDecl decl (id hint itype)
+	 (let ((c (assq type hint)))
+	    (if (pair? c)
+		(set-cdr! c (+fx 1 (cdr c)))
+		(set! hint (cons (cons type 1) hint))))))
+   
+   (with-access::J2SDecl decl (id hint itype)
       (cond
 	 ((or (eq? itype 'unknown)
 	      (eq? itype 'any)
@@ -91,11 +99,18 @@
 		   (or (memq 'integer types) (memq 'index types))))
 	  (for-each (lambda (type)
 		       [assert (type) (symbol? type)]
-		       (unless (memq type '(unknown any))
-			  (let ((c (assq type hint)))
-			     (if (pair? c)
-				 (set-cdr! c (+fx 1 (cdr c)))
-				 (set! hint (cons (cons type 1) hint))))))
+		       (case type
+			  ((unknown any)
+			   #unspecified)
+			  ((string)
+			   (unless (assq 'no-string hint)
+			      (add-hint! decl type)))
+			  ((no-string)
+			   (let ((c (assq 'string hint)))
+			      (set! hint (delete! c hint))
+			      (add-hint! decl type)))
+			  (else
+			   (add-hint! decl type))))
 	     types))
 	 ((and (not (eq? itype '(unknown any number))) (null? hint))
 	  (set! hint (list (cons itype 1)))))))
@@ -519,7 +534,7 @@
 	       (else #f)))))
    
    (define (param-hint-count p::J2SDecl)
-      (with-access::J2SDecl p (hint usecnt useinloop itype)
+      (with-access::J2SDecl p (hint usecnt useinloop itype id)
 	 (if (and (>=fx (length hint) 4)
 		  (let* ((w (map cdr hint))
 			 (max (apply max w))
@@ -577,8 +592,8 @@
 		   (disp (dispatch-body body pred callt callu val)))
 	       (set! params newparams)
 	       (set! body disp)
-	       (when (config-get conf :profile)
-		  (profile-fun! this id 'dispatch))))))
+	       (when (config-get conf :profile-hint)
+		  (profile-hint! this id 'dispatch))))))
    
    (define (duplicated? fun::J2SDecl)
       (with-access::J2SDeclFun fun (val %info)
@@ -609,16 +624,16 @@
 			  (list ft fu))
 		       (loop #f))))))
 	 ((typed? this)
-	  (when (config-get conf :profile #f)
-	     (unless (profile-fun? this)
+	  (when (config-get conf :profile-hint #f)
+	     (unless (profile-hint? this)
 		(with-access::J2SDeclFun this (id)
-		   (profile-fun! this id 'type))))
+		   (profile-hint! this id 'type))))
 	  '())
 	 ((not (duplicated? this))
-	  (when (config-get conf :profile #f)
-	     (unless (profile-fun? this)
+	  (when (config-get conf :profile-hint #f)
+	     (unless (profile-hint? this)
 		(with-access::J2SDeclFun this (id)
-		   (profile-fun! this id 'notype))))
+		   (profile-hint! this id 'notype))))
 	  '())
 	 (else
 	  '()))))
@@ -733,15 +748,15 @@
 		   (rhs (loop (cdr decls) (cdr htypes))))))))))
 
 ;*---------------------------------------------------------------------*/
-;*    profile-fun! ...                                                 */
+;*    profile-hint! ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (profile-fun! fun::J2SDeclFun id::symbol attr::symbol)
+(define (profile-hint! fun::J2SDeclFun id::symbol attr::symbol)
    
    (define (prof val::J2SFun)
       (with-access::J2SFun val (body loc)
 	 (let ((prof (J2SStmtExpr
 			(J2SPragma
-			   `(profile-function ,(format "~a" id) ',attr)))))
+			   `(profile-hint ,(format "~a" id) ',attr)))))
 	    (set! body
 	       (duplicate::J2SBlock body
 		  (nodes (list prof body)))))))
@@ -754,9 +769,9 @@
 	     (prof method)))))
 
 ;*---------------------------------------------------------------------*/
-;*    profile-fun? ...                                                 */
+;*    profile-hint? ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (profile-fun? fun::J2SDeclFun)
+(define (profile-hint? fun::J2SDeclFun)
    (with-access::J2SDeclFun fun (val id %info loc)
       (when (isa? val J2SFun)
 	 (with-access::J2SFun val (body)
@@ -773,7 +788,7 @@
 	 (when (isa? expr J2SPragma)
 	    (with-access::J2SPragma expr (expr)
 	       (match-case expr
-		  ((profile-function . ?-) #t)
+		  ((profile-hint . ?-) #t)
 		  (else #f)))))))
 
 ;*---------------------------------------------------------------------*/
@@ -811,8 +826,8 @@
 		  ;; typed version
 		  (set! body
 		     (return-patch! (j2s-alpha body '() '()) val nval))))
-	    (when (config-get conf :profile)
-	       (profile-fun! nfun id 'nohint))
+	    (when (config-get conf :profile-hint)
+	       (profile-hint! nfun id 'nohint))
 	    nfun))))
 
 ;*---------------------------------------------------------------------*/
@@ -873,8 +888,8 @@
 	    (use-count nbody +1 #f)
 	    (with-access::J2SFun newfun (decl)
 	       (set! decl newdecl))
-	    (when (config-get conf :profile)
-	       (profile-fun! newdecl id 'hint))
+	    (when (config-get conf :profile-hint)
+	       (profile-hint! newdecl id 'hint))
 	    (set! hintinfo
 	       (instantiate::FunHintInfo
 		  (hinted newdecl)
@@ -1051,8 +1066,6 @@
 				   (best-hint-type p #t))
 			      decls)))
 		(set! nodes (list (loop-dispatch this decls htypes)))
-		(tprint "DUPLICATE LOOP loc="
-		   loc " " (j2s->list (test-hint-decls decls htypes loc)))
 		this)
 	     (call-default-walker)))))
 

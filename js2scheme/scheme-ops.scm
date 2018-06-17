@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Aug 21 07:21:19 2017                          */
-;*    Last change :  Wed Jun  6 08:08:16 2018 (serrano)                */
+;*    Last change :  Fri Jun 15 15:51:44 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Unary and binary Scheme code generation                          */
@@ -2060,7 +2060,10 @@
 	       (binop-number-number op type
 		  (box left tl conf) (box right tr conf) flip)))))
       ((uint32)
-       (binop-uint32-uint32 op type left right flip))
+       (if (and (not (eq? type 'uint32))
+		(inrange-int32? lhs) (inrange-int32? rhs))
+	   (binop-int32-int32 op type (asint32 left tl) (asint32 right tr) flip)
+	   (binop-uint32-uint32 op type left right flip)))
       ((bint)
        (cond
 	  ((m64? conf)

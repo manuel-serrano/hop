@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Thu Jan 18 08:03:25 2018                          */
-;*    Last change :  Wed Jun 13 13:18:37 2018 (serrano)                */
+;*    Last change :  Fri Jun 15 21:41:27 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Program node compilation                                         */
@@ -208,7 +208,9 @@
 ;*    profilers ...                                                    */
 ;*---------------------------------------------------------------------*/
 (define (profilers conf)
-   (when (config-get conf :profile #f)
+   (when (or (config-get conf :profile-call #f)
+	     (config-get conf :profile-cache #f)
+	     (config-get conf :profile-hint #f))
       `(js-profile-init ',(filter-config conf)
 	  ,(if (config-get conf :profile-call #f)
 	       '(vector %source %call-log %call-locations)
@@ -306,5 +308,7 @@
       (when (>=fx profid 0)
 	 (match-case loc
 	    ((at ?- ?point)
-	     (vector-set! vec profid point)))))
+	     (vector-set! vec profid point))
+	    (else
+	     #f))))
    vec)

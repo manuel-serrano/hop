@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Feb  6 17:28:45 2018                          */
-;*    Last change :  Wed Jun 13 12:32:20 2018 (serrano)                */
+;*    Last change :  Sat Jun 16 12:45:50 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    HopScript profiler.                                              */
@@ -44,12 +44,10 @@
 	   (log-vtable! ::int ::vector ::vector)
 	   (log-vtable-conflict!)
 	   
-	   (profile-function ::obj ::symbol)
+	   (profile-hint ::obj ::symbol)
 	   (profile-cache-index ::long)
 	   (profile-cache-extension ::long)
-	   (profile-vector-extension ::long ::long)
-	   (profile-functions)
-	   (profile-allocs)))
+	   (profile-vector-extension ::long ::long)))
 
 ;*---------------------------------------------------------------------*/
 ;*    *profile* ...                                                    */
@@ -105,10 +103,10 @@
 	       (lambda (n)
 		  (profile-report-start trc)
 		  (profile-report-cache trc)
-		  (when (string-contains trc "hopscript:function")
-		     (profile-functions))
+		  (when (string-contains trc "hopscript:hint")
+		     (profile-hints trc))
 		  (when (string-contains trc "hopscript:alloc")
-		     (profile-allocs))
+		     (profile-allocs trc))
 		  (when (string-contains trc "hopscript:call")
 		     (profile-calls trc))
 		  (profile-report-end trc conf)
@@ -350,12 +348,12 @@
       ((dispatch) 2)
       ((type) 3)
       ((notype) 4)
-      (else (error "profile-function" "illegal attr" attr))))
+      (else (error "profile-hint" "illegal attr" attr))))
 
 ;*---------------------------------------------------------------------*/
-;*    profile-function ...                                             */
+;*    profile-hint ...                                                 */
 ;*---------------------------------------------------------------------*/
-(define (profile-function name attr)
+(define (profile-hint name attr)
    (when *log-functions*
       (let ((o (assq name *functions*))
 	    (i (attr->index attr)))
@@ -366,13 +364,12 @@
 	     (vector-set! (cddr o) i (+fx 1 (vector-ref (cddr o) i)))))))
 
 ;*---------------------------------------------------------------------*/
-;*    profile-functions ...                                            */
+;*    profile-hints ...                                                */
 ;*---------------------------------------------------------------------*/
-(define (profile-functions)
+(define (profile-hints trc)
    (with-output-to-port *profile-port*
       (lambda ()
-	 (let ((m (pregexp-match "hopscript:function([0-9]+)"
-		     (getenv "HOPTRACE"))))
+	 (let ((m (pregexp-match "hopscript:function([0-9]+)" trc)))
 	    (when m
 	       (set! *function-threshold* (string->integer (cadr m)))))
 	 (for-each (lambda (e)
@@ -421,7 +418,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    profile-allocs ...                                               */
 ;*---------------------------------------------------------------------*/
-(define (profile-allocs)
+(define (profile-allocs trc)
    
    (define (show-json-percentages vec)
       (let ((len (vector-length vec)))
@@ -499,11 +496,10 @@
    
    (with-output-to-port *profile-port*
       (lambda ()
-	 (let ((m (pregexp-match "hopscript:alloc([0-9]+)"
-		     (getenv "HOPTRACE"))))
+	 (let ((m (pregexp-match "hopscript:alloc([0-9]+)" trc)))
 	    (cond-expand
 	       (profile
-		(if (string-contains (getenv "HOPTRACE") "format:json")
+		(if (string-contains trc "format:json")
 		    (show-json-alloc)
 		    (show-text-alloc)))
 	       (else
@@ -1123,21 +1119,23 @@
 ;*    profile-calls ...                                                */
 ;*---------------------------------------------------------------------*/
 (define (profile-calls trc)
-   
-   (define (print-call-counts counts)
-      (print
-	 (format "[ ~(, ) ],"
-	    (map (lambda (n)
-		    (if (number? n)
-			;; direct call
-			n
-			;; unknown call
-			(format "[ ~(, ) ]"
-			   (map (lambda (n)
-				   (format "{ \"loc\": ~a, \"cnt\": ~a }"
-				      (car n) (cdr n)))
-			      n))))
-	       counts))))
+
+   (define (print-call-counts counts locations)
+      (let ((sep "\n      "))
+	 (for-each (lambda (l n)
+		      (when (>=fx l 0)
+			 (display sep)
+			 (set! sep ",\n      ")
+			 (if (number? n)
+			     ;; direct call
+			     (printf "{ \"point\": ~a, \"cnt\": ~a }" l n) 
+			     ;; unknown call
+			     (printf "{ \"point\": ~a, \"cnt\": [ ~(, ) ] }" l
+				(map (lambda (n)
+					(format "{ \"point\": ~a, \"cnt\": ~a }"
+					   (car n) (cdr n)))
+				   n)))))
+	    locations counts)))
    
    (when (string-contains trc "format:fprofile")
       (with-output-to-port *profile-port*
@@ -1150,10 +1148,10 @@
 			       (print ","))
 			    (print "  { \"filename\": \""
 			       (vector-ref t 0) "\",")
-			    (display "    \"counts\": ")
-			    (print-call-counts (vector->list (vector-ref t 1)))
-			    (display* "    \"locations\": "
-			       (format "[ ~(, ) ] }"
-				  (vector->list (vector-ref t 2)))))
+			    (display "    \"calls\": [")
+			    (print-call-counts
+			       (vector->list (vector-ref t 1))
+			       (vector->list (vector-ref t 2)))
+			    (print " ] }"))
 		  *profile-call-tables*))
 	    (print "],")))))

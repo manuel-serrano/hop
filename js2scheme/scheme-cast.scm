@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Wed Dec  6 07:13:28 2017                          */
-;*    Last change :  Tue Jun 12 13:11:38 2018 (serrano)                */
+;*    Last change :  Fri Jun 15 21:43:56 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Casting values from JS types to SCM implementation types.        */
@@ -358,6 +358,11 @@
    (js->real v expr conf #f))
 
 ;*---------------------------------------------------------------------*/
+;*    *debug-real* ...                                                 */
+;*---------------------------------------------------------------------*/
+(define *debug-real* '())
+
+;*---------------------------------------------------------------------*/
 ;*    js->real ...                                                     */
 ;*---------------------------------------------------------------------*/
 (define (js->real v expr conf numberp)
@@ -398,7 +403,10 @@
 	 (((or bit-orjs bit-andjs bit-xorjs bitnojs) . ?rest)
 	  `(js-toflonum ,v))
 	 (else
-	  (tprint "TODO js->real " v)
+	  (let ((f (car v)))
+	     (unless (memq f *debug-real*)
+		(set! *debug-real* (cons f *debug-real*))
+		(tprint "TODO js->real " v)))
 	  (if numberp
 	      `(js-toflonum ,v)
 	      `(js-toflonum (js-tonumber ,v %this)))))))

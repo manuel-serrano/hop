@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Mon Feb 12 20:41:05 2018 (serrano)                */
+;*    Last change :  Sun Jun 17 12:21:08 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Count the number of occurrences for all variables                */
@@ -101,7 +101,7 @@
 	    (set! keep #f)
 	    (set! decls
 	       (filter (lambda (d::J2SDecl)
-			  (with-access::J2SDecl d (usecnt)
+			  (with-access::J2SDecl d (usecnt id)
 			     (or (>fx usecnt 0)
 				 (and (isa? d J2SDeclInit)
 				      (with-access::J2SDeclInit d (val)

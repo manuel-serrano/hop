@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Nov 12 13:32:52 2004                          */
-;*    Last change :  Thu Jun  7 09:11:51 2018 (serrano)                */
+;*    Last change :  Sat Jun 16 12:35:19 2018 (serrano)                */
 ;*    Copyright   :  2004-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Hop command line parsing                                         */
@@ -45,7 +45,7 @@
    (print "      j2s:info, j2s:type, j2s:utype, j2s:hint, j2s:range, j2s:usage, j2s:key,")
    (print "      j2s:loc, j2s:cache, j2s:dump, j2s:size")
    (print "      nodejs:compile,")
-   (print "      hopscript:cache[num] (*), hopscript:function[num] (*),")
+   (print "      hopscript:cache[num] (*), hopscript:hint[num] (*),")
    (print "      hopscript:alloc[num], hopscript:uncache, hopscript:call")
    (print "      format:json, format:fprofile, srcfile=path, logfile=path")
    (print "   - HOPCFLAGS: hopc compilation flags")
@@ -329,6 +329,13 @@
 	    (("--profile" (help "Profiling mode (see HOPTRACE)"))
 	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
 	     (hopc-j2s-flags-set! (cons* :profile #t (hopc-j2s-flags))))
+	    (("--profile-cache" (help "Cache profiling mode (see HOPTRACE)"))
+	     (hopc-bigloo-profile-options-set! '("-srfi" "profile"))
+	     (hopc-j2s-flags-set! (cons* :profile-cache #t (hopc-j2s-flags))))
+	    (("--profile-hint" (help "Hint profiling mode (see HOPTRACE)"))
+	     (hopc-j2s-flags-set! (cons* :profile-hint #t (hopc-j2s-flags))))
+	    (("--profile-call" (help "Call profiling mode (see HOPTRACE)"))
+	     (hopc-j2s-flags-set! (cons* :profile-call #t (hopc-j2s-flags))))
 	    (section "Experimental features")
 	    (("--js-cspecs" ?cspecs (help "force default cache specs"))
 	     (call-with-input-string cspecs

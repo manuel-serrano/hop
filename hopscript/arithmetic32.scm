@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Dec  4 19:36:39 2017                          */
-;*    Last change :  Tue May  8 16:42:57 2018 (serrano)                */
+;*    Last change :  Fri Jun 15 15:46:35 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Arithmetic operations on 32bit and nan64 platforms               */
@@ -495,7 +495,25 @@
 ;*    -u32/overflow ...                                                */
 ;*---------------------------------------------------------------------*/
 (define-inline (-u32/overflow x::uint32 y::uint32)
-   (js-uint32-tointeger (-u32 x y)))
+   (cond-expand
+      ((and bigloo-c (config have-overflow #t) (config nan-tagging #t))
+       (let ((res::uint32 0))
+	  (if (pragma::bool "__builtin_usub_overflow($1, $2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
+		 x y)
+	      (js-uint32-tointeger res))))
+      ((and bigloo-c (config have-overflow #t))
+       (let ((res::ulong 0))
+	  (if (pragma::bool "__builtin_usubl_overflow($1, $2, &$3)"
+		 x y (pragma res))
+	      (pragma::real "DOUBLE_TO_REAL(((double)($1))-((double)($2)))"
+		 x y)
+	      (js-uint32-tointeger (pragma::uint32 "(uint32_t)$1" res)))))
+      (else
+       (if (>=u32 x y)
+	   (js-uint32-tointeger (-u32 x y))
+	   (-fl (uint32->real x) (uint32->real y))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    -/overflow ...                                                   */
