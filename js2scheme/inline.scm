@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Fri Jun 15 14:22:39 2018 (serrano)                */
+;*    Last change :  Sun Jun 17 23:50:34 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -121,7 +121,7 @@
 ;*    j2s-inline-profile ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (j2s-inline-profile prgm::J2SProgram conf logfile)
-
+   
    (define (find-protoinfo loc pms::struct)
       (bind-exit (return)
 	 (hashtable-for-each pms
@@ -149,29 +149,28 @@
 		     candidates)))
 	 (sort (lambda (x y) (> (car x) (car y)))
 	    (filter (lambda (x) x) (vector->list tgts)))))
-
+   
    (define (call-targets this::J2SCall clog funs pms::struct)
       (if (vector? (cddr clog))
 	  (map cdr (find-targets (cddr clog) funs pms))
 	  (>= (cadr clog) inline-min-call-occurrence)))
    
-   (define (inline-profile!::long this::J2SCall clog fuel owner pms funs)
+   (define (inline-profile!::long this::J2SCall clog leaf fuel owner pms funs)
       (with-access::J2SCall this (%info loc)
 	 (let ((targets (call-targets this clog funs pms)))
 	    (if targets
 		(let ((parent %info)
 		      (sz (node-size this))
-		      (new (inline! this targets inline-max-function-size
+		      (new (inline! this targets leaf inline-max-function-size
 			      (list owner) pms prgm conf)))
 		   (if (eq? new this)
 		       (values 0 '())
-		       (begin
+		       (let ((nc (collect-calls-and-link* new parent owner)))
 			  (update-parent! parent this new)
-			  (values (-fx (node-size new) sz)
-			     (collect-calls-and-link* new parent owner)))))
+			  (values (-fx (node-size new) sz) nc))))
 		(values 0 '())))))
    
-   (define (inline-calls! nl::struct clog fuel pms::struct funs)
+   (define (inline-calls! nl::struct clog leaf::bool fuel pms::struct funs)
       (let loop ((calls (nodelink-nodes nl))
 		 (sz 0)
 		 (nc '()))
@@ -179,12 +178,12 @@
 	     (values sz nc)
 	     (let ((call (car calls)))
 		(multiple-value-bind (z c)
-		   (inline-profile! call clog fuel (nodelink-owner nl) pms funs)
+		   (inline-profile! call
+		      clog leaf fuel (nodelink-owner nl) pms funs)
 		   (loop (cdr calls) (+fx sz z) (append c nc)))))))
    
    (let ((log (call-profile-log prgm logfile conf)))
       (if log
-	  ;; link the call nodes to their parent
 	  (with-access::J2SProgram prgm (nodes)
 	     (let* ((calls (collect-calls-and-link* prgm prgm #f))
 		    (funs (collect-funs* prgm))
@@ -192,22 +191,34 @@
 		    (fuel (- (* size inline-global-expansion) size))
 		    (pms (ptable (append-map collect-proto-methods* nodes))))
 		(let loop ((i 0)
-			   (fuel (- (* size inline-global-expansion) size)))
-		   (if (or (=fx i (vector-length log)) (<= fuel 0))
-		       (j2s-inline-profile-cleanup! prgm conf)
+			   (fuel fuel)
+			   (leaf #t))
+		   (cond
+		      ((<= fuel 0)
+		       (j2s-inline-profile-cleanup! prgm conf))
+		      ((=fx i (vector-length log))
+		       (if leaf
+			   (loop 0 fuel #f)
+			   (j2s-inline-profile-cleanup! prgm conf)))
+		      (else
 		       (let ((clog (vector-ref log i)))
 			  (if (and (>=fx (car clog) 0)
 				   (>= (cadr clog) inline-min-call-occurrence))
 			      (let ((nl (assq (car clog) calls)))
 				 (if (pair? nl)
-				     (multiple-value-bind (f c)
+				     (multiple-value-bind (f c l)
 					(inline-calls! (cdr nl) clog
-					   fuel pms funs)
+					   leaf fuel pms funs)
 					(nodelink-nodes-set! (cdr nl)
-					   (append c (nodelink-nodes (cdr nl))))
-					(loop (+fx i 1) (- fuel f)))
-				     (loop (+fx i 1) fuel)))
-			      (loop (+fx i 1) fuel)))))))
+					   (append
+					      (append-map
+						 (lambda (c)
+						    (nodelink-nodes (cdr c)))
+						 c)
+					      (nodelink-nodes (cdr nl))))
+					(loop (+fx i 1) (- fuel f) leaf))
+				     (loop (+fx i 1) fuel leaf)))
+			      (loop (+fx i 1) fuel leaf))))))))
 	  (j2s-inline-noprofile prgm conf))))
 
 ;*---------------------------------------------------------------------*/
@@ -233,12 +244,15 @@
 					   ":" (caddr loc) " size="
 					   (node-size (protoinfo-method p)))))
 			   b))))))
-	 (let loop ((limit 10))
-	    (inline! this #f limit '() pms this conf)
-	    (let ((nsize (node-size this)))
-	       (when (and (<fx limit inline-max-function-size)
-			  (< nsize (* size inline-global-expansion)))
-		  (loop (+fx limit 5))))))
+	 (let liip ((leaf #f))
+	    (let loop ((limit 10))
+	       (inline! this #f leaf limit '() pms this conf)
+	       (let ((nsize (node-size this)))
+		  (when (and (<fx limit inline-max-function-size)
+			     (< nsize (* size inline-global-expansion)))
+		     (loop (+fx limit 5)))))
+	    (unless leaf
+	       (liip #t))))
       (j2s-inline-profile-cleanup! this conf)))
 
 ;*---------------------------------------------------------------------*/
@@ -342,8 +356,8 @@
 ;*---------------------------------------------------------------------*/
 ;*    collect-proto-methods* ...                                       */
 ;*    -------------------------------------------------------------    */
-;*    Collect the inline candidates, which are the top level methods   */
-;*    assigned to constructor prototypes.                              */
+;*    Collect the inline methods candidates, which are the top level   */
+;*    methods assigned to constructor prototypes.                      */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-proto-methods* this::J2SNode)
    '())
@@ -403,21 +417,23 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline!* ...                                                     */
 ;*---------------------------------------------------------------------*/
-(define (inline!* lst targets limit::long stack::pair-nil pmethods prgm conf)
-   (map (lambda (o) (inline! o targets limit stack pmethods prgm conf)) lst))
+(define (inline!* lst targets leaf::bool limit::long stack::pair-nil pmethods prgm conf)
+   (map (lambda (o)
+	   (inline! o targets leaf limit stack pmethods prgm conf))
+      lst))
 		       
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SNode ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SNode
-		       targets limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
    (call-default-walker))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SMeta ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SMeta
-		       targets limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
    (with-access::J2SMeta this (optim debug)
       (if (or (=fx optim 0) (>fx debug 0))
 	  this
@@ -427,39 +443,39 @@
 ;*    inline! ::J2SMetaInl ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SMetaInl
-		       targets limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
    (with-access::J2SMetaInl this (inlstack stmt loc)
       (set! stmt
 	 (inline! stmt
-	    targets limit (append inlstack stack) pmethods prgm conf))
+	    targets leaf limit (append inlstack stack) pmethods prgm conf))
       this))
    
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SDeclFun ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SDeclFun
-		       targets limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
    (with-access::J2SDeclFun this (val id)
-      (inline! val targets limit stack pmethods prgm conf)
+      (inline! val targets leaf limit stack pmethods prgm conf)
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SFun ...                                             */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SFun
-		       targets limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
    (with-access::J2SFun this (optimize body)
       (when optimize
 	 (set! body
 	    (inline! body
-	       targets limit (cons this stack) pmethods prgm conf)))
+	       targets leaf limit (cons this stack) pmethods prgm conf)))
       this))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline! ::J2SCall ...                                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (inline! this::J2SCall
-		       targets limit::long stack::pair-nil pmethods prgm conf)
+		       targets leaf limit::long stack::pair-nil pmethods prgm conf)
    
    (define (find-inline-decl-function this::J2SCall fun arity limit stack)
       (with-access::J2SRef fun (decl)
@@ -468,7 +484,7 @@
 	       (let ((val (j2sdeclinit-val-fun decl)))
 		  (when (and (=fx (function-arity val) arity)
 			     (function-fxarg? val)
-			     (function-leaf? val)
+			     (or (not leaf) (function-leaf? val))
 			     (not (memq val stack))
 			     (<=fx (function-size val) limit)
 			     (check-id id))
@@ -482,7 +498,7 @@
 				      (let ((f (protoinfo-method m)))
 					 (and (=fx (function-arity f) arity)
 					      (function-fxarg? f)
-					      (function-leaf? f)
+					      (or (not leaf) (function-leaf? f))
 					      (not (memq f stack)))))
 			      (or (hashtable-get pmethods val) '()))))
 		  (when (<fx (apply +
@@ -505,10 +521,10 @@
 	       (when (pair? stack) 
 		  (invalidate-function-size! (car stack)))
 	       (let ((e (inline-method-call fun mets args loc
-			   '() limit stack pmethods prgm conf)))
+			   '() leaf limit stack pmethods prgm conf)))
 		  (inline-stmt->expr loc
-		     (inline! e '()
-			0 (append vals stack) pmethods prgm conf)))))))
+		     (inline! e
+			'() leaf 0 (append vals stack) pmethods prgm conf)))))))
    
    (define (inline-ref-call this::J2SCall fun::J2SRef args loc)
       (cond
@@ -520,13 +536,13 @@
 		(invalidate-function-size! (car stack)))
 	     (inline-stmt->expr loc
 		(inline-function-call target args loc
-		   targets (if targets 0 limit) stack pmethods prgm conf))))
+		   targets leaf (if targets 0 limit) stack pmethods prgm conf))))
 	 ((pair? targets)
 	  (when (pair? stack)
 	     (invalidate-function-size! (car stack)))
 	  (inline-stmt->expr loc
 	     (inline-unknown-call fun args loc
-		targets limit stack pmethods prgm conf)))
+		targets leaf limit stack pmethods prgm conf)))
 	 (else
 	  #f)))
 
@@ -547,23 +563,25 @@
 ;*    inline-function-call ...                                         */
 ;*---------------------------------------------------------------------*/
 (define (inline-function-call val::J2SFun args::pair-nil loc
-	   targets limit::long stack::pair-nil pmethods prgm conf)
+	   targets leaf limit::long stack::pair-nil pmethods prgm conf)
    (with-access::J2SFun val (body thisp params (floc loc))
-      (let* ((vals (inline-args params args #f limit stack pmethods prgm conf))
+      (let* ((vals (inline-args params
+		      args #f leaf limit stack pmethods prgm conf))
 	     (nbody (j2s-alpha body
 		       (cons thisp params) (cons (J2SUndefined) vals))))
 	 (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
 	    (J2SMetaInl (cons val stack)
 	       (config-get conf :optim 0)
 	       (if (> limit 0)
-		   (inline! nbody #f limit (cons val stack) pmethods prgm conf)
+		   (inline! nbody
+		      #f leaf limit (cons val stack) pmethods prgm conf)
 		   nbody))))))
 
 ;*---------------------------------------------------------------------*/
 ;*    inline-unknown-call ...                                          */
 ;*---------------------------------------------------------------------*/
 (define (inline-unknown-call ref::J2SRef args::pair-nil loc
-	   targets limit::long stack::pair-nil pmethods prgm conf)
+	   targets leaf limit::long stack::pair-nil pmethods prgm conf)
    (let loop ((targets targets))
       (if (null? targets)
 	  (J2SStmtExpr (J2SCall* ref args))
@@ -576,7 +594,7 @@
 			      (J2SRef (with-access::J2SRef ref (decl) decl))
 			      (J2SRef (targetinfo-decl target)))
 		       (inline-function-call fun args loc
-			  #f 0 stack pmethods prgm conf)
+			  #f leaf 0 stack pmethods prgm conf)
 		       (loop (cdr targets))))
 		 (loop '()))))))
    
@@ -584,7 +602,7 @@
 ;*    inline-method-call ...                                           */
 ;*---------------------------------------------------------------------*/
 (define (inline-method-call fun::J2SAccess callees::pair args::pair-nil loc
-	   targets limit::long stack::pair-nil pmethods prgm conf)
+	   targets leaf limit::long stack::pair-nil pmethods prgm conf)
    
    (define (get-cache prgm::J2SProgram)
       (with-access::J2SProgram prgm (pcache-size)
@@ -618,14 +636,15 @@
 		  (let ((id (gensym 'a)))
 		     (with-access::J2SNode a (loc)
 			(J2SLetOpt '(ref) id
-			   (inline! a #f limit stack pmethods prgm conf))))))
+			   (inline! a
+			      #f leaf limit stack pmethods prgm conf))))))
 	 args))
 
    (define (inline-method obj::J2SRef field callee args cache loc kont)
       (let ((val (protoinfo-method callee)))
 	 (with-access::J2SFun val (body thisp params (floc loc))
 	    (let ((vals (inline-args params args
-			   #f limit stack pmethods prgm conf)))
+			   #f leaf limit stack pmethods prgm conf)))
 	       (with-access::J2SRef obj (decl)
 		  (cache-check cache loc obj field kont
 		     (LetBlock floc (filter (lambda (b) (isa? b J2SDecl)) vals)
@@ -634,7 +653,8 @@
 			   (inline!
 			      (j2s-alpha body
 				 (cons thisp params) (cons decl vals))
-			      #f limit (cons val stack) pmethods prgm conf)))))))))
+			      #f leaf limit
+			      (cons val stack) pmethods prgm conf)))))))))
    
    (define (inline-object-method-call fun obj args)
       (with-access::J2SAccess fun (field)
@@ -704,7 +724,7 @@
 ;*---------------------------------------------------------------------*/
 ;*    inline-args ...                                                  */
 ;*---------------------------------------------------------------------*/
-(define (inline-args params args targets limit stack pmethods prgm conf)
+(define (inline-args params args targets leaf limit stack pmethods prgm conf)
    (map (lambda (p a)
 	   (cond
 	      ((and (ronly-variable? p) (isa? a J2SLiteral))
@@ -716,7 +736,7 @@
 		  (with-access::J2SNode a (loc)
 		     (let ((d (J2SLetOpt usage (gensym id)
 				 (inline! a
-				    targets limit stack pmethods prgm conf))))
+				    targets leaf limit stack pmethods prgm conf))))
 			(with-access::J2SDecl d ((w writable))
 			   (set! w writable))
 			d))))))
@@ -1043,6 +1063,13 @@
    #f)
 
 ;*---------------------------------------------------------------------*/
+;*    node-leaf ::J2SNew ...                                           */
+;*---------------------------------------------------------------------*/
+(define-walk-method (node-leaf node::J2SNew cell)
+   (cell-set! cell #f)
+   #f)
+
+;*---------------------------------------------------------------------*/
 ;*    unmetainl! ::J2SNode ...                                         */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (unmetainl! this::J2SNode)
@@ -1166,6 +1193,8 @@
 
 ;*---------------------------------------------------------------------*/
 ;*    collect-funs* ::J2SNode ...                                      */
+;*    -------------------------------------------------------------    */
+;*    Collect all the function definitions.                            */
 ;*---------------------------------------------------------------------*/
 (define-walk-method (collect-funs* this::J2SNode)
    (call-default-walker))
@@ -1375,6 +1404,5 @@
 	       :object-return (lambda (o)
 				 (reverse! (cell-ref o)))
 	       :parse-error (lambda (msg fname loc)
-			       (tprint "msg=" msg " fname=" fname " loc=" loc)
 			       (error/location "fprofile" "Wrong JSON file" msg
 				  fname loc)))))))
