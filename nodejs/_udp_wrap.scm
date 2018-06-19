@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Oct 19 07:19:20 2014                          */
-;*    Last change :  Sun Jun 10 13:52:15 2018 (serrano)                */
+;*    Last change :  Tue Jun 19 07:31:42 2018 (serrano)                */
 ;*    Copyright   :  2014-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Nodejs UDP bindings                                              */
@@ -36,6 +36,11 @@
 	 (lambda (this . l)
 	    (error "udp_wrap" "binding not implemented" name))
 	 0 (symbol->string name)))
+
+   (define (check-fail %this process r)
+      (unless (=fx r 0)
+	 (js-put! process '_errno (nodejs-err-name r) #f %this))
+      r)
 
    (define (create-udp-proto)
       (with-access::JsGlobalObject %this (js-object)
@@ -111,11 +116,12 @@
 	       (js-make-function %this
 		  (lambda (this addr iface)
 		     (with-access::JsHandle this (handle)
-			(nodejs-udp-set-membership handle
-			   (js-tostring addr %this)
-			   (unless (eq? iface (js-undefined))
-			      (js-tostring iface %this))
-			   'join-group)))
+			(check-fail %this process
+			   (nodejs-udp-set-membership handle
+			      (js-tostring addr %this)
+			      (unless (eq? iface (js-undefined))
+				 (js-tostring iface %this))
+			      'join-group))))
 		  3 "addMembership")
 	       #f %this)
 	    

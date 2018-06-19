@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Fri Oct 25 07:05:26 2013                          */
-;*    Last change :  Mon Jun 11 14:40:09 2018 (serrano)                */
+;*    Last change :  Mon Jun 18 16:16:47 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    JavaScript property handling (getting, setting, defining and     */
@@ -454,7 +454,7 @@
 	 (set! pmap #t)
 	 (set! emap #t)
 	 (set! amap #t)))
-   
+
    (with-access::JsGlobalObject %this (js-pmap-valid cmap)
       (when js-pmap-valid
 	 (set! js-pmap-valid #f)
@@ -1825,7 +1825,8 @@
 		      (reject "sealed object"))
 		     ((not (isa? el-or-desc JsPropertyDescriptor))
 		      ;; 8.12.5, step 6
-		      (js-invalidate-pcaches-pmap! %this name)
+		      ;;;(tprint "INVALIDATE.3 " p " " (typeof el-or-desc) " " point)
+		      ;;(js-invalidate-pcaches-pmap! %this name)
 		      (extend-object!))
 		     (else
 		      (with-access::JsDataDescriptor el-or-desc (writable)
@@ -1938,6 +1939,7 @@
 			   (writable #t)
 			   (enumerable #t)
 			   (configurable #t))))
+	    (js-invalidate-pcaches-pmap! %this name)
 	    (js-define-own-property o name newdesc throw %this)
 	    v)))
    
@@ -2161,7 +2163,6 @@
 		   cmap)))))
    
    (define (extend-mapped-object!)
-      
       ;; 8.12.5, step 6
       (with-access::JsObject o (cmap elements)
 	 (with-access::JsConstructMap cmap (props)

@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Mon Sep 18 04:15:19 2017                          */
-;*    Last change :  Sun Jun 17 23:50:34 2018 (serrano)                */
+;*    Last change :  Tue Jun 19 13:27:17 2018 (serrano)                */
 ;*    Copyright   :  2017-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Method inlining optimization                                     */
@@ -658,6 +658,7 @@
    
    (define (inline-object-method-call fun obj args)
       (with-access::J2SAccess fun (field)
+	 (tprint "ICI PAS bON LE CALL...qui fait un cache miss")
 	 (let loop ((callees callees)
 		    (caches '()))
 	    (if (null? callees)
@@ -705,14 +706,6 @@
 			 (J2SStmtExpr
 			    (J2SCall* (J2SAccess (J2SRef d) field)
 			       args)))))))
-	    ((not (eq? (j2s-type obj) 'object))
-	     (LetBlock loc t 
-		(J2SIf (J2SHopCall (J2SHopRef/rtype 'js-object? 'bool)
-			  obj)
-		   (inline-object-method-call fun obj args)
-		   (J2SMeta 0 0
-		      (J2SStmtExpr
-			 (J2SCall* (J2SAccess obj field) args))))))
 	    ((not (isa? obj J2SRef))
 	     (let* ((id (gensym 'this))
 		    (d (J2SLetOpt '(get) id obj)))

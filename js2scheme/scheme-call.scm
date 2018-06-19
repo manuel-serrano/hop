@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Sun Mar 25 07:00:50 2018                          */
-;*    Last change :  Mon Jun 18 15:10:15 2018 (serrano)                */
+;*    Last change :  Tue Jun 19 13:43:00 2018 (serrano)                */
 ;*    Copyright   :  2018 Manuel Serrano                               */
 ;*    -------------------------------------------------------------    */
 ;*    Scheme code generation of JavaScript function calls              */
@@ -268,27 +268,27 @@
 	     (call-super-method fun args))
 	    ((and ccache (= (bigloo-debug) 0))
 	     (cond
-;* 		((isa? field J2SString)                                */
-;* 		 (with-access::J2SString field (val)                   */
-;* 		    (or (and (string=? val "toString")                 */
-;* 			     (j2s-tostring this mode return conf))     */
-;* 			(let ((call (if (eq? (j2s-vtype obj) 'object)  */
-;* 					'js-object-method-call-name/cache */
-;* 					'js-method-call-name/cache)))  */
-;* 			   `(,call                                     */
-;* 			       ,j2s-unresolved-call-workspace          */
-;* 			       ,(j2s-scheme obj mode return conf)      */
-;* 			       ',(string->symbol val)                  */
-;* 			       ,(js-pcache ccache)                     */
-;* 			       ,(js-pcache ocache)                     */
-;* 			       ,(loc->point loc)                       */
-;* 			       ',ccspecs                               */
-;* 			       ',(if (>=fx (config-get conf :optim 0) 3) */
-;* 				     ocspecs                           */
-;* 				     '(imap+))                         */
-;* 			       ,@(map (lambda (arg)                    */
-;* 					 (j2s-scheme arg mode return conf)) */
-;* 				    args))))))                         */
+		((isa? field J2SString)
+		 (with-access::J2SString field (val)
+		    (or (and (string=? val "toString")
+			     (j2s-tostring this mode return conf))
+			(let ((call (if (eq? (j2s-vtype obj) 'object)
+					'js-object-method-call-name/cache
+					'js-method-call-name/cache)))
+			   `(,call
+			       ,j2s-unresolved-call-workspace
+			       ,(j2s-scheme obj mode return conf)
+			       ',(string->symbol val)
+			       ,(js-pcache ccache)
+			       ,(js-pcache ocache)
+			       ,(loc->point loc)
+			       ',ccspecs
+			       ',(if (>=fx (config-get conf :optim 0) 3)
+				     ocspecs
+				     '(imap+))
+			       ,@(map (lambda (arg)
+					 (j2s-scheme arg mode return conf))
+				    args))))))
 		(else
 		 (call-unknown-function fun
 		    (list (j2s-scheme obj mode return conf))
