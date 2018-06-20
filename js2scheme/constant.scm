@@ -3,7 +3,7 @@
 ;*    -------------------------------------------------------------    */
 ;*    Author      :  Manuel Serrano                                    */
 ;*    Creation    :  Tue Oct  8 09:03:28 2013                          */
-;*    Last change :  Tue Jun  5 07:21:16 2018 (serrano)                */
+;*    Last change :  Wed Jun 20 17:49:49 2018 (serrano)                */
 ;*    Copyright   :  2013-18 Manuel Serrano                            */
 ;*    -------------------------------------------------------------    */
 ;*    Preallocate constant objects (regexps, literal cmaps,            */
@@ -293,7 +293,7 @@
 			(let* ((x (fixnum->uint32 lval))
 			       (y (bit-andu32 (fixnum->uint32 rval) #u32:31))
 			       (r (bit-rshu32 x (uint32->fixnum y))))
-			   (if (<=u32 (fixnum->uint32 (maxvalfx)) r)
+			   (if (<=u32 r (fixnum->uint32 (maxvalfx)))
 			       (J2SNumber (uint32->fixnum r))
 			       this))
 			this))
